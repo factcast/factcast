@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+option java_multiple_files = false;
+option java_package = "org.factcast.server.grpc.gen";
+option java_outer_classname = "GreeterProto";
+package org.factcast.server.grpc.gen;
+
+message UUID {
+	int64 msb = 1;
+	int64 lsb = 2;
+}
+
+message UUIDs {
+	repeated UUID uuid = 1;
+}
+
+message ResponseStreamMessage {
+	enum Type {
+		Fact = 0;
+		Id = 1;
+		Catchup = 2;
+		Complete = 3;
+		Error = 4;
+	}
+
+	Type type = 1;
+	Fact fact = 2;
+	UUID id = 3;
+	string error = 4;
+}
+
+message ResponseStreamMessages {
+	repeated ResponseStreamMessage msg = 1;
+}
+
+message SubscriptionRequest {
+	enum TargetType {
+	// check this
+		Fact = 0;
+		Id = 1;
+	}
+
+	TargetType targetType = 1;
+	bool continous = 2;
+	repeated FactSpec specs = 3;
+}
+
+message FactSpec {
+	string ns = 1;
+	string type = 2;
+	UUID aggId = 3;
+}
+
+message Fact {
+	string header = 1;
+	string payload = 2;
+}
+
+message Facts {
+	repeated Fact fact = 1;
+}
+
+message Empty {
+}
+
+service FactCast {
+	rpc subscribe (SubscriptionRequest) returns (ResponseStreamMessages) {
+	}
+	rpc fetchById (UUID) returns (Fact) {
+	}
+	rpc publish (Facts) returns (Empty) {
+	}
+}

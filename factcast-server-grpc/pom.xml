@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.factcast</groupId>
+		<artifactId>factcast</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+	<artifactId>factcast-server-grpc</artifactId>
+	<properties>
+		<grpc.version>1.2.0</grpc.version><!-- CURRENT_GRPC_VERSION -->
+	</properties>
+
+	<repositories>
+		<repository>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+			<id>jfrogSnapshots</id>
+			<name>jfrogSnapshots</name>
+			<url>http://oss.jfrog.org/oss-snapshot-local</url>
+		</repository>
+	</repositories>
+	<dependencies>
+		<dependency>
+			<groupId>org.lognet</groupId>
+			<artifactId>grpc-spring-boot-starter</artifactId>
+			<version>2.0.2-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.factcast</groupId>
+			<artifactId>factcast-grpc-api</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.factcast</groupId>
+			<artifactId>factcast-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	
+	</dependencies>
+</project>

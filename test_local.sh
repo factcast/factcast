@@ -1,0 +1,10 @@
+#!/bin/bash
+
+mvn clean install -DskipTests && \
+java \
+-Dfactcast.store.pgsql.user=tester \
+-Dfactcast.store.pgsql.password=test_password \
+-Dfactcast.store.pgsql.dbname=test1 \
+-Dlogging.level.org.factcast=TRACE \
+-Dspring.profiles.active=localtest \
+-jar factcast-server/target/factcast.jar 

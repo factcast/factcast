@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+option java_multiple_files = false;
+option java_package = "org.factcast.server.grpc.gen";
+option java_outer_classname = "FactStoreProto";
+package org.factcast.server.grpc.gen;
+
+message MSG_UUID {
+	int64 msb = 1;
+	int64 lsb = 2;
+}
+
+
+message MSG_Notification{
+	enum Type {
+		Fact = 0;
+		Id = 1;
+		Catchup = 2;
+		Complete = 3;
+		Error = 4;
+	}
+
+	Type type = 1;
+	MSG_Fact fact = 2;
+	MSG_UUID id = 3;
+	string error = 4;
+}
+
+
+
+message MSG_SubscriptionRequest {
+	bool continous = 1;
+	int64 maxLatency = 2;
+	MSG_UUID since = 3;
+	bool idOnly=4;
+	repeated MSG_FactSpec specs = 5;
+}
+
+message MSG_FactSpec {
+	string ns = 1;
+	string type = 2;
+	MSG_UUID aggId = 3;
+	string jsFilter = 4;
+}
+
+message MSG_Fact {
+	bool present = 1;
+	string header = 2;
+	string payload = 3;
+}
+message MSG_Facts {
+	repeated MSG_Fact fact = 1;
+}
+
+
+message MSG_Empty {
+}
+
+service RemoteFactStore {
+	rpc subscribeFact (MSG_SubscriptionRequest) returns (stream MSG_Notification) {
+	}
+	rpc subscribeId (MSG_SubscriptionRequest) returns (stream MSG_Notification) {
+	}
+	rpc fetchById (MSG_UUID) returns (MSG_Fact) {
+	}
+	rpc publish (MSG_Facts) returns (MSG_Empty) {
+	}
+	rpc publishWithMark (MSG_Facts) returns (MSG_UUID) {
+	}
+
+}
