@@ -1,17 +1,17 @@
 package org.factcast.store.pgsql.internal;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.store.subscription.FactSpec;
-import org.factcast.core.store.subscription.SubscriptionRequest;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
 class PGQuerySQLUtil { // TODO work in progress
 
-	static PreparedStatementSetter createStatementSetter(SubscriptionRequest req, AtomicLong ser) {
+	static PreparedStatementSetter createStatementSetter(List<FactSpec> specs, AtomicLong ser) {
 
 		return p -> {
 			// be conservative, less ram and fetching from db is less of a
@@ -23,7 +23,7 @@ class PGQuerySQLUtil { // TODO work in progress
 
 			// TODO vulnerable of json injection attack
 			int count = 0;
-			for (FactSpec spec : req.specs()) {
+			for (FactSpec spec : specs) {
 
 				p.setString(++count, "{\"ns\": \"" + spec.ns() + "\" }");
 
@@ -47,11 +47,11 @@ class PGQuerySQLUtil { // TODO work in progress
 		};
 	}
 
-	static String createWhereClause(SubscriptionRequest req) {
+	static String createWhereClause(List<FactSpec> specs) {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("( (1=0) ");
-		req.specs().forEach(spec -> {
+		specs.forEach(spec -> {
 			sb.append("OR ( ");
 
 			sb.append(PGConstants.COLUMN_HEADER + " @> ? ");

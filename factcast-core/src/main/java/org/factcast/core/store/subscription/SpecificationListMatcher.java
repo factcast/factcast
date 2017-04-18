@@ -6,9 +6,9 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 
-public class SubscriptionRequestMatcher implements Predicate<Fact> {
+public class SpecificationListMatcher implements Predicate<Fact> {
 
-	private final List<? extends FactSpecMatcher> matchers;
+	private final List<FactSpecMatcher> matchers;
 
 	@Override
 	public boolean test(Fact t) {
@@ -17,7 +17,7 @@ public class SubscriptionRequestMatcher implements Predicate<Fact> {
 		return matchers.stream().anyMatch(m -> m.test(t));
 	}
 
-	public SubscriptionRequestMatcher(SubscriptionRequest req) {
-		matchers = req.specs().stream().map(s -> new FactSpecMatcher(s)).collect(Collectors.toList());
+	public SpecificationListMatcher(List<FactSpec> specs) {
+		matchers = specs.stream().map(s -> new FactSpecMatcher(s)).collect(Collectors.toList());
 	}
 }

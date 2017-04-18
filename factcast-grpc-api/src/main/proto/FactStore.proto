@@ -10,7 +10,16 @@ message MSG_UUID {
 	int64 lsb = 2;
 }
 
+// since the powers that be have removed optional/required from protocol version3, there is no way to distinguish an unset string from an empty string.
+// for that reason, we need this wrpper type and ugly code to access it.
+// see https://github.com/grpc/grpc-java/issues/1973
 
+message OptionalString{
+	 string value=1;
+}
+message OptionalInt64{
+	 int64 value=1;
+}
 message MSG_Notification{
 	enum Type {
 		Fact = 0;
@@ -23,24 +32,24 @@ message MSG_Notification{
 	Type type = 1;
 	MSG_Fact fact = 2;
 	MSG_UUID id = 3;
-	string error = 4;
+	OptionalString error = 4;
 }
 
 
 
 message MSG_SubscriptionRequest {
 	bool continous = 1;
-	int64 maxLatency = 2;
+	OptionalInt64 maxLatency = 2;
 	MSG_UUID since = 3;
 	bool idOnly=4;
 	repeated MSG_FactSpec specs = 5;
 }
 
 message MSG_FactSpec {
-	string ns = 1;
-	string type = 2;
+	OptionalString ns = 1;
+	OptionalString type = 2;
 	MSG_UUID aggId = 3;
-	string jsFilter = 4;
+	OptionalString jsFilter = 4;
 }
 
 message MSG_Fact {

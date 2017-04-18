@@ -1,20 +1,23 @@
 package org.factcast.store.pgsql.internal;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
 import org.factcast.core.Fact;
+import org.factcast.core.store.subscription.FactSpec;
 import org.factcast.core.store.subscription.FactStoreObserver;
+import org.factcast.core.store.subscription.SpecificationListMatcher;
 import org.factcast.core.store.subscription.Subscription;
 import org.factcast.core.store.subscription.SubscriptionRequest;
-import org.factcast.core.store.subscription.SubscriptionRequestMatcher;
 import org.factcast.store.pgsql.internal.PGListener.FactInsertionEvent;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
+import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
@@ -42,8 +45,11 @@ class PGQuery {
 
 		log.trace("catching up for " + req);
 
+		List<FactSpec> specs = Lists.newArrayList(req.specs());
+		specs.add(0, FactSpec.forMark());
+
 		if (hasAnyScriptFilters(req)) {
-			postQueryMatcher = new SubscriptionRequestMatcher(req);
+			postQueryMatcher = new SpecificationListMatcher(specs);
 		} else {
 			log.trace("post query filtering has been disabled");
 		}
@@ -53,7 +59,7 @@ class PGQuery {
 
 		log.trace("catching up from {}", staringSerial);
 
-		String sql = createSQL(req);
+		String sql = createSQL(specs);
 		log.trace("sql={}", sql);
 
 		RowCallbackHandler rsHandler = rs -> {
@@ -73,7 +79,7 @@ class PGQuery {
 			}
 		};
 
-		PreparedStatementSetter setter = PGQuerySQLUtil.createStatementSetter(req, ser);
+		PreparedStatementSetter setter = PGQuerySQLUtil.createStatementSetter(specs, ser);
 		query = () -> tpl.query(sql, setter, rsHandler);
 
 		return catchupAndFollow(req, observer);
@@ -83,9 +89,9 @@ class PGQuery {
 		return req.specs().stream().anyMatch(s -> s.jsFilterScript() != null);
 	}
 
-	private String createSQL(SubscriptionRequest req) {
+	private String createSQL(List<FactSpec> specs) {
 		return "SELECT " + PGConstants.PROJECTION_FACT + " FROM " + PGConstants.TABLE_FACT + " WHERE "
-				+ PGQuerySQLUtil.createWhereClause(req) + " ORDER BY " + PGConstants.COLUMN_SER + " ASC";
+				+ PGQuerySQLUtil.createWhereClause(specs) + " ORDER BY " + PGConstants.COLUMN_SER + " ASC";
 	}
 
 	private Subscription catchupAndFollow(SubscriptionRequest req, FactStoreObserver c) {

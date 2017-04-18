@@ -27,7 +27,7 @@ public class SubscriptionRequest {
 	long maxLatencyInMillis = 100;
 	boolean continous;
 	UUID startingAfter;
-	List<FactSpec> specs = new LinkedList<>(Arrays.asList(FactSpec.forMark()));
+	List<FactSpec> specs = new LinkedList<>();
 
 	@RequiredArgsConstructor
 	public static class Builder implements SpecBuilder {
