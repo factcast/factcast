@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import org.factcast.core.DefaultFactFactory;
 import org.factcast.core.Fact;
 import org.factcast.core.store.subscription.FactSpec;
-import org.factcast.core.store.subscription.StoreSubscriptionRequest;
+import org.factcast.core.store.subscription.SubscriptionRequestTO;
 import org.factcast.core.store.subscription.SubscriptionRequest;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact.Builder;
@@ -96,7 +96,7 @@ public class ProtoConverter {
 
 	public SubscriptionRequest fromProto(@NonNull MSG_SubscriptionRequest request) {
 
-		StoreSubscriptionRequest r = new StoreSubscriptionRequest();
+		SubscriptionRequestTO r = new SubscriptionRequestTO();
 		r.specs(request.getSpecsList().stream().map(this::fromProto).collect(Collectors.toList()));
 		r.continous(request.getContinous());
 		LongConverter.fromProto(request, "maxLatency").ifPresent(r::maxLatencyInMillis);

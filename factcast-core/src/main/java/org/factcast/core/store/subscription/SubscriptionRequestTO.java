@@ -12,7 +12,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Data
 @Accessors(fluent = true)
-public class StoreSubscriptionRequest implements SubscriptionRequest {
+public class SubscriptionRequestTO implements SubscriptionRequest {
 
 	long maxLatencyInMillis = 100;
 	boolean continous;
