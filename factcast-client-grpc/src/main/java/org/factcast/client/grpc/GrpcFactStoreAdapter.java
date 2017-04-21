@@ -14,8 +14,8 @@ import org.factcast.core.store.subscription.Subscription;
 import org.factcast.core.store.subscription.SubscriptionRequest;
 import org.factcast.server.grpc.api.FactObserver;
 import org.factcast.server.grpc.api.IdObserver;
-import org.factcast.server.grpc.api.ProtoConverter;
 import org.factcast.server.grpc.api.RemoteFactCast;
+import org.factcast.server.grpc.api.conv.ProtoConverter;
 import org.factcast.server.grpc.gen.FactStoreProto;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Facts;
@@ -50,8 +50,8 @@ public class GrpcFactStoreAdapter implements RemoteFactCast {
 	@Override
 	public CompletableFuture<Subscription> subscribeFact(SubscriptionRequest req, FactObserver observer) {
 		// TODO centrally manage
-		RemoteFactStoreStub fs = RemoteFactStoreGrpc.newStub(
-				ManagedChannelBuilder.forAddress("localhost", 6565).usePlaintext(true).build());
+		RemoteFactStoreStub fs = RemoteFactStoreGrpc
+				.newStub(ManagedChannelBuilder.forAddress("localhost", 6565).usePlaintext(true).build());
 
 		CountDownLatch l = new CountDownLatch(1);
 

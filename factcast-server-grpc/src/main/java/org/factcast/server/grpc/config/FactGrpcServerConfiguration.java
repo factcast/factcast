@@ -1,7 +1,7 @@
 package org.factcast.server.grpc.config;
 
 import org.factcast.core.DefaultFactFactory;
-import org.factcast.server.grpc.api.ProtoConverter;
+import org.factcast.server.grpc.api.conv.ProtoConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

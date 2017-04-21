@@ -36,7 +36,7 @@ public class SmokeMT {
 
 		adapter.subscribeId(SubscriptionRequest.catchup(FactSpec.ns("default")).sinceInception(), f -> {
 			System.err.println("csubId " + f);
-			
+
 		});
 
 		adapter.subscribeFact(SubscriptionRequest.catchup(FactSpec.ns("default")).sinceInception(), f -> {

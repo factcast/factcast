@@ -17,7 +17,6 @@ import com.google.common.collect.Lists;
 
 import lombok.NonNull;
 
-//TOD unify with FactStore?
 public interface RemoteFactCast {
 	CompletableFuture<Subscription> subscribeFact(@NonNull SubscriptionRequest req, @NonNull FactObserver observer);
 
