@@ -1,4 +1,4 @@
-package org.factcast.core.store.subscription;
+package org.factcast.core.subscription;
 
 /**
  * A handle that is returned from Subscribe Methods in order to be able to

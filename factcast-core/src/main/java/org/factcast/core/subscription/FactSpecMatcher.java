@@ -1,4 +1,4 @@
-package org.factcast.core.store.subscription;
+package org.factcast.core.subscription;
 
 import java.util.Collection;
 import java.util.List;

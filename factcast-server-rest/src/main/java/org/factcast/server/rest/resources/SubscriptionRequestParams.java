@@ -5,8 +5,8 @@ import java.util.UUID;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.QueryParam;
 
-import org.factcast.core.store.subscription.SubscriptionRequestTO;
-import org.factcast.core.store.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 
 import lombok.Data;
 

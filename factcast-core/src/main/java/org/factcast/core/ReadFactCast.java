@@ -4,8 +4,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.factcast.core.store.subscription.Subscription;
-import org.factcast.core.store.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
 
 import lombok.NonNull;
 

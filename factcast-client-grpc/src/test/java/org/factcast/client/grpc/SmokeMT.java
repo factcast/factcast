@@ -7,8 +7,8 @@ import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactObserver;
 import org.factcast.core.IdObserver;
-import org.factcast.core.store.subscription.FactSpec;
-import org.factcast.core.store.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.FactSpec;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -25,6 +25,7 @@ import ch.qos.logback.classic.Logger;
 @EnableAutoConfiguration
 @Configuration
 public class SmokeMT {
+
 	public static void main(String[] args) {
 		Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 		root.setLevel(Level.INFO);

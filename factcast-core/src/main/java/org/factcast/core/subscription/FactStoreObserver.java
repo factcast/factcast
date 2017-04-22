@@ -1,4 +1,4 @@
-package org.factcast.core.store.subscription;
+package org.factcast.core.subscription;
 
 import org.factcast.core.Fact;
 import org.slf4j.LoggerFactory;

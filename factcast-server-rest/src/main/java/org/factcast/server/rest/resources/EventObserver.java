@@ -8,7 +8,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 
 import org.factcast.core.Fact;
-import org.factcast.core.store.subscription.FactStoreObserver;
+import org.factcast.core.subscription.FactStoreObserver;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.OutboundEvent;
 

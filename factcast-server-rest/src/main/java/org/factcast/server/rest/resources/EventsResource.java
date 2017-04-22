@@ -17,8 +17,8 @@ import javax.ws.rs.core.MediaType;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.store.subscription.FactStoreObserver;
-import org.factcast.core.store.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.FactStoreObserver;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.server.rest.resources.cache.Cacheable;
 import org.factcast.server.rest.resources.cache.NoCache;
 import org.glassfish.jersey.media.sse.EventOutput;

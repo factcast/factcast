@@ -21,7 +21,7 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor
 @Getter
 @Setter
-public class SmokeTestFact implements Fact {
+class SmokeTestFact implements Fact {
 	@JsonProperty
 	UUID id = UUID.randomUUID();
 	@JsonProperty

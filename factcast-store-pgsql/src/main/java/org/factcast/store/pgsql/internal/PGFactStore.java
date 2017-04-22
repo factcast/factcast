@@ -9,9 +9,9 @@ import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.store.subscription.FactStoreObserver;
-import org.factcast.core.store.subscription.Subscription;
-import org.factcast.core.store.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.FactStoreObserver;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.factcast.core.store.subscription.FactSpec;
+import org.factcast.core.subscription.FactSpec;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
 import lombok.NonNull;

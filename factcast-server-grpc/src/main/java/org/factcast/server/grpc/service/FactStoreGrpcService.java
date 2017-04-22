@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.store.subscription.FactStoreObserver;
-import org.factcast.core.store.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.FactStoreObserver;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.server.grpc.api.conv.ProtoConverter;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Empty;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;

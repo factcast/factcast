@@ -7,11 +7,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
 import org.factcast.core.Fact;
-import org.factcast.core.store.subscription.FactSpec;
-import org.factcast.core.store.subscription.FactSpecMatcher;
-import org.factcast.core.store.subscription.FactStoreObserver;
-import org.factcast.core.store.subscription.Subscription;
-import org.factcast.core.store.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.FactSpec;
+import org.factcast.core.subscription.FactSpecMatcher;
+import org.factcast.core.subscription.FactStoreObserver;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.store.pgsql.internal.PGListener.FactInsertionEvent;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;

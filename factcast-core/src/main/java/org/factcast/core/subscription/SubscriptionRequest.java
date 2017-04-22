@@ -1,10 +1,10 @@
-package org.factcast.core.store.subscription;
+package org.factcast.core.subscription;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.factcast.core.store.subscription.FluentSubscriptionRequest.SpecBuilder;
+import org.factcast.core.subscription.FluentSubscriptionRequest.SpecBuilder;
 
 import com.google.common.base.Preconditions;
 

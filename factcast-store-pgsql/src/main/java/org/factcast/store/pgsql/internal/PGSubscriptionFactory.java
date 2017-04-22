@@ -1,8 +1,8 @@
 package org.factcast.store.pgsql.internal;
 
-import org.factcast.core.store.subscription.FactStoreObserver;
-import org.factcast.core.store.subscription.Subscription;
-import org.factcast.core.store.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.FactStoreObserver;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.google.common.eventbus.EventBus;

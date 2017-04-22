@@ -12,8 +12,8 @@ import org.factcast.core.FactCast;
 import org.factcast.core.FactObserver;
 import org.factcast.core.GenericObserver;
 import org.factcast.core.IdObserver;
-import org.factcast.core.store.subscription.Subscription;
-import org.factcast.core.store.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.server.grpc.api.conv.ProtoConverter;
 import org.factcast.server.grpc.gen.FactStoreProto;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
@@ -151,17 +151,17 @@ public class GrpcFactCast implements FactCast {
 	}
 
 	@Override
-	public CompletableFuture<Subscription> subscribe(SubscriptionRequest req, IdObserver observer) {
+	public CompletableFuture<Subscription> subscribe(SubscriptionRequest req, IdObserver observer) {// TODO
 		if (!req.idOnly()) {
-			throw new IllegalArgumentException();// TODO
+			throw new IllegalArgumentException("Requested Facts but provided an IdObserver");
 		}
 		return subscribeInternal(req, new ObserverBridge<UUID>(observer, UUID.class));
 	}
 
 	@Override
-	public CompletableFuture<Subscription> subscribe(SubscriptionRequest req, FactObserver observer) {
+	public CompletableFuture<Subscription> subscribe(SubscriptionRequest req, FactObserver observer) {// TODO
 		if (req.idOnly()) {
-			throw new IllegalArgumentException();// TODO
+			throw new IllegalArgumentException("Requested Ids but provided an FactObserver");
 		}
 		return subscribeInternal(req, new ObserverBridge<Fact>(observer, Fact.class));
 	}

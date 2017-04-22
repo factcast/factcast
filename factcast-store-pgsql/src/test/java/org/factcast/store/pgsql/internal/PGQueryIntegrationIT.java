@@ -9,10 +9,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.factcast.core.Fact;
-import org.factcast.core.store.subscription.FactSpec;
-import org.factcast.core.store.subscription.FactStoreObserver;
-import org.factcast.core.store.subscription.Subscription;
-import org.factcast.core.store.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.FactSpec;
+import org.factcast.core.subscription.FactStoreObserver;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
