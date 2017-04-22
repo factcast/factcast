@@ -13,24 +13,11 @@
 		<grpc.version>1.2.0</grpc.version><!-- CURRENT_GRPC_VERSION -->
 	</properties>
 
-	<repositories>
-		<repository>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-			<id>jfrogSnapshots</id>
-			<name>jfrogSnapshots</name>
-			<url>http://oss.jfrog.org/oss-snapshot-local</url>
-		</repository>
-	</repositories>
 	<dependencies>
 		<dependency>
-			<groupId>org.lognet</groupId>
-			<artifactId>grpc-spring-boot-starter</artifactId>
-			<version>2.0.2-SNAPSHOT</version>
+			<groupId>net.devh</groupId>
+			<artifactId>grpc-server-spring-boot-starter</artifactId>
+			<version>1.0.1.RELEASE</version>
 		</dependency>
 		<dependency>
 			<groupId>org.factcast</groupId>

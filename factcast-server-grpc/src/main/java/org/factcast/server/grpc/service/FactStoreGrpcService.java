@@ -10,6 +10,7 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.server.grpc.api.conv.ProtoConverter;
+import org.factcast.server.grpc.gen.FactStoreProto;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Empty;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Facts;
@@ -17,13 +18,12 @@ import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_UUID;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
-import org.lognet.springboot.grpc.GRpcService;
-import org.lognet.springboot.grpc.autoconfigure.GRpcServerProperties;
 
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.devh.springboot.autoconfigure.grpc.server.GrpcService;
 
 /**
  * Service that provides access to an injected FactStore via GRPC.
@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RequiredArgsConstructor
-@GRpcService()
+@GrpcService(FactStoreProto.class)
 @SuppressWarnings("all")
 public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
