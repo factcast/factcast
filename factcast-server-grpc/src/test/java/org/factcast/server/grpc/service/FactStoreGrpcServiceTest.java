@@ -121,4 +121,6 @@ public class FactStoreGrpcServiceTest {
 		verify(obs).onNext(eq(protoConverter.toProto(markId)));
 
 	}
+
+	// TODO subscribe test
 }
