@@ -8,9 +8,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
+import org.factcast.core.FactCast;
+import org.factcast.core.FactObserver;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.subscription.FactSpec;
-import org.factcast.core.store.subscription.FactStoreObserver;
 import org.factcast.core.store.subscription.SubscriptionRequest;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,11 +21,12 @@ import org.springframework.test.annotation.DirtiesContext;
 public abstract class AbstractFactStoreTest {
 
 	private static final FactSpec ANY = FactSpec.ns("default");
-	FactStore uut;
+
+	FactCast uut;
 
 	@Before
 	public void setUp() throws Exception {
-		uut = createStoreToTest();
+		uut = FactCast.from(createStoreToTest());
 	}
 
 	protected abstract FactStore createStoreToTest();
@@ -32,7 +34,7 @@ public abstract class AbstractFactStoreTest {
 	@Test
 	@DirtiesContext
 	public void testEmptyStore() throws Exception {
-		FactStoreObserver ido = mock(FactStoreObserver.class);
+		FactObserver ido = mock(FactObserver.class);
 		uut.subscribe(SubscriptionRequest.catchup(ANY).asFacts().sinceInception(), ido).get();
 		Thread.sleep(200);// TODO
 		verify(ido).onCatchup();
@@ -44,7 +46,7 @@ public abstract class AbstractFactStoreTest {
 	@Test
 	@DirtiesContext
 	public void testEmptyStoreFollowNonMatching() throws Exception {
-		FactStoreObserver ido = mock(FactStoreObserver.class);
+		FactObserver ido = mock(FactObserver.class);
 		uut.subscribe(SubscriptionRequest.follow(ANY).asFacts().sinceInception(), ido).get();
 		Thread.sleep(200);// TODO
 		verify(ido).onCatchup();
@@ -61,7 +63,7 @@ public abstract class AbstractFactStoreTest {
 	@Test
 	@DirtiesContext
 	public void testEmptyStoreFollowMatching() throws Exception {
-		FactStoreObserver ido = mock(FactStoreObserver.class);
+		FactObserver ido = mock(FactObserver.class);
 		uut.subscribe(SubscriptionRequest.follow(ANY).asFacts().sinceInception(), ido).get();
 		Thread.sleep(200);// TODO
 		verify(ido).onCatchup();
@@ -78,7 +80,7 @@ public abstract class AbstractFactStoreTest {
 	@Test
 	@DirtiesContext
 	public void testEmptyStoreCatchupMatching() throws Exception {
-		FactStoreObserver ido = mock(FactStoreObserver.class);
+		FactObserver ido = mock(FactObserver.class);
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
 		uut.subscribe(SubscriptionRequest.catchup(ANY).asFacts().sinceInception(), ido).get();
 
@@ -91,7 +93,7 @@ public abstract class AbstractFactStoreTest {
 	@Test
 	@DirtiesContext
 	public void testEmptyStoreFollowMatchingDelayed() throws Exception {
-		FactStoreObserver ido = mock(FactStoreObserver.class);
+		FactObserver ido = mock(FactObserver.class);
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
 		uut.subscribe(SubscriptionRequest.follow(ANY).asFacts().sinceInception(), ido).get();
 		verify(ido).onCatchup();
@@ -107,7 +109,7 @@ public abstract class AbstractFactStoreTest {
 	@Test
 	@DirtiesContext
 	public void testEmptyStoreFollowNonmMatchingDelayed() throws Exception {
-		FactStoreObserver ido = mock(FactStoreObserver.class);
+		FactObserver ido = mock(FactObserver.class);
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"t1\"}", "{}"));
 		uut.subscribe(SubscriptionRequest.follow(ANY).asFacts().sinceInception(), ido).get();
 		verify(ido).onCatchup();
@@ -138,7 +140,7 @@ public abstract class AbstractFactStoreTest {
 	@Test
 	@DirtiesContext
 	public void testAnySubscriptionsMatchesMark() throws Exception {
-		FactStoreObserver ido = mock(FactStoreObserver.class);
+		FactObserver ido = mock(FactObserver.class);
 		UUID mark = uut.publishWithMark(
 				Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"no_idea\",\"type\":\"noone_knows\"}", "{}"));
 
@@ -157,7 +159,7 @@ public abstract class AbstractFactStoreTest {
 	@Test
 	@DirtiesContext
 	public void testRequiredMetaAttribute() throws Exception {
-		FactStoreObserver ido = mock(FactStoreObserver.class);
+		FactObserver ido = mock(FactObserver.class);
 		uut.publish(
 				Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"noone_knows\"}", "{}"));
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
@@ -174,7 +176,7 @@ public abstract class AbstractFactStoreTest {
 	@Test
 	@DirtiesContext
 	public void testScriptedWithPayloadFiltering() throws Exception {
-		FactStoreObserver ido = mock(FactStoreObserver.class);
+		FactObserver ido = mock(FactObserver.class);
 		uut.publish(Fact.of(
 				"{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}",
 				"{}"));
@@ -192,7 +194,7 @@ public abstract class AbstractFactStoreTest {
 	@Test
 	@DirtiesContext
 	public void testScriptedWithHeaderFiltering() throws Exception {
-		FactStoreObserver ido = mock(FactStoreObserver.class);
+		FactObserver ido = mock(FactObserver.class);
 		uut.publish(Fact.of(
 				"{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}",
 				"{}"));
@@ -210,7 +212,7 @@ public abstract class AbstractFactStoreTest {
 	@Test
 	@DirtiesContext
 	public void testScriptedFilteringMatchAll() throws Exception {
-		FactStoreObserver ido = mock(FactStoreObserver.class);
+		FactObserver ido = mock(FactObserver.class);
 		uut.publish(Fact.of(
 				"{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}",
 				"{}"));
@@ -228,7 +230,7 @@ public abstract class AbstractFactStoreTest {
 	@Test
 	@DirtiesContext
 	public void testScriptedFilteringMatchNone() throws Exception {
-		FactStoreObserver ido = mock(FactStoreObserver.class);
+		FactObserver ido = mock(FactObserver.class);
 		uut.publish(Fact.of(
 				"{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}",
 				"{}"));

@@ -53,6 +53,4 @@ service RemoteFactStore {
 	}
 	rpc publish (MSG_Facts) returns (MSG_Empty) {
 	}
-	rpc publishWithMark (MSG_Facts) returns (MSG_UUID) {
-	}
 }

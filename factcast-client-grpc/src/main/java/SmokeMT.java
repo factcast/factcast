@@ -1,9 +1,9 @@
 import org.factcast.client.grpc.GrpcFactStoreAdapter;
+import org.factcast.core.FactObserver;
+import org.factcast.core.IdObserver;
 import org.factcast.core.store.subscription.FactSpec;
 import org.factcast.core.store.subscription.SubscriptionRequest;
-import org.factcast.server.grpc.api.FactObserver;
-import org.factcast.server.grpc.api.IdObserver;
-import org.factcast.server.grpc.api.RemoteFactCast;
+import org.factcast.server.grpc.api.RemoteFactStore;
 import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.Level;
@@ -14,7 +14,7 @@ public class SmokeMT {
 		Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 		root.setLevel(Level.INFO);
 
-		RemoteFactCast adapter = new GrpcFactStoreAdapter();
+		RemoteFactStore adapter = new GrpcFactStoreAdapter();
 		// Optional<Fact> fetchById = adapter.fetchById(UUID.randomUUID());
 		// System.out.println(fetchById.isPresent());
 		//

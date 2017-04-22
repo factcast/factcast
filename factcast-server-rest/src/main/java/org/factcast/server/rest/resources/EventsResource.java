@@ -16,7 +16,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 
 import org.factcast.core.Fact;
-import org.factcast.core.store.ReadFactStore;
+import org.factcast.core.store.FactStore;
 import org.factcast.core.store.subscription.FactStoreObserver;
 import org.factcast.core.store.subscription.SubscriptionRequest;
 import org.factcast.server.rest.resources.cache.Cacheable;
@@ -35,7 +35,7 @@ import com.mercateo.common.rest.schemagen.types.ObjectWithSchema;
 public class EventsResource implements JerseyResource {
 
 	@Inject
-	private ReadFactStore readFactStore;
+	private FactStore readFactStore;
 
 	@Inject
 	private LinkMetaFactory linkMetaFactory;

@@ -72,22 +72,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 		}
 	}
 
-	@Override
-	public void publishWithMark(MSG_Facts request, StreamObserver<MSG_UUID> responseObserver) {
-		List<Fact> facts = request.getFactList().stream().map(conv::fromProto).collect(Collectors.toList());
-		log.trace("publishWithMark {}", facts);
-		try {
-			log.trace("store publishWithMark {}", facts);
-			UUID markId = store.publishWithMark(facts);
-			log.trace("store publishWithMark {} done", facts);
-			responseObserver.onNext(conv.toProto(markId));
-			responseObserver.onCompleted();
-		} catch (Throwable e) {
-			log.error("Problem while publishing with mark: ", e);
-			responseObserver.onError(e);
-		}
-	}
-
 	@RequiredArgsConstructor
 	private abstract class ObserverBridge implements FactStoreObserver {
 
@@ -95,21 +79,21 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
 		@Override
 		public void onComplete() {
-			log.trace("onComplete – sending complete notification");
+			log.info("onComplete – sending complete notification");
 			observer.onNext(conv.toCompleteNotification());
 			observer.onCompleted();
 		}
 
 		@Override
 		public void onError(Throwable e) {
-			log.trace("onError– sending Error notification {}", e);
+			log.warn("onError – sending Error notification {}", e);
 			observer.onError(e);
 			observer.onCompleted(); // TODO really?
 		}
 
 		@Override
 		public void onCatchup() {
-			log.trace("onCatchup – sending catchup notification");
+			log.info("onCatchup – sending catchup notification");
 			observer.onNext(conv.toCatchupNotification());
 		}
 
@@ -118,11 +102,12 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 	@Override
 	public void subscribe(MSG_SubscriptionRequest request, StreamObserver<MSG_Notification> responseObserver) {
 		SubscriptionRequest req = conv.fromProto(request);
+		final boolean idOnly = req.idOnly();
 		store.subscribe(req, new ObserverBridge(responseObserver) {
 
 			@Override
 			public void onNext(Fact f) {
-				responseObserver.onNext(req.idOnly() ? conv.toIdNotification(f) : conv.toNotification(f));
+				responseObserver.onNext(idOnly ? conv.toIdNotification(f) : conv.toNotification(f));
 			}
 		});
 	}

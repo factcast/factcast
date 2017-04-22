@@ -1,4 +1,4 @@
-package org.factcast.server.grpc.api;
+package org.factcast.core;
 
 import java.util.UUID;
 

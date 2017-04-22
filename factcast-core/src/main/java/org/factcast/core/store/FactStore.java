@@ -1,10 +1,14 @@
 package org.factcast.core.store;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.Fact;
-import org.factcast.core.wellknown.MarkFact;
+import org.factcast.core.store.subscription.FactStoreObserver;
+import org.factcast.core.store.subscription.Subscription;
+import org.factcast.core.store.subscription.SubscriptionRequest;
 
 import lombok.NonNull;
 
@@ -14,26 +18,12 @@ import lombok.NonNull;
  * @author usr
  *
  */
-public interface FactStore extends ReadFactStore {
+public interface FactStore {
 
 	void publish(@NonNull List<Fact> factsToPublish);
 
-	/// ---------- defaults
+	CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequest req, @NonNull FactStoreObserver observer);
 
-	default void publish(@NonNull Fact factToPublish) {
-		publish(Helpers.toList(factToPublish));
-	}
-
-	default UUID publishWithMark(@NonNull Fact factToPublish) {
-		MarkFact m = new MarkFact();
-		publish(Helpers.toList(factToPublish, m));
-		return m.id();
-	}
-
-	default UUID publishWithMark(@NonNull Iterable<Fact> factsToPublish) {
-		MarkFact m = new MarkFact();
-		publish(Helpers.toList(factsToPublish, m));
-		return m.id();
-	}
+	Optional<Fact> fetchById(@NonNull UUID id);
 
 }

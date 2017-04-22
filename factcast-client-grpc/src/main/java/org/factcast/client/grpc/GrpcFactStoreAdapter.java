@@ -1,6 +1,5 @@
 package org.factcast.client.grpc;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -8,13 +7,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
+import org.factcast.client.grpc.GrpcFactStoreAdapter.ObserverBridge;
 import org.factcast.core.Fact;
+import org.factcast.core.FactObserver;
+import org.factcast.core.GenericObserver;
+import org.factcast.core.IdObserver;
 import org.factcast.core.store.subscription.Subscription;
 import org.factcast.core.store.subscription.SubscriptionRequest;
-import org.factcast.server.grpc.api.FactObserver;
-import org.factcast.server.grpc.api.GenericObserver;
-import org.factcast.server.grpc.api.IdObserver;
-import org.factcast.server.grpc.api.RemoteFactCast;
+import org.factcast.server.grpc.api.RemoteFactStore;
 import org.factcast.server.grpc.api.conv.ProtoConverter;
 import org.factcast.server.grpc.gen.FactStoreProto;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
@@ -38,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 // TODO cleanup
 @RequiredArgsConstructor
 @Slf4j
-public class GrpcFactStoreAdapter implements RemoteFactCast {
+public class GrpcFactStoreAdapter implements RemoteFactStore {
 
 	// TODO inject
 	final ProtoConverter conv = new ProtoConverter();
@@ -120,12 +120,11 @@ public class GrpcFactStoreAdapter implements RemoteFactCast {
 	}
 
 	@Override
-	public void publish(Collection<Fact> factsToPublish) {
+	public void publish(List<Fact> factsToPublish) {
 		List<MSG_Fact> mf = factsToPublish.stream().map(conv::toProto).collect(Collectors.toList());
 		MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
 		fc.publish(mfs);
 	}
-
 	@RequiredArgsConstructor
 	static class ObserverBridge<T> implements GenericObserver<T> {
 
@@ -138,7 +137,6 @@ public class GrpcFactStoreAdapter implements RemoteFactCast {
 		}
 
 	}
-
 	@Override
 	public CompletableFuture<Subscription> subscribe(SubscriptionRequest req, IdObserver observer) {
 		if (!req.idOnly()) {

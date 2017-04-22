@@ -2,6 +2,7 @@ package org.factcast.store.pgsql.internal;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 import org.factcast.core.store.FactStore;
@@ -28,7 +29,7 @@ public class PGFactIdToSerMapperIT {
 	@Test
 	public void testRetrieve() throws Exception {
 		MarkFact m = new MarkFact();
-		store.publish(m);
+		store.publish(Arrays.asList(m));
 		long retrieve = new PGFactIdToSerMapper(tpl).retrieve(m.id());
 		assertTrue(retrieve > 0);
 	}

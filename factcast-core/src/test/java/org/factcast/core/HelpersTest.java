@@ -1,11 +1,9 @@
-package org.factcast.core.store;
+package org.factcast.core;
 
 import static org.junit.Assert.*;
 
 import java.util.List;
 
-import org.factcast.core.Fact;
-import org.factcast.core.TestFact;
 import org.factcast.core.wellknown.MarkFact;
 import org.junit.Test;
 

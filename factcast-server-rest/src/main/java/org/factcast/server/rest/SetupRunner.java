@@ -1,5 +1,6 @@
 package org.factcast.server.rest;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
@@ -63,7 +64,7 @@ public class SetupRunner implements CommandLineRunner {
 
 	@Override
 	public void run(String... arg0) throws Exception {
-		factStore.publish(one);
+		factStore.publish(Arrays.asList(one));
 
 	}
 
