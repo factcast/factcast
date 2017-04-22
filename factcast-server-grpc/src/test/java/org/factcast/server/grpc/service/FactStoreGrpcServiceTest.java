@@ -33,8 +33,6 @@ public class FactStoreGrpcServiceTest {
 
 	@Captor
 	ArgumentCaptor<List<Fact>> acFactList;
-	@Captor
-	ArgumentCaptor<UUID> acUUID;
 
 	ProtoConverter protoConverter = new ProtoConverter();
 
@@ -95,6 +93,32 @@ public class FactStoreGrpcServiceTest {
 		uut.fetchById(protoConverter.toProto(id), mock(StreamObserver.class));
 
 		verify(backend).fetchById(eq(id));
+	}
+
+	@Test
+	public void testPublishWithMark() throws Exception {
+		uut = new FactStoreGrpcService(backend);
+		UUID markId = UUID.randomUUID();
+		doReturn(markId).when(backend).publishWithMark(acFactList.capture());
+		Builder b = MSG_Facts.newBuilder();
+
+		TestFact f1 = new TestFact();
+		TestFact f2 = new TestFact();
+		MSG_Fact msg1 = protoConverter.toProto(f1);
+		MSG_Fact msg2 = protoConverter.toProto(f2);
+
+		b.addAllFact(Arrays.asList(msg1, msg2));
+		MSG_Facts r = b.build();
+
+		StreamObserver obs = mock(StreamObserver.class);
+		uut.publishWithMark(r, obs);
+		List<Fact> facts = acFactList.getValue();
+		assertFalse(facts.isEmpty());
+		assertEquals(2, facts.size());
+		assertEquals(f1.id(), facts.get(0).id());
+		assertEquals(f2.id(), facts.get(1).id());
+
+		verify(obs).onNext(eq(protoConverter.toProto(markId)));
 
 	}
 }
