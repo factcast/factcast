@@ -4,8 +4,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
-import org.factcast.core.store.subscription.SubscriptionRequestTO;
 import org.factcast.core.store.subscription.SubscriptionRequest;
+import org.factcast.core.store.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FCJson;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact.Builder;

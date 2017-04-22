@@ -1,5 +1,6 @@
 package org.factcast.core.store;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
@@ -15,7 +16,7 @@ import lombok.NonNull;
  */
 public interface FactStore extends ReadFactStore {
 
-	void publish(@NonNull Iterable<Fact> factsToPublish);
+	void publish(@NonNull List<Fact> factsToPublish);
 
 	/// ---------- defaults
 

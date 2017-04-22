@@ -2,6 +2,7 @@ package org.factcast.store.inmem;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
@@ -88,7 +89,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
 	}
 
 	@Override
-	public synchronized void publish(@NonNull Iterable<Fact> factsToPublish) {
+	public synchronized void publish(@NonNull List<Fact> factsToPublish) {
 		factsToPublish.forEach(f -> {
 			int ser = highwaterMark.incrementAndGet();
 			store.put(ser, f);
