@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
  *
  */
 @RequiredArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PROTECTED, onConstructor = @__(@VisibleForTesting))
+@AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__(@VisibleForTesting))
 class CondensedExecutor {
 
 	private final long maxDelayInMillis;

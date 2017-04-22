@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 
 import io.grpc.Channel;
 import io.grpc.stub.StreamObserver;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
@@ -136,8 +137,8 @@ public class GrpcFactCast implements FactCast {
 		blockingStub.publish(mfs);
 	}
 
-	@RequiredArgsConstructor
-	static class ObserverBridge<T> implements GenericObserver<T> {
+	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+	private static class ObserverBridge<T> implements GenericObserver<T> {
 
 		private final GenericObserver<T> delegate;
 		private final Class<T> type;

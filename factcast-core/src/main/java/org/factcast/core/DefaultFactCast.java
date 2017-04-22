@@ -15,6 +15,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 
+import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -22,16 +23,18 @@ import lombok.RequiredArgsConstructor;
 class DefaultFactCast implements FactCast {
 
 	@NonNull
-	final FactStore store;
+	private final FactStore store;
 
 	@Override
-	public CompletableFuture<Subscription> subscribeToFacts(@NonNull SubscriptionRequest req, @NonNull FactObserver observer) {
+	public CompletableFuture<Subscription> subscribeToFacts(@NonNull SubscriptionRequest req,
+			@NonNull FactObserver observer) {
 		return store.subscribe(SubscriptionRequestTO.forFacts(req),
 				new ObserverBridge<Fact>(observer, Function.identity()));
 	}
 
 	@Override
-	public CompletableFuture<Subscription> subscribeToIds(@NonNull SubscriptionRequest req, @NonNull IdObserver observer) {
+	public CompletableFuture<Subscription> subscribeToIds(@NonNull SubscriptionRequest req,
+			@NonNull IdObserver observer) {
 		return store.subscribe(SubscriptionRequestTO.forIds(req), new ObserverBridge<UUID>(observer, f -> f.id()));
 	}
 
@@ -45,8 +48,8 @@ class DefaultFactCast implements FactCast {
 		store.publish(factsToPublish);
 	}
 
-	@RequiredArgsConstructor
-	static class ObserverBridge<T> implements FactStoreObserver {
+	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+	private static class ObserverBridge<T> implements FactStoreObserver {
 
 		private final GenericObserver<T> delegate;
 		private final Function<Fact, T> project;

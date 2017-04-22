@@ -10,7 +10,6 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Provides {@link PreparedStatementSetter} and the corresponding SQL from a
@@ -19,7 +18,6 @@ import lombok.RequiredArgsConstructor;
  * @author usr
  *
  */
-@RequiredArgsConstructor
 class PGQueryBuilder {
 
 	// TODO is that possibly interesting to configure?

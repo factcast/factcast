@@ -2,8 +2,6 @@ package org.factcast.core.subscription;
 
 import static org.junit.Assert.*;
 
-import org.factcast.core.subscription.FactSpec;
-import org.factcast.core.subscription.FactSpecMatcher;
 import org.factcast.core.wellknown.MarkFact;
 import org.junit.Test;
 

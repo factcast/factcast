@@ -10,11 +10,11 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.eventbus.EventBus;
 import com.impossibl.postgres.api.jdbc.PGConnection;
 
+import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
@@ -60,8 +60,7 @@ class PGListener implements InitializingBean, DisposableBean {
 		}
 	}
 
-	@VisibleForTesting
-	synchronized void listen() {
+	private synchronized void listen() {
 
 		try {
 			this.connection = connSup.get();
@@ -81,6 +80,7 @@ class PGListener implements InitializingBean, DisposableBean {
 	}
 
 	@Value
+	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 	public static class FactInsertionEvent {
 		String name;
 	}

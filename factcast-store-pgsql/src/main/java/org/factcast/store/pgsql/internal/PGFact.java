@@ -10,6 +10,7 @@ import org.factcast.core.util.FCJson;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ import lombok.experimental.Accessors;
  *
  */
 @Accessors(fluent = true)
-@RequiredArgsConstructor
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @ToString(of = { "id", "ns", "type", "aggId", "meta" })
 class PGFact implements Fact {
 
@@ -49,7 +50,7 @@ class PGFact implements Fact {
 	private final String jsonPayload;
 
 	@JsonProperty
-	Map<String, String> meta = null;
+	private Map<String, String> meta = null;
 
 	@Override
 	public String meta(String key) {

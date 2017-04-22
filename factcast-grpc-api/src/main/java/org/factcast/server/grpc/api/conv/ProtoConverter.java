@@ -7,14 +7,9 @@ import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FCJson;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact.Builder;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification.Type;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_UUID;
-
-import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.GeneratedMessageV3;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +18,6 @@ import lombok.SneakyThrows;
 //TODO add symetry tests
 @RequiredArgsConstructor
 public class ProtoConverter {
-
-	public MSG_Notification toIdNotification(UUID t) {
-		org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification.Builder b = MSG_Notification.newBuilder()
-				.setType(MSG_Notification.Type.Id);
-		return b.setId(toProto(t)).build();
-	}
 
 	public MSG_Notification toCatchupNotification() {
 		return MSG_Notification.newBuilder().setType(MSG_Notification.Type.Catchup).build();
@@ -43,7 +32,7 @@ public class ProtoConverter {
 		org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification.Builder b = MSG_Notification.newBuilder()
 				.setType(MSG_Notification.Type.Fact);
 		b.setFact(toProto(t));
-		b.setType(Type.Fact);
+		b.setType(MSG_Notification.Type.Fact);
 		return b.build();
 
 	}
@@ -52,7 +41,7 @@ public class ProtoConverter {
 		org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification.Builder b = MSG_Notification.newBuilder()
 				.setType(MSG_Notification.Type.Id);
 		b.setId(toProto(t.id()));
-		b.setType(Type.Id);
+		b.setType(MSG_Notification.Type.Id);
 		return b.build();
 	}
 
@@ -82,7 +71,7 @@ public class ProtoConverter {
 	}
 
 	public MSG_Fact toProto(org.factcast.core.Fact factMark) {
-		Builder proto = MSG_Fact.newBuilder();
+		MSG_Fact.Builder proto = MSG_Fact.newBuilder();
 		proto.setPresent(true);
 		proto.setHeader(factMark.jsonHeader());
 		proto.setPayload(factMark.jsonPayload());
@@ -90,7 +79,7 @@ public class ProtoConverter {
 	}
 
 	public MSG_Fact toProto(Optional<Fact> optionalFact) {
-		Builder proto = MSG_Fact.newBuilder();
+		MSG_Fact.Builder proto = MSG_Fact.newBuilder();
 		boolean present = optionalFact.isPresent();
 		proto.setPresent(present);
 		if (present) {
@@ -101,22 +90,6 @@ public class ProtoConverter {
 		return proto.build();
 	}
 
-	public UUID fromIdNotification(@NonNull MSG_Notification n) {
-		if (n.getType() != MSG_Notification.Type.Id) {
-			throw new IllegalArgumentException("Wrong notification type");
-		}
-
-		return fromProto(n.getId());
-	}
-
-	public static FieldDescriptor getRequiredFieldDescriptor(GeneratedMessageV3 msg, String fieldName) {
-
-		FieldDescriptor fd = msg.getDescriptorForType().findFieldByName(fieldName);
-		if (fd == null) {
-			throw new NoSuchFieldError(
-					"Unknown field '" + fieldName + "' for Type '" + msg.getDescriptorForType().getFullName() + "'");
-		}
-		return fd;
-	}
+	
 
 }
