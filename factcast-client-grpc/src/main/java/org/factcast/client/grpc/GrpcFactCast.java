@@ -7,14 +7,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
-import org.factcast.client.grpc.GrpcFactStoreAdapter.ObserverBridge;
 import org.factcast.core.Fact;
+import org.factcast.core.FactCast;
 import org.factcast.core.FactObserver;
 import org.factcast.core.GenericObserver;
 import org.factcast.core.IdObserver;
 import org.factcast.core.store.subscription.Subscription;
 import org.factcast.core.store.subscription.SubscriptionRequest;
-import org.factcast.server.grpc.api.RemoteFactStore;
 import org.factcast.server.grpc.api.conv.ProtoConverter;
 import org.factcast.server.grpc.gen.FactStoreProto;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
@@ -23,11 +22,13 @@ import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
+import org.springframework.stereotype.Component;
 
-import io.grpc.ManagedChannelBuilder;
+import io.grpc.Channel;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 
 /**
  * POC
@@ -36,24 +37,33 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 // TODO cleanup
-@RequiredArgsConstructor
-@Slf4j
-public class GrpcFactStoreAdapter implements RemoteFactStore {
 
-	// TODO inject
+@Slf4j
+@Component
+public class GrpcFactCast implements FactCast {
+
+	private final AddressChannelFactory channelFactory;
+	private final RemoteFactStoreBlockingStub blockingStub;
+	private final RemoteFactStoreStub stub;
+
+	GrpcFactCast(AddressChannelFactory channelFactory) {
+		this.channelFactory = channelFactory;
+
+		Channel c = channelFactory.createChannel("factstore");
+		blockingStub = RemoteFactStoreGrpc.newBlockingStub(c);
+		stub = RemoteFactStoreGrpc.newStub(c);
+
+	}
+
 	final ProtoConverter conv = new ProtoConverter();
-	final RemoteFactStoreBlockingStub fc = RemoteFactStoreGrpc
-			.newBlockingStub(ManagedChannelBuilder.forAddress("localhost", 6565).usePlaintext(true).build());
 
 	private CompletableFuture<Subscription> subscribeInternal(SubscriptionRequest req,
 			@SuppressWarnings("rawtypes") GenericObserver observer) {
 		// TODO centrally manage
-		RemoteFactStoreStub fs = RemoteFactStoreGrpc
-				.newStub(ManagedChannelBuilder.forAddress("localhost", 6565).usePlaintext(true).build());
 
 		CountDownLatch l = new CountDownLatch(1);
 
-		fs.subscribe(conv.toProto(req), new StreamObserver<FactStoreProto.MSG_Notification>() {
+		stub.subscribe(conv.toProto(req), new StreamObserver<FactStoreProto.MSG_Notification>() {
 
 			@SuppressWarnings("unchecked")
 			@Override
@@ -111,7 +121,8 @@ public class GrpcFactStoreAdapter implements RemoteFactStore {
 
 	@Override
 	public Optional<Fact> fetchById(UUID id) {
-		MSG_Fact fetchById = fc.fetchById(conv.toProto(id));
+
+		MSG_Fact fetchById = blockingStub.fetchById(conv.toProto(id));
 		if (!fetchById.getPresent()) {
 			return Optional.empty();
 		} else {
@@ -123,8 +134,9 @@ public class GrpcFactStoreAdapter implements RemoteFactStore {
 	public void publish(List<Fact> factsToPublish) {
 		List<MSG_Fact> mf = factsToPublish.stream().map(conv::toProto).collect(Collectors.toList());
 		MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
-		fc.publish(mfs);
+		blockingStub.publish(mfs);
 	}
+
 	@RequiredArgsConstructor
 	static class ObserverBridge<T> implements GenericObserver<T> {
 
@@ -137,6 +149,7 @@ public class GrpcFactStoreAdapter implements RemoteFactStore {
 		}
 
 	}
+
 	@Override
 	public CompletableFuture<Subscription> subscribe(SubscriptionRequest req, IdObserver observer) {
 		if (!req.idOnly()) {

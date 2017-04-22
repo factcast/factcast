@@ -1,3 +1,4 @@
+package org.factcast.client.grpc;
 
 import java.util.HashMap;
 import java.util.Map;

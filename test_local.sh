@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mvn clean install -DskipTests && \
+# mvn clean install -DskipTests && \
 java \
 -Dfactcast.store.pgsql.user=tester \
 -Dfactcast.store.pgsql.password=test_password \
