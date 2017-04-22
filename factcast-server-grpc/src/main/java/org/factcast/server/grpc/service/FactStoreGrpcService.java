@@ -104,6 +104,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 	@Override
 	public void subscribe(MSG_SubscriptionRequest request, StreamObserver<MSG_Notification> responseObserver) {
 		SubscriptionRequestTO req = conv.fromProto(request);
+		log.trace("subscription for {}", req);
 		final boolean idOnly = req.idOnly();
 		store.subscribe(req, new ObserverBridge(responseObserver) {
 

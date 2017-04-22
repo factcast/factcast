@@ -28,9 +28,8 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.google.common.eventbus.EventBus;
 
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.Wither;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { PGEmbeddedConfiguration.class })
@@ -39,9 +38,8 @@ public class PGQueryIntegrationIT {
 
 	private static final FactSpec DEFAULT_SPEC = FactSpec.ns("default-ns").type("type1");
 
-	@Wither
-	@AllArgsConstructor
-	@RequiredArgsConstructor
+	@Accessors(fluent = true)
+	@Data
 	public static class TestHeader {
 		String id = UUID.randomUUID().toString();
 		String ns = "default-ns";
@@ -94,9 +92,9 @@ public class PGQueryIntegrationIT {
 
 		insertTestFact(TestHeader.create());
 		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create().withNs("other-ns"));
-		insertTestFact(TestHeader.create().withType("type2"));
-		insertTestFact(TestHeader.create().withNs("other-ns").withType("type2"));
+		insertTestFact(TestHeader.create().ns("other-ns"));
+		insertTestFact(TestHeader.create().type("type2"));
+		insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
 
 		SubscriptionRequestTO req = SubscriptionRequestTO
 				.forFacts(SubscriptionRequest.catchup(DEFAULT_SPEC).sinceInception());
@@ -129,9 +127,9 @@ public class PGQueryIntegrationIT {
 
 		insertTestFact(TestHeader.create());
 		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create().withNs("other-ns"));
-		insertTestFact(TestHeader.create().withType("type2"));
-		insertTestFact(TestHeader.create().withNs("other-ns").withType("type2"));
+		insertTestFact(TestHeader.create().ns("other-ns"));
+		insertTestFact(TestHeader.create().type("type2"));
+		insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
 
 		sleep(200);
 		verify(c, times(2)).onNext(any(Fact.class));
