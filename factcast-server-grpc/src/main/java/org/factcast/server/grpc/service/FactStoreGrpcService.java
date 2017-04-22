@@ -48,7 +48,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 			UUID fromProto = conv.fromProto(request);
 			log.trace("fetchById {}", fromProto);
 			Optional<Fact> fetchById = store.fetchById(fromProto);
-			log.trace("fetchById {} was {}found", fromProto, fetchById.map(f -> "").orElse("NOT "));
+			log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "").orElse("NOT "));
 			responseObserver.onNext(conv.toProto(fetchById));
 			responseObserver.onCompleted();
 		} catch (Throwable e) {
@@ -59,6 +59,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 	@Override
 	public void publish(@NonNull MSG_Facts request, @NonNull StreamObserver<MSG_Empty> responseObserver) {
 		List<Fact> facts = request.getFactList().stream().map(conv::fromProto).collect(Collectors.toList());
+		final int size = facts.size();
+		log.debug("publish {} fact{}", size, size > 1 ? "s" : "");
 		log.trace("publish {}", facts);
 		try {
 			log.trace("store publish {}", facts);
