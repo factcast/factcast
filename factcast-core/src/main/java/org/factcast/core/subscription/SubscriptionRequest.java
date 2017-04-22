@@ -19,8 +19,6 @@ public interface SubscriptionRequest {
 
 	List<FactSpec> specs();
 
-	boolean idOnly();
-
 	// hint to where to get the default from
 	public static SpecBuilder follow(@NonNull FactSpec spec) {
 		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).follow(spec);

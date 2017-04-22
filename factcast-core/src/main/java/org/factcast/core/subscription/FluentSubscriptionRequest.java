@@ -35,7 +35,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 	boolean idOnly = false;
 
 	@RequiredArgsConstructor
-	public static class Builder implements SpecBuilder, TypeBuilder {
+	public static class Builder implements SpecBuilder {
 		private final FluentSubscriptionRequest toBuild;
 
 		@Override
@@ -69,17 +69,6 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 			return this;
 		}
 
-		@Override
-		public TypeBuilder asFacts() {
-			toBuild.idOnly = false;
-			return this;
-		}
-
-		@Override
-		public TypeBuilder asIds() {
-			toBuild.idOnly = true;
-			return this;
-		}
 	}
 
 	public java.util.Optional<UUID> startingAfter() {
@@ -92,14 +81,6 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
 	public interface SpecBuilder {
 		SpecBuilder or(@NonNull FactSpec s);
-
-		TypeBuilder asFacts();
-
-		TypeBuilder asIds();
-
-	}
-
-	public interface TypeBuilder {
 
 		SubscriptionRequest since(@NonNull UUID id);
 

@@ -35,7 +35,7 @@ public abstract class AbstractFactStoreTest {
 	@DirtiesContext
 	public void testEmptyStore() throws Exception {
 		FactObserver ido = mock(FactObserver.class);
-		uut.subscribe(SubscriptionRequest.catchup(ANY).asFacts().sinceInception(), ido).get();
+		uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).sinceInception(), ido).get();
 		Thread.sleep(200);// TODO
 		verify(ido).onCatchup();
 		verify(ido).onComplete();
@@ -47,7 +47,7 @@ public abstract class AbstractFactStoreTest {
 	@DirtiesContext
 	public void testEmptyStoreFollowNonMatching() throws Exception {
 		FactObserver ido = mock(FactObserver.class);
-		uut.subscribe(SubscriptionRequest.follow(ANY).asFacts().sinceInception(), ido).get();
+		uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), ido).get();
 		Thread.sleep(200);// TODO
 		verify(ido).onCatchup();
 		verify(ido, never()).onComplete();
@@ -64,7 +64,7 @@ public abstract class AbstractFactStoreTest {
 	@DirtiesContext
 	public void testEmptyStoreFollowMatching() throws Exception {
 		FactObserver ido = mock(FactObserver.class);
-		uut.subscribe(SubscriptionRequest.follow(ANY).asFacts().sinceInception(), ido).get();
+		uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), ido).get();
 		Thread.sleep(200);// TODO
 		verify(ido).onCatchup();
 		verify(ido, never()).onComplete();
@@ -82,7 +82,7 @@ public abstract class AbstractFactStoreTest {
 	public void testEmptyStoreCatchupMatching() throws Exception {
 		FactObserver ido = mock(FactObserver.class);
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		uut.subscribe(SubscriptionRequest.catchup(ANY).asFacts().sinceInception(), ido).get();
+		uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).sinceInception(), ido).get();
 
 		verify(ido).onCatchup();
 		verify(ido).onComplete();
@@ -95,7 +95,7 @@ public abstract class AbstractFactStoreTest {
 	public void testEmptyStoreFollowMatchingDelayed() throws Exception {
 		FactObserver ido = mock(FactObserver.class);
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		uut.subscribe(SubscriptionRequest.follow(ANY).asFacts().sinceInception(), ido).get();
+		uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), ido).get();
 		verify(ido).onCatchup();
 		verify(ido, never()).onComplete();
 		verify(ido, never()).onError(any());
@@ -111,7 +111,7 @@ public abstract class AbstractFactStoreTest {
 	public void testEmptyStoreFollowNonmMatchingDelayed() throws Exception {
 		FactObserver ido = mock(FactObserver.class);
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"t1\"}", "{}"));
-		uut.subscribe(SubscriptionRequest.follow(ANY).asFacts().sinceInception(), ido).get();
+		uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), ido).get();
 		verify(ido).onCatchup();
 		verify(ido, never()).onComplete();
 		verify(ido, never()).onError(any());
@@ -147,7 +147,7 @@ public abstract class AbstractFactStoreTest {
 		ArgumentCaptor<Fact> af = ArgumentCaptor.forClass(Fact.class);
 		doNothing().when(ido).onNext(af.capture());
 
-		uut.subscribe(SubscriptionRequest.catchup(ANY).asFacts().sinceInception(), ido).get();
+		uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).sinceInception(), ido).get();
 
 		verify(ido).onNext(any());
 		assertEquals(mark, af.getValue().id());
@@ -165,7 +165,7 @@ public abstract class AbstractFactStoreTest {
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
 				+ "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}", "{}"));
 		FactSpec REQ_FOO_BAR = FactSpec.ns("default").meta("foo", "bar");
-		uut.subscribe(SubscriptionRequest.catchup(REQ_FOO_BAR).asFacts().sinceInception(), ido).get();
+		uut.subscribeToFacts(SubscriptionRequest.catchup(REQ_FOO_BAR).sinceInception(), ido).get();
 
 		verify(ido).onNext(any());
 		verify(ido).onCatchup();
@@ -183,7 +183,7 @@ public abstract class AbstractFactStoreTest {
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
 				+ "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}", "{}"));
 		FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h,e){ return (h.hit=='me')}");
-		uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).asFacts().sinceInception(), ido).get();
+		uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), ido).get();
 
 		verify(ido).onNext(any());
 		verify(ido).onCatchup();
@@ -201,7 +201,7 @@ public abstract class AbstractFactStoreTest {
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
 				+ "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}", "{}"));
 		FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return (h.hit=='me')}");
-		uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).asFacts().sinceInception(), ido).get();
+		uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), ido).get();
 
 		verify(ido).onNext(any());
 		verify(ido).onCatchup();
@@ -219,7 +219,7 @@ public abstract class AbstractFactStoreTest {
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
 				+ "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}", "{}"));
 		FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return true }");
-		uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).asFacts().sinceInception(), ido).get();
+		uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), ido).get();
 
 		verify(ido, times(2)).onNext(any());
 		verify(ido).onCatchup();
@@ -237,7 +237,7 @@ public abstract class AbstractFactStoreTest {
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
 				+ "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}", "{}"));
 		FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return false }");
-		uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).asFacts().sinceInception(), ido).get();
+		uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), ido).get();
 
 		verify(ido).onCatchup();
 		verify(ido).onComplete();

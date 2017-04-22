@@ -11,7 +11,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,7 +54,7 @@ class PGFactStore implements FactStore {
 	}
 
 	@Override
-	public CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequest req,
+	public CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO req,
 			@NonNull FactStoreObserver observer) {
 		return CompletableFuture.supplyAsync(() -> sf.subscribe(req, observer));
 	}

@@ -5,9 +5,7 @@ import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.core.subscription.FactObserver;
 import org.factcast.core.subscription.FactSpec;
-import org.factcast.core.subscription.IdObserver;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,16 +55,11 @@ public class SmokeMT {
 			System.out.println(fc.fetchById(m.id()).isPresent());
 			System.out.println(fc.fetchById(mark).isPresent());
 
-			fc.subscribe(SubscriptionRequest.catchup(FactSpec.ns("default")).asIds().sinceInception(),
-					(IdObserver) f -> {
-						System.err.println("csubId " + f);
+			fc.subscribeToIds(SubscriptionRequest.catchup(FactSpec.ns("default")).sinceInception(),
+					System.err::println);
 
-					});
-
-			fc.subscribe(SubscriptionRequest.catchup(FactSpec.ns("default")).asFacts().sinceInception(),
-					(FactObserver) f -> {
-						System.err.println("csubFact " + f);
-					});
+			fc.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default")).sinceInception(),
+					System.err::println);
 		}
 
 	}

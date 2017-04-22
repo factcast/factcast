@@ -8,7 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 
 import lombok.NonNull;
 
@@ -22,7 +22,7 @@ public interface FactStore {
 
 	void publish(@NonNull List<Fact> factsToPublish);
 
-	CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequest req, @NonNull FactStoreObserver observer);
+	CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO req, @NonNull FactStoreObserver observer);
 
 	Optional<Fact> fetchById(@NonNull UUID id);
 

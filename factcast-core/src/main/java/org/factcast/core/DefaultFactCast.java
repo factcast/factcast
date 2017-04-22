@@ -13,6 +13,7 @@ import org.factcast.core.subscription.GenericObserver;
 import org.factcast.core.subscription.IdObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -24,13 +25,14 @@ class DefaultFactCast implements FactCast {
 	final FactStore store;
 
 	@Override
-	public CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequest req, @NonNull FactObserver observer) {
-		return store.subscribe(req, new ObserverBridge<Fact>(observer, Function.identity()));
+	public CompletableFuture<Subscription> subscribeToFacts(@NonNull SubscriptionRequest req, @NonNull FactObserver observer) {
+		return store.subscribe(SubscriptionRequestTO.forFacts(req),
+				new ObserverBridge<Fact>(observer, Function.identity()));
 	}
 
 	@Override
-	public CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequest req, @NonNull IdObserver observer) {
-		return store.subscribe(req, new ObserverBridge<UUID>(observer, f -> f.id()));
+	public CompletableFuture<Subscription> subscribeToIds(@NonNull SubscriptionRequest req, @NonNull IdObserver observer) {
+		return store.subscribe(SubscriptionRequestTO.forIds(req), new ObserverBridge<UUID>(observer, f -> f.id()));
 	}
 
 	@Override

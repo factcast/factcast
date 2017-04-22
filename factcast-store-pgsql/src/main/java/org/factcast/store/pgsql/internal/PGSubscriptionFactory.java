@@ -2,7 +2,7 @@ package org.factcast.store.pgsql.internal;
 
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.google.common.eventbus.EventBus;
@@ -24,7 +24,7 @@ public class PGSubscriptionFactory {
 	private final PGFactIdToSerMapper serMapper;
 	private final PGFactFactory factory;
 
-	public Subscription subscribe(SubscriptionRequest req, FactStoreObserver observer) {
+	public Subscription subscribe(SubscriptionRequestTO req, FactStoreObserver observer) {
 		PGQuery q = new PGQuery(tpl, bus, serMapper, factory);
 		return q.catchup(req, observer);
 	}

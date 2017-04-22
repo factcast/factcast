@@ -37,9 +37,19 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 	public SubscriptionRequestTO(SubscriptionRequest request) {
 		maxLatencyInMillis = request.maxLatencyInMillis();
 		continous = request.continous();
-		idOnly = request.idOnly();
 		startingAfter = request.startingAfter().orElse(null);
 		specs = request.specs();
 	}
 
+	public static SubscriptionRequestTO forFacts(SubscriptionRequest req) {
+		SubscriptionRequestTO t = new SubscriptionRequestTO(req);
+		t.idOnly(false);
+		return t;
+	}
+
+	public static SubscriptionRequestTO forIds(SubscriptionRequest req) {
+		SubscriptionRequestTO t = new SubscriptionRequestTO(req);
+		t.idOnly(true);
+		return t;
+	}
 }

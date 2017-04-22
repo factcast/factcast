@@ -12,6 +12,7 @@ import org.factcast.core.subscription.FactSpecMatcher;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.pgsql.internal.PGListener.FactInsertionEvent;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
@@ -42,7 +43,7 @@ class PGQuery {
 	private final AtomicInteger hit = new AtomicInteger(0);
 	private Predicate<Fact> postQueryMatcher;
 
-	Subscription catchup(SubscriptionRequest req, FactStoreObserver observer) {
+	Subscription catchup(SubscriptionRequestTO req, FactStoreObserver observer) {
 
 		log.trace("catching up for " + req);
 

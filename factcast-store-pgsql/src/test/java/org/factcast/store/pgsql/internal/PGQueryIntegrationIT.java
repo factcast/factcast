@@ -13,6 +13,7 @@ import org.factcast.core.subscription.FactSpec;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,7 +75,8 @@ public class PGQueryIntegrationIT {
 	@Test
 	@DirtiesContext
 	public void testRoundtrip() throws Exception {
-		SubscriptionRequest req = SubscriptionRequest.catchup(DEFAULT_SPEC).asFacts().sinceInception();
+		SubscriptionRequestTO req = SubscriptionRequestTO
+				.forFacts(SubscriptionRequest.catchup(DEFAULT_SPEC).sinceInception());
 
 		FactStoreObserver c = mock(FactStoreObserver.class);
 
@@ -96,7 +98,8 @@ public class PGQueryIntegrationIT {
 		insertTestFact(TestHeader.create().withType("type2"));
 		insertTestFact(TestHeader.create().withNs("other-ns").withType("type2"));
 
-		SubscriptionRequest req = SubscriptionRequest.catchup(DEFAULT_SPEC).asFacts().sinceInception();
+		SubscriptionRequestTO req = SubscriptionRequestTO
+				.forFacts(SubscriptionRequest.catchup(DEFAULT_SPEC).sinceInception());
 
 		FactStoreObserver c = mock(FactStoreObserver.class);
 
@@ -114,7 +117,8 @@ public class PGQueryIntegrationIT {
 	@Test
 	@DirtiesContext()
 	public void testRoundtripInsertAfter() throws Exception {
-		SubscriptionRequest req = SubscriptionRequest.follow(DEFAULT_SPEC).asFacts().sinceInception();
+		SubscriptionRequestTO req = SubscriptionRequestTO
+				.forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).sinceInception());
 
 		FactStoreObserver c = mock(FactStoreObserver.class);
 
@@ -138,7 +142,8 @@ public class PGQueryIntegrationIT {
 	@DirtiesContext()
 	public void testRoundtripCatchupEventsInsertedAfterStart() throws Exception {
 
-		SubscriptionRequest req = SubscriptionRequest.follow(DEFAULT_SPEC).asFacts().sinceInception();
+		SubscriptionRequestTO req = SubscriptionRequestTO
+				.forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).sinceInception());
 		FactStoreObserver c = mock(FactStoreObserver.class);
 		doAnswer(i -> {
 			sleep(50);
@@ -184,7 +189,8 @@ public class PGQueryIntegrationIT {
 	@DirtiesContext()
 	public void testRoundtripCompletion() throws Exception {
 
-		SubscriptionRequest req = SubscriptionRequest.catchup(DEFAULT_SPEC).asFacts().sinceInception();
+		SubscriptionRequestTO req = SubscriptionRequestTO
+				.forFacts(SubscriptionRequest.catchup(DEFAULT_SPEC).sinceInception());
 		FactStoreObserver c = mock(FactStoreObserver.class);
 
 		insertTestFact(TestHeader.create());
@@ -213,7 +219,8 @@ public class PGQueryIntegrationIT {
 	@DirtiesContext()
 	public void testCancel() throws Exception {
 
-		SubscriptionRequest req = SubscriptionRequest.follow(DEFAULT_SPEC).asFacts().sinceInception();
+		SubscriptionRequestTO req = SubscriptionRequestTO
+				.forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).sinceInception());
 
 		FactStoreObserver c = mock(FactStoreObserver.class);
 

@@ -22,6 +22,7 @@ import org.factcast.core.subscription.FactSpecMatcher;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.springframework.beans.factory.DisposableBean;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -99,7 +100,8 @@ public class InMemFactStore implements FactStore, DisposableBean {
 	}
 
 	@Override
-	public synchronized CompletableFuture<Subscription> subscribe(SubscriptionRequest req, FactStoreObserver observer) {
+	public synchronized CompletableFuture<Subscription> subscribe(SubscriptionRequestTO req,
+			FactStoreObserver observer) {
 
 		InMemSubscription s = new InMemSubscription(req, c -> observer.onNext(c));
 		store.values().stream().forEach(s);

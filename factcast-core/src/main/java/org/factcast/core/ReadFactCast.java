@@ -12,9 +12,9 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import lombok.NonNull;
 
 public interface ReadFactCast {
-	CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequest req, @NonNull FactObserver observer);
+	CompletableFuture<Subscription> subscribeToFacts(@NonNull SubscriptionRequest req, @NonNull FactObserver observer);
 
-	CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequest req, @NonNull IdObserver observer);
+	CompletableFuture<Subscription> subscribeToIds(@NonNull SubscriptionRequest req, @NonNull IdObserver observer);
 
 	Optional<Fact> fetchById(@NonNull UUID id);
 }
