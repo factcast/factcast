@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
+import org.factcast.core.util.FCJson;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -16,6 +16,15 @@ import lombok.SneakyThrows;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+/**
+ * PG Specific impl of Fact.
+ * 
+ * This class is necessary in order to delay parsing of the header until
+ * necessary (when accessing meta-data)
+ * 
+ * @author usr
+ *
+ */
 @Accessors(fluent = true)
 @RequiredArgsConstructor
 @ToString(of = { "id", "ns", "type", "aggId", "meta" })
@@ -38,7 +47,6 @@ class PGFact implements Fact {
 	@NonNull
 	private final String jsonPayload;
 
-	private final ObjectMapper jackson;
 	@JsonProperty
 	Map<String, String> meta = null;
 
@@ -52,11 +60,13 @@ class PGFact implements Fact {
 
 	@SneakyThrows
 	private Map<String, String> deser() {
-		Meta deser = jackson.readValue(jsonHeader, Meta.class);
+		Meta deser = FCJson.reader().forType(Meta.class).readValue(jsonHeader);
 		return deser.meta;
 	}
 
+	// just picks the MetaData from the Header (as we know the rest already
 	private static class Meta {
+		@JsonProperty
 		Map<String, String> meta = new HashMap<>();
 	}
 }

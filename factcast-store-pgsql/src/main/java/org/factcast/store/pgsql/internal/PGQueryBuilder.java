@@ -9,9 +9,25 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.factcast.core.store.subscription.FactSpec;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
-class PGQuerySQLUtil { // TODO work in progress
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
-	static PreparedStatementSetter createStatementSetter(List<FactSpec> specs, AtomicLong ser) {
+/**
+ * Provides {@link PreparedStatementSetter} and the corresponding SQL from a
+ * list of {@link FactSpec}s.
+ * 
+ * @author usr
+ *
+ */
+@RequiredArgsConstructor
+class PGQueryBuilder {
+
+	// TODO is that possibly interesting to configure?
+	private static final int FETCH_SIZE = 50;
+	@NonNull
+	private final List<FactSpec> specs;
+
+	PreparedStatementSetter createStatementSetter(AtomicLong ser) {
 
 		return p -> {
 			// be conservative, less ram and fetching from db is less of a
@@ -19,7 +35,7 @@ class PGQuerySQLUtil { // TODO work in progress
 			//
 			// Note, that by sync. calling the Observer, backpressure is kind of
 			// built-in.
-			p.setFetchSize(200);
+			p.setFetchSize(FETCH_SIZE);
 
 			// TODO vulnerable of json injection attack
 			int count = 0;
@@ -47,7 +63,7 @@ class PGQuerySQLUtil { // TODO work in progress
 		};
 	}
 
-	static String createWhereClause(List<FactSpec> specs) {
+	private String createWhereClause() {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("( (1=0) ");
@@ -78,4 +94,8 @@ class PGQuerySQLUtil { // TODO work in progress
 		return sb.toString();
 	}
 
+	String createSQL() {
+		return "SELECT " + PGConstants.PROJECTION_FACT + " FROM " + PGConstants.TABLE_FACT + " WHERE "
+				+ createWhereClause() + " ORDER BY " + PGConstants.COLUMN_SER + " ASC";
+	}
 }

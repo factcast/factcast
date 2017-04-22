@@ -2,7 +2,7 @@ package org.factcast.store.pgsql.internal;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -20,20 +20,30 @@ import com.google.common.collect.Lists;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * A PostGres based FactStore implementation
+ * 
+ * @author usr
+ *
+ */
 @RequiredArgsConstructor
 class PGFactStore implements FactStore {
-
+	// is that interesting to configure?
+	private static final int BATCH_SIZE = 500;
+	@NonNull
 	private final JdbcTemplate tpl;
+	@NonNull
 	private final PGFactFactory factory;
+	@NonNull
 	private final PGSubscriptionFactory sf;
 
 	@Override
 	@Transactional
 	public void publish(@NonNull Iterable<Fact> factsToPublish) {
 
-		ArrayList<Fact> l = Lists.newArrayList(factsToPublish);
+		List<Fact> l = Lists.newArrayList(factsToPublish);
 
-		tpl.batchUpdate(PGConstants.INSERT_FACT, l, 500, (p, f) -> {
+		tpl.batchUpdate(PGConstants.INSERT_FACT, l, BATCH_SIZE, (p, f) -> {
 			p.setString(1, f.jsonHeader());
 			p.setString(2, f.jsonPayload());
 		});

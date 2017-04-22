@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.google.common.base.Supplier;
 import com.google.common.eventbus.AsyncEventBus;
 import com.impossibl.postgres.api.jdbc.PGConnection;
 import com.impossibl.postgres.api.jdbc.PGNotificationListener;
@@ -25,7 +26,7 @@ import com.impossibl.postgres.api.jdbc.PGNotificationListener;
 public class PGSqlListenerTest {
 
 	@Mock
-	PGConnectionSupplier ds;
+	Supplier<PGConnection> ds;
 	@Mock
 	AsyncEventBus bus;
 	@Mock

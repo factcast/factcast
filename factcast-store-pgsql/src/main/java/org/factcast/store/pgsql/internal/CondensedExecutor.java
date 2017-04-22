@@ -10,6 +10,13 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Executes a given runnable if triggered, but ignores all subsequent triggers
+ * for maxDelayInMillis.
+ * 
+ * @author usr
+ *
+ */
 @RequiredArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PROTECTED, onConstructor = @__(@VisibleForTesting))
 class CondensedExecutor {

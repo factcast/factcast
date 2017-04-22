@@ -5,7 +5,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.function.Predicate;
 
+import com.impossibl.postgres.api.jdbc.PGConnection;
+
 import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Used to test if a connection is still alive.
+ * 
+ * Even though CPools provide this already, this one is intended to used with
+ * the cone {@link PGConnection}, that listens to changes on the fact table and
+ * thus should not be reused in a CPool.
+ * 
+ * @author usr
+ *
+ */
 
 @Slf4j
 class ConnectionTester implements Predicate<java.sql.Connection> {

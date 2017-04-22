@@ -17,6 +17,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 
+/**
+ * Main @Configuration class for a PGFactStore
+ * 
+ * @author usr
+ *
+ */
 @Configuration
 @EnableScheduling
 @Import(SchedulingConfiguration.class)
@@ -49,8 +55,8 @@ public class PGFactStoreInternalConfiguration {
 	}
 
 	@Bean
-	public PGFactFactory pgFactFactory(ObjectMapper om) {
-		return new PGFactFactory(om);
+	public PGFactFactory pgFactFactory() {
+		return new PGFactFactory();
 	}
 
 	@Bean

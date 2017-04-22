@@ -8,10 +8,10 @@ import java.util.function.Predicate;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Supplier;
 import com.google.common.eventbus.EventBus;
 import com.impossibl.postgres.api.jdbc.PGConnection;
 
@@ -20,20 +20,28 @@ import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Listens (sql LISTEN command) to a channel on Postgresql and passes a trigger
+ * on an EventBus.
+ * 
+ * This trigger then is supposed to "encourage" active subscriptions to query
+ * for new Facts from PG.
+ * 
+ * @author usr
+ *
+ */
+
 @Slf4j
 @RequiredArgsConstructor
 class PGListener implements InitializingBean, DisposableBean {
-	// must not be wrapped by any ConnectionPool
 
-	private final PGConnectionSupplier connSup;
+	private final Supplier<PGConnection> connSup;
 
 	private final @NonNull EventBus bus;
 
 	private final @NonNull Predicate<Connection> tester;
 
 	private PGConnection connection = null;
-
-	private String dataSourceUrl = null;
 
 	@Scheduled(fixedRate = 10000)
 	public synchronized void check() {
@@ -95,9 +103,4 @@ class PGListener implements InitializingBean, DisposableBean {
 		connection = null;
 	}
 
-	@Autowired
-	@org.springframework.beans.factory.annotation.Value("${spring.datasource.url}")
-	public void setDataSourceUrl(String dataSourceUrl) {
-		this.dataSourceUrl = dataSourceUrl;
-	}
 }

@@ -24,6 +24,7 @@ import com.google.common.eventbus.Subscribe;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+// TODO document properly
 @Slf4j
 @RequiredArgsConstructor
 class PGQuery {
@@ -59,8 +60,9 @@ class PGQuery {
 
 		log.trace("catching up from {}", staringSerial);
 
-		String sql = createSQL(specs);
-		log.trace("sql={}", sql);
+		PGQueryBuilder q = new PGQueryBuilder(specs);
+		String sql = q.createSQL();
+		PreparedStatementSetter setter = q.createStatementSetter(ser);
 
 		RowCallbackHandler rsHandler = rs -> {
 			if (!disconnected.get()) {
@@ -79,19 +81,15 @@ class PGQuery {
 			}
 		};
 
-		PreparedStatementSetter setter = PGQuerySQLUtil.createStatementSetter(specs, ser);
-		query = () -> tpl.query(sql, setter, rsHandler);
+		query = () -> {
+			tpl.query(sql, setter, rsHandler);
+		};
 
 		return catchupAndFollow(req, observer);
 	}
 
 	private boolean hasAnyScriptFilters(SubscriptionRequest req) {
 		return req.specs().stream().anyMatch(s -> s.jsFilterScript() != null);
-	}
-
-	private String createSQL(List<FactSpec> specs) {
-		return "SELECT " + PGConstants.PROJECTION_FACT + " FROM " + PGConstants.TABLE_FACT + " WHERE "
-				+ PGQuerySQLUtil.createWhereClause(specs) + " ORDER BY " + PGConstants.COLUMN_SER + " ASC";
 	}
 
 	private Subscription catchupAndFollow(SubscriptionRequest req, FactStoreObserver c) {

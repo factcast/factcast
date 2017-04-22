@@ -9,6 +9,13 @@ import com.google.common.eventbus.EventBus;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Creates Subscription
+ * 
+ * @author usr
+ *
+ */
+// TODO integrate with PGQuery
 @RequiredArgsConstructor
 public class PGSubscriptionFactory {
 	private final JdbcTemplate tpl;

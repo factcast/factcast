@@ -8,14 +8,16 @@ import org.factcast.core.Fact;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.RequiredArgsConstructor;
 
+/**
+ * extracts a PGFact from a ResultSet
+ * 
+ * @author usr
+ *
+ */
 @RequiredArgsConstructor
-public class PGFactFactory implements ResultSetExtractor<Fact> {
-
-	private final ObjectMapper om;
+class PGFactFactory implements ResultSetExtractor<Fact> {
 
 	@Override
 	public Fact extractData(ResultSet rs) throws SQLException, DataAccessException {
@@ -28,8 +30,8 @@ public class PGFactFactory implements ResultSetExtractor<Fact> {
 		String jsonHeader = rs.getString(PGConstants.COLUMN_HEADER);
 		String jsonPayload = rs.getString(PGConstants.COLUMN_PAYLOAD);
 
-		return new PGFact(id == null ? null : UUID.fromString(id), ns, type,
-				aggId == null ? null : UUID.fromString(aggId), jsonHeader, jsonPayload, om);
+		return new PGFact(UUID.fromString(id), ns, type, aggId == null ? null : UUID.fromString(aggId), jsonHeader,
+				jsonPayload);
 	}
 
 }

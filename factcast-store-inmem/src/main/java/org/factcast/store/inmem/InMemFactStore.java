@@ -23,6 +23,7 @@ import org.factcast.core.store.subscription.Subscription;
 import org.factcast.core.store.subscription.SubscriptionRequest;
 import org.springframework.beans.factory.DisposableBean;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 
 import lombok.NonNull;
@@ -34,11 +35,20 @@ import lombok.NonNull;
  *
  */
 public class InMemFactStore implements FactStore, DisposableBean {
-	// TODO could use some cleanup
+
+	@VisibleForTesting
+	InMemFactStore(@NonNull ExecutorService es) {
+		this.es = es;
+	}
+
+	public InMemFactStore() {
+		this(Executors.newCachedThreadPool());
+	}
+
 	private final AtomicInteger highwaterMark = new AtomicInteger(0);
 	private final LinkedHashMap<Integer, Fact> store = new LinkedHashMap<>();
 	private final CopyOnWriteArrayList<InMemSubscription> sub = new CopyOnWriteArrayList<>();
-	private final ExecutorService es = Executors.newCachedThreadPool();
+	private final ExecutorService es;
 
 	private class InMemSubscription implements Subscription, Consumer<Fact> {
 		private final Predicate<Fact> matcher;
@@ -87,9 +97,6 @@ public class InMemFactStore implements FactStore, DisposableBean {
 		});
 	}
 
-	private void nop() {
-	};
-
 	@Override
 	public synchronized CompletableFuture<Subscription> subscribe(SubscriptionRequest req, FactStoreObserver observer) {
 
@@ -103,7 +110,8 @@ public class InMemFactStore implements FactStore, DisposableBean {
 			return CompletableFuture.completedFuture(s);
 		} else {
 			observer.onComplete();
-			return CompletableFuture.completedFuture(this::nop);
+			return CompletableFuture.completedFuture(() -> {
+			});
 		}
 
 	}

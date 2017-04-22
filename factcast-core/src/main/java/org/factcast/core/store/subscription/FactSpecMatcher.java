@@ -29,7 +29,8 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
 	private static final ScriptEngineManager engineManager = new ScriptEngineManager();
 
-	private final String ns;
+	@NonNull
+	private String ns;
 	private final String type;
 	private final UUID aggId;
 	private final Map<String, String> meta;
@@ -40,8 +41,8 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 	public FactSpecMatcher(@NonNull FactSpec spec) {
 
 		// opt: prevent method calls by prefetching to final fields.
-		// yes, hey might be inlined at some point, but making decisions based
-		// on final dields helps.
+		// yes, they might be inlined at some point, but making decisions based
+		// on final fields should help.
 		//
 		// this Predicate is pretty performance critical
 		ns = spec.ns();
@@ -72,9 +73,6 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 	}
 
 	protected boolean nsMatch(Fact t) {
-		if (ns == null) {
-			return true;
-		}
 		String otherNs = t.ns();
 		return (ns.hashCode() == otherNs.hashCode()) && ns.equals(otherNs);
 	}
