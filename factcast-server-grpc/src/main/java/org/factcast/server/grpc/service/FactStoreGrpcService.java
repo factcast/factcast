@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.subscription.FactStoreObserver;
+import org.factcast.core.store.subscription.SubscriptionRequest;
 import org.factcast.server.grpc.api.conv.ProtoConverter;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Empty;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
@@ -21,7 +22,6 @@ import org.lognet.springboot.grpc.GRpcService;
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -107,26 +107,14 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 	}
 
 	@Override
-	public void subscribeFact(MSG_SubscriptionRequest request, StreamObserver<MSG_Notification> responseObserver) {
-		store.subscribe(conv.fromProto(request), new ObserverBridge(responseObserver) {
+	public void subscribe(MSG_SubscriptionRequest request, StreamObserver<MSG_Notification> responseObserver) {
+		SubscriptionRequest req = conv.fromProto(request);
+		store.subscribe(req, new ObserverBridge(responseObserver) {
 
 			@Override
 			public void onNext(Fact f) {
-				responseObserver.onNext(conv.toNotification(f));
+				responseObserver.onNext(req.idOnly() ? conv.toIdNotification(f) : conv.toNotification(f));
 			}
 		});
-	}
-
-	@SneakyThrows
-	@Override
-	public void subscribeId(MSG_SubscriptionRequest request, StreamObserver<MSG_Notification> responseObserver) {
-		store.subscribe(conv.fromProto(request), new ObserverBridge(responseObserver) {
-
-			@Override
-			public void onNext(Fact f) {
-				log.trace("onNext " + f);
-				responseObserver.onNext(conv.toIdNotification(f));
-			}
-		}).get();
 	}
 }

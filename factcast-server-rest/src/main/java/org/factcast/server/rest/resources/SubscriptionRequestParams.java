@@ -5,9 +5,7 @@ import java.util.UUID;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.QueryParam;
 
-import org.factcast.core.store.subscription.ClientSubscriptionRequest;
-import org.factcast.core.store.subscription.FactSpec;
-import org.factcast.core.store.subscription.SubscriptionRequestTO;
+import org.factcast.core.store.subscription.StoreSubscriptionRequest;
 import org.factcast.core.store.subscription.SubscriptionRequest;
 
 import lombok.Data;
@@ -29,7 +27,7 @@ public class SubscriptionRequestParams {
 
 	public SubscriptionRequest toRequest() {
 
-		SubscriptionRequestTO r = new SubscriptionRequestTO();
+		StoreSubscriptionRequest r = new StoreSubscriptionRequest();
 		r.continous(follow);
 		if (since != null) {
 			r.startingAfter(UUID.fromString(since));

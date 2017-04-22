@@ -19,10 +19,14 @@ public interface SubscriptionRequest {
 
 	List<FactSpec> specs();
 
+	boolean idOnly();
+
+	// hint to where to get the default from
 	public static SpecBuilder follow(@NonNull FactSpec spec) {
 		return new ClientSubscriptionRequest.Builder(new ClientSubscriptionRequest()).follow(spec);
 	}
 
+	// hint to where to get the default from
 	public static SpecBuilder follow(long maxLatencyInMillis, @NonNull FactSpec spec) {
 
 		Preconditions.checkArgument(maxLatencyInMillis >= 10, "maxLatencyInMillis>=10");
@@ -33,6 +37,7 @@ public interface SubscriptionRequest {
 		return new ClientSubscriptionRequest.Builder(toBuild).follow(spec);
 	}
 
+	// hint to where to get the default from
 	public static SpecBuilder catchup(@NonNull FactSpec spec) {
 		return new ClientSubscriptionRequest.Builder(new ClientSubscriptionRequest()).catchup(spec);
 	}

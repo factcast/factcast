@@ -26,9 +26,10 @@ public class ClientSubscriptionRequest implements SubscriptionRequest {
 	boolean continous;
 	UUID startingAfter;
 	List<FactSpec> specs = new LinkedList<>();
+	boolean idOnly = false;
 
 	@RequiredArgsConstructor
-	public static class Builder implements SpecBuilder {
+	public static class Builder implements SpecBuilder, TypeBuilder {
 		private final ClientSubscriptionRequest toBuild;
 
 		@Override
@@ -61,6 +62,18 @@ public class ClientSubscriptionRequest implements SubscriptionRequest {
 			toBuild.continous = false;
 			return this;
 		}
+
+		@Override
+		public TypeBuilder asFacts() {
+			toBuild.idOnly = false;
+			return this;
+		}
+
+		@Override
+		public TypeBuilder asIds() {
+			toBuild.idOnly = true;
+			return this;
+		}
 	}
 
 	public java.util.Optional<UUID> startingAfter() {
@@ -73,6 +86,14 @@ public class ClientSubscriptionRequest implements SubscriptionRequest {
 
 	public interface SpecBuilder {
 		SpecBuilder or(@NonNull FactSpec s);
+
+		TypeBuilder asFacts();
+
+		TypeBuilder asIds();
+
+	}
+
+	public interface TypeBuilder {
 
 		SubscriptionRequest since(@NonNull UUID id);
 

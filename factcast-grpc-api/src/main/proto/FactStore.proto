@@ -14,13 +14,6 @@ message MSG_UUID {
 // for that reason, we need this wrpper type and ugly code to access it.
 // see https://github.com/grpc/grpc-java/issues/1973
 
-message MSG_OptionalString{
-	 string value=1;
-}
-
-message MSG_OptionalInt64{
-	 int64 value=1;
-}
 
 message MSG_Notification{
 	enum Type {
@@ -34,22 +27,11 @@ message MSG_Notification{
 	Type type = 1;
 	MSG_Fact fact = 2;
 	MSG_UUID id = 3;
-	MSG_OptionalString error = 4;
+	string error = 4;
 }
 
 message MSG_SubscriptionRequest {
-	bool continous = 1;
-	MSG_OptionalInt64 maxLatency = 2;
-	MSG_UUID since = 3;
-	bool idOnly=4;
-	repeated MSG_FactSpec specs = 5;
-}
-
-message MSG_FactSpec {
-	MSG_OptionalString ns = 1;
-	MSG_OptionalString type = 2;
-	MSG_UUID aggId = 3;
-	MSG_OptionalString jsFilter = 4;
+	string json =1;
 }
 
 message MSG_Fact {
@@ -65,9 +47,7 @@ message MSG_Empty {
 }
 
 service RemoteFactStore {
-	rpc subscribeFact (MSG_SubscriptionRequest) returns (stream MSG_Notification) {
-	}
-	rpc subscribeId (MSG_SubscriptionRequest) returns (stream MSG_Notification) {
+	rpc subscribe (MSG_SubscriptionRequest) returns (stream MSG_Notification) {
 	}
 	rpc fetchById (MSG_UUID) returns (MSG_Fact) {
 	}

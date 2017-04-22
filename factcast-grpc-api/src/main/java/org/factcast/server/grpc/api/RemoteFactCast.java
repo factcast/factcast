@@ -18,9 +18,9 @@ import com.google.common.collect.Lists;
 import lombok.NonNull;
 
 public interface RemoteFactCast {
-	CompletableFuture<Subscription> subscribeFact(@NonNull SubscriptionRequest req, @NonNull FactObserver observer);
+	CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequest req, @NonNull FactObserver observer);
 
-	CompletableFuture<Subscription> subscribeId(@NonNull SubscriptionRequest req, @NonNull IdObserver observer);
+	CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequest req, @NonNull IdObserver observer);
 
 	Optional<Fact> fetchById(@NonNull UUID id);
 

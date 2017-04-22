@@ -8,11 +8,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
-import org.factcast.core.DefaultFactFactory;
 import org.factcast.core.Fact;
 import org.factcast.core.store.subscription.Subscription;
 import org.factcast.core.store.subscription.SubscriptionRequest;
 import org.factcast.server.grpc.api.FactObserver;
+import org.factcast.server.grpc.api.GenericObserver;
 import org.factcast.server.grpc.api.IdObserver;
 import org.factcast.server.grpc.api.RemoteFactCast;
 import org.factcast.server.grpc.api.conv.ProtoConverter;
@@ -23,8 +23,6 @@ import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
@@ -43,20 +41,21 @@ import lombok.extern.slf4j.Slf4j;
 public class GrpcFactStoreAdapter implements RemoteFactCast {
 
 	// TODO inject
-	final ProtoConverter conv = new ProtoConverter(new DefaultFactFactory(new ObjectMapper()));
+	final ProtoConverter conv = new ProtoConverter();
 	final RemoteFactStoreBlockingStub fc = RemoteFactStoreGrpc
 			.newBlockingStub(ManagedChannelBuilder.forAddress("localhost", 6565).usePlaintext(true).build());
 
-	@Override
-	public CompletableFuture<Subscription> subscribeFact(SubscriptionRequest req, FactObserver observer) {
+	private CompletableFuture<Subscription> subscribeInternal(SubscriptionRequest req,
+			@SuppressWarnings("rawtypes") GenericObserver observer) {
 		// TODO centrally manage
 		RemoteFactStoreStub fs = RemoteFactStoreGrpc
 				.newStub(ManagedChannelBuilder.forAddress("localhost", 6565).usePlaintext(true).build());
 
 		CountDownLatch l = new CountDownLatch(1);
 
-		fs.subscribeFact(conv.toProto(req, false), new StreamObserver<FactStoreProto.MSG_Notification>() {
+		fs.subscribe(conv.toProto(req), new StreamObserver<FactStoreProto.MSG_Notification>() {
 
+			@SuppressWarnings("unchecked")
 			@Override
 			public void onNext(MSG_Notification f) {
 
@@ -75,10 +74,10 @@ public class GrpcFactStoreAdapter implements RemoteFactCast {
 					observer.onNext(conv.fromProto(f.getFact()));
 					break;
 				case Id:
-					throw new IllegalStateException(
-							"ID Notification recieved, where Fact notification is expected, this is a BUG");
+					observer.onNext(conv.fromProto(f.getId()));
+					break;
 				case Error:
-					observer.onError(new RuntimeException("TODO unknown error"));// TODO
+					observer.onError(new RuntimeException("TODO unknown error "));// TODO
 					break;
 
 				case UNRECOGNIZED:
@@ -111,63 +110,6 @@ public class GrpcFactStoreAdapter implements RemoteFactCast {
 	}
 
 	@Override
-	public CompletableFuture<Subscription> subscribeId(SubscriptionRequest req, IdObserver observer) {
-		// TODO centrally manage
-		RemoteFactStoreStub fs = RemoteFactStoreGrpc.newStub(ManagedChannelBuilder.forAddress("localhost", 6565)
-				.directExecutor().maxInboundMessageSize(32).usePlaintext(true).build());
-
-		CountDownLatch l = new CountDownLatch(1);
-
-		fs.subscribeId(conv.toProto(req, true), new StreamObserver<FactStoreProto.MSG_Notification>() {
-
-			@Override
-			public void onNext(MSG_Notification f) {
-
-				switch (f.getType()) {
-				case Catchup:
-					observer.onCatchup();
-					l.countDown();
-					break;
-				case Complete:
-					observer.onComplete();
-					break;
-				case Id:
-					observer.onNext(conv.fromProto(f.getId()));
-					break;
-				case Fact:
-					throw new IllegalStateException(
-							"Fact Notification recieved, where ID Notification is expected, this is a BUG");
-				case Error:
-					observer.onError(new RuntimeException("TODO unknown error"));// TODO
-					break;
-				}
-			}
-
-			@Override
-			public void onError(Throwable t) {
-				observer.onError(t);
-
-			}
-
-			@Override
-			public void onCompleted() {
-				observer.onComplete();
-			}
-		});
-		// wait until catchup
-		try {
-			l.await();
-		} catch (InterruptedException e) {
-			throw new IllegalStateException(e);
-		}
-
-		Subscription subscription = () -> {
-			// TODO how to cancel?
-		};
-		return CompletableFuture.completedFuture(subscription);
-	}
-
-	@Override
 	public Optional<Fact> fetchById(UUID id) {
 		MSG_Fact fetchById = fc.fetchById(conv.toProto(id));
 		if (!fetchById.getPresent()) {
@@ -182,6 +124,35 @@ public class GrpcFactStoreAdapter implements RemoteFactCast {
 		List<MSG_Fact> mf = factsToPublish.stream().map(conv::toProto).collect(Collectors.toList());
 		MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
 		fc.publish(mfs);
+	}
+
+	@RequiredArgsConstructor
+	static class ObserverBridge<T> implements GenericObserver<T> {
+
+		private final GenericObserver<T> delegate;
+		private final Class<T> type;
+
+		@Override
+		public void onNext(Object f) {
+			delegate.onNext(type.cast(f));
+		}
+
+	}
+
+	@Override
+	public CompletableFuture<Subscription> subscribe(SubscriptionRequest req, IdObserver observer) {
+		if (!req.idOnly()) {
+			throw new IllegalArgumentException();// TODO
+		}
+		return subscribeInternal(req, new ObserverBridge<UUID>(observer, UUID.class));
+	}
+
+	@Override
+	public CompletableFuture<Subscription> subscribe(SubscriptionRequest req, FactObserver observer) {
+		if (req.idOnly()) {
+			throw new IllegalArgumentException();// TODO
+		}
+		return subscribeInternal(req, new ObserverBridge<Fact>(observer, Fact.class));
 	}
 
 }

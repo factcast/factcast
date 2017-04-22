@@ -58,7 +58,8 @@ public class PGSqlFactStoreMT {
 
 			start = System.currentTimeMillis();
 			AtomicInteger found = new AtomicInteger(0);
-			SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("default-ns")).since(startMark.id());
+			SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("default-ns")).asFacts()
+					.since(startMark.id());
 			store.subscribe(req, f -> {
 				found.incrementAndGet();
 			}).get();

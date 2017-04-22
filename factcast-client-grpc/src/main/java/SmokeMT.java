@@ -1,11 +1,10 @@
 import org.factcast.client.grpc.GrpcFactStoreAdapter;
-import org.factcast.core.DefaultFactFactory;
 import org.factcast.core.store.subscription.FactSpec;
 import org.factcast.core.store.subscription.SubscriptionRequest;
+import org.factcast.server.grpc.api.FactObserver;
+import org.factcast.server.grpc.api.IdObserver;
 import org.factcast.server.grpc.api.RemoteFactCast;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -14,8 +13,6 @@ public class SmokeMT {
 	public static void main(String[] args) {
 		Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 		root.setLevel(Level.INFO);
-
-		DefaultFactFactory ff = new DefaultFactFactory(new ObjectMapper());
 
 		RemoteFactCast adapter = new GrpcFactStoreAdapter();
 		// Optional<Fact> fetchById = adapter.fetchById(UUID.randomUUID());
@@ -34,14 +31,16 @@ public class SmokeMT {
 		// System.out.println(adapter.fetchById(mark).isPresent());
 		//
 
-		adapter.subscribeId(SubscriptionRequest.catchup(FactSpec.ns("default")).sinceInception(), f -> {
-			System.err.println("csubId " + f);
+		adapter.subscribe(SubscriptionRequest.catchup(FactSpec.ns("default")).asIds().sinceInception(),
+				(IdObserver) f -> {
+					System.err.println("csubId " + f);
 
-		});
+				});
 
-		adapter.subscribeFact(SubscriptionRequest.catchup(FactSpec.ns("default")).sinceInception(), f -> {
-			System.err.println("csubFact " + f);
-		});
+		adapter.subscribe(SubscriptionRequest.catchup(FactSpec.ns("default")).asFacts().sinceInception(),
+				(FactObserver) f -> {
+					System.err.println("csubFact " + f);
+				});
 
 	}
 }

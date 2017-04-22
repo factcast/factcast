@@ -4,8 +4,6 @@ import static org.junit.Assert.*;
 
 import java.util.UUID;
 
-import org.factcast.core.store.subscription.FactSpec;
-import org.factcast.core.store.subscription.FactSpecMatcher;
 import org.junit.Before;
 import org.junit.Test;
 

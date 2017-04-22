@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.factcast.core.util.FCJson;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,7 +27,7 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 @Getter
 @ToString
-class DefaultFactImpl implements Fact {
+class DefaultFact implements Fact {
 
 	@NonNull
 	private final String jsonHeader;
@@ -38,9 +40,13 @@ class DefaultFactImpl implements Fact {
 	private UUID id;
 	private String type;
 
+	public static Fact of(@NonNull String jsonHeader, @NonNull String jsonPayload){
+		return new DefaultFact(jsonHeader, jsonPayload);
+	}
+	
 	@SneakyThrows
-	public DefaultFactImpl(@NonNull String jsonHeader, @NonNull String jsonPayload, @NonNull ObjectMapper jackson) {
-		header = jackson.readValue(jsonHeader, Header.class);
+	public DefaultFact(@NonNull String jsonHeader, @NonNull String jsonPayload) {
+		header = FCJson.reader().forType(Header.class).readValue(jsonHeader);
 		id = header.id;
 		aggId = header.aggId;
 		ns = header.ns;

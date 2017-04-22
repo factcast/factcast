@@ -6,25 +6,34 @@ import java.util.UUID;
 
 import org.factcast.core.wellknown.MarkFact;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 
 @Accessors(fluent = true)
-@RequiredArgsConstructor(staticName = "ns")
 @Data
+@RequiredArgsConstructor(staticName="ns")
+
 /**
- * Defines a Specification of facts to match for a subscription. 
+ * Defines a Specification of facts to match for a subscription.
+ * 
  * @author usr
  *
  */
 public class FactSpec {
+
 	@NonNull
+	@JsonProperty
 	private final String ns;
-	private String type = null;
+	@JsonProperty
+	 private String type = null;
+	@JsonProperty
 	private UUID aggId = null;
 	@NonNull
+	@JsonProperty
 	private final Map<String, String> meta = new HashMap<>();
 
 	public FactSpec meta(@NonNull String k, @NonNull String v) {
@@ -32,8 +41,15 @@ public class FactSpec {
 		return this;
 	}
 
+	@JsonProperty
 	private String jsFilterScript = null;
+
 	public static FactSpec forMark() {
 		return FactSpec.ns("").type(MarkFact.TYPE);
 	}
+
+	public FactSpec() {
+		this("default");
+	}
+
 }

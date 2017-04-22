@@ -34,4 +34,9 @@ public interface Fact {
 	// TODO add schema
 
 	String meta(String key);
+
+	// hint to where to get the default from
+	static Fact of(@NonNull String jsonHeader, @NonNull String jsonPayload) {
+		return DefaultFact.of(jsonHeader, jsonPayload);
+	}
 }
