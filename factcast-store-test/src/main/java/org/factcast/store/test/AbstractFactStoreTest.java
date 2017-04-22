@@ -12,6 +12,7 @@ import org.factcast.core.FactCast;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactObserver;
 import org.factcast.core.subscription.FactSpec;
+import org.factcast.core.subscription.IdObserver;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.junit.Before;
 import org.junit.Test;
@@ -141,8 +142,9 @@ public abstract class AbstractFactStoreTest {
 	@DirtiesContext
 	public void testAnySubscriptionsMatchesMark() throws Exception {
 		FactObserver ido = mock(FactObserver.class);
-		UUID mark = uut.publishWithMark(
-				Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"no_idea\",\"type\":\"noone_knows\"}", "{}"));
+		UUID mark = uut.publishWithMark(Fact.of(
+				"{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"" + UUID.randomUUID() + "\",\"type\":\"noone_knows\"}",
+				"{}"));
 
 		ArgumentCaptor<Fact> af = ArgumentCaptor.forClass(Fact.class);
 		doNothing().when(ido).onNext(af.capture());
@@ -168,6 +170,23 @@ public abstract class AbstractFactStoreTest {
 		uut.subscribeToFacts(SubscriptionRequest.catchup(REQ_FOO_BAR).sinceInception(), ido).get();
 
 		verify(ido).onNext(any());
+		verify(ido).onCatchup();
+		verify(ido).onComplete();
+		verifyNoMoreInteractions(ido);
+	}
+
+	@Test
+	@DirtiesContext
+	public void testIdOnly() throws Exception {
+		IdObserver ido = mock(IdObserver.class);
+		uut.publish(
+				Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"noone_knows\"}", "{}"));
+		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+				+ "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}", "{}"));
+		FactSpec DEFAULT_NS = FactSpec.ns("default");
+		uut.subscribeToIds(SubscriptionRequest.catchup(DEFAULT_NS).sinceInception(), ido).get();
+
+		verify(ido, times(2)).onNext(any(UUID.class));
 		verify(ido).onCatchup();
 		verify(ido).onComplete();
 		verifyNoMoreInteractions(ido);

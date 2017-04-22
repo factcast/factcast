@@ -10,6 +10,7 @@ import lombok.experimental.UtilityClass;
  * @author usr
  *
  */
+
 @UtilityClass
 @FieldDefaults(level = AccessLevel.PUBLIC, makeFinal = true)
 class PGConstants {
@@ -28,13 +29,22 @@ class PGConstants {
 
 	String PROJECTION_FACT = String.join(", ", COLUMN_SER, COLUMN_HEADER, COLUMN_PAYLOAD, fromHeader(ALIAS_ID),
 			fromHeader(ALIAS_AGGID), fromHeader(ALIAS_NS), fromHeader(ALIAS_TYPE));
+
+	String PROJECTION_ID = String.join(", ", COLUMN_SER, empty(COLUMN_HEADER), empty(COLUMN_PAYLOAD),
+			fromHeader(ALIAS_ID), fromHeader(ALIAS_AGGID), fromHeader(ALIAS_NS), fromHeader(ALIAS_TYPE));
+
 	String INSERT_FACT = "INSERT INTO " + TABLE_FACT + "(" + COLUMN_HEADER + "," + COLUMN_PAYLOAD
 			+ ") VALUES (cast(? as jsonb),cast (? as jsonb))";
+
 	String SELECT_BY_ID = "SELECT " + PROJECTION_FACT + " FROM " + TABLE_FACT + " WHERE " + COLUMN_HEADER
 			+ " @> cast (? as jsonb)";
 
 	private String fromHeader(String attributeName) {
 		return PGConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
+	}
+
+	private String empty(String attributeName) {
+		return "'{}' AS " + attributeName;
 	}
 
 }

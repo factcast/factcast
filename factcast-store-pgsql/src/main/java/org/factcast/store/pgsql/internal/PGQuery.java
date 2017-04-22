@@ -1,13 +1,12 @@
 package org.factcast.store.pgsql.internal;
 
-import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactSpec;
 import org.factcast.core.subscription.FactSpecMatcher;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
@@ -18,7 +17,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
-import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
@@ -47,11 +45,8 @@ class PGQuery {
 
 		log.trace("catching up for " + req);
 
-		List<FactSpec> specs = Lists.newArrayList(req.specs());
-		specs.add(0, FactSpec.forMark());
-
-		if (hasAnyScriptFilters(req)) {
-			postQueryMatcher = FactSpecMatcher.matchesAnyOf(specs);
+		if (req.hasAnyScriptFilters()) {
+			postQueryMatcher = FactSpecMatcher.matchesAnyOf(req.specs());
 		} else {
 			log.trace("post query filtering has been disabled");
 		}
@@ -61,22 +56,24 @@ class PGQuery {
 
 		log.trace("catching up from {}", staringSerial);
 
-		PGQueryBuilder q = new PGQueryBuilder(specs);
+		PGQueryBuilder q = new PGQueryBuilder(req);
 		String sql = q.createSQL();
+		log.trace("subscription sql={}", sql);
 		PreparedStatementSetter setter = q.createStatementSetter(ser);
 
 		RowCallbackHandler rsHandler = rs -> {
 			if (!disconnected.get()) {
 				Fact f = factory.extractData(rs);
 				count.incrementAndGet();
-				log.trace("found potential match {}", f.id());
+				final UUID factId = f.id();
+				log.trace("found potential match {}", factId);
 				// intentionally using short circ. || here
 				if ((postQueryMatcher == null) || postQueryMatcher.test(f)) {
 					hit.incrementAndGet();
 					observer.onNext(f);
-					log.trace("onNext called with id={}", f.id());
+					log.trace("onNext called with id={}", factId);
 				} else {
-					log.trace("filtered id={}", f.id());
+					log.trace("filtered id={}", factId);
 				}
 				this.ser.set(rs.getLong(PGConstants.COLUMN_SER));
 			}
@@ -87,10 +84,6 @@ class PGQuery {
 		};
 
 		return catchupAndFollow(req, observer);
-	}
-
-	private boolean hasAnyScriptFilters(SubscriptionRequest req) {
-		return req.specs().stream().anyMatch(s -> s.jsFilterScript() != null);
 	}
 
 	private Subscription catchupAndFollow(SubscriptionRequest req, FactStoreObserver c) {

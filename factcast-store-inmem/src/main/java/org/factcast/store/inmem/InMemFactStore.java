@@ -1,6 +1,5 @@
 package org.factcast.store.inmem;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -17,16 +16,13 @@ import java.util.stream.Stream;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.FactSpec;
 import org.factcast.core.subscription.FactSpecMatcher;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.springframework.beans.factory.DisposableBean;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 
 import lombok.NonNull;
 
@@ -56,11 +52,9 @@ public class InMemFactStore implements FactStore, DisposableBean {
 		private final Predicate<Fact> matcher;
 		final Consumer<Fact> consumer;
 
-		InMemSubscription(SubscriptionRequest req, Consumer<Fact> consumer) {
+		InMemSubscription(SubscriptionRequestTO req, Consumer<Fact> consumer) {
 			this.consumer = consumer;
-			ArrayList<FactSpec> specs = Lists.newArrayList(req.specs());
-			specs.add(0, FactSpec.forMark());
-			matcher = FactSpecMatcher.matchesAnyOf(specs);
+			matcher = FactSpecMatcher.matchesAnyOf(req.specs());
 		}
 
 		@Override

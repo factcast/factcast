@@ -1,12 +1,12 @@
 package org.factcast.store.pgsql.internal;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.subscription.FactSpec;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
 import lombok.NonNull;
@@ -24,8 +24,15 @@ class PGQueryBuilder {
 
 	// TODO is that possibly interesting to configure?
 	private static final int FETCH_SIZE = 50;
+
+	private final boolean selectIdOnly;
 	@NonNull
-	private final List<FactSpec> specs;
+	private final SubscriptionRequestTO req;
+
+	public PGQueryBuilder(@NonNull SubscriptionRequestTO req) {
+		this.req = req;
+		selectIdOnly = req.idOnly() && !req.hasScriptFilters();
+	}
 
 	PreparedStatementSetter createStatementSetter(AtomicLong ser) {
 
@@ -39,7 +46,7 @@ class PGQueryBuilder {
 
 			// TODO vulnerable of json injection attack
 			int count = 0;
-			for (FactSpec spec : specs) {
+			for (FactSpec spec : req.specs()) {
 
 				p.setString(++count, "{\"ns\": \"" + spec.ns() + "\" }");
 
@@ -67,7 +74,7 @@ class PGQueryBuilder {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("( (1=0) ");
-		specs.forEach(spec -> {
+		req.specs().forEach(spec -> {
 			sb.append("OR ( ");
 
 			sb.append(PGConstants.COLUMN_HEADER + " @> ? ");
@@ -95,7 +102,9 @@ class PGQueryBuilder {
 	}
 
 	String createSQL() {
-		return "SELECT " + PGConstants.PROJECTION_FACT + " FROM " + PGConstants.TABLE_FACT + " WHERE "
-				+ createWhereClause() + " ORDER BY " + PGConstants.COLUMN_SER + " ASC";
+
+		return "SELECT " + (selectIdOnly ? PGConstants.PROJECTION_ID : PGConstants.PROJECTION_FACT) + " FROM "
+				+ PGConstants.TABLE_FACT + " WHERE " + createWhereClause() + "ORDER BY " + PGConstants.COLUMN_SER
+				+ " ASC";
 	}
 }
