@@ -14,27 +14,32 @@ import lombok.experimental.FieldDefaults;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Data
-@Accessors(fluent=true)
+@Accessors(fluent = true)
 @NoArgsConstructor
-public class StoreSubscriptionRequest implements SubscriptionRequest {
+public class SubscriptionRequestTO implements SubscriptionRequest {
 
 	@JsonProperty
 	long maxLatencyInMillis = 100;
-	@JsonProperty boolean continous;
-	@JsonProperty boolean idOnly=false;
-	@JsonProperty UUID startingAfter;
-	@JsonProperty List<FactSpec> specs = new LinkedList<>();
+	@JsonProperty
+	boolean continous;
+	@JsonProperty
+	boolean idOnly = false;
+	@JsonProperty
+	UUID startingAfter;
+	@JsonProperty
+	List<FactSpec> specs = new LinkedList<>();
 
 	public java.util.Optional<UUID> startingAfter() {
 		return java.util.Optional.ofNullable(startingAfter);
 	}
 
-	public StoreSubscriptionRequest(SubscriptionRequest request) {
-		maxLatencyInMillis=request.maxLatencyInMillis();
-		continous=request.continous();
-		idOnly=request.idOnly();
-		startingAfter=request.startingAfter().orElse(null);
-		specs=request.specs();
+	// copy constr. from a SR
+	public SubscriptionRequestTO(SubscriptionRequest request) {
+		maxLatencyInMillis = request.maxLatencyInMillis();
+		continous = request.continous();
+		idOnly = request.idOnly();
+		startingAfter = request.startingAfter().orElse(null);
+		specs = request.specs();
 	}
 
 }

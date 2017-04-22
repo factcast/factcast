@@ -4,7 +4,7 @@ import org.factcast.core.Fact;
 import org.slf4j.LoggerFactory;
 
 /**
- * Observer that consumes either Facts or Fact-Ids
+ * Observer that consumes Facts
  *
  * @author usr
  *

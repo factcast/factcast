@@ -8,8 +8,8 @@ import java.util.function.Predicate;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.subscription.FactSpec;
+import org.factcast.core.store.subscription.FactSpecMatcher;
 import org.factcast.core.store.subscription.FactStoreObserver;
-import org.factcast.core.store.subscription.SpecificationListMatcher;
 import org.factcast.core.store.subscription.Subscription;
 import org.factcast.core.store.subscription.SubscriptionRequest;
 import org.factcast.store.pgsql.internal.PGListener.FactInsertionEvent;
@@ -49,7 +49,7 @@ class PGQuery {
 		specs.add(0, FactSpec.forMark());
 
 		if (hasAnyScriptFilters(req)) {
-			postQueryMatcher = new SpecificationListMatcher(specs);
+			postQueryMatcher = FactSpecMatcher.matchesAnyOf(specs);
 		} else {
 			log.trace("post query filtering has been disabled");
 		}

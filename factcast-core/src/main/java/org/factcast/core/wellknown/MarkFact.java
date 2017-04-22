@@ -18,17 +18,16 @@ import lombok.experimental.FieldDefaults;
  * @author usr
  *
  */
-
 // TODO open ns to be defined by constructor?
-
 @Value
 @Accessors(fluent = true)
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class MarkFact implements Fact {
 
 	public static final String TYPE = "_mark";
+	public static final String NS = "_";
 	UUID id = UUID.randomUUID();
-	String ns = "";
+	String ns = NS;
 	String type = TYPE;
 	UUID aggId = null;
 
@@ -43,14 +42,12 @@ public class MarkFact implements Fact {
 
 	@Override
 	public String jsonHeader() {
-		return String.format("{\"ns\":\"%s\",\"id\":\"%s\",\"type\":\"%s\"}",ns(), id(), type());
+		return String.format("{\"ns\":\"%s\",\"id\":\"%s\",\"type\":\"%s\"}", ns(), id(), type());
 	}
 
 	@Override
 	public String meta(String key) {
 		return null;
 	}
-
-
 
 }

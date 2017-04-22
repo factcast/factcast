@@ -11,8 +11,10 @@ import org.factcast.core.store.subscription.SubscriptionRequest;
 
 import lombok.NonNull;
 
+/**
+ * Read-Only FactStore to be used from consuming clients.
+ */
 public interface ReadFactStore {
-
 	CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequest req, @NonNull FactStoreObserver observer);
 
 	Optional<Fact> fetchById(@NonNull UUID id);

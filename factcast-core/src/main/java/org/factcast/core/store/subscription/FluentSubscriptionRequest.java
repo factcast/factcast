@@ -15,12 +15,18 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
 
+/**
+ * SubscriptionRequest intented to be used by clients for convenience.
+ * 
+ * @author usr
+ *
+ */
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
 @Accessors(fluent = true)
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 @ToString
-public class ClientSubscriptionRequest implements SubscriptionRequest {
+class FluentSubscriptionRequest implements SubscriptionRequest {
 
 	long maxLatencyInMillis = 100;
 	boolean continous;
@@ -30,7 +36,7 @@ public class ClientSubscriptionRequest implements SubscriptionRequest {
 
 	@RequiredArgsConstructor
 	public static class Builder implements SpecBuilder, TypeBuilder {
-		private final ClientSubscriptionRequest toBuild;
+		private final FluentSubscriptionRequest toBuild;
 
 		@Override
 		public SpecBuilder or(@NonNull FactSpec s) {

@@ -11,13 +11,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.subscription.FactSpec;
+import org.factcast.core.store.subscription.FactSpecMatcher;
 import org.factcast.core.store.subscription.FactStoreObserver;
-import org.factcast.core.store.subscription.SpecificationListMatcher;
 import org.factcast.core.store.subscription.Subscription;
 import org.factcast.core.store.subscription.SubscriptionRequest;
 import org.springframework.beans.factory.DisposableBean;
@@ -40,14 +41,14 @@ public class InMemFactStore implements FactStore, DisposableBean {
 	private final ExecutorService es = Executors.newCachedThreadPool();
 
 	private class InMemSubscription implements Subscription, Consumer<Fact> {
-		private final SpecificationListMatcher matcher;
+		private final Predicate<Fact> matcher;
 		final Consumer<Fact> consumer;
 
 		InMemSubscription(SubscriptionRequest req, Consumer<Fact> consumer) {
 			this.consumer = consumer;
 			ArrayList<FactSpec> specs = Lists.newArrayList(req.specs());
 			specs.add(0, FactSpec.forMark());
-			matcher = new SpecificationListMatcher(specs);
+			matcher = FactSpecMatcher.matchesAnyOf(specs);
 		}
 
 		@Override

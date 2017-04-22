@@ -13,23 +13,22 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 
-@Accessors(fluent = true)
-@Data
-@RequiredArgsConstructor(staticName="ns")
-
 /**
  * Defines a Specification of facts to match for a subscription.
  * 
  * @author usr
  *
  */
+@Accessors(fluent = true)
+@Data
+@RequiredArgsConstructor(staticName = "ns")
 public class FactSpec {
 
 	@NonNull
 	@JsonProperty
 	private final String ns;
 	@JsonProperty
-	 private String type = null;
+	private String type = null;
 	@JsonProperty
 	private UUID aggId = null;
 	@NonNull
@@ -45,11 +44,10 @@ public class FactSpec {
 	private String jsFilterScript = null;
 
 	public static FactSpec forMark() {
-		return FactSpec.ns("").type(MarkFact.TYPE);
+		return FactSpec.ns(MarkFact.NS).type(MarkFact.TYPE);
 	}
 
-	public FactSpec() {
+	protected FactSpec() {
 		this("default");
 	}
-
 }

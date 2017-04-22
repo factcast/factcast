@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.UUID;
 
+import org.factcast.core.TestFact;
 import org.junit.Before;
 import org.junit.Test;
 

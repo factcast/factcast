@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.factcast.core.store.subscription.ClientSubscriptionRequest.SpecBuilder;
+import org.factcast.core.store.subscription.FluentSubscriptionRequest.SpecBuilder;
 
 import com.google.common.base.Preconditions;
 
@@ -23,7 +23,7 @@ public interface SubscriptionRequest {
 
 	// hint to where to get the default from
 	public static SpecBuilder follow(@NonNull FactSpec spec) {
-		return new ClientSubscriptionRequest.Builder(new ClientSubscriptionRequest()).follow(spec);
+		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).follow(spec);
 	}
 
 	// hint to where to get the default from
@@ -32,13 +32,13 @@ public interface SubscriptionRequest {
 		Preconditions.checkArgument(maxLatencyInMillis >= 10, "maxLatencyInMillis>=10");
 		Preconditions.checkArgument(maxLatencyInMillis <= 300000, "maxLatencyInMillis<=300000");
 
-		ClientSubscriptionRequest toBuild = new ClientSubscriptionRequest();
+		FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest();
 		toBuild.maxLatencyInMillis = maxLatencyInMillis;
-		return new ClientSubscriptionRequest.Builder(toBuild).follow(spec);
+		return new FluentSubscriptionRequest.Builder(toBuild).follow(spec);
 	}
 
 	// hint to where to get the default from
 	public static SpecBuilder catchup(@NonNull FactSpec spec) {
-		return new ClientSubscriptionRequest.Builder(new ClientSubscriptionRequest()).catchup(spec);
+		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).catchup(spec);
 	}
 }

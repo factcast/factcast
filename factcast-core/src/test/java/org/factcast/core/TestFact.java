@@ -1,10 +1,8 @@
-package org.factcast.core.store.subscription;
+package org.factcast.core;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-import org.factcast.core.Fact;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,7 +21,7 @@ import lombok.experimental.Accessors;
 @Setter
 public class TestFact implements Fact {
 	@JsonProperty
-	UUID id;
+	UUID id = UUID.randomUUID();
 	@JsonProperty
 	UUID aggId;
 	@JsonProperty

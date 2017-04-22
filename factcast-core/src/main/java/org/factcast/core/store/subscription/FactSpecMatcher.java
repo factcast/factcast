@@ -1,8 +1,11 @@
 package org.factcast.core.store.subscription;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -17,12 +20,8 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 
 /**
- * Matches specifications against facts.
+ * Matches facts against specifications.
  * 
- * This will be extended to define more complex rules by matching on arbitrary
- * header fields or event provide a means to do server-side filtering via
- * javascript.
- *
  * @author usr
  *
  */
@@ -116,6 +115,11 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 		ScriptEngine e = engineManager.getEngineByName("nashorn");
 		e.eval("var test=" + js);
 		return e;
+	}
+
+	public static Predicate<Fact> matchesAnyOf(Collection<FactSpec> spec) {
+		List<FactSpecMatcher> matchers = spec.stream().map(FactSpecMatcher::new).collect(Collectors.toList());
+		return f -> matchers.stream().anyMatch(p -> p.test(f));
 	}
 
 }
