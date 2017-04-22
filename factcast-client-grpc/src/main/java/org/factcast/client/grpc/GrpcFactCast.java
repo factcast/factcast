@@ -60,7 +60,6 @@ public class GrpcFactCast implements FactCast {
 
 	private CompletableFuture<Subscription> subscribeInternal(SubscriptionRequestTO req,
 			@SuppressWarnings("rawtypes") GenericObserver observer) {
-		// TODO centrally manage
 
 		CountDownLatch l = new CountDownLatch(1);
 
@@ -79,6 +78,7 @@ public class GrpcFactCast implements FactCast {
 					break;
 				case Complete:
 					observer.onComplete();
+					l.countDown();
 					break;
 
 				case Fact:
@@ -88,11 +88,12 @@ public class GrpcFactCast implements FactCast {
 					observer.onNext(conv.fromProto(f.getId()));
 					break;
 				case Error:
-					observer.onError(new RuntimeException("TODO unknown error "));// TODO
+					l.countDown();
+					observer.onError(new RuntimeException("Server-side Error: \n" + f.getError()));
 					break;
 
 				case UNRECOGNIZED:
-					observer.onError(new RuntimeException("Unrecognized notification type"));
+					observer.onError(new RuntimeException("Unrecognized notification type. THIS IS A BUG!"));
 					break;
 				}
 			}
@@ -108,6 +109,7 @@ public class GrpcFactCast implements FactCast {
 				observer.onComplete();
 			}
 		});
+
 		// wait until catchup
 		try {
 			l.await();
