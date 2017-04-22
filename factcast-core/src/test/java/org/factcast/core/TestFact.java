@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,6 +20,7 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor
 @Getter
 @Setter
+@EqualsAndHashCode(of = "id")
 public class TestFact implements Fact {
 	@JsonProperty
 	UUID id = UUID.randomUUID();
@@ -28,7 +30,7 @@ public class TestFact implements Fact {
 	String type;
 	@JsonProperty
 	String ns = "default";
-	String jsonPayload;
+	String jsonPayload = "{}";
 	@JsonProperty
 	Map<String, String> meta = new HashMap<>();
 
