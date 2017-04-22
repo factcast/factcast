@@ -31,7 +31,6 @@ class PGQuery {
 	private final JdbcTemplate tpl;
 	private final EventBus bus;
 	private final PGFactIdToSerMapper serMapper;
-	private final PGFactFactory factory;
 
 	private final AtomicLong ser = new AtomicLong(0);
 	private final AtomicBoolean disconnected = new AtomicBoolean(false);
@@ -63,7 +62,7 @@ class PGQuery {
 
 		RowCallbackHandler rsHandler = rs -> {
 			if (!disconnected.get()) {
-				Fact f = factory.extractData(rs);
+				Fact f = PGFact.from(rs);
 				count.incrementAndGet();
 				final UUID factId = f.id();
 				log.trace("found potential match {}", factId);

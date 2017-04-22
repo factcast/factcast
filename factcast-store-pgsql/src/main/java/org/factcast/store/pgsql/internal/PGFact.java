@@ -1,5 +1,6 @@
 package org.factcast.store.pgsql.internal;
 
+import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -68,5 +69,20 @@ class PGFact implements Fact {
 	private static class Meta {
 		@JsonProperty
 		Map<String, String> meta = new HashMap<>();
+	}
+
+	@SneakyThrows
+	public static Fact from(ResultSet rs) {
+
+		String id = rs.getString(PGConstants.ALIAS_ID);
+		String aggId = rs.getString(PGConstants.ALIAS_AGGID);
+		String type = rs.getString(PGConstants.ALIAS_TYPE);
+		String ns = rs.getString(PGConstants.ALIAS_NS);
+
+		String jsonHeader = rs.getString(PGConstants.COLUMN_HEADER);
+		String jsonPayload = rs.getString(PGConstants.COLUMN_PAYLOAD);
+
+		return new PGFact(UUID.fromString(id), ns, type, aggId == null ? null : UUID.fromString(aggId), jsonHeader,
+				jsonPayload);
 	}
 }

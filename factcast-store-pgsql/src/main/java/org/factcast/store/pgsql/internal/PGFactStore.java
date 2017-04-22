@@ -32,8 +32,7 @@ class PGFactStore implements FactStore {
 	private static final int BATCH_SIZE = 500;
 	@NonNull
 	private final JdbcTemplate tpl;
-	@NonNull
-	private final PGFactFactory factory;
+
 	@NonNull
 	private final PGSubscriptionFactory sf;
 
@@ -50,7 +49,7 @@ class PGFactStore implements FactStore {
 	}
 
 	private Fact extractFactFromResultSet(ResultSet rs, int rowNum) throws SQLException {
-		return factory.extractData(rs);
+		return PGFact.from(rs);
 	}
 
 	@Override

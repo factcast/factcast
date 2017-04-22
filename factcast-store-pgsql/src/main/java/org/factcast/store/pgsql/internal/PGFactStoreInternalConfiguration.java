@@ -13,7 +13,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.SchedulingConfiguration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 
@@ -55,25 +54,13 @@ public class PGFactStoreInternalConfiguration {
 	}
 
 	@Bean
-	public PGFactFactory pgFactFactory() {
-		return new PGFactFactory();
+	public FactStore factStore(JdbcTemplate tpl, PGSubscriptionFactory queryProvider) {
+		return new PGFactStore(tpl, queryProvider);
 	}
 
 	@Bean
-	public FactStore factStore(JdbcTemplate tpl, PGFactFactory pff, PGSubscriptionFactory queryProvider) {
-		return new PGFactStore(tpl, pff, queryProvider);
-	}
-
-	@Bean
-	public PGSubscriptionFactory pgSubscriptionFactory(JdbcTemplate tpl, EventBus bus, PGFactIdToSerMapper serMapper,
-			PGFactFactory factory) {
-		return new PGSubscriptionFactory(tpl, bus, serMapper, factory);
-	}
-
-	@Bean
-	@ConditionalOnMissingBean(ObjectMapper.class)
-	public ObjectMapper objectMapper() {
-		return new ObjectMapper();
+	public PGSubscriptionFactory pgSubscriptionFactory(JdbcTemplate tpl, EventBus bus, PGFactIdToSerMapper serMapper) {
+		return new PGSubscriptionFactory(tpl, bus, serMapper);
 	}
 
 }

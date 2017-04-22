@@ -17,15 +17,14 @@ import lombok.RequiredArgsConstructor;
  */
 // TODO integrate with PGQuery
 @RequiredArgsConstructor
-public class PGSubscriptionFactory {
+class PGSubscriptionFactory {
 	private final JdbcTemplate tpl;
 
 	private final EventBus bus;
 	private final PGFactIdToSerMapper serMapper;
-	private final PGFactFactory factory;
 
 	public Subscription subscribe(SubscriptionRequestTO req, FactStoreObserver observer) {
-		PGQuery q = new PGQuery(tpl, bus, serMapper, factory);
+		PGQuery q = new PGQuery(tpl, bus, serMapper);
 		return q.run(req, observer);
 	}
 
