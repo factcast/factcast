@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
@@ -31,7 +32,10 @@ public class FactStoreGrpcServiceTest {
 	FactStoreGrpcService uut;
 
 	@Captor
-	ArgumentCaptor<List<Fact>> c;
+	ArgumentCaptor<List<Fact>> acFactList;
+	@Captor
+	ArgumentCaptor<UUID> acUUID;
+
 	ProtoConverter protoConverter = new ProtoConverter();
 
 	@Test(expected = NullPointerException.class)
@@ -44,20 +48,20 @@ public class FactStoreGrpcServiceTest {
 	@Test
 	public void testPublishNone() throws Exception {
 		uut = new FactStoreGrpcService(backend);
-		doNothing().when(backend).publish(c.capture());
+		doNothing().when(backend).publish(acFactList.capture());
 		MSG_Facts r = MSG_Facts.newBuilder().build();
 
 		uut.publish(r, mock(StreamObserver.class));
 
 		verify(backend).publish(anyList());
 
-		assertTrue(c.getValue().isEmpty());
+		assertTrue(acFactList.getValue().isEmpty());
 	}
 
 	@Test
 	public void testPublishSome() throws Exception {
 		uut = new FactStoreGrpcService(backend);
-		doNothing().when(backend).publish(c.capture());
+		doNothing().when(backend).publish(acFactList.capture());
 		Builder b = MSG_Facts.newBuilder();
 
 		TestFact f1 = new TestFact();
@@ -72,7 +76,7 @@ public class FactStoreGrpcServiceTest {
 
 		verify(backend).publish(anyList());
 
-		List<Fact> facts = c.getValue();
+		List<Fact> facts = acFactList.getValue();
 		assertFalse(facts.isEmpty());
 		assertEquals(2, facts.size());
 		assertEquals(f1.id(), facts.get(0).id());
@@ -85,4 +89,12 @@ public class FactStoreGrpcServiceTest {
 		uut.fetchById(null, mock(StreamObserver.class));
 	}
 
+	@Test(expected = NullPointerException.class)
+	public void testFetchById() throws Exception {
+		UUID id = UUID.randomUUID();
+		uut.fetchById(protoConverter.toProto(id), mock(StreamObserver.class));
+
+		verify(backend).fetchById(eq(id));
+
+	}
 }
