@@ -15,28 +15,46 @@ public interface SubscriptionRequest {
 
 	boolean continous();
 
+	boolean ephemeral();
+
 	Optional<UUID> startingAfter();
 
 	List<FactSpec> specs();
 
-	// hint to where to get the default from
-	public static SpecBuilder follow(@NonNull FactSpec spec) {
-		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).follow(spec);
+	// ------------
+
+	public static SpecBuilder ephemeral(@NonNull FactSpec spec) {
+		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(true)).follow(spec);
 	}
 
-	// hint to where to get the default from
-	public static SpecBuilder follow(long maxLatencyInMillis, @NonNull FactSpec spec) {
+	public static SpecBuilder ephemeral(long maxLatencyInMillis, @NonNull FactSpec spec) {
 
-		Preconditions.checkArgument(maxLatencyInMillis >= 10, "maxLatencyInMillis>=10");
-		Preconditions.checkArgument(maxLatencyInMillis <= 300000, "maxLatencyInMillis<=300000");
+		checkMaxDelay(maxLatencyInMillis);
 
-		FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest();
+		FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest(true);
 		toBuild.maxLatencyInMillis = maxLatencyInMillis;
 		return new FluentSubscriptionRequest.Builder(toBuild).follow(spec);
 	}
 
-	// hint to where to get the default from
+	public static SpecBuilder follow(@NonNull FactSpec spec) {
+		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(false)).follow(spec);
+	}
+
+	public static SpecBuilder follow(long maxLatencyInMillis, @NonNull FactSpec spec) {
+
+		checkMaxDelay(maxLatencyInMillis);
+
+		FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest(false);
+		toBuild.maxLatencyInMillis = maxLatencyInMillis;
+		return new FluentSubscriptionRequest.Builder(toBuild).follow(spec);
+	}
+
+	public static void checkMaxDelay(long maxLatencyInMillis) {
+		Preconditions.checkArgument(maxLatencyInMillis >= 10, "maxLatencyInMillis>=10");
+		Preconditions.checkArgument(maxLatencyInMillis <= 300000, "maxLatencyInMillis<=300000");
+	}
+
 	public static SpecBuilder catchup(@NonNull FactSpec spec) {
-		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).catchup(spec);
+		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(false)).catchup(spec);
 	}
 }

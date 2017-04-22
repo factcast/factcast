@@ -43,17 +43,13 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 @Component
 public class GrpcFactCast implements FactCast {
 
-	private final AddressChannelFactory channelFactory;
 	private final RemoteFactStoreBlockingStub blockingStub;
 	private final RemoteFactStoreStub stub;
 
 	GrpcFactCast(AddressChannelFactory channelFactory) {
-		this.channelFactory = channelFactory;
-
 		Channel c = channelFactory.createChannel("factstore");
 		blockingStub = RemoteFactStoreGrpc.newBlockingStub(c);
 		stub = RemoteFactStoreGrpc.newStub(c);
-
 	}
 
 	final ProtoConverter conv = new ProtoConverter();

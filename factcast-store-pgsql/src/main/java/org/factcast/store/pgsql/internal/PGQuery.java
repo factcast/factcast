@@ -41,9 +41,9 @@ class PGQuery {
 	private final AtomicInteger hit = new AtomicInteger(0);
 	private Predicate<Fact> postQueryMatcher;
 
-	Subscription catchup(SubscriptionRequestTO req, FactStoreObserver observer) {
+	Subscription run(SubscriptionRequestTO req, FactStoreObserver observer) {
 
-		log.trace("catching up for " + req);
+		log.trace("initializing for {}", req);
 
 		if (req.hasAnyScriptFilters()) {
 			postQueryMatcher = FactSpecMatcher.matchesAnyOf(req.specs());
@@ -54,7 +54,7 @@ class PGQuery {
 		Long staringSerial = req.startingAfter().map(serMapper::retrieve).orElse(0L);
 		ser.set(staringSerial);
 
-		log.trace("catching up from {}", staringSerial);
+		log.trace("initializing from {}", staringSerial);
 
 		PGQueryBuilder q = new PGQueryBuilder(req);
 		String sql = q.createSQL();
@@ -88,16 +88,13 @@ class PGQuery {
 
 	private Subscription catchupAndFollow(SubscriptionRequest req, FactStoreObserver c) {
 		long start = System.currentTimeMillis();
-		// catchup phase 1 – historic facts
-		if (!disconnected.get()) {
-			log.trace("catchup phase1 - historic Facts");
-			query.run();
+
+		if (req.ephemeral()) {
+			this.ser.set(getLatestFactSer());
+		} else {
+			catchup();
 		}
-		// catchup phase 2 (all since connect)
-		if (!disconnected.get()) {
-			log.trace("catchup phase2 - Facts since connect");
-			query.run();
-		}
+
 		// propagate catchup
 		if (!disconnected.get()) {
 			log.trace("signaling catchup");
@@ -105,6 +102,7 @@ class PGQuery {
 			log.info("Catchup stats: runtime:{}ms, hitRate:{}% (count:{}, hit:{}), highwater:{} ",
 					System.currentTimeMillis() - start, hitRate(), count.get(), hit.get(), ser.get());
 		}
+
 		if (!disconnected.get() && req.continous()) {
 
 			log.info("Entering follow mode for {}", req);
@@ -146,6 +144,23 @@ class PGQuery {
 			c.onComplete();
 			return this::nop;
 		}
+	}
+
+	private void catchup() {
+		// catchup phase 1 – historic facts
+		if (!disconnected.get()) {
+			log.trace("catchup phase1 - historic Facts");
+			query.run();
+		}
+		// catchup phase 2 (all since connect)
+		if (!disconnected.get()) {
+			log.trace("catchup phase2 - Facts since connect");
+			query.run();
+		}
+	}
+
+	private long getLatestFactSer() {
+		return tpl.queryForObject(PGConstants.SELECT_LATEST_SER, Long.class).longValue();
 	}
 
 	private long hitRate() {

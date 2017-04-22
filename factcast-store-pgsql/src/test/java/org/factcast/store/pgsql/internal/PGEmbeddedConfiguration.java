@@ -33,7 +33,7 @@ public class PGEmbeddedConfiguration {
 			PostgresConfig pgConfig = PostgresConfig.defaultWithDbName("embedded", "test", "test");
 			PostgresStarter<PostgresExecutable, PostgresProcess> runtime = PostgresStarter.getDefaultInstance();
 			PostgresExecutable exec = runtime.prepare(pgConfig);
-			PostgresProcess process = exec.start();
+			exec.start();
 
 			ds = new PGDataSource();
 			ds.setUser(pgConfig.credentials().username());

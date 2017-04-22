@@ -4,11 +4,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
-import com.google.common.collect.ImmutableList;
-
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
@@ -24,9 +21,11 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
 @Accessors(fluent = true)
-@NoArgsConstructor(access = AccessLevel.PACKAGE)
 @ToString
+@RequiredArgsConstructor
 class FluentSubscriptionRequest implements SubscriptionRequest {
+
+	final boolean ephemeral;
 
 	long maxLatencyInMillis = 100;
 	boolean continous;
@@ -46,14 +45,12 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
 		@Override
 		public SubscriptionRequest sinceInception() {
-			toBuild.lock();
 			return toBuild;
 		}
 
 		@Override
 		public SubscriptionRequest since(@NonNull UUID id) {
 			toBuild.startingAfter = id;
-			toBuild.lock();
 			return toBuild;
 		}
 
@@ -73,10 +70,6 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
 	public java.util.Optional<UUID> startingAfter() {
 		return java.util.Optional.ofNullable(startingAfter);
-	}
-
-	protected void lock() {
-		specs = ImmutableList.copyOf(specs);
 	}
 
 	public interface SpecBuilder {

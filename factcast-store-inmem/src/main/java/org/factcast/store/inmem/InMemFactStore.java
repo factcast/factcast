@@ -98,7 +98,9 @@ public class InMemFactStore implements FactStore, DisposableBean {
 			FactStoreObserver observer) {
 
 		InMemSubscription s = new InMemSubscription(req, c -> observer.onNext(c));
-		store.values().stream().forEach(s);
+		if (!req.ephemeral()) {
+			store.values().stream().forEach(s);
+		}
 
 		observer.onCatchup();
 

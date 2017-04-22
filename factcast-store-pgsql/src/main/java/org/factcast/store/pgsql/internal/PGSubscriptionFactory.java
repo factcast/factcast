@@ -26,7 +26,7 @@ public class PGSubscriptionFactory {
 
 	public Subscription subscribe(SubscriptionRequestTO req, FactStoreObserver observer) {
 		PGQuery q = new PGQuery(tpl, bus, serMapper, factory);
-		return q.catchup(req, observer);
+		return q.run(req, observer);
 	}
 
 }

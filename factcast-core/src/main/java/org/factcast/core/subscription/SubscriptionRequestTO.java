@@ -25,6 +25,8 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 	@JsonProperty
 	boolean continous;
 	@JsonProperty
+	boolean ephemeral;
+	@JsonProperty
 	boolean idOnly = false;
 	@JsonProperty
 	UUID startingAfter;
@@ -48,6 +50,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 	public SubscriptionRequestTO(SubscriptionRequest request) {
 		maxLatencyInMillis = request.maxLatencyInMillis();
 		continous = request.continous();
+		ephemeral = request.ephemeral();
 		startingAfter = request.startingAfter().orElse(null);
 		specs = new ArrayList<FactSpec>(request.specs());
 		specs.add(FactSpec.forMark());
