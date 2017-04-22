@@ -5,9 +5,9 @@ import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.core.FactObserver;
-import org.factcast.core.IdObserver;
+import org.factcast.core.subscription.FactObserver;
 import org.factcast.core.subscription.FactSpec;
+import org.factcast.core.subscription.IdObserver;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

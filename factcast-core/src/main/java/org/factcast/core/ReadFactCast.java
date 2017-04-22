@@ -4,6 +4,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.factcast.core.subscription.FactObserver;
+import org.factcast.core.subscription.IdObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 

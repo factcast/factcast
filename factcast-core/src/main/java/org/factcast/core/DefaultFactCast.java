@@ -7,7 +7,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.FactObserver;
 import org.factcast.core.subscription.FactStoreObserver;
+import org.factcast.core.subscription.GenericObserver;
+import org.factcast.core.subscription.IdObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 

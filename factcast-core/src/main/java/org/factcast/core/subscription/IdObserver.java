@@ -1,4 +1,4 @@
-package org.factcast.core;
+package org.factcast.core.subscription;
 
 import java.util.UUID;
 

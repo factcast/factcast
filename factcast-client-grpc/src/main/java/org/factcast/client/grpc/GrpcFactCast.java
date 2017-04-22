@@ -9,9 +9,9 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.core.FactObserver;
-import org.factcast.core.GenericObserver;
-import org.factcast.core.IdObserver;
+import org.factcast.core.subscription.FactObserver;
+import org.factcast.core.subscription.GenericObserver;
+import org.factcast.core.subscription.IdObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.server.grpc.api.conv.ProtoConverter;
