@@ -6,6 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
+import org.factcast.core.util.FCJson;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AccessLevel;
@@ -67,5 +69,9 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 		SubscriptionRequestTO t = new SubscriptionRequestTO(req);
 		t.idOnly(true);
 		return t;
+	}
+
+	public SubscriptionRequestTO copy() {
+		return FCJson.copy(this);
 	}
 }

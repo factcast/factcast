@@ -20,7 +20,7 @@ import lombok.NonNull;
  */
 public interface FactStore {
 
-	void publish(@NonNull List<Fact> factsToPublish);
+	public void publish(@NonNull List<? extends Fact> factsToPublish);
 
 	CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO req, @NonNull FactStoreObserver observer);
 

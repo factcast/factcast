@@ -1,5 +1,10 @@
 package org.factcast.core;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -8,6 +13,7 @@ import org.factcast.core.util.FCJson;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -21,6 +27,8 @@ import lombok.experimental.Accessors;
  * probably not optimal considering performance. If you extend FactCast,
  * consider creating a dedicated Fact Impl.
  * 
+ * For caching purposes, this thing should be Externalizable.
+ * 
  * @see PGFact
  * @author usr
  *
@@ -28,18 +36,14 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 @Getter
 @ToString
-class DefaultFact implements Fact {
+public class DefaultFact implements Fact, Externalizable {
 
-	@NonNull
-	private final String jsonHeader;
-	@NonNull
-	private final String jsonPayload;
+	private String jsonHeader;
+	private String jsonPayload;
 	private Header header;
-	private Map<String, String> meta;
-	private String ns;
-	private UUID aggId;
-	private UUID id;
-	private String type;
+
+	public DefaultFact() {
+	}
 
 	public static Fact of(@NonNull String jsonHeader, @NonNull String jsonPayload) {
 		return new DefaultFact(jsonHeader, jsonPayload);
@@ -47,19 +51,20 @@ class DefaultFact implements Fact {
 
 	@SneakyThrows
 	private DefaultFact(@NonNull String jsonHeader, @NonNull String jsonPayload) {
-		header = FCJson.reader().forType(Header.class).readValue(jsonHeader);
-		id = header.id;
-		aggId = header.aggId;
-		ns = header.ns;
-		type = header.type;
-		meta = header.meta;
+
 		this.jsonHeader = jsonHeader;
 		this.jsonPayload = jsonPayload;
+		init(jsonHeader);
+
+	}
+
+	private void init(String jsonHeader) throws IOException, JsonProcessingException {
+		header = FCJson.reader().forType(Header.class).readValue(jsonHeader);
 	}
 
 	@Value
 	@JsonIgnoreProperties(ignoreUnknown = true)
-	public static class Header {
+	public static class Header implements Serializable {
 		@JsonProperty
 		@NonNull
 		final UUID id;
@@ -76,7 +81,40 @@ class DefaultFact implements Fact {
 
 	@Override
 	public String meta(String key) {
-		return meta.get(key);
+		return header.meta.get(key);
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput out) throws IOException {
+		out.writeUTF(jsonHeader);
+		out.writeUTF(jsonPayload);
+	}
+
+	@Override
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+		jsonHeader = in.readUTF();
+		jsonPayload = in.readUTF();
+		init(jsonHeader);
+	}
+
+	@Override
+	public UUID id() {
+		return header.id;
+	}
+
+	@Override
+	public String ns() {
+		return header.ns;
+	}
+
+	@Override
+	public String type() {
+		return header.type;
+	}
+
+	@Override
+	public UUID aggId() {
+		return header.aggId;
 	}
 
 }

@@ -11,7 +11,7 @@ import lombok.NonNull;
 
 public interface FactCast extends ReadFactCast {
 
-	void publish(@NonNull List<Fact> factsToPublish);
+	void publish(@NonNull List<? extends Fact> factsToPublish);
 
 	/// ---------- defaults
 
@@ -58,4 +58,12 @@ public interface FactCast extends ReadFactCast {
 	public static ReadFactCast fromReadOnly(FactStore store) {
 		return new DefaultFactCast(store);
 	}
+
+	// public static FactCast fromCached(FactStore store) {
+	// return new CachingFactCast(new DefaultFactCast(store));
+	// }
+	//
+	// public static ReadFactCast fromReadOnlyCached(FactStore store) {
+	// return new CachingFactCast(new DefaultFactCast(store));
+	// }
 }

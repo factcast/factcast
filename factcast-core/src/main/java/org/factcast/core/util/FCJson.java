@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
 import lombok.NonNull;
+import lombok.SneakyThrows;
 
 /**
  * Statically shared ObjectMapper reader & writer to be used within FactCast for
@@ -38,5 +39,11 @@ public class FCJson {
 
 	public static ObjectWriter writer() {
 		return writer;
+	}
+
+	@SneakyThrows
+	public static <T> T copy(@NonNull T toCopy) {
+		Class<? extends Object> c = toCopy.getClass();
+		return reader.forType(c).readValue(writer.forType(c).writeValueAsString(toCopy));
 	}
 }

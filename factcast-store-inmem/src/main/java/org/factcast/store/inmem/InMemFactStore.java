@@ -84,7 +84,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
 	}
 
 	@Override
-	public synchronized void publish(@NonNull List<Fact> factsToPublish) {
+	public synchronized void publish(@NonNull List<? extends Fact> factsToPublish) {
 		factsToPublish.forEach(f -> {
 			int ser = highwaterMark.incrementAndGet();
 			store.put(ser, f);

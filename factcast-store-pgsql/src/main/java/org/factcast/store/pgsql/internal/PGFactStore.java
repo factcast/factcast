@@ -38,7 +38,7 @@ class PGFactStore implements FactStore {
 
 	@Override
 	@Transactional
-	public void publish(@NonNull List<Fact> factsToPublish) {
+	public void publish(@NonNull List<? extends Fact> factsToPublish) {
 
 		List<Fact> l = Lists.newArrayList(factsToPublish);
 

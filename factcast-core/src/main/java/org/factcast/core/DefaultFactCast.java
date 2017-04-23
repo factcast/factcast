@@ -44,7 +44,7 @@ class DefaultFactCast implements FactCast {
 	}
 
 	@Override
-	public void publish(@NonNull List<Fact> factsToPublish) {
+	public void publish(@NonNull List<? extends Fact> factsToPublish) {
 		store.publish(factsToPublish);
 	}
 

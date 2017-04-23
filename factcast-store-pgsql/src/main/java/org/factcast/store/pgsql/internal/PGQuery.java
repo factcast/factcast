@@ -65,7 +65,9 @@ class PGQuery {
 				Fact f = PGFact.from(rs);
 				count.incrementAndGet();
 				final UUID factId = f.id();
-				log.trace("found potential match {}", factId);
+				if (postQueryMatcher != null) {
+					log.trace("found potential match {}", factId);
+				}
 				// intentionally using short circ. || here
 				if ((postQueryMatcher == null) || postQueryMatcher.test(f)) {
 					hit.incrementAndGet();
