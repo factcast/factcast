@@ -10,11 +10,6 @@ message MSG_UUID {
 	int64 lsb = 2;
 }
 
-// since the powers that be have removed optional/required from protocol version3, there is no way to distinguish an unset string from an empty string.
-// for that reason, we need this wrpper type and ugly code to access it.
-// see https://github.com/grpc/grpc-java/issues/1973
-
-
 message MSG_Notification{
 	enum Type {
 		Fact = 0;
@@ -39,6 +34,7 @@ message MSG_Fact {
 	string header = 2;
 	string payload = 3;
 }
+
 message MSG_Facts {
 	repeated MSG_Fact fact = 1;
 }
