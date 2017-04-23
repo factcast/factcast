@@ -1,4 +1,4 @@
-package org.factcast.client.grpc;
+package org.factcast.example.grpc;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,9 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
-import lombok.experimental.Accessors;
 
-@Accessors(fluent = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

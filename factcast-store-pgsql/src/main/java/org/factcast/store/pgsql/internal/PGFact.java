@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
-import org.factcast.core.util.FCJson;
+import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -62,7 +62,7 @@ class PGFact implements Fact {
 
 	@SneakyThrows
 	private Map<String, String> deser() {
-		Meta deser = FCJson.reader().forType(Meta.class).readValue(jsonHeader);
+		Meta deser = FactCastJson.reader().forType(Meta.class).readValue(jsonHeader);
 		return deser.meta;
 	}
 

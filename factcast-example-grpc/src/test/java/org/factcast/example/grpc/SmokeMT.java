@@ -1,4 +1,4 @@
-package org.factcast.client.grpc;
+package org.factcast.example.grpc;
 
 import java.util.Arrays;
 import java.util.List;
@@ -8,7 +8,6 @@ import org.factcast.client.cache.CachingFactCast;
 import org.factcast.core.subscription.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -23,6 +22,7 @@ import com.yammer.metrics.reporting.ConsoleReporter;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import lombok.RequiredArgsConstructor;
 
 @SpringBootApplication
 @EnableAutoConfiguration
@@ -37,11 +37,11 @@ public class SmokeMT {
 		SpringApplication.run(SmokeMT.class);
 	}
 
+	@RequiredArgsConstructor
 	@Component
 	public static class SmokeMTCommandRunner implements CommandLineRunner {
 
-		@Autowired
-		CachingFactCast fc;
+		final CachingFactCast fc;
 
 		@Override
 		public void run(String... args) throws Exception {

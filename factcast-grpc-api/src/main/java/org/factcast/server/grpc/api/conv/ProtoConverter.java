@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.util.FCJson;
+import org.factcast.core.util.FactCastJson;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_SubscriptionRequest;
@@ -51,12 +51,12 @@ public class ProtoConverter {
 
 	@SneakyThrows
 	public SubscriptionRequestTO fromProto(@NonNull MSG_SubscriptionRequest request) {
-		return FCJson.reader().forType(SubscriptionRequestTO.class).readValue(request.getJson());
+		return FactCastJson.reader().forType(SubscriptionRequestTO.class).readValue(request.getJson());
 	}
 
 	@SneakyThrows
 	public MSG_SubscriptionRequest toProto(SubscriptionRequestTO request) {
-		return MSG_SubscriptionRequest.newBuilder().setJson(FCJson.writer().writeValueAsString(request)).build();
+		return MSG_SubscriptionRequest.newBuilder().setJson(FactCastJson.writer().writeValueAsString(request)).build();
 	}
 
 	public UUID fromProto(MSG_UUID request) {

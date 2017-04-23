@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
  * @author usr
  *
  */
-
+// TODO test
 @RequiredArgsConstructor
 public class CachingFactCast implements FactCast {
 

@@ -8,7 +8,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
-import org.factcast.core.FactCastConfiguration;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
@@ -21,21 +20,17 @@ import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Import;
-import org.springframework.stereotype.Component;
 
 import io.grpc.Channel;
 import io.grpc.stub.StreamObserver;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 
 /**
- * POC
+ * Adapter that implements a FactStore by calling a remote one via GRPC.
  * 
  * @author usr
  *
@@ -43,10 +38,7 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 // TODO cleanup
 
 @Slf4j
-@Component
-@ComponentScan(basePackages = "org.factcast")
-@Import(FactCastConfiguration.class)
-public class GrpcFactStore implements FactStore {
+class GrpcFactStore implements FactStore {
 
 	private final RemoteFactStoreBlockingStub blockingStub;
 	private final RemoteFactStoreStub stub;
@@ -76,26 +68,12 @@ public class GrpcFactStore implements FactStore {
 		blockingStub.publish(mfs);
 	}
 
-	// @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-	// private static class ObserverBridge<T> implements GenericObserver<T> {
-	//
-	// private final GenericObserver<T> delegate;
-	// private final Class<T> type;
-	//
-	// @Override
-	// public void onNext(Object f) {
-	// delegate.onNext(type.cast(f));
-	// }
-	//
-	// }
-
 	@Override
 	public CompletableFuture<Subscription> subscribe(SubscriptionRequestTO req, FactStoreObserver observer) {
 		CountDownLatch l = new CountDownLatch(1);
 
 		stub.subscribe(conv.toProto(req), new StreamObserver<FactStoreProto.MSG_Notification>() {
 
-			@SuppressWarnings("unchecked")
 			@Override
 			public void onNext(MSG_Notification f) {
 
@@ -154,7 +132,6 @@ public class GrpcFactStore implements FactStore {
 	}
 
 	@RequiredArgsConstructor
-	@Accessors(fluent = true)
 	final static class IdOnlyFact implements Fact {
 		@Getter
 		@NonNull

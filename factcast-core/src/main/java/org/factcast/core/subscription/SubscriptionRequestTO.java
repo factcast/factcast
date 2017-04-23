@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
-import org.factcast.core.util.FCJson;
+import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -72,6 +72,6 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 	}
 
 	public SubscriptionRequestTO copy() {
-		return FCJson.copy(this);
+		return FactCastJson.copy(this);
 	}
 }

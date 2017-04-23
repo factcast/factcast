@@ -16,6 +16,8 @@ import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.spring.provider.SpringEmbeddedCacheManager;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +25,17 @@ import org.springframework.context.annotation.Import;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Creates inifinispan cacheManager and configures cache to use for factCast.
+ * 
+ * Note that you can also use infinispan directly via its spring
+ * integration/jcache. This package just exists for having reasonable defaults
+ * without the risk of conflicting with any configuration files.
+ * 
+ * @author usr
+ *
+ */
 
 @Configuration
 @Import({ CachingFactCastConfiguration.class })
@@ -49,10 +62,14 @@ public class FactCastInfinispanConfiguration {
 
 		final SpringEmbeddedCacheManager cm;
 
+		@Autowired
+		@Value("${factcast.cache.infinispan.path:#{systemProperties['java.io.tmpdir']+ '/factcast'}}")
+		String folder;
+
 		@PostConstruct
 		public void init() {
-			final String folder = System.getProperty("java.io.tmpdir") + "/factcast";
-			log.info("initializing infinispan to persistently cache to " + folder);
+			log.info("Infinispan initialization done.");
+			log.info("Configure to persistently cache to '{}'", folder);
 			ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 
 			final PersistenceConfigurationBuilder persistence = configurationBuilder.persistence().passivation(false);

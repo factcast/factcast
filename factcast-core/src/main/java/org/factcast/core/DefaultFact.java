@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.factcast.core.util.FCJson;
+import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -58,7 +58,7 @@ public class DefaultFact implements Fact, Externalizable {
 	}
 
 	private void init(String jsonHeader) throws IOException, JsonProcessingException {
-		header = FCJson.reader().forType(Header.class).readValue(jsonHeader);
+		header = FactCastJson.reader().forType(Header.class).readValue(jsonHeader);
 	}
 
 	@Value

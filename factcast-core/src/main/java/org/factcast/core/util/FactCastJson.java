@@ -18,7 +18,7 @@ import lombok.SneakyThrows;
  *
  */
 
-public class FCJson {
+public class FactCastJson {
 	private final static ObjectMapper objectMapper = new ObjectMapper();
 
 	private static final ObjectReader reader;
