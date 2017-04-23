@@ -27,7 +27,7 @@ class SmokeTestFact implements Fact {
 	@JsonProperty
 	String type;
 	@JsonProperty
-	String ns = "default";
+	String ns = "smoke";
 	String jsonPayload = "{}";
 	@JsonProperty
 	Map<String, String> meta = new HashMap<>();

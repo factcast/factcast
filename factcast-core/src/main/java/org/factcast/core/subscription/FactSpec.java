@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.Accessors;
 
 /**
  * Defines a Specification of facts to match for a subscription.
@@ -19,7 +18,7 @@ import lombok.experimental.Accessors;
  * @author usr
  *
  */
-@Accessors(fluent = true)
+
 @Data
 @RequiredArgsConstructor(staticName = "ns")
 public class FactSpec {

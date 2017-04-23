@@ -15,9 +15,6 @@ import org.factcast.core.Fact;
 
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import lombok.experimental.Accessors;
-
-@Accessors(fluent = true)
 
 /**
  * Matches facts against specifications.

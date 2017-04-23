@@ -16,7 +16,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.ToString;
-import lombok.experimental.Accessors;
 
 /**
  * PG Specific impl of Fact.
@@ -27,7 +26,7 @@ import lombok.experimental.Accessors;
  * @author usr
  *
  */
-@Accessors(fluent = true)
+
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @ToString(of = { "id", "ns", "type", "aggId", "meta" })
 class PGFact implements Fact {

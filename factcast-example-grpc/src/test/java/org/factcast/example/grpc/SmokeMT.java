@@ -1,10 +1,12 @@
 package org.factcast.example.grpc;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.factcast.client.cache.CachingFactCast;
+import org.factcast.core.Fact;
+import org.factcast.core.FactCast;
+import org.factcast.core.subscription.FactObserver;
 import org.factcast.core.subscription.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.slf4j.LoggerFactory;
@@ -41,7 +43,7 @@ public class SmokeMT {
 	@Component
 	public static class SmokeMTCommandRunner implements CommandLineRunner {
 
-		final CachingFactCast fc;
+		final FactCast fc;
 
 		@Override
 		public void run(String... args) throws Exception {
@@ -84,28 +86,43 @@ public class SmokeMT {
 
 			Meter readMeter = r.newMeter(this.getClass(), "readFromRemoteStore", "read", TimeUnit.SECONDS);
 
-			fc.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default")).sinceInception(), f -> {
-				readMeter.mark();
-			});
+			CountDownLatch l = new CountDownLatch(1);
+
+			UUID aggId = UUID.randomUUID();
+			fc.subscribeToFacts(SubscriptionRequest.follow(20000, FactSpec.ns("smoke").aggId(aggId)).sinceInception(),
+					new FactObserver() {
+
+						@Override
+						public void onNext(Fact f) {
+							if (aggId.equals(f.aggId())) {
+								readMeter.mark();
+
+								if (readMeter.count() == 2500) {
+									l.countDown();
+								}
+							}
+						}
+
+						public void onComplete() {
+							System.out.println("COMPLETE");
+							l.countDown();
+						};
+					});
 
 			Meter writeMeter = r.newMeter(this.getClass(), "writeToRemoteStore", "written", TimeUnit.SECONDS);
-			while (true) {
+
+			for (int i = 0; i < 2500; i++) {
 
 				try {
-					List<SmokeTestFact> ten = Arrays.asList(new SmokeTestFact(), new SmokeTestFact(),
-							new SmokeTestFact(),
-
-							new SmokeTestFact(), new SmokeTestFact(), new SmokeTestFact(), new SmokeTestFact(),
-							new SmokeTestFact(), new SmokeTestFact(), new SmokeTestFact());
-
-					fc.publish(ten);
-					writeMeter.mark(10);
+					fc.publish(new SmokeTestFact().aggId(aggId));
+					writeMeter.mark();
 				} catch (Throwable e) {
 					System.err.println(e);
 					Thread.sleep(1000);
 				}
 			}
 
+			l.await();
 		}
 
 	}

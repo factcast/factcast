@@ -7,7 +7,6 @@ import org.factcast.core.Fact;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.Value;
-import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
 
 /**
@@ -20,7 +19,7 @@ import lombok.experimental.FieldDefaults;
  */
 // TODO open ns to be defined by constructor?
 @Value
-@Accessors(fluent = true)
+
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class MarkFact implements Fact {
 

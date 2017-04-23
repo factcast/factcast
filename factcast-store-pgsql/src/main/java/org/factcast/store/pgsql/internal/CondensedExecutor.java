@@ -9,6 +9,7 @@ import com.google.common.annotations.VisibleForTesting;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Executes a given runnable if triggered, but ignores all subsequent triggers
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
  * @author usr
  *
  */
+@Slf4j
 @RequiredArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__(@VisibleForTesting))
 class CondensedExecutor {
@@ -28,17 +30,25 @@ class CondensedExecutor {
 	private final AtomicBoolean currentlyScheduled = new AtomicBoolean(false);
 
 	public void trigger() {
-		if (!currentlyScheduled.getAndSet(true)) {
+		if (maxDelayInMillis < 1) {
+			executeQuery();
+		} else if (!currentlyScheduled.getAndSet(true)) {
 			timer.schedule(new TimerTask() {
 
 				@Override
 				public void run() {
 					currentlyScheduled.set(false);
-					synchronized (target) {
-						target.run();
-					}
+					CondensedExecutor.this.executeQuery();
 				}
 			}, maxDelayInMillis);
+		}
+	}
+
+	protected void executeQuery() {
+		try {
+			target.run();
+		} catch (Throwable e) {
+			log.error("cannot execute query: " + e);
 		}
 	}
 
@@ -46,5 +56,9 @@ class CondensedExecutor {
 		timer.cancel();
 		currentlyScheduled.set(true);
 		timer.purge();
+	}
+
+	public CondensedExecutor(Runnable query) {
+		this(0, query);
 	}
 }

@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
-import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
 
 /**
@@ -20,14 +19,14 @@ import lombok.experimental.FieldDefaults;
  */
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
-@Accessors(fluent = true)
+
 @ToString
 @RequiredArgsConstructor
 class FluentSubscriptionRequest implements SubscriptionRequest {
 
 	final boolean ephemeral;
 
-	long maxLatencyInMillis = 100;
+	long maxBatchDelayInMs = 0;
 	boolean continous;
 	UUID startingAfter;
 	List<FactSpec> specs = new LinkedList<>();

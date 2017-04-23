@@ -11,7 +11,7 @@ import com.google.common.base.Preconditions;
 import lombok.NonNull;
 
 public interface SubscriptionRequest {
-	long maxLatencyInMillis();
+	long maxBatchDelayInMs();
 
 	boolean continous();
 
@@ -27,12 +27,12 @@ public interface SubscriptionRequest {
 		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(true)).follow(spec);
 	}
 
-	public static SpecBuilder ephemeral(long maxLatencyInMillis, @NonNull FactSpec spec) {
+	public static SpecBuilder ephemeral(long maxBatchDelayInMs, @NonNull FactSpec spec) {
 
-		checkMaxDelay(maxLatencyInMillis);
+		checkMaxDelay(maxBatchDelayInMs);
 
 		FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest(true);
-		toBuild.maxLatencyInMillis = maxLatencyInMillis;
+		toBuild.maxBatchDelayInMs = maxBatchDelayInMs;
 		return new FluentSubscriptionRequest.Builder(toBuild).follow(spec);
 	}
 
@@ -40,18 +40,18 @@ public interface SubscriptionRequest {
 		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(false)).follow(spec);
 	}
 
-	public static SpecBuilder follow(long maxLatencyInMillis, @NonNull FactSpec spec) {
+	public static SpecBuilder follow(long maxBatchDelayInMs, @NonNull FactSpec spec) {
 
-		checkMaxDelay(maxLatencyInMillis);
+		checkMaxDelay(maxBatchDelayInMs);
 
 		FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest(false);
-		toBuild.maxLatencyInMillis = maxLatencyInMillis;
+		toBuild.maxBatchDelayInMs = maxBatchDelayInMs;
 		return new FluentSubscriptionRequest.Builder(toBuild).follow(spec);
 	}
 
 	public static void checkMaxDelay(long maxLatencyInMillis) {
-		Preconditions.checkArgument(maxLatencyInMillis >= 10, "maxLatencyInMillis>=10");
-		Preconditions.checkArgument(maxLatencyInMillis <= 300000, "maxLatencyInMillis<=300000");
+		Preconditions.checkArgument(maxLatencyInMillis >= 10, "maxBatchDelayInMs>=10");
+		Preconditions.checkArgument(maxLatencyInMillis <= 30000, "maxBatchDelayInMs<=30000");
 	}
 
 	public static SpecBuilder catchup(@NonNull FactSpec spec) {

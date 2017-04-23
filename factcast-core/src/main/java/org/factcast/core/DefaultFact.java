@@ -19,7 +19,6 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.ToString;
 import lombok.Value;
-import lombok.experimental.Accessors;
 
 /**
  * Note: creating an instance involves deserializing the header from JS. This is
@@ -32,7 +31,7 @@ import lombok.experimental.Accessors;
  * @author usr
  *
  */
-@Accessors(fluent = true)
+
 @Getter
 @ToString
 public class DefaultFact implements Fact, Externalizable {

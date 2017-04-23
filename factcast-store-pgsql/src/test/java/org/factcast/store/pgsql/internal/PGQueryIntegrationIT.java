@@ -29,7 +29,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import com.google.common.eventbus.EventBus;
 
 import lombok.Data;
-import lombok.experimental.Accessors;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { PGEmbeddedConfiguration.class })
@@ -38,7 +37,6 @@ public class PGQueryIntegrationIT {
 
 	private static final FactSpec DEFAULT_SPEC = FactSpec.ns("default-ns").type("type1");
 
-	@Accessors(fluent = true)
 	@Data
 	public static class TestHeader {
 		String id = UUID.randomUUID().toString();

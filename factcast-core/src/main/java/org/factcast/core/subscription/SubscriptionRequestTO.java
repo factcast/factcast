@@ -8,22 +8,22 @@ import java.util.UUID;
 
 import org.factcast.core.util.FactCastJson;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Data
-@Accessors(fluent = true)
 @NoArgsConstructor
+@JsonIgnoreProperties
 public class SubscriptionRequestTO implements SubscriptionRequest {
 
 	@JsonProperty
-	long maxLatencyInMillis = 100;
+	long maxBatchDelayInMs = 0;
 	@JsonProperty
 	boolean continous;
 	@JsonProperty
@@ -50,12 +50,12 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 
 	// copy constr. from a SR
 	public SubscriptionRequestTO(SubscriptionRequest request) {
-		maxLatencyInMillis = request.maxLatencyInMillis();
+		maxBatchDelayInMs = request.maxBatchDelayInMs();
 		continous = request.continous();
 		ephemeral = request.ephemeral();
 		startingAfter = request.startingAfter().orElse(null);
 		specs = new ArrayList<FactSpec>(request.specs());
-		specs.add(FactSpec.forMark());
+		specs.add(0, FactSpec.forMark());
 		specs = Collections.unmodifiableList(specs);
 	}
 
