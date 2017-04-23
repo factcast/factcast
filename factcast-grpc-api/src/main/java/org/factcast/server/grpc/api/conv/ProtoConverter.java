@@ -90,6 +90,4 @@ public class ProtoConverter {
 		return proto.build();
 	}
 
-	
-
 }

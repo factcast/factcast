@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
 //FIXME can be a junit test
 @RunWith(MockitoJUnitRunner.class)
 public class ConnectionTesterTest {
@@ -21,9 +22,9 @@ public class ConnectionTesterTest {
 
 	@Mock
 	PreparedStatement ps;
-	@Mock 
+	@Mock
 	ResultSet rs;
-	
+
 	@Test
 	public void testTest() throws Exception {
 		ConnectionTester tester = new ConnectionTester();
@@ -31,9 +32,9 @@ public class ConnectionTesterTest {
 		when(conn.prepareStatement(anyString())).thenReturn(ps);
 		when(ps.executeQuery()).thenReturn(rs);
 		when(rs.getInt(1)).thenReturn(42);
-		
+
 		assertTrue(tester.test(conn));
-		
+
 		verify(rs).next();
 		verify(rs).getInt(1);
 	}

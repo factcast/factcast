@@ -71,9 +71,8 @@ public class CachingFactCast implements FactCast {
 	}
 
 	@Override
-
 	public Optional<Fact> fetchById(UUID id) {
-		return Optional.ofNullable(lookup.lookup(id));
+		return lookup.lookup(id);
 	}
 
 }

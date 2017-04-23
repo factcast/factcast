@@ -31,7 +31,7 @@ public class EventObserver implements FactStoreObserver {
 	@Override
 	public void onNext(Fact f) {
 		UUID t = f.id();
-		
+
 		final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
 		eventBuilder.name("new-event");
 		String toReturn = t.toString();
