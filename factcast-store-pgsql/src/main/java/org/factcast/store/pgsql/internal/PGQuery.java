@@ -74,9 +74,8 @@ class PGQuery {
 					try {
 						observer.onNext(f);
 					} catch (Throwable e) {
-						log.warn("Exception from observer", e);
+						log.warn("Exception from observer. THIS IS A BUG! Please Report!", e);
 						disconnect(observer);
-
 					}
 					log.trace("onNext called with id={}", factId);
 				} else {

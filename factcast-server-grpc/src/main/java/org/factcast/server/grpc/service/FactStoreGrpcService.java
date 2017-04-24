@@ -3,11 +3,14 @@ package org.factcast.server.grpc.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactStoreObserver;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.server.grpc.api.conv.ProtoConverter;
 import org.factcast.server.grpc.gen.FactStoreProto;
@@ -70,7 +73,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Throwable e) {
 			log.error("Problem while publishing: ", e);
-			responseObserver.onError(e);
+
 		}
 	}
 
@@ -83,14 +86,23 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 		public void onComplete() {
 			log.info("onComplete – sending complete notification");
 			observer.onNext(conv.toCompleteNotification());
-			observer.onCompleted();
+			tryComplete();
 		}
 
 		@Override
 		public void onError(Throwable e) {
 			log.warn("onError – sending Error notification {}", e);
 			observer.onError(e);
-			observer.onCompleted(); // TODO really?
+			tryComplete();
+		}
+
+		private void tryComplete() {
+			try {
+				observer.onCompleted();
+			} catch (Throwable e) {
+				log.trace("Expected exception on completion: ", e);
+			}
+
 		}
 
 		@Override
@@ -104,14 +116,31 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 	@Override
 	public void subscribe(MSG_SubscriptionRequest request, StreamObserver<MSG_Notification> responseObserver) {
 		SubscriptionRequestTO req = conv.fromProto(request);
-		log.trace("subscription for {}", req);
+		log.trace("creating subscription for {}", req);
 		final boolean idOnly = req.idOnly();
-		store.subscribe(req, new ObserverBridge(responseObserver) {
+		final AtomicReference<Subscription> ref = new AtomicReference<>();
 
-			@Override
-			public void onNext(Fact f) {
-				responseObserver.onNext(idOnly ? conv.toIdNotification(f) : conv.toNotification(f));
-			}
-		});
+		try {
+			ref.set(store.subscribe(req, new ObserverBridge(responseObserver) {
+
+				@Override
+				public void onNext(Fact f) {
+					try {
+						responseObserver.onNext(idOnly ? conv.toIdNotification(f) : conv.toNotification(f));
+					} catch (Throwable e) {
+						log.warn("Exception while sending data to stream", e);
+						if (ref.get() != null) {
+							try {
+								ref.get().close();
+							} catch (Exception e1) {
+								// swallow.
+							}
+						}
+					}
+				}
+			}).get());
+		} catch (InterruptedException | ExecutionException e) {
+			log.warn("unexpected exception while subscribing ", e);
+		}
 	}
 }
