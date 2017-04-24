@@ -206,7 +206,7 @@ public abstract class AbstractFactStoreTest {
 
 	@Test
 	@DirtiesContext
-	public void testEmptyStoreFollowNonmMatchingDelayed() throws Exception {
+	public void testEmptyStoreFollowNonMatchingDelayed() throws Exception {
 		FactObserver ido = mock(FactObserver.class);
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"t1\"}", "{}"));
 		uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), ido).get();

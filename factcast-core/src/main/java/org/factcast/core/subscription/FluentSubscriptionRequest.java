@@ -30,6 +30,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 	UUID startingAfter;
 	List<FactSpec> specs = new LinkedList<>();
 	boolean idOnly = false;
+	String jsFilter = null;
 
 	@RequiredArgsConstructor
 	public static class Builder implements SpecBuilder {
@@ -64,6 +65,11 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 			return this;
 		}
 
+		public SpecBuilder jsFilter(@NonNull String s) {
+			toBuild.jsFilter = s;
+			return this;
+		}
+
 	}
 
 	public java.util.Optional<UUID> startingAfter() {
@@ -72,6 +78,8 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
 	public interface SpecBuilder {
 		SpecBuilder or(@NonNull FactSpec s);
+
+		SpecBuilder jsFilter(@NonNull String s);
 
 		SubscriptionRequest since(@NonNull UUID id);
 

@@ -52,8 +52,8 @@ message MSG_OptionalFact{
 	Fact defined by header & payload
 */	
 message MSG_Fact {
-	string header = 2;
-	string payload = 3;
+	string header = 1;
+	string payload = 2;
 }
 
 /**

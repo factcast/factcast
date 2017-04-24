@@ -29,6 +29,8 @@ public interface SubscriptionRequest {
 
 	List<FactSpec> specs();
 
+	// FIXME jsFilter
+
 	// ------------
 
 	public static SpecBuilder ephemeral(@NonNull FactSpec spec) {

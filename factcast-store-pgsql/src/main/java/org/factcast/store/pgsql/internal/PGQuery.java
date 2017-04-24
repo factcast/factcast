@@ -51,10 +51,10 @@ class PGQuery {
 			log.trace("post query filtering has been disabled");
 		}
 
-		Long staringSerial = req.startingAfter().map(serMapper::retrieve).orElse(0L);
-		ser.set(staringSerial);
+		Long startingSerial = req.startingAfter().map(serMapper::retrieve).orElse(0L);
+		ser.set(startingSerial);
 
-		log.trace("initializing from {}", staringSerial);
+		log.trace("initializing from {}", startingSerial);
 
 		PGQueryBuilder q = new PGQueryBuilder(req);
 		String sql = q.createSQL();
@@ -147,6 +147,7 @@ class PGQuery {
 		} else {
 			log.debug("Complete");
 			c.onComplete();
+			// FIXME disc.?
 			return this::nop;
 		}
 	}
