@@ -1,5 +1,7 @@
 package org.factcast.core.util;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -26,6 +28,9 @@ public class FactCastJson {
 	private static final ObjectWriter writer;
 
 	static {
+
+		objectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
+
 		writer = objectMapper.writer();
 		reader = objectMapper.reader();
 	}
@@ -36,7 +41,6 @@ public class FactCastJson {
 	}
 
 	@NonNull
-
 	public static ObjectWriter writer() {
 		return writer;
 	}
