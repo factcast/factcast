@@ -13,21 +13,19 @@ import com.mercateo.common.rest.schemagen.JerseyResource;
 import com.mercateo.common.rest.schemagen.JsonHyperSchema;
 import com.mercateo.common.rest.schemagen.link.LinkMetaFactory;
 import com.mercateo.common.rest.schemagen.types.ObjectWithSchema;
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Component;
 
 @Path("/")
-
+@Component
+@AllArgsConstructor
 public class RootResource implements JerseyResource {
 
-	@Inject
-	private LinkMetaFactory linkMetaFactory;
+	private final RootSchemaCreator schemaCreator;
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public ObjectWithSchema<Void> getRoot() {
-		Optional<Link> eventsLink = linkMetaFactory.createFactoryFor(EventsResource.class).forCall(EventsRel.EVENTS,
-				r -> r.getServerSentEvents(null));
-
-		return ObjectWithSchema.create(null, JsonHyperSchema.from(eventsLink));
-
+		return schemaCreator.forRoot();
 	}
 }
