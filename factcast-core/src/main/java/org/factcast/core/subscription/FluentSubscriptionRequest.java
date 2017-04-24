@@ -19,7 +19,6 @@ import lombok.experimental.FieldDefaults;
  */
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
-
 @ToString
 @RequiredArgsConstructor
 class FluentSubscriptionRequest implements SubscriptionRequest {

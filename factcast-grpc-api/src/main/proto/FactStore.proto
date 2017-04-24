@@ -1,15 +1,22 @@
 syntax = "proto3";
 
 option java_multiple_files = false;
-option java_package = "org.factcast.server.grpc.gen";
+option java_package = "org.factcast.grpc.api.gen";
 option java_outer_classname = "FactStoreProto";
-package org.factcast.server.grpc.gen;
+package org.factcast.grpc.api.gen;
 
+/**
+	defines a UUID with most & least significant bits
+*/
 message MSG_UUID {
 	int64 msb = 1;
 	int64 lsb = 2;
 }
 
+/**
+	A Notification as returned as a stream member from subscribe.
+	Type acts as descriminator. Either a Fact, ID, or one of the signals Catchup/Complete/Error.
+*/
 message MSG_Notification{
 	enum Type {
 		Fact = 0;
@@ -25,32 +32,45 @@ message MSG_Notification{
 	string error = 4;
 }
 
+/**
+	A jackson-serialized Subscription request
+*/
 message MSG_SubscriptionRequest {
 	string json =1;
 }
 
+/**
+	Optional Fact as returned from fetchById
+	fact is only set, if present is true
+*/
 message MSG_OptionalFact{
 	bool present = 1;
 	MSG_Fact fact = 2;
 }
 
+/**
+	Fact defined by header & payload
+*/	
 message MSG_Fact {
 	string header = 2;
 	string payload = 3;
 }
 
+/**
+	List of Facts to publish atomically
+*/
 message MSG_Facts {
 	repeated MSG_Fact fact = 1;
 }
 
+/**
+	void
+*/
 message MSG_Empty {
 }
 
 service RemoteFactStore {
-	rpc subscribe (MSG_SubscriptionRequest) returns (stream MSG_Notification) {
-	}
-	rpc fetchById (MSG_UUID) returns (MSG_OptionalFact) {
-	}
-	rpc publish (MSG_Facts) returns (MSG_Empty) {
-	}
+	rpc subscribe (MSG_SubscriptionRequest) returns (stream MSG_Notification) {}
+	rpc fetchById (MSG_UUID) returns (MSG_OptionalFact) {}
+	rpc publish (MSG_Facts) returns (MSG_Empty) {}
 }

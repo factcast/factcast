@@ -5,6 +5,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
+/**
+ * Spring config that provides a FactCast instance from a FactStore
+ * 
+ * @author usr
+ *
+ */
 @Configuration
 public class FactCastConfiguration {
 

@@ -10,7 +10,6 @@ import lombok.experimental.UtilityClass;
  * @author usr
  *
  */
-
 @UtilityClass
 @FieldDefaults(level = AccessLevel.PUBLIC, makeFinal = true)
 class PGConstants {

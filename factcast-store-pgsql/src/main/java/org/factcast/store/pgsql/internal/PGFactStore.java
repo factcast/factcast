@@ -21,7 +21,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 /**
- * A PostGres based FactStore implementation
+ * A PostgreSQL based FactStore implementation
  * 
  * @author usr
  *

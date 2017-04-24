@@ -12,15 +12,15 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.server.grpc.api.conv.ProtoConverter;
-import org.factcast.server.grpc.gen.FactStoreProto;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Empty;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Facts;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_OptionalFact;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_SubscriptionRequest;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_UUID;
-import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
+import org.factcast.grpc.api.conv.ProtoConverter;
+import org.factcast.grpc.api.gen.FactStoreProto;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
+import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
@@ -109,7 +109,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 			log.info("onCatchup – sending catchup notification");
 			observer.onNext(conv.toCatchupNotification());
 		}
-
 	}
 
 	@Override
@@ -124,7 +123,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 			@Override
 			public void onNext(Fact f) {
 				try {
-					responseObserver.onNext(idOnly ? conv.toIdNotification(f) : conv.toNotification(f));
+					responseObserver.onNext(idOnly ? conv.toNotification(f.id()) : conv.toNotification(f));
 				} catch (Throwable e) {
 					log.warn("Exception while sending data to stream", e);
 					if (ref.get() != null) {

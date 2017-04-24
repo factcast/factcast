@@ -10,6 +10,12 @@ import com.google.common.collect.Lists;
 
 import lombok.NonNull;
 
+/**
+ * tiny helpers to keep FactCast interface clean.
+ * 
+ * @author usr
+ *
+ */
 class Helpers {
 
 	public static List<Fact> toList(@NonNull Fact f) {

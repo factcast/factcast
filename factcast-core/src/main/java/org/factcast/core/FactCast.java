@@ -9,6 +9,15 @@ import org.factcast.core.wellknown.MarkFact;
 
 import lombok.NonNull;
 
+/**
+ * Main interface to work against as a client.
+ * 
+ * FactCast provides methods to publish Facts in a sync/async fashion, as well
+ * as a subscription mechanism to listen for changes and catching up.
+ * 
+ * @author usr
+ *
+ */
 public interface FactCast extends ReadFactCast {
 
 	void publish(@NonNull List<? extends Fact> factsToPublish);
@@ -59,11 +68,4 @@ public interface FactCast extends ReadFactCast {
 		return new DefaultFactCast(store);
 	}
 
-	// public static FactCast fromCached(FactStore store) {
-	// return new CachingFactCast(new DefaultFactCast(store));
-	// }
-	//
-	// public static ReadFactCast fromReadOnlyCached(FactStore store) {
-	// return new CachingFactCast(new DefaultFactCast(store));
-	// }
 }

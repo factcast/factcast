@@ -14,6 +14,7 @@ import org.factcast.core.subscription.SubscriptionRequest;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Integrates local cache for Facts.
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
  *
  */
 // TODO test
+@Slf4j
 @RequiredArgsConstructor
 public class CachingFactCast implements FactCast {
 
@@ -46,6 +48,9 @@ public class CachingFactCast implements FactCast {
 
 	@Override
 	public CompletableFuture<Subscription> subscribeToFacts(SubscriptionRequest req, FactObserver observer) {
+
+		log.debug("changing Fact Subscription to Id subscription for caching single Fact lookups");
+
 		return subscribeToIds(req, new IdObserver() {
 
 			@Override

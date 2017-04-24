@@ -10,6 +10,14 @@ import com.google.common.base.Preconditions;
 
 import lombok.NonNull;
 
+/**
+ * Defines a request for Subscription.
+ * 
+ * see {@link FluentSubscriptionRequest}, {@link SubscriptionRequestTO}
+ * 
+ * @author usr
+ *
+ */
 public interface SubscriptionRequest {
 	long maxBatchDelayInMs();
 
@@ -50,7 +58,6 @@ public interface SubscriptionRequest {
 	}
 
 	public static void checkMaxDelay(long maxLatencyInMillis) {
-		Preconditions.checkArgument(maxLatencyInMillis >= 10, "maxBatchDelayInMs>=10");
 		Preconditions.checkArgument(maxLatencyInMillis <= 30000, "maxBatchDelayInMs<=30000");
 	}
 

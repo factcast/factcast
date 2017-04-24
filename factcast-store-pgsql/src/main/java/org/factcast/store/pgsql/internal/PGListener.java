@@ -30,7 +30,6 @@ import lombok.extern.slf4j.Slf4j;
  * @author usr
  *
  */
-
 @Slf4j
 @RequiredArgsConstructor
 class PGListener implements InitializingBean, DisposableBean {
