@@ -1,5 +1,7 @@
 package org.factcast.client.grpc;
 
+import static io.grpc.stub.ClientCalls.*;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,11 +20,13 @@ import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Facts;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.server.grpc.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
 
 import io.grpc.Channel;
+import io.grpc.ClientCall;
 import io.grpc.stub.StreamObserver;
 import lombok.Getter;
 import lombok.NonNull;
@@ -74,7 +78,8 @@ class GrpcFactStore implements FactStore {
 	public CompletableFuture<Subscription> subscribe(SubscriptionRequestTO req, FactStoreObserver observer) {
 		CountDownLatch l = new CountDownLatch(1);
 
-		stub.subscribe(conv.toProto(req), new StreamObserver<FactStoreProto.MSG_Notification>() {
+		final MSG_SubscriptionRequest request = conv.toProto(req);
+		final StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new StreamObserver<FactStoreProto.MSG_Notification>() {
 
 			@Override
 			public void onNext(MSG_Notification f) {
@@ -119,8 +124,11 @@ class GrpcFactStore implements FactStore {
 			public void onCompleted() {
 				observer.onComplete();
 			}
-		});
+		};
 
+		final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()
+				.newCall(RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions());
+		asyncServerStreamingCall(call, request, responseObserver);
 		// wait until catchup
 		try {
 			l.await();
@@ -130,6 +138,7 @@ class GrpcFactStore implements FactStore {
 
 		// TODO how to close?
 		return CompletableFuture.completedFuture(() -> {
+			call.cancel("Client no longer interested", null);
 		});
 	}
 

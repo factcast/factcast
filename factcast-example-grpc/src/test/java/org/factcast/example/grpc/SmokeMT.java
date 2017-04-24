@@ -1,14 +1,16 @@
 package org.factcast.example.grpc;
 
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.subscription.FactObserver;
 import org.factcast.core.subscription.FactSpec;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.wellknown.MarkFact;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -49,7 +51,9 @@ public class SmokeMT {
 		public void run(String... args) throws Exception {
 			final MetricsRegistry r = new MetricsRegistry();
 			ConsoleReporter consoleReporter = new ConsoleReporter(r, System.err, ((MetricPredicate) (n, me) -> true));
-			consoleReporter.start(1, TimeUnit.SECONDS);
+			Meter readMeter = r.newMeter(this.getClass(), "readFromRemoteStore", "read", TimeUnit.SECONDS);
+			Meter writeMeter = r.newMeter(this.getClass(), "writeToRemoteStore", "written", TimeUnit.SECONDS);
+			// consoleReporter.start(1, TimeUnit.SECONDS);
 
 			// Optional<Fact> fetchById = fc.fetchById(UUID.randomUUID());
 			// System.out.println(fetchById.isPresent());
@@ -84,45 +88,39 @@ public class SmokeMT {
 			// fc.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default")).since(since),
 			// System.err::println);
 
-			Meter readMeter = r.newMeter(this.getClass(), "readFromRemoteStore", "read", TimeUnit.SECONDS);
-
-			CountDownLatch l = new CountDownLatch(1);
-
 			UUID aggId = UUID.randomUUID();
-			fc.subscribeToFacts(SubscriptionRequest.follow(20000, FactSpec.ns("smoke").aggId(aggId)).sinceInception(),
-					new FactObserver() {
+
+			CompletableFuture<Subscription> sub = fc.subscribeToFacts(
+					SubscriptionRequest.follow(FactSpec.ns("smoke").aggId(aggId)).sinceInception(), new FactObserver() {
 
 						@Override
 						public void onNext(Fact f) {
-							if (aggId.equals(f.aggId())) {
-								readMeter.mark();
-
-								if (readMeter.count() == 2500) {
-									l.countDown();
-								}
+							if (!MarkFact.TYPE.equals(f.type())) {
+								System.out.println(f);
 							}
 						}
 
 						public void onComplete() {
 							System.out.println("COMPLETE");
-							l.countDown();
 						};
 					});
 
-			Meter writeMeter = r.newMeter(this.getClass(), "writeToRemoteStore", "written", TimeUnit.SECONDS);
+			System.out.println("writing");
 
-			for (int i = 0; i < 2500; i++) {
+			fc.publish(new SmokeTestFact().aggId(aggId));
 
-				try {
-					fc.publish(new SmokeTestFact().aggId(aggId));
-					writeMeter.mark();
-				} catch (Throwable e) {
-					System.err.println(e);
-					Thread.sleep(1000);
-				}
-			}
+			Thread.sleep(500);
 
-			l.await();
+			System.out.println("closing");
+			sub.get().close();
+			Thread.sleep(500);
+
+			System.out.println("publishing one more");
+			Fact afterClose = new SmokeTestFact().aggId(aggId);
+			fc.publish(afterClose);
+
+			Thread.sleep(3000);
+
 		}
 
 	}

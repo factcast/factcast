@@ -57,7 +57,7 @@ class PGQuery {
 
 		PGQueryBuilder q = new PGQueryBuilder(req);
 		String sql = q.createSQL();
-		log.trace("subscription sql={}", sql);
+		log.debug("subscription sql={}", sql);
 		PreparedStatementSetter setter = q.createStatementSetter(ser);
 
 		RowCallbackHandler rsHandler = rs -> {
