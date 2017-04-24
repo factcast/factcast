@@ -29,8 +29,12 @@ message MSG_SubscriptionRequest {
 	string json =1;
 }
 
-message MSG_Fact {
+message MSG_OptionalFact{
 	bool present = 1;
+	MSG_Fact fact = 2;
+}
+
+message MSG_Fact {
 	string header = 2;
 	string payload = 3;
 }
@@ -45,7 +49,7 @@ message MSG_Empty {
 service RemoteFactStore {
 	rpc subscribe (MSG_SubscriptionRequest) returns (stream MSG_Notification) {
 	}
-	rpc fetchById (MSG_UUID) returns (MSG_Fact) {
+	rpc fetchById (MSG_UUID) returns (MSG_OptionalFact) {
 	}
 	rpc publish (MSG_Facts) returns (MSG_Empty) {
 	}

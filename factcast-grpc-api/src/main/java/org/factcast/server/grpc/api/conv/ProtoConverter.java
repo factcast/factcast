@@ -8,6 +8,8 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification;
+import org.factcast.server.grpc.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.server.grpc.gen.FactStoreProto.MSG_OptionalFact.Builder;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_UUID;
 
@@ -72,22 +74,28 @@ public class ProtoConverter {
 
 	public MSG_Fact toProto(org.factcast.core.Fact factMark) {
 		MSG_Fact.Builder proto = MSG_Fact.newBuilder();
-		proto.setPresent(true);
 		proto.setHeader(factMark.jsonHeader());
 		proto.setPayload(factMark.jsonPayload());
 		return proto.build();
 	}
 
-	public MSG_Fact toProto(Optional<Fact> optionalFact) {
-		MSG_Fact.Builder proto = MSG_Fact.newBuilder();
-		boolean present = optionalFact.isPresent();
+	public MSG_OptionalFact toProto(Optional<Fact> optFact) {
+		Builder proto = MSG_OptionalFact.newBuilder();
+		boolean present = optFact.isPresent();
+
 		proto.setPresent(present);
 		if (present) {
-			Fact fact = optionalFact.get();
-			proto.setHeader(fact.jsonHeader());
-			proto.setPayload(fact.jsonPayload());
+			proto.setFact(toProto(optFact.get()));
 		}
 		return proto.build();
+	}
+
+	public Optional<Fact> fromProto(@NonNull MSG_OptionalFact msg) {
+		if (!msg.getPresent()) {
+			return Optional.empty();
+		} else {
+			return Optional.of(fromProto(msg.getFact()));
+		}
 	}
 
 }

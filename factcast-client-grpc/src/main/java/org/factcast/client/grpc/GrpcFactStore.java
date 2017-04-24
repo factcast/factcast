@@ -17,6 +17,7 @@ import org.factcast.server.grpc.gen.FactStoreProto;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Facts;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification;
+import org.factcast.server.grpc.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
@@ -54,11 +55,11 @@ class GrpcFactStore implements FactStore {
 
 	@Override
 	public Optional<Fact> fetchById(UUID id) {
-		MSG_Fact fetchById = blockingStub.fetchById(conv.toProto(id));
+		MSG_OptionalFact fetchById = blockingStub.fetchById(conv.toProto(id));
 		if (!fetchById.getPresent()) {
 			return Optional.empty();
 		} else {
-			return Optional.ofNullable(conv.fromProto(fetchById));
+			return conv.fromProto(fetchById);
 		}
 	}
 

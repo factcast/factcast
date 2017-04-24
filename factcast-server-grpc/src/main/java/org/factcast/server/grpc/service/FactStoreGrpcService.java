@@ -15,9 +15,9 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.server.grpc.api.conv.ProtoConverter;
 import org.factcast.server.grpc.gen.FactStoreProto;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Empty;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Facts;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification;
+import org.factcast.server.grpc.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.server.grpc.gen.FactStoreProto.MSG_UUID;
 import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
@@ -46,7 +46,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 	private final ProtoConverter conv = new ProtoConverter();
 
 	@Override
-	public void fetchById(MSG_UUID request, StreamObserver<MSG_Fact> responseObserver) {
+	public void fetchById(MSG_UUID request, StreamObserver<MSG_OptionalFact> responseObserver) {
 		try {
 			UUID fromProto = conv.fromProto(request);
 			log.trace("fetchById {}", fromProto);
