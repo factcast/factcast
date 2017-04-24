@@ -1,5 +1,5 @@
 # Proof of Concept
 
-see the [![Build Status](https://travis-ci.org/uweschaefer/factcast.svg?branch=master)](https://travis-ci.org/uweschaefer/factcast) 
-
+[![Build Status](https://travis-ci.org/uweschaefer/factcast.svg?branch=master)](https://travis-ci.org/uweschaefer/factcast) 
+[![MavenCentral](https://img.shields.io/maven-central/v/org.factcast/factcast-server.svg)]
 ... under active development.
