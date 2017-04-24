@@ -3,7 +3,7 @@ package org.factcast.server.grpc.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -102,7 +102,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 			} catch (Throwable e) {
 				log.trace("Expected exception on completion: ", e);
 			}
-
 		}
 
 		@Override
@@ -118,29 +117,27 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 		SubscriptionRequestTO req = conv.fromProto(request);
 		log.trace("creating subscription for {}", req);
 		final boolean idOnly = req.idOnly();
-		final AtomicReference<Subscription> ref = new AtomicReference<>();
+		final AtomicReference<CompletableFuture<Subscription>> ref = new AtomicReference<>();
 
-		try {
-			ref.set(store.subscribe(req, new ObserverBridge(responseObserver) {
+		ref.set(store.subscribe(req, new ObserverBridge(responseObserver) {
 
-				@Override
-				public void onNext(Fact f) {
-					try {
-						responseObserver.onNext(idOnly ? conv.toIdNotification(f) : conv.toNotification(f));
-					} catch (Throwable e) {
-						log.warn("Exception while sending data to stream", e);
-						if (ref.get() != null) {
-							try {
-								ref.get().close();
-							} catch (Exception e1) {
-								// swallow.
-							}
+			@Override
+			public void onNext(Fact f) {
+				try {
+					responseObserver.onNext(idOnly ? conv.toIdNotification(f) : conv.toNotification(f));
+				} catch (Throwable e) {
+					log.warn("Exception while sending data to stream", e);
+					if (ref.get() != null) {
+						try {
+							ref.get().getNow(() -> {
+							}).close();
+						} catch (Exception e1) {
+							// swallow.
 						}
 					}
 				}
-			}).get());
-		} catch (InterruptedException | ExecutionException e) {
-			log.warn("unexpected exception while subscribing ", e);
-		}
+			}
+		}));
+
 	}
 }

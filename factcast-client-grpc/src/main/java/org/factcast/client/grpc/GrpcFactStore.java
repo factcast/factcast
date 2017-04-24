@@ -40,11 +40,12 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 @Slf4j
 class GrpcFactStore implements FactStore {
 
+	private static final String CHANNEL_NAME = "factstore";
 	private final RemoteFactStoreBlockingStub blockingStub;
 	private final RemoteFactStoreStub stub;
 
 	GrpcFactStore(AddressChannelFactory channelFactory) {
-		Channel c = channelFactory.createChannel("factstore");
+		Channel c = channelFactory.createChannel(CHANNEL_NAME);
 		blockingStub = RemoteFactStoreGrpc.newBlockingStub(c);
 		stub = RemoteFactStoreGrpc.newStub(c);
 	}
