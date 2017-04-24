@@ -15,6 +15,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 
+import lombok.AllArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactStoreObserver;
@@ -30,15 +31,18 @@ import com.mercateo.common.rest.schemagen.link.LinkFactory;
 import com.mercateo.common.rest.schemagen.link.LinkMetaFactory;
 import com.mercateo.common.rest.schemagen.link.relation.Rel;
 import com.mercateo.common.rest.schemagen.types.ObjectWithSchema;
+import org.springframework.stereotype.Component;
 
 @Path("events")
+@Component
+@AllArgsConstructor
 public class EventsResource implements JerseyResource {
 
-	@Inject
-	private FactStore readFactStore;
+	private final FactStore readFactStore;
 
-	@Inject
-	private LinkMetaFactory linkMetaFactory;
+	private final EventsSchemaCreator schemaCreator;
+
+	private final EventObserverFactory eventObserverFactory;
 
 	@GET
 	@Produces(SseFeature.SERVER_SENT_EVENTS)
@@ -46,9 +50,8 @@ public class EventsResource implements JerseyResource {
 	public EventOutput getServerSentEvents(
 			@NotNull @Valid @BeanParam SubscriptionRequestParams subscriptionRequestParams) {
 		final EventOutput eventOutput = new EventOutput();
-		LinkFactory<EventsResource> linkFatory = linkMetaFactory.createFactoryFor(EventsResource.class);
 		SubscriptionRequestTO req = subscriptionRequestParams.toRequest();
-		FactStoreObserver observer = new EventObserver(eventOutput, linkFatory);
+		FactStoreObserver observer = eventObserverFactory.createFor(eventOutput);
 		readFactStore.subscribe(req, observer);
 		return eventOutput;
 	}
@@ -61,8 +64,6 @@ public class EventsResource implements JerseyResource {
 		Optional<Fact> fact = readFactStore.fetchById(UUID.fromString(id));
 		FactJson returnValue = fact.map(f -> new FactJson(f.jsonHeader(), f.jsonPayload()))
 				.orElseThrow(NotFoundException::new);
-		Optional<Link> selfLink = linkMetaFactory.createFactoryFor(EventsResource.class).forCall(Rel.SELF,
-				r -> r.getForId(id));
-		return ObjectWithSchema.create(returnValue, JsonHyperSchema.from(selfLink));
+		return schemaCreator.forFactWithId(returnValue, id);
 	}
 }

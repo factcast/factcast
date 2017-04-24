@@ -30,9 +30,9 @@
 			<artifactId>spring-boot-starter-jetty</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.mercateo</groupId>
-			<artifactId>common.rest.schemagen</artifactId>
-			<version>0.18.5</version>
+			<groupId>com.mercateo.rest</groupId>
+			<artifactId>rest-schemagen-spring</artifactId>
+			<version>0.1.17</version>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>

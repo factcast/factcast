@@ -17,7 +17,6 @@ public class FactCastRestApplication extends ResourceConfig {
 		// Register resources and providers using package-scanning.
 		final String resourceBasePackage = "org.factcast.server.rest.resources";
 		packages(resourceBasePackage);
-		LinkFactoryResourceConfig.configure(this);
 		register(NoCacheFilter.class);
 		register(CachableFilter.class);
 	}
