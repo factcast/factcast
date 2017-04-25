@@ -29,15 +29,15 @@ public interface FactCast extends ReadFactCast {
 	}
 
 	default UUID publishWithMark(@NonNull Fact factToPublish) {
-		MarkFact m = new MarkFact();
-		publish(Helpers.toList(factToPublish, m));
-		return m.id();
+		MarkFact mark = new MarkFact();
+		publish(Helpers.toList(factToPublish, mark));
+		return mark.id();
 	}
 
 	default UUID publishWithMark(@NonNull List<Fact> factsToPublish) {
-		MarkFact m = new MarkFact();
-		publish(Helpers.toList(factsToPublish, m));
-		return m.id();
+		MarkFact mark = new MarkFact();
+		publish(Helpers.toList(factsToPublish, mark));
+		return mark.id();
 	}
 
 	// async

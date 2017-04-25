@@ -43,16 +43,16 @@ import net.devh.springboot.autoconfigure.grpc.server.GrpcService;
 public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
 	private final FactStore store;
-	private final ProtoConverter conv = new ProtoConverter();
+	private final ProtoConverter converter = new ProtoConverter();
 
 	@Override
 	public void fetchById(MSG_UUID request, StreamObserver<MSG_OptionalFact> responseObserver) {
 		try {
-			UUID fromProto = conv.fromProto(request);
+			UUID fromProto = converter.fromProto(request);
 			log.trace("fetchById {}", fromProto);
 			Optional<Fact> fetchById = store.fetchById(fromProto);
 			log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "").orElse("NOT "));
-			responseObserver.onNext(conv.toProto(fetchById));
+			responseObserver.onNext(converter.toProto(fetchById));
 			responseObserver.onCompleted();
 		} catch (Throwable e) {
 			responseObserver.onError(e);
@@ -61,7 +61,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
 	@Override
 	public void publish(@NonNull MSG_Facts request, @NonNull StreamObserver<MSG_Empty> responseObserver) {
-		List<Fact> facts = request.getFactList().stream().map(conv::fromProto).collect(Collectors.toList());
+		List<Fact> facts = request.getFactList().stream().map(converter::fromProto).collect(Collectors.toList());
 		final int size = facts.size();
 		log.debug("publish {} fact{}", size, size > 1 ? "s" : "");
 		log.trace("publish {}", facts);
@@ -85,7 +85,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 		@Override
 		public void onComplete() {
 			log.info("onComplete – sending complete notification");
-			observer.onNext(conv.toCompleteNotification());
+			observer.onNext(converter.toCompleteNotification());
 			tryComplete();
 		}
 
@@ -107,13 +107,13 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 		@Override
 		public void onCatchup() {
 			log.info("onCatchup – sending catchup notification");
-			observer.onNext(conv.toCatchupNotification());
+			observer.onNext(converter.toCatchupNotification());
 		}
 	}
 
 	@Override
 	public void subscribe(MSG_SubscriptionRequest request, StreamObserver<MSG_Notification> responseObserver) {
-		SubscriptionRequestTO req = conv.fromProto(request);
+		SubscriptionRequestTO req = converter.fromProto(request);
 		log.trace("creating subscription for {}", req);
 		final boolean idOnly = req.idOnly();
 		final AtomicReference<CompletableFuture<Subscription>> ref = new AtomicReference<>();
@@ -123,7 +123,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 			@Override
 			public void onNext(Fact f) {
 				try {
-					responseObserver.onNext(idOnly ? conv.toNotification(f.id()) : conv.toNotification(f));
+					responseObserver.onNext(idOnly ? converter.toNotification(f.id()) : converter.toNotification(f));
 				} catch (Throwable e) {
 					log.warn("Exception while sending data to stream", e);
 					if (ref.get() != null) {

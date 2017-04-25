@@ -28,7 +28,8 @@ public interface FactStore {
 
 	public void publish(@NonNull List<? extends Fact> factsToPublish);
 
-	CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO req, @NonNull FactStoreObserver observer);
+	CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO request,
+			@NonNull FactStoreObserver observer);
 
 	Optional<Fact> fetchById(@NonNull UUID id);
 

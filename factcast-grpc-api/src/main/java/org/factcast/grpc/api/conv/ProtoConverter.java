@@ -37,24 +37,24 @@ public class ProtoConverter {
 	}
 
 	public MSG_Notification toNotification(Fact t) {
-		org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Builder b = MSG_Notification.newBuilder()
+		org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Builder builder = MSG_Notification.newBuilder()
 				.setType(MSG_Notification.Type.Fact);
-		b.setFact(toProto(t));
-		b.setType(MSG_Notification.Type.Fact);
-		return b.build();
+		builder.setFact(toProto(t));
+		builder.setType(MSG_Notification.Type.Fact);
+		return builder.build();
 
 	}
 
 	public MSG_Notification toNotification(UUID t) {
-		org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Builder b = MSG_Notification.newBuilder()
+		org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Builder builder = MSG_Notification.newBuilder()
 				.setType(MSG_Notification.Type.Id);
-		b.setId(toProto(t));
-		b.setType(MSG_Notification.Type.Id);
-		return b.build();
+		builder.setId(toProto(t));
+		builder.setType(MSG_Notification.Type.Id);
+		return builder.build();
 	}
 
-	public MSG_UUID toProto(@NonNull UUID t) {
-		return MSG_UUID.newBuilder().setLsb(t.getLeastSignificantBits()).setMsb(t.getMostSignificantBits()).build();
+	public MSG_UUID toProto(@NonNull UUID id) {
+		return MSG_UUID.newBuilder().setLsb(id.getLeastSignificantBits()).setMsb(id.getMostSignificantBits()).build();
 	}
 
 	@SneakyThrows

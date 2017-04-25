@@ -60,8 +60,8 @@ class PGFact implements Fact {
 
 	@SneakyThrows
 	private Map<String, String> deser() {
-		Meta deser = FactCastJson.reader().forType(Meta.class).readValue(jsonHeader);
-		return deser.meta;
+		Meta deserializedMeta = FactCastJson.reader().forType(Meta.class).readValue(jsonHeader);
+		return deserializedMeta.meta;
 	}
 
 	// just picks the MetaData from the Header (as we know the rest already
@@ -71,15 +71,15 @@ class PGFact implements Fact {
 	}
 
 	@SneakyThrows
-	public static Fact from(ResultSet rs) {
+	public static Fact from(ResultSet resultSet) {
 
-		String id = rs.getString(PGConstants.ALIAS_ID);
-		String aggId = rs.getString(PGConstants.ALIAS_AGGID);
-		String type = rs.getString(PGConstants.ALIAS_TYPE);
-		String ns = rs.getString(PGConstants.ALIAS_NS);
+		String id = resultSet.getString(PGConstants.ALIAS_ID);
+		String aggId = resultSet.getString(PGConstants.ALIAS_AGGID);
+		String type = resultSet.getString(PGConstants.ALIAS_TYPE);
+		String ns = resultSet.getString(PGConstants.ALIAS_NS);
 
-		String jsonHeader = rs.getString(PGConstants.COLUMN_HEADER);
-		String jsonPayload = rs.getString(PGConstants.COLUMN_PAYLOAD);
+		String jsonHeader = resultSet.getString(PGConstants.COLUMN_HEADER);
+		String jsonPayload = resultSet.getString(PGConstants.COLUMN_PAYLOAD);
 
 		return new PGFact(UUID.fromString(id), ns, type, aggId == null ? null : UUID.fromString(aggId), jsonHeader,
 				jsonPayload);

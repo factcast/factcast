@@ -38,7 +38,7 @@ public class DefaultFact implements Fact, Externalizable {
 	private String jsonHeader;
 	@Getter
 	private String jsonPayload;
-	private Header header;
+	private Header deserializedHeader;
 
 	// needed for Externalizable – do not use !
 	@Deprecated
@@ -59,7 +59,7 @@ public class DefaultFact implements Fact, Externalizable {
 	}
 
 	private void init(@NonNull String jsonHeader) throws IOException, JsonProcessingException {
-		header = FactCastJson.reader().forType(Header.class).readValue(jsonHeader);
+		deserializedHeader = FactCastJson.reader().forType(Header.class).readValue(jsonHeader);
 	}
 
 	@Value
@@ -82,7 +82,7 @@ public class DefaultFact implements Fact, Externalizable {
 
 	@Override
 	public String meta(String key) {
-		return header.meta.get(key);
+		return deserializedHeader.meta.get(key);
 	}
 
 	@Override
@@ -103,22 +103,22 @@ public class DefaultFact implements Fact, Externalizable {
 
 	@Override
 	public UUID id() {
-		return header.id;
+		return deserializedHeader.id;
 	}
 
 	@Override
 	public String ns() {
-		return header.ns;
+		return deserializedHeader.ns;
 	}
 
 	@Override
 	public String type() {
-		return header.type;
+		return deserializedHeader.type;
 	}
 
 	@Override
 	public UUID aggId() {
-		return header.aggId;
+		return deserializedHeader.aggId;
 	}
 
 }

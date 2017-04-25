@@ -27,9 +27,10 @@ class ConnectionTester implements Predicate<java.sql.Connection> {
 	public boolean test(java.sql.Connection connection) {
 
 		if (connection != null) {
-			try (PreparedStatement s = connection.prepareStatement("SELECT 42"); ResultSet rs = s.executeQuery();) {
-				rs.next();
-				return rs.getInt(1) == 42;
+			try (PreparedStatement statement = connection.prepareStatement("SELECT 42");
+					ResultSet resultSet = statement.executeQuery();) {
+				resultSet.next();
+				return resultSet.getInt(1) == 42;
 			} catch (SQLException e) {
 				log.warn("Connection test failed:", e);
 			}

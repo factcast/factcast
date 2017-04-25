@@ -31,36 +31,36 @@ class PGFactStore implements FactStore {
 	// is that interesting to configure?
 	private static final int BATCH_SIZE = 500;
 	@NonNull
-	private final JdbcTemplate tpl;
+	private final JdbcTemplate jdbcTemplate;
 
 	@NonNull
-	private final PGSubscriptionFactory sf;
+	private final PGSubscriptionFactory subscriptionFactory;
 
 	@Override
 	@Transactional
 	public void publish(@NonNull List<? extends Fact> factsToPublish) {
 
-		List<Fact> l = Lists.newArrayList(factsToPublish);
+		List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
 
-		tpl.batchUpdate(PGConstants.INSERT_FACT, l, BATCH_SIZE, (p, f) -> {
-			p.setString(1, f.jsonHeader());
-			p.setString(2, f.jsonPayload());
+		jdbcTemplate.batchUpdate(PGConstants.INSERT_FACT, copiedListOfFacts, BATCH_SIZE, (statement, fact) -> {
+			statement.setString(1, fact.jsonHeader());
+			statement.setString(2, fact.jsonPayload());
 		});
 	}
 
-	private Fact extractFactFromResultSet(ResultSet rs, int rowNum) throws SQLException {
-		return PGFact.from(rs);
+	private Fact extractFactFromResultSet(ResultSet resultSet, int rowNum) throws SQLException {
+		return PGFact.from(resultSet);
 	}
 
 	@Override
-	public CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO req,
+	public CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO request,
 			@NonNull FactStoreObserver observer) {
-		return CompletableFuture.supplyAsync(() -> sf.subscribe(req, observer));
+		return CompletableFuture.supplyAsync(() -> subscriptionFactory.subscribe(request, observer));
 	}
 
 	@Override
 	public Optional<Fact> fetchById(@NonNull UUID id) {
-		return tpl.query(PGConstants.SELECT_BY_ID, new Object[] { "{\"id\":\"" + id + "\"}" },
+		return jdbcTemplate.query(PGConstants.SELECT_BY_ID, new Object[] { "{\"id\":\"" + id + "\"}" },
 				this::extractFactFromResultSet).stream().findFirst();
 	}
 

@@ -29,37 +29,37 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 class PGQuery {
 
-	private final JdbcTemplate tpl;
-	private final EventBus bus;
-	private final PGFactIdToSerMapper serMapper;
+	private final JdbcTemplate jdbcTemplate;
+	private final EventBus eventBus;
+	private final PGFactIdToSerMapper idToSerMapper;
 
-	private final AtomicLong ser = new AtomicLong(0);
+	private final AtomicLong serial = new AtomicLong(0);
 	private final AtomicBoolean disconnected = new AtomicBoolean(false);
-	private CondensedExecutor cExec;
+	private CondensedExecutor condensedExecutor;
 	private Runnable query;
 	private final AtomicInteger count = new AtomicInteger(0);
 	private final AtomicInteger hit = new AtomicInteger(0);
 	private Predicate<Fact> postQueryMatcher;
 
-	Subscription run(SubscriptionRequestTO req, FactStoreObserver observer) {
+	Subscription run(SubscriptionRequestTO request, FactStoreObserver observer) {
 
-		log.trace("initializing for {}", req);
+		log.trace("initializing for {}", request);
 
-		if (req.hasAnyScriptFilters()) {
-			postQueryMatcher = FactSpecMatcher.matchesAnyOf(req.specs());
+		if (request.hasAnyScriptFilters()) {
+			postQueryMatcher = FactSpecMatcher.matchesAnyOf(request.specs());
 		} else {
 			log.trace("post query filtering has been disabled");
 		}
 
-		Long startingSerial = req.startingAfter().map(serMapper::retrieve).orElse(0L);
-		ser.set(startingSerial);
+		Long startingSerial = request.startingAfter().map(idToSerMapper::retrieve).orElse(0L);
+		serial.set(startingSerial);
 
 		log.trace("initializing from {}", startingSerial);
 
-		PGQueryBuilder q = new PGQueryBuilder(req);
+		PGQueryBuilder q = new PGQueryBuilder(request);
 		String sql = q.createSQL();
 		log.debug("subscription sql={}", sql);
-		PreparedStatementSetter setter = q.createStatementSetter(ser);
+		PreparedStatementSetter setter = q.createStatementSetter(serial);
 
 		RowCallbackHandler rsHandler = rs -> {
 			if (isConnected()) {
@@ -82,24 +82,24 @@ class PGQuery {
 				} else {
 					log.trace("filtered id={}", factId);
 				}
-				this.ser.set(rs.getLong(PGConstants.COLUMN_SER));
+				this.serial.set(rs.getLong(PGConstants.COLUMN_SER));
 			}
 		};
 
 		query = () -> {
 			synchronized (PGQuery.this) {
-				tpl.query(sql, setter, rsHandler);
+				jdbcTemplate.query(sql, setter, rsHandler);
 			}
 		};
 
-		return catchupAndFollow(req, observer);
+		return catchupAndFollow(request, observer);
 	}
 
-	private Subscription catchupAndFollow(SubscriptionRequest req, FactStoreObserver c) {
+	private Subscription catchupAndFollow(SubscriptionRequest request, FactStoreObserver factStoreObserver) {
 		long start = System.currentTimeMillis();
 
-		if (req.ephemeral()) {
-			this.ser.set(getLatestFactSer());
+		if (request.ephemeral()) {
+			this.serial.set(getLatestFactSer());
 		} else {
 			catchup();
 		}
@@ -107,46 +107,47 @@ class PGQuery {
 		// propagate catchup
 		if (isConnected()) {
 			log.trace("signaling catchup");
-			c.onCatchup();
+			factStoreObserver.onCatchup();
 			log.info("Catchup stats: runtime:{}ms, hitRate:{}% (count:{}, hit:{}), highwater:{} ",
-					System.currentTimeMillis() - start, hitRate(), count.get(), hit.get(), ser.get());
+					System.currentTimeMillis() - start, hitRate(), count.get(), hit.get(), serial.get());
 		}
 
-		if (isConnected() && req.continous()) {
+		if (isConnected() && request.continous()) {
 
-			log.info("Entering follow mode for {}", req);
+			log.info("Entering follow mode for {}", request);
 			count.set(0);
 			hit.set(0);
 
-			if (req.maxBatchDelayInMs() < 1) {
+			if (request.maxBatchDelayInMs() < 1) {
 				// ok, instant query after NOTIFY
-				cExec = new CondensedExecutor(query);
+				condensedExecutor = new CondensedExecutor(query);
 			} else {
 				// spread consumers, so that they query at different points in
 				// time,
 				// even if they get triggered at the same PIT, and share the
 				// same
 				// latency requirements
-				long delay = (((req.maxBatchDelayInMs() / 4L) * 3L)
-						+ (long) (Math.abs(Math.random() * ((req.maxBatchDelayInMs() / 4)))));
-				log.info("Setting delay for this instance to " + delay + ", maxDelay was " + req.maxBatchDelayInMs());
+				long delay = (((request.maxBatchDelayInMs() / 4L) * 3L)
+						+ (long) (Math.abs(Math.random() * ((request.maxBatchDelayInMs() / 4)))));
+				log.info("Setting delay for this instance to " + delay + ", maxDelay was "
+						+ request.maxBatchDelayInMs());
 
-				cExec = new CondensedExecutor(delay, query);
+				condensedExecutor = new CondensedExecutor(delay, query);
 			}
 
-			bus.register(this);
+			eventBus.register(this);
 			// catchup phase 3 – make sure, we did not miss any fact due to
 			// slow registration
 			if (isConnected()) {
-				cExec.trigger();
+				condensedExecutor.trigger();
 			}
 			return () -> {
-				disconnect(c);
+				disconnect(factStoreObserver);
 			};
 
 		} else {
 			log.debug("Complete");
-			c.onComplete();
+			factStoreObserver.onComplete();
 			// FIXME disc.?
 			return this::nop;
 		}
@@ -155,12 +156,12 @@ class PGQuery {
 	private void disconnect(FactStoreObserver c) {
 		log.info("Disconnecting");
 		disconnected.set(true);
-		if (cExec != null) {
-			cExec.cancel();
+		if (condensedExecutor != null) {
+			condensedExecutor.cancel();
 		}
-		bus.unregister(this);
+		eventBus.unregister(this);
 		log.info("Follow stats: hitRate:{}% (count:{}, hit:{}), highwater:{} ", hitRate(), count.get(), hit.get(),
-				ser.get());
+				serial.get());
 		log.info("Disconnected");
 
 		// TODO strategic decision: consumer.onComplete(); after
@@ -191,7 +192,7 @@ class PGQuery {
 	}
 
 	private long getLatestFactSer() {
-		return tpl.queryForObject(PGConstants.SELECT_LATEST_SER, Long.class).longValue();
+		return jdbcTemplate.queryForObject(PGConstants.SELECT_LATEST_SER, Long.class).longValue();
 	}
 
 	private long hitRate() {
@@ -207,8 +208,8 @@ class PGQuery {
 	@Subscribe
 	public void onEvent(FactInsertionEvent ev) {
 		if (isConnected()) {
-			if (cExec != null) {
-				cExec.trigger();
+			if (condensedExecutor != null) {
+				condensedExecutor.trigger();
 			}
 		}
 	}

@@ -34,17 +34,17 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 class PGListener implements InitializingBean, DisposableBean {
 
-	private final Supplier<PGConnection> connSup;
+	private final Supplier<PGConnection> connectionSupplier;
 
-	private final @NonNull EventBus bus;
+	private final @NonNull EventBus eventBus;
 
-	private final @NonNull Predicate<Connection> tester;
+	private final @NonNull Predicate<Connection> connectionTester;
 
 	private PGConnection connection = null;
 
 	@Scheduled(fixedRate = 10000)
 	public synchronized void check() {
-		if (!tester.test(connection)) {
+		if (!connectionTester.test(connection)) {
 			log.warn("Reconnecting");
 			Connection oldConnection = connection;
 			CompletableFuture.runAsync(() -> {
@@ -62,15 +62,15 @@ class PGListener implements InitializingBean, DisposableBean {
 	private synchronized void listen() {
 
 		try {
-			this.connection = connSup.get();
+			this.connection = connectionSupplier.get();
 			connection.addNotificationListener(this.getClass().getSimpleName(), PGConstants.CHANNEL_NAME,
 					(pid, name, msg) -> {
 						log.trace("Recieved event from pg name={} message={}", name, msg);
-						bus.post(new FactInsertionEvent(name));
+						eventBus.post(new FactInsertionEvent(name));
 
 					});
-			try (PreparedStatement s = connection.prepareStatement("LISTEN " + PGConstants.CHANNEL_NAME);) {
-				s.execute();
+			try (PreparedStatement statement = connection.prepareStatement("LISTEN " + PGConstants.CHANNEL_NAME);) {
+				statement.execute();
 			}
 
 		} catch (Throwable e) {

@@ -33,12 +33,13 @@ import lombok.NonNull;
  * @author usr
  *
  */
+// TODO check id uniqueness
 @Deprecated
 public class InMemFactStore implements FactStore, DisposableBean {
 
 	@VisibleForTesting
 	InMemFactStore(@NonNull ExecutorService es) {
-		this.es = es;
+		this.executorService = es;
 	}
 
 	public InMemFactStore() {
@@ -47,8 +48,8 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
 	private final AtomicInteger highwaterMark = new AtomicInteger(0);
 	private final LinkedHashMap<Integer, Fact> store = new LinkedHashMap<>();
-	private final CopyOnWriteArrayList<InMemSubscription> sub = new CopyOnWriteArrayList<>();
-	private final ExecutorService es;
+	private final CopyOnWriteArrayList<InMemSubscription> activeSubscriptions = new CopyOnWriteArrayList<>();
+	private final ExecutorService executorService;
 
 	private class InMemSubscription implements Subscription, Consumer<Fact> {
 		private final Predicate<Fact> matcher;
@@ -62,7 +63,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
 		@Override
 		public void close() {
 			synchronized (InMemFactStore.this) {
-				sub.remove(this);
+				activeSubscriptions.remove(this);
 			}
 		}
 
@@ -91,7 +92,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
 			int ser = highwaterMark.incrementAndGet();
 			store.put(ser, f);
 
-			sub.parallelStream().forEach(s -> es.submit(() -> s.accept(f)));
+			activeSubscriptions.parallelStream().forEach(s -> executorService.submit(() -> s.accept(f)));
 		});
 	}
 
@@ -107,7 +108,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
 		observer.onCatchup();
 
 		if (req.continous()) {
-			sub.add(s);
+			activeSubscriptions.add(s);
 			return CompletableFuture.completedFuture(s);
 		} else {
 			observer.onComplete();
@@ -119,7 +120,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
 	@Override
 	public synchronized void destroy() throws Exception {
-		es.shutdown();
+		executorService.shutdown();
 	}
 
 }

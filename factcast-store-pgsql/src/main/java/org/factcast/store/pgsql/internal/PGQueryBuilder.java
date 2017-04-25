@@ -27,12 +27,12 @@ class PGQueryBuilder {
 	@NonNull
 	private final SubscriptionRequestTO req;
 
-	public PGQueryBuilder(@NonNull SubscriptionRequestTO req) {
-		this.req = req;
-		selectIdOnly = req.idOnly() && !req.hasScriptFilters();
+	public PGQueryBuilder(@NonNull SubscriptionRequestTO request) {
+		this.req = request;
+		selectIdOnly = request.idOnly() && !request.hasScriptFilters();
 	}
 
-	PreparedStatementSetter createStatementSetter(AtomicLong ser) {
+	PreparedStatementSetter createStatementSetter(AtomicLong serial) {
 
 		return p -> {
 			// be conservative, less ram and fetching from db is less of a
@@ -64,7 +64,7 @@ class PGQueryBuilder {
 				}
 			}
 
-			p.setLong(++count, ser.get());
+			p.setLong(++count, serial.get());
 		};
 	}
 

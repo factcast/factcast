@@ -33,13 +33,13 @@ public class PGFactStoreInternalConfiguration {
 	}
 
 	@Bean
-	public PGFactIdToSerMapper pgEventIdToSerMapper(JdbcTemplate tpl) {
-		return new PGFactIdToSerMapper(tpl);
+	public PGFactIdToSerMapper pgEventIdToSerMapper(JdbcTemplate jdbcTemplate) {
+		return new PGFactIdToSerMapper(jdbcTemplate);
 	}
 
 	@Bean
-	public PGListener pgSqlListener(EventBus bus, EnvironmentPGConnectionSupplier connSup) {
-		return new PGListener(connSup, bus, new ConnectionTester());
+	public PGListener pgSqlListener(EventBus eventBus, EnvironmentPGConnectionSupplier connectionSupplier) {
+		return new PGListener(connectionSupplier, eventBus, new ConnectionTester());
 	}
 
 	@Bean
@@ -54,13 +54,14 @@ public class PGFactStoreInternalConfiguration {
 	}
 
 	@Bean
-	public FactStore factStore(JdbcTemplate tpl, PGSubscriptionFactory queryProvider) {
-		return new PGFactStore(tpl, queryProvider);
+	public FactStore factStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory queryProvider) {
+		return new PGFactStore(jdbcTemplate, queryProvider);
 	}
 
 	@Bean
-	public PGSubscriptionFactory pgSubscriptionFactory(JdbcTemplate tpl, EventBus bus, PGFactIdToSerMapper serMapper) {
-		return new PGSubscriptionFactory(tpl, bus, serMapper);
+	public PGSubscriptionFactory pgSubscriptionFactory(JdbcTemplate jdbcTemplate, EventBus eventBus,
+			PGFactIdToSerMapper serMapper) {
+		return new PGSubscriptionFactory(jdbcTemplate, eventBus, serMapper);
 	}
 
 }

@@ -31,7 +31,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 	private final UUID aggId;
 	private final Map<String, String> meta;
 	private final String script;
-	private final ScriptEngine engine;
+	private final ScriptEngine scriptEngine;
 
 	public FactSpecMatcher(@NonNull FactSpec spec) {
 
@@ -46,7 +46,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 		meta = spec.meta().isEmpty() ? null : spec.meta();
 		script = spec.jsFilterScript();
 
-		engine = getEngine(script);
+		scriptEngine = getEngine(script);
 	}
 
 	public boolean test(Fact t) {
@@ -84,8 +84,8 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 		if (aggId == null) {
 			return true;
 		}
-		UUID otheraggId = t.aggId();
-		return aggId.equals(otheraggId);
+		UUID otherAggId = t.aggId();
+		return aggId.equals(otherAggId);
 	}
 
 	@SneakyThrows
@@ -94,7 +94,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 			return true;
 		}
 
-		Boolean jsEval = (Boolean) engine.eval("test(" + t.jsonHeader() + "," + t.jsonPayload() + ")");
+		Boolean jsEval = (Boolean) scriptEngine.eval("test(" + t.jsonHeader() + "," + t.jsonPayload() + ")");
 		return jsEval;
 	}
 
@@ -105,9 +105,9 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 			return null;
 		}
 
-		ScriptEngine e = engineManager.getEngineByName("nashorn");
-		e.eval("var test=" + js);
-		return e;
+		ScriptEngine engine = engineManager.getEngineByName("nashorn");
+		engine.eval("var test=" + js);
+		return engine;
 	}
 
 	public static Predicate<Fact> matchesAnyOf(Collection<FactSpec> spec) {

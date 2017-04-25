@@ -50,28 +50,28 @@ class GrpcFactStore implements FactStore {
 	private final RemoteFactStoreStub stub;
 
 	GrpcFactStore(@NonNull AddressChannelFactory channelFactory) {
-		Channel c = channelFactory.createChannel(CHANNEL_NAME);
-		blockingStub = RemoteFactStoreGrpc.newBlockingStub(c);
-		stub = RemoteFactStoreGrpc.newStub(c);
+		Channel channel = channelFactory.createChannel(CHANNEL_NAME);
+		blockingStub = RemoteFactStoreGrpc.newBlockingStub(channel);
+		stub = RemoteFactStoreGrpc.newStub(channel);
 	}
 
-	final ProtoConverter conv = new ProtoConverter();
+	final ProtoConverter converter = new ProtoConverter();
 
 	@Override
 	public Optional<Fact> fetchById(UUID id) {
 		log.trace("fetching {} from remote store", id);
-		MSG_OptionalFact fetchById = blockingStub.fetchById(conv.toProto(id));
+		MSG_OptionalFact fetchById = blockingStub.fetchById(converter.toProto(id));
 		if (!fetchById.getPresent()) {
 			return Optional.empty();
 		} else {
-			return conv.fromProto(fetchById);
+			return converter.fromProto(fetchById);
 		}
 	}
 
 	@Override
 	public void publish(@NonNull List<? extends Fact> factsToPublish) {
 		log.trace("publishing {} facts to remote store", factsToPublish.size());
-		List<MSG_Fact> mf = factsToPublish.stream().map(conv::toProto).collect(Collectors.toList());
+		List<MSG_Fact> mf = factsToPublish.stream().map(converter::toProto).collect(Collectors.toList());
 		MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
 		blockingStub.publish(mfs);
 	}
@@ -79,9 +79,9 @@ class GrpcFactStore implements FactStore {
 	@Override
 	public CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO req,
 			@NonNull FactStoreObserver observer) {
-		CountDownLatch l = new CountDownLatch(1);
+		CountDownLatch latch = new CountDownLatch(1);
 
-		final MSG_SubscriptionRequest request = conv.toProto(req);
+		final MSG_SubscriptionRequest request = converter.toProto(req);
 		final StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new StreamObserver<FactStoreProto.MSG_Notification>() {
 
 			@Override
@@ -91,29 +91,29 @@ class GrpcFactStore implements FactStore {
 
 				switch (f.getType()) {
 				case Catchup:
-					l.countDown();
+					latch.countDown();
 					observer.onCatchup();
 					break;
 				case Complete:
-					l.countDown();
+					latch.countDown();
 					observer.onComplete();
 					break;
 				case Error:
-					l.countDown();
+					latch.countDown();
 					observer.onError(new RuntimeException("Server-side Error: \n" + f.getError()));
 					break;
 
 				case Fact:
-					observer.onNext(conv.fromProto(f.getFact()));
+					observer.onNext(converter.fromProto(f.getFact()));
 					break;
 
 				case Id:
 					// wrap id in a fact
-					observer.onNext(new IdOnlyFact(conv.fromProto(f.getId())));
+					observer.onNext(new IdOnlyFact(converter.fromProto(f.getId())));
 					break;
 
 				case UNRECOGNIZED:
-					l.countDown();
+					latch.countDown();
 					observer.onError(new RuntimeException("Unrecognized notification type. THIS IS A BUG!"));
 					break;
 				}
@@ -137,7 +137,7 @@ class GrpcFactStore implements FactStore {
 
 		// wait until catchup
 		try {
-			l.await();
+			latch.await();
 		} catch (InterruptedException e) {
 			throw new IllegalStateException(e);
 		}
