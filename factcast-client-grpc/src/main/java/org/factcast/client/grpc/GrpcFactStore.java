@@ -70,10 +70,14 @@ class GrpcFactStore implements FactStore {
 
 	@Override
 	public void publish(@NonNull List<? extends Fact> factsToPublish) {
-		log.trace("publishing {} facts to remote store", factsToPublish.size());
-		List<MSG_Fact> mf = factsToPublish.stream().map(converter::toProto).collect(Collectors.toList());
-		MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
-		blockingStub.publish(mfs);
+		try {
+			log.trace("publishing {} facts to remote store", factsToPublish.size());
+			List<MSG_Fact> mf = factsToPublish.stream().map(converter::toProto).collect(Collectors.toList());
+			MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
+			blockingStub.publish(mfs);
+		} catch (Exception e) {
+			log.warn("failed to publish {} facts: {}", factsToPublish.size(), e);
+		}
 	}
 
 	@Override
@@ -92,14 +96,17 @@ class GrpcFactStore implements FactStore {
 				switch (f.getType()) {
 				case Catchup:
 					latch.countDown();
+					log.debug("received onCatchup signal");
 					observer.onCatchup();
 					break;
 				case Complete:
 					latch.countDown();
+					log.debug("received onComplete signal");
 					observer.onComplete();
 					break;
 				case Error:
 					latch.countDown();
+					log.debug("received onError signal");
 					observer.onError(new RuntimeException("Server-side Error: \n" + f.getError()));
 					break;
 
@@ -139,12 +146,18 @@ class GrpcFactStore implements FactStore {
 		try {
 			latch.await();
 		} catch (InterruptedException e) {
-			throw new IllegalStateException(e);
+			cancel(call);
+			return CompletableFuture.completedFuture(() -> {
+			});
 		}
 
 		return CompletableFuture.completedFuture(() -> {
-			call.cancel("Client is no longer interested", null);
+			cancel(call);
 		});
+	}
+
+	private void cancel(final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call) {
+		call.cancel("Client is no longer interested", null);
 	}
 
 	@RequiredArgsConstructor

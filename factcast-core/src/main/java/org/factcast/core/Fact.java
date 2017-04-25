@@ -14,6 +14,7 @@ import lombok.NonNull;
  * @author usr
  *
  */
+// TODO add schema
 public interface Fact {
 
 	@NonNull
@@ -31,7 +32,6 @@ public interface Fact {
 
 	@NonNull
 	String jsonPayload();
-	// TODO add schema
 
 	String meta(String key);
 

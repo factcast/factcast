@@ -20,7 +20,6 @@ import lombok.NonNull;
  */
 class PGQueryBuilder {
 
-	// TODO is that possibly interesting to configure?
 	private static final int FETCH_SIZE = 50;
 
 	private final boolean selectIdOnly;
@@ -29,14 +28,14 @@ class PGQueryBuilder {
 
 	public PGQueryBuilder(@NonNull SubscriptionRequestTO request) {
 		this.req = request;
-		selectIdOnly = request.idOnly() && !request.hasScriptFilters();
+		selectIdOnly = request.idOnly() && !request.hasAnyScriptFilters();
 	}
 
 	PreparedStatementSetter createStatementSetter(AtomicLong serial) {
 
 		return p -> {
-			// be conservative, less ram and fetching from db is less of a
-			// problem than serializing to the client
+			// be conservative, less ram and fetching from db often is less of a
+			// problem than serializing to the client.
 			//
 			// Note, that by sync. calling the Observer, backpressure is kind of
 			// built-in.

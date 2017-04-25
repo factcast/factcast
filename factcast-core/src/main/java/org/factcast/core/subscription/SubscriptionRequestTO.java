@@ -47,13 +47,8 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 	@JsonProperty
 	final List<FactSpec> specs = new LinkedList<>(Arrays.asList(FactSpec.forMark()));
 
-	transient Boolean hasScriptFilters;
-
 	public boolean hasAnyScriptFilters() {
-		if (hasScriptFilters == null) {
-			hasScriptFilters = specs.stream().anyMatch(s -> s.jsFilterScript() != null);
-		}
-		return hasScriptFilters;
+		return specs.stream().anyMatch(s -> s.jsFilterScript() != null);
 	}
 
 	public java.util.Optional<UUID> startingAfter() {

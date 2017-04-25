@@ -33,7 +33,7 @@ public class CondensedExecutorTest {
 
 	@Test
 	public void testDelayedExecution() throws Exception {
-		CondensedExecutor uut = new CondensedExecutor(1, callback, mockTimer);
+		CondensedExecutor uut = new CondensedExecutor(1, callback, () -> true, mockTimer);
 
 		uut.trigger();
 		verify(mockTimer).schedule(anyObject(), eq(1L));
@@ -44,7 +44,7 @@ public class CondensedExecutorTest {
 
 	@Test
 	public void testDelayedMultipleExecution() throws Exception {
-		CondensedExecutor uut = new CondensedExecutor(22, callback, mockTimer);
+		CondensedExecutor uut = new CondensedExecutor(22, callback, () -> true, mockTimer);
 
 		verify(mockTimer, never()).schedule(anyObject(), anyLong());
 
@@ -59,7 +59,7 @@ public class CondensedExecutorTest {
 
 	@Test
 	public void testDelayedCondensedExecution() throws Exception {
-		CondensedExecutor uut = new CondensedExecutor(104, callback, mockTimer);
+		CondensedExecutor uut = new CondensedExecutor(104, callback, () -> true, mockTimer);
 
 		// not yet scheduled anything
 		verify(mockTimer, never()).schedule(anyObject(), anyLong());
