@@ -34,6 +34,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercateo.common.rest.schemagen.JerseyResource;
+import com.mercateo.common.rest.schemagen.link.LinkFactoryContext;
 import com.mercateo.common.rest.schemagen.types.ObjectWithSchema;
 
 import lombok.AllArgsConstructor;
@@ -56,6 +57,8 @@ public class EventsResource implements JerseyResource {
 
 	private final EventObserverFactory eventObserverFactory;
 
+	private final LinkFactoryContext linkFactoryContext;
+
 	@GET
 	@Produces(SseFeature.SERVER_SENT_EVENTS)
 	@NoCache
@@ -63,7 +66,7 @@ public class EventsResource implements JerseyResource {
 			@NotNull @Valid @BeanParam SubscriptionRequestParams subscriptionRequestParams) {
 		final EventOutput eventOutput = new EventOutput();
 		SubscriptionRequestTO req = subscriptionRequestParams.toRequest();
-		FactStoreObserver observer = eventObserverFactory.createFor(eventOutput);
+		FactStoreObserver observer = eventObserverFactory.createFor(eventOutput, linkFactoryContext.getBaseUri());
 		factStore.subscribe(req, observer);
 		return eventOutput;
 	}

@@ -1,10 +1,14 @@
 package org.factcast.server.rest.resources;
 
-import com.mercateo.common.rest.schemagen.link.LinkFactory;
-import com.mercateo.common.rest.schemagen.types.HyperSchemaCreator;
-import lombok.AllArgsConstructor;
+import java.net.URI;
+
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.springframework.stereotype.Component;
+
+import com.mercateo.common.rest.schemagen.link.LinkFactory;
+import com.mercateo.common.rest.schemagen.types.HyperSchemaCreator;
+
+import lombok.AllArgsConstructor;
 
 @Component
 @AllArgsConstructor
@@ -14,7 +18,7 @@ class EventObserverFactory {
 
 	private final HyperSchemaCreator hyperSchemaCreator;
 
-	EventObserver createFor(EventOutput eventOutput) {
-		return new EventObserver(eventOutput, eventsResourceLinkFactory, hyperSchemaCreator);
+	EventObserver createFor(EventOutput eventOutput, URI baseURI) {
+		return new EventObserver(eventOutput, eventsResourceLinkFactory, hyperSchemaCreator, baseURI);
 	}
 }
