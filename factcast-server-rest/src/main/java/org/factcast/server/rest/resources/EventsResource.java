@@ -97,7 +97,7 @@ public class EventsResource implements JerseyResource {
 		List<Fact> listToPublish = factTransactionJson.facts().stream().map(f -> {
 			String headerString;
 			try {
-				headerString = objectMapper.writeValueAsString(f.header);
+				headerString = objectMapper.writeValueAsString(f.header());
 			} catch (Exception e) {
 				log.error("error", e);
 				throw new WebApplicationException(500);
