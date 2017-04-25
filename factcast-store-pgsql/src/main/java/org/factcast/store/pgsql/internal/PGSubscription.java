@@ -4,7 +4,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
@@ -25,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 // TODO document properly
 @Slf4j
 @RequiredArgsConstructor
-class PGSubscription {
+class PGSubscription implements Subscription {
 
 	private final JdbcTemplate jdbcTemplate;
 	private final EventBus eventBus;
@@ -33,12 +32,11 @@ class PGSubscription {
 
 	private final AtomicLong serial = new AtomicLong(0);
 	private final AtomicBoolean disconnected = new AtomicBoolean(false);
-	private final AtomicInteger count = new AtomicInteger(0);
-	private final AtomicInteger hit = new AtomicInteger(0);
+	private final PGFilteringStats stats = new PGFilteringStats();
 
 	private CondensedExecutor condensedExecutor;
 
-	Subscription run(SubscriptionRequestTO request, FactStoreObserver observer) {
+	void run(SubscriptionRequestTO request, FactStoreObserver observer) {
 		log.trace("initializing for {}", request);
 
 		PGQueryBuilder q = new PGQueryBuilder(request);
@@ -49,53 +47,8 @@ class PGSubscription {
 		PreparedStatementSetter setter = q.createStatementSetter(serial);
 		RowCallbackHandler rsHandler = new FactRowCallbackHandler(observer, new PGPostQueryMatcher(request.specs()));
 
-		SynchronizedQuery query = new SynchronizedQuery(sql, setter, rsHandler);
-		return catchupAndFollow(request, observer, query);
-	}
-
-	@RequiredArgsConstructor
-	private class FactRowCallbackHandler implements RowCallbackHandler {
-
-		final FactStoreObserver observer;
-		final PGPostQueryMatcher postQueryMatcher;
-
-		@Override
-		public void processRow(ResultSet rs) throws SQLException {
-			if (isConnected()) {
-				Fact f = PGFact.from(rs);
-				count.incrementAndGet();
-				final UUID factId = f.id();
-
-				if (postQueryMatcher.test(f)) {
-					hit.incrementAndGet();
-					try {
-						observer.onNext(f);
-					} catch (Throwable e) {
-						log.warn("Exception from observer. THIS IS A BUG! Please Report!", e);
-						disconnect(observer);
-					}
-					log.trace("onNext called with id={}", factId);
-				} else {
-					log.trace("filtered id={}", factId);
-				}
-				serial.set(rs.getLong(PGConstants.COLUMN_SER));
-			}
-		}
-	}
-
-	@RequiredArgsConstructor
-	private class SynchronizedQuery implements Runnable {
-
-		final String sql;
-		final PreparedStatementSetter setter;
-		final RowCallbackHandler rowHandler;
-
-		@Override
-		// the synchronized here is VERY important!
-		public synchronized void run() {
-			jdbcTemplate.query(sql, setter, rowHandler);
-		}
-
+		PGSynchronizedQuery query = new PGSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler);
+		catchupAndFollow(request, observer, query);
 	}
 
 	private void initializeSerialToStartAfter(SubscriptionRequestTO request) {
@@ -104,11 +57,13 @@ class PGSubscription {
 		log.trace("starting to stream from id: {}", startingSerial);
 	}
 
-	private Subscription catchupAndFollow(SubscriptionRequest request, FactStoreObserver factStoreObserver,
-			SynchronizedQuery query) {
-		long start = System.currentTimeMillis();
+	private void catchupAndFollow(SubscriptionRequest request, FactStoreObserver factStoreObserver,
+			PGSynchronizedQuery query) {
+
+		stats.reset();
 
 		if (request.ephemeral()) {
+			// just fast forward to the latest event publish by now
 			this.serial.set(getLatestFactSer());
 		} else {
 			catchup(query);
@@ -118,15 +73,13 @@ class PGSubscription {
 		if (isConnected()) {
 			log.trace("signaling catchup");
 			factStoreObserver.onCatchup();
-			log.info("Catchup stats: runtime:{}ms, hitRate:{}% (count:{}, hit:{}), highwater:{} ",
-					System.currentTimeMillis() - start, hitRate(), count.get(), hit.get(), serial.get());
+			stats.dumpWithRuntime();
 		}
 
 		if (isConnected() && request.continous()) {
 
 			log.info("Entering follow mode for {}", request);
-			count.set(0);
-			hit.set(0);
+			stats.reset();
 
 			long delayInMs;
 
@@ -152,48 +105,19 @@ class PGSubscription {
 			// slow registration
 			condensedExecutor.trigger();
 
-			return () -> {
-				disconnect(factStoreObserver);
-			};
-
 		} else {
 			log.debug("Complete");
 			factStoreObserver.onComplete();
 			// FIXME disc.?
-			return this::nop;
+
 		}
 	}
 
-	private void disconnect(FactStoreObserver c) {
-		log.info("Disconnecting");
-		disconnected.set(true);
-
-		if (condensedExecutor != null) {
-			condensedExecutor.cancel();
-			eventBus.unregister(condensedExecutor);
-		}
-
-		log.info("Follow stats: hitRate:{}% (count:{}, hit:{}), highwater:{} ", hitRate(), count.get(), hit.get(),
-				serial.get());
-		log.info("Disconnected");
-
-		// TODO strategic decision: consumer.onComplete(); after
-		// cancel!?
-		log.info("Complete");
-		try {
-			c.onComplete();
-		} catch (Throwable e) {
-			log.trace("Closing observer not possible. Ignoring", e);
-		}
-	}
-
-	private void catchup(SynchronizedQuery query) {
-		// catchup phase 1 – historic facts
+	private void catchup(PGSynchronizedQuery query) {
 		if (isConnected()) {
 			log.trace("catchup phase1 - historic Facts");
 			query.run();
 		}
-		// catchup phase 2 (all since connect)
 		if (isConnected()) {
 			log.trace("catchup phase2 - Facts since connect");
 			query.run();
@@ -208,14 +132,56 @@ class PGSubscription {
 		return jdbcTemplate.queryForObject(PGConstants.SELECT_LATEST_SER, Long.class).longValue();
 	}
 
-	private long hitRate() {
-		if (count.get() == 0) {
-			return 100;
+	@Override
+	public void close() throws Exception {
+		log.info("Disconnecting");
+		disconnected.set(true);
+
+		if (condensedExecutor != null) {
+			condensedExecutor.cancel();
+			eventBus.unregister(condensedExecutor);
 		}
-		return Math.round((100.0 / count.get()) * hit.get());
+
+		stats.dump();
+		log.info("Disconnected");
 	}
 
-	private void nop() {
+	private void tryClose() {
+		try {
+			close();
+		} catch (Throwable meh) {
+			log.warn("Unexpected, but irrelevant exception while closing: ", meh);
+		}
 	}
 
+	@RequiredArgsConstructor
+	private class FactRowCallbackHandler implements RowCallbackHandler {
+
+		final FactStoreObserver observer;
+		final PGPostQueryMatcher postQueryMatcher;
+
+		@Override
+		public void processRow(ResultSet rs) throws SQLException {
+			if (isConnected()) {
+				Fact f = PGFact.from(rs);
+				stats.notifyCount();
+				final UUID factId = f.id();
+
+				if (postQueryMatcher.test(f)) {
+					stats.notifyHit();
+					try {
+						observer.onNext(f);
+					} catch (Throwable e) {
+						log.warn("Exception from observer. THIS IS A BUG! Please Report!", e);
+						tryClose();
+					}
+					log.trace("onNext called with id={}", factId);
+				} else {
+					log.trace("filtered id={}", factId);
+				}
+				serial.set(rs.getLong(PGConstants.COLUMN_SER));
+			}
+		}
+
+	}
 }

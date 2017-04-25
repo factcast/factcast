@@ -3,6 +3,7 @@ package org.factcast.example.grpc;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
@@ -85,9 +86,12 @@ public class SmokeMT {
 			//
 			// System.err.println(
 			// "--------------------------------------------------------------------------------------------");
-			// fc.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default")).since(since),
-			// System.err::println);
 
+			AtomicLong i = new AtomicLong();
+			fc.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default")).sinceInception(),
+					f -> i.incrementAndGet());
+
+			System.out.println("got: " + i.get() + " facts");
 			UUID aggId = UUID.randomUUID();
 
 			CompletableFuture<Subscription> sub = fc.subscribeToFacts(

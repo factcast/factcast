@@ -24,8 +24,9 @@ class PGSubscriptionFactory {
 	private final PGFactIdToSerMapper idToSerialMapper;
 
 	public Subscription subscribe(SubscriptionRequestTO req, FactStoreObserver observer) {
-		PGSubscription q = new PGSubscription(jdbcTemplate, eventBus, idToSerialMapper);
-		return q.run(req, observer);
+		PGSubscription subscription = new PGSubscription(jdbcTemplate, eventBus, idToSerialMapper);
+		subscription.run(req, observer);
+		return subscription;
 	}
 
 }
