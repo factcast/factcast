@@ -7,9 +7,9 @@ import org.junit.Test;
 
 public class FactSpecTest {
 
-	@Test
-	public void testMarkMatcher() throws Exception {
-		assertTrue(new FactSpecMatcher(FactSpec.forMark()).test(new MarkFact()));
-	}
+    @Test
+    public void testMarkMatcher() throws Exception {
+        assertTrue(new FactSpecMatcher(FactSpec.forMark()).test(new MarkFact()));
+    }
 
 }

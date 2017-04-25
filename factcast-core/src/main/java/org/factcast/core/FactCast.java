@@ -20,52 +20,52 @@ import lombok.NonNull;
  */
 public interface FactCast extends ReadFactCast {
 
-	void publish(@NonNull List<? extends Fact> factsToPublish);
+    void publish(@NonNull List<? extends Fact> factsToPublish);
 
-	/// ---------- defaults
+    /// ---------- defaults
 
-	default void publish(@NonNull Fact factToPublish) {
-		publish(Helpers.toList(factToPublish));
-	}
+    default void publish(@NonNull Fact factToPublish) {
+        publish(Helpers.toList(factToPublish));
+    }
 
-	default UUID publishWithMark(@NonNull Fact factToPublish) {
-		MarkFact mark = new MarkFact();
-		publish(Helpers.toList(factToPublish, mark));
-		return mark.id();
-	}
+    default UUID publishWithMark(@NonNull Fact factToPublish) {
+        MarkFact mark = new MarkFact();
+        publish(Helpers.toList(factToPublish, mark));
+        return mark.id();
+    }
 
-	default UUID publishWithMark(@NonNull List<Fact> factsToPublish) {
-		MarkFact mark = new MarkFact();
-		publish(Helpers.toList(factsToPublish, mark));
-		return mark.id();
-	}
+    default UUID publishWithMark(@NonNull List<Fact> factsToPublish) {
+        MarkFact mark = new MarkFact();
+        publish(Helpers.toList(factsToPublish, mark));
+        return mark.id();
+    }
 
-	// async
+    // async
 
-	default CompletableFuture<UUID> publishAsyncWithMark(@NonNull List<Fact> factsToPublish) {
-		return CompletableFuture.supplyAsync(() -> publishWithMark(factsToPublish));
-	}
+    default CompletableFuture<UUID> publishAsyncWithMark(@NonNull List<Fact> factsToPublish) {
+        return CompletableFuture.supplyAsync(() -> publishWithMark(factsToPublish));
+    }
 
-	default CompletableFuture<UUID> publishAsyncWithMark(@NonNull Fact factToPublish) {
-		return CompletableFuture.supplyAsync(() -> publishWithMark(factToPublish));
-	}
+    default CompletableFuture<UUID> publishAsyncWithMark(@NonNull Fact factToPublish) {
+        return CompletableFuture.supplyAsync(() -> publishWithMark(factToPublish));
+    }
 
-	default CompletableFuture<Void> publishAsync(@NonNull Fact factToPublish) {
-		return CompletableFuture.runAsync(() -> publish(factToPublish));
-	}
+    default CompletableFuture<Void> publishAsync(@NonNull Fact factToPublish) {
+        return CompletableFuture.runAsync(() -> publish(factToPublish));
+    }
 
-	default CompletableFuture<Void> publishAsync(@NonNull List<Fact> factsToPublish) {
-		return CompletableFuture.runAsync(() -> publish(factsToPublish));
-	}
+    default CompletableFuture<Void> publishAsync(@NonNull List<Fact> factsToPublish) {
+        return CompletableFuture.runAsync(() -> publish(factsToPublish));
+    }
 
-	// Factory
+    // Factory
 
-	public static FactCast from(@NonNull FactStore store) {
-		return new DefaultFactCast(store);
-	}
+    public static FactCast from(@NonNull FactStore store) {
+        return new DefaultFactCast(store);
+    }
 
-	public static ReadFactCast fromReadOnly(@NonNull FactStore store) {
-		return new DefaultFactCast(store);
-	}
+    public static ReadFactCast fromReadOnly(@NonNull FactStore store) {
+        return new DefaultFactCast(store);
+    }
 
 }

@@ -21,25 +21,27 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 public class PGFactIdToSerMapperIT {
 
-	@Autowired
-	JdbcTemplate tpl;
-	@Autowired
-	FactStore store;
+    @Autowired
+    JdbcTemplate tpl;
 
-	@Test
-	public void testRetrieve() throws Exception {
-		MarkFact m = new MarkFact();
-		store.publish(Arrays.asList(m));
-		long retrieve = new PGFactIdToSerMapper(tpl).retrieve(m.id());
-		assertTrue(retrieve > 0);
-	}
+    @Autowired
+    FactStore store;
 
-	@Test
-	public void testRetrieveNonExistant() throws Exception {
-		try {
-			new PGFactIdToSerMapper(tpl).retrieve(UUID.fromString("2b86d90e-2755-4f82-b86d-fd092b25ccc8"));
-			fail();
-		} catch (Throwable e) {
-		}
-	}
+    @Test
+    public void testRetrieve() throws Exception {
+        MarkFact m = new MarkFact();
+        store.publish(Arrays.asList(m));
+        long retrieve = new PGFactIdToSerMapper(tpl).retrieve(m.id());
+        assertTrue(retrieve > 0);
+    }
+
+    @Test
+    public void testRetrieveNonExistant() throws Exception {
+        try {
+            new PGFactIdToSerMapper(tpl).retrieve(UUID.fromString(
+                    "2b86d90e-2755-4f82-b86d-fd092b25ccc8"));
+            fail();
+        } catch (Throwable e) {
+        }
+    }
 }

@@ -17,8 +17,8 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 @Configuration
 public class GrpcFactStoreConfiguration {
 
-	@Bean
-	public GrpcFactStore grpcFactStore(AddressChannelFactory af) {
-		return new GrpcFactStore(af);
-	}
+    @Bean
+    public GrpcFactStore grpcFactStore(AddressChannelFactory af) {
+        return new GrpcFactStore(af);
+    }
 }

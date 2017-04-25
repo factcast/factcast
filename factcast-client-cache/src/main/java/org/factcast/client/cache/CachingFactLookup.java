@@ -15,13 +15,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CachingFactLookup {
 
-	public static final String CACHE_NAME = "factcast.lookup.fact";
+    public static final String CACHE_NAME = "factcast.lookup.fact";
 
-	@NonNull
-	private final FactStore store;
+    @NonNull
+    private final FactStore store;
 
-	@Cacheable(CACHE_NAME)
-	public Optional<Fact> lookup(@NonNull UUID id) {
-		return store.fetchById(id);
-	}
+    @Cacheable(CACHE_NAME)
+    public Optional<Fact> lookup(@NonNull UUID id) {
+        return store.fetchById(id);
+    }
 }

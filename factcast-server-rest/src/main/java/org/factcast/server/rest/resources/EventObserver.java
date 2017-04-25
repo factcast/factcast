@@ -21,84 +21,88 @@ import com.mercateo.common.rest.schemagen.types.HyperSchemaCreator;
 import lombok.val;
 
 public class EventObserver implements FactStoreObserver {
-	private final EventOutput eventOutput;
-	private final LinkFactory<EventsResource> linkFatory;
-	private final HyperSchemaCreator hyperSchemaCreator;
-	private final LinkFactoryContext linkFactoryContext;
+    private final EventOutput eventOutput;
 
-	public EventObserver(EventOutput eventOutput, LinkFactory<EventsResource> linkFatory,
-			HyperSchemaCreator hyperSchemaCreator, URI baseURI) {
-		super();
-		this.eventOutput = eventOutput;
-		this.linkFatory = linkFatory;
-		this.hyperSchemaCreator = hyperSchemaCreator;
-		this.linkFactoryContext = new LinkFactoryContext() {
+    private final LinkFactory<EventsResource> linkFatory;
 
-			@Override
-			public MethodCheckerForLink getMethodCheckerForLink() {
-				return m -> true;
-			}
+    private final HyperSchemaCreator hyperSchemaCreator;
 
-			@Override
-			public FieldCheckerForSchema getFieldCheckerForSchema() {
-				return (f, c) -> true;
-			}
+    private final LinkFactoryContext linkFactoryContext;
 
-			@Override
-			public URI getBaseUri() {
-				return baseURI;
-			}
-		};
-	}
+    public EventObserver(EventOutput eventOutput, LinkFactory<EventsResource> linkFatory,
+            HyperSchemaCreator hyperSchemaCreator, URI baseURI) {
+        super();
+        this.eventOutput = eventOutput;
+        this.linkFatory = linkFatory;
+        this.hyperSchemaCreator = hyperSchemaCreator;
+        this.linkFactoryContext = new LinkFactoryContext() {
 
-	@Override
-	public void onNext(Fact f) {
-		UUID t = f.id();
+            @Override
+            public MethodCheckerForLink getMethodCheckerForLink() {
+                return m -> true;
+            }
 
-		final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
-		eventBuilder.name("new-event");
-		String toReturn = t.toString();
-		val linkToEvent = linkFatory.forCall(Rel.CANONICAL, r -> r.getForId(toReturn), linkFactoryContext);
-		val withSchema = hyperSchemaCreator.create(new EventIdJson(toReturn), linkToEvent);
-		eventBuilder.data(withSchema);
-		eventBuilder.mediaType(MediaType.APPLICATION_JSON_TYPE);
-		final OutboundEvent event = eventBuilder.build();
-		try {
-			eventOutput.write(event);
-		} catch (IOException e) {
-			throw new RuntimeException("Error when writing the event.", e);
-		}
-	}
+            @Override
+            public FieldCheckerForSchema getFieldCheckerForSchema() {
+                return (f, c) -> true;
+            }
 
-	@Override
-	public void onCatchup() {
-		final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
-		eventBuilder.name("catchup");
-		eventBuilder.comment("Signal event for catching up");
-		eventBuilder.data("{\"catchup\":true}");
-		final OutboundEvent event = eventBuilder.build();
+            @Override
+            public URI getBaseUri() {
+                return baseURI;
+            }
+        };
+    }
 
-		try {
-			eventOutput.write(event);
-		} catch (IOException e) {
-			throw new RuntimeException("Error when writing the event.", e);
-		}
-	}
+    @Override
+    public void onNext(Fact f) {
+        UUID t = f.id();
 
-	@Override
-	public void onComplete() {
+        final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
+        eventBuilder.name("new-event");
+        String toReturn = t.toString();
+        val linkToEvent = linkFatory.forCall(Rel.CANONICAL, r -> r.getForId(toReturn),
+                linkFactoryContext);
+        val withSchema = hyperSchemaCreator.create(new EventIdJson(toReturn), linkToEvent);
+        eventBuilder.data(withSchema);
+        eventBuilder.mediaType(MediaType.APPLICATION_JSON_TYPE);
+        final OutboundEvent event = eventBuilder.build();
+        try {
+            eventOutput.write(event);
+        } catch (IOException e) {
+            throw new RuntimeException("Error when writing the event.", e);
+        }
+    }
 
-		final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
-		eventBuilder.name("complete");
-		eventBuilder.comment("Signal event for catching up");
-		eventBuilder.data("{\"complete\":true}");
-		final OutboundEvent event = eventBuilder.build();
-		try {
-			eventOutput.write(event);
-			eventOutput.close();
-		} catch (IOException e) {
-			throw new RuntimeException("Error when writing the event.", e);
-		}
-	}
+    @Override
+    public void onCatchup() {
+        final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
+        eventBuilder.name("catchup");
+        eventBuilder.comment("Signal event for catching up");
+        eventBuilder.data("{\"catchup\":true}");
+        final OutboundEvent event = eventBuilder.build();
+
+        try {
+            eventOutput.write(event);
+        } catch (IOException e) {
+            throw new RuntimeException("Error when writing the event.", e);
+        }
+    }
+
+    @Override
+    public void onComplete() {
+
+        final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
+        eventBuilder.name("complete");
+        eventBuilder.comment("Signal event for catching up");
+        eventBuilder.data("{\"complete\":true}");
+        final OutboundEvent event = eventBuilder.build();
+        try {
+            eventOutput.write(event);
+            eventOutput.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Error when writing the event.", e);
+        }
+    }
 
 }

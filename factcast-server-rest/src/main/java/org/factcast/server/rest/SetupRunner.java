@@ -14,63 +14,64 @@ import lombok.NonNull;
 //TODO move that in test folder
 @Component
 public class SetupRunner implements CommandLineRunner {
-	private static final Fact one = new Fact() {
+    private static final Fact one = new Fact() {
 
-		private final UUID id = UUID.randomUUID();
-		private final UUID aggId = UUID.randomUUID();
+        private final UUID id = UUID.randomUUID();
 
-		@Override
-		public String type() {
-			return "a";
-		}
+        private final UUID aggId = UUID.randomUUID();
 
-		@Override
-		public String ns() {
-			return "a";
-		}
+        @Override
+        public String type() {
+            return "a";
+        }
 
-		@Override
-		public String jsonPayload() {
-			return "{}";
-		}
+        @Override
+        public String ns() {
+            return "a";
+        }
 
-		@Override
-		public String jsonHeader() {
+        @Override
+        public String jsonPayload() {
+            return "{}";
+        }
 
-			return "{\"ns\":\"a\","//
-					+ "\"type\":\"a\","//
-					+ "\"aggId\":\"" + aggId + "\","//
-					+ "\"id\":\"" + id + "\""//
-					+ "}";
-		}
+        @Override
+        public String jsonHeader() {
 
-		@Override
-		public UUID id() {
-			return id;
-		}
+            return "{\"ns\":\"a\","//
+                    + "\"type\":\"a\","//
+                    + "\"aggId\":\"" + aggId + "\","//
+                    + "\"id\":\"" + id + "\""//
+                    + "}";
+        }
 
-		@Override
-		public UUID aggId() {
-			return aggId;
-		}
+        @Override
+        public UUID id() {
+            return id;
+        }
 
-		@Override
-		public String meta(String key) {
-			return null;
-		}
-	};
+        @Override
+        public UUID aggId() {
+            return aggId;
+        }
 
-	private final FactStore factStore;
+        @Override
+        public String meta(String key) {
+            return null;
+        }
+    };
 
-	@Autowired
-	public SetupRunner(@NonNull FactStore factStore) {
-		this.factStore = factStore;
-	}
+    private final FactStore factStore;
 
-	@Override
-	public void run(String... arg0) throws Exception {
-		factStore.publish(Arrays.asList(one));
+    @Autowired
+    public SetupRunner(@NonNull FactStore factStore) {
+        this.factStore = factStore;
+    }
 
-	}
+    @Override
+    public void run(String... arg0) throws Exception {
+        factStore.publish(Arrays.asList(one));
+
+    }
 
 }

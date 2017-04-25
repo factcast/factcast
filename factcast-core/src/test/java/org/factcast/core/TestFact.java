@@ -20,31 +20,36 @@ import lombok.SneakyThrows;
 @Setter
 @EqualsAndHashCode(of = "id")
 public class TestFact implements Fact {
-	@JsonProperty
-	UUID id = UUID.randomUUID();
-	@JsonProperty
-	UUID aggId;
-	@JsonProperty
-	String type;
-	@JsonProperty
-	String ns = "default";
-	String jsonPayload = "{}";
-	@JsonProperty
-	Map<String, String> meta = new HashMap<>();
+    @JsonProperty
+    UUID id = UUID.randomUUID();
 
-	@Override
-	public String meta(String key) {
-		return meta.get(key);
-	}
+    @JsonProperty
+    UUID aggId;
 
-	public TestFact meta(String key, String value) {
-		meta.put(key, value);
-		return this;
-	}
+    @JsonProperty
+    String type;
 
-	@Override
-	@SneakyThrows
-	public String jsonHeader() {
-		return new ObjectMapper().writeValueAsString(this);
-	}
+    @JsonProperty
+    String ns = "default";
+
+    String jsonPayload = "{}";
+
+    @JsonProperty
+    Map<String, String> meta = new HashMap<>();
+
+    @Override
+    public String meta(String key) {
+        return meta.get(key);
+    }
+
+    public TestFact meta(String key, String value) {
+        meta.put(key, value);
+        return this;
+    }
+
+    @Override
+    @SneakyThrows
+    public String jsonHeader() {
+        return new ObjectMapper().writeValueAsString(this);
+    }
 }

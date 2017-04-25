@@ -8,13 +8,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class CachingFactCastConfiguration {
 
-	@Bean
-	public CachingFactCast cachingFactCast(FactCast fc, CachingFactLookup fl) {
-		return new CachingFactCast(fc, fl);
-	}
+    @Bean
+    public CachingFactCast cachingFactCast(FactCast fc, CachingFactLookup fl) {
+        return new CachingFactCast(fc, fl);
+    }
 
-	@Bean
-	public CachingFactLookup cachingFactLookup(FactStore store) {
-		return new CachingFactLookup(store);
-	}
+    @Bean
+    public CachingFactLookup cachingFactLookup(FactStore store) {
+        return new CachingFactLookup(store);
+    }
 }

@@ -23,47 +23,50 @@ import ru.yandex.qatools.embed.postgresql.config.PostgresConfig;
 @Configuration
 @Import(PGFactStoreInternalConfiguration.class)
 @ImportAutoConfiguration({ DataSourceAutoConfiguration.class, JdbcTemplateAutoConfiguration.class,
-		TransactionAutoConfiguration.class })
+        TransactionAutoConfiguration.class })
 public class PGEmbeddedConfiguration {
 
-	private static PGDataSource ds;
+    private static PGDataSource ds;
 
-	static {
-		try {
-			PostgresConfig pgConfig = PostgresConfig.defaultWithDbName("embedded", "test", "test");
-			PostgresStarter<PostgresExecutable, PostgresProcess> runtime = PostgresStarter.getDefaultInstance();
-			PostgresExecutable exec = runtime.prepare(pgConfig);
-			exec.start();
+    static {
+        try {
+            PostgresConfig pgConfig = PostgresConfig.defaultWithDbName("embedded", "test", "test");
+            PostgresStarter<PostgresExecutable, PostgresProcess> runtime = PostgresStarter
+                    .getDefaultInstance();
+            PostgresExecutable exec = runtime.prepare(pgConfig);
+            exec.start();
 
-			ds = new PGDataSource();
-			ds.setUser(pgConfig.credentials().username());
-			ds.setPassword(pgConfig.credentials().password());
-			ds.setPort(pgConfig.net().port());
-			ds.setHost(pgConfig.net().host());
-			ds.setDatabase(pgConfig.storage().dbName());
+            ds = new PGDataSource();
+            ds.setUser(pgConfig.credentials().username());
+            ds.setPassword(pgConfig.credentials().password());
+            ds.setPort(pgConfig.net().port());
+            ds.setHost(pgConfig.net().host());
+            ds.setDatabase(pgConfig.storage().dbName());
 
-			String host = pgConfig.net().host();
-			int port = pgConfig.net().port();
-			String dbName = pgConfig.storage().dbName();
-			String username = pgConfig.credentials().username();
-			String password2 = pgConfig.credentials().password();
-			String url = String.format("jdbc:pgsql://%s:%s/%s?currentSchema=public&user=%s&password=%s", host, port,
-					dbName, username, password2);
-			//
+            String host = pgConfig.net().host();
+            int port = pgConfig.net().port();
+            String dbName = pgConfig.storage().dbName();
+            String username = pgConfig.credentials().username();
+            String password2 = pgConfig.credentials().password();
+            String url = String.format(
+                    "jdbc:pgsql://%s:%s/%s?currentSchema=public&user=%s&password=%s", host, port,
+                    dbName, username, password2);
+            //
 
-			System.setProperty("spring.datasource.url", url);
-			System.setProperty("spring.datasource.driverClassName", PGDriver.class.getCanonicalName());
+            System.setProperty("spring.datasource.url", url);
+            System.setProperty("spring.datasource.driverClassName", PGDriver.class
+                    .getCanonicalName());
 
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 
-	@Bean
-	public DataSource dataSource() {
-		return ds;
-	}
+    @Bean
+    public DataSource dataSource() {
+        return ds;
+    }
 }
 //
 // volatile static EmbeddedPGDataSource embeddedPg = null;

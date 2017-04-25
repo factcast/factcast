@@ -14,12 +14,12 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 public class PGFactStoreIT extends AbstractFactStoreTest {
 
-	@Autowired
-	FactStore store;
+    @Autowired
+    FactStore store;
 
-	@Override
-	protected FactStore createStoreToTest() {
-		return store;
-	}
+    @Override
+    protected FactStore createStoreToTest() {
+        return store;
+    }
 
 }

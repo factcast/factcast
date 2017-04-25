@@ -24,20 +24,20 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class ConnectionTester implements Predicate<Connection> {
 
-	@Override
-	public boolean test(Connection connection) {
+    @Override
+    public boolean test(Connection connection) {
 
-		if (connection != null) {
-			try (PreparedStatement statement = connection.prepareStatement("SELECT 42");
-					ResultSet resultSet = statement.executeQuery();) {
-				resultSet.next();
-				return resultSet.getInt(1) == 42;
-			} catch (SQLException e) {
-				log.warn("Connection test failed:", e);
-			}
-		}
-		return false;
+        if (connection != null) {
+            try (PreparedStatement statement = connection.prepareStatement("SELECT 42");
+                    ResultSet resultSet = statement.executeQuery();) {
+                resultSet.next();
+                return resultSet.getInt(1) == 42;
+            } catch (SQLException e) {
+                log.warn("Connection test failed:", e);
+            }
+        }
+        return false;
 
-	}
+    }
 
 }

@@ -17,30 +17,30 @@ import org.springframework.context.annotation.Import;
 @Import(JerseyHateoasConfiguration.class)
 public class FactCastServerConfiguration {
 
-	private InMemFactStore inMemFactStore = new InMemFactStore();
+    private InMemFactStore inMemFactStore = new InMemFactStore();
 
-	@Bean
-	FieldCheckerForSchema fieldCheckerForSchema() {
-		return (field, callContext) -> true;
-	}
+    @Bean
+    FieldCheckerForSchema fieldCheckerForSchema() {
+        return (field, callContext) -> true;
+    }
 
-	@Bean
-	MethodCheckerForLink methodCheckerForLink() {
-		return (scope) -> true;
-	}
+    @Bean
+    MethodCheckerForLink methodCheckerForLink() {
+        return (scope) -> true;
+    }
 
-	@Bean
-	LinkFactory<RootResource> rootResourceLinkFactory(LinkMetaFactory linkMetaFactory) {
-		return linkMetaFactory.createFactoryFor(RootResource.class);
-	}
+    @Bean
+    LinkFactory<RootResource> rootResourceLinkFactory(LinkMetaFactory linkMetaFactory) {
+        return linkMetaFactory.createFactoryFor(RootResource.class);
+    }
 
-	@Bean
-	LinkFactory<EventsResource> eventsResourceLinkFactory(LinkMetaFactory linkMetaFactory) {
-		return linkMetaFactory.createFactoryFor(EventsResource.class);
-	}
+    @Bean
+    LinkFactory<EventsResource> eventsResourceLinkFactory(LinkMetaFactory linkMetaFactory) {
+        return linkMetaFactory.createFactoryFor(EventsResource.class);
+    }
 
-	@Bean
-	FactStore getFactStore() {
-		return inMemFactStore;
-	}
+    @Bean
+    FactStore getFactStore() {
+        return inMemFactStore;
+    }
 }

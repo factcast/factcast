@@ -24,20 +24,22 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class PGPostQueryMatcher implements Predicate<Fact> {
 
-	private final boolean canBeSkipped;
-	private final List<FactSpecMatcher> matchers;
+    private final boolean canBeSkipped;
 
-	public PGPostQueryMatcher(@NonNull List<FactSpec> specs) {
-		canBeSkipped = !specs.stream().anyMatch(s -> s.jsFilterScript() != null);
-		if (canBeSkipped) {
-			log.trace("post query filtering has been disabled");
-		}
-		this.matchers = specs.stream().map(s -> new FactSpecMatcher(s)).collect(Collectors.toList());
-	}
+    private final List<FactSpecMatcher> matchers;
 
-	@Override
-	public boolean test(Fact input) {
-		return canBeSkipped || matchers.stream().anyMatch(m -> m.test(input));
-	}
+    public PGPostQueryMatcher(@NonNull List<FactSpec> specs) {
+        canBeSkipped = !specs.stream().anyMatch(s -> s.jsFilterScript() != null);
+        if (canBeSkipped) {
+            log.trace("post query filtering has been disabled");
+        }
+        this.matchers = specs.stream().map(s -> new FactSpecMatcher(s)).collect(Collectors
+                .toList());
+    }
+
+    @Override
+    public boolean test(Fact input) {
+        return canBeSkipped || matchers.stream().anyMatch(m -> m.test(input));
+    }
 
 }

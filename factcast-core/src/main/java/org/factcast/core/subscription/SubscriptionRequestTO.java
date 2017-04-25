@@ -34,59 +34,64 @@ import lombok.experimental.FieldDefaults;
 @JsonIgnoreProperties
 public class SubscriptionRequestTO implements SubscriptionRequest {
 
-	@JsonProperty
-	long maxBatchDelayInMs = 0;
-	@JsonProperty
-	boolean continous;
-	@JsonProperty
-	boolean ephemeral;
-	@JsonProperty
-	boolean idOnly = false;
-	@JsonProperty
-	UUID startingAfter;
-	@JsonProperty
-	final List<FactSpec> specs = new LinkedList<>(Arrays.asList(FactSpec.forMark()));
+    @JsonProperty
+    long maxBatchDelayInMs = 0;
 
-	public boolean hasAnyScriptFilters() {
-		return specs.stream().anyMatch(s -> s.jsFilterScript() != null);
-	}
+    @JsonProperty
+    boolean continous;
 
-	public java.util.Optional<UUID> startingAfter() {
-		return java.util.Optional.ofNullable(startingAfter);
-	}
+    @JsonProperty
+    boolean ephemeral;
 
-	// copy constr. from a SR
-	public SubscriptionRequestTO(SubscriptionRequest request) {
-		maxBatchDelayInMs = request.maxBatchDelayInMs();
-		continous = request.continous();
-		ephemeral = request.ephemeral();
-		startingAfter = request.startingAfter().orElse(null);
-		specs.addAll(request.specs());
-	}
+    @JsonProperty
+    boolean idOnly = false;
 
-	public static SubscriptionRequestTO forFacts(SubscriptionRequest request) {
-		SubscriptionRequestTO t = new SubscriptionRequestTO(request);
-		t.idOnly(false);
-		return t;
-	}
+    @JsonProperty
+    UUID startingAfter;
 
-	public static SubscriptionRequestTO forIds(SubscriptionRequest request) {
-		SubscriptionRequestTO t = new SubscriptionRequestTO(request);
-		t.idOnly(true);
-		return t;
-	}
+    @JsonProperty
+    final List<FactSpec> specs = new LinkedList<>(Arrays.asList(FactSpec.forMark()));
 
-	public void addSpecs(@NonNull List<FactSpec> factSpecs) {
-		checkArgument(!factSpecs.isEmpty());
-		specs.addAll(factSpecs);
-	}
+    public boolean hasAnyScriptFilters() {
+        return specs.stream().anyMatch(s -> s.jsFilterScript() != null);
+    }
 
-	public SubscriptionRequestTO copy() {
-		return FactCastJson.copy(this);
-	}
+    public java.util.Optional<UUID> startingAfter() {
+        return java.util.Optional.ofNullable(startingAfter);
+    }
 
-	@Override
-	public List<FactSpec> specs() {
-		return Collections.unmodifiableList(specs);
-	}
+    // copy constr. from a SR
+    public SubscriptionRequestTO(SubscriptionRequest request) {
+        maxBatchDelayInMs = request.maxBatchDelayInMs();
+        continous = request.continous();
+        ephemeral = request.ephemeral();
+        startingAfter = request.startingAfter().orElse(null);
+        specs.addAll(request.specs());
+    }
+
+    public static SubscriptionRequestTO forFacts(SubscriptionRequest request) {
+        SubscriptionRequestTO t = new SubscriptionRequestTO(request);
+        t.idOnly(false);
+        return t;
+    }
+
+    public static SubscriptionRequestTO forIds(SubscriptionRequest request) {
+        SubscriptionRequestTO t = new SubscriptionRequestTO(request);
+        t.idOnly(true);
+        return t;
+    }
+
+    public void addSpecs(@NonNull List<FactSpec> factSpecs) {
+        checkArgument(!factSpecs.isEmpty());
+        specs.addAll(factSpecs);
+    }
+
+    public SubscriptionRequestTO copy() {
+        return FactCastJson.copy(this);
+    }
+
+    @Override
+    public List<FactSpec> specs() {
+        return Collections.unmodifiableList(specs);
+    }
 }

@@ -12,13 +12,13 @@ import com.mercateo.common.rest.schemagen.link.injection.LinkFactoryResourceConf
 @Component
 public class FactCastRestApplication extends ResourceConfig {
 
-	public FactCastRestApplication() {
-		register(JacksonFeature.class);
-		// Register resources and providers using package-scanning.
-		final String resourceBasePackage = "org.factcast.server.rest.resources";
-		packages(resourceBasePackage);
-		register(NoCacheFilter.class);
-		register(CachableFilter.class);
-	}
+    public FactCastRestApplication() {
+        register(JacksonFeature.class);
+        // Register resources and providers using package-scanning.
+        final String resourceBasePackage = "org.factcast.server.rest.resources";
+        packages(resourceBasePackage);
+        register(NoCacheFilter.class);
+        register(CachableFilter.class);
+    }
 
 }

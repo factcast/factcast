@@ -13,41 +13,43 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 class PGFilteringStats {
-	long start = System.currentTimeMillis();
-	final AtomicLong count = new AtomicLong(0);
-	final AtomicLong hit = new AtomicLong(0);
+    long start = System.currentTimeMillis();
 
-	long rate() {
-		if (count.get() == 0) {
-			return 100;
-		}
-		return Math.round((100.0 / count.get()) * hit.get());
-	}
+    final AtomicLong count = new AtomicLong(0);
 
-	void dump() {
-		log.info("Follow stats: hitRate:{}% (count:{}, hit:{})", rate(), count.get(), hit.get());
-	}
+    final AtomicLong hit = new AtomicLong(0);
 
-	void dumpWithRuntime() {
-		log.info("Follow stats: elapsed:{}ms, hitRate:{}% (count:{}, hit:{})", elapsedMillis(), rate(), count.get(),
-				hit.get());
-	}
+    long rate() {
+        if (count.get() == 0) {
+            return 100;
+        }
+        return Math.round((100.0 / count.get()) * hit.get());
+    }
 
-	void reset() {
-		hit.set(0);
-		count.set(0);
-		start = System.currentTimeMillis();
-	}
+    void dump() {
+        log.info("Follow stats: hitRate:{}% (count:{}, hit:{})", rate(), count.get(), hit.get());
+    }
 
-	void notifyHit() {
-		hit.incrementAndGet();
-	}
+    void dumpWithRuntime() {
+        log.info("Follow stats: elapsed:{}ms, hitRate:{}% (count:{}, hit:{})", elapsedMillis(),
+                rate(), count.get(), hit.get());
+    }
 
-	void notifyCount() {
-		count.incrementAndGet();
-	}
+    void reset() {
+        hit.set(0);
+        count.set(0);
+        start = System.currentTimeMillis();
+    }
 
-	long elapsedMillis() {
-		return System.currentTimeMillis() - start;
-	}
+    void notifyHit() {
+        hit.incrementAndGet();
+    }
+
+    void notifyCount() {
+        count.incrementAndGet();
+    }
+
+    long elapsedMillis() {
+        return System.currentTimeMillis() - start;
+    }
 }

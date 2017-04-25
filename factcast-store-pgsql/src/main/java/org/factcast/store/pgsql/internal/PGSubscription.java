@@ -26,162 +26,168 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 class PGSubscription implements Subscription {
 
-	private final JdbcTemplate jdbcTemplate;
-	private final EventBus eventBus;
-	private final PGFactIdToSerMapper idToSerMapper;
+    private final JdbcTemplate jdbcTemplate;
 
-	private final AtomicLong serial = new AtomicLong(0);
-	private final AtomicBoolean disconnected = new AtomicBoolean(false);
-	private final PGFilteringStats stats = new PGFilteringStats();
+    private final EventBus eventBus;
 
-	private CondensedExecutor condensedExecutor;
+    private final PGFactIdToSerMapper idToSerMapper;
 
-	void run(SubscriptionRequestTO request, FactStoreObserver observer) {
-		log.trace("initializing for {}", request);
+    private final AtomicLong serial = new AtomicLong(0);
 
-		PGQueryBuilder q = new PGQueryBuilder(request);
+    private final AtomicBoolean disconnected = new AtomicBoolean(false);
 
-		initializeSerialToStartAfter(request);
+    private final PGFilteringStats stats = new PGFilteringStats();
 
-		String sql = q.createSQL();
-		PreparedStatementSetter setter = q.createStatementSetter(serial);
-		RowCallbackHandler rsHandler = new FactRowCallbackHandler(observer, new PGPostQueryMatcher(request.specs()));
+    private CondensedExecutor condensedExecutor;
 
-		PGSynchronizedQuery query = new PGSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler);
-		catchupAndFollow(request, observer, query);
-	}
+    void run(SubscriptionRequestTO request, FactStoreObserver observer) {
+        log.trace("initializing for {}", request);
 
-	private void initializeSerialToStartAfter(SubscriptionRequestTO request) {
-		Long startingSerial = request.startingAfter().map(idToSerMapper::retrieve).orElse(0L);
-		serial.set(startingSerial);
-		log.trace("starting to stream from id: {}", startingSerial);
-	}
+        PGQueryBuilder q = new PGQueryBuilder(request);
 
-	private void catchupAndFollow(SubscriptionRequest request, FactStoreObserver factStoreObserver,
-			PGSynchronizedQuery query) {
+        initializeSerialToStartAfter(request);
 
-		stats.reset();
+        String sql = q.createSQL();
+        PreparedStatementSetter setter = q.createStatementSetter(serial);
+        RowCallbackHandler rsHandler = new FactRowCallbackHandler(observer, new PGPostQueryMatcher(
+                request.specs()));
 
-		if (request.ephemeral()) {
-			// just fast forward to the latest event publish by now
-			this.serial.set(getLatestFactSer());
-		} else {
-			catchup(query);
-		}
+        PGSynchronizedQuery query = new PGSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler);
+        catchupAndFollow(request, observer, query);
+    }
 
-		// propagate catchup
-		if (isConnected()) {
-			log.trace("signaling catchup");
-			factStoreObserver.onCatchup();
-			stats.dumpWithRuntime();
-		}
+    private void initializeSerialToStartAfter(SubscriptionRequestTO request) {
+        Long startingSerial = request.startingAfter().map(idToSerMapper::retrieve).orElse(0L);
+        serial.set(startingSerial);
+        log.trace("starting to stream from id: {}", startingSerial);
+    }
 
-		if (isConnected() && request.continous()) {
+    private void catchupAndFollow(SubscriptionRequest request, FactStoreObserver factStoreObserver,
+            PGSynchronizedQuery query) {
 
-			log.info("Entering follow mode for {}", request);
-			stats.reset();
+        stats.reset();
 
-			long delayInMs;
+        if (request.ephemeral()) {
+            // just fast forward to the latest event publish by now
+            this.serial.set(getLatestFactSer());
+        } else {
+            catchup(query);
+        }
 
-			if (request.maxBatchDelayInMs() < 1) {
-				// ok, instant query after NOTIFY
-				delayInMs = 0;
-			} else {
-				// spread consumers, so that they query at different points in
-				// time, even if they get triggered at the same PIT, and share
-				// the
-				// same latency requirements
-				//
-				// ok, that is unlikely to be necessary, but easy to do, so...
-				delayInMs = (((request.maxBatchDelayInMs() / 4L) * 3L)
-						+ (long) (Math.abs(Math.random() * ((request.maxBatchDelayInMs() / 4)))));
-				log.info("Setting delay for this instance to " + delayInMs + ", maxDelay was "
-						+ request.maxBatchDelayInMs());
-			}
+        // propagate catchup
+        if (isConnected()) {
+            log.trace("signaling catchup");
+            factStoreObserver.onCatchup();
+            stats.dumpWithRuntime();
+        }
 
-			this.condensedExecutor = new CondensedExecutor(delayInMs, query, () -> isConnected());
-			eventBus.register(condensedExecutor);
-			// catchup phase 3 – make sure, we did not miss any fact due to
-			// slow registration
-			condensedExecutor.trigger();
+        if (isConnected() && request.continous()) {
 
-		} else {
-			log.debug("Complete");
-			factStoreObserver.onComplete();
-			// FIXME disc.?
+            log.info("Entering follow mode for {}", request);
+            stats.reset();
 
-		}
-	}
+            long delayInMs;
 
-	private void catchup(PGSynchronizedQuery query) {
-		if (isConnected()) {
-			log.trace("catchup phase1 - historic Facts");
-			query.run();
-		}
-		if (isConnected()) {
-			log.trace("catchup phase2 - Facts since connect");
-			query.run();
-		}
-	}
+            if (request.maxBatchDelayInMs() < 1) {
+                // ok, instant query after NOTIFY
+                delayInMs = 0;
+            } else {
+                // spread consumers, so that they query at different points in
+                // time, even if they get triggered at the same PIT, and share
+                // the
+                // same latency requirements
+                //
+                // ok, that is unlikely to be necessary, but easy to do, so...
+                delayInMs = (((request.maxBatchDelayInMs() / 4L) * 3L) + (long) (Math.abs(Math
+                        .random() * ((request.maxBatchDelayInMs() / 4)))));
+                log.info("Setting delay for this instance to " + delayInMs + ", maxDelay was "
+                        + request.maxBatchDelayInMs());
+            }
 
-	private boolean isConnected() {
-		return !disconnected.get();
-	}
+            this.condensedExecutor = new CondensedExecutor(delayInMs, query, () -> isConnected());
+            eventBus.register(condensedExecutor);
+            // catchup phase 3 – make sure, we did not miss any fact due to
+            // slow registration
+            condensedExecutor.trigger();
 
-	private long getLatestFactSer() {
-		return jdbcTemplate.queryForObject(PGConstants.SELECT_LATEST_SER, Long.class).longValue();
-	}
+        } else {
+            log.debug("Complete");
+            factStoreObserver.onComplete();
+            // FIXME disc.?
 
-	@Override
-	public void close() throws Exception {
-		log.info("Disconnecting");
-		disconnected.set(true);
+        }
+    }
 
-		if (condensedExecutor != null) {
-			condensedExecutor.cancel();
-			eventBus.unregister(condensedExecutor);
-		}
+    private void catchup(PGSynchronizedQuery query) {
+        if (isConnected()) {
+            log.trace("catchup phase1 - historic Facts");
+            query.run();
+        }
+        if (isConnected()) {
+            log.trace("catchup phase2 - Facts since connect");
+            query.run();
+        }
+    }
 
-		stats.dump();
-		log.info("Disconnected");
-	}
+    private boolean isConnected() {
+        return !disconnected.get();
+    }
 
-	private void tryClose() {
-		try {
-			close();
-		} catch (Throwable meh) {
-			log.warn("Unexpected, but irrelevant exception while closing: ", meh);
-		}
-	}
+    private long getLatestFactSer() {
+        return jdbcTemplate.queryForObject(PGConstants.SELECT_LATEST_SER, Long.class).longValue();
+    }
 
-	@RequiredArgsConstructor
-	private class FactRowCallbackHandler implements RowCallbackHandler {
+    @Override
+    public void close() throws Exception {
+        log.info("Disconnecting");
+        disconnected.set(true);
 
-		final FactStoreObserver observer;
-		final PGPostQueryMatcher postQueryMatcher;
+        if (condensedExecutor != null) {
+            condensedExecutor.cancel();
+            eventBus.unregister(condensedExecutor);
+        }
 
-		@Override
-		public void processRow(ResultSet rs) throws SQLException {
-			if (isConnected()) {
-				Fact f = PGFact.from(rs);
-				stats.notifyCount();
-				final UUID factId = f.id();
+        stats.dump();
+        log.info("Disconnected");
+    }
 
-				if (postQueryMatcher.test(f)) {
-					stats.notifyHit();
-					try {
-						observer.onNext(f);
-					} catch (Throwable e) {
-						log.warn("Exception from observer. THIS IS A BUG! Please Report!", e);
-						tryClose();
-					}
-					log.trace("onNext called with id={}", factId);
-				} else {
-					log.trace("filtered id={}", factId);
-				}
-				serial.set(rs.getLong(PGConstants.COLUMN_SER));
-			}
-		}
+    private void tryClose() {
+        try {
+            close();
+        } catch (Throwable meh) {
+            log.warn("Unexpected, but irrelevant exception while closing: ", meh);
+        }
+    }
 
-	}
+    @RequiredArgsConstructor
+    private class FactRowCallbackHandler implements RowCallbackHandler {
+
+        final FactStoreObserver observer;
+
+        final PGPostQueryMatcher postQueryMatcher;
+
+        @Override
+        public void processRow(ResultSet rs) throws SQLException {
+            if (isConnected()) {
+                Fact f = PGFact.from(rs);
+                stats.notifyCount();
+                final UUID factId = f.id();
+
+                if (postQueryMatcher.test(f)) {
+                    stats.notifyHit();
+                    try {
+                        observer.onNext(f);
+                    } catch (Throwable e) {
+                        log.warn("Exception from observer. THIS IS A BUG! Please Report!", e);
+                        tryClose();
+                    }
+                    log.trace("onNext called with id={}", factId);
+                } else {
+                    log.trace("filtered id={}", factId);
+                }
+                serial.set(rs.getLong(PGConstants.COLUMN_SER));
+            }
+        }
+
+    }
 }

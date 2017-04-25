@@ -28,57 +28,60 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 class DefaultFactCast implements FactCast {
 
-	@NonNull
-	private final FactStore store;
+    @NonNull
+    private final FactStore store;
 
-	@Override
-	public CompletableFuture<Subscription> subscribeToFacts(@NonNull SubscriptionRequest req,
-			@NonNull FactObserver observer) {
-		final Function<Fact, Fact> projection = Function.identity();
-		return store.subscribe(SubscriptionRequestTO.forFacts(req), new ObserverBridge<Fact>(observer, projection));
-	}
+    @Override
+    public CompletableFuture<Subscription> subscribeToFacts(@NonNull SubscriptionRequest req,
+            @NonNull FactObserver observer) {
+        final Function<Fact, Fact> projection = Function.identity();
+        return store.subscribe(SubscriptionRequestTO.forFacts(req), new ObserverBridge<Fact>(
+                observer, projection));
+    }
 
-	@Override
-	public CompletableFuture<Subscription> subscribeToIds(@NonNull SubscriptionRequest req,
-			@NonNull IdObserver observer) {
-		final Function<Fact, UUID> projection = f -> f.id();
-		return store.subscribe(SubscriptionRequestTO.forIds(req), new ObserverBridge<UUID>(observer, projection));
-	}
+    @Override
+    public CompletableFuture<Subscription> subscribeToIds(@NonNull SubscriptionRequest req,
+            @NonNull IdObserver observer) {
+        final Function<Fact, UUID> projection = f -> f.id();
+        return store.subscribe(SubscriptionRequestTO.forIds(req), new ObserverBridge<UUID>(observer,
+                projection));
+    }
 
-	@Override
-	public Optional<Fact> fetchById(@NonNull UUID id) {
-		return store.fetchById(id);
-	}
+    @Override
+    public Optional<Fact> fetchById(@NonNull UUID id) {
+        return store.fetchById(id);
+    }
 
-	@Override
-	public void publish(@NonNull List<? extends Fact> factsToPublish) {
-		store.publish(factsToPublish);
-	}
+    @Override
+    public void publish(@NonNull List<? extends Fact> factsToPublish) {
+        store.publish(factsToPublish);
+    }
 
-	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-	private static class ObserverBridge<T> implements FactStoreObserver {
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    private static class ObserverBridge<T> implements FactStoreObserver {
 
-		private final GenericObserver<T> delegate;
-		private final Function<Fact, T> project;
+        private final GenericObserver<T> delegate;
 
-		@Override
-		public void onNext(Fact fact) {
-			delegate.onNext(project.apply(fact));
-		}
+        private final Function<Fact, T> project;
 
-		@Override
-		public void onCatchup() {
-			delegate.onCatchup();
-		}
+        @Override
+        public void onNext(Fact fact) {
+            delegate.onNext(project.apply(fact));
+        }
 
-		@Override
-		public void onError(Throwable exception) {
-			delegate.onError(exception);
-		}
+        @Override
+        public void onCatchup() {
+            delegate.onCatchup();
+        }
 
-		@Override
-		public void onComplete() {
-			delegate.onComplete();
-		}
-	}
+        @Override
+        public void onError(Throwable exception) {
+            delegate.onError(exception);
+        }
+
+        @Override
+        public void onComplete() {
+            delegate.onComplete();
+        }
+    }
 }

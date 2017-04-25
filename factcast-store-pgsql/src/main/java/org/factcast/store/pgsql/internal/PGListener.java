@@ -34,72 +34,73 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 class PGListener implements InitializingBean, DisposableBean {
 
-	private final Supplier<PGConnection> connectionSupplier;
+    private final Supplier<PGConnection> connectionSupplier;
 
-	private final @NonNull EventBus eventBus;
+    private final @NonNull EventBus eventBus;
 
-	private final @NonNull Predicate<Connection> connectionTester;
+    private final @NonNull Predicate<Connection> connectionTester;
 
-	private PGConnection connection = null;
+    private PGConnection connection = null;
 
-	@Scheduled(fixedRate = 10000)
-	public synchronized void check() {
-		if (!connectionTester.test(connection)) {
-			log.warn("Reconnecting");
-			Connection oldConnection = connection;
-			CompletableFuture.runAsync(() -> {
-				try {
-					oldConnection.close();
-				} catch (Throwable e) {
-					// silently swallow, connection is probably gone anyway
-				}
-			});
+    @Scheduled(fixedRate = 10000)
+    public synchronized void check() {
+        if (!connectionTester.test(connection)) {
+            log.warn("Reconnecting");
+            Connection oldConnection = connection;
+            CompletableFuture.runAsync(() -> {
+                try {
+                    oldConnection.close();
+                } catch (Throwable e) {
+                    // silently swallow, connection is probably gone anyway
+                }
+            });
 
-			listen();
-		}
-	}
+            listen();
+        }
+    }
 
-	private synchronized void listen() {
+    private synchronized void listen() {
 
-		try {
-			this.connection = connectionSupplier.get();
-			connection.addNotificationListener(this.getClass().getSimpleName(), PGConstants.CHANNEL_NAME,
-					(pid, name, msg) -> {
-						log.trace("Recieved event from pg name={} message={}", name, msg);
-						eventBus.post(new FactInsertionEvent(name));
+        try {
+            this.connection = connectionSupplier.get();
+            connection.addNotificationListener(this.getClass().getSimpleName(),
+                    PGConstants.CHANNEL_NAME, (pid, name, msg) -> {
+                        log.trace("Recieved event from pg name={} message={}", name, msg);
+                        eventBus.post(new FactInsertionEvent(name));
 
-					});
-			try (PreparedStatement statement = connection.prepareStatement("LISTEN " + PGConstants.CHANNEL_NAME);) {
-				statement.execute();
-			}
+                    });
+            try (PreparedStatement statement = connection.prepareStatement("LISTEN "
+                    + PGConstants.CHANNEL_NAME);) {
+                statement.execute();
+            }
 
-		} catch (Throwable e) {
-			log.error("Unable to retrieve jdbc Connection: ", e);
-		}
-	}
+        } catch (Throwable e) {
+            log.error("Unable to retrieve jdbc Connection: ", e);
+        }
+    }
 
-	@Value
-	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-	public static class FactInsertionEvent {
-		String name;
-	}
+    @Value
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class FactInsertionEvent {
+        String name;
+    }
 
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		listen();
-	}
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        listen();
+    }
 
-	@Override
-	public synchronized void destroy() throws Exception {
-		if (connection != null) {
-			try {
-				connection.removeNotificationListener(this.getClass().getSimpleName());
-				connection.close();
-			} catch (SQLException e) {
-				log.warn("During shutdown: ", e);
-			}
-		}
-		connection = null;
-	}
+    @Override
+    public synchronized void destroy() throws Exception {
+        if (connection != null) {
+            try {
+                connection.removeNotificationListener(this.getClass().getSimpleName());
+                connection.close();
+            } catch (SQLException e) {
+                log.warn("During shutdown: ", e);
+            }
+        }
+        connection = null;
+    }
 
 }

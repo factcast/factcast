@@ -22,15 +22,18 @@ import lombok.RequiredArgsConstructor;
 @Nonnull
 class PGSynchronizedQuery implements Runnable {
 
-	final JdbcTemplate jdbcTemplate;
-	final String sql;
-	final PreparedStatementSetter setter;
-	final RowCallbackHandler rowHandler;
+    final JdbcTemplate jdbcTemplate;
 
-	@Override
-	// the synchronized here is crucial!
-	public synchronized void run() {
-		jdbcTemplate.query(sql, setter, rowHandler);
-	}
+    final String sql;
+
+    final PreparedStatementSetter setter;
+
+    final RowCallbackHandler rowHandler;
+
+    @Override
+    // the synchronized here is crucial!
+    public synchronized void run() {
+        jdbcTemplate.query(sql, setter, rowHandler);
+    }
 
 }

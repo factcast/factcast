@@ -15,26 +15,25 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 class PGFactIdToSerMapper {
-	private final JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
-	/**
-	 * 
-	 * @param id
-	 * @return 0, if no Fact is found for the id given. @throws
-	 */
-	public long retrieve(UUID id) {
-		if (id != null) {
+    /**
+     * 
+     * @param id
+     * @return 0, if no Fact is found for the id given. @throws
+     */
+    public long retrieve(UUID id) {
+        if (id != null) {
 
-			try {
-				// throws EmptyResultDataAccessException if is not found!
-				return jdbcTemplate.queryForObject(
-						"SELECT " + PGConstants.COLUMN_SER + " FROM " + PGConstants.TABLE_FACT + " WHERE "
-								+ PGConstants.COLUMN_HEADER + " @> ?",
-						new Object[] { "{\"id\":\"" + id + "\"}" }, Long.class).longValue();
-			} catch (EmptyResultDataAccessException meh) {
-			}
-		}
-		return 0;
-	}
+            try {
+                // throws EmptyResultDataAccessException if is not found!
+                return jdbcTemplate.queryForObject("SELECT " + PGConstants.COLUMN_SER + " FROM "
+                        + PGConstants.TABLE_FACT + " WHERE " + PGConstants.COLUMN_HEADER + " @> ?",
+                        new Object[] { "{\"id\":\"" + id + "\"}" }, Long.class).longValue();
+            } catch (EmptyResultDataAccessException meh) {
+            }
+        }
+        return 0;
+    }
 
 }

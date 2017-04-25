@@ -35,210 +35,215 @@ import lombok.Data;
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 public class PGQueryIT {
 
-	private static final FactSpec DEFAULT_SPEC = FactSpec.ns("default-ns").type("type1");
+    private static final FactSpec DEFAULT_SPEC = FactSpec.ns("default-ns").type("type1");
 
-	@Data
-	public static class TestHeader {
-		String id = UUID.randomUUID().toString();
-		String ns = "default-ns";
-		String type = "type1";
+    @Data
+    public static class TestHeader {
+        String id = UUID.randomUUID().toString();
 
-		@Override
-		public String toString() {
-			return String.format("{\"id\":\"%s\",\"ns\":\"%s\",\"type\":\"%s\"}", id, ns, type);
-		}
+        String ns = "default-ns";
 
-		public static TestHeader create() {
-			return new TestHeader();
-		}
-	}
+        String type = "type1";
 
-	@Autowired
-	PGSubscriptionFactory pq;
-	@Autowired
-	JdbcTemplate tpl;
-	@Autowired
-	PGListener listener;
-	@Autowired
-	PGFactStore store;
+        @Override
+        public String toString() {
+            return String.format("{\"id\":\"%s\",\"ns\":\"%s\",\"type\":\"%s\"}", id, ns, type);
+        }
 
-	@Bean
-	@Primary
-	public EventBus eventBus() {
-		return new EventBus(this.getClass().getSimpleName());
-	}
+        public static TestHeader create() {
+            return new TestHeader();
+        }
+    }
 
-	@Test
-	@DirtiesContext
-	public void testRoundtrip() throws Exception {
-		SubscriptionRequestTO req = SubscriptionRequestTO
-				.forFacts(SubscriptionRequest.catchup(DEFAULT_SPEC).sinceInception());
+    @Autowired
+    PGSubscriptionFactory pq;
 
-		FactStoreObserver c = mock(FactStoreObserver.class);
+    @Autowired
+    JdbcTemplate tpl;
 
-		pq.subscribe(req, c);
+    @Autowired
+    PGListener listener;
 
-		verify(c, never()).onNext(anyObject());
-		verify(c).onCatchup();
-		verify(c).onComplete();
+    @Autowired
+    PGFactStore store;
 
-	}
+    @Bean
+    @Primary
+    public EventBus eventBus() {
+        return new EventBus(this.getClass().getSimpleName());
+    }
 
-	@Test
-	@DirtiesContext
-	public void testRoundtripInsertBefore() throws Exception {
+    @Test
+    @DirtiesContext
+    public void testRoundtrip() throws Exception {
+        SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(
+                DEFAULT_SPEC).sinceInception());
 
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create().ns("other-ns"));
-		insertTestFact(TestHeader.create().type("type2"));
-		insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
+        FactStoreObserver c = mock(FactStoreObserver.class);
 
-		SubscriptionRequestTO req = SubscriptionRequestTO
-				.forFacts(SubscriptionRequest.catchup(DEFAULT_SPEC).sinceInception());
+        pq.subscribe(req, c);
 
-		FactStoreObserver c = mock(FactStoreObserver.class);
+        verify(c, never()).onNext(anyObject());
+        verify(c).onCatchup();
+        verify(c).onComplete();
 
-		pq.subscribe(req, c);
+    }
 
-		verify(c).onCatchup();
-		verify(c).onComplete();
-		verify(c, times(2)).onNext(anyObject());
-	}
+    @Test
+    @DirtiesContext
+    public void testRoundtripInsertBefore() throws Exception {
 
-	private void insertTestFact(TestHeader header) {
-		tpl.execute("INSERT INTO fact(header,payload) VALUES ('" + header + "','{}')");
-	}
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create().ns("other-ns"));
+        insertTestFact(TestHeader.create().type("type2"));
+        insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
 
-	@Test
-	@DirtiesContext()
-	public void testRoundtripInsertAfter() throws Exception {
-		SubscriptionRequestTO req = SubscriptionRequestTO
-				.forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).sinceInception());
+        SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(
+                DEFAULT_SPEC).sinceInception());
 
-		FactStoreObserver c = mock(FactStoreObserver.class);
+        FactStoreObserver c = mock(FactStoreObserver.class);
 
-		pq.subscribe(req, c);
+        pq.subscribe(req, c);
 
-		verify(c).onCatchup();
-		verify(c, never()).onNext(any(Fact.class));
+        verify(c).onCatchup();
+        verify(c).onComplete();
+        verify(c, times(2)).onNext(anyObject());
+    }
 
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create().ns("other-ns"));
-		insertTestFact(TestHeader.create().type("type2"));
-		insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
+    private void insertTestFact(TestHeader header) {
+        tpl.execute("INSERT INTO fact(header,payload) VALUES ('" + header + "','{}')");
+    }
 
-		sleep(200);
-		verify(c, times(2)).onNext(any(Fact.class));
+    @Test
+    @DirtiesContext()
+    public void testRoundtripInsertAfter() throws Exception {
+        SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(
+                DEFAULT_SPEC).sinceInception());
 
-	}
+        FactStoreObserver c = mock(FactStoreObserver.class);
 
-	@Test
-	@DirtiesContext()
-	public void testRoundtripCatchupEventsInsertedAfterStart() throws Exception {
+        pq.subscribe(req, c);
 
-		SubscriptionRequestTO req = SubscriptionRequestTO
-				.forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).sinceInception());
-		FactStoreObserver c = mock(FactStoreObserver.class);
-		doAnswer(i -> {
-			sleep(50);
-			return null;
-		}).when(c).onNext(any());
-		ExecutorService es = Executors.newCachedThreadPool();
+        verify(c).onCatchup();
+        verify(c, never()).onNext(any(Fact.class));
 
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create().ns("other-ns"));
+        insertTestFact(TestHeader.create().type("type2"));
+        insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
 
-		Future<?> connected = es.submit(() -> pq.subscribe(req, c));
+        sleep(200);
+        verify(c, times(2)).onNext(any(Fact.class));
 
-		Thread.sleep(200);
+    }
 
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create());
-		connected.get();
+    @Test
+    @DirtiesContext()
+    public void testRoundtripCatchupEventsInsertedAfterStart() throws Exception {
 
-		Thread.sleep(1000);
+        SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(
+                DEFAULT_SPEC).sinceInception());
+        FactStoreObserver c = mock(FactStoreObserver.class);
+        doAnswer(i -> {
+            sleep(50);
+            return null;
+        }).when(c).onNext(any());
+        ExecutorService es = Executors.newCachedThreadPool();
 
-		verify(c).onCatchup();
-		verify(c, times(8)).onNext(any(Fact.class));
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create());
 
-		sleep(200);
-		insertTestFact(TestHeader.create());
+        Future<?> connected = es.submit(() -> pq.subscribe(req, c));
 
-		sleep(300);
+        Thread.sleep(200);
 
-		verify(c, times(9)).onNext(any(Fact.class));
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create());
+        connected.get();
 
-	}
+        Thread.sleep(1000);
 
-	// TODO remove all the Thread.sleeps
-	private void sleep(long ms) throws InterruptedException {
-		Thread.sleep(ms);
-	}
+        verify(c).onCatchup();
+        verify(c, times(8)).onNext(any(Fact.class));
 
-	@Test
-	@DirtiesContext()
-	public void testRoundtripCompletion() throws Exception {
+        sleep(200);
+        insertTestFact(TestHeader.create());
 
-		SubscriptionRequestTO req = SubscriptionRequestTO
-				.forFacts(SubscriptionRequest.catchup(DEFAULT_SPEC).sinceInception());
-		FactStoreObserver c = mock(FactStoreObserver.class);
+        sleep(300);
 
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create());
+        verify(c, times(9)).onNext(any(Fact.class));
 
-		pq.subscribe(req, c);
+    }
 
-		verify(c).onCatchup();
-		verify(c).onComplete();
-		verify(c, times(5)).onNext(any(Fact.class));
+    // TODO remove all the Thread.sleeps
+    private void sleep(long ms) throws InterruptedException {
+        Thread.sleep(ms);
+    }
 
-		insertTestFact(TestHeader.create());
+    @Test
+    @DirtiesContext()
+    public void testRoundtripCompletion() throws Exception {
 
-		sleep(300);
+        SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(
+                DEFAULT_SPEC).sinceInception());
+        FactStoreObserver c = mock(FactStoreObserver.class);
 
-		verify(c).onCatchup();
-		verify(c).onComplete();
-		verify(c, times(5)).onNext(any(Fact.class));
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create());
 
-	}
+        pq.subscribe(req, c);
 
-	@Test
-	@DirtiesContext()
-	public void testCancel() throws Exception {
+        verify(c).onCatchup();
+        verify(c).onComplete();
+        verify(c, times(5)).onNext(any(Fact.class));
 
-		SubscriptionRequestTO req = SubscriptionRequestTO
-				.forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).sinceInception());
+        insertTestFact(TestHeader.create());
 
-		FactStoreObserver c = mock(FactStoreObserver.class);
+        sleep(300);
 
-		insertTestFact(TestHeader.create());
+        verify(c).onCatchup();
+        verify(c).onComplete();
+        verify(c, times(5)).onNext(any(Fact.class));
 
-		Subscription sub = pq.subscribe(req, c);
+    }
 
-		verify(c).onCatchup();
-		verify(c, times(1)).onNext(anyObject());
+    @Test
+    @DirtiesContext()
+    public void testCancel() throws Exception {
 
-		insertTestFact(TestHeader.create());
-		insertTestFact(TestHeader.create());
-		sleep(200);
-		verify(c, times(3)).onNext(anyObject());
+        SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(
+                DEFAULT_SPEC).sinceInception());
 
-		sub.close();
+        FactStoreObserver c = mock(FactStoreObserver.class);
 
-		insertTestFact(TestHeader.create()); // must not show up
-		insertTestFact(TestHeader.create());// must not show up
-		sleep(200);
-		verify(c, times(3)).onNext(anyObject());
+        insertTestFact(TestHeader.create());
 
-	}
+        Subscription sub = pq.subscribe(req, c);
+
+        verify(c).onCatchup();
+        verify(c, times(1)).onNext(anyObject());
+
+        insertTestFact(TestHeader.create());
+        insertTestFact(TestHeader.create());
+        sleep(200);
+        verify(c, times(3)).onNext(anyObject());
+
+        sub.close();
+
+        insertTestFact(TestHeader.create()); // must not show up
+        insertTestFact(TestHeader.create());// must not show up
+        sleep(200);
+        verify(c, times(3)).onNext(anyObject());
+
+    }
 
 }

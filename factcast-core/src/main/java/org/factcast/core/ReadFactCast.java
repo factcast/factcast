@@ -19,10 +19,11 @@ import lombok.NonNull;
  *
  */
 public interface ReadFactCast {
-	CompletableFuture<Subscription> subscribeToFacts(@NonNull SubscriptionRequest request,
-			@NonNull FactObserver observer);
+    CompletableFuture<Subscription> subscribeToFacts(@NonNull SubscriptionRequest request,
+            @NonNull FactObserver observer);
 
-	CompletableFuture<Subscription> subscribeToIds(@NonNull SubscriptionRequest request, @NonNull IdObserver observer);
+    CompletableFuture<Subscription> subscribeToIds(@NonNull SubscriptionRequest request,
+            @NonNull IdObserver observer);
 
-	Optional<Fact> fetchById(@NonNull UUID id);
+    Optional<Fact> fetchById(@NonNull UUID id);
 }

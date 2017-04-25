@@ -13,10 +13,11 @@ import javax.ws.rs.core.HttpHeaders;
 @Priority(Priorities.HEADER_DECORATOR)
 public class CachableFilter implements ContainerResponseFilter {
 
-	@Override
-	public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext)
-			throws IOException {
-		responseContext.getHeaders().putSingle(HttpHeaders.CACHE_CONTROL, "max-age=1000000, s-maxage=1000000, public");
-	}
+    @Override
+    public void filter(ContainerRequestContext requestContext,
+            ContainerResponseContext responseContext) throws IOException {
+        responseContext.getHeaders().putSingle(HttpHeaders.CACHE_CONTROL,
+                "max-age=1000000, s-maxage=1000000, public");
+    }
 
 }

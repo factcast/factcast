@@ -17,25 +17,26 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ConnectionTesterTest {
 
-	@Mock
-	Connection conn;
+    @Mock
+    Connection conn;
 
-	@Mock
-	PreparedStatement ps;
-	@Mock
-	ResultSet rs;
+    @Mock
+    PreparedStatement ps;
 
-	@Test
-	public void testTest() throws Exception {
-		ConnectionTester tester = new ConnectionTester();
+    @Mock
+    ResultSet rs;
 
-		when(conn.prepareStatement(anyString())).thenReturn(ps);
-		when(ps.executeQuery()).thenReturn(rs);
-		when(rs.getInt(1)).thenReturn(42);
+    @Test
+    public void testTest() throws Exception {
+        ConnectionTester tester = new ConnectionTester();
 
-		assertTrue(tester.test(conn));
+        when(conn.prepareStatement(anyString())).thenReturn(ps);
+        when(ps.executeQuery()).thenReturn(rs);
+        when(rs.getInt(1)).thenReturn(42);
 
-		verify(rs).next();
-		verify(rs).getInt(1);
-	}
+        assertTrue(tester.test(conn));
+
+        verify(rs).next();
+        verify(rs).getInt(1);
+    }
 }

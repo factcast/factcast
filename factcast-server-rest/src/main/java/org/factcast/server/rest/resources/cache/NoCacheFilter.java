@@ -13,10 +13,10 @@ import javax.ws.rs.core.HttpHeaders;
 @Priority(Priorities.HEADER_DECORATOR)
 public class NoCacheFilter implements ContainerResponseFilter {
 
-	@Override
-	public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext)
-			throws IOException {
-		responseContext.getHeaders().putSingle(HttpHeaders.CACHE_CONTROL, "no-cache");
-	}
+    @Override
+    public void filter(ContainerRequestContext requestContext,
+            ContainerResponseContext responseContext) throws IOException {
+        responseContext.getHeaders().putSingle(HttpHeaders.CACHE_CONTROL, "no-cache");
+    }
 
 }

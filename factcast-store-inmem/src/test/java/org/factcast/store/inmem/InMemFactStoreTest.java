@@ -10,18 +10,18 @@ import org.junit.Test;
 
 public class InMemFactStoreTest extends AbstractFactStoreTest {
 
-	@Override
-	protected FactStore createStoreToTest() {
-		return new InMemFactStore();
-	}
+    @Override
+    protected FactStore createStoreToTest() {
+        return new InMemFactStore();
+    }
 
-	@Test
-	public void testDestroy() throws Exception {
-		ExecutorService es = mock(ExecutorService.class);
-		InMemFactStore inMemFactStore = new InMemFactStore(es);
+    @Test
+    public void testDestroy() throws Exception {
+        ExecutorService es = mock(ExecutorService.class);
+        InMemFactStore inMemFactStore = new InMemFactStore(es);
 
-		inMemFactStore.destroy();
-		verify(es).shutdown();
-	}
+        inMemFactStore.destroy();
+        verify(es).shutdown();
+    }
 
 }
