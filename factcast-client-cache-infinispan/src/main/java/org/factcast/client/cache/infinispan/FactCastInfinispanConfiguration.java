@@ -69,7 +69,7 @@ public class FactCastInfinispanConfiguration {
 		@PostConstruct
 		public void init() {
 			log.info("Infinispan initialization done.");
-			log.info("Configure to persistently cache to '{}'", folder);
+			log.info("Configure to persist cached objects to '{}'", folder);
 			ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 
 			final PersistenceConfigurationBuilder persistence = configurationBuilder.persistence().passivation(false);

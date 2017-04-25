@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
@@ -17,7 +16,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 
 import org.factcast.core.DefaultFact;
@@ -31,30 +29,32 @@ import org.factcast.server.rest.resources.cache.Cacheable;
 import org.factcast.server.rest.resources.cache.NoCache;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercateo.common.rest.schemagen.JerseyResource;
-import com.mercateo.common.rest.schemagen.JsonHyperSchema;
-import com.mercateo.common.rest.schemagen.link.LinkFactory;
-import com.mercateo.common.rest.schemagen.link.LinkMetaFactory;
-import com.mercateo.common.rest.schemagen.link.relation.Rel;
 import com.mercateo.common.rest.schemagen.types.ObjectWithSchema;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Path("events")
+
 @Slf4j
+
+@Component
+@AllArgsConstructor
+
 public class EventsResource implements JerseyResource {
 
-	@Inject
-	private FactStore factStore;
+	private final FactStore factStore;
 
-	@Inject
-	private LinkMetaFactory linkMetaFactory;
-
-	@Inject
 	private ObjectMapper objectMapper;
+
+	private final EventsSchemaCreator schemaCreator;
+
+	private final EventObserverFactory eventObserverFactory;
 
 	@GET
 	@Produces(SseFeature.SERVER_SENT_EVENTS)
@@ -62,9 +62,8 @@ public class EventsResource implements JerseyResource {
 	public EventOutput getServerSentEvents(
 			@NotNull @Valid @BeanParam SubscriptionRequestParams subscriptionRequestParams) {
 		final EventOutput eventOutput = new EventOutput();
-		LinkFactory<EventsResource> linkFatory = linkMetaFactory.createFactoryFor(EventsResource.class);
 		SubscriptionRequestTO req = subscriptionRequestParams.toRequest();
-		FactStoreObserver observer = new EventObserver(eventOutput, linkFatory);
+		FactStoreObserver observer = eventObserverFactory.createFor(eventOutput);
 		factStore.subscribe(req, observer);
 		return eventOutput;
 	}
@@ -84,9 +83,7 @@ public class EventsResource implements JerseyResource {
 				throw new WebApplicationException(500);
 			}
 		}).orElseThrow(NotFoundException::new);
-		Optional<Link> selfLink = linkMetaFactory.createFactoryFor(EventsResource.class).forCall(Rel.SELF,
-				r -> r.getForId(id));
-		return ObjectWithSchema.create(returnValue, JsonHyperSchema.from(selfLink));
+		return schemaCreator.forFactWithId(returnValue, id);
 	}
 
 	@POST

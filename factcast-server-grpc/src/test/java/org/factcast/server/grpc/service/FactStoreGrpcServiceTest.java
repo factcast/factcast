@@ -11,10 +11,10 @@ import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.store.FactStore;
-import org.factcast.server.grpc.api.conv.ProtoConverter;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Facts;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Facts.Builder;
+import org.factcast.grpc.api.conv.ProtoConverter;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -34,7 +34,7 @@ public class FactStoreGrpcServiceTest {
 	@Captor
 	ArgumentCaptor<List<Fact>> acFactList;
 
-	ProtoConverter protoConverter = new ProtoConverter();
+	final ProtoConverter protoConverter = new ProtoConverter();
 
 	@Test(expected = NullPointerException.class)
 	public void testPublishNull() throws Exception {

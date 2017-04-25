@@ -1,4 +1,4 @@
-package org.factcast.server.grpc.api.conv;
+package org.factcast.grpc.api.conv;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -6,16 +6,24 @@ import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_SubscriptionRequest;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_UUID;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact.Builder;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
-//TODO add symetry tests
+/**
+ * Converts Protobuf messages to Java Objects and back.
+ * 
+ * @author usr
+ *
+ */
+// TODO add symetry tests
 @RequiredArgsConstructor
 public class ProtoConverter {
 
@@ -29,7 +37,7 @@ public class ProtoConverter {
 	}
 
 	public MSG_Notification toNotification(Fact t) {
-		org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification.Builder b = MSG_Notification.newBuilder()
+		org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Builder b = MSG_Notification.newBuilder()
 				.setType(MSG_Notification.Type.Fact);
 		b.setFact(toProto(t));
 		b.setType(MSG_Notification.Type.Fact);
@@ -37,10 +45,10 @@ public class ProtoConverter {
 
 	}
 
-	public MSG_Notification toIdNotification(Fact t) {
-		org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification.Builder b = MSG_Notification.newBuilder()
+	public MSG_Notification toNotification(UUID t) {
+		org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Builder b = MSG_Notification.newBuilder()
 				.setType(MSG_Notification.Type.Id);
-		b.setId(toProto(t.id()));
+		b.setId(toProto(t));
 		b.setType(MSG_Notification.Type.Id);
 		return b.build();
 	}
@@ -72,22 +80,28 @@ public class ProtoConverter {
 
 	public MSG_Fact toProto(org.factcast.core.Fact factMark) {
 		MSG_Fact.Builder proto = MSG_Fact.newBuilder();
-		proto.setPresent(true);
 		proto.setHeader(factMark.jsonHeader());
 		proto.setPayload(factMark.jsonPayload());
 		return proto.build();
 	}
 
-	public MSG_Fact toProto(Optional<Fact> optionalFact) {
-		MSG_Fact.Builder proto = MSG_Fact.newBuilder();
-		boolean present = optionalFact.isPresent();
+	public MSG_OptionalFact toProto(Optional<Fact> optFact) {
+		Builder proto = MSG_OptionalFact.newBuilder();
+		boolean present = optFact.isPresent();
+
 		proto.setPresent(present);
 		if (present) {
-			Fact fact = optionalFact.get();
-			proto.setHeader(fact.jsonHeader());
-			proto.setPayload(fact.jsonPayload());
+			proto.setFact(toProto(optFact.get()));
 		}
 		return proto.build();
+	}
+
+	public Optional<Fact> fromProto(@NonNull MSG_OptionalFact msg) {
+		if (!msg.getPresent()) {
+			return Optional.empty();
+		} else {
+			return Optional.of(fromProto(msg.getFact()));
+		}
 	}
 
 }

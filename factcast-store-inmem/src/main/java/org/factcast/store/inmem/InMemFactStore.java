@@ -27,11 +27,13 @@ import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
 
 /**
- * for testing purposes only
+ * Eternally-growing InMem Implementation of a FactStore. USE FOR TESTING
+ * PURPOSES ONLY
  * 
  * @author usr
  *
  */
+@Deprecated
 public class InMemFactStore implements FactStore, DisposableBean {
 
 	@VisibleForTesting

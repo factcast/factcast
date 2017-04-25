@@ -19,7 +19,6 @@ import lombok.experimental.FieldDefaults;
  */
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
-
 @ToString
 @RequiredArgsConstructor
 class FluentSubscriptionRequest implements SubscriptionRequest {
@@ -64,7 +63,6 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 			toBuild.continous = false;
 			return this;
 		}
-
 	}
 
 	public java.util.Optional<UUID> startingAfter() {

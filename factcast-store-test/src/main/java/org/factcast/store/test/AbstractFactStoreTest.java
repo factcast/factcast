@@ -13,6 +13,7 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactObserver;
 import org.factcast.core.subscription.FactSpec;
 import org.factcast.core.subscription.IdObserver;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.junit.Before;
 import org.junit.Test;
@@ -105,6 +106,77 @@ public abstract class AbstractFactStoreTest {
 
 	@Test
 	@DirtiesContext
+	public void testEmptyStoreEphemeralWithCancel() throws Exception {
+
+		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+
+		FactObserver ido = mock(FactObserver.class);
+		Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.ephemeral(ANY).sinceInception(), ido)
+				.get();
+		Thread.sleep(200);// TODO
+
+		// nothing recieved
+
+		verify(ido).onCatchup();
+		verify(ido, never()).onComplete();
+		verify(ido, never()).onError(any());
+		verify(ido, never()).onNext(any());
+
+		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+		Thread.sleep(200);
+
+		verify(ido, times(1)).onNext(any());
+
+		subscription.close();
+
+		Thread.sleep(200);
+		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+		Thread.sleep(200);
+
+		// additional event not received
+		verify(ido, times(1)).onNext(any());
+
+	}
+
+	@Test
+	@DirtiesContext
+	public void testEmptyStoreFollowWithCancel() throws Exception {
+
+		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+
+		FactObserver ido = mock(FactObserver.class);
+		Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), ido).get();
+		Thread.sleep(200);// TODO
+
+		// nothing recieved
+
+		verify(ido).onCatchup();
+		verify(ido, never()).onComplete();
+		verify(ido, never()).onError(any());
+		verify(ido, times(3)).onNext(any());
+
+		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+		Thread.sleep(200);
+
+		verify(ido, times(4)).onNext(any());
+
+		subscription.close();
+
+		Thread.sleep(200);
+		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+		Thread.sleep(200);
+
+		// additional event not received
+		verify(ido, times(4)).onNext(any());
+
+	}
+
+	@Test
+	@DirtiesContext
 	public void testEmptyStoreCatchupMatching() throws Exception {
 		FactObserver ido = mock(FactObserver.class);
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
@@ -134,7 +206,7 @@ public abstract class AbstractFactStoreTest {
 
 	@Test
 	@DirtiesContext
-	public void testEmptyStoreFollowNonmMatchingDelayed() throws Exception {
+	public void testEmptyStoreFollowNonMatchingDelayed() throws Exception {
 		FactObserver ido = mock(FactObserver.class);
 		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"t1\"}", "{}"));
 		uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), ido).get();

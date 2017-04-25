@@ -18,7 +18,7 @@ import lombok.SneakyThrows;
 import lombok.ToString;
 
 /**
- * PG Specific impl of Fact.
+ * PG Specific implementation of a Fact.
  * 
  * This class is necessary in order to delay parsing of the header until
  * necessary (when accessing meta-data)
@@ -26,7 +26,6 @@ import lombok.ToString;
  * @author usr
  *
  */
-
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @ToString(of = { "id", "ns", "type", "aggId", "meta" })
 class PGFact implements Fact {
@@ -68,7 +67,7 @@ class PGFact implements Fact {
 	// just picks the MetaData from the Header (as we know the rest already
 	private static class Meta {
 		@JsonProperty
-		Map<String, String> meta = new HashMap<>();
+		final Map<String, String> meta = new HashMap<>();
 	}
 
 	@SneakyThrows

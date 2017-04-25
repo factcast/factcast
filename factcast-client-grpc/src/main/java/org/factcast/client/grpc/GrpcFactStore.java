@@ -1,5 +1,7 @@
 package org.factcast.client.grpc;
 
+import static io.grpc.stub.ClientCalls.*;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,16 +14,19 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.server.grpc.api.conv.ProtoConverter;
-import org.factcast.server.grpc.gen.FactStoreProto;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Facts;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification;
-import org.factcast.server.grpc.gen.RemoteFactStoreGrpc;
-import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
-import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
+import org.factcast.grpc.api.conv.ProtoConverter;
+import org.factcast.grpc.api.gen.FactStoreProto;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
+import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
+import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
+import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
 
 import io.grpc.Channel;
+import io.grpc.ClientCall;
 import io.grpc.stub.StreamObserver;
 import lombok.Getter;
 import lombok.NonNull;
@@ -40,11 +45,12 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 @Slf4j
 class GrpcFactStore implements FactStore {
 
+	private static final String CHANNEL_NAME = "factstore";
 	private final RemoteFactStoreBlockingStub blockingStub;
 	private final RemoteFactStoreStub stub;
 
-	GrpcFactStore(AddressChannelFactory channelFactory) {
-		Channel c = channelFactory.createChannel("factstore");
+	GrpcFactStore(@NonNull AddressChannelFactory channelFactory) {
+		Channel c = channelFactory.createChannel(CHANNEL_NAME);
 		blockingStub = RemoteFactStoreGrpc.newBlockingStub(c);
 		stub = RemoteFactStoreGrpc.newStub(c);
 	}
@@ -53,40 +59,44 @@ class GrpcFactStore implements FactStore {
 
 	@Override
 	public Optional<Fact> fetchById(UUID id) {
-		MSG_Fact fetchById = blockingStub.fetchById(conv.toProto(id));
+		log.trace("fetching {} from remote store", id);
+		MSG_OptionalFact fetchById = blockingStub.fetchById(conv.toProto(id));
 		if (!fetchById.getPresent()) {
 			return Optional.empty();
 		} else {
-			return Optional.ofNullable(conv.fromProto(fetchById));
+			return conv.fromProto(fetchById);
 		}
 	}
 
 	@Override
-	public void publish(List<? extends Fact> factsToPublish) {
+	public void publish(@NonNull List<? extends Fact> factsToPublish) {
+		log.trace("publishing {} facts to remote store", factsToPublish.size());
 		List<MSG_Fact> mf = factsToPublish.stream().map(conv::toProto).collect(Collectors.toList());
 		MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
 		blockingStub.publish(mfs);
 	}
 
 	@Override
-	public CompletableFuture<Subscription> subscribe(SubscriptionRequestTO req, FactStoreObserver observer) {
+	public CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO req,
+			@NonNull FactStoreObserver observer) {
 		CountDownLatch l = new CountDownLatch(1);
 
-		stub.subscribe(conv.toProto(req), new StreamObserver<FactStoreProto.MSG_Notification>() {
+		final MSG_SubscriptionRequest request = conv.toProto(req);
+		final StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new StreamObserver<FactStoreProto.MSG_Notification>() {
 
 			@Override
 			public void onNext(MSG_Notification f) {
 
-				log.trace("observer got msg: " + f);
+				log.trace("observer got msg: {}", f);
 
 				switch (f.getType()) {
 				case Catchup:
-					observer.onCatchup();
 					l.countDown();
+					observer.onCatchup();
 					break;
 				case Complete:
-					observer.onComplete();
 					l.countDown();
+					observer.onComplete();
 					break;
 				case Error:
 					l.countDown();
@@ -98,10 +108,12 @@ class GrpcFactStore implements FactStore {
 					break;
 
 				case Id:
+					// wrap id in a fact
 					observer.onNext(new IdOnlyFact(conv.fromProto(f.getId())));
 					break;
 
 				case UNRECOGNIZED:
+					l.countDown();
 					observer.onError(new RuntimeException("Unrecognized notification type. THIS IS A BUG!"));
 					break;
 				}
@@ -117,7 +129,11 @@ class GrpcFactStore implements FactStore {
 			public void onCompleted() {
 				observer.onComplete();
 			}
-		});
+		};
+
+		final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()
+				.newCall(RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions());
+		asyncServerStreamingCall(call, request, responseObserver);
 
 		// wait until catchup
 		try {
@@ -126,8 +142,8 @@ class GrpcFactStore implements FactStore {
 			throw new IllegalStateException(e);
 		}
 
-		// TODO how to close?
 		return CompletableFuture.completedFuture(() -> {
+			call.cancel("Client is no longer interested", null);
 		});
 	}
 

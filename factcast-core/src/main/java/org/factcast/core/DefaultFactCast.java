@@ -19,6 +19,12 @@ import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Default impl for FactCast used by FactCast.from* methods.
+ * 
+ * @author usr
+ *
+ */
 @RequiredArgsConstructor
 class DefaultFactCast implements FactCast {
 
@@ -28,14 +34,15 @@ class DefaultFactCast implements FactCast {
 	@Override
 	public CompletableFuture<Subscription> subscribeToFacts(@NonNull SubscriptionRequest req,
 			@NonNull FactObserver observer) {
-		return store.subscribe(SubscriptionRequestTO.forFacts(req),
-				new ObserverBridge<Fact>(observer, Function.identity()));
+		final Function<Fact, Fact> projection = Function.identity();
+		return store.subscribe(SubscriptionRequestTO.forFacts(req), new ObserverBridge<Fact>(observer, projection));
 	}
 
 	@Override
 	public CompletableFuture<Subscription> subscribeToIds(@NonNull SubscriptionRequest req,
 			@NonNull IdObserver observer) {
-		return store.subscribe(SubscriptionRequestTO.forIds(req), new ObserverBridge<UUID>(observer, f -> f.id()));
+		final Function<Fact, UUID> projection = f -> f.id();
+		return store.subscribe(SubscriptionRequestTO.forIds(req), new ObserverBridge<UUID>(observer, projection));
 	}
 
 	@Override

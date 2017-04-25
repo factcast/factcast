@@ -23,6 +23,7 @@ import com.google.common.eventbus.Subscribe;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+// TODO split
 // TODO document properly
 @Slf4j
 @RequiredArgsConstructor
@@ -50,14 +51,14 @@ class PGQuery {
 			log.trace("post query filtering has been disabled");
 		}
 
-		Long staringSerial = req.startingAfter().map(serMapper::retrieve).orElse(0L);
-		ser.set(staringSerial);
+		Long startingSerial = req.startingAfter().map(serMapper::retrieve).orElse(0L);
+		ser.set(startingSerial);
 
-		log.trace("initializing from {}", staringSerial);
+		log.trace("initializing from {}", startingSerial);
 
 		PGQueryBuilder q = new PGQueryBuilder(req);
 		String sql = q.createSQL();
-		log.trace("subscription sql={}", sql);
+		log.debug("subscription sql={}", sql);
 		PreparedStatementSetter setter = q.createStatementSetter(ser);
 
 		RowCallbackHandler rsHandler = rs -> {
@@ -74,9 +75,8 @@ class PGQuery {
 					try {
 						observer.onNext(f);
 					} catch (Throwable e) {
-						log.warn("Exception from observer", e);
+						log.warn("Exception from observer. THIS IS A BUG! Please Report!", e);
 						disconnect(observer);
-
 					}
 					log.trace("onNext called with id={}", factId);
 				} else {
@@ -147,6 +147,7 @@ class PGQuery {
 		} else {
 			log.debug("Complete");
 			c.onComplete();
+			// FIXME disc.?
 			return this::nop;
 		}
 	}

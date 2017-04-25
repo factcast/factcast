@@ -33,7 +33,7 @@ import lombok.Data;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { PGEmbeddedConfiguration.class })
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
-public class PGQueryIntegrationIT {
+public class PGQueryIT {
 
 	private static final FactSpec DEFAULT_SPEC = FactSpec.ns("default-ns").type("type1");
 

@@ -3,21 +3,24 @@ package org.factcast.server.grpc.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactStoreObserver;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.server.grpc.api.conv.ProtoConverter;
-import org.factcast.server.grpc.gen.FactStoreProto;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Empty;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Fact;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Facts;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_Notification;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_SubscriptionRequest;
-import org.factcast.server.grpc.gen.FactStoreProto.MSG_UUID;
-import org.factcast.server.grpc.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
+import org.factcast.grpc.api.conv.ProtoConverter;
+import org.factcast.grpc.api.gen.FactStoreProto;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
+import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
@@ -43,7 +46,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 	private final ProtoConverter conv = new ProtoConverter();
 
 	@Override
-	public void fetchById(MSG_UUID request, StreamObserver<MSG_Fact> responseObserver) {
+	public void fetchById(MSG_UUID request, StreamObserver<MSG_OptionalFact> responseObserver) {
 		try {
 			UUID fromProto = conv.fromProto(request);
 			log.trace("fetchById {}", fromProto);
@@ -70,7 +73,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Throwable e) {
 			log.error("Problem while publishing: ", e);
-			responseObserver.onError(e);
+
 		}
 	}
 
@@ -83,14 +86,22 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 		public void onComplete() {
 			log.info("onComplete – sending complete notification");
 			observer.onNext(conv.toCompleteNotification());
-			observer.onCompleted();
+			tryComplete();
 		}
 
 		@Override
 		public void onError(Throwable e) {
 			log.warn("onError – sending Error notification {}", e);
 			observer.onError(e);
-			observer.onCompleted(); // TODO really?
+			tryComplete();
+		}
+
+		private void tryComplete() {
+			try {
+				observer.onCompleted();
+			} catch (Throwable e) {
+				log.trace("Expected exception on completion: ", e);
+			}
 		}
 
 		@Override
@@ -98,20 +109,34 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 			log.info("onCatchup – sending catchup notification");
 			observer.onNext(conv.toCatchupNotification());
 		}
-
 	}
 
 	@Override
 	public void subscribe(MSG_SubscriptionRequest request, StreamObserver<MSG_Notification> responseObserver) {
 		SubscriptionRequestTO req = conv.fromProto(request);
-		log.trace("subscription for {}", req);
+		log.trace("creating subscription for {}", req);
 		final boolean idOnly = req.idOnly();
-		store.subscribe(req, new ObserverBridge(responseObserver) {
+		final AtomicReference<CompletableFuture<Subscription>> ref = new AtomicReference<>();
+
+		ref.set(store.subscribe(req, new ObserverBridge(responseObserver) {
 
 			@Override
 			public void onNext(Fact f) {
-				responseObserver.onNext(idOnly ? conv.toIdNotification(f) : conv.toNotification(f));
+				try {
+					responseObserver.onNext(idOnly ? conv.toNotification(f.id()) : conv.toNotification(f));
+				} catch (Throwable e) {
+					log.warn("Exception while sending data to stream", e);
+					if (ref.get() != null) {
+						try {
+							ref.get().getNow(() -> {
+							}).close();
+						} catch (Exception e1) {
+							// swallow.
+						}
+					}
+				}
 			}
-		});
+		}));
+
 	}
 }

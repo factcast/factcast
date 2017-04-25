@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 
 import org.factcast.core.Fact;
 
@@ -27,14 +26,13 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 	private static final ScriptEngineManager engineManager = new ScriptEngineManager();
 
 	@NonNull
-	private String ns;
+	private final String ns;
 	private final String type;
 	private final UUID aggId;
 	private final Map<String, String> meta;
 	private final String script;
 	private final ScriptEngine engine;
 
-	@SneakyThrows // TODO err handling
 	public FactSpecMatcher(@NonNull FactSpec spec) {
 
 		// opt: prevent method calls by prefetching to final fields.
@@ -102,7 +100,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
 	// TODO err handling
 	@SneakyThrows
-	private static ScriptEngine getEngine(String js) throws ScriptException {
+	private static ScriptEngine getEngine(String js) {
 		if (js == null) {
 			return null;
 		}

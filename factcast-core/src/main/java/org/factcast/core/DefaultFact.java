@@ -31,15 +31,17 @@ import lombok.Value;
  * @author usr
  *
  */
-
-@Getter
 @ToString
 public class DefaultFact implements Fact, Externalizable {
 
+	@Getter
 	private String jsonHeader;
+	@Getter
 	private String jsonPayload;
 	private Header header;
 
+	// needed for Externalizable – do not use !
+	@Deprecated
 	public DefaultFact() {
 	}
 
@@ -56,7 +58,7 @@ public class DefaultFact implements Fact, Externalizable {
 
 	}
 
-	private void init(String jsonHeader) throws IOException, JsonProcessingException {
+	private void init(@NonNull String jsonHeader) throws IOException, JsonProcessingException {
 		header = FactCastJson.reader().forType(Header.class).readValue(jsonHeader);
 	}
 
@@ -85,14 +87,17 @@ public class DefaultFact implements Fact, Externalizable {
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
+		// write only header & payload
 		out.writeUTF(jsonHeader);
 		out.writeUTF(jsonPayload);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+		// read only header & payload
 		jsonHeader = in.readUTF();
 		jsonPayload = in.readUTF();
+		// and recreate the header field
 		init(jsonHeader);
 	}
 

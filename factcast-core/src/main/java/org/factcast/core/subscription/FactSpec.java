@@ -18,7 +18,6 @@ import lombok.RequiredArgsConstructor;
  * @author usr
  *
  */
-
 @Data
 @RequiredArgsConstructor(staticName = "ns")
 public class FactSpec {
@@ -46,7 +45,4 @@ public class FactSpec {
 		return FactSpec.ns(MarkFact.NS).type(MarkFact.TYPE);
 	}
 
-	protected FactSpec() {
-		this("default");
-	}
 }
