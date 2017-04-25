@@ -1,10 +1,12 @@
 package org.factcast.server.rest.resources;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.QueryParam;
 
+import org.factcast.core.subscription.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 
 import lombok.Data;
@@ -32,22 +34,11 @@ public class SubscriptionRequestParams {
 			r.startingAfter(UUID.fromString(since));
 		}
 
+		FactSpec factSpec = FactSpec.ns(ns);
+		if (aggId != null) {
+			factSpec = factSpec.aggId(UUID.fromString(aggId));
+		}
+		r.specs(Arrays.asList(FactSpec.forMark(), factSpec));
 		return r;
-
-		// SpecBuilder builder;
-		// FactSpec factSpec = FactSpec.ns(ns);
-		// if (aggId != null) {
-		// factSpec.aggId(UUID.fromString(aggId));
-		// }
-		// if (follow) {
-		// builder = ClientSubscriptionRequest.follow(factSpec);
-		// } else {
-		// builder = ClientSubscriptionRequest.catchup(factSpec);
-		// }
-		// if (since != null) {
-		// return builder.since(UUID.fromString(since));
-		// } else {
-		// return builder.sinceInception();
-		// }
 	}
 }

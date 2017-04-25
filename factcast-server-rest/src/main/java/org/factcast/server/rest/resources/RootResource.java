@@ -11,6 +11,7 @@ import javax.ws.rs.core.MediaType;
 
 import com.mercateo.common.rest.schemagen.JerseyResource;
 import com.mercateo.common.rest.schemagen.JsonHyperSchema;
+import com.mercateo.common.rest.schemagen.link.LinkFactory;
 import com.mercateo.common.rest.schemagen.link.LinkMetaFactory;
 import com.mercateo.common.rest.schemagen.types.ObjectWithSchema;
 
@@ -24,10 +25,14 @@ public class RootResource implements JerseyResource {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public ObjectWithSchema<Void> getRoot() {
-		Optional<Link> eventsLink = linkMetaFactory.createFactoryFor(EventsResource.class).forCall(EventsRel.EVENTS,
+		LinkFactory<EventsResource> eventsResourceFactory = linkMetaFactory.createFactoryFor(EventsResource.class);
+		Optional<Link> eventsLink = eventsResourceFactory.forCall(EventsRel.EVENTS,
 				r -> r.getServerSentEvents(null));
 
-		return ObjectWithSchema.create(null, JsonHyperSchema.from(eventsLink));
+		Optional<Link> createLink = eventsResourceFactory
+				.forCall(EventsRel.CREATE_TRANSACTIONAL, r -> r.newTransaction(null));
+
+		return ObjectWithSchema.create(null, JsonHyperSchema.from(eventsLink, createLink));
 
 	}
 }

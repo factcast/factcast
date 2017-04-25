@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 import lombok.NonNull;
 
-//TODO do not rely on component scan
+//TODO move that in test folder
 @Component
 public class SetupRunner implements CommandLineRunner {
 	private static final Fact one = new Fact() {
@@ -36,7 +36,12 @@ public class SetupRunner implements CommandLineRunner {
 
 		@Override
 		public String jsonHeader() {
-			return "{}";
+
+			return "{\"ns\":\"a\","//
+					+ "\"type\":\"a\","//
+					+ "\"aggId\":\"" + aggId + "\","//
+					+ "\"id\":\"" + id + "\""//
+					+ "}";
 		}
 
 		@Override

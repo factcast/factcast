@@ -11,4 +11,10 @@ public enum EventsRel implements RelationContainer {
 			return Relation.of("events", RelType.OTHER);
 		}
 	},
+	CREATE_TRANSACTIONAL {
+		@Override
+		public Relation getRelation() {
+			return Relation.of("create-transactional", RelType.OTHER);
+		}
+	},
 }
