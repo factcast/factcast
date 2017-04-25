@@ -31,37 +31,37 @@ public interface SubscriptionRequest {
 
 	// ------------
 
-	public static SpecBuilder ephemeral(@NonNull FactSpec spec) {
-		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(true)).follow(spec);
+	public static SpecBuilder ephemeral(@NonNull FactSpec specification) {
+		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(true)).follow(specification);
 	}
 
-	public static SpecBuilder ephemeral(long maxBatchDelayInMs, @NonNull FactSpec spec) {
+	public static SpecBuilder ephemeral(long maxBatchDelayInMs, @NonNull FactSpec specification) {
 
 		checkMaxDelay(maxBatchDelayInMs);
 
 		FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest(true);
 		toBuild.maxBatchDelayInMs = maxBatchDelayInMs;
-		return new FluentSubscriptionRequest.Builder(toBuild).follow(spec);
+		return new FluentSubscriptionRequest.Builder(toBuild).follow(specification);
 	}
 
-	public static SpecBuilder follow(@NonNull FactSpec spec) {
-		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(false)).follow(spec);
+	public static SpecBuilder follow(@NonNull FactSpec specification) {
+		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(false)).follow(specification);
 	}
 
-	public static SpecBuilder follow(long maxBatchDelayInMs, @NonNull FactSpec spec) {
+	public static SpecBuilder follow(long maxBatchDelayInMs, @NonNull FactSpec specification) {
 
 		checkMaxDelay(maxBatchDelayInMs);
 
 		FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest(false);
 		toBuild.maxBatchDelayInMs = maxBatchDelayInMs;
-		return new FluentSubscriptionRequest.Builder(toBuild).follow(spec);
+		return new FluentSubscriptionRequest.Builder(toBuild).follow(specification);
 	}
 
 	public static void checkMaxDelay(long maxLatencyInMillis) {
 		Preconditions.checkArgument(maxLatencyInMillis <= 30000, "maxBatchDelayInMs<=30000");
 	}
 
-	public static SpecBuilder catchup(@NonNull FactSpec spec) {
-		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(false)).catchup(spec);
+	public static SpecBuilder catchup(@NonNull FactSpec specification) {
+		return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(false)).catchup(specification);
 	}
 }

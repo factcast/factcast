@@ -36,8 +36,8 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 		private final FluentSubscriptionRequest toBuild;
 
 		@Override
-		public SpecBuilder or(@NonNull FactSpec s) {
-			toBuild.specs.add(s);
+		public SpecBuilder or(@NonNull FactSpec specification) {
+			toBuild.specs.add(specification);
 			return this;
 		}
 
@@ -52,14 +52,14 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 			return toBuild;
 		}
 
-		SpecBuilder follow(@NonNull FactSpec spec) {
-			or(spec);
+		SpecBuilder follow(@NonNull FactSpec specification) {
+			or(specification);
 			toBuild.continous = true;
 			return this;
 		}
 
-		SpecBuilder catchup(@NonNull FactSpec spec) {
-			or(spec);
+		SpecBuilder catchup(@NonNull FactSpec specification) {
+			or(specification);
 			toBuild.continous = false;
 			return this;
 		}
@@ -70,7 +70,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 	}
 
 	public interface SpecBuilder {
-		SpecBuilder or(@NonNull FactSpec s);
+		SpecBuilder or(@NonNull FactSpec specification);
 
 		SubscriptionRequest since(@NonNull UUID id);
 

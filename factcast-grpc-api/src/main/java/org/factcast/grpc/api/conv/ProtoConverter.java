@@ -45,10 +45,10 @@ public class ProtoConverter {
 
 	}
 
-	public MSG_Notification toNotification(UUID t) {
+	public MSG_Notification toNotification(UUID id) {
 		org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Builder builder = MSG_Notification.newBuilder()
 				.setType(MSG_Notification.Type.Id);
-		builder.setId(toProto(t));
+		builder.setId(toProto(id));
 		builder.setType(MSG_Notification.Type.Id);
 		return builder.build();
 	}
@@ -96,11 +96,11 @@ public class ProtoConverter {
 		return proto.build();
 	}
 
-	public Optional<Fact> fromProto(@NonNull MSG_OptionalFact msg) {
-		if (!msg.getPresent()) {
+	public Optional<Fact> fromProto(@NonNull MSG_OptionalFact message) {
+		if (!message.getPresent()) {
 			return Optional.empty();
 		} else {
-			return Optional.of(fromProto(msg.getFact()));
+			return Optional.of(fromProto(message.getFact()));
 		}
 	}
 

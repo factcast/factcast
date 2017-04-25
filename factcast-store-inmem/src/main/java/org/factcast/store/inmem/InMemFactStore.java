@@ -55,9 +55,9 @@ public class InMemFactStore implements FactStore, DisposableBean {
 		private final Predicate<Fact> matcher;
 		final Consumer<Fact> consumer;
 
-		InMemSubscription(SubscriptionRequestTO req, Consumer<Fact> consumer) {
+		InMemSubscription(SubscriptionRequestTO request, Consumer<Fact> consumer) {
 			this.consumer = consumer;
-			matcher = FactSpecMatcher.matchesAnyOf(req.specs());
+			matcher = FactSpecMatcher.matchesAnyOf(request.specs());
 		}
 
 		@Override
@@ -97,17 +97,17 @@ public class InMemFactStore implements FactStore, DisposableBean {
 	}
 
 	@Override
-	public synchronized CompletableFuture<Subscription> subscribe(SubscriptionRequestTO req,
+	public synchronized CompletableFuture<Subscription> subscribe(SubscriptionRequestTO request,
 			FactStoreObserver observer) {
 
-		InMemSubscription s = new InMemSubscription(req, c -> observer.onNext(c));
-		if (!req.ephemeral()) {
+		InMemSubscription s = new InMemSubscription(request, c -> observer.onNext(c));
+		if (!request.ephemeral()) {
 			store.values().stream().forEach(s);
 		}
 
 		observer.onCatchup();
 
-		if (req.continous()) {
+		if (request.continous()) {
 			activeSubscriptions.add(s);
 			return CompletableFuture.completedFuture(s);
 		} else {

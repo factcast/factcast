@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
  */
 public interface FactStoreObserver {
 
-	void onNext(Fact f);
+	void onNext(Fact fact);
 
 	default void onCatchup() {
 	}

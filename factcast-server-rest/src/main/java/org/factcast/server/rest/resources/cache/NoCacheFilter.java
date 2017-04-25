@@ -16,7 +16,7 @@ public class NoCacheFilter implements ContainerResponseFilter {
 	@Override
 	public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext)
 			throws IOException {
-		responseContext.getHeaders().putSingle(HttpHeaders.CACHE_CONTROL, "no-cahce");
+		responseContext.getHeaders().putSingle(HttpHeaders.CACHE_CONTROL, "no-cache");
 	}
 
 }

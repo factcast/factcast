@@ -1,6 +1,6 @@
 package org.factcast.core.subscription;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.*;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -69,14 +69,14 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 		specs.addAll(request.specs());
 	}
 
-	public static SubscriptionRequestTO forFacts(SubscriptionRequest req) {
-		SubscriptionRequestTO t = new SubscriptionRequestTO(req);
+	public static SubscriptionRequestTO forFacts(SubscriptionRequest request) {
+		SubscriptionRequestTO t = new SubscriptionRequestTO(request);
 		t.idOnly(false);
 		return t;
 	}
 
-	public static SubscriptionRequestTO forIds(SubscriptionRequest req) {
-		SubscriptionRequestTO t = new SubscriptionRequestTO(req);
+	public static SubscriptionRequestTO forIds(SubscriptionRequest request) {
+		SubscriptionRequestTO t = new SubscriptionRequestTO(request);
 		t.idOnly(true);
 		return t;
 	}

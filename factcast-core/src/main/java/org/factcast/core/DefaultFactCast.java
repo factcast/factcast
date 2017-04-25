@@ -62,8 +62,8 @@ class DefaultFactCast implements FactCast {
 		private final Function<Fact, T> project;
 
 		@Override
-		public void onNext(Fact f) {
-			delegate.onNext(project.apply(f));
+		public void onNext(Fact fact) {
+			delegate.onNext(project.apply(fact));
 		}
 
 		@Override
@@ -72,8 +72,8 @@ class DefaultFactCast implements FactCast {
 		}
 
 		@Override
-		public void onError(Throwable e) {
-			delegate.onError(e);
+		public void onError(Throwable exception) {
+			delegate.onError(exception);
 		}
 
 		@Override
