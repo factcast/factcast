@@ -1,5 +1,6 @@
 package org.factcast.server.rest.resources;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 import javax.validation.constraints.NotNull;
@@ -37,7 +38,7 @@ public class SubscriptionRequestParams {
 		if (aggId != null) {
 			factSpec = factSpec.aggId(UUID.fromString(aggId));
 		}
-		r.addSpec(factSpec);
+		r.addSpecs(Arrays.asList(factSpec));
 		return r;
 	}
 }

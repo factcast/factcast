@@ -1,6 +1,9 @@
 package org.factcast.core.subscription;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -78,11 +81,17 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 		return t;
 	}
 
-	public void addSpec(@NonNull FactSpec factSpec) {
-		specs.add(factSpec);
+	public void addSpecs(@NonNull List<FactSpec> factSpecs) {
+		checkArgument(!factSpecs.isEmpty());
+		specs.addAll(factSpecs);
 	}
 
 	public SubscriptionRequestTO copy() {
 		return FactCastJson.copy(this);
+	}
+
+	@Override
+	public List<FactSpec> specs() {
+		return Collections.unmodifiableList(specs);
 	}
 }
