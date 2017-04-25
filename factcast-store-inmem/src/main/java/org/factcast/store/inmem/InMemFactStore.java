@@ -1,9 +1,11 @@
 package org.factcast.store.inmem;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -33,7 +35,6 @@ import lombok.NonNull;
  * @author usr
  *
  */
-// TODO check id uniqueness
 @Deprecated
 public class InMemFactStore implements FactStore, DisposableBean {
 
@@ -48,6 +49,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
 	private final AtomicInteger highwaterMark = new AtomicInteger(0);
 	private final LinkedHashMap<Integer, Fact> store = new LinkedHashMap<>();
+	private final Set<UUID> ids = new HashSet<>();
 	private final CopyOnWriteArrayList<InMemSubscription> activeSubscriptions = new CopyOnWriteArrayList<>();
 	private final ExecutorService executorService;
 
@@ -88,9 +90,15 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
 	@Override
 	public synchronized void publish(@NonNull List<? extends Fact> factsToPublish) {
+
+		if (factsToPublish.stream().anyMatch(f -> ids.contains(f.id()))) {
+			throw new IllegalArgumentException("duplicate ids - ids must be unique!");
+		}
+
 		factsToPublish.forEach(f -> {
 			int ser = highwaterMark.incrementAndGet();
 			store.put(ser, f);
+			ids.add(f.id());
 
 			activeSubscriptions.parallelStream().forEach(s -> executorService.submit(() -> s.accept(f)));
 		});

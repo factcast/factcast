@@ -1,5 +1,6 @@
 package org.factcast.store.pgsql.internal;
 
+import java.sql.BatchUpdateException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -12,10 +13,12 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.Lists;
+import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -39,13 +42,24 @@ class PGFactStore implements FactStore {
 	@Override
 	@Transactional
 	public void publish(@NonNull List<? extends Fact> factsToPublish) {
+		try {
+			List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
 
-		List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
-
-		jdbcTemplate.batchUpdate(PGConstants.INSERT_FACT, copiedListOfFacts, BATCH_SIZE, (statement, fact) -> {
-			statement.setString(1, fact.jsonHeader());
-			statement.setString(2, fact.jsonPayload());
-		});
+			jdbcTemplate.batchUpdate(PGConstants.INSERT_FACT, copiedListOfFacts, BATCH_SIZE, (statement, fact) -> {
+				statement.setString(1, fact.jsonHeader());
+				statement.setString(2, fact.jsonPayload());
+			});
+		} catch (UncategorizedSQLException sql) {
+			// yikes
+			Throwable batch = sql.getCause();
+			if (batch instanceof BatchUpdateException) {
+				Throwable violation = batch.getCause();
+				if (violation instanceof PGSQLIntegrityConstraintViolationException) {
+					throw new IllegalArgumentException(violation);
+				}
+			}
+			throw sql;
+		}
 	}
 
 	private Fact extractFactFromResultSet(ResultSet resultSet, int rowNum) throws SQLException {

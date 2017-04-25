@@ -45,6 +45,15 @@ public abstract class AbstractFactStoreTest {
 		verify(observer, never()).onNext(any());
 	}
 
+	@Test(expected = IllegalArgumentException.class)
+	@DirtiesContext
+	public void testUniquenessConstraint() throws Exception {
+		final UUID id = UUID.randomUUID();
+		uut.publish(Fact.of("{\"id\":\"" + id + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+		uut.publish(Fact.of("{\"id\":\"" + id + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+		fail();
+	}
+
 	@Test
 	@DirtiesContext
 	public void testEmptyStoreFollowNonMatching() throws Exception {
