@@ -157,7 +157,7 @@
 			<plugin>
 				<groupId>com.marvinformatics.formatter</groupId>
 				<artifactId>formatter-maven-plugin</artifactId>
-				<version>1.8.0</version>
+				<version>1.9.1.RC2</version>
 				<configuration>
 					<configFile>src/eclipse/config/eclipse_code_formatter.xml</configFile>
 					<configJsFile>src/eclipse/config/eclipse_javascript_formatter.xml</configJsFile>
