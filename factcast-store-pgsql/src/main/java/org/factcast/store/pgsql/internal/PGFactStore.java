@@ -22,6 +22,7 @@ import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * A PostgreSQL based FactStore implementation
@@ -29,6 +30,7 @@ import lombok.RequiredArgsConstructor;
  * @author usr
  *
  */
+@Slf4j
 @RequiredArgsConstructor
 class PGFactStore implements FactStore {
     // is that interesting to configure?
@@ -45,6 +47,7 @@ class PGFactStore implements FactStore {
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
         try {
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
+            log.trace("Inserting {} fact(s) in batches of {}", factsToPublish.size(), BATCH_SIZE);
 
             jdbcTemplate.batchUpdate(PGConstants.INSERT_FACT, copiedListOfFacts, BATCH_SIZE, (
                     statement, fact) -> {

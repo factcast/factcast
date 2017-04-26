@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.function.Predicate;
 
+import javax.annotation.Nonnull;
+
 import com.impossibl.postgres.api.jdbc.PGConnection;
 
 import lombok.extern.slf4j.Slf4j;
@@ -25,19 +27,24 @@ import lombok.extern.slf4j.Slf4j;
 class ConnectionTester implements Predicate<Connection> {
 
     @Override
-    public boolean test(Connection connection) {
+    public boolean test(@Nonnull Connection connection) {
+
+        log.trace("Testing Connection :", connection);
 
         if (connection != null) {
             try (PreparedStatement statement = connection.prepareStatement("SELECT 42");
                     ResultSet resultSet = statement.executeQuery();) {
                 resultSet.next();
-                return resultSet.getInt(1) == 42;
+                if (resultSet.getInt(1) == 42) {
+                    log.trace("Connection test passed");
+                    return true;
+                } else {
+                    log.trace("Connection test failed");
+                }
             } catch (SQLException e) {
-                log.warn("Connection test failed:", e);
+                log.warn("Connection test failed with exception", e);
             }
         }
         return false;
-
     }
-
 }
