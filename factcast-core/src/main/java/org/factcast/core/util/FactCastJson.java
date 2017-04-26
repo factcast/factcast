@@ -21,33 +21,33 @@ import lombok.SneakyThrows;
  */
 
 public class FactCastJson {
-	private final static ObjectMapper objectMapper = new ObjectMapper();
+    private final static ObjectMapper objectMapper = new ObjectMapper();
 
-	private static final ObjectReader reader;
+    private static final ObjectReader reader;
 
-	private static final ObjectWriter writer;
+    private static final ObjectWriter writer;
 
-	static {
+    static {
 
-		objectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
+        objectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
 
-		writer = objectMapper.writer();
-		reader = objectMapper.reader();
-	}
+        writer = objectMapper.writer();
+        reader = objectMapper.reader();
+    }
 
-	@NonNull
-	public static ObjectReader reader() {
-		return reader;
-	}
+    @NonNull
+    public static ObjectReader reader() {
+        return reader;
+    }
 
-	@NonNull
-	public static ObjectWriter writer() {
-		return writer;
-	}
+    @NonNull
+    public static ObjectWriter writer() {
+        return writer;
+    }
 
-	@SneakyThrows
-	public static <T> T copy(@NonNull T toCopy) {
-		Class<? extends Object> c = toCopy.getClass();
-		return reader.forType(c).readValue(writer.forType(c).writeValueAsString(toCopy));
-	}
+    @SneakyThrows
+    public static <T> T copy(@NonNull T toCopy) {
+        Class<? extends Object> c = toCopy.getClass();
+        return reader.forType(c).readValue(writer.forType(c).writeValueAsString(toCopy));
+    }
 }

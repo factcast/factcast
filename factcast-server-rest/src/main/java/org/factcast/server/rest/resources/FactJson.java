@@ -15,10 +15,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FactJson {
-	@JsonProperty
-	@NotNull
-	DefaultFact.Header header;
-	@JsonProperty
-	@NotNull
-	JsonNode payLoad;
+    @JsonProperty
+    @NotNull
+    DefaultFact.Header header;
+
+    @JsonProperty
+    @NotNull
+    JsonNode payLoad;
 }

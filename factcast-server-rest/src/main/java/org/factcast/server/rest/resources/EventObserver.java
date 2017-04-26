@@ -114,8 +114,8 @@ public class EventObserver implements FactStoreObserver {
 		} catch (Exception e1) {
 
 		}
-		// debug level, because error occurs always, if client disappears
-		log.debug("Error while writing into the pipe", e);
+		//debug level, because error occurs always, if client disappears
+		log.debug("Error while writing into the pipe",e);
 		throw new RuntimeException("Error when writing the event.", e);
 	}
 

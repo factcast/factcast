@@ -87,11 +87,11 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
-            <version>2.0.1</version>
-            <scope>compile</scope>
-        </dependency>
+			<groupId>com.google.code.findbugs</groupId>
+			<artifactId>annotations</artifactId>
+			<version>2.0.1</version>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -151,6 +151,24 @@
 						<goals>
 							<goal>jar</goal>
 						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.marvinformatics.formatter</groupId>
+				<artifactId>formatter-maven-plugin</artifactId>
+				<version>1.8.0</version>
+				<configuration>
+					<configFile>src/eclipse/config/eclipse_code_formatter.xml</configFile>
+					<configJsFile>src/eclipse/config/eclipse_javascript_formatter.xml</configJsFile>
+				</configuration>
+				<executions>
+					<execution>
+						<id>formatting</id>
+						<goals>
+							<goal>format</goal>
+						</goals>
+						<phase>process-sources</phase>
 					</execution>
 				</executions>
 			</plugin>

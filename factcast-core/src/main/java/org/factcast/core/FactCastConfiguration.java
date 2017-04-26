@@ -14,10 +14,10 @@ import org.springframework.context.annotation.Primary;
 @Configuration
 public class FactCastConfiguration {
 
-	@Bean
-	@Primary
-	public FactCast factCast(FactStore store) {
-		return FactCast.from(store);
-	}
+    @Bean
+    @Primary
+    public FactCast factCast(FactStore store) {
+        return FactCast.from(store);
+    }
 
 }

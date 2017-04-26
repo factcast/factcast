@@ -30,58 +30,63 @@ import lombok.ToString;
 @ToString(of = { "id", "ns", "type", "aggId", "meta" })
 class PGFact implements Fact {
 
-	@Getter
-	@NonNull
-	private final UUID id;
-	@Getter
-	@NonNull
-	private final String ns;
-	@Getter
-	private final String type;
-	@Getter
-	private final UUID aggId;
-	@Getter
-	@NonNull
-	private final String jsonHeader;
-	@Getter
-	@NonNull
-	private final String jsonPayload;
+    @Getter
+    @NonNull
+    private final UUID id;
 
-	@JsonProperty
-	private Map<String, String> meta = null;
+    @Getter
+    @NonNull
+    private final String ns;
 
-	@Override
-	public String meta(String key) {
-		if (meta == null) {
-			meta = deser();
-		}
-		return meta.get(key);
-	}
+    @Getter
+    private final String type;
 
-	@SneakyThrows
-	private Map<String, String> deser() {
-		Meta deser = FactCastJson.reader().forType(Meta.class).readValue(jsonHeader);
-		return deser.meta;
-	}
+    @Getter
+    private final UUID aggId;
 
-	// just picks the MetaData from the Header (as we know the rest already
-	private static class Meta {
-		@JsonProperty
-		final Map<String, String> meta = new HashMap<>();
-	}
+    @Getter
+    @NonNull
+    private final String jsonHeader;
 
-	@SneakyThrows
-	public static Fact from(ResultSet rs) {
+    @Getter
+    @NonNull
+    private final String jsonPayload;
 
-		String id = rs.getString(PGConstants.ALIAS_ID);
-		String aggId = rs.getString(PGConstants.ALIAS_AGGID);
-		String type = rs.getString(PGConstants.ALIAS_TYPE);
-		String ns = rs.getString(PGConstants.ALIAS_NS);
+    @JsonProperty
+    private Map<String, String> meta = null;
 
-		String jsonHeader = rs.getString(PGConstants.COLUMN_HEADER);
-		String jsonPayload = rs.getString(PGConstants.COLUMN_PAYLOAD);
+    @Override
+    public String meta(String key) {
+        if (meta == null) {
+            meta = deser();
+        }
+        return meta.get(key);
+    }
 
-		return new PGFact(UUID.fromString(id), ns, type, aggId == null ? null : UUID.fromString(aggId), jsonHeader,
-				jsonPayload);
-	}
+    @SneakyThrows
+    private Map<String, String> deser() {
+        Meta deserializedMeta = FactCastJson.reader().forType(Meta.class).readValue(jsonHeader);
+        return deserializedMeta.meta;
+    }
+
+    // just picks the MetaData from the Header (as we know the rest already
+    private static class Meta {
+        @JsonProperty
+        final Map<String, String> meta = new HashMap<>();
+    }
+
+    @SneakyThrows
+    public static Fact from(ResultSet resultSet) {
+
+        String id = resultSet.getString(PGConstants.ALIAS_ID);
+        String aggId = resultSet.getString(PGConstants.ALIAS_AGGID);
+        String type = resultSet.getString(PGConstants.ALIAS_TYPE);
+        String ns = resultSet.getString(PGConstants.ALIAS_NS);
+
+        String jsonHeader = resultSet.getString(PGConstants.COLUMN_HEADER);
+        String jsonPayload = resultSet.getString(PGConstants.COLUMN_PAYLOAD);
+
+        return new PGFact(UUID.fromString(id), ns, type, aggId == null ? null
+                : UUID.fromString(aggId), jsonHeader, jsonPayload);
+    }
 }

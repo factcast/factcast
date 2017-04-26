@@ -20,89 +20,90 @@ import lombok.NonNull;
  */
 class PGQueryBuilder {
 
-	// TODO is that possibly interesting to configure?
-	private static final int FETCH_SIZE = 50;
+    private static final int FETCH_SIZE = 50;
 
-	private final boolean selectIdOnly;
-	@NonNull
-	private final SubscriptionRequestTO req;
+    private final boolean selectIdOnly;
 
-	public PGQueryBuilder(@NonNull SubscriptionRequestTO req) {
-		this.req = req;
-		selectIdOnly = req.idOnly() && !req.hasScriptFilters();
-	}
+    @NonNull
+    private final SubscriptionRequestTO req;
 
-	PreparedStatementSetter createStatementSetter(AtomicLong ser) {
+    public PGQueryBuilder(@NonNull SubscriptionRequestTO request) {
+        this.req = request;
+        selectIdOnly = request.idOnly() && !request.hasAnyScriptFilters();
+    }
 
-		return p -> {
-			// be conservative, less ram and fetching from db is less of a
-			// problem than serializing to the client
-			//
-			// Note, that by sync. calling the Observer, backpressure is kind of
-			// built-in.
-			p.setFetchSize(FETCH_SIZE);
+    PreparedStatementSetter createStatementSetter(AtomicLong serial) {
 
-			// TODO vulnerable of json injection attack
-			int count = 0;
-			for (FactSpec spec : req.specs()) {
+        return p -> {
+            // be conservative, less ram and fetching from db often is less of a
+            // problem than serializing to the client.
+            //
+            // Note, that by sync. calling the Observer, backpressure is kind of
+            // built-in.
+            p.setFetchSize(FETCH_SIZE);
 
-				p.setString(++count, "{\"ns\": \"" + spec.ns() + "\" }");
+            // TODO vulnerable of json injection attack
+            int count = 0;
+            for (FactSpec spec : req.specs()) {
 
-				String type = spec.type();
-				if (type != null) {
-					p.setString(++count, "{\"type\": \"" + type + "\" }");
-				}
+                p.setString(++count, "{\"ns\": \"" + spec.ns() + "\" }");
 
-				UUID agg = spec.aggId();
-				if (agg != null) {
-					p.setString(++count, "{\"aggId\": \"" + agg.toString() + "\" }");
-				}
+                String type = spec.type();
+                if (type != null) {
+                    p.setString(++count, "{\"type\": \"" + type + "\" }");
+                }
 
-				Map<String, String> meta = spec.meta();
-				for (Entry<String, String> e : meta.entrySet()) {
-					p.setString(++count, "{\"meta\":{\"" + e.getKey() + "\":\"" + e.getValue() + "\" }}");
-				}
-			}
+                UUID agg = spec.aggId();
+                if (agg != null) {
+                    p.setString(++count, "{\"aggId\": \"" + agg.toString() + "\" }");
+                }
 
-			p.setLong(++count, ser.get());
-		};
-	}
+                Map<String, String> meta = spec.meta();
+                for (Entry<String, String> e : meta.entrySet()) {
+                    p.setString(++count, "{\"meta\":{\"" + e.getKey() + "\":\"" + e.getValue()
+                            + "\" }}");
+                }
+            }
 
-	private String createWhereClause() {
+            p.setLong(++count, serial.get());
+        };
+    }
 
-		StringBuilder sb = new StringBuilder();
-		sb.append("( (1=0) ");
-		req.specs().forEach(spec -> {
-			sb.append("OR ( ");
+    private String createWhereClause() {
 
-			sb.append(PGConstants.COLUMN_HEADER + " @> ? ");
+        StringBuilder sb = new StringBuilder();
+        sb.append("( (1=0) ");
+        req.specs().forEach(spec -> {
+            sb.append("OR ( ");
 
-			String type = spec.type();
-			if (type != null) {
-				sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ? ");
-			}
+            sb.append(PGConstants.COLUMN_HEADER + " @> ? ");
 
-			UUID agg = spec.aggId();
-			if (agg != null) {
-				sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ? ");
-			}
+            String type = spec.type();
+            if (type != null) {
+                sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ? ");
+            }
 
-			Map<String, String> meta = spec.meta();
-			meta.entrySet().forEach(e -> {
-				sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ? ");
-			});
+            UUID agg = spec.aggId();
+            if (agg != null) {
+                sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ? ");
+            }
 
-			sb.append(") ");
-		});
-		sb.append(") AND " + PGConstants.COLUMN_SER + ">? ");
+            Map<String, String> meta = spec.meta();
+            meta.entrySet().forEach(e -> {
+                sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ? ");
+            });
 
-		return sb.toString();
-	}
+            sb.append(") ");
+        });
+        sb.append(") AND " + PGConstants.COLUMN_SER + ">? ");
 
-	String createSQL() {
+        return sb.toString();
+    }
 
-		return "SELECT " + (selectIdOnly ? PGConstants.PROJECTION_ID : PGConstants.PROJECTION_FACT) + " FROM "
-				+ PGConstants.TABLE_FACT + " WHERE " + createWhereClause() + "ORDER BY " + PGConstants.COLUMN_SER
-				+ " ASC";
-	}
+    String createSQL() {
+
+        return "SELECT " + (selectIdOnly ? PGConstants.PROJECTION_ID : PGConstants.PROJECTION_FACT)
+                + " FROM " + PGConstants.TABLE_FACT + " WHERE " + createWhereClause() + "ORDER BY "
+                + PGConstants.COLUMN_SER + " ASC";
+    }
 }

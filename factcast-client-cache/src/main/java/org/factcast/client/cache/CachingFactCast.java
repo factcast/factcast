@@ -33,51 +33,54 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class CachingFactCast implements FactCast {
 
-	final FactCast delegate;
-	final CachingFactLookup lookup;
+    final FactCast delegate;
 
-	@Override
-	public void publish(@NonNull List<? extends Fact> factsToPublish) {
-		delegate.publish(factsToPublish);
-	}
+    final CachingFactLookup lookup;
 
-	@Override
-	public CompletableFuture<Subscription> subscribeToIds(SubscriptionRequest req, IdObserver observer) {
-		return delegate.subscribeToIds(req, observer);
-	}
+    @Override
+    public void publish(@NonNull List<? extends Fact> factsToPublish) {
+        delegate.publish(factsToPublish);
+    }
 
-	@Override
-	public CompletableFuture<Subscription> subscribeToFacts(SubscriptionRequest req, FactObserver observer) {
+    @Override
+    public CompletableFuture<Subscription> subscribeToIds(SubscriptionRequest req,
+            IdObserver observer) {
+        return delegate.subscribeToIds(req, observer);
+    }
 
-		log.debug("changing Fact Subscription to Id subscription for caching single Fact lookups");
+    @Override
+    public CompletableFuture<Subscription> subscribeToFacts(SubscriptionRequest req,
+            FactObserver observer) {
 
-		return subscribeToIds(req, new IdObserver() {
+        log.debug("changing Fact Subscription to Id subscription for caching single Fact lookups");
 
-			@Override
-			public void onNext(UUID f) {
-				fetchById(f).ifPresent(observer::onNext);
-			}
+        return subscribeToIds(req, new IdObserver() {
 
-			@Override
-			public void onCatchup() {
-				observer.onCatchup();
-			}
+            @Override
+            public void onNext(UUID f) {
+                fetchById(f).ifPresent(observer::onNext);
+            }
 
-			@Override
-			public void onComplete() {
-				observer.onComplete();
-			}
+            @Override
+            public void onCatchup() {
+                observer.onCatchup();
+            }
 
-			@Override
-			public void onError(Throwable e) {
-				observer.onError(e);
-			}
-		});
-	}
+            @Override
+            public void onComplete() {
+                observer.onComplete();
+            }
 
-	@Override
-	public Optional<Fact> fetchById(UUID id) {
-		return lookup.lookup(id);
-	}
+            @Override
+            public void onError(Throwable e) {
+                observer.onError(e);
+            }
+        });
+    }
+
+    @Override
+    public Optional<Fact> fetchById(UUID id) {
+        return lookup.lookup(id);
+    }
 
 }

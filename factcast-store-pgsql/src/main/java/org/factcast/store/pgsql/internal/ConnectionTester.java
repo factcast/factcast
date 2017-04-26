@@ -1,5 +1,6 @@
 package org.factcast.store.pgsql.internal;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -21,21 +22,22 @@ import lombok.extern.slf4j.Slf4j;
  */
 
 @Slf4j
-class ConnectionTester implements Predicate<java.sql.Connection> {
+class ConnectionTester implements Predicate<Connection> {
 
-	@Override
-	public boolean test(java.sql.Connection connection) {
+    @Override
+    public boolean test(Connection connection) {
 
-		if (connection != null) {
-			try (PreparedStatement s = connection.prepareStatement("SELECT 42"); ResultSet rs = s.executeQuery();) {
-				rs.next();
-				return rs.getInt(1) == 42;
-			} catch (SQLException e) {
-				log.warn("Connection test failed:", e);
-			}
-		}
-		return false;
+        if (connection != null) {
+            try (PreparedStatement statement = connection.prepareStatement("SELECT 42");
+                    ResultSet resultSet = statement.executeQuery();) {
+                resultSet.next();
+                return resultSet.getInt(1) == 42;
+            } catch (SQLException e) {
+                log.warn("Connection test failed:", e);
+            }
+        }
+        return false;
 
-	}
+    }
 
 }

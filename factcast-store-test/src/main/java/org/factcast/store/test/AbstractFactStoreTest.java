@@ -22,342 +22,387 @@ import org.springframework.test.annotation.DirtiesContext;
 
 public abstract class AbstractFactStoreTest {
 
-	private static final FactSpec ANY = FactSpec.ns("default");
+    private static final FactSpec ANY = FactSpec.ns("default");
 
-	FactCast uut;
+    FactCast uut;
 
-	@Before
-	public void setUp() throws Exception {
-		uut = FactCast.from(createStoreToTest());
-	}
+    @Before
+    public void setUp() throws Exception {
+        uut = FactCast.from(createStoreToTest());
+    }
 
-	protected abstract FactStore createStoreToTest();
+    protected abstract FactStore createStoreToTest();
 
-	@Test
-	@DirtiesContext
-	public void testEmptyStore() throws Exception {
-		FactObserver ido = mock(FactObserver.class);
-		uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).sinceInception(), ido).get();
-		Thread.sleep(200);// TODO
-		verify(ido).onCatchup();
-		verify(ido).onComplete();
-		verify(ido, never()).onError(any());
-		verify(ido, never()).onNext(any());
-	}
+    @Test
+    @DirtiesContext
+    public void testEmptyStore() throws Exception {
+        FactObserver observer = mock(FactObserver.class);
+        uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).sinceInception(), observer).get();
+        Thread.sleep(200);// TODO
+        verify(observer).onCatchup();
+        verify(observer).onComplete();
+        verify(observer, never()).onError(any());
+        verify(observer, never()).onNext(any());
+    }
 
-	@Test
-	@DirtiesContext
-	public void testEmptyStoreFollowNonMatching() throws Exception {
-		FactObserver ido = mock(FactObserver.class);
-		uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), ido).get();
-		Thread.sleep(200);// TODO
-		verify(ido).onCatchup();
-		verify(ido, never()).onComplete();
-		verify(ido, never()).onError(any());
-		verify(ido, never()).onNext(any());
+    @Test(expected = IllegalArgumentException.class)
+    @DirtiesContext
+    public void testUniquenessConstraint() throws Exception {
+        final UUID id = UUID.randomUUID();
+        uut.publish(Fact.of("{\"id\":\"" + id + "\",\"type\":\"someType\",\"ns\":\"default\"}",
+                "{}"));
+        uut.publish(Fact.of("{\"id\":\"" + id + "\",\"type\":\"someType\",\"ns\":\"default\"}",
+                "{}"));
+        fail();
+    }
 
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"other\"}", "{}"));
-		Thread.sleep(200);
+    @Test
+    @DirtiesContext
+    public void testEmptyStoreFollowNonMatching() throws Exception {
+        FactObserver observer = mock(FactObserver.class);
+        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), observer).get();
+        Thread.sleep(200);// TODO
+        verify(observer).onCatchup();
+        verify(observer, never()).onComplete();
+        verify(observer, never()).onError(any());
+        verify(observer, never()).onNext(any());
 
-		verify(ido, never()).onNext(any());
-	}
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"other\"}", "{}"));
+        Thread.sleep(200);
 
-	@Test
-	@DirtiesContext
-	public void testEmptyStoreFollowMatching() throws Exception {
-		FactObserver ido = mock(FactObserver.class);
-		uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), ido).get();
-		Thread.sleep(200);// TODO
-		verify(ido).onCatchup();
-		verify(ido, never()).onComplete();
-		verify(ido, never()).onError(any());
-		verify(ido, never()).onNext(any());
+        verify(observer, never()).onNext(any());
+    }
 
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		Thread.sleep(200);
+    @Test
+    @DirtiesContext
+    public void testEmptyStoreFollowMatching() throws Exception {
+        FactObserver observer = mock(FactObserver.class);
+        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), observer).get();
+        Thread.sleep(200);// TODO
+        verify(observer).onCatchup();
+        verify(observer, never()).onComplete();
+        verify(observer, never()).onError(any());
+        verify(observer, never()).onNext(any());
 
-		verify(ido, times(1)).onNext(any());
-	}
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        Thread.sleep(200);
 
-	@Test
-	@DirtiesContext
-	public void testEmptyStoreEphemeral() throws Exception {
+        verify(observer, times(1)).onNext(any());
+    }
 
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+    @Test
+    @DirtiesContext
+    public void testEmptyStoreEphemeral() throws Exception {
 
-		FactObserver ido = mock(FactObserver.class);
-		uut.subscribeToFacts(SubscriptionRequest.ephemeral(ANY).sinceInception(), ido).get();
-		Thread.sleep(200);// TODO
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
 
-		// nothing recieved
+        FactObserver observer = mock(FactObserver.class);
+        uut.subscribeToFacts(SubscriptionRequest.ephemeral(ANY).sinceInception(), observer).get();
+        Thread.sleep(200);// TODO
 
-		verify(ido).onCatchup();
-		verify(ido, never()).onComplete();
-		verify(ido, never()).onError(any());
-		verify(ido, never()).onNext(any());
+        // nothing recieved
 
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		Thread.sleep(200);
+        verify(observer).onCatchup();
+        verify(observer, never()).onComplete();
+        verify(observer, never()).onError(any());
+        verify(observer, never()).onNext(any());
 
-		verify(ido, times(1)).onNext(any());
-	}
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        Thread.sleep(200);
 
-	@Test
-	@DirtiesContext
-	public void testEmptyStoreEphemeralWithCancel() throws Exception {
+        verify(observer, times(1)).onNext(any());
+    }
 
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+    @Test
+    @DirtiesContext
+    public void testEmptyStoreEphemeralWithCancel() throws Exception {
 
-		FactObserver ido = mock(FactObserver.class);
-		Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.ephemeral(ANY).sinceInception(), ido)
-				.get();
-		Thread.sleep(200);// TODO
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
 
-		// nothing recieved
+        FactObserver observer = mock(FactObserver.class);
+        Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.ephemeral(ANY)
+                .sinceInception(), observer).get();
+        Thread.sleep(200);// TODO
 
-		verify(ido).onCatchup();
-		verify(ido, never()).onComplete();
-		verify(ido, never()).onError(any());
-		verify(ido, never()).onNext(any());
+        // nothing recieved
 
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		Thread.sleep(200);
+        verify(observer).onCatchup();
+        verify(observer, never()).onComplete();
+        verify(observer, never()).onError(any());
+        verify(observer, never()).onNext(any());
 
-		verify(ido, times(1)).onNext(any());
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        Thread.sleep(200);
 
-		subscription.close();
+        verify(observer, times(1)).onNext(any());
 
-		Thread.sleep(200);
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		Thread.sleep(200);
+        subscription.close();
 
-		// additional event not received
-		verify(ido, times(1)).onNext(any());
+        Thread.sleep(200);
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        Thread.sleep(200);
 
-	}
+        // additional event not received
+        verify(observer, times(1)).onNext(any());
 
-	@Test
-	@DirtiesContext
-	public void testEmptyStoreFollowWithCancel() throws Exception {
+    }
 
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+    @Test
+    @DirtiesContext
+    public void testEmptyStoreFollowWithCancel() throws Exception {
 
-		FactObserver ido = mock(FactObserver.class);
-		Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), ido).get();
-		Thread.sleep(200);// TODO
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
 
-		// nothing recieved
+        FactObserver observer = mock(FactObserver.class);
+        Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.follow(ANY)
+                .sinceInception(), observer).get();
+        Thread.sleep(200);// TODO
 
-		verify(ido).onCatchup();
-		verify(ido, never()).onComplete();
-		verify(ido, never()).onError(any());
-		verify(ido, times(3)).onNext(any());
+        // nothing recieved
 
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		Thread.sleep(200);
+        verify(observer).onCatchup();
+        verify(observer, never()).onComplete();
+        verify(observer, never()).onError(any());
+        verify(observer, times(3)).onNext(any());
 
-		verify(ido, times(4)).onNext(any());
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        Thread.sleep(200);
 
-		subscription.close();
+        verify(observer, times(4)).onNext(any());
 
-		Thread.sleep(200);
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		Thread.sleep(200);
+        subscription.close();
 
-		// additional event not received
-		verify(ido, times(4)).onNext(any());
+        Thread.sleep(200);
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        Thread.sleep(200);
 
-	}
+        // additional event not received
+        verify(observer, times(4)).onNext(any());
 
-	@Test
-	@DirtiesContext
-	public void testEmptyStoreCatchupMatching() throws Exception {
-		FactObserver ido = mock(FactObserver.class);
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).sinceInception(), ido).get();
+    }
 
-		verify(ido).onCatchup();
-		verify(ido).onComplete();
-		verify(ido, never()).onError(any());
-		verify(ido).onNext(any());
-	}
+    @Test
+    @DirtiesContext
+    public void testEmptyStoreCatchupMatching() throws Exception {
+        FactObserver observer = mock(FactObserver.class);
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).sinceInception(), observer).get();
 
-	@Test
-	@DirtiesContext
-	public void testEmptyStoreFollowMatchingDelayed() throws Exception {
-		FactObserver ido = mock(FactObserver.class);
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), ido).get();
-		verify(ido).onCatchup();
-		verify(ido, never()).onComplete();
-		verify(ido, never()).onError(any());
-		verify(ido).onNext(any());
+        verify(observer).onCatchup();
+        verify(observer).onComplete();
+        verify(observer, never()).onError(any());
+        verify(observer).onNext(any());
+    }
 
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		Thread.sleep(200);
-		verify(ido, times(2)).onNext(any());
-	}
+    @Test
+    @DirtiesContext
+    public void testEmptyStoreFollowMatchingDelayed() throws Exception {
+        FactObserver observer = mock(FactObserver.class);
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), observer).get();
+        verify(observer).onCatchup();
+        verify(observer, never()).onComplete();
+        verify(observer, never()).onError(any());
+        verify(observer).onNext(any());
 
-	@Test
-	@DirtiesContext
-	public void testEmptyStoreFollowNonMatchingDelayed() throws Exception {
-		FactObserver ido = mock(FactObserver.class);
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"t1\"}", "{}"));
-		uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), ido).get();
-		verify(ido).onCatchup();
-		verify(ido, never()).onComplete();
-		verify(ido, never()).onError(any());
-		verify(ido).onNext(any());
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        Thread.sleep(200);
+        verify(observer, times(2)).onNext(any());
+    }
 
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"other\",\"type\":\"t1\"}", "{}"));
-		Thread.sleep(200);
-		verify(ido, times(1)).onNext(any());
-	}
+    @Test
+    @DirtiesContext
+    public void testEmptyStoreFollowNonMatchingDelayed() throws Exception {
+        FactObserver observer = mock(FactObserver.class);
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"type\":\"t1\"}", "{}"));
+        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), observer).get();
+        verify(observer).onCatchup();
+        verify(observer, never()).onComplete();
+        verify(observer, never()).onError(any());
+        verify(observer).onNext(any());
 
-	@Test
-	@DirtiesContext
-	public void testFetchById() throws Exception {
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		UUID id = UUID.randomUUID();
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"other\",\"type\":\"t1\"}", "{}"));
+        Thread.sleep(200);
+        verify(observer, times(1)).onNext(any());
+    }
 
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		Optional<Fact> f = uut.fetchById(id);
-		assertFalse(f.isPresent());
-		uut.publish(Fact.of("{\"id\":\"" + id + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-		f = uut.fetchById(id);
-		assertTrue(f.isPresent());
-		assertEquals(id, f.map(Fact::id).get());
-	}
+    @Test
+    @DirtiesContext
+    public void testFetchById() throws Exception {
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        UUID id = UUID.randomUUID();
 
-	@Test
-	@DirtiesContext
-	public void testAnySubscriptionsMatchesMark() throws Exception {
-		FactObserver ido = mock(FactObserver.class);
-		UUID mark = uut.publishWithMark(Fact.of(
-				"{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"" + UUID.randomUUID() + "\",\"type\":\"noone_knows\"}",
-				"{}"));
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        Optional<Fact> f = uut.fetchById(id);
+        assertFalse(f.isPresent());
+        uut.publish(Fact.of("{\"id\":\"" + id + "\",\"type\":\"someType\",\"ns\":\"default\"}",
+                "{}"));
+        f = uut.fetchById(id);
+        assertTrue(f.isPresent());
+        assertEquals(id, f.map(Fact::id).get());
+    }
 
-		ArgumentCaptor<Fact> af = ArgumentCaptor.forClass(Fact.class);
-		doNothing().when(ido).onNext(af.capture());
+    @Test
+    @DirtiesContext
+    public void testAnySubscriptionsMatchesMark() throws Exception {
+        FactObserver observer = mock(FactObserver.class);
+        UUID mark = uut.publishWithMark(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\""
+                + UUID.randomUUID() + "\",\"type\":\"noone_knows\"}", "{}"));
 
-		uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).sinceInception(), ido).get();
+        ArgumentCaptor<Fact> af = ArgumentCaptor.forClass(Fact.class);
+        doNothing().when(observer).onNext(af.capture());
 
-		verify(ido).onNext(any());
-		assertEquals(mark, af.getValue().id());
-		verify(ido).onCatchup();
-		verify(ido).onComplete();
-		verifyNoMoreInteractions(ido);
-	}
+        uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).sinceInception(), observer).get();
 
-	@Test
-	@DirtiesContext
-	public void testRequiredMetaAttribute() throws Exception {
-		FactObserver ido = mock(FactObserver.class);
-		uut.publish(
-				Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"noone_knows\"}", "{}"));
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-				+ "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}", "{}"));
-		FactSpec REQ_FOO_BAR = FactSpec.ns("default").meta("foo", "bar");
-		uut.subscribeToFacts(SubscriptionRequest.catchup(REQ_FOO_BAR).sinceInception(), ido).get();
+        verify(observer).onNext(any());
+        assertEquals(mark, af.getValue().id());
+        verify(observer).onCatchup();
+        verify(observer).onComplete();
+        verifyNoMoreInteractions(observer);
+    }
 
-		verify(ido).onNext(any());
-		verify(ido).onCatchup();
-		verify(ido).onComplete();
-		verifyNoMoreInteractions(ido);
-	}
+    @Test
+    @DirtiesContext
+    public void testRequiredMetaAttribute() throws Exception {
+        FactObserver observer = mock(FactObserver.class);
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"type\":\"noone_knows\"}", "{}"));
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
+                "{}"));
+        FactSpec REQ_FOO_BAR = FactSpec.ns("default").meta("foo", "bar");
+        uut.subscribeToFacts(SubscriptionRequest.catchup(REQ_FOO_BAR).sinceInception(), observer)
+                .get();
 
-	@Test
-	@DirtiesContext
-	public void testIdOnly() throws Exception {
-		IdObserver ido = mock(IdObserver.class);
-		uut.publish(
-				Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"noone_knows\"}", "{}"));
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-				+ "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}", "{}"));
-		FactSpec DEFAULT_NS = FactSpec.ns("default");
-		uut.subscribeToIds(SubscriptionRequest.catchup(DEFAULT_NS).sinceInception(), ido).get();
+        verify(observer).onNext(any());
+        verify(observer).onCatchup();
+        verify(observer).onComplete();
+        verifyNoMoreInteractions(observer);
+    }
 
-		verify(ido, times(2)).onNext(any(UUID.class));
-		verify(ido).onCatchup();
-		verify(ido).onComplete();
-		verifyNoMoreInteractions(ido);
-	}
+    @Test
+    @DirtiesContext
+    public void testobservernly() throws Exception {
+        IdObserver observer = mock(IdObserver.class);
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"type\":\"noone_knows\"}", "{}"));
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
+                "{}"));
+        FactSpec DEFAULT_NS = FactSpec.ns("default");
+        uut.subscribeToIds(SubscriptionRequest.catchup(DEFAULT_NS).sinceInception(), observer)
+                .get();
 
-	@Test
-	@DirtiesContext
-	public void testScriptedWithPayloadFiltering() throws Exception {
-		FactObserver ido = mock(FactObserver.class);
-		uut.publish(Fact.of(
-				"{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}",
-				"{}"));
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-				+ "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}", "{}"));
-		FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h,e){ return (h.hit=='me')}");
-		uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), ido).get();
+        verify(observer, times(2)).onNext(any(UUID.class));
+        verify(observer).onCatchup();
+        verify(observer).onComplete();
+        verifyNoMoreInteractions(observer);
+    }
 
-		verify(ido).onNext(any());
-		verify(ido).onCatchup();
-		verify(ido).onComplete();
-		verifyNoMoreInteractions(ido);
-	}
+    @Test
+    @DirtiesContext
+    public void testScriptedWithPayloadFiltering() throws Exception {
+        FactObserver observer = mock(FactObserver.class);
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}", "{}"));
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
+                "{}"));
+        FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript(
+                "function (h,e){ return (h.hit=='me')}");
+        uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), observer)
+                .get();
 
-	@Test
-	@DirtiesContext
-	public void testScriptedWithHeaderFiltering() throws Exception {
-		FactObserver ido = mock(FactObserver.class);
-		uut.publish(Fact.of(
-				"{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}",
-				"{}"));
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-				+ "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}", "{}"));
-		FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return (h.hit=='me')}");
-		uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), ido).get();
+        verify(observer).onNext(any());
+        verify(observer).onCatchup();
+        verify(observer).onComplete();
+        verifyNoMoreInteractions(observer);
+    }
 
-		verify(ido).onNext(any());
-		verify(ido).onCatchup();
-		verify(ido).onComplete();
-		verifyNoMoreInteractions(ido);
-	}
+    @Test
+    @DirtiesContext
+    public void testScriptedWithHeaderFiltering() throws Exception {
+        FactObserver observer = mock(FactObserver.class);
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}", "{}"));
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
+                "{}"));
+        FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript(
+                "function (h){ return (h.hit=='me')}");
+        uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), observer)
+                .get();
 
-	@Test
-	@DirtiesContext
-	public void testScriptedFilteringMatchAll() throws Exception {
-		FactObserver ido = mock(FactObserver.class);
-		uut.publish(Fact.of(
-				"{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}",
-				"{}"));
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-				+ "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}", "{}"));
-		FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return true }");
-		uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), ido).get();
+        verify(observer).onNext(any());
+        verify(observer).onCatchup();
+        verify(observer).onComplete();
+        verifyNoMoreInteractions(observer);
+    }
 
-		verify(ido, times(2)).onNext(any());
-		verify(ido).onCatchup();
-		verify(ido).onComplete();
-		verifyNoMoreInteractions(ido);
-	}
+    @Test
+    @DirtiesContext
+    public void testScriptedFilteringMatchAll() throws Exception {
+        FactObserver observer = mock(FactObserver.class);
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}", "{}"));
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
+                "{}"));
+        FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return true }");
+        uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), observer)
+                .get();
 
-	@Test
-	@DirtiesContext
-	public void testScriptedFilteringMatchNone() throws Exception {
-		FactObserver ido = mock(FactObserver.class);
-		uut.publish(Fact.of(
-				"{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}",
-				"{}"));
-		uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-				+ "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}", "{}"));
-		FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return false }");
-		uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), ido).get();
+        verify(observer, times(2)).onNext(any());
+        verify(observer).onCatchup();
+        verify(observer).onComplete();
+        verifyNoMoreInteractions(observer);
+    }
 
-		verify(ido).onCatchup();
-		verify(ido).onComplete();
-		verifyNoMoreInteractions(ido);
-	}
+    @Test
+    @DirtiesContext
+    public void testScriptedFilteringMatchNone() throws Exception {
+        FactObserver observer = mock(FactObserver.class);
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}", "{}"));
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
+                "{}"));
+        FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return false }");
+        uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), observer)
+                .get();
+
+        verify(observer).onCatchup();
+        verify(observer).onComplete();
+        verifyNoMoreInteractions(observer);
+    }
 
 }

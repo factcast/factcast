@@ -118,6 +118,10 @@ public class EventsResource implements JerseyResource {
 			return DefaultFact.of(headerString, f.payLoad().toString());
 		}).collect(Collectors.toList());
 
-		factStore.publish(listToPublish);
+		try {
+			factStore.publish(listToPublish);
+		} catch (IllegalArgumentException e) {
+			throw new WebApplicationException(e.getMessage(), 400);
+		}
 	}
 }

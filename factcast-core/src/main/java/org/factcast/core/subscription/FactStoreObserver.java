@@ -12,16 +12,16 @@ import org.slf4j.LoggerFactory;
  */
 public interface FactStoreObserver {
 
-	void onNext(Fact f);
+    void onNext(Fact fact);
 
-	default void onCatchup() {
-	}
+    default void onCatchup() {
+    }
 
-	default void onComplete() {
-	}
+    default void onComplete() {
+    }
 
-	default void onError(Throwable e) {
-		LoggerFactory.getLogger(FactStoreObserver.class).warn("Unhandled onError:", e);
-	}
+    default void onError(Throwable e) {
+        LoggerFactory.getLogger(FactStoreObserver.class).warn("Unhandled onError:", e);
+    }
 
 }

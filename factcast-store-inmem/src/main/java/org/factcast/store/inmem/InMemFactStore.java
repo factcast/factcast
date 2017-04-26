@@ -1,9 +1,11 @@
 package org.factcast.store.inmem;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -36,90 +38,103 @@ import lombok.NonNull;
 @Deprecated
 public class InMemFactStore implements FactStore, DisposableBean {
 
-	@VisibleForTesting
-	InMemFactStore(@NonNull ExecutorService es) {
-		this.es = es;
-	}
+    @VisibleForTesting
+    InMemFactStore(@NonNull ExecutorService es) {
+        this.executorService = es;
+    }
 
-	public InMemFactStore() {
-		this(Executors.newCachedThreadPool());
-	}
+    public InMemFactStore() {
+        this(Executors.newCachedThreadPool());
+    }
 
-	private final AtomicInteger highwaterMark = new AtomicInteger(0);
-	private final LinkedHashMap<Integer, Fact> store = new LinkedHashMap<>();
-	private final CopyOnWriteArrayList<InMemSubscription> sub = new CopyOnWriteArrayList<>();
-	private final ExecutorService es;
+    private final AtomicInteger highwaterMark = new AtomicInteger(0);
 
-	private class InMemSubscription implements Subscription, Consumer<Fact> {
-		private final Predicate<Fact> matcher;
-		final Consumer<Fact> consumer;
+    private final LinkedHashMap<Integer, Fact> store = new LinkedHashMap<>();
 
-		InMemSubscription(SubscriptionRequestTO req, Consumer<Fact> consumer) {
-			this.consumer = consumer;
-			matcher = FactSpecMatcher.matchesAnyOf(req.specs());
-		}
+    private final Set<UUID> ids = new HashSet<>();
 
-		@Override
-		public void close() {
-			synchronized (InMemFactStore.this) {
-				sub.remove(this);
-			}
-		}
+    private final CopyOnWriteArrayList<InMemSubscription> activeSubscriptions = new CopyOnWriteArrayList<>();
 
-		public boolean matches(Fact f) {
-			return matcher.test(f);
-		}
+    private final ExecutorService executorService;
 
-		@Override
-		public void accept(Fact t) {
-			if (matches(t)) {
-				consumer.accept(t);
-			}
-		}
+    private class InMemSubscription implements Subscription, Consumer<Fact> {
+        private final Predicate<Fact> matcher;
 
-	}
+        final Consumer<Fact> consumer;
 
-	@Override
-	public synchronized Optional<Fact> fetchById(@NonNull UUID id) {
-		Stream<Entry<Integer, Fact>> stream = store.entrySet().stream();
-		return stream.filter(e -> e.getValue().id().equals(id)).findFirst().map(e -> e.getValue());
-	}
+        InMemSubscription(SubscriptionRequestTO request, Consumer<Fact> consumer) {
+            this.consumer = consumer;
+            matcher = FactSpecMatcher.matchesAnyOf(request.specs());
+        }
 
-	@Override
-	public synchronized void publish(@NonNull List<? extends Fact> factsToPublish) {
-		factsToPublish.forEach(f -> {
-			int ser = highwaterMark.incrementAndGet();
-			store.put(ser, f);
+        @Override
+        public void close() {
+            synchronized (InMemFactStore.this) {
+                activeSubscriptions.remove(this);
+            }
+        }
 
-			sub.parallelStream().forEach(s -> es.submit(() -> s.accept(f)));
-		});
-	}
+        public boolean matches(Fact f) {
+            return matcher.test(f);
+        }
 
-	@Override
-	public synchronized CompletableFuture<Subscription> subscribe(SubscriptionRequestTO req,
-			FactStoreObserver observer) {
+        @Override
+        public void accept(Fact t) {
+            if (matches(t)) {
+                consumer.accept(t);
+            }
+        }
 
-		InMemSubscription s = new InMemSubscription(req, c -> observer.onNext(c));
-		if (!req.ephemeral()) {
-			store.values().stream().forEach(s);
-		}
+    }
 
-		observer.onCatchup();
+    @Override
+    public synchronized Optional<Fact> fetchById(@NonNull UUID id) {
+        Stream<Entry<Integer, Fact>> stream = store.entrySet().stream();
+        return stream.filter(e -> e.getValue().id().equals(id)).findFirst().map(e -> e.getValue());
+    }
 
-		if (req.continous()) {
-			sub.add(s);
-			return CompletableFuture.completedFuture(s);
-		} else {
-			observer.onComplete();
-			return CompletableFuture.completedFuture(() -> {
-			});
-		}
+    @Override
+    public synchronized void publish(@NonNull List<? extends Fact> factsToPublish) {
 
-	}
+        if (factsToPublish.stream().anyMatch(f -> ids.contains(f.id()))) {
+            throw new IllegalArgumentException("duplicate ids - ids must be unique!");
+        }
 
-	@Override
-	public synchronized void destroy() throws Exception {
-		es.shutdown();
-	}
+        factsToPublish.forEach(f -> {
+            int ser = highwaterMark.incrementAndGet();
+            store.put(ser, f);
+            ids.add(f.id());
+
+            activeSubscriptions.parallelStream().forEach(s -> executorService.submit(() -> s.accept(
+                    f)));
+        });
+    }
+
+    @Override
+    public synchronized CompletableFuture<Subscription> subscribe(SubscriptionRequestTO request,
+            FactStoreObserver observer) {
+
+        InMemSubscription s = new InMemSubscription(request, c -> observer.onNext(c));
+        if (!request.ephemeral()) {
+            store.values().stream().forEach(s);
+        }
+
+        observer.onCatchup();
+
+        if (request.continous()) {
+            activeSubscriptions.add(s);
+            return CompletableFuture.completedFuture(s);
+        } else {
+            observer.onComplete();
+            return CompletableFuture.completedFuture(() -> {
+            });
+        }
+
+    }
+
+    @Override
+    public synchronized void destroy() throws Exception {
+        executorService.shutdown();
+    }
 
 }

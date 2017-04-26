@@ -14,29 +14,29 @@ import lombok.NonNull;
  * @author usr
  *
  */
+// TODO add schema
 public interface Fact {
 
-	@NonNull
-	UUID id();
+    @NonNull
+    UUID id();
 
-	@NonNull
-	String ns();
+    @NonNull
+    String ns();
 
-	String type();
+    String type();
 
-	UUID aggId();
+    UUID aggId();
 
-	@NonNull
-	String jsonHeader();
+    @NonNull
+    String jsonHeader();
 
-	@NonNull
-	String jsonPayload();
-	// TODO add schema
+    @NonNull
+    String jsonPayload();
 
-	String meta(String key);
+    String meta(String key);
 
-	// hint to where to get the default from
-	static Fact of(@NonNull String jsonHeader, @NonNull String jsonPayload) {
-		return DefaultFact.of(jsonHeader, jsonPayload);
-	}
+    // hint to where to get the default from
+    static Fact of(@NonNull String jsonHeader, @NonNull String jsonPayload) {
+        return DefaultFact.of(jsonHeader, jsonPayload);
+    }
 }

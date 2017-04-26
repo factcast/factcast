@@ -1,5 +1,6 @@
 package org.factcast.store.pgsql.internal;
 
+import java.sql.BatchUpdateException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -12,10 +13,12 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.Lists;
+import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -28,40 +31,54 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 class PGFactStore implements FactStore {
-	// is that interesting to configure?
-	private static final int BATCH_SIZE = 500;
-	@NonNull
-	private final JdbcTemplate tpl;
+    // is that interesting to configure?
+    private static final int BATCH_SIZE = 500;
 
-	@NonNull
-	private final PGSubscriptionFactory sf;
+    @NonNull
+    private final JdbcTemplate jdbcTemplate;
 
-	@Override
-	@Transactional
-	public void publish(@NonNull List<? extends Fact> factsToPublish) {
+    @NonNull
+    private final PGSubscriptionFactory subscriptionFactory;
 
-		List<Fact> l = Lists.newArrayList(factsToPublish);
+    @Override
+    @Transactional
+    public void publish(@NonNull List<? extends Fact> factsToPublish) {
+        try {
+            List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
 
-		tpl.batchUpdate(PGConstants.INSERT_FACT, l, BATCH_SIZE, (p, f) -> {
-			p.setString(1, f.jsonHeader());
-			p.setString(2, f.jsonPayload());
-		});
-	}
+            jdbcTemplate.batchUpdate(PGConstants.INSERT_FACT, copiedListOfFacts, BATCH_SIZE, (
+                    statement, fact) -> {
+                statement.setString(1, fact.jsonHeader());
+                statement.setString(2, fact.jsonPayload());
+            });
+        } catch (UncategorizedSQLException sql) {
+            // yikes
+            Throwable batch = sql.getCause();
+            if (batch instanceof BatchUpdateException) {
+                Throwable violation = batch.getCause();
+                if (violation instanceof PGSQLIntegrityConstraintViolationException) {
+                    throw new IllegalArgumentException(violation);
+                }
+            }
+            throw sql;
+        }
+    }
 
-	private Fact extractFactFromResultSet(ResultSet rs, int rowNum) throws SQLException {
-		return PGFact.from(rs);
-	}
+    private Fact extractFactFromResultSet(ResultSet resultSet, int rowNum) throws SQLException {
+        return PGFact.from(resultSet);
+    }
 
-	@Override
-	public CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO req,
-			@NonNull FactStoreObserver observer) {
-		return CompletableFuture.supplyAsync(() -> sf.subscribe(req, observer));
-	}
+    @Override
+    public CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO request,
+            @NonNull FactStoreObserver observer) {
+        return CompletableFuture.supplyAsync(() -> subscriptionFactory.subscribe(request,
+                observer));
+    }
 
-	@Override
-	public Optional<Fact> fetchById(@NonNull UUID id) {
-		return tpl.query(PGConstants.SELECT_BY_ID, new Object[] { "{\"id\":\"" + id + "\"}" },
-				this::extractFactFromResultSet).stream().findFirst();
-	}
+    @Override
+    public Optional<Fact> fetchById(@NonNull UUID id) {
+        return jdbcTemplate.query(PGConstants.SELECT_BY_ID, new Object[] { "{\"id\":\"" + id
+                + "\"}" }, this::extractFactFromResultSet).stream().findFirst();
+    }
 
 }

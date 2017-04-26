@@ -23,59 +23,63 @@ import lombok.experimental.FieldDefaults;
 @RequiredArgsConstructor
 class FluentSubscriptionRequest implements SubscriptionRequest {
 
-	final boolean ephemeral;
+    final boolean ephemeral;
 
-	long maxBatchDelayInMs = 0;
-	boolean continous;
-	UUID startingAfter;
-	List<FactSpec> specs = new LinkedList<>();
-	boolean idOnly = false;
+    long maxBatchDelayInMs = 0;
 
-	@RequiredArgsConstructor
-	public static class Builder implements SpecBuilder {
-		private final FluentSubscriptionRequest toBuild;
+    boolean continous;
 
-		@Override
-		public SpecBuilder or(@NonNull FactSpec s) {
-			toBuild.specs.add(s);
-			return this;
-		}
+    UUID startingAfter;
 
-		@Override
-		public SubscriptionRequest sinceInception() {
-			return toBuild;
-		}
+    List<FactSpec> specs = new LinkedList<>();
 
-		@Override
-		public SubscriptionRequest since(@NonNull UUID id) {
-			toBuild.startingAfter = id;
-			return toBuild;
-		}
+    boolean idOnly = false;
 
-		SpecBuilder follow(@NonNull FactSpec spec) {
-			or(spec);
-			toBuild.continous = true;
-			return this;
-		}
+    @RequiredArgsConstructor
+    public static class Builder implements SpecBuilder {
+        private final FluentSubscriptionRequest toBuild;
 
-		SpecBuilder catchup(@NonNull FactSpec spec) {
-			or(spec);
-			toBuild.continous = false;
-			return this;
-		}
-	}
+        @Override
+        public SpecBuilder or(@NonNull FactSpec specification) {
+            toBuild.specs.add(specification);
+            return this;
+        }
 
-	public java.util.Optional<UUID> startingAfter() {
-		return java.util.Optional.ofNullable(startingAfter);
-	}
+        @Override
+        public SubscriptionRequest sinceInception() {
+            return toBuild;
+        }
 
-	public interface SpecBuilder {
-		SpecBuilder or(@NonNull FactSpec s);
+        @Override
+        public SubscriptionRequest since(@NonNull UUID id) {
+            toBuild.startingAfter = id;
+            return toBuild;
+        }
 
-		SubscriptionRequest since(@NonNull UUID id);
+        SpecBuilder follow(@NonNull FactSpec specification) {
+            or(specification);
+            toBuild.continous = true;
+            return this;
+        }
 
-		SubscriptionRequest sinceInception();
+        SpecBuilder catchup(@NonNull FactSpec specification) {
+            or(specification);
+            toBuild.continous = false;
+            return this;
+        }
+    }
 
-	}
+    public java.util.Optional<UUID> startingAfter() {
+        return java.util.Optional.ofNullable(startingAfter);
+    }
+
+    public interface SpecBuilder {
+        SpecBuilder or(@NonNull FactSpec specification);
+
+        SubscriptionRequest since(@NonNull UUID id);
+
+        SubscriptionRequest sinceInception();
+
+    }
 
 }

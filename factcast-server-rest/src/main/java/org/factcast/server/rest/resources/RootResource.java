@@ -17,12 +17,12 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class RootResource implements JerseyResource {
 
-	private final RootSchemaCreator schemaCreator;
+    private final RootSchemaCreator schemaCreator;
 
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	public ObjectWithSchema<Void> getRoot() {
-		return schemaCreator.forRoot();
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public ObjectWithSchema<Void> getRoot() {
+        return schemaCreator.forRoot();
 
-	}
+    }
 }

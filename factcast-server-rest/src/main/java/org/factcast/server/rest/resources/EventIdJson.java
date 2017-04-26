@@ -8,7 +8,7 @@ import lombok.Value;
 @Value
 public class EventIdJson {
 
-	@NonNull
-	@JsonProperty
-	private String id;
+    @NonNull
+    @JsonProperty
+    private String id;
 }

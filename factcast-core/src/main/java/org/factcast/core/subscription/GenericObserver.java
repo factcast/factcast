@@ -12,16 +12,16 @@ import org.slf4j.LoggerFactory;
  * @param <T>
  */
 public interface GenericObserver<T> {
-	void onNext(T f);
+    void onNext(T element);
 
-	default void onCatchup() {
-	}
+    default void onCatchup() {
+    }
 
-	default void onComplete() {
-	}
+    default void onComplete() {
+    }
 
-	default void onError(Throwable e) {
-		LoggerFactory.getLogger(GenericObserver.class).warn("Unhandled onError:", e);
-	}
+    default void onError(Throwable exception) {
+        LoggerFactory.getLogger(GenericObserver.class).warn("Unhandled onError:", exception);
+    }
 
 }

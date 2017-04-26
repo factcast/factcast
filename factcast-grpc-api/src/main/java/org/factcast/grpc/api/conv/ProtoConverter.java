@@ -27,81 +27,84 @@ import lombok.SneakyThrows;
 @RequiredArgsConstructor
 public class ProtoConverter {
 
-	public MSG_Notification toCatchupNotification() {
-		return MSG_Notification.newBuilder().setType(MSG_Notification.Type.Catchup).build();
-	}
+    public MSG_Notification toCatchupNotification() {
+        return MSG_Notification.newBuilder().setType(MSG_Notification.Type.Catchup).build();
+    }
 
-	public MSG_Notification toCompleteNotification() {
-		return MSG_Notification.newBuilder().setType(MSG_Notification.Type.Complete).build();
+    public MSG_Notification toCompleteNotification() {
+        return MSG_Notification.newBuilder().setType(MSG_Notification.Type.Complete).build();
 
-	}
+    }
 
-	public MSG_Notification toNotification(Fact t) {
-		org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Builder b = MSG_Notification.newBuilder()
-				.setType(MSG_Notification.Type.Fact);
-		b.setFact(toProto(t));
-		b.setType(MSG_Notification.Type.Fact);
-		return b.build();
+    public MSG_Notification toNotification(Fact t) {
+        org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Builder builder = MSG_Notification
+                .newBuilder().setType(MSG_Notification.Type.Fact);
+        builder.setFact(toProto(t));
+        builder.setType(MSG_Notification.Type.Fact);
+        return builder.build();
 
-	}
+    }
 
-	public MSG_Notification toNotification(UUID t) {
-		org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Builder b = MSG_Notification.newBuilder()
-				.setType(MSG_Notification.Type.Id);
-		b.setId(toProto(t));
-		b.setType(MSG_Notification.Type.Id);
-		return b.build();
-	}
+    public MSG_Notification toNotification(UUID id) {
+        org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Builder builder = MSG_Notification
+                .newBuilder().setType(MSG_Notification.Type.Id);
+        builder.setId(toProto(id));
+        builder.setType(MSG_Notification.Type.Id);
+        return builder.build();
+    }
 
-	public MSG_UUID toProto(@NonNull UUID t) {
-		return MSG_UUID.newBuilder().setLsb(t.getLeastSignificantBits()).setMsb(t.getMostSignificantBits()).build();
-	}
+    public MSG_UUID toProto(@NonNull UUID id) {
+        return MSG_UUID.newBuilder().setLsb(id.getLeastSignificantBits()).setMsb(id
+                .getMostSignificantBits()).build();
+    }
 
-	@SneakyThrows
-	public SubscriptionRequestTO fromProto(@NonNull MSG_SubscriptionRequest request) {
-		return FactCastJson.reader().forType(SubscriptionRequestTO.class).readValue(request.getJson());
-	}
+    @SneakyThrows
+    public SubscriptionRequestTO fromProto(@NonNull MSG_SubscriptionRequest request) {
+        return FactCastJson.reader().forType(SubscriptionRequestTO.class).readValue(request
+                .getJson());
+    }
 
-	@SneakyThrows
-	public MSG_SubscriptionRequest toProto(SubscriptionRequestTO request) {
-		return MSG_SubscriptionRequest.newBuilder().setJson(FactCastJson.writer().writeValueAsString(request)).build();
-	}
+    @SneakyThrows
+    public MSG_SubscriptionRequest toProto(SubscriptionRequestTO request) {
+        return MSG_SubscriptionRequest.newBuilder().setJson(FactCastJson.writer()
+                .writeValueAsString(request)).build();
+    }
 
-	public UUID fromProto(MSG_UUID request) {
-		long lsb = request.getLsb();
-		long msb = request.getMsb();
+    public UUID fromProto(MSG_UUID request) {
+        long lsb = request.getLsb();
+        long msb = request.getMsb();
 
-		return new UUID(msb, lsb);
-	}
+        return new UUID(msb, lsb);
+    }
 
-	public Fact fromProto(MSG_Fact protoFact) {
-		return Fact.of(protoFact.getHeader(), protoFact.getPayload());
-	}
+    public Fact fromProto(MSG_Fact protoFact) {
+        return Fact.of(protoFact.getHeader(), protoFact.getPayload());
+    }
 
-	public MSG_Fact toProto(org.factcast.core.Fact factMark) {
-		MSG_Fact.Builder proto = MSG_Fact.newBuilder();
-		proto.setHeader(factMark.jsonHeader());
-		proto.setPayload(factMark.jsonPayload());
-		return proto.build();
-	}
+    public MSG_Fact toProto(org.factcast.core.Fact factMark) {
+        MSG_Fact.Builder proto = MSG_Fact.newBuilder();
+        proto.setHeader(factMark.jsonHeader());
+        proto.setPayload(factMark.jsonPayload());
+        return proto.build();
+    }
 
-	public MSG_OptionalFact toProto(Optional<Fact> optFact) {
-		Builder proto = MSG_OptionalFact.newBuilder();
-		boolean present = optFact.isPresent();
+    public MSG_OptionalFact toProto(Optional<Fact> optFact) {
+        Builder proto = MSG_OptionalFact.newBuilder();
+        boolean present = optFact.isPresent();
 
-		proto.setPresent(present);
-		if (present) {
-			proto.setFact(toProto(optFact.get()));
-		}
-		return proto.build();
-	}
+        proto.setPresent(present);
+        if (present) {
+            proto.setFact(toProto(optFact.get()));
+        }
+        return proto.build();
+    }
 
-	public Optional<Fact> fromProto(@NonNull MSG_OptionalFact msg) {
-		if (!msg.getPresent()) {
-			return Optional.empty();
-		} else {
-			return Optional.of(fromProto(msg.getFact()));
-		}
-	}
+    public Optional<Fact> fromProto(@NonNull MSG_OptionalFact message) {
+        if (!message.getPresent()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(fromProto(message.getFact()));
+        }
+    }
 
 }

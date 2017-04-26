@@ -34,91 +34,97 @@ import lombok.Value;
 @ToString
 public class DefaultFact implements Fact, Externalizable {
 
-	@Getter
-	private String jsonHeader;
-	@Getter
-	private String jsonPayload;
-	private Header header;
+    @Getter
+    private String jsonHeader;
 
-	// needed for Externalizable – do not use !
-	@Deprecated
-	public DefaultFact() {
-	}
+    @Getter
+    private String jsonPayload;
 
-	public static Fact of(@NonNull String jsonHeader, @NonNull String jsonPayload) {
-		return new DefaultFact(jsonHeader, jsonPayload);
-	}
+    private Header deserializedHeader;
 
-	@SneakyThrows
-	private DefaultFact(@NonNull String jsonHeader, @NonNull String jsonPayload) {
+    // needed for Externalizable – do not use !
+    @Deprecated
+    public DefaultFact() {
+    }
 
-		this.jsonHeader = jsonHeader;
-		this.jsonPayload = jsonPayload;
-		init(jsonHeader);
+    public static Fact of(@NonNull String jsonHeader, @NonNull String jsonPayload) {
+        return new DefaultFact(jsonHeader, jsonPayload);
+    }
 
-	}
+    @SneakyThrows
+    private DefaultFact(@NonNull String jsonHeader, @NonNull String jsonPayload) {
 
-	private void init(@NonNull String jsonHeader) throws IOException, JsonProcessingException {
-		header = FactCastJson.reader().forType(Header.class).readValue(jsonHeader);
-	}
+        this.jsonHeader = jsonHeader;
+        this.jsonPayload = jsonPayload;
+        init(jsonHeader);
 
-	@Value
-	@JsonIgnoreProperties(ignoreUnknown = true)
-	public static class Header {
+    }
 
-		@JsonProperty
-		@NonNull
-		final UUID id;
-		@JsonProperty
-		@NonNull
-		final String ns;
-		@JsonProperty
-		final String type;
-		@JsonProperty
-		final UUID aggId;
-		@JsonProperty
-		final Map<String, String> meta = new HashMap<>();
-	}
+    private void init(@NonNull String jsonHeader) throws IOException, JsonProcessingException {
+        deserializedHeader = FactCastJson.reader().forType(Header.class).readValue(jsonHeader);
+    }
 
-	@Override
-	public String meta(String key) {
-		return header.meta.get(key);
-	}
+    @Value
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Header {
 
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		// write only header & payload
-		out.writeUTF(jsonHeader);
-		out.writeUTF(jsonPayload);
-	}
+        @JsonProperty
+        @NonNull
+        final UUID id;
 
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		// read only header & payload
-		jsonHeader = in.readUTF();
-		jsonPayload = in.readUTF();
-		// and recreate the header field
-		init(jsonHeader);
-	}
+        @JsonProperty
+        @NonNull
+        final String ns;
 
-	@Override
-	public UUID id() {
-		return header.id;
-	}
+        @JsonProperty
+        final String type;
 
-	@Override
-	public String ns() {
-		return header.ns;
-	}
+        @JsonProperty
+        final UUID aggId;
 
-	@Override
-	public String type() {
-		return header.type;
-	}
+        @JsonProperty
+        final Map<String, String> meta = new HashMap<>();
+    }
 
-	@Override
-	public UUID aggId() {
-		return header.aggId;
-	}
+    @Override
+    public String meta(String key) {
+        return deserializedHeader.meta.get(key);
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        // write only header & payload
+        out.writeUTF(jsonHeader);
+        out.writeUTF(jsonPayload);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        // read only header & payload
+        jsonHeader = in.readUTF();
+        jsonPayload = in.readUTF();
+        // and recreate the header field
+        init(jsonHeader);
+    }
+
+    @Override
+    public UUID id() {
+        return deserializedHeader.id;
+    }
+
+    @Override
+    public String ns() {
+        return deserializedHeader.ns;
+    }
+
+    @Override
+    public String type() {
+        return deserializedHeader.type;
+    }
+
+    @Override
+    public UUID aggId() {
+        return deserializedHeader.aggId;
+    }
 
 }

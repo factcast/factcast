@@ -23,96 +23,104 @@ import lombok.SneakyThrows;
  */
 public final class FactSpecMatcher implements Predicate<Fact> {
 
-	private static final ScriptEngineManager engineManager = new ScriptEngineManager();
+    private static final ScriptEngineManager engineManager = new ScriptEngineManager();
 
-	@NonNull
-	private final String ns;
-	private final String type;
-	private final UUID aggId;
-	private final Map<String, String> meta;
-	private final String script;
-	private final ScriptEngine engine;
+    @NonNull
+    private final String ns;
 
-	public FactSpecMatcher(@NonNull FactSpec spec) {
+    private final String type;
 
-		// opt: prevent method calls by prefetching to final fields.
-		// yes, they might be inlined at some point, but making decisions based
-		// on final fields should help.
-		//
-		// this Predicate is pretty performance critical
-		ns = spec.ns();
-		type = spec.type();
-		aggId = spec.aggId();
-		meta = spec.meta().isEmpty() ? null : spec.meta();
-		script = spec.jsFilterScript();
+    private final UUID aggId;
 
-		engine = getEngine(script);
-	}
+    private final Map<String, String> meta;
 
-	public boolean test(Fact t) {
+    private final String script;
 
-		boolean match = nsMatch(t);
-		match = match && typeMatch(t);
-		match = match && aggIdMatch(t);
-		match = match && metaMatch(t);
-		match = match && scriptMatch(t);
+    private final ScriptEngine scriptEngine;
 
-		return match;
-	}
+    public FactSpecMatcher(@NonNull FactSpec spec) {
 
-	protected boolean metaMatch(Fact t) {
-		if ((meta == null) || meta.isEmpty()) {
-			return true;
-		}
-		return !meta.entrySet().parallelStream().anyMatch(e -> !e.getValue().equals(t.meta(e.getKey())));
-	}
+        // opt: prevent method calls by prefetching to final fields.
+        // yes, they might be inlined at some point, but making decisions based
+        // on final fields should help.
+        //
+        // this Predicate is pretty performance critical
+        ns = spec.ns();
+        type = spec.type();
+        aggId = spec.aggId();
+        meta = spec.meta().isEmpty() ? null : spec.meta();
+        script = spec.jsFilterScript();
 
-	protected boolean nsMatch(Fact t) {
-		String otherNs = t.ns();
-		return (ns.hashCode() == otherNs.hashCode()) && ns.equals(otherNs);
-	}
+        scriptEngine = getEngine(script);
+    }
 
-	protected boolean typeMatch(Fact t) {
-		if (type == null) {
-			return true;
-		}
-		String otherType = t.type();
-		return type.equals(otherType);
-	}
+    public boolean test(Fact t) {
 
-	protected boolean aggIdMatch(Fact t) {
-		if (aggId == null) {
-			return true;
-		}
-		UUID otheraggId = t.aggId();
-		return aggId.equals(otheraggId);
-	}
+        boolean match = nsMatch(t);
+        match = match && typeMatch(t);
+        match = match && aggIdMatch(t);
+        match = match && metaMatch(t);
+        match = match && scriptMatch(t);
 
-	@SneakyThrows
-	protected boolean scriptMatch(Fact t) {
-		if (script == null) {
-			return true;
-		}
+        return match;
+    }
 
-		Boolean jsEval = (Boolean) engine.eval("test(" + t.jsonHeader() + "," + t.jsonPayload() + ")");
-		return jsEval;
-	}
+    protected boolean metaMatch(Fact t) {
+        if ((meta == null) || meta.isEmpty()) {
+            return true;
+        }
+        return !meta.entrySet().parallelStream().anyMatch(e -> !e.getValue().equals(t.meta(e
+                .getKey())));
+    }
 
-	// TODO err handling
-	@SneakyThrows
-	private static ScriptEngine getEngine(String js) {
-		if (js == null) {
-			return null;
-		}
+    protected boolean nsMatch(Fact t) {
+        String otherNs = t.ns();
+        return (ns.hashCode() == otherNs.hashCode()) && ns.equals(otherNs);
+    }
 
-		ScriptEngine e = engineManager.getEngineByName("nashorn");
-		e.eval("var test=" + js);
-		return e;
-	}
+    protected boolean typeMatch(Fact t) {
+        if (type == null) {
+            return true;
+        }
+        String otherType = t.type();
+        return type.equals(otherType);
+    }
 
-	public static Predicate<Fact> matchesAnyOf(Collection<FactSpec> spec) {
-		List<FactSpecMatcher> matchers = spec.stream().map(FactSpecMatcher::new).collect(Collectors.toList());
-		return f -> matchers.stream().anyMatch(p -> p.test(f));
-	}
+    protected boolean aggIdMatch(Fact t) {
+        if (aggId == null) {
+            return true;
+        }
+        UUID otherAggId = t.aggId();
+        return aggId.equals(otherAggId);
+    }
+
+    @SneakyThrows
+    protected boolean scriptMatch(Fact t) {
+        if (script == null) {
+            return true;
+        }
+
+        Boolean jsEval = (Boolean) scriptEngine.eval("test(" + t.jsonHeader() + "," + t
+                .jsonPayload() + ")");
+        return jsEval;
+    }
+
+    // TODO err handling
+    @SneakyThrows
+    private static ScriptEngine getEngine(String js) {
+        if (js == null) {
+            return null;
+        }
+
+        ScriptEngine engine = engineManager.getEngineByName("nashorn");
+        engine.eval("var test=" + js);
+        return engine;
+    }
+
+    public static Predicate<Fact> matchesAnyOf(Collection<FactSpec> spec) {
+        List<FactSpecMatcher> matchers = spec.stream().map(FactSpecMatcher::new).collect(Collectors
+                .toList());
+        return f -> matchers.stream().anyMatch(p -> p.test(f));
+    }
 
 }

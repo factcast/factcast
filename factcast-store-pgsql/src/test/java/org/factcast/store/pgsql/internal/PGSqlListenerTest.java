@@ -25,104 +25,109 @@ import com.impossibl.postgres.api.jdbc.PGNotificationListener;
 @RunWith(MockitoJUnitRunner.class)
 public class PGSqlListenerTest {
 
-	@Mock
-	Supplier<PGConnection> ds;
-	@Mock
-	AsyncEventBus bus;
-	@Mock
-	PGConnection conn;
-	@Mock
-	PreparedStatement ps;
-	@Mock
-	Predicate<Connection> tester;
-	@Captor
-	ArgumentCaptor<PGNotificationListener> captor;
+    @Mock
+    Supplier<PGConnection> ds;
 
-	@org.junit.Before
-	public void setUp() throws SQLException {
-		Mockito.when(ds.get()).thenReturn(conn);
-		Mockito.when(conn.prepareStatement(anyString())).thenReturn(ps);
-		Mockito.when(ps.execute()).thenReturn(true);
+    @Mock
+    AsyncEventBus bus;
 
-	}
+    @Mock
+    PGConnection conn;
 
-	@Test
-	public void testCheck() throws Exception {
-		Mockito.when(ds.get()).thenReturn(conn);
+    @Mock
+    PreparedStatement ps;
 
-		PGListener l = new PGListener(ds, bus, c -> true);
-		l.afterPropertiesSet();
-		l.check();
-		verifyNoMoreInteractions(bus);
-		verify(ds, times(1)).get();
-	}
+    @Mock
+    Predicate<Connection> tester;
 
-	@Test
-	public void testCheckFails() throws Exception {
-		Mockito.when(ds.get()).thenReturn(conn);
-		Mockito.when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
-		Mockito.when(tester.test(Mockito.any(PGConnection.class))).thenReturn(false, false, true);
+    @Captor
+    ArgumentCaptor<PGNotificationListener> captor;
 
-		PGListener l = new PGListener(ds, bus, tester);
-		l.afterPropertiesSet();
-		l.check();
-		l.check();
-		l.check();
-		verifyNoMoreInteractions(bus);
-		verify(ds, times(3)).get();
-	}
+    @org.junit.Before
+    public void setUp() throws SQLException {
+        Mockito.when(ds.get()).thenReturn(conn);
+        Mockito.when(conn.prepareStatement(anyString())).thenReturn(ps);
+        Mockito.when(ps.execute()).thenReturn(true);
 
-	@Test
-	public void testListen() throws Exception {
-		Mockito.when(ds.get()).thenReturn(conn);
-		Mockito.when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
+    }
 
-		PGListener l = new PGListener(ds, bus, tester);
-		l.afterPropertiesSet();
-		verifyNoMoreInteractions(bus);
-		verify(ds, times(1)).get();
-		verify(conn, times(1)).addNotificationListener(Mockito.anyString(), Mockito.eq(PGConstants.CHANNEL_NAME),
-				Mockito.any());
+    @Test
+    public void testCheck() throws Exception {
+        Mockito.when(ds.get()).thenReturn(conn);
 
-	}
+        PGListener l = new PGListener(ds, bus, c -> true);
+        l.afterPropertiesSet();
+        l.check();
+        verifyNoMoreInteractions(bus);
+        verify(ds, times(1)).get();
+    }
 
-	@Test
-	public void testNotify() throws Exception {
+    @Test
+    public void testCheckFails() throws Exception {
+        Mockito.when(ds.get()).thenReturn(conn);
+        Mockito.when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
+        Mockito.when(tester.test(Mockito.any(PGConnection.class))).thenReturn(false, false, true);
 
-		Mockito.doNothing().when(conn).addNotificationListener(Mockito.anyString(), eq(PGConstants.CHANNEL_NAME),
-				captor.capture());
+        PGListener l = new PGListener(ds, bus, tester);
+        l.afterPropertiesSet();
+        l.check();
+        l.check();
+        l.check();
+        verifyNoMoreInteractions(bus);
+        verify(ds, times(3)).get();
+    }
 
-		PGListener l = new PGListener(ds, bus, tester);
-		l.afterPropertiesSet();
+    @Test
+    public void testListen() throws Exception {
+        Mockito.when(ds.get()).thenReturn(conn);
+        Mockito.when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
 
-		PGNotificationListener nl = captor.getValue();
+        PGListener l = new PGListener(ds, bus, tester);
+        l.afterPropertiesSet();
+        verifyNoMoreInteractions(bus);
+        verify(ds, times(1)).get();
+        verify(conn, times(1)).addNotificationListener(Mockito.anyString(), Mockito.eq(
+                PGConstants.CHANNEL_NAME), Mockito.any());
 
-		nl.notification(1, PGConstants.CHANNEL_NAME, "");
-		nl.notification(1, PGConstants.CHANNEL_NAME, "");
-		nl.notification(1, PGConstants.CHANNEL_NAME, "");
+    }
 
-		verify(bus, times(3)).post(any(FactInsertionEvent.class));
+    @Test
+    public void testNotify() throws Exception {
 
-	}
+        Mockito.doNothing().when(conn).addNotificationListener(Mockito.anyString(), eq(
+                PGConstants.CHANNEL_NAME), captor.capture());
 
-	@Test
-	public void testStop() throws Exception {
-		Mockito.when(ds.get()).thenReturn(conn);
-		Mockito.when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
-		PGListener l = new PGListener(ds, bus, tester);
-		l.afterPropertiesSet();
-		l.destroy();
+        PGListener l = new PGListener(ds, bus, tester);
+        l.afterPropertiesSet();
 
-		verify(conn).close();
-	}
+        PGNotificationListener nl = captor.getValue();
 
-	@Test
-	public void testStopWithoutStaring() throws Exception {
-		Mockito.when(ds.get()).thenReturn(conn);
-		Mockito.when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
-		PGListener l = new PGListener(ds, bus, tester);
-		l.destroy();
+        nl.notification(1, PGConstants.CHANNEL_NAME, "");
+        nl.notification(1, PGConstants.CHANNEL_NAME, "");
+        nl.notification(1, PGConstants.CHANNEL_NAME, "");
 
-		verifyNoMoreInteractions(conn);
-	}
+        verify(bus, times(3)).post(any(FactInsertionEvent.class));
+
+    }
+
+    @Test
+    public void testStop() throws Exception {
+        Mockito.when(ds.get()).thenReturn(conn);
+        Mockito.when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
+        PGListener l = new PGListener(ds, bus, tester);
+        l.afterPropertiesSet();
+        l.destroy();
+
+        verify(conn).close();
+    }
+
+    @Test
+    public void testStopWithoutStaring() throws Exception {
+        Mockito.when(ds.get()).thenReturn(conn);
+        Mockito.when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
+        PGListener l = new PGListener(ds, bus, tester);
+        l.destroy();
+
+        verifyNoMoreInteractions(conn);
+    }
 }

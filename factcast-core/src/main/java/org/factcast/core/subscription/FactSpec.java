@@ -22,27 +22,30 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor(staticName = "ns")
 public class FactSpec {
 
-	@NonNull
-	@JsonProperty
-	private final String ns;
-	@JsonProperty
-	private String type = null;
-	@JsonProperty
-	private UUID aggId = null;
-	@NonNull
-	@JsonProperty
-	private final Map<String, String> meta = new HashMap<>();
+    @NonNull
+    @JsonProperty
+    private final String ns;
 
-	public FactSpec meta(@NonNull String k, @NonNull String v) {
-		meta.put(k, v);
-		return this;
-	}
+    @JsonProperty
+    private String type = null;
 
-	@JsonProperty
-	private String jsFilterScript = null;
+    @JsonProperty
+    private UUID aggId = null;
 
-	public static FactSpec forMark() {
-		return FactSpec.ns(MarkFact.NS).type(MarkFact.TYPE);
-	}
+    @NonNull
+    @JsonProperty
+    private final Map<String, String> meta = new HashMap<>();
+
+    public FactSpec meta(@NonNull String k, @NonNull String v) {
+        meta.put(k, v);
+        return this;
+    }
+
+    @JsonProperty
+    private String jsFilterScript = null;
+
+    public static FactSpec forMark() {
+        return FactSpec.ns(MarkFact.NS).type(MarkFact.TYPE);
+    }
 
 }

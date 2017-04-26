@@ -42,51 +42,53 @@ import lombok.extern.slf4j.Slf4j;
 @EnableCaching
 @Slf4j
 public class FactCastInfinispanConfiguration {
-	@Bean
-	public CachingFactCast cachingFactCast(FactStore store, CachingFactLookup cl) {
-		return new CachingFactCast(FactCast.from(store), cl);
-	}
+    @Bean
+    public CachingFactCast cachingFactCast(FactStore store, CachingFactLookup cl) {
+        return new CachingFactCast(FactCast.from(store), cl);
+    }
 
-	@Bean
-	InfinispanInitialization infinispanInitialization(SpringEmbeddedCacheManager cm) {
-		return new InfinispanInitialization(cm);
-	}
+    @Bean
+    InfinispanInitialization infinispanInitialization(SpringEmbeddedCacheManager cm) {
+        return new InfinispanInitialization(cm);
+    }
 
-	@Bean
-	public SpringEmbeddedCacheManager cacheManager() {
-		return new SpringEmbeddedCacheManager(new DefaultCacheManager());
-	}
+    @Bean
+    public SpringEmbeddedCacheManager cacheManager() {
+        return new SpringEmbeddedCacheManager(new DefaultCacheManager());
+    }
 
-	@RequiredArgsConstructor
-	static class InfinispanInitialization {
+    @RequiredArgsConstructor
+    static class InfinispanInitialization {
 
-		final SpringEmbeddedCacheManager cm;
+        final SpringEmbeddedCacheManager cm;
 
-		@Autowired
-		@Value("${factcast.cache.infinispan.path:#{systemProperties['java.io.tmpdir']+ '/factcast'}}")
-		String folder;
+        @Autowired
+        @Value("${factcast.cache.infinispan.path:#{systemProperties['java.io.tmpdir']+ '/factcast'}}")
+        String folder;
 
-		@PostConstruct
-		public void init() {
-			log.info("Infinispan initialization done.");
-			log.info("Configure to persist cached objects to '{}'", folder);
-			ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+        @PostConstruct
+        public void init() {
+            log.info("Infinispan initialization done.");
+            log.info("Configure to persist cached objects to '{}'", folder);
+            ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 
-			final PersistenceConfigurationBuilder persistence = configurationBuilder.persistence().passivation(false);
-			final SingleFileStoreConfigurationBuilder filestore = persistence.addSingleFileStore().location(folder);
-			filestore.async();
-			filestore.eviction().type(EvictionType.COUNT).size(10_000_000_000L);
-			filestore.expiration().maxIdle(365 * 30, TimeUnit.DAYS);
-			filestore.indexing().addIndexedEntity(DefaultFact.class);
-			filestore.fetchPersistentState(true);
-			filestore.preload(false);
+            final PersistenceConfigurationBuilder persistence = configurationBuilder.persistence()
+                    .passivation(false);
+            final SingleFileStoreConfigurationBuilder filestore = persistence.addSingleFileStore()
+                    .location(folder);
+            filestore.async();
+            filestore.eviction().type(EvictionType.COUNT).size(10_000_000_000L);
+            filestore.expiration().maxIdle(365 * 30, TimeUnit.DAYS);
+            filestore.indexing().addIndexedEntity(DefaultFact.class);
+            filestore.fetchPersistentState(true);
+            filestore.preload(false);
 
-			org.infinispan.configuration.cache.Configuration c = filestore.build();
+            org.infinispan.configuration.cache.Configuration c = filestore.build();
 
-			final String cacheName = CachingFactLookup.CACHE_NAME;
-			log.info("Configuring cache " + cacheName);
-			cm.getNativeCacheManager().defineConfiguration(cacheName, c);
-			log.info("Infinispan initialization done.");
-		}
-	}
+            final String cacheName = CachingFactLookup.CACHE_NAME;
+            log.info("Configuring cache " + cacheName);
+            cm.getNativeCacheManager().defineConfiguration(cacheName, c);
+            log.info("Infinispan initialization done.");
+        }
+    }
 }

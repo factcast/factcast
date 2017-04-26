@@ -3,6 +3,7 @@ package org.factcast.example.grpc;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
@@ -34,94 +35,100 @@ import lombok.RequiredArgsConstructor;
 
 public class SmokeMT {
 
-	public static void main(String[] args) {
-		Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-		root.setLevel(Level.INFO);
+    public static void main(String[] args) {
+        Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        root.setLevel(Level.INFO);
 
-		SpringApplication.run(SmokeMT.class);
-	}
+        SpringApplication.run(SmokeMT.class);
+    }
 
-	@RequiredArgsConstructor
-	@Component
-	public static class SmokeMTCommandRunner implements CommandLineRunner {
+    @RequiredArgsConstructor
+    @Component
+    public static class SmokeMTCommandRunner implements CommandLineRunner {
 
-		final FactCast fc;
+        final FactCast fc;
 
-		@Override
-		public void run(String... args) throws Exception {
-			final MetricsRegistry r = new MetricsRegistry();
-			ConsoleReporter consoleReporter = new ConsoleReporter(r, System.err, ((MetricPredicate) (n, me) -> true));
-			Meter readMeter = r.newMeter(this.getClass(), "readFromRemoteStore", "read", TimeUnit.SECONDS);
-			Meter writeMeter = r.newMeter(this.getClass(), "writeToRemoteStore", "written", TimeUnit.SECONDS);
-			// consoleReporter.start(1, TimeUnit.SECONDS);
+        @Override
+        public void run(String... args) throws Exception {
+            final MetricsRegistry r = new MetricsRegistry();
+            ConsoleReporter consoleReporter = new ConsoleReporter(r, System.err,
+                    ((MetricPredicate) (n, me) -> true));
+            Meter readMeter = r.newMeter(this.getClass(), "readFromRemoteStore", "read",
+                    TimeUnit.SECONDS);
+            Meter writeMeter = r.newMeter(this.getClass(), "writeToRemoteStore", "written",
+                    TimeUnit.SECONDS);
+            // consoleReporter.start(1, TimeUnit.SECONDS);
 
-			// Optional<Fact> fetchById = fc.fetchById(UUID.randomUUID());
-			// System.out.println(fetchById.isPresent());
-			//
-			// SmokeTestFact f1 = new SmokeTestFact().type("create");
-			// fc.publish(f1);
-			//
-			// fetchById = fc.fetchById(f1.id());
-			// System.out.println(fetchById.isPresent());
-			//
-			// SmokeTestFact m = new SmokeTestFact().type("withMark");
-			// UUID mark = fc.publishWithMark(m);
-			//
-			// System.out.println(fc.fetchById(m.id()).isPresent());
-			// System.out.println(fc.fetchById(mark).isPresent());
-			//
-			// fc.subscribeToIds(SubscriptionRequest.catchup(FactSpec.ns("default")).sinceInception(),
-			// System.err::println);
+            // Optional<Fact> fetchById = fc.fetchById(UUID.randomUUID());
+            // System.out.println(fetchById.isPresent());
+            //
+            // SmokeTestFact f1 = new SmokeTestFact().type("create");
+            // fc.publish(f1);
+            //
+            // fetchById = fc.fetchById(f1.id());
+            // System.out.println(fetchById.isPresent());
+            //
+            // SmokeTestFact m = new SmokeTestFact().type("withMark");
+            // UUID mark = fc.publishWithMark(m);
+            //
+            // System.out.println(fc.fetchById(m.id()).isPresent());
+            // System.out.println(fc.fetchById(mark).isPresent());
+            //
+            // fc.subscribeToIds(SubscriptionRequest.catchup(FactSpec.ns("default")).sinceInception(),
+            // System.err::println);
 
-			// final UUID since =
-			// UUID.fromString("9224fe02-ee8b-4322-b8dd-b083001f4967");
-			// fc.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default")).since(since),
-			// System.err::println);
-			//
-			// System.err.println(
-			// "--------------------------------------------------------------------------------------------");
-			// fc.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default")).since(since),
-			// System.err::println);
-			//
-			// System.err.println(
-			// "--------------------------------------------------------------------------------------------");
-			// fc.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default")).since(since),
-			// System.err::println);
+            // final UUID since =
+            // UUID.fromString("9224fe02-ee8b-4322-b8dd-b083001f4967");
+            // fc.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default")).since(since),
+            // System.err::println);
+            //
+            // System.err.println(
+            // "--------------------------------------------------------------------------------------------");
+            // fc.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default")).since(since),
+            // System.err::println);
+            //
+            // System.err.println(
+            // "--------------------------------------------------------------------------------------------");
 
-			UUID aggId = UUID.randomUUID();
+            AtomicLong i = new AtomicLong();
+            fc.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default"))
+                    .sinceInception(), f -> i.incrementAndGet());
 
-			CompletableFuture<Subscription> sub = fc.subscribeToFacts(
-					SubscriptionRequest.follow(FactSpec.ns("smoke").aggId(aggId)).sinceInception(), new FactObserver() {
+            System.out.println("got: " + i.get() + " facts");
+            UUID aggId = UUID.randomUUID();
 
-						@Override
-						public void onNext(Fact f) {
-							if (!MarkFact.TYPE.equals(f.type())) {
-								System.out.println(f);
-							}
-						}
+            CompletableFuture<Subscription> sub = fc.subscribeToFacts(SubscriptionRequest.follow(
+                    FactSpec.ns("smoke").aggId(aggId)).sinceInception(), new FactObserver() {
 
-						public void onComplete() {
-							System.out.println("COMPLETE");
-						};
-					});
+                        @Override
+                        public void onNext(Fact f) {
+                            if (!MarkFact.TYPE.equals(f.type())) {
+                                System.out.println(f);
+                            }
+                        }
 
-			System.out.println("writing");
+                        public void onComplete() {
+                            System.out.println("COMPLETE");
+                        };
+                    });
 
-			fc.publish(new SmokeTestFact().aggId(aggId));
+            System.out.println("writing");
 
-			Thread.sleep(500);
+            fc.publish(new SmokeTestFact().aggId(aggId));
 
-			System.out.println("closing");
-			sub.get().close();
-			Thread.sleep(500);
+            Thread.sleep(500);
 
-			System.out.println("publishing one more");
-			Fact afterClose = new SmokeTestFact().aggId(aggId);
-			fc.publish(afterClose);
+            System.out.println("closing");
+            sub.get().close();
+            Thread.sleep(500);
 
-			Thread.sleep(3000);
+            System.out.println("publishing one more");
+            Fact afterClose = new SmokeTestFact().aggId(aggId);
+            fc.publish(afterClose);
 
-		}
+            Thread.sleep(3000);
 
-	}
+        }
+
+    }
 }

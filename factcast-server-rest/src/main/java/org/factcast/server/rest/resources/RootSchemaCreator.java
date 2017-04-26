@@ -14,14 +14,16 @@ import lombok.val;
 @Component
 @AllArgsConstructor
 class RootSchemaCreator {
-	private final HyperSchemaCreator hyperSchemaCreator;
+    private final HyperSchemaCreator hyperSchemaCreator;
 
-	private final LinkFactory<EventsResource> eventsResourceLinkFactory;
+    private final LinkFactory<EventsResource> eventsResourceLinkFactory;
 
-	ObjectWithSchema<Void> forRoot() {
-		val getEventsLink = eventsResourceLinkFactory.forCall(EventsRel.EVENTS, r -> r.getServerSentEvents(null));
-		val createLink = eventsResourceLinkFactory.forCall(EventsRel.CREATE_TRANSACTIONAL, r -> r.newTransaction(null));
+    ObjectWithSchema<Void> forRoot() {
+        val getEventsLink = eventsResourceLinkFactory.forCall(EventsRel.EVENTS, r -> r
+                .getServerSentEvents(null));
+        val createLink = eventsResourceLinkFactory.forCall(EventsRel.CREATE_TRANSACTIONAL, r -> r
+                .newTransaction(null));
 
-		return hyperSchemaCreator.create(null, collect(getEventsLink, createLink));
-	}
+        return hyperSchemaCreator.create(null, collect(getEventsLink, createLink));
+    }
 }

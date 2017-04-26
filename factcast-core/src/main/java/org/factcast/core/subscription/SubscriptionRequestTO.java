@@ -1,6 +1,6 @@
 package org.factcast.core.subscription;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.*;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,64 +34,64 @@ import lombok.experimental.FieldDefaults;
 @JsonIgnoreProperties
 public class SubscriptionRequestTO implements SubscriptionRequest {
 
-	@JsonProperty
-	long maxBatchDelayInMs = 0;
-	@JsonProperty
-	boolean continous;
-	@JsonProperty
-	boolean ephemeral;
-	@JsonProperty
-	boolean idOnly = false;
-	@JsonProperty
-	UUID startingAfter;
-	@JsonProperty
-	final List<FactSpec> specs = new LinkedList<>(Arrays.asList(FactSpec.forMark()));
+    @JsonProperty
+    long maxBatchDelayInMs = 0;
 
-	transient Boolean hasScriptFilters;
+    @JsonProperty
+    boolean continous;
 
-	public boolean hasAnyScriptFilters() {
-		if (hasScriptFilters == null) {
-			hasScriptFilters = specs.stream().anyMatch(s -> s.jsFilterScript() != null);
-		}
-		return hasScriptFilters;
-	}
+    @JsonProperty
+    boolean ephemeral;
 
-	public java.util.Optional<UUID> startingAfter() {
-		return java.util.Optional.ofNullable(startingAfter);
-	}
+    @JsonProperty
+    boolean idOnly = false;
 
-	// copy constr. from a SR
-	public SubscriptionRequestTO(SubscriptionRequest request) {
-		maxBatchDelayInMs = request.maxBatchDelayInMs();
-		continous = request.continous();
-		ephemeral = request.ephemeral();
-		startingAfter = request.startingAfter().orElse(null);
-		specs.addAll(request.specs());
-	}
+    @JsonProperty
+    UUID startingAfter;
 
-	public static SubscriptionRequestTO forFacts(SubscriptionRequest req) {
-		SubscriptionRequestTO t = new SubscriptionRequestTO(req);
-		t.idOnly(false);
-		return t;
-	}
+    @JsonProperty
+    final List<FactSpec> specs = new LinkedList<>(Arrays.asList(FactSpec.forMark()));
 
-	public static SubscriptionRequestTO forIds(SubscriptionRequest req) {
-		SubscriptionRequestTO t = new SubscriptionRequestTO(req);
-		t.idOnly(true);
-		return t;
-	}
+    public boolean hasAnyScriptFilters() {
+        return specs.stream().anyMatch(s -> s.jsFilterScript() != null);
+    }
 
-	public void addSpecs(@NonNull List<FactSpec> factSpecs) {
-		checkArgument(!factSpecs.isEmpty());
-		specs.addAll(factSpecs);
-	}
+    public java.util.Optional<UUID> startingAfter() {
+        return java.util.Optional.ofNullable(startingAfter);
+    }
 
-	public SubscriptionRequestTO copy() {
-		return FactCastJson.copy(this);
-	}
+    // copy constr. from a SR
+    public SubscriptionRequestTO(SubscriptionRequest request) {
+        maxBatchDelayInMs = request.maxBatchDelayInMs();
+        continous = request.continous();
+        ephemeral = request.ephemeral();
+        startingAfter = request.startingAfter().orElse(null);
+        specs.addAll(request.specs());
+    }
 
-	@Override
-	public List<FactSpec> specs() {
-		return Collections.unmodifiableList(specs);
-	}
+    public static SubscriptionRequestTO forFacts(SubscriptionRequest request) {
+        SubscriptionRequestTO t = new SubscriptionRequestTO(request);
+        t.idOnly(false);
+        return t;
+    }
+
+    public static SubscriptionRequestTO forIds(SubscriptionRequest request) {
+        SubscriptionRequestTO t = new SubscriptionRequestTO(request);
+        t.idOnly(true);
+        return t;
+    }
+
+    public void addSpecs(@NonNull List<FactSpec> factSpecs) {
+        checkArgument(!factSpecs.isEmpty());
+        specs.addAll(factSpecs);
+    }
+
+    public SubscriptionRequestTO copy() {
+        return FactCastJson.copy(this);
+    }
+
+    @Override
+    public List<FactSpec> specs() {
+        return Collections.unmodifiableList(specs);
+    }
 }

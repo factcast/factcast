@@ -27,73 +27,74 @@ import io.grpc.stub.StreamObserver;
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("unchecked")
 public class FactStoreGrpcServiceTest {
-	@Mock
-	FactStore backend;
-	FactStoreGrpcService uut;
+    @Mock
+    FactStore backend;
 
-	@Captor
-	ArgumentCaptor<List<Fact>> acFactList;
+    FactStoreGrpcService uut;
 
-	final ProtoConverter protoConverter = new ProtoConverter();
+    @Captor
+    ArgumentCaptor<List<Fact>> acFactList;
 
-	@Test(expected = NullPointerException.class)
-	public void testPublishNull() throws Exception {
-		uut = new FactStoreGrpcService(backend);
+    final ProtoConverter protoConverter = new ProtoConverter();
 
-		uut.publish(null, mock(StreamObserver.class));
-	}
+    @Test(expected = NullPointerException.class)
+    public void testPublishNull() throws Exception {
+        uut = new FactStoreGrpcService(backend);
 
-	@Test
-	public void testPublishNone() throws Exception {
-		uut = new FactStoreGrpcService(backend);
-		doNothing().when(backend).publish(acFactList.capture());
-		MSG_Facts r = MSG_Facts.newBuilder().build();
+        uut.publish(null, mock(StreamObserver.class));
+    }
 
-		uut.publish(r, mock(StreamObserver.class));
+    @Test
+    public void testPublishNone() throws Exception {
+        uut = new FactStoreGrpcService(backend);
+        doNothing().when(backend).publish(acFactList.capture());
+        MSG_Facts r = MSG_Facts.newBuilder().build();
 
-		verify(backend).publish(anyList());
+        uut.publish(r, mock(StreamObserver.class));
 
-		assertTrue(acFactList.getValue().isEmpty());
-	}
+        verify(backend).publish(anyList());
 
-	@Test
-	public void testPublishSome() throws Exception {
-		uut = new FactStoreGrpcService(backend);
-		doNothing().when(backend).publish(acFactList.capture());
-		Builder b = MSG_Facts.newBuilder();
+        assertTrue(acFactList.getValue().isEmpty());
+    }
 
-		TestFact f1 = new TestFact();
-		TestFact f2 = new TestFact();
-		MSG_Fact msg1 = protoConverter.toProto(f1);
-		MSG_Fact msg2 = protoConverter.toProto(f2);
+    @Test
+    public void testPublishSome() throws Exception {
+        uut = new FactStoreGrpcService(backend);
+        doNothing().when(backend).publish(acFactList.capture());
+        Builder b = MSG_Facts.newBuilder();
 
-		b.addAllFact(Arrays.asList(msg1, msg2));
-		MSG_Facts r = b.build();
+        TestFact f1 = new TestFact();
+        TestFact f2 = new TestFact();
+        MSG_Fact msg1 = protoConverter.toProto(f1);
+        MSG_Fact msg2 = protoConverter.toProto(f2);
 
-		uut.publish(r, mock(StreamObserver.class));
+        b.addAllFact(Arrays.asList(msg1, msg2));
+        MSG_Facts r = b.build();
 
-		verify(backend).publish(anyList());
+        uut.publish(r, mock(StreamObserver.class));
 
-		List<Fact> facts = acFactList.getValue();
-		assertFalse(facts.isEmpty());
-		assertEquals(2, facts.size());
-		assertEquals(f1.id(), facts.get(0).id());
-		assertEquals(f2.id(), facts.get(1).id());
+        verify(backend).publish(anyList());
 
-	}
+        List<Fact> facts = acFactList.getValue();
+        assertFalse(facts.isEmpty());
+        assertEquals(2, facts.size());
+        assertEquals(f1.id(), facts.get(0).id());
+        assertEquals(f2.id(), facts.get(1).id());
 
-	@Test(expected = NullPointerException.class)
-	public void testFetchByIdNull() throws Exception {
-		uut.fetchById(null, mock(StreamObserver.class));
-	}
+    }
 
-	@Test(expected = NullPointerException.class)
-	public void testFetchById() throws Exception {
-		UUID id = UUID.randomUUID();
-		uut.fetchById(protoConverter.toProto(id), mock(StreamObserver.class));
+    @Test(expected = NullPointerException.class)
+    public void testFetchByIdNull() throws Exception {
+        uut.fetchById(null, mock(StreamObserver.class));
+    }
 
-		verify(backend).fetchById(eq(id));
-	}
+    @Test(expected = NullPointerException.class)
+    public void testFetchById() throws Exception {
+        UUID id = UUID.randomUUID();
+        uut.fetchById(protoConverter.toProto(id), mock(StreamObserver.class));
 
-	// TODO subscribe test
+        verify(backend).fetchById(eq(id));
+    }
+
+    // TODO subscribe test
 }

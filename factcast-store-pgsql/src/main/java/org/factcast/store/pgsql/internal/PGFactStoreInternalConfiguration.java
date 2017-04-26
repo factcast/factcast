@@ -26,41 +26,43 @@ import com.google.common.eventbus.EventBus;
 @EnableScheduling
 @Import(SchedulingConfiguration.class)
 public class PGFactStoreInternalConfiguration {
-	@Bean
-	@ConditionalOnMissingBean(EventBus.class)
-	public EventBus eventBus() {
-		return new AsyncEventBus(this.getClass().getSimpleName(), Executors.newCachedThreadPool());
-	}
+    @Bean
+    @ConditionalOnMissingBean(EventBus.class)
+    public EventBus eventBus() {
+        return new AsyncEventBus(this.getClass().getSimpleName(), Executors.newCachedThreadPool());
+    }
 
-	@Bean
-	public PGFactIdToSerMapper pgEventIdToSerMapper(JdbcTemplate tpl) {
-		return new PGFactIdToSerMapper(tpl);
-	}
+    @Bean
+    public PGFactIdToSerMapper pgEventIdToSerMapper(JdbcTemplate jdbcTemplate) {
+        return new PGFactIdToSerMapper(jdbcTemplate);
+    }
 
-	@Bean
-	public PGListener pgSqlListener(EventBus bus, EnvironmentPGConnectionSupplier connSup) {
-		return new PGListener(connSup, bus, new ConnectionTester());
-	}
+    @Bean
+    public PGListener pgSqlListener(EventBus eventBus,
+            EnvironmentPGConnectionSupplier connectionSupplier) {
+        return new PGListener(connectionSupplier, eventBus, new ConnectionTester());
+    }
 
-	@Bean
-	public EnvironmentPGConnectionSupplier environmentPGConnectionSupplier() {
-		return new EnvironmentPGConnectionSupplier();
-	}
+    @Bean
+    public EnvironmentPGConnectionSupplier environmentPGConnectionSupplier() {
+        return new EnvironmentPGConnectionSupplier();
+    }
 
-	@Bean
-	@ConditionalOnMissingBean(TaskScheduler.class)
-	public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
-		return new ThreadPoolTaskScheduler();
-	}
+    @Bean
+    @ConditionalOnMissingBean(TaskScheduler.class)
+    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
+        return new ThreadPoolTaskScheduler();
+    }
 
-	@Bean
-	public FactStore factStore(JdbcTemplate tpl, PGSubscriptionFactory queryProvider) {
-		return new PGFactStore(tpl, queryProvider);
-	}
+    @Bean
+    public FactStore factStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory queryProvider) {
+        return new PGFactStore(jdbcTemplate, queryProvider);
+    }
 
-	@Bean
-	public PGSubscriptionFactory pgSubscriptionFactory(JdbcTemplate tpl, EventBus bus, PGFactIdToSerMapper serMapper) {
-		return new PGSubscriptionFactory(tpl, bus, serMapper);
-	}
+    @Bean
+    public PGSubscriptionFactory pgSubscriptionFactory(JdbcTemplate jdbcTemplate, EventBus eventBus,
+            PGFactIdToSerMapper serMapper) {
+        return new PGSubscriptionFactory(jdbcTemplate, eventBus, serMapper);
+    }
 
 }

@@ -45,143 +45,160 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 @Slf4j
 class GrpcFactStore implements FactStore {
 
-	private static final String CHANNEL_NAME = "factstore";
-	private final RemoteFactStoreBlockingStub blockingStub;
-	private final RemoteFactStoreStub stub;
+    private static final String CHANNEL_NAME = "factstore";
 
-	GrpcFactStore(@NonNull AddressChannelFactory channelFactory) {
-		Channel c = channelFactory.createChannel(CHANNEL_NAME);
-		blockingStub = RemoteFactStoreGrpc.newBlockingStub(c);
-		stub = RemoteFactStoreGrpc.newStub(c);
-	}
+    private final RemoteFactStoreBlockingStub blockingStub;
 
-	final ProtoConverter conv = new ProtoConverter();
+    private final RemoteFactStoreStub stub;
 
-	@Override
-	public Optional<Fact> fetchById(UUID id) {
-		log.trace("fetching {} from remote store", id);
-		MSG_OptionalFact fetchById = blockingStub.fetchById(conv.toProto(id));
-		if (!fetchById.getPresent()) {
-			return Optional.empty();
-		} else {
-			return conv.fromProto(fetchById);
-		}
-	}
+    GrpcFactStore(@NonNull AddressChannelFactory channelFactory) {
+        Channel channel = channelFactory.createChannel(CHANNEL_NAME);
+        blockingStub = RemoteFactStoreGrpc.newBlockingStub(channel);
+        stub = RemoteFactStoreGrpc.newStub(channel);
+    }
 
-	@Override
-	public void publish(@NonNull List<? extends Fact> factsToPublish) {
-		log.trace("publishing {} facts to remote store", factsToPublish.size());
-		List<MSG_Fact> mf = factsToPublish.stream().map(conv::toProto).collect(Collectors.toList());
-		MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
-		blockingStub.publish(mfs);
-	}
+    final ProtoConverter converter = new ProtoConverter();
 
-	@Override
-	public CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO req,
-			@NonNull FactStoreObserver observer) {
-		CountDownLatch l = new CountDownLatch(1);
+    @Override
+    public Optional<Fact> fetchById(UUID id) {
+        log.trace("fetching {} from remote store", id);
+        MSG_OptionalFact fetchById = blockingStub.fetchById(converter.toProto(id));
+        if (!fetchById.getPresent()) {
+            return Optional.empty();
+        } else {
+            return converter.fromProto(fetchById);
+        }
+    }
 
-		final MSG_SubscriptionRequest request = conv.toProto(req);
-		final StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new StreamObserver<FactStoreProto.MSG_Notification>() {
+    @Override
+    public void publish(@NonNull List<? extends Fact> factsToPublish) {
+        try {
+            log.trace("publishing {} facts to remote store", factsToPublish.size());
+            List<MSG_Fact> mf = factsToPublish.stream().map(converter::toProto).collect(Collectors
+                    .toList());
+            MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
+            blockingStub.publish(mfs);
+        } catch (Exception e) {
+            log.warn("failed to publish {} facts: {}", factsToPublish.size(), e);
+        }
+    }
 
-			@Override
-			public void onNext(MSG_Notification f) {
+    @Override
+    public CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO req,
+            @NonNull FactStoreObserver observer) {
+        CountDownLatch latch = new CountDownLatch(1);
 
-				log.trace("observer got msg: {}", f);
+        final MSG_SubscriptionRequest request = converter.toProto(req);
+        final StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new StreamObserver<FactStoreProto.MSG_Notification>() {
 
-				switch (f.getType()) {
-				case Catchup:
-					l.countDown();
-					observer.onCatchup();
-					break;
-				case Complete:
-					l.countDown();
-					observer.onComplete();
-					break;
-				case Error:
-					l.countDown();
-					observer.onError(new RuntimeException("Server-side Error: \n" + f.getError()));
-					break;
+            @Override
+            public void onNext(MSG_Notification f) {
 
-				case Fact:
-					observer.onNext(conv.fromProto(f.getFact()));
-					break;
+                log.trace("observer got msg: {}", f);
 
-				case Id:
-					// wrap id in a fact
-					observer.onNext(new IdOnlyFact(conv.fromProto(f.getId())));
-					break;
+                switch (f.getType()) {
+                case Catchup:
+                    latch.countDown();
+                    log.debug("received onCatchup signal");
+                    observer.onCatchup();
+                    break;
+                case Complete:
+                    latch.countDown();
+                    log.debug("received onComplete signal");
+                    observer.onComplete();
+                    break;
+                case Error:
+                    latch.countDown();
+                    log.debug("received onError signal");
+                    observer.onError(new RuntimeException("Server-side Error: \n" + f.getError()));
+                    break;
 
-				case UNRECOGNIZED:
-					l.countDown();
-					observer.onError(new RuntimeException("Unrecognized notification type. THIS IS A BUG!"));
-					break;
-				}
-			}
+                case Fact:
+                    observer.onNext(converter.fromProto(f.getFact()));
+                    break;
 
-			@Override
-			public void onError(Throwable t) {
-				observer.onError(t);
+                case Id:
+                    // wrap id in a fact
+                    observer.onNext(new IdOnlyFact(converter.fromProto(f.getId())));
+                    break;
 
-			}
+                case UNRECOGNIZED:
+                    latch.countDown();
+                    observer.onError(new RuntimeException(
+                            "Unrecognized notification type. THIS IS A BUG!"));
+                    break;
+                }
+            }
 
-			@Override
-			public void onCompleted() {
-				observer.onComplete();
-			}
-		};
+            @Override
+            public void onError(Throwable t) {
+                observer.onError(t);
 
-		final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()
-				.newCall(RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions());
-		asyncServerStreamingCall(call, request, responseObserver);
+            }
 
-		// wait until catchup
-		try {
-			l.await();
-		} catch (InterruptedException e) {
-			throw new IllegalStateException(e);
-		}
+            @Override
+            public void onCompleted() {
+                observer.onComplete();
+            }
+        };
 
-		return CompletableFuture.completedFuture(() -> {
-			call.cancel("Client is no longer interested", null);
-		});
-	}
+        final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()
+                .newCall(RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions());
+        asyncServerStreamingCall(call, request, responseObserver);
 
-	@RequiredArgsConstructor
-	final static class IdOnlyFact implements Fact {
-		@Getter
-		@NonNull
-		final UUID id;
+        // wait until catchup
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            cancel(call);
+            return CompletableFuture.completedFuture(() -> {
+            });
+        }
 
-		@Override
-		public String ns() {
-			throw new UnsupportedOperationException();
-		}
+        return CompletableFuture.completedFuture(() -> {
+            cancel(call);
+        });
+    }
 
-		@Override
-		public String type() {
-			throw new UnsupportedOperationException();
-		}
+    private void cancel(final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call) {
+        call.cancel("Client is no longer interested", null);
+    }
 
-		@Override
-		public UUID aggId() {
-			throw new UnsupportedOperationException();
-		}
+    @RequiredArgsConstructor
+    final static class IdOnlyFact implements Fact {
+        @Getter
+        @NonNull
+        final UUID id;
 
-		@Override
-		public String jsonHeader() {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public String ns() {
+            throw new UnsupportedOperationException();
+        }
 
-		@Override
-		public String jsonPayload() {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public String type() {
+            throw new UnsupportedOperationException();
+        }
 
-		@Override
-		public String meta(String key) {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public UUID aggId() {
+            throw new UnsupportedOperationException();
+        }
 
-	}
+        @Override
+        public String jsonHeader() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String jsonPayload() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String meta(String key) {
+            throw new UnsupportedOperationException();
+        }
+
+    }
 }

@@ -10,7 +10,7 @@ import lombok.Data;
 
 @Data
 public class FactTransactionJson {
-	@JsonProperty
-	@NotEmpty
-	List<FactJson> facts;
+    @JsonProperty
+    @NotEmpty
+    List<FactJson> facts;
 }

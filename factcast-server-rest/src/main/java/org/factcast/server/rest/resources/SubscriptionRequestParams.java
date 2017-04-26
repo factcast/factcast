@@ -13,32 +13,35 @@ import lombok.Data;
 
 @Data
 public class SubscriptionRequestParams {
-	@QueryParam("ns")
-	@NotNull
-	private String ns;
-	@QueryParam("since")
-	private String since;
-	@QueryParam("follow")
-	private boolean follow;
-	@QueryParam("aggId")
-	private String aggId;
+    @QueryParam("ns")
+    @NotNull
+    private String ns;
 
-	// FIXME TODO JAR: Type missing?
-	// FIXME TODO JAR: List of FactSpecs...
+    @QueryParam("since")
+    private String since;
 
-	public SubscriptionRequestTO toRequest() {
+    @QueryParam("follow")
+    private boolean follow;
 
-		SubscriptionRequestTO r = new SubscriptionRequestTO();
-		r.continous(follow);
-		if (since != null) {
-			r.startingAfter(UUID.fromString(since));
-		}
+    @QueryParam("aggId")
+    private String aggId;
 
-		FactSpec factSpec = FactSpec.ns(ns);
-		if (aggId != null) {
-			factSpec = factSpec.aggId(UUID.fromString(aggId));
-		}
-		r.addSpecs(Arrays.asList(factSpec));
-		return r;
-	}
+    // FIXME TODO JAR: Type missing?
+    // FIXME TODO JAR: List of FactSpecs...
+
+    public SubscriptionRequestTO toRequest() {
+
+        SubscriptionRequestTO r = new SubscriptionRequestTO();
+        r.continous(follow);
+        if (since != null) {
+            r.startingAfter(UUID.fromString(since));
+        }
+
+        FactSpec factSpec = FactSpec.ns(ns);
+        if (aggId != null) {
+            factSpec = factSpec.aggId(UUID.fromString(aggId));
+        }
+        r.addSpecs(Arrays.asList(factSpec));
+        return r;
+    }
 }

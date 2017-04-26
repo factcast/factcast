@@ -18,37 +18,38 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CachingFactLookupTest {
 
-	private CachingFactLookup uut;
-	private FactStore store;
+    private CachingFactLookup uut;
 
-	@Before
-	public void setUp() throws Exception {
-		store = mock(FactStore.class);
-		uut = new CachingFactLookup(store);
-	}
+    private FactStore store;
 
-	@Test
-	public void testLookupFails() throws Exception {
-		when(store.fetchById(any())).thenReturn(Optional.empty());
+    @Before
+    public void setUp() throws Exception {
+        store = mock(FactStore.class);
+        uut = new CachingFactLookup(store);
+    }
 
-		final UUID id = UUID.randomUUID();
-		Optional<Fact> lookup = uut.lookup(id);
+    @Test
+    public void testLookupFails() throws Exception {
+        when(store.fetchById(any())).thenReturn(Optional.empty());
 
-		assertFalse(lookup.isPresent());
-		verify(store).fetchById(id);
-	}
+        final UUID id = UUID.randomUUID();
+        Optional<Fact> lookup = uut.lookup(id);
 
-	@Test
-	public void testLookupWorks() throws Exception {
-		final TestFact f = new TestFact();
-		when(store.fetchById(f.id())).thenReturn(Optional.of(f));
+        assertFalse(lookup.isPresent());
+        verify(store).fetchById(id);
+    }
 
-		Optional<Fact> lookup = uut.lookup(f.id());
+    @Test
+    public void testLookupWorks() throws Exception {
+        final TestFact f = new TestFact();
+        when(store.fetchById(f.id())).thenReturn(Optional.of(f));
 
-		assertTrue(lookup.isPresent());
-		assertEquals(f, lookup.get());
+        Optional<Fact> lookup = uut.lookup(f.id());
 
-		verify(store).fetchById(f.id());
-	}
+        assertTrue(lookup.isPresent());
+        assertEquals(f, lookup.get());
+
+        verify(store).fetchById(f.id());
+    }
 
 }

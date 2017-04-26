@@ -18,18 +18,18 @@ import lombok.NonNull;
  */
 class Helpers {
 
-	public static List<Fact> toList(@NonNull Fact f) {
-		return Arrays.asList(f);
-	}
+    public static List<Fact> toList(@NonNull Fact fact) {
+        return Arrays.asList(fact);
+    }
 
-	public static List<Fact> toList(@NonNull Fact f, @NonNull MarkFact m) {
-		return toList(Arrays.asList(f), m);
-	}
+    public static List<Fact> toList(@NonNull Fact fact, @NonNull MarkFact mark) {
+        return toList(Arrays.asList(fact), mark);
+    }
 
-	public static List<Fact> toList(@NonNull List<Fact> f, @NonNull MarkFact m) {
-		LinkedList<Fact> newLinkedList = Lists.newLinkedList(f);
-		newLinkedList.add(m);
-		return newLinkedList;
-	}
+    public static List<Fact> toList(@NonNull List<Fact> fact, @NonNull MarkFact mark) {
+        LinkedList<Fact> newLinkedList = Lists.newLinkedList(fact);
+        newLinkedList.add(mark);
+        return newLinkedList;
+    }
 
 }

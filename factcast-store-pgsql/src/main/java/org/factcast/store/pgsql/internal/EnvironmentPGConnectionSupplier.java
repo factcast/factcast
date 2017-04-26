@@ -17,24 +17,25 @@ import lombok.SneakyThrows;
  */
 class EnvironmentPGConnectionSupplier implements Supplier<PGConnection>, InitializingBean {
 
-	private String url;
-	private DriverManagerDataSource ds;
+    private String url;
 
-	@Value("${spring.datasource.url}")
-	public void setUrl(String url) {
-		this.url = url;
-	}
+    private DriverManagerDataSource dataSource;
 
-	@Override
-	@SneakyThrows
-	public PGConnection get() {
-		return (PGConnection) ds.getConnection();
-	}
+    @Value("${spring.datasource.url}")
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		this.ds = new DriverManagerDataSource();
-		ds.setUrl(url);
-	}
+    @Override
+    @SneakyThrows
+    public PGConnection get() {
+        return (PGConnection) dataSource.getConnection();
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.dataSource = new DriverManagerDataSource();
+        dataSource.setUrl(url);
+    }
 
 }

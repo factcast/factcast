@@ -22,30 +22,35 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class MarkFact implements Fact {
 
-	public static final String TYPE = "_mark";
-	public static final String NS = "_";
-	UUID id = UUID.randomUUID();
-	String ns = NS;
-	String type = TYPE;
-	UUID aggId = null;
+    public static final String TYPE = "_mark";
 
-	/**
-	 * does not have any payload.
-	 */
-	@Override
-	@NonNull
-	public String jsonPayload() {
-		return "{}";
-	}
+    public static final String NS = "_";
 
-	@Override
-	public String jsonHeader() {
-		return String.format("{\"ns\":\"%s\",\"id\":\"%s\",\"type\":\"%s\"}", ns(), id(), type());
-	}
+    UUID id = UUID.randomUUID();
 
-	@Override
-	public String meta(String key) {
-		return null;
-	}
+    String ns = NS;
+
+    String type = TYPE;
+
+    UUID aggId = null;
+
+    /**
+     * does not have any payload.
+     */
+    @Override
+    @NonNull
+    public String jsonPayload() {
+        return "{}";
+    }
+
+    @Override
+    public String jsonHeader() {
+        return String.format("{\"ns\":\"%s\",\"id\":\"%s\",\"type\":\"%s\"}", ns(), id(), type());
+    }
+
+    @Override
+    public String meta(String key) {
+        return null;
+    }
 
 }
