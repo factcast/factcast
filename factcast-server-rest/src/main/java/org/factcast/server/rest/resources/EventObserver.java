@@ -3,11 +3,13 @@ package org.factcast.server.rest.resources;
 import java.io.IOException;
 import java.net.URI;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import javax.ws.rs.core.MediaType;
 
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStoreObserver;
+import org.factcast.core.subscription.Subscription;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.OutboundEvent;
 
@@ -19,19 +21,24 @@ import com.mercateo.common.rest.schemagen.plugin.MethodCheckerForLink;
 import com.mercateo.common.rest.schemagen.types.HyperSchemaCreator;
 
 import lombok.val;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class EventObserver implements FactStoreObserver {
 	private final EventOutput eventOutput;
 	private final LinkFactory<EventsResource> linkFatory;
 	private final HyperSchemaCreator hyperSchemaCreator;
 	private final LinkFactoryContext linkFactoryContext;
+	private Supplier<Subscription> subsup;
 
 	public EventObserver(EventOutput eventOutput, LinkFactory<EventsResource> linkFatory,
-			HyperSchemaCreator hyperSchemaCreator, URI baseURI) {
+			HyperSchemaCreator hyperSchemaCreator, URI baseURI, Supplier<Subscription> subsup) {
 		super();
 		this.eventOutput = eventOutput;
 		this.linkFatory = linkFatory;
 		this.hyperSchemaCreator = hyperSchemaCreator;
+		this.subsup = subsup;
+		// this is need, because we are nor in requestscope anymore
 		this.linkFactoryContext = new LinkFactoryContext() {
 
 			@Override
@@ -66,7 +73,7 @@ public class EventObserver implements FactStoreObserver {
 		try {
 			eventOutput.write(event);
 		} catch (IOException e) {
-			throw new RuntimeException("Error when writing the event.", e);
+			unsubscribeAndThrow(e);
 		}
 	}
 
@@ -81,7 +88,7 @@ public class EventObserver implements FactStoreObserver {
 		try {
 			eventOutput.write(event);
 		} catch (IOException e) {
-			throw new RuntimeException("Error when writing the event.", e);
+			unsubscribeAndThrow(e);
 		}
 	}
 
@@ -97,8 +104,19 @@ public class EventObserver implements FactStoreObserver {
 			eventOutput.write(event);
 			eventOutput.close();
 		} catch (IOException e) {
-			throw new RuntimeException("Error when writing the event.", e);
+			unsubscribeAndThrow(e);
 		}
+	}
+
+	private void unsubscribeAndThrow(Throwable e) {
+		try {
+			subsup.get().close();
+		} catch (Exception e1) {
+
+		}
+		// debug level, because error occurs always, if client disappears
+		log.debug("Error while writing into the pipe", e);
+		throw new RuntimeException("Error when writing the event.", e);
 	}
 
 }
