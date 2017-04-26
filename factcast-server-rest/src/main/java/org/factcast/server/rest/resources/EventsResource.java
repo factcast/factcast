@@ -3,6 +3,8 @@ package org.factcast.server.rest.resources;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -23,10 +25,12 @@ import org.factcast.core.DefaultFact.Header;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactStoreObserver;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.server.rest.resources.cache.Cacheable;
 import org.factcast.server.rest.resources.cache.NoCache;
+import org.factcast.server.rest.util.SetableSupplier;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
 import org.springframework.stereotype.Component;
@@ -66,9 +70,17 @@ public class EventsResource implements JerseyResource {
             @NotNull @Valid @BeanParam SubscriptionRequestParams subscriptionRequestParams) {
         final EventOutput eventOutput = new EventOutput();
         SubscriptionRequestTO req = subscriptionRequestParams.toRequest();
+        SetableSupplier<Subscription> subsup = new SetableSupplier<>();
         FactStoreObserver observer = eventObserverFactory.createFor(eventOutput, linkFactoryContext
-                .getBaseUri());
-        factStore.subscribe(req, observer);
+                .getBaseUri(), subsup);
+
+        CompletableFuture<Subscription> sub = factStore.subscribe(req, observer);
+        try {
+            subsup.set(sub.get());
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("error while getting sub from future", e);
+            throw new WebApplicationException(500);
+        }
         return eventOutput;
     }
 
@@ -107,6 +119,10 @@ public class EventsResource implements JerseyResource {
             return DefaultFact.of(headerString, f.payLoad().toString());
         }).collect(Collectors.toList());
 
-        factStore.publish(listToPublish);
+        try {
+            factStore.publish(listToPublish);
+        } catch (IllegalArgumentException e) {
+            throw new WebApplicationException(e.getMessage(), 400);
+        }
     }
 }

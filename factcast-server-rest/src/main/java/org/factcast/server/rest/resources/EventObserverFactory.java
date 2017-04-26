@@ -1,7 +1,9 @@
 package org.factcast.server.rest.resources;
 
 import java.net.URI;
+import java.util.function.Supplier;
 
+import org.factcast.core.subscription.Subscription;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.springframework.stereotype.Component;
 
@@ -18,8 +20,8 @@ class EventObserverFactory {
 
     private final HyperSchemaCreator hyperSchemaCreator;
 
-    EventObserver createFor(EventOutput eventOutput, URI baseURI) {
+    EventObserver createFor(EventOutput eventOutput, URI baseURI, Supplier<Subscription> subsup) {
         return new EventObserver(eventOutput, eventsResourceLinkFactory, hyperSchemaCreator,
-                baseURI);
+                baseURI, subsup);
     }
 }
