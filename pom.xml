@@ -155,12 +155,29 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>org.commonjava.maven.plugins</groupId>
+				<artifactId>directory-maven-plugin</artifactId>
+				<version>0.1</version>
+				<executions>
+					<execution>
+						<id>directories</id>
+						<goals>
+							<goal>highest-basedir</goal>
+						</goals>
+						<phase>initialize</phase>
+						<configuration>
+							<property>main.basedir</property>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>com.marvinformatics.formatter</groupId>
 				<artifactId>formatter-maven-plugin</artifactId>
 				<version>1.9.1.RC2</version>
 				<configuration>
-					<configFile>src/eclipse/config/eclipse_code_formatter.xml</configFile>
-					<configJsFile>src/eclipse/config/eclipse_javascript_formatter.xml</configJsFile>
+					<configFile>${main.basedir}/src/eclipse/config/eclipse_code_formatter.xml</configFile>
+					<configJsFile>${main.basedir}/src/eclipse/config/eclipse_javascript_formatter.xml</configJsFile>
 				</configuration>
 				<executions>
 					<execution>
