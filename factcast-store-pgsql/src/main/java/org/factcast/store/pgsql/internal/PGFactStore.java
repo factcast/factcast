@@ -13,6 +13,7 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,19 +43,30 @@ class PGFactStore implements FactStore {
     @NonNull
     private final PGSubscriptionFactory subscriptionFactory;
 
+    @NonNull
+    private final CounterService counterService;
+
     @Override
     @Transactional
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
         try {
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
-            log.trace("Inserting {} fact(s) in batches of {}", factsToPublish.size(), BATCH_SIZE);
+            final int numberOfFactsToPublish = factsToPublish.size();
+
+            log.trace("Inserting {} fact(s) in batches of {}", numberOfFactsToPublish, BATCH_SIZE);
 
             jdbcTemplate.batchUpdate(PGConstants.INSERT_FACT, copiedListOfFacts, BATCH_SIZE, (
                     statement, fact) -> {
                 statement.setString(1, fact.jsonHeader());
                 statement.setString(2, fact.jsonPayload());
             });
+
+            counterService.increment(PGMetrics.FACT_PUBLISHED);
+
         } catch (UncategorizedSQLException sql) {
+
+            counterService.increment(PGMetrics.FACT_PUBLISHING_FAILED);
+
             // yikes
             Throwable batch = sql.getCause();
             if (batch instanceof BatchUpdateException) {

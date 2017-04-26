@@ -3,6 +3,7 @@ package org.factcast.store.pgsql.internal;
 import java.util.concurrent.Executors;
 
 import org.factcast.core.store.FactStore;
+import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,8 +56,9 @@ public class PGFactStoreInternalConfiguration {
     }
 
     @Bean
-    public FactStore factStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory queryProvider) {
-        return new PGFactStore(jdbcTemplate, queryProvider);
+    public FactStore factStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory queryProvider,
+            CounterService counterService) {
+        return new PGFactStore(jdbcTemplate, queryProvider, counterService);
     }
 
     @Bean
