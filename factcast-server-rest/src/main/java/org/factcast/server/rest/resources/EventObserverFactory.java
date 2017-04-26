@@ -16,11 +16,12 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 class EventObserverFactory {
 
-	private final LinkFactory<EventsResource> eventsResourceLinkFactory;
+    private final LinkFactory<EventsResource> eventsResourceLinkFactory;
 
-	private final HyperSchemaCreator hyperSchemaCreator;
+    private final HyperSchemaCreator hyperSchemaCreator;
 
-	EventObserver createFor(EventOutput eventOutput, URI baseURI, Supplier<Subscription> subsup) {
-		return new EventObserver(eventOutput, eventsResourceLinkFactory, hyperSchemaCreator, baseURI, subsup);
-	}
+    EventObserver createFor(EventOutput eventOutput, URI baseURI, Supplier<Subscription> subsup) {
+        return new EventObserver(eventOutput, eventsResourceLinkFactory, hyperSchemaCreator,
+                baseURI, subsup);
+    }
 }

@@ -53,75 +53,76 @@ import lombok.extern.slf4j.Slf4j;
 
 public class EventsResource implements JerseyResource {
 
-	private final FactStore factStore;
+    private final FactStore factStore;
 
-	private ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
-	private final EventsSchemaCreator schemaCreator;
+    private final EventsSchemaCreator schemaCreator;
 
-	private final EventObserverFactory eventObserverFactory;
+    private final EventObserverFactory eventObserverFactory;
 
-	private final LinkFactoryContext linkFactoryContext;
+    private final LinkFactoryContext linkFactoryContext;
 
-	@GET
-	@Produces(SseFeature.SERVER_SENT_EVENTS)
-	@NoCache
-	public EventOutput getServerSentEvents(
-			@NotNull @Valid @BeanParam SubscriptionRequestParams subscriptionRequestParams) {
-		final EventOutput eventOutput = new EventOutput();
-		SubscriptionRequestTO req = subscriptionRequestParams.toRequest();
-		SetableSupplier<Subscription> subsup = new SetableSupplier<>();
-		FactStoreObserver observer = eventObserverFactory.createFor(eventOutput, linkFactoryContext.getBaseUri(),
-				subsup);
+    @GET
+    @Produces(SseFeature.SERVER_SENT_EVENTS)
+    @NoCache
+    public EventOutput getServerSentEvents(
+            @NotNull @Valid @BeanParam SubscriptionRequestParams subscriptionRequestParams) {
+        final EventOutput eventOutput = new EventOutput();
+        SubscriptionRequestTO req = subscriptionRequestParams.toRequest();
+        SetableSupplier<Subscription> subsup = new SetableSupplier<>();
+        FactStoreObserver observer = eventObserverFactory.createFor(eventOutput, linkFactoryContext
+                .getBaseUri(), subsup);
 
-		CompletableFuture<Subscription> sub = factStore.subscribe(req, observer);
-		try {
-			subsup.set(sub.get());
-		} catch (InterruptedException | ExecutionException e) {
-			log.error("error while getting sub from future", e);
-			throw new WebApplicationException(500);
-		}
-		return eventOutput;
-	}
+        CompletableFuture<Subscription> sub = factStore.subscribe(req, observer);
+        try {
+            subsup.set(sub.get());
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("error while getting sub from future", e);
+            throw new WebApplicationException(500);
+        }
+        return eventOutput;
+    }
 
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("{id}")
-	@Cacheable
-	public ObjectWithSchema<FactJson> getForId(@NotNull @PathParam("id") String id) {
-		Optional<Fact> fact = factStore.fetchById(UUID.fromString(id));
-		FactJson returnValue = fact.map(f -> {
-			try {
-				JsonNode payLoad = objectMapper.readTree(f.jsonPayload());
-				return new FactJson(FactCastJson.reader().forType(Header.class).readValue(f.jsonHeader()), payLoad);
-			} catch (Exception e) {
-				log.error("error", e);
-				throw new WebApplicationException(500);
-			}
-		}).orElseThrow(NotFoundException::new);
-		return schemaCreator.forFactWithId(returnValue, id);
-	}
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("{id}")
+    @Cacheable
+    public ObjectWithSchema<FactJson> getForId(@NotNull @PathParam("id") String id) {
+        Optional<Fact> fact = factStore.fetchById(UUID.fromString(id));
+        FactJson returnValue = fact.map(f -> {
+            try {
+                JsonNode payLoad = objectMapper.readTree(f.jsonPayload());
+                return new FactJson(FactCastJson.reader().forType(Header.class).readValue(f
+                        .jsonHeader()), payLoad);
+            } catch (Exception e) {
+                log.error("error", e);
+                throw new WebApplicationException(500);
+            }
+        }).orElseThrow(NotFoundException::new);
+        return schemaCreator.forFactWithId(returnValue, id);
+    }
 
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@NoCache
-	public void newTransaction(@NotNull @Valid FactTransactionJson factTransactionJson) {
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @NoCache
+    public void newTransaction(@NotNull @Valid FactTransactionJson factTransactionJson) {
 
-		List<Fact> listToPublish = factTransactionJson.facts().stream().map(f -> {
-			String headerString;
-			try {
-				headerString = objectMapper.writeValueAsString(f.header());
-			} catch (Exception e) {
-				log.error("error", e);
-				throw new WebApplicationException(500);
-			}
-			return DefaultFact.of(headerString, f.payLoad().toString());
-		}).collect(Collectors.toList());
+        List<Fact> listToPublish = factTransactionJson.facts().stream().map(f -> {
+            String headerString;
+            try {
+                headerString = objectMapper.writeValueAsString(f.header());
+            } catch (Exception e) {
+                log.error("error", e);
+                throw new WebApplicationException(500);
+            }
+            return DefaultFact.of(headerString, f.payLoad().toString());
+        }).collect(Collectors.toList());
 
-		try {
-			factStore.publish(listToPublish);
-		} catch (IllegalArgumentException e) {
-			throw new WebApplicationException(e.getMessage(), 400);
-		}
-	}
+        try {
+            factStore.publish(listToPublish);
+        } catch (IllegalArgumentException e) {
+            throw new WebApplicationException(e.getMessage(), 400);
+        }
+    }
 }

@@ -25,98 +25,103 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class EventObserver implements FactStoreObserver {
-	private final EventOutput eventOutput;
-	private final LinkFactory<EventsResource> linkFatory;
-	private final HyperSchemaCreator hyperSchemaCreator;
-	private final LinkFactoryContext linkFactoryContext;
-	private Supplier<Subscription> subsup;
+    private final EventOutput eventOutput;
 
-	public EventObserver(EventOutput eventOutput, LinkFactory<EventsResource> linkFatory,
-			HyperSchemaCreator hyperSchemaCreator, URI baseURI, Supplier<Subscription> subsup) {
-		super();
-		this.eventOutput = eventOutput;
-		this.linkFatory = linkFatory;
-		this.hyperSchemaCreator = hyperSchemaCreator;
-		this.subsup = subsup;
-		// this is need, because we are nor in requestscope anymore
-		this.linkFactoryContext = new LinkFactoryContext() {
+    private final LinkFactory<EventsResource> linkFatory;
 
-			@Override
-			public MethodCheckerForLink getMethodCheckerForLink() {
-				return m -> true;
-			}
+    private final HyperSchemaCreator hyperSchemaCreator;
 
-			@Override
-			public FieldCheckerForSchema getFieldCheckerForSchema() {
-				return (f, c) -> true;
-			}
+    private final LinkFactoryContext linkFactoryContext;
 
-			@Override
-			public URI getBaseUri() {
-				return baseURI;
-			}
-		};
-	}
+    private Supplier<Subscription> subsup;
 
-	@Override
-	public void onNext(Fact f) {
-		UUID t = f.id();
+    public EventObserver(EventOutput eventOutput, LinkFactory<EventsResource> linkFatory,
+            HyperSchemaCreator hyperSchemaCreator, URI baseURI, Supplier<Subscription> subsup) {
+        super();
+        this.eventOutput = eventOutput;
+        this.linkFatory = linkFatory;
+        this.hyperSchemaCreator = hyperSchemaCreator;
+        this.subsup = subsup;
+        // this is need, because we are nor in requestscope anymore
+        this.linkFactoryContext = new LinkFactoryContext() {
 
-		final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
-		eventBuilder.name("new-event");
-		String toReturn = t.toString();
-		val linkToEvent = linkFatory.forCall(Rel.CANONICAL, r -> r.getForId(toReturn), linkFactoryContext);
-		val withSchema = hyperSchemaCreator.create(new EventIdJson(toReturn), linkToEvent);
-		eventBuilder.data(withSchema);
-		eventBuilder.mediaType(MediaType.APPLICATION_JSON_TYPE);
-		final OutboundEvent event = eventBuilder.build();
-		try {
-			eventOutput.write(event);
-		} catch (IOException e) {
-			unsubscribeAndThrow(e);
-		}
-	}
+            @Override
+            public MethodCheckerForLink getMethodCheckerForLink() {
+                return m -> true;
+            }
 
-	@Override
-	public void onCatchup() {
-		final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
-		eventBuilder.name("catchup");
-		eventBuilder.comment("Signal event for catching up");
-		eventBuilder.data("{\"catchup\":true}");
-		final OutboundEvent event = eventBuilder.build();
+            @Override
+            public FieldCheckerForSchema getFieldCheckerForSchema() {
+                return (f, c) -> true;
+            }
 
-		try {
-			eventOutput.write(event);
-		} catch (IOException e) {
-			unsubscribeAndThrow(e);
-		}
-	}
+            @Override
+            public URI getBaseUri() {
+                return baseURI;
+            }
+        };
+    }
 
-	@Override
-	public void onComplete() {
+    @Override
+    public void onNext(Fact f) {
+        UUID t = f.id();
 
-		final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
-		eventBuilder.name("complete");
-		eventBuilder.comment("Signal event for catching up");
-		eventBuilder.data("{\"complete\":true}");
-		final OutboundEvent event = eventBuilder.build();
-		try {
-			eventOutput.write(event);
-			eventOutput.close();
-		} catch (IOException e) {
-			unsubscribeAndThrow(e);
-		}
-	}
+        final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
+        eventBuilder.name("new-event");
+        String toReturn = t.toString();
+        val linkToEvent = linkFatory.forCall(Rel.CANONICAL, r -> r.getForId(toReturn),
+                linkFactoryContext);
+        val withSchema = hyperSchemaCreator.create(new EventIdJson(toReturn), linkToEvent);
+        eventBuilder.data(withSchema);
+        eventBuilder.mediaType(MediaType.APPLICATION_JSON_TYPE);
+        final OutboundEvent event = eventBuilder.build();
+        try {
+            eventOutput.write(event);
+        } catch (IOException e) {
+            unsubscribeAndThrow(e);
+        }
+    }
 
-	private void unsubscribeAndThrow(Throwable e) {
-		try {
-			subsup.get().close();
-		} catch (Exception e1) {
+    @Override
+    public void onCatchup() {
+        final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
+        eventBuilder.name("catchup");
+        eventBuilder.comment("Signal event for catching up");
+        eventBuilder.data("{\"catchup\":true}");
+        final OutboundEvent event = eventBuilder.build();
 
-		}
-		//debug level, because error occurs always, if client disappears
-		log.debug("Error while writing into the pipe",e);
-		throw new RuntimeException("Error when writing the event.", e);
-	}
+        try {
+            eventOutput.write(event);
+        } catch (IOException e) {
+            unsubscribeAndThrow(e);
+        }
+    }
+
+    @Override
+    public void onComplete() {
+
+        final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
+        eventBuilder.name("complete");
+        eventBuilder.comment("Signal event for catching up");
+        eventBuilder.data("{\"complete\":true}");
+        final OutboundEvent event = eventBuilder.build();
+        try {
+            eventOutput.write(event);
+            eventOutput.close();
+        } catch (IOException e) {
+            unsubscribeAndThrow(e);
+        }
+    }
+
+    private void unsubscribeAndThrow(Throwable e) {
+        try {
+            subsup.get().close();
+        } catch (Exception e1) {
+
+        }
+        // debug level, because error occurs always, if client disappears
+        log.debug("Error while writing into the pipe", e);
+        throw new RuntimeException("Error when writing the event.", e);
+    }
 
 }
