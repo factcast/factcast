@@ -16,7 +16,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.factcast</groupId>
-			<artifactId>factcast-store-inmem</artifactId>
+			<artifactId>factcast-store-pgsql</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
