@@ -105,8 +105,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
             store.put(ser, f);
             ids.add(f.id());
 
-            activeSubscriptions.parallelStream().forEach(s -> executorService.submit(() -> s.accept(
-                    f)));
+            activeSubscriptions.stream().forEachOrdered(s -> s.accept(f));
         });
     }
 
