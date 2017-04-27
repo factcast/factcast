@@ -5,6 +5,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.factcast.server.rest.resources.cache.NoCache;
 import org.springframework.stereotype.Component;
 
 import com.mercateo.common.rest.schemagen.JerseyResource;
@@ -21,6 +22,7 @@ public class RootResource implements JerseyResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @NoCache
     public ObjectWithSchema<Void> getRoot() {
         return schemaCreator.forRoot();
 
