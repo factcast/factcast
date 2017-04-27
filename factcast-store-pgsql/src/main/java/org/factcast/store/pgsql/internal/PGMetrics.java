@@ -9,4 +9,6 @@ public class PGMetrics {
 
     String FACT_PUBLISHED = "factstore.pg.publish.fact.count";
 
+    String FACT_PUBLISHING_LATENCY = "factstore.pg.publish.fact.latency";
+
 }
