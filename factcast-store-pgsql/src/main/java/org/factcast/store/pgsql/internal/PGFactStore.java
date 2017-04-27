@@ -13,16 +13,16 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Lists;
 import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException;
 
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-@RequiredArgsConstructor
+
 class PGFactStore implements FactStore {
     // is that interesting to configure?
     private static final int BATCH_SIZE = 500;
@@ -44,7 +44,23 @@ class PGFactStore implements FactStore {
     private final PGSubscriptionFactory subscriptionFactory;
 
     @NonNull
-    private final CounterService counterService;
+    private final MetricRegistry registry;
+
+    @NonNull
+    private final Counter publishedCounter;
+
+    @NonNull
+    private final Counter publishFailedCounter;
+
+    PGFactStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory subscriptionFactory,
+            MetricRegistry registry) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.subscriptionFactory = subscriptionFactory;
+        this.registry = registry;
+
+        publishedCounter = registry.counter(PGMetrics.FACT_PUBLISHED);
+        publishFailedCounter = registry.counter(PGMetrics.FACT_PUBLISHING_FAILED);
+    }
 
     @Override
     @Transactional
@@ -61,11 +77,11 @@ class PGFactStore implements FactStore {
                 statement.setString(2, fact.jsonPayload());
             });
 
-            counterService.increment(PGMetrics.FACT_PUBLISHED);
+            publishedCounter.inc(numberOfFactsToPublish);
 
         } catch (UncategorizedSQLException sql) {
 
-            counterService.increment(PGMetrics.FACT_PUBLISHING_FAILED);
+            publishFailedCounter.inc();
 
             // yikes
             Throwable batch = sql.getCause();

@@ -5,8 +5,8 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class PGMetrics {
 
-    String FACT_PUBLISHING_FAILED = "factstore.publish.failure";
+    String FACT_PUBLISHING_FAILED = "factstore.pg.publish.failure";
 
-    String FACT_PUBLISHED = "factstore.publish.fact.count";
+    String FACT_PUBLISHED = "factstore.pg.publish.fact.count";
 
 }

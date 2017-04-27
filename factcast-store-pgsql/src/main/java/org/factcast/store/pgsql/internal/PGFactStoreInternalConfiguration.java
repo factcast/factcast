@@ -3,7 +3,6 @@ package org.factcast.store.pgsql.internal;
 import java.util.concurrent.Executors;
 
 import org.factcast.core.store.FactStore;
-import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.SchedulingConfiguration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 
@@ -57,8 +57,8 @@ public class PGFactStoreInternalConfiguration {
 
     @Bean
     public FactStore factStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory queryProvider,
-            CounterService counterService) {
-        return new PGFactStore(jdbcTemplate, queryProvider, counterService);
+            MetricRegistry metricsRegistry) {
+        return new PGFactStore(jdbcTemplate, queryProvider, metricsRegistry);
     }
 
     @Bean

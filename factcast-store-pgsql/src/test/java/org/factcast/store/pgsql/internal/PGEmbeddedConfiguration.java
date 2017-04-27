@@ -6,7 +6,7 @@ import java.io.IOException;
 
 import javax.sql.DataSource;
 
-import org.springframework.boot.actuate.metrics.CounterService;
+import org.mockito.Mockito;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import com.codahale.metrics.MetricRegistry;
 import com.impossibl.postgres.jdbc.PGDataSource;
 import com.impossibl.postgres.jdbc.PGDriver;
 
@@ -72,7 +73,7 @@ public class PGEmbeddedConfiguration {
     }
 
     @Bean
-    public CounterService nopCounterService() {
-        return mock(CounterService.class);
+    public MetricRegistry nopCounterService() {
+        return Mockito.mock(MetricRegistry.class, RETURNS_DEEP_STUBS);
     }
 }
