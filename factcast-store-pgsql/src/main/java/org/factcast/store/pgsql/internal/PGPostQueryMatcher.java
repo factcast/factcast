@@ -1,5 +1,6 @@
 package org.factcast.store.pgsql.internal;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -26,15 +27,16 @@ class PGPostQueryMatcher implements Predicate<Fact> {
 
     private final boolean canBeSkipped;
 
-    private final List<FactSpecMatcher> matchers;
+    private final List<FactSpecMatcher> matchers = new LinkedList<>();
 
     public PGPostQueryMatcher(@NonNull List<FactSpec> specs) {
         canBeSkipped = !specs.stream().anyMatch(s -> s.jsFilterScript() != null);
         if (canBeSkipped) {
             log.trace("post query filtering has been disabled");
+        } else {
+            this.matchers.addAll(specs.stream().map(s -> new FactSpecMatcher(s)).collect(Collectors
+                    .toList()));
         }
-        this.matchers = specs.stream().map(s -> new FactSpecMatcher(s)).collect(Collectors
-                .toList());
     }
 
     @Override

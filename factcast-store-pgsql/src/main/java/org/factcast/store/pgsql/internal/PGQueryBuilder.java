@@ -1,5 +1,7 @@
 package org.factcast.store.pgsql.internal;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -71,10 +73,11 @@ class PGQueryBuilder {
 
     private String createWhereClause() {
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("( (1=0) ");
+        List<String> predicates = new LinkedList<>();
+
         req.specs().forEach(spec -> {
-            sb.append("OR ( ");
+            StringBuilder sb = new StringBuilder();
+            sb.append("( ");
 
             sb.append(PGConstants.COLUMN_HEADER + " @> ? ");
 
@@ -94,16 +97,18 @@ class PGQueryBuilder {
             });
 
             sb.append(") ");
-        });
-        sb.append(") AND " + PGConstants.COLUMN_SER + ">? ");
 
-        return sb.toString();
+            predicates.add(sb.toString());
+        });
+
+        String predicatesAsString = String.join(" OR ", predicates);
+        return "( " + predicatesAsString + " ) AND " + PGConstants.COLUMN_SER + ">?";
     }
 
     String createSQL() {
 
         return "SELECT " + (selectIdOnly ? PGConstants.PROJECTION_ID : PGConstants.PROJECTION_FACT)
-                + " FROM " + PGConstants.TABLE_FACT + " WHERE " + createWhereClause() + "ORDER BY "
+                + " FROM " + PGConstants.TABLE_FACT + " WHERE " + createWhereClause() + " ORDER BY "
                 + PGConstants.COLUMN_SER + " ASC";
     }
 }

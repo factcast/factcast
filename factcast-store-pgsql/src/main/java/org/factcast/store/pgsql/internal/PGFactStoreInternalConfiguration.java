@@ -13,6 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.SchedulingConfiguration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 
@@ -55,8 +56,9 @@ public class PGFactStoreInternalConfiguration {
     }
 
     @Bean
-    public FactStore factStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory queryProvider) {
-        return new PGFactStore(jdbcTemplate, queryProvider);
+    public FactStore factStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory queryProvider,
+            MetricRegistry metricsRegistry) {
+        return new PGFactStore(jdbcTemplate, queryProvider, metricsRegistry);
     }
 
     @Bean

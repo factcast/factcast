@@ -17,11 +17,14 @@ import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Lists;
 import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException;
 
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * A PostgreSQL based FactStore implementation
@@ -29,7 +32,8 @@ import lombok.RequiredArgsConstructor;
  * @author usr
  *
  */
-@RequiredArgsConstructor
+@Slf4j
+
 class PGFactStore implements FactStore {
     // is that interesting to configure?
     private static final int BATCH_SIZE = 500;
@@ -40,18 +44,46 @@ class PGFactStore implements FactStore {
     @NonNull
     private final PGSubscriptionFactory subscriptionFactory;
 
+    @NonNull
+    private final MetricRegistry registry;
+
+    @NonNull
+    private final Counter publishFailedCounter;
+
+    private final Meter publishLatency;
+
+    PGFactStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory subscriptionFactory,
+            MetricRegistry registry) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.subscriptionFactory = subscriptionFactory;
+        this.registry = registry;
+
+        publishFailedCounter = registry.counter(PGMetrics.FACT_PUBLISHING_FAILED);
+        publishLatency = registry.meter(PGMetrics.FACT_PUBLISHING_LATENCY);
+    }
+
     @Override
     @Transactional
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
         try {
+
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
+            final int numberOfFactsToPublish = factsToPublish.size();
+
+            log.trace("Inserting {} fact(s) in batches of {}", numberOfFactsToPublish, BATCH_SIZE);
 
             jdbcTemplate.batchUpdate(PGConstants.INSERT_FACT, copiedListOfFacts, BATCH_SIZE, (
                     statement, fact) -> {
                 statement.setString(1, fact.jsonHeader());
                 statement.setString(2, fact.jsonPayload());
             });
+
+            publishLatency.mark(numberOfFactsToPublish);
+
         } catch (UncategorizedSQLException sql) {
+
+            publishFailedCounter.inc();
+
             // yikes
             Throwable batch = sql.getCause();
             if (batch instanceof BatchUpdateException) {
