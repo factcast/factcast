@@ -37,7 +37,7 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 // TODO cleanup

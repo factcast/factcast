@@ -7,7 +7,7 @@ import java.util.UUID;
  * 
  * see {@link GenericObserver}.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 public interface IdObserver extends GenericObserver<UUID> {

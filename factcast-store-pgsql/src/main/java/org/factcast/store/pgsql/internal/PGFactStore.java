@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * A PostgreSQL based FactStore implementation
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @Slf4j

@@ -15,7 +15,7 @@ import lombok.NonNull;
  * FactCast provides methods to publish Facts in a sync/async fashion, as well
  * as a subscription mechanism to listen for changes and catching up.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 public interface FactCast extends ReadFactCast {

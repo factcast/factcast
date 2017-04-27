@@ -15,7 +15,7 @@ import lombok.NonNull;
  * 
  * see {@link FluentSubscriptionRequest}, {@link SubscriptionRequestTO}
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 public interface SubscriptionRequest {

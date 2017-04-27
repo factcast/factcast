@@ -28,7 +28,7 @@ import lombok.Value;
  * For caching purposes, this thing should be Externalizable.
  * 
  * @see PGFact
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @ToString

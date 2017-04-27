@@ -15,7 +15,7 @@ import lombok.NonNull;
  * A read-only interface to a FactCast, that only offers subscription and
  * Fact-by-id lookup.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 public interface ReadFactCast {

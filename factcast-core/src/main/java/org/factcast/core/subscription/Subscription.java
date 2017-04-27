@@ -6,7 +6,7 @@ package org.factcast.core.subscription;
  * 
  * This might be used for resource-efficiency.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 public interface Subscription extends AutoCloseable {

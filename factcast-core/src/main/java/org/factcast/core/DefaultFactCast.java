@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * Default impl for FactCast used by FactCast.from* methods.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @RequiredArgsConstructor

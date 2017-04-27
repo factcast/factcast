@@ -7,7 +7,7 @@ import org.factcast.core.Fact;
  * 
  * see {@link GenericObserver}.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 public interface FactObserver extends GenericObserver<Fact> {

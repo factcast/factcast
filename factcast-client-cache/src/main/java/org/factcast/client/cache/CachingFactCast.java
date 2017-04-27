@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  * Event very often by either restarting Views using non-snapshot transient
  * views, or have many local consumers that share interest in the same Facts.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 // TODO test

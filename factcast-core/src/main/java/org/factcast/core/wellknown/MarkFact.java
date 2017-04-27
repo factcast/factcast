@@ -14,7 +14,7 @@ import lombok.experimental.FieldDefaults;
  * stream in order to build sync. interfaces on top of eventual consistent
  * views.
  *
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 // TODO open ns to be defined by constructor?

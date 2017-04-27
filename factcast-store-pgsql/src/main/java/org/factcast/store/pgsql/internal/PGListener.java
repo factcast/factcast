@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
  * This trigger then is supposed to "encourage" active subscriptions to query
  * for new Facts from PG.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @Slf4j

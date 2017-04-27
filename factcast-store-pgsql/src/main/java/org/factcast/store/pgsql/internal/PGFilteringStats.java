@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
  * tiny statistics class that keeps track of the amount of hits vs filtered
  * Facts, as well as a start-time.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @Slf4j
@@ -27,12 +27,15 @@ class PGFilteringStats {
     }
 
     void dump() {
-        log.info("Follow stats: hitRate:{}% (count:{}, hit:{})", rate(), count.get(), hit.get());
+        log.info("Subscription stats: hitRate:{}% (count:{}, hit:{})", rate(), count.get(), hit
+                .get());
+        reset();
     }
 
-    void dumpWithRuntime() {
-        log.info("Follow stats: elapsed:{}ms, hitRate:{}% (count:{}, hit:{})", elapsedMillis(),
+    void dumpForCatchup() {
+        log.info("Catchup stats: elapsed:{}ms, hitRate:{}% (count:{}, hit:{})", elapsedMillis(),
                 rate(), count.get(), hit.get());
+        reset();
     }
 
     void reset() {

@@ -91,12 +91,18 @@ public class SmokeMT {
             UUID aggId = UUID.randomUUID();
 
             CompletableFuture<Subscription> sub = fc.subscribeToFacts(SubscriptionRequest.follow(
-                    FactSpec.ns("smoke").aggId(aggId)).sinceInception(), new FactObserver() {
+                    FactSpec.ns("default")).sinceInception(), new FactObserver() {
 
                         @Override
                         public void onNext(Fact f) {
                             if (!MarkFact.TYPE.equals(f.type())) {
                                 System.out.println(f);
+                                try {
+                                    Thread.sleep(300);
+                                } catch (InterruptedException e) {
+                                    // TODO Auto-generated catch block
+                                    e.printStackTrace();
+                                }
                             }
                         }
 

@@ -1,8 +1,8 @@
-package org.factcast.store.pgsql;
+package org.factcast.store.inmem;
 
-import org.factcast.store.pgsql.internal.PGFactStoreInternalConfiguration;
+import org.factcast.core.store.FactStore;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
 /**
  * Configuration to include in order to use a PGFactStore
@@ -14,7 +14,9 @@ import org.springframework.context.annotation.Import;
  *
  */
 @Configuration
-@Import(PGFactStoreInternalConfiguration.class)
-public class PGFactStoreConfiguration {
-
+public class InMemStoreConfiguration {
+    @Bean
+    public FactStore factStore() {
+        return new InMemFactStore();
+    }
 }

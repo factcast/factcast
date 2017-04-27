@@ -20,7 +20,7 @@ import com.google.common.eventbus.EventBus;
 /**
  * Main @Configuration class for a PGFactStore
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @Configuration

@@ -14,7 +14,7 @@ import lombok.experimental.FieldDefaults;
 /**
  * SubscriptionRequest intented to be used by clients for convenience.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @FieldDefaults(level = AccessLevel.PROTECTED)

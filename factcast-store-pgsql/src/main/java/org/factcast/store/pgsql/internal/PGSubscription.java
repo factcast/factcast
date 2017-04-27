@@ -78,7 +78,7 @@ class PGSubscription implements Subscription {
         if (isConnected()) {
             log.trace("signaling catchup");
             factStoreObserver.onCatchup();
-            stats.dumpWithRuntime();
+            stats.dumpForCatchup();
         }
 
         if (isConnected() && request.continous()) {
@@ -178,7 +178,13 @@ class PGSubscription implements Subscription {
                     try {
                         observer.onNext(f);
                     } catch (Throwable e) {
-                        log.warn("Exception from observer. THIS IS A BUG! Please Report!", e);
+                        // debug level, because it happens regularly on
+                        // disconnecting clients.
+                        log.debug("Exception from observer.", e);
+                        // close result set in order to release DB resources as
+                        // early as possible
+                        rs.close();
+                        // try to disconnect
                         tryClose();
                     }
                     log.trace("onNext called with id={}", factId);

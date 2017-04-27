@@ -20,7 +20,7 @@ import lombok.SneakyThrows;
 /**
  * Converts Protobuf messages to Java Objects and back.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 // TODO add symetry tests

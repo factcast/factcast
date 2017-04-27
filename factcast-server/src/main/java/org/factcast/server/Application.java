@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
  * 
  * This should contain a pgsql backend and grpc and rest frontends.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @SpringBootApplication

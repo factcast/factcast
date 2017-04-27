@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * Creates Subscription
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 // TODO integrate with PGQuery

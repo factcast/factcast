@@ -23,7 +23,7 @@ import lombok.ToString;
  * This class is necessary in order to delay parsing of the header until
  * necessary (when accessing meta-data)
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)

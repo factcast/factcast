@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
  * 
  * see {@link IdObserver}, {@link FactObserver}
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  * @param <T>
  */

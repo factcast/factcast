@@ -16,7 +16,7 @@ import lombok.SneakyThrows;
  * You must not change the configuration of this mapper, and it should not be
  * used outside of FactCast.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 

@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * Fetches a SERIAL from a Fact-Id.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @RequiredArgsConstructor

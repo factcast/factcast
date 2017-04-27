@@ -33,7 +33,7 @@ import net.devh.springboot.autoconfigure.grpc.server.GrpcService;
  * 
  * Configure port using {@link GRpcServerProperties}
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @Slf4j
@@ -127,20 +127,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
             @Override
             public void onNext(Fact f) {
-                try {
-                    responseObserver.onNext(idOnly ? converter.toNotification(f.id())
-                            : converter.toNotification(f));
-                } catch (Throwable e) {
-                    log.warn("Exception while sending data to stream", e);
-                    if (ref.get() != null) {
-                        try {
-                            ref.get().getNow(() -> {
-                            }).close();
-                        } catch (Exception e1) {
-                            // swallow.
-                        }
-                    }
-                }
+                responseObserver.onNext(idOnly ? converter.toNotification(f.id())
+                        : converter.toNotification(f));
             }
         }));
 
