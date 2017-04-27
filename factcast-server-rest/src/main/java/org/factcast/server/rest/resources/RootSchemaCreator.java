@@ -18,10 +18,12 @@ class RootSchemaCreator {
 
     private final LinkFactory<EventsResource> eventsResourceLinkFactory;
 
+    private final LinkFactory<EventsTransactionsResource> transactionsLinkFactory;
+
     ObjectWithSchema<Void> forRoot() {
         val getEventsLink = eventsResourceLinkFactory.forCall(EventsRel.EVENTS, r -> r
                 .getServerSentEvents(null));
-        val createLink = eventsResourceLinkFactory.forCall(EventsRel.CREATE_TRANSACTIONAL, r -> r
+        val createLink = transactionsLinkFactory.forCall(EventsRel.CREATE_TRANSACTIONAL, r -> r
                 .newTransaction(null));
 
         return hyperSchemaCreator.create(null, collect(getEventsLink, createLink));

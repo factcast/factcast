@@ -1,26 +1,21 @@
 package org.factcast.server.rest.resources;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
-import org.factcast.core.DefaultFact;
 import org.factcast.core.DefaultFact.Header;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
@@ -50,7 +45,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Component
 @AllArgsConstructor
-
 public class EventsResource implements JerseyResource {
 
     private final FactStore factStore;
@@ -69,7 +63,7 @@ public class EventsResource implements JerseyResource {
     public EventOutput getServerSentEvents(
             @NotNull @Valid @BeanParam SubscriptionRequestParams subscriptionRequestParams) {
         final EventOutput eventOutput = new EventOutput();
-        SubscriptionRequestTO req = subscriptionRequestParams.toRequest();
+        SubscriptionRequestTO req = subscriptionRequestParams.toRequest(objectMapper);
         SetableSupplier<Subscription> subsup = new SetableSupplier<>();
         FactStoreObserver observer = eventObserverFactory.createFor(eventOutput, linkFactoryContext
                 .getBaseUri(), subsup);
@@ -101,28 +95,5 @@ public class EventsResource implements JerseyResource {
             }
         }).orElseThrow(NotFoundException::new);
         return schemaCreator.forFactWithId(returnValue, id);
-    }
-
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @NoCache
-    public void newTransaction(@NotNull @Valid FactTransactionJson factTransactionJson) {
-
-        List<Fact> listToPublish = factTransactionJson.facts().stream().map(f -> {
-            String headerString;
-            try {
-                headerString = objectMapper.writeValueAsString(f.header());
-            } catch (Exception e) {
-                log.error("error", e);
-                throw new WebApplicationException(500);
-            }
-            return DefaultFact.of(headerString, f.payLoad().toString());
-        }).collect(Collectors.toList());
-
-        try {
-            factStore.publish(listToPublish);
-        } catch (IllegalArgumentException e) {
-            throw new WebApplicationException(e.getMessage(), 400);
-        }
     }
 }
