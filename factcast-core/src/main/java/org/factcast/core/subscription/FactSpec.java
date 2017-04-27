@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Defines a Specification of facts to match for a subscription.
@@ -19,7 +18,6 @@ import lombok.RequiredArgsConstructor;
  *
  */
 @Data
-@RequiredArgsConstructor(staticName = "ns")
 public class FactSpec {
 
     @NonNull
@@ -46,6 +44,15 @@ public class FactSpec {
 
     public static FactSpec forMark() {
         return FactSpec.ns(MarkFact.NS).type(MarkFact.TYPE);
+    }
+
+    public static FactSpec ns(String ns) {
+        return new FactSpec(ns);
+    }
+
+    public FactSpec(@NonNull @JsonProperty("ns") String ns) {
+        super();
+        this.ns = ns;
     }
 
 }

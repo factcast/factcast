@@ -102,7 +102,7 @@ public class EventObserver implements FactStoreObserver {
 
         final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
         eventBuilder.name("complete");
-        eventBuilder.comment("Signal event for catching up");
+        eventBuilder.comment("Signal event for completion");
         eventBuilder.data("{\"complete\":true}");
         final OutboundEvent event = eventBuilder.build();
         try {

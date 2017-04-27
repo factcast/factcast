@@ -1,35 +1,33 @@
 package org.factcast.server.rest.resources;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.QueryParam;
 
 import org.factcast.core.subscription.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.hibernate.validator.constraints.NotEmpty;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Data;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SubscriptionRequestParams {
-    @QueryParam("ns")
-    @NotNull
-    private String ns;
-
     @QueryParam("since")
     private String since;
 
     @QueryParam("follow")
     private boolean follow;
 
-    @QueryParam("aggId")
-    private String aggId;
+    @NotEmpty
+    @QueryParam("factSpec")
+    private List<FactSpec> factSpecs;
 
-    // FIXME TODO JAR: Type missing?
-    // FIXME TODO JAR: List of FactSpecs...
-
-    public SubscriptionRequestTO toRequest() {
+    public SubscriptionRequestTO toRequest(ObjectMapper objectMapper) {
 
         SubscriptionRequestTO r = new SubscriptionRequestTO();
         r.continous(follow);
@@ -37,11 +35,7 @@ public class SubscriptionRequestParams {
             r.startingAfter(UUID.fromString(since));
         }
 
-        FactSpec factSpec = FactSpec.ns(ns);
-        if (aggId != null) {
-            factSpec = factSpec.aggId(UUID.fromString(aggId));
-        }
-        r.addSpecs(Arrays.asList(factSpec));
+        r.addSpecs(factSpecs);
         return r;
     }
 }

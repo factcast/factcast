@@ -2,6 +2,7 @@ package org.factcast.server.rest;
 
 import org.factcast.server.rest.resources.cache.CachableFilter;
 import org.factcast.server.rest.resources.cache.NoCacheFilter;
+import org.factcast.server.rest.resources.converter.FactSpecParamConverterProvider.FactSpecParamConverter;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ public class FactCastRestApplication extends ResourceConfig {
         packages(resourceBasePackage);
         register(NoCacheFilter.class);
         register(CachableFilter.class);
+        register(FactSpecParamConverter.class);
     }
 
 }
