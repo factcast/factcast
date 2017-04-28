@@ -7,7 +7,7 @@ import lombok.experimental.UtilityClass;
 /**
  * String constants mainly used in SQL-Statement creation
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @UtilityClass

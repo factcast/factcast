@@ -37,7 +37,7 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 // TODO cleanup
@@ -143,7 +143,9 @@ class GrpcFactStore implements FactStore {
         };
 
         final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()
-                .newCall(RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions());
+                .newCall(RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions()
+                        .withWaitForReady().withCompression("gzip"));
+
         asyncServerStreamingCall(call, request, responseObserver);
 
         // wait until catchup

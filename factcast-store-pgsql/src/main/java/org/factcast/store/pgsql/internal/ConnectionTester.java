@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
  * the cone {@link PGConnection}, that listens to changes on the fact table and
  * thus should not be reused in a CPool.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 
@@ -28,9 +28,6 @@ class ConnectionTester implements Predicate<Connection> {
 
     @Override
     public boolean test(@Nonnull Connection connection) {
-
-        log.trace("Testing Connection :", connection);
-
         if (connection != null) {
             try (PreparedStatement statement = connection.prepareStatement("SELECT 42");
                     ResultSet resultSet = statement.executeQuery();) {

@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
  * Executes a given runnable if triggered, but ignores all subsequent triggers
  * for maxDelayInMillis.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @Slf4j

@@ -21,7 +21,7 @@ import lombok.NonNull;
  * In a sense it is an internal interface, or SPI implemented by for instance
  * InMemFactStore or PGFactStore.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 public interface FactStore {

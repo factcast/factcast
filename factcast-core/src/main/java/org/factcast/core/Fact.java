@@ -11,7 +11,7 @@ import lombok.NonNull;
  *
  * Only generated code, does not need unit testing.
  *
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 // TODO add schema

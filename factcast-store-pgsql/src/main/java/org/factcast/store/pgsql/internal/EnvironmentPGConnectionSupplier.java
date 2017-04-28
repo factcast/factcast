@@ -12,7 +12,7 @@ import lombok.SneakyThrows;
 /**
  * Supplies a PGConnection directly from an un-pooled DataSource
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 class EnvironmentPGConnectionSupplier implements Supplier<PGConnection>, InitializingBean {

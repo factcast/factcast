@@ -4,12 +4,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.conv.ProtoConverter;
@@ -22,6 +22,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,7 @@ import net.devh.springboot.autoconfigure.grpc.server.GrpcService;
  * 
  * Configure port using {@link GRpcServerProperties}
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @Slf4j
@@ -44,7 +45,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     private final FactStore store;
 
-    private final ProtoConverter converter = new ProtoConverter();
+    final ProtoConverter converter = new ProtoConverter();
 
     @Override
     public void fetchById(MSG_UUID request, StreamObserver<MSG_OptionalFact> responseObserver) {
@@ -81,66 +82,24 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         }
     }
 
-    @RequiredArgsConstructor
-    private abstract class ObserverBridge implements FactStoreObserver {
-
-        final StreamObserver<MSG_Notification> observer;
-
-        @Override
-        public void onComplete() {
-            log.info("onComplete – sending complete notification");
-            observer.onNext(converter.toCompleteNotification());
-            tryComplete();
-        }
-
-        @Override
-        public void onError(Throwable e) {
-            log.warn("onError – sending Error notification {}", e);
-            observer.onError(e);
-            tryComplete();
-        }
-
-        private void tryComplete() {
-            try {
-                observer.onCompleted();
-            } catch (Throwable e) {
-                log.trace("Expected exception on completion: ", e);
-            }
-        }
-
-        @Override
-        public void onCatchup() {
-            log.info("onCatchup – sending catchup notification");
-            observer.onNext(converter.toCatchupNotification());
-        }
-    }
-
     @Override
     public void subscribe(MSG_SubscriptionRequest request,
             StreamObserver<MSG_Notification> responseObserver) {
+
+        BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(
+                (ServerCallStreamObserver) responseObserver);
+
         SubscriptionRequestTO req = converter.fromProto(request);
         log.trace("creating subscription for {}", req);
         final boolean idOnly = req.idOnly();
         final AtomicReference<CompletableFuture<Subscription>> ref = new AtomicReference<>();
 
-        ref.set(store.subscribe(req, new ObserverBridge(responseObserver) {
+        ref.set(store.subscribe(req, new ObserverBridge(this, resp) {
 
             @Override
             public void onNext(Fact f) {
-                try {
-                    responseObserver.onNext(idOnly ? converter.toNotification(f.id())
-                            : converter.toNotification(f));
-                } catch (Throwable e) {
-                    log.warn("Exception while sending data to stream", e);
-                    if (ref.get() != null) {
-                        try {
-                            ref.get().getNow(() -> {
-                            }).close();
-                        } catch (Exception e1) {
-                            // swallow.
-                        }
-                    }
-                }
+                resp.onNext(idOnly ? converter.toNotification(f.id())
+                        : converter.toNotification(f));
             }
         }));
 

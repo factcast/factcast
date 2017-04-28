@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Primary;
 /**
  * Spring config that provides a FactCast instance from a FactStore
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @Configuration

@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Observer that consumes Facts
  *
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  * @param <T>
  */

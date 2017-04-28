@@ -3,6 +3,7 @@ package org.factcast.example.grpc;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
@@ -10,7 +11,6 @@ import org.factcast.core.subscription.FactObserver;
 import org.factcast.core.subscription.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.wellknown.MarkFact;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -90,14 +90,24 @@ public class SmokeMT {
             // "--------------------------------------------------------------------------------------------");
             UUID aggId = UUID.randomUUID();
 
+            AtomicLong l = new AtomicLong();
             CompletableFuture<Subscription> sub = fc.subscribeToFacts(SubscriptionRequest.follow(
-                    FactSpec.ns("smoke").aggId(aggId)).sinceInception(), new FactObserver() {
+                    FactSpec.ns("default")).sinceInception(), new FactObserver() {
 
                         @Override
                         public void onNext(Fact f) {
-                            if (!MarkFact.TYPE.equals(f.type())) {
-                                System.out.println(f);
+                            l.incrementAndGet();
+
+                            try {
+                                if (Math.random() < .001) {
+                                    System.out.println(l.get());
+                                    Thread.sleep(50);
+                                }
+                            } catch (InterruptedException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
                             }
+
                         }
 
                         public void onComplete() {

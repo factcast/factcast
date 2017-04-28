@@ -13,7 +13,7 @@ import lombok.NonNull;
 /**
  * tiny helpers to keep FactCast interface clean.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 class Helpers {

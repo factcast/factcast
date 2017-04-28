@@ -18,7 +18,7 @@ import lombok.SneakyThrows;
 /**
  * Matches facts against specifications.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 public final class FactSpecMatcher implements Predicate<Fact> {

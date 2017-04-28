@@ -27,20 +27,36 @@ import org.springframework.beans.factory.DisposableBean;
 import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Eternally-growing InMem Implementation of a FactStore. USE FOR TESTING
  * PURPOSES ONLY
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com, joerg.adler@mercateo.com
  *
  */
 @Deprecated
+@Slf4j
 public class InMemFactStore implements FactStore, DisposableBean {
 
     @VisibleForTesting
     InMemFactStore(@NonNull ExecutorService es) {
         this.executorService = es;
+
+        if (Package.getPackage("org.junit") == null) {
+
+            log.warn("");
+            log.warn(
+                    "**********************************************************************************************************");
+            log.warn(
+                    "* You are using an inmem-impl of a FactStore. This imlementation is for quick testing ONLY and will fail *");
+            log.warn(
+                    "*   with OOM if you load it with a significant amount of Facts.                                          *");
+            log.warn(
+                    "**********************************************************************************************************");
+            log.warn("");
+        }
     }
 
     public InMemFactStore() {
@@ -105,8 +121,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
             store.put(ser, f);
             ids.add(f.id());
 
-            activeSubscriptions.parallelStream().forEach(s -> executorService.submit(() -> s.accept(
-                    f)));
+            activeSubscriptions.stream().forEachOrdered(s -> s.accept(f));
         });
     }
 

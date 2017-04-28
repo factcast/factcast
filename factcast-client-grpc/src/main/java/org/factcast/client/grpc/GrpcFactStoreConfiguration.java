@@ -10,7 +10,7 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 /**
  * Provides a GrpcFactStore as a FactStore impl
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @Import(FactCastConfiguration.class)

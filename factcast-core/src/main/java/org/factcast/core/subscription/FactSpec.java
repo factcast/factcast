@@ -14,7 +14,7 @@ import lombok.NonNull;
 /**
  * Defines a Specification of facts to match for a subscription.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @Data

@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
  * integration/jcache. This package just exists for having reasonable defaults
  * without the risk of conflicting with any configuration files.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 

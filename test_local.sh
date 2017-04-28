@@ -7,6 +7,7 @@ java \
 -Dfactcast.store.pgsql.dbname=test1 \
 -Dspring.profiles.active=localtest \
 -Dlogging.level.org.factcast=DEBUG \
+-Dlogging.level.org.factcast=TRACE \
 -jar factcast-server/target/factcast.jar 
 
 

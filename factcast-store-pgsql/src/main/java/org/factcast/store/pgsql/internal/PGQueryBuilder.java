@@ -12,17 +12,24 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Provides {@link PreparedStatementSetter} and the corresponding SQL from a
  * list of {@link FactSpec}s.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
+@Slf4j
 class PGQueryBuilder {
 
-    private static final int FETCH_SIZE = 50;
+    // be conservative, less ram and fetching from db often is less of a
+    // problem than serializing to the client.
+    //
+    // Note, that by sync. calling the Observer, (depending on the
+    // transport) backpressure is kind of built-in.
+    private static final int FETCH_SIZE = 100;
 
     private final boolean selectIdOnly;
 
@@ -37,11 +44,6 @@ class PGQueryBuilder {
     PreparedStatementSetter createStatementSetter(AtomicLong serial) {
 
         return p -> {
-            // be conservative, less ram and fetching from db often is less of a
-            // problem than serializing to the client.
-            //
-            // Note, that by sync. calling the Observer, backpressure is kind of
-            // built-in.
             p.setFetchSize(FETCH_SIZE);
 
             // TODO vulnerable of json injection attack
@@ -106,9 +108,10 @@ class PGQueryBuilder {
     }
 
     String createSQL() {
-
-        return "SELECT " + (selectIdOnly ? PGConstants.PROJECTION_ID : PGConstants.PROJECTION_FACT)
-                + " FROM " + PGConstants.TABLE_FACT + " WHERE " + createWhereClause() + " ORDER BY "
-                + PGConstants.COLUMN_SER + " ASC";
+        final String sql = "SELECT " + (selectIdOnly ? PGConstants.PROJECTION_ID
+                : PGConstants.PROJECTION_FACT) + " FROM " + PGConstants.TABLE_FACT + " WHERE "
+                + createWhereClause() + " ORDER BY " + PGConstants.COLUMN_SER + " ASC";
+        log.trace("SQL={}", sql);
+        return sql;
     }
 }

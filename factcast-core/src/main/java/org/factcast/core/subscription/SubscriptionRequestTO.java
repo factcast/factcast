@@ -25,7 +25,7 @@ import lombok.experimental.FieldDefaults;
  * 
  * Note that FactSpec.forMark() is silently added to the list of specifications.
  * 
- * @author usr
+ * @author uwe.schaefer@mercateo.com
  *
  */
 @FieldDefaults(level = AccessLevel.PRIVATE)
