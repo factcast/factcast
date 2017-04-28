@@ -2,6 +2,12 @@ package org.factcast.store.pgsql.internal;
 
 import lombok.experimental.UtilityClass;
 
+/**
+ * Constants for metrics-names.
+ * 
+ * @author <uwe.schaefer@mercateo.com>
+ *
+ */
 @UtilityClass
 public class PGMetrics {
 

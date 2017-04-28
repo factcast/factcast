@@ -61,12 +61,6 @@ public class PGQueryIT {
     @Autowired
     JdbcTemplate tpl;
 
-    @Autowired
-    PGListener listener;
-
-    @Autowired
-    PGFactStore store;
-
     @Bean
     @Primary
     public EventBus eventBus() {
