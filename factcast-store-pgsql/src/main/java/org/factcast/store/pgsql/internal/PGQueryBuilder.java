@@ -24,7 +24,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class PGQueryBuilder {
 
-    private static final int FETCH_SIZE = 1000;
+    // be conservative, less ram and fetching from db often is less of a
+    // problem than serializing to the client.
+    //
+    // Note, that by sync. calling the Observer, (depending on the
+    // transport) backpressure is kind of built-in.
+    private static final int FETCH_SIZE = 100;
 
     private final boolean selectIdOnly;
 
@@ -39,11 +44,6 @@ class PGQueryBuilder {
     PreparedStatementSetter createStatementSetter(AtomicLong serial) {
 
         return p -> {
-            // be conservative, less ram and fetching from db often is less of a
-            // problem than serializing to the client.
-            //
-            // Note, that by sync. calling the Observer, (depending on the
-            // transport) backpressure is kind of built-in.
             p.setFetchSize(FETCH_SIZE);
 
             // TODO vulnerable of json injection attack

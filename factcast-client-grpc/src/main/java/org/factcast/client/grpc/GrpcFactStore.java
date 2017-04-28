@@ -143,7 +143,9 @@ class GrpcFactStore implements FactStore {
         };
 
         final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()
-                .newCall(RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions());
+                .newCall(RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions()
+                        .withWaitForReady().withCompression("gzip"));
+
         asyncServerStreamingCall(call, request, responseObserver);
 
         // wait until catchup
