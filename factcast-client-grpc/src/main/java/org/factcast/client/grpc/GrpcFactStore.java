@@ -38,8 +38,6 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
  * @author uwe.schaefer@mercateo.com
  *
  */
-// TODO cleanup
-
 @Slf4j
 class GrpcFactStore implements FactStore {
 

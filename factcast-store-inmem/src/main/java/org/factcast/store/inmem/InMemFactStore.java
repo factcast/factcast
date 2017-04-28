@@ -49,13 +49,13 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
             log.warn("");
             log.warn(
-                    "**********************************************************************************************************");
+                    "***********************************************************************************************************");
             log.warn(
-                    "* You are using an inmem-impl of a FactStore. This imlementation is for quick testing ONLY and will fail *");
+                    "* You are using an inmem-impl of a FactStore. This implementation is for quick testing ONLY and will fail *");
             log.warn(
-                    "*   with OOM if you load it with a significant amount of Facts.                                          *");
+                    "*   with OOM if you load it with a significant amount of Facts.                                           *");
             log.warn(
-                    "**********************************************************************************************************");
+                    "***********************************************************************************************************");
             log.warn("");
         }
     }
@@ -64,17 +64,17 @@ public class InMemFactStore implements FactStore, DisposableBean {
         this(Executors.newCachedThreadPool());
     }
 
-    private final AtomicInteger highwaterMark = new AtomicInteger(0);
+    final AtomicInteger highwaterMark = new AtomicInteger(0);
 
-    private final LinkedHashMap<Integer, Fact> store = new LinkedHashMap<>();
+    final LinkedHashMap<Integer, Fact> store = new LinkedHashMap<>();
 
-    private final Set<UUID> ids = new HashSet<>();
+    final Set<UUID> ids = new HashSet<>();
 
-    private final CopyOnWriteArrayList<InMemFollower> activeFollowers = new CopyOnWriteArrayList<>();
+    final CopyOnWriteArrayList<InMemFollower> activeFollowers = new CopyOnWriteArrayList<>();
 
-    private final ExecutorService executorService;
+    final ExecutorService executorService;
 
-    private class InMemFollower implements Predicate<Fact>, Consumer<Fact> {
+    private class InMemFollower implements Predicate<Fact>, Consumer<Fact>, AutoCloseable {
         final Predicate<Fact> matcher;
 
         final SubscriptionImpl<Fact> subscription;
