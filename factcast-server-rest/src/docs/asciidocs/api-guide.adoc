@@ -1,0 +1,6 @@
+[[overview-headers]]
+== Headers
+ 
+Every response has the following header(s):
+ 
+include::{snippets}/get-simple/http-request.adoc[]
