@@ -22,11 +22,11 @@ import lombok.experimental.UtilityClass;
  */
 @UtilityClass
 public class FactCastJson {
-    private final static ObjectMapper objectMapper = new ObjectMapper();
+    final static ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final ObjectReader reader;
+    static final ObjectReader reader;
 
-    private static final ObjectWriter writer;
+    static final ObjectWriter writer;
 
     static {
 

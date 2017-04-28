@@ -35,7 +35,7 @@ import lombok.Data;
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 public class PGQueryIT {
 
-    private static final FactSpec DEFAULT_SPEC = FactSpec.ns("default-ns").type("type1");
+    static final FactSpec DEFAULT_SPEC = FactSpec.ns("default-ns").type("type1");
 
     @Data
     public static class TestHeader {

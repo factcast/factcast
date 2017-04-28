@@ -4,8 +4,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.factcast.core.wellknown.MarkFact;
-
 import com.google.common.collect.Lists;
 
 import lombok.NonNull;

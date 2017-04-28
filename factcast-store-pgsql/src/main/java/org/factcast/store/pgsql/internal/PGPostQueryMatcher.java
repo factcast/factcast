@@ -25,9 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class PGPostQueryMatcher implements Predicate<Fact> {
 
-    private final boolean canBeSkipped;
+    final boolean canBeSkipped;
 
-    private final List<FactSpecMatcher> matchers = new LinkedList<>();
+    final List<FactSpecMatcher> matchers = new LinkedList<>();
 
     public PGPostQueryMatcher(@NonNull List<FactSpec> specs) {
         canBeSkipped = !specs.stream().anyMatch(s -> s.jsFilterScript() != null);

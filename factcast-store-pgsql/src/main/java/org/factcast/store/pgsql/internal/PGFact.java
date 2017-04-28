@@ -32,28 +32,28 @@ class PGFact implements Fact {
 
     @Getter
     @NonNull
-    private final UUID id;
+    final UUID id;
 
     @Getter
     @NonNull
-    private final String ns;
+    final String ns;
 
     @Getter
-    private final String type;
+    final String type;
 
     @Getter
-    private final UUID aggId;
-
-    @Getter
-    @NonNull
-    private final String jsonHeader;
+    final UUID aggId;
 
     @Getter
     @NonNull
-    private final String jsonPayload;
+    final String jsonHeader;
+
+    @Getter
+    @NonNull
+    final String jsonPayload;
 
     @JsonProperty
-    private Map<String, String> meta = null;
+    Map<String, String> meta = null;
 
     @Override
     public String meta(String key) {

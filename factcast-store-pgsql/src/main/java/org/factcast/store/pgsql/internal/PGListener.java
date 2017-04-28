@@ -34,13 +34,13 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 class PGListener implements InitializingBean, DisposableBean {
 
-    private final Supplier<PGConnection> connectionSupplier;
+    final Supplier<PGConnection> connectionSupplier;
 
-    private final @NonNull EventBus eventBus;
+    final @NonNull EventBus eventBus;
 
-    private final @NonNull Predicate<Connection> connectionTester;
+    final @NonNull Predicate<Connection> connectionTester;
 
-    private PGConnection connection = null;
+    PGConnection connection = null;
 
     @Scheduled(fixedRate = 10000)
     public synchronized void check() {

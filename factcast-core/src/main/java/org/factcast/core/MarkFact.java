@@ -1,8 +1,6 @@
-package org.factcast.core.wellknown;
+package org.factcast.core;
 
 import java.util.UUID;
-
-import org.factcast.core.Fact;
 
 import lombok.AccessLevel;
 import lombok.NonNull;

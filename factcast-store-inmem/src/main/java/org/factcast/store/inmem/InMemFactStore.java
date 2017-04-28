@@ -70,35 +70,34 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
     private final Set<UUID> ids = new HashSet<>();
 
-    private final CopyOnWriteArrayList<InMemSubscription> activeSubscriptions = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<InMemFollower> activeFollowers = new CopyOnWriteArrayList<>();
 
     private final ExecutorService executorService;
 
-    private class InMemSubscription implements Consumer<Fact> {
-        private final Predicate<Fact> matcher;
+    private class InMemFollower implements Predicate<Fact>, Consumer<Fact> {
+        final Predicate<Fact> matcher;
 
-        final Consumer<Fact> consumer;
+        final SubscriptionImpl<Fact> subscription;
 
-        InMemSubscription(SubscriptionRequestTO request, Consumer<Fact> consumer) {
-            this.consumer = consumer;
+        InMemFollower(SubscriptionRequestTO request, SubscriptionImpl<Fact> subscription) {
+            this.subscription = subscription;
             matcher = FactSpecMatcher.matchesAnyOf(request.specs());
         }
 
         public void close() {
             synchronized (InMemFactStore.this) {
-                activeSubscriptions.remove(this);
+                activeFollowers.remove(this);
             }
         }
 
-        public boolean matches(Fact f) {
+        @Override
+        public boolean test(Fact f) {
             return matcher.test(f);
         }
 
         @Override
         public void accept(Fact t) {
-            if (matches(t)) {
-                consumer.accept(t);
-            }
+            subscription.notifyElement(t);
         }
 
     }
@@ -121,7 +120,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
             store.put(ser, f);
             ids.add(f.id());
 
-            activeSubscriptions.stream().forEachOrdered(s -> s.accept(f));
+            activeFollowers.stream().filter(s -> s.test(f)).forEachOrdered(s -> s.accept(f));
         });
     }
 
@@ -129,24 +128,25 @@ public class InMemFactStore implements FactStore, DisposableBean {
     public synchronized Subscription subscribe(SubscriptionRequestTO request,
             FactObserver observer) {
 
-        // FIXME
-        InMemSubscription s = new InMemSubscription(request, c -> observer.onNext(c));
         SubscriptionImpl<Fact> subscription = Subscriptions.on(observer);
+        InMemFollower s = new InMemFollower(request, subscription);
 
         executorService.submit(() -> {
+
+            // catchup
             if (!request.ephemeral()) {
-                store.values().stream().forEach(f -> {
-                    if (s.matches(f)) {
-                        subscription.notifyElement(f);
-                    }
-                });
+                store.values().stream().filter(s).forEach(s);
             }
+
             subscription.notifyCatchup();
+
+            // follow
             if (request.continous()) {
-                activeSubscriptions.add(s);
+                activeFollowers.add(s);
             } else {
                 subscription.notifyComplete();
             }
+
         });
 
         return subscription.onClose(s::close);

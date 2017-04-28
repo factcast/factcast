@@ -30,15 +30,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 class PGSynchronizedQuery {
 
-    private JdbcTemplate jdbcTemplate;
+    JdbcTemplate jdbcTemplate;
 
-    private String sql;
+    String sql;
 
-    private PreparedStatementSetter setter;
+    PreparedStatementSetter setter;
 
-    private RowCallbackHandler rowHandler;
+    RowCallbackHandler rowHandler;
 
-    private TransactionTemplate transactionTemplate;
+    TransactionTemplate transactionTemplate;
 
     PGSynchronizedQuery(@NonNull JdbcTemplate jdbcTemplate, @NonNull String sql,
             @NonNull PreparedStatementSetter setter, @NonNull RowCallbackHandler rowHandler) {

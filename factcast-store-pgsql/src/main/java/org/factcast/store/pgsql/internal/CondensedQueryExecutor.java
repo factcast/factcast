@@ -27,15 +27,15 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__(@VisibleForTesting))
 class CondensedQueryExecutor {
 
-    private final long maxDelayInMillis;
+    final long maxDelayInMillis;
 
-    private final PGSynchronizedQuery target;
+    final PGSynchronizedQuery target;
 
-    private final Supplier<Boolean> connectionStateSupplier;
+    final Supplier<Boolean> connectionStateSupplier;
 
-    private Timer timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer", true);
+    Timer timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer", true);
 
-    private final AtomicBoolean currentlyScheduled = new AtomicBoolean(false);
+    final AtomicBoolean currentlyScheduled = new AtomicBoolean(false);
 
     public void trigger() {
         if (connectionStateSupplier.get()) {

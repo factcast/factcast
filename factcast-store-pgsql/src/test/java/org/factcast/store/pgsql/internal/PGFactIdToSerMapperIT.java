@@ -5,8 +5,8 @@ import static org.junit.Assert.*;
 import java.util.Arrays;
 import java.util.UUID;
 
+import org.factcast.core.MarkFact;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.wellknown.MarkFact;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

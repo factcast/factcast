@@ -5,7 +5,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.store.FactStore;
-import org.factcast.core.wellknown.MarkFact;
 
 import lombok.NonNull;
 

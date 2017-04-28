@@ -21,11 +21,11 @@ import lombok.RequiredArgsConstructor;
 // TODO integrate with PGQuery
 @RequiredArgsConstructor
 class PGSubscriptionFactory {
-    private final JdbcTemplate jdbcTemplate;
+    final JdbcTemplate jdbcTemplate;
 
-    private final EventBus eventBus;
+    final EventBus eventBus;
 
-    private final PGFactIdToSerMapper idToSerialMapper;
+    final PGFactIdToSerMapper idToSerialMapper;
 
     public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
         final SubscriptionImpl<Fact> subscription = Subscriptions.on(observer);

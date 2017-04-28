@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 class PGFactIdToSerMapper {
-    private final JdbcTemplate jdbcTemplate;
+    final JdbcTemplate jdbcTemplate;
 
     /**
      * 

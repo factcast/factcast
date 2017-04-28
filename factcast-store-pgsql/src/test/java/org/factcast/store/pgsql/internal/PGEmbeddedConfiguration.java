@@ -30,7 +30,7 @@ import ru.yandex.qatools.embed.postgresql.config.PostgresConfig;
         TransactionAutoConfiguration.class })
 public class PGEmbeddedConfiguration {
 
-    private static PGDataSource ds;
+    static PGDataSource ds;
 
     static {
         try {

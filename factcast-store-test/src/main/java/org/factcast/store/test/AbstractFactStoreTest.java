@@ -21,7 +21,7 @@ import org.springframework.test.annotation.DirtiesContext;
 
 public abstract class AbstractFactStoreTest {
 
-    private static final FactSpec ANY = FactSpec.ns("default");
+    static final FactSpec ANY = FactSpec.ns("default");
 
     FactCast uut;
 

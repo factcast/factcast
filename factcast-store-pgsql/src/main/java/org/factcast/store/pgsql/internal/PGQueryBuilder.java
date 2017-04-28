@@ -29,12 +29,12 @@ class PGQueryBuilder {
     //
     // Note, that by sync. calling the Observer, (depending on the
     // transport) backpressure is kind of built-in.
-    private static final int FETCH_SIZE = 100;
+    static final int FETCH_SIZE = 100;
 
-    private final boolean selectIdOnly;
+    final boolean selectIdOnly;
 
     @NonNull
-    private final SubscriptionRequestTO req;
+    final SubscriptionRequestTO req;
 
     public PGQueryBuilder(@NonNull SubscriptionRequestTO request) {
         this.req = request;

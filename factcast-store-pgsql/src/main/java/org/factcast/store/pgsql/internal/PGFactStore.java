@@ -38,20 +38,20 @@ class PGFactStore implements FactStore {
     private static final int BATCH_SIZE = 500;
 
     @NonNull
-    private final JdbcTemplate jdbcTemplate;
+    final JdbcTemplate jdbcTemplate;
 
     @NonNull
-    private final PGSubscriptionFactory subscriptionFactory;
+    final PGSubscriptionFactory subscriptionFactory;
 
     @NonNull
-    private final MetricRegistry registry;
+    final MetricRegistry registry;
 
     @NonNull
-    private final Counter publishFailedCounter;
+    final Counter publishFailedCounter;
 
-    private final Meter publishLatency;
+    final Meter publishLatency;
 
-    private final PGMetricNames names = new PGMetricNames();
+    final PGMetricNames names = new PGMetricNames();
 
     PGFactStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory subscriptionFactory,
             MetricRegistry registry) {

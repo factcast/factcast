@@ -35,12 +35,12 @@ import lombok.Value;
 public class DefaultFact implements Fact, Externalizable {
 
     @Getter
-    private String jsonHeader;
+    String jsonHeader;
 
     @Getter
-    private String jsonPayload;
+    String jsonPayload;
 
-    private Header deserializedHeader;
+    Header deserializedHeader;
 
     // needed for Externalizable – do not use !
     @Deprecated

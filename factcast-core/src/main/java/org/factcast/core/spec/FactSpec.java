@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.factcast.core.wellknown.MarkFact;
+import org.factcast.core.MarkFact;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -22,17 +22,17 @@ public class FactSpec {
 
     @NonNull
     @JsonProperty
-    private final String ns;
+    final String ns;
 
     @JsonProperty
-    private String type = null;
+    String type = null;
 
     @JsonProperty
-    private UUID aggId = null;
+    UUID aggId = null;
 
     @NonNull
     @JsonProperty
-    private final Map<String, String> meta = new HashMap<>();
+    final Map<String, String> meta = new HashMap<>();
 
     public FactSpec meta(@NonNull String k, @NonNull String v) {
         meta.put(k, v);
@@ -40,7 +40,7 @@ public class FactSpec {
     }
 
     @JsonProperty
-    private String jsFilterScript = null;
+    String jsFilterScript = null;
 
     public static FactSpec forMark() {
         return FactSpec.ns(MarkFact.NS).type(MarkFact.TYPE);

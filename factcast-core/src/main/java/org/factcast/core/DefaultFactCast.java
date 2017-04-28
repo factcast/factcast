@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 class DefaultFactCast implements FactCast {
 
     @NonNull
-    private final FactStore store;
+    final FactStore store;
 
     @Override
     public Subscription subscribeToFacts(@NonNull SubscriptionRequest req,

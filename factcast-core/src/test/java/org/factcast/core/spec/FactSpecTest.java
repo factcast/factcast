@@ -2,7 +2,7 @@ package org.factcast.core.spec;
 
 import static org.junit.Assert.*;
 
-import org.factcast.core.wellknown.MarkFact;
+import org.factcast.core.MarkFact;
 import org.junit.Test;
 
 //TODO remove?

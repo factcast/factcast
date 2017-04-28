@@ -11,11 +11,11 @@ import org.springframework.context.annotation.Configuration;
  * just forwards to {@link PGFactStoreInternalConfiguration}, so that IDEs can
  * still complain about internal references.
  * 
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@mercateo.com, joerg.adler@mercateo.com
  *
  */
 @Configuration
-public class InMemStoreConfiguration {
+public class InMemFactStoreConfiguration {
     @Bean
     @ConditionalOnMissingBean(FactStore.class)
     public FactStore factStore() {

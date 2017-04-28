@@ -27,7 +27,7 @@ public final class CachingFactLookup {
     public static final String CACHE_NAME = "factcast.lookup.fact";
 
     @NonNull
-    private final FactStore store;
+    final FactStore store;
 
     @Cacheable(CACHE_NAME)
     public Optional<Fact> lookup(@NonNull UUID id) {

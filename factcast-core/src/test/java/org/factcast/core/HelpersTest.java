@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import java.util.List;
 
-import org.factcast.core.wellknown.MarkFact;
 import org.junit.Test;
 
 public class HelpersTest {
