@@ -15,6 +15,12 @@ import lombok.RequiredArgsConstructor;
  * executes a query in a synchronized fashion, to make sure, results are
  * processed in order as well as sequentially.
  * 
+ * Note, that you can hint the query method if index usage is wanted. In a
+ * catchup scenario, you will probably want to use an index. If however you are
+ * following a fact stream and expect to get a low number of rows (if any) back
+ * from the query because you seek for the "latest" changes, it is way more
+ * efficient to scan the table. In that case call <code>query(false)</code>.
+ * 
  * DO NOT use an instance as a singleton/Spring bean. This class is meant be
  * instantiated by each subscription.
  * 
