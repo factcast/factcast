@@ -25,15 +25,15 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__(@VisibleForTesting))
-class CondensedExecutor {
+class CondensedQueryExecutor {
 
     private final long maxDelayInMillis;
 
-    private final Runnable target;
+    private final PGSynchronizedQuery target;
 
     private final Supplier<Boolean> connectionStateSupplier;
 
-    private Timer timer = new Timer(CondensedExecutor.class.getSimpleName() + ".timer", true);
+    private Timer timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer", true);
 
     private final AtomicBoolean currentlyScheduled = new AtomicBoolean(false);
 
@@ -47,7 +47,7 @@ class CondensedExecutor {
                     @Override
                     public void run() {
                         currentlyScheduled.set(false);
-                        CondensedExecutor.this.runTarget();
+                        CondensedQueryExecutor.this.runTarget();
                     }
                 }, maxDelayInMillis);
             }
@@ -62,7 +62,7 @@ class CondensedExecutor {
 
     protected void runTarget() {
         try {
-            target.run();
+            target.run(false);
         } catch (Throwable e) {
             log.error("cannot run Target: ", e);
         }

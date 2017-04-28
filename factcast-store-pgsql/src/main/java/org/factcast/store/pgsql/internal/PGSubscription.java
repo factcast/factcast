@@ -38,7 +38,7 @@ class PGSubscription implements Subscription {
 
     private final PGFilteringStats stats = new PGFilteringStats();
 
-    private CondensedExecutor condensedExecutor;
+    private CondensedQueryExecutor condensedExecutor;
 
     void run(SubscriptionRequestTO request, FactStoreObserver observer) {
         log.trace("initializing for {}", request);
@@ -104,7 +104,8 @@ class PGSubscription implements Subscription {
                         + request.maxBatchDelayInMs());
             }
 
-            this.condensedExecutor = new CondensedExecutor(delayInMs, query, () -> isConnected());
+            this.condensedExecutor = new CondensedQueryExecutor(delayInMs, query,
+                    () -> isConnected());
             eventBus.register(condensedExecutor);
             // catchup phase 3 – make sure, we did not miss any fact due to
             // slow registration
@@ -121,11 +122,11 @@ class PGSubscription implements Subscription {
     private void catchup(PGSynchronizedQuery query) {
         if (isConnected()) {
             log.trace("catchup phase1 - historic Facts");
-            query.run();
+            query.run(true);
         }
         if (isConnected()) {
             log.trace("catchup phase2 - Facts since connect");
-            query.run();
+            query.run(true);
         }
     }
 

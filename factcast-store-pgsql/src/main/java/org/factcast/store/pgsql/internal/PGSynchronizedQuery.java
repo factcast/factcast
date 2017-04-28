@@ -1,11 +1,14 @@
 package org.factcast.store.pgsql.internal;
 
-import javax.annotation.Nonnull;
-
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -19,21 +22,44 @@ import lombok.RequiredArgsConstructor;
  *
  */
 @RequiredArgsConstructor
-@Nonnull
-class PGSynchronizedQuery implements Runnable {
+class PGSynchronizedQuery {
 
-    final JdbcTemplate jdbcTemplate;
+    private JdbcTemplate jdbcTemplate;
 
-    final String sql;
+    private String sql;
 
-    final PreparedStatementSetter setter;
+    private PreparedStatementSetter setter;
 
-    final RowCallbackHandler rowHandler;
+    private RowCallbackHandler rowHandler;
 
-    @Override
-    // the synchronized here is crucial!
-    public synchronized void run() {
-        jdbcTemplate.query(sql, setter, rowHandler);
+    private TransactionTemplate transactionTemplate;
+
+    PGSynchronizedQuery(@NonNull JdbcTemplate jdbcTemplate, @NonNull String sql,
+            @NonNull PreparedStatementSetter setter, @NonNull RowCallbackHandler rowHandler) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.sql = sql;
+        this.setter = setter;
+        this.rowHandler = rowHandler;
+
+        DataSourceTransactionManager transactionManager = new DataSourceTransactionManager(
+                jdbcTemplate.getDataSource());
+        transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
+    // the synchronized here is crucial!
+    public synchronized void run(boolean useIndex) {
+        if (useIndex) {
+            jdbcTemplate.query(sql, setter, rowHandler);
+        } else {
+            transactionTemplate.execute(new TransactionCallback<Object>() {
+                @Override
+                public Object doInTransaction(TransactionStatus status) {
+
+                    jdbcTemplate.execute("SET LOCAL enable_bitmapscan=0;");
+                    jdbcTemplate.query(sql, setter, rowHandler);
+                    return null;
+                }
+            });
+        }
+    }
 }

@@ -15,13 +15,13 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CondensedExecutorTest {
+public class CondensedQueryExecutorTest {
 
     @Mock
     Timer mockTimer;
 
     @Mock
-    Runnable callback;
+    PGSynchronizedQuery callback;
 
     @Captor
     ArgumentCaptor<TimerTask> task;
@@ -33,18 +33,19 @@ public class CondensedExecutorTest {
 
     @Test
     public void testDelayedExecution() throws Exception {
-        CondensedExecutor uut = new CondensedExecutor(1, callback, () -> true, mockTimer);
+        CondensedQueryExecutor uut = new CondensedQueryExecutor(1, callback, () -> true, mockTimer);
 
         uut.trigger();
         verify(mockTimer).schedule(anyObject(), eq(1L));
 
         task.getValue().run();
-        verify(callback).run();
+        verify(callback).run(anyBoolean());
     }
 
     @Test
     public void testDelayedMultipleExecution() throws Exception {
-        CondensedExecutor uut = new CondensedExecutor(22, callback, () -> true, mockTimer);
+        CondensedQueryExecutor uut = new CondensedQueryExecutor(22, callback, () -> true,
+                mockTimer);
 
         verify(mockTimer, never()).schedule(anyObject(), anyLong());
 
@@ -53,13 +54,14 @@ public class CondensedExecutorTest {
         uut.trigger();
         task.getAllValues().get(1).run();
 
-        verify(callback, times(2)).run();
+        verify(callback, times(2)).run(anyBoolean());
 
     }
 
     @Test
     public void testDelayedCondensedExecution() throws Exception {
-        CondensedExecutor uut = new CondensedExecutor(104, callback, () -> true, mockTimer);
+        CondensedQueryExecutor uut = new CondensedQueryExecutor(104, callback, () -> true,
+                mockTimer);
 
         // not yet scheduled anything
         verify(mockTimer, never()).schedule(anyObject(), anyLong());
