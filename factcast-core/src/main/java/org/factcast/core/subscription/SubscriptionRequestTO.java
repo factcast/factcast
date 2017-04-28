@@ -18,6 +18,7 @@ import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.experimental.FieldDefaults;
 
 /**
@@ -94,5 +95,10 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     @Override
     public List<FactSpec> specs() {
         return Collections.unmodifiableList(specs);
+    }
+
+    @SneakyThrows
+    public String toString() {
+        return FactCastJson.writer().writeValueAsString(this);
     }
 }
