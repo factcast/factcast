@@ -60,8 +60,8 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     public void testEmptyStoreFollowNonMatching() throws Exception {
         FactObserver observer = mock(FactObserver.class);
-        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), observer);
-        Thread.sleep(200);// TODO
+        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), observer)
+                .awaitCatchup();
         verify(observer).onCatchup();
         verify(observer, never()).onComplete();
         verify(observer, never()).onError(any());
@@ -78,8 +78,9 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     public void testEmptyStoreFollowMatching() throws Exception {
         FactObserver observer = mock(FactObserver.class);
-        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), observer);
-        Thread.sleep(200);// TODO
+        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), observer)
+                .awaitCatchup();
+
         verify(observer).onCatchup();
         verify(observer, never()).onComplete();
         verify(observer, never()).onError(any());
@@ -104,8 +105,8 @@ public abstract class AbstractFactStoreTest {
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
 
         FactObserver observer = mock(FactObserver.class);
-        uut.subscribeToFacts(SubscriptionRequest.ephemeral(ANY).sinceInception(), observer);
-        Thread.sleep(200);// TODO
+        uut.subscribeToFacts(SubscriptionRequest.ephemeral(ANY).sinceInception(), observer)
+                .awaitCatchup();
 
         // nothing recieved
 
@@ -134,8 +135,7 @@ public abstract class AbstractFactStoreTest {
 
         FactObserver observer = mock(FactObserver.class);
         Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.ephemeral(ANY)
-                .sinceInception(), observer);
-        Thread.sleep(200);// TODO
+                .sinceInception(), observer).awaitCatchup();
 
         // nothing recieved
 
@@ -152,7 +152,6 @@ public abstract class AbstractFactStoreTest {
 
         subscription.close();
 
-        Thread.sleep(200);
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
         Thread.sleep(200);
@@ -175,8 +174,7 @@ public abstract class AbstractFactStoreTest {
 
         FactObserver observer = mock(FactObserver.class);
         Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.follow(ANY)
-                .sinceInception(), observer);
-        Thread.sleep(200);// TODO
+                .sinceInception(), observer).awaitCatchup();
 
         // nothing recieved
 
@@ -287,8 +285,8 @@ public abstract class AbstractFactStoreTest {
         doNothing().when(observer).onNext(af.capture());
 
         Subscription s = uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).sinceInception(),
-                observer);
-        s.awaitCatchup();
+                observer).awaitCatchup();
+
         verify(observer).onNext(any());
         assertEquals(mark, af.getValue().id());
         verify(observer).onComplete();
