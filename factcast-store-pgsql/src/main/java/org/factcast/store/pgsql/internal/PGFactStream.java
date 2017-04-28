@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 // TODO needs new name
-class PGSubscription {
+class PGFactStream {
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -40,7 +40,7 @@ class PGSubscription {
 
     private CondensedQueryExecutor condensedExecutor;
 
-    void run(SubscriptionRequestTO request, SubscriptionImpl<Fact> subscription) {
+    void connect(SubscriptionRequestTO request, SubscriptionImpl<Fact> subscription) {
         log.trace("initializing for {}", request);
 
         PGQueryBuilder q = new PGQueryBuilder(request);

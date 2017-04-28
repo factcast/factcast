@@ -51,14 +51,16 @@ class PGFactStore implements FactStore {
 
     private final Meter publishLatency;
 
+    private final PGMetricNames names = new PGMetricNames();
+
     PGFactStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory subscriptionFactory,
             MetricRegistry registry) {
         this.jdbcTemplate = jdbcTemplate;
         this.subscriptionFactory = subscriptionFactory;
         this.registry = registry;
 
-        publishFailedCounter = registry.counter(PGMetrics.FACT_PUBLISHING_FAILED);
-        publishLatency = registry.meter(PGMetrics.FACT_PUBLISHING_LATENCY);
+        publishFailedCounter = registry.counter(names.factPublishingFailed());
+        publishLatency = registry.meter(names.factPublishingLatency());
     }
 
     @Override

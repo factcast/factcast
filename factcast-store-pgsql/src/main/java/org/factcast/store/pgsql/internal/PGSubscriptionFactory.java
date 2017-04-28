@@ -30,8 +30,8 @@ class PGSubscriptionFactory {
     public Subscription subscribe(SubscriptionRequestTO req, FactStoreObserver observer) {
         final SubscriptionImpl<Fact> subscription = Subscriptions.on(observer);
 
-        PGSubscription pgsub = new PGSubscription(jdbcTemplate, eventBus, idToSerialMapper);
-        pgsub.run(req, subscription);
+        PGFactStream pgsub = new PGFactStream(jdbcTemplate, eventBus, idToSerialMapper);
+        pgsub.connect(req, subscription);
 
         return subscription.onClose(pgsub::close);
     }
