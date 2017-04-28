@@ -1,6 +1,7 @@
 package org.factcast.store.inmem;
 
 import org.factcast.core.store.FactStore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class InMemStoreConfiguration {
     @Bean
+    @ConditionalOnMissingBean(FactStore.class)
     public FactStore factStore() {
         return new InMemFactStore();
     }
