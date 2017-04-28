@@ -1,7 +1,6 @@
 package org.factcast.example.grpc;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -91,8 +90,8 @@ public class SmokeMT {
             UUID aggId = UUID.randomUUID();
 
             AtomicLong l = new AtomicLong();
-            CompletableFuture<Subscription> sub = fc.subscribeToFacts(SubscriptionRequest.follow(
-                    FactSpec.ns("default")).sinceInception(), new FactObserver() {
+            Subscription sub = fc.subscribeToFacts(SubscriptionRequest.follow(FactSpec.ns(
+                    "default")).sinceInception(), new FactObserver() {
 
                         @Override
                         public void onNext(Fact f) {
@@ -122,7 +121,7 @@ public class SmokeMT {
             Thread.sleep(500);
 
             System.out.println("closing");
-            sub.get().close();
+            sub.close();
             Thread.sleep(500);
 
             System.out.println("publishing one more");

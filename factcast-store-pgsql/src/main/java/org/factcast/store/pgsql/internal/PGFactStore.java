@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
@@ -101,10 +100,9 @@ class PGFactStore implements FactStore {
     }
 
     @Override
-    public CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO request,
+    public Subscription subscribe(@NonNull SubscriptionRequestTO request,
             @NonNull FactStoreObserver observer) {
-        return CompletableFuture.supplyAsync(() -> subscriptionFactory.subscribe(request,
-                observer));
+        return subscriptionFactory.subscribe(request, observer);
     }
 
     @Override

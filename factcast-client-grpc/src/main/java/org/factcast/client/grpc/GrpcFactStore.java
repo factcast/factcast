@@ -5,15 +5,15 @@ import static io.grpc.stub.ClientCalls.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.Subscriptions;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
@@ -84,9 +84,9 @@ class GrpcFactStore implements FactStore {
     }
 
     @Override
-    public CompletableFuture<Subscription> subscribe(@NonNull SubscriptionRequestTO req,
+    public Subscription subscribe(@NonNull SubscriptionRequestTO req,
             @NonNull FactStoreObserver observer) {
-        CountDownLatch latch = new CountDownLatch(1);
+        SubscriptionImpl<Fact> subscription = Subscriptions.on(observer);
 
         final MSG_SubscriptionRequest request = converter.toProto(req);
         final StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new StreamObserver<FactStoreProto.MSG_Notification>() {
@@ -98,33 +98,30 @@ class GrpcFactStore implements FactStore {
 
                 switch (f.getType()) {
                 case Catchup:
-                    latch.countDown();
                     log.debug("received onCatchup signal");
-                    observer.onCatchup();
+                    subscription.notifyCatchup();
                     break;
                 case Complete:
-                    latch.countDown();
                     log.debug("received onComplete signal");
-                    observer.onComplete();
+                    subscription.notifyComplete();
                     break;
                 case Error:
-                    latch.countDown();
                     log.debug("received onError signal");
-                    observer.onError(new RuntimeException("Server-side Error: \n" + f.getError()));
+                    subscription.notifyError(new RuntimeException("Server-side Error: \n" + f
+                            .getError()));
                     break;
 
                 case Fact:
-                    observer.onNext(converter.fromProto(f.getFact()));
+                    subscription.notifyElement(converter.fromProto(f.getFact()));
                     break;
 
                 case Id:
                     // wrap id in a fact
-                    observer.onNext(new IdOnlyFact(converter.fromProto(f.getId())));
+                    subscription.notifyElement(new IdOnlyFact(converter.fromProto(f.getId())));
                     break;
 
                 case UNRECOGNIZED:
-                    latch.countDown();
-                    observer.onError(new RuntimeException(
+                    subscription.notifyError(new RuntimeException(
                             "Unrecognized notification type. THIS IS A BUG!"));
                     break;
                 }
@@ -132,13 +129,13 @@ class GrpcFactStore implements FactStore {
 
             @Override
             public void onError(Throwable t) {
-                observer.onError(t);
+                subscription.notifyError(t);
 
             }
 
             @Override
             public void onCompleted() {
-                observer.onComplete();
+                subscription.notifyComplete();
             }
         };
 
@@ -148,16 +145,7 @@ class GrpcFactStore implements FactStore {
 
         asyncServerStreamingCall(call, request, responseObserver);
 
-        // wait until catchup
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            cancel(call);
-            return CompletableFuture.completedFuture(() -> {
-            });
-        }
-
-        return CompletableFuture.completedFuture(() -> {
+        return subscription.onClose(() -> {
             cancel(call);
         });
     }

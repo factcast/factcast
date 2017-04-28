@@ -3,7 +3,6 @@ package org.factcast.client.cache;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
@@ -43,14 +42,12 @@ public class CachingFactCast implements FactCast {
     }
 
     @Override
-    public CompletableFuture<Subscription> subscribeToIds(SubscriptionRequest req,
-            IdObserver observer) {
+    public Subscription subscribeToIds(SubscriptionRequest req, IdObserver observer) {
         return delegate.subscribeToIds(req, observer);
     }
 
     @Override
-    public CompletableFuture<Subscription> subscribeToFacts(SubscriptionRequest req,
-            FactObserver observer) {
+    public Subscription subscribeToFacts(SubscriptionRequest req, FactObserver observer) {
 
         log.debug("changing Fact Subscription to Id subscription for caching single Fact lookups");
 

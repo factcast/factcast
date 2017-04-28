@@ -7,8 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactStoreObserver;
-import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -24,7 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 // TODO document properly
 @Slf4j
 @RequiredArgsConstructor
-class PGSubscription implements Subscription {
+// TODO needs new name
+class PGSubscription {
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -40,7 +40,7 @@ class PGSubscription implements Subscription {
 
     private CondensedQueryExecutor condensedExecutor;
 
-    void run(SubscriptionRequestTO request, FactStoreObserver observer) {
+    void run(SubscriptionRequestTO request, SubscriptionImpl<Fact> subscription) {
         log.trace("initializing for {}", request);
 
         PGQueryBuilder q = new PGQueryBuilder(request);
@@ -49,11 +49,11 @@ class PGSubscription implements Subscription {
 
         String sql = q.createSQL();
         PreparedStatementSetter setter = q.createStatementSetter(serial);
-        RowCallbackHandler rsHandler = new FactRowCallbackHandler(observer, new PGPostQueryMatcher(
-                request.specs()));
+        RowCallbackHandler rsHandler = new FactRowCallbackHandler(subscription,
+                new PGPostQueryMatcher(request.specs()));
 
         PGSynchronizedQuery query = new PGSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler);
-        catchupAndFollow(request, observer, query);
+        catchupAndFollow(request, subscription, query);
     }
 
     private void initializeSerialToStartAfter(SubscriptionRequestTO request) {
@@ -62,7 +62,7 @@ class PGSubscription implements Subscription {
         log.trace("starting to stream from id: {}", startingSerial);
     }
 
-    private void catchupAndFollow(SubscriptionRequest request, FactStoreObserver factStoreObserver,
+    private void catchupAndFollow(SubscriptionRequest request, SubscriptionImpl<Fact> subscription,
             PGSynchronizedQuery query) {
 
         stats.reset();
@@ -77,7 +77,7 @@ class PGSubscription implements Subscription {
         // propagate catchup
         if (isConnected()) {
             log.trace("signaling catchup");
-            factStoreObserver.onCatchup();
+            subscription.notifyCatchup();
             stats.dumpForCatchup();
         }
 
@@ -113,7 +113,7 @@ class PGSubscription implements Subscription {
 
         } else {
             log.debug("Complete");
-            factStoreObserver.onComplete();
+            subscription.notifyComplete();
             // FIXME disc.?
 
         }
@@ -138,8 +138,7 @@ class PGSubscription implements Subscription {
         return jdbcTemplate.queryForObject(PGConstants.SELECT_LATEST_SER, Long.class).longValue();
     }
 
-    @Override
-    public void close() throws Exception {
+    public void close() {
         log.info("Disconnecting");
         disconnected.set(true);
 
@@ -163,7 +162,7 @@ class PGSubscription implements Subscription {
     @RequiredArgsConstructor
     private class FactRowCallbackHandler implements RowCallbackHandler {
 
-        final FactStoreObserver observer;
+        final SubscriptionImpl<Fact> observer;
 
         final PGPostQueryMatcher postQueryMatcher;
 
@@ -177,7 +176,7 @@ class PGSubscription implements Subscription {
                 if (postQueryMatcher.test(f)) {
                     stats.notifyHit();
                     try {
-                        observer.onNext(f);
+                        observer.notifyElement(f);
                     } catch (Throwable e) {
                         // debug level, because it happens regularly on
                         // disconnecting clients.

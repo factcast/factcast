@@ -11,4 +11,8 @@ package org.factcast.core.subscription;
  */
 public interface Subscription extends AutoCloseable {
 
+    void awaitCatchup() throws SubscriptionCancelledException;
+
+    void awaitComplete() throws SubscriptionCancelledException;
+
 }

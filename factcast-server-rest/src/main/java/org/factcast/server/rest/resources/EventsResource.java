@@ -2,8 +2,6 @@ package org.factcast.server.rest.resources;
 
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -49,7 +47,7 @@ public class EventsResource implements JerseyResource {
 
     private final FactStore factStore;
 
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     private final EventsSchemaCreator schemaCreator;
 
@@ -68,13 +66,9 @@ public class EventsResource implements JerseyResource {
         FactStoreObserver observer = eventObserverFactory.createFor(eventOutput, linkFactoryContext
                 .getBaseUri(), subsup);
 
-        CompletableFuture<Subscription> sub = factStore.subscribe(req, observer);
-        try {
-            subsup.set(sub.get());
-        } catch (InterruptedException | ExecutionException e) {
-            log.error("error while getting sub from future", e);
-            throw new WebApplicationException(500);
-        }
+        Subscription sub = factStore.subscribe(req, observer);
+        subsup.set(sub);
+
         return eventOutput;
     }
 

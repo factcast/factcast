@@ -3,14 +3,10 @@ package org.factcast.server.grpc.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
@@ -92,16 +88,15 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         SubscriptionRequestTO req = converter.fromProto(request);
         log.trace("creating subscription for {}", req);
         final boolean idOnly = req.idOnly();
-        final AtomicReference<CompletableFuture<Subscription>> ref = new AtomicReference<>();
 
-        ref.set(store.subscribe(req, new ObserverBridge(this, resp) {
+        store.subscribe(req, new ObserverBridge(this, resp) {
 
             @Override
             public void onNext(Fact f) {
                 resp.onNext(idOnly ? converter.toNotification(f.id())
                         : converter.toNotification(f));
             }
-        }));
+        });
 
     }
 }

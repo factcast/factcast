@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
  *
  * @param <T>
  */
-public interface FactStoreObserver {
+public interface FactStoreObserver extends GenericObserver<Fact> {
 
     void onNext(Fact fact);
 

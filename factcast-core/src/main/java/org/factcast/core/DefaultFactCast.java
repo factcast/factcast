@@ -3,7 +3,6 @@ package org.factcast.core;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.factcast.core.store.FactStore;
@@ -32,7 +31,7 @@ class DefaultFactCast implements FactCast {
     private final FactStore store;
 
     @Override
-    public CompletableFuture<Subscription> subscribeToFacts(@NonNull SubscriptionRequest req,
+    public Subscription subscribeToFacts(@NonNull SubscriptionRequest req,
             @NonNull FactObserver observer) {
         final Function<Fact, Fact> projection = Function.identity();
         return store.subscribe(SubscriptionRequestTO.forFacts(req), new ObserverBridge<Fact>(
@@ -40,7 +39,7 @@ class DefaultFactCast implements FactCast {
     }
 
     @Override
-    public CompletableFuture<Subscription> subscribeToIds(@NonNull SubscriptionRequest req,
+    public Subscription subscribeToIds(@NonNull SubscriptionRequest req,
             @NonNull IdObserver observer) {
         final Function<Fact, UUID> projection = f -> f.id();
         return store.subscribe(SubscriptionRequestTO.forIds(req), new ObserverBridge<UUID>(observer,

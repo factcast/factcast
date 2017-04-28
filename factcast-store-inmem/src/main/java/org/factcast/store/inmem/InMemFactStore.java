@@ -7,7 +7,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,7 +20,9 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactSpecMatcher;
 import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.Subscriptions;
 import org.springframework.beans.factory.DisposableBean;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -73,7 +74,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
     private final ExecutorService executorService;
 
-    private class InMemSubscription implements Subscription, Consumer<Fact> {
+    private class InMemSubscription implements Consumer<Fact> {
         private final Predicate<Fact> matcher;
 
         final Consumer<Fact> consumer;
@@ -83,7 +84,6 @@ public class InMemFactStore implements FactStore, DisposableBean {
             matcher = FactSpecMatcher.matchesAnyOf(request.specs());
         }
 
-        @Override
         public void close() {
             synchronized (InMemFactStore.this) {
                 activeSubscriptions.remove(this);
@@ -126,25 +126,30 @@ public class InMemFactStore implements FactStore, DisposableBean {
     }
 
     @Override
-    public synchronized CompletableFuture<Subscription> subscribe(SubscriptionRequestTO request,
+    public synchronized Subscription subscribe(SubscriptionRequestTO request,
             FactStoreObserver observer) {
 
+        // FIXME
         InMemSubscription s = new InMemSubscription(request, c -> observer.onNext(c));
-        if (!request.ephemeral()) {
-            store.values().stream().forEach(s);
-        }
+        SubscriptionImpl<Fact> subscription = Subscriptions.on(observer);
 
-        observer.onCatchup();
+        executorService.submit(() -> {
+            if (!request.ephemeral()) {
+                store.values().stream().forEach(f -> {
+                    if (s.matches(f)) {
+                        subscription.notifyElement(f);
+                    }
+                });
+            }
+            subscription.notifyCatchup();
+            if (request.continous()) {
+                activeSubscriptions.add(s);
+            } else {
+                subscription.notifyComplete();
+            }
+        });
 
-        if (request.continous()) {
-            activeSubscriptions.add(s);
-            return CompletableFuture.completedFuture(s);
-        } else {
-            observer.onComplete();
-            return CompletableFuture.completedFuture(() -> {
-            });
-        }
-
+        return subscription.onClose(s::close);
     }
 
     @Override

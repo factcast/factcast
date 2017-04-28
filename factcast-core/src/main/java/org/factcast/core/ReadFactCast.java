@@ -2,7 +2,6 @@ package org.factcast.core;
 
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.subscription.FactObserver;
 import org.factcast.core.subscription.IdObserver;
@@ -19,11 +18,10 @@ import lombok.NonNull;
  *
  */
 public interface ReadFactCast {
-    CompletableFuture<Subscription> subscribeToFacts(@NonNull SubscriptionRequest request,
+    Subscription subscribeToFacts(@NonNull SubscriptionRequest request,
             @NonNull FactObserver observer);
 
-    CompletableFuture<Subscription> subscribeToIds(@NonNull SubscriptionRequest request,
-            @NonNull IdObserver observer);
+    Subscription subscribeToIds(@NonNull SubscriptionRequest request, @NonNull IdObserver observer);
 
     Optional<Fact> fetchById(@NonNull UUID id);
 }
