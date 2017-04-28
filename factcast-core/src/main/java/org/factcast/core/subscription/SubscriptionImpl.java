@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.factcast.core.subscription.observer.GenericObserver;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -51,6 +52,7 @@ public final class SubscriptionImpl<T> implements Subscription {
         return this;
     }
 
+    @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
     public void notifyCatchup() {
         observer.onCatchup();
         if (!catchup.isDone()) {
@@ -58,6 +60,7 @@ public final class SubscriptionImpl<T> implements Subscription {
         }
     }
 
+    @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
     public void notifyComplete() {
         observer.onComplete();
         if (!complete.isDone()) {

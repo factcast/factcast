@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,8 +57,8 @@ public class FactCastInfinispanConfiguration {
         return new SpringEmbeddedCacheManager(new DefaultCacheManager());
     }
 
-    @RequiredArgsConstructor
-    static class InfinispanInitialization {
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    private static class InfinispanInitialization {
 
         final SpringEmbeddedCacheManager cm;
 

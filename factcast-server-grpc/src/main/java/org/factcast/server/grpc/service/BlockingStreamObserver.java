@@ -39,8 +39,6 @@ class BlockingStreamObserver<T> implements StreamObserver<T> {
         synchronized (lock) {
             while (!delegate.isReady()) {
                 try {
-                    System.out.println("locked");
-
                     while (!delegate.isCancelled() && !delegate.isReady()) {
                         log.debug("slow client, waiting");
                         lock.wait(30000);

@@ -89,7 +89,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         log.trace("creating subscription for {}", req);
         final boolean idOnly = req.idOnly();
 
-        store.subscribe(req, new GrpcObserverAdapter(this, resp) {
+        store.subscribe(req, new GrpcObserverAdapter(resp) {
 
             @Override
             public void onNext(Fact f) {

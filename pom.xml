@@ -40,6 +40,16 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
 
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>findbugs-maven-plugin</artifactId>
+				<version>3.0.5-SNAPSHOT</version>
+			</plugin>
+		</plugins>
+	</reporting>
+
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -199,7 +209,8 @@
 		</resources>
 		<pluginManagement>
 			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>

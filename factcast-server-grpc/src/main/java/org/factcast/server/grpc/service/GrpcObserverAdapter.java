@@ -13,13 +13,9 @@ abstract class GrpcObserverAdapter implements FactObserver {
 
     final ProtoConverter converter = new ProtoConverter();
 
-    final FactStoreGrpcService factStoreGrpcService;
-
     final StreamObserver<MSG_Notification> observer;
 
-    public GrpcObserverAdapter(FactStoreGrpcService factStoreGrpcService,
-            StreamObserver<MSG_Notification> grpcObserver) {
-        this.factStoreGrpcService = factStoreGrpcService;
+    public GrpcObserverAdapter(StreamObserver<MSG_Notification> grpcObserver) {
         observer = grpcObserver;
     }
 
