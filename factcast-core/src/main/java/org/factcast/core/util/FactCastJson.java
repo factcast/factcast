@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
 
 /**
  * Statically shared ObjectMapper reader & writer to be used within FactCast for
@@ -19,7 +20,7 @@ import lombok.SneakyThrows;
  * @author uwe.schaefer@mercateo.com
  *
  */
-
+@UtilityClass
 public class FactCastJson {
     private final static ObjectMapper objectMapper = new ObjectMapper();
 

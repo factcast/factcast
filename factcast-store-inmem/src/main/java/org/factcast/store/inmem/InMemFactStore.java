@@ -16,13 +16,13 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpecMatcher;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.FactSpecMatcher;
-import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.Subscriptions;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.springframework.beans.factory.DisposableBean;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -127,7 +127,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
     @Override
     public synchronized Subscription subscribe(SubscriptionRequestTO request,
-            FactStoreObserver observer) {
+            FactObserver observer) {
 
         // FIXME
         InMemSubscription s = new InMemSubscription(request, c -> observer.onNext(c));

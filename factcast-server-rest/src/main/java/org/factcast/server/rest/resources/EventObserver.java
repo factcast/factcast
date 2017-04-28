@@ -8,8 +8,8 @@ import java.util.function.Supplier;
 import javax.ws.rs.core.MediaType;
 
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.OutboundEvent;
 
@@ -24,7 +24,7 @@ import lombok.val;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class EventObserver implements FactStoreObserver {
+public class EventObserver implements FactObserver {
     private final EventOutput eventOutput;
 
     private final LinkFactory<EventsResource> linkFatory;

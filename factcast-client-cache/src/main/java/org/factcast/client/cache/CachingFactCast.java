@@ -6,10 +6,10 @@ import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.core.subscription.FactObserver;
-import org.factcast.core.subscription.IdObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.IdObserver;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -18,11 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Integrates local cache for Facts.
  * 
- * Note that this Wrapper does necessarily not make your consumers faster, as
- * the local caching (might involve IO!) and the increased network activity will
- * have significant impact. Local caching is a good strategy, read the same
- * Event very often by either restarting Views using non-snapshot transient
- * views, or have many local consumers that share interest in the same Facts.
+ * Note that this Wrapper does not necessarily make your consumers faster, as
+ * the local caching might involve IO. Local caching is a good strategy where,
+ * the same Fact is read very often by either restarting Consumers using
+ * non-snapshot transient state, or where there are many local consumers that
+ * share interest in the same Facts.
  * 
  * @author uwe.schaefer@mercateo.com
  *

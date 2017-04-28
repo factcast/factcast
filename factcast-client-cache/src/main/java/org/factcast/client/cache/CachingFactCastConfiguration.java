@@ -5,6 +5,13 @@ import org.factcast.core.store.FactStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Spring configuration class that provides a CachingFactCast by wrapping a
+ * FactCast instance.
+ * 
+ * @author <uwe.schaefer@mercateo.com>
+ *
+ */
 @Configuration
 public class CachingFactCastConfiguration {
 

@@ -1,4 +1,4 @@
-package org.factcast.core.subscription;
+package org.factcast.core.spec;
 
 import static org.junit.Assert.*;
 

@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Import;
 import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 
 /**
- * Provides a GrpcFactStore as a FactStore impl
+ * Provides a GrpcFactStore as a FactStore implementation.
  * 
  * @author uwe.schaefer@mercateo.com
  *

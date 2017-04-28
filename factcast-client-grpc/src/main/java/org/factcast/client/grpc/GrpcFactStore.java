@@ -9,11 +9,11 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.Subscriptions;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
@@ -28,9 +28,7 @@ import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.stub.StreamObserver;
-import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 
@@ -45,11 +43,11 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 @Slf4j
 class GrpcFactStore implements FactStore {
 
-    private static final String CHANNEL_NAME = "factstore";
+    static final String CHANNEL_NAME = "factstore";
 
-    private final RemoteFactStoreBlockingStub blockingStub;
+    final RemoteFactStoreBlockingStub blockingStub;
 
-    private final RemoteFactStoreStub stub;
+    final RemoteFactStoreStub stub;
 
     GrpcFactStore(@NonNull AddressChannelFactory channelFactory) {
         Channel channel = channelFactory.createChannel(CHANNEL_NAME);
@@ -85,7 +83,7 @@ class GrpcFactStore implements FactStore {
 
     @Override
     public Subscription subscribe(@NonNull SubscriptionRequestTO req,
-            @NonNull FactStoreObserver observer) {
+            @NonNull FactObserver observer) {
         SubscriptionImpl<Fact> subscription = Subscriptions.on(observer);
 
         final MSG_SubscriptionRequest request = converter.toProto(req);
@@ -152,43 +150,5 @@ class GrpcFactStore implements FactStore {
 
     private void cancel(final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call) {
         call.cancel("Client is no longer interested", null);
-    }
-
-    @RequiredArgsConstructor
-    final static class IdOnlyFact implements Fact {
-        @Getter
-        @NonNull
-        final UUID id;
-
-        @Override
-        public String ns() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public String type() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public UUID aggId() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public String jsonHeader() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public String jsonPayload() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public String meta(String key) {
-            throw new UnsupportedOperationException();
-        }
-
     }
 }

@@ -5,9 +5,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.FactObserver;
 
 import lombok.NonNull;
 
@@ -27,8 +27,7 @@ public interface FactStore {
 
     public void publish(@NonNull List<? extends Fact> factsToPublish);
 
-    Subscription subscribe(@NonNull SubscriptionRequestTO request,
-            @NonNull FactStoreObserver observer);
+    Subscription subscribe(@NonNull SubscriptionRequestTO request, @NonNull FactObserver observer);
 
     Optional<Fact> fetchById(@NonNull UUID id);
 

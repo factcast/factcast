@@ -1,10 +1,11 @@
-package org.factcast.core.subscription;
+package org.factcast.core.spec;
 
 import static org.junit.Assert.*;
 
 import org.factcast.core.wellknown.MarkFact;
 import org.junit.Test;
 
+//TODO remove?
 public class FactSpecTest {
 
     @Test

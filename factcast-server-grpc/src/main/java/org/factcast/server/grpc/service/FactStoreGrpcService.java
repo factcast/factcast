@@ -39,7 +39,7 @@ import net.devh.springboot.autoconfigure.grpc.server.GrpcService;
 @SuppressWarnings("all")
 public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
-    private final FactStore store;
+    final FactStore store;
 
     final ProtoConverter converter = new ProtoConverter();
 
@@ -89,7 +89,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         log.trace("creating subscription for {}", req);
         final boolean idOnly = req.idOnly();
 
-        store.subscribe(req, new ObserverBridge(this, resp) {
+        store.subscribe(req, new GrpcObserverAdapter(this, resp) {
 
             @Override
             public void onNext(Fact f) {

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.FluentSubscriptionRequest.SpecBuilder;
 
 import com.google.common.base.Preconditions;

@@ -1,6 +1,6 @@
 package org.factcast.server.grpc.service;
 
-import org.factcast.core.subscription.FactStoreObserver;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 
@@ -9,15 +9,15 @@ import lombok.extern.slf4j.Slf4j;
 
 //TODO document
 @Slf4j
-abstract class ObserverBridge implements FactStoreObserver {
+abstract class GrpcObserverAdapter implements FactObserver {
 
-    private final ProtoConverter converter = new ProtoConverter();
+    final ProtoConverter converter = new ProtoConverter();
 
-    private final FactStoreGrpcService factStoreGrpcService;
+    final FactStoreGrpcService factStoreGrpcService;
 
-    private final StreamObserver<MSG_Notification> observer;
+    final StreamObserver<MSG_Notification> observer;
 
-    public ObserverBridge(FactStoreGrpcService factStoreGrpcService,
+    public GrpcObserverAdapter(FactStoreGrpcService factStoreGrpcService,
             StreamObserver<MSG_Notification> grpcObserver) {
         this.factStoreGrpcService = factStoreGrpcService;
         observer = grpcObserver;

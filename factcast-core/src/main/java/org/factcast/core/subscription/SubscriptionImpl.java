@@ -3,6 +3,8 @@ package org.factcast.core.subscription;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import org.factcast.core.subscription.observer.GenericObserver;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -30,21 +32,23 @@ public final class SubscriptionImpl<T> implements Subscription {
     }
 
     @Override
-    public void awaitCatchup() throws SubscriptionCancelledException {
+    public Subscription awaitCatchup() throws SubscriptionCancelledException {
         try {
             catchup.get();
         } catch (InterruptedException | ExecutionException e) {
             throw new SubscriptionCancelledException(e);
         }
+        return this;
     }
 
     @Override
-    public void awaitComplete() throws SubscriptionCancelledException {
+    public Subscription awaitComplete() throws SubscriptionCancelledException {
         try {
             complete.get();
         } catch (InterruptedException | ExecutionException e) {
             throw new SubscriptionCancelledException(e);
         }
+        return this;
     }
 
     public void notifyCatchup() {

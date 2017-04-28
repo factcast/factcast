@@ -6,8 +6,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactSpec;
-import org.factcast.core.subscription.FactSpecMatcher;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.core.spec.FactSpecMatcher;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;

@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

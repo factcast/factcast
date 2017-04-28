@@ -1,4 +1,4 @@
-package org.factcast.core.subscription;
+package org.factcast.core.spec;
 
 import java.util.Collection;
 import java.util.List;
@@ -23,20 +23,20 @@ import lombok.SneakyThrows;
  */
 public final class FactSpecMatcher implements Predicate<Fact> {
 
-    private static final ScriptEngineManager engineManager = new ScriptEngineManager();
+    static final ScriptEngineManager engineManager = new ScriptEngineManager();
 
     @NonNull
-    private final String ns;
+    final String ns;
 
-    private final String type;
+    final String type;
 
-    private final UUID aggId;
+    final UUID aggId;
 
-    private final Map<String, String> meta;
+    final Map<String, String> meta;
 
-    private final String script;
+    final String script;
 
-    private final ScriptEngine scriptEngine;
+    final ScriptEngine scriptEngine;
 
     public FactSpecMatcher(@NonNull FactSpec spec) {
 

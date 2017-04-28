@@ -17,9 +17,9 @@ import javax.ws.rs.core.MediaType;
 import org.factcast.core.DefaultFact.Header;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.server.rest.resources.cache.Cacheable;
 import org.factcast.server.rest.resources.cache.NoCache;
@@ -63,7 +63,7 @@ public class EventsResource implements JerseyResource {
         final EventOutput eventOutput = new EventOutput();
         SubscriptionRequestTO req = subscriptionRequestParams.toRequest(objectMapper);
         SetableSupplier<Subscription> subsup = new SetableSupplier<>();
-        FactStoreObserver observer = eventObserverFactory.createFor(eventOutput, linkFactoryContext
+        FactObserver observer = eventObserverFactory.createFor(eventOutput, linkFactoryContext
                 .getBaseUri(), subsup);
 
         Subscription sub = factStore.subscribe(req, observer);

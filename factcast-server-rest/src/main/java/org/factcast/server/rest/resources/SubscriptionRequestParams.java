@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import javax.ws.rs.QueryParam;
 
-import org.factcast.core.subscription.FactSpec;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.server.rest.resources.converter.JsonParam;
 import org.hibernate.validator.constraints.NotEmpty;

@@ -3,10 +3,10 @@ package org.factcast.core;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.factcast.core.subscription.FactObserver;
-import org.factcast.core.subscription.IdObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.IdObserver;
 
 import lombok.NonNull;
 

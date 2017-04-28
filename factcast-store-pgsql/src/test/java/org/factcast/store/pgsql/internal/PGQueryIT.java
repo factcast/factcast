@@ -9,11 +9,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactSpec;
-import org.factcast.core.subscription.FactStoreObserver;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,7 +73,7 @@ public class PGQueryIT {
         SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(
                 DEFAULT_SPEC).sinceInception());
 
-        FactStoreObserver c = mock(FactStoreObserver.class);
+        FactObserver c = mock(FactObserver.class);
 
         pq.subscribe(req, c);
 
@@ -96,7 +96,7 @@ public class PGQueryIT {
         SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(
                 DEFAULT_SPEC).sinceInception());
 
-        FactStoreObserver c = mock(FactStoreObserver.class);
+        FactObserver c = mock(FactObserver.class);
 
         pq.subscribe(req, c);
 
@@ -115,7 +115,7 @@ public class PGQueryIT {
         SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(
                 DEFAULT_SPEC).sinceInception());
 
-        FactStoreObserver c = mock(FactStoreObserver.class);
+        FactObserver c = mock(FactObserver.class);
 
         pq.subscribe(req, c);
 
@@ -139,7 +139,7 @@ public class PGQueryIT {
 
         SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(
                 DEFAULT_SPEC).sinceInception());
-        FactStoreObserver c = mock(FactStoreObserver.class);
+        FactObserver c = mock(FactObserver.class);
         doAnswer(i -> {
             sleep(50);
             return null;
@@ -186,7 +186,7 @@ public class PGQueryIT {
 
         SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(
                 DEFAULT_SPEC).sinceInception());
-        FactStoreObserver c = mock(FactStoreObserver.class);
+        FactObserver c = mock(FactObserver.class);
 
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
@@ -217,7 +217,7 @@ public class PGQueryIT {
         SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(
                 DEFAULT_SPEC).sinceInception());
 
-        FactStoreObserver c = mock(FactStoreObserver.class);
+        FactObserver c = mock(FactObserver.class);
 
         insertTestFact(TestHeader.create());
 

@@ -9,9 +9,9 @@ import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.FactStoreObserver;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
@@ -103,7 +103,7 @@ class PGFactStore implements FactStore {
 
     @Override
     public Subscription subscribe(@NonNull SubscriptionRequestTO request,
-            @NonNull FactStoreObserver observer) {
+            @NonNull FactObserver observer) {
         return subscriptionFactory.subscribe(request, observer);
     }
 
