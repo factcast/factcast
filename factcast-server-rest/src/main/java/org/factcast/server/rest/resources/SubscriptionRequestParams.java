@@ -7,6 +7,7 @@ import javax.ws.rs.QueryParam;
 
 import org.factcast.core.subscription.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.server.rest.resources.converter.JsonParam;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -25,6 +26,7 @@ public class SubscriptionRequestParams {
 
     @NotEmpty
     @QueryParam("factSpec")
+    @JsonParam
     private List<FactSpec> factSpecs;
 
     public SubscriptionRequestTO toRequest(ObjectMapper objectMapper) {
