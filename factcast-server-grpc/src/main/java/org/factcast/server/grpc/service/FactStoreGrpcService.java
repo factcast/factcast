@@ -3,6 +3,7 @@ package org.factcast.server.grpc.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
@@ -44,6 +45,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     final ProtoConverter converter = new ProtoConverter();
 
+    private final AtomicLong subscriptionId = new AtomicLong();
+
     @Override
     public void fetchById(MSG_UUID request, StreamObserver<MSG_OptionalFact> responseObserver) {
         try {
@@ -82,16 +85,18 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     @Override
     public void subscribe(MSG_SubscriptionRequest request,
             StreamObserver<MSG_Notification> responseObserver) {
-
-        BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(
-                (ServerCallStreamObserver) responseObserver);
-
         SubscriptionRequestTO req = converter.fromProto(request);
-        log.trace("creating subscription for {}", req);
+        String newId = "sub#" + subscriptionId.incrementAndGet();
+        log.info("subscribing {} for {} defined as {}", newId, req, req.dump());
+        req.subscriptionId(newId);
+        BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(req
+                .subscriptionId(), (ServerCallStreamObserver) responseObserver);
+
         final boolean idOnly = req.idOnly();
 
-        Subscription subscription = store.subscribe(req, new GrpcObserverAdapter(resp, f -> idOnly
-                ? converter.toNotification(f.id()) : converter.toNotification(f)));
+        Subscription subscription = store.subscribe(req, new GrpcObserverAdapter(req.toString(),
+                resp, f -> idOnly ? converter.toNotification(f.id())
+                        : converter.toNotification(f)));
         // TODO anything todo with the subscription instance?
     }
 }

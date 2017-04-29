@@ -6,8 +6,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
-import org.factcast.core.spec.FactSpec;
 import org.factcast.core.spec.FactSpecMatcher;
+import org.factcast.core.subscription.SubscriptionRequest;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -29,13 +29,13 @@ class PGPostQueryMatcher implements Predicate<Fact> {
 
     final List<FactSpecMatcher> matchers = new LinkedList<>();
 
-    public PGPostQueryMatcher(@NonNull List<FactSpec> specs) {
-        canBeSkipped = !specs.stream().anyMatch(s -> s.jsFilterScript() != null);
+    public PGPostQueryMatcher(@NonNull SubscriptionRequest req) {
+        canBeSkipped = !req.specs().stream().anyMatch(s -> s.jsFilterScript() != null);
         if (canBeSkipped) {
-            log.trace("post query filtering has been disabled");
+            log.trace("{} post query filtering has been disabled", req);
         } else {
-            this.matchers.addAll(specs.stream().map(s -> new FactSpecMatcher(s)).collect(Collectors
-                    .toList()));
+            this.matchers.addAll(req.specs().stream().map(s -> new FactSpecMatcher(s)).collect(
+                    Collectors.toList()));
         }
     }
 

@@ -24,20 +24,22 @@ final class GrpcObserverAdapter implements FactObserver {
 
     final ProtoConverter converter = new ProtoConverter();
 
+    final String id;
+
     final StreamObserver<MSG_Notification> observer;
 
     final Function<Fact, MSG_Notification> projection;
 
     @Override
     public void onComplete() {
-        log.info("onComplete – sending complete notification");
+        log.info("{} onComplete – sending complete notification", id);
         observer.onNext(converter.toCompleteNotification());
         tryComplete();
     }
 
     @Override
     public void onError(Throwable e) {
-        log.warn("onError – sending Error notification {}", e);
+        log.warn("{} onError – sending Error notification {}", id, e);
         observer.onError(e);
         tryComplete();
     }
@@ -46,13 +48,13 @@ final class GrpcObserverAdapter implements FactObserver {
         try {
             observer.onCompleted();
         } catch (Throwable e) {
-            log.trace("Expected exception on completion ", e);
+            log.trace("{} Expected exception on completion ", id, e);
         }
     }
 
     @Override
     public void onCatchup() {
-        log.info("onCatchup – sending catchup notification");
+        log.info("{} onCatchup – sending catchup notification", id);
         observer.onNext(converter.toCatchupNotification());
     }
 

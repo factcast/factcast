@@ -90,15 +90,15 @@ public class SmokeMT {
             UUID aggId = UUID.randomUUID();
 
             AtomicLong l = new AtomicLong();
-            Subscription sub = fc.subscribeToFacts(SubscriptionRequest.follow(FactSpec.ns(
-                    "default")).sinceInception(), new FactObserver() {
+            Subscription sub = fc.subscribeToFacts(SubscriptionRequest.follow(FactSpec.ns("smoke"))
+                    .sinceInception(), new FactObserver() {
 
                         @Override
                         public void onNext(Fact f) {
                             l.incrementAndGet();
                             if (Math.random() < .01) {
                                 try {
-                                    Thread.sleep(10000);
+                                    Thread.sleep(100);
                                 } catch (InterruptedException e) {
                                     // TODO Auto-generated catch block
                                     e.printStackTrace();

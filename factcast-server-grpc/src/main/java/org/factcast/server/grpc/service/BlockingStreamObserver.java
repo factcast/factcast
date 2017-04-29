@@ -1,7 +1,5 @@
 package org.factcast.server.grpc.service;
 
-import java.util.UUID;
-
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +16,10 @@ class BlockingStreamObserver<T> implements StreamObserver<T> {
 
     final Object lock = new Object();
 
-    BlockingStreamObserver(ServerCallStreamObserver<T> delegate) {
+    final String id;
+
+    BlockingStreamObserver(String id, ServerCallStreamObserver<T> delegate) {
+        this.id = id;
         this.delegate = delegate;
         this.delegate.setOnReadyHandler(this::wakeup);
         this.delegate.setOnCancelHandler(this::wakeup);
@@ -37,10 +38,9 @@ class BlockingStreamObserver<T> implements StreamObserver<T> {
         synchronized (lock) {
 
             if (!delegate.isReady()) {
-                UUID ticket = UUID.randomUUID();
+
                 for (int i = 1; i <= retry; i++) {
-                    log.debug("Channel not ready. Slow client? Waiting. Ticket: {}, Attempt: {}",
-                            ticket, i);
+                    log.debug("{} channel not ready. Slow client? Attempt: {}/{}", id, i, retry);
                     try {
                         lock.wait(waitTime);
                     } catch (InterruptedException meh) {
@@ -49,11 +49,11 @@ class BlockingStreamObserver<T> implements StreamObserver<T> {
                         break;
                     }
                     if (delegate.isCancelled()) {
-                        throw new RuntimeException("channel was cancelled. Ticket: " + ticket);
+                        throw new RuntimeException("channel was cancelled.");
                     }
                 }
                 if (!delegate.isReady()) {
-                    throw new RuntimeException("channel not coming back. Ticket: " + ticket);
+                    throw new RuntimeException("channel not coming back.");
                 }
             }
         }

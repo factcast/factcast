@@ -16,6 +16,7 @@ import org.springframework.jdbc.core.RowCallbackHandler;
 
 import com.google.common.eventbus.EventBus;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,36 +39,36 @@ class PGFactStream {
 
     final AtomicBoolean disconnected = new AtomicBoolean(false);
 
-    final PGFilteringStats stats = new PGFilteringStats();
-
     private CondensedQueryExecutor condensedExecutor;
 
-    void connect(SubscriptionRequestTO request) {
-        log.trace("initializing for {}", request);
+    private SubscriptionRequestTO request;
+
+    void connect(@NonNull SubscriptionRequestTO request) {
+
+        this.request = request;
+        log.debug("{} connecting subscription {}", request, request.dump());
 
         PGQueryBuilder q = new PGQueryBuilder(request);
 
-        initializeSerialToStartAfter(request);
+        initializeSerialToStartAfter();
 
         String sql = q.createSQL();
         PreparedStatementSetter setter = q.createStatementSetter(serial);
         RowCallbackHandler rsHandler = new FactRowCallbackHandler(subscription,
-                new PGPostQueryMatcher(request.specs()));
+                new PGPostQueryMatcher(request));
 
         PGSynchronizedQuery query = new PGSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler);
         catchupAndFollow(request, subscription, query);
     }
 
-    private void initializeSerialToStartAfter(SubscriptionRequestTO request) {
+    private void initializeSerialToStartAfter() {
         Long startingSerial = request.startingAfter().map(idToSerMapper::retrieve).orElse(0L);
         serial.set(startingSerial);
-        log.trace("starting to stream from id: {}", startingSerial);
+        log.trace("{} setting starting point to SER={}", request, startingSerial);
     }
 
     private void catchupAndFollow(SubscriptionRequest request, SubscriptionImpl<Fact> subscription,
             PGSynchronizedQuery query) {
-
-        stats.reset();
 
         if (request.ephemeral()) {
             // just fast forward to the latest event publish by now
@@ -78,15 +79,13 @@ class PGFactStream {
 
         // propagate catchup
         if (isConnected()) {
-            log.trace("signaling catchup");
+            log.trace("{} signaling catchup", request);
             subscription.notifyCatchup();
-            stats.dumpForCatchup();
         }
 
         if (isConnected() && request.continous()) {
 
-            log.info("Entering follow mode for {}", request);
-            stats.reset();
+            log.info("{} entering follow mode", request);
 
             long delayInMs;
 
@@ -101,8 +100,8 @@ class PGFactStream {
                 // ok, that is unlikely to be necessary, but easy to do, so...
                 delayInMs = (((request.maxBatchDelayInMs() / 4L) * 3L) + (long) (Math.abs(Math
                         .random() * ((request.maxBatchDelayInMs() / 4)))));
-                log.info("Setting delay for this instance to " + delayInMs + ", maxDelay was "
-                        + request.maxBatchDelayInMs());
+                log.info("{} setting delay to {}, maxDelay was {}", request, delayInMs, request
+                        .maxBatchDelayInMs());
             }
 
             this.condensedExecutor = new CondensedQueryExecutor(delayInMs, query,
@@ -113,8 +112,9 @@ class PGFactStream {
             condensedExecutor.trigger();
 
         } else {
-            log.debug("Complete");
+
             subscription.notifyComplete();
+            log.debug("Completed {}", request);
             // FIXME disc.?
 
         }
@@ -122,11 +122,14 @@ class PGFactStream {
 
     private void catchup(PGSynchronizedQuery query) {
         if (isConnected()) {
-            log.trace("catchup phase1 - historic Facts");
+            // TODO add sid
+            log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial
+                    .get());
             query.run(true);
         }
         if (isConnected()) {
-            log.trace("catchup phase2 - Facts since connect");
+            // TODO add sid
+            log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
             query.run(true);
         }
     }
@@ -140,7 +143,7 @@ class PGFactStream {
     }
 
     public void close() {
-        log.info("Disconnecting");
+        log.debug("{} disconnecting ", request);
         disconnected.set(true);
 
         if (condensedExecutor != null) {
@@ -148,8 +151,7 @@ class PGFactStream {
             condensedExecutor.cancel();
         }
 
-        stats.dump();
-        log.info("Disconnected");
+        log.info("{} disconnected ", request);
     }
 
     @RequiredArgsConstructor
@@ -165,27 +167,28 @@ class PGFactStream {
 
                 if (rs.isClosed()) {
                     throw new RuntimeException(
-                            "ResultSet already close. We should not have got here. THIS IS A BUG!");
+                            "ResultSet already closed. We should not have got here. THIS IS A BUG!");
                 }
 
                 Fact f = PGFact.from(rs);
-                stats.notifyCount();
                 final UUID factId = f.id();
 
                 if (postQueryMatcher.test(f)) {
-                    stats.notifyHit();
                     try {
                         subscription.notifyElement(f);
-                        log.trace("onNext called with id={}", factId);
+                        log.trace("{} onNext called with id={}", request, factId);
                     } catch (Throwable e) {
                         // debug level, because it happens regularly on
                         // disconnecting clients.
-                        log.debug("Exception from subscription: {}", e.getMessage());
+                        // TODO add sid
+                        log.debug("{} exception from subscription: {}", request, e.getMessage());
 
                         try {
                             subscription.close();
                         } catch (Exception e1) {
-                            log.warn("Exception while closing subscription: {}", e1.getMessage());
+                            // TODO add sid
+                            log.warn("{} exception while closing subscription: {}", request, e1
+                                    .getMessage());
                         }
 
                         // close result set in order to release DB resources as
@@ -196,7 +199,8 @@ class PGFactStream {
 
                     }
                 } else {
-                    log.trace("filtered id={}", factId);
+                    // TODO add sid
+                    log.trace("{} filtered id={}", request, factId);
                 }
                 serial.set(rs.getLong(PGConstants.COLUMN_SER));
             }

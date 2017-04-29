@@ -30,6 +30,8 @@ public interface SubscriptionRequest {
 
     List<FactSpec> specs();
 
+    String subscriptionId();
+
     // ------------
 
     public static SpecBuilder follow(@NonNull FactSpec specification) {

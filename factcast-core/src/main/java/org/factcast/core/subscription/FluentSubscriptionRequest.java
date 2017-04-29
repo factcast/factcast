@@ -10,7 +10,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 
 /**
@@ -21,8 +20,7 @@ import lombok.experimental.FieldDefaults;
  */
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
-@ToString
-@RequiredArgsConstructor
+
 class FluentSubscriptionRequest implements SubscriptionRequest {
 
     boolean ephemeral = false;
@@ -36,6 +34,19 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     List<FactSpec> specs = new LinkedList<>();
 
     boolean idOnly = false;
+
+    String subscriptionId;
+
+    public FluentSubscriptionRequest() {
+        subscriptionId = createSubscriptionId();
+    }
+
+    private String createSubscriptionId() {
+        StackTraceElement stackTraceElement = new Exception().getStackTrace()[3];
+        return UUID.randomUUID() + " (" + stackTraceElement.getClassName().substring(
+                stackTraceElement.getClassName().lastIndexOf(".") + 1) + "." + stackTraceElement
+                        .getMethodName() + ":" + stackTraceElement.getLineNumber() + ")";
+    }
 
     @RequiredArgsConstructor
     public static class Builder implements SpecBuilder {
@@ -92,4 +103,8 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     }
 
+    @Override
+    public String toString() {
+        return subscriptionId;
+    }
 }

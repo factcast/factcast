@@ -52,6 +52,9 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     UUID startingAfter;
 
     @JsonProperty
+    String subscriptionId;
+
+    @JsonProperty
     final List<FactSpec> specs = new LinkedList<>(Arrays.asList(FactSpec.forMark()));
 
     public boolean hasAnyScriptFilters() {
@@ -68,6 +71,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
         continous = request.continous();
         ephemeral = request.ephemeral();
         startingAfter = request.startingAfter().orElse(null);
+        subscriptionId = request.subscriptionId();
         specs.addAll(request.specs());
     }
 
@@ -98,7 +102,12 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     }
 
     @SneakyThrows
-    public String toString() {
+    public String dump() {
         return FactCastJson.writer().writeValueAsString(this);
+    }
+
+    @Override
+    public String toString() {
+        return subscriptionId;
     }
 }

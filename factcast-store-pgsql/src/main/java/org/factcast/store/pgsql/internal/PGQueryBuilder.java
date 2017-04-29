@@ -111,7 +111,7 @@ class PGQueryBuilder {
         final String sql = "SELECT " + (selectIdOnly ? PGConstants.PROJECTION_ID
                 : PGConstants.PROJECTION_FACT) + " FROM " + PGConstants.TABLE_FACT + " WHERE "
                 + createWhereClause() + " ORDER BY " + PGConstants.COLUMN_SER + " ASC";
-        log.trace("SQL={}", sql);
+        log.trace("{} SQL={}", req, sql);
         return sql;
     }
 }
