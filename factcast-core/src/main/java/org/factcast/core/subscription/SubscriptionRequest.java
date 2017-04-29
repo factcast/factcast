@@ -30,7 +30,7 @@ public interface SubscriptionRequest {
 
     List<FactSpec> specs();
 
-    String subscriptionId();
+    String debugInfo();
 
     // ------------
 

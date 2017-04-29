@@ -35,13 +35,13 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     boolean idOnly = false;
 
-    String subscriptionId;
+    String debugInfo;
 
     public FluentSubscriptionRequest() {
-        subscriptionId = createSubscriptionId();
+        debugInfo = createDebugInfo();
     }
 
-    private String createSubscriptionId() {
+    private String createDebugInfo() {
         StackTraceElement stackTraceElement = new Exception().getStackTrace()[3];
         return UUID.randomUUID() + " (" + stackTraceElement.getClassName().substring(
                 stackTraceElement.getClassName().lastIndexOf(".") + 1) + "." + stackTraceElement
@@ -105,6 +105,6 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     @Override
     public String toString() {
-        return subscriptionId;
+        return debugInfo;
     }
 }

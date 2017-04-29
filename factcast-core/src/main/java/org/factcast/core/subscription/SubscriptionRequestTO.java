@@ -52,7 +52,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     UUID startingAfter;
 
     @JsonProperty
-    String subscriptionId;
+    String debugInfo;
 
     @JsonProperty
     final List<FactSpec> specs = new LinkedList<>(Arrays.asList(FactSpec.forMark()));
@@ -71,7 +71,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
         continous = request.continous();
         ephemeral = request.ephemeral();
         startingAfter = request.startingAfter().orElse(null);
-        subscriptionId = request.subscriptionId();
+        debugInfo = request.debugInfo();
         specs.addAll(request.specs());
     }
 
@@ -108,6 +108,6 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 
     @Override
     public String toString() {
-        return subscriptionId;
+        return debugInfo;
     }
 }

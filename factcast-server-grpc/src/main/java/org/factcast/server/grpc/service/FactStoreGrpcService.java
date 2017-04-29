@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
@@ -45,7 +44,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     final ProtoConverter converter = new ProtoConverter();
 
-    private final AtomicLong subscriptionId = new AtomicLong();
+    static final AtomicLong subscriptionIdStore = new AtomicLong();
 
     @Override
     public void fetchById(MSG_UUID request, StreamObserver<MSG_OptionalFact> responseObserver) {
@@ -86,17 +85,20 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     public void subscribe(MSG_SubscriptionRequest request,
             StreamObserver<MSG_Notification> responseObserver) {
         SubscriptionRequestTO req = converter.fromProto(request);
-        String newId = "sub#" + subscriptionId.incrementAndGet();
-        log.info("subscribing {} for {} defined as {}", newId, req, req.dump());
-        req.subscriptionId(newId);
-        BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(req
-                .subscriptionId(), (ServerCallStreamObserver) responseObserver);
+        resetDebugInfo(req);
+
+        BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(req.toString(),
+                (ServerCallStreamObserver) responseObserver);
 
         final boolean idOnly = req.idOnly();
 
-        Subscription subscription = store.subscribe(req, new GrpcObserverAdapter(req.toString(),
-                resp, f -> idOnly ? converter.toNotification(f.id())
-                        : converter.toNotification(f)));
-        // TODO anything todo with the subscription instance?
+        store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp, f -> idOnly ? converter
+                .toNotification(f.id()) : converter.toNotification(f)));
+    }
+
+    private void resetDebugInfo(SubscriptionRequestTO req) {
+        String newId = "sub#" + subscriptionIdStore.incrementAndGet();
+        log.info("subscribing {} for {} defined as {}", newId, req, req.dump());
+        req.debugInfo(newId);
     }
 }
