@@ -21,6 +21,6 @@ href="https://github.com/uweschaefer/factcast/edit/master/factcast-site/document
 </div>
 
 # FactCast documentation
-[FactCast {{%icon fa-github%}}](https://github.com/uweschaefer/factcast) is a ...
+[FactCast {{%icon fa-github%}}](https://github.com/uweschaefer/factcast) is a ....
 
 
