@@ -1,5 +1,5 @@
 language: java
 jdk:
   - oraclejdk8
-
-script: "mvn clean install"
+install: "mvn install -DskipTests=true"
+script: "mvn -e clean verify jacoco:report coveralls:report"
