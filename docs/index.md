@@ -1,3 +1,0 @@
-# FactCast docs
-
-TODO...
