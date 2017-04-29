@@ -19,6 +19,8 @@ import org.factcast.core.subscription.observer.IdObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -30,9 +32,12 @@ public class CachingFactCastTest {
     @Mock
     FactCast fc;
 
+    @Captor
+    ArgumentCaptor<IdObserver> obsCap;
+
     final Fact f = DefaultFact.of("{\"ns\":\"foo\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
 
-    private CachingFactCast uut;
+    CachingFactCast uut;
 
     @Before
     public void setUp() {
@@ -77,14 +82,33 @@ public class CachingFactCastTest {
     public void testSubscribeToFacts() throws Exception {
         SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.forMark()).sinceInception();
         when(l.lookup(any())).thenReturn(Optional.of(f));
-
+        when(fc.subscribeToIds(same(rs), obsCap.capture())).thenReturn(null);
         final FactObserver observer = mock(FactObserver.class);
+
         uut.subscribeToFacts(rs, observer);
 
+        IdObserver underlyingObserver = obsCap.getValue();
         verify(fc).subscribeToIds(same(rs), any());
+
         verify(observer, never()).onCatchup();
         verify(observer, never()).onComplete();
+        verify(observer, never()).onError(any());
 
+        // provide an id
+        underlyingObserver.onNext(f.id());
+        // assume lookup for id
+        verify(l).lookup(eq(f.id()));
+
+        // verify signals get through
+        underlyingObserver.onCatchup();
+        verify(observer).onCatchup();
+
+        underlyingObserver.onComplete();
+        verify(observer).onComplete();
+
+        Exception e = new Exception();
+        underlyingObserver.onError(e);
+        verify(observer).onError(same(e));
     }
 
 }
