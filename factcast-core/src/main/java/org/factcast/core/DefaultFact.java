@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -32,6 +33,7 @@ import lombok.Value;
  *
  */
 @ToString
+@EqualsAndHashCode(of = { "jsonHeader", "jsonPayload" })
 public class DefaultFact implements Fact, Externalizable {
 
     @Getter
