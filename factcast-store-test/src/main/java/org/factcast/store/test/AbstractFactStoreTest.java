@@ -105,8 +105,7 @@ public abstract class AbstractFactStoreTest {
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
 
         FactObserver observer = mock(FactObserver.class);
-        uut.subscribeToFacts(SubscriptionRequest.ephemeral(ANY).sinceInception(), observer)
-                .awaitCatchup();
+        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromNowOn(), observer).awaitCatchup();
 
         // nothing recieved
 
@@ -134,8 +133,8 @@ public abstract class AbstractFactStoreTest {
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
 
         FactObserver observer = mock(FactObserver.class);
-        Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.ephemeral(ANY)
-                .sinceInception(), observer).awaitCatchup();
+        Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.follow(ANY)
+                .fromNowOn(), observer).awaitCatchup();
 
         // nothing recieved
 

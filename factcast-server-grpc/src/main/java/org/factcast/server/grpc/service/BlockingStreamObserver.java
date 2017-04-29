@@ -31,26 +31,28 @@ class BlockingStreamObserver<T> implements StreamObserver<T> {
 
     @Override
     public void onNext(T value) {
-
-        if (delegate.isCancelled()) {
-            return;
-        }
-
         synchronized (lock) {
-            while (!delegate.isReady()) {
-                try {
-                    while (!delegate.isCancelled() && !delegate.isReady()) {
-                        log.debug("slow client, waiting");
-                        lock.wait(30000);
-                    }
 
-                    if (delegate.isCancelled()) {
-                        return;
-                    }
+            if (!delegate.isReady()) {
 
-                } catch (InterruptedException meh) {
-                    // ignore
+                for (int i = 0; i < 5; i++) {
+                    log.debug("Channel not ready. Slow client? Waiting");
+                    try {
+                        lock.wait(5000);
+                    } catch (InterruptedException meh) {
+                    }
+                    if (delegate.isReady()) {
+                        break;
+                    } else {
+                        delegate.isCancelled();
+                        throw new RuntimeException("channel was cancelled.");
+                    }
                 }
+
+                if (!delegate.isReady()) {
+                    throw new RuntimeException("channel not coming back.");
+                }
+
             }
         }
         delegate.onNext(value);

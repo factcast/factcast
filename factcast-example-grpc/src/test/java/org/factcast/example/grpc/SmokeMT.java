@@ -90,32 +90,26 @@ public class SmokeMT {
             UUID aggId = UUID.randomUUID();
 
             AtomicLong l = new AtomicLong();
-            Subscription sub = fc.subscribeToFacts(SubscriptionRequest.follow(FactSpec.ns(
-                    "default")).sinceInception(), new FactObserver() {
+            Subscription sub = fc.subscribeToFacts(SubscriptionRequest.follow(FactSpec.ns("smoke"))
+                    .fromNowOn(), new FactObserver() {
 
                         @Override
                         public void onNext(Fact f) {
                             l.incrementAndGet();
 
-                            try {
-                                if (Math.random() < .001) {
-                                    System.out.println(l.get());
-                                    Thread.sleep(50);
-                                }
-                            } catch (InterruptedException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                            }
+                            System.out.println(l.get());
 
                         }
 
                         public void onComplete() {
                             System.out.println("COMPLETE");
                         };
-                    });
+                    }).awaitCatchup();
 
             System.out.println("writing");
 
+            fc.publish(new SmokeTestFact().aggId(aggId));
+            fc.publish(new SmokeTestFact().aggId(aggId));
             fc.publish(new SmokeTestFact().aggId(aggId));
 
             Thread.sleep(500);

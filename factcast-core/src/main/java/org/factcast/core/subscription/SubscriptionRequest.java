@@ -32,22 +32,8 @@ public interface SubscriptionRequest {
 
     // ------------
 
-    public static SpecBuilder ephemeral(@NonNull FactSpec specification) {
-        return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(true)).follow(
-                specification);
-    }
-
-    public static SpecBuilder ephemeral(long maxBatchDelayInMs, @NonNull FactSpec specification) {
-
-        checkMaxDelay(maxBatchDelayInMs);
-
-        FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest(true);
-        toBuild.maxBatchDelayInMs = maxBatchDelayInMs;
-        return new FluentSubscriptionRequest.Builder(toBuild).follow(specification);
-    }
-
     public static SpecBuilder follow(@NonNull FactSpec specification) {
-        return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(false)).follow(
+        return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).follow(
                 specification);
     }
 
@@ -55,7 +41,7 @@ public interface SubscriptionRequest {
 
         checkMaxDelay(maxBatchDelayInMs);
 
-        FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest(false);
+        FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest();
         toBuild.maxBatchDelayInMs = maxBatchDelayInMs;
         return new FluentSubscriptionRequest.Builder(toBuild).follow(specification);
     }
@@ -65,7 +51,7 @@ public interface SubscriptionRequest {
     }
 
     public static SpecBuilder catchup(@NonNull FactSpec specification) {
-        return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(false)).catchup(
+        return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).catchup(
                 specification);
     }
 }

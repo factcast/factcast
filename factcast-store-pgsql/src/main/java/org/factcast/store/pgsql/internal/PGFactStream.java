@@ -143,8 +143,9 @@ class PGFactStream {
         disconnected.set(true);
 
         if (condensedExecutor != null) {
-            condensedExecutor.cancel();
             eventBus.unregister(condensedExecutor);
+            condensedExecutor.cancel();
+
         }
 
         stats.dump();
@@ -177,17 +178,21 @@ class PGFactStream {
                     stats.notifyHit();
                     try {
                         observer.notifyElement(f);
+                        log.trace("onNext called with id={}", factId);
                     } catch (Throwable e) {
                         // debug level, because it happens regularly on
                         // disconnecting clients.
-                        log.debug("Exception from observer.", e);
+                        log.debug("Exception from observer.");
+
+                        // try to disconnect
+                        tryClose();
                         // close result set in order to release DB resources as
                         // early as possible
                         rs.close();
-                        // try to disconnect
-                        tryClose();
+
+                        throw e;
+
                     }
-                    log.trace("onNext called with id={}", factId);
                 } else {
                     log.trace("filtered id={}", factId);
                 }

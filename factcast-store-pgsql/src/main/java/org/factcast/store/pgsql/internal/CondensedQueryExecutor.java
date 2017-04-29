@@ -47,7 +47,12 @@ class CondensedQueryExecutor {
                     @Override
                     public void run() {
                         currentlyScheduled.set(false);
-                        CondensedQueryExecutor.this.runTarget();
+                        try {
+                            CondensedQueryExecutor.this.runTarget();
+                        } catch (Throwable e) {
+                            log.debug("Scheduled query failed, closing.");
+                            // TODO
+                        }
                     }
                 }, maxDelayInMillis);
             }

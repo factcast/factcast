@@ -25,7 +25,7 @@ import lombok.experimental.FieldDefaults;
 @RequiredArgsConstructor
 class FluentSubscriptionRequest implements SubscriptionRequest {
 
-    final boolean ephemeral;
+    boolean ephemeral = false;
 
     long maxBatchDelayInMs = 0;
 
@@ -49,6 +49,12 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
         @Override
         public SubscriptionRequest sinceInception() {
+            return toBuild;
+        }
+
+        @Override
+        public SubscriptionRequest fromNowOn() {
+            toBuild.ephemeral = true;
             return toBuild;
         }
 
@@ -81,6 +87,8 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
         SubscriptionRequest since(@NonNull UUID id);
 
         SubscriptionRequest sinceInception();
+
+        SubscriptionRequest fromNowOn();
 
     }
 
