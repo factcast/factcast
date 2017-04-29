@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
@@ -89,14 +90,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         log.trace("creating subscription for {}", req);
         final boolean idOnly = req.idOnly();
 
-        store.subscribe(req, new GrpcObserverAdapter(resp) {
-
-            @Override
-            public void onNext(Fact f) {
-                resp.onNext(idOnly ? converter.toNotification(f.id())
-                        : converter.toNotification(f));
-            }
-        });
-
+        Subscription subscription = store.subscribe(req, new GrpcObserverAdapter(resp, f -> idOnly
+                ? converter.toNotification(f.id()) : converter.toNotification(f)));
+        // TODO anything todo with the subscription instance?
     }
 }

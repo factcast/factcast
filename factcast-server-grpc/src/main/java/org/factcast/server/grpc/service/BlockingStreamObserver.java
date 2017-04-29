@@ -1,5 +1,7 @@
 package org.factcast.server.grpc.service;
 
+import java.util.UUID;
+
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
@@ -8,25 +10,26 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class BlockingStreamObserver<T> implements StreamObserver<T> {
 
-    private final ServerCallStreamObserver<T> delegate;
+    static final int retry = 60;
 
-    private final Object lock = new Object();
+    static final int waitTime = 1000;
+
+    final ServerCallStreamObserver<T> delegate;
+
+    final Object lock = new Object();
 
     BlockingStreamObserver(ServerCallStreamObserver<T> delegate) {
         this.delegate = delegate;
-        this.delegate.setOnReadyHandler(() -> {
-            synchronized (lock) {
-                lock.notifyAll(); // wake up our thread
-            }
-        });
-        this.delegate.setOnCancelHandler(() -> {
-            synchronized (lock) {
-                lock.notifyAll(); // wake up our thread
-            }
-        });
+        this.delegate.setOnReadyHandler(this::wakeup);
+        this.delegate.setOnCancelHandler(this::wakeup);
         delegate.setCompression("gzip");
         delegate.setMessageCompression(true);
+    }
 
+    private void wakeup() {
+        synchronized (lock) {
+            lock.notifyAll(); // wake up our thread
+        }
     }
 
     @Override
@@ -34,25 +37,24 @@ class BlockingStreamObserver<T> implements StreamObserver<T> {
         synchronized (lock) {
 
             if (!delegate.isReady()) {
-
-                for (int i = 0; i < 5; i++) {
-                    log.debug("Channel not ready. Slow client? Waiting");
+                UUID ticket = UUID.randomUUID();
+                for (int i = 1; i <= retry; i++) {
+                    log.debug("Channel not ready. Slow client? Waiting. Ticket: {}, Attempt: {}",
+                            ticket, i);
                     try {
-                        lock.wait(5000);
+                        lock.wait(waitTime);
                     } catch (InterruptedException meh) {
                     }
                     if (delegate.isReady()) {
                         break;
-                    } else {
-                        delegate.isCancelled();
-                        throw new RuntimeException("channel was cancelled.");
+                    }
+                    if (delegate.isCancelled()) {
+                        throw new RuntimeException("channel was cancelled. Ticket: " + ticket);
                     }
                 }
-
                 if (!delegate.isReady()) {
-                    throw new RuntimeException("channel not coming back.");
+                    throw new RuntimeException("channel not coming back. Ticket: " + ticket);
                 }
-
             }
         }
         delegate.onNext(value);

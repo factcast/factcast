@@ -32,13 +32,13 @@ class PGFactStream {
 
     final PGFactIdToSerMapper idToSerMapper;
 
+    final SubscriptionImpl<Fact> subscription;
+
     final AtomicLong serial = new AtomicLong(0);
 
     final AtomicBoolean disconnected = new AtomicBoolean(false);
 
     final PGFilteringStats stats = new PGFilteringStats();
-
-    final SubscriptionImpl<Fact> subscription;
 
     private CondensedQueryExecutor condensedExecutor;
 
@@ -180,12 +180,12 @@ class PGFactStream {
                     } catch (Throwable e) {
                         // debug level, because it happens regularly on
                         // disconnecting clients.
-                        log.debug("Exception from subscription.");
+                        log.debug("Exception from subscription: {}", e.getMessage());
 
                         try {
                             subscription.close();
                         } catch (Exception e1) {
-                            log.debug("Exception while closing subscription", e);
+                            log.warn("Exception while closing subscription: {}", e1.getMessage());
                         }
 
                         // close result set in order to release DB resources as
