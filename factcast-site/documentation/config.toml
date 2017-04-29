@@ -1,0 +1,15 @@
+baseURL = "/documentation"
+languageCode = "en-us"
+title = "FactCast"
+theme = "hugo-theme-docdock"
+themesdir = "themes"
+
+[params]
+editURL ="https://github.com/uweschaefer/factcast/edit/master/factcast-site/documentation/"
+noHomeIcon = false
+noSearch = false
+
+[outputs]
+home = [ "HTML", "RSS", "JSON"]
+
+
