@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -75,7 +74,7 @@ public class PGQueryIT {
 
         FactObserver c = mock(FactObserver.class);
 
-        pq.subscribe(req, c);
+        pq.subscribe(req, c).awaitComplete();
 
         verify(c, never()).onNext(anyObject());
         verify(c).onCatchup();
@@ -98,7 +97,7 @@ public class PGQueryIT {
 
         FactObserver c = mock(FactObserver.class);
 
-        pq.subscribe(req, c);
+        pq.subscribe(req, c).awaitComplete();
 
         verify(c).onCatchup();
         verify(c).onComplete();
@@ -117,7 +116,7 @@ public class PGQueryIT {
 
         FactObserver c = mock(FactObserver.class);
 
-        pq.subscribe(req, c);
+        pq.subscribe(req, c).awaitCatchup();
 
         verify(c).onCatchup();
         verify(c, never()).onNext(any(Fact.class));
@@ -152,17 +151,14 @@ public class PGQueryIT {
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
 
-        Future<?> connected = es.submit(() -> pq.subscribe(req, c));
-
-        Thread.sleep(200);
+        Subscription s = pq.subscribe(req, c);
 
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
-        connected.get();
 
         Thread.sleep(1000);
-
+        s.awaitCatchup();
         verify(c).onCatchup();
         verify(c, times(8)).onNext(any(Fact.class));
 
@@ -194,7 +190,7 @@ public class PGQueryIT {
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
 
-        pq.subscribe(req, c);
+        pq.subscribe(req, c).awaitComplete();
 
         verify(c).onCatchup();
         verify(c).onComplete();
@@ -221,7 +217,7 @@ public class PGQueryIT {
 
         insertTestFact(TestHeader.create());
 
-        Subscription sub = pq.subscribe(req, c);
+        Subscription sub = pq.subscribe(req, c).awaitCatchup();
 
         verify(c).onCatchup();
         verify(c, times(1)).onNext(anyObject());

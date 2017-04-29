@@ -53,7 +53,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
         }
 
         @Override
-        public SubscriptionRequest fromNowOn() {
+        public SubscriptionRequest sinceSubscription() {
             toBuild.ephemeral = true;
             return toBuild;
         }
@@ -88,7 +88,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
         SubscriptionRequest sinceInception();
 
-        SubscriptionRequest fromNowOn();
+        SubscriptionRequest sinceSubscription();
 
     }
 

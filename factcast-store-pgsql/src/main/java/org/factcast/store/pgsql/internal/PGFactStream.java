@@ -26,21 +26,23 @@ import lombok.extern.slf4j.Slf4j;
 // TODO needs new name
 class PGFactStream {
 
-    private final JdbcTemplate jdbcTemplate;
+    final JdbcTemplate jdbcTemplate;
 
-    private final EventBus eventBus;
+    final EventBus eventBus;
 
-    private final PGFactIdToSerMapper idToSerMapper;
+    final PGFactIdToSerMapper idToSerMapper;
 
-    private final AtomicLong serial = new AtomicLong(0);
+    final AtomicLong serial = new AtomicLong(0);
 
-    private final AtomicBoolean disconnected = new AtomicBoolean(false);
+    final AtomicBoolean disconnected = new AtomicBoolean(false);
 
-    private final PGFilteringStats stats = new PGFilteringStats();
+    final PGFilteringStats stats = new PGFilteringStats();
+
+    final SubscriptionImpl<Fact> subscription;
 
     private CondensedQueryExecutor condensedExecutor;
 
-    void connect(SubscriptionRequestTO request, SubscriptionImpl<Fact> subscription) {
+    void connect(SubscriptionRequestTO request) {
         log.trace("initializing for {}", request);
 
         PGQueryBuilder q = new PGQueryBuilder(request);
@@ -94,8 +96,7 @@ class PGFactStream {
             } else {
                 // spread consumers, so that they query at different points in
                 // time, even if they get triggered at the same PIT, and share
-                // the
-                // same latency requirements
+                // the same latency requirements
                 //
                 // ok, that is unlikely to be necessary, but easy to do, so...
                 delayInMs = (((request.maxBatchDelayInMs() / 4L) * 3L) + (long) (Math.abs(Math
@@ -145,31 +146,28 @@ class PGFactStream {
         if (condensedExecutor != null) {
             eventBus.unregister(condensedExecutor);
             condensedExecutor.cancel();
-
         }
 
         stats.dump();
         log.info("Disconnected");
     }
 
-    private void tryClose() {
-        try {
-            close();
-        } catch (Throwable meh) {
-            log.warn("Unexpected, but irrelevant exception while closing: ", meh);
-        }
-    }
-
     @RequiredArgsConstructor
     private class FactRowCallbackHandler implements RowCallbackHandler {
 
-        final SubscriptionImpl<Fact> observer;
+        final SubscriptionImpl<Fact> subscription;
 
         final PGPostQueryMatcher postQueryMatcher;
 
         @Override
         public void processRow(ResultSet rs) throws SQLException {
             if (isConnected()) {
+
+                if (rs.isClosed()) {
+                    throw new RuntimeException(
+                            "ResultSet already close. We should not have got here. THIS IS A BUG!");
+                }
+
                 Fact f = PGFact.from(rs);
                 stats.notifyCount();
                 final UUID factId = f.id();
@@ -177,15 +175,19 @@ class PGFactStream {
                 if (postQueryMatcher.test(f)) {
                     stats.notifyHit();
                     try {
-                        observer.notifyElement(f);
+                        subscription.notifyElement(f);
                         log.trace("onNext called with id={}", factId);
                     } catch (Throwable e) {
                         // debug level, because it happens regularly on
                         // disconnecting clients.
-                        log.debug("Exception from observer.");
+                        log.debug("Exception from subscription.");
 
-                        // try to disconnect
-                        tryClose();
+                        try {
+                            subscription.close();
+                        } catch (Exception e1) {
+                            log.debug("Exception while closing subscription", e);
+                        }
+
                         // close result set in order to release DB resources as
                         // early as possible
                         rs.close();
