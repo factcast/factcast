@@ -236,6 +236,7 @@
 							<exclude>**/*Configuration.*</exclude>
 							<exclude>**/*Application.*</exclude>
 							<exclude>**/*Exception.*</exclude>
+							<exclude>**/*TO.*</exclude>
 						</excludes>
 					</configuration>
 				</plugin>

@@ -7,8 +7,6 @@ import java.util.UUID;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.FluentSubscriptionRequest.SpecBuilder;
 
-import com.google.common.base.Preconditions;
-
 import lombok.NonNull;
 
 /**
@@ -20,6 +18,8 @@ import lombok.NonNull;
  *
  */
 public interface SubscriptionRequest {
+    final int MAX_DELAY = 30000;
+
     long maxBatchDelayInMs();
 
     boolean continous();
@@ -40,16 +40,9 @@ public interface SubscriptionRequest {
     }
 
     public static SpecBuilder follow(long maxBatchDelayInMs, @NonNull FactSpec specification) {
-
-        checkMaxDelay(maxBatchDelayInMs);
-
         FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest();
         toBuild.maxBatchDelayInMs = maxBatchDelayInMs;
         return new FluentSubscriptionRequest.Builder(toBuild).follow(specification);
-    }
-
-    static void checkMaxDelay(long maxLatencyInMillis) {
-        Preconditions.checkArgument(maxLatencyInMillis <= 30000, "maxBatchDelayInMs<=30000");
     }
 
     public static SpecBuilder catchup(@NonNull FactSpec specification) {
