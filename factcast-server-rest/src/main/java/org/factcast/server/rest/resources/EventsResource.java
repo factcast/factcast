@@ -14,7 +14,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
-import org.factcast.core.DefaultFact.Header;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
@@ -81,8 +80,9 @@ public class EventsResource implements JerseyResource {
         FactJson returnValue = fact.map(f -> {
             try {
                 JsonNode payLoad = objectMapper.readTree(f.jsonPayload());
-                return new FactJson(FactCastJson.reader().forType(Header.class).readValue(f
-                        .jsonHeader()), payLoad);
+                return new FactJson(FactCastJson.reader().forType(
+                        org.factcast.server.rest.resources.FactJson.Header.class).readValue(f
+                                .jsonHeader()), payLoad);
             } catch (Exception e) {
                 log.error("error", e);
                 throw new WebApplicationException(500);
