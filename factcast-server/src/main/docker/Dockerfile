@@ -1,4 +1,5 @@
 FROM frolvlad/alpine-oraclejdk8:slim
+MAINTAINER uwe.schaefer <factcast-auth-7234@codesmell.de>
 VOLUME /tmp
 COPY factcast.jar app.jar
 RUN sh -c 'touch /app.jar'
