@@ -13,6 +13,11 @@ import lombok.NoArgsConstructor;
 
 public class FactCastJsonTest {
 
+    @Test(expected = NullPointerException.class)
+    public void testCopyNull() throws Exception {
+        FactCastJson.copy(null);
+    }
+
     @Test
     public void testCopy() throws Exception {
         final Foo foo = new Foo("bar", "baz");

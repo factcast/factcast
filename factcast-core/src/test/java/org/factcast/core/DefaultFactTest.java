@@ -82,6 +82,33 @@ public class DefaultFactTest {
     }
 
     @Test
+    public void testJsonHeader() throws Exception {
+        final UUID id = UUID.randomUUID();
+        final UUID aid = UUID.randomUUID();
+        final String header = "{\"id\":\"" + id + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggId\":\""
+                + aid + "\",\"meta\":{\"foo\":7}}";
+        Fact f = DefaultFact.of(header, "{}");
+
+        assertSame(header, f.jsonHeader());
+    }
+
+    @Test
+    public void testEqualityBasedOnId() throws Exception {
+        final UUID id = UUID.randomUUID();
+        final UUID aid = UUID.randomUUID();
+        final String header = "{\"id\":\"" + id + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggId\":\""
+                + aid + "\",\"meta\":{\"foo\":7}}";
+
+        Fact f = DefaultFact.of(header, "{}");
+        Fact f2 = DefaultFact.of("{\"id\":\"" + id + "\"}", "{}");
+        Fact f3 = DefaultFact.of("{\"id\":\"" + aid + "\"}", "{}");
+
+        assertEquals(f, f);
+        assertEquals(f, f2);
+        assertNotEquals(f, f3);
+    }
+
+    @Test
     public void testCopyAttributes() throws Exception {
         final UUID id = UUID.randomUUID();
         final UUID aid = UUID.randomUUID();
