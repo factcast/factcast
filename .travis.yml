@@ -2,4 +2,4 @@ language: java
 jdk:
   - oraclejdk8
 install: "mvn dependency:resolve"
-script: "mvn -e clean verify jacoco:report coveralls:report"
+script: "mvn -e clean verify install jacoco:report coveralls:report"
