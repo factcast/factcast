@@ -1,5 +1,7 @@
 package org.factcast.client.grpc;
 
+import static org.junit.Assert.*;
+
 import java.util.UUID;
 
 import org.junit.Test;
@@ -39,5 +41,11 @@ public class IdOnlyFactTest {
     @Test(expected = UnsupportedOperationException.class)
     public void testMetaUnsupported() throws Exception {
         new IdOnlyFact(UUID.randomUUID()).meta("foo");
+    }
+
+    @Test
+    public void testId() throws Exception {
+        UUID id = UUID.randomUUID();
+        assertSame(id, new IdOnlyFact(id).id());
     }
 }

@@ -48,7 +48,7 @@ public interface SubscriptionRequest {
         return new FluentSubscriptionRequest.Builder(toBuild).follow(specification);
     }
 
-    public static void checkMaxDelay(long maxLatencyInMillis) {
+    static void checkMaxDelay(long maxLatencyInMillis) {
         Preconditions.checkArgument(maxLatencyInMillis <= 30000, "maxBatchDelayInMs<=30000");
     }
 

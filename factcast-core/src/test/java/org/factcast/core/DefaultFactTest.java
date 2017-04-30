@@ -2,6 +2,11 @@ package org.factcast.core;
 
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.UUID;
 
 import org.junit.Test;
@@ -51,5 +56,53 @@ public class DefaultFactTest {
         Fact f = DefaultFact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"ns\":\"default\",\"meta\":{\"foo\":7}}", "{}");
         assertEquals("7", f.meta("foo"));
+    }
+
+    @Test
+    public void testExternalization() throws Exception {
+
+        Fact f = DefaultFact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"meta\":{\"foo\":7}}", "{}");
+
+        Fact copy = copyBySerialization(f);
+
+        assertEquals(f, copy);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T copyBySerialization(T f) throws IOException, ClassNotFoundException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(os);
+        objectOutputStream.writeObject(f);
+        objectOutputStream.flush();
+        ByteArrayInputStream is = new ByteArrayInputStream(os.toByteArray());
+        ObjectInputStream objectInputStream = new ObjectInputStream(is);
+        return (T) objectInputStream.readObject();
+    }
+
+    @Test
+    public void testCopyAttributes() throws Exception {
+        final UUID id = UUID.randomUUID();
+        final UUID aid = UUID.randomUUID();
+        Fact f = DefaultFact.of("{\"id\":\"" + id
+                + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggId\":\"" + aid
+                + "\",\"meta\":{\"foo\":7}}", "{}");
+
+        Fact copy = copyBySerialization(f);
+
+        assertNotSame(f.id(), copy.id());
+        assertNotSame(f.ns(), copy.ns());
+        assertNotSame(f.type(), copy.type());
+        assertNotSame(f.aggId(), copy.aggId());
+        assertNotSame(f.meta("foo"), copy.meta("foo"));
+
+        assertEquals(f.id(), copy.id());
+        assertEquals(f.ns(), copy.ns());
+        assertEquals(f.type(), copy.type());
+        assertEquals(f.aggId(), copy.aggId());
+        assertEquals(f.meta("foo"), copy.meta("foo"));
+
+        assertEquals(f.jsonPayload(), copy.jsonPayload());
     }
 }

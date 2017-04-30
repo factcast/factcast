@@ -4,8 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.factcast.core.util.FactCastJson;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -50,6 +51,6 @@ public class TestFact implements Fact {
     @Override
     @SneakyThrows
     public String jsonHeader() {
-        return new ObjectMapper().writeValueAsString(this);
+        return FactCastJson.writer().writeValueAsString(this);
     }
 }

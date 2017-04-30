@@ -111,22 +111,22 @@ public class DefaultFact implements Fact, Externalizable {
 
     @Override
     public UUID id() {
-        return deserializedHeader.id;
+        return deserializedHeader.id();
     }
 
     @Override
     public String ns() {
-        return deserializedHeader.ns;
+        return deserializedHeader.ns();
     }
 
     @Override
     public String type() {
-        return deserializedHeader.type;
+        return deserializedHeader.type();
     }
 
     @Override
     public UUID aggId() {
-        return deserializedHeader.aggId;
+        return deserializedHeader.aggId();
     }
 
 }

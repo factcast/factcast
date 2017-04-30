@@ -15,7 +15,6 @@ import lombok.experimental.FieldDefaults;
  * @author uwe.schaefer@mercateo.com
  *
  */
-// TODO open ns to be defined by constructor?
 @Value
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class MarkFact implements Fact {
