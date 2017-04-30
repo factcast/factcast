@@ -11,7 +11,6 @@ import java.util.UUID;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionCancelledException;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.junit.Before;
@@ -46,26 +45,7 @@ public class DefaultFactCastTest {
 
     @Test
     public void testSubscribeToFacts() throws Exception {
-        when(store.subscribe(csr.capture(), any())).thenReturn(new Subscription() {
-
-            @Override
-            public void close() throws Exception {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
-            public Subscription awaitComplete() throws SubscriptionCancelledException {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Subscription awaitCatchup() throws SubscriptionCancelledException {
-                // TODO Auto-generated method stub
-                return null;
-            }
-        });
+        when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
 
         final UUID since = UUID.randomUUID();
         SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.forMark()).or(FactSpec.ns(
@@ -85,26 +65,7 @@ public class DefaultFactCastTest {
 
     @Test
     public void testSubscribeToIds() throws Exception {
-        when(store.subscribe(csr.capture(), any())).thenReturn(new Subscription() {
-
-            @Override
-            public void close() throws Exception {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
-            public Subscription awaitComplete() throws SubscriptionCancelledException {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Subscription awaitCatchup() throws SubscriptionCancelledException {
-                // TODO Auto-generated method stub
-                return null;
-            }
-        });
+        when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
 
         SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.forMark()).or(FactSpec.ns(
                 "some").type("type")).sinceInception();

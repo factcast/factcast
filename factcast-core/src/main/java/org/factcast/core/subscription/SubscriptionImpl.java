@@ -2,6 +2,8 @@ package org.factcast.core.subscription;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.factcast.core.subscription.observer.GenericObserver;
 
@@ -40,12 +42,34 @@ public final class SubscriptionImpl<T> implements Subscription {
             throw new SubscriptionCancelledException(e);
         }
         return this;
+
+    }
+
+    public Subscription awaitCatchup(long waitTimeInMillis) throws SubscriptionCancelledException,
+            TimeoutException {
+        try {
+            catchup.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new SubscriptionCancelledException(e);
+        }
+        return this;
+
     }
 
     @Override
     public Subscription awaitComplete() throws SubscriptionCancelledException {
         try {
             complete.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new SubscriptionCancelledException(e);
+        }
+        return this;
+    }
+
+    public Subscription awaitComplete(long waitTimeInMillis) throws SubscriptionCancelledException,
+            TimeoutException {
+        try {
+            complete.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
         } catch (InterruptedException | ExecutionException e) {
             throw new SubscriptionCancelledException(e);
         }

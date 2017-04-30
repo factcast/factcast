@@ -20,7 +20,6 @@ import lombok.experimental.FieldDefaults;
  */
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
-
 class FluentSubscriptionRequest implements SubscriptionRequest {
 
     boolean ephemeral = false;
@@ -75,13 +74,13 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
             return toBuild;
         }
 
-        SpecBuilder follow(@NonNull FactSpec specification) {
+        SpecBuilder follow(FactSpec specification) {
             or(specification);
             toBuild.continous = true;
             return this;
         }
 
-        SpecBuilder catchup(@NonNull FactSpec specification) {
+        SpecBuilder catchup(FactSpec specification) {
             or(specification);
             toBuild.continous = false;
             return this;
