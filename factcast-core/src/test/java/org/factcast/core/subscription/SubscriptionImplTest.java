@@ -3,6 +3,7 @@ package org.factcast.core.subscription;
 import static org.junit.Assert.*;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
 
 import org.factcast.core.Fact;
@@ -39,6 +40,31 @@ public class SubscriptionImplTest {
 
     }
 
+    @Test
+    public void testAwaitCatchup() throws Exception {
+
+        expect(TimeoutException.class, () -> uut.awaitCatchup(10));
+        expect(TimeoutException.class, () -> uut.awaitComplete(10));
+
+        uut.notifyCatchup();
+
+        uut.awaitCatchup();
+        expect(TimeoutException.class, () -> uut.awaitComplete(10));
+
+    }
+
+    @Test
+    public void testAwaitComplete() throws Exception {
+
+        expect(TimeoutException.class, () -> uut.awaitCatchup(10));
+        expect(TimeoutException.class, () -> uut.awaitComplete(10));
+
+        uut.notifyComplete();
+
+        uut.awaitCatchup();
+        uut.awaitComplete();
+    }
+
     private void expect(Class<? extends Throwable> ex, Callable<?> e) {
         try {
             e.call();
@@ -55,6 +81,27 @@ public class SubscriptionImplTest {
     @Test(expected = NullPointerException.class)
     public void testNullConst() throws Exception {
         new SubscriptionImpl<>(null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testNotifyElementNull() throws Exception {
+        uut.notifyElement(null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testNotifyErrorNull() throws Exception {
+        uut.notifyError(null);
+    }
+
+    @Test
+    public void testOnClose() throws Exception {
+
+        CountDownLatch l = new CountDownLatch(1);
+
+        uut.onClose(() -> l.countDown());
+
+        uut.close();
+        l.await();
     }
 
 }

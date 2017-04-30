@@ -87,6 +87,10 @@ public final class SubscriptionImpl<T> implements Subscription {
     @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
     public void notifyComplete() {
         observer.onComplete();
+        if (!catchup.isDone()) {
+            catchup.complete(null);
+        }
+
         if (!complete.isDone()) {
             complete.complete(null);
         }
@@ -102,7 +106,7 @@ public final class SubscriptionImpl<T> implements Subscription {
         }
     }
 
-    public void notifyElement(T e) {
+    public void notifyElement(@NonNull T e) {
         observer.onNext(e);
     }
 
