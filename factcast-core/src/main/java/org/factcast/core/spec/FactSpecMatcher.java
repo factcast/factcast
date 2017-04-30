@@ -117,10 +117,15 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         return engine;
     }
 
-    public static Predicate<Fact> matchesAnyOf(Collection<FactSpec> spec) {
+    public static Predicate<Fact> matchesAnyOf(@NonNull Collection<FactSpec> spec) {
         List<FactSpecMatcher> matchers = spec.stream().map(FactSpecMatcher::new).collect(Collectors
                 .toList());
         return f -> matchers.stream().anyMatch(p -> p.test(f));
+    }
+
+    public static Predicate<Fact> matches(@NonNull FactSpec spec) {
+        FactSpecMatcher m = new FactSpecMatcher(spec);
+        return f -> m.test(f);
     }
 
 }

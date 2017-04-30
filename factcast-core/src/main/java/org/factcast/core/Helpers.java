@@ -7,7 +7,6 @@ import java.util.List;
 import com.google.common.collect.Lists;
 
 import lombok.NonNull;
-import lombok.experimental.UtilityClass;
 
 /**
  * tiny helpers to keep FactCast interface clean.
@@ -15,8 +14,7 @@ import lombok.experimental.UtilityClass;
  * @author uwe.schaefer@mercateo.com
  *
  */
-@UtilityClass
-class Helpers {
+final class Helpers {
 
     static List<Fact> toList(@NonNull Fact fact) {
         return Arrays.asList(fact);

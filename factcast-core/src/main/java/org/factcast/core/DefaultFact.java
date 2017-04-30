@@ -13,12 +13,12 @@ import org.factcast.core.util.FactCastJson;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import lombok.Value;
 
 /**
  * Note: creating an instance involves deserializing the header from JS. This is
@@ -31,7 +31,7 @@ import lombok.Value;
  * @author uwe.schaefer@mercateo.com
  *
  */
-@EqualsAndHashCode(of = { "jsonHeader", "jsonPayload" })
+@EqualsAndHashCode(of = { "deserializedHeader" })
 public class DefaultFact implements Fact, Externalizable {
 
     @Getter
@@ -60,27 +60,32 @@ public class DefaultFact implements Fact, Externalizable {
 
     }
 
+    @SuppressWarnings("deprecation")
     private void init(String jsonHeader) throws IOException, JsonProcessingException {
         deserializedHeader = FactCastJson.reader().forType(Header.class).readValue(jsonHeader);
+        if (deserializedHeader.id == null) {
+            throw new JsonMappingException("id attribute missing from " + jsonHeader);
+        }
     }
 
-    @Value
+    @Getter
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Header {
+    @EqualsAndHashCode(of = { "id" })
+    static class Header {
 
         @JsonProperty
         @NonNull
-        final UUID id;
+        UUID id;
 
         @JsonProperty
         @NonNull
-        final String ns;
+        String ns;
 
         @JsonProperty
-        final String type;
+        String type;
 
         @JsonProperty
-        final UUID aggId;
+        UUID aggId;
 
         @JsonProperty
         final Map<String, String> meta = new HashMap<>();
