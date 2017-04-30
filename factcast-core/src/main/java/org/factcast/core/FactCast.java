@@ -2,7 +2,6 @@ package org.factcast.core;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.store.FactStore;
 
@@ -37,24 +36,6 @@ public interface FactCast extends ReadFactCast {
         MarkFact mark = new MarkFact();
         publish(Helpers.toList(factsToPublish, mark));
         return mark.id();
-    }
-
-    // async
-
-    default CompletableFuture<UUID> publishAsyncWithMark(@NonNull List<Fact> factsToPublish) {
-        return CompletableFuture.supplyAsync(() -> publishWithMark(factsToPublish));
-    }
-
-    default CompletableFuture<UUID> publishAsyncWithMark(@NonNull Fact factToPublish) {
-        return CompletableFuture.supplyAsync(() -> publishWithMark(factToPublish));
-    }
-
-    default CompletableFuture<Void> publishAsync(@NonNull Fact factToPublish) {
-        return CompletableFuture.runAsync(() -> publish(factToPublish));
-    }
-
-    default CompletableFuture<Void> publishAsync(@NonNull List<Fact> factsToPublish) {
-        return CompletableFuture.runAsync(() -> publish(factsToPublish));
     }
 
     // Factory

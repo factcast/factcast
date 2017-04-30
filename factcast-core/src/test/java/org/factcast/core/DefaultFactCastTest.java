@@ -195,4 +195,13 @@ public class DefaultFactCastTest {
         new DefaultFactCast(null);
     }
 
+    @Test(expected = NullPointerException.class)
+    public void testpublishWithMarkOneNull() throws Exception {
+        uut.publishWithMark((Fact) null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testpublishWithMarkManyNull() throws Exception {
+        uut.publishWithMark((List<Fact>) null);
+    }
 }

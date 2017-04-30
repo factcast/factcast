@@ -13,4 +13,9 @@ public class FactTest {
     public void testOfNull2() throws Exception {
         Fact.of("", null);
     }
+
+    @Test(expected = NullPointerException.class)
+    public void testOfNull() throws Exception {
+        Fact.of(null, null);
+    }
 }

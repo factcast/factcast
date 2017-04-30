@@ -18,7 +18,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import lombok.ToString;
 import lombok.Value;
 
 /**
@@ -32,7 +31,6 @@ import lombok.Value;
  * @author uwe.schaefer@mercateo.com
  *
  */
-@ToString
 @EqualsAndHashCode(of = { "jsonHeader", "jsonPayload" })
 public class DefaultFact implements Fact, Externalizable {
 
@@ -54,7 +52,7 @@ public class DefaultFact implements Fact, Externalizable {
     }
 
     @SneakyThrows
-    private DefaultFact(@NonNull String jsonHeader, @NonNull String jsonPayload) {
+    private DefaultFact(String jsonHeader, String jsonPayload) {
 
         this.jsonHeader = jsonHeader;
         this.jsonPayload = jsonPayload;
@@ -62,7 +60,7 @@ public class DefaultFact implements Fact, Externalizable {
 
     }
 
-    private void init(@NonNull String jsonHeader) throws IOException, JsonProcessingException {
+    private void init(String jsonHeader) throws IOException, JsonProcessingException {
         deserializedHeader = FactCastJson.reader().forType(Header.class).readValue(jsonHeader);
     }
 

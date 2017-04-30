@@ -2,10 +2,8 @@ package org.factcast.core;
 
 import java.util.UUID;
 
-import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
-import lombok.Value;
-import lombok.experimental.FieldDefaults;
 
 /**
  * Special fact without payload, that can be used to identify marks in the
@@ -15,21 +13,20 @@ import lombok.experimental.FieldDefaults;
  * @author uwe.schaefer@mercateo.com
  *
  */
-@Value
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Getter
 public class MarkFact implements Fact {
 
     public static final String TYPE = "_mark";
 
     public static final String NS = "_";
 
-    UUID id = UUID.randomUUID();
+    final UUID id = UUID.randomUUID();
 
-    String ns = NS;
+    final String ns = NS;
 
-    String type = TYPE;
+    final String type = TYPE;
 
-    UUID aggId = null;
+    final UUID aggId = null;
 
     /**
      * does not have any payload.
