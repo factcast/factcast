@@ -112,7 +112,7 @@
 				<!-- Module not yet ready for coverage report -->
 				<configuration>
 					<excludes>
-						<exclude>*</exclude>
+						<exclude>**/*</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
