@@ -1,6 +1,6 @@
 +++
 draft = false
-title = "Create Page"
+title = "create a page"
 description = ""
 date = "2017-04-24T18:36:24+02:00"
 creatordisplayname = "Valere JEANTET"
@@ -10,7 +10,7 @@ lastmodifieremail = "valere.jeantet@gmail.com"
 tags = ["tag1","tag2"]
 
 [menu.main]
-parent = ""
+parent = "hidden"
 identifier = "page"
 weight = 10
 

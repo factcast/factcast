@@ -10,7 +10,7 @@ lastmodifierdisplayname = "Valere JEANTET"
 lastmodifieremail = "valere.jeantet@gmail.com"
 
 [menu.main]
-parent = ""
+parent = "hidden"
 identifier = "shortcodes"
 weight = 30
 

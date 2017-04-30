@@ -5,7 +5,7 @@ theme = "hugo-theme-docdock"
 themesdir = "themes"
 
 [params]
-editURL ="https://github.com/uweschaefer/factcast/edit/master/factcast-site/documentation/"
+editURL ="https://github.com/uweschaefer/factcast/edit/master/factcast-site/documentation/content/"
 noHomeIcon = false
 noSearch = false
 

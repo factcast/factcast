@@ -10,7 +10,7 @@ lastmodifierdisplayname = "Valere JEANTET"
 lastmodifieremail = "valere.jeantet@gmail.com"
 
 [menu.main]
-parent = "page"
+parent = "hidden"
 identifier = "page-slide"
 weight = 21
 
