@@ -14,7 +14,7 @@ weight = 20
 
 +++
 
-## GRPC Comsumer
+## GRPC Consumer
 
 As mentioned [before]({{%relref "intro_02_design.md#read-subscribe"%}}), there are three main Use-Cases for subscribing to a Fact-Stream:
 
