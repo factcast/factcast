@@ -5,6 +5,8 @@ import lombok.NonNull;
 
 @Getter
 public class FactStoreMetricNames {
+    static final String PREFIX = "factstore.";
+
     final String type;
 
     final String factPublishingFailed;
@@ -15,8 +17,9 @@ public class FactStoreMetricNames {
 
     protected FactStoreMetricNames(@NonNull String type) {
         this.type = type;
-        factPublishingFailed = "factstore." + type + ".publish.failure";
-        factPublished = "factstore." + type + ".publish.fact.count";
-        factPublishingLatency = "factstore." + type + ".publish.fact.latency";
+
+        factPublishingFailed = PREFIX + type + ".publish.failure";
+        factPublished = PREFIX + type + ".publish.fact.count";
+        factPublishingLatency = PREFIX + type + ".publish.fact.latency";
     }
 }
