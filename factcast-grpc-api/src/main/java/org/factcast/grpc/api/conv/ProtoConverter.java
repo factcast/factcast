@@ -81,7 +81,7 @@ public class ProtoConverter {
         return Fact.of(protoFact.getHeader(), protoFact.getPayload());
     }
 
-    public MSG_Fact toProto(org.factcast.core.Fact factMark) {
+    public MSG_Fact toProto(Fact factMark) {
         MSG_Fact.Builder proto = MSG_Fact.newBuilder();
         proto.setHeader(factMark.jsonHeader());
         proto.setPayload(factMark.jsonPayload());
