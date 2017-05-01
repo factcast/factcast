@@ -233,9 +233,13 @@
 					</executions>
 					<configuration>
 						<excludes>
+							<!-- Spring specific classes -->
 							<exclude>**/*Configuration.*</exclude>
 							<exclude>**/*Application.*</exclude>
+							<!-- Exceptions -->
 							<exclude>**/*Exception.*</exclude>
+							<!-- proto-generated classes -->
+							<exclude>**/gen/*</exclude>
 						</excludes>
 					</configuration>
 				</plugin>
