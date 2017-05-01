@@ -37,8 +37,8 @@ public class ProtoConverter {
     }
 
     public MSG_Notification toNotification(Fact t) {
-        org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Builder builder = MSG_Notification
-                .newBuilder().setType(MSG_Notification.Type.Fact);
+        MSG_Notification.Builder builder = MSG_Notification.newBuilder().setType(
+                MSG_Notification.Type.Fact);
         builder.setFact(toProto(t));
         builder.setType(MSG_Notification.Type.Fact);
         return builder.build();
@@ -46,8 +46,8 @@ public class ProtoConverter {
     }
 
     public MSG_Notification toNotification(UUID id) {
-        org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Builder builder = MSG_Notification
-                .newBuilder().setType(MSG_Notification.Type.Id);
+        MSG_Notification.Builder builder = MSG_Notification.newBuilder().setType(
+                MSG_Notification.Type.Id);
         builder.setId(toProto(id));
         builder.setType(MSG_Notification.Type.Id);
         return builder.build();
