@@ -1,5 +1,7 @@
 package org.factcast.server.grpc;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +29,8 @@ class BlockingStreamObserver<T> implements StreamObserver<T> {
         delegate.setMessageCompression(true);
     }
 
-    private void wakeup() {
+    @VisibleForTesting
+    void wakeup() {
         synchronized (lock) {
             lock.notifyAll(); // wake up our thread
         }
