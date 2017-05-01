@@ -2,11 +2,9 @@
 draft = false
 title = "create a page"
 description = ""
-date = "2017-04-24T18:36:24+02:00"
-creatordisplayname = "Valere JEANTET"
-creatoremail = "valere.jeantet@gmail.com"
-lastmodifierdisplayname = "Valere JEANTET"
-lastmodifieremail = "valere.jeantet@gmail.com"
+
+creatordisplayname = "Uwe Schaefer"
+creatoremail = "uwe.schaefer@mercateo.com"
 tags = ["tag1","tag2"]
 
 [menu.main]

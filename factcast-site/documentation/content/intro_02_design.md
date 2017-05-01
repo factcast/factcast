@@ -1,0 +1,42 @@
++++
+draft = false
+title = "Conceptual Design"
+description = ""
+
+creatordisplayname = "Uwe Schaefer"
+creatoremail = "uwe.schaefer@mercateo.com"
+
+[menu.main]
+parent = "intro"
+identifier = "design"
+weight = 20
++++
+
+## Write (publish)
+
+With FactCast, you write Facts into a log by **publishing** Facts. You can publish single Facts, as well as a List of Facts atomically (all-or-none). 
+
+In order to coordinate with consumers, you can also add special **Mark**Facts at the end of the List, that you can reference lateron. 
+{{%alert danger%}} TODO see markFacts {{% /alert%}}
+
+## Read (subscribe)
+
+In order to receive Facts, you subscribe to FactCast with a subscription request. This is where FactCast differs significantly from other solutions because the subscriptioon request contains the **full specification** of what events to receive.
+This means, there is no need for Server-Side administration or knowing ahead of time, which Streams to publich the Fact to.
+
+{{%alert danger%}} TODO see SubscriptionRequest {{% /alert%}}
+
+Next to the specification of what kinds of events to read, the SubscriptionRequest also contains the information of which Events to skip (due to being already received by the consumer) and how to deal with Facts being published in the Future.
+When subscribing, the Consumer sends a specification of Facts he is interested in and might have received Facts in the past.
+
+#### Facts are always guaranteed to be sent in the order published.
+
+The three usual subscription Models and their corresponding UseCases are:
+
+| Subscription Type | Description |
+|:--|:--|
+| Catchup | <p>On subscribing he sends the 'id' of the last event processed and gets every Fact that matches his specification, that has been published **after** this last known Fact. The subscription is complete, once the consumer has read the last of the currently published Facts.</p> <p>A usual Usecase for this kind of subscription is a write model, that needs to aggregate all information about a specific aggregate, in order to validate or reject an incoming command.</p>|
+| Ephemeral | The consumer **does not catch up** with Events that happened in the past, but only receives matching Facts **from now on**. <p>A good UseCase is cache invalidation.</p> |
+| Follow | The 80% usecase for consumers. Here the Consumer does catch-up with Facts from the past and (after that) receives future Facts **as they are published**. |
+
+Obviously all these subscription types rely on streaming transport which is implemented (at the time of writing) by REST-SSE or GRPC.

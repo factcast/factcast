@@ -1,6 +1,6 @@
 +++
 draft = false
-title = "Home"
+title = "Intro"
 description = ""
 date = "2017-04-24T18:36:24+02:00"
 
@@ -8,26 +8,13 @@ date = "2017-04-24T18:36:24+02:00"
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 
+[menu.main]
+parent = ""
+identifier = "intro"
+weight = 10
 +++
 
-<span id="sidebar-toggle-span">
-<a href="#" id="sidebar-toggle" data-sidebar-toggle=""><i class="fa fa-bars"></i></a>
-</span>
-
-<div id="top-github-link">
-  <a class="github-link"
-href="https://github.com/uweschaefer/factcast/edit/master/factcast-site/documentation/content/_index.md" target="blank">
-    <i class="fa fa-code-fork"></i> Edit this page</a>
-</div>
-
-
-
-<h1 align="center">FactCast</h1>
-A simple EventStore based on PostgreSQL.
-
-### Intro
-
-EventSourcing is a great pattern in many ways for technical as well as business reasons. There are a bunch of exciting EventStores, CEP and CQRS Frameworks / Templates out there.
+**EventSourcing** is a great pattern in many ways for technical as well as business reasons. There are a bunch of exciting EventStores, CEP and CQRS Frameworks / Templates out there.
 
 Amongst others:
 
@@ -50,34 +37,9 @@ However, where Subsystems communicate with each other (most likely corssing thos
 REST and similar technological choices provide this solution, and if spiced with streaming, we have all we need. 
 Oh and one thing: Whatever solution we choose to store and stream forward needs to be failure tolerant, somewhat scalable and should pose minimal operational complexity and overhead to an existing system.
 
-This is where some of the above solutions pose a possible problem:
+**This** is where some of the above solutions pose a possible problem:
 
 While all of them are most probably great, when it comes to clustering, backup, data and application-management and failover, none of these are trivial problems and most of them bring their own (certainly great) solution.
 
-Gee, i wish there was a solution, that is flexible, platform neutral and could be operated at scale with what we **already know''.
-
-### FactStore Requirements
-
-##### Some of the requirements that lead to the current design of FactStore are
-
-* based on wellknown technology
-* minimal operational effort needed
-* Stateless for simple Failover
-* Stateless for horizontal scalability (for reading)
-* wellknown data persistence layer for ease of operation
-* wellknown data persistence layer to be future proof in the light of the german data protection laws (and yes, that's not a trivial one)
-* fast **enough** when writing
-* fast for reading
-* Simple (!) enough for teams with very different tools to be able to integrate with their chosen environment
-
-##### NON-Requirements are
-
-* excessive write performance (as in high speed trading)
-* full-blown Application Framework 
-
-
-
-
-[FactCast {{%icon fa-github%}}](https://github.com/uweschaefer/factcast) is a ....
-
+##### Gee, i wish there was a solution, that is flexible, platform neutral and could be operated at scale with what we **already know**.
 
