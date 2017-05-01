@@ -91,7 +91,7 @@ public class SmokeMT {
 
             AtomicLong l = new AtomicLong();
             Subscription sub = fc.subscribeToFacts(SubscriptionRequest.follow(FactSpec.ns("smoke"))
-                    .sinceInception(), new FactObserver() {
+                    .fromScratch(), new FactObserver() {
 
                         @Override
                         public void onNext(Fact f) {

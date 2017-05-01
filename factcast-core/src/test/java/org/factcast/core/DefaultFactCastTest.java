@@ -49,7 +49,7 @@ public class DefaultFactCastTest {
 
         final UUID since = UUID.randomUUID();
         SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.forMark()).or(FactSpec.ns(
-                "some").type("type")).since(since);
+                "some").type("type")).from(since);
 
         uut.subscribeToFacts(r, f -> {
         });
@@ -68,7 +68,7 @@ public class DefaultFactCastTest {
         when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
 
         SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.forMark()).or(FactSpec.ns(
-                "some").type("type")).sinceInception();
+                "some").type("type")).fromScratch();
 
         uut.subscribeToIds(r, f -> {
         });
@@ -143,12 +143,12 @@ public class DefaultFactCastTest {
 
     @Test(expected = NullPointerException.class)
     public void testSubscribeIds2ndArgNull() throws Exception {
-        uut.subscribeToIds(SubscriptionRequest.follow(FactSpec.forMark()).sinceInception(), null);
+        uut.subscribeToIds(SubscriptionRequest.follow(FactSpec.forMark()).fromScratch(), null);
     }
 
     @Test(expected = NullPointerException.class)
     public void testSubscribeFacts2ndArgNull() throws Exception {
-        uut.subscribeToFacts(SubscriptionRequest.follow(FactSpec.forMark()).sinceInception(), null);
+        uut.subscribeToFacts(SubscriptionRequest.follow(FactSpec.forMark()).fromScratch(), null);
     }
 
     @Test(expected = NullPointerException.class)

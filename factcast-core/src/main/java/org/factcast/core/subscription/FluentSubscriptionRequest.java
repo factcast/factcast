@@ -58,18 +58,18 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
         }
 
         @Override
-        public SubscriptionRequest sinceInception() {
+        public SubscriptionRequest fromScratch() {
             return toBuild;
         }
 
         @Override
-        public SubscriptionRequest sinceSubscription() {
+        public SubscriptionRequest fromNowOn() {
             toBuild.ephemeral = true;
             return toBuild;
         }
 
         @Override
-        public SubscriptionRequest since(@NonNull UUID id) {
+        public SubscriptionRequest from(@NonNull UUID id) {
             toBuild.startingAfter = id;
             return toBuild;
         }
@@ -94,11 +94,11 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     public interface SpecBuilder {
         SpecBuilder or(@NonNull FactSpec specification);
 
-        SubscriptionRequest since(@NonNull UUID id);
+        SubscriptionRequest from(@NonNull UUID id);
 
-        SubscriptionRequest sinceInception();
+        SubscriptionRequest fromScratch();
 
-        SubscriptionRequest sinceSubscription();
+        SubscriptionRequest fromNowOn();
 
     }
 

@@ -25,7 +25,7 @@ public class SubscriptionRequestTest {
     @Test
     public void testCatchup() throws Exception {
         FactSpec s = FactSpec.ns("xx");
-        final SubscriptionRequest r = SubscriptionRequest.catchup(s).sinceInception();
+        final SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
         assertTrue(r.specs().contains(s));
         assertEquals(1, r.specs().size());
     }
@@ -33,7 +33,7 @@ public class SubscriptionRequestTest {
     @Test
     public void testFollow() throws Exception {
         FactSpec s = FactSpec.ns("xx");
-        final SubscriptionRequest r = SubscriptionRequest.follow(s).sinceInception();
+        final SubscriptionRequest r = SubscriptionRequest.follow(s).fromScratch();
         assertTrue(r.specs().contains(s));
         assertEquals(1, r.specs().size());
     }
@@ -41,7 +41,7 @@ public class SubscriptionRequestTest {
     @Test
     public void testFollowMaxDelay() throws Exception {
         FactSpec s = FactSpec.ns("xx");
-        final SubscriptionRequest r = SubscriptionRequest.follow(7, s).sinceInception();
+        final SubscriptionRequest r = SubscriptionRequest.follow(7, s).fromScratch();
         assertTrue(r.specs().contains(s));
         assertEquals(1, r.specs().size());
         assertEquals(7, r.maxBatchDelayInMs());

@@ -36,7 +36,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     public void testEmptyStore() throws Exception {
         FactObserver observer = mock(FactObserver.class);
-        Subscription s = uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).sinceInception(),
+        Subscription s = uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).fromScratch(),
                 observer);
         s.awaitComplete();
         verify(observer).onCatchup();
@@ -60,7 +60,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     public void testEmptyStoreFollowNonMatching() throws Exception {
         FactObserver observer = mock(FactObserver.class);
-        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), observer)
+        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
                 .awaitCatchup();
         verify(observer).onCatchup();
         verify(observer, never()).onComplete();
@@ -78,7 +78,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     public void testEmptyStoreFollowMatching() throws Exception {
         FactObserver observer = mock(FactObserver.class);
-        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), observer)
+        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
                 .awaitCatchup();
 
         verify(observer).onCatchup();
@@ -105,8 +105,7 @@ public abstract class AbstractFactStoreTest {
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
 
         FactObserver observer = mock(FactObserver.class);
-        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceSubscription(), observer)
-                .awaitCatchup();
+        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromNowOn(), observer).awaitCatchup();
 
         // nothing recieved
 
@@ -135,7 +134,7 @@ public abstract class AbstractFactStoreTest {
 
         FactObserver observer = mock(FactObserver.class);
         Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.follow(ANY)
-                .sinceSubscription(), observer).awaitCatchup();
+                .fromNowOn(), observer).awaitCatchup();
 
         // nothing recieved
 
@@ -174,7 +173,7 @@ public abstract class AbstractFactStoreTest {
 
         FactObserver observer = mock(FactObserver.class);
         Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.follow(ANY)
-                .sinceInception(), observer).awaitCatchup();
+                .fromScratch(), observer).awaitCatchup();
 
         // nothing recieved
 
@@ -207,7 +206,7 @@ public abstract class AbstractFactStoreTest {
         FactObserver observer = mock(FactObserver.class);
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).sinceInception(), observer)
+        uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).fromScratch(), observer)
                 .awaitComplete();
 
         verify(observer).onCatchup();
@@ -222,7 +221,7 @@ public abstract class AbstractFactStoreTest {
         FactObserver observer = mock(FactObserver.class);
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), observer)
+        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
                 .awaitCatchup();
 
         verify(observer).onCatchup();
@@ -242,7 +241,7 @@ public abstract class AbstractFactStoreTest {
         FactObserver observer = mock(FactObserver.class);
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"ns\":\"default\",\"type\":\"t1\"}", "{}"));
-        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).sinceInception(), observer)
+        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
                 .awaitCatchup();
         ;
         verify(observer).onCatchup();
@@ -284,7 +283,7 @@ public abstract class AbstractFactStoreTest {
         ArgumentCaptor<Fact> af = ArgumentCaptor.forClass(Fact.class);
         doNothing().when(observer).onNext(af.capture());
 
-        Subscription s = uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).sinceInception(),
+        Subscription s = uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).fromScratch(),
                 observer).awaitComplete();
 
         verify(observer).onNext(any());
@@ -304,7 +303,7 @@ public abstract class AbstractFactStoreTest {
                 + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                 "{}"));
         FactSpec REQ_FOO_BAR = FactSpec.ns("default").meta("foo", "bar");
-        uut.subscribeToFacts(SubscriptionRequest.catchup(REQ_FOO_BAR).sinceInception(), observer)
+        uut.subscribeToFacts(SubscriptionRequest.catchup(REQ_FOO_BAR).fromScratch(), observer)
                 .awaitComplete();
 
         verify(observer).onNext(any());
@@ -324,7 +323,7 @@ public abstract class AbstractFactStoreTest {
                 "{}"));
         FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript(
                 "function (h,e){ return (h.hit=='me')}");
-        uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), observer)
+        uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                 .awaitComplete();
 
         verify(observer).onNext(any());
@@ -344,7 +343,7 @@ public abstract class AbstractFactStoreTest {
                 "{}"));
         FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript(
                 "function (h){ return (h.hit=='me')}");
-        uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), observer)
+        uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                 .awaitComplete();
 
         verify(observer).onNext(any());
@@ -363,7 +362,7 @@ public abstract class AbstractFactStoreTest {
                 + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                 "{}"));
         FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return true }");
-        uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), observer)
+        uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                 .awaitComplete();
 
         verify(observer, times(2)).onNext(any());
@@ -382,7 +381,7 @@ public abstract class AbstractFactStoreTest {
                 + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                 "{}"));
         FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return false }");
-        uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).sinceInception(), observer)
+        uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                 .awaitComplete();
 
         verify(observer).onCatchup();

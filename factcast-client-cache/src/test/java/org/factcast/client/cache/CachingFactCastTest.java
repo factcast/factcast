@@ -74,7 +74,7 @@ public class CachingFactCastTest {
 
     @Test
     public void testSubscribeToIds() throws Exception {
-        SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.forMark()).sinceInception();
+        SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.forMark()).fromScratch();
 
         final IdObserver observer = id -> {
         };
@@ -85,7 +85,7 @@ public class CachingFactCastTest {
 
     @Test
     public void testSubscribeToFacts() throws Exception {
-        SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.forMark()).sinceInception();
+        SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.forMark()).fromScratch();
         when(l.lookup(any())).thenReturn(Optional.of(f));
         when(fc.subscribeToIds(same(rs), obsCap.capture())).thenReturn(null);
         final FactObserver observer = mock(FactObserver.class);

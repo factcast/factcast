@@ -14,7 +14,7 @@ public class SubscriptionRequestTOTest {
 
     @Test
     public void testDebugInfo() throws Exception {
-        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.forMark()).sinceInception();
+        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.forMark()).fromScratch();
         String debugInfo = r.debugInfo();
 
         SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
@@ -24,7 +24,7 @@ public class SubscriptionRequestTOTest {
 
     @Test
     public void testDumpContainsDebugInfo() throws Exception {
-        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.forMark()).sinceInception();
+        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.forMark()).fromScratch();
         String debugInfo = r.debugInfo();
 
         SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
@@ -34,7 +34,7 @@ public class SubscriptionRequestTOTest {
 
     @Test
     public void testToString() throws Exception {
-        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.forMark()).sinceInception();
+        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.forMark()).fromScratch();
         String debugInfo = r.debugInfo();
 
         SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
@@ -45,7 +45,7 @@ public class SubscriptionRequestTOTest {
     @Test
     public void testSpecsContainMarkSpec() throws Exception {
         final FactSpec s = FactSpec.ns("foo");
-        SubscriptionRequest r = SubscriptionRequest.catchup(s).sinceInception();
+        SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
         SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
 
         assertEquals(2, uut.specs().size());

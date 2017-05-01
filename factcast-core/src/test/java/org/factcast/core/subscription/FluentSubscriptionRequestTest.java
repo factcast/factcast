@@ -8,15 +8,15 @@ import org.junit.Test;
 public class FluentSubscriptionRequestTest {
 
     @Test
-    public void testSinceSubscription() throws Exception {
-        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).sinceSubscription();
+    public void testFromSubscription() throws Exception {
+        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
 
         assertTrue(r.ephemeral());
     }
 
     @Test(expected = NullPointerException.class)
-    public void testSinceNull() throws Exception {
-        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).since(null);
+    public void testFromNull() throws Exception {
+        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).from(null);
     }
 
     @Test(expected = NullPointerException.class)
@@ -36,13 +36,13 @@ public class FluentSubscriptionRequestTest {
 
     @Test
     public void testToString() throws Exception {
-        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.forMark()).sinceInception();
+        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.forMark()).fromScratch();
         assertSame(r.debugInfo(), r.toString());
     }
 
     @Test
     public void testDebugInfo() throws Exception {
-        String debugInfo = SubscriptionRequest.catchup(FactSpec.forMark()).sinceInception()
+        String debugInfo = SubscriptionRequest.catchup(FactSpec.forMark()).fromScratch()
                 .debugInfo();
         assertNotNull(debugInfo);
         assertTrue(debugInfo.contains(this.getClass().getSimpleName()));
