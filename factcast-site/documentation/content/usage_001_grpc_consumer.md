@@ -73,13 +73,18 @@ class QueryOptimizedView {
    UUID lastFactProcessed = persistentModel.getLastFactProcessed();
 
    // subscribe to all customer related changes.
-   SubscriptionRequest req = SubscriptionRequest.follow(FactSpec.ns("myapp")
-      .type("CustomerCreated")
-      .type("CustomerDeleted")  
-      .type("Purchase")  
-      .type("CustomerDeposition")    
-    ).from(lastFactProcessed);
+   SubscriptionRequest req = SubscriptionRequest
+      .follow(type("CustomerCreated"))
+          .or(type("CustomerDeleted"))
+          .or(type("CustomerDeposition"))
+          .or(type("PurchaseCompleted"))
+      .from(lastFactProcessed);
+
    factCast.subscribeToFacts(req, this::handle );
+ }
+
+ private FactSpec type(String type){ 
+   return FactSpec.ns("myapp").type(type); 
  }
 
  @Transactional
@@ -106,13 +111,18 @@ class CustomerCache {
  @PostConstruct
  public void init(){
    // subscribe to all customer related changes.
-   SubscriptionRequest req = SubscriptionRequest.follow(FactSpec.ns("myapp")
-      .type("CustomerCreated")
-      .type("CustomerDeleted")  
-      .type("Purchase")  
-      .type("CustomerDeposition")    
-    ).fromNowOn();
+   SubscriptionRequest req = SubscriptionRequest.
+      .follow(type("CustomerCreated"))
+          .or(type("CustomerDeleted"))
+          .or(type("CustomerDeposition"))
+          .or(type("PurchaseCompleted"))
+      .fromNowOn();
+
    factCast.subscribeToFacts(req, this::handle );
+ }
+
+ private FactSpec type(String type){ 
+  return FactSpec.ns("myapp").type(type); 
  }
 
  @Transactional
