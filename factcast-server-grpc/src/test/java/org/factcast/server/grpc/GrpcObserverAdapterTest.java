@@ -8,6 +8,8 @@ import static org.mockito.Mockito.*;
 import java.util.function.Function;
 
 import org.factcast.core.Fact;
+import org.factcast.core.TestFact;
+import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,6 +68,33 @@ public class GrpcObserverAdapterTest {
 
         verify(observer).onNext(any());
         assertEquals(MSG_Notification.Type.Catchup, msg.getValue().getType());
+
+    }
+
+    @Test
+    public void testOnError() throws Exception {
+        GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
+
+        verify(observer, never()).onNext(any());
+        uut.onError(new Exception());
+
+        verify(observer).onError(any());
+    }
+
+    @Test
+    public void testOnNext() throws Exception {
+        ProtoConverter conv = new ProtoConverter();
+        GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer,
+                conv::createNotificationFor);
+        doNothing().when(observer).onNext(msg.capture());
+        verify(observer, never()).onNext(any());
+
+        final TestFact f = new TestFact();
+        uut.onNext(f);
+
+        verify(observer).onNext(any());
+        assertEquals(MSG_Notification.Type.Fact, msg.getValue().getType());
+        assertEquals(f.id(), conv.fromProto(msg.getValue().getFact()).id());
 
     }
 }

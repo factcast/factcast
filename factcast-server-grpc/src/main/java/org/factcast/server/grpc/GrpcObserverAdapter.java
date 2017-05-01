@@ -43,7 +43,7 @@ final class GrpcObserverAdapter implements FactObserver {
 
     @Override
     public void onError(Throwable e) {
-        log.warn("{} onError – sending Error notification {}", id, e);
+        log.warn("{} onError – sending Error notification {}", id, e.getMessage());
         observer.onError(e);
         tryComplete();
     }
@@ -52,7 +52,7 @@ final class GrpcObserverAdapter implements FactObserver {
         try {
             observer.onCompleted();
         } catch (Throwable e) {
-            log.trace("{} Expected exception on completion ", id, e);
+            log.trace("{} Expected exception on completion {}", id, e.getMessage());
         }
     }
 
