@@ -110,9 +110,6 @@ public class SmokeMT {
 
                     }).awaitCatchup();
 
-            UUID customerId = null;
-            SubscriptionRequest.catchup(FactSpec.ns("myapp").aggId(customerId)).fromScratch();
-
             System.out.println("writing");
 
             fc.publish(new SmokeTestFact().aggId(aggId));
