@@ -15,7 +15,6 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 
 /**
  * Converts Protobuf messages to Java Objects and back.
@@ -23,7 +22,6 @@ import lombok.SneakyThrows;
  * @author uwe.schaefer@mercateo.com
  *
  */
-// TODO add symetry tests
 @RequiredArgsConstructor
 public class ProtoConverter {
 
@@ -58,16 +56,15 @@ public class ProtoConverter {
                 .getMostSignificantBits()).build();
     }
 
-    @SneakyThrows
+    // TODO test
     public SubscriptionRequestTO fromProto(@NonNull MSG_SubscriptionRequest request) {
-        return FactCastJson.reader().forType(SubscriptionRequestTO.class).readValue(request
-                .getJson());
+        return FactCastJson.readValue(SubscriptionRequestTO.class, request.getJson());
     }
 
-    @SneakyThrows
+    // TODO test
     public MSG_SubscriptionRequest toProto(SubscriptionRequestTO request) {
-        return MSG_SubscriptionRequest.newBuilder().setJson(FactCastJson.writer()
-                .writeValueAsString(request)).build();
+        return MSG_SubscriptionRequest.newBuilder().setJson(FactCastJson.writeValueAsString(
+                request)).build();
     }
 
     public UUID fromProto(MSG_UUID request) {

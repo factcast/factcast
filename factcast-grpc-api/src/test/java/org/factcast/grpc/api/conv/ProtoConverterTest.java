@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.junit.Test;
 
 public class ProtoConverterTest {
@@ -20,6 +21,21 @@ public class ProtoConverterTest {
         UUID copy = uut.fromProto(uut.toProto(probe));
 
         assertEquals(probe, copy);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testToProtoUUIDNull() throws Exception {
+        uut.toProto((UUID) null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testToProtoFactNull() throws Exception {
+        uut.toProto((Fact) null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testFromProtoOptionalNull() throws Exception {
+        uut.fromProto((MSG_OptionalFact) null);
     }
 
     @Test
@@ -80,6 +96,16 @@ public class ProtoConverterTest {
 
         assertNotNull(n);
         assertEquals(MSG_Notification.Type.Complete, n.getType());
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testCreateNotificationForFactNull() throws Exception {
+        uut.createNotificationFor((Fact) null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testCreateNotificationForIdNull() throws Exception {
+        uut.createNotificationFor((UUID) null);
     }
 
     @Test

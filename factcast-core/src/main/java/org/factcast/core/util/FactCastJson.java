@@ -55,7 +55,12 @@ public final class FactCastJson {
     }
 
     @SneakyThrows
-    public static <T> String writeValueAsString(T value) {
+    public static <T> String writeValueAsString(@NonNull T value) {
         return writer().writeValueAsString(value);
+    }
+
+    @SneakyThrows
+    public static <T> T readValue(@NonNull Class<T> class1, String json) {
+        return reader().forType(class1).readValue(json);
     }
 }
