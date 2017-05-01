@@ -120,6 +120,10 @@ class GrpcFactStore implements FactStore {
                     subscription.notifyError(new RuntimeException(
                             "Unrecognized notification type. THIS IS A BUG!"));
                     break;
+
+                default:
+                    throw new IllegalArgumentException(
+                            "Unknown type of notification received! THIS IS A BUG!");
                 }
             }
 
