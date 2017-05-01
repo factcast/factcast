@@ -89,8 +89,8 @@ public class SubscriptionRequestTOTest {
         uut.addSpecs(Lists.emptyList());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testMayDelay() throws Exception {
+    @Test
+    public void testMaxDelay() throws Exception {
         final FactSpec s = FactSpec.ns("foo");
         SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
         SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);

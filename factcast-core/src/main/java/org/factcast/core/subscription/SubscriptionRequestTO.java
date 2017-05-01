@@ -34,8 +34,6 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @JsonIgnoreProperties
 public class SubscriptionRequestTO implements SubscriptionRequest {
-    public SubscriptionRequestTO() {
-    }
 
     @JsonProperty
     long maxBatchDelayInMs = 0;
@@ -57,6 +55,9 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 
     @JsonProperty
     final List<FactSpec> specs = new LinkedList<>(Arrays.asList(FactSpec.forMark()));
+
+    public SubscriptionRequestTO() {
+    }
 
     public boolean hasAnyScriptFilters() {
         return specs.stream().anyMatch(s -> s.jsFilterScript() != null);
