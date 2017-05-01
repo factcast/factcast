@@ -27,16 +27,16 @@ import lombok.SneakyThrows;
 @RequiredArgsConstructor
 public class ProtoConverter {
 
-    public MSG_Notification toCatchupNotification() {
+    public MSG_Notification createCatchupNotification() {
         return MSG_Notification.newBuilder().setType(MSG_Notification.Type.Catchup).build();
     }
 
-    public MSG_Notification toCompleteNotification() {
+    public MSG_Notification createCompleteNotification() {
         return MSG_Notification.newBuilder().setType(MSG_Notification.Type.Complete).build();
 
     }
 
-    public MSG_Notification toNotification(Fact t) {
+    public MSG_Notification createNotificationFor(@NonNull Fact t) {
         MSG_Notification.Builder builder = MSG_Notification.newBuilder().setType(
                 MSG_Notification.Type.Fact);
         builder.setFact(toProto(t));
@@ -45,7 +45,7 @@ public class ProtoConverter {
 
     }
 
-    public MSG_Notification toNotification(UUID id) {
+    public MSG_Notification createNotificationFor(@NonNull UUID id) {
         MSG_Notification.Builder builder = MSG_Notification.newBuilder().setType(
                 MSG_Notification.Type.Id);
         builder.setId(toProto(id));

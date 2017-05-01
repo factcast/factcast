@@ -93,7 +93,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         final boolean idOnly = req.idOnly();
 
         store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp, f -> idOnly ? converter
-                .toNotification(f.id()) : converter.toNotification(f)));
+                .createNotificationFor(f.id()) : converter.createNotificationFor(f)));
     }
 
     private void resetDebugInfo(SubscriptionRequestTO req) {
