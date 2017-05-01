@@ -5,7 +5,13 @@ import lombok.NonNull;
 
 @Getter
 public class FactStoreMetricNames {
-    private final String type;
+    final String type;
+
+    final String factPublishingFailed;
+
+    final String factPublished;
+
+    final String factPublishingLatency;
 
     protected FactStoreMetricNames(@NonNull String type) {
         this.type = type;
@@ -13,10 +19,4 @@ public class FactStoreMetricNames {
         factPublished = "factstore." + type + ".publish.fact.count";
         factPublishingLatency = "factstore." + type + ".publish.fact.latency";
     }
-
-    private final String factPublishingFailed;
-
-    private final String factPublished;
-
-    private final String factPublishingLatency;
 }

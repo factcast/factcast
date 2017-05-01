@@ -8,9 +8,8 @@ import org.factcast.core.MarkFact;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.Getter;
+import lombok.Data;
 import lombok.NonNull;
-import lombok.Setter;
 
 /**
  * Defines a Specification of facts to match for a subscription.
@@ -18,8 +17,7 @@ import lombok.Setter;
  * @author uwe.schaefer@mercateo.com
  *
  */
-@Getter
-@Setter
+@Data
 public class FactSpec {
 
     @NonNull
@@ -32,6 +30,9 @@ public class FactSpec {
     @JsonProperty
     UUID aggId = null;
 
+    @JsonProperty
+    String jsFilterScript = null;
+
     @NonNull
     @JsonProperty
     final Map<String, String> meta = new HashMap<>();
@@ -40,9 +41,6 @@ public class FactSpec {
         meta.put(k, v);
         return this;
     }
-
-    @JsonProperty
-    String jsFilterScript = null;
 
     public static FactSpec forMark() {
         return FactSpec.ns(MarkFact.NS).type(MarkFact.TYPE);

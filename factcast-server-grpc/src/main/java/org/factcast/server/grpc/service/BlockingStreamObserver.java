@@ -49,11 +49,11 @@ class BlockingStreamObserver<T> implements StreamObserver<T> {
                         break;
                     }
                     if (delegate.isCancelled()) {
-                        throw new RuntimeException("channel was cancelled.");
+                        throw new TransportLayerException("channel was cancelled.");
                     }
                 }
                 if (!delegate.isReady()) {
-                    throw new RuntimeException("channel not coming back.");
+                    throw new TransportLayerException("channel not coming back.");
                 }
             }
         }

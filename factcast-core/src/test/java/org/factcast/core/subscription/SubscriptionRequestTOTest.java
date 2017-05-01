@@ -48,7 +48,7 @@ public class SubscriptionRequestTOTest {
         SubscriptionRequest r = SubscriptionRequest.catchup(s).sinceInception();
         SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
 
-        assertEquals(2, uut.specs());
+        assertEquals(2, uut.specs().size());
         assertEquals(s, uut.specs().get(1));
         assertEquals(FactSpec.forMark(), uut.specs().get(0));
 

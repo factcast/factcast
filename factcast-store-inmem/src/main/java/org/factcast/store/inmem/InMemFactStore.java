@@ -40,6 +40,15 @@ import lombok.extern.slf4j.Slf4j;
 @Deprecated
 @Slf4j
 public class InMemFactStore implements FactStore, DisposableBean {
+    final AtomicInteger highwaterMark = new AtomicInteger(0);
+
+    final LinkedHashMap<Integer, Fact> store = new LinkedHashMap<>();
+
+    final Set<UUID> ids = new HashSet<>();
+
+    final CopyOnWriteArrayList<InMemFollower> activeFollowers = new CopyOnWriteArrayList<>();
+
+    final ExecutorService executorService;
 
     @VisibleForTesting
     InMemFactStore(@NonNull ExecutorService es) {
@@ -63,16 +72,6 @@ public class InMemFactStore implements FactStore, DisposableBean {
     public InMemFactStore() {
         this(Executors.newCachedThreadPool());
     }
-
-    final AtomicInteger highwaterMark = new AtomicInteger(0);
-
-    final LinkedHashMap<Integer, Fact> store = new LinkedHashMap<>();
-
-    final Set<UUID> ids = new HashSet<>();
-
-    final CopyOnWriteArrayList<InMemFollower> activeFollowers = new CopyOnWriteArrayList<>();
-
-    final ExecutorService executorService;
 
     private class InMemFollower implements Predicate<Fact>, Consumer<Fact>, AutoCloseable {
         final Predicate<Fact> matcher;

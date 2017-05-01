@@ -22,9 +22,11 @@ public interface GenericObserver<I> {
     void onNext(I element);
 
     default void onCatchup() {
+        // implement if you are interested in that event
     }
 
     default void onComplete() {
+        // implement if you are interested in that event
     }
 
     default void onError(Throwable exception) {

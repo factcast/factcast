@@ -47,13 +47,13 @@ class GrpcFactStore implements FactStore {
 
     final RemoteFactStoreStub stub;
 
+    final ProtoConverter converter = new ProtoConverter();
+
     GrpcFactStore(@NonNull AddressChannelFactory channelFactory) {
         Channel channel = channelFactory.createChannel(CHANNEL_NAME);
         blockingStub = RemoteFactStoreGrpc.newBlockingStub(channel);
         stub = RemoteFactStoreGrpc.newStub(channel);
     }
-
-    final ProtoConverter converter = new ProtoConverter();
 
     @Override
     public Optional<Fact> fetchById(UUID id) {

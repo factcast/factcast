@@ -15,6 +15,7 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
 import com.google.common.eventbus.EventBus;
+import com.impossibl.postgres.jdbc.PGSQLSimpleException;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -166,7 +167,7 @@ class PGFactStream {
             if (isConnected()) {
 
                 if (rs.isClosed()) {
-                    throw new RuntimeException(
+                    throw new PGSQLSimpleException(
                             "ResultSet already closed. We should not have got here. THIS IS A BUG!");
                 }
 
