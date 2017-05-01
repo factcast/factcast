@@ -22,12 +22,13 @@ href="https://github.com/uweschaefer/factcast/edit/master/factcast-site/document
 
 
 
-<h1 align="center">[FactCast {{%icon fa-github%}}](https://github.com/uweschaefer/factcast)</h1>
+<h1 align="center">FactCast</h1>
 
 ## A simple EventStore based on PostgreSQL.
 
 #### This is work in progress and neither the Documentation, nor the code is in a "released" state. Please keep that in mind when poking around.
 
+[FactCast at {{%icon fa-github%}}](https://github.com/uweschaefer/factcast)
 
 
 
