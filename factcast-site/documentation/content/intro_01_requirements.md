@@ -22,7 +22,7 @@ weight = 10
 * Stateless for horizontal scalability (for reading)
 * wellknown data persistence layer for ease of operation
 * wellknown data persistence layer to be future proof in the light of the german data protection laws (and yes, that's not a trivial one)
-* fast **enough** when writing
+* fast *enough* when writing
 * fast for reading
 * Simple (!) enough for teams with very different tools to be able to integrate with their chosen environment
 

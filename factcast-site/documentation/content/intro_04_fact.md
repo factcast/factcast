@@ -14,7 +14,7 @@ weight = 40
 
 ## Facts
 
-FactCast is centered around **Facts**. We say Facts instead of Events, because Event has become a blurry term that could mean any number of things from a simple ```onWhatNot() ``` call handled by an Event-Loop to a ```LegalContractCreated``` with any flavour of semantics.
+FactCast is centered around *Facts*. We say Facts instead of Events, because Event has become a blurry term that could mean any number of things from a simple ```onWhatNot() ``` call handled by an Event-Loop to a ```LegalContractCreated``` with any flavour of semantics.
 
 We decided to use the term Fact over Domain-Event because we want to highlight the notion of an Event being an immutable thing that, once it is published, became an observable Fact.
 
@@ -35,3 +35,4 @@ consists of:
 
 has no constraints other than being a valid JSON document.
 
+{{%alert danger%}} see REST docs / GRPC docs {{% /alert%}}
