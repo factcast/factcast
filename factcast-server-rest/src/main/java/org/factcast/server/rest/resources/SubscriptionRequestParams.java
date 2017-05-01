@@ -18,6 +18,7 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SubscriptionRequestParams {
+    // TODO rename to from for consistency
     @QueryParam("since")
     private String since;
 

@@ -15,10 +15,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AccessLevel;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 import lombok.NonNull;
-import lombok.SneakyThrows;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 /**
@@ -31,10 +30,12 @@ import lombok.experimental.FieldDefaults;
  *
  */
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Data
-@NoArgsConstructor
+@Getter
+@Setter
 @JsonIgnoreProperties
 public class SubscriptionRequestTO implements SubscriptionRequest {
+    public SubscriptionRequestTO() {
+    }
 
     @JsonProperty
     long maxBatchDelayInMs = 0;
@@ -97,9 +98,8 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
         return Collections.unmodifiableList(specs);
     }
 
-    @SneakyThrows
     public String dump() {
-        return FactCastJson.writer().writeValueAsString(this);
+        return FactCastJson.writeValueAsString(this);
     }
 
     @Override

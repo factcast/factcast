@@ -53,4 +53,9 @@ public final class FactCastJson {
         Class<? extends Object> c = toCopy.getClass();
         return reader.forType(c).readValue(writer.forType(c).writeValueAsString(toCopy));
     }
+
+    @SneakyThrows
+    public static <T> String writeValueAsString(T value) {
+        return writer().writeValueAsString(value);
+    }
 }
