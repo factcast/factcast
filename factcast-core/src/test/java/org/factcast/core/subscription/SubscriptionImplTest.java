@@ -1,8 +1,7 @@
 package org.factcast.core.subscription;
 
-import static org.junit.Assert.*;
+import static org.factcast.core.TestHelper.*;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
 
@@ -63,18 +62,6 @@ public class SubscriptionImplTest {
 
         uut.awaitCatchup();
         uut.awaitComplete();
-    }
-
-    private void expect(Class<? extends Throwable> ex, Callable<?> e) {
-        try {
-            e.call();
-            fail("expected " + ex);
-        } catch (Throwable actual) {
-            if (!ex.isInstance(actual)) {
-                fail("Wrong exception, expected " + ex + " but got " + actual);
-            }
-
-        }
     }
 
     @SuppressWarnings("resource")
