@@ -8,8 +8,9 @@ import org.factcast.core.MarkFact;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 
 /**
  * Defines a Specification of facts to match for a subscription.
@@ -17,7 +18,8 @@ import lombok.NonNull;
  * @author uwe.schaefer@mercateo.com
  *
  */
-@Data
+@Getter
+@Setter
 public class FactSpec {
 
     @NonNull
