@@ -16,6 +16,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
+import com.impossibl.postgres.jdbc.PGDriver;
 
 /**
  * Main @Configuration class for a PGFactStore
@@ -27,6 +28,14 @@ import com.google.common.eventbus.EventBus;
 @EnableScheduling
 @Import(SchedulingConfiguration.class)
 public class PGFactStoreInternalConfiguration {
+    static {
+        final String DRIVER_PROPERTY = "spring.datasource.driverClassName";
+
+        if (System.getProperty(DRIVER_PROPERTY) == null) {
+            System.setProperty(DRIVER_PROPERTY, PGDriver.class.getCanonicalName());
+        }
+    }
+
     @Bean
     @ConditionalOnMissingBean(EventBus.class)
     public EventBus eventBus() {

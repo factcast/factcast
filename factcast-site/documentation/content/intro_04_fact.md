@@ -14,13 +14,13 @@ weight = 40
 
 ## Facts
 
-FactCast is centered around *Facts*. We say Facts instead of Events, because Event has become a blurry term that could mean any number of things from a simple ```onWhatNot() ``` call handled by an Event-Loop to a ```LegalContractCreated``` with any flavour of semantics.
+FactCast is centered around *Facts*. We say Facts instead of Events, because Event has become a blurry term that could mean any number of things from a simple ```onWhatNot() ``` call handled by an Event-Loop to a ```LegalContractCreated``` with any flavor of semantics.
 
 We decided to use the term Fact over Domain-Event because we want to highlight the notion of an Event being an immutable thing that, once it is published, became an observable Fact.
 
 Facts consist of two JSON documents: Header and Payload.
 
-#### The Header 
+#### The Header
 
 consists of:
 

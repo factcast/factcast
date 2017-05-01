@@ -14,7 +14,7 @@ weight = 30
 
 ## Technical Choices
 
-Based on the formentioned requirements, let us highlight some technical choices.
+Based on the aforementioned requirements, let us highlight some technical choices.
 
 ## Choice #1: PostgreSQL for persistence
 
@@ -34,7 +34,7 @@ While Document datastores like [MongoDB](https://mongodb.com) certainly have mor
 
 #### Coordination
 
-With ```LISTEN``` and ```NOTIFY``` PostgreSQL makes the transition from a passive, queryable Datastore to a reactive one, that can be used to guarantee low latency pushes of new Facts down to subscribers, irrelevant at which instance of FactCast the write has happened, without the need of any further message-bus/topic/whatever.
+With ```LISTEN``` and ```NOTIFY``` PostgreSQL makes the transition from a passive Data-store to a reactive one, that can be used to guarantee low latency pushes of new Facts down to subscribers, irrelevant at which instance of FactCast the write has happened, without the need of any further message-bus/topic/whatever.
 
 #### Read-Replicas
 
@@ -51,5 +51,3 @@ With AWS RDS for instance, it is rather trivial to setup and operate a PostgreSQ
 ## Choice #2: GRPC
 
 {{%alert danger%}} TODO {{% /alert%}}
-
-
