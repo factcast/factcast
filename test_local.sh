@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#mvn clean install -o -DskipTests && \
+mvn clean install -o -DskipTests && \
 java \
 -D"spring.datasource.url=jdbc:pgsql://192.168.3.11/test1?user=tester&password=test_password" \
 -Dmanagement.security.enabled=false \
