@@ -92,10 +92,6 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
         specs.addAll(factSpecs);
     }
 
-    public SubscriptionRequestTO copy() {
-        return FactCastJson.copy(this);
-    }
-
     @Override
     public List<FactSpec> specs() {
         return Collections.unmodifiableList(specs);
