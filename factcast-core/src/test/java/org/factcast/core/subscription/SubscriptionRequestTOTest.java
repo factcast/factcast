@@ -32,4 +32,26 @@ public class SubscriptionRequestTOTest {
         assertTrue(uut.dump().contains(r.debugInfo()));
     }
 
+    @Test
+    public void testToString() throws Exception {
+        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.forMark()).sinceInception();
+        String debugInfo = r.debugInfo();
+
+        SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
+
+        assertEquals(debugInfo, uut.toString());
+    }
+
+    @Test
+    public void testSpecsContainMarkSpec() throws Exception {
+        final FactSpec s = FactSpec.ns("foo");
+        SubscriptionRequest r = SubscriptionRequest.catchup(s).sinceInception();
+        SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
+
+        assertEquals(2, uut.specs());
+        assertEquals(s, uut.specs().get(1));
+        assertEquals(FactSpec.forMark(), uut.specs().get(0));
+
+    }
+
 }
