@@ -16,7 +16,7 @@ weight = 20
 
 With FactCast, you write Facts into a log by **publishing** Facts. You can publish single Facts, as well as a List of Facts atomically (all-or-none). 
 
-In order to coordinate with consumers, you can also add special **Mark**Facts at the end of the List, that you can reference lateron. 
+In order to coordinate with consumers, you can also add special **MarkFacts** at the end of the List, that you can reference from consumers lateron. 
 {{%alert danger%}} TODO see markFacts {{% /alert%}}
 
 ## Read (subscribe)
@@ -29,7 +29,10 @@ This means, there is no need for Server-Side administration or knowing ahead of 
 Next to the specification of what kinds of events to read, the SubscriptionRequest also contains the information of which Events to skip (due to being already received by the consumer) and how to deal with Facts being published in the Future.
 When subscribing, the Consumer sends a specification of Facts he is interested in and might have received Facts in the past.
 
-#### Facts are always guaranteed to be sent in the order published.
+
+#### {{% alert theme="info" %}} Note, that Facts are always guaranteed to be sent in the order published. {{% /alert %}}
+
+
 
 The three usual subscription Models and their corresponding UseCases are:
 
@@ -40,3 +43,9 @@ The three usual subscription Models and their corresponding UseCases are:
 | Follow | The 80% usecase for consumers. Here the Consumer does catch-up with Facts from the past and (after that) receives future Facts **as they are published**. |
 
 Obviously all these subscription types rely on streaming transport which is implemented (at the time of writing) by REST-SSE or GRPC.
+
+## Read (fetchById)
+
+There are situation, where either the bandwidth is limited between consumer and FactCast, and there are either many consumers interested in the same Fact, or consumers repeatedly receiving the same Fact (Catchup-Subscriptions for example). 
+
+What could help here, is not actually pushing Facts to the client, but **just 'ids' (or URLs)** to identify Facts and provide a way to fetch the Facts by that 'id'. This way, we can make use of HTTP-Proxies, 'local' caches etc, depending on the protocol used.

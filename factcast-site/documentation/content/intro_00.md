@@ -32,14 +32,14 @@ All of these have a slightly different focus, but all of them deal with persisti
 In a microservice world, **teams choose their own** tools of trade. This is a very important benefit of using Microservices in the first place, and you do not want to mess with this principle.
 However, where Subsystems communicate with each other (most likely corssing those team borders) you need some common ground. EventSourcing is a great pattern here (as well as within those subsystems) because of the decoupling effect of its use. 
 
-##### So, what is needed is some technological solution, that everyone can easily agree on because it does not force as little technical dependencies on the clients as possible.
+##### So, what is needed is some technical solution, that everyone can easily agree on, because it forces as little technical dependencies on the clients as possible.
 
 REST and similar technological choices provide this solution, and if spiced with streaming, we have all we need. 
 Oh and one thing: Whatever solution we choose to store and stream forward needs to be failure tolerant, somewhat scalable and should pose minimal operational complexity and overhead to an existing system.
 
 **This** is where some of the above solutions pose a possible problem:
 
-While all of them are most probably great, when it comes to clustering, backup, data and application-management and failover, none of these are trivial problems and most of them bring their own (certainly great) solution.
+While all of them are most probably great, when it comes to clustering, backup, data-/application-management and failover, none of these are trivial problems and most of them bring their own (certainly great) solution.
 
-##### Gee, i wish there was a solution, that is flexible, platform neutral and could be operated at scale with what we **already know**.
+##### Gee, i wish there was a solution, that is flexible, platform neutral and could be operated at scale with **what we already know**.
 

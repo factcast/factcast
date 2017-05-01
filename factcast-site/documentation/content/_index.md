@@ -22,62 +22,12 @@ href="https://github.com/uweschaefer/factcast/edit/master/factcast-site/document
 
 
 
-<h1 align="center">FactCast</h1>
-A simple EventStore based on PostgreSQL.
+<h1 align="center">[FactCast {{%icon fa-github%}}](https://github.com/uweschaefer/factcast)</h1>
 
-### Intro
+## A simple EventStore based on PostgreSQL.
 
-EventSourcing is a great pattern in many ways for technical as well as business reasons. There are a bunch of exciting EventStores, CEP and CQRS Frameworks / Templates out there.
-
-Amongst others:
-
-* [Greg Young's EventStore – The open-source, functional database with Complex Event Processing in JavaScript.](https://geteventstore.com/)
-* [Lagom - Opinionated microservice framework](https://www.lightbend.com/platform/development/lagom-framework)
-* [Axon Framework – Java Framework for scalable and high-performance applications.](http://www.axonframework.org/)
-* [The Eventuate™ Platform ](http://eventuate.io/)
-* [Kafka – for building real-time data pipelines and streaming apps](https://kafka.apache.org/)
-* [event-store-commons – a common event store Java interface ](https://github.com/fuinorg/event-store-commons)
-
-All of these have a slightly different focus, but all of them deal with persisting Streams of Events.
-
-### The Problem at hand
-
-In a microservice world, **teams choose their own** tools of trade. This is a very important benefit of using Microservices in the first place, and you do not want to mess with this principle.
-However, where Subsystems communicate with each other (most likely corssing those team borders) you need some common ground. EventSourcing is a great pattern here (as well as within those subsystems) because of the decoupling effect of its use. 
-
-##### So, what is needed is some technological solution, that everyone can easily agree on because it does not force as little technical dependencies on the clients as possible.
-
-REST and similar technological choices provide this solution, and if spiced with streaming, we have all we need. 
-Oh and one thing: Whatever solution we choose to store and stream forward needs to be failure tolerant, somewhat scalable and should pose minimal operational complexity and overhead to an existing system.
-
-This is where some of the above solutions pose a possible problem:
-
-While all of them are most probably great, when it comes to clustering, backup, data and application-management and failover, none of these are trivial problems and most of them bring their own (certainly great) solution.
-
-Gee, i wish there was a solution, that is flexible, platform neutral and could be operated at scale with what we **already know''.
-
-### FactStore Requirements
-
-##### Some of the requirements that lead to the current design of FactStore are
-
-* based on wellknown technology
-* minimal operational effort needed
-* Stateless for simple Failover
-* Stateless for horizontal scalability (for reading)
-* wellknown data persistence layer for ease of operation
-* wellknown data persistence layer to be future proof in the light of the german data protection laws (and yes, that's not a trivial one)
-* fast **enough** when writing
-* fast for reading
-* Simple (!) enough for teams with very different tools to be able to integrate with their chosen environment
-
-##### NON-Requirements are
-
-* excessive write performance (as in high speed trading)
-* full-blown Application Framework 
+#### This is work in progress and neither the Documentation, nor the code is in a "released" state. Please keep that in mind when poking around.
 
 
-
-
-[FactCast {{%icon fa-github%}}](https://github.com/uweschaefer/factcast) is a ....
 
 

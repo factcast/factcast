@@ -12,9 +12,9 @@ identifier = "techchoices"
 weight = 30
 +++
 
-## Technical requirements
+## Technical Choices
 
-Base on the formentioned requirements, let us highlight some technical choices.
+Based on the formentioned requirements, let us highlight some technical choices.
 
 ## Choice #1: PostgreSQL for persistence
 
@@ -30,7 +30,7 @@ Monitoring, Alerting, Backup, Point in time recovery, Authentication / Authoriza
 
 #### Flexible Querys
 
-While Document datastores like MongoDB certainly have more to offer here, PostgreSQL is surprisingly good with JSON. FactCast uses GIN Indexes on JSONB Columns in order to find matching Facts for subscriptions easily.
+While Document datastores like [MongoDB](https://mongodb.com) certainly have more to offer here, PostgreSQL is surprisingly good with JSON. FactCast uses **GIN** Indexes on **JSONB** Columns in order to find matching Facts for subscriptions easily.
 
 #### Coordination
 
@@ -46,6 +46,10 @@ With AWS RDS for instance, it is rather trivial to setup and operate a PostgreSQ
 
 ## Choice #2: REST
 
+{{%alert danger%}} TODO {{% /alert%}}
+
 ## Choice #2: GRPC
+
+{{%alert danger%}} TODO {{% /alert%}}
 
 

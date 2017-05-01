@@ -12,7 +12,7 @@ identifier = "anatomy"
 weight = 40
 +++
 
-### Facts
+## Facts
 
 FactCast is centered around **Facts**. We say Facts instead of Events, because Event has become a blurry term that could mean any number of things from a simple ```onWhatNot() ``` call handled by an Event-Loop to a ```LegalContractCreated``` with any flavour of semantics.
 
