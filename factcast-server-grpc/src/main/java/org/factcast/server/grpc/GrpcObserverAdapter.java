@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RequiredArgsConstructor
-final class GrpcObserverAdapter implements FactObserver {
+class GrpcObserverAdapter implements FactObserver {
 
     final ProtoConverter converter = new ProtoConverter();
 

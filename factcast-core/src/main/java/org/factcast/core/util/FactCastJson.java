@@ -24,11 +24,11 @@ import lombok.SneakyThrows;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FactCastJson {
 
-    final static ObjectMapper objectMapper = new ObjectMapper();
+    private final static ObjectMapper objectMapper = new ObjectMapper();
 
-    static final ObjectReader reader;
+    private static final ObjectReader reader;
 
-    static final ObjectWriter writer;
+    private static final ObjectWriter writer;
 
     static {
 
@@ -36,16 +36,6 @@ public final class FactCastJson {
 
         writer = objectMapper.writer();
         reader = objectMapper.reader();
-    }
-
-    @NonNull
-    public static ObjectReader reader() {
-        return reader;
-    }
-
-    @NonNull
-    public static ObjectWriter writer() {
-        return writer;
     }
 
     @SneakyThrows
@@ -56,11 +46,11 @@ public final class FactCastJson {
 
     @SneakyThrows
     public static <T> String writeValueAsString(@NonNull T value) {
-        return writer().writeValueAsString(value);
+        return writer.writeValueAsString(value);
     }
 
     @SneakyThrows
     public static <T> T readValue(@NonNull Class<T> class1, String json) {
-        return reader().forType(class1).readValue(json);
+        return reader.forType(class1).readValue(json);
     }
 }

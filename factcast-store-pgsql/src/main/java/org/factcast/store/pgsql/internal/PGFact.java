@@ -65,7 +65,7 @@ class PGFact implements Fact {
 
     @SneakyThrows
     private Map<String, String> deser() {
-        Meta deserializedMeta = FactCastJson.reader().forType(Meta.class).readValue(jsonHeader);
+        Meta deserializedMeta = FactCastJson.readValue(Meta.class, jsonHeader);
         return deserializedMeta.meta;
     }
 

@@ -51,6 +51,6 @@ public class TestFact implements Fact {
     @Override
     @SneakyThrows
     public String jsonHeader() {
-        return FactCastJson.writer().writeValueAsString(this);
+        return FactCastJson.writeValueAsString(this);
     }
 }

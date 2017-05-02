@@ -1,5 +1,6 @@
 package org.factcast.core.util;
 
+import static org.factcast.core.TestHelper.*;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
@@ -40,6 +41,13 @@ public class FactCastJsonTest {
 
         @JsonIgnore
         String baz;
+    }
+
+    @Test
+    public void testReadValueNull() throws Exception {
+        expectNPE(() -> FactCastJson.readValue(null, ""));
+        expectNPE(() -> FactCastJson.readValue(null, null));
+        expectNPE(() -> FactCastJson.readValue(FactCastJson.class, null));
     }
 
 }

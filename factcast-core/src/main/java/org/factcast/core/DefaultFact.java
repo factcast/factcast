@@ -62,7 +62,7 @@ public class DefaultFact implements Fact, Externalizable {
 
     @SuppressWarnings("deprecation")
     private void init(String jsonHeader) throws IOException, JsonProcessingException {
-        deserializedHeader = FactCastJson.reader().forType(Header.class).readValue(jsonHeader);
+        deserializedHeader = FactCastJson.readValue(Header.class, jsonHeader);
         if (deserializedHeader.id == null) {
             throw new JsonMappingException("id attribute missing from " + jsonHeader);
         }
