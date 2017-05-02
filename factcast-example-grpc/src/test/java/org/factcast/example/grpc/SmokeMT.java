@@ -1,5 +1,6 @@
 package org.factcast.example.grpc;
 
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -7,9 +8,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.observer.FactObserver;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -90,37 +89,55 @@ public class SmokeMT {
             UUID aggId = UUID.randomUUID();
 
             AtomicLong l = new AtomicLong();
-            Subscription sub = fc.subscribeToFacts(SubscriptionRequest.follow(FactSpec.ns("smoke"))
-                    .fromScratch(), new FactObserver() {
-
-                        @Override
-                        public void onNext(Fact f) {
-                            l.incrementAndGet();
-                            if (Math.random() < .01) {
-                                try {
-                                    Thread.sleep(100);
-                                } catch (InterruptedException e) {
-                                    // TODO Auto-generated catch block
-                                    e.printStackTrace();
-                                }
-                            }
-                            System.out.println(l.get());
-
-                        }
-
-                    }).awaitCatchup();
+            // Subscription sub =
+            // fc.subscribeToFacts(SubscriptionRequest.follow(FactSpec.ns("smoke"))
+            // .fromScratch(), new FactObserver() {
+            //
+            // @Override
+            // public void onNext(Fact f) {
+            // l.incrementAndGet();
+            // if (Math.random() < .01) {
+            // try {
+            // Thread.sleep(100);
+            // } catch (InterruptedException e) {
+            // // TODO Auto-generated catch block
+            // e.printStackTrace();
+            // }
+            // }
+            // System.out.println(l.get());
+            //
+            // }
+            //
+            // }).awaitCatchup();
 
             System.out.println("writing");
 
+            final SmokeTestFact first = new SmokeTestFact();
+            fc.publish(first.aggId(aggId));
             fc.publish(new SmokeTestFact().aggId(aggId));
             fc.publish(new SmokeTestFact().aggId(aggId));
-            fc.publish(new SmokeTestFact().aggId(aggId));
+            fc.publish(Arrays.asList(new SmokeTestFact().aggId(aggId), new SmokeTestFact().aggId(
+                    aggId), new SmokeTestFact().aggId(aggId)));
+
+            fc.fetchById(first.id());
 
             Thread.sleep(500);
 
             System.out.println("closing");
-            sub.close();
+            // sub.close();
             Thread.sleep(500);
+
+            fc.subscribeToFacts(SubscriptionRequest.follow(FactSpec.ns("smoke").aggId(UUID
+                    .randomUUID())).fromScratch(), f -> {
+                    }).awaitCatchup();
+
+            fc.subscribeToFacts(SubscriptionRequest.follow(FactSpec.ns("smoke").aggId(UUID
+                    .randomUUID())).fromScratch(), f -> {
+                    }).awaitCatchup();
+
+            fc.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("smoke").aggId(UUID
+                    .randomUUID())).fromScratch(), f -> {
+                    }).awaitCatchup();
 
             System.out.println("publishing one more");
             Fact afterClose = new SmokeTestFact().aggId(aggId);

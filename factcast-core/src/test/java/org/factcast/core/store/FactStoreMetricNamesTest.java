@@ -16,7 +16,7 @@ public class FactStoreMetricNamesTest {
         final String type = "something";
         FactStoreMetricNames n = new FactStoreMetricNames(type);
 
-        assertTrue(n.factPublished().startsWith("factstore." + type + "."));
+        assertTrue(n.factPublishingMeter().startsWith("factstore." + type + "."));
         assertTrue(n.factPublishingFailed().startsWith("factstore." + type + "."));
         assertTrue(n.factPublishingLatency().startsWith("factstore." + type + "."));
         assertEquals(type, n.type());

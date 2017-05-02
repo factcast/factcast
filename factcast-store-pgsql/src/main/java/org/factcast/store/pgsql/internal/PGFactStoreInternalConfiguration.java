@@ -49,8 +49,8 @@ public class PGFactStoreInternalConfiguration {
 
     @Bean
     public PGListener pgSqlListener(EventBus eventBus,
-            EnvironmentPGConnectionSupplier connectionSupplier) {
-        return new PGListener(connectionSupplier, eventBus, new ConnectionTester());
+            EnvironmentPGConnectionSupplier connectionSupplier, MetricRegistry registry) {
+        return new PGListener(connectionSupplier, eventBus, new ConnectionTester(registry));
     }
 
     @Bean

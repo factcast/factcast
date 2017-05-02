@@ -8,8 +8,11 @@ import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 import com.impossibl.postgres.api.jdbc.PGConnection;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -24,7 +27,14 @@ import lombok.extern.slf4j.Slf4j;
  */
 
 @Slf4j
+
 class ConnectionTester implements Predicate<Connection> {
+
+    final Counter connectionFailureMetric;
+
+    ConnectionTester(@NonNull MetricRegistry registry) {
+        connectionFailureMetric = registry.counter(new PGMetricNames().connectionFailure());
+    }
 
     @Override
     public boolean test(@Nonnull Connection connection) {
@@ -42,6 +52,7 @@ class ConnectionTester implements Predicate<Connection> {
                 log.warn("Connection test failed with exception", e);
             }
         }
+        connectionFailureMetric.inc();
         return false;
     }
 }

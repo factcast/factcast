@@ -11,7 +11,10 @@ import java.sql.ResultSet;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.internal.stubbing.defaultanswers.ReturnsDeepStubs;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import com.codahale.metrics.MetricRegistry;
 
 //FIXME can be a junit test
 @RunWith(MockitoJUnitRunner.class)
@@ -28,7 +31,9 @@ public class ConnectionTesterTest {
 
     @Test
     public void testTest() throws Exception {
-        ConnectionTester tester = new ConnectionTester();
+        final MetricRegistry mr = mock(MetricRegistry.class, new ReturnsDeepStubs());
+
+        ConnectionTester tester = new ConnectionTester(mr);
 
         when(conn.prepareStatement(anyString())).thenReturn(ps);
         when(ps.executeQuery()).thenReturn(rs);

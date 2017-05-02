@@ -50,4 +50,9 @@ public class FactCastJsonTest {
         expectNPE(() -> FactCastJson.readValue(FactCastJson.class, null));
     }
 
+    @Test
+    public void testWriteValueNull() throws Exception {
+        expectNPE(() -> FactCastJson.writeValueAsString(null));
+    }
+
 }
