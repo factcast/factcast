@@ -47,7 +47,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     static final AtomicLong subscriptionIdStore = new AtomicLong();
 
     @Override
-    public void fetchById(MSG_UUID request, StreamObserver<MSG_OptionalFact> responseObserver) {
+    public void fetchById(@NonNull MSG_UUID request,
+            @NonNull StreamObserver<MSG_OptionalFact> responseObserver) {
         try {
             UUID fromProto = converter.fromProto(request);
             log.trace("fetchById {}", fromProto);
@@ -82,8 +83,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void subscribe(MSG_SubscriptionRequest request,
-            StreamObserver<MSG_Notification> responseObserver) {
+    public void subscribe(@NonNull MSG_SubscriptionRequest request,
+            @NonNull StreamObserver<MSG_Notification> responseObserver) {
         SubscriptionRequestTO req = converter.fromProto(request);
         resetDebugInfo(req);
 
@@ -96,7 +97,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                 .createNotificationFor(f.id()) : converter.createNotificationFor(f)));
     }
 
-    private void resetDebugInfo(SubscriptionRequestTO req) {
+    private void resetDebugInfo(@NonNull SubscriptionRequestTO req) {
         String newId = "sub#" + subscriptionIdStore.incrementAndGet();
         log.info("subscribing {} for {} defined as {}", newId, req, req.dump());
         req.debugInfo(newId);
