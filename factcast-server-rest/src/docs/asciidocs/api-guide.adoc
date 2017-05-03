@@ -1,6 +1,34 @@
-[[overview-headers]]
-== Headers
- 
-Every response has the following header(s):
- 
-include::{snippets}/get-simple/http-request.adoc[]
+= Fact-Cast REST-API-documentation
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 4
+:sectlinks:
+
+[introduction]
+= Introduction
+
+The fact-cast REST-API for getting and sharing events. It's a HATEOAS REST-API, links are represented as json-hyperschema
+
+[[resources]]
+= Resources
+
+
+[[resources-root]]
+== Root
+This is the entry point-resource
+
+=== Enter the API
+A `GET` request lists all the possibilities, one can do with the API.
+
+==== Links
+include::{snippets}/root/links.adoc[]
+
+==== Example request
+
+include::{snippets}/root/http-request.adoc[]
+
+==== Example response
+
+include::{snippets}/root/http-response.adoc[]

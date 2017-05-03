@@ -80,6 +80,12 @@
 			<version>2.25.1</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.mercateo.rest</groupId>
+			<artifactId>rest-hateoas-client</artifactId>
+			<version>0.0.5</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
