@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
 import com.google.common.collect.Lists;
 import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException;
 
@@ -49,9 +51,17 @@ class PGFactStore implements FactStore {
     @NonNull
     final Counter publishFailedCounter;
 
-    final Meter publishLatency;
+    final Timer publishLatency;
 
     final PGMetricNames names = new PGMetricNames();
+
+    private Meter publishMeter;
+
+    private Timer fetchLatency;
+
+    private Meter subscriptionCatchupMeter;
+
+    private Meter subscriptionFollowMeter;
 
     PGFactStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory subscriptionFactory,
             MetricRegistry registry) {
@@ -60,13 +70,19 @@ class PGFactStore implements FactStore {
         this.registry = registry;
 
         publishFailedCounter = registry.counter(names.factPublishingFailed());
-        publishLatency = registry.meter(names.factPublishingLatency());
+        publishLatency = registry.timer(names.factPublishingLatency());
+        publishMeter = registry.meter(names.factPublishingMeter());
+
+        fetchLatency = registry.timer(names.fetchLatency());
+
+        subscriptionCatchupMeter = registry.meter(names.subscribeCatchup());
+        subscriptionFollowMeter = registry.meter(names.subscribeFollow());
     }
 
     @Override
     @Transactional
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
-        try {
+        try (final Context time = publishLatency.time();) {
 
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
             final int numberOfFactsToPublish = factsToPublish.size();
@@ -79,7 +95,7 @@ class PGFactStore implements FactStore {
                 statement.setString(2, fact.jsonPayload());
             });
 
-            publishLatency.mark(numberOfFactsToPublish);
+            publishMeter.mark(numberOfFactsToPublish);
 
         } catch (UncategorizedSQLException sql) {
 
@@ -104,13 +120,21 @@ class PGFactStore implements FactStore {
     @Override
     public Subscription subscribe(@NonNull SubscriptionRequestTO request,
             @NonNull FactObserver observer) {
+
+        if (request.continous()) {
+            subscriptionFollowMeter.mark();
+        } else {
+            subscriptionCatchupMeter.mark();
+        }
         return subscriptionFactory.subscribe(request, observer);
     }
 
     @Override
     public Optional<Fact> fetchById(@NonNull UUID id) {
-        return jdbcTemplate.query(PGConstants.SELECT_BY_ID, new Object[] { "{\"id\":\"" + id
-                + "\"}" }, this::extractFactFromResultSet).stream().findFirst();
+        try (final Context time = fetchLatency.time();) {
+            return jdbcTemplate.query(PGConstants.SELECT_BY_ID, new Object[] { "{\"id\":\"" + id
+                    + "\"}" }, this::extractFactFromResultSet).stream().findFirst();
+        }
     }
 
 }

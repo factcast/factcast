@@ -16,9 +16,18 @@ public class FactStoreMetricNamesTest {
         final String type = "something";
         FactStoreMetricNames n = new FactStoreMetricNames(type);
 
-        assertTrue(n.factPublished().startsWith("factstore." + type + "."));
-        assertTrue(n.factPublishingFailed().startsWith("factstore." + type + "."));
-        assertTrue(n.factPublishingLatency().startsWith("factstore." + type + "."));
+        final String typedPrefix = "factstore." + type + ".";
+
+        assertTrue(n.factPublishingMeter().startsWith(typedPrefix));
+        assertTrue(n.factPublishingFailed().startsWith(typedPrefix));
+        assertTrue(n.factPublishingLatency().startsWith(typedPrefix));
+
+        assertTrue(n.fetchLatency().startsWith(typedPrefix));
+
+        assertTrue(n.connectionFailure().startsWith(typedPrefix));
+        assertTrue(n.subscribeCatchup().startsWith(typedPrefix));
+        assertTrue(n.subscribeFollow().startsWith(typedPrefix));
+
         assertEquals(type, n.type());
 
     }

@@ -15,7 +15,7 @@ import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
-import org.factcast.server.grpc.FactStoreGrpcService;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -38,16 +38,18 @@ public class FactStoreGrpcServiceTest {
 
     final ProtoConverter protoConverter = new ProtoConverter();
 
+    @Before
+    public void setUp() {
+        uut = new FactStoreGrpcService(backend);
+    }
+
     @Test(expected = NullPointerException.class)
     public void testPublishNull() throws Exception {
-        uut = new FactStoreGrpcService(backend);
-
         uut.publish(null, mock(StreamObserver.class));
     }
 
     @Test
     public void testPublishNone() throws Exception {
-        uut = new FactStoreGrpcService(backend);
         doNothing().when(backend).publish(acFactList.capture());
         MSG_Facts r = MSG_Facts.newBuilder().build();
 
@@ -60,7 +62,7 @@ public class FactStoreGrpcServiceTest {
 
     @Test
     public void testPublishSome() throws Exception {
-        uut = new FactStoreGrpcService(backend);
+
         doNothing().when(backend).publish(acFactList.capture());
         Builder b = MSG_Facts.newBuilder();
 
@@ -89,7 +91,7 @@ public class FactStoreGrpcServiceTest {
         uut.fetchById(null, mock(StreamObserver.class));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testFetchById() throws Exception {
         UUID id = UUID.randomUUID();
         uut.fetchById(protoConverter.toProto(id), mock(StreamObserver.class));
