@@ -1,4 +1,4 @@
-package org.factcast.server.rest;
+package org.factcast.server.rest.documentation;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -6,15 +6,13 @@ import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import lombok.NonNull;
 
-//TODO move that in test folder
 @Component
-public class SetupRunner implements CommandLineRunner {
-    private static final Fact one = new Fact() {
+public class SetupRunner {
+    static final Fact one = new Fact() {
 
         private final UUID id = UUID.randomUUID();
 
@@ -61,17 +59,9 @@ public class SetupRunner implements CommandLineRunner {
         }
     };
 
-    private final FactStore factStore;
-
     @Autowired
     public SetupRunner(@NonNull FactStore factStore) {
-        this.factStore = factStore;
-    }
-
-    @Override
-    public void run(String... arg0) throws Exception {
         factStore.publish(Arrays.asList(one));
-
     }
 
 }

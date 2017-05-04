@@ -76,7 +76,12 @@ public class EventsResource implements JerseyResource {
     @Path("{id}")
     @Cacheable
     public ObjectWithSchema<FactJson> getForId(@NotNull @PathParam("id") String id) {
-        Optional<Fact> fact = factStore.fetchById(UUID.fromString(id));
+        Optional<Fact> fact;
+        try {
+            fact = factStore.fetchById(UUID.fromString(id));
+        } catch (IllegalArgumentException e) {
+            throw new WebApplicationException(404);
+        }
         FactJson returnValue = fact.map(f -> {
             try {
                 JsonNode payLoad = objectMapper.readTree(f.jsonPayload());

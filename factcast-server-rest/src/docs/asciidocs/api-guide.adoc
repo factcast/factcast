@@ -32,3 +32,21 @@ include::{snippets}/root/http-request.adoc[]
 ==== Example response
 
 include::{snippets}/root/http-response.adoc[]
+
+[[resources-transactions]]
+== Event-Transactions
+This is the resource for commiting new facts
+
+=== New Transaction
+A `POST` with a list of all facts to publish.
+
+==== Payload
+include::{snippets}/events-transactions/request-fields.adoc[]
+
+==== Example request
+
+include::{snippets}/events-transactions/http-request.adoc[]
+
+==== Example response
+
+include::{snippets}/events-transactions/http-response.adoc[]
