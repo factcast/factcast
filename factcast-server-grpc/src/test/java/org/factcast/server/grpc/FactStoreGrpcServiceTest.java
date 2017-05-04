@@ -10,7 +10,10 @@ import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
@@ -23,6 +26,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -37,6 +41,9 @@ public class FactStoreGrpcServiceTest {
     ArgumentCaptor<List<Fact>> acFactList;
 
     final ProtoConverter protoConverter = new ProtoConverter();
+
+    @Captor
+    private ArgumentCaptor<SubscriptionRequestTO> reqCaptor;
 
     @Before
     public void setUp() {
@@ -94,10 +101,33 @@ public class FactStoreGrpcServiceTest {
     @Test
     public void testFetchById() throws Exception {
         UUID id = UUID.randomUUID();
-        uut.fetchById(protoConverter.toProto(id), mock(StreamObserver.class));
+        uut.fetchById(protoConverter.toProto(id), mock(ServerCallStreamObserver.class));
 
         verify(backend).fetchById(eq(id));
     }
 
-    // TODO subscribe test
+    @Test
+    public void testSubscribeFacts() throws Exception {
+        SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.forMark()).fromNowOn();
+        when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
+        uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)), mock(
+                ServerCallStreamObserver.class));
+
+        verify(backend).subscribe(any(), any());
+        assertFalse(reqCaptor.getValue().idOnly());
+
+    }
+
+    @Test
+    public void testSubscribeIds() throws Exception {
+        SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.forMark()).fromNowOn();
+        when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
+        uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forIds(req)), mock(
+                ServerCallStreamObserver.class));
+
+        verify(backend).subscribe(any(), any());
+        assertTrue(reqCaptor.getValue().idOnly());
+
+    }
+
 }
