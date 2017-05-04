@@ -1,0 +1,4 @@
+databaseChangeLog:
+    - include:
+        file: event_store/v1.0.0/v1.yaml
+        relativeToChangelogFile: true
