@@ -117,7 +117,7 @@ public class SpringConfig {
     LinkFactoryContext linkFactoryContext(FieldCheckerForSchema fieldCheckerForSchema,
             MethodCheckerForLink methodCheckerForLink) throws URISyntaxException {
 
-        URI baseUri = new URI("http://localhost:8080");
+        URI baseUri = new URI("http://localhost:9998");
 
         return new LinkFactoryContextDefault(baseUri, methodCheckerForLink, fieldCheckerForSchema);
     }
