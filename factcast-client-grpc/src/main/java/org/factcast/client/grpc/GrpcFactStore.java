@@ -24,6 +24,9 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -49,10 +52,22 @@ class GrpcFactStore implements FactStore {
 
     final ProtoConverter converter = new ProtoConverter();
 
+    @Autowired
     GrpcFactStore(@NonNull AddressChannelFactory channelFactory) {
-        Channel channel = channelFactory.createChannel(CHANNEL_NAME);
-        blockingStub = RemoteFactStoreGrpc.newBlockingStub(channel);
-        stub = RemoteFactStoreGrpc.newStub(channel);
+        this(channelFactory.createChannel(CHANNEL_NAME));
+
+    }
+
+    @VisibleForTesting
+    GrpcFactStore(@NonNull Channel channel) {
+        this(RemoteFactStoreGrpc.newBlockingStub(channel), RemoteFactStoreGrpc.newStub(channel));
+    }
+
+    @VisibleForTesting
+    GrpcFactStore(@NonNull RemoteFactStoreBlockingStub newBlockingStub,
+            @NonNull RemoteFactStoreStub newStub) {
+        this.blockingStub = newBlockingStub;
+        this.stub = newStub;
     }
 
     @Override
