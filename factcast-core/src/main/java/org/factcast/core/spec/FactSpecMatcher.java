@@ -1,6 +1,5 @@
 package org.factcast.core.spec;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -117,15 +116,14 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         return engine;
     }
 
-    public static Predicate<Fact> matchesAnyOf(@NonNull Collection<FactSpec> spec) {
+    public static Predicate<Fact> matchesAnyOf(@NonNull List<FactSpec> spec) {
         List<FactSpecMatcher> matchers = spec.stream().map(FactSpecMatcher::new).collect(Collectors
                 .toList());
         return f -> matchers.stream().anyMatch(p -> p.test(f));
     }
 
     public static Predicate<Fact> matches(@NonNull FactSpec spec) {
-        FactSpecMatcher m = new FactSpecMatcher(spec);
-        return f -> m.test(f);
+        return new FactSpecMatcher(spec);
     }
 
 }

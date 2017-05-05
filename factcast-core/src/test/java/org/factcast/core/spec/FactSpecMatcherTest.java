@@ -2,8 +2,11 @@ package org.factcast.core.spec;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.UUID;
+import java.util.function.Predicate;
 
+import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.junit.Before;
 import org.junit.Test;
@@ -84,6 +87,22 @@ public class FactSpecMatcherTest {
 
     private boolean metaMatch(FactSpec s, TestFact f) {
         return new FactSpecMatcher(s).metaMatch(f);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testMatchesAnyOfNull() throws Exception {
+        FactSpecMatcher.matchesAnyOf(null);
+    }
+
+    @Test
+    public void testMatchesAnyOf() throws Exception {
+        Predicate<Fact> p = FactSpecMatcher.matchesAnyOf(Arrays.asList(FactSpec.ns("1"), FactSpec
+                .ns("2")));
+
+        assertTrue(p.test(new TestFact().ns("1")));
+        assertTrue(p.test(new TestFact().ns("2")));
+        assertFalse(p.test(new TestFact().ns("3")));
+
     }
 
 }

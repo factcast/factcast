@@ -17,7 +17,6 @@ import com.impossibl.postgres.api.jdbc.PGConnection;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -79,10 +78,9 @@ class PGListener implements InitializingBean, DisposableBean {
         }
     }
 
-    @Value
     @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     public static class FactInsertionEvent {
-        String name;
+        final String name;
     }
 
     @Override
