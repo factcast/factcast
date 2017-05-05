@@ -18,9 +18,8 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SubscriptionRequestParams {
-    // TODO rename to from for consistency
-    @QueryParam("since")
-    private String since;
+    @QueryParam("from")
+    private String from;
 
     @QueryParam("follow")
     private boolean follow;
@@ -28,17 +27,17 @@ public class SubscriptionRequestParams {
     @NotEmpty
     @QueryParam("factSpec")
     @JsonParam
-    private List<FactSpec> factSpecs;
+    private List<FactSpec> factSpec;
 
     public SubscriptionRequestTO toRequest(ObjectMapper objectMapper) {
 
         SubscriptionRequestTO r = new SubscriptionRequestTO();
         r.continous(follow);
-        if (since != null) {
-            r.startingAfter(UUID.fromString(since));
+        if (from != null) {
+            r.startingAfter(UUID.fromString(from));
         }
 
-        r.addSpecs(factSpecs);
+        r.addSpecs(factSpec);
         return r;
     }
 }

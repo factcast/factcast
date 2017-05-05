@@ -11,21 +11,35 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.pr
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.removeHeaders;
 
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import org.factcast.server.rest.FactCastRestApplication;
+import org.factcast.server.rest.resources.FactJson;
+import org.glassfish.jersey.media.sse.EventInput;
+import org.glassfish.jersey.media.sse.SseFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.spring.SpringLifecycleListener;
 import org.glassfish.jersey.server.spring.scope.RequestContextFilter;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.restdocs.JUnitRestDocumentation;
+import org.springframework.restdocs.headers.ResponseHeadersSnippet;
 import org.springframework.restdocs.hypermedia.HypermediaDocumentation;
 import org.springframework.restdocs.hypermedia.LinksSnippet;
+import org.springframework.restdocs.payload.FieldDescriptor;
+import org.springframework.restdocs.payload.PayloadDocumentation;
+import org.springframework.restdocs.request.ParameterDescriptor;
+import org.springframework.restdocs.request.RequestDocumentation;
+import org.springframework.restdocs.request.RequestParametersSnippet;
+import org.springframework.restdocs.snippet.Snippet;
 
 import com.mercateo.common.rest.schemagen.link.relation.Rel;
 
@@ -70,17 +84,55 @@ public class EventsDocumentationTest extends JerseyTest {
     }
 
     @Test
-    public void getSimpleEvent() {
+    @Ignore
+    public void getEvents() throws InterruptedException, ExecutionException {
 
+        // request-Documentation
+
+        List<ParameterDescriptor> subscriptionParamDescriptors = Descriptors
+                .getSubscriptionRequestParamsdescriptor();
+        RequestParametersSnippet requestSnippet = RequestDocumentation.relaxedRequestParameters(
+                subscriptionParamDescriptors);
+
+        // header
+        ResponseHeadersSnippet headerDoc = responseHeaders(headerWithName(HttpHeaders.CACHE_CONTROL)
+                .description("Caching is disabled for streams"));
+
+        EventInput eventInput = target("/events/").queryParam("follow", true).queryParam("factSpec",
+                "%7B%20%22ns%22%3A%22a%22%7D").register(SseFeature.class).register(
+                        documentationConfiguration(this.documentation)).register(document(
+                                "event-stream", preprocessRequest(removeHeaders("User-Agent")),
+                                preprocessResponse(prettyPrint()), headerDoc, requestSnippet))
+                .request().get(EventInput.class);
+
+        // assertThat(response.getStatus(), is(200));
+        // assertThat(response.getHeaderString(HttpHeaders.CACHE_CONTROL),
+        // is("no-chache"));
+    }
+
+    @Test
+    public void getSimpleEvent() {
+        // links
         LinksSnippet links = HypermediaDocumentation.links(new HyperschemaLinkExtractor(), //
                 HypermediaDocumentation.linkWithRel(Rel.SELF.getRelation().getName()).description(
                         "The link to that specific resource"));
+        // payload
+        List<FieldDescriptor> factFieldDescriptors = Descriptors.getFactFieldDescriptors("",
+                new ConstrainedFields(FactJson.class));
+        factFieldDescriptors.add(PayloadDocumentation.fieldWithPath("_schema").description(
+                "Schemainformation"));
+        Snippet responseDoc = PayloadDocumentation.responseFields(factFieldDescriptors);
+
+        // header
+        ResponseHeadersSnippet headerDoc = responseHeaders(headerWithName(HttpHeaders.CACHE_CONTROL)
+                .description("Caching for 1000000 seconds."));
 
         final Response response = target("/events/" + SetupRunner.one.id().toString()).register(
                 documentationConfiguration(this.documentation)).register(document("event",
                         preprocessRequest(removeHeaders("User-Agent")), preprocessResponse(
-                                prettyPrint()), links)).request().get();
+                                prettyPrint()), links, responseDoc, headerDoc)).request().get();
         assertThat(response.getStatus(), is(200));
-
+        assertThat(response.getHeaderString(HttpHeaders.CACHE_CONTROL), is(
+                "max-age=1000000, s-maxage=1000000, public"));
     }
 }
