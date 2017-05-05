@@ -42,4 +42,26 @@ public class SubscriptionsTest {
         verify(obs).onError(any());
 
     }
+
+    @Test(expected = SubscriptionCancelledException.class)
+    public void testOnErrorCompletesFutureCatchup() throws Exception {
+        SubscriptionImpl<Integer> on = Subscriptions.on(obs);
+
+        verify(obs, never()).onError(any());
+        on.notifyError(new Throwable("ignore me"));
+        verify(obs).onError(any());
+
+        on.awaitCatchup();
+    }
+
+    @Test(expected = SubscriptionCancelledException.class)
+    public void testOnErrorCompletesFutureComplete() throws Exception {
+        SubscriptionImpl<Integer> on = Subscriptions.on(obs);
+
+        verify(obs, never()).onError(any());
+        on.notifyError(new Throwable("ignore me"));
+        verify(obs).onError(any());
+
+        on.awaitComplete();
+    }
 }
