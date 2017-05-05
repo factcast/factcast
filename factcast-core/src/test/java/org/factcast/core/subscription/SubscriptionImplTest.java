@@ -144,4 +144,16 @@ public class SubscriptionImplTest {
 
         on.awaitComplete();
     }
+
+    @Test(timeout = 100)
+    public void testAwaitCatchupLong() throws Exception {
+        uut.notifyCatchup();
+        uut.awaitCatchup(100000);
+    }
+
+    @Test(timeout = 100)
+    public void testAwaitCompleteLong() throws Exception {
+        uut.notifyComplete();
+        uut.awaitComplete(100000);
+    }
 }
