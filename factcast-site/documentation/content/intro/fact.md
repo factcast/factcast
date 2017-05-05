@@ -31,6 +31,48 @@ consists of:
 * an optional Object 'meta' any number of key-value pairs, where the values are Strings
 * any additional information you want to put in a Fact Header
 
+
+```jsonSchema
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "definitions": {},
+    "id": "http://docs.factcast.org/example/fact.json",
+    "properties": {
+        "id": {
+            "id": "/properties/id",
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+        },
+        "aggId": {
+            "id": "/properties/aggId",
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+        },
+        "ns": {
+            "id": "/properties/ns",
+            "type": "string",
+        },
+        "type": {
+            "id": "/properties/type",
+            "type": "string"
+        },
+        "meta": {
+            "id": "/properties/meta",
+            "type": "object",
+            "additionalProperties": {
+		"type": "string",
+		"description": "Some string values"
+            },
+        }
+    },
+    "type": "object",
+    "additionalProperties": {
+        "type": "object"
+    },
+    required: ["id","ns"]
+}
+```
+
 #### The Payload
 
 has no constraints other than being a valid JSON document.
