@@ -31,4 +31,4 @@ The docker container can be started
 ```
 docker run -e"spring.datasource.url=jdbc:pgsql://<POSTGRES-SERVER>/<DATABASENAME>?user=<USERNAME>&password=<PASSWORD>" -p 9090:9090 -p 8080:8080 -p 8081:8081 factcast/factcast-server
 ```
-[{{%icon circle-arrow-right%}}Read more on Ports]({{%relref "setup_server_005_ports.md"%}})
+[{{%icon circle-arrow-right%}}Read more on Ports]({{%relref "setup/server/ports.md"%}})

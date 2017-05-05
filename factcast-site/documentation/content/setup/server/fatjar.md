@@ -33,4 +33,4 @@ To run the jar, pass the necessary configuration info as -D parameters:
 java -Dspring.datasource.url=jdbc:pgsql://<POSTGRES-SERVER>/<DATABASENAME>?user=<USERNAME>&password=<PASSWORD> -Dmanagement.security.enabled=false -jar target/factcast.jar
 
 ```
-[{{%icon circle-arrow-right%}}Read more on Ports]({{%relref "setup_server_005_ports.md"%}})
+[{{%icon circle-arrow-right%}}Read more on Ports]({{%relref "setup/server/ports.md"%}})
