@@ -12,7 +12,6 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.Subscriptions;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
@@ -97,7 +96,7 @@ class GrpcFactStore implements FactStore {
     @Override
     public Subscription subscribe(@NonNull SubscriptionRequestTO req,
             @NonNull FactObserver observer) {
-        SubscriptionImpl<Fact> subscription = Subscriptions.on(observer);
+        SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
 
         final MSG_SubscriptionRequest request = converter.toProto(req);
         final StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new StreamObserver<FactStoreProto.MSG_Notification>() {

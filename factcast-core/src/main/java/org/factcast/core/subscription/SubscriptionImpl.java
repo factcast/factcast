@@ -114,4 +114,8 @@ public final class SubscriptionImpl<T> implements Subscription {
         onClose = e;
         return this;
     }
+
+    public static <T> SubscriptionImpl<T> on(@NonNull GenericObserver<T> o) {
+        return new SubscriptionImpl<>(o);
+    }
 }

@@ -1,6 +1,8 @@
 package org.factcast.core.subscription;
 
 import static org.factcast.core.TestHelper.*;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
@@ -24,6 +26,7 @@ public class SubscriptionImplTest {
 
     @Before
     public void setUp() throws Exception {
+        obs = mock(GenericObserver.class);
     }
 
     @Test
@@ -91,4 +94,54 @@ public class SubscriptionImplTest {
         l.await();
     }
 
+    private GenericObserver<Integer> obs;
+
+    @Test(expected = NullPointerException.class)
+    public void testOnNull() throws Exception {
+        SubscriptionImpl.on(null);
+    }
+
+    @Test
+    public void testOn() throws Exception {
+        SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
+
+        verify(obs, never()).onNext(any());
+        on.notifyElement(1);
+        verify(obs).onNext(1);
+
+        verify(obs, never()).onCatchup();
+        on.notifyCatchup();
+        verify(obs).onCatchup();
+
+        verify(obs, never()).onComplete();
+        on.notifyComplete();
+        verify(obs).onComplete();
+
+        verify(obs, never()).onError(any());
+        on.notifyError(new Throwable("ignore me"));
+        verify(obs).onError(any());
+
+    }
+
+    @Test(expected = SubscriptionCancelledException.class)
+    public void testOnErrorCompletesFutureCatchup() throws Exception {
+        SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
+
+        verify(obs, never()).onError(any());
+        on.notifyError(new Throwable("ignore me"));
+        verify(obs).onError(any());
+
+        on.awaitCatchup();
+    }
+
+    @Test(expected = SubscriptionCancelledException.class)
+    public void testOnErrorCompletesFutureComplete() throws Exception {
+        SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
+
+        verify(obs, never()).onError(any());
+        on.notifyError(new Throwable("ignore me"));
+        verify(obs).onError(any());
+
+        on.awaitComplete();
+    }
 }

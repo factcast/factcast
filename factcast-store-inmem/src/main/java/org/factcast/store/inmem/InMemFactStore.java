@@ -21,7 +21,6 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.Subscriptions;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.springframework.beans.factory.DisposableBean;
 
@@ -127,7 +126,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
     public synchronized Subscription subscribe(SubscriptionRequestTO request,
             FactObserver observer) {
 
-        SubscriptionImpl<Fact> subscription = Subscriptions.on(observer);
+        SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
         InMemFollower s = new InMemFollower(request, subscription);
 
         executorService.submit(() -> {
