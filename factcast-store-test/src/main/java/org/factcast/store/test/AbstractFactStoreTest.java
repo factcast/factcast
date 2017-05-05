@@ -96,15 +96,20 @@ public abstract class AbstractFactStoreTest {
         private List<Fact> values = new LinkedList<>();
 
         @Override
-        public void onNext(Fact element) {
+        public synchronized void onNext(Fact element) {
             values.add(element);
+            this.notifyAll();
         }
 
         @SneakyThrows
         public void await(int count) {
             synchronized (this) {
-                if (values.size() >= count) {
-                    return;
+                while (true) {
+                    if (values.size() >= count) {
+                        return;
+                    } else {
+                        this.wait();
+                    }
                 }
             }
         }
