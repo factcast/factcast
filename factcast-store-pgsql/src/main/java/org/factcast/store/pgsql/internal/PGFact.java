@@ -27,7 +27,7 @@ import lombok.ToString;
  *
  */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-@ToString(of = { "id", "ns", "type", "aggId", "meta" })
+@ToString(of = { "id" })
 class PGFact implements Fact {
 
     @Getter
