@@ -4,11 +4,14 @@ import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.core.MarkFact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
@@ -18,6 +21,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.annotation.DirtiesContext;
+
+import lombok.SneakyThrows;
 
 public abstract class AbstractFactStoreTest {
 
@@ -32,7 +37,7 @@ public abstract class AbstractFactStoreTest {
 
     protected abstract FactStore createStoreToTest();
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testEmptyStore() throws Exception {
         FactObserver observer = mock(FactObserver.class);
@@ -45,7 +50,7 @@ public abstract class AbstractFactStoreTest {
         verify(observer, never()).onNext(any());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(timeout = 10000, expected = IllegalArgumentException.class)
     @DirtiesContext
     public void testUniquenessConstraint() throws Exception {
         final UUID id = UUID.randomUUID();
@@ -56,28 +61,60 @@ public abstract class AbstractFactStoreTest {
         fail();
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testEmptyStoreFollowNonMatching() throws Exception {
-        FactObserver observer = mock(FactObserver.class);
-        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
-                .awaitCatchup();
+        TestFactObserver observer = testObserver();
+        Subscription s = uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(),
+                observer).awaitCatchup();
         verify(observer).onCatchup();
         verify(observer, never()).onComplete();
         verify(observer, never()).onError(any());
         verify(observer, never()).onNext(any());
 
-        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+        uut.publishWithMark(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"other\"}", "{}"));
-        Thread.sleep(500);
+        uut.publishWithMark(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\",\"ns\":\"other\"}", "{}"));
 
-        verify(observer, never()).onNext(any());
+        observer.await(2);
+
+        // the mark facts only
+        verify(observer, times(2)).onNext(any());
+
+        assertEquals(MarkFact.TYPE, observer.values.get(0).type());
+        assertEquals(MarkFact.TYPE, observer.values.get(1).type());
+
     }
 
-    @Test
+    private TestFactObserver testObserver() {
+        return spy(new TestFactObserver());
+    }
+
+    private static class TestFactObserver implements FactObserver {
+
+        private List<Fact> values = new LinkedList<>();
+
+        @Override
+        public void onNext(Fact element) {
+            values.add(element);
+        }
+
+        @SneakyThrows
+        public void await(int count) {
+            synchronized (this) {
+                if (values.size() >= count) {
+                    return;
+                }
+            }
+        }
+
+    }
+
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testEmptyStoreFollowMatching() throws Exception {
-        FactObserver observer = mock(FactObserver.class);
+        TestFactObserver observer = testObserver();
         uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
                 .awaitCatchup();
 
@@ -88,12 +125,10 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        Thread.sleep(500);
-
-        verify(observer, times(1)).onNext(any());
+        observer.await(1);
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testEmptyStoreEphemeral() throws Exception {
 
@@ -104,7 +139,7 @@ public abstract class AbstractFactStoreTest {
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
 
-        FactObserver observer = mock(FactObserver.class);
+        TestFactObserver observer = testObserver();
         uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromNowOn(), observer).awaitCatchup();
 
         // nothing recieved
@@ -116,15 +151,14 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        Thread.sleep(500);
-
+        observer.await(1);
         verify(observer, times(1)).onNext(any());
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testEmptyStoreEphemeralWithCancel() throws Exception {
-
+        TestFactObserver observer = testObserver();
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
@@ -132,7 +166,6 @@ public abstract class AbstractFactStoreTest {
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
 
-        FactObserver observer = mock(FactObserver.class);
         Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.follow(ANY)
                 .fromNowOn(), observer).awaitCatchup();
 
@@ -145,7 +178,7 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        Thread.sleep(500);
+        observer.await(1);
 
         verify(observer, times(1)).onNext(any());
 
@@ -153,17 +186,17 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        Thread.sleep(500);
+        Thread.sleep(100);
 
         // additional event not received
         verify(observer, times(1)).onNext(any());
 
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testEmptyStoreFollowWithCancel() throws Exception {
-
+        TestFactObserver observer = testObserver();
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
@@ -171,7 +204,6 @@ public abstract class AbstractFactStoreTest {
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
 
-        FactObserver observer = mock(FactObserver.class);
         Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.follow(ANY)
                 .fromScratch(), observer).awaitCatchup();
 
@@ -184,23 +216,20 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        Thread.sleep(500);
-
-        verify(observer, times(4)).onNext(any());
-
+        observer.await(4);
         subscription.close();
 
-        Thread.sleep(500);
+        Thread.sleep(100);
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        Thread.sleep(500);
+        Thread.sleep(100);
 
         // additional event not received
         verify(observer, times(4)).onNext(any());
 
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testEmptyStoreCatchupMatching() throws Exception {
         FactObserver observer = mock(FactObserver.class);
@@ -215,10 +244,10 @@ public abstract class AbstractFactStoreTest {
         verify(observer).onNext(any());
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testEmptyStoreFollowMatchingDelayed() throws Exception {
-        FactObserver observer = mock(FactObserver.class);
+        TestFactObserver observer = testObserver();
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
         uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
@@ -231,19 +260,19 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        Thread.sleep(500);
-        verify(observer, times(2)).onNext(any());
+        observer.await(2);
+
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testEmptyStoreFollowNonMatchingDelayed() throws Exception {
-        FactObserver observer = mock(FactObserver.class);
+        TestFactObserver observer = testObserver();
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"ns\":\"default\",\"type\":\"t1\"}", "{}"));
         uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
                 .awaitCatchup();
-        ;
+
         verify(observer).onCatchup();
         verify(observer, never()).onComplete();
         verify(observer, never()).onError(any());
@@ -251,11 +280,10 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"ns\":\"other\",\"type\":\"t1\"}", "{}"));
-        Thread.sleep(500);
-        verify(observer, times(1)).onNext(any());
+        observer.await(1);
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testFetchById() throws Exception {
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
@@ -273,7 +301,7 @@ public abstract class AbstractFactStoreTest {
         assertEquals(id, f.map(Fact::id).get());
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testAnySubscriptionsMatchesMark() throws Exception {
         FactObserver observer = mock(FactObserver.class);
@@ -293,7 +321,7 @@ public abstract class AbstractFactStoreTest {
         verifyNoMoreInteractions(observer);
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testRequiredMetaAttribute() throws Exception {
         FactObserver observer = mock(FactObserver.class);
@@ -312,7 +340,7 @@ public abstract class AbstractFactStoreTest {
         verifyNoMoreInteractions(observer);
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testScriptedWithPayloadFiltering() throws Exception {
         FactObserver observer = mock(FactObserver.class);
@@ -332,7 +360,7 @@ public abstract class AbstractFactStoreTest {
         verifyNoMoreInteractions(observer);
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testScriptedWithHeaderFiltering() throws Exception {
         FactObserver observer = mock(FactObserver.class);
@@ -352,7 +380,7 @@ public abstract class AbstractFactStoreTest {
         verifyNoMoreInteractions(observer);
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testScriptedFilteringMatchAll() throws Exception {
         FactObserver observer = mock(FactObserver.class);
@@ -371,7 +399,7 @@ public abstract class AbstractFactStoreTest {
         verifyNoMoreInteractions(observer);
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testScriptedFilteringMatchNone() throws Exception {
         FactObserver observer = mock(FactObserver.class);
@@ -389,7 +417,7 @@ public abstract class AbstractFactStoreTest {
         verifyNoMoreInteractions(observer);
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testIncludeMarks() throws Exception {
         final UUID id = UUID.randomUUID();
@@ -403,7 +431,7 @@ public abstract class AbstractFactStoreTest {
 
     }
 
-    @Test
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testSkipMarks() throws Exception {
         final UUID id = UUID.randomUUID();
