@@ -69,7 +69,7 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"other\"}", "{}"));
-        Thread.sleep(200);
+        Thread.sleep(500);
 
         verify(observer, never()).onNext(any());
     }
@@ -88,7 +88,7 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        Thread.sleep(200);
+        Thread.sleep(500);
 
         verify(observer, times(1)).onNext(any());
     }
@@ -116,7 +116,7 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        Thread.sleep(200);
+        Thread.sleep(500);
 
         verify(observer, times(1)).onNext(any());
     }
@@ -145,7 +145,7 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        Thread.sleep(200);
+        Thread.sleep(500);
 
         verify(observer, times(1)).onNext(any());
 
@@ -153,7 +153,7 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        Thread.sleep(200);
+        Thread.sleep(500);
 
         // additional event not received
         verify(observer, times(1)).onNext(any());
@@ -184,16 +184,16 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        Thread.sleep(200);
+        Thread.sleep(500);
 
         verify(observer, times(4)).onNext(any());
 
         subscription.close();
 
-        Thread.sleep(200);
+        Thread.sleep(500);
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        Thread.sleep(200);
+        Thread.sleep(500);
 
         // additional event not received
         verify(observer, times(4)).onNext(any());
@@ -231,7 +231,7 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-        Thread.sleep(200);
+        Thread.sleep(500);
         verify(observer, times(2)).onNext(any());
     }
 
@@ -251,7 +251,7 @@ public abstract class AbstractFactStoreTest {
 
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"ns\":\"other\",\"type\":\"t1\"}", "{}"));
-        Thread.sleep(200);
+        Thread.sleep(500);
         verify(observer, times(1)).onNext(any());
     }
 

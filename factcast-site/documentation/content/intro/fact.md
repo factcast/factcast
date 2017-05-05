@@ -32,6 +32,8 @@ consists of:
 * any additional information you want to put in a Fact Header
 
 
+JSON-Schema:
+
 ```jsonSchema
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
