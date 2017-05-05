@@ -132,4 +132,21 @@ public class DefaultFactTest {
 
         assertEquals(f.jsonPayload(), copy.jsonPayload());
     }
+
+    @Test
+    public void testEqualityMustBeBasedOnIDOnly() throws Exception {
+
+        UUID id = UUID.randomUUID();
+
+        Fact f1 = DefaultFact.of("{\"id\":\"" + id
+                + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggId\":\"" + UUID.randomUUID()
+                + "\",\"meta\":{\"foo\":7}}", "{}");
+
+        Fact f2 = DefaultFact.of("{\"id\":\"" + id
+                + "\",\"ns\":\"poit\",\"type\":\"bar\",\"aggId\":\"" + UUID.randomUUID()
+                + "\",\"meta\":{\"foo\":7}}", "{}");
+
+        assertEquals(f1, f2);
+
+    }
 }

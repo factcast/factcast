@@ -38,20 +38,19 @@ class ConnectionTester implements Predicate<Connection> {
 
     @Override
     public boolean test(@Nonnull Connection connection) {
-        if (connection != null) {
-            try (PreparedStatement statement = connection.prepareStatement("SELECT 42");
-                    ResultSet resultSet = statement.executeQuery();) {
-                resultSet.next();
-                if (resultSet.getInt(1) == 42) {
-                    log.trace("Connection test passed");
-                    return true;
-                } else {
-                    log.trace("Connection test failed");
-                }
-            } catch (SQLException e) {
-                log.warn("Connection test failed with exception", e);
+        try (PreparedStatement statement = connection.prepareStatement("SELECT 42");
+                ResultSet resultSet = statement.executeQuery();) {
+            resultSet.next();
+            if (resultSet.getInt(1) == 42) {
+                log.trace("Connection test passed");
+                return true;
+            } else {
+                log.trace("Connection test failed");
             }
+        } catch (SQLException e) {
+            log.warn("Connection test failed with exception", e);
         }
+
         connectionFailureMetric.inc();
         return false;
     }
