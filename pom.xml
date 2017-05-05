@@ -24,7 +24,16 @@
 		<module>factcast-grpc-api</module>
 		<module>factcast-server-rest</module>
 	</modules>
+	
+	<url>https://github.com/uweschaefer/factcast/tree/master/</url>
 
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+	
 	<scm>
 		<connection>scm:git:ssh://git@bitbucket.org:uweschaefer/factcast.git</connection>
 		<tag>HEAD</tag>

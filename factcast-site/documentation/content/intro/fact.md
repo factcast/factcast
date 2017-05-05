@@ -77,4 +77,4 @@ consists of:
 
 has no constraints other than being a valid JSON document.
 
-{{%alert danger%}} see REST docs / GRPC docs {{% /alert%}}
+please, see REST docs / GRPC docs for further details.
