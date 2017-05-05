@@ -32,7 +32,7 @@ import com.mercateo.common.rest.schemagen.types.PaginatedResponseBuilderCreator;
 
 @Configuration
 @EnableAutoConfiguration
-@ComponentScan(basePackageClasses = RootResource.class)
+@ComponentScan(basePackageClasses = { RootResource.class, SetupRunner.class })
 public class SpringConfig {
 
     private InMemFactStore inMemFactStore = new InMemFactStore();
@@ -121,5 +121,4 @@ public class SpringConfig {
 
         return new LinkFactoryContextDefault(baseUri, methodCheckerForLink, fieldCheckerForSchema);
     }
-
 }

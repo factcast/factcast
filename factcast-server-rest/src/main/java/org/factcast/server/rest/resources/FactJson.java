@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -29,10 +30,12 @@ public class FactJson {
 
         @JsonProperty
         @NonNull
+        @NotNull
         final UUID id;
 
         @JsonProperty
         @NonNull
+        @NotNull
         final String ns;
 
         @JsonProperty
@@ -56,9 +59,12 @@ public class FactJson {
 
     @JsonProperty
     @NotNull
+    @NonNull
+    @Valid
     Header header;
 
     @JsonProperty
     @NotNull
+    @NonNull
     JsonNode payLoad;
 }

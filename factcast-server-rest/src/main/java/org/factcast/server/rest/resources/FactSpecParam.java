@@ -10,9 +10,6 @@ import lombok.Data;
 
 /**
  * Defines a Specification of facts to match for a subscription.
- * 
- * @author uwe.schaefer@mercateo.com
- *
  */
 @Data
 public class FactSpecParam {

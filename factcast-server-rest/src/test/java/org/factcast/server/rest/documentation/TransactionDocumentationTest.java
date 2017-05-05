@@ -8,11 +8,16 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.pr
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.removeHeaders;
+import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 
+import java.util.List;
+
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.factcast.server.rest.FactCastRestApplication;
-import org.factcast.server.rest.resources.EventsRel;
+import org.factcast.server.rest.resources.FactTransactionJson;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.spring.SpringLifecycleListener;
 import org.glassfish.jersey.server.spring.scope.RequestContextFilter;
@@ -22,11 +27,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.restdocs.JUnitRestDocumentation;
-import org.springframework.restdocs.hypermedia.HypermediaDocumentation;
-import org.springframework.restdocs.hypermedia.LinksSnippet;
+import org.springframework.restdocs.payload.FieldDescriptor;
+import org.springframework.restdocs.snippet.Snippet;
 
-public class RootDocumentationTest extends JerseyTest {
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+public class TransactionDocumentationTest extends JerseyTest {
     @Rule
     public JUnitRestDocumentation documentation = new JUnitRestDocumentation(
             "target/generated-snippets");
@@ -50,21 +56,28 @@ public class RootDocumentationTest extends JerseyTest {
         ctx.close();
     }
 
+    private ObjectMapper objectMapper = new ObjectMapper();
+
     @Test
-    public void getSimple() {
+    public void getSimple() throws Exception {
 
-        LinksSnippet links = HypermediaDocumentation.links(new HyperschemaLinkExtractor(), //
-                HypermediaDocumentation.linkWithRel(EventsRel.EVENTS.getRelation().getName())
-                        .description(
-                                "The link for the eventstream, links to the <<resources-events, events resource>>"), //
-                HypermediaDocumentation.linkWithRel(EventsRel.CREATE_TRANSACTIONAL.getRelation()
-                        .getName()).description(
-                                "Creating a new transaction links to the <<resources-transactions, transaction resource>>"));
+        ConstrainedFields fields = new ConstrainedFields(FactTransactionJson.class);
+        List<FieldDescriptor> fieldDescriptors = Descriptors.getFactFieldDescriptors(
+                "facts[].", fields);
+        fieldDescriptors.add(0, fields.withPath("facts").description(
+                "Non empty list with the facts to commit in this transaction"));
+        Snippet requestFieldSnippet = requestFields(//
+                fieldDescriptors);
 
-        final Response response = target("/").register(documentationConfiguration(
-                this.documentation)).register(document("root", preprocessRequest(removeHeaders(
-                        "User-Agent")), preprocessResponse(prettyPrint()), links)).request().get();
-        assertThat(response.getStatus(), is(200));
+        FactTransactionJson factTransactionJson = objectMapper.readValue(this.getClass()
+                .getResourceAsStream("TransactionJson.json"), FactTransactionJson.class);
+
+        final Response response = target("/transactions").register(documentationConfiguration(
+                this.documentation)).register(document("events-transactions", preprocessRequest(
+                        removeHeaders("User-Agent"), prettyPrint()), preprocessResponse(
+                                prettyPrint()), requestFieldSnippet)).request().post(Entity.entity(
+                                        factTransactionJson, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus(), is(204));
 
     }
 }

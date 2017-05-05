@@ -9,7 +9,7 @@
 [introduction]
 = Introduction
 
-The fact-cast REST-API for getting and sharing events. It's a HATEOAS REST-API, links are represented as json-hyperschema
+The fact-cast REST-API for getting and sharing events. It's a HATEOAS REST-API, links are represented as https://github.com/Mercateo/rest-schemagen[json-hyperschema]. A (german) article about the format can also be found https://heise.de/-3550392[here]. 
 
 [[resources]]
 = Resources
@@ -32,3 +32,47 @@ include::{snippets}/root/http-request.adoc[]
 ==== Example response
 
 include::{snippets}/root/http-response.adoc[]
+
+[[resources-transactions]]
+== Event-Transactions
+This is the resource for commiting new events
+
+=== New Transaction
+A `POST` with a list of all events to publish.
+
+==== Payload
+include::{snippets}/events-transactions/request-fields.adoc[]
+
+==== Example request
+
+include::{snippets}/events-transactions/http-request.adoc[]
+
+==== Example response
+
+include::{snippets}/events-transactions/http-response.adoc[]
+
+
+[[resources-events]]
+== Events
+Resource to fetch specific events.
+
+=== Fetching a specific event
+A `GET` request to the specific event URL, which is derived from the stream.
+
+==== Payload
+include::{snippets}/event/response-fields.adoc[]
+
+==== Header
+include::{snippets}/event/response-headers.adoc[]
+
+==== Example request
+
+include::{snippets}/event/http-request.adoc[]
+
+==== Example response
+
+include::{snippets}/event/http-response.adoc[]
+
+==== Event not found
+include::{snippets}/event-404/http-response.adoc[]
+include::{snippets}/event-404/response-headers.adoc[]

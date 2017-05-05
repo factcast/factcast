@@ -16,8 +16,13 @@ public class CachableFilter implements ContainerResponseFilter {
     @Override
     public void filter(ContainerRequestContext requestContext,
             ContainerResponseContext responseContext) throws IOException {
-        responseContext.getHeaders().putSingle(HttpHeaders.CACHE_CONTROL,
-                "max-age=1000000, s-maxage=1000000, public");
+        if (responseContext.getStatusInfo().getStatusCode() == 200) {
+            responseContext.getHeaders().putSingle(HttpHeaders.CACHE_CONTROL,
+                    "max-age=1000000, s-maxage=1000000, public");
+        } else {
+            responseContext.getHeaders().putSingle(HttpHeaders.CACHE_CONTROL,
+                    "max-age=10, s-maxage=10, public");
+        }
     }
 
 }
