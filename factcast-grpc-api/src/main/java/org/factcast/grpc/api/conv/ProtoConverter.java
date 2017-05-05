@@ -56,12 +56,10 @@ public class ProtoConverter {
                 .getMostSignificantBits()).build();
     }
 
-    // TODO test
     public SubscriptionRequestTO fromProto(@NonNull MSG_SubscriptionRequest request) {
         return FactCastJson.readValue(SubscriptionRequestTO.class, request.getJson());
     }
 
-    // TODO test
     public MSG_SubscriptionRequest toProto(SubscriptionRequestTO request) {
         return MSG_SubscriptionRequest.newBuilder().setJson(FactCastJson.writeValueAsString(
                 request)).build();

@@ -2,13 +2,17 @@ package org.factcast.grpc.api.conv;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.junit.Test;
 
 public class ProtoConverterTest {
@@ -129,4 +133,33 @@ public class ProtoConverterTest {
         assertEquals(probe, uut.fromProto(n.getId()));
 
     }
+
+    @Test(expected = NullPointerException.class)
+    public void testFromProtoMSG_SubscriptionRequestNull() throws Exception {
+        uut.fromProto((MSG_SubscriptionRequest) null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testToProtoSubscriptionRequestNull() throws Exception {
+        uut.toProto((SubscriptionRequestTO) null);
+    }
+
+    @Test
+    public void testToProtoSubscriptionRequest() throws Exception {
+        SubscriptionRequestTO to = new SubscriptionRequestTO().continous(true).ephemeral(false)
+                .debugInfo("test").maxBatchDelayInMs(13).marks(true);
+
+        to.addSpecs(Arrays.asList(FactSpec.ns("foo")));
+        SubscriptionRequestTO copy = uut.fromProto(uut.toProto(to));
+
+        assertEquals(to.debugInfo(), copy.debugInfo());
+        assertEquals(to.ephemeral(), copy.ephemeral());
+        assertEquals(to.continous(), copy.continous());
+        assertEquals(to.maxBatchDelayInMs(), copy.maxBatchDelayInMs());
+        assertEquals(to.specs().get(0).type(), copy.specs().get(0).type());
+        assertEquals(to.specs().get(0).ns(), copy.specs().get(0).ns());
+        assertEquals(to.specs().get(1).type(), copy.specs().get(1).type());
+        assertEquals(to.specs().get(1).ns(), copy.specs().get(1).ns());
+    }
+
 }

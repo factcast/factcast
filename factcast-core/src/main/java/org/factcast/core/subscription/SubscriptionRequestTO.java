@@ -2,6 +2,7 @@ package org.factcast.core.subscription;
 
 import static com.google.common.base.Preconditions.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.Lists;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -78,9 +80,6 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
         debugInfo = request.debugInfo();
         specs.addAll(request.specs());
         marks = request.marks();
-        if (marks) {
-            specs.add(0, FactSpec.forMark());
-        }
     }
 
     public static SubscriptionRequestTO forFacts(SubscriptionRequest request) {
@@ -102,7 +101,11 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 
     @Override
     public List<FactSpec> specs() {
-        return Collections.unmodifiableList(specs);
+        ArrayList<FactSpec> l = Lists.newArrayList(specs);
+        if (marks) {
+            l.add(0, FactSpec.forMark());
+        }
+        return Collections.unmodifiableList(l);
     }
 
     public String dump() {
