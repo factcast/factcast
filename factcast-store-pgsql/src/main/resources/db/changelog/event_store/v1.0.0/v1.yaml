@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: akp
+      changes:
+        - createTable:
+            tableName: fact
+            columns:
+              - column:
+                  name: ser
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: payload
+                  type: JSONB
+                  constraints:
+                    nullable: false
+              - column:
+                  name: header
+                  type: JSONB
+                  constraints:
+                    nullable: false
+        - sql:
+            dbms: postgresql
+            endDelimiter: \nGO
+            sql: CREATE UNIQUE INDEX idx_fact_unique_id ON fact( (header->'id') )
+        - sql:
+            dbms: postgresql
+            endDelimiter: \nGO
+            sql: CREATE INDEX idx_fact_header ON fact USING GIN(header jsonb_path_ops)
+        - createProcedure:
+            dbms: postgresql 
+            encoding: utf8
+            path: createInsertFactTrigger.sql
+            relativeToChangelogFile: true   
