@@ -389,4 +389,32 @@ public abstract class AbstractFactStoreTest {
         verifyNoMoreInteractions(observer);
     }
 
+    @Test
+    @DirtiesContext
+    public void testIncludeMarks() throws Exception {
+        final UUID id = UUID.randomUUID();
+        uut.publishWithMark(Fact.of("{\"id\":\"" + id
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+        FactObserver observer = mock(FactObserver.class);
+        uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default")).fromScratch(),
+                observer).awaitComplete();
+
+        verify(observer, times(2)).onNext(any());
+
+    }
+
+    @Test
+    @DirtiesContext
+    public void testSkipMarks() throws Exception {
+        final UUID id = UUID.randomUUID();
+        uut.publishWithMark(Fact.of("{\"id\":\"" + id
+                + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+
+        FactObserver observer = mock(FactObserver.class);
+        uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default")).skipMarks()
+                .fromScratch(), observer).awaitComplete();
+
+        verify(observer, times(1)).onNext(any());
+
+    }
 }

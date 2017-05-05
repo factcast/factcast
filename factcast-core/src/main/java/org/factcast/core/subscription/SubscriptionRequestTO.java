@@ -2,7 +2,6 @@ package org.factcast.core.subscription;
 
 import static com.google.common.base.Preconditions.*;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,6 +38,9 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     long maxBatchDelayInMs = 0;
 
     @JsonProperty
+    boolean marks;
+
+    @JsonProperty
     boolean continous;
 
     @JsonProperty
@@ -54,7 +56,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     String debugInfo;
 
     @JsonProperty
-    final List<FactSpec> specs = new LinkedList<>(Arrays.asList(FactSpec.forMark()));
+    final List<FactSpec> specs = new LinkedList<>();
 
     public SubscriptionRequestTO() {
     }
@@ -75,6 +77,10 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
         startingAfter = request.startingAfter().orElse(null);
         debugInfo = request.debugInfo();
         specs.addAll(request.specs());
+        marks = request.marks();
+        if (marks) {
+            specs.add(0, FactSpec.forMark());
+        }
     }
 
     public static SubscriptionRequestTO forFacts(SubscriptionRequest request) {

@@ -62,8 +62,8 @@ public class TransactionDocumentationTest extends JerseyTest {
     public void getSimple() throws Exception {
 
         ConstrainedFields fields = new ConstrainedFields(FactTransactionJson.class);
-        List<FieldDescriptor> fieldDescriptors = Descriptors.getFactFieldDescriptors(
-                "facts[].", fields);
+        List<FieldDescriptor> fieldDescriptors = Descriptors.getFactFieldDescriptors("facts[].",
+                fields);
         fieldDescriptors.add(0, fields.withPath("facts").description(
                 "Non empty list with the facts to commit in this transaction"));
         Snippet requestFieldSnippet = requestFields(//

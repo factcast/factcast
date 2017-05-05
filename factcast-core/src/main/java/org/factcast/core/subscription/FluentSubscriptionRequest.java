@@ -24,6 +24,8 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     boolean ephemeral = false;
 
+    boolean marks = true;
+
     long maxBatchDelayInMs = 0;
 
     boolean continous;
@@ -85,6 +87,12 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
             toBuild.continous = false;
             return this;
         }
+
+        @Override
+        public SpecBuilder skipMarks() {
+            toBuild.marks = false;
+            return this;
+        }
     }
 
     public java.util.Optional<UUID> startingAfter() {
@@ -93,6 +101,8 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     public interface SpecBuilder {
         SpecBuilder or(@NonNull FactSpec specification);
+
+        SpecBuilder skipMarks();
 
         SubscriptionRequest from(@NonNull UUID id);
 

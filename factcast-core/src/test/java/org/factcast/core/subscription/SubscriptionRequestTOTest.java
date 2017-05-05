@@ -118,4 +118,23 @@ public class SubscriptionRequestTOTest {
 
     }
 
+    @Test
+    public void testSkipMarks() throws Exception {
+        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).skipMarks()
+                .fromScratch();
+
+        SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
+
+        assertFalse(uut.marks());
+    }
+
+    @Test
+    public void testDontSkipMarks() throws Exception {
+        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch();
+
+        SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
+
+        assertTrue(uut.marks());
+    }
+
 }
