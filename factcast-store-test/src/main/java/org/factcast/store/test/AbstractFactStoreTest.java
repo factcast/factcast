@@ -224,7 +224,6 @@ public abstract class AbstractFactStoreTest {
         observer.await(4);
         subscription.close();
 
-        Thread.sleep(100);
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
         Thread.sleep(100);

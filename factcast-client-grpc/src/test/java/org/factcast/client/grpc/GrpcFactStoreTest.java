@@ -1,5 +1,6 @@
 package org.factcast.client.grpc;
 
+import static org.factcast.core.TestHelper.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
@@ -24,6 +25,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+
+import io.grpc.Channel;
+import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ RemoteFactStoreBlockingStub.class, RemoteFactStoreStub.class })
@@ -84,4 +88,11 @@ public class GrpcFactStoreTest {
         assertEquals(fact.id(), published.id());
     }
 
+    @Test
+    public void testConstruction() throws Exception {
+        expectNPE(() -> new GrpcFactStore((AddressChannelFactory) null));
+        expectNPE(() -> new GrpcFactStore((Channel) null));
+        expectNPE(() -> new GrpcFactStore(mock(RemoteFactStoreBlockingStub.class), null));
+        expectNPE(() -> new GrpcFactStore(null, mock(RemoteFactStoreStub.class)));
+    }
 }
