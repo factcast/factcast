@@ -36,7 +36,7 @@ public class DefaultFactTest {
         DefaultFact.of("not json at all", "{}");
     }
 
-    @Test(expected = JsonMappingException.class)
+    @Test(expected = IOException.class)
     public void testNoId() throws Exception {
         DefaultFact.of("{\"ns\":\"default\"}", "{}");
     }
