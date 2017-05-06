@@ -47,11 +47,11 @@ public interface FactCast extends ReadFactCast {
 
     // Factory
 
-    public static FactCast from(@NonNull FactStore store) {
+    static FactCast from(@NonNull FactStore store) {
         return new DefaultFactCast(store);
     }
 
-    public static ReadFactCast fromReadOnly(@NonNull FactStore store) {
+    static ReadFactCast fromReadOnly(@NonNull FactStore store) {
         return new DefaultFactCast(store);
     }
 

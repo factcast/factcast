@@ -25,7 +25,7 @@ import lombok.NonNull;
  */
 public interface FactStore {
 
-    public void publish(@NonNull List<? extends Fact> factsToPublish);
+    void publish(@NonNull List<? extends Fact> factsToPublish);
 
     Subscription subscribe(@NonNull SubscriptionRequestTO request, @NonNull FactObserver observer);
 

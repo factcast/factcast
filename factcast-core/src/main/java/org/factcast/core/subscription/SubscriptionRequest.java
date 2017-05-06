@@ -35,18 +35,18 @@ public interface SubscriptionRequest {
 
     // ------------
 
-    public static SpecBuilder follow(@NonNull FactSpec specification) {
+    static SpecBuilder follow(@NonNull FactSpec specification) {
         return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).follow(
                 specification);
     }
 
-    public static SpecBuilder follow(long maxBatchDelayInMs, @NonNull FactSpec specification) {
+    static SpecBuilder follow(long maxBatchDelayInMs, @NonNull FactSpec specification) {
         FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest();
         toBuild.maxBatchDelayInMs = maxBatchDelayInMs;
         return new FluentSubscriptionRequest.Builder(toBuild).follow(specification);
     }
 
-    public static SpecBuilder catchup(@NonNull FactSpec specification) {
+    static SpecBuilder catchup(@NonNull FactSpec specification) {
         return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).catchup(
                 specification);
     }

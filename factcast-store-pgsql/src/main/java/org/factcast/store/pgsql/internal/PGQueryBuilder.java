@@ -36,7 +36,7 @@ class PGQueryBuilder {
     @NonNull
     final SubscriptionRequestTO req;
 
-    public PGQueryBuilder(@NonNull SubscriptionRequestTO request) {
+    PGQueryBuilder(@NonNull SubscriptionRequestTO request) {
         this.req = request;
         selectIdOnly = request.idOnly() && !request.hasAnyScriptFilters();
     }
