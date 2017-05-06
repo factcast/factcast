@@ -33,6 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 class PGListener implements InitializingBean, DisposableBean {
 
+    static final String LISTEN_SQL = "LISTEN " + PGConstants.CHANNEL_NAME;
+
     final Supplier<PGConnection> connectionSupplier;
 
     final @NonNull EventBus eventBus;
@@ -68,8 +70,7 @@ class PGListener implements InitializingBean, DisposableBean {
                         eventBus.post(new FactInsertionEvent(name));
 
                     });
-            try (PreparedStatement statement = connection.prepareStatement("LISTEN "
-                    + PGConstants.CHANNEL_NAME);) {
+            try (PreparedStatement statement = connection.prepareStatement(LISTEN_SQL);) {
                 statement.execute();
             }
 

@@ -18,7 +18,6 @@ import lombok.NonNull;
  *
  */
 public interface SubscriptionRequest {
-    final int MAX_DELAY = 30000;
 
     long maxBatchDelayInMs();
 
