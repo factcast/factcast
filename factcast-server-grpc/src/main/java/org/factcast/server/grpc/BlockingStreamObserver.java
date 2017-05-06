@@ -10,9 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class BlockingStreamObserver<T> implements StreamObserver<T> {
 
-    static final int retry = 60;
+    static final int RETRY_COUNT = 60;
 
-    static final int waitTime = 1000;
+    static final int WAIT_TIME = 1000;
 
     final ServerCallStreamObserver<T> delegate;
 
@@ -42,11 +42,13 @@ class BlockingStreamObserver<T> implements StreamObserver<T> {
 
             if (!delegate.isReady()) {
 
-                for (int i = 1; i <= retry; i++) {
-                    log.debug("{} channel not ready. Slow client? Attempt: {}/{}", id, i, retry);
+                for (int i = 1; i <= RETRY_COUNT; i++) {
+                    log.debug("{} channel not ready. Slow client? Attempt: {}/{}", id, i,
+                            RETRY_COUNT);
                     try {
-                        lock.wait(waitTime);
+                        lock.wait(WAIT_TIME);
                     } catch (InterruptedException meh) {
+                        // ignore
                     }
                     if (delegate.isReady()) {
                         break;
