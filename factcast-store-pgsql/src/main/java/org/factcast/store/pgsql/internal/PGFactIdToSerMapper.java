@@ -17,8 +17,8 @@ import lombok.RequiredArgsConstructor;
 class PGFactIdToSerMapper {
     final JdbcTemplate jdbcTemplate;
 
-    final static String sql = "SELECT " + PGConstants.COLUMN_SER + " FROM " + PGConstants.TABLE_FACT
-            + " WHERE " + PGConstants.COLUMN_HEADER + " @> ?";
+    static final String SELECT_BY_HEADER_JSON = "SELECT " + PGConstants.COLUMN_SER + " FROM "
+            + PGConstants.TABLE_FACT + " WHERE " + PGConstants.COLUMN_HEADER + " @> ?";
 
     /**
      * 
@@ -30,8 +30,8 @@ class PGFactIdToSerMapper {
 
             try {
                 // throws EmptyResultDataAccessException if is not found!
-                return jdbcTemplate.queryForObject(sql, new Object[] { "{\"id\":\"" + id + "\"}" },
-                        Long.class).longValue();
+                return jdbcTemplate.queryForObject(SELECT_BY_HEADER_JSON, new Object[] {
+                        "{\"id\":\"" + id + "\"}" }, Long.class).longValue();
             } catch (EmptyResultDataAccessException meh) {
             }
         }
