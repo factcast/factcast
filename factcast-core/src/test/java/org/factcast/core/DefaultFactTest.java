@@ -12,7 +12,6 @@ import java.util.UUID;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class DefaultFactTest {
 
@@ -41,7 +40,7 @@ public class DefaultFactTest {
         DefaultFact.of("{\"ns\":\"default\"}", "{}");
     }
 
-    @Test(expected = JsonMappingException.class)
+    @Test(expected = IOException.class)
     public void testIdNotUUID() throws Exception {
         DefaultFact.of("{\"id\":\"buh\",\"ns\":\"default\"}", "{}");
     }
