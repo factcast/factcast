@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 @SpringBootApplication
 @EnableAutoConfiguration
 @Configuration
-
+@SuppressWarnings("unused")
 public class SmokeMT {
 
     public static void main(String[] args) {

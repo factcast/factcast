@@ -35,6 +35,7 @@ public class FactSpecTest {
         new FactSpec(null);
     }
 
+    @SuppressWarnings("static-access")
     @Test
     public void testFactSpecNs() throws Exception {
         assertEquals("y", FactSpec.ns("x").ns("y").ns());

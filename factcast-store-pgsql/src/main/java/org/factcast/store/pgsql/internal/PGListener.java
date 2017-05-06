@@ -80,6 +80,7 @@ class PGListener implements InitializingBean, DisposableBean {
 
     @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     public static class FactInsertionEvent {
+        @SuppressWarnings("unused")
         final String name;
     }
 

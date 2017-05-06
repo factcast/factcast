@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class InMemFactStoreConfiguration {
+    @SuppressWarnings("deprecation")
     @Bean
     @ConditionalOnMissingBean(FactStore.class)
     public FactStore factStore() {

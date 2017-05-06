@@ -32,6 +32,7 @@ import com.mercateo.common.rest.schemagen.types.PaginatedResponseBuilderCreator;
 
 @Configuration
 @EnableAutoConfiguration
+@SuppressWarnings("deprecation")
 @ComponentScan(basePackageClasses = { RootResource.class, SetupRunner.class })
 public class SpringConfig {
 

@@ -19,8 +19,6 @@ public class SubscriptionRequestTOTest {
     @Test
     public void testDebugInfo() throws Exception {
         SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.forMark()).fromScratch();
-        String debugInfo = r.debugInfo();
-
         SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
 
         assertEquals(r.debugInfo(), uut.debugInfo());
@@ -29,8 +27,6 @@ public class SubscriptionRequestTOTest {
     @Test
     public void testDumpContainsDebugInfo() throws Exception {
         SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.forMark()).fromScratch();
-        String debugInfo = r.debugInfo();
-
         SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
 
         assertTrue(uut.dump().contains(r.debugInfo()));

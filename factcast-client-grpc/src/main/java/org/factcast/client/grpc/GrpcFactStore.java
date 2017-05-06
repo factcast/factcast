@@ -52,7 +52,7 @@ class GrpcFactStore implements FactStore {
     final ProtoConverter converter = new ProtoConverter();
 
     @Autowired
-    GrpcFactStore(@NonNull AddressChannelFactory channelFactory) {
+    GrpcFactStore(AddressChannelFactory channelFactory) {
         this(channelFactory.createChannel(CHANNEL_NAME));
 
     }

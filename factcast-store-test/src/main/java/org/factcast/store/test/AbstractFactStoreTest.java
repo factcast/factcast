@@ -65,8 +65,8 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     public void testEmptyStoreFollowNonMatching() throws Exception {
         TestFactObserver observer = testObserver();
-        Subscription s = uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(),
-                observer).awaitCatchup();
+        uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
+                .awaitCatchup();
         verify(observer).onCatchup();
         verify(observer, never()).onComplete();
         verify(observer, never()).onError(any());
@@ -315,8 +315,8 @@ public abstract class AbstractFactStoreTest {
         ArgumentCaptor<Fact> af = ArgumentCaptor.forClass(Fact.class);
         doNothing().when(observer).onNext(af.capture());
 
-        Subscription s = uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).fromScratch(),
-                observer).awaitComplete();
+        uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).fromScratch(), observer)
+                .awaitComplete();
 
         verify(observer).onNext(any());
         assertEquals(mark, af.getValue().id());

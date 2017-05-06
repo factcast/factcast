@@ -16,6 +16,7 @@ import com.mercateo.common.rest.schemagen.plugin.MethodCheckerForLink;
 import com.mercateo.rest.schemagen.spring.JerseyHateoasConfiguration;
 
 @Configuration
+@SuppressWarnings("deprecation")
 @Import(JerseyHateoasConfiguration.class)
 public class FactCastServerConfiguration {
 

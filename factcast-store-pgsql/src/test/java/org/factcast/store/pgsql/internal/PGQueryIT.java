@@ -4,8 +4,6 @@ import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -143,7 +141,6 @@ public class PGQueryIT {
             sleep(50);
             return null;
         }).when(c).onNext(any());
-        ExecutorService es = Executors.newCachedThreadPool();
 
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());

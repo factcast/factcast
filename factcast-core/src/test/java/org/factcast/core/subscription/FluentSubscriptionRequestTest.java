@@ -16,7 +16,7 @@ public class FluentSubscriptionRequestTest {
 
     @Test(expected = NullPointerException.class)
     public void testFromNull() throws Exception {
-        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).from(null);
+        SubscriptionRequest.catchup(FactSpec.ns("foo")).from(null);
     }
 
     @Test(expected = NullPointerException.class)

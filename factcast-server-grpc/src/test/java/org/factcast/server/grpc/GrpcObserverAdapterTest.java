@@ -20,6 +20,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import io.grpc.stub.StreamObserver;
 
+@SuppressWarnings({ "rawtypes", "unchecked" })
 @RunWith(MockitoJUnitRunner.class)
 public class GrpcObserverAdapterTest {
 

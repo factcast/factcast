@@ -24,6 +24,7 @@ public class SubscriptionImplTest {
     @InjectMocks
     private SubscriptionImpl<Fact> uut;
 
+    @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception {
         obs = mock(GenericObserver.class);
