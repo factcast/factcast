@@ -29,7 +29,7 @@ class PGPostQueryMatcher implements Predicate<Fact> {
 
     final List<FactSpecMatcher> matchers = new LinkedList<>();
 
-    public PGPostQueryMatcher(@NonNull SubscriptionRequest req) {
+    PGPostQueryMatcher(@NonNull SubscriptionRequest req) {
         canBeSkipped = !req.specs().stream().anyMatch(s -> s.jsFilterScript() != null);
         if (canBeSkipped) {
             log.trace("{} post query filtering has been disabled", req);

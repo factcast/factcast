@@ -38,7 +38,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     String debugInfo;
 
-    public FluentSubscriptionRequest() {
+    FluentSubscriptionRequest() {
         debugInfo = createDebugInfo();
     }
 
