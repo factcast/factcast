@@ -3,7 +3,7 @@ draft = false
 title = "notice"
 description = ""
 
-[menu.main]
+
 parent = "shortcodes"
 identifier = "notice"
 +++

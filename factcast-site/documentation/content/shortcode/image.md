@@ -3,7 +3,7 @@ draft = false
 title = "image"
 description = ""
 
-[menu.main]
+
 parent = "shortcodes"
 identifier = "image"
 +++

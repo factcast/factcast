@@ -7,10 +7,12 @@ int_trap() {
 
 trap int_trap INT
 
-if [ ! -e themes ];
-then
- tar xzf themes.tgz
-fi
+set -e
+rm -rf stage
+rm -rf public
+rm -r hugo-theme*
+wget -qO- https://github.com/uweschaefer/hugo-theme-docdock/archive/master.zip|bsdtar -xvf- 
+
 (
  hugo server --watch
 )

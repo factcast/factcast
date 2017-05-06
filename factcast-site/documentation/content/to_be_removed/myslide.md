@@ -12,9 +12,6 @@ progress= true
 history= true
 center= true
 
-[menu.main]
-parent = "page-slide"
-weight = 100
 +++
 
 # In the morning

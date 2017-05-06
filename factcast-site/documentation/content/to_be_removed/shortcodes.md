@@ -5,10 +5,6 @@ description = ""
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 
-[menu.main]
-parent = "hidden"
-identifier = "shortcodes"
-weight = 30
 
 +++
 

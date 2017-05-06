@@ -3,7 +3,7 @@ draft = false
 title = "button"
 description = "s"
 
-[menu.main]
+
 parent = "shortcodes"
 identifier = "button"
 +++

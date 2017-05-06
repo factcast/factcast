@@ -2,7 +2,7 @@
 draft = false
 title = "alert"
 description = ""
-[menu.main]
+
 parent = "shortcodes"
 identifier = "alert"
 +++

@@ -3,7 +3,7 @@ draft = false
 title = "icon"
 description = ""
 
-[menu.main]
+
 parent = "shortcodes"
 identifier = "icon"
 +++

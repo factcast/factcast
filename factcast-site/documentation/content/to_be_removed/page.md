@@ -7,10 +7,6 @@ creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 tags = ["tag1","tag2"]
 
-[menu.main]
-parent = "hidden"
-identifier = "page"
-weight = 10
 
 +++
 

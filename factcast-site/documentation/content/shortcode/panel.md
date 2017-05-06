@@ -3,7 +3,7 @@ draft = false
 title = "panel"
 description = ""
 
-[menu.main]
+
 parent = "shortcodes"
 identifier = "panel"
 +++

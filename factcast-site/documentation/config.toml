@@ -1,8 +1,8 @@
 baseURL = "https://docs.factcast.org/"
 languageCode = "en-us"
 title = "FactCast"
-theme = "hugo-theme-docdock"
-themesdir = "themes"
+theme = "hugo-theme-docdock-master"
+themesdir = "."
 
 [params]
 editURL ="https://github.com/uweschaefer/factcast/edit/master/factcast-site/documentation/content/"
@@ -14,4 +14,9 @@ noSearch = false
 [outputs]
 home = [ "HTML", "RSS", "JSON"]
 
-
+[[menu.shortcuts]]
+pre = "<h3>More</h3>"
+name = "<i class='fa fa-github'></i> Github repo"
+identifier = "github"
+url = "https://github.com/uweschaefer/factcast/"
+weight = 1

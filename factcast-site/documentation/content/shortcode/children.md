@@ -3,7 +3,6 @@ draft = false
 title = "children"
 description = ""
 
-[menu.main]
 parent = "shortcodes"
 identifier = "children"
 +++

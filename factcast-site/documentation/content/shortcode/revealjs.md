@@ -4,7 +4,7 @@ title = "revealjs"
 slug = "revealjs"
 description = "present content as a reveal.js slide"
 
-[menu.main]
+
 parent = "shortcodes"
 identifier = "revealjs"
 weight = 1
