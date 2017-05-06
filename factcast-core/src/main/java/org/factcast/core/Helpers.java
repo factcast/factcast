@@ -14,8 +14,10 @@ import lombok.NonNull;
  * @author uwe.schaefer@mercateo.com
  *
  */
-final class Helpers {
+class Helpers {
 
+    private Helpers(){}
+    
     static List<Fact> toList(@NonNull Fact fact) {
         return Arrays.asList(fact);
     }
