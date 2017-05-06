@@ -2,4 +2,9 @@ language: java
 jdk:
   - oraclejdk8
 install: "mvn install -DskipTests"
-script: "mvn -e clean verify jacoco:report coveralls:report"
+script: "mvn -e clean verify jacoco:report coveralls:report sonar:sonar"
+
+addons:
+  sonarqube:
+    organization: "uweschaefer-github"
+    

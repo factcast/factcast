@@ -43,6 +43,10 @@ The current project health is
 <a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast%22">
     <img class="inline" src="https://img.shields.io/maven-central/v/org.factcast/factcast-server.svg" alt="MavenCentral">
 </a>
+<a href="https://www.apache.org/licenses/LICENSE-2.0">
+    <img class="inline" src="https://img.shields.io/badge/license-ASL2-green.svg?style=flat" >
+</a>
+
 
 ## Change-log
 
