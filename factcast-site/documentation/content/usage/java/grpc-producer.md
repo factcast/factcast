@@ -1,6 +1,6 @@
 +++
 draft = false
-title = "GRPC Producer"
+title = "Java GRPC Producer"
 description = ""
 date = "2017-04-24T18:36:24+02:00"
 
@@ -9,12 +9,12 @@ creatoremail = "uwe.schaefer@mercateo.com"
 
 [menu.main]
 parent = "usage"
-identifier = "grpc_producer"
+identifier = "java_grpc_producer"
 weight = 10
 
 +++
 
-## GRPC Producer
+## Java GRPC Producer
 
 #### FactCast.publish(List&lt;Fact&gt; factsToPublish)
 

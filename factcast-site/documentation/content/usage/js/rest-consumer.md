@@ -1,19 +1,22 @@
 +++
 draft = false
-title = "REST Producer"
+title = "JavaScript REST Consumer"
 description = ""
 date = "2017-04-24T18:36:24+02:00"
 
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 
+hidden = true
+
 [menu.main]
 parent = "usage"
-identifier = "rest_producer"
-weight = 40
+#identifier = "js_rest_consumer"
+weight = 110
+
 
 +++
 
-## REST Producer
+## JavaScript REST Consumer
 
 {{%alert danger%}} TODO{{% /alert%}}

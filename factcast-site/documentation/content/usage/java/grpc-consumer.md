@@ -1,6 +1,6 @@
 +++
 draft = false
-title = "GRPC Consumer"
+title = "Java GRPC Consumer"
 description = ""
 date = "2017-04-24T18:36:24+02:00"
 
@@ -9,12 +9,12 @@ creatoremail = "uwe.schaefer@mercateo.com"
 
 [menu.main]
 parent = "usage"
-identifier = "grpc_consumer"
+identifier = "java_grpc_consumer"
 weight = 20
 
 +++
 
-## GRPC Consumer
+## Java GRPC Consumer
 
 As mentioned [before]({{%relref "intro/design/conceptual.md#read-subscribe"%}}), there are three main Use-Cases for subscribing to a Fact-Stream:
 

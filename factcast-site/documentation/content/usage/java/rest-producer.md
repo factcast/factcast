@@ -1,6 +1,6 @@
 +++
 draft = false
-title = "REST Consumer"
+title = "Java REST Producer"
 description = ""
 date = "2017-04-24T18:36:24+02:00"
 
@@ -9,11 +9,11 @@ creatoremail = "uwe.schaefer@mercateo.com"
 
 [menu.main]
 parent = "usage"
-identifier = "rest_consumer"
-weight = 40
+identifier = "java_rest_producer"
+weight = 30
 
 +++
 
-## REST Consumer
+## Java REST Producer
 
 {{%alert danger%}} TODO{{% /alert%}}
