@@ -302,7 +302,7 @@ public abstract class AbstractFactStoreTest {
                 "{}"));
         f = uut.fetchById(id);
         assertTrue(f.isPresent());
-        assertEquals(id, f.map(Fact::id).get());
+        assertEquals(id, f.map(Fact::id).orElse(null));
     }
 
     @Test(timeout = 10000)
