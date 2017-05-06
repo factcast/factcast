@@ -12,8 +12,6 @@ import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -40,7 +38,7 @@ public class DefaultFact implements Fact, Externalizable {
     @Getter
     String jsonPayload;
 
-    Header deserializedHeader;
+    transient Header deserializedHeader;
 
     // needed for Externalizable – do not use !
     @Deprecated
@@ -61,10 +59,10 @@ public class DefaultFact implements Fact, Externalizable {
     }
 
     @SuppressWarnings("deprecation")
-    private void init(String jsonHeader) throws IOException, JsonProcessingException {
+    private void init(String jsonHeader) throws IOException {
         deserializedHeader = FactCastJson.readValue(Header.class, jsonHeader);
         if (deserializedHeader.id == null) {
-            throw new JsonMappingException("id attribute missing from " + jsonHeader);
+            throw new IOException("id attribute missing from " + jsonHeader);
         }
     }
 

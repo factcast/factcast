@@ -45,7 +45,7 @@ public class FactSpec {
     }
 
     public static FactSpec forMark() {
-        return FactSpec.ns(MarkFact.NS).type(MarkFact.TYPE);
+        return FactSpec.ns(MarkFact.MARK_NS).type(MarkFact.MARK_TYPE);
     }
 
     public static FactSpec ns(String ns) {

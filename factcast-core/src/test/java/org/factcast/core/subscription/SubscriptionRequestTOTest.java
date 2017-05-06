@@ -50,7 +50,7 @@ public class SubscriptionRequestTOTest {
 
         assertEquals(2, uut.specs().size());
         assertEquals(s, uut.specs().get(1));
-        assertEquals(MarkFact.TYPE, uut.specs().get(0).type());
+        assertEquals(MarkFact.MARK_TYPE, uut.specs().get(0).type());
 
     }
 
@@ -104,7 +104,7 @@ public class SubscriptionRequestTOTest {
 
         assertEquals(2, uut.specs().size());
         assertEquals(s, uut.specs().get(1));
-        assertEquals(MarkFact.TYPE, uut.specs().get(0).type());
+        assertEquals(MarkFact.MARK_TYPE, uut.specs().get(0).type());
 
         final String js = "function (h,e){ return true }";
         uut.addSpecs(Arrays.asList(FactSpec.ns("buh").jsFilterScript(js)));

@@ -82,8 +82,8 @@ public abstract class AbstractFactStoreTest {
         // the mark facts only
         verify(observer, times(2)).onNext(any());
 
-        assertEquals(MarkFact.TYPE, observer.values.get(0).type());
-        assertEquals(MarkFact.TYPE, observer.values.get(1).type());
+        assertEquals(MarkFact.MARK_TYPE, observer.values.get(0).type());
+        assertEquals(MarkFact.MARK_TYPE, observer.values.get(1).type());
 
     }
 

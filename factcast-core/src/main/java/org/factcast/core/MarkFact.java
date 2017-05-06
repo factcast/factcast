@@ -16,15 +16,15 @@ import lombok.NonNull;
 @Getter
 public class MarkFact implements Fact {
 
-    public static final String TYPE = "_mark";
+    public static final String MARK_TYPE = "_mark";
 
-    public static final String NS = "_";
+    public static final String MARK_NS = "_";
 
     final UUID id = UUID.randomUUID();
 
-    final String ns = NS;
+    final String ns = MARK_NS;
 
-    final String type = TYPE;
+    final String type = MARK_TYPE;
 
     final UUID aggId = null;
 
