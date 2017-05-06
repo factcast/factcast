@@ -108,7 +108,7 @@ public class DefaultFact implements Fact, Externalizable {
         // read only header & payload
         jsonHeader = in.readUTF();
         jsonPayload = in.readUTF();
-        // and recreate the header field
+        // and recreate the header fields
         init(jsonHeader);
     }
 

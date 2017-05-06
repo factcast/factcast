@@ -43,4 +43,17 @@ public class GenericObserverTest {
 
     }
 
+    @Test(expected = NullPointerException.class)
+    public void testMapNull() throws Exception {
+        GenericObserver<Integer> i = new GenericObserver<Integer>() {
+
+            @Override
+            public void onNext(Integer element) {
+
+            }
+        };
+
+        i.map(null);
+    }
+
 }
