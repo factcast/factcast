@@ -100,7 +100,7 @@ class PGFactStream {
                 //
                 // ok, that is unlikely to be necessary, but easy to do, so...
                 delayInMs = (((request.maxBatchDelayInMs() / 4L) * 3L) + (long) (Math.abs(Math
-                        .random() * ((request.maxBatchDelayInMs() / 4)))));
+                        .random() * (request.maxBatchDelayInMs() / 4.0))));
                 log.info("{} setting delay to {}, maxDelay was {}", request, delayInMs, request
                         .maxBatchDelayInMs());
             }
@@ -123,13 +123,11 @@ class PGFactStream {
 
     private void catchup(PGSynchronizedQuery query) {
         if (isConnected()) {
-            // TODO add sid
             log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial
                     .get());
             query.run(true);
         }
         if (isConnected()) {
-            // TODO add sid
             log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
             query.run(true);
         }
