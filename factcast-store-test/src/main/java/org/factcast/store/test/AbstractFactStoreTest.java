@@ -108,7 +108,7 @@ public abstract class AbstractFactStoreTest {
                     if (values.size() >= count) {
                         return;
                     } else {
-                        this.wait();
+                        this.wait(50);
                     }
                 }
             }
