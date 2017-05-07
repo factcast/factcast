@@ -1,7 +1,9 @@
 package org.factcast.example.grpc;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
@@ -12,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.Setter;
 import lombok.SneakyThrows;
 
@@ -24,7 +27,7 @@ class SmokeTestFact implements Fact {
     UUID id = UUID.randomUUID();
 
     @JsonProperty
-    UUID aggId;
+    Set<UUID> aggId;
 
     @JsonProperty
     String type;
@@ -51,5 +54,13 @@ class SmokeTestFact implements Fact {
     @SneakyThrows
     public String jsonHeader() {
         return new ObjectMapper().writeValueAsString(this);
+    }
+
+    public SmokeTestFact aggId(@NonNull UUID aggId, UUID... otherAggIds) {
+        this.aggId.add(aggId);
+        if (otherAggIds != null) {
+            this.aggId.addAll(Arrays.asList(otherAggIds));
+        }
+        return this;
     }
 }

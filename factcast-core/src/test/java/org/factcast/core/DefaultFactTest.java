@@ -84,8 +84,9 @@ public class DefaultFactTest {
     public void testJsonHeader() throws Exception {
         final UUID id = UUID.randomUUID();
         final UUID aid = UUID.randomUUID();
-        final String header = "{\"id\":\"" + id + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggId\":\""
-                + aid + "\",\"meta\":{\"foo\":7}}";
+        final String header = "{\"id\":\"" + id
+                + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggId\":[\"" + aid
+                + "\"],\"meta\":{\"foo\":7}}";
         Fact f = DefaultFact.of(header, "{}");
 
         assertSame(header, f.jsonHeader());
@@ -95,8 +96,9 @@ public class DefaultFactTest {
     public void testEqualityBasedOnId() throws Exception {
         final UUID id = UUID.randomUUID();
         final UUID aid = UUID.randomUUID();
-        final String header = "{\"id\":\"" + id + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggId\":\""
-                + aid + "\",\"meta\":{\"foo\":7}}";
+        final String header = "{\"id\":\"" + id
+                + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggId\":[\"" + aid
+                + "\"],\"meta\":{\"foo\":7}}";
 
         Fact f = DefaultFact.of(header, "{}");
         Fact f2 = DefaultFact.of("{\"id\":\"" + id + "\"}", "{}");
@@ -112,8 +114,8 @@ public class DefaultFactTest {
         final UUID id = UUID.randomUUID();
         final UUID aid = UUID.randomUUID();
         Fact f = DefaultFact.of("{\"id\":\"" + id
-                + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggId\":\"" + aid
-                + "\",\"meta\":{\"foo\":7}}", "{}");
+                + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggId\":[\"" + aid
+                + "\"],\"meta\":{\"foo\":7}}", "{}");
 
         Fact copy = copyBySerialization(f);
 
@@ -138,12 +140,12 @@ public class DefaultFactTest {
         UUID id = UUID.randomUUID();
 
         Fact f1 = DefaultFact.of("{\"id\":\"" + id
-                + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggId\":\"" + UUID.randomUUID()
-                + "\",\"meta\":{\"foo\":7}}", "{}");
+                + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggId\":[\"" + UUID.randomUUID()
+                + "\"],\"meta\":{\"foo\":7}}", "{}");
 
         Fact f2 = DefaultFact.of("{\"id\":\"" + id
-                + "\",\"ns\":\"poit\",\"type\":\"bar\",\"aggId\":\"" + UUID.randomUUID()
-                + "\",\"meta\":{\"foo\":7}}", "{}");
+                + "\",\"ns\":\"poit\",\"type\":\"bar\",\"aggId\":[\"" + UUID.randomUUID()
+                + "\"],\"meta\":{\"foo\":7}}", "{}");
 
         assertEquals(f1, f2);
 

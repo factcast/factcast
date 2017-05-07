@@ -2,6 +2,7 @@ package org.factcast.core.spec;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -89,8 +90,8 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         if (aggId == null) {
             return true;
         }
-        UUID otherAggId = t.aggId();
-        return aggId.equals(otherAggId);
+        Set<UUID> otherAggId = t.aggId();
+        return otherAggId != null && otherAggId.contains(aggId);
     }
 
     @SneakyThrows

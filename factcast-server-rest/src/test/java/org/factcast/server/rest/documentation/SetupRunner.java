@@ -1,8 +1,10 @@
 package org.factcast.server.rest.documentation;
 
 import java.util.Arrays;
+import java.util.Set;
 import java.util.UUID;
 
+import org.assertj.core.util.Sets;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +18,7 @@ public class SetupRunner {
 
         private final UUID id = UUID.randomUUID();
 
-        private final UUID aggId = UUID.randomUUID();
+        private final Set<UUID> aggId = Sets.newLinkedHashSet(UUID.randomUUID());
 
         @Override
         public String type() {
@@ -49,7 +51,7 @@ public class SetupRunner {
         }
 
         @Override
-        public UUID aggId() {
+        public Set<UUID> aggId() {
             return aggId;
         }
 

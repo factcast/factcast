@@ -6,6 +6,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.util.FactCastJson;
@@ -83,7 +84,7 @@ public class DefaultFact implements Fact, Externalizable {
         String type;
 
         @JsonProperty
-        UUID aggId;
+        Set<UUID> aggId;
 
         @JsonProperty
         final Map<String, String> meta = new HashMap<>();
@@ -126,7 +127,7 @@ public class DefaultFact implements Fact, Externalizable {
     }
 
     @Override
-    public UUID aggId() {
+    public Set<UUID> aggId() {
         return deserializedHeader.aggId();
     }
 

@@ -1,5 +1,7 @@
 package org.factcast.core;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -26,7 +28,7 @@ public class MarkFact implements Fact {
 
     final String type = MARK_TYPE;
 
-    final UUID aggId = null;
+    final Set<UUID> aggId = Collections.emptySet();
 
     /**
      * does not have any payload.

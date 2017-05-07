@@ -56,5 +56,4 @@ public class FactSpec {
         super();
         this.ns = ns;
     }
-
 }

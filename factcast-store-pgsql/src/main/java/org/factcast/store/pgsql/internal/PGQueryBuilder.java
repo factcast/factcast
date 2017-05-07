@@ -59,7 +59,7 @@ class PGQueryBuilder {
 
                 UUID agg = spec.aggId();
                 if (agg != null) {
-                    p.setString(++count, "{\"aggId\": \"" + agg.toString() + "\" }");
+                    p.setString(++count, "{\"aggId\": [\"" + agg + "\"]}");
                 }
 
                 Map<String, String> meta = spec.meta();
@@ -111,7 +111,7 @@ class PGQueryBuilder {
         final String sql = "SELECT " + (selectIdOnly ? PGConstants.PROJECTION_ID
                 : PGConstants.PROJECTION_FACT) + " FROM " + PGConstants.TABLE_FACT + " WHERE "
                 + createWhereClause() + " ORDER BY " + PGConstants.COLUMN_SER + " ASC";
-        log.trace("{} SQL={}", req, sql);
+        log.info("{} SQL={}", req, sql);
         return sql;
     }
 }

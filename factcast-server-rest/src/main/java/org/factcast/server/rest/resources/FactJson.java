@@ -2,6 +2,7 @@ package org.factcast.server.rest.resources;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.validation.Valid;
@@ -42,7 +43,7 @@ public class FactJson {
         final String type;
 
         @JsonProperty
-        final UUID aggId;
+        final Set<UUID> aggId;
 
         @JsonProperty
         final Map<String, String> meta = new HashMap<>();
@@ -66,5 +67,5 @@ public class FactJson {
     @JsonProperty
     @NotNull
     @NonNull
-    JsonNode payLoad;
+    JsonNode payload;
 }

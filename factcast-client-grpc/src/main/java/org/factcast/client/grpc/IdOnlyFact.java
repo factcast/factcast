@@ -1,5 +1,6 @@
 package org.factcast.client.grpc;
 
+import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
@@ -25,7 +26,7 @@ final class IdOnlyFact implements Fact {
     }
 
     @Override
-    public UUID aggId() {
+    public Set<UUID> aggId() {
         throw new UnsupportedOperationException();
     }
 

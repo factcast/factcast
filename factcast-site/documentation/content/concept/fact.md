@@ -30,7 +30,7 @@ consists of:
 
 * a **required** Fact-Id 'id' of type UUID
 * a **required** namespace 'ns' of type String
-* an optional aggregateId 'aggId' of type UUID
+* an optional set of aggregateIds 'aggId' of type array of UUIDs
 * an optional (but mostly used) Fact-Type 'type' of type String
 * an optional Object 'meta' any number of key-value pairs, where the values are Strings
 * any additional information you want to put in a Fact Header
@@ -51,8 +51,12 @@ JSON-Schema:
         },
         "aggId": {
             "id": "/properties/aggId",
-            "type": "string",
-            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+            "type": "array",
+            "items":{
+            	"id": "/properties/aggId/items",
+            	"type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+            }
         },
         "ns": {
             "id": "/properties/ns",

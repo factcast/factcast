@@ -45,7 +45,7 @@ public class EventsTransactionsResource implements JerseyResource {
                 log.error("error", e);
                 throw new WebApplicationException(500);
             }
-            return DefaultFact.of(headerString, f.payLoad().toString());
+            return DefaultFact.of(headerString, f.payload().toString());
         }).collect(Collectors.toList());
 
         try {

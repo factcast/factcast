@@ -1,5 +1,6 @@
 package org.factcast.core;
 
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.NonNull;
@@ -25,7 +26,7 @@ public interface Fact {
 
     String type();
 
-    UUID aggId();
+    Set<UUID> aggId();
 
     @NonNull
     String jsonHeader();

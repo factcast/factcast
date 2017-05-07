@@ -1,14 +1,18 @@
 package org.factcast.store.pgsql.internal;
 
 import java.sql.ResultSet;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -42,7 +46,7 @@ class PGFact implements Fact {
     final String type;
 
     @Getter
-    final UUID aggId;
+    final Set<UUID> aggId;
 
     @Getter
     @NonNull
@@ -86,7 +90,21 @@ class PGFact implements Fact {
         String jsonHeader = resultSet.getString(PGConstants.COLUMN_HEADER);
         String jsonPayload = resultSet.getString(PGConstants.COLUMN_PAYLOAD);
 
-        return new PGFact(UUID.fromString(id), ns, type, aggId == null ? null
-                : UUID.fromString(aggId), jsonHeader, jsonPayload);
+        return new PGFact(UUID.fromString(id), ns, type, toUUIDArray(aggId), jsonHeader,
+                jsonPayload);
+    }
+
+    @VisibleForTesting
+    static Set<UUID> toUUIDArray(String aggIdArrayAsString) {
+
+        Set<UUID> set = new LinkedHashSet<>();
+        if (aggIdArrayAsString != null && aggIdArrayAsString.trim().length() > 2) {
+            UUID[] readValue = FactCastJson.readValue(UUID[].class, aggIdArrayAsString);
+            if (readValue != null) {
+                set.addAll(Arrays.asList(readValue));
+            }
+        }
+
+        return set;
     }
 }

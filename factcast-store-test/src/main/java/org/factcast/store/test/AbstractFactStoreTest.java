@@ -449,4 +449,66 @@ public abstract class AbstractFactStoreTest {
         verify(observer, times(1)).onNext(any());
 
     }
+
+    @Test(timeout = 10000)
+    @DirtiesContext
+    public void testMatchBySingleAggId() throws Exception {
+        final UUID id = UUID.randomUUID();
+        final UUID aggId1 = UUID.randomUUID();
+        uut.publishWithMark(Fact.of("{\"id\":\"" + id
+                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggId\":[\"" + aggId1 + "\"]}",
+                "{}"));
+
+        FactObserver observer = mock(FactObserver.class);
+        uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId1))
+                .skipMarks().fromScratch(), observer).awaitComplete();
+
+        verify(observer, times(1)).onNext(any());
+
+    }
+
+    @Test(timeout = 10000)
+    @DirtiesContext
+    public void testMatchByOneOfAggId() throws Exception {
+        final UUID id = UUID.randomUUID();
+        final UUID aggId1 = UUID.randomUUID();
+        final UUID aggId2 = UUID.randomUUID();
+
+        uut.publishWithMark(Fact.of("{\"id\":\"" + id
+                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggId\":[\"" + aggId1 + "\",\""
+                + aggId2 + "\"]}", "{}"));
+
+        FactObserver observer = mock(FactObserver.class);
+        uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId1))
+                .skipMarks().fromScratch(), observer).awaitComplete();
+
+        verify(observer, times(1)).onNext(any());
+
+        observer = mock(FactObserver.class);
+        uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId2))
+                .skipMarks().fromScratch(), observer).awaitComplete();
+
+        verify(observer, times(1)).onNext(any());
+
+    }
+
+    @Test(timeout = 10000)
+    @DirtiesContext
+    public void testMatchBySecondAggId() throws Exception {
+        final UUID id = UUID.randomUUID();
+        final UUID aggId1 = UUID.randomUUID();
+        final UUID aggId2 = UUID.randomUUID();
+
+        uut.publishWithMark(Fact.of("{\"id\":\"" + id
+                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggId\":[\"" + aggId1 + "\",\""
+                + aggId2 + "\"]}", "{}"));
+
+        FactObserver observer = mock(FactObserver.class);
+        uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId2))
+                .skipMarks().fromScratch(), observer).awaitComplete();
+
+        verify(observer, times(1)).onNext(any());
+
+    }
+
 }

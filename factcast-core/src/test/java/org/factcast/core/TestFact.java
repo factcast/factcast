@@ -1,17 +1,21 @@
 package org.factcast.core;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.Sets;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.Setter;
 import lombok.SneakyThrows;
 
@@ -25,7 +29,7 @@ public class TestFact implements Fact {
     UUID id = UUID.randomUUID();
 
     @JsonProperty
-    UUID aggId;
+    Set<UUID> aggId = Sets.newLinkedHashSet();
 
     @JsonProperty
     String type;
@@ -52,5 +56,13 @@ public class TestFact implements Fact {
     @SneakyThrows
     public String jsonHeader() {
         return FactCastJson.writeValueAsString(this);
+    }
+
+    public TestFact aggId(@NonNull UUID aggId, UUID... otherAggIds) {
+        this.aggId.add(aggId);
+        if (otherAggIds != null) {
+            this.aggId.addAll(Arrays.asList(otherAggIds));
+        }
+        return this;
     }
 }

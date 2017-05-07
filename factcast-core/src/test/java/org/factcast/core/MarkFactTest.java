@@ -23,7 +23,7 @@ public class MarkFactTest {
         // intentionally not using the constants here. i am sure you see why :)
         assertEquals("_", uut.ns());
         assertEquals("_mark", uut.type());
-        assertNull(uut.aggId());
+        assertTrue(uut.aggId().isEmpty());
         assertNotNull(uut.id());
     }
 
