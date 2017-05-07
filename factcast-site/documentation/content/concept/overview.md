@@ -19,14 +19,16 @@ weight = 15
 In order to use FactCast most effectively it is necessary to have an overview of the concepts within and where they might differ to a solution already familiar to you. So let us look at the basics:
 
 
-## Write (publish)
+### Write (publish)
 
 With FactCast, you write Facts into a log by *publishing* Facts. You can publish single Facts, as well as a List of Facts atomically (all-or-none).
 
 In order to coordinate with consumers, you can also add special *MarkFacts* at the end of the List, that you can reference from consumers later on.
-{{%alert danger%}} TODO see markFacts {{% /alert%}}
 
-## Read (subscribe)
+[{{%icon circle-arrow-right%}}Fact Specification]({{%relref "concept/markfact.md"%}})
+
+
+### Read (subscribe)
 
 In order to receive Facts, you subscribe to FactCast with a subscription request. This is where FactCast differs significantly from other solutions because the subscription request contains the *full specification* of what events to receive.
 This means, there is no need for Server-Side administration or knowing ahead of time, which Streams to publich the Fact to.
@@ -49,7 +51,7 @@ The three usual subscription Models and their corresponding UseCases are:
 
 Obviously all these subscription types rely on streaming transport which is implemented (at the time of writing) by REST-SSE or GRPC.
 
-## Read (fetchById)
+### Read (fetchById)
 
 There are situation, where either the bandwidth consumption has to be minimized between the consumers and FactCast, and there are either many consumers interested in the same Fact, or consumers repeatedly receiving the same Fact (Catchup-Subscriptions without snapshotting for example).
 
