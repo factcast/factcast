@@ -129,9 +129,8 @@ class CustomerCache {
  public void handle(Fact f){
     // if anything has changed, invalidate the cached value.
     // ...
-    UUID aggregateId = f.aggId();
-    if (aggregateId!=null)
-      customerCache.remove(aggregateId);
+    Set<UUID> aggregateIds = f.aggId();
+    aggregateIds.forEach(customerCache::remove);
  }
 
 ```
