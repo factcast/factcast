@@ -26,7 +26,8 @@ Any Contribution, be it code, issues, docs etc. are more than welcome if they co
 * [github.com/BernhardBln](https://github.com/BernhardBln) for discussions, review and guidance
 * [@emwexx](https://twitter.com/emwexx) for discussions
 * [@joerg_adler](https://twitter.com/joerg_adler) for providing the REST adapter
-* [@awuerl](https://twitter.com/awuerl) for work on the REST adapter
 
 
 and of course all the [Contributors](https://github.com/uweschaefer/factcast/graphs/contributors) 
+
+{{%ghcontributors "https://api.github.com/repos/uweschaefer/factcast/contributors?per_page=100" %}}
