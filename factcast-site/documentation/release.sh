@@ -10,8 +10,8 @@ hugo
 mkdir stage -p
 mv public/* stage
 
-mv stage/index.html stage/_.html
-cat stealth.html >stage/index.html
+#mv stage/index.html stage/_.html
+#cat stealth.html >stage/index.html
 rsync --delete -rcv stage/* wv:/www/docs.factcast.org
 rm -rf stage
 

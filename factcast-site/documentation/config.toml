@@ -16,7 +16,14 @@ home = [ "HTML", "RSS", "JSON"]
 
 [[menu.shortcuts]]
 pre = "<h3>More</h3>"
-name = "<i class='fa fa-github'></i> Github repo"
+name = "Github repo <i class='fa fa-github'></i>"
 identifier = "github"
 url = "https://github.com/uweschaefer/factcast/"
 weight = 1
+
+[[menu.shortcuts]]
+
+name = "Contribution"
+identifier = "thanks"
+url = "/thanks"
+weight = 2
