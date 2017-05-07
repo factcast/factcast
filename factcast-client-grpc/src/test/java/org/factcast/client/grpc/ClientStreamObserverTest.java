@@ -49,6 +49,13 @@ public class ClientStreamObserverTest {
     }
 
     @Test
+    public void testOnNextId() throws Exception {
+        MSG_Notification n = converter.createNotificationFor(UUID.randomUUID());
+        uut.onNext(n);
+        verify(factObserver).onNext(any(IdOnlyFact.class));
+    }
+
+    @Test
     public void testOnCatchup() throws Exception {
         uut.onNext(converter.createCatchupNotification());
         verify(factObserver).onCatchup();

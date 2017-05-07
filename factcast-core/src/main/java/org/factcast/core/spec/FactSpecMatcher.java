@@ -12,6 +12,8 @@ import javax.script.ScriptEngineManager;
 
 import org.factcast.core.Fact;
 
+import com.fasterxml.jackson.databind.util.LRUMap;
+
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
@@ -24,6 +26,8 @@ import lombok.SneakyThrows;
 public final class FactSpecMatcher implements Predicate<Fact> {
 
     static final ScriptEngineManager engineManager = new ScriptEngineManager();
+
+    static final LRUMap<String, ScriptEngine> scriptEngineCache = new LRUMap<>(10, 200);
 
     @NonNull
     final String ns;
@@ -105,16 +109,22 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         return jsEval;
     }
 
-    // TODO err handling
     @SneakyThrows
-    private static ScriptEngine getEngine(String js) {
+    private static synchronized ScriptEngine getEngine(String js) {
         if (js == null) {
             return null;
         }
 
-        ScriptEngine engine = engineManager.getEngineByName("nashorn");
-        engine.eval("var test=" + js);
-        return engine;
+        ScriptEngine cachedEngine = scriptEngineCache.get(js);
+        if (cachedEngine != null) {
+            return cachedEngine;
+        } else {
+            ScriptEngine engine = engineManager.getEngineByName("nashorn");
+            engine.eval("var test=" + js);
+            scriptEngineCache.put(js, engine);
+            return engine;
+        }
+
     }
 
     public static Predicate<Fact> matchesAnyOf(@NonNull List<FactSpec> spec) {

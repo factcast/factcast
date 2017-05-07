@@ -511,4 +511,22 @@ public abstract class AbstractFactStoreTest {
 
     }
 
+    @Test(timeout = 10000)
+    @DirtiesContext
+    public void testDelayed() throws Exception {
+        final UUID id = UUID.randomUUID();
+
+        TestFactObserver obs = new TestFactObserver();
+
+        uut.subscribeToFacts(SubscriptionRequest.follow(500, FactSpec.ns("default").aggId(id))
+                .skipMarks().fromScratch(), obs);
+
+        uut.publishWithMark(Fact.of("{\"id\":\"" + id
+                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggId\":[\"" + id + "\"]}", "{}"));
+
+        // will take some time on pgstore
+        obs.await(1);
+
+    }
+
 }
