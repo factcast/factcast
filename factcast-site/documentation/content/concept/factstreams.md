@@ -27,7 +27,7 @@ User-1234
 	UserPasswordResetRequested
 	UserPasswordReset
 ```  
-While this kind of Stream design makes it trivial to find all the Facts that have to be aggregated to reconstruct the State of User(id=1234), you are not done, yet.
+While this kind of Stream design makes it trivial to find all the Facts that have to be aggregated to reconstruct the state of User(id=1234), you are not done, yet.
 
 ### Facts that are not picked by Aggregate-Id
 
