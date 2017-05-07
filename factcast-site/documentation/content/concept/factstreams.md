@@ -65,7 +65,7 @@ As a consumer, you need to be able to express, what Facts are of interest to you
 
 The actual filtering of FactStreams according to the consumer's needs should also probably be done within the Store, for efficiency reasons. You don't want to flood the network with Facts that end up being filtered out, if at all possible.
 
-This requires a **flexible way of expressing**, what Facts you are interested in, ultimately leading to **Scripted Predicates**.
+This requires a **flexible way of expressing**, what Facts you are interested in, ultimately leading to **scripted Predicates**.
 
 Filtering could be done either ahead of time (by emitting Facts into different Streams and creating new Streams whenever a consumer's need changes), or just-in-time, which might have some impact on performance.   
  
