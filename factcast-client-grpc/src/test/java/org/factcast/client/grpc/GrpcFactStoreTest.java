@@ -11,6 +11,8 @@ import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
@@ -19,6 +21,7 @@ import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -41,6 +44,9 @@ public class GrpcFactStoreTest {
 
     @Mock
     private RemoteFactStoreStub stub;
+
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    private SubscriptionRequestTO req;
 
     private ProtoConverter conv = new ProtoConverter();
 
@@ -94,5 +100,14 @@ public class GrpcFactStoreTest {
         expectNPE(() -> new GrpcFactStore((Channel) null));
         expectNPE(() -> new GrpcFactStore(mock(RemoteFactStoreBlockingStub.class), null));
         expectNPE(() -> new GrpcFactStore(null, mock(RemoteFactStoreStub.class)));
+        expectNPE(() -> new GrpcFactStore(null, null));
     }
+
+    @Test
+    public void testSubscribeNull() throws Exception {
+        expectNPE(() -> uut.subscribe(null, mock(FactObserver.class)));
+        expectNPE(() -> uut.subscribe(null, null));
+        expectNPE(() -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
+    }
+
 }

@@ -10,9 +10,11 @@ import org.factcast.core.subscription.observer.GenericObserver;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
-public final class SubscriptionImpl<T> implements Subscription {
+@Slf4j
+public class SubscriptionImpl<T> implements Subscription {
 
     @NonNull
     final GenericObserver<T> observer;
@@ -94,6 +96,7 @@ public final class SubscriptionImpl<T> implements Subscription {
         if (!complete.isDone()) {
             complete.complete(null);
         }
+        tryClose();
     }
 
     public void notifyError(Throwable e) {
@@ -103,6 +106,15 @@ public final class SubscriptionImpl<T> implements Subscription {
         }
         if (!complete.isDone()) {
             complete.completeExceptionally(e);
+        }
+        tryClose();
+    }
+
+    private void tryClose() {
+        try {
+            close();
+        } catch (Exception e) {
+            log.trace("Irrelevant Excption during close: ", e);
         }
     }
 

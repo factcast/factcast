@@ -23,13 +23,11 @@ message MSG_Notification{
 		Id = 1;
 		Catchup = 2;
 		Complete = 3;
-		Error = 4;
 	}
 
 	Type type = 1;
 	MSG_Fact fact = 2;
 	MSG_UUID id = 3;
-	string error = 4;
 }
 
 /**

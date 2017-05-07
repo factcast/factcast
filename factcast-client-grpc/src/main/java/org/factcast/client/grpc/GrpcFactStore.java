@@ -98,66 +98,14 @@ class GrpcFactStore implements FactStore {
             @NonNull FactObserver observer) {
         SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
 
-        final MSG_SubscriptionRequest request = converter.toProto(req);
-        final StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new StreamObserver<FactStoreProto.MSG_Notification>() {
+        StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new ClientStreamObserver(
+                subscription);
 
-            @Override
-            public void onNext(MSG_Notification f) {
+        ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel().newCall(
+                RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions().withWaitForReady()
+                        .withCompression("gzip"));
 
-                log.trace("observer got msg: {}", f);
-
-                switch (f.getType()) {
-                case Catchup:
-                    log.debug("received onCatchup signal");
-                    subscription.notifyCatchup();
-                    break;
-                case Complete:
-                    log.debug("received onComplete signal");
-                    subscription.notifyComplete();
-                    break;
-                case Error:
-                    log.debug("received onError signal");
-                    subscription.notifyError(new RuntimeException("Server-side Error: \n" + f
-                            .getError()));
-                    break;
-
-                case Fact:
-                    subscription.notifyElement(converter.fromProto(f.getFact()));
-                    break;
-
-                case Id:
-                    // wrap id in a fact
-                    subscription.notifyElement(new IdOnlyFact(converter.fromProto(f.getId())));
-                    break;
-
-                case UNRECOGNIZED:
-                    subscription.notifyError(new RuntimeException(
-                            "Unrecognized notification type. THIS IS A BUG!"));
-                    break;
-
-                default:
-                    throw new IllegalArgumentException(
-                            "Unknown type of notification received! THIS IS A BUG!");
-                }
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                subscription.notifyError(t);
-
-            }
-
-            @Override
-            public void onCompleted() {
-                subscription.notifyComplete();
-            }
-        };
-
-        final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()
-                .newCall(RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions()
-                        .withWaitForReady().withCompression("gzip"));
-
-        asyncServerStreamingCall(call, request, responseObserver);
+        asyncServerStreamingCall(call, converter.toProto(req), responseObserver);
 
         return subscription.onClose(() -> {
             cancel(call);
