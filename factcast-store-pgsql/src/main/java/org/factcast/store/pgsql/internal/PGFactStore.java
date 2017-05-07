@@ -82,7 +82,7 @@ class PGFactStore implements FactStore {
     @Override
     @Transactional
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
-        try (final Context time = publishLatency.time();) {
+        try (Context time = publishLatency.time();) {
 
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
             final int numberOfFactsToPublish = factsToPublish.size();
@@ -131,7 +131,7 @@ class PGFactStore implements FactStore {
 
     @Override
     public Optional<Fact> fetchById(@NonNull UUID id) {
-        try (final Context time = fetchLatency.time();) {
+        try (Context time = fetchLatency.time();) {
             return jdbcTemplate.query(PGConstants.SELECT_BY_ID, new Object[] { "{\"id\":\"" + id
                     + "\"}" }, this::extractFactFromResultSet).stream().findFirst();
         }
