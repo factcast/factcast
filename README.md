@@ -2,7 +2,7 @@
 
 **This project is not ready for primetime**
 
-It is not yet release, the API may change, the documentation is incomplete.
+It is not yet released, the API may change, the documentation is incomplete.
 
 [![Build Status](https://travis-ci.org/uweschaefer/factcast.svg?branch=master)](https://travis-ci.org/uweschaefer/factcast) 
 <a href='https://coveralls.io/github/uweschaefer/factcast?branch=master'><img src='https://coveralls.io/repos/github/uweschaefer/factcast/badge.svg?branch=master#n' alt='Coverage Status' /></a>
