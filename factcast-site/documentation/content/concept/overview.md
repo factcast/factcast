@@ -1,16 +1,23 @@
 +++
 draft = false
-title = "Conceptual Design"
+title = "Concept"
 description = ""
+date = "2017-04-24T18:36:24+02:00"
 
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 
 [menu.main]
-parent = "intro"
-identifier = "design"
-weight = 20
+parent = ""
+identifier = "concept"
+weight = 15
+
 +++
+
+## Concept
+
+In order to use FactCast most effectively it is necessary to have an overview of the concepts within and where they might differ to a solution already familiar to you. So let us look at the basics:
+
 
 ## Write (publish)
 
@@ -31,8 +38,6 @@ When subscribing, the Consumer sends a specification of Facts he is interested i
 
 
 #### {{% alert theme="info" %}} *Note, that Facts are always guaranteed to be sent in the order published.* {{% /alert %}}
-
-
 
 The three usual subscription Models and their corresponding UseCases are:
 

@@ -10,7 +10,7 @@ creatoremail = "uwe.schaefer@mercateo.com"
 [menu.main]
 parent = ""
 identifier = "setup_server"
-weight = 10
+weight = 18
 
 +++
 
