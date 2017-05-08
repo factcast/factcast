@@ -43,7 +43,7 @@ public class FactJson {
         final String type;
 
         @JsonProperty
-        final Set<UUID> aggId;
+        final Set<UUID> aggIds;
 
         @JsonProperty
         final Map<String, String> meta = new HashMap<>();

@@ -1,6 +1,6 @@
 package org.factcast.server.rest.documentation;
 
-import static org.springframework.restdocs.request.RequestDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public class Descriptors {
                 fields.withPath(prefix + "header.id").description("client side UUID"), //
                 fields.withPath(prefix + "header.ns").description("namespace"), //
                 fields.withPath(prefix + "header.type").description("type"), //
-                fields.withPath(prefix + "header.aggId").description("IDs of aggregates involved"), //
+                fields.withPath(prefix + "header.aggIds").description("IDs of aggregates involved"), //
                 fields.withPath(prefix + "header.meta").description("Key-value map for meta data"),
                 fields.withPath(prefix + "payload").description("The payload of the new fact"));
 
