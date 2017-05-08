@@ -84,7 +84,7 @@ public class DefaultFact implements Fact, Externalizable {
         String type;
 
         @JsonProperty
-        Set<UUID> aggId;
+        Set<UUID> aggIds;
 
         @JsonProperty
         final Map<String, String> meta = new HashMap<>();
@@ -127,8 +127,8 @@ public class DefaultFact implements Fact, Externalizable {
     }
 
     @Override
-    public Set<UUID> aggId() {
-        return deserializedHeader.aggId();
+    public Set<UUID> aggIds() {
+        return deserializedHeader.aggIds();
     }
 
 }

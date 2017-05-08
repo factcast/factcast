@@ -51,7 +51,7 @@ public class SetupRunner {
         }
 
         @Override
-        public Set<UUID> aggId() {
+        public Set<UUID> aggIds() {
             return aggId;
         }
 

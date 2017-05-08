@@ -59,7 +59,7 @@ public class ProtoConverterTest {
         Fact copy = uut.fromProto(uut.toProto(probe));
 
         assertEquals(probe.id(), copy.id());
-        assertEquals(probe.aggId(), copy.aggId());
+        assertEquals(probe.aggIds(), copy.aggIds());
         assertEquals(probe.type(), copy.type());
         assertEquals(probe.ns(), copy.ns());
         assertEquals(probe.meta(key1), copy.meta(key1));
