@@ -42,7 +42,7 @@ public class PGFactTest {
 
         assertEquals(ns, uut.ns());
         assertEquals(type, uut.type());
-        assertEquals(aggId, uut.aggId().iterator().next().toString());
+        assertEquals(aggId, uut.aggIds().iterator().next().toString());
         assertEquals(id, uut.id().toString());
         assertEquals(header, uut.jsonHeader());
         assertEquals(payload, uut.jsonPayload());

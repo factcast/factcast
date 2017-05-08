@@ -28,7 +28,7 @@ public class MarkFact implements Fact {
 
     final String type = MARK_TYPE;
 
-    final Set<UUID> aggId = Collections.emptySet();
+    final Set<UUID> aggIds = Collections.emptySet();
 
     /**
      * does not have any payload.

@@ -94,7 +94,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         if (aggId == null) {
             return true;
         }
-        Set<UUID> otherAggId = t.aggId();
+        Set<UUID> otherAggId = t.aggIds();
         return otherAggId != null && otherAggId.contains(aggId);
     }
 

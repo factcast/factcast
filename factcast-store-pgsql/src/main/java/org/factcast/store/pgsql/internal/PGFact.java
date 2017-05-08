@@ -46,7 +46,7 @@ class PGFact implements Fact {
     final String type;
 
     @Getter
-    final Set<UUID> aggId;
+    final Set<UUID> aggIds;
 
     @Getter
     @NonNull
