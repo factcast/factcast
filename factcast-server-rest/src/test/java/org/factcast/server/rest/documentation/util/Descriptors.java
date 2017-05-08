@@ -1,4 +1,4 @@
-package org.factcast.server.rest.documentation;
+package org.factcast.server.rest.documentation.util;
 
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 

@@ -19,6 +19,10 @@ import javax.ws.rs.core.Response;
 
 import org.factcast.server.rest.FactCastRestApplication;
 import org.factcast.server.rest.TestFacts;
+import org.factcast.server.rest.documentation.util.ConstrainedFields;
+import org.factcast.server.rest.documentation.util.Descriptors;
+import org.factcast.server.rest.documentation.util.HyperschemaLinkExtractor;
+import org.factcast.server.rest.documentation.util.SpringConfig;
 import org.factcast.server.rest.resources.FactJson;
 import org.glassfish.jersey.media.sse.EventInput;
 import org.glassfish.jersey.media.sse.SseFeature;

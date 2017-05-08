@@ -12,6 +12,8 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.re
 import javax.ws.rs.core.Response;
 
 import org.factcast.server.rest.FactCastRestApplication;
+import org.factcast.server.rest.documentation.util.HyperschemaLinkExtractor;
+import org.factcast.server.rest.documentation.util.SpringConfig;
 import org.factcast.server.rest.resources.EventsRel;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.spring.SpringLifecycleListener;

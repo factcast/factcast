@@ -1,4 +1,4 @@
-package org.factcast.server.rest.documentation;
+package org.factcast.server.rest.documentation.util;
 
 import java.net.URI;
 import java.net.URISyntaxException;

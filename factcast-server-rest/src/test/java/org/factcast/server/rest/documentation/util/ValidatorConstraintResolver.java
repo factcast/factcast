@@ -1,4 +1,4 @@
-package org.factcast.server.rest.documentation;
+package org.factcast.server.rest.documentation.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;

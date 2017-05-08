@@ -1,4 +1,4 @@
-package org.factcast.server.rest.documentation;
+package org.factcast.server.rest.documentation.util;
 
 import java.io.IOException;
 import java.util.Arrays;

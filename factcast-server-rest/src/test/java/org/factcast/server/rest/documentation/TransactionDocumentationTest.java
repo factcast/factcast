@@ -17,6 +17,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.factcast.server.rest.FactCastRestApplication;
+import org.factcast.server.rest.documentation.util.ConstrainedFields;
+import org.factcast.server.rest.documentation.util.Descriptors;
+import org.factcast.server.rest.documentation.util.SpringConfig;
 import org.factcast.server.rest.resources.FactTransactionJson;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.spring.SpringLifecycleListener;
