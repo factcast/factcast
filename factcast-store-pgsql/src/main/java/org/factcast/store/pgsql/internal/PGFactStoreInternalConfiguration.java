@@ -72,8 +72,13 @@ public class PGFactStoreInternalConfiguration {
 
     @Bean
     public PGSubscriptionFactory pgSubscriptionFactory(JdbcTemplate jdbcTemplate, EventBus eventBus,
-            PGFactIdToSerMapper serMapper) {
-        return new PGSubscriptionFactory(jdbcTemplate, eventBus, serMapper);
+            PGFactIdToSerMapper serMapper, PGLatestSerialFetcher fetcher) {
+        return new PGSubscriptionFactory(jdbcTemplate, eventBus, serMapper, fetcher);
+    }
+
+    @Bean
+    public PGLatestSerialFetcher pgLatestSerialFetcher(JdbcTemplate jdbcTemplate) {
+        return new PGLatestSerialFetcher(jdbcTemplate);
     }
 
 }

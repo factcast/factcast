@@ -40,9 +40,11 @@ class PGFactStream {
 
     final AtomicBoolean disconnected = new AtomicBoolean(false);
 
-    private CondensedQueryExecutor condensedExecutor;
+    final PGLatestSerialFetcher fetcher;
 
-    private SubscriptionRequestTO request;
+    CondensedQueryExecutor condensedExecutor;
+
+    SubscriptionRequestTO request;
 
     void connect(@NonNull SubscriptionRequestTO request) {
 
@@ -58,7 +60,8 @@ class PGFactStream {
         RowCallbackHandler rsHandler = new FactRowCallbackHandler(subscription,
                 new PGPostQueryMatcher(request));
 
-        PGSynchronizedQuery query = new PGSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler);
+        PGSynchronizedQuery query = new PGSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler,
+                serial, fetcher);
         catchupAndFollow(request, subscription, query);
     }
 
@@ -73,7 +76,7 @@ class PGFactStream {
 
         if (request.ephemeral()) {
             // just fast forward to the latest event publish by now
-            this.serial.set(getLatestFactSer());
+            this.serial.set(fetcher.retrieveLatestSer());
         } else {
             catchup(query);
         }
@@ -135,10 +138,6 @@ class PGFactStream {
 
     private boolean isConnected() {
         return !disconnected.get();
-    }
-
-    private long getLatestFactSer() {
-        return jdbcTemplate.queryForObject(PGConstants.SELECT_LATEST_SER, Long.class).longValue();
     }
 
     public void close() {

@@ -46,7 +46,7 @@ With AWS RDS for instance, it is rather trivial to setup and operate a PostgreSQ
 
 ## Choice #2: REST
 
-The obvious choice for implementing platform neutrsal APIs nowadays is REST. If we say REST were, we actually mean REST - not RPCish JSON over HTTP. The FactCast Rest Adapter provides an API with HATEOAS properties following the [JSON-LD](http://json-ld.org/spec/latest/json-ld-api/#jsonldoptions) spec.
+The obvious choice for implementing platform neutrsal APIs nowadays is REST. If we say REST were, we actually mean REST - not RPCish JSON over HTTP. The FactCast Rest Adapter provides an API with HATEOAS properties.
 
 ## Choice #3: GRPC
 

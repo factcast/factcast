@@ -518,16 +518,16 @@ public abstract class AbstractFactStoreTest {
 
         TestFactObserver obs = new TestFactObserver();
 
-        uut.subscribeToFacts(SubscriptionRequest.follow(500, FactSpec.ns("default").aggId(id))
-                .skipMarks().fromScratch(), obs);
+        try (Subscription s = uut.subscribeToFacts(SubscriptionRequest.follow(500, FactSpec.ns(
+                "default").aggId(id)).skipMarks().fromScratch(), obs);) {
 
-        uut.publishWithMark(Fact.of("{\"id\":\"" + id
-                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id + "\"]}",
-                "{}"));
+            uut.publishWithMark(Fact.of("{\"id\":\"" + id
+                    + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id + "\"]}",
+                    "{}"));
 
-        // will take some time on pgstore
-        obs.await(1);
-
+            // will take some time on pgstore
+            obs.await(1);
+        }
     }
 
 }
