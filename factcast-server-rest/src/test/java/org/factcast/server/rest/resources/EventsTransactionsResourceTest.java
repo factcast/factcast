@@ -1,7 +1,7 @@
 package org.factcast.server.rest.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.verify;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 
@@ -38,13 +38,13 @@ public class EventsTransactionsResourceTest {
 
         List<Fact> facts = captor.getValue();
         Fact fact = facts.get(0);
-        FactJson sentFact = factTransactionJson.facts.get(0);
-        assertEquals(sentFact.header.ns(), fact.ns());
-        assertEquals(sentFact.header.aggIds(), fact.aggIds());
-        assertEquals(sentFact.header.type(), fact.type());
-        assertEquals(sentFact.header.id(), fact.id());
-        assertEquals(objectMapper.writeValueAsString(sentFact.header), fact.jsonHeader());
-        assertEquals(sentFact.payload.toString(), fact.jsonPayload());
+        FactJson sentFact = factTransactionJson.facts().get(0);
+        assertEquals(sentFact.header().ns(), fact.ns());
+        assertEquals(sentFact.header().aggIds(), fact.aggIds());
+        assertEquals(sentFact.header().type(), fact.type());
+        assertEquals(sentFact.header().id(), fact.id());
+        assertEquals(objectMapper.writeValueAsString(sentFact.header()), fact.jsonHeader());
+        assertEquals(sentFact.payload().toString(), fact.jsonPayload());
     }
 
 }
