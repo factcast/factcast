@@ -1,7 +1,7 @@
 package org.factcast.server.rest.resources;
 
 import java.net.URI;
-import java.util.function.Supplier;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.factcast.core.subscription.Subscription;
 import org.glassfish.jersey.media.sse.EventOutput;
@@ -20,8 +20,9 @@ class EventObserverFactory {
 
     private final HyperSchemaCreator hyperSchemaCreator;
 
-    EventObserver createFor(EventOutput eventOutput, URI baseURI, Supplier<Subscription> subsup) {
+    EventObserver createFor(EventOutput eventOutput, URI baseURI,
+            AtomicReference<Subscription> subscription) {
         return new EventObserver(eventOutput, eventsResourceLinkFactory, hyperSchemaCreator,
-                baseURI, subsup);
+                baseURI, subscription);
     }
 }

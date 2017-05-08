@@ -2,6 +2,7 @@ package org.factcast.server.rest.resources;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -22,7 +23,6 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.server.rest.resources.cache.Cacheable;
 import org.factcast.server.rest.resources.cache.NoCache;
-import org.factcast.server.rest.util.SetableSupplier;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
 import org.springframework.stereotype.Component;
@@ -61,12 +61,12 @@ public class EventsResource implements JerseyResource {
             @NotNull @Valid @BeanParam SubscriptionRequestParams subscriptionRequestParams) {
         final EventOutput eventOutput = new EventOutput();
         SubscriptionRequestTO req = subscriptionRequestParams.toRequest(objectMapper);
-        SetableSupplier<Subscription> subsup = new SetableSupplier<>();
+        AtomicReference<Subscription> subscription = new AtomicReference<Subscription>(null);
         FactObserver observer = eventObserverFactory.createFor(eventOutput, linkFactoryContext
-                .getBaseUri(), subsup);
+                .getBaseUri(), subscription);
 
         Subscription sub = factStore.subscribe(req, observer);
-        subsup.set(sub);
+        subscription.set(sub);
 
         return eventOutput;
     }

@@ -3,7 +3,7 @@ package org.factcast.server.rest.resources;
 import java.io.IOException;
 import java.net.URI;
 import java.util.UUID;
-import java.util.function.Supplier;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.ws.rs.core.MediaType;
 
@@ -33,15 +33,16 @@ public class EventObserver implements FactObserver {
 
     private final LinkFactoryContext linkFactoryContext;
 
-    private Supplier<Subscription> subsup;
+    private AtomicReference<Subscription> subcription;
 
     public EventObserver(EventOutput eventOutput, LinkFactory<EventsResource> linkFatory,
-            HyperSchemaCreator hyperSchemaCreator, URI baseURI, Supplier<Subscription> subsup) {
+            HyperSchemaCreator hyperSchemaCreator, URI baseURI,
+            AtomicReference<Subscription> subcription) {
         super();
         this.eventOutput = eventOutput;
         this.linkFatory = linkFatory;
         this.hyperSchemaCreator = hyperSchemaCreator;
-        this.subsup = subsup;
+        this.subcription = subcription;
         // this is need, because we are nor in requestscope anymore
         this.linkFactoryContext = new LinkFactoryContext() {
 
@@ -74,6 +75,7 @@ public class EventObserver implements FactObserver {
         val withSchema = hyperSchemaCreator.create(new EventIdJson(toReturn), linkToEvent);
         eventBuilder.data(withSchema);
         eventBuilder.mediaType(MediaType.APPLICATION_JSON_TYPE);
+        eventBuilder.id(t.toString());
         final OutboundEvent event = eventBuilder.build();
         try {
             eventOutput.write(event);
@@ -108,14 +110,17 @@ public class EventObserver implements FactObserver {
         try {
             eventOutput.write(event);
             eventOutput.close();
-        } catch (IOException e) {
+            subcription.get().close();
+        } catch (Exception e) {
             unsubscribeAndThrow(e);
         }
+
     }
 
     private void unsubscribeAndThrow(Throwable e) {
         try {
-            subsup.get().close();
+            subcription.get().close();
+            eventOutput.close();
         } catch (Exception e1) {
 
         }

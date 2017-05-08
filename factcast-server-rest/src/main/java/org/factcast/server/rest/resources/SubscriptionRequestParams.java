@@ -3,11 +3,13 @@ package org.factcast.server.rest.resources;
 import java.util.List;
 import java.util.UUID;
 
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.QueryParam;
 
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.server.rest.resources.converter.JsonParam;
+import org.glassfish.jersey.media.sse.SseFeature;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -18,7 +20,7 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SubscriptionRequestParams {
-    @QueryParam("from")
+    @HeaderParam(SseFeature.LAST_EVENT_ID_HEADER)
     private String from;
 
     @QueryParam("follow")
