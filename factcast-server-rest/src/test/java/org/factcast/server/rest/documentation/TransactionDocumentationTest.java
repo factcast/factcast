@@ -59,7 +59,7 @@ public class TransactionDocumentationTest extends JerseyTest {
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    public void getSimple() throws Exception {
+    public void post() throws Exception {
 
         ConstrainedFields fields = new ConstrainedFields(FactTransactionJson.class);
         List<FieldDescriptor> fieldDescriptors = Descriptors.getFactFieldDescriptors("facts[].",

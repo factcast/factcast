@@ -40,7 +40,7 @@ public class SetupRunner {
 
             return "{\"ns\":\"a\","//
                     + "\"type\":\"a\","//
-                    + "\"aggId\":\"" + aggId + "\","//
+                    + "\"aggIds\":[\"" + aggId.iterator().next() + "\"],"//
                     + "\"id\":\"" + id + "\""//
                     + "}";
         }
