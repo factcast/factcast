@@ -25,7 +25,7 @@ public class TestFacts {
 
         @Override
         public String jsonPayload() {
-            return "{}";
+            return "{\"id\":\"" + id + "\"}";
         }
 
         @Override

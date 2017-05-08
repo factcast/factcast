@@ -42,6 +42,7 @@ public class EventObserverTest {
     @Mock
     private EventOutput eventOutput;
 
+    @SuppressWarnings("deprecation")
     @Spy
     private LinkFactory<EventsResource> linkFatory = LinkMetaFactory.createInsecureFactoryForTest()
             .createFactoryFor(EventsResource.class);
@@ -69,6 +70,7 @@ public class EventObserverTest {
         ArgumentCaptor<OutboundEvent> cap = ArgumentCaptor.forClass(OutboundEvent.class);
         verify(eventOutput).write(cap.capture());
         OutboundEvent ev = cap.getValue();
+        @SuppressWarnings("unchecked")
         JsonHyperSchema jsonHyperSchema = ((ObjectWithSchema<Void>) ev.getData()).schema;
         assertTrue(jsonHyperSchema.getByRel(Rel.CANONICAL).isPresent());
         assertThat(ev.getId(), is(TestFacts.one.id().toString()));

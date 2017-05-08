@@ -60,7 +60,7 @@ public class EventsResource implements JerseyResource {
     public EventOutput getServerSentEvents(
             @NotNull @Valid @BeanParam SubscriptionRequestParams subscriptionRequestParams) {
         final EventOutput eventOutput = new EventOutput();
-        SubscriptionRequestTO req = subscriptionRequestParams.toRequest(objectMapper);
+        SubscriptionRequestTO req = subscriptionRequestParams.toRequest();
         AtomicReference<Subscription> subscription = new AtomicReference<Subscription>(null);
         FactObserver observer = eventObserverFactory.createFor(eventOutput, linkFactoryContext
                 .getBaseUri(), subscription);
@@ -80,7 +80,7 @@ public class EventsResource implements JerseyResource {
         try {
             fact = factStore.fetchById(UUID.fromString(id));
         } catch (IllegalArgumentException e) {
-            throw new WebApplicationException(404);
+            throw new NotFoundException();
         }
         FactJson returnValue = fact.map(f -> {
             try {
@@ -93,6 +93,6 @@ public class EventsResource implements JerseyResource {
                 throw new WebApplicationException(500);
             }
         }).orElseThrow(NotFoundException::new);
-        return schemaCreator.forFactWithId(returnValue, id);
+        return schemaCreator.forFactWithId(returnValue);
     }
 }

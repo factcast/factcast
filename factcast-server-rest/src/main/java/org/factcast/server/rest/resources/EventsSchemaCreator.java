@@ -23,8 +23,9 @@ class EventsSchemaCreator {
 
     private final HyperSchemaCreator hyperSchemaCreator;
 
-    ObjectWithSchema<FactJson> forFactWithId(FactJson returnValue, String id) {
-        Optional<Link> selfLink = eventsResourceLinkFactory.forCall(Rel.SELF, r -> r.getForId(id));
+    ObjectWithSchema<FactJson> forFactWithId(FactJson returnValue) {
+        Optional<Link> selfLink = eventsResourceLinkFactory.forCall(Rel.SELF, r -> r.getForId(
+                returnValue.header().id().toString()));
 
         return hyperSchemaCreator.create(returnValue, collect(selfLink));
     }

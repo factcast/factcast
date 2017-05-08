@@ -13,7 +13,6 @@ import org.glassfish.jersey.media.sse.SseFeature;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Data;
 
@@ -31,7 +30,7 @@ public class SubscriptionRequestParams {
     @JsonParam
     private List<FactSpec> factSpec;
 
-    public SubscriptionRequestTO toRequest(ObjectMapper objectMapper) {
+    public SubscriptionRequestTO toRequest() {
 
         SubscriptionRequestTO r = new SubscriptionRequestTO();
         r.continous(follow);
