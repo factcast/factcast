@@ -26,7 +26,7 @@ final class IdOnlyFact implements Fact {
     }
 
     @Override
-    public Set<UUID> aggId() {
+    public Set<UUID> aggIds() {
         throw new UnsupportedOperationException();
     }
 

@@ -30,7 +30,7 @@ class PGConstants {
 
     String ALIAS_TYPE = "type";
 
-    String ALIAS_AGGID = "aggId";
+    String ALIAS_AGGID = "aggIds";
 
     String PROJECTION_FACT = String.join(", ", COLUMN_SER, COLUMN_HEADER, COLUMN_PAYLOAD,
             fromHeader(ALIAS_ID), fromHeader(ALIAS_AGGID), fromHeader(ALIAS_NS), fromHeader(

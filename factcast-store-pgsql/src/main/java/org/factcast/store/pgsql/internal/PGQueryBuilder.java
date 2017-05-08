@@ -59,7 +59,7 @@ class PGQueryBuilder {
 
                 UUID agg = spec.aggId();
                 if (agg != null) {
-                    p.setString(++count, "{\"aggId\": [\"" + agg + "\"]}");
+                    p.setString(++count, "{\"aggIds\": [\"" + agg + "\"]}");
                 }
 
                 Map<String, String> meta = spec.meta();

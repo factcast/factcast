@@ -26,7 +26,7 @@ public interface Fact {
 
     String type();
 
-    Set<UUID> aggId();
+    Set<UUID> aggIds();
 
     @NonNull
     String jsonHeader();

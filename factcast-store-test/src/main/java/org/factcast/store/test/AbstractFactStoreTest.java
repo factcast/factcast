@@ -456,7 +456,7 @@ public abstract class AbstractFactStoreTest {
         final UUID id = UUID.randomUUID();
         final UUID aggId1 = UUID.randomUUID();
         uut.publishWithMark(Fact.of("{\"id\":\"" + id
-                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggId\":[\"" + aggId1 + "\"]}",
+                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + aggId1 + "\"]}",
                 "{}"));
 
         FactObserver observer = mock(FactObserver.class);
@@ -475,7 +475,7 @@ public abstract class AbstractFactStoreTest {
         final UUID aggId2 = UUID.randomUUID();
 
         uut.publishWithMark(Fact.of("{\"id\":\"" + id
-                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggId\":[\"" + aggId1 + "\",\""
+                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + aggId1 + "\",\""
                 + aggId2 + "\"]}", "{}"));
 
         FactObserver observer = mock(FactObserver.class);
@@ -500,7 +500,7 @@ public abstract class AbstractFactStoreTest {
         final UUID aggId2 = UUID.randomUUID();
 
         uut.publishWithMark(Fact.of("{\"id\":\"" + id
-                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggId\":[\"" + aggId1 + "\",\""
+                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + aggId1 + "\",\""
                 + aggId2 + "\"]}", "{}"));
 
         FactObserver observer = mock(FactObserver.class);
@@ -522,7 +522,8 @@ public abstract class AbstractFactStoreTest {
                 .skipMarks().fromScratch(), obs);
 
         uut.publishWithMark(Fact.of("{\"id\":\"" + id
-                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggId\":[\"" + id + "\"]}", "{}"));
+                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id + "\"]}",
+                "{}"));
 
         // will take some time on pgstore
         obs.await(1);

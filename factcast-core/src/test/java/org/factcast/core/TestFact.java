@@ -29,7 +29,7 @@ public class TestFact implements Fact {
     UUID id = UUID.randomUUID();
 
     @JsonProperty
-    Set<UUID> aggId = Sets.newLinkedHashSet();
+    Set<UUID> aggIds = Sets.newLinkedHashSet();
 
     @JsonProperty
     String type;
@@ -59,9 +59,9 @@ public class TestFact implements Fact {
     }
 
     public TestFact aggId(@NonNull UUID aggId, UUID... otherAggIds) {
-        this.aggId.add(aggId);
+        this.aggIds.add(aggId);
         if (otherAggIds != null) {
-            this.aggId.addAll(Arrays.asList(otherAggIds));
+            this.aggIds.addAll(Arrays.asList(otherAggIds));
         }
         return this;
     }

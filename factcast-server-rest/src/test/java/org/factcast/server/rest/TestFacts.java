@@ -11,7 +11,7 @@ public class TestFacts {
 
         private final UUID id = UUID.randomUUID();
 
-        private final Set<UUID> aggId = Sets.newLinkedHashSet(UUID.randomUUID());
+        private final Set<UUID> aggIds = Sets.newLinkedHashSet(UUID.randomUUID());
 
         @Override
         public String type() {
@@ -33,7 +33,7 @@ public class TestFacts {
 
             return "{\"ns\":\"a\","//
                     + "\"type\":\"a\","//
-                    + "\"aggIds\":[\"" + aggId.iterator().next() + "\"],"//
+                    + "\"aggIds\":[\"" + aggIds.iterator().next() + "\"],"//
                     + "\"id\":\"" + id + "\""//
                     + "}";
         }
@@ -44,8 +44,8 @@ public class TestFacts {
         }
 
         @Override
-        public Set<UUID> aggId() {
-            return aggId;
+        public Set<UUID> aggIds() {
+            return aggIds;
         }
 
         @Override

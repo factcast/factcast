@@ -20,7 +20,7 @@ public class IdOnlyFactTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testaggIdUnsupported() throws Exception {
-        new IdOnlyFact(UUID.randomUUID()).aggId();
+        new IdOnlyFact(UUID.randomUUID()).aggIds();
     }
 
     @Test(expected = UnsupportedOperationException.class)
