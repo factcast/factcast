@@ -28,11 +28,13 @@ class PGSubscriptionFactory {
 
     final PGFactIdToSerMapper idToSerialMapper;
 
+    final PGLatestSerialFetcher fetcher;
+
     public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
         final SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
 
         PGFactStream pgsub = new PGFactStream(jdbcTemplate, eventBus, idToSerialMapper,
-                subscription);
+                subscription, fetcher);
         CompletableFuture.runAsync(() -> pgsub.connect(req));
 
         return subscription.onClose(pgsub::close);

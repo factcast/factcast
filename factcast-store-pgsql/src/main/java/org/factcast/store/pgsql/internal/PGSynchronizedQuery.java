@@ -1,5 +1,7 @@
 package org.factcast.store.pgsql.internal;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -29,19 +31,32 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 class PGSynchronizedQuery {
+    @NonNull
+    final JdbcTemplate jdbcTemplate;
 
-    JdbcTemplate jdbcTemplate;
+    @NonNull
+    final String sql;
 
-    String sql;
+    @NonNull
+    final PreparedStatementSetter setter;
 
-    PreparedStatementSetter setter;
+    @NonNull
+    final RowCallbackHandler rowHandler;
 
-    RowCallbackHandler rowHandler;
+    @NonNull
+    final TransactionTemplate transactionTemplate;
 
-    TransactionTemplate transactionTemplate;
+    @NonNull
+    final AtomicLong serialToContinueFrom;
+
+    @NonNull
+    final PGLatestSerialFetcher latestFetcher;
 
     PGSynchronizedQuery(@NonNull JdbcTemplate jdbcTemplate, @NonNull String sql,
-            @NonNull PreparedStatementSetter setter, @NonNull RowCallbackHandler rowHandler) {
+            @NonNull PreparedStatementSetter setter, @NonNull RowCallbackHandler rowHandler,
+            AtomicLong serialToContinueFrom, PGLatestSerialFetcher fetcher) {
+        this.serialToContinueFrom = serialToContinueFrom;
+        latestFetcher = fetcher;
         this.jdbcTemplate = jdbcTemplate;
         this.sql = sql;
         this.setter = setter;
@@ -57,6 +72,9 @@ class PGSynchronizedQuery {
         if (useIndex) {
             jdbcTemplate.query(sql, setter, rowHandler);
         } else {
+
+            long latest = latestFetcher.retrieveLatestSer();
+
             transactionTemplate.execute(new TransactionCallback<Object>() {
                 @Override
                 public Object doInTransaction(TransactionStatus status) {
@@ -66,6 +84,10 @@ class PGSynchronizedQuery {
                     return null;
                 }
             });
+
+            // shift to max(retrievedLatestSer, and ser as updated in
+            // rowHandler)
+            serialToContinueFrom.set(Math.max(serialToContinueFrom.get(), latest));
         }
     }
 }
