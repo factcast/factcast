@@ -49,7 +49,7 @@ FactSpec-Objects must define a **ns** attribute. The rest is actually optional:
 |:--|:--|:--|
 |ns|String|Namespace|
 |type|String|Type of Fact|
-|aggIds|Array of UUIDs|Aggregate-IDs, this fact is associated with|
+|aggId|UUID|Aggregate-ID|
 |meta|JSON Object with String Properties|A list of String key-value pairs (Tags) to match|
 |jsFilterScript|String (JavaScript)|Scripted Predicate, see below |
 
