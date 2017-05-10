@@ -14,15 +14,15 @@ import lombok.AllArgsConstructor;
 
 @Component
 @AllArgsConstructor
-class EventObserverFactory {
+class FactsObserverFactory {
 
-    private final LinkFactory<EventsResource> eventsResourceLinkFactory;
+    private final LinkFactory<FactsResource> factsResourceLinkFactory;
 
     private final HyperSchemaCreator hyperSchemaCreator;
 
-    EventObserver createFor(EventOutput eventOutput, URI baseURI,
+    FactsObserver createFor(EventOutput eventOutput, URI baseURI,
             AtomicReference<Subscription> subscription) {
-        return new EventObserver(eventOutput, eventsResourceLinkFactory, hyperSchemaCreator,
-                baseURI, subscription);
+        return new FactsObserver(eventOutput, factsResourceLinkFactory, hyperSchemaCreator, baseURI,
+                subscription);
     }
 }

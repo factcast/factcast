@@ -76,7 +76,7 @@ public class TransactionDocumentationTest extends JerseyTest {
                 .getResourceAsStream("TransactionJson.json"), FactTransactionJson.class);
 
         final Response response = target("/transactions").register(documentationConfiguration(
-                this.documentation)).register(document("events-transactions", preprocessRequest(
+                this.documentation)).register(document("facts-transactions", preprocessRequest(
                         removeHeaders("User-Agent"), prettyPrint()), preprocessResponse(
                                 prettyPrint()), requestFieldSnippet)).request().post(Entity.entity(
                                         factTransactionJson, MediaType.APPLICATION_JSON));

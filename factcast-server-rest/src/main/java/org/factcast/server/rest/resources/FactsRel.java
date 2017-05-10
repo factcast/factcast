@@ -4,11 +4,11 @@ import com.mercateo.common.rest.schemagen.link.relation.RelType;
 import com.mercateo.common.rest.schemagen.link.relation.Relation;
 import com.mercateo.common.rest.schemagen.link.relation.RelationContainer;
 
-public enum EventsRel implements RelationContainer {
-    EVENTS {
+public enum FactsRel implements RelationContainer {
+    FACTS {
         @Override
         public Relation getRelation() {
-            return Relation.of("events", RelType.OTHER);
+            return Relation.of("facts", RelType.OTHER);
         }
     },
     CREATE_TRANSACTIONAL {

@@ -29,9 +29,9 @@ import com.mercateo.common.rest.schemagen.link.LinkFactoryContext;
 import com.mercateo.common.rest.schemagen.types.ObjectWithSchema;
 
 @RunWith(MockitoJUnitRunner.class)
-public class EventsResourceTest {
+public class FactsResourceTest {
     @Mock
-    private EventObserverFactory eventObserverFactory;
+    private FactsObserverFactory eventObserverFactory;
 
     @Mock
     private FactStore factStore;
@@ -43,17 +43,17 @@ public class EventsResourceTest {
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
-    private EventsSchemaCreator schemaCreator;
+    private FactsSchemaCreator schemaCreator;
 
     @InjectMocks
-    private EventsResource uut;
+    private FactsResource uut;
 
     @Test
     public void testGetServerSentEvents() throws Exception {
         SubscriptionRequestParams subscriptionRequestParams = mock(SubscriptionRequestParams.class);
         SubscriptionRequestTO subTo = mock(SubscriptionRequestTO.class);
         when(subscriptionRequestParams.toRequest()).thenReturn(subTo);
-        EventObserver value = mock(EventObserver.class);
+        FactsObserver value = mock(FactsObserver.class);
         when(eventObserverFactory.createFor(any(), any(), any())).thenReturn(value);
         URI baseUri = new URI("http://localhost:8080");
         when(linkFactoryContext.getBaseUri()).thenReturn(baseUri);

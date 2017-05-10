@@ -14,7 +14,7 @@ import javax.ws.rs.core.Response;
 import org.factcast.server.rest.FactCastRestApplication;
 import org.factcast.server.rest.documentation.util.HyperschemaLinkExtractor;
 import org.factcast.server.rest.documentation.util.SpringConfig;
-import org.factcast.server.rest.resources.EventsRel;
+import org.factcast.server.rest.resources.FactsRel;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.spring.SpringLifecycleListener;
 import org.glassfish.jersey.server.spring.scope.RequestContextFilter;
@@ -56,10 +56,10 @@ public class RootDocumentationTest extends JerseyTest {
     public void getSimple() {
 
         LinksSnippet links = HypermediaDocumentation.links(new HyperschemaLinkExtractor(), //
-                HypermediaDocumentation.linkWithRel(EventsRel.EVENTS.getRelation().getName())
+                HypermediaDocumentation.linkWithRel(FactsRel.FACTS.getRelation().getName())
                         .description(
-                                "The link for the eventstream, links to the <<resources-events, events resource>>"), //
-                HypermediaDocumentation.linkWithRel(EventsRel.CREATE_TRANSACTIONAL.getRelation()
+                                "The link for the eventstream, links to the <<resources-facts, facts resource>>"), //
+                HypermediaDocumentation.linkWithRel(FactsRel.CREATE_TRANSACTIONAL.getRelation()
                         .getName()).description(
                                 "Creating a new transaction links to the <<resources-transactions, transaction resource>>"));
 

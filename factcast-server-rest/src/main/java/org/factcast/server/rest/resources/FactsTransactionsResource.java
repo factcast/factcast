@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @AllArgsConstructor
-public class EventsTransactionsResource implements JerseyResource {
+public class FactsTransactionsResource implements JerseyResource {
     private final FactStore factStore;
 
     private ObjectMapper objectMapper;

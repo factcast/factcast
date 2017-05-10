@@ -6,7 +6,7 @@ import lombok.NonNull;
 import lombok.Value;
 
 @Value
-public class EventIdJson {
+public class FactIdJson {
 
     @NonNull
     @JsonProperty

@@ -4,15 +4,14 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.factcast.core.store.FactStore;
-import org.factcast.server.rest.resources.EventsResource;
-import org.factcast.server.rest.resources.EventsTransactionsResource;
+import org.factcast.server.rest.resources.FactsResource;
+import org.factcast.server.rest.resources.FactsTransactionsResource;
 import org.factcast.server.rest.resources.RootResource;
 import org.factcast.store.inmem.InMemFactStore;
 import org.springframework.beans.factory.config.CustomScopeConfigurer;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 
@@ -30,7 +29,6 @@ import com.mercateo.common.rest.schemagen.types.ListResponseBuilderCreator;
 import com.mercateo.common.rest.schemagen.types.ObjectWithSchemaCreator;
 import com.mercateo.common.rest.schemagen.types.PaginatedResponseBuilderCreator;
 
-@Configuration
 @EnableAutoConfiguration
 @SuppressWarnings("deprecation")
 @ComponentScan(basePackageClasses = { RootResource.class, SetupRunner.class })
@@ -54,14 +52,14 @@ public class SpringConfig {
     }
 
     @Bean
-    LinkFactory<EventsTransactionsResource> transactionsResourceLinkFactory(
+    LinkFactory<FactsTransactionsResource> transactionsResourceLinkFactory(
             LinkMetaFactory linkMetaFactory) {
-        return linkMetaFactory.createFactoryFor(EventsTransactionsResource.class);
+        return linkMetaFactory.createFactoryFor(FactsTransactionsResource.class);
     }
 
     @Bean
-    LinkFactory<EventsResource> eventsResourceLinkFactory(LinkMetaFactory linkMetaFactory) {
-        return linkMetaFactory.createFactoryFor(EventsResource.class);
+    LinkFactory<FactsResource> factsResourceLinkFactory(LinkMetaFactory linkMetaFactory) {
+        return linkMetaFactory.createFactoryFor(FactsResource.class);
     }
 
     @Bean

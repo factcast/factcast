@@ -16,16 +16,16 @@ import lombok.val;
 class RootSchemaCreator {
     private final HyperSchemaCreator hyperSchemaCreator;
 
-    private final LinkFactory<EventsResource> eventsResourceLinkFactory;
+    private final LinkFactory<FactsResource> factsResourceLinkFactory;
 
-    private final LinkFactory<EventsTransactionsResource> transactionsLinkFactory;
+    private final LinkFactory<FactsTransactionsResource> transactionsLinkFactory;
 
     ObjectWithSchema<Void> forRoot() {
-        val getEventsLink = eventsResourceLinkFactory.forCall(EventsRel.EVENTS, r -> r
+        val getFactsLink = factsResourceLinkFactory.forCall(FactsRel.FACTS, r -> r
                 .getServerSentEvents(null));
-        val createLink = transactionsLinkFactory.forCall(EventsRel.CREATE_TRANSACTIONAL, r -> r
+        val createLink = transactionsLinkFactory.forCall(FactsRel.CREATE_TRANSACTIONAL, r -> r
                 .newTransaction(null));
 
-        return hyperSchemaCreator.create(null, collect(getEventsLink, createLink));
+        return hyperSchemaCreator.create(null, collect(getFactsLink, createLink));
     }
 }

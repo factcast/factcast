@@ -76,8 +76,8 @@ public class EventsDocumentationTest extends JerseyTest {
     @Test
     public void documentNotFoundCacheHeaders() {
 
-        final Response response = target("/events/5").register(documentationConfiguration(
-                this.documentation)).register(document("event-404", preprocessRequest(removeHeaders(
+        final Response response = target("/facts/5").register(documentationConfiguration(
+                this.documentation)).register(document("fact-404", preprocessRequest(removeHeaders(
                         "User-Agent")), preprocessResponse(prettyPrint()), responseHeaders(
                                 headerWithName(HttpHeaders.CACHE_CONTROL).description(
                                         "Caching of errors is set to 10 seconds")))).request()
@@ -90,7 +90,7 @@ public class EventsDocumentationTest extends JerseyTest {
 
     @Test
     @Ignore
-    public void getEvents() throws InterruptedException, ExecutionException {
+    public void getFacts() throws InterruptedException, ExecutionException {
 
         // request-Documentation
 
@@ -103,10 +103,10 @@ public class EventsDocumentationTest extends JerseyTest {
         ResponseHeadersSnippet headerDoc = responseHeaders(headerWithName(HttpHeaders.CACHE_CONTROL)
                 .description("Caching is disabled for streams"));
 
-        EventInput eventInput = target("/events/").queryParam("follow", true).queryParam("factSpec",
+        EventInput eventInput = target("/facts/").queryParam("follow", true).queryParam("factSpec",
                 "%7B%20%22ns%22%3A%22a%22%7D").register(SseFeature.class).register(
                         documentationConfiguration(this.documentation)).register(document(
-                                "event-stream", preprocessRequest(removeHeaders("User-Agent")),
+                                "fact-stream", preprocessRequest(removeHeaders("User-Agent")),
                                 preprocessResponse(prettyPrint()), headerDoc, requestSnippet))
                 .request().get(EventInput.class);
 
@@ -116,7 +116,7 @@ public class EventsDocumentationTest extends JerseyTest {
     }
 
     @Test
-    public void getSimpleEvent() {
+    public void getSimpleFact() {
         // links
         LinksSnippet links = HypermediaDocumentation.links(new HyperschemaLinkExtractor(), //
                 HypermediaDocumentation.linkWithRel(Rel.SELF.getRelation().getName()).description(
@@ -132,8 +132,8 @@ public class EventsDocumentationTest extends JerseyTest {
         ResponseHeadersSnippet headerDoc = responseHeaders(headerWithName(HttpHeaders.CACHE_CONTROL)
                 .description("Caching for 1000000 seconds."));
 
-        final Response response = target("/events/" + TestFacts.one.id().toString()).register(
-                documentationConfiguration(this.documentation)).register(document("event",
+        final Response response = target("/facts/" + TestFacts.one.id().toString()).register(
+                documentationConfiguration(this.documentation)).register(document("fact",
                         preprocessRequest(removeHeaders("User-Agent")), preprocessResponse(
                                 prettyPrint()), links, responseDoc, headerDoc)).request().get();
         assertThat(response.getStatus(), is(200));

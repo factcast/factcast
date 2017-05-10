@@ -24,10 +24,10 @@ import lombok.val;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class EventObserver implements FactObserver {
+public class FactsObserver implements FactObserver {
     private final EventOutput eventOutput;
 
-    private final LinkFactory<EventsResource> linkFatory;
+    private final LinkFactory<FactsResource> linkFatory;
 
     private final HyperSchemaCreator hyperSchemaCreator;
 
@@ -35,7 +35,7 @@ public class EventObserver implements FactObserver {
 
     private AtomicReference<Subscription> subcription;
 
-    public EventObserver(EventOutput eventOutput, LinkFactory<EventsResource> linkFatory,
+    public FactsObserver(EventOutput eventOutput, LinkFactory<FactsResource> linkFatory,
             HyperSchemaCreator hyperSchemaCreator, URI baseURI,
             AtomicReference<Subscription> subcription) {
         super();
@@ -72,7 +72,7 @@ public class EventObserver implements FactObserver {
         String toReturn = t.toString();
         val linkToEvent = linkFatory.forCall(Rel.CANONICAL, r -> r.getForId(toReturn),
                 linkFactoryContext);
-        val withSchema = hyperSchemaCreator.create(new EventIdJson(toReturn), linkToEvent);
+        val withSchema = hyperSchemaCreator.create(new FactIdJson(toReturn), linkToEvent);
         eventBuilder.data(withSchema);
         eventBuilder.mediaType(MediaType.APPLICATION_JSON_TYPE);
         eventBuilder.id(t.toString());

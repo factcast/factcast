@@ -36,21 +36,21 @@ import com.mercateo.common.rest.schemagen.types.ObjectWithSchema;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Path("events")
+@Path("facts")
 
 @Slf4j
 
 @Component
 @AllArgsConstructor
-public class EventsResource implements JerseyResource {
+public class FactsResource implements JerseyResource {
 
     private final FactStore factStore;
 
     private final ObjectMapper objectMapper;
 
-    private final EventsSchemaCreator schemaCreator;
+    private final FactsSchemaCreator schemaCreator;
 
-    private final EventObserverFactory eventObserverFactory;
+    private final FactsObserverFactory eventObserverFactory;
 
     private final LinkFactoryContext linkFactoryContext;
 

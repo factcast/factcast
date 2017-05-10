@@ -23,16 +23,16 @@ import com.mercateo.common.rest.schemagen.types.HyperSchemaCreator;
 import com.mercateo.common.rest.schemagen.types.ObjectWithSchemaCreator;
 
 @RunWith(MockitoJUnitRunner.class)
-public class EventsSchemaCreatorTest {
+public class FactsSchemaCreatorTest {
     @Mock
-    private LinkFactory<EventsResource> eventsResourceLinkFactory;
+    private LinkFactory<FactsResource> eventsResourceLinkFactory;
 
     @Spy
     private HyperSchemaCreator hyperSchemaCreator = new HyperSchemaCreator(
             new ObjectWithSchemaCreator(), new JsonHyperSchemaCreator());
 
     @InjectMocks
-    private EventsSchemaCreator uut;
+    private FactsSchemaCreator uut;
 
     @Test
     public void testForFactWithId() throws Exception {

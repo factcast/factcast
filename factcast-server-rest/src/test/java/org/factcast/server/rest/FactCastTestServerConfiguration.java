@@ -1,8 +1,8 @@
 package org.factcast.server.rest;
 
 import org.factcast.core.store.FactStore;
-import org.factcast.server.rest.resources.EventsResource;
-import org.factcast.server.rest.resources.EventsTransactionsResource;
+import org.factcast.server.rest.resources.FactsResource;
+import org.factcast.server.rest.resources.FactsTransactionsResource;
 import org.factcast.server.rest.resources.RootResource;
 import org.factcast.store.inmem.InMemFactStore;
 import org.springframework.context.annotation.Bean;
@@ -18,7 +18,7 @@ import com.mercateo.rest.schemagen.spring.JerseyHateoasConfiguration;
 @Configuration
 @SuppressWarnings("deprecation")
 @Import(JerseyHateoasConfiguration.class)
-public class FactCastServerConfiguration {
+public class FactCastTestServerConfiguration {
 
     private InMemFactStore inMemFactStore = new InMemFactStore();
 
@@ -38,14 +38,14 @@ public class FactCastServerConfiguration {
     }
 
     @Bean
-    LinkFactory<EventsTransactionsResource> transactionsResourceLinkFactory(
+    LinkFactory<FactsTransactionsResource> transactionsResourceLinkFactory(
             LinkMetaFactory linkMetaFactory) {
-        return linkMetaFactory.createFactoryFor(EventsTransactionsResource.class);
+        return linkMetaFactory.createFactoryFor(FactsTransactionsResource.class);
     }
 
     @Bean
-    LinkFactory<EventsResource> eventsResourceLinkFactory(LinkMetaFactory linkMetaFactory) {
-        return linkMetaFactory.createFactoryFor(EventsResource.class);
+    LinkFactory<FactsResource> factsResourceLinkFactory(LinkMetaFactory linkMetaFactory) {
+        return linkMetaFactory.createFactoryFor(FactsResource.class);
     }
 
     @Bean

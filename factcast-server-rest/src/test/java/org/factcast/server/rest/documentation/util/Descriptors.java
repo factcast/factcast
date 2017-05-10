@@ -13,8 +13,9 @@ public class Descriptors {
     public static List<FieldDescriptor> getFactFieldDescriptors(String prefix,
             ConstrainedFields fields) {
         return Lists.newArrayList(fields.withPath(prefix + "header").description(
-                "The header of the new fact, it could have many custom attributes, but the follwing are needed"), //
-                fields.withPath(prefix + "header.id").description("client side UUID"), //
+                "The header of new fact, it could have many custom attributes. The following are known."), //
+                fields.withPath(prefix + "header.id").description(
+                        "UUID, is given by clients when commiting the fact"), //
                 fields.withPath(prefix + "header.ns").description("namespace"), //
                 fields.withPath(prefix + "header.type").description("type"), //
                 fields.withPath(prefix + "header.aggIds").description("IDs of aggregates involved"), //
@@ -26,7 +27,7 @@ public class Descriptors {
     public static List<ParameterDescriptor> getSubscriptionRequestParamsdescriptor() {
 
         return Lists.newArrayList(parameterWithName("from").description(
-                "UUID of the last events, the client crawled before").optional(),
+                "UUID of the last fact, the client crawled before").optional(),
 
                 parameterWithName("follow").description("Boolean, if the stream is to infinitiy")
                         .optional(),

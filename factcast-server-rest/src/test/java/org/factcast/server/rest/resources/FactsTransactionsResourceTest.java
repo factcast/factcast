@@ -18,7 +18,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(MockitoJUnitRunner.class)
-public class EventsTransactionsResourceTest {
+public class FactsTransactionsResourceTest {
     @Mock
     private FactStore factStore;
 
@@ -26,7 +26,7 @@ public class EventsTransactionsResourceTest {
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @InjectMocks
-    private EventsTransactionsResource uut;
+    private FactsTransactionsResource uut;
 
     @Test
     public void testNewTransaction() throws Exception {

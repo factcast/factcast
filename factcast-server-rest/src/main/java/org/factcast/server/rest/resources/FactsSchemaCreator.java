@@ -17,14 +17,14 @@ import lombok.AllArgsConstructor;
 
 @Component
 @AllArgsConstructor
-class EventsSchemaCreator {
+class FactsSchemaCreator {
 
-    private final LinkFactory<EventsResource> eventsResourceLinkFactory;
+    private final LinkFactory<FactsResource> factsResourceLinkFactory;
 
     private final HyperSchemaCreator hyperSchemaCreator;
 
     ObjectWithSchema<FactJson> forFactWithId(FactJson returnValue) {
-        Optional<Link> selfLink = eventsResourceLinkFactory.forCall(Rel.SELF, r -> r.getForId(
+        Optional<Link> selfLink = factsResourceLinkFactory.forCall(Rel.SELF, r -> r.getForId(
                 returnValue.header().id().toString()));
 
         return hyperSchemaCreator.create(returnValue, collect(selfLink));

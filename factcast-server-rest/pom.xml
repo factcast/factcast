@@ -57,6 +57,12 @@
 			<groupId>org.factcast</groupId>
 			<artifactId>factcast-store-inmem</artifactId>
 			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.factcast</groupId>
+			<artifactId>factcast-core</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish.jersey.media</groupId>

@@ -37,17 +37,17 @@ import com.mercateo.common.rest.schemagen.types.HyperSchemaCreator;
 import com.mercateo.common.rest.schemagen.types.ObjectWithSchema;
 import com.mercateo.common.rest.schemagen.types.ObjectWithSchemaCreator;
 
-public class EventObserverTest {
+public class FactsObserverTest {
 
     @Mock
     private EventOutput eventOutput;
 
     @SuppressWarnings("deprecation")
     @Spy
-    private LinkFactory<EventsResource> linkFatory = LinkMetaFactory.createInsecureFactoryForTest()
-            .createFactoryFor(EventsResource.class);
+    private LinkFactory<FactsResource> linkFatory = LinkMetaFactory.createInsecureFactoryForTest()
+            .createFactoryFor(FactsResource.class);
 
-    private EventObserver uut;
+    private FactsObserver uut;
 
     @Mock
     private Subscription subscription;
@@ -61,7 +61,7 @@ public class EventObserverTest {
         URI baseURI = new URI("http://localhost:8080");
         HyperSchemaCreator hyperSchemaCreator = new HyperSchemaCreator(
                 new ObjectWithSchemaCreator(), new JsonHyperSchemaCreator());
-        uut = new EventObserver(eventOutput, linkFatory, hyperSchemaCreator, baseURI, subsup);
+        uut = new FactsObserver(eventOutput, linkFatory, hyperSchemaCreator, baseURI, subsup);
     }
 
     @Test
