@@ -10,7 +10,7 @@
 	</parent>
 	<artifactId>factcast-server-rest</artifactId>
 	<properties>
-		<snippetsDirectory>${project.build.directory}/generated-snippets</snippetsDirectory>
+		<snippetsDirectory>$src/docs/generated-snippets</snippetsDirectory>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -109,10 +109,8 @@
 						<configuration>
 							<backend>html</backend>
 							<doctype>book</doctype>
-							<attributes>
-								<snippets>${snippetsDirectory}</snippets>
-							</attributes>
-							<sourceDirectory>src/docs/asciidocs</sourceDirectory>
+							<sourceDirectory>src/docs</sourceDirectory>
+							<sourceDocumentName>api-guide.adoc</sourceDocumentName>
 							<outputDirectory>target/generated-docs</outputDirectory>
 						</configuration>
 					</execution>

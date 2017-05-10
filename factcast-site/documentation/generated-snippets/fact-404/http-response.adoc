@@ -1,0 +1,6 @@
+[source,http,options="nowrap"]
+----
+HTTP/1.1 404 Not Found
+Cache-Control: max-age=10, s-maxage=10, public
+
+----

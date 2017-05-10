@@ -1,0 +1,10 @@
+|===
+|Relation|Description
+
+|`facts`
+|The link for the eventstream, links to the <<resources-facts, facts resource>>
+
+|`create-transactional`
+|Creating a new transaction links to the <<resources-transactions, transaction resource>>
+
+|===

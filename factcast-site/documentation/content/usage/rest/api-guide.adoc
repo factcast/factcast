@@ -1,0 +1,107 @@
+= Fact-Cast REST-API-documentation
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 4
+:sectlinks:
+
+[introduction]
+= Introduction
+
+The fact-cast REST-API for getting and sharing facts. It's a HATEOAS REST-API, links are represented as https://github.com/Mercateo/rest-schemagen[json-hyperschema]. A (german) article about the format can also be found https://heise.de/-3550392[here]. 
+
+[[resources]]
+= Resources
+
+
+[[resources-root]]
+== Root
+This is the entry point-resource
+
+=== Enter the API
+A `GET` request lists all the possibilities, one can do with the API.
+
+==== Links
+include::generated-snippets/root/links.adoc[]
+
+==== Example request
+
+include::generated-snippets/root/http-request.adoc[]
+
+==== Example response
+
+include::generated-snippets/root/http-response.adoc[]
+
+[[resources-transactions]]
+== Fact-Transactions
+This is the resource for commiting new facts
+
+=== New Transaction
+A `POST` with a list of all facts to publish.
+
+==== Payload
+include::generated-snippets/facts-transactions/request-fields.adoc[]
+
+==== Example request
+
+include::generated-snippets/facts-transactions/http-request.adoc[]
+
+==== Example response
+
+include::generated-snippets/facts-transactions/http-response.adoc[]
+
+
+[[resources-facts]]
+== Facts
+Resource to fetch specific facts.
+
+=== SSE stream of facts
+Here one can get a Server-Sent-Events stream for specified facts
+
+==== Request
+===== Fields
+include::snippets/events/request-fields.adoc[]
+
+===== Headers
+include::snippets/events/request-headers.adoc[]
+
+==== Response is a SSE stream
+The resulting stream has events in it of type "new-fact" having the following fields and links
+
+===== Payload of the events new-fact
+include::snippets/events/response-fields.adoc[]
+
+===== Links of the events new-fact
+include::snippets/events/links.adoc[]
+
+===== System events
+There is also a event of type catchup and one of type complete
+
+==== Header Fields
+include::snippets/events/response-headers.adoc[]
+
+==== Example request
+include::snippets/events/http-request.adoc[]
+
+==== Example response
+include::snippets/events/http-response.adoc[]
+
+=== Fetching a specific fact
+A `GET` request to the specific fact URL, which is derived from the stream.
+
+==== Payload
+include::generated-snippets/fact/response-fields.adoc[]
+
+==== Header
+include::generated-snippets/fact/response-headers.adoc[]
+
+==== Example request
+include::generated-snippets/fact/http-request.adoc[]
+
+==== Example response
+include::generated-snippets/fact/http-response.adoc[]
+
+==== Fact not found
+include::generated-snippets/fact-404/http-response.adoc[]
+include::generated-snippets/fact-404/response-headers.adoc[]

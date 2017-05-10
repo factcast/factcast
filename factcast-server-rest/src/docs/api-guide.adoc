@@ -23,15 +23,15 @@ This is the entry point-resource
 A `GET` request lists all the possibilities, one can do with the API.
 
 ==== Links
-include::{snippets}/root/links.adoc[]
+include::generated-snippets/root/links.adoc[]
 
 ==== Example request
 
-include::{snippets}/root/http-request.adoc[]
+include::generated-snippets/root/http-request.adoc[]
 
 ==== Example response
 
-include::{snippets}/root/http-response.adoc[]
+include::generated-snippets/root/http-response.adoc[]
 
 [[resources-transactions]]
 == Fact-Transactions
@@ -41,15 +41,15 @@ This is the resource for commiting new facts
 A `POST` with a list of all facts to publish.
 
 ==== Payload
-include::{snippets}/facts-transactions/request-fields.adoc[]
+include::generated-snippets/facts-transactions/request-fields.adoc[]
 
 ==== Example request
 
-include::{snippets}/facts-transactions/http-request.adoc[]
+include::generated-snippets/facts-transactions/http-request.adoc[]
 
 ==== Example response
 
-include::{snippets}/facts-transactions/http-response.adoc[]
+include::generated-snippets/facts-transactions/http-response.adoc[]
 
 
 [[resources-facts]]
@@ -60,45 +60,48 @@ Resource to fetch specific facts.
 Here one can get a Server-Sent-Events stream for specified facts
 
 ==== Request
-include::../events/request-fields.adoc[]
-include::../events/request-headers.adoc[]
+===== Fields
+include::snippets/events/request-fields.adoc[]
+
+===== Headers
+include::snippets/events/request-headers.adoc[]
 
 ==== Response is a SSE stream
 The resulting stream has events in it of type "new-fact" having the following fields and links
 
 ===== Payload of the events new-fact
-include::../events/response-fields.adoc[]
+include::snippets/events/response-fields.adoc[]
 
 ===== Links of the events new-fact
-include::../events/links.adoc[]
+include::snippets/events/links.adoc[]
 
 ===== System events
 There is also a event of type catchup and one of type complete
 
 ==== Header Fields
-include::../events/response-headers.adoc[]
+include::snippets/events/response-headers.adoc[]
 
 ==== Example request
-include::../events/http-request.adoc[]
+include::snippets/events/http-request.adoc[]
 
 ==== Example response
-include::../events/http-response.adoc[]
+include::snippets/events/http-response.adoc[]
 
 === Fetching a specific fact
 A `GET` request to the specific fact URL, which is derived from the stream.
 
 ==== Payload
-include::{snippets}/fact/response-fields.adoc[]
+include::generated-snippets/fact/response-fields.adoc[]
 
 ==== Header
-include::{snippets}/fact/response-headers.adoc[]
+include::generated-snippets/fact/response-headers.adoc[]
 
 ==== Example request
-include::{snippets}/fact/http-request.adoc[]
+include::generated-snippets/fact/http-request.adoc[]
 
 ==== Example response
-include::{snippets}/fact/http-response.adoc[]
+include::generated-snippets/fact/http-response.adoc[]
 
 ==== Fact not found
-include::{snippets}/fact-404/http-response.adoc[]
-include::{snippets}/fact-404/response-headers.adoc[]
+include::generated-snippets/fact-404/http-response.adoc[]
+include::generated-snippets/fact-404/response-headers.adoc[]

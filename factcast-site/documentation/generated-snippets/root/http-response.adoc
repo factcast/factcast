@@ -1,0 +1,109 @@
+[source,http,options="nowrap"]
+----
+HTTP/1.1 200 OK
+Content-Type: application/json
+Cache-Control: no-cache
+Content-Length: 2676
+
+{
+  "_schema" : {
+    "links" : [ {
+      "href" : "http://localhost:9998/facts",
+      "schema" : {
+        "type" : "object",
+        "properties" : {
+          "factSpec" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "aggId" : {
+                  "type" : "string"
+                },
+                "jsFilterScript" : {
+                  "type" : "string"
+                },
+                "meta" : {
+                  "type" : "object",
+                  "properties" : { }
+                },
+                "ns" : {
+                  "type" : "string"
+                },
+                "type" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "minItems" : 1
+          },
+          "follow" : {
+            "type" : "boolean",
+            "default" : false
+          },
+          "from" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "factSpec" ]
+      },
+      "method" : "GET",
+      "rel" : "facts",
+      "relType" : "other",
+      "mediaType" : "text/event-stream",
+      "target" : "_blank"
+    }, {
+      "href" : "http://localhost:9998/transactions",
+      "schema" : {
+        "type" : "object",
+        "properties" : {
+          "facts" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "header" : {
+                  "type" : "object",
+                  "properties" : {
+                    "aggIds" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "string"
+                      }
+                    },
+                    "id" : {
+                      "type" : "string"
+                    },
+                    "meta" : {
+                      "type" : "object",
+                      "properties" : { }
+                    },
+                    "ns" : {
+                      "type" : "string"
+                    },
+                    "type" : {
+                      "type" : "string"
+                    }
+                  },
+                  "required" : [ "id", "ns" ]
+                },
+                "payload" : {
+                  "type" : "object",
+                  "properties" : { }
+                }
+              },
+              "required" : [ "header", "payload" ]
+            },
+            "minItems" : 1
+          }
+        },
+        "required" : [ "facts" ]
+      },
+      "rel" : "create-transactional",
+      "relType" : "other",
+      "method" : "POST",
+      "target" : "_blank"
+    } ]
+  }
+}
+----

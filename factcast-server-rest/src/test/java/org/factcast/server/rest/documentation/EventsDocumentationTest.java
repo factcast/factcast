@@ -52,7 +52,7 @@ public class EventsDocumentationTest extends JerseyTest {
 
     @Rule
     public JUnitRestDocumentation documentation = new JUnitRestDocumentation(
-            "target/generated-snippets");
+            "src/docs/generated-snippets");
 
     private AnnotationConfigApplicationContext ctx;
 

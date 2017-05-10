@@ -38,7 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class TransactionDocumentationTest extends JerseyTest {
     @Rule
     public JUnitRestDocumentation documentation = new JUnitRestDocumentation(
-            "target/generated-snippets");
+            "src/docs/generated-snippets");
 
     private AnnotationConfigApplicationContext ctx;
 

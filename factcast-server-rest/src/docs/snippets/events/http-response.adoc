@@ -1,0 +1,77 @@
+[source,http,options="nowrap"]
+----
+HTTP/1.1 200 OK
+Content-Type: text/event-stream
+Cache-Control: no-cache
+Transfer-Encoding: chunked
+
+event: new-fact
+id: b0eb38dd-a4f0-4b94-8702-7eee97baf917
+data: {
+  "id": "b0eb38dd-a4f0-4b94-8702-7eee97baf917",
+  "_schema": {
+    "links": [
+      {
+        "href": "http://localhost:9090/facts/b0eb38dd-a4f0-4b94-8702-7eee97baf917",
+        "targetSchema": {
+          "type": "object",
+          "properties": {
+            "header": {
+              "type": "object",
+              "properties": {
+                "aggIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "id": {
+                  "type": "string"
+                },
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    
+                  }
+                },
+                "ns": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "ns"
+              ]
+            },
+            "payload": {
+              "type": "object",
+              "properties": {
+                
+              }
+            }
+          },
+          "required": [
+            "header",
+            "payload"
+          ]
+        },
+        "rel": "canonical",
+        "mediaType": "application/json",
+        "method": "GET"
+      }
+    ]
+  }
+}
+
+: Signal event for catching up
+event: catchup
+data: {"catchup":true}
+
+: Signal event for completion
+event: complete
+data: {"complete":true}
+
+----
