@@ -4,10 +4,7 @@ import org.factcast.server.rest.resources.cache.CachableFilter;
 import org.factcast.server.rest.resources.cache.NoCacheFilter;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.springframework.stereotype.Component;
 
-//TODO do not rely on component scan
-@Component
 public class FactCastRestApplication extends ResourceConfig {
 
     public FactCastRestApplication() {
