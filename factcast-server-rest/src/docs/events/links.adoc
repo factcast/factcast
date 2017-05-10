@@ -1,0 +1,7 @@
+|===
+|Relation|Description
+
+|`canonical`
+|The link to the <<_fetching_a_specific_fact, specific fact>> 
+
+|===

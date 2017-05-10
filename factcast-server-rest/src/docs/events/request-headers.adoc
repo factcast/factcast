@@ -1,0 +1,7 @@
+|===
+|Name|Description
+
+|`Last-Event-ID`
+|ID of the last Fact, the client knows 
+
+|===

@@ -68,7 +68,7 @@ public class FactsObserver implements FactObserver {
         UUID t = f.id();
 
         final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
-        eventBuilder.name("new-event");
+        eventBuilder.name("new-fact");
         String toReturn = t.toString();
         val linkToEvent = linkFatory.forCall(Rel.CANONICAL, r -> r.getForId(toReturn),
                 linkFactoryContext);

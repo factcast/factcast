@@ -56,6 +56,34 @@ include::{snippets}/facts-transactions/http-response.adoc[]
 == Facts
 Resource to fetch specific facts.
 
+=== SSE stream of facts
+Here one can get a Server-Sent-Events stream for specified facts
+
+==== Request
+include::../events/request-fields.adoc[]
+include::../events/request-headers.adoc[]
+
+==== Response is a SSE stream
+The resulting stream has events in it of type "new-fact" having the following fields and links
+
+===== Payload of the events new-fact
+include::../events/response-fields.adoc[]
+
+===== Links of the events new-fact
+include::../events/links.adoc[]
+
+===== System events
+There is also a event of type catchup and one of type complete
+
+==== Header Fields
+include::../events/response-headers.adoc[]
+
+==== Example request
+include::../events/http-request.adoc[]
+
+==== Example response
+include::../events/http-response.adoc[]
+
 === Fetching a specific fact
 A `GET` request to the specific fact URL, which is derived from the stream.
 
@@ -66,11 +94,9 @@ include::{snippets}/fact/response-fields.adoc[]
 include::{snippets}/fact/response-headers.adoc[]
 
 ==== Example request
-
 include::{snippets}/fact/http-request.adoc[]
 
 ==== Example response
-
 include::{snippets}/fact/http-response.adoc[]
 
 ==== Fact not found

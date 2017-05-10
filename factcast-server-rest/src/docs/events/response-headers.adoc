@@ -1,0 +1,7 @@
+|===
+|Name|Description
+
+|`Cache-Control`
+|Caching is disabled for the stream 
+
+|===
