@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.factcast.core.store.FactStore;
+import org.factcast.server.rest.FactCastRestConfig;
 import org.factcast.server.rest.resources.FactsResource;
 import org.factcast.server.rest.resources.FactsTransactionsResource;
 import org.factcast.server.rest.resources.RootResource;
@@ -29,7 +30,7 @@ import com.mercateo.common.rest.schemagen.types.ListResponseBuilderCreator;
 import com.mercateo.common.rest.schemagen.types.ObjectWithSchemaCreator;
 import com.mercateo.common.rest.schemagen.types.PaginatedResponseBuilderCreator;
 
-@EnableAutoConfiguration
+@EnableAutoConfiguration(exclude = FactCastRestConfig.class)
 @SuppressWarnings("deprecation")
 @ComponentScan(basePackageClasses = { RootResource.class, SetupRunner.class })
 public class SpringConfig {
