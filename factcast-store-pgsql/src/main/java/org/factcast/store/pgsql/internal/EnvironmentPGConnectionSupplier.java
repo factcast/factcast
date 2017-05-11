@@ -7,6 +7,7 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import com.google.common.base.Supplier;
 import com.impossibl.postgres.api.jdbc.PGConnection;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
 
 /**
@@ -16,7 +17,7 @@ import lombok.SneakyThrows;
  *
  */
 class EnvironmentPGConnectionSupplier implements Supplier<PGConnection>, InitializingBean {
-
+    @Getter
     String url;
 
     DriverManagerDataSource dataSource;

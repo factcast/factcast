@@ -2,11 +2,13 @@ package org.factcast.store.pgsql.internal;
 
 import java.util.concurrent.Executors;
 
+import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.factcast.core.store.FactStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -81,4 +83,31 @@ public class PGFactStoreInternalConfiguration {
         return new PGLatestSerialFetcher(jdbcTemplate);
     }
 
+    @Bean
+    @Primary
+    public javax.sql.DataSource datasource(EnvironmentPGConnectionSupplier env) {
+        org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
+        PoolProperties p = new PoolProperties();
+        p.setUrl(env.url());
+        p.setDriverClassName(PGDriver.class.getCanonicalName());
+        p.setJmxEnabled(false);
+        p.setTestWhileIdle(false);
+        p.setTestOnBorrow(false);
+        p.setValidationQuery("SELECT 1");
+        p.setTestOnReturn(true);
+        p.setValidationInterval(1200000);
+        p.setTimeBetweenEvictionRunsMillis(30000);
+        p.setMaxActive(50);
+        p.setInitialSize(10);
+        p.setMaxWait(10000);
+        p.setRemoveAbandonedTimeout(30);
+        p.setMinEvictableIdleTimeMillis(30000);
+        p.setMinIdle(10);
+        p.setLogAbandoned(true);
+        p.setRemoveAbandoned(true);
+        p.setJdbcInterceptors("org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;"
+                + "org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer");
+        ds.setPoolProperties(p);
+        return ds;
+    }
 }
