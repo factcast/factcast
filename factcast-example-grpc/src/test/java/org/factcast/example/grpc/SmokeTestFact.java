@@ -2,6 +2,7 @@ package org.factcast.example.grpc;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -27,7 +28,7 @@ class SmokeTestFact implements Fact {
     UUID id = UUID.randomUUID();
 
     @JsonProperty
-    Set<UUID> aggIds;
+    Set<UUID> aggIds = new HashSet<>();
 
     @JsonProperty
     String type;
