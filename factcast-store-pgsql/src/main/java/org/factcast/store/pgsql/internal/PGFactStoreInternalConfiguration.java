@@ -98,7 +98,7 @@ public class PGFactStoreInternalConfiguration {
         p.setValidationInterval(1200000);
         p.setTimeBetweenEvictionRunsMillis(30000);
         p.setMaxActive(50);
-        p.setInitialSize(10);
+        p.setInitialSize(50);
         p.setMaxWait(10000);
         p.setRemoveAbandonedTimeout(30);
         p.setMinEvictableIdleTimeMillis(30000);

@@ -19,6 +19,8 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
@@ -71,6 +73,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         log.debug("publish {} fact{}", size, size > 1 ? "s" : "");
         log.trace("publish {}", facts);
         try {
+
             log.trace("store publish {}", facts);
             store.publish(facts);
             log.trace("store publish done");
@@ -78,7 +81,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             responseObserver.onCompleted();
         } catch (Throwable e) {
             log.error("Problem while publishing: ", e);
-
+            responseObserver.onError(new StatusRuntimeException(Status.INTERNAL.withDescription(e
+                    .getMessage())));
         }
     }
 
