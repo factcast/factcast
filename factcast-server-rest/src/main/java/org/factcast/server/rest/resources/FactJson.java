@@ -25,6 +25,18 @@ import lombok.Value;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FactJson {
+
+    @JsonProperty
+    @NotNull
+    @NonNull
+    @Valid
+    Header header;
+
+    @JsonProperty
+    @NotNull
+    @NonNull
+    JsonNode payload;
+
     @Value
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Header {
@@ -57,15 +69,4 @@ public class FactJson {
             return anyOther;
         }
     }
-
-    @JsonProperty
-    @NotNull
-    @NonNull
-    @Valid
-    Header header;
-
-    @JsonProperty
-    @NotNull
-    @NonNull
-    JsonNode payload;
 }

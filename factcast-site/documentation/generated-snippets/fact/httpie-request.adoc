@@ -1,4 +1,4 @@
 [source,bash]
 ----
-$ http GET 'http://localhost:9998/facts/52d454b1-50af-454a-8240-b0baedf44912'
+$ http GET 'http://localhost:9998/facts/75372e9f-c8ff-42e4-b9e6-52deae28ec90'
 ----

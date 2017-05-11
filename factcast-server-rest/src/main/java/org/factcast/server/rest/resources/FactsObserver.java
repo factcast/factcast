@@ -80,7 +80,7 @@ public class FactsObserver implements FactObserver {
         try {
             eventOutput.write(event);
         } catch (IOException e) {
-            unsubscribeAndThrow(e);
+            unsubscribeAndLog(e);
         }
     }
 
@@ -95,7 +95,7 @@ public class FactsObserver implements FactObserver {
         try {
             eventOutput.write(event);
         } catch (IOException e) {
-            unsubscribeAndThrow(e);
+            unsubscribeAndLog(e);
         }
     }
 
@@ -112,12 +112,12 @@ public class FactsObserver implements FactObserver {
             eventOutput.close();
             subcription.get().close();
         } catch (Exception e) {
-            unsubscribeAndThrow(e);
+            unsubscribeAndLog(e);
         }
 
     }
 
-    private void unsubscribeAndThrow(Throwable e) {
+    private void unsubscribeAndLog(Throwable e) {
         try {
             subcription.get().close();
             eventOutput.close();
@@ -126,7 +126,6 @@ public class FactsObserver implements FactObserver {
         }
         // debug level, because error occurs always, if client disappears
         log.debug("Error while writing into the pipe", e);
-        throw new RuntimeException("Error when writing the event.", e);
     }
 
 }
