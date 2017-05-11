@@ -96,6 +96,9 @@ include::generated-snippets/fact/response-fields.adoc[]
 ==== Header
 include::generated-snippets/fact/response-headers.adoc[]
 
+==== Links
+include::generated-snippets/fact/links.adoc[]
+
 ==== Example request
 include::generated-snippets/fact/http-request.adoc[]
 

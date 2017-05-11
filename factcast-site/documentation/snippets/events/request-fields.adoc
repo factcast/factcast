@@ -1,7 +1,5 @@
 |===
-
 |Parameter|Type|Description|Constraints
-
 
 |follow
 |boolean 
@@ -39,4 +37,5 @@
 |Object
 |String-Key-Value map for additional filter parameters 
 |
+
 |===

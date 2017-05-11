@@ -1,5 +1,6 @@
 |===
 |Path|Type|Description
+
 |`id`
 |`String`
 |The id of the fact. Is also used for the event ID of the SSE-Stream
