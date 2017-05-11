@@ -1,5 +1,8 @@
 package org.factcast.server.rest;
 
+import org.factcast.server.rest.resources.FactsResource;
+import org.factcast.server.rest.resources.FactsTransactionsResource;
+import org.factcast.server.rest.resources.RootResource;
 import org.factcast.server.rest.resources.cache.CachableFilter;
 import org.factcast.server.rest.resources.cache.NoCacheFilter;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -9,9 +12,10 @@ public class FactCastRestApplication extends ResourceConfig {
 
     public FactCastRestApplication() {
         register(JacksonFeature.class);
-        // Register resources and providers using package-scanning.
-        final String resourceBasePackage = "org.factcast.server.rest.resources";
-        packages(resourceBasePackage);
+
+        register(RootResource.class);
+        register(FactsTransactionsResource.class);
+        register(FactsResource.class);
         register(NoCacheFilter.class);
         register(CachableFilter.class);
     }
