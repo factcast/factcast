@@ -4,7 +4,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -91,16 +90,13 @@ public class FactsObserverTest {
     @Test
     public void testOnCatchupError() throws Exception {
         doThrow(IOException.class).when(eventOutput).write(any());
-        try {
-            uut.onCatchup();
-        } catch (RuntimeException e) {
-            verify(subscription).close();
-            verify(eventOutput).close();
-            verify(eventOutput, times(1)).write(any());
-            verifyNoMoreInteractions(subscription, linkFatory, eventOutput);
-            return;
-        }
-        fail();
+
+        uut.onCatchup();
+
+        verify(subscription).close();
+        verify(eventOutput).close();
+        verify(eventOutput, times(1)).write(any());
+        verifyNoMoreInteractions(subscription, linkFatory, eventOutput);
 
     }
 
