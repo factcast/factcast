@@ -6,6 +6,7 @@ import org.factcast.server.rest.resources.RootResource;
 import org.factcast.server.rest.resources.cache.CachableFilter;
 import org.factcast.server.rest.resources.cache.NoCacheFilter;
 import org.factcast.server.rest.resources.converter.JsonParamConverterProvider;
+import org.factcast.server.rest.resources.cors.CorsFilter;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ public class FactCastRestApplication extends ResourceConfig {
         register(NoCacheFilter.class);
         register(CachableFilter.class);
 
+        register(CorsFilter.class);
         register(JsonParamConverterProvider.class);
     }
 
