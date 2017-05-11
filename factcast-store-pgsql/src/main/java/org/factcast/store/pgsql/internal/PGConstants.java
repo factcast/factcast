@@ -46,7 +46,7 @@ class PGConstants {
     String SELECT_BY_ID = "SELECT " + PROJECTION_FACT + " FROM " + TABLE_FACT + " WHERE "
             + COLUMN_HEADER + " @> cast (? as jsonb)";
 
-    String SELECT_LATEST_SER = "SELECT GREATEST(max(" + COLUMN_SER + "),0) FROM " + TABLE_FACT;
+    String SELECT_LATEST_SER = "SELECT max(" + COLUMN_SER + ") FROM " + TABLE_FACT;
 
     private String fromHeader(String attributeName) {
         return PGConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;

@@ -90,19 +90,15 @@ public class PGFactStoreInternalConfiguration {
         PoolProperties p = new PoolProperties();
         p.setUrl(env.url());
         p.setDriverClassName(PGDriver.class.getCanonicalName());
+        p.setInitialSize(32);
         p.setJmxEnabled(false);
-        p.setTestWhileIdle(false);
-        p.setTestOnBorrow(false);
+        p.setTestOnBorrow(true);
         p.setValidationQuery("SELECT 1");
-        p.setTestOnReturn(true);
-        p.setValidationInterval(1200000);
         p.setTimeBetweenEvictionRunsMillis(30000);
-        p.setMaxActive(50);
-        p.setInitialSize(50);
-        p.setMaxWait(10000);
-        p.setRemoveAbandonedTimeout(30);
-        p.setMinEvictableIdleTimeMillis(30000);
-        p.setMinIdle(10);
+        p.setMaxActive(64);
+        p.setMinIdle(5);
+        p.setMaxIdle(32);
+
         p.setLogAbandoned(true);
         p.setRemoveAbandoned(true);
         p.setJdbcInterceptors("org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;"
