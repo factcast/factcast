@@ -79,7 +79,7 @@ class PGSynchronizedQuery {
                 @Override
                 public Object doInTransaction(TransactionStatus status) {
 
-                    jdbcTemplate.execute("SET LOCAL enable_bitmapscan=0;");
+                    jdbcTemplate.execute("SET LOCAL enable_indexscan=0;");
                     jdbcTemplate.query(sql, setter, rowHandler);
                     return null;
                 }
