@@ -24,7 +24,7 @@ weight = 40
 [introduction]
 = Introduction
 
-The fact-cast REST-API for getting and sharing facts. It's a HATEOAS REST-API, links are represented as https://github.com/Mercateo/rest-schemagen[json-hyperschema]. A (german) article about the format can also be found https://heise.de/-3550392[here]. 
+This page is about the FactCast REST-API for fetching and publishing facts. As it is a HATEOAS REST-API, links are represented as https://github.com/Mercateo/rest-schemagen[json-hyperschema]. A (german) article about the format can also be found https://heise.de/-3550392[here]. 
 
 [[resources]]
 = Resources
@@ -35,7 +35,7 @@ The fact-cast REST-API for getting and sharing facts. It's a HATEOAS REST-API, l
 This is the entry point-resource
 
 === Enter the API
-A `GET` request lists all the possibilities, one can do with the API.
+A `GET` request lists all links that can be followed.
 
 ==== Links
 include::generated-snippets/root/links.adoc[]
@@ -50,7 +50,7 @@ include::generated-snippets/root/http-response.adoc[]
 
 [[resources-transactions]]
 == Fact-Transactions
-This is the resource for commiting new facts
+This is the resource for publishing new facts
 
 === New Transaction
 A `POST` with a list of all facts to publish.
@@ -72,7 +72,7 @@ include::generated-snippets/facts-transactions/http-response.adoc[]
 Resource to fetch specific facts.
 
 === SSE stream of facts
-Here one can get a Server-Sent-Events stream for specified facts
+Here, you can subscribe to a Server-Sent-Events stream of facts machting the sepcification passed.
 
 ==== Request
 ===== Fields
@@ -82,7 +82,7 @@ include::snippets/events/request-fields.adoc[]
 include::snippets/events/request-headers.adoc[]
 
 ==== Response is a SSE stream
-The resulting stream has events in it of type "new-fact" having the following fields and links
+The resulting stream contains events of type "new-fact", that consists of the following fields and links
 
 ===== Payload of the events new-fact
 include::snippets/events/response-fields.adoc[]
@@ -91,7 +91,7 @@ include::snippets/events/response-fields.adoc[]
 include::snippets/events/links.adoc[]
 
 ===== System events
-There is also a event of type catchup and one of type complete
+Also, there are Events that notify the subscriber of 'catchup' and 'complete' events
 
 ==== Header Fields
 include::snippets/events/response-headers.adoc[]
@@ -103,7 +103,7 @@ include::snippets/events/http-request.adoc[]
 include::snippets/events/http-response.adoc[]
 
 === Fetching a specific fact
-A `GET` request to the specific fact URL, which is derived from the stream.
+A `GET` request to the specific fact URL, which is referenced from the stream.
 
 ==== Payload
 include::generated-snippets/fact/response-fields.adoc[]

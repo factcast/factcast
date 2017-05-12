@@ -2,6 +2,7 @@ package org.factcast.store.pgsql.internal;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,10 @@ class PGLatestSerialFetcher {
     public long retrieveLatestSer() {
 
         try {
-            return jdbcTemplate.queryForObject(PGConstants.SELECT_LATEST_SER, Long.class);
+            SqlRowSet rs = jdbcTemplate.queryForRowSet(PGConstants.SELECT_LATEST_SER);
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
         } catch (EmptyResultDataAccessException meh) {
         }
         return 0;

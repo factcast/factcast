@@ -11,12 +11,36 @@ hidden = true
 
 [menu.main]
 parent = "usage"
-#identifier = "js_rest_consumer"
-weight = 110
+identifier = "js_rest_consumer"
+weight = 130
 
 
 +++
 
 ## JavaScript REST Consumer
 
-{{%alert danger%}} TODO{{% /alert%}}
+```html
+<html>
+<body>
+  <script>
+    const params = new URLSearchParams();
+    params.set('factSpec', JSON.stringify({
+      ns: 'myapp'
+    }));
+    params.set('follow', true);
+    const subscription = new EventSource('http://localhost:8080/facts?' + params.toString());
+
+    const div = document.getElementById('events');
+    subscription.addEventListener('new-fact', (message) => {
+      const fact = JSON.parse(message.data);
+      const p = document.createElement('p');
+      const text = document.createTextNode('Id: ' + fact.id);
+      p.appendChild(text);
+      div.appendChild(p)
+    });
+  </script>
+  <div id="events"></div>
+</body>
+</html>
+
+```
