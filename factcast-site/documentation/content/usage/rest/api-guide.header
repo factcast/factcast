@@ -8,8 +8,8 @@ creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 
 [menu.main]
-parent = "usage"
+parent = ""
 identifier = "rest_api"
-weight = 40
+weight = 31 
 
 +++
