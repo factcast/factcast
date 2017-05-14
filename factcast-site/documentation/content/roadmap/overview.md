@@ -23,7 +23,7 @@ A directory of JSON-Schemas for the Facts published is planned, so that publishi
 #### Automatic Schema evolution
 
 While subscribing to a Fact Stream, for every Fact type a consumer sends his preference on the Schema-version. Provided, that FactCast has code that transforms a Fact from Schema Version 1 to Schema Version 2 and back, it can automatically transform according to the consumers needs.
-This takes decoupling a step furter, because a producer could be producing Version 2 Facts, where Consumers still receive them as Version 1. It also helps with carnary releases on any side of the Stream.
+This takes decoupling a step furter, because a producer could be producing Version 2 Facts, where Consumers still receive them as Version 1. It also helps with canary releases on any side of the Stream.
 
 #### Publish Commands along with Facts
 
