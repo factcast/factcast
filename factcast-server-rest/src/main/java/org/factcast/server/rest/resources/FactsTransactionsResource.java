@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -38,6 +39,9 @@ public class FactsTransactionsResource implements JerseyResource {
     public void newTransaction(@NotNull @Valid FactTransactionJson factTransactionJson) {
 
         List<Fact> listToPublish = factTransactionJson.facts().stream().map(f -> {
+            if (f.payload().isNull()) {
+                throw new BadRequestException("the paload has to be not null");
+            }
             String headerString;
             try {
                 headerString = objectMapper.writeValueAsString(f.header());
