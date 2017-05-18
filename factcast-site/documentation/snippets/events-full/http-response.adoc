@@ -1,0 +1,94 @@
+[source,http,options="nowrap"]
+----
+HTTP/1.1 200 OK
+Content-Type: text/event-stream
+Cache-Control: no-cache
+Transfer-Encoding: chunked
+
+event: new-fact
+id: b0eb38dd-a4f0-4b94-8702-7eee97baf917
+data: {
+   "header":{
+      "id":"b0eb38dd-a4f0-4b94-8702-7eee97baf917",
+      "ns":"a",
+      "type":"a",
+      "aggIds":null,
+      "meta":{
+
+      },
+      "test":{
+         "test":"test"
+      },
+      "aggId":[
+         "5ef49698-cfd3-4144-8399-91cfc2a1529f"
+      ]
+   },
+   "payload":{
+      "data":"data"
+   },
+   "_schema":{
+      "links":[
+         {
+            "href":"http://localhost:8080/facts/1ef7e938-ee94-4989-ba9e-8bb8ddf9c036",
+            "targetSchema":{
+               "type":"object",
+               "properties":{
+                  "header":{
+                     "type":"object",
+                     "properties":{
+                        "aggIds":{
+                           "type":"array",
+                           "items":{
+                              "type":"string"
+                           }
+                        },
+                        "id":{
+                           "type":"string"
+                        },
+                        "meta":{
+                           "type":"object",
+                           "properties":{
+
+                           }
+                        },
+                        "ns":{
+                           "type":"string"
+                        },
+                        "type":{
+                           "type":"string"
+                        }
+                     },
+                     "required":[
+                        "id",
+                        "ns"
+                     ]
+                  },
+                  "payload":{
+                     "type":"object",
+                     "properties":{
+
+                     }
+                  }
+               },
+               "required":[
+                  "header",
+                  "payload"
+               ]
+            },
+            "rel":"self",
+            "mediaType":"application/json",
+            "method":"GET"
+         }
+      ]
+   }
+}
+
+: Signal event for catching up
+event: catchup
+data: {"catchup":true}
+
+: Signal event for completion
+event: complete
+data: {"complete":true}
+
+----
