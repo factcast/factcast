@@ -2,7 +2,10 @@
 |Relation|Description
 
 |`facts`
-|The link for the eventstream, links to the <<resources-facts, facts resource>>
+|The link for the eventstream of fact ids, links to the <<_sse_stream_of_fact_ids, facts resource>>
+
+|`full-facts`
+|The link for the eventstream, links to the <<_sse_stream_of_facts, facts resource>>
 
 |`create-transactional`
 |Creating a new transaction links to the <<resources-transactions, transaction resource>>

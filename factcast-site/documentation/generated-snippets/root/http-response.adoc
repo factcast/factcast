@@ -2,8 +2,13 @@
 ----
 HTTP/1.1 200 OK
 Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: origin, content-type, accept
+Access-Control-Allow-Credentials: false
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, HEAD
+Access-Control-Max-Age: 1209600
 Cache-Control: no-cache
-Content-Length: 2676
+Content-Length: 3840
 
 {
   "_schema" : {
@@ -49,6 +54,51 @@ Content-Length: 2676
       },
       "method" : "GET",
       "rel" : "facts",
+      "relType" : "other",
+      "mediaType" : "text/event-stream",
+      "target" : "_blank"
+    }, {
+      "href" : "http://localhost:9998/facts/full",
+      "schema" : {
+        "type" : "object",
+        "properties" : {
+          "factSpec" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "aggId" : {
+                  "type" : "string"
+                },
+                "jsFilterScript" : {
+                  "type" : "string"
+                },
+                "meta" : {
+                  "type" : "object",
+                  "properties" : { }
+                },
+                "ns" : {
+                  "type" : "string"
+                },
+                "type" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "minItems" : 1
+          },
+          "follow" : {
+            "type" : "boolean",
+            "default" : false
+          },
+          "from" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "factSpec" ]
+      },
+      "method" : "GET",
+      "rel" : "full-facts",
       "relType" : "other",
       "mediaType" : "text/event-stream",
       "target" : "_blank"

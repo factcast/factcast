@@ -2,23 +2,28 @@
 ----
 HTTP/1.1 200 OK
 Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: origin, content-type, accept
+Access-Control-Allow-Credentials: false
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, HEAD
+Access-Control-Max-Age: 1209600
 Cache-Control: max-age=1000000, s-maxage=1000000, public
 Content-Length: 1355
 
 {
   "header" : {
-    "id" : "75372e9f-c8ff-42e4-b9e6-52deae28ec90",
+    "id" : "a1eeefb0-27f7-42af-b4a5-dd50f59a4c2a",
     "ns" : "a",
     "type" : "a",
-    "aggIds" : [ "1ff56a1b-2be4-4021-8c22-0d4ca8edec61" ],
+    "aggIds" : [ "c33d9dde-744a-4f54-ad80-c6405d6fe9d2" ],
     "meta" : { }
   },
   "payload" : {
-    "id" : "75372e9f-c8ff-42e4-b9e6-52deae28ec90"
+    "id" : "a1eeefb0-27f7-42af-b4a5-dd50f59a4c2a"
   },
   "_schema" : {
     "links" : [ {
-      "href" : "http://localhost:9998/facts/75372e9f-c8ff-42e4-b9e6-52deae28ec90",
+      "href" : "http://localhost:9998/facts/a1eeefb0-27f7-42af-b4a5-dd50f59a4c2a",
       "targetSchema" : {
         "type" : "object",
         "properties" : {

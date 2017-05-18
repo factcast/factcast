@@ -11,6 +11,12 @@ public enum FactsRel implements RelationContainer {
             return Relation.of("facts", RelType.OTHER);
         }
     },
+    FULL_FACTS {
+        @Override
+        public Relation getRelation() {
+            return Relation.of("full-facts", RelType.OTHER);
+        }
+    },
     CREATE_TRANSACTIONAL {
         @Override
         public Relation getRelation() {

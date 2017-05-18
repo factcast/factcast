@@ -6,7 +6,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -27,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercateo.common.rest.schemagen.JsonHyperSchema;
 import com.mercateo.common.rest.schemagen.JsonHyperSchemaCreator;
 import com.mercateo.common.rest.schemagen.link.LinkFactory;
@@ -51,16 +51,18 @@ public class FactsObserverTest {
     @Mock
     private Subscription subscription;
 
+    @Spy
+    private FactTransformer factTransformer = new FactTransformer(new ObjectMapper());
+
     @Before
     public void setup() throws URISyntaxException {
         MockitoAnnotations.initMocks(this);
-
-        subscription = mock(Subscription.class);
         AtomicReference<Subscription> subsup = new AtomicReference<Subscription>(subscription);
         URI baseURI = new URI("http://localhost:8080");
         HyperSchemaCreator hyperSchemaCreator = new HyperSchemaCreator(
                 new ObjectWithSchemaCreator(), new JsonHyperSchemaCreator());
-        uut = new FactsObserver(eventOutput, linkFatory, hyperSchemaCreator, baseURI, subsup);
+        uut = new FactsObserver(eventOutput, linkFatory, hyperSchemaCreator, baseURI, subsup,
+                factTransformer, false);
     }
 
     @Test
@@ -112,6 +114,22 @@ public class FactsObserverTest {
         verify(subscription).close();
         verify(eventOutput).close();
         verifyNoMoreInteractions(subscription, linkFatory, eventOutput);
+    }
+
+    @Test
+    public void testCreationOfFulltype() throws Exception {
+
+        ObjectWithSchema<FactJson> object = (ObjectWithSchema<FactJson>) uut.createPayload(
+                TestFacts.one, true);
+        assertThat(object.object.header().id(), is(TestFacts.one.id()));
+    }
+
+    @Test
+    public void testCreationOfIdType() throws Exception {
+
+        ObjectWithSchema<FactIdJson> object = (ObjectWithSchema<FactIdJson>) uut.createPayload(
+                TestFacts.one, false);
+        assertThat(object.object.id(), is(TestFacts.one.id().toString()));
     }
 
 }

@@ -3,6 +3,7 @@ package org.factcast.server.rest.resources;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -40,7 +41,7 @@ public class FactsResourceTest {
     private LinkFactoryContext linkFactoryContext;
 
     @Spy
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private FactTransformer factTransformer = new FactTransformer(new ObjectMapper());
 
     @Mock
     private FactsSchemaCreator schemaCreator;
@@ -54,12 +55,27 @@ public class FactsResourceTest {
         SubscriptionRequestTO subTo = mock(SubscriptionRequestTO.class);
         when(subscriptionRequestParams.toRequest()).thenReturn(subTo);
         FactsObserver value = mock(FactsObserver.class);
-        when(eventObserverFactory.createFor(any(), any(), any())).thenReturn(value);
+        when(eventObserverFactory.createFor(any(), any(), any(), anyBoolean())).thenReturn(value);
         URI baseUri = new URI("http://localhost:8080");
         when(linkFactoryContext.getBaseUri()).thenReturn(baseUri);
         EventOutput returnValue = uut.getServerSentEvents(subscriptionRequestParams);
 
-        verify(eventObserverFactory).createFor(eq(returnValue), eq(baseUri), any());
+        verify(eventObserverFactory).createFor(eq(returnValue), eq(baseUri), any(), eq(false));
+        verify(factStore).subscribe(subTo, value);
+    }
+
+    @Test
+    public void testGetFullServerSentEvents() throws Exception {
+        SubscriptionRequestParams subscriptionRequestParams = mock(SubscriptionRequestParams.class);
+        SubscriptionRequestTO subTo = mock(SubscriptionRequestTO.class);
+        when(subscriptionRequestParams.toRequest()).thenReturn(subTo);
+        FactsObserver value = mock(FactsObserver.class);
+        when(eventObserverFactory.createFor(any(), any(), any(), anyBoolean())).thenReturn(value);
+        URI baseUri = new URI("http://localhost:8080");
+        when(linkFactoryContext.getBaseUri()).thenReturn(baseUri);
+        EventOutput returnValue = uut.getServerSentEventsFull(subscriptionRequestParams);
+
+        verify(eventObserverFactory).createFor(eq(returnValue), eq(baseUri), any(), eq(true));
         verify(factStore).subscribe(subTo, value);
     }
 
