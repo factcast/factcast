@@ -100,7 +100,8 @@ public class PGFactStoreInternalConfiguration {
         p.setMinIdle(5);
         p.setMaxIdle(32);
 
-        p.setRemoveAbandoned(true);
+        p.setRemoveAbandoned(false);
+        p.setRemoveAbandonedTimeout(60 * 60 * 24);
         p.setJdbcInterceptors("org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;"
                 + "org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer");
         ds.setPoolProperties(p);
