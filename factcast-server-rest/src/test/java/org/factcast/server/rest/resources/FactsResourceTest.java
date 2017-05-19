@@ -53,7 +53,7 @@ public class FactsResourceTest {
     public void testGetServerSentEvents() throws Exception {
         SubscriptionRequestParams subscriptionRequestParams = mock(SubscriptionRequestParams.class);
         SubscriptionRequestTO subTo = mock(SubscriptionRequestTO.class);
-        when(subscriptionRequestParams.toRequest()).thenReturn(subTo);
+        when(subscriptionRequestParams.toRequest(anyBoolean())).thenReturn(subTo);
         FactsObserver value = mock(FactsObserver.class);
         when(eventObserverFactory.createFor(any(), any(), any(), anyBoolean())).thenReturn(value);
         URI baseUri = new URI("http://localhost:8080");
@@ -68,7 +68,7 @@ public class FactsResourceTest {
     public void testGetFullServerSentEvents() throws Exception {
         SubscriptionRequestParams subscriptionRequestParams = mock(SubscriptionRequestParams.class);
         SubscriptionRequestTO subTo = mock(SubscriptionRequestTO.class);
-        when(subscriptionRequestParams.toRequest()).thenReturn(subTo);
+        when(subscriptionRequestParams.toRequest(anyBoolean())).thenReturn(subTo);
         FactsObserver value = mock(FactsObserver.class);
         when(eventObserverFactory.createFor(any(), any(), any(), anyBoolean())).thenReturn(value);
         URI baseUri = new URI("http://localhost:8080");

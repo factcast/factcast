@@ -103,7 +103,7 @@ include::snippets/events/http-request.adoc[]
 include::snippets/events/http-response.adoc[]
 
 === SSE stream of facts
-Here, you can subscribe to a Server-Sent-Events stream of facts machting the specification passed. This resource is recommended if you have many facts or server side http-caching is turned off. 
+Here, you can subscribe to a Server-Sent-Events stream of facts matching the specification passed. This resource is recommended for most scenarios. 
 
 ==== Request
 ===== Fields

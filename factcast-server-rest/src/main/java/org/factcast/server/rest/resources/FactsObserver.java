@@ -77,7 +77,6 @@ public class FactsObserver implements FactObserver {
 
     @Override
     public void onNext(Fact f) {
-
         final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
         eventBuilder.name("new-fact");
         ObjectWithSchema<?> withSchema = createPayload(f, fullOutputMode);
@@ -156,4 +155,15 @@ public class FactsObserver implements FactObserver {
         log.debug("Error while writing into the pipe", e);
     }
 
+    @Override
+    public void onError(Throwable exception) {
+        try {
+            subcription.get().close();
+            eventOutput.close();
+        } catch (Exception e1) {
+
+        }
+
+        log.error("Error while reading", exception);
+    }
 }

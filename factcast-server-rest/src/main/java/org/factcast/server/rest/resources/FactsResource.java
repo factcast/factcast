@@ -49,6 +49,7 @@ public class FactsResource implements JerseyResource {
     @GET
     @Produces(SseFeature.SERVER_SENT_EVENTS)
     @NoCache
+    @Path("id-only")
     public EventOutput getServerSentEvents(
             @NotNull @Valid @BeanParam SubscriptionRequestParams subscriptionRequestParams) {
         return createEventOutput(subscriptionRequestParams, false);
@@ -57,7 +58,6 @@ public class FactsResource implements JerseyResource {
     @GET
     @Produces(SseFeature.SERVER_SENT_EVENTS)
     @NoCache
-    @Path("full")
     public EventOutput getServerSentEventsFull(
             @NotNull @Valid @BeanParam SubscriptionRequestParams subscriptionRequestParams) {
         return createEventOutput(subscriptionRequestParams, true);
@@ -66,7 +66,7 @@ public class FactsResource implements JerseyResource {
     private EventOutput createEventOutput(SubscriptionRequestParams subscriptionRequestParams,
             boolean fullOutput) {
         final EventOutput eventOutput = new EventOutput();
-        SubscriptionRequestTO req = subscriptionRequestParams.toRequest();
+        SubscriptionRequestTO req = subscriptionRequestParams.toRequest(!fullOutput);
         AtomicReference<Subscription> subscription = new AtomicReference<Subscription>(null);
         FactObserver observer = factsObserverFactory.createFor(eventOutput, linkFactoryContext
                 .getBaseUri(), subscription, fullOutput);
