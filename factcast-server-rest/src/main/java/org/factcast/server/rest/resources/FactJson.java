@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.mercateo.common.rest.schemagen.IgnoreInRestSchema;
@@ -24,18 +25,19 @@ import lombok.Value;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FactJson {
 
     @JsonProperty
     @NotNull
     @NonNull
     @Valid
-    Header header;
+    private Header header;
 
     @JsonProperty
     @NotNull
     @NonNull
-    JsonNode payload;
+    private JsonNode payload;
 
     @Value
     @JsonIgnoreProperties(ignoreUnknown = true)

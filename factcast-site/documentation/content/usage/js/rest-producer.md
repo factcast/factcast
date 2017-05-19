@@ -9,11 +9,39 @@ creatoremail = "uwe.schaefer@mercateo.com"
 
 [menu.main]
 parent = "usage"
-#identifier = "js_rest_producer"
-weight = 100
+identifier = "js_rest_producer"
+weight = 120
 
 +++
 
 ## JavaScript REST Producer
 
-{{%alert danger%}} TODO{{% /alert%}}
+```html
+<html>
+<body>
+  <div id="events"></div>
+  <script>
+   fetch('http://localhost:8080/transactions', {
+     method: 'POST',
+     headers: {
+       'Content-Type': 'application/json'
+     },
+     body: JSON.stringify({
+       facts: [
+         {
+           header: {
+             ns: 'myapp',
+             id: '1ef7e938-ee94-4989-ba9e-8bb8ddf9c03b'
+           },
+           payload: {
+             foo: 'bar'
+           }
+         }
+       ]
+     })
+   }).then(() => console.log('published'));
+  </script>
+</body>
+</html>
+
+```
