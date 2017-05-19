@@ -93,13 +93,13 @@ public class PGFactStoreInternalConfiguration {
         p.setInitialSize(32);
         p.setJmxEnabled(false);
         p.setTestOnBorrow(true);
+        p.setTestOnReturn(true);
         p.setValidationQuery("SELECT 1");
         p.setTimeBetweenEvictionRunsMillis(30000);
         p.setMaxActive(64);
         p.setMinIdle(5);
         p.setMaxIdle(32);
 
-        p.setLogAbandoned(true);
         p.setRemoveAbandoned(true);
         p.setJdbcInterceptors("org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;"
                 + "org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer");
