@@ -8,7 +8,7 @@ Access-Control-Allow-Credentials: false
 Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, HEAD
 Access-Control-Max-Age: 1209600
 Cache-Control: no-cache
-Content-Length: 3715
+Content-Length: 3793
 
 {
   "_schema" : {
@@ -50,7 +50,7 @@ Content-Length: 3715
         "required" : [ "factSpec" ]
       },
       "method" : "GET",
-      "rel" : "facts",
+      "rel" : "http://rels.factcast.org/fact-ids",
       "relType" : "other",
       "mediaType" : "text/event-stream",
       "target" : "_blank"
@@ -92,7 +92,7 @@ Content-Length: 3715
         "required" : [ "factSpec" ]
       },
       "method" : "GET",
-      "rel" : "full-facts",
+      "rel" : "http://rels.factcast.org/full-facts",
       "relType" : "other",
       "mediaType" : "text/event-stream",
       "target" : "_blank"
@@ -143,7 +143,7 @@ Content-Length: 3715
         },
         "required" : [ "facts" ]
       },
-      "rel" : "create-transactional",
+      "rel" : "http://rels.factcast.org/create-transactional",
       "relType" : "other",
       "method" : "POST",
       "target" : "_blank"

@@ -12,18 +12,18 @@ Content-Length: 1355
 
 {
   "header" : {
-    "id" : "8fa9b0aa-dc98-47c4-8ee3-6792e7746d8a",
+    "id" : "3484fc5b-cd84-4f09-9048-41256faf8dc6",
     "ns" : "a",
     "type" : "a",
-    "aggIds" : [ "33d67320-bdc0-4a59-b840-54056ae5a2ba" ],
+    "aggIds" : [ "94e20b43-e2d8-422d-a6cd-e4f763cad862" ],
     "meta" : { }
   },
   "payload" : {
-    "id" : "8fa9b0aa-dc98-47c4-8ee3-6792e7746d8a"
+    "id" : "3484fc5b-cd84-4f09-9048-41256faf8dc6"
   },
   "_schema" : {
     "links" : [ {
-      "href" : "http://localhost:9998/facts/8fa9b0aa-dc98-47c4-8ee3-6792e7746d8a",
+      "href" : "http://localhost:9998/facts/3484fc5b-cd84-4f09-9048-41256faf8dc6",
       "targetSchema" : {
         "type" : "object",
         "properties" : {

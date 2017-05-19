@@ -1,0 +1,101 @@
++++
+draft = false
+title = "Java REST Consumer"
+description = ""
+date = "2017-05-19T15:00:00+02:00"
+
+[menu.main]
+parent = "usage"
+identifier = "java_rest_consumer"
+weight = 12
+
++++
+
+For consuming the REST-API there are many way, here we show the ones with the help of this https://github.com/Mercateo/rest-hateoas-client[HATEOAS-Client].
+
+= Streaming whole events
+The default way, to get facts from the REST-API would be to get a stream of full fact. 
+
+Code snippet:
+[source,java]
+----    
+        Response<Object> rootResource = new ClientStarter().create("http://localhost:8080", //<1>
+                Object.class);
+        
+        OngoingResponse<FactJson> sseResponse = rootResource.prepareNextWithResponse(FactJson.class) //<2>
+                .withRequestObject(new FactRequest(true, "%7B%20%22ns%22%3A%22ab%22%7D")); //<3>
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        
+        Optional<AutoCloseable> es = sseResponse.subscribe("http://rels.factcast.org/full-facts", //<4>
+                new SSEObserver<FactJson>() {
+                    private int count = 0;
+
+                    @Override
+                    public void onSignal(String signal) {
+                        System.out.println(signal + " after " + stopwatch.elapsed(TimeUnit.SECONDS)
+                                + " and " + count + " objects received");
+                    }
+
+                    @Override
+                    public void onEvent(Response<FactJson> response) {
+                        count++;
+                        System.out.println(count + ":" + response.getResponseObject().get() //<5>
+                                .toString());
+
+                    }
+
+                    @Override
+                    public void onError(String errorCode) {
+                        System.out.println("error occured" + errorCode);
+                    }
+                }, "new-fact", 1000);
+                
+----
+<1> init of the client
+<2> bring your own implementation of facts, you want to read
+<3> very simple implementation of the fact request, don't do that at home :-) 
+<4> take the full-fact rel
+<5> just print the fact to the console
+
+= Streaming of ids 
+In some scenarios (very large events) this could result in a very high load on the server side. So one can choose the opportunity, to have only an stream of ids an load the facts from HTTP-cache afterwards. Please note, that this approach takes at least two orders of magnitude longer on the client side.
+
+Code snippet:
+[source,java]
+----
+        Response<Object> rootResource = new ClientStarter().create("http://localhost:8080", //<1>
+                Object.class);
+        
+        OngoingResponse<IdBean> sseResponse = rootResource.prepareNextWithResponse(IdBean.class) //<2>
+                .withRequestObject(new FactRequest(true, "%7B%20%22ns%22%3A%22ab%22%7D")); //<3>
+        
+        Optional<AutoCloseable> es = sseResponse.subscribe("http://rels.factcast.org/fact-ids", new SSEObserver<IdBean>() {
+            private int count = 0;
+
+            @Override
+            public void onSignal(String signal) {
+                System.out.println(signal);
+
+            }
+
+            @Override
+            public void onEvent(Response<IdBean> response) {
+                count++;
+                Optional<Response<FactJson>> fact = response.prepareNextWithResponse(FactJson.class)
+                        .callWithRel("canonical");          //<5>
+                System.out.println(count + fact.get().getResponseObject().get().toString());
+
+            }
+
+            @Override
+            public void onError(String errorCode) {
+                System.out.println("error occured" + errorCode);
+
+            }
+        }, "new-fact", 1000);
+----
+<1> init of the client
+<2> simple bean with only id in it
+<3> very simple implementation of the fact request, don't do that at home :-) 
+<4> take the fact-ids rel
+<5> making a request for the full fact

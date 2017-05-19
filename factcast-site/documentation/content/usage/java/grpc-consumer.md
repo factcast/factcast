@@ -10,7 +10,7 @@ creatoremail = "uwe.schaefer@mercateo.com"
 [menu.main]
 parent = "usage"
 identifier = "java_grpc_consumer"
-weight = 20
+weight = 11
 
 +++
 
