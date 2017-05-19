@@ -117,16 +117,6 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.jacoco</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<!-- Module not yet ready for coverage report -->
-				<configuration>
-					<excludes>
-						<exclude>**/*</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
-			<plugin>
 				<artifactId>maven-resources-plugin</artifactId>
 				<version>2.7</version>
 				<executions>

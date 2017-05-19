@@ -21,11 +21,14 @@ class RootSchemaCreator {
     private final LinkFactory<FactsTransactionsResource> transactionsLinkFactory;
 
     ObjectWithSchema<Void> forRoot() {
-        val getFactsLink = factsResourceLinkFactory.forCall(FactsRel.FACTS, r -> r
+        val getFactsLink = factsResourceLinkFactory.forCall(FactsRel.FACT_IDS, r -> r
                 .getServerSentEvents(null));
+
+        val getFullFactsLink = factsResourceLinkFactory.forCall(FactsRel.FULL_FACTS, r -> r
+                .getServerSentEventsFull(null));
         val createLink = transactionsLinkFactory.forCall(FactsRel.CREATE_TRANSACTIONAL, r -> r
                 .newTransaction(null));
 
-        return hyperSchemaCreator.create(null, collect(getFactsLink, createLink));
+        return hyperSchemaCreator.create(null, collect(getFactsLink, getFullFactsLink, createLink));
     }
 }

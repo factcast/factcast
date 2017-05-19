@@ -13,6 +13,7 @@ import org.glassfish.jersey.media.sse.SseFeature;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.mercateo.common.rest.schemagen.IgnoreInRestSchema;
 
 import lombok.Data;
 
@@ -20,6 +21,7 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SubscriptionRequestParams {
     @HeaderParam(SseFeature.LAST_EVENT_ID_HEADER)
+    @IgnoreInRestSchema
     private String from;
 
     @QueryParam("follow")
@@ -30,7 +32,7 @@ public class SubscriptionRequestParams {
     @JsonParam
     private List<FactSpec> factSpec;
 
-    public SubscriptionRequestTO toRequest() {
+    public SubscriptionRequestTO toRequest(boolean idOnly) {
 
         SubscriptionRequestTO r = new SubscriptionRequestTO();
         r.continous(follow);
@@ -39,6 +41,7 @@ public class SubscriptionRequestParams {
         }
 
         r.addSpecs(factSpec);
+        r.idOnly(idOnly);
         return r;
     }
 }

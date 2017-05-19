@@ -31,10 +31,10 @@ public class TestFacts {
         @Override
         public String jsonHeader() {
 
-            return "{\"ns\":\"a\","//
+            return "{\"id\":\"" + id + "\"," //
+                    + "\"ns\":\"a\","//
                     + "\"type\":\"a\","//
-                    + "\"aggIds\":[\"" + aggIds.iterator().next() + "\"],"//
-                    + "\"id\":\"" + id + "\""//
+                    + "\"aggIds\":[\"" + aggIds.iterator().next() + "\"]"//
                     + "}";
         }
 

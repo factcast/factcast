@@ -56,9 +56,12 @@ public class RootDocumentationTest extends JerseyTest {
     public void getSimple() {
 
         LinksSnippet links = HypermediaDocumentation.links(new HyperschemaLinkExtractor(), //
-                HypermediaDocumentation.linkWithRel(FactsRel.FACTS.getRelation().getName())
+                HypermediaDocumentation.linkWithRel(FactsRel.FACT_IDS.getRelation().getName())
                         .description(
-                                "The link for the eventstream, links to the <<resources-facts, facts resource>>"), //
+                                "The link for the eventstream of fact ids, links to the <<_sse_stream_of_fact_ids, facts resource>>"), //
+                HypermediaDocumentation.linkWithRel(FactsRel.FULL_FACTS.getRelation().getName())
+                        .description(
+                                "The link for the eventstream, links to the <<_sse_stream_of_facts, facts resource>>"), //
                 HypermediaDocumentation.linkWithRel(FactsRel.CREATE_TRANSACTIONAL.getRelation()
                         .getName()).description(
                                 "Creating a new transaction links to the <<resources-transactions, transaction resource>>"));

@@ -13,13 +13,16 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.OutboundEvent;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.mercateo.common.rest.schemagen.link.LinkFactory;
 import com.mercateo.common.rest.schemagen.link.LinkFactoryContext;
 import com.mercateo.common.rest.schemagen.link.relation.Rel;
 import com.mercateo.common.rest.schemagen.plugin.FieldCheckerForSchema;
 import com.mercateo.common.rest.schemagen.plugin.MethodCheckerForLink;
 import com.mercateo.common.rest.schemagen.types.HyperSchemaCreator;
+import com.mercateo.common.rest.schemagen.types.ObjectWithSchema;
 
+import lombok.NonNull;
 import lombok.val;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,14 +38,23 @@ public class FactsObserver implements FactObserver {
 
     private AtomicReference<Subscription> subcription;
 
-    public FactsObserver(EventOutput eventOutput, LinkFactory<FactsResource> linkFatory,
-            HyperSchemaCreator hyperSchemaCreator, URI baseURI,
-            AtomicReference<Subscription> subcription) {
+    private FactTransformer factTransformer;
+
+    private boolean fullOutputMode;
+
+    public FactsObserver(@NonNull EventOutput eventOutput,
+            @NonNull LinkFactory<FactsResource> linkFatory,
+            @NonNull HyperSchemaCreator hyperSchemaCreator, @NonNull URI baseURI,
+            @NonNull AtomicReference<Subscription> subcription,
+            @NonNull FactTransformer factTransformer, boolean fullOutputMode) {
         super();
+
+        this.fullOutputMode = fullOutputMode;
         this.eventOutput = eventOutput;
         this.linkFatory = linkFatory;
         this.hyperSchemaCreator = hyperSchemaCreator;
         this.subcription = subcription;
+        this.factTransformer = factTransformer;
         // this is need, because we are nor in requestscope anymore
         this.linkFactoryContext = new LinkFactoryContext() {
 
@@ -65,23 +77,38 @@ public class FactsObserver implements FactObserver {
 
     @Override
     public void onNext(Fact f) {
-        UUID t = f.id();
-
         final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
         eventBuilder.name("new-fact");
-        String toReturn = t.toString();
-        val linkToEvent = linkFatory.forCall(Rel.CANONICAL, r -> r.getForId(toReturn),
-                linkFactoryContext);
-        val withSchema = hyperSchemaCreator.create(new FactIdJson(toReturn), linkToEvent);
+        ObjectWithSchema<?> withSchema = createPayload(f, fullOutputMode);
+
         eventBuilder.data(withSchema);
         eventBuilder.mediaType(MediaType.APPLICATION_JSON_TYPE);
-        eventBuilder.id(t.toString());
+        eventBuilder.id(f.id().toString());
         final OutboundEvent event = eventBuilder.build();
         try {
             eventOutput.write(event);
         } catch (IOException e) {
             unsubscribeAndLog(e);
         }
+    }
+
+    @VisibleForTesting
+    ObjectWithSchema<?> createPayload(Fact f, boolean fullOutputMode) {
+        UUID t = f.id();
+        String toReturn = t.toString();
+
+        ObjectWithSchema<?> withSchema;
+        if (fullOutputMode) {
+            val linkToEvent = linkFatory.forCall(Rel.SELF, r -> r.getForId(toReturn),
+                    linkFactoryContext);
+            withSchema = hyperSchemaCreator.create(factTransformer.toJson(f), linkToEvent);
+        } else {
+
+            val linkToEvent = linkFatory.forCall(Rel.CANONICAL, r -> r.getForId(toReturn),
+                    linkFactoryContext);
+            withSchema = hyperSchemaCreator.create(new FactIdJson(toReturn), linkToEvent);
+        }
+        return withSchema;
     }
 
     @Override
@@ -128,4 +155,15 @@ public class FactsObserver implements FactObserver {
         log.debug("Error while writing into the pipe", e);
     }
 
+    @Override
+    public void onError(Throwable exception) {
+        try {
+            subcription.get().close();
+            eventOutput.close();
+        } catch (Exception e1) {
+
+        }
+
+        log.error("Error while reading", exception);
+    }
 }

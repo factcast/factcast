@@ -11,18 +11,23 @@ import com.mercateo.common.rest.schemagen.link.LinkFactory;
 import com.mercateo.common.rest.schemagen.types.HyperSchemaCreator;
 
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 
 @Component
 @AllArgsConstructor
 class FactsObserverFactory {
-
+    @NonNull
     private final LinkFactory<FactsResource> factsResourceLinkFactory;
 
+    @NonNull
     private final HyperSchemaCreator hyperSchemaCreator;
 
+    @NonNull
+    private final FactTransformer factTransformer;
+
     FactsObserver createFor(EventOutput eventOutput, URI baseURI,
-            AtomicReference<Subscription> subscription) {
+            AtomicReference<Subscription> subscription, boolean fullOutputMode) {
         return new FactsObserver(eventOutput, factsResourceLinkFactory, hyperSchemaCreator, baseURI,
-                subscription);
+                subscription, factTransformer, fullOutputMode);
     }
 }

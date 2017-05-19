@@ -41,6 +41,7 @@ public class FactJson {
 
     @Value
     @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Header {
 
         @JsonProperty
