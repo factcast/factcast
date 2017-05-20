@@ -6,6 +6,7 @@ java \
 -Dmanagement.security.enabled=false \
 -Dmanagement.port=8081 \
 -Dlogging.level.org.factcast=DEBUG \
+-Dfactcast.pg.fetchSize=10000 \
 -jar factcast-server/target/factcast.jar 
 
 

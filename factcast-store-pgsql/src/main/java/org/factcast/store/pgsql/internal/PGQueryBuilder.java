@@ -114,4 +114,15 @@ class PGQueryBuilder {
         log.info("{} SQL={}", req, sql);
         return sql;
     }
+
+    String catchupSQL(long clientId) {
+        final String sql = "INSERT INTO " + PGConstants.TABLE_CATCHUP + //
+                " (" + PGConstants.COLUMN_CID + "," + PGConstants.COLUMN_SER + ") " + //
+                "(SELECT " + clientId + "," + PGConstants.COLUMN_SER + //
+                " FROM " + PGConstants.TABLE_FACT + //
+                " WHERE " + createWhereClause() + //
+                " ORDER BY " + PGConstants.COLUMN_SER + " ASC)";
+        log.info("{} SQLCU={}", req, sql);
+        return sql;
+    }
 }

@@ -74,8 +74,10 @@ public class PGFactStoreInternalConfiguration {
 
     @Bean
     public PGSubscriptionFactory pgSubscriptionFactory(JdbcTemplate jdbcTemplate, EventBus eventBus,
-            PGFactIdToSerMapper serMapper, PGLatestSerialFetcher fetcher) {
-        return new PGSubscriptionFactory(jdbcTemplate, eventBus, serMapper, fetcher);
+            PGFactIdToSerMapper serMapper, PGLatestSerialFetcher fetcher,
+            PGCatchUpFactory catchupFactory) {
+        return new PGSubscriptionFactory(jdbcTemplate, eventBus, serMapper, fetcher,
+                catchupFactory);
     }
 
     @Bean
@@ -101,10 +103,20 @@ public class PGFactStoreInternalConfiguration {
         p.setMaxIdle(32);
 
         p.setRemoveAbandoned(false);
-        p.setRemoveAbandonedTimeout(60 * 60 * 24);
         p.setJdbcInterceptors("org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;"
                 + "org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer");
         ds.setPoolProperties(p);
         return ds;
+    }
+
+    @Bean
+    public PGCatchUpFactory pgCatchUpFactory(JdbcTemplate jdbc, PGConfigurationProperties props,
+            PGFactIdToSerMapper serMapper) {
+        return new PGCatchUpFactory(jdbc, props, serMapper);
+    }
+
+    @Bean
+    public PGConfigurationProperties pgConfigurationProperties() {
+        return new PGConfigurationProperties();
     }
 }
