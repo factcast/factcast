@@ -1,10 +1,11 @@
 package org.factcast.store.pgsql.internal;
 
-import java.util.List;
+import java.util.LinkedList;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
@@ -14,14 +15,18 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
-public class PGCatchupFetchPage {
+public class PGCatchUpFetchPage {
     final JdbcTemplate jdbc;
+
+    final SubscriptionRequestTO req;
 
     final long clientId;
 
     final long pageSize;
 
-    public List<Fact> fetchFacts(AtomicLong serial) {
+    // use LinkedLists so that we can use remove() rather than iteration, in
+    // order to release Facts for GC asap.
+    public LinkedList<Fact> fetchFacts(AtomicLong serial) {
         final RowMapper<Fact> uuidExtractor = (rs, i) -> {
             serial.set(rs.getLong(PGConstants.COLUMN_SER));
             return PGFact.from(rs);
@@ -33,12 +38,19 @@ public class PGCatchupFetchPage {
             ps.setLong(3, pageSize);
         };
 
-        log.debug("  fetching next page for cid={}, limit={}, ser>{}", clientId, pageSize, serial
-                .get());
-        return jdbc.query(PGConstants.SELECT_FACT_FROM_CATCHUP, pss, uuidExtractor);
+        log.trace("{}  fetching next page for cid={}, limit={}, ser>{}", req, clientId, pageSize,
+                serial.get());
+        return new LinkedList<Fact>(jdbc.query(PGConstants.SELECT_FACT_FROM_CATCHUP, pss,
+                uuidExtractor));
     }
 
-    public List<UUID> fetchIDs(AtomicLong serial) {
+    // use LinkedLists so that we can use remove() rather than iteration, in
+    // order to release Facts for GC asap.
+    public LinkedList<UUID> fetchIDs(AtomicLong serial) {
+        if (true) {
+            throw new UnsupportedOperationException("TODO");
+        }
+
         final RowMapper<UUID> uuidExtractor = (rs, i) -> {
             serial.set(rs.getLong(PGConstants.COLUMN_SER));
             return UUID.fromString(rs.getString(PGConstants.ALIAS_ID));
@@ -49,7 +61,7 @@ public class PGCatchupFetchPage {
             ps.setLong(3, pageSize);
         };
 
-        log.debug("  fetching for cid={} next {} ids", clientId, pageSize);
-        return jdbc.query(PGConstants.SELECT_ID_FROM_CATCHUP, pss, uuidExtractor);
+        log.trace("{}  fetching for cid={} next {} ids", req, clientId, pageSize);
+        return new LinkedList<>(jdbc.query(PGConstants.SELECT_ID_FROM_CATCHUP, pss, uuidExtractor));
     }
 }

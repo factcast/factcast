@@ -111,7 +111,7 @@ class PGQueryBuilder {
         final String sql = "SELECT " + (selectIdOnly ? PGConstants.PROJECTION_ID
                 : PGConstants.PROJECTION_FACT) + " FROM " + PGConstants.TABLE_FACT + " WHERE "
                 + createWhereClause() + " ORDER BY " + PGConstants.COLUMN_SER + " ASC";
-        log.info("{} SQL={}", req, sql);
+        log.trace("{} createSQL={}", req, sql);
         return sql;
     }
 
@@ -122,7 +122,7 @@ class PGQueryBuilder {
                 " FROM " + PGConstants.TABLE_FACT + //
                 " WHERE " + createWhereClause() + //
                 " ORDER BY " + PGConstants.COLUMN_SER + " ASC)";
-        log.info("{} SQLCU={}", req, sql);
+        log.trace("{} catchupSQL={}", req, sql);
         return sql;
     }
 }

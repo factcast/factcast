@@ -10,7 +10,6 @@ import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.pgsql.internal.PGCatchUpFactory.PGCatchup;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -132,24 +131,15 @@ class PGFactStream {
 
     private void catchup(PGPostQueryMatcher postQueryMatcher) {
         if (isConnected()) {
-            log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial
+            log.debug("{} catchup phase1 - historic facts staring with SER={}", request, serial
                     .get());
 
-            catchupAttempt(postQueryMatcher);
+            pgCatchupFactory.create(request, postQueryMatcher, subscription, serial).run();
 
         }
         if (isConnected()) {
-            log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
-
-            catchupAttempt(postQueryMatcher);
-        }
-    }
-
-    private void catchupAttempt(PGPostQueryMatcher postQueryMatcher) {
-
-        try (PGCatchup catchupQuery = pgCatchupFactory.create(request, postQueryMatcher,
-                subscription, serial);) {
-            catchupQuery.run();
+            log.debug("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
+            pgCatchupFactory.create(request, postQueryMatcher, subscription, serial).run();
         }
     }
 

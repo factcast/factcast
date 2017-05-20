@@ -1,10 +1,15 @@
 #
 DROP TRIGGER IF EXISTS tr_fact_insert ON fact;
+DROP SEQUENCE IF EXISTS catchup_seq;
+
+
+DROP INDEX IF EXISTS idx_catchup_cid_ser;
 DROP INDEX IF EXISTS idx_fact_header;
 DROP INDEX IF EXISTS idx_fact_unique_id;
+
 DROP TABLE IF EXISTS fact CASCADE;
 DROP TABLE IF EXISTS catchup CASCADE;
-DROP SEQUENCE IF EXISTS catchup_seq;
+
 #
 
 CREATE TABLE fact (
@@ -35,10 +40,10 @@ CREATE TRIGGER tr_fact_insert AFTER INSERT ON fact FOR EACH ROW EXECUTE PROCEDUR
 
 #
 create sequence catchup_seq;
-create UNLOGGED table catchup (
- client bigint, 
+create table catchup (
+ cid bigint, 
  ser bigint, 
  ts timestamp
 ); 
-create index on catchup(client,ser); 
+create index idx_catchup_cid_ser on catchup(cid,ser); 
 #

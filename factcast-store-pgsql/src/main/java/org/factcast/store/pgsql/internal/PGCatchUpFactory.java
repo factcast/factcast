@@ -1,6 +1,6 @@
 package org.factcast.store.pgsql.internal;
 
-import java.util.List;
+import java.util.LinkedList;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -31,7 +31,7 @@ public class PGCatchUpFactory {
     }
 
     @RequiredArgsConstructor
-    static class PGCatchup implements AutoCloseable, Runnable {
+    static class PGCatchup implements Runnable {
         @NonNull
         final JdbcTemplate jdbc;
 
@@ -50,58 +50,61 @@ public class PGCatchUpFactory {
         @NonNull
         final SubscriptionImpl<Fact> subscription;
 
-        private long clientId = 0;
-
+        @NonNull
         final AtomicLong serial;
 
-        @Override
-        public synchronized void close() {
-            if (clientId > 0) {
-                jdbc.update(PGConstants.DELETE_CATCH_BY_CID, clientId);
-            }
-        }
+        private long clientId = 0;
 
         @Override
         public void run() {
-            PGCatchupPrepare prep = new PGCatchupPrepare(jdbc, request);
+            PGCatchUpPrepare prep = new PGCatchUpPrepare(jdbc, request);
             clientId = prep.prepareCatchup(serial);
-            PGCatchupFetchPage fetch = new PGCatchupFetchPage(jdbc, clientId, props.getFetchSize());
 
-            while (true) {
-                List<Fact> fetchFacts = fetch.fetchFacts(serial);
-                if (fetchFacts.isEmpty()) {
-                    break;
-                }
+            if (clientId > 0) {
+                try {
+                    PGCatchUpFetchPage fetch = new PGCatchUpFetchPage(jdbc, request, clientId, props
+                            .getFetchSize());
 
-                fetchFacts.forEach(f -> {
-                    UUID factId = f.id();
-
-                    if (postQueryMatcher.test(f)) {
-                        try {
-                            subscription.notifyElement(f);
-                            log.trace("{} notifyElement called with id={}", request, factId);
-                        } catch (Throwable e) {
-                            // debug level, because it happens regularly on
-                            // disconnecting clients.
-                            log.debug("{} exception from subscription: {}", request, e
-                                    .getMessage());
-
-                            try {
-                                subscription.close();
-                            } catch (Exception e1) {
-                                log.warn("{} exception while closing subscription: {}", request, e1
-                                        .getMessage());
-                            }
-                            throw e;
+                    while (true) {
+                        LinkedList<Fact> facts = fetch.fetchFacts(serial);
+                        if (facts.isEmpty()) {
+                            // we have reached the end
+                            break;
                         }
-                    } else {
-                        log.trace("{} filtered id={}", request, factId);
-                    }
-                });
-            }
 
-            // just in case
-            close();
+                        while (!facts.isEmpty()) {
+                            Fact f = facts.removeFirst();
+                            UUID factId = f.id();
+
+                            if (postQueryMatcher.test(f)) {
+                                try {
+                                    subscription.notifyElement(f);
+                                    log.trace("{} notifyElement called with id={}", request,
+                                            factId);
+                                } catch (Throwable e) {
+                                    // debug level, because it happens regularly
+                                    // on
+                                    // disconnecting clients.
+                                    log.debug("{} exception from subscription: {}", request, e
+                                            .getMessage());
+
+                                    try {
+                                        subscription.close();
+                                    } catch (Exception e1) {
+                                        log.warn("{} exception while closing subscription: {}",
+                                                request, e1.getMessage());
+                                    }
+                                    throw e;
+                                }
+                            } else {
+                                log.trace("{} filtered id={}", request, factId);
+                            }
+                        }
+                    }
+                } finally {
+                    jdbc.update(PGConstants.DELETE_CATCH_BY_CID, clientId);
+                }
+            }
         }
 
     }
