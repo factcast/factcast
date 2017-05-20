@@ -1,4 +1,4 @@
-package org.factcast.store.pgsql.internal;
+package org.factcast.store.pgsql.internal.catchup;
 
 import java.util.LinkedList;
 import java.util.UUID;
@@ -7,6 +7,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.pgsql.internal.PGConfigurationProperties;
+import org.factcast.store.pgsql.internal.PGConstants;
+import org.factcast.store.pgsql.internal.PGFactIdToSerMapper;
+import org.factcast.store.pgsql.internal.PGPostQueryMatcher;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import lombok.NonNull;
@@ -31,7 +35,7 @@ public class PGCatchUpFactory {
     }
 
     @RequiredArgsConstructor
-    static class PGCatchup implements Runnable {
+    public static class PGCatchup implements Runnable {
         @NonNull
         final JdbcTemplate jdbc;
 

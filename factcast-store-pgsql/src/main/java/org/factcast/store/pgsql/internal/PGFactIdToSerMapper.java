@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
  *
  */
 @RequiredArgsConstructor
-class PGFactIdToSerMapper {
+public class PGFactIdToSerMapper {
     final JdbcTemplate jdbcTemplate;
 
     static final String SELECT_BY_HEADER_JSON = "SELECT " + PGConstants.COLUMN_SER + " FROM "

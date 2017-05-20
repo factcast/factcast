@@ -7,6 +7,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.store.pgsql.internal.catchup.PGCatchUpFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.google.common.eventbus.EventBus;

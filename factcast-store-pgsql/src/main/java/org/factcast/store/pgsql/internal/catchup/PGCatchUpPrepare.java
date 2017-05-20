@@ -1,10 +1,12 @@
-package org.factcast.store.pgsql.internal;
+package org.factcast.store.pgsql.internal.catchup;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.pgsql.internal.PGConstants;
+import org.factcast.store.pgsql.internal.PGQueryBuilder;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;

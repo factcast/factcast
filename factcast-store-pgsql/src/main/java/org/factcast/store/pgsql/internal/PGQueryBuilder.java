@@ -22,29 +22,21 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-class PGQueryBuilder {
-
-    // be conservative, less ram and fetching from db often is less of a
-    // problem than serializing to the client.
-    //
-    // Note, that by sync. calling the Observer, (depending on the
-    // transport) backpressure is kind of built-in.
-    static final int FETCH_SIZE = 100;
+public class PGQueryBuilder {
 
     final boolean selectIdOnly;
 
     @NonNull
     final SubscriptionRequestTO req;
 
-    PGQueryBuilder(@NonNull SubscriptionRequestTO request) {
+    public PGQueryBuilder(@NonNull SubscriptionRequestTO request) {
         this.req = request;
         selectIdOnly = request.idOnly() && !request.hasAnyScriptFilters();
     }
 
-    PreparedStatementSetter createStatementSetter(AtomicLong serial) {
+    public PreparedStatementSetter createStatementSetter(AtomicLong serial) {
 
         return p -> {
-            p.setFetchSize(FETCH_SIZE);
 
             // TODO vulnerable of json injection attack
             int count = 0;
@@ -107,7 +99,7 @@ class PGQueryBuilder {
         return "( " + predicatesAsString + " ) AND " + PGConstants.COLUMN_SER + ">?";
     }
 
-    String createSQL() {
+    public String createSQL() {
         final String sql = "SELECT " + (selectIdOnly ? PGConstants.PROJECTION_ID
                 : PGConstants.PROJECTION_FACT) + " FROM " + PGConstants.TABLE_FACT + " WHERE "
                 + createWhereClause() + " ORDER BY " + PGConstants.COLUMN_SER + " ASC";
@@ -115,7 +107,7 @@ class PGQueryBuilder {
         return sql;
     }
 
-    String catchupSQL(long clientId) {
+    public String catchupSQL(long clientId) {
         final String sql = "INSERT INTO " + PGConstants.TABLE_CATCHUP + //
                 " (" + PGConstants.COLUMN_CID + "," + PGConstants.COLUMN_SER + ") " + //
                 "(SELECT " + clientId + "," + PGConstants.COLUMN_SER + //

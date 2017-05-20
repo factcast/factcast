@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-class PGPostQueryMatcher implements Predicate<Fact> {
+public class PGPostQueryMatcher implements Predicate<Fact> {
 
     final boolean canBeSkipped;
 
