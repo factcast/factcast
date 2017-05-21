@@ -2,6 +2,7 @@ package org.factcast.store.pgsql.internal.listen;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.function.Supplier;
 
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.stereotype.Component;
@@ -13,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class PGDriverManagerConnectionSupplier {
+public class PGDriverManagerConnectionSupplier implements Supplier<PgConnection> {
     @NonNull
     final org.apache.tomcat.jdbc.pool.DataSource ds;
 
