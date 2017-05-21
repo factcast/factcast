@@ -2,6 +2,7 @@ package org.factcast.store.pgsql.internal;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.factcast.store.pgsql.internal.query.PGLatestSerialFetcher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;

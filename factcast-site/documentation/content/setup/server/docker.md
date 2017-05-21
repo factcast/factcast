@@ -29,6 +29,6 @@ This will create a docker container as factcast/factcast-server that includes RE
 The docker container can be started
 
 ```
-docker run -e"spring.datasource.url=jdbc:pgsql://<POSTGRES-SERVER>/<DATABASENAME>?user=<USERNAME>&password=<PASSWORD>" -p 9090:9090 -p 8080:8080 -p 8081:8081 factcast/factcast-server
+docker run -e"spring.datasource.url=jdbc:postgresql://<POSTGRES-SERVER>/<DATABASENAME>?user=<USERNAME>&password=<PASSWORD>" -p 9090:9090 -p 8080:8080 -p 8081:8081 factcast/factcast-server
 ```
 [{{%icon circle-arrow-right%}}Read more on Ports]({{%relref "setup/server/ports.md"%}})

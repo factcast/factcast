@@ -71,6 +71,11 @@ public class PGConstants {
     public String DELETE_CATCH_BY_CID = "DELETE FROM " + TABLE_CATCHUP + //
             " WHERE cid=?";
 
+    public static final String SELECT_BY_HEADER_JSON = "SELECT " + COLUMN_SER + " FROM "
+            + TABLE_FACT + " WHERE " + COLUMN_HEADER + " @> ?";
+
+    public static final String LISTEN_SQL = "LISTEN " + CHANNEL_NAME;
+
     private String fromHeader(String attributeName) {
         return PGConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
     }

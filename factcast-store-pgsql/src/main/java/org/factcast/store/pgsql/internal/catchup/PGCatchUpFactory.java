@@ -7,11 +7,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.pgsql.internal.PGConfigurationProperties;
+import org.factcast.store.pgsql.PGConfigurationProperties;
 import org.factcast.store.pgsql.internal.PGConstants;
-import org.factcast.store.pgsql.internal.PGFactIdToSerMapper;
 import org.factcast.store.pgsql.internal.PGPostQueryMatcher;
+import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -19,13 +20,14 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
+@Component
 public class PGCatchUpFactory {
 
     final JdbcTemplate jdbc;
 
     final PGConfigurationProperties props;
 
-    final PGFactIdToSerMapper serMapper;
+    final PGFactIdToSerialMapper serMapper;
 
     public PGCatchup create(@NonNull SubscriptionRequestTO request,
             PGPostQueryMatcher postQueryMatcher, SubscriptionImpl<Fact> subscription,
@@ -43,7 +45,7 @@ public class PGCatchUpFactory {
         final PGConfigurationProperties props;
 
         @NonNull
-        final PGFactIdToSerMapper serMapper;
+        final PGFactIdToSerialMapper serMapper;
 
         @NonNull
         final SubscriptionRequestTO request;

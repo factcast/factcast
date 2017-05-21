@@ -1,6 +1,5 @@
 package org.factcast.store.pgsql.internal;
 
-import java.sql.BatchUpdateException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -12,8 +11,11 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.store.pgsql.internal.metrics.PGMetricNames;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.codahale.metrics.Counter;
@@ -22,7 +24,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.google.common.collect.Lists;
-import com.impossibl.postgres.jdbc.PGSQLIntegrityConstraintViolationException;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -34,8 +35,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-
-class PGFactStore implements FactStore {
+@Component("factStore")
+public class PGFactStore implements FactStore {
     // is that interesting to configure?
     private static final int BATCH_SIZE = 500;
 
@@ -63,7 +64,8 @@ class PGFactStore implements FactStore {
 
     private Meter subscriptionFollowMeter;
 
-    PGFactStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory subscriptionFactory,
+    @Autowired
+    public PGFactStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory subscriptionFactory,
             MetricRegistry registry) {
         this.jdbcTemplate = jdbcTemplate;
         this.subscriptionFactory = subscriptionFactory;
@@ -100,15 +102,7 @@ class PGFactStore implements FactStore {
         } catch (UncategorizedSQLException sql) {
 
             publishFailedCounter.inc();
-
             // yikes
-            Throwable batch = sql.getCause();
-            if (batch instanceof BatchUpdateException) {
-                Throwable violation = batch.getCause();
-                if (violation instanceof PGSQLIntegrityConstraintViolationException) {
-                    throw new IllegalArgumentException(violation);
-                }
-            }
             throw sql;
         }
     }

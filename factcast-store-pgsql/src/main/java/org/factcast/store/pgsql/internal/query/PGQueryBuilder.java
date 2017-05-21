@@ -1,4 +1,4 @@
-package org.factcast.store.pgsql.internal;
+package org.factcast.store.pgsql.internal.query;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.pgsql.internal.PGConstants;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
 import lombok.NonNull;

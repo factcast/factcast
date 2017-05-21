@@ -1,4 +1,4 @@
-package org.factcast.store.pgsql.internal;
+package org.factcast.store.pgsql.internal.metrics;
 
 import org.factcast.core.store.FactStoreMetricNames;
 
@@ -8,9 +8,9 @@ import org.factcast.core.store.FactStoreMetricNames;
  * @author <uwe.schaefer@mercateo.com>
  *
  */
-class PGMetricNames extends FactStoreMetricNames {
+public class PGMetricNames extends FactStoreMetricNames {
 
-    PGMetricNames() {
+    public PGMetricNames() {
         super("pg");
     }
 

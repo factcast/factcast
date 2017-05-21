@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 /**
- * SubscriptionRequest intented to be used by clients for convenience.
+ * SubscriptionRequest intended to be used by clients for convenience.
  * 
  * @author uwe.schaefer@mercateo.com
  *

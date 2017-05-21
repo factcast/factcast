@@ -11,12 +11,14 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.pgsql.internal.catchup.PGCatchUpFactory;
+import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
+import org.factcast.store.pgsql.internal.query.PGLatestSerialFetcher;
+import org.factcast.store.pgsql.internal.query.PGQueryBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
 import com.google.common.eventbus.EventBus;
-import com.impossibl.postgres.jdbc.PGSQLSimpleException;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +35,7 @@ public class PGFactStream {
 
     final EventBus eventBus;
 
-    final PGFactIdToSerMapper idToSerMapper;
+    final PGFactIdToSerialMapper idToSerMapper;
 
     final SubscriptionImpl<Fact> subscription;
 
@@ -172,7 +174,7 @@ public class PGFactStream {
             if (isConnected()) {
 
                 if (rs.isClosed()) {
-                    throw new PGSQLSimpleException(
+                    throw new IllegalStateException(
                             "ResultSet already closed. We should not have got here. THIS IS A BUG!");
                 }
 

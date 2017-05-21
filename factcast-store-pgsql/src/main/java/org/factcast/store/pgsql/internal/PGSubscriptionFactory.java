@@ -8,7 +8,10 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.pgsql.internal.catchup.PGCatchUpFactory;
+import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
+import org.factcast.store.pgsql.internal.query.PGLatestSerialFetcher;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
 import com.google.common.eventbus.EventBus;
 
@@ -22,12 +25,13 @@ import lombok.RequiredArgsConstructor;
  */
 // TODO integrate with PGQuery
 @RequiredArgsConstructor
+@Component
 class PGSubscriptionFactory {
     final JdbcTemplate jdbcTemplate;
 
     final EventBus eventBus;
 
-    final PGFactIdToSerMapper idToSerialMapper;
+    final PGFactIdToSerialMapper idToSerialMapper;
 
     final PGLatestSerialFetcher fetcher;
 

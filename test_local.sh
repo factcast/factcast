@@ -2,7 +2,6 @@
 
 mvn clean install -o -DskipTests && \
 java \
--D"spring.datasource.url=jdbc:pgsql://localhost/test5?user=tester&password=test_password" \
 -Dmanagement.security.enabled=false \
 -Dmanagement.port=8081 \
 -Dlogging.level.org.factcast=DEBUG \
@@ -11,3 +10,4 @@ java \
 
 #-Dlogging.level.org.factcast=TRACE \
 #spring.datasource.url=jdbc:pgsql://192.168.3.11/test1?user=tester&password=test_password
+# -D"spring.datasource.url=jdbc:postgresql://localhost/test5?user=tester&password=test_password" \
