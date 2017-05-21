@@ -1,16 +1,14 @@
-package org.factcast.client.grpc;
+package org.factcast.core;
 
 import java.util.Set;
 import java.util.UUID;
-
-import org.factcast.core.Fact;
 
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-final class IdOnlyFact implements Fact {
+public final class IdOnlyFact implements Fact {
     @Getter
     @NonNull
     final UUID id;

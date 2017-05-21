@@ -1,36 +1,37 @@
-package org.factcast.store.pgsql.internal;
+package org.factcast.store.pgsql.internal.query;
 
 import java.util.UUID;
 
+import org.factcast.store.pgsql.internal.PGConstants;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * Fetches a SERIAL from a Fact-Id.
+ * Fetches a SER from a Fact-Id.
  * 
  * @author uwe.schaefer@mercateo.com
  *
  */
+@Component
 @RequiredArgsConstructor
-class PGFactIdToSerMapper {
+public class PGFactIdToSerialMapper {
     final JdbcTemplate jdbcTemplate;
 
-    static final String SELECT_BY_HEADER_JSON = "SELECT " + PGConstants.COLUMN_SER + " FROM "
-            + PGConstants.TABLE_FACT + " WHERE " + PGConstants.COLUMN_HEADER + " @> ?";
-
     /**
+     * Fetches the SER of a particular Fact identified by id
      * 
      * @param id
-     * @return 0, if no Fact is found for the id given. @throws
+     *            the FactId to look for
+     * @return the corresponding SER, 0, if no Fact is found for the id given.
      */
     public long retrieve(UUID id) {
         if (id != null) {
-
             try {
                 // throws EmptyResultDataAccessException if is not found!
-                return jdbcTemplate.queryForObject(SELECT_BY_HEADER_JSON, new Object[] {
+                return jdbcTemplate.queryForObject(PGConstants.SELECT_BY_HEADER_JSON, new Object[] {
                         "{\"id\":\"" + id + "\"}" }, Long.class).longValue();
             } catch (EmptyResultDataAccessException meh) {
             }

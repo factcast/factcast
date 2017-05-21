@@ -5,7 +5,7 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-import org.factcast.store.pgsql.internal.PGListener.FactInsertionEvent;
+import org.factcast.store.pgsql.internal.listen.PGListener.FactInsertionEvent;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;

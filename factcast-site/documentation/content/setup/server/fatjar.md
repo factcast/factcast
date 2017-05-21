@@ -30,7 +30,7 @@ This will create a standard spring boot fat jar ```target/factcast-server.jar```
 To run the jar, pass the necessary configuration info as -D parameters:
 
 ```sh
-java -Dspring.datasource.url=jdbc:pgsql://<POSTGRES-SERVER>/<DATABASENAME>?user=<USERNAME>&password=<PASSWORD> -Dmanagement.security.enabled=false -jar target/factcast.jar
+java -Dspring.datasource.url=jdbc:postgresql://<POSTGRES-SERVER>/<DATABASENAME>?user=<USERNAME>&password=<PASSWORD> -Dmanagement.security.enabled=false -jar target/factcast.jar
 
 ```
 [{{%icon circle-arrow-right%}}Read more on Ports]({{%relref "setup/server/ports.md"%}})

@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.UUID;
 
+import org.factcast.core.IdOnlyFact;
 import org.junit.Test;
 
 public class IdOnlyFactTest {

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
+import org.factcast.core.IdOnlyFact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;

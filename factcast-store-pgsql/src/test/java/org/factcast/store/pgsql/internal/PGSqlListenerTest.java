@@ -7,8 +7,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
-import org.factcast.store.pgsql.internal.PGListener.FactInsertionEvent;
+import org.factcast.store.pgsql.internal.listen.PGListener;
+import org.factcast.store.pgsql.internal.listen.PGListener.FactInsertionEvent;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -16,32 +18,31 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.postgresql.PGNotification;
+import org.postgresql.core.Notification;
+import org.postgresql.jdbc.PgConnection;
 
-import com.google.common.base.Supplier;
 import com.google.common.eventbus.AsyncEventBus;
-import com.impossibl.postgres.api.jdbc.PGConnection;
-import com.impossibl.postgres.api.jdbc.PGNotificationListener;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PGSqlListenerTest {
 
     @Mock
-    Supplier<PGConnection> ds;
+    Supplier<PgConnection> ds;
 
     @Mock
     AsyncEventBus bus;
 
     @Mock
-    PGConnection conn;
+    PgConnection conn;
 
     @Mock
     PreparedStatement ps;
 
-    @Mock
-    Predicate<Connection> tester;
+    Predicate<Connection> tester = c -> true;
 
     @Captor
-    ArgumentCaptor<PGNotificationListener> captor;
+    ArgumentCaptor<PGListener> captor;
 
     @org.junit.Before
     public void setUp() throws SQLException {
@@ -52,61 +53,64 @@ public class PGSqlListenerTest {
     }
 
     @Test
-    public void testCheck() throws Exception {
-        Mockito.when(ds.get()).thenReturn(conn);
-
-        PGListener l = new PGListener(ds, bus, c -> true);
-        l.afterPropertiesSet();
-        l.check();
-        verifyNoMoreInteractions(bus);
-        verify(ds, times(1)).get();
-    }
-
-    @Test
     public void testCheckFails() throws Exception {
-        Mockito.when(ds.get()).thenReturn(conn);
-        Mockito.when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
-        Mockito.when(tester.test(Mockito.any(PGConnection.class))).thenReturn(false, false, true);
+        tester = mock(Predicate.class);
+        Mockito.when(tester.test(any())).thenReturn(false, false, true, false);
 
         PGListener l = new PGListener(ds, bus, tester);
         l.afterPropertiesSet();
-        l.check();
-        l.check();
-        l.check();
+        verify(bus, times(3)).post(any(FactInsertionEvent.class));
         verifyNoMoreInteractions(bus);
-        verify(ds, times(3)).get();
+
     }
 
     @Test
     public void testListen() throws Exception {
-        Mockito.when(ds.get()).thenReturn(conn);
-        Mockito.when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
-
         PGListener l = new PGListener(ds, bus, tester);
         l.afterPropertiesSet();
+
+        sleep(100);
+        verify(bus).post(any(FactInsertionEvent.class));
         verifyNoMoreInteractions(bus);
-        verify(ds, times(1)).get();
-        verify(conn, times(1)).addNotificationListener(Mockito.anyString(), Mockito.eq(
-                PGConstants.CHANNEL_NAME), Mockito.any());
+
+        verify(conn).prepareStatement(PGConstants.LISTEN_SQL);
+        verify(ps).execute();
 
     }
 
     @Test
     public void testNotify() throws Exception {
 
-        Mockito.doNothing().when(conn).addNotificationListener(Mockito.anyString(), eq(
-                PGConstants.CHANNEL_NAME), captor.capture());
-
         PGListener l = new PGListener(ds, bus, tester);
+
+        when(conn.getNotifications(anyInt())).thenReturn(new PGNotification[] { //
+                new Notification(PGConstants.CHANNEL_NAME, 1), //
+                new Notification(PGConstants.CHANNEL_NAME, 1), //
+                new Notification(PGConstants.CHANNEL_NAME, 1) }, //
+                new PGNotification[] { new Notification(PGConstants.CHANNEL_NAME, 2) },
+                new PGNotification[] { new Notification(PGConstants.CHANNEL_NAME, 3) }, //
+                null);
         l.afterPropertiesSet();
 
-        PGNotificationListener nl = captor.getValue();
+        sleep(400);
 
-        nl.notification(1, PGConstants.CHANNEL_NAME, "");
-        nl.notification(1, PGConstants.CHANNEL_NAME, "");
-        nl.notification(1, PGConstants.CHANNEL_NAME, "");
+        // 4 posts: one scheduled, 3 from notifications
+        verify(bus, times(4)).post(any(FactInsertionEvent.class));
 
-        verify(bus, times(3)).post(any(FactInsertionEvent.class));
+    }
+
+    @Test
+    public void testNotifyScheduled() throws Exception {
+
+        PGListener l = new PGListener(ds, bus, tester);
+
+        when(conn.getNotifications(anyInt())).thenReturn(null);
+        l.afterPropertiesSet();
+
+        sleep(200);
+
+        // one scheduled
+        verify(bus, times(1)).post(any(FactInsertionEvent.class));
 
     }
 
@@ -118,11 +122,19 @@ public class PGSqlListenerTest {
         l.afterPropertiesSet();
         l.destroy();
 
+        sleep(50);
         verify(conn).close();
     }
 
+    private void sleep(int i) {
+        try {
+            Thread.sleep(i);
+        } catch (InterruptedException e) {
+        }
+    }
+
     @Test
-    public void testStopWithoutStaring() throws Exception {
+    public void testStopWithoutStarting() throws Exception {
         Mockito.when(ds.get()).thenReturn(conn);
         Mockito.when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
         PGListener l = new PGListener(ds, bus, tester);

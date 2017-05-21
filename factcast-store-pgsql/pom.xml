@@ -28,12 +28,8 @@
 			<version>1.16</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.impossibl.pgjdbc-ng</groupId>
-			<artifactId>pgjdbc-ng</artifactId>
-			<version>0.7.1</version>
-			<classifier>complete</classifier>
-		</dependency>
+		<!-- <dependency> <groupId>com.impossibl.pgjdbc-ng</groupId> <artifactId>pgjdbc-ng</artifactId> 
+			<version>0.7.1</version> <classifier>complete</classifier> </dependency> -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -56,6 +52,22 @@
 		<dependency>
 			<groupId>org.liquibase</groupId>
 			<artifactId>liquibase-core</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.postgres</groupId>
+					<artifactId>postgres</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>42.1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>

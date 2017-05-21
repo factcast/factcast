@@ -32,7 +32,7 @@ import lombok.ToString;
  */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @ToString(of = { "id" })
-class PGFact implements Fact {
+public class PGFact implements Fact {
 
     @Getter
     @NonNull

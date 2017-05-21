@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.factcast.core.MarkFact;
 import org.factcast.core.store.FactStore;
+import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,14 +32,14 @@ public class PGFactIdToSerMapperIT {
     public void testRetrieve() throws Exception {
         MarkFact m = new MarkFact();
         store.publish(Arrays.asList(m));
-        long retrieve = new PGFactIdToSerMapper(tpl).retrieve(m.id());
+        long retrieve = new PGFactIdToSerialMapper(tpl).retrieve(m.id());
         assertTrue(retrieve > 0);
     }
 
     @Test
     public void testRetrieveNonExistant() throws Exception {
         try {
-            new PGFactIdToSerMapper(tpl).retrieve(UUID.fromString(
+            new PGFactIdToSerialMapper(tpl).retrieve(UUID.fromString(
                     "2b86d90e-2755-4f82-b86d-fd092b25ccc8"));
             fail();
         } catch (Throwable e) {

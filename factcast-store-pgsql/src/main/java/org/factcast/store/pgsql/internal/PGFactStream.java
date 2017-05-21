@@ -10,12 +10,15 @@ import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.pgsql.internal.catchup.PGCatchUpFactory;
+import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
+import org.factcast.store.pgsql.internal.query.PGLatestSerialFetcher;
+import org.factcast.store.pgsql.internal.query.PGQueryBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
 import com.google.common.eventbus.EventBus;
-import com.impossibl.postgres.jdbc.PGSQLSimpleException;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -26,13 +29,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 // TODO needs new name
-class PGFactStream {
+public class PGFactStream {
 
     final JdbcTemplate jdbcTemplate;
 
     final EventBus eventBus;
 
-    final PGFactIdToSerMapper idToSerMapper;
+    final PGFactIdToSerialMapper idToSerMapper;
 
     final SubscriptionImpl<Fact> subscription;
 
@@ -42,23 +45,28 @@ class PGFactStream {
 
     final PGLatestSerialFetcher fetcher;
 
+    final PGCatchUpFactory pgCatchupFactory;
+
     CondensedQueryExecutor condensedExecutor;
 
     SubscriptionRequestTO request;
+
+    PGPostQueryMatcher postQueryMatcher;
 
     void connect(@NonNull SubscriptionRequestTO request) {
 
         this.request = request;
         log.debug("{} connecting subscription {}", request, request.dump());
 
+        postQueryMatcher = new PGPostQueryMatcher(request);
         PGQueryBuilder q = new PGQueryBuilder(request);
 
         initializeSerialToStartAfter();
 
         String sql = q.createSQL();
         PreparedStatementSetter setter = q.createStatementSetter(serial);
-        RowCallbackHandler rsHandler = new FactRowCallbackHandler(subscription,
-                new PGPostQueryMatcher(request));
+
+        RowCallbackHandler rsHandler = new FactRowCallbackHandler(subscription, postQueryMatcher);
 
         PGSynchronizedQuery query = new PGSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler,
                 serial, fetcher);
@@ -78,7 +86,7 @@ class PGFactStream {
             // just fast forward to the latest event publish by now
             this.serial.set(fetcher.retrieveLatestSer());
         } else {
-            catchup(query);
+            catchup(postQueryMatcher);
         }
 
         // propagate catchup
@@ -124,15 +132,17 @@ class PGFactStream {
         }
     }
 
-    private void catchup(PGSynchronizedQuery query) {
+    private void catchup(PGPostQueryMatcher postQueryMatcher) {
         if (isConnected()) {
-            log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial
+            log.debug("{} catchup phase1 - historic facts staring with SER={}", request, serial
                     .get());
-            query.run(true);
+
+            pgCatchupFactory.create(request, postQueryMatcher, subscription, serial).run();
+
         }
         if (isConnected()) {
-            log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
-            query.run(true);
+            log.debug("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
+            pgCatchupFactory.create(request, postQueryMatcher, subscription, serial).run();
         }
     }
 
@@ -164,7 +174,7 @@ class PGFactStream {
             if (isConnected()) {
 
                 if (rs.isClosed()) {
-                    throw new PGSQLSimpleException(
+                    throw new IllegalStateException(
                             "ResultSet already closed. We should not have got here. THIS IS A BUG!");
                 }
 

@@ -9,7 +9,9 @@ import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpecMatcher;
 import org.factcast.core.subscription.SubscriptionRequest;
 
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -23,8 +25,10 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-class PGPostQueryMatcher implements Predicate<Fact> {
+public class PGPostQueryMatcher implements Predicate<Fact> {
 
+    @Getter
+    @Accessors(fluent = true)
     final boolean canBeSkipped;
 
     final List<FactSpecMatcher> matchers = new LinkedList<>();

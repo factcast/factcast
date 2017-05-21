@@ -1,4 +1,4 @@
-package org.factcast.store.pgsql.internal;
+package org.factcast.store.pgsql.internal.listen;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -8,9 +8,12 @@ import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
 
+import org.factcast.store.pgsql.internal.metrics.PGMetricNames;
+import org.postgresql.PGConnection;
+import org.springframework.stereotype.Component;
+
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
-import com.impossibl.postgres.api.jdbc.PGConnection;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
  * Used to test if a connection is still alive.
  * 
  * Even though CPools provide this already, this one is intended to used with
- * the cone {@link PGConnection}, that listens to changes on the fact table and
+ * the one {@link PGConnection}, that listens to changes on the fact table and
  * thus should not be reused in a CPool.
  * 
  * @author uwe.schaefer@mercateo.com
@@ -27,12 +30,12 @@ import lombok.extern.slf4j.Slf4j;
  */
 
 @Slf4j
-
-class ConnectionTester implements Predicate<Connection> {
+@Component
+public class PGConnectionTester implements Predicate<Connection> {
 
     final Counter connectionFailureMetric;
 
-    ConnectionTester(@NonNull MetricRegistry registry) {
+    PGConnectionTester(@NonNull MetricRegistry registry) {
         connectionFailureMetric = registry.counter(new PGMetricNames().connectionFailure());
     }
 
