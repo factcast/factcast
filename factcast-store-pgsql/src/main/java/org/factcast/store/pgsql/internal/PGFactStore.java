@@ -13,7 +13,8 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.pgsql.internal.metrics.PGMetricNames;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.UncategorizedSQLException;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -99,11 +100,15 @@ public class PGFactStore implements FactStore {
 
             publishMeter.mark(numberOfFactsToPublish);
 
-        } catch (UncategorizedSQLException sql) {
+        } catch (DataAccessException sql) {
 
             publishFailedCounter.inc();
             // yikes
-            throw sql;
+            if (sql instanceof DuplicateKeyException) {
+                throw new IllegalArgumentException(sql.getMessage());
+            } else {
+                throw sql;
+            }
         }
     }
 

@@ -38,18 +38,23 @@ public class PGCatchUpPrepare {
             @Override
             public Long doInPreparedStatement(PreparedStatement ps) throws SQLException,
                     DataAccessException {
+
                 log.debug("{} preparing paging for matches after {}", req, serial.get());
+                try {
+                    b.createStatementSetter(serial).setValues(ps);
+                    int numberOfFactsToCatchup = ps.executeUpdate();
 
-                b.createStatementSetter(serial).setValues(ps);
-                int numberOfFactsToCatchup = ps.executeUpdate();
-
-                if (numberOfFactsToCatchup > 0) {
-                    log.debug("{} prepared {} facts for cid={}", req, numberOfFactsToCatchup,
-                            clientId);
-                    return clientId;
-                } else {
-                    log.debug("{} nothing to catch up", req);
-                    return 0L;
+                    if (numberOfFactsToCatchup > 0) {
+                        log.debug("{} prepared {} facts for cid={}", req, numberOfFactsToCatchup,
+                                clientId);
+                        return clientId;
+                    } else {
+                        log.debug("{} nothing to catch up", req);
+                        return 0L;
+                    }
+                } catch (SQLException ex) {
+                    log.error("While trying to prepare catchup", ex);
+                    throw ex;
                 }
             }
         });

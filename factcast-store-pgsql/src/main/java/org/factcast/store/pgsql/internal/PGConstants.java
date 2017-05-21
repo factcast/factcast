@@ -42,7 +42,6 @@ public class PGConstants {
             fromHeader(ALIAS_ID), fromHeader(ALIAS_AGGID), fromHeader(ALIAS_NS), fromHeader(
                     ALIAS_TYPE));
 
-    // FIXME still needed?
     public String PROJECTION_ID = String.join(", ", COLUMN_SER, empty(COLUMN_HEADER), empty(
             COLUMN_PAYLOAD), fromHeader(ALIAS_ID), fromHeader(ALIAS_AGGID), fromHeader(ALIAS_NS),
             fromHeader(ALIAS_TYPE));
@@ -72,7 +71,7 @@ public class PGConstants {
             " WHERE cid=?";
 
     public static final String SELECT_BY_HEADER_JSON = "SELECT " + COLUMN_SER + " FROM "
-            + TABLE_FACT + " WHERE " + COLUMN_HEADER + " @> ?";
+            + TABLE_FACT + " WHERE " + COLUMN_HEADER + " @> ?::jsonb";
 
     public static final String LISTEN_SQL = "LISTEN " + CHANNEL_NAME;
 

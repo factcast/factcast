@@ -74,21 +74,21 @@ public class PGQueryBuilder {
             StringBuilder sb = new StringBuilder();
             sb.append("( ");
 
-            sb.append(PGConstants.COLUMN_HEADER + " @> ? ");
+            sb.append(PGConstants.COLUMN_HEADER + " @> ?::jsonb ");
 
             String type = spec.type();
             if (type != null) {
-                sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ? ");
+                sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ?::jsonb ");
             }
 
             UUID agg = spec.aggId();
             if (agg != null) {
-                sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ? ");
+                sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ?::jsonb ");
             }
 
             Map<String, String> meta = spec.meta();
             meta.entrySet().forEach(e -> {
-                sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ? ");
+                sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ?::jsonb ");
             });
 
             sb.append(") ");
@@ -113,7 +113,7 @@ public class PGQueryBuilder {
                 " (" + PGConstants.COLUMN_CID + "," + PGConstants.COLUMN_SER + ") " + //
                 "(SELECT " + clientId + "," + PGConstants.COLUMN_SER + //
                 " FROM " + PGConstants.TABLE_FACT + //
-                " WHERE " + createWhereClause() + //
+                " WHERE (" + createWhereClause() + ")" + //
                 " ORDER BY " + PGConstants.COLUMN_SER + " ASC)";
         log.trace("{} catchupSQL={}", req, sql);
         return sql;

@@ -3,10 +3,12 @@ package org.factcast.store.pgsql.internal.listen;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
-import org.apache.tomcat.jdbc.pool.DataSource;
-import org.factcast.store.pgsql.PGConfigurationProperties;
 import org.factcast.store.pgsql.internal.PGConstants;
 import org.postgresql.PGNotification;
 import org.postgresql.jdbc.PgConnection;
@@ -36,56 +38,82 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class PGListener implements InitializingBean, DisposableBean {
 
-    final @NonNull DataSource ds;
+    final @NonNull Supplier<PgConnection> ds;
 
     final @NonNull EventBus eventBus;
 
-    final @NonNull PGConfigurationProperties props;
+    final @NonNull Predicate<Connection> pgConnectionTester;
 
     final AtomicBoolean running = new AtomicBoolean(true);
 
     Thread listenerThread;
 
-    @SuppressWarnings("resource")
+    private int blockingWaitTimeInMillis = 1000 * 60;
+
     private void listen() {
         log.trace("Starting instance Listener");
 
+        CountDownLatch l = new CountDownLatch(1);
+
         listenerThread = new Thread(() -> {
             while (running.get()) {
-                try (Connection c = ds.getConnection();) {
-                    try (PreparedStatement ps = c.prepareStatement(PGConstants.LISTEN_SQL);) {
+                // make sure, we did not miss anything while reconnecting
+                postEvent("scheduled-poll");
+
+                try (PgConnection pc = ds.get()) {
+                    try (PreparedStatement ps = pc.prepareStatement(PGConstants.LISTEN_SQL);) {
                         log.trace("Running LISTEN command");
                         ps.execute();
                     }
 
-                    try (Connection actual = ((javax.sql.PooledConnection) c).getConnection();) {
-                        PgConnection pc = (PgConnection) actual;
-                        log.trace("Waiting for notifications for {}ms", props
-                                .getNotificationWaitTimeInMillis());
+                    while (running.get()) {
 
-                        PGNotification[] notifications = pc.getNotifications((int) props
-                                .getNotificationWaitTimeInMillis());
-                        if (!running.get()) {
-                            return;
-                        }
+                        if (pgConnectionTester.test(pc)) {
 
-                        if (notifications != null && notifications.length > 0) {
-                            final String name = notifications[0].getName();
-                            log.trace("notifying consumers for '{}'", name);
-                            postEvent(name);
+                            log.trace("Waiting for notifications for {}ms",
+                                    blockingWaitTimeInMillis);
+
+                            l.countDown();
+                            PGNotification[] notifications = pc.getNotifications(
+                                    blockingWaitTimeInMillis);
+
+                            if (notifications != null && notifications.length > 0) {
+                                final String name = notifications[0].getName();
+                                log.trace("notifying consumers for '{}'", name);
+                                postEvent(name);
+                            } else {
+                                log.trace("No notifications yet. Looping.");
+                            }
                         } else {
-                            log.trace("No notifications yet. Looping.");
-                            postEvent("scheduled-poll");
+                            log.warn("Connection is failing test");
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                            }
+                            break;
                         }
                     }
+
                 } catch (SQLException e) {
-                    log.warn("While waiting for Notifications", e);
+                    if (e.getMessage().contains("administrator command")) {
+                        log.warn("While waiting for Notifications", e);
+                    } else {
+                        log.warn("While waiting for Notifications", e);
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e1) {
+                        }
+                    }
                 }
             }
 
         }, "PG Instance Listener");
         listenerThread.setDaemon(true);
         listenerThread.start();
+        try {
+            l.await(15, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+        }
     }
 
     private void postEvent(final String name) {
@@ -108,7 +136,9 @@ public class PGListener implements InitializingBean, DisposableBean {
     @Override
     public void destroy() throws Exception {
         this.running.set(false);
-        listenerThread.interrupt();
+        if (listenerThread != null) {
+            listenerThread.interrupt();
+        }
     }
 
 }
