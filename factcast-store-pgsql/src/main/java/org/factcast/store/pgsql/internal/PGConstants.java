@@ -54,10 +54,13 @@ public class PGConstants {
 
     public String SELECT_LATEST_SER = "SELECT max(" + COLUMN_SER + ") FROM " + TABLE_FACT;
 
-    public String SELECT_ID_FROM_CATCHUP = "SELECT " + PROJECTION_ID + " FROM " + TABLE_FACT
-            + " WHERE (" + COLUMN_SER + " IN ( SELECT " + COLUMN_SER + " FROM " + TABLE_CATCHUP
-            + " WHERE " + COLUMN_CID + "=? AND " + COLUMN_SER + ">? LIMIT ? ) ORDER BY "
-            + COLUMN_SER + " ASC";
+    public String SELECT_ID_FROM_CATCHUP = //
+            "SELECT " + PROJECTION_ID + //
+                    " FROM " + TABLE_FACT + //
+                    " WHERE " + COLUMN_SER + " IN ( " + //
+                    "   SELECT " + COLUMN_SER + " FROM " + TABLE_CATCHUP + //
+                    "   WHERE ( " + COLUMN_CID + "=? AND " + COLUMN_SER + ">? ) LIMIT ? " + //
+                    ") ORDER BY " + COLUMN_SER + " ASC";
 
     public String SELECT_FACT_FROM_CATCHUP = //
             "SELECT " + PROJECTION_FACT + //

@@ -11,7 +11,15 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(fluent = false)
 public class PGConfigurationProperties {
-    private int fetchSize = 10;// FIXME
+    /**
+     * defines the number of Facts being retrieved with one Page Query
+     */
+    private int factPageSize = 500;
 
-    private long notificationWaitTimeInMillis = 1000 * 120;
+    /**
+     * defines the number of Facts being retrieved with one Page Query, when
+     * fetching only IDs
+     */
+    private int idPageSize = 10000;
+
 }

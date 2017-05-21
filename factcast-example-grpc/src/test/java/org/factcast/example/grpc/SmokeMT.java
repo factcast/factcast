@@ -106,27 +106,18 @@ public class SmokeMT {
             System.out.println("reading");
 
             AtomicLong l = new AtomicLong();
+            long start = System.currentTimeMillis();
             Subscription sub = fc.subscribeToFacts(SubscriptionRequest.follow(FactSpec.ns("smoke"))
                     .fromScratch(), new FactObserver() {
 
                         @Override
                         public void onNext(Fact f) {
                             l.incrementAndGet();
-                            // if (Math.random() < .01) {
-                            // try {
-                            // Thread.sleep(100);
-                            // } catch (InterruptedException e) {
-                            // // TODO Auto-generated catch block
-                            // e.printStackTrace();
-                            // }
-                            // }
-                            // System.out.println(l.get());
-
                         }
 
                     }).awaitCatchup();
 
-            System.out.println("l " + l.get());
+            System.out.println("l " + l.get() + " " + (System.currentTimeMillis() - start) + "ms");
 
             // System.out.println("writing");
             //

@@ -61,6 +61,15 @@ public class PGCatchUpFactory {
 
         private long clientId = 0;
 
+        public LinkedList<Fact> doFetch(PGCatchUpFetchPage fetch) {
+            boolean idsOnly = request.idOnly() && postQueryMatcher.canBeSkipped();
+            if (idsOnly) {
+                return fetch.fetchIdFacts(serial);
+            } else {
+                return fetch.fetchFacts(serial);
+            }
+        }
+
         @Override
         public void run() {
             PGCatchUpPrepare prep = new PGCatchUpPrepare(jdbc, request);
@@ -68,11 +77,10 @@ public class PGCatchUpFactory {
 
             if (clientId > 0) {
                 try {
-                    PGCatchUpFetchPage fetch = new PGCatchUpFetchPage(jdbc, request, clientId, props
-                            .getFetchSize());
-
+                    PGCatchUpFetchPage fetch = new PGCatchUpFetchPage(jdbc, props, request,
+                            clientId);
                     while (true) {
-                        LinkedList<Fact> facts = fetch.fetchFacts(serial);
+                        LinkedList<Fact> facts = doFetch(fetch);
                         if (facts.isEmpty()) {
                             // we have reached the end
                             break;
@@ -107,6 +115,8 @@ public class PGCatchUpFactory {
                             }
                         }
                     }
+                } catch (Exception e) {
+                    log.error("While fetching ", e);
                 } finally {
                     jdbc.update(PGConstants.DELETE_CATCH_BY_CID, clientId);
                 }

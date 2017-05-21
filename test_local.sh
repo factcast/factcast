@@ -8,6 +8,3 @@ java \
 -jar factcast-server/target/factcast.jar 
 
 
-#-Dlogging.level.org.factcast=TRACE \
-#spring.datasource.url=jdbc:pgsql://192.168.3.11/test1?user=tester&password=test_password
-# -D"spring.datasource.url=jdbc:postgresql://localhost/test5?user=tester&password=test_password" \

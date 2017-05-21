@@ -1,6 +1,7 @@
 package org.factcast.client.grpc;
 
 import org.factcast.core.Fact;
+import org.factcast.core.IdOnlyFact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
