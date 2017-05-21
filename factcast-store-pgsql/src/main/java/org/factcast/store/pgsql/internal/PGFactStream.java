@@ -95,7 +95,7 @@ public class PGFactStream {
             subscription.notifyCatchup();
         }
 
-        if (isConnected() && request.continous()) {
+        if (isConnected() && request.continuous()) {
 
             log.info("{} entering follow mode", request);
 
