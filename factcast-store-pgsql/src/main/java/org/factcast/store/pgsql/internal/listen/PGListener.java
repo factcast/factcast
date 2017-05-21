@@ -85,25 +85,17 @@ public class PGListener implements InitializingBean, DisposableBean {
                                 log.trace("No notifications yet. Looping.");
                             }
                         } else {
-                            log.warn("Connection is failing test");
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
-                            }
+                            log("Connection is failing test", null);
+                            sleepUnlessTest(1000);
                             break;
                         }
                     }
 
                 } catch (SQLException e) {
-                    if (e.getMessage().contains("administrator command")) {
-                        log.warn("While waiting for Notifications", e);
-                    } else {
-                        log.warn("While waiting for Notifications", e);
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e1) {
-                        }
-                    }
+
+                    log("While waiting for Notifications", e);
+                    sleepUnlessTest(1000);
+
                 }
             }
 
@@ -114,6 +106,25 @@ public class PGListener implements InitializingBean, DisposableBean {
             l.await(15, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
+    }
+
+    private void sleepUnlessTest(int i) {
+        try {
+            Thread.sleep(inJunitTest() ? Math.min(50, i) : i);
+        } catch (InterruptedException e) {
+        }
+    }
+
+    private void log(String msg, SQLException e) {
+        if (inJunitTest()) {
+            log.trace(msg, e);
+        } else {
+            log.warn(msg, e);
+        }
+    }
+
+    private boolean inJunitTest() {
+        return Package.getPackage("org.junit") != null;
     }
 
     private void postEvent(final String name) {

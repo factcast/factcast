@@ -154,16 +154,13 @@ public class PGQueryIT {
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
 
-        Thread.sleep(1000);
         s.awaitCatchup();
         verify(c).onCatchup();
         verify(c, times(8)).onNext(any(Fact.class));
 
-        sleep(200);
         insertTestFact(TestHeader.create());
 
-        sleep(300);
-
+        sleep(200);
         verify(c, times(9)).onNext(any(Fact.class));
 
     }
