@@ -26,8 +26,7 @@ public class FactTransformer {
                     org.factcast.server.rest.resources.FactJson.Header.class, f.jsonHeader()),
                     payLoad);
         } catch (Exception e) {
-            log.error("error", e);
-            throw new WebApplicationException(500);
+            throw new WebApplicationException(e.getMessage(), 500);
         }
     }
 }
