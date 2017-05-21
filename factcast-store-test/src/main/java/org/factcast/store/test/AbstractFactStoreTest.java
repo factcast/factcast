@@ -4,10 +4,10 @@ import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Vector;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
@@ -93,7 +93,7 @@ public abstract class AbstractFactStoreTest {
 
     private static class TestFactObserver implements FactObserver {
 
-        private List<Fact> values = new LinkedList<>();
+        private List<Fact> values = new Vector<>();
 
         @Override
         public synchronized void onNext(Fact element) {
@@ -103,17 +103,17 @@ public abstract class AbstractFactStoreTest {
 
         @SneakyThrows
         public void await(int count) {
-            synchronized (this) {
-                while (true) {
-                    if (values.size() >= count) {
-                        return;
-                    } else {
+
+            while (true) {
+                if (values.size() >= count) {
+                    return;
+                } else {
+                    synchronized (this) {
                         this.wait(50);
                     }
                 }
             }
         }
-
     }
 
     @Test(timeout = 10000)
