@@ -25,7 +25,7 @@ const store = new RemoteFactStore('localhost:9090', grpc.credentials.createInsec
 
 const subscription = store.subscribe({
   json: JSON.stringify({
-    continous: true,
+    continuous: true,
     specs: [
       {
         ns: 'myapp'

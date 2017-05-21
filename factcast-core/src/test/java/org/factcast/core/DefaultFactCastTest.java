@@ -57,7 +57,7 @@ public class DefaultFactCastTest {
         verify(store).subscribe(any(), any());
 
         final SubscriptionRequestTO req = csr.getValue();
-        assertTrue(req.continous());
+        assertTrue(req.continuous());
         assertFalse(req.idOnly());
         assertEquals(since, req.startingAfter().get());
         assertFalse(req.ephemeral());
@@ -76,7 +76,7 @@ public class DefaultFactCastTest {
         verify(store).subscribe(any(), any());
 
         final SubscriptionRequestTO req = csr.getValue();
-        assertTrue(req.continous());
+        assertTrue(req.continuous());
         assertTrue(req.idOnly());
         assertFalse(req.ephemeral());
     }

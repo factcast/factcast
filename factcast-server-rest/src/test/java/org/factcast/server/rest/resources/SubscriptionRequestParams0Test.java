@@ -26,7 +26,7 @@ public class SubscriptionRequestParams0Test {
         subscriptionRequestParams.from(id.toString());
         SubscriptionRequestTO to = subscriptionRequestParams.toRequest(true);
         assertEquals(factSpecs, to.specs());
-        assertTrue(to.continous());
+        assertTrue(to.continuous());
         assertTrue(to.idOnly());
         assertEquals(id, to.startingAfter().get());
     }

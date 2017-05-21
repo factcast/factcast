@@ -146,7 +146,7 @@ public class ProtoConverterTest {
 
     @Test
     public void testToProtoSubscriptionRequest() throws Exception {
-        SubscriptionRequestTO to = new SubscriptionRequestTO().continous(true).ephemeral(false)
+        SubscriptionRequestTO to = new SubscriptionRequestTO().continuous(true).ephemeral(false)
                 .debugInfo("test").maxBatchDelayInMs(13).marks(true);
 
         to.addSpecs(Arrays.asList(FactSpec.ns("foo")));
@@ -154,7 +154,7 @@ public class ProtoConverterTest {
 
         assertEquals(to.debugInfo(), copy.debugInfo());
         assertEquals(to.ephemeral(), copy.ephemeral());
-        assertEquals(to.continous(), copy.continous());
+        assertEquals(to.continuous(), copy.continuous());
         assertEquals(to.maxBatchDelayInMs(), copy.maxBatchDelayInMs());
         assertEquals(to.specs().get(0).type(), copy.specs().get(0).type());
         assertEquals(to.specs().get(0).ns(), copy.specs().get(0).ns());

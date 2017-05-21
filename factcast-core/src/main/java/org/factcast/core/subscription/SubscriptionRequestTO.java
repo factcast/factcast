@@ -44,7 +44,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     boolean marks;
 
     @JsonProperty
-    boolean continous;
+    boolean continuous;
 
     @JsonProperty
     boolean ephemeral;
@@ -75,7 +75,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     // copy constr. from a SR
     public SubscriptionRequestTO(SubscriptionRequest request) {
         maxBatchDelayInMs = request.maxBatchDelayInMs();
-        continous = request.continous();
+        continuous = request.continuous();
         ephemeral = request.ephemeral();
         startingAfter = request.startingAfter().orElse(null);
         debugInfo = request.debugInfo();

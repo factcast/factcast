@@ -139,7 +139,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
             subscription.notifyCatchup();
 
             // follow
-            if (request.continous()) {
+            if (request.continuous()) {
                 activeFollowers.add(s);
             } else {
                 subscription.notifyComplete();

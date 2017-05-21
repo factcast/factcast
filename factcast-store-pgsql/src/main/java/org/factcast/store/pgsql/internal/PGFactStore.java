@@ -120,7 +120,7 @@ public class PGFactStore implements FactStore {
     public Subscription subscribe(@NonNull SubscriptionRequestTO request,
             @NonNull FactObserver observer) {
 
-        if (request.continous()) {
+        if (request.continuous()) {
             subscriptionFollowMeter.mark();
         } else {
             subscriptionCatchupMeter.mark();

@@ -28,7 +28,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     long maxBatchDelayInMs = 0;
 
-    boolean continous;
+    boolean continuous;
 
     UUID startingAfter;
 
@@ -78,13 +78,13 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
         SpecBuilder follow(FactSpec specification) {
             or(specification);
-            toBuild.continous = true;
+            toBuild.continuous = true;
             return this;
         }
 
         SpecBuilder catchup(FactSpec specification) {
             or(specification);
-            toBuild.continous = false;
+            toBuild.continuous = false;
             return this;
         }
 

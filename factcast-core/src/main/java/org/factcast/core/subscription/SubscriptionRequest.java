@@ -21,7 +21,7 @@ public interface SubscriptionRequest {
 
     long maxBatchDelayInMs();
 
-    boolean continous();
+    boolean continuous();
 
     boolean marks();
 

@@ -35,7 +35,7 @@ public class SubscriptionRequestParams {
     public SubscriptionRequestTO toRequest(boolean idOnly) {
 
         SubscriptionRequestTO r = new SubscriptionRequestTO();
-        r.continous(follow);
+        r.continuous(follow);
         if (from != null) {
             r.startingAfter(UUID.fromString(from));
         }
