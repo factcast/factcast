@@ -5,6 +5,13 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.cloud.aws.jdbc.datasource.TomcatJdbcDataSourceFactory;
 import org.springframework.cloud.aws.jdbc.rds.AmazonRdsDataSourceFactoryBean;
 
+/**
+ * exchange the given TomcatJdbcDataSourceFactory with a customized factory so
+ * we can configure the datasource connection pool
+ * 
+ *
+ */
+
 public class RdsDataSourceFactorBeanPostProcessor implements BeanPostProcessor {
 
     @Override
