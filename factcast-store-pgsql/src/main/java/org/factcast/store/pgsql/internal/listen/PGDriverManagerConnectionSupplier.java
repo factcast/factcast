@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
+import org.assertj.core.util.VisibleForTesting;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PGDriverManagerConnectionSupplier implements Supplier<PgConnection> {
     @NonNull
-    final org.apache.tomcat.jdbc.pool.DataSource ds;
+    private final org.apache.tomcat.jdbc.pool.DataSource ds;
 
     @Inject
     PGDriverManagerConnectionSupplier(@NonNull DataSource dataSource) {
@@ -47,7 +48,8 @@ public class PGDriverManagerConnectionSupplier implements Supplier<PgConnection>
         }
     }
 
-    private Properties buildCredentialProperties(org.apache.tomcat.jdbc.pool.DataSource ds) {
+    @VisibleForTesting
+    Properties buildCredentialProperties(org.apache.tomcat.jdbc.pool.DataSource ds) {
 
         Properties dbp = new Properties();
         dbp.setProperty("user", ds.getPoolProperties().getUsername());
