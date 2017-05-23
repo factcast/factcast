@@ -16,6 +16,7 @@
 		<module>factcast-client-cache-infinispan</module>
 		<module>factcast-example-grpc</module>
 		<module>factcast-store-pgsql</module>
+		<module>factcast-store-pgsql-rds</module>
 		<module>factcast-store-inmem</module>
 		<module>factcast-store-test</module>
 		<module>factcast-core</module>
