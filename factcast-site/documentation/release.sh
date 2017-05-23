@@ -2,7 +2,10 @@
 set -e
 rm -rf stage
 rm -rf public
-rm -r hugo-theme*
+if [ -e hugo-theme* ];
+then
+  rm -r hugo-theme*
+fi
 wget -qO- https://github.com/uweschaefer/hugo-theme-docdock/archive/master.zip|bsdtar -xvf- 
 
 hugo

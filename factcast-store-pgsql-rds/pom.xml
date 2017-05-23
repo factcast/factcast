@@ -13,6 +13,12 @@
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-aws-jdbc</artifactId>
+			<exclusions>
+			<exclusion>
+			<group>commons-logging</group>
+			<artifactId>commons-logging</artifactId>
+			</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 </project>
