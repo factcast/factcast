@@ -8,9 +8,10 @@ import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
-import org.assertj.core.util.VisibleForTesting;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.stereotype.Component;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
