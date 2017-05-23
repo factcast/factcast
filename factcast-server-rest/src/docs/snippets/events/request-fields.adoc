@@ -1,7 +1,7 @@
 |===
 |Parameter|Type|Description|Constraints
 
-|follow
+|continuous
 |boolean 
 |if the stream should be endless, or terminates
 |Defaults to false

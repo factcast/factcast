@@ -1,11 +1,8 @@
 package org.factcast.server.rest.documentation.util;
 
-import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
-
 import java.util.List;
 
 import org.springframework.restdocs.payload.FieldDescriptor;
-import org.springframework.restdocs.request.ParameterDescriptor;
 
 import com.google.common.collect.Lists;
 
@@ -24,14 +21,4 @@ public class Descriptors {
 
     }
 
-    public static List<ParameterDescriptor> getSubscriptionRequestParamsdescriptor() {
-
-        return Lists.newArrayList(parameterWithName("from").description(
-                "UUID of the last fact, the client crawled before").optional(),
-
-                parameterWithName("follow").description("Boolean, if the stream is to infinitiy")
-                        .optional(),
-
-                parameterWithName("factSpec").description("multiple specifications, in json"));
-    }
 }

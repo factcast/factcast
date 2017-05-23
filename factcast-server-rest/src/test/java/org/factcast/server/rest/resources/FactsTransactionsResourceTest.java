@@ -1,6 +1,8 @@
 package org.factcast.server.rest.resources;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.anyList;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
@@ -31,6 +33,7 @@ public class FactsTransactionsResourceTest {
     @InjectMocks
     private FactsTransactionsResource uut;
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     public void testNewTransaction() throws Exception {
         FactTransactionJson factTransactionJson = objectMapper.readValue(this.getClass()
@@ -48,6 +51,15 @@ public class FactsTransactionsResourceTest {
         assertEquals(sentFact.header().id(), fact.id());
         assertEquals(objectMapper.writeValueAsString(sentFact.header()), fact.jsonHeader());
         assertEquals(sentFact.payload().toString(), fact.jsonPayload());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test(expected = BadRequestException.class)
+    public void testBadRequestEx() throws Exception {
+        FactTransactionJson factTransactionJson = objectMapper.readValue(this.getClass()
+                .getResourceAsStream("TransactionJson.json"), FactTransactionJson.class);
+        doThrow(IllegalArgumentException.class).when(factStore).publish(anyList());
+        uut.newTransaction(factTransactionJson);
     }
 
     @Test(expected = BadRequestException.class)

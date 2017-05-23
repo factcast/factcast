@@ -24,8 +24,8 @@ public class SubscriptionRequestParams {
     @IgnoreInRestSchema
     private String from;
 
-    @QueryParam("follow")
-    private boolean follow;
+    @QueryParam("continuous")
+    private boolean continuous;
 
     @NotEmpty
     @QueryParam("factSpec")
@@ -35,7 +35,7 @@ public class SubscriptionRequestParams {
     public SubscriptionRequestTO toRequest(boolean idOnly) {
 
         SubscriptionRequestTO r = new SubscriptionRequestTO();
-        r.continuous(follow);
+        r.continuous(continuous);
         if (from != null) {
             r.startingAfter(UUID.fromString(from));
         }

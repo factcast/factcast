@@ -15,6 +15,7 @@ import javax.ws.rs.ext.Provider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 
 @Provider
@@ -22,7 +23,7 @@ public class JsonParamConverterProvider implements ParamConverterProvider {
     private final ObjectMapper objectMapper;
 
     @Inject
-    public JsonParamConverterProvider(ObjectMapper objectMapper) {
+    public JsonParamConverterProvider(@NonNull ObjectMapper objectMapper) {
         super();
         this.objectMapper = objectMapper;
     }

@@ -21,7 +21,7 @@ public class SubscriptionRequestParams0Test {
         FactSpec factSpec = mock(FactSpec.class);
         factSpecs.add(factSpec);
         subscriptionRequestParams.factSpec(factSpecs);
-        subscriptionRequestParams.follow(true);
+        subscriptionRequestParams.continuous(true);
         UUID id = UUID.randomUUID();
         subscriptionRequestParams.from(id.toString());
         SubscriptionRequestTO to = subscriptionRequestParams.toRequest(true);

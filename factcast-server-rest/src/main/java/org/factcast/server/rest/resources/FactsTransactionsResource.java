@@ -18,6 +18,7 @@ import org.factcast.core.store.FactStore;
 import org.factcast.server.rest.resources.cache.NoCache;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercateo.common.rest.schemagen.JerseyResource;
 
@@ -40,12 +41,13 @@ public class FactsTransactionsResource implements JerseyResource {
 
         List<Fact> listToPublish = factTransactionJson.facts().stream().map(f -> {
             if (f.payload().isNull()) {
-                throw new BadRequestException("the paload has to be not null");
+                throw new BadRequestException("the payload has to be not null");
             }
             String headerString;
             try {
                 headerString = objectMapper.writeValueAsString(f.header());
-            } catch (Exception e) {
+            } catch (JsonProcessingException e) {
+                // this should really never happen :-)
                 log.error("error", e);
                 throw new WebApplicationException(500);
             }
@@ -55,7 +57,7 @@ public class FactsTransactionsResource implements JerseyResource {
         try {
             factStore.publish(listToPublish);
         } catch (IllegalArgumentException e) {
-            throw new WebApplicationException(e.getMessage(), 400);
+            throw new BadRequestException(e.getMessage());
         }
     }
 }

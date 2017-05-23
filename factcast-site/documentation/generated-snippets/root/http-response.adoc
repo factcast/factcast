@@ -8,7 +8,7 @@ Access-Control-Allow-Credentials: false
 Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, HEAD
 Access-Control-Max-Age: 1209600
 Cache-Control: no-cache
-Content-Length: 3793
+Content-Length: 3801
 
 {
   "_schema" : {
@@ -17,6 +17,10 @@ Content-Length: 3793
       "schema" : {
         "type" : "object",
         "properties" : {
+          "continuous" : {
+            "type" : "boolean",
+            "default" : false
+          },
           "factSpec" : {
             "type" : "array",
             "items" : {
@@ -41,10 +45,6 @@ Content-Length: 3793
               }
             },
             "minItems" : 1
-          },
-          "follow" : {
-            "type" : "boolean",
-            "default" : false
           }
         },
         "required" : [ "factSpec" ]
@@ -59,6 +59,10 @@ Content-Length: 3793
       "schema" : {
         "type" : "object",
         "properties" : {
+          "continuous" : {
+            "type" : "boolean",
+            "default" : false
+          },
           "factSpec" : {
             "type" : "array",
             "items" : {
@@ -83,10 +87,6 @@ Content-Length: 3793
               }
             },
             "minItems" : 1
-          },
-          "follow" : {
-            "type" : "boolean",
-            "default" : false
           }
         },
         "required" : [ "factSpec" ]

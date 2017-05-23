@@ -9,13 +9,15 @@ import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.core.HttpHeaders;
 
+import lombok.NonNull;
+
 @Cacheable
 @Priority(Priorities.HEADER_DECORATOR)
 public class CachableFilter implements ContainerResponseFilter {
 
     @Override
-    public void filter(ContainerRequestContext requestContext,
-            ContainerResponseContext responseContext) throws IOException {
+    public void filter(@NonNull ContainerRequestContext requestContext,
+            @NonNull ContainerResponseContext responseContext) throws IOException {
         if (responseContext.getStatusInfo().getStatusCode() == 200) {
             responseContext.getHeaders().putSingle(HttpHeaders.CACHE_CONTROL,
                     "max-age=1000000, s-maxage=1000000, public");

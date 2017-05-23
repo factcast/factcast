@@ -12,6 +12,8 @@ import static org.mockito.Mockito.when;
 import java.net.URI;
 import java.util.Optional;
 
+import javax.ws.rs.NotFoundException;
+
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.server.rest.TestFacts;
@@ -87,6 +89,17 @@ public class FactsResourceTest {
         when(schemaCreator.forFactWithId(any())).thenReturn(value);
         ObjectWithSchema<FactJson> result = uut.getForId(TestFacts.one.id().toString());
         assertThat(result, is(value));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test(expected = NotFoundException.class)
+    public void testGetForIdNotFound() throws Exception {
+        when(factStore.fetchById(TestFacts.one.id())).thenThrow(IllegalArgumentException.class);
+        ObjectWithSchema<FactJson> value = ObjectWithSchema.create(null, JsonHyperSchema.from(Lists
+                .newArrayList()));
+        when(schemaCreator.forFactWithId(any())).thenReturn(value);
+        uut.getForId(TestFacts.one.id().toString());
+
     }
 
 }

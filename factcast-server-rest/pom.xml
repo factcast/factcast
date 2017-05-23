@@ -31,6 +31,7 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-jetty</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.mercateo.rest</groupId>
@@ -79,6 +80,7 @@
 			<groupId>org.glassfish.jersey.core</groupId>
 			<artifactId>jersey-client</artifactId>
 			<version>2.25.1</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish.jersey.test-framework.providers</groupId>
@@ -89,7 +91,7 @@
 		<dependency>
 			<groupId>com.mercateo.rest</groupId>
 			<artifactId>rest-hateoas-client</artifactId>
-			<version>0.0.5</version>
+			<version>0.1.0</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
