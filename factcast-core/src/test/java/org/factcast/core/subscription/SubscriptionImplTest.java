@@ -118,9 +118,65 @@ public class SubscriptionImplTest {
         on.notifyComplete();
         verify(obs).onComplete();
 
+        // subsequent calls will be ignored, as this subscription was completed.
+        // creating a new one...
+
+    }
+
+    @Test
+    public void testOnError() throws Exception {
+        SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
+
         verify(obs, never()).onError(any());
         on.notifyError(new Throwable("ignore me"));
         verify(obs).onError(any());
+
+    }
+
+    @Test
+    public void testOnErrorCloses() throws Exception {
+        SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
+
+        on.notifyError(new Throwable("ignore me"));
+
+        on.notifyElement(1);
+        on.notifyCatchup();
+        on.notifyComplete();
+
+        verify(obs, never()).onComplete();
+        verify(obs, never()).onCatchup();
+        verify(obs, never()).onNext(anyInt());
+
+    }
+
+    @Test
+    public void testOnCompleteCloses() throws Exception {
+        SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
+
+        on.notifyComplete();
+
+        on.notifyElement(1);
+        on.notifyCatchup();
+        on.notifyError(new Throwable("ignore me"));
+
+        verify(obs, never()).onError(any());
+        verify(obs, never()).onCatchup();
+        verify(obs, never()).onNext(anyInt());
+
+    }
+
+    @Test
+    public void testOnCatchupDoesNotClose() throws Exception {
+        SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
+
+        on.notifyCatchup();
+
+        on.notifyElement(1);
+        on.notifyError(new Throwable("ignore me"));
+
+        verify(obs).onError(any());
+        verify(obs).onCatchup();
+        verify(obs).onNext(anyInt());
 
     }
 
