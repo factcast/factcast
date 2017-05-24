@@ -2,6 +2,7 @@ package org.factcast.server.rest.resources;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.QueryParam;
@@ -16,13 +17,21 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.mercateo.common.rest.schemagen.IgnoreInRestSchema;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Slf4j
 public class SubscriptionRequestParams {
+    private static final AtomicLong counter = new AtomicLong();
+
     @HeaderParam(SseFeature.LAST_EVENT_ID_HEADER)
     @IgnoreInRestSchema
     private String from;
+
+    @HeaderParam("Debug-Info")
+    @IgnoreInRestSchema
+    private String debugInfo;
 
     @QueryParam("continuous")
     private boolean continuous;
@@ -42,6 +51,14 @@ public class SubscriptionRequestParams {
 
         r.addSpecs(factSpec);
         r.idOnly(idOnly);
+
+        r.debugInfo(convertDebugInfo());
         return r;
+    }
+
+    private String convertDebugInfo() {
+        String innerDebugString = "rest-subRequest #" + counter.incrementAndGet();
+        log.debug("Subscription " + toString() + " converted to " + innerDebugString);
+        return innerDebugString;
     }
 }

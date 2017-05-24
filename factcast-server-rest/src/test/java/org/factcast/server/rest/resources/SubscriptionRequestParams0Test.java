@@ -29,6 +29,7 @@ public class SubscriptionRequestParams0Test {
         assertTrue(to.continuous());
         assertTrue(to.idOnly());
         assertEquals(id, to.startingAfter().get());
+        assertEquals("rest-subRequest #1", to.debugInfo());
     }
 
 }
