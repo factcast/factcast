@@ -1,6 +1,7 @@
 package org.factcast.store.pgsql.internal.catchup;
 
 import java.util.LinkedList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
@@ -11,6 +12,8 @@ import org.factcast.store.pgsql.internal.rowmapper.PGFactExtractor;
 import org.factcast.store.pgsql.internal.rowmapper.PGIdFactExtractor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
+
+import com.google.common.base.Stopwatch;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,10 +35,14 @@ public class PGCatchUpFetchPage {
     public LinkedList<Fact> fetchFacts(AtomicLong serial) {
 
         int factPageSize = properties.getFactPageSize();
-        log.trace("{}  fetching next page of Facts for cid={}, limit={}, ser>{}", req, clientId,
-                factPageSize, serial.get());
-        return new LinkedList<Fact>(jdbc.query(PGConstants.SELECT_FACT_FROM_CATCHUP, createSetter(
-                serial, factPageSize), new PGFactExtractor(serial)));
+        Stopwatch sw = Stopwatch.createStarted();
+        final LinkedList<Fact> list = new LinkedList<Fact>(jdbc.query(
+                PGConstants.SELECT_FACT_FROM_CATCHUP, createSetter(serial, factPageSize),
+                new PGFactExtractor(serial)));
+        sw.stop();
+        log.debug("{}  fetched next page of Facts for cid={}, limit={}, ser>{} in {}ms", req,
+                clientId, factPageSize, serial.get(), sw.elapsed(TimeUnit.MILLISECONDS));
+        return list;
     }
 
     private PreparedStatementSetter createSetter(AtomicLong serial, int pageSize) {
@@ -50,10 +57,14 @@ public class PGCatchUpFetchPage {
     // order to release Facts for GC asap.
     public LinkedList<Fact> fetchIdFacts(AtomicLong serial) {
         int idPageSize = properties.getIdPageSize();
-        log.trace("{}  fetching next page of Ids for cid={}, limit={}, ser>{}", req, clientId,
-                idPageSize, serial.get());
+        Stopwatch sw = Stopwatch.createStarted();
+        final LinkedList<Fact> list = new LinkedList<>(jdbc.query(
+                PGConstants.SELECT_ID_FROM_CATCHUP, createSetter(serial, idPageSize),
+                new PGIdFactExtractor(serial)));
+        sw.stop();
+        log.debug("{}  fetched next page of Ids for cid={}, limit={}, ser>{} in {}ms", req,
+                clientId, idPageSize, serial.get(), sw.elapsed(TimeUnit.MILLISECONDS));
 
-        return new LinkedList<>(jdbc.query(PGConstants.SELECT_ID_FROM_CATCHUP, createSetter(serial,
-                idPageSize), new PGIdFactExtractor(serial)));
+        return list;
     }
 }

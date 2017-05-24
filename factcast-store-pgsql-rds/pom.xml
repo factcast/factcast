@@ -15,7 +15,7 @@
 			<artifactId>spring-cloud-starter-aws-jdbc</artifactId>
 			<exclusions>
 			<exclusion>
-			<group>commons-logging</group>
+			<groupId>commons-logging</groupId>
 			<artifactId>commons-logging</artifactId>
 			</exclusion>
 			</exclusions>

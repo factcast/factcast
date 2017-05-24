@@ -2,6 +2,7 @@ package org.factcast.store.pgsql.internal.catchup;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -10,6 +11,8 @@ import org.factcast.store.pgsql.internal.query.PGQueryBuilder;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
+
+import com.google.common.base.Stopwatch;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,12 +44,14 @@ public class PGCatchUpPrepare {
 
                 log.debug("{} preparing paging for matches after {}", req, serial.get());
                 try {
+                    Stopwatch sw = Stopwatch.createStarted();
                     b.createStatementSetter(serial).setValues(ps);
                     int numberOfFactsToCatchup = ps.executeUpdate();
-
+                    sw.stop();
                     if (numberOfFactsToCatchup > 0) {
-                        log.debug("{} prepared {} facts for cid={}", req, numberOfFactsToCatchup,
-                                clientId);
+                        log.debug("{} prepared {} facts for cid={} in {}ms", req,
+                                numberOfFactsToCatchup, clientId, sw.elapsed(
+                                        TimeUnit.MILLISECONDS));
                         return clientId;
                     } else {
                         log.debug("{} nothing to catch up", req);

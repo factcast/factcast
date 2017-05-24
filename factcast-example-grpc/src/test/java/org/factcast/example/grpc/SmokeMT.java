@@ -4,12 +4,11 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.IdObserver;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -107,11 +106,11 @@ public class SmokeMT {
 
             AtomicLong l = new AtomicLong();
             long start = System.currentTimeMillis();
-            Subscription sub = fc.subscribeToFacts(SubscriptionRequest.follow(FactSpec.ns("smoke"))
-                    .fromScratch(), new FactObserver() {
+            Subscription sub = fc.subscribeToIds(SubscriptionRequest.follow(FactSpec.ns("smoke"))
+                    .fromScratch(), new IdObserver() {
 
                         @Override
-                        public void onNext(Fact f) {
+                        public void onNext(UUID f) {
                             l.incrementAndGet();
                         }
 

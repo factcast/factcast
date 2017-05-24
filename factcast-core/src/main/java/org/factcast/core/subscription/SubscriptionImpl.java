@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.factcast.core.subscription.observer.GenericObserver;
 
@@ -23,12 +24,15 @@ public class SubscriptionImpl<T> implements Subscription {
     Runnable onClose = () -> {
     };
 
+    AtomicBoolean closed = new AtomicBoolean(false);
+
     final CompletableFuture<Void> catchup = new CompletableFuture<Void>();
 
     final CompletableFuture<Void> complete = new CompletableFuture<Void>();
 
     @Override
     public void close() throws Exception {
+        closed.set(true);
         SubscriptionCancelledException closedException = new SubscriptionCancelledException(
                 "Client closed the subscription");
         catchup.completeExceptionally(closedException);
@@ -80,34 +84,42 @@ public class SubscriptionImpl<T> implements Subscription {
 
     @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
     public void notifyCatchup() {
-        observer.onCatchup();
-        if (!catchup.isDone()) {
-            catchup.complete(null);
+        if (!closed.get()) {
+            observer.onCatchup();
+            if (!catchup.isDone()) {
+                catchup.complete(null);
+            }
         }
     }
 
     @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
     public void notifyComplete() {
-        observer.onComplete();
-        if (!catchup.isDone()) {
-            catchup.complete(null);
-        }
+        if (!closed.get()) {
+            observer.onComplete();
+            if (!catchup.isDone()) {
+                catchup.complete(null);
+            }
 
-        if (!complete.isDone()) {
-            complete.complete(null);
+            if (!complete.isDone()) {
+                complete.complete(null);
+            }
+            tryClose();
         }
-        tryClose();
     }
 
     public void notifyError(Throwable e) {
-        observer.onError(e);
-        if (!catchup.isDone()) {
-            catchup.completeExceptionally(e);
+        if (!closed.get()) {
+            observer.onError(e);
+
+            if (!catchup.isDone()) {
+                catchup.completeExceptionally(e);
+            }
+            if (!complete.isDone()) {
+                complete.completeExceptionally(e);
+            }
+            tryClose();
         }
-        if (!complete.isDone()) {
-            complete.completeExceptionally(e);
-        }
-        tryClose();
+
     }
 
     private void tryClose() {
@@ -119,7 +131,9 @@ public class SubscriptionImpl<T> implements Subscription {
     }
 
     public void notifyElement(@NonNull T e) {
-        observer.onNext(e);
+        if (!closed.get()) {
+            observer.onNext(e);
+        }
     }
 
     public SubscriptionImpl<T> onClose(Runnable e) {
