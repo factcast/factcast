@@ -15,7 +15,7 @@ import com.mercateo.rest.schemagen.spring.JerseyHateoasConfiguration;
 
 @Configuration
 @Import(JerseyHateoasConfiguration.class)
-public class FactCastRestConfig {
+public class FactCastRestConfiguration {
 
     @Bean
     FieldCheckerForSchema fieldCheckerForSchema() {
