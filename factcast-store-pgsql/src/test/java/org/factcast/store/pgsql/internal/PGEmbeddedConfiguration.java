@@ -33,30 +33,41 @@ public class PGEmbeddedConfiguration {
     static org.apache.tomcat.jdbc.pool.DataSource ds;
 
     static {
-        try {
-            PostgresConfig pgConfig = PostgresConfig.defaultWithDbName("embedded", "test", "test");
-            PostgresStarter<PostgresExecutable, PostgresProcess> runtime = PostgresStarter
-                    .getDefaultInstance();
-            PostgresExecutable exec = runtime.prepare(pgConfig);
-            exec.start();
 
-            String host = pgConfig.net().host();
-            int port = pgConfig.net().port();
-            String dbName = pgConfig.storage().dbName();
-            String url = String.format("jdbc:postgresql://%s:%s/%s", host, port, dbName);
-            //
+        String url = System.getenv("pg_url");
 
+        if (url == null) {
+            try {
+                PostgresConfig pgConfig = PostgresConfig.defaultWithDbName("embedded", "test",
+                        "test");
+                PostgresStarter<PostgresExecutable, PostgresProcess> runtime = PostgresStarter
+                        .getDefaultInstance();
+                PostgresExecutable exec = runtime.prepare(pgConfig);
+                exec.start();
+
+                String host = pgConfig.net().host();
+                int port = pgConfig.net().port();
+                String dbName = pgConfig.storage().dbName();
+                url = String.format("jdbc:postgresql://%s:%s/%s", host, port, dbName);
+                //
+
+                System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
+
+                System.setProperty("spring.datasource.username", pgConfig.credentials().username());
+                System.setProperty("spring.datasource.password", pgConfig.credentials().password());
+                System.setProperty("spring.datasource.host", host);
+                System.setProperty("spring.datasource.port", Integer.valueOf(port).toString());
+
+                System.setProperty("spring.datasource.url", url);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        } else {
+            // use predefined url
             System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
-
-            System.setProperty("spring.datasource.username", pgConfig.credentials().username());
-            System.setProperty("spring.datasource.password", pgConfig.credentials().password());
-            System.setProperty("spring.datasource.host", host);
-            System.setProperty("spring.datasource.port", Integer.valueOf(port).toString());
-
             System.setProperty("spring.datasource.url", url);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+
         }
     }
 

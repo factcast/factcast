@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
+import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.stereotype.Component;
 
@@ -53,8 +54,17 @@ public class PGDriverManagerConnectionSupplier implements Supplier<PgConnection>
     Properties buildCredentialProperties(org.apache.tomcat.jdbc.pool.DataSource ds) {
 
         Properties dbp = new Properties();
-        dbp.setProperty("user", ds.getPoolProperties().getUsername());
-        dbp.setProperty("password", ds.getPoolProperties().getPassword());
+        final PoolConfiguration poolProperties = ds.getPoolProperties();
+        if (poolProperties != null) {
+            final String user = poolProperties.getUsername();
+            if (user != null) {
+                dbp.setProperty("user", user);
+            }
+            final String pwd = poolProperties.getPassword();
+            if (pwd != null) {
+                dbp.setProperty("password", pwd);
+            }
+        }
 
         return dbp;
     }
