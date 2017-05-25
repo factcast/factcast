@@ -51,7 +51,7 @@ public class PGConnectionTester implements Predicate<Connection> {
                 log.trace("Connection test failed");
             }
         } catch (SQLException e) {
-            log.warn("Connection test failed with exception", e);
+            log.warn("Connection test failed with exception: {}", e.getMessage());
         }
 
         connectionFailureMetric.inc();
