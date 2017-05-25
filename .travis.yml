@@ -4,7 +4,5 @@ jdk:
 install: "mvn install -DskipTests"
 script: "ulimit -s 1082768 ; mvn -e clean verify jacoco:report coveralls:report"
 
-addons:
-  sonarqube:
-    organization: "uweschaefer-github"
+
     
