@@ -9,7 +9,7 @@ import org.factcast.core.Fact;
 public class TestFacts {
     public static final Fact one = new Fact() {
 
-        private final UUID id = UUID.randomUUID();
+        private final UUID id = UUID.fromString("d941087a-cb63-400f-bca2-7b65214fafa4");
 
         private final Set<UUID> aggIds = Sets.newLinkedHashSet(UUID.randomUUID());
 

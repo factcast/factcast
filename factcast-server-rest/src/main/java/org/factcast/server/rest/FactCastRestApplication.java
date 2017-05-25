@@ -13,6 +13,8 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.logging.LoggingFeature.Verbosity;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.server.ServerProperties;
+import org.glassfish.jersey.server.validation.internal.ValidationExceptionMapper;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.springframework.stereotype.Component;
 
@@ -39,6 +41,10 @@ public class FactCastRestApplication extends ResourceConfig {
                 2000);
 
         register(loggingFeature);
+
+        register(ValidationExceptionMapper.class);
+
+        property(ServerProperties.BV_SEND_ERROR_IN_RESPONSE, true);
     }
 
 }

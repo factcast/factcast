@@ -15,7 +15,7 @@ weight = 12
 :icons: font
 :source-highlighter: highlightjs
 
-For consuming the REST-API there are many way, here we show the ones with the help of this https://github.com/Mercateo/rest-hateoas-client[HATEOAS-Client].
+For consuming the REST-API there are many ways, here we show the ones with the help of this https://github.com/Mercateo/rest-hateoas-client[HATEOAS-Client].
 
 == Streaming whole events
 The default way, to get facts from the REST-API would be to get a stream of full fact. 

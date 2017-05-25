@@ -45,12 +45,10 @@ public class FactJson {
     public static class Header {
 
         @JsonProperty
-        @NonNull
         @NotNull
         final UUID id;
 
         @JsonProperty
-        @NonNull
         @NotNull
         final String ns;
 
