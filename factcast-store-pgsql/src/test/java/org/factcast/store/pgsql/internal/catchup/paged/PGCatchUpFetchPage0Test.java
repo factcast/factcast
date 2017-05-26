@@ -1,4 +1,4 @@
-package org.factcast.store.pgsql.internal.catchup;
+package org.factcast.store.pgsql.internal.catchup.paged;
 
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.pgsql.PGConfigurationProperties;
 import org.factcast.store.pgsql.internal.PGConstants;
+import org.factcast.store.pgsql.internal.catchup.PGCatchUpFetchPage;
 import org.factcast.store.pgsql.internal.rowmapper.PGIdFactExtractor;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,7 +38,7 @@ public class PGCatchUpFetchPage0Test {
 
     @Test
     public void testFetchIdFacts() throws Exception {
-        uut = new PGCatchUpFetchPage(jdbc, properties, req, 12);
+        uut = new PGCatchUpFetchPage(jdbc, properties.getPageSize(), req, 12);
         uut.fetchIdFacts(new AtomicLong());
 
         verify(jdbc).query(eq(PGConstants.SELECT_ID_FROM_CATCHUP), any(

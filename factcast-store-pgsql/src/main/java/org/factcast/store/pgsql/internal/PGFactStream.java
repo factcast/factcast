@@ -10,7 +10,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.pgsql.internal.catchup.PGCatchUpFactory;
+import org.factcast.store.pgsql.internal.catchup.PGCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PGLatestSerialFetcher;
 import org.factcast.store.pgsql.internal.query.PGQueryBuilder;
@@ -45,7 +45,7 @@ public class PGFactStream {
 
     final PGLatestSerialFetcher fetcher;
 
-    final PGCatchUpFactory pgCatchupFactory;
+    final PGCatchupFactory pgCatchupFactory;
 
     CondensedQueryExecutor condensedExecutor;
 
