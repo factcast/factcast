@@ -31,6 +31,9 @@ public class GenericObserver0Test {
 
         verify(i, never()).onError(any());
         mapped.onError(new Throwable("ignore me") {
+
+            private static final long serialVersionUID = 1L;
+
             @Override
             public StackTraceElement[] getStackTrace() {
                 return new StackTraceElement[0];
