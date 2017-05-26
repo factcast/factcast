@@ -7,7 +7,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.store.pgsql.internal.catchup.PGCatchUpFactory;
+import org.factcast.store.pgsql.internal.catchup.PGCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PGLatestSerialFetcher;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -35,7 +35,7 @@ class PGSubscriptionFactory {
 
     final PGLatestSerialFetcher fetcher;
 
-    final PGCatchUpFactory catchupFactory;
+    final PGCatchupFactory catchupFactory;
 
     public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
         final SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
