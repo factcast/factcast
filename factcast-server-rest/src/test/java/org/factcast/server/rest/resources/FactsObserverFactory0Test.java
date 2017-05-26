@@ -17,25 +17,17 @@ public class FactsObserverFactory0Test {
     @Test
     public void testNullContracts() throws Exception {
 
-        TestHelper.expectNPE(() -> new FactsObserverFactory(
-                null,
-                mock(HyperSchemaCreator.class),
+        TestHelper.expectNPE(() -> new FactsObserverFactory(null, mock(HyperSchemaCreator.class),
                 mock(FactTransformer.class)));
 
-        TestHelper.expectNPE(() -> new FactsObserverFactory(
-                mock(LinkFactory.class),
-                null,
-                mock(FactTransformer.class)));
+        TestHelper.expectNPE(() -> new FactsObserverFactory(mock(LinkFactory.class), null, mock(
+                FactTransformer.class)));
 
-        TestHelper.expectNPE(() -> new FactsObserverFactory(
-                mock(LinkFactory.class),
-                mock(HyperSchemaCreator.class),
-                null));
+        TestHelper.expectNPE(() -> new FactsObserverFactory(mock(LinkFactory.class), mock(
+                HyperSchemaCreator.class), null));
 
-        FactsObserverFactory uut = new FactsObserverFactory(
-                mock(LinkFactory.class),
-                mock(HyperSchemaCreator.class),
-                mock(FactTransformer.class));
+        FactsObserverFactory uut = new FactsObserverFactory(mock(LinkFactory.class), mock(
+                HyperSchemaCreator.class), mock(FactTransformer.class));
 
         TestHelper.expectNPE(() -> uut.createFor(null, new URI("http://ibm.com"),
                 new AtomicReference<>(), false));
