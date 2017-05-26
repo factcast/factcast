@@ -1,6 +1,7 @@
 package org.factcast.store.pgsql.internal.listen;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.fail;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.*;
@@ -65,14 +66,21 @@ public class PGDriverManagerConnectionSupplier0Test {
 
     }
 
-    @Test(expected = SQLException.class)
+    @Test
     public void testExceptionOnDriverManager_getConnection() throws Exception {
         String url = "jdbc:xyz:foo";
         org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
         ds.setUrl(url);
 
         PGDriverManagerConnectionSupplier uut = new PGDriverManagerConnectionSupplier(ds);
-
-        uut.get();
+        try {
+            uut.get();
+            fail("Was expecting Exception");
+        } catch (Exception e) {
+            if (!(e.getCause() instanceof SQLException)) {
+                fail("Wrong Exception type. Was expecting SQLException wrapped in a RuntimeException, but got ",
+                        e);
+            }
+        }
     }
 }
