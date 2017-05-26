@@ -57,7 +57,7 @@ public class SubscriptionRequestParams {
     }
 
     private String convertDebugInfo() {
-        String innerDebugString = "rest-subRequest #" + counter.incrementAndGet();
+        String innerDebugString = "rest-sub#" + counter.incrementAndGet();
         log.debug("Subscription " + toString() + " converted to " + innerDebugString);
         return innerDebugString;
     }
