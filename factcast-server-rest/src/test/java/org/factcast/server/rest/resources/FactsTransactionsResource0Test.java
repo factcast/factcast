@@ -1,13 +1,14 @@
 package org.factcast.server.rest.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyList;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.WebApplicationException;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
@@ -19,8 +20,10 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FactsTransactionsResource0Test {
@@ -70,4 +73,21 @@ public class FactsTransactionsResource0Test {
         uut.newTransaction(factTransactionJson);
     }
 
+    @Test(expected = WebApplicationException.class)
+    public void testMappingException() throws Exception {
+        final ObjectMapper om = mock(ObjectMapper.class);
+        when(om.writeValueAsString(any())).thenThrow(new JsonProcessingException("ignore me") {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public StackTraceElement[] getStackTrace() {
+                return new StackTraceElement[] {};
+            }
+        });
+        uut = new FactsTransactionsResource(mock(FactStore.class), om);
+
+        final FactTransactionJson tx = new FactTransactionJson();
+        tx.facts(Arrays.asList(new FactJson().payload(TextNode.valueOf("buh"))));
+        uut.newTransaction(tx);
+    }
 }
