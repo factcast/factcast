@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.*;
 
+import java.sql.SQLException;
 import java.util.Properties;
 
 import javax.sql.DataSource;
@@ -55,7 +56,6 @@ public class PGDriverManagerConnectionSupplier0Test {
         assertEquals("testPassword", creds.get("password"));
     }
 
-    @SuppressWarnings("unused")
     @Test(expected = NullPointerException.class)
     public void test_constructor() {
 
@@ -63,5 +63,16 @@ public class PGDriverManagerConnectionSupplier0Test {
 
         failBecauseExceptionWasNotThrown(NullPointerException.class);
 
+    }
+
+    @Test(expected = SQLException.class)
+    public void testExceptionOnDriverManager_getConnection() throws Exception {
+        String url = "jdbc:xyz:foo";
+        org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
+        ds.setUrl(url);
+
+        PGDriverManagerConnectionSupplier uut = new PGDriverManagerConnectionSupplier(ds);
+
+        uut.get();
     }
 }
