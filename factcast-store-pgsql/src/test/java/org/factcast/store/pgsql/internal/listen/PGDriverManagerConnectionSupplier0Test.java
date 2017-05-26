@@ -1,10 +1,9 @@
 package org.factcast.store.pgsql.internal.listen;
 
-import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+import static org.mockito.MockitoAnnotations.*;
 
 import java.util.Properties;
 
@@ -15,6 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+@SuppressWarnings("all")
 public class PGDriverManagerConnectionSupplier0Test {
 
     PGDriverManagerConnectionSupplier uut;
@@ -29,7 +29,6 @@ public class PGDriverManagerConnectionSupplier0Test {
         uut = new PGDriverManagerConnectionSupplier(ds);
     }
 
-    @SuppressWarnings("unused")
     @Test(expected = IllegalStateException.class)
     public void test_wrongDataSourceImplementation() {
 

@@ -46,7 +46,7 @@ public class PGDriverManagerConnectionSupplier implements Supplier<PgConnection>
         } catch (SQLException e) {
             final String msg = "Cannot acquire Connection from DriverManager: " + ds.getUrl();
             log.error(msg, e);
-            throw new RuntimeException(msg, e);
+            throw new RuntimeException(msg);
         }
     }
 

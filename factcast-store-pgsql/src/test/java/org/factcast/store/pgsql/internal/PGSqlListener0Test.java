@@ -52,6 +52,7 @@ public class PGSqlListener0Test {
 
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testCheckFails() throws Exception {
         tester = mock(Predicate.class);
