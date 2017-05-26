@@ -25,8 +25,8 @@ class FactsObserverFactory {
     @NonNull
     private final FactTransformer factTransformer;
 
-    FactsObserver createFor(EventOutput eventOutput, URI baseURI,
-            AtomicReference<Subscription> subscription, boolean fullOutputMode) {
+    FactsObserver createFor(@NonNull EventOutput eventOutput, @NonNull URI baseURI,
+            @NonNull AtomicReference<Subscription> subscription, boolean fullOutputMode) {
         return new FactsObserver(eventOutput, factsResourceLinkFactory, hyperSchemaCreator, baseURI,
                 subscription, factTransformer, fullOutputMode);
     }
