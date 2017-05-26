@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.concurrent.Callable;
 
-public class Test0Helper {
+public class TestHelper {
 
     public static void expectNPE(Callable<?> e) {
         expect(NullPointerException.class, e);

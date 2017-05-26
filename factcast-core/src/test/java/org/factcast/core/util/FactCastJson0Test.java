@@ -1,6 +1,6 @@
 package org.factcast.core.util;
 
-import static org.factcast.core.Test0Helper.*;
+import static org.factcast.core.TestHelper.*;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
