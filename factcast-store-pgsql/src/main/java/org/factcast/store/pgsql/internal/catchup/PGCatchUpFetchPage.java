@@ -15,24 +15,27 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 
 import com.google.common.base.Stopwatch;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
-public class PGCatchUpFetchPage {
-
+class PGCatchUpFetchPage {
+    @NonNull
     final JdbcTemplate jdbc;
 
+    @NonNull
     final PGConfigurationProperties properties;
 
+    @NonNull
     final SubscriptionRequestTO req;
 
     final long clientId;
 
     // use LinkedLists so that we can use remove() rather than iteration, in
     // order to release Facts for GC asap.
-    public LinkedList<Fact> fetchFacts(AtomicLong serial) {
+    public LinkedList<Fact> fetchFacts(@NonNull AtomicLong serial) {
 
         int factPageSize = properties.getFactPageSize();
         Stopwatch sw = Stopwatch.createStarted();
@@ -55,7 +58,7 @@ public class PGCatchUpFetchPage {
 
     // use LinkedLists so that we can use remove() rather than iteration, in
     // order to release Facts for GC asap.
-    public LinkedList<Fact> fetchIdFacts(AtomicLong serial) {
+    public LinkedList<Fact> fetchIdFacts(@NonNull AtomicLong serial) {
         int idPageSize = properties.getIdPageSize();
         Stopwatch sw = Stopwatch.createStarted();
         final LinkedList<Fact> list = new LinkedList<>(jdbc.query(
