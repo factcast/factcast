@@ -30,9 +30,10 @@ public class JsonParamConverterProvider implements ParamConverterProvider {
 
     @AllArgsConstructor
     public static class JsonParamConverter<T> implements ParamConverter<T> {
-
+        @NonNull
         private final ObjectMapper objectMapper;
 
+        @NonNull
         private final Class<T> clazz;
 
         @Override
@@ -46,17 +47,19 @@ public class JsonParamConverterProvider implements ParamConverterProvider {
 
         @Override
         @SneakyThrows
-        public String toString(T value) {
+        public String toString(@NonNull T value) {
             return objectMapper.writeValueAsString(value);
         }
 
     }
 
     @Override
-    public <T> ParamConverter<T> getConverter(Class<T> rawType, Type genericType,
-            Annotation[] annotations) {
-        if (annotations != null && Arrays.stream(annotations).filter(a -> a instanceof JsonParam)
-                .findAny().isPresent() && !Collection.class.isAssignableFrom(rawType)) {
+    public <T> ParamConverter<T> getConverter(@NonNull Class<T> rawType, @NonNull Type genericType,
+            @NonNull Annotation[] annotations) {
+        if (annotations != null && Arrays.stream(annotations)
+                .filter(a -> a instanceof JsonParam)
+                .findAny()
+                .isPresent() && !Collection.class.isAssignableFrom(rawType)) {
             return new JsonParamConverter<T>(objectMapper, rawType);
         }
         return null;
