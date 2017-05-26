@@ -32,7 +32,7 @@ public class PGCatchUpPrepare {
 
     final SubscriptionRequestTO req;
 
-    long prepareCatchup(AtomicLong serial) {
+    public long prepareCatchup(AtomicLong serial) {
         PGQueryBuilder b = new PGQueryBuilder(req);
         long clientId = jdbc.queryForObject(PGConstants.NEXT_FROM_CATCHUP_SEQ, Long.class);
         String catchupSQL = b.catchupSQL(clientId);

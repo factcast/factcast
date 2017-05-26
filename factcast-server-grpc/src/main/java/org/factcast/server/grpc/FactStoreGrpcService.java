@@ -102,7 +102,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     private void resetDebugInfo(@NonNull SubscriptionRequestTO req) {
-        String newId = "sub#" + subscriptionIdStore.incrementAndGet();
+        String newId = "grpc-sub#" + subscriptionIdStore.incrementAndGet();
         log.info("subscribing {} for {} defined as {}", newId, req, req.dump());
         req.debugInfo(newId);
     }
