@@ -14,6 +14,7 @@ import com.mercateo.common.rest.schemagen.types.HyperSchemaCreator;
 
 public class FactsObserverFactory0Test {
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testNullContracts() throws Exception {
 
