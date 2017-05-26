@@ -1,6 +1,6 @@
 package org.factcast.server.grpc;
 
-import static org.factcast.core.Test0Helper.*;
+import static org.factcast.core.TestHelper.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;

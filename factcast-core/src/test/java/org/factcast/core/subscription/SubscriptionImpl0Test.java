@@ -1,6 +1,6 @@
 package org.factcast.core.subscription;
 
-import static org.factcast.core.Test0Helper.*;
+import static org.factcast.core.TestHelper.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 

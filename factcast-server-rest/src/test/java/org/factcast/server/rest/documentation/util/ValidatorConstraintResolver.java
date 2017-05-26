@@ -80,8 +80,7 @@ public class ValidatorConstraintResolver implements ConstraintResolver {
             PropertyDescriptor propertyDescriptor) {
         for (ConstraintDescriptor<?> constraintDescriptor : propertyDescriptor
                 .getConstraintDescriptors()) {
-            constraints.add(new Constraint(constraintDescriptor.getAnnotation()
-                    .annotationType()
+            constraints.add(new Constraint(constraintDescriptor.getAnnotation().annotationType()
                     .getName(), constraintDescriptor.getAttributes()));
         }
     }
@@ -89,8 +88,8 @@ public class ValidatorConstraintResolver implements ConstraintResolver {
     private Class<?> getFollowUpClass(PropertyDescriptor propertyDescriptor, Class<?> clazzBefore) {
         Class<?> clazz = propertyDescriptor.getElementClass();
         if (Collection.class.isAssignableFrom(clazz)) {
-            final Predicate<? super Field> predicate = f -> f.getName().equals(
-                    propertyDescriptor.getPropertyName());
+            final Predicate<? super Field> predicate = f -> f.getName().equals(propertyDescriptor
+                    .getPropertyName());
             @SuppressWarnings("unchecked")
             Set<Field> field = ReflectionUtils.getAllFields(clazzBefore, predicate);
             Type typeArgument = ((ParameterizedType) field.iterator().next().getGenericType())

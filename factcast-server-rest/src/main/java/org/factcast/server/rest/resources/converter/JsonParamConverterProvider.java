@@ -1,6 +1,5 @@
 package org.factcast.server.rest.resources.converter;
 
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Arrays;
@@ -20,6 +19,7 @@ import lombok.SneakyThrows;
 
 @Provider
 public class JsonParamConverterProvider implements ParamConverterProvider {
+    // would it be reasonable to use FCJson here?
     private final ObjectMapper objectMapper;
 
     @Inject
@@ -30,16 +30,17 @@ public class JsonParamConverterProvider implements ParamConverterProvider {
 
     @AllArgsConstructor
     public static class JsonParamConverter<T> implements ParamConverter<T> {
-
+        @NonNull
         private final ObjectMapper objectMapper;
 
+        @NonNull
         private final Class<T> clazz;
 
         @Override
         public T fromString(String value) {
             try {
                 return objectMapper.readValue(value, clazz);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw new BadRequestException();
             }
         }
