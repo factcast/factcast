@@ -30,7 +30,12 @@ public class GenericObserverTest {
         verify(i).onCatchup();
 
         verify(i, never()).onError(any());
-        mapped.onError(new Throwable("ignore me"));
+        mapped.onError(new Throwable("ignore me") {
+            @Override
+            public StackTraceElement[] getStackTrace() {
+                return new StackTraceElement[0];
+            }
+        });
         verify(i).onError(any());
 
         verify(i, never()).onComplete();
