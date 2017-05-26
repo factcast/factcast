@@ -1,8 +1,7 @@
 package org.factcast.server.rest.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +28,7 @@ public class SubscriptionRequestParams0Test {
         assertTrue(to.continuous());
         assertTrue(to.idOnly());
         assertEquals(id, to.startingAfter().get());
-        assertEquals("rest-subRequest #1", to.debugInfo());
+        assertEquals("rest-sub#1", to.debugInfo());
     }
 
 }
