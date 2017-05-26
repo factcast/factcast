@@ -19,6 +19,8 @@ import org.reflections.ReflectionUtils;
 import org.springframework.restdocs.constraints.Constraint;
 import org.springframework.restdocs.constraints.ConstraintResolver;
 
+import com.google.common.base.Predicate;
+
 public class ValidatorConstraintResolver implements ConstraintResolver {
 
     private final Validator validator;
@@ -78,7 +80,8 @@ public class ValidatorConstraintResolver implements ConstraintResolver {
             PropertyDescriptor propertyDescriptor) {
         for (ConstraintDescriptor<?> constraintDescriptor : propertyDescriptor
                 .getConstraintDescriptors()) {
-            constraints.add(new Constraint(constraintDescriptor.getAnnotation().annotationType()
+            constraints.add(new Constraint(constraintDescriptor.getAnnotation()
+                    .annotationType()
                     .getName(), constraintDescriptor.getAttributes()));
         }
     }
@@ -86,8 +89,10 @@ public class ValidatorConstraintResolver implements ConstraintResolver {
     private Class<?> getFollowUpClass(PropertyDescriptor propertyDescriptor, Class<?> clazzBefore) {
         Class<?> clazz = propertyDescriptor.getElementClass();
         if (Collection.class.isAssignableFrom(clazz)) {
-            Set<Field> field = ReflectionUtils.getAllFields(clazzBefore, f -> f.getName().equals(
-                    propertyDescriptor.getPropertyName()));
+            final Predicate<? super Field> predicate = f -> f.getName().equals(
+                    propertyDescriptor.getPropertyName());
+            @SuppressWarnings("unchecked")
+            Set<Field> field = ReflectionUtils.getAllFields(clazzBefore, predicate);
             Type typeArgument = ((ParameterizedType) field.iterator().next().getGenericType())
                     .getActualTypeArguments()[0];
 

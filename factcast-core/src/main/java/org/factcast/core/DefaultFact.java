@@ -59,7 +59,6 @@ public class DefaultFact implements Fact, Externalizable {
 
     }
 
-    @SuppressWarnings("deprecation")
     private void init(String jsonHeader) throws IOException {
         deserializedHeader = FactCastJson.readValue(Header.class, jsonHeader);
         if (deserializedHeader.id == null) {
