@@ -285,6 +285,25 @@
 										<ignore></ignore>
 									</action>
 								</pluginExecution>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											com.marvinformatics.formatter
+										</groupId>
+										<artifactId>
+											formatter-maven-plugin
+										</artifactId>
+										<versionRange>
+											[1.9.1.RC2,)
+										</versionRange>
+										<goals>
+											<goal>format</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
 							</pluginExecutions>
 						</lifecycleMappingMetadata>
 					</configuration>
