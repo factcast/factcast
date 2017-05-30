@@ -440,8 +440,7 @@ public abstract class AbstractFactStore0Test {
                 + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
 
         FactObserver observer = mock(FactObserver.class);
-        uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default"))
-                .skipMarks()
+        uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default")).skipMarks()
                 .fromScratch(), observer).awaitComplete();
 
         verify(observer, times(1)).onNext(any());
@@ -459,8 +458,7 @@ public abstract class AbstractFactStore0Test {
 
         FactObserver observer = mock(FactObserver.class);
         uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId1))
-                .skipMarks()
-                .fromScratch(), observer).awaitComplete();
+                .skipMarks().fromScratch(), observer).awaitComplete();
 
         verify(observer, times(1)).onNext(any());
 
@@ -479,15 +477,13 @@ public abstract class AbstractFactStore0Test {
 
         FactObserver observer = mock(FactObserver.class);
         uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId1))
-                .skipMarks()
-                .fromScratch(), observer).awaitComplete();
+                .skipMarks().fromScratch(), observer).awaitComplete();
 
         verify(observer, times(1)).onNext(any());
 
         observer = mock(FactObserver.class);
         uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId2))
-                .skipMarks()
-                .fromScratch(), observer).awaitComplete();
+                .skipMarks().fromScratch(), observer).awaitComplete();
 
         verify(observer, times(1)).onNext(any());
 
@@ -506,8 +502,7 @@ public abstract class AbstractFactStore0Test {
 
         FactObserver observer = mock(FactObserver.class);
         uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId2))
-                .skipMarks()
-                .fromScratch(), observer).awaitComplete();
+                .skipMarks().fromScratch(), observer).awaitComplete();
 
         verify(observer, times(1)).onNext(any());
 
