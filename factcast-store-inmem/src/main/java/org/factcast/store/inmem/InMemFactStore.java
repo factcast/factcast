@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.factcast.core.Fact;
@@ -118,7 +119,9 @@ public class InMemFactStore implements FactStore, DisposableBean {
             store.put(ser, f);
             ids.add(f.id());
 
-            activeFollowers.stream().filter(s -> s.test(f)).forEachOrdered(s -> s.accept(f));
+            List<InMemFollower> subscribers = activeFollowers.stream().filter(s -> s.test(f))
+                    .collect(Collectors.toList());
+            subscribers.forEach(s -> s.accept(f));
         });
     }
 

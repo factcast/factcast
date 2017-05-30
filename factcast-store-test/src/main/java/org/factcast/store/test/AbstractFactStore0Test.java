@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.Vector;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
@@ -93,12 +93,11 @@ public abstract class AbstractFactStore0Test {
 
     private static class TestFactObserver implements FactObserver {
 
-        private List<Fact> values = new Vector<>();
+        private List<Fact> values = new CopyOnWriteArrayList<>();
 
         @Override
-        public synchronized void onNext(Fact element) {
+        public void onNext(Fact element) {
             values.add(element);
-            this.notifyAll();
         }
 
         @SneakyThrows
@@ -108,9 +107,7 @@ public abstract class AbstractFactStore0Test {
                 if (values.size() >= count) {
                     return;
                 } else {
-                    synchronized (this) {
-                        this.wait(50);
-                    }
+                    Thread.sleep(50);
                 }
             }
         }
@@ -198,7 +195,7 @@ public abstract class AbstractFactStore0Test {
 
     }
 
-    @Test(timeout = 10000)
+    @Test(timeout = 1000000)
     @DirtiesContext
     public void testEmptyStoreFollowWithCancel() throws Exception {
         TestFactObserver observer = testObserver();
