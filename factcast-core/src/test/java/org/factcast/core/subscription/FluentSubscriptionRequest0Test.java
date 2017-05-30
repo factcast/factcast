@@ -42,7 +42,8 @@ public class FluentSubscriptionRequest0Test {
 
     @Test
     public void testDebugInfo() throws Exception {
-        String debugInfo = SubscriptionRequest.catchup(FactSpec.forMark()).fromScratch()
+        String debugInfo = SubscriptionRequest.catchup(FactSpec.forMark())
+                .fromScratch()
                 .debugInfo();
         assertNotNull(debugInfo);
         assertTrue(debugInfo.contains(this.getClass().getSimpleName()));

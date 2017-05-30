@@ -70,10 +70,12 @@ public class EventsDocumentation0Test extends JerseyTest {
     public void documentNotFoundCacheHeaders() {
 
         final Response response = target("/facts/5").register(documentationConfiguration(
-                this.documentation)).register(document("fact-404", preprocessRequest(removeHeaders(
+                this.documentation))
+                .register(document("fact-404", preprocessRequest(removeHeaders(
                         "User-Agent")), preprocessResponse(prettyPrint()), responseHeaders(
                                 headerWithName(HttpHeaders.CACHE_CONTROL).description(
-                                        "Caching of errors is set to 10 seconds")))).request()
+                                        "Caching of errors is set to 10 seconds"))))
+                .request()
                 .get();
         assertThat(response.getStatus(), is(404));
         assertThat(response.getHeaderString(HttpHeaders.CACHE_CONTROL), is(
@@ -99,9 +101,12 @@ public class EventsDocumentation0Test extends JerseyTest {
                 .description("Caching for 1000000 seconds."));
 
         final Response response = target("/facts/" + TestFacts.one.id().toString()).register(
-                documentationConfiguration(this.documentation)).register(document("fact",
+                documentationConfiguration(this.documentation))
+                .register(document("fact",
                         preprocessRequest(removeHeaders("User-Agent")), preprocessResponse(
-                                prettyPrint()), links, responseDoc, headerDoc)).request().get();
+                                prettyPrint()), links, responseDoc, headerDoc))
+                .request()
+                .get();
         assertThat(response.getStatus(), is(200));
         assertThat(response.getHeaderString(HttpHeaders.CACHE_CONTROL), is(
                 "max-age=1000000, s-maxage=1000000, public"));

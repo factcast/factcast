@@ -80,7 +80,8 @@ public class ValidatorConstraintResolver implements ConstraintResolver {
             PropertyDescriptor propertyDescriptor) {
         for (ConstraintDescriptor<?> constraintDescriptor : propertyDescriptor
                 .getConstraintDescriptors()) {
-            constraints.add(new Constraint(constraintDescriptor.getAnnotation().annotationType()
+            constraints.add(new Constraint(constraintDescriptor.getAnnotation()
+                    .annotationType()
                     .getName(), constraintDescriptor.getAttributes()));
         }
     }

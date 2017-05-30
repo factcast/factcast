@@ -53,8 +53,13 @@ public class ProtoConverter0Test {
         String key2 = "k2";
         String type = "da-type";
         String ns = "da-ns";
-        Fact probe = new Test0Fact().aggId(aggId).jsonPayload(payload).meta(key1, value1).meta(key2,
-                value2).type(type).ns(ns);
+        Fact probe = new Test0Fact().aggId(aggId)
+                .jsonPayload(payload)
+                .meta(key1, value1)
+                .meta(key2,
+                        value2)
+                .type(type)
+                .ns(ns);
 
         Fact copy = uut.fromProto(uut.toProto(probe));
 
@@ -146,8 +151,11 @@ public class ProtoConverter0Test {
 
     @Test
     public void testToProtoSubscriptionRequest() throws Exception {
-        SubscriptionRequestTO to = new SubscriptionRequestTO().continuous(true).ephemeral(false)
-                .debugInfo("test").maxBatchDelayInMs(13).marks(true);
+        SubscriptionRequestTO to = new SubscriptionRequestTO().continuous(true)
+                .ephemeral(false)
+                .debugInfo("test")
+                .maxBatchDelayInMs(13)
+                .marks(true);
 
         to.addSpecs(Arrays.asList(FactSpec.ns("foo")));
         SubscriptionRequestTO copy = uut.fromProto(uut.toProto(to));

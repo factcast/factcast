@@ -52,8 +52,11 @@ public class ProtoConverter {
     }
 
     public MSG_UUID toProto(@NonNull UUID id) {
-        return MSG_UUID.newBuilder().setLsb(id.getLeastSignificantBits()).setMsb(id
-                .getMostSignificantBits()).build();
+        return MSG_UUID.newBuilder()
+                .setLsb(id.getLeastSignificantBits())
+                .setMsb(id
+                        .getMostSignificantBits())
+                .build();
     }
 
     public SubscriptionRequestTO fromProto(@NonNull MSG_SubscriptionRequest request) {
@@ -61,8 +64,10 @@ public class ProtoConverter {
     }
 
     public MSG_SubscriptionRequest toProto(SubscriptionRequestTO request) {
-        return MSG_SubscriptionRequest.newBuilder().setJson(FactCastJson.writeValueAsString(
-                request)).build();
+        return MSG_SubscriptionRequest.newBuilder()
+                .setJson(FactCastJson.writeValueAsString(
+                        request))
+                .build();
     }
 
     public UUID fromProto(MSG_UUID request) {

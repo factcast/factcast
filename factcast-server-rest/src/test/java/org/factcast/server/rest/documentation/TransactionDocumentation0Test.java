@@ -76,10 +76,13 @@ public class TransactionDocumentation0Test extends JerseyTest {
                 .getResourceAsStream("TransactionJson.json"), FactTransactionJson.class);
 
         final Response response = target("/transactions").register(documentationConfiguration(
-                this.documentation)).register(document("facts-transactions", preprocessRequest(
+                this.documentation))
+                .register(document("facts-transactions", preprocessRequest(
                         removeHeaders("User-Agent"), prettyPrint()), preprocessResponse(
-                                prettyPrint()), requestFieldSnippet)).request().post(Entity.entity(
-                                        factTransactionJson, MediaType.APPLICATION_JSON));
+                                prettyPrint()), requestFieldSnippet))
+                .request()
+                .post(Entity.entity(
+                        factTransactionJson, MediaType.APPLICATION_JSON));
         assertThat(response.getStatus(), is(204));
 
     }

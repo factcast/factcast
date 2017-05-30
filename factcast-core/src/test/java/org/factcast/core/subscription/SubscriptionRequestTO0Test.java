@@ -116,7 +116,8 @@ public class SubscriptionRequestTO0Test {
 
     @Test
     public void testSkipMarks() throws Exception {
-        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).skipMarks()
+        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo"))
+                .skipMarks()
                 .fromScratch();
 
         SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);

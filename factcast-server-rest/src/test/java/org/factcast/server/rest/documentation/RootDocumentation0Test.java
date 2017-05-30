@@ -67,8 +67,11 @@ public class RootDocumentation0Test extends JerseyTest {
                                 "Creating a new transaction links to the <<resources-transactions, transaction resource>>"));
 
         final Response response = target("/").register(documentationConfiguration(
-                this.documentation)).register(document("root", preprocessRequest(removeHeaders(
-                        "User-Agent")), preprocessResponse(prettyPrint()), links)).request().get();
+                this.documentation))
+                .register(document("root", preprocessRequest(removeHeaders(
+                        "User-Agent")), preprocessResponse(prettyPrint()), links))
+                .request()
+                .get();
         assertThat(response.getStatus(), is(200));
 
     }

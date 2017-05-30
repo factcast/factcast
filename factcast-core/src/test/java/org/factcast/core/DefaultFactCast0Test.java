@@ -48,8 +48,10 @@ public class DefaultFactCast0Test {
         when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
 
         final UUID since = UUID.randomUUID();
-        SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.forMark()).or(FactSpec.ns(
-                "some").type("type")).from(since);
+        SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.forMark())
+                .or(FactSpec.ns(
+                        "some").type("type"))
+                .from(since);
 
         uut.subscribeToFacts(r, f -> {
         });
@@ -67,8 +69,10 @@ public class DefaultFactCast0Test {
     public void testSubscribeToIds() throws Exception {
         when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
 
-        SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.forMark()).or(FactSpec.ns(
-                "some").type("type")).fromScratch();
+        SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.forMark())
+                .or(FactSpec.ns(
+                        "some").type("type"))
+                .fromScratch();
 
         uut.subscribeToIds(r, f -> {
         });
