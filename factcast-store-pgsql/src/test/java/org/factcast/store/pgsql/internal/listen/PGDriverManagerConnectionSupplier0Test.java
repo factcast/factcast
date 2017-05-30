@@ -1,7 +1,6 @@
 package org.factcast.store.pgsql.internal.listen;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.Assertions.fail;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.*;
@@ -10,6 +9,8 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import javax.sql.DataSource;
+
+import junit.framework.Assert;
 
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.junit.Before;
@@ -75,7 +76,7 @@ public class PGDriverManagerConnectionSupplier0Test {
         PGDriverManagerConnectionSupplier uut = new PGDriverManagerConnectionSupplier(ds);
         try {
             uut.get();
-            fail("Was expecting Exception");
+            org.junit.Assert.fail("Was expecting Exception");
         } catch (Exception e) {
             if (!(e.getCause() instanceof SQLException)) {
                 fail("Wrong Exception type. Was expecting SQLException wrapped in a RuntimeException, but got ",
