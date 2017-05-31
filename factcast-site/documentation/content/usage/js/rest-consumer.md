@@ -22,24 +22,24 @@ weight = 130
 ```html
 <html>
 <body>
+  <div id="events"></div>
   <script>
     const params = new URLSearchParams();
     params.set('factSpec', JSON.stringify({
       ns: 'myapp'
     }));
-    params.set('follow', true);
+    params.set('continuous', true);
     const subscription = new EventSource('http://localhost:8080/facts?' + params.toString());
 
     const div = document.getElementById('events');
     subscription.addEventListener('new-fact', (message) => {
       const fact = JSON.parse(message.data);
       const p = document.createElement('p');
-      const text = document.createTextNode('Id: ' + fact.id);
+      const text = document.createTextNode('Id: ' + message.lastEventId + ' ' + JSON.stringify(fact.payload));
       p.appendChild(text);
       div.appendChild(p)
     });
-  </script>
-  <div id="events"></div>
+    </script>
 </body>
 </html>
 
