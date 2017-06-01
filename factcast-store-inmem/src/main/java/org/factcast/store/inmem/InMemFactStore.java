@@ -20,6 +20,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpecMatcher;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.springframework.beans.factory.DisposableBean;
@@ -75,9 +76,9 @@ public class InMemFactStore implements FactStore, DisposableBean {
     private class InMemFollower implements Predicate<Fact>, Consumer<Fact>, AutoCloseable {
         final Predicate<Fact> matcher;
 
-        final Subscription subscription;
+        final SubscriptionImpl<Fact> subscription;
 
-        InMemFollower(SubscriptionRequestTO request, Subscription subscription) {
+        InMemFollower(SubscriptionRequestTO request, SubscriptionImpl<Fact> subscription) {
             this.subscription = subscription;
             matcher = FactSpecMatcher.matchesAnyOf(request.specs());
         }
@@ -129,7 +130,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
     public synchronized Subscription subscribe(SubscriptionRequestTO request,
             FactObserver observer) {
 
-        Subscription<Fact> subscription = Subscription.on(observer);
+        SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
         InMemFollower s = new InMemFollower(request, subscription);
 
         executorService.submit(() -> {
