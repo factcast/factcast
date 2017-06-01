@@ -24,10 +24,15 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-// TODO split
-// TODO document properly
+/**
+ * Creates and maintains a subscription.
+ * 
+ * @author <uwe.schaefer@mercateo.com>
+ *
+ */
 @Slf4j
 @RequiredArgsConstructor
+// TODO usr class has too many responsibilities
 // TODO needs new name
 public class PGFactStream {
 

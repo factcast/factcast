@@ -18,7 +18,11 @@ import com.google.common.eventbus.EventBus;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Creates Subscription
+ * Creates Subscription connecting {@link SubscriptionRequestTO} and
+ * {@link FactObserver}
+ * 
+ * 
+ * @see PGFactStream
  * 
  * @author uwe.schaefer@mercateo.com
  *
