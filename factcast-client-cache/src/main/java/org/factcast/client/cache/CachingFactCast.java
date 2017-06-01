@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author uwe.schaefer@mercateo.com
  *
  */
-// TODO test
+
 @Slf4j
 @RequiredArgsConstructor
 public class CachingFactCast implements FactCast {

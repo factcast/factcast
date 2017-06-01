@@ -3,6 +3,12 @@ package org.factcast.core.store;
 import lombok.Getter;
 import lombok.NonNull;
 
+/**
+ * Constants based on a given prefix for metrics-names.
+ * 
+ * @author <uwe.schaefer@mercateo.com>
+ *
+ */
 @Getter
 public class FactStoreMetricNames {
     static final String PREFIX = "factstore.";

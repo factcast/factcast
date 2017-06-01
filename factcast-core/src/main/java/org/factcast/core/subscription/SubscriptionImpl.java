@@ -13,8 +13,18 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 
+ * Implements a subscription and offers notifyX methods for the Fact Supplier to
+ * write to.
+ * 
+ * @author <uwe.schaefer@mercateo.com>
+ *
+ * @param <T>
+ */
 @RequiredArgsConstructor
 @Slf4j
+// TODO usr hide the impl an provide an interface for notify*
 public class SubscriptionImpl<T> implements Subscription {
 
     @NonNull

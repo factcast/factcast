@@ -6,7 +6,18 @@ import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
 
-//TODO document
+/**
+ * StreamObserver impl that blocks if the Stream to the consumer is not in
+ * writeable state to provide a basic backpressure alike property.
+ * 
+ * Note it the consumer stream is not writeable, the
+ * {@link BlockingStreamObserver} will retry RETRY_COUNT (default 60) times
+ * after WAIT_TIME (default 1000) millis
+ * 
+ * @author <uwe.schaefer@mercateo.com>
+ *
+ * @param <T>
+ */
 @Slf4j
 class BlockingStreamObserver<T> implements StreamObserver<T> {
 

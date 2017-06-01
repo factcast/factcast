@@ -2,6 +2,7 @@ package org.factcast.client.grpc;
 
 import org.factcast.core.Fact;
 import org.factcast.core.IdOnlyFact;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
@@ -12,6 +13,16 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Bridges GRPC Specific StreamObserver to a subscription by switching over the
+ * notification type and dispatching to the appropriate subscription method.
+ * 
+ * @see StreamObserver
+ * @see Subscription
+ * 
+ * @author <uwe.schaefer@mercateo.com>
+ *
+ */
 @RequiredArgsConstructor
 @Slf4j
 class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notification> {

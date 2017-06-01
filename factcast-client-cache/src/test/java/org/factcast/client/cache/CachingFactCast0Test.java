@@ -25,7 +25,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CachingFactCastTest {
+public class CachingFactCast0Test {
     @Mock
     CachingFactLookup l;
 
