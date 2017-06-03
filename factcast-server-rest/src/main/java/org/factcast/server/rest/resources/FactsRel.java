@@ -4,6 +4,12 @@ import com.mercateo.common.rest.schemagen.link.relation.RelType;
 import com.mercateo.common.rest.schemagen.link.relation.Relation;
 import com.mercateo.common.rest.schemagen.link.relation.RelationContainer;
 
+/**
+ * enumeration for all possible custom relations on facts and transactions
+ * 
+ * @author joerg_adler
+ *
+ */
 public enum FactsRel implements RelationContainer {
     FACT_IDS {
         @Override

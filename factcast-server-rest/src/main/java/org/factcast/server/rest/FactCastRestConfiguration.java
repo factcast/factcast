@@ -13,6 +13,10 @@ import com.mercateo.common.rest.schemagen.plugin.FieldCheckerForSchema;
 import com.mercateo.common.rest.schemagen.plugin.MethodCheckerForLink;
 import com.mercateo.rest.schemagen.spring.JerseyHateoasConfiguration;
 
+/**
+ * spring configuration class
+ *
+ */
 @Configuration
 @Import(JerseyHateoasConfiguration.class)
 public class FactCastRestConfiguration {

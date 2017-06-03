@@ -10,6 +10,12 @@ import javax.ws.rs.container.ContainerResponseFilter;
 
 import lombok.NonNull;
 
+/**
+ * this filter provides static headers to enable request from the browser
+ * 
+ * @author joerg_adler
+ *
+ */
 @Priority(Priorities.HEADER_DECORATOR)
 public class CorsFilter implements ContainerResponseFilter {
 

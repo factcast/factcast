@@ -17,6 +17,13 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
+/**
+ * provides a converter for query parameters which are a JSON entity.This
+ * depends on the presence of the JsonParam annotation
+ * 
+ * @author joerg_adler
+ *
+ */
 @Provider
 public class JsonParamConverterProvider implements ParamConverterProvider {
     // would it be reasonable to use FCJson here?
@@ -28,6 +35,13 @@ public class JsonParamConverterProvider implements ParamConverterProvider {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * converts a query parameter from json to object and back
+     * 
+     * @author joerg_adler
+     *
+     * @param <T>
+     */
     @AllArgsConstructor
     public static class JsonParamConverter<T> implements ParamConverter<T> {
         @NonNull
@@ -56,10 +70,8 @@ public class JsonParamConverterProvider implements ParamConverterProvider {
     @Override
     public <T> ParamConverter<T> getConverter(Class<T> rawType, Type genericType,
             Annotation[] annotations) {
-        if (annotations != null && Arrays.stream(annotations)
-                .filter(a -> a instanceof JsonParam)
-                .findAny()
-                .isPresent() && !Collection.class.isAssignableFrom(rawType)) {
+        if (annotations != null && Arrays.stream(annotations).filter(a -> a instanceof JsonParam)
+                .findAny().isPresent() && !Collection.class.isAssignableFrom(rawType)) {
             return new JsonParamConverter<T>(objectMapper, rawType);
         }
         return null;

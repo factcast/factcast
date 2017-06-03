@@ -11,6 +11,12 @@ import javax.ws.rs.core.HttpHeaders;
 
 import lombok.NonNull;
 
+/**
+ * Filter for inserting a HTTP-Header for not caching the response seconds
+ * 
+ * @author joerg_adler
+ *
+ */
 @NoCache
 @Priority(Priorities.HEADER_DECORATOR)
 public class NoCacheFilter implements ContainerResponseFilter {

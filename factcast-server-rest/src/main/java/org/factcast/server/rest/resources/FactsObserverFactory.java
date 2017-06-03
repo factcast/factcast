@@ -13,6 +13,13 @@ import com.mercateo.common.rest.schemagen.types.HyperSchemaCreator;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
+/**
+ * this class creates a FactObserver in the first place, when the request comes
+ * in
+ * 
+ * @author joerg_adler
+ *
+ */
 @Component
 @AllArgsConstructor
 class FactsObserverFactory {

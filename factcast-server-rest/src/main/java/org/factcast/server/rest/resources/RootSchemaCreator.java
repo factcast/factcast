@@ -11,6 +11,11 @@ import com.mercateo.common.rest.schemagen.types.ObjectWithSchema;
 import lombok.AllArgsConstructor;
 import lombok.val;
 
+/**
+ * helper class creating the hyper schema for the response of the root resource
+ * 
+ *
+ */
 @Component
 @AllArgsConstructor
 class RootSchemaCreator {

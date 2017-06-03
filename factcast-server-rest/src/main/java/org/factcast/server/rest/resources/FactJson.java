@@ -22,6 +22,13 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 
+/**
+ * return object for the resources returning facts to the client. Also used in
+ * the new transactions in the payload
+ * 
+ * @author joerg_adler
+ *
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

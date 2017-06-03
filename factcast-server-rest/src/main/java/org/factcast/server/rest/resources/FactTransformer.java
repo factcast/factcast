@@ -11,6 +11,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AllArgsConstructor;
 
+/**
+ * this class maps facts from the underlying store to the JSON return objects
+ * 
+ * @author joerg_adler
+ *
+ */
 @AllArgsConstructor
 @Component
 public class FactTransformer {

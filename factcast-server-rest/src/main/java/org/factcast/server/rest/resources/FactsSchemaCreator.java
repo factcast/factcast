@@ -15,6 +15,11 @@ import com.mercateo.common.rest.schemagen.types.ObjectWithSchema;
 
 import lombok.AllArgsConstructor;
 
+/**
+ * helper class for creating schemas for facts
+ * 
+ *
+ */
 @Component
 @AllArgsConstructor
 class FactsSchemaCreator {

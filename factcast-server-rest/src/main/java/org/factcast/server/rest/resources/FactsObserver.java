@@ -26,6 +26,14 @@ import lombok.NonNull;
 import lombok.val;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * This is the worker, where the content of the SSE-Streams is created. It has
+ * two output modes. Depending on the flag "fullOutputMode" there will be only
+ * ids in the stream or full facts.
+ * 
+ * @author joerg_adler
+ *
+ */
 @Slf4j
 public class FactsObserver implements FactObserver {
     private final EventOutput eventOutput;

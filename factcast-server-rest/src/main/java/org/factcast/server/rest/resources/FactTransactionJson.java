@@ -10,6 +10,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
 
+/**
+ * payload object for new transactions
+ * 
+ * @author joerg_adler
+ *
+ */
 @Data
 public class FactTransactionJson {
     @JsonProperty

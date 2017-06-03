@@ -11,6 +11,13 @@ import javax.ws.rs.core.HttpHeaders;
 
 import lombok.NonNull;
 
+/**
+ * Filter for inserting a HTTP-Header for caching the response for 100000
+ * seconds
+ * 
+ * @author joerg_adler
+ *
+ */
 @Cacheable
 @Priority(Priorities.HEADER_DECORATOR)
 public class CachableFilter implements ContainerResponseFilter {

@@ -25,6 +25,12 @@ import com.mercateo.common.rest.schemagen.JerseyResource;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * The resource for writing new facts into the store packed into a transaction
+ * 
+ * @author joerg_adler
+ *
+ */
 @Path("transactions")
 @Slf4j
 @Component

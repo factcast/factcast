@@ -19,6 +19,12 @@ import com.mercateo.common.rest.schemagen.IgnoreInRestSchema;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * parameter object for SSE subscriptions
+ * 
+ * @author joerg_adler
+ *
+ */
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Slf4j

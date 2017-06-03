@@ -13,6 +13,12 @@ import com.mercateo.common.rest.schemagen.types.ObjectWithSchema;
 
 import lombok.AllArgsConstructor;
 
+/**
+ * entrypoint of the REST-API, delivering the links to the other resources
+ * 
+ * @author joerg_adler
+ *
+ */
 @Path("/")
 @Component
 @AllArgsConstructor

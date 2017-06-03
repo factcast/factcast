@@ -18,6 +18,12 @@ import org.glassfish.jersey.server.validation.internal.ValidationExceptionMapper
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.springframework.stereotype.Component;
 
+/**
+ * jersey configuration class
+ * 
+ * @author joerg_adler
+ *
+ */
 @Component
 public class FactCastRestApplication extends ResourceConfig {
 

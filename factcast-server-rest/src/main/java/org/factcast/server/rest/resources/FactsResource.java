@@ -31,6 +31,13 @@ import com.mercateo.common.rest.schemagen.types.ObjectWithSchema;
 
 import lombok.AllArgsConstructor;
 
+/**
+ * The read resource for facts. Providing two SSE streams (one for only ids, one
+ * for full facts) and a cacheable endpoint for single facts
+ * 
+ * @author joerg_adler
+ *
+ */
 @Path("facts")
 @Component
 @AllArgsConstructor
