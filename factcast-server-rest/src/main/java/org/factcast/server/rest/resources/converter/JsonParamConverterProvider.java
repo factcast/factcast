@@ -70,8 +70,10 @@ public class JsonParamConverterProvider implements ParamConverterProvider {
     @Override
     public <T> ParamConverter<T> getConverter(Class<T> rawType, Type genericType,
             Annotation[] annotations) {
-        if (annotations != null && Arrays.stream(annotations).filter(a -> a instanceof JsonParam)
-                .findAny().isPresent() && !Collection.class.isAssignableFrom(rawType)) {
+        if (annotations != null && Arrays.stream(annotations)
+                .filter(a -> a instanceof JsonParam)
+                .findAny()
+                .isPresent() && !Collection.class.isAssignableFrom(rawType)) {
             return new JsonParamConverter<T>(objectMapper, rawType);
         }
         return null;

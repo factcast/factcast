@@ -2,6 +2,7 @@ package org.factcast.core.store;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
@@ -30,5 +31,7 @@ public interface FactStore {
     Subscription subscribe(@NonNull SubscriptionRequestTO request, @NonNull FactObserver observer);
 
     Optional<Fact> fetchById(@NonNull UUID id);
+
+    List<OptionalLong> serialOf(List<UUID> l);
 
 }

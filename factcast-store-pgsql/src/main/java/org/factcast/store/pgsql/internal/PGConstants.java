@@ -78,6 +78,9 @@ public class PGConstants {
 
     public static final String LISTEN_SQL = "LISTEN " + CHANNEL_NAME;
 
+    public String SELECT_SER_BY_ID = "SELECT " + COLUMN_SER + " FROM " + TABLE_FACT + " WHERE "
+            + COLUMN_HEADER + " @> cast (? as jsonb)";
+
     private String fromHeader(String attributeName) {
         return PGConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
     }

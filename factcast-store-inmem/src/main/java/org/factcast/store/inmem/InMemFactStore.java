@@ -1,16 +1,18 @@
 package org.factcast.store.inmem;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -40,9 +42,9 @@ import lombok.extern.slf4j.Slf4j;
 @Deprecated
 @Slf4j
 public class InMemFactStore implements FactStore, DisposableBean {
-    final AtomicInteger highwaterMark = new AtomicInteger(0);
+    final AtomicLong highwaterMark = new AtomicLong(0);
 
-    final LinkedHashMap<Integer, Fact> store = new LinkedHashMap<>();
+    final LinkedHashMap<Long, Fact> store = new LinkedHashMap<>();
 
     final Set<UUID> ids = new HashSet<>();
 
@@ -103,7 +105,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
     @Override
     public synchronized Optional<Fact> fetchById(@NonNull UUID id) {
-        Stream<Entry<Integer, Fact>> stream = store.entrySet().stream();
+        Stream<Entry<Long, Fact>> stream = store.entrySet().stream();
         return stream.filter(e -> e.getValue().id().equals(id)).findFirst().map(e -> e.getValue());
     }
 
@@ -115,7 +117,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
         }
 
         factsToPublish.forEach(f -> {
-            int ser = highwaterMark.incrementAndGet();
+            long ser = highwaterMark.incrementAndGet();
             store.put(ser, f);
             ids.add(f.id());
 
@@ -159,6 +161,27 @@ public class InMemFactStore implements FactStore, DisposableBean {
     @Override
     public synchronized void destroy() throws Exception {
         executorService.shutdown();
+    }
+
+    @Override
+    public synchronized List<OptionalLong> serialOf(List<UUID> l) {
+        // needs to be a linkedHashMap to retain order
+        OptionalLong[] found = new OptionalLong[l.size()];
+        for (int i = 0; i < found.length; i++) {
+            found[i] = OptionalLong.empty();
+        }
+
+        // hilariously inefficient
+        store.forEach((s, f) -> {
+
+            final int indexOf = l.indexOf(f.id());
+            if (indexOf > -1) {
+                found[indexOf] = OptionalLong.of(s);
+            }
+
+        });
+
+        return Arrays.asList(found);
     }
 
 }

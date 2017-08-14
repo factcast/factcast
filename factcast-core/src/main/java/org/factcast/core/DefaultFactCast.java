@@ -2,6 +2,7 @@ package org.factcast.core;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.UUID;
 
 import org.factcast.core.store.FactStore;
@@ -27,18 +28,21 @@ class DefaultFactCast implements FactCast {
     final FactStore store;
 
     @Override
+    @NonNull
     public Subscription subscribeToFacts(@NonNull SubscriptionRequest req,
             @NonNull FactObserver observer) {
         return store.subscribe(SubscriptionRequestTO.forFacts(req), observer);
     }
 
     @Override
+    @NonNull
     public Subscription subscribeToIds(@NonNull SubscriptionRequest req,
             @NonNull IdObserver observer) {
         return store.subscribe(SubscriptionRequestTO.forIds(req), observer.map(Fact::id));
     }
 
     @Override
+    @NonNull
     public Optional<Fact> fetchById(@NonNull UUID id) {
         return store.fetchById(id);
     }
@@ -46,6 +50,12 @@ class DefaultFactCast implements FactCast {
     @Override
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
         store.publish(factsToPublish);
+    }
+
+    @Override
+    @NonNull
+    public List<OptionalLong> serialOf(@NonNull List<UUID> ids) {
+        return store.serialOf(ids);
     }
 
 }

@@ -23,6 +23,8 @@ public class FactStoreMetricNames {
 
     final String fetchLatency;
 
+    final String seqLookupLatency;
+
     final String subscribeCatchup;
 
     final String subscribeFollow;
@@ -37,6 +39,7 @@ public class FactStoreMetricNames {
         factPublishingMeter = PREFIX + type + ".publish.fact.meter";
 
         fetchLatency = PREFIX + type + ".fetchById.latency";
+        seqLookupLatency = PREFIX + type + ".seqLookup.latency";
         subscribeCatchup = PREFIX + type + ".subscribe.catchup";
         subscribeFollow = PREFIX + type + ".subscribe.follow";
 

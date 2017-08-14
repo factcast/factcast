@@ -36,8 +36,27 @@ public interface Fact {
 
     String meta(String key);
 
+    default Long metaAsLong(String key) {
+        String s = meta(key);
+        if (s != null) {
+            return Long.valueOf(s);
+        }
+        return null;
+    }
+
     // hint to where to get the default from
     static Fact of(@NonNull String jsonHeader, @NonNull String jsonPayload) {
         return DefaultFact.of(jsonHeader, jsonPayload);
+    }
+
+    default boolean before(Fact other) {
+        Long mySer = metaAsLong("_ser");
+        Long otherSer = other.metaAsLong("_ser");
+
+        if (mySer == null || otherSer == null) {
+            throw new IllegalStateException("'_ser' Meta attribute not found");
+        }
+
+        return mySer < otherSer;
     }
 }

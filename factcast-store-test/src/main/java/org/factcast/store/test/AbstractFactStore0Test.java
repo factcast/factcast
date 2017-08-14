@@ -532,4 +532,18 @@ public abstract class AbstractFactStore0Test {
         }
     }
 
+    @Test(timeout = 10000)
+    @DirtiesContext
+    public void testSequenceOf() throws Exception {
+        final UUID id = UUID.randomUUID();
+
+        assertFalse(uut.sequenceOfId(id).isPresent());
+
+        UUID mark1 = uut.publishWithMark(Fact.of("{\"id\":\"" + id
+                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id + "\"]}",
+                "{}"));
+
+        assertTrue(uut.sequenceOfId(mark1).isPresent());
+    }
+
 }

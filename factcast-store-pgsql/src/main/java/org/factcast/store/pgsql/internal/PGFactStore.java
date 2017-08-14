@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
@@ -61,6 +62,8 @@ public class PGFactStore implements FactStore {
 
     private Timer fetchLatency;
 
+    private Timer seqLookupLatency;
+
     private Meter subscriptionCatchupMeter;
 
     private Meter subscriptionFollowMeter;
@@ -77,6 +80,7 @@ public class PGFactStore implements FactStore {
         publishMeter = registry.meter(names.factPublishingMeter());
 
         fetchLatency = registry.timer(names.fetchLatency());
+        seqLookupLatency = registry.timer(names.seqLookupLatency());
 
         subscriptionCatchupMeter = registry.meter(names.subscribeCatchup());
         subscriptionFollowMeter = registry.meter(names.subscribeFollow());
@@ -116,6 +120,10 @@ public class PGFactStore implements FactStore {
         return PGFact.from(resultSet);
     }
 
+    private Long extractSerFromResultSet(ResultSet resultSet, int rowNum) throws SQLException {
+        return Long.valueOf(resultSet.getString(PGConstants.COLUMN_SER));
+    }
+
     @Override
     public Subscription subscribe(@NonNull SubscriptionRequestTO request,
             @NonNull FactObserver observer) {
@@ -133,6 +141,15 @@ public class PGFactStore implements FactStore {
         try (Context time = fetchLatency.time();) {
             return jdbcTemplate.query(PGConstants.SELECT_BY_ID, new Object[] { "{\"id\":\"" + id
                     + "\"}" }, this::extractFactFromResultSet).stream().findFirst();
+        }
+    }
+
+    @Override
+    public List<OptionalLong> serialOf(List<UUID> l) {
+        try (Context time = fetchLatency.time();) {
+            // FIXME
+            return jdbcTemplate.query(PGConstants.SELECT_SER_BY_ID, new Object[] { "{\"id\":\"" + id
+                    + "\"}" }, this::extractSerFromResultSet).stream().findFirst();
         }
     }
 
