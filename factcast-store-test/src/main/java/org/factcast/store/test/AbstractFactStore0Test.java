@@ -544,6 +544,12 @@ public abstract class AbstractFactStore0Test {
                 "{}"));
 
         assertTrue(uut.serialOf(mark1).isPresent());
+        assertTrue(uut.serialOf(id).isPresent());
+
+        long serMark = uut.serialOf(mark1).getAsLong();
+        long serFact = uut.serialOf(id).getAsLong();
+
+        assertTrue(serFact < serMark);
     }
 
 }
