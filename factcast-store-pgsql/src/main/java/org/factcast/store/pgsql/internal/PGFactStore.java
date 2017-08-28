@@ -152,9 +152,11 @@ public class PGFactStore implements FactStore {
 
             if (res.size() > 1) {
                 throw new IllegalStateException("Event ID appeared twice!?");
+            } else if (res.isEmpty()) {
+                return OptionalLong.empty();
             }
 
-            Long ser = res.iterator().next();
+            Long ser = res.get(0);
             if (ser != null && ser.longValue() > 0) {
                 return OptionalLong.of(ser.longValue());
             } else {

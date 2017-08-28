@@ -535,6 +535,7 @@ public abstract class AbstractFactStore0Test {
     @Test(timeout = 10000)
     @DirtiesContext
     public void testSerialOf() throws Exception {
+
         final UUID id = UUID.randomUUID();
 
         assertFalse(uut.serialOf(id).isPresent());
@@ -550,6 +551,7 @@ public abstract class AbstractFactStore0Test {
         long serFact = uut.serialOf(id).getAsLong();
 
         assertTrue(serFact < serMark);
+
     }
 
 }
