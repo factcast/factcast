@@ -118,14 +118,16 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
         factsToPublish.forEach(f -> {
             long ser = highwaterMark.incrementAndGet();
-            // FIXME need to set serial to header
-            store.put(ser, f);
-            ids.add(f.id());
+
+            Fact inMemFact = new InMemFact(ser, f);
+
+            store.put(ser, inMemFact);
+            ids.add(inMemFact.id());
 
             List<InMemFollower> subscribers = activeFollowers.stream()
-                    .filter(s -> s.test(f))
+                    .filter(s -> s.test(inMemFact))
                     .collect(Collectors.toList());
-            subscribers.forEach(s -> s.accept(f));
+            subscribers.forEach(s -> s.accept(inMemFact));
         });
     }
 

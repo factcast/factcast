@@ -7,6 +7,8 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -53,6 +55,25 @@ public class FactCastJson0Test {
     @Test
     public void testWriteValueNull() throws Exception {
         expectNPE(() -> FactCastJson.writeValueAsString(null));
+    }
+
+    @Test
+    public void testNewObjectNode() throws Exception {
+        assertNotNull(FactCastJson.newObjectNode());
+        assertTrue(FactCastJson.newObjectNode() instanceof ObjectNode);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testToObjectNodeNonJson() throws Exception {
+        FactCastJson.toObjectNode("no-json");
+    }
+
+    @Test()
+    public void testToObjectNode() throws Exception {
+        ObjectNode objectNode = FactCastJson.toObjectNode("{\"x\":1}");
+        JsonNode jsonNode = objectNode.get("x");
+        assertEquals(1, jsonNode.asInt());
+        assertNull(objectNode.get("y"));
     }
 
 }

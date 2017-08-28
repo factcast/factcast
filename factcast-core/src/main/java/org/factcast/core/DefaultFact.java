@@ -51,7 +51,7 @@ public class DefaultFact implements Fact, Externalizable {
     }
 
     @SneakyThrows
-    private DefaultFact(String jsonHeader, String jsonPayload) {
+    protected DefaultFact(String jsonHeader, String jsonPayload) {
 
         this.jsonHeader = jsonHeader;
         this.jsonPayload = jsonPayload;

@@ -1,10 +1,13 @@
 package org.factcast.core.util;
 
+import java.io.IOException;
+
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -52,5 +55,17 @@ public final class FactCastJson {
     @SneakyThrows
     public static <T> T readValue(@NonNull Class<T> class1, String json) {
         return reader.forType(class1).readValue(json);
+    }
+
+    public static ObjectNode toObjectNode(String jsonHeader) {
+        try {
+            return (ObjectNode) objectMapper.readTree(jsonHeader);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static ObjectNode newObjectNode() {
+        return objectMapper.getNodeFactory().objectNode();
     }
 }
