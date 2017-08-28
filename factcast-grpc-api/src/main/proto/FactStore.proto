@@ -13,6 +13,10 @@ message MSG_UUID {
 	int64 lsb = 2;
 }
 
+message MSG_OptionalSerial {
+	bool present = 1;
+	uint64 serial = 2;
+}
 /**
 	A Notification as returned as a stream member from subscribe.
 	Type acts as descriminator. Either a Fact, ID, or one of the signals Catchup/Complete/Error.
@@ -71,4 +75,5 @@ service RemoteFactStore {
 	rpc subscribe (MSG_SubscriptionRequest) returns (stream MSG_Notification) {}
 	rpc fetchById (MSG_UUID) returns (MSG_OptionalFact) {}
 	rpc publish (MSG_Facts) returns (MSG_Empty) {}
+	rpc serialOf (MSG_UUID) returns (MSG_OptionalSerial) {}
 }

@@ -145,11 +145,22 @@ public class PGFactStore implements FactStore {
     }
 
     @Override
-    public List<OptionalLong> serialOf(List<UUID> l) {
+    public OptionalLong serialOf(UUID l) {
         try (Context time = fetchLatency.time();) {
-            // FIXME
-            return jdbcTemplate.query(PGConstants.SELECT_SER_BY_ID, new Object[] { "{\"id\":\"" + id
-                    + "\"}" }, this::extractSerFromResultSet).stream().findFirst();
+            List<Long> res = jdbcTemplate.query(PGConstants.SELECT_SER_BY_ID, new Object[] {
+                    "{\"id\":\"" + l + "\"}" }, this::extractSerFromResultSet);
+
+            if (res.size() > 1) {
+                throw new IllegalStateException("Event ID appeared twice!?");
+            }
+
+            Long ser = res.iterator().next();
+            if (ser != null && ser.longValue() > 0) {
+                return OptionalLong.of(ser.longValue());
+            } else {
+                return OptionalLong.empty();
+            }
+
         }
     }
 

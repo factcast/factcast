@@ -77,12 +77,14 @@ public class CachingFactCast implements FactCast {
     }
 
     @Override
+    @NonNull
     public Optional<Fact> fetchById(UUID id) {
         return lookup.lookup(id);
     }
 
     @Override
-    public List<OptionalLong> serialOf(List<UUID> ids) {
+    @NonNull
+    public OptionalLong serialOf(@NonNull UUID ids) {
         return delegate.serialOf(ids);
     }
 

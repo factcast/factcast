@@ -1,7 +1,5 @@
 package org.factcast.core;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
@@ -28,19 +26,6 @@ public interface ReadFactCast {
 
     Optional<Fact> fetchById(@NonNull UUID id);
 
-    default OptionalLong serialOf(@NonNull UUID id) {
-        final List<OptionalLong> sequences = serialOf(Arrays.asList(id));
-        if (sequences.isEmpty()) {
-            throw new IllegalStateException("Got empty list of sequences. This is a client error.");
-        }
-        if (sequences.size() > 1) {
-            throw new IllegalStateException(
-                    "Got list of sequences with >1 Elements. This is a client error.");
-        }
-        return sequences.iterator().next();
-
-    }
-
     @NonNull
-    List<OptionalLong> serialOf(@NonNull List<UUID> ids);
+    OptionalLong serialOf(@NonNull UUID id);
 }

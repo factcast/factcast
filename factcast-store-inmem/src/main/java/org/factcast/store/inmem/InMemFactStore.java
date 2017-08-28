@@ -1,9 +1,9 @@
 package org.factcast.store.inmem;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -164,24 +164,14 @@ public class InMemFactStore implements FactStore, DisposableBean {
     }
 
     @Override
-    public synchronized List<OptionalLong> serialOf(List<UUID> l) {
-        // needs to be a linkedHashMap to retain order
-        OptionalLong[] found = new OptionalLong[l.size()];
-        for (int i = 0; i < found.length; i++) {
-            found[i] = OptionalLong.empty();
-        }
-
+    public OptionalLong serialOf(UUID l) {
         // hilariously inefficient
-        store.forEach((s, f) -> {
-
-            final int indexOf = l.indexOf(f.id());
-            if (indexOf > -1) {
-                found[indexOf] = OptionalLong.of(s);
+        for (Map.Entry<Long, Fact> e : store.entrySet()) {
+            if (l.equals(e.getValue().id())) {
+                return OptionalLong.of(e.getKey().longValue());
             }
-
-        });
-
-        return Arrays.asList(found);
+        }
+        return OptionalLong.empty();
     }
 
 }

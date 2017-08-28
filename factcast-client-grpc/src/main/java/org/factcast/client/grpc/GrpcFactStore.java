@@ -4,6 +4,7 @@ import static io.grpc.stub.ClientCalls.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -115,5 +116,12 @@ class GrpcFactStore implements FactStore {
 
     private void cancel(final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call) {
         call.cancel("Client is no longer interested", null);
+    }
+
+    @Override
+    public OptionalLong serialOf(@NonNull UUID l) {
+
+        return converter.fromProto(blockingStub.serialOf(converter.toProto(l)));
+
     }
 }

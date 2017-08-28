@@ -1,6 +1,7 @@
 package org.factcast.grpc.api.conv;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
@@ -10,6 +11,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact.Builder;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 
@@ -104,6 +106,15 @@ public class ProtoConverter {
             return Optional.empty();
         } else {
             return Optional.of(fromProto(message.getFact()));
+        }
+    }
+
+    @NonNull
+    public OptionalLong fromProto(@NonNull MSG_OptionalSerial serialOf) {
+        if (serialOf.getPresent() && serialOf.getSerial() > 0) {
+            return OptionalLong.of(serialOf.getSerial());
+        } else {
+            return OptionalLong.empty();
         }
     }
 
