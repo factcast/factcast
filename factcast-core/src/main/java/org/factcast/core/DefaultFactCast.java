@@ -53,7 +53,8 @@ class DefaultFactCast implements FactCast {
     }
 
     @Override
-    public OptionalLong serialOf(UUID id) {
+    @NonNull
+    public OptionalLong serialOf(@NonNull UUID id) {
         return store.serialOf(id);
     }
 

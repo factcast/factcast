@@ -111,6 +111,7 @@ public class ProtoConverter {
 
     @NonNull
     public OptionalLong fromProto(@NonNull MSG_OptionalSerial serialOf) {
+        // note that an unsigned is used to transport the serial. Serials MUST be >0
         if (serialOf.getPresent() && serialOf.getSerial() > 0) {
             return OptionalLong.of(serialOf.getSerial());
         } else {

@@ -120,8 +120,6 @@ class GrpcFactStore implements FactStore {
 
     @Override
     public OptionalLong serialOf(@NonNull UUID l) {
-
         return converter.fromProto(blockingStub.serialOf(converter.toProto(l)));
-
     }
 }

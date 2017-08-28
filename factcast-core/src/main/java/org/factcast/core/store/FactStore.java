@@ -32,6 +32,6 @@ public interface FactStore {
 
     Optional<Fact> fetchById(@NonNull UUID id);
 
-    OptionalLong serialOf(UUID l);
+    OptionalLong serialOf(@NonNull UUID l);
 
 }

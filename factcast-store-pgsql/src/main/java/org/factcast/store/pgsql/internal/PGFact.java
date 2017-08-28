@@ -92,10 +92,8 @@ public class PGFact implements Fact {
         String jsonHeader = resultSet.getString(PGConstants.COLUMN_HEADER);
         String jsonPayload = resultSet.getString(PGConstants.COLUMN_PAYLOAD);
 
-        PGFact f = new PGFact(UUID.fromString(id), ns, type, toUUIDArray(aggId), jsonHeader,
+        return new PGFact(UUID.fromString(id), ns, type, toUUIDArray(aggId), jsonHeader,
                 jsonPayload);
-
-        return f;
     }
 
     @VisibleForTesting
