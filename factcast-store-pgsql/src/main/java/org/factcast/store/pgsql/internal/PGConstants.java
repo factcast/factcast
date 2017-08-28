@@ -78,6 +78,12 @@ public class PGConstants {
 
     public static final String LISTEN_SQL = "LISTEN " + CHANNEL_NAME;
 
+    public static final String UPDATE_FACT_SERIALS = "update " + TABLE_FACT + " set "
+            + COLUMN_HEADER + "= jsonb_set( " + COLUMN_HEADER
+            + " , '{meta}' , COALESCE(" + COLUMN_HEADER
+            + "->'meta','{}') || concat('{\"_ser\":', " + COLUMN_SER
+            + " ,'}' )::jsonb , true) WHERE header @> ?::jsonb";
+
     public String SELECT_SER_BY_ID = "SELECT " + COLUMN_SER + " FROM " + TABLE_FACT + " WHERE "
             + COLUMN_HEADER + " @> cast (? as jsonb)";
 

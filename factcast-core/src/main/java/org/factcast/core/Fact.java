@@ -36,12 +36,13 @@ public interface Fact {
 
     String meta(String key);
 
-    default Long metaAsLong(String key) {
-        String s = meta(key);
+    default long serial() {
+        String s = meta("_ser");
         if (s != null) {
-            return Long.valueOf(s);
+            return Long.valueOf(s).longValue();
+        } else {
+            throw new IllegalStateException("'_ser' Meta attribute not found");
         }
-        return null;
     }
 
     // hint to where to get the default from
@@ -50,13 +51,6 @@ public interface Fact {
     }
 
     default boolean before(Fact other) {
-        Long mySer = metaAsLong("_ser");
-        Long otherSer = other.metaAsLong("_ser");
-
-        if (mySer == null || otherSer == null) {
-            throw new IllegalStateException("'_ser' Meta attribute not found");
-        }
-
-        return mySer < otherSer;
+        return serial() < other.serial();
     }
 }

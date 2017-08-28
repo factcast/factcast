@@ -96,11 +96,20 @@ public class PGFactStore implements FactStore {
 
             log.trace("Inserting {} fact(s) in batches of {}", numberOfFactsToPublish, BATCH_SIZE);
 
-            jdbcTemplate.batchUpdate(PGConstants.INSERT_FACT, copiedListOfFacts, BATCH_SIZE, (
-                    statement, fact) -> {
-                statement.setString(1, fact.jsonHeader());
-                statement.setString(2, fact.jsonPayload());
-            });
+            jdbcTemplate.batchUpdate(PGConstants.INSERT_FACT, copiedListOfFacts,
+                    BATCH_SIZE, (
+                            statement, fact) -> {
+                        statement.setString(1, fact.jsonHeader());
+                        statement.setString(2, fact.jsonPayload());
+                    });
+
+            // add serials to headers
+            jdbcTemplate.batchUpdate(PGConstants.UPDATE_FACT_SERIALS, copiedListOfFacts,
+                    BATCH_SIZE, (
+                            statement, fact) -> {
+                        final String idMatch = "{\"id\":\"" + fact.id() + "\"}";
+                        statement.setString(1, idMatch);
+                    });
 
             publishMeter.mark(numberOfFactsToPublish);
 

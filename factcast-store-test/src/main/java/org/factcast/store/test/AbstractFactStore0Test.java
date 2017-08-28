@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -552,6 +553,31 @@ public abstract class AbstractFactStore0Test {
 
         assertTrue(serFact < serMark);
 
+    }
+
+    @Test(timeout = 10000)
+    @DirtiesContext
+    public void testSerialHeader() throws Exception {
+
+        UUID id = UUID.randomUUID();
+        uut.publish(Fact.of("{\"id\":\"" + id
+                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id + "\"]}",
+                "{}"));
+
+        UUID id2 = UUID.randomUUID();
+        uut.publish(Fact.of("{\"id\":\"" + id2
+                + "\",\"type\":\"someType\",\"meta\":{\"foo\":\"bar\"},\"ns\":\"default\",\"aggIds\":[\""
+                + id2 + "\"]}",
+                "{}"));
+
+        OptionalLong serialOf = uut.serialOf(id);
+        assertTrue(serialOf.isPresent());
+
+        Fact f = uut.fetchById(id).get();
+        Fact fact2 = uut.fetchById(id2).get();
+
+        assertEquals(serialOf.getAsLong(), f.serial());
+        assertTrue(f.before(fact2));
     }
 
 }

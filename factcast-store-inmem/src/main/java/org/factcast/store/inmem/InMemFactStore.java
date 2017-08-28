@@ -118,6 +118,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
         factsToPublish.forEach(f -> {
             long ser = highwaterMark.incrementAndGet();
+            // FIXME need to set serial to header
             store.put(ser, f);
             ids.add(f.id());
 

@@ -11,6 +11,7 @@ import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.core.util.FactCastJson;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 
@@ -74,6 +75,7 @@ public class PGFact implements Fact {
     }
 
     // just picks the MetaData from the Header (as we know the rest already
+    @JsonIgnoreProperties(ignoreUnknown = true)
     private static class Meta {
         @JsonProperty
         final Map<String, String> meta = new HashMap<>();
@@ -90,8 +92,10 @@ public class PGFact implements Fact {
         String jsonHeader = resultSet.getString(PGConstants.COLUMN_HEADER);
         String jsonPayload = resultSet.getString(PGConstants.COLUMN_PAYLOAD);
 
-        return new PGFact(UUID.fromString(id), ns, type, toUUIDArray(aggId), jsonHeader,
+        PGFact f = new PGFact(UUID.fromString(id), ns, type, toUUIDArray(aggId), jsonHeader,
                 jsonPayload);
+
+        return f;
     }
 
     @VisibleForTesting
