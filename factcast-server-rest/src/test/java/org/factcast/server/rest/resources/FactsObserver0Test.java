@@ -1,9 +1,16 @@
 package org.factcast.server.rest.resources;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.io.IOException;
 import java.net.URI;
@@ -126,6 +133,48 @@ public class FactsObserver0Test {
         ObjectWithSchema<FactIdJson> object = (ObjectWithSchema<FactIdJson>) uut.createPayload(
                 TestFacts.one, false);
         assertThat(object.object.id(), is(TestFacts.one.id().toString()));
+    }
+
+    @Test
+    public void test_isConnectionAlive_IsNotAlive() throws IOException {
+
+        doThrow(IOException.class).when(eventOutput).write(any());
+
+        boolean connectionAlive = uut.isConnectionAlive();
+
+        assertFalse(connectionAlive);
+    }
+
+    @Test
+    public void test_isConnectionAlive_IsAlive() {
+
+        boolean connectionAlive = uut.isConnectionAlive();
+
+        assertTrue(connectionAlive);
+    }
+
+    @Test
+    public void test_isConnectionAlive_verifySignalEvent() throws IOException {
+
+        // when
+        uut.isConnectionAlive();
+
+        // then
+        ArgumentCaptor<OutboundEvent> capture = ArgumentCaptor.forClass(OutboundEvent.class);
+        verify(eventOutput).write(capture.capture());
+
+        OutboundEvent value = capture.getValue();
+
+        assertEquals("keep-alive", value.getName());
+    }
+
+    @Test
+    public void unsubscribe() throws Exception {
+
+        uut.unsubscribe();
+
+        verify(subscription).close();
+        verify(eventOutput).close();
     }
 
 }

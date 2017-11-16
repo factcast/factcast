@@ -34,7 +34,9 @@ class FactsObserverFactory {
 
     FactsObserver createFor(@NonNull EventOutput eventOutput, @NonNull URI baseURI,
             @NonNull AtomicReference<Subscription> subscription, boolean fullOutputMode) {
-        return new FactsObserver(eventOutput, factsResourceLinkFactory, hyperSchemaCreator, baseURI,
-                subscription, factTransformer, fullOutputMode);
+        FactsObserver factsObserver = new FactsObserver(eventOutput, factsResourceLinkFactory,
+                hyperSchemaCreator, baseURI, subscription, factTransformer, fullOutputMode);
+        new ConnectionCleanupTimer(factsObserver).start();
+        return factsObserver;
     }
 }
