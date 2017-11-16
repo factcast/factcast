@@ -31,7 +31,10 @@ href="https://github.com/uweschaefer/factcast/edit/master/factcast-site/document
 Source Code is available as [{{%icon fa-github%}}github](https://github.com/uweschaefer/factcast) repository.
 
 The current project health is
-<a href="https://app.buddy.works/uwe-schaefer/factcast/pipelines/pipeline/51653"><img class="inline" src="https://camo.githubusercontent.com/491d2173cf06d5e86afd41ce22e7eaae51beaa06/68747470733a2f2f6170702e62756464792e776f726b732f7577652d73636861656665722f66616374636173742f706970656c696e65732f706970656c696e652f35313635332f62616467652e7376673f746f6b656e3d63653865326136316565613163633533306132666133336363376265326665373530633262373139616664336464316634633937303733343264653366366266" alt="buddy pipeline" title="buddy pipeline" data-canonical-src="https://app.buddy.works/uwe-schaefer/factcast/pipelines/pipeline/51653/badge.svg?token=ce8e2a61eea1cc530a2fa33cc7be2fe750c2b719afd3dd1f4c9707342de3f6bf" style="max-width:100%;"></a>
+<a href="https://circleci.com/gh/uweschaefer/factcast"><img class="inline" src="https://circleci.com/gh/uweschaefer/factcast.svg?style=svg" alt="circleci" title="circleci" style="max-width:100%;"></a>
+
+
+
 <a href="https://coveralls.io/github/uweschaefer/factcast?branch=master">
     <img class="inline" src="https://coveralls.io/repos/github/uweschaefer/factcast/badge.svg?branch=master" alt="Coverage Status" style="width: auto; height: auto;">
 </a>
