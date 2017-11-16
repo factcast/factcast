@@ -96,7 +96,8 @@ public class FactsObserver implements FactObserver {
         try {
             eventOutput.write(event);
         } catch (IOException e) {
-            unsubscribeAndLog(e);
+            unsubscribe();
+            log.debug("Error while writing into the pipe", e);
         }
     }
 
@@ -130,7 +131,8 @@ public class FactsObserver implements FactObserver {
         try {
             eventOutput.write(event);
         } catch (IOException e) {
-            unsubscribeAndLog(e);
+            unsubscribe();
+            log.debug("Error while writing into the pipe", e);
         }
     }
 
@@ -147,20 +149,23 @@ public class FactsObserver implements FactObserver {
             eventOutput.close();
             subcription.get().close();
         } catch (Exception e) {
-            unsubscribeAndLog(e);
+            unsubscribe();
+            log.debug("Error while writing into the pipe", e);
         }
 
     }
 
-    private void unsubscribeAndLog(Throwable e) {
+    synchronized void unsubscribe() {
         try {
             subcription.get().close();
-            eventOutput.close();
-        } catch (Exception e1) {
-
+        } catch (Exception e) {
+            log.error("unable to close event output", e);
         }
-        // debug level, because error occurs always, if client disappears
-        log.debug("Error while writing into the pipe", e);
+        try {
+            eventOutput.close();
+        } catch (IOException e) {
+            log.error("unable to close event output", e);
+        }
     }
 
     @Override
@@ -173,5 +178,20 @@ public class FactsObserver implements FactObserver {
         }
 
         log.error("Error while reading", exception);
+    }
+
+    boolean isConnectionAlive() {
+
+        final OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
+        eventBuilder.name("keep-alive");
+        eventBuilder.comment("Signal event for keep-alive");
+        final OutboundEvent event = eventBuilder.build();
+        try {
+            eventOutput.write(event);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+
     }
 }
