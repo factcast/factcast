@@ -14,6 +14,6 @@ rm -r hugo-theme*
 wget -qO- https://github.com/uweschaefer/hugo-theme-docdock/archive/master.zip|bsdtar -xvf- 
 
 (
- hugo server --watch
+ hugo server --watch --bind 192.168.3.11
 )
 
