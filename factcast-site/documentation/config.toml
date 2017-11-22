@@ -27,3 +27,11 @@ name = "Contribution"
 identifier = "thanks"
 url = "/thanks"
 weight = 2
+
+[[menu.shortcuts]]
+
+name = "Legal / Impressum"
+identifier = "legal"
+url = "/imprint"
+weight = 99
+
