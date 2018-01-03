@@ -209,6 +209,11 @@
 					</execution>
 				</executions>
 			</plugin>
+			  <plugin>
+			      <groupId>com.gemnasium</groupId>
+			      <artifactId>gemnasium-maven-plugin</artifactId>
+			      <version>0.2.0</version>
+			  </plugin>
 		</plugins>
 		<resources>
 			<resource>
