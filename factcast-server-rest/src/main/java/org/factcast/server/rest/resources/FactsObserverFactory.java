@@ -65,7 +65,7 @@ class FactsObserverFactory {
             @Value("${rest.cleanup-conn.wait-sec:10}") int waitSecondsForCleanUpCheck) {
         this(factsResourceLinkFactory, hyperSchemaCreator, factTransformer, MoreExecutors
                 .getExitingScheduledExecutorService(new ScheduledThreadPoolExecutor(
-                        nrCleanUpThreads)), waitSecondsForCleanUpCheck);
+                        nrCleanUpThreads), 100, TimeUnit.MILLISECONDS), waitSecondsForCleanUpCheck);
     }
 
     FactsObserver createFor(@NonNull EventOutput eventOutput, @NonNull URI baseURI,
