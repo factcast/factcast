@@ -1,16 +1,25 @@
 package org.factcast.server.rest.resources;
 
 import java.net.URI;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import javax.inject.Inject;
 
 import org.factcast.core.subscription.Subscription;
 import org.glassfish.jersey.media.sse.EventOutput;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.mercateo.common.rest.schemagen.link.LinkFactory;
 import com.mercateo.common.rest.schemagen.types.HyperSchemaCreator;
 
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
 /**
@@ -21,7 +30,6 @@ import lombok.NonNull;
  *
  */
 @Component
-@AllArgsConstructor
 class FactsObserverFactory {
     @NonNull
     private final LinkFactory<FactsResource> factsResourceLinkFactory;
@@ -32,11 +40,50 @@ class FactsObserverFactory {
     @NonNull
     private final FactTransformer factTransformer;
 
+    @NonNull
+    private final ScheduledExecutorService executorService;
+
+    private final int waitSecondsForCleanUpCheck;
+
+    @VisibleForTesting
+    FactsObserverFactory(@NonNull LinkFactory<FactsResource> factsResourceLinkFactory,
+            @NonNull HyperSchemaCreator hyperSchemaCreator,
+            @NonNull FactTransformer factTransformer,
+            @NonNull ScheduledExecutorService executorService, int waitSecondsForCleanUpCheck) {
+        this.factsResourceLinkFactory = factsResourceLinkFactory;
+        this.hyperSchemaCreator = hyperSchemaCreator;
+        this.factTransformer = factTransformer;
+        this.executorService = executorService;
+        this.waitSecondsForCleanUpCheck = waitSecondsForCleanUpCheck;
+    }
+
+    @Inject
+    public FactsObserverFactory(@NonNull LinkFactory<FactsResource> factsResourceLinkFactory,
+            @NonNull HyperSchemaCreator hyperSchemaCreator,
+            @NonNull FactTransformer factTransformer,
+            @Value("${rest.cleanup-conn.threads-nr:10}") int nrCleanUpThreads,
+            @Value("${rest.cleanup-conn.wait-sec:10}") int waitSecondsForCleanUpCheck) {
+        this(factsResourceLinkFactory, hyperSchemaCreator, factTransformer, MoreExecutors
+                .getExitingScheduledExecutorService(new ScheduledThreadPoolExecutor(
+                        nrCleanUpThreads)), waitSecondsForCleanUpCheck);
+    }
+
     FactsObserver createFor(@NonNull EventOutput eventOutput, @NonNull URI baseURI,
             @NonNull AtomicReference<Subscription> subscription, boolean fullOutputMode) {
         FactsObserver factsObserver = new FactsObserver(eventOutput, factsResourceLinkFactory,
                 hyperSchemaCreator, baseURI, subscription, factTransformer, fullOutputMode);
-        new ConnectionCleanupTimer(factsObserver).start();
+
+        scheduleCleanUp(new CompletableFuture<>(), factsObserver);
+
         return factsObserver;
+    }
+
+    @VisibleForTesting
+    void scheduleCleanUp(CompletableFuture<Void> future, FactsObserver factsObserver) {
+
+        ScheduledFuture<?> scheduleWithFixedDelay = executorService.scheduleWithFixedDelay(
+                new ConnectionCleanupRunnable(factsObserver, future), waitSecondsForCleanUpCheck,
+                waitSecondsForCleanUpCheck, TimeUnit.SECONDS);
+        future.thenRun(() -> scheduleWithFixedDelay.cancel(true));
     }
 }
