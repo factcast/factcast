@@ -22,7 +22,7 @@ jobs:
 
     environment:
       # Customize the JVM maximum heap limit
-      # MAVEN_OPTS: -Xmx2200m
+      MAVEN_OPTS: -Xmx1600m
       pg_url: jdbc:postgresql://localhost/test?currentSchema=public&username=circleci&password=test
     
     steps:
