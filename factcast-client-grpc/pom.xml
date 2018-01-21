@@ -21,13 +21,19 @@
 		</dependency>
 		<dependency>
 			<groupId>org.factcast</groupId>
+			<artifactId>factcast-client-cache-infinispan</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.factcast</groupId>
 			<artifactId>factcast-grpc-api</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.devh</groupId>
 			<artifactId>grpc-client-spring-boot-starter</artifactId>
-			<version>1.3.0-RELEASE</version>
+			<version>1.0.1.RELEASE</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

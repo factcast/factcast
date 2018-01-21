@@ -59,8 +59,8 @@ public class SmokeMT {
             // Optional<Fact> fetchById = fc.fetchById(UUID.randomUUID());
             // System.out.println(fetchById.isPresent());
             //
-            SmokeTestFact f1 = new SmokeTestFact().type("create");
-            fc.publish(f1);
+            // SmokeTestFact f1 = new SmokeTestFact().type("create");
+            // fc.publish(f1);
             //
             // fetchById = fc.fetchById(f1.id());
             // System.out.println(fetchById.isPresent());
@@ -112,7 +112,6 @@ public class SmokeMT {
                         @Override
                         public void onNext(UUID f) {
                             l.incrementAndGet();
-                            System.out.println(f);
                             // try {
                             // Thread.sleep(10);
                             // } catch (InterruptedException e) {

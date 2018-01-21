@@ -9,4 +9,3 @@ target
 
 **/bin/*
 *.versionsBackup*
-test_local.sh
