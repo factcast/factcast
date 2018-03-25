@@ -26,6 +26,5 @@ public interface ReadFactCast {
 
     Optional<Fact> fetchById(@NonNull UUID id);
 
-    @NonNull
     OptionalLong serialOf(@NonNull UUID id);
 }

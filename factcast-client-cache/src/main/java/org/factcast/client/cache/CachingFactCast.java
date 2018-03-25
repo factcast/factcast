@@ -43,12 +43,14 @@ public class CachingFactCast implements FactCast {
     }
 
     @Override
-    public Subscription subscribeToIds(SubscriptionRequest req, IdObserver observer) {
+    public Subscription subscribeToIds(@NonNull SubscriptionRequest req,
+            @NonNull IdObserver observer) {
         return delegate.subscribeToIds(req, observer);
     }
 
     @Override
-    public Subscription subscribeToFacts(SubscriptionRequest req, FactObserver observer) {
+    public Subscription subscribeToFacts(@NonNull SubscriptionRequest req,
+            @NonNull FactObserver observer) {
 
         log.debug("changing Fact Subscription to Id subscription for caching single Fact lookups");
 
@@ -77,13 +79,11 @@ public class CachingFactCast implements FactCast {
     }
 
     @Override
-    @NonNull
     public Optional<Fact> fetchById(UUID id) {
         return lookup.lookup(id);
     }
 
     @Override
-    @NonNull
     public OptionalLong serialOf(@NonNull UUID ids) {
         return delegate.serialOf(ids);
     }

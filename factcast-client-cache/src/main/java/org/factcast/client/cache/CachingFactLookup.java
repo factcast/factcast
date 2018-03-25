@@ -30,7 +30,7 @@ public class CachingFactLookup {
     final FactStore store;
 
     @Cacheable(CACHE_NAME)
-    public Optional<Fact> lookup(@NonNull UUID id) {
+    public Optional<Fact> lookup(UUID id) {
         return store.fetchById(id);
     }
 }

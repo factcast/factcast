@@ -67,11 +67,6 @@ public class CachingFactCast0Test {
         verify(fc).publish(same(facts));
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testNonNull() throws Exception {
-        uut.publish((List<Fact>) null);
-    }
-
     @Test
     public void testSubscribeToIds() throws Exception {
         SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.forMark()).fromScratch();
