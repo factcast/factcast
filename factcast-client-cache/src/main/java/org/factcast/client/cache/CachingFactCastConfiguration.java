@@ -5,8 +5,6 @@ import org.factcast.core.store.FactStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import lombok.NonNull;
-
 /**
  * Spring configuration class that provides a CachingFactCast by wrapping a
  * FactCast instance.
@@ -18,12 +16,12 @@ import lombok.NonNull;
 public class CachingFactCastConfiguration {
 
     @Bean
-    public CachingFactCast cachingFactCast(@NonNull FactCast fc, @NonNull CachingFactLookup fl) {
+    public CachingFactCast cachingFactCast(FactCast fc, CachingFactLookup fl) {
         return new CachingFactCast(fc, fl);
     }
 
     @Bean
-    public CachingFactLookup cachingFactLookup(@NonNull FactStore store) {
+    public CachingFactLookup cachingFactLookup(FactStore store) {
         return new CachingFactLookup(store);
     }
 }
