@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CachingFactCast implements FactCast {
 
     final FactCast delegate;
-    @NonNull 
+
     final CachingFactLookup lookup;
 
     @Override
@@ -43,19 +43,19 @@ public class CachingFactCast implements FactCast {
     }
 
     @Override
-    public Subscription subscribeToIds(@NonNull SubscriptionRequest req, @NonNull IdObserver observer) {
+    public Subscription subscribeToIds(SubscriptionRequest req, IdObserver observer) {
         return delegate.subscribeToIds(req, observer);
     }
 
     @Override
-    public Subscription subscribeToFacts(@NonNull SubscriptionRequest req, @NonNull FactObserver observer) {
+    public Subscription subscribeToFacts(SubscriptionRequest req, FactObserver observer) {
 
         log.debug("changing Fact Subscription to Id subscription for caching single Fact lookups");
 
         return subscribeToIds(req, new IdObserver() {
 
             @Override
-            public void onNext(@NonNull UUID f) {
+            public void onNext(UUID f) {
                 fetchById(f).ifPresent(observer::onNext);
             }
 
@@ -78,7 +78,7 @@ public class CachingFactCast implements FactCast {
 
     @Override
     @NonNull
-    public Optional<Fact> fetchById(@NonNull UUID id) {
+    public Optional<Fact> fetchById(UUID id) {
         return lookup.lookup(id);
     }
 

@@ -26,15 +26,12 @@ import lombok.NonNull;
  */
 public interface FactStore {
 
-	void publish(@NonNull List<? extends Fact> factsToPublish);
+    void publish(@NonNull List<? extends Fact> factsToPublish);
 
-	@NonNull
-	Subscription subscribe(@NonNull SubscriptionRequestTO request, @NonNull FactObserver observer);
+    Subscription subscribe(@NonNull SubscriptionRequestTO request, @NonNull FactObserver observer);
 
-	@NonNull
-	Optional<Fact> fetchById(@NonNull UUID id);
+    Optional<Fact> fetchById(@NonNull UUID id);
 
-	@NonNull
-	OptionalLong serialOf(@NonNull UUID l);
+    OptionalLong serialOf(@NonNull UUID l);
 
 }
