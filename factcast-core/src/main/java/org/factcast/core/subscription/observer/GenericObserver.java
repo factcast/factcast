@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
  * @param <T>
  */
 public interface GenericObserver<I> {
-    void onNext(I element);
+    void onNext(@NonNull I element);
 
     default void onCatchup() {
         // implement if you are interested in that event
@@ -45,7 +45,7 @@ public interface GenericObserver<I> {
         private final Function<Fact, I> project;
 
         @Override
-        public void onNext(Fact from) {
+        public void onNext(@NonNull Fact from) {
             delegate.onNext(project.apply(from));
         }
 
