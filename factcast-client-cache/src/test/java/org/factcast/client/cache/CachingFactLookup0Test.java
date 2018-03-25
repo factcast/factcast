@@ -52,14 +52,4 @@ public class CachingFactLookup0Test {
         verify(store).fetchById(f.id());
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testLookupNonnull() throws Exception {
-        uut.lookup(null);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testDependencyNonnull() throws Exception {
-        new CachingFactLookup(null);
-    }
-
 }
