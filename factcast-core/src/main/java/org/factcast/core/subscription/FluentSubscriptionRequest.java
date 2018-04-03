@@ -14,7 +14,7 @@ import lombok.experimental.FieldDefaults;
 
 /**
  * SubscriptionRequest intended to be used by clients for convenience.
- * 
+ *
  * @author uwe.schaefer@mercateo.com
  *
  */
@@ -95,6 +95,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
         }
     }
 
+    @Override
     public java.util.Optional<UUID> startingAfter() {
         return java.util.Optional.ofNullable(startingAfter);
     }

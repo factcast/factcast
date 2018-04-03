@@ -30,12 +30,13 @@ import org.springframework.beans.factory.DisposableBean;
 import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Eternally-growing InMem Implementation of a FactStore. USE FOR TESTING
  * PURPOSES ONLY
- * 
+ *
  * @author uwe.schaefer@mercateo.com, joerg.adler@mercateo.com
  *
  */
@@ -54,7 +55,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
     @VisibleForTesting
     InMemFactStore(@NonNull ExecutorService es) {
-        this.executorService = es;
+        executorService = es;
 
         if (Package.getPackage("org.junit") == null) {
 
@@ -75,16 +76,38 @@ public class InMemFactStore implements FactStore, DisposableBean {
         this(Executors.newCachedThreadPool());
     }
 
+    @RequiredArgsConstructor
+    class AfterPredicate implements Predicate<Fact>{
+        final UUID after;
+        boolean flipSwitch=false;
+
+        @Override
+        public boolean test(Fact t) {
+            if (flipSwitch) {
+                return true;
+            }
+
+            flipSwitch = after.equals(t.id());
+            return false;
+        }
+    }
+
     private class InMemFollower implements Predicate<Fact>, Consumer<Fact>, AutoCloseable {
-        final Predicate<Fact> matcher;
+        Predicate<Fact> matcher;
 
         final SubscriptionImpl<Fact> subscription;
 
         InMemFollower(SubscriptionRequestTO request, SubscriptionImpl<Fact> subscription) {
             this.subscription = subscription;
             matcher = FactSpecMatcher.matchesAnyOf(request.specs());
+            if (request.startingAfter().isPresent()) {
+                AfterPredicate afterPredicate = new AfterPredicate(request.startingAfter().get());
+                matcher = f -> afterPredicate.test(f) && matcher.test(f);
+            }
+
         }
 
+        @Override
         public void close() {
             synchronized (InMemFactStore.this) {
                 activeFollowers.remove(this);
