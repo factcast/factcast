@@ -99,12 +99,13 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
         InMemFollower(SubscriptionRequestTO request, SubscriptionImpl<Fact> subscription) {
             this.subscription = subscription;
-            matcher = FactSpecMatcher.matchesAnyOf(request.specs());
+            Predicate<Fact> anyOf = FactSpecMatcher.matchesAnyOf(request.specs());
             if (request.startingAfter().isPresent()) {
                 AfterPredicate afterPredicate = new AfterPredicate(request.startingAfter().get());
-                matcher = f -> afterPredicate.test(f) && matcher.test(f);
+                matcher = f -> afterPredicate.test(f) && anyOf.test(f);
+            } else {
+                matcher=anyOf;
             }
-
         }
 
         @Override
@@ -165,7 +166,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
             // catchup
             if (!request.ephemeral()) {
-                store.values().stream().filter(s).forEach(s);
+                store.values().stream().filter(s).forEachOrdered(s);
             }
 
             if (request.continuous()) {
