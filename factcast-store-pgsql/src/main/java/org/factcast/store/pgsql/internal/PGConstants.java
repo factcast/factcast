@@ -36,7 +36,8 @@ public class PGConstants {
 
     public static String ALIAS_AGGID = "aggIds";
 
-    public static String PROJECTION_FACT = String.join(", ", COLUMN_SER, COLUMN_HEADER, COLUMN_PAYLOAD,
+    public static String PROJECTION_FACT = String.join(", ", COLUMN_SER, COLUMN_HEADER,
+            COLUMN_PAYLOAD,
             fromHeader(ALIAS_ID), fromHeader(ALIAS_AGGID), fromHeader(ALIAS_NS), fromHeader(
                     ALIAS_TYPE));
 
@@ -47,7 +48,8 @@ public class PGConstants {
     public static String INSERT_FACT = "INSERT INTO " + TABLE_FACT + "(" + COLUMN_HEADER + ","
             + COLUMN_PAYLOAD + ") VALUES (cast(? as jsonb),cast (? as jsonb))";
 
-    public static String SELECT_BY_ID = "SELECT " + PROJECTION_FACT + " FROM " + TABLE_FACT + " WHERE "
+    public static String SELECT_BY_ID = "SELECT " + PROJECTION_FACT + " FROM " + TABLE_FACT
+            + " WHERE "
             + COLUMN_HEADER + " @> cast (? as jsonb)";
 
     public static String SELECT_LATEST_SER = "SELECT max(" + COLUMN_SER + ") FROM " + TABLE_FACT;
@@ -82,7 +84,8 @@ public class PGConstants {
             + "->'meta','{}') || concat('{\"_ser\":', " + COLUMN_SER
             + " ,'}' )::jsonb , true) WHERE header @> ?::jsonb";
 
-    public static String SELECT_SER_BY_ID = "SELECT " + COLUMN_SER + " FROM " + TABLE_FACT + " WHERE "
+    public static String SELECT_SER_BY_ID = "SELECT " + COLUMN_SER + " FROM " + TABLE_FACT
+            + " WHERE "
             + COLUMN_HEADER + " @> cast (? as jsonb)";
 
     private static String fromHeader(String attributeName) {
