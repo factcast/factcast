@@ -18,6 +18,9 @@
 		<name>Mercateo AG</name>
 		<url>http://www.mercateo.com</url>
 	</organization>
+	
+	<name>factcast</name>
+	<description>factcast is a 'good enough' event store using PostgreSQL for persistence, and offers REST and GRPC interfaces.</description>
 
 	<modules>
 		<module>factcast-site</module>
@@ -51,6 +54,8 @@
 		<url>https://github.com/Mercateo/factcast.git</url>
 		<tag>HEAD</tag>
 	</scm>
+
+
 
 	<developers>
 		<developer>
