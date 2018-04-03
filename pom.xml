@@ -376,6 +376,9 @@
 		</profile>
 		<profile>
 			<id>release-sign-artifacts</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
 			<build>
 				<plugins>
 					<plugin>
