@@ -48,6 +48,15 @@
 		<tag>HEAD</tag>
 	</scm>
 
+	<developers>
+		<developer>
+			<name>Uwe Schaefer</name>
+			<email>uwe.schaefer@mercateo.com</email>
+			<organization>Mercateo AG</organization>
+			<organizationUrl>http://www.mercateo.com</organizationUrl>
+		</developer>
+	</developers>
+
 	<properties>
 		<spring-boot.version>1.5.9.RELEASE</spring-boot.version>
 		<spring-cloud.version>Edgware.SR1</spring-cloud.version>
@@ -365,7 +374,32 @@
 				</snapshotRepository>
 			</distributionManagement>
 		</profile>
-
+		<profile>
+			<id>release-sign-artifacts</id>
+			<activation>
+				<property>
+					<name>gpg.passphrase</name>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.6</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 
 	</profiles>
 </project>
