@@ -77,9 +77,10 @@ public class InMemFactStore implements FactStore, DisposableBean {
     }
 
     @RequiredArgsConstructor
-    class AfterPredicate implements Predicate<Fact>{
+    class AfterPredicate implements Predicate<Fact> {
         final UUID after;
-        boolean flipSwitch=false;
+
+        boolean flipSwitch = false;
 
         @Override
         public boolean test(Fact t) {
@@ -104,7 +105,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
                 AfterPredicate afterPredicate = new AfterPredicate(request.startingAfter().get());
                 matcher = f -> afterPredicate.test(f) && anyOf.test(f);
             } else {
-                matcher=anyOf;
+                matcher = anyOf;
             }
         }
 
