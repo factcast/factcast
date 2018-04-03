@@ -42,7 +42,9 @@
 	</licenses>
 
 	<scm>
-		<connection>scm:git:ssh://git@bitbucket.org:uweschaefer/factcast.git</connection>
+		<connection>scm:git:git@github.com:Mercateo/factcast.git</connection>
+		<developerConnection>scm:git:git@github.com:Mercateo/factcast.git</developerConnection>
+		<url>https://github.com/Mercateo/factcast.git</url>
 		<tag>HEAD</tag>
 	</scm>
 
