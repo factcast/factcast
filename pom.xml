@@ -376,11 +376,6 @@
 		</profile>
 		<profile>
 			<id>release-sign-artifacts</id>
-			<activation>
-				<property>
-					<name>gpg.passphrase</name>
-				</property>
-			</activation>
 			<build>
 				<plugins>
 					<plugin>
