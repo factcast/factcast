@@ -4,7 +4,7 @@
 
 	<groupId>org.factcast</groupId>
 	<artifactId>factcast</artifactId>
-	<version>0.0.3-SNAPSHOT</version>
+	<version>0.0.3</version>
 
 	<packaging>pom</packaging>
 
@@ -43,7 +43,7 @@
 		<connection>scm:git:git@github.com:Mercateo/factcast.git</connection>
 		<developerConnection>scm:git:git@github.com:Mercateo/factcast.git</developerConnection>
 		<url>https://github.com/Mercateo/factcast.git</url>
-		<tag>HEAD</tag>
+		<tag>factcast-0.0.3</tag>
 	</scm>
 
 	<developers>
