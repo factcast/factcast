@@ -6,7 +6,7 @@
 
 It is not yet released, the API may change, the documentation is incomplete.
 
-[![CircleCI](https://circleci.com/gh/uweschaefer/factcast.svg?style=svg)](https://circleci.com/gh/uweschaefer/factcast)
+[![CircleCI](https://circleci.com/gh/Mercateo/factcast.svg?style=svg)](https://circleci.com/gh/Mercateo/factcast)
 [![Coverage Status](https://coveralls.io/repos/github/uweschaefer/factcast/badge.svg?branch=master)](https://coveralls.io/github/uweschaefer/factcast?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/dd5921cfeb81482db72fa8d9df68048f)](https://www.codacy.com/app/uwe/factcast?utm_source=github.com&utm_medium=referral&utm_content=uweschaefer/factcast&utm_campaign=badger)
 [![MavenCentral](https://img.shields.io/maven-central/v/org.factcast/factcast-server.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast%22)
