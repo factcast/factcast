@@ -58,6 +58,7 @@ public interface SubscriptionRequest {
         return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).catchup(
                 specification);
     }
+
     static SpecBuilder follow(@NonNull Collection<FactSpec> specification) {
         return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).follow(
                 specification);
