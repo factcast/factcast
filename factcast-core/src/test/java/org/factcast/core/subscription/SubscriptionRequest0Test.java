@@ -1,6 +1,7 @@
 package org.factcast.core.subscription;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.factcast.core.spec.FactSpec;
 import org.junit.Test;
@@ -9,12 +10,12 @@ public class SubscriptionRequest0Test {
 
     @Test(expected = NullPointerException.class)
     public void testCatchupNullSpec() throws Exception {
-        SubscriptionRequest.catchup(null);
+        SubscriptionRequest.catchup((FactSpec) null);
     }
 
     @Test(expected = NullPointerException.class)
     public void testFollowNullSpec() throws Exception {
-        SubscriptionRequest.follow(null);
+        SubscriptionRequest.follow((FactSpec) null);
     }
 
     @Test(expected = NullPointerException.class)

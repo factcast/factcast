@@ -99,6 +99,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
             specification.forEach(this::catchup);
             return this;
         }
+
         public SpecBuilder follow(Collection<FactSpec> specification) {
             specification.forEach(this::follow);
             return this;
