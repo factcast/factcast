@@ -1,5 +1,6 @@
 package org.factcast.core.subscription;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -76,13 +77,13 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
             return toBuild;
         }
 
-        SpecBuilder follow(FactSpec specification) {
+        public SpecBuilder follow(FactSpec specification) {
             or(specification);
             toBuild.continuous = true;
             return this;
         }
 
-        SpecBuilder catchup(FactSpec specification) {
+        public SpecBuilder catchup(FactSpec specification) {
             or(specification);
             toBuild.continuous = false;
             return this;
@@ -91,6 +92,15 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
         @Override
         public SpecBuilder skipMarks() {
             toBuild.marks = false;
+            return this;
+        }
+
+        public SpecBuilder catchup(Collection<FactSpec> specification) {
+            specification.forEach(this::catchup);
+            return this;
+        }
+        public SpecBuilder follow(Collection<FactSpec> specification) {
+            specification.forEach(this::follow);
             return this;
         }
     }

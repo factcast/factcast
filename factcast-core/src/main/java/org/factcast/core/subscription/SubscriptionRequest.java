@@ -1,5 +1,6 @@
 package org.factcast.core.subscription;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -11,9 +12,9 @@ import lombok.NonNull;
 
 /**
  * Defines a request for Subscription.
- * 
+ *
  * see {@link FluentSubscriptionRequest}, {@link SubscriptionRequestTO}
- * 
+ *
  * @author uwe.schaefer@mercateo.com
  *
  */
@@ -50,4 +51,16 @@ public interface SubscriptionRequest {
         return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).catchup(
                 specification);
     }
+
+    // convenience
+
+    static SpecBuilder catchup(@NonNull Collection<FactSpec> specification) {
+        return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).catchup(
+                specification);
+    }
+    static SpecBuilder follow(@NonNull Collection<FactSpec> specification) {
+        return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).follow(
+                specification);
+    }
+
 }
