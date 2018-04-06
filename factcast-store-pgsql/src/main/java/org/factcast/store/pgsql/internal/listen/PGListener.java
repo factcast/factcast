@@ -7,7 +7,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import org.factcast.store.pgsql.internal.PGConstants;
 import org.postgresql.PGNotification;
@@ -38,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class PGListener implements InitializingBean, DisposableBean {
 
-    final @NonNull Supplier<PgConnection> ds;
+    final @NonNull PgConnectionSupplier pgConnectionSupplier;
 
     final @NonNull EventBus eventBus;
 
@@ -46,7 +45,7 @@ public class PGListener implements InitializingBean, DisposableBean {
 
     final AtomicBoolean running = new AtomicBoolean(true);
 
-    Thread listenerThread;
+    private Thread listenerThread;
 
     private int blockingWaitTimeInMillis = 1000 * 60;
 
@@ -60,8 +59,8 @@ public class PGListener implements InitializingBean, DisposableBean {
                 // make sure, we did not miss anything while reconnecting
                 postEvent("scheduled-poll");
 
-                try (PgConnection pc = ds.get()) {
-                    try (PreparedStatement ps = pc.prepareStatement(PGConstants.LISTEN_SQL);) {
+                try (PgConnection pc = pgConnectionSupplier.get()) {
+                    try (PreparedStatement ps = pc.prepareStatement(PGConstants.LISTEN_SQL)) {
                         log.trace("Running LISTEN command");
                         ps.execute();
                     }
@@ -102,6 +101,8 @@ public class PGListener implements InitializingBean, DisposableBean {
         }, "PG Instance Listener");
         listenerThread.setDaemon(true);
         listenerThread.start();
+        listenerThread.setUncaughtExceptionHandler((t, e) -> log.error("thread " + t
+                + " encountered an unhandled exception", e));
         try {
             l.await(15, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
@@ -140,12 +141,12 @@ public class PGListener implements InitializingBean, DisposableBean {
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         listen();
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void destroy() {
         this.running.set(false);
         if (listenerThread != null) {
             listenerThread.interrupt();
