@@ -11,9 +11,8 @@ import lombok.NonNull;
 
 public interface PGCatchupFactory {
 
-    PGCatchup create(
-
-            @NonNull SubscriptionRequestTO request, @NonNull PGPostQueryMatcher postQueryMatcher,
+    PGCatchup create(@NonNull SubscriptionRequestTO request,
+            @NonNull PGPostQueryMatcher postQueryMatcher,
             @NonNull SubscriptionImpl<Fact> subscription, @NonNull AtomicLong serial);
 
 }

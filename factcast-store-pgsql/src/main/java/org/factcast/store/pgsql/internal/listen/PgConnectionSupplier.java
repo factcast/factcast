@@ -3,7 +3,6 @@ package org.factcast.store.pgsql.internal.listen;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
-import java.util.function.Supplier;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -18,15 +17,16 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
-@Slf4j
-public class PGDriverManagerConnectionSupplier implements Supplier<PgConnection> {
+public class PgConnectionSupplier {
+
     @NonNull
     private final org.apache.tomcat.jdbc.pool.DataSource ds;
 
     @Inject
-    PGDriverManagerConnectionSupplier(@NonNull DataSource dataSource) {
+    PgConnectionSupplier(@NonNull DataSource dataSource) {
 
         if (dataSource instanceof org.apache.tomcat.jdbc.pool.DataSource) {
             this.ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
@@ -37,16 +37,14 @@ public class PGDriverManagerConnectionSupplier implements Supplier<PgConnection>
         }
     }
 
-    @Override
-    public PgConnection get() {
+    public PgConnection get() throws SQLException {
         try {
-
-            return (PgConnection) DriverManager.getDriver(ds.getUrl()).connect(ds.getUrl(),
-                    buildCredentialProperties(ds));
+            return (PgConnection) DriverManager.getDriver(ds.getUrl())
+                    .connect(ds.getUrl(), buildCredentialProperties(ds));
         } catch (SQLException e) {
             final String msg = "Cannot acquire Connection from DriverManager: " + ds.getUrl();
             log.error(msg, e);
-            throw new RuntimeException(msg, e);
+            throw e;
         }
     }
 

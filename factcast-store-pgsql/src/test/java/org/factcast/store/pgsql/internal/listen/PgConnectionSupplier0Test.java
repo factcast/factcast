@@ -10,17 +10,15 @@ import java.util.Properties;
 
 import javax.sql.DataSource;
 
-import junit.framework.Assert;
-
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
 @SuppressWarnings("all")
-public class PGDriverManagerConnectionSupplier0Test {
+public class PgConnectionSupplier0Test {
 
-    PGDriverManagerConnectionSupplier uut;
+    PgConnectionSupplier uut;
 
     @Mock
     private org.apache.tomcat.jdbc.pool.DataSource ds;
@@ -29,14 +27,14 @@ public class PGDriverManagerConnectionSupplier0Test {
     public void prepare() {
 
         initMocks(this);
-        uut = new PGDriverManagerConnectionSupplier(ds);
+        uut = new PgConnectionSupplier(ds);
     }
 
     @Test(expected = IllegalStateException.class)
     public void test_wrongDataSourceImplementation() {
 
         DataSource ds = mock(DataSource.class);
-        new PGDriverManagerConnectionSupplier(ds);
+        new PgConnectionSupplier(ds);
 
         failBecauseExceptionWasNotThrown(IllegalStateException.class);
     }
@@ -61,7 +59,7 @@ public class PGDriverManagerConnectionSupplier0Test {
     @Test(expected = NullPointerException.class)
     public void test_constructor() {
 
-        new PGDriverManagerConnectionSupplier(null);
+        new PgConnectionSupplier(null);
 
         failBecauseExceptionWasNotThrown(NullPointerException.class);
 
@@ -73,15 +71,8 @@ public class PGDriverManagerConnectionSupplier0Test {
         org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
         ds.setUrl(url);
 
-        PGDriverManagerConnectionSupplier uut = new PGDriverManagerConnectionSupplier(ds);
-        try {
-            uut.get();
-            org.junit.Assert.fail("Was expecting Exception");
-        } catch (Exception e) {
-            if (!(e.getCause() instanceof SQLException)) {
-                fail("Wrong Exception type. Was expecting SQLException wrapped in a RuntimeException, but got ",
-                        e);
-            }
-        }
+        PgConnectionSupplier uut = new PgConnectionSupplier(ds);
+
+        assertThatThrownBy(() -> uut.get()).isInstanceOf(SQLException.class);
     }
 }
