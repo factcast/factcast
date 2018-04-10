@@ -7,10 +7,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import org.factcast.store.pgsql.internal.listen.PGListener;
 import org.factcast.store.pgsql.internal.listen.PGListener.FactInsertionEvent;
+import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -28,7 +29,7 @@ import com.google.common.eventbus.AsyncEventBus;
 public class PGSqlListener0Test {
 
     @Mock
-    Supplier<PgConnection> ds;
+    PgConnectionSupplier ds;
 
     @Mock
     AsyncEventBus bus;
@@ -44,7 +45,7 @@ public class PGSqlListener0Test {
     @Captor
     ArgumentCaptor<PGListener> captor;
 
-    @org.junit.Before
+    @Before
     public void setUp() throws SQLException {
         Mockito.when(ds.get()).thenReturn(conn);
         Mockito.when(conn.prepareStatement(anyString())).thenReturn(ps);
