@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -249,6 +251,42 @@
 							<goal>format</goal>
 						</goals>
 						<phase>process-sources</phase>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<inherited>false</inherited>
+				<groupId>com.mycila.maven-license-plugin</groupId>
+				<artifactId>maven-license-plugin</artifactId>
+				<version>1.9.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>format</goal>
+						</goals>
+						<id>add.license</id>
+						<phase>generate-sources</phase>
+
+						<configuration>
+							<concurrencyFactor>3</concurrencyFactor>
+							<strictCheck>true</strictCheck>
+							<header>src/etc/header.txt</header>
+							<failIfMissing>true</failIfMissing>
+							<aggregate>true</aggregate>
+							<mapping>
+								<java>DOUBLESLASH_STYLE</java>
+							</mapping>
+							<properties>
+								<owner>Mercateo AG</owner>
+								<year>2018</year>
+								<email>uwe.schaefer@mercateo.com</email>
+							</properties>
+							<includes>
+								<include>
+									**/src/main/**/*.java
+								</include>
+							</includes>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
