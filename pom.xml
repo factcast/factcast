@@ -23,6 +23,7 @@
 
 	<name>factcast</name>
 	<description>factcast is a 'good enough' event store using PostgreSQL for persistence, and offers REST and GRPC interfaces.</description>
+	<inceptionYear>2018</inceptionYear>
 
 	<modules>
 		<module>factcast-site</module>
@@ -255,40 +256,8 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<inherited>false</inherited>
-				<groupId>com.mycila.maven-license-plugin</groupId>
-				<artifactId>maven-license-plugin</artifactId>
-				<version>1.9.0</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>format</goal>
-						</goals>
-						<id>add.license</id>
-						<phase>generate-sources</phase>
-
-						<configuration>
-							<concurrencyFactor>3</concurrencyFactor>
-							<strictCheck>true</strictCheck>
-							<header>src/etc/header.txt</header>
-							<failIfMissing>true</failIfMissing>
-							<aggregate>true</aggregate>
-							<mapping>
-								<java>DOUBLESLASH_STYLE</java>
-							</mapping>
-							<properties>
-								<owner>Mercateo AG</owner>
-								<year>2018</year>
-								<email>uwe.schaefer@mercateo.com</email>
-							</properties>
-							<includes>
-								<include>
-									**/src/main/**/*.java
-								</include>
-							</includes>
-						</configuration>
-					</execution>
-				</executions>
+				<groupId>com.mycila</groupId>
+				<artifactId>license-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 		<resources>
@@ -299,6 +268,40 @@
 		</resources>
 		<pluginManagement>
 			<plugins>
+				<plugin>
+					<groupId>com.mycila</groupId>
+					<artifactId>license-maven-plugin</artifactId>
+					<version>3.0</version>
+
+					<configuration>
+						<concurrencyFactor>4</concurrencyFactor>
+						<strictCheck>true</strictCheck>
+						<header>com/mycila/maven/plugin/license/templates/APACHE-2.txt</header>
+						<properties>
+							<owner>${project.organization.name}</owner>
+							<email>${project.organization.url}</email>
+						</properties>
+						<includes>
+							<include>
+								**/src/main/**/*.java
+							</include>
+							<include>
+								**/src/main/**/*.kt
+							</include>
+						</includes>
+						<aggregate>true</aggregate>
+					</configuration>
+
+					<executions>
+						<execution>
+							<goals>
+								<goal>format</goal>
+							</goals>
+							<id>update.license.header</id>
+							<phase>validate</phase>
+						</execution>
+					</executions>
+				</plugin>
 				<plugin>
 					<groupId>com.versioneye</groupId>
 					<artifactId>versioneye-maven-plugin</artifactId>
