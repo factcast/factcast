@@ -2,6 +2,7 @@
 .settings
 *~
 .classpath
+.factorypath
 target
 
 .idea
