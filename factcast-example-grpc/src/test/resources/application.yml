@@ -2,8 +2,6 @@ grpc:
   client:
     factstore:
       host:
-        - ibm.com
         - localhost
       port: 
-        - 7777
         - 9090
