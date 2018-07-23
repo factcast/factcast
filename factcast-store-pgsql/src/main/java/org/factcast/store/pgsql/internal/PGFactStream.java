@@ -130,14 +130,13 @@ public class PGFactStream {
                 // the same latency requirements
                 //
                 // ok, that is unlikely to be necessary, but easy to do, so...
-                delayInMs = ((request.maxBatchDelayInMs() / 4L) * 3L) + (long) (Math.abs(Math
-                        .random() * (request.maxBatchDelayInMs() / 4.0)));
+                delayInMs = ((request.maxBatchDelayInMs() / 4L) * 3L)
+                        + (long) (Math.abs(Math.random() * (request.maxBatchDelayInMs() / 4.0)));
                 log.info("{} setting delay to {}, maxDelay was {}", request, delayInMs, request
                         .maxBatchDelayInMs());
             }
 
-            this.condensedExecutor = new CondensedQueryExecutor(delayInMs, query,
-                    () -> isConnected());
+            condensedExecutor = new CondensedQueryExecutor(delayInMs, query, () -> isConnected());
             eventBus.register(condensedExecutor);
             // catchup phase 3 – make sure, we did not miss any fact due to
             // slow registration
@@ -156,9 +155,7 @@ public class PGFactStream {
         if (isConnected()) {
             log.debug("{} catchup phase1 - historic facts staring with SER={}", request, serial
                     .get());
-
             pgCatchupFactory.create(request, postQueryMatcher, subscription, serial).run();
-
         }
         if (isConnected()) {
             log.debug("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
@@ -170,13 +167,14 @@ public class PGFactStream {
         return !disconnected.get();
     }
 
-    public void close() {
+    public synchronized void close() {
         log.debug("{} disconnecting ", request);
         disconnected.set(true);
 
         if (condensedExecutor != null) {
             eventBus.unregister(condensedExecutor);
             condensedExecutor.cancel();
+            condensedExecutor = null;
         }
 
         log.info("{} disconnected ", request);
