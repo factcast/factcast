@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -36,68 +37,74 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class BlockingStreamObserver<T> implements StreamObserver<T> {
 
-    static final int RETRY_COUNT = 60;
+	static final int RETRY_COUNT = 60;
 
-    static final int WAIT_TIME = 1000;
+	static final int WAIT_TIME = 1000;
 
-    final ServerCallStreamObserver<T> delegate;
+	final ServerCallStreamObserver<T> delegate;
 
-    final Object lock = new Object();
+	final Object lock = new Object();
 
-    final String id;
+	final String id;
 
-    BlockingStreamObserver(String id, ServerCallStreamObserver<T> delegate) {
-        this.id = id;
-        this.delegate = delegate;
-        this.delegate.setOnReadyHandler(this::wakeup);
-        this.delegate.setOnCancelHandler(this::wakeup);
-        delegate.setCompression("gzip");
-        delegate.setMessageCompression(true);
-    }
+	BlockingStreamObserver(@NonNull String id, @NonNull ServerCallStreamObserver<T> delegate) {
+		this.id = id;
+		this.delegate = delegate;
+		this.delegate.setOnReadyHandler(this::wakeup);
+		this.delegate.setOnCancelHandler(this::wakeup);
+		delegate.setCompression("gzip");
+		delegate.setMessageCompression(true);
+	}
 
-    @VisibleForTesting
-    void wakeup() {
-        synchronized (lock) {
-            lock.notifyAll(); // wake up our thread
-        }
-    }
+	@VisibleForTesting
+	void wakeup() {
+		synchronized (lock) {
+			lock.notifyAll(); // wake up our thread
+		}
+	}
 
-    @Override
-    public void onNext(T value) {
-        synchronized (lock) {
+	@Override
+	public void onNext(T value) {
+		if (!delegate.isCancelled()) {
+			synchronized (lock) {
 
-            if (!delegate.isReady()) {
+				if (!delegate.isReady()) {
 
-                for (int i = 1; i <= RETRY_COUNT; i++) {
-                    log.debug("{} channel not ready. Slow client? Attempt: {}/{}", id, i,
-                            RETRY_COUNT);
-                    try {
-                        lock.wait(WAIT_TIME);
-                    } catch (InterruptedException meh) {
-                        // ignore
-                    }
-                    if (delegate.isReady()) {
-                        break;
-                    }
-                    if (delegate.isCancelled()) {
-                        throw new TransportLayerException("channel was cancelled.");
-                    }
-                }
-                if (!delegate.isReady()) {
-                    throw new TransportLayerException("channel not coming back.");
-                }
-            }
-        }
-        delegate.onNext(value);
-    }
+					for (int i = 1; i <= RETRY_COUNT; i++) {
+						log.debug("{} channel not ready. Slow client? Attempt: {}/{}", id, i, RETRY_COUNT);
+						try {
+							lock.wait(WAIT_TIME);
+						} catch (InterruptedException meh) {
+							// ignore
+						}
+						if (delegate.isReady()) {
+							break;
+						}
+						if (delegate.isCancelled()) {
+							// channel was cancelled.
+							break;
+						}
+					}
+					if (!delegate.isReady()&&!delegate.isCancelled()) {
+						throw new TransportLayerException("channel not coming back.");
+					}
+				}
+				
+				if (!delegate.isCancelled())
+					delegate.onNext(value);
+			}
+			
+		}
 
-    @Override
-    public void onError(Throwable t) {
-        delegate.onError(t);
-    }
+	}
 
-    @Override
-    public void onCompleted() {
-        delegate.onCompleted();
-    }
+	@Override
+	public void onError(Throwable t) {
+		delegate.onError(t);
+	}
+
+	@Override
+	public void onCompleted() {
+		delegate.onCompleted();
+	}
 }
