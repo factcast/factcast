@@ -60,7 +60,8 @@ import lombok.extern.slf4j.Slf4j;
 public class InMemFactStore implements FactStore, DisposableBean {
     final AtomicLong highwaterMark = new AtomicLong(0);
 
-    final LinkedHashMap<Long, Fact> store = new LinkedHashMap<>();
+    @VisibleForTesting
+    protected final LinkedHashMap<Long, Fact> store = new LinkedHashMap<>();
 
     final Set<UUID> ids = new HashSet<>();
 
