@@ -15,15 +15,9 @@
  */
 package org.factcast.server.grpc;
 
-import java.util.Optional;
-
-import org.factcast.grpc.api.CompressionAttribute;
-import org.factcast.grpc.api.CompressionAttributeMarshaller;
 import org.springframework.stereotype.Component;
 
-import io.grpc.Attributes.Key;
 import io.grpc.Metadata;
-import io.grpc.Metadata.BinaryMarshaller;
 import io.grpc.ServerCall;
 import io.grpc.ServerCall.Listener;
 import io.grpc.ServerCallHandler;
@@ -39,21 +33,18 @@ import net.devh.springboot.autoconfigure.grpc.server.GlobalServerInterceptorRegi
  */
 @Component
 public class GZipInterceptorConfigurer extends GlobalServerInterceptorConfigurerAdapter {
-    public void addServerInterceptors(GlobalServerInterceptorRegistry registry) {
-        registry.addServerInterceptors(new GZipInterceptor());
-    }
+	public void addServerInterceptors(GlobalServerInterceptorRegistry registry) {
+		registry.addServerInterceptors(new GZipInterceptor());
+	}
 
-    static class GZipInterceptor implements ServerInterceptor {
+	static class GZipInterceptor implements ServerInterceptor {
 
-        @Override
-        public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
-                Metadata headers,
-                ServerCallHandler<ReqT, RespT> next) {
+		@Override
+		public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
+				ServerCallHandler<ReqT, RespT> next) {
+			call.setCompression("gzip");
+			return next.startCall(call, headers);
+		}
 
-            String algoUsed = CompressionAttribute.fromMetaData(headers).orElse("gzip");
-            call.setCompression(algoUsed);
-            return next.startCall(call, headers);
-        }
-
-    }
+	}
 }
