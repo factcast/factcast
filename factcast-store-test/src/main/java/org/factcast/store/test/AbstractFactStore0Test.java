@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -44,7 +45,7 @@ public abstract class AbstractFactStore0Test {
 
     static final FactSpec ANY = FactSpec.ns("default");
 
-    FactCast uut;
+    protected FactCast uut;
 
     @Before
     public void setUp() throws Exception {
@@ -366,8 +367,9 @@ public abstract class AbstractFactStore0Test {
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                 "{}"));
-        FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript(
-                "function (h,e){ return (h.hit=='me')}");
+        FactSpec SCRIPTED = FactSpec.ns("default")
+                .jsFilterScript(
+                        "function (h,e){ return (h.hit=='me')}");
         uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                 .awaitComplete();
 
@@ -386,8 +388,9 @@ public abstract class AbstractFactStore0Test {
         uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                 "{}"));
-        FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript(
-                "function (h){ return (h.hit=='me')}");
+        FactSpec SCRIPTED = FactSpec.ns("default")
+                .jsFilterScript(
+                        "function (h){ return (h.hit=='me')}");
         uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                 .awaitComplete();
 
@@ -593,6 +596,63 @@ public abstract class AbstractFactStore0Test {
 
         assertEquals(serialOf.getAsLong(), f.serial());
         assertTrue(f.before(fact2));
+    }
+
+    @Test(timeout = 10000)
+    @DirtiesContext
+    public void testUniqueIdentConstraintInLog() throws Exception {
+
+        String ident = UUID.randomUUID().toString();
+
+        UUID id = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+        Fact f1 = Fact.of("{\"id\":\"" + id
+                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id
+                + "\"],\"meta\":{\"unique_identifier\":\"" + ident + "\"}}",
+                "{}");
+        Fact f2 = Fact.of("{\"id\":\"" + id2
+                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id2
+                + "\"],\"meta\":{\"unique_identifier\":\"" + ident + "\"}}",
+                "{}");
+        uut.publish(f1);
+
+        // needs to fail due to uniqueIdentitfier not being unique
+        try {
+            uut.publish(f2);
+            fail("Expected IllegalArgumentException due to unique_identifier being used a sencond time");
+        } catch (IllegalArgumentException e) {
+
+            // make sure, f1 was stored before
+            assertTrue(uut.fetchById(id).isPresent());
+        }
+    }
+
+    @Test(timeout=10000)
+    @DirtiesContext
+    public void testUniqueIdentConstraintInBatch() throws Exception {
+
+        String ident = UUID.randomUUID().toString();
+        
+        UUID id = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+        Fact f1 = Fact.of("{\"id\":\"" + id
+                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id
+                + "\"],\"meta\":{\"unique_identifier\":\"" + ident + "\"}}",
+                "{}");
+        Fact f2 = Fact.of("{\"id\":\"" + id2
+                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id2
+                + "\"],\"meta\":{\"unique_identifier\":\"" + ident + "\"}}",
+                "{}");
+
+        // needs to fail due to uniqueIdentitfier not being unique
+        try {
+            uut.publish(Arrays.asList(f1, f2));
+            fail("Expected IllegalArgumentException due to unique_identifier being used twice in a batch");
+        } catch (IllegalArgumentException e) {
+
+            // make sure, f1 was not stored either
+            assertFalse(uut.fetchById(id).isPresent());
+        }
     }
 
 }
