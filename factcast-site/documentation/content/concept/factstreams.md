@@ -69,7 +69,7 @@ This requires a **flexible way of expressing**, what Facts you are interested in
 
 Filtering could be done either ahead of time (by emitting Facts into different Streams and creating new Streams whenever a consumer's need changes), or just-in-time, which might have some impact on performance.   
  
-[{{%icon circle-arrow-right%}}Fact Specification]({{%relref "concept/factspec.md"%}})
+[{{%icon circle-arrow-right%}}Fact Specification]({{%relref "/concept/factspec.md"%}})
 
-[{{%icon circle-arrow-right%}}Fact Specification - Scripted Predicates ]({{%relref "concept/factspec.md#post-query-filtering-scripted-predicates"%}})
+[{{%icon circle-arrow-right%}}Fact Specification - Scripted Predicates ]({{%relref "/concept/factspec.md#post-query-filtering-scripted-predicates"%}})
 

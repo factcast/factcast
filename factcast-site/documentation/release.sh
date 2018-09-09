@@ -8,7 +8,7 @@ then
 fi
 wget -qO- https://github.com/uweschaefer/hugo-theme-docdock/archive/master.zip|bsdtar -xvf- 
 
-hugo
+./hugo
 
 mkdir stage -p
 mv public/* stage

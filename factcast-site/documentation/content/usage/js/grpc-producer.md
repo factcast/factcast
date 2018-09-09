@@ -41,4 +41,4 @@ store.publish([{
   }
 })
 ```
-See the [Facts]({{%relref "concept/fact.md"%}}) page for detailed information about all possible and required header fields.
+See the [Facts]({{%relref "/concept/fact.md"%}}) page for detailed information about all possible and required header fields.
