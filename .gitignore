@@ -11,3 +11,6 @@ target
 **/bin/*
 *.versionsBackup*
 test_local.sh
+/.metadata/
+.recommenders
+**/dependency-reduced*
