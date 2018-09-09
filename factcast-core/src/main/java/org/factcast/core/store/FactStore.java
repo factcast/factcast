@@ -25,8 +25,6 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 
-import lombok.NonNull;
-
 /**
  * A read/Write FactStore.
  * 
