@@ -64,6 +64,8 @@ public class InMemFactStore implements FactStore, DisposableBean {
     protected final LinkedHashMap<Long, Fact> store = new LinkedHashMap<>();
 
     final Set<UUID> ids = new HashSet<>();
+    
+    final Set<String> uniqueIdentifiers = new HashSet<>();
 
     final CopyOnWriteArrayList<InMemFollower> activeFollowers = new CopyOnWriteArrayList<>();
 
@@ -157,6 +159,16 @@ public class InMemFactStore implements FactStore, DisposableBean {
             throw new IllegalArgumentException("duplicate ids - ids must be unique!");
         }
 
+        // test on unique idents in batch
+        if (factsToPublish.stream().filter(f->f.meta("unique_identifier")!=null).collect(Collectors.groupingBy(f -> f.meta("unique_identifier"))).values().stream().anyMatch(c->c.size()>1)) {
+            throw new IllegalArgumentException("duplicate unique_identifier in factsToPublish - unique_identifier must be unique!");
+        }
+
+        // test on unique idents in log        
+        if (factsToPublish.stream().anyMatch(f -> uniqueIdentifiers.contains(f.meta("unique_identifier")))) {
+            throw new IllegalArgumentException("duplicate unique_identifier - unique_identifier must be unique!");
+        }
+
         factsToPublish.forEach(f -> {
             long ser = highwaterMark.incrementAndGet();
 
@@ -164,6 +176,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
 
             store.put(ser, inMemFact);
             ids.add(inMemFact.id());
+            Optional.ofNullable(f.meta("unique_identifier")).ifPresent(uniqueIdentifiers::add);
 
             List<InMemFollower> subscribers = activeFollowers.stream()
                     .filter(s -> s.test(inMemFact))

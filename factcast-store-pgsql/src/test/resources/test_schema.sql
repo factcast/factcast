@@ -46,4 +46,5 @@ create table catchup (
  ts timestamp
 ); 
 create index idx_catchup_cid_ser on catchup(cid,ser); 
+create unique index unique_metaident on fact ((header->'meta'->'unique_identifier')) where (header->'meta'->'unique_identifier') notnull;
 #

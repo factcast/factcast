@@ -8,3 +8,6 @@ databaseChangeLog:
     - include:
          file: factcast/v0.0.1/issue45.sql
          relativeToChangelogFile: true
+    - include:
+         file: factcast/issue82/uniqueConstraintForIdent.sql
+         relativeToChangelogFile: true
