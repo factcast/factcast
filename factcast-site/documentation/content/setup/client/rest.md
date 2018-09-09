@@ -25,7 +25,7 @@ Without going into which ones are right or wrong, here are two (out of many) opt
 
 ### HateOAS client
 
-One has to import the recent version of a suitable HATEOAS-Client, e.g. [this one](https://github.com/Mercateo/rest-hateoas-client). There are intentionally no beans for facts and subscriptions on the client side, because the user has the opportunity to code his own beans, which will be in the most times projections of the full beans, described by the schemas in the [REST-API documentation]({{%relref "usage/rest/api-guide.adoc"%}}). In the [usage]({{%relref "usage/overview.md"%}}) section there will be some example code for further reading.
+One has to import the recent version of a suitable HATEOAS-Client, e.g. [this one](https://github.com/Mercateo/rest-hateoas-client). There are intentionally no beans for facts and subscriptions on the client side, because the user has the opportunity to code his own beans, which will be in the most times projections of the full beans, described by the schemas in the [REST-API documentation]({{%relref "/usage/rest/api-guide.adoc"%}}). In the [usage]({{%relref "/usage/overview.md"%}}) section there will be some example code for further reading.
 
 ### Feign client
 

@@ -25,7 +25,7 @@ With FactCast, you write Facts into a log by *publishing* Facts. You can publish
 
 In order to coordinate with consumers, you can also add special *MarkFacts* at the end of the List, that you can reference from consumers later on.
 
-[{{%icon circle-arrow-right%}}Fact Specification]({{%relref "concept/markfact.md"%}})
+[{{%icon circle-arrow-right%}}Fact Specification]({{%relref "/concept/markfact.md"%}})
 
 
 ### Read (subscribe)

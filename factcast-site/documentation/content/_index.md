@@ -52,4 +52,10 @@ src="https://circleci.com/gh/Mercateo/factcast.svg?style=svg" alt="circleci" tit
 
 ## Change-log
 
-There is no release yet.
+#### Upcoming releases
+
+* <a href="https://github.com/Mercateo/factcast/projects/1">
+    Milestone 0.10
+</a>
+
+
