@@ -35,7 +35,9 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
-      - run: mvn -B -DskipTests -DskipITs install
+      - run: 
+          name: Quick install
+          command: mvn -B -DskipTests -DskipITs install
 
       - save_cache:
           paths:
@@ -48,4 +50,7 @@ jobs:
 
         
       # run tests!
-      - run: mvn -e  clean install verify jacoco:report coveralls:report -DrepoToken=caJLRInBkC7HkdYpryaUfSDl0zKM8BN3R
+      - run: 
+          name: FullTest
+          command: mvn -B clean install verify jacoco:report coveralls:report -DrepoToken=caJLRInBkC7HkdYpryaUfSDl0zKM8BN3R -Dpg_url=$(pg_url)
+      
