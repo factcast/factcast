@@ -22,7 +22,7 @@ jobs:
 
     environment:
       # Customize the JVM maximum heap limit
-      MAVEN_OPTS: -Xmx2600m
+#      MAVEN_OPTS: -Xmx2600m
       pg_url: jdbc:postgresql://localhost/test?currentSchema=public&username=circleci&password=test
     
     steps:
@@ -52,5 +52,5 @@ jobs:
       # run tests!
       - run: 
           name: FullTest
-          command: mvn -B clean install verify jacoco:report coveralls:report -DrepoToken=caJLRInBkC7HkdYpryaUfSDl0zKM8BN3R -Dpg_url=$(pg_url)
+          command: mvn -B clean install verify jacoco:report coveralls:report -DrepoToken=caJLRInBkC7HkdYpryaUfSDl0zKM8BN3R -Dpg_url=$pg_url
       
