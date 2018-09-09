@@ -15,10 +15,13 @@
  */
 package org.factcast.store.pgsql.rds;
 
+import javax.annotation.Resource;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.cloud.aws.jdbc.datasource.TomcatJdbcDataSourceFactory;
 import org.springframework.cloud.aws.jdbc.rds.AmazonRdsDataSourceFactoryBean;
+import org.springframework.core.env.Environment;
 
 /**
  * exchange the given TomcatJdbcDataSourceFactory with a customized factory so
@@ -28,6 +31,9 @@ import org.springframework.cloud.aws.jdbc.rds.AmazonRdsDataSourceFactoryBean;
  */
 
 public class RdsDataSourceFactorBeanPostProcessor implements BeanPostProcessor {
+
+    @Resource
+    private Environment env;
 
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName)
@@ -45,8 +51,8 @@ public class RdsDataSourceFactorBeanPostProcessor implements BeanPostProcessor {
 
         TomcatJdbcDataSourceFactory fac = new TomcatJdbcDataSourceFactory();
 
-        fac.setRemoveAbandonedTimeout(360000);
-        fac.setMaxWait(20000);
+        fac.setTestOnBorrow(env.getProperty("tomcat.testOnBorrow", Boolean.class));
+        fac.setConnectionProperties(env.getProperty("tomcat.connectionProperties", String.class));
         return fac;
 
     }

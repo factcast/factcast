@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.internal.listen;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.inject.Inject;
@@ -27,6 +28,7 @@ import org.postgresql.jdbc.PgConnection;
 import org.springframework.stereotype.Component;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -47,15 +49,15 @@ public class PgConnectionSupplier {
             this.ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
         } else {
             throw new IllegalStateException("expected "
-                    + org.apache.tomcat.jdbc.pool.DataSource.class.getName() + " , but got "
-                    + dataSource.getClass().getName());
+                    + org.apache.tomcat.jdbc.pool.DataSource.class.getName()
+                    + " , but got " + dataSource.getClass().getName());
         }
     }
 
     public PgConnection get() throws SQLException {
         try {
-            return (PgConnection) DriverManager.getDriver(ds.getUrl())
-                    .connect(ds.getUrl(), buildCredentialProperties(ds));
+            return (PgConnection) DriverManager.getDriver(ds.getUrl()).connect(ds.getUrl(),
+                    buildPgConnectionProperties(ds));
         } catch (SQLException e) {
             final String msg = "Cannot acquire Connection from DriverManager: " + ds.getUrl();
             log.error(msg, e);
@@ -63,23 +65,38 @@ public class PgConnectionSupplier {
         }
     }
 
+    private void setProperty(Properties dbp, String propertyName, String value) {
+        if (value != null) dbp.setProperty(propertyName, value);
+    }
+
     @VisibleForTesting
-    Properties buildCredentialProperties(org.apache.tomcat.jdbc.pool.DataSource ds) {
+    Properties buildPgConnectionProperties(org.apache.tomcat.jdbc.pool.DataSource ds) {
 
         Properties dbp = new Properties();
+
         final PoolConfiguration poolProperties = ds.getPoolProperties();
         if (poolProperties != null) {
-            final String user = poolProperties.getUsername();
-            if (user != null) {
-                dbp.setProperty("user", user);
-            }
-            final String pwd = poolProperties.getPassword();
-            if (pwd != null) {
-                dbp.setProperty("password", pwd);
+            setProperty(dbp,"user",poolProperties.getUsername());
+            setProperty(dbp,"password",poolProperties.getPassword());
+
+            final String connectionProperties = poolProperties.getConnectionProperties();
+            if (connectionProperties != null) {
+                try {
+                    Map<String, String> singleConnectionProperties = Splitter.on(";")
+                            .omitEmptyStrings()
+                            .withKeyValueSeparator("=")
+                            .split(connectionProperties);
+
+                    setProperty(dbp,"socketTimeout", singleConnectionProperties.get("socketTimeout"));
+                    setProperty(dbp,"connectTimeout", singleConnectionProperties.get("connectTimeout"));
+                    setProperty(dbp,"loginTimeout", singleConnectionProperties.get("loginTimeout"));
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException("illegal connectionProperties: "
+                            + connectionProperties);
+                }
             }
         }
 
         return dbp;
     }
-
 }
