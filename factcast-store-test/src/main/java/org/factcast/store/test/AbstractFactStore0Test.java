@@ -627,12 +627,12 @@ public abstract class AbstractFactStore0Test {
         }
     }
 
-    @Test(timeout=10000)
+    @Test(timeout = 10000)
     @DirtiesContext
     public void testUniqueIdentConstraintInBatch() throws Exception {
 
         String ident = UUID.randomUUID().toString();
-        
+
         UUID id = UUID.randomUUID();
         UUID id2 = UUID.randomUUID();
         Fact f1 = Fact.of("{\"id\":\"" + id

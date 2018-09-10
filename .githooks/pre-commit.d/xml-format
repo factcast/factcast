@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -e
+
+# needs xmllint
+# for macos use brew install xmlstarlet
+# for debian, use apt install libxml2-utils 
+command -v xmllint >/dev/null 2>&1 || echo "***WARNING*** need xmllint. Install via brew (xmlstarlet) or apt (libxml2-utils)." 
+
+PREFIX="> pre-commit [$(basename $0)]"
+TMP_SPACE=/tmp/git-hooks/pre-commit/$REPO_NAME/$(date +%s%N)
+
+mkdir -p $TMP_SPACE
+
+for X in `git diff --cached --name-only |grep -i "\.xml$"`; do
+  TX=$TMP_SPACE/tmp_formatted_xml
+  xmllint --format -o $TX $X
+  cmp -s $X $TX || (mv $TX $X && git-update-index $X && echo "$PREFIX Formatted $X" )
+done
+
+rm -rf $TMP_SPACE
+exit 0
