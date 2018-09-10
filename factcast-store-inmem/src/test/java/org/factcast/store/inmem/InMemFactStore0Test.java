@@ -20,7 +20,7 @@ public class InMemFactStore0Test extends AbstractFactStore0Test {
 
     @Override
     protected FactStore createStoreToTest() {
-        this.store=new InMemFactStore();
+        this.store = new InMemFactStore();
         return store;
     }
 
@@ -32,7 +32,7 @@ public class InMemFactStore0Test extends AbstractFactStore0Test {
         inMemFactStore.destroy();
         verify(es).shutdown();
     }
-    
+
     @Test
     public void testClear() throws Exception {
         Fact f1 = DefaultFact.of("{\"id\":\"" + UUID.randomUUID().toString() + "\"}", "{}");

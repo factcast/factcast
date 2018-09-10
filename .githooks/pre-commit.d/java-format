@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+
+PREFIX="> pre-commit [$(basename $0)]"
+echo "$PREFIX checking format of java files"
+mvn -q formatter:validate || ( echo "$PREFIX Please format your java files according to the format definition in src/eclipse\n$PREXIX You can do that by typing 'mvn formatter:format' if your IDE does not help with that." && exit 1)

@@ -33,18 +33,19 @@ import net.devh.springboot.autoconfigure.grpc.server.GlobalServerInterceptorRegi
  */
 @Component
 public class GZipInterceptorConfigurer extends GlobalServerInterceptorConfigurerAdapter {
-	public void addServerInterceptors(GlobalServerInterceptorRegistry registry) {
-		registry.addServerInterceptors(new GZipInterceptor());
-	}
+    public void addServerInterceptors(GlobalServerInterceptorRegistry registry) {
+        registry.addServerInterceptors(new GZipInterceptor());
+    }
 
-	static class GZipInterceptor implements ServerInterceptor {
+    static class GZipInterceptor implements ServerInterceptor {
 
-		@Override
-		public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
-				ServerCallHandler<ReqT, RespT> next) {
-			call.setCompression("gzip");
-			return next.startCall(call, headers);
-		}
+        @Override
+        public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
+                Metadata headers,
+                ServerCallHandler<ReqT, RespT> next) {
+            call.setCompression("gzip");
+            return next.startCall(call, headers);
+        }
 
-	}
+    }
 }

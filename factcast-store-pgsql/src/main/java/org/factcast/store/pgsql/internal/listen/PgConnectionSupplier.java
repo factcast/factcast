@@ -66,7 +66,8 @@ public class PgConnectionSupplier {
     }
 
     private void setProperty(Properties dbp, String propertyName, String value) {
-        if (value != null) dbp.setProperty(propertyName, value);
+        if (value != null)
+            dbp.setProperty(propertyName, value);
     }
 
     @VisibleForTesting
@@ -76,8 +77,8 @@ public class PgConnectionSupplier {
 
         final PoolConfiguration poolProperties = ds.getPoolProperties();
         if (poolProperties != null) {
-            setProperty(dbp,"user",poolProperties.getUsername());
-            setProperty(dbp,"password",poolProperties.getPassword());
+            setProperty(dbp, "user", poolProperties.getUsername());
+            setProperty(dbp, "password", poolProperties.getPassword());
 
             final String connectionProperties = poolProperties.getConnectionProperties();
             if (connectionProperties != null) {
@@ -87,9 +88,12 @@ public class PgConnectionSupplier {
                             .withKeyValueSeparator("=")
                             .split(connectionProperties);
 
-                    setProperty(dbp,"socketTimeout", singleConnectionProperties.get("socketTimeout"));
-                    setProperty(dbp,"connectTimeout", singleConnectionProperties.get("connectTimeout"));
-                    setProperty(dbp,"loginTimeout", singleConnectionProperties.get("loginTimeout"));
+                    setProperty(dbp, "socketTimeout", singleConnectionProperties.get(
+                            "socketTimeout"));
+                    setProperty(dbp, "connectTimeout", singleConnectionProperties.get(
+                            "connectTimeout"));
+                    setProperty(dbp, "loginTimeout", singleConnectionProperties.get(
+                            "loginTimeout"));
                 } catch (IllegalArgumentException e) {
                     throw new IllegalArgumentException("illegal connectionProperties: "
                             + connectionProperties);
