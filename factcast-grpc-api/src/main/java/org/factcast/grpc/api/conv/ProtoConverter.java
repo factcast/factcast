@@ -22,11 +22,13 @@ import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact.Builder;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ProtocolVersion;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 
@@ -41,6 +43,8 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 public class ProtoConverter {
+
+    private static final MSG_Empty EMPTY = MSG_Empty.newBuilder().build();
 
     public MSG_Notification createCatchupNotification() {
         return MSG_Notification.newBuilder().setType(MSG_Notification.Type.Catchup).build();
@@ -132,6 +136,24 @@ public class ProtoConverter {
         } else {
             return OptionalLong.empty();
         }
+    }
+
+    @NonNull
+    public ProtocolVersion fromProto(@NonNull MSG_ProtocolVersion msg) {
+        return ProtocolVersion.of(msg.getMajor(), msg.getMinor(), msg.getPatch());
+    }
+
+    @NonNull
+    public MSG_ProtocolVersion toProto(@NonNull ProtocolVersion v) {
+        return MSG_ProtocolVersion.newBuilder()
+                .setMajor(v.major())
+                .setMinor(v.minor())
+                .setPatch(v.patch())
+                .build();
+    }
+
+    public MSG_Empty empty() {
+        return EMPTY;
     }
 
 }

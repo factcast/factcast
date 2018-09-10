@@ -30,15 +30,18 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
+import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ProtocolVersion;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -57,9 +60,11 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
  *
  */
 @Slf4j
-class GrpcFactStore implements FactStore {
+class GrpcFactStore implements FactStore, InitializingBean {
 
     static final String CHANNEL_NAME = "factstore";
+
+    static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 0, 0);
 
     final RemoteFactStoreBlockingStub blockingStub;
 
@@ -100,8 +105,10 @@ class GrpcFactStore implements FactStore {
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
         try {
             log.trace("publishing {} facts to remote store", factsToPublish.size());
-            List<MSG_Fact> mf = factsToPublish.stream().map(converter::toProto).collect(Collectors
-                    .toList());
+            List<MSG_Fact> mf = factsToPublish.stream()
+                    .map(converter::toProto)
+                    .collect(Collectors
+                            .toList());
             MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
             blockingStub.publish(mfs);
         } catch (Exception e) {
@@ -117,10 +124,11 @@ class GrpcFactStore implements FactStore {
         StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new ClientStreamObserver(
                 subscription);
 
-        ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel().newCall(
-                RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions()
-                        .withWaitForReady()
-                        .withCompression("gzip"));
+        ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()
+                .newCall(
+                        RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions()
+                                .withWaitForReady()
+                                .withCompression("gzip"));
 
         asyncServerStreamingCall(call, converter.toProto(req), responseObserver);
 
@@ -136,5 +144,26 @@ class GrpcFactStore implements FactStore {
     @Override
     public OptionalLong serialOf(@NonNull UUID l) {
         return converter.fromProto(blockingStub.serialOf(converter.toProto(l)));
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        testCompatibility();
+    }
+
+    public void testCompatibility() {
+        ProtocolVersion serverProtocolVersion = converter.fromProto(blockingStub.protocolVersion(
+                converter.empty()));
+        if (!PROTOCOL_VERSION.isCompatibleTo(serverProtocolVersion))
+            throw new IncompatibleProtocolVersions("Apparently, the local Protocol Version "
+                    + PROTOCOL_VERSION + " is not compatible with the Server's "
+                    + serverProtocolVersion
+                    + ". \nPlease choose a compatible GRPC Client to connect to this Server.");
+
+        if (!PROTOCOL_VERSION.equals(serverProtocolVersion))
+            log.info("Compatible protocol version encountered client={}, server={}",
+                    PROTOCOL_VERSION, serverProtocolVersion);
+        else
+            log.info("Matching protocol version encountered {}", serverProtocolVersion);
     }
 }
