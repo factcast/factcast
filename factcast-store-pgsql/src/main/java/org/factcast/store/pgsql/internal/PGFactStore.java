@@ -128,15 +128,12 @@ public class PGFactStore implements FactStore {
 
             publishMeter.mark(numberOfFactsToPublish);
 
-        } catch (DataAccessException sql) {
-
+        } catch (DuplicateKeyException dupkey) {
             publishFailedCounter.inc();
-            // yikes
-            if (sql instanceof DuplicateKeyException) {
-                throw new IllegalArgumentException(sql.getMessage());
-            } else {
-                throw sql;
-            }
+            throw new IllegalArgumentException(dupkey.getMessage());
+        } catch (DataAccessException sql) {
+            publishFailedCounter.inc();
+            throw sql;
         }
     }
 
