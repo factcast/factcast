@@ -32,10 +32,9 @@ public class ProtocolVersion {
     int patch;
 
     public boolean isCompatibleTo(ProtocolVersion other) {
-        if (major != other.major)
-            return false;
         // patch level must be irrelevant
-        return minor <= other.minor;
+        return (major == other.major) &&
+                (minor <= other.minor);
     }
 
     @Override
