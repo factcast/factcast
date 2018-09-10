@@ -22,14 +22,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.factcast.core.Fact;
 
 public class PGCatchupQueue {
-    public PGCatchupQueue(int capacity) {
-        queue = new LinkedBlockingQueue<>(capacity);
-    }
-
     @lombok.experimental.Delegate
     final BlockingQueue<Fact> queue;
 
     final AtomicBoolean done = new AtomicBoolean(false);
+
+    public PGCatchupQueue(int capacity) {
+        queue = new LinkedBlockingQueue<>(capacity);
+    }
 
     public boolean isDone() {
         return done.get();
