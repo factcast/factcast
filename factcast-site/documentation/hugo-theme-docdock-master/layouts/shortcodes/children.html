@@ -1,0 +1,44 @@
+{{ if (index .Page.Menus "main") }}
+{{ $nohidden := .Get "nohidden"}}
+{{ $style :=  .Get "style" | default "li" }}
+{{ $depth :=  .Get "depth" | default 1 }}
+{{ $withDescription :=  .Get "description" | default false }}
+{{ $sortTerm :=  .Get "sort" | default "" }}
+
+<ul class="children children-{{$style}}">
+	{{template "childs" dict "menu" (index .Page.Menus "main") "style" $style "nohidden" $nohidden "count" 1 "depth" $depth "pages" .Site.Pages "description" $withDescription "sortTerm" $sortTerm}}	
+</ul>
+
+{{ end }}
+{{.Inner|safeHTML}}
+
+{{ define "childs" }}
+	{{ range sort .menu.Children .sortTerm }}
+		{{ if or (not $.nohidden ) (and (ne $.nohidden nil) (.Identifier))   }} 
+
+
+
+{{(printf "<%s>" $.style)|safeHTML}}
+<a href="{{.URL}}" >{{ .Name }}</a>
+{{(printf "</%s>" $.style)|safeHTML}}
+{{if $.description}}
+{{range where $.pages "RelPermalink" .URL}}
+	{{if .Description}}
+<p>{{.Description}}</p>
+	{{else}}
+<p>{{.Summary}}</p>
+	{{end}}
+{{end}}
+{{end}}
+
+
+		{{ end }}
+		{{ if lt $.count $.depth}}
+			{{ if  (.HasChildren)}}
+<ul>
+	{{template "childs" dict "menu" . "style" $.style "nohidden" $.nohidden "count" (add $.count 1) "depth" $.depth "pages" $.pages "description" $.description "	sortTerm" $.sortTerm}}
+</ul>
+			{{end}}
+		{{end}}
+	{{end}}
+{{end}}
