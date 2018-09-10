@@ -25,11 +25,13 @@ import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.conv.ProtoConverter;
+import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ProtocolVersion;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
@@ -56,6 +58,7 @@ import net.devh.springboot.autoconfigure.grpc.server.GrpcService;
 @GrpcService(FactStoreProto.class)
 @SuppressWarnings("all")
 public class FactStoreGrpcService extends RemoteFactStoreImplBase {
+    final static ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 0, 0);
 
     final FactStore store;
 
@@ -70,8 +73,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             UUID fromProto = converter.fromProto(request);
             log.trace("fetchById {}", fromProto);
             Optional<Fact> fetchById = store.fetchById(fromProto);
-            log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "").orElse(
-                    "NOT "));
+            log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "")
+                    .orElse(
+                            "NOT "));
             responseObserver.onNext(converter.toProto(fetchById));
             responseObserver.onCompleted();
         } catch (Throwable e) {
@@ -82,8 +86,11 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     @Override
     public void publish(@NonNull MSG_Facts request,
             @NonNull StreamObserver<MSG_Empty> responseObserver) {
-        List<Fact> facts = request.getFactList().stream().map(converter::fromProto).collect(
-                Collectors.toList());
+        List<Fact> facts = request.getFactList()
+                .stream()
+                .map(converter::fromProto)
+                .collect(
+                        Collectors.toList());
         final int size = facts.size();
         log.debug("publish {} fact{}", size, size > 1 ? "s" : "");
         log.trace("publish {}", facts);
@@ -114,6 +121,13 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
         store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp, f -> idOnly ? converter
                 .createNotificationFor(f.id()) : converter.createNotificationFor(f)));
+    }
+
+    @Override
+    public void protocolVersion(MSG_Empty request,
+            StreamObserver<MSG_ProtocolVersion> responseObserver) {
+        responseObserver.onNext(converter.toProto(PROTOCOL_VERSION));
+        responseObserver.onCompleted();
     }
 
     private void resetDebugInfo(@NonNull SubscriptionRequestTO req) {

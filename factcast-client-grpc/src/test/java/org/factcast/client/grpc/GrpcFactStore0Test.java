@@ -14,6 +14,7 @@ import org.factcast.core.Test0Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
+import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
@@ -108,6 +109,28 @@ public class GrpcFactStore0Test {
         expectNPE(() -> uut.subscribe(null, mock(FactObserver.class)));
         expectNPE(() -> uut.subscribe(null, null));
         expectNPE(() -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
+    }
+
+    @Test
+    public void testMatchingProtocolVersion() throws Exception {
+        when(blockingStub.protocolVersion(any())).thenReturn(conv.toProto(ProtocolVersion.of(1, 0,
+                0)));
+
+        uut.testCompatibility();
+    }
+
+    @Test
+    public void testCompatibleProtocolVersion() throws Exception {
+        when(blockingStub.protocolVersion(any())).thenReturn(conv.toProto(ProtocolVersion.of(1, 1,
+                0)));
+        uut.testCompatibility();
+    }
+
+    @Test(expected = IncompatibleProtocolVersions.class)
+    public void testIncompatibleProtocolVersion() throws Exception {
+        when(blockingStub.protocolVersion(any())).thenReturn(conv.toProto(ProtocolVersion.of(2, 0,
+                0)));
+        uut.testCompatibility();
     }
 
 }
