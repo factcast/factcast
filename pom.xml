@@ -173,6 +173,7 @@
           </dependency>
         </dependencies>
         <configuration>
+          <argLine>-Xmx1600m</argLine>
           <forkCount>1</forkCount>
           <excludes>
             <exclude>**/*IT.java</exclude>
