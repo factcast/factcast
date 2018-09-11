@@ -47,7 +47,7 @@ public class PGEmbeddedConfiguration {
                 PostgresConfig pgConfig =
 
                         new PostgresConfig(
-                                ru.yandex.qatools.embed.postgresql.distribution.Version.V9_6_8,
+                                ru.yandex.qatools.embed.postgresql.distribution.Version.V10_3,
                                 new Net(), new Storage("embedded"), new Timeout(),
                                 new Credentials("test", "test"));
                 PostgresStarter<PostgresExecutable, PostgresProcess> runtime = PostgresStarter
