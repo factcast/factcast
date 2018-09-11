@@ -33,9 +33,15 @@ Gee, i wish there was a solution, that is flexible, platform neutral and could b
 
 #### Changes:
 
-[Milestone 0.10](https://github.com/Mercateo/factcast/projects/1)
+[0.0.10 (milestone)](https://github.com/Mercateo/factcast/projects/1)
+
+ * header.meta.unique_identity added 
+ * socket/conect timeouts added to improve with resilience on PGSQL/RDS failure
+ * Protocol Version introduced to GRPC to improve protocol evolution
+ * .githooks added to enforce xml and java formatting
+ * JUnit 5 added (but still in migration)
 
 #### Upcoming:
 
-[Milestone 0.12](https://github.com/Mercateo/factcast/projects/2)
+[0.0.12 (milestone)](https://github.com/Mercateo/factcast/projects/2)
 
