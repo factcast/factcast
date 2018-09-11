@@ -239,7 +239,4 @@ public class InMemFactStore implements FactStore, DisposableBean {
         return OptionalLong.empty();
     }
 
-    public void clear() {
-        this.store.clear();
-    }
 }
