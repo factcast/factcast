@@ -53,7 +53,7 @@ src="https://circleci.com/gh/Mercateo/factcast.svg?style=svg" alt="circleci" tit
 ## Changelog
 
 * 2018-09-11 <a href="https://github.com/Mercateo/factcast/projects/1">
-    0.0.10 (Milestone)
+    0.0.10 (milestone)
 </a>
  * header.meta.unique_identity added 
  * socket/conect timeouts added to improve with resilience on PGSQL/RDS failure
