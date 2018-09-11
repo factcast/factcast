@@ -1,6 +1,7 @@
 package org.factcast.store.pgsql.internal;
 
 import static org.mockito.Mockito.*;
+import static ru.yandex.qatools.embed.postgresql.distribution.Version.Main.PRODUCTION;
 
 import java.io.IOException;
 
@@ -17,11 +18,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.core.Version;
 
 import ru.yandex.qatools.embed.postgresql.PostgresExecutable;
 import ru.yandex.qatools.embed.postgresql.PostgresProcess;
 import ru.yandex.qatools.embed.postgresql.PostgresStarter;
 import ru.yandex.qatools.embed.postgresql.config.PostgresConfig;
+import ru.yandex.qatools.embed.postgresql.config.AbstractPostgresConfig.Credentials;
+import ru.yandex.qatools.embed.postgresql.config.AbstractPostgresConfig.Net;
+import ru.yandex.qatools.embed.postgresql.config.AbstractPostgresConfig.Storage;
+import ru.yandex.qatools.embed.postgresql.config.AbstractPostgresConfig.Timeout;
 
 @Configuration
 @ComponentScan(basePackageClasses = PGConfigurationProperties.class)
@@ -38,8 +44,12 @@ public class PGEmbeddedConfiguration {
 
         if (url == null) {
             try {
-                PostgresConfig pgConfig = PostgresConfig.defaultWithDbName("embedded", "test",
-                        "test");
+                PostgresConfig pgConfig =
+
+                        new PostgresConfig(
+                                ru.yandex.qatools.embed.postgresql.distribution.Version.V9_6_8,
+                                new Net(), new Storage("embedded"), new Timeout(),
+                                new Credentials("test", "test"));
                 PostgresStarter<PostgresExecutable, PostgresProcess> runtime = PostgresStarter
                         .getDefaultInstance();
                 PostgresExecutable exec = runtime.prepare(pgConfig);
