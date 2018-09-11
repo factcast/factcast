@@ -31,17 +31,10 @@ Gee, i wish there was a solution, that is flexible, platform neutral and could b
 
 [Read more on factcast.org](https://factcast.org)
 
-#### Changes:
+#### Latest Verison on maven central [0.0.10 (milestone)](https://search.maven.org/search?q=factcast)
 
-[0.0.10 (milestone)](https://github.com/Mercateo/factcast/projects/1)
+#### Upcoming: [0.0.12 (milestone)](https://github.com/Mercateo/factcast/projects/2)
 
- * header.meta.unique_identity added 
- * socket/conect timeouts added to improve with resilience on PGSQL/RDS failure
- * Protocol Version introduced to GRPC to improve protocol evolution
- * .githooks added to enforce xml and java formatting
- * JUnit 5 added (but still in migration)
 
-#### Upcoming:
-
-[0.0.12 (milestone)](https://github.com/Mercateo/factcast/projects/2)
+[Detailed changlelog](https://factcast.org)
 
