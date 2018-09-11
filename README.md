@@ -37,3 +37,5 @@ Gee, i wish there was a solution, that is flexible, platform neutral and could b
 
 #### Upcoming:
 
+[Milestone 0.12](https://github.com/Mercateo/factcast/projects/2)
+
