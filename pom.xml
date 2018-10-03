@@ -18,6 +18,7 @@
   <description>factcast is a 'good enough' event store using PostgreSQL for persistence, and offers REST and GRPC interfaces.</description>
   <inceptionYear>2018</inceptionYear>
   <modules>
+    <module>factcast-bom</module>
     <module>factcast-site</module>
     <module>factcast-client-grpc</module>
     <module>factcast-client-cache</module>
