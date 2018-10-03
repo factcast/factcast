@@ -50,11 +50,6 @@
 			</dependency>
 			<dependency>
 				<groupId>org.factcast</groupId>
-				<artifactId>factcast-server-rest</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.factcast</groupId>
 				<artifactId>factcast-grpc-api</artifactId>
 				<version>${project.version}</version>
 			</dependency>
@@ -72,12 +67,6 @@
 				<version>${project.version}</version>
 			</dependency>
 
-			<!-- TODO soon to be removed -->
-			<dependency>
-				<groupId>org.factcast</groupId>
-				<artifactId>factcast-server</artifactId>
-				<version>${project.version}</version>
-			</dependency>
 		</dependencies>
 	</dependencyManagement>
 </project>

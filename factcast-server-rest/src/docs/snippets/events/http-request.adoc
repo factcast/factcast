@@ -1,6 +1,0 @@
-[source,http,options="nowrap"]
-----
-GET /facts/id-only?continuous=false&factSpec=%7B%20%22ns%22%3A%22a%22%7D
-Host: localhost:9998
-
-----

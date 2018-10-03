@@ -22,9 +22,9 @@ import org.springframework.boot.autoconfigure.web.ErrorMvcAutoConfiguration;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Spring boot starter for running a production server.
+ * Spring boot starter for running a factcast server.
  * 
- * This should contain a pgsql backend and grpc and rest frontends.
+ * This should contain a pgsql backend and grpc API frontend.
  * 
  * @author uwe.schaefer@mercateo.com
  *
