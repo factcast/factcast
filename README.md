@@ -36,5 +36,5 @@ Gee, i wish there was a solution, that is flexible, platform neutral and could b
 #### Upcoming: [0.0.14 (milestone)](https://github.com/Mercateo/factcast/projects/3)
 
 
-[Detailed changlelog](https://factcast.org/changelog)
+[Detailed changlelog](https://docs.factcast.org/changelog)
 
