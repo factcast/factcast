@@ -52,6 +52,8 @@ src="https://circleci.com/gh/Mercateo/factcast.svg?style=svg" alt="circleci" tit
 
 ## Releases
 * 2018-10-03 <a href="https://github.com/Mercateo/factcast/projects/2">0.0.12 (milestone)</a>
+ * Note that the jersey impl of the REST interface has its own <a href="https://github.com/Mercateo/factcast-rest-jersey">place on github now.</a> and got new coordinates: **org.factcast:factcast-server-rest-jersey:0.0.12.**
+ * If you use the REST Server, you'll need to change your dependencies accordingly
 * 2018-09-11 <a href="https://github.com/Mercateo/factcast/projects/1">0.0.10 (milestone)</a>
 
 ### Upcoming 
