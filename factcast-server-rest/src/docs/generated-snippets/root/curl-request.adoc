@@ -1,0 +1,4 @@
+[source,bash]
+----
+$ curl 'http://localhost:9998/' -i
+----

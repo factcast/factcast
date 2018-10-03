@@ -1,0 +1,7 @@
+|===
+|Name|Description
+
+|`Cache-Control`
+|Caching of errors is set to 10 seconds
+
+|===

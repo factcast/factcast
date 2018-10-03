@@ -1,0 +1,13 @@
+|===
+|Relation|Description
+
+|`http://rels.factcast.org/fact-ids`
+|The link for the eventstream of fact ids, links to the <<_sse_stream_of_fact_ids, facts resource>>
+
+|`http://rels.factcast.org/full-facts`
+|The link for the eventstream, links to the <<_sse_stream_of_facts, facts resource>>
+
+|`http://rels.factcast.org/create-transactional`
+|Creating a new transaction links to the <<resources-transactions, transaction resource>>
+
+|===

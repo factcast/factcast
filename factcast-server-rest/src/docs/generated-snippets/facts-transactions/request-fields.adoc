@@ -1,0 +1,52 @@
+|===
+|Path|Type|Description|Constraints
+
+
+|facts
+|Array
+|Non empty list with the facts to commit in this transaction
+|Must not be empty
+
+
+|facts[].header
+|Object
+|The header of new fact, it could have many custom attributes. The following are known.
+|Must not be null
+
+
+|facts[].header.id
+|String
+|UUID, is given by clients when commiting the fact
+|Must not be null
+
+
+|facts[].header.ns
+|String
+|namespace
+|Must not be null
+
+
+|facts[].header.type
+|String
+|type
+|
+
+
+|facts[].header.aggIds
+|Array
+|IDs of aggregates involved
+|
+
+
+|facts[].header.meta
+|Object
+|Key-value map for meta data
+|
+
+
+|facts[].payload
+|Object
+|The payload of the new fact
+|Must not be null
+
+|===
