@@ -30,7 +30,6 @@
     <module>factcast-core</module>
     <module>factcast-server-grpc</module>
     <module>factcast-grpc-api</module>
-    <module>factcast-server-rest</module>
 
     <module>factcast-examples/factcast-example-grpc</module>
     <module>factcast-examples/factcast-example-server</module>

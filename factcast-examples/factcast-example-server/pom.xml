@@ -31,6 +31,10 @@
       <artifactId>factcast-server-grpc</artifactId>
       <version>${project.version}</version>
     </dependency>
+<!-- 
+
+TODO will be moved
+
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-server-rest</artifactId>
@@ -43,27 +47,9 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-engine</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-runner</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-migrationsupport</artifactId>
-      <scope>test</scope>
-    </dependency>
+    </dependency> -->
+   
+  
   </dependencies>
   <build>
     <finalName>factcast</finalName>
