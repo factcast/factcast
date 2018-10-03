@@ -23,16 +23,18 @@
     <module>factcast-client-grpc</module>
     <module>factcast-client-cache</module>
     <module>factcast-client-cache-infinispan</module>
-    <module>factcast-example-grpc</module>
     <module>factcast-store-pgsql</module>
     <module>factcast-store-pgsql-rds</module>
     <module>factcast-store-inmem</module>
     <module>factcast-store-test</module>
     <module>factcast-core</module>
-    <module>factcast-server</module>
     <module>factcast-server-grpc</module>
     <module>factcast-grpc-api</module>
     <module>factcast-server-rest</module>
+
+    <module>factcast-examples/factcast-example-grpc</module>
+    <module>factcast-examples/factcast-example-server</module>
+
   </modules>
   <url>https://github.com/uweschaefer/factcast/tree/master/</url>
   <licenses>
