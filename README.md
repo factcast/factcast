@@ -31,10 +31,10 @@ Gee, i wish there was a solution, that is flexible, platform neutral and could b
 
 [Read more on factcast.org](https://factcast.org)
 
-#### Latest Version on maven central [0.0.10 (milestone)](https://search.maven.org/search?q=factcast)
+#### Latest Version on maven central [0.0.12 (milestone)](https://search.maven.org/search?q=factcast)
 
-#### Upcoming: [0.0.12 (milestone)](https://github.com/Mercateo/factcast/projects/2)
+#### Upcoming: [0.0.14 (milestone)](https://github.com/Mercateo/factcast/projects/3)
 
 
-[Detailed changlelog](https://factcast.org)
+[Detailed changlelog](https://factcast.org/changelog)
 

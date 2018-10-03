@@ -50,22 +50,11 @@ src="https://circleci.com/gh/Mercateo/factcast.svg?style=svg" alt="circleci" tit
 </a>
 
 
-## Changelog
+## Releases
+* 2018-10-03 <a href="https://github.com/Mercateo/factcast/projects/2">0.0.12 (milestone)</a>
+* 2018-09-11 <a href="https://github.com/Mercateo/factcast/projects/1">0.0.10 (milestone)</a>
 
-* 2018-09-11 <a href="https://github.com/Mercateo/factcast/projects/1">
-    0.0.10 (milestone)
+### Upcoming 
+* <a href="https://github.com/Mercateo/factcast/projects/3">
+    0.0.14 (milestone)
 </a>
- * header.meta.unique_identity added 
- * socket/conect timeouts added to improve with resilience on PGSQL/RDS failure
- * Protocol Version introduced to GRPC to improve protocol evolution
- * .githooks added to enforce xml and java formatting
- * JUnit 5 added (but still in migration)
-
-
-#### Upcoming releases
-
-* <a href="https://github.com/Mercateo/factcast/projects/2">
-    0.0.12 (milestone)
-</a>
-
-
