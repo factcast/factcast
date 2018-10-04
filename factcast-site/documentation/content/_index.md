@@ -43,7 +43,7 @@ src="https://circleci.com/gh/Mercateo/factcast.svg?style=svg" alt="circleci" tit
     <img src="https://camo.githubusercontent.com/1c83cab4eec41ad80d9920cba1bc06f849a97b03/68747470733a2f2f6170692e636f646163792e636f6d2f70726f6a6563742f62616467652f47726164652f6464353932316366656238313438326462373266613864396466363830343866" alt="Codacy Badge" data-canonical-src="https://api.codacy.com/project/badge/Grade/dd5921cfeb81482db72fa8d9df68048f" style="max-width:100%;" class="inline">
 </a>
 <a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast%22">
-    <img class="inline" src="https://img.shields.io/maven-central/v/org.factcast/factcast-server.svg" alt="MavenCentral">
+    <img class="inline" src="https://img.shields.io/maven-central/v/org.factcast/factcast.svg" alt="MavenCentral">
 </a>
 <a href="https://www.apache.org/licenses/LICENSE-2.0">
     <img class="inline" src="https://img.shields.io/badge/license-ASL2-green.svg?style=flat" >
