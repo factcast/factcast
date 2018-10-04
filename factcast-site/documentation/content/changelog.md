@@ -1,7 +1,19 @@
 # Change Log
 
+## [upcoming](https://github.com/Mercateo/factcast/tree/upcoming) (2018-10-04)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.12...upcoming)
+
+**Closed issues:**
+
+- Automatic changelog generation from Issue & PR Data [\#117](https://github.com/Mercateo/factcast/issues/117)
+- Extract REST code to separate repo [\#84](https://github.com/Mercateo/factcast/issues/84)
+
+**Merged pull requests:**
+
+- \#117: added automatically generated changelog to site [\#118](https://github.com/Mercateo/factcast/pull/118) ([uweschaefer](https://github.com/uweschaefer))
+
 ## [factcast-0.0.12](https://github.com/Mercateo/factcast/tree/factcast-0.0.12) (2018-10-03)
-[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.10...factcast-0.0.12)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/0.0.10...factcast-0.0.12)
 
 **Closed issues:**
 
@@ -10,7 +22,6 @@
 - Upgrade junit dependency to 5.3.1 [\#109](https://github.com/Mercateo/factcast/issues/109)
 - Upgrade embedded postgres dependency [\#106](https://github.com/Mercateo/factcast/issues/106)
 - Move pg to version 10 [\#99](https://github.com/Mercateo/factcast/issues/99)
-- Deploy Milestone 0.10 to maven central [\#88](https://github.com/Mercateo/factcast/issues/88)
 
 **Merged pull requests:**
 
@@ -22,13 +33,11 @@
 - \#99: switched tests to embed pgsql 10 [\#108](https://github.com/Mercateo/factcast/pull/108) ([uweschaefer](https://github.com/uweschaefer))
 - \#106: updated dependency for pg-embed [\#107](https://github.com/Mercateo/factcast/pull/107) ([uweschaefer](https://github.com/uweschaefer))
 
-## [factcast-0.0.10](https://github.com/Mercateo/factcast/tree/factcast-0.0.10) (2018-09-11)
-[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.8...factcast-0.0.10)
+## [0.0.10](https://github.com/Mercateo/factcast/tree/0.0.10) (2018-09-11)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.10...0.0.10)
 
 **Fixed bugs:**
 
-- Flaky test setup with circleCI [\#59](https://github.com/Mercateo/factcast/issues/59)
-- Follow subscriptions no longer work after "Connection to \[url\] refused". [\#56](https://github.com/Mercateo/factcast/issues/56)
 - flaky test [\#49](https://github.com/Mercateo/factcast/issues/49)
 
 **Closed issues:**
@@ -39,10 +48,23 @@
 - add repolocal githooks [\#96](https://github.com/Mercateo/factcast/issues/96)
 - fix hugo version [\#95](https://github.com/Mercateo/factcast/issues/95)
 - Document unique\_identifier [\#92](https://github.com/Mercateo/factcast/issues/92)
+- Deploy Milestone 0.10 to maven central [\#88](https://github.com/Mercateo/factcast/issues/88)
 - Document .clear in InMemFactStore [\#87](https://github.com/Mercateo/factcast/issues/87)
 - Add Version info procedure to GRPC protocol [\#86](https://github.com/Mercateo/factcast/issues/86)
 - Avoid embedded postgres if possible [\#85](https://github.com/Mercateo/factcast/issues/85)
 - Switch to JUnit5 [\#79](https://github.com/Mercateo/factcast/issues/79)
+- Add some Timeouts when working with PGSQL [\#53](https://github.com/Mercateo/factcast/issues/53)
+
+## [factcast-0.0.10](https://github.com/Mercateo/factcast/tree/factcast-0.0.10) (2018-09-11)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.8...factcast-0.0.10)
+
+**Fixed bugs:**
+
+- Flaky test setup with circleCI [\#59](https://github.com/Mercateo/factcast/issues/59)
+- Follow subscriptions no longer work after "Connection to \[url\] refused". [\#56](https://github.com/Mercateo/factcast/issues/56)
+
+**Closed issues:**
+
 - add global gzip compression to all grpc communication server -\> client [\#73](https://github.com/Mercateo/factcast/issues/73)
 - cannot run Target:  org.factcast.server.grpc.TransportLayerException: null [\#72](https://github.com/Mercateo/factcast/issues/72)
 - Unregister call from Eventbus fails unexpectedly [\#71](https://github.com/Mercateo/factcast/issues/71)
@@ -50,7 +72,6 @@
 - Upgrade circleci to 2.0 [\#65](https://github.com/Mercateo/factcast/issues/65)
 - Adapt to use oss-parent-pom  [\#63](https://github.com/Mercateo/factcast/issues/63)
 - Add License plugin to project [\#61](https://github.com/Mercateo/factcast/issues/61)
-- Add some Timeouts when working with PGSQL [\#53](https://github.com/Mercateo/factcast/issues/53)
 - Migrate all existing Facts by adding meta.\_ser [\#45](https://github.com/Mercateo/factcast/issues/45)
 
 **Merged pull requests:**
