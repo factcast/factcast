@@ -15,6 +15,7 @@
  */
 package org.factcast.grpc.api.conv;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
@@ -28,7 +29,9 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact.Builder;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ProtocolVersion;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProperties;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProtocolVersion;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 
@@ -56,8 +59,9 @@ public class ProtoConverter {
     }
 
     public MSG_Notification createNotificationFor(@NonNull Fact t) {
-        MSG_Notification.Builder builder = MSG_Notification.newBuilder().setType(
-                MSG_Notification.Type.Fact);
+        MSG_Notification.Builder builder = MSG_Notification.newBuilder()
+                .setType(
+                        MSG_Notification.Type.Fact);
         builder.setFact(toProto(t));
         builder.setType(MSG_Notification.Type.Fact);
         return builder.build();
@@ -65,8 +69,9 @@ public class ProtoConverter {
     }
 
     public MSG_Notification createNotificationFor(@NonNull UUID id) {
-        MSG_Notification.Builder builder = MSG_Notification.newBuilder().setType(
-                MSG_Notification.Type.Id);
+        MSG_Notification.Builder builder = MSG_Notification.newBuilder()
+                .setType(
+                        MSG_Notification.Type.Id);
         builder.setId(toProto(id));
         builder.setType(MSG_Notification.Type.Id);
         return builder.build();
@@ -130,7 +135,8 @@ public class ProtoConverter {
 
     @NonNull
     public OptionalLong fromProto(@NonNull MSG_OptionalSerial serialOf) {
-        // note that an unsigned is used to transport the serial. Serials MUST be >0
+        // note that an unsigned is used to transport the serial. Serials MUST
+        // be >0
         if (serialOf.getPresent() && serialOf.getSerial() > 0) {
             return OptionalLong.of(serialOf.getSerial());
         } else {
@@ -139,17 +145,39 @@ public class ProtoConverter {
     }
 
     @NonNull
-    public ProtocolVersion fromProto(@NonNull MSG_ProtocolVersion msg) {
+    public ProtocolVersion fromProto(@NonNull MSG_ServerProtocolVersion msg) {
         return ProtocolVersion.of(msg.getMajor(), msg.getMinor(), msg.getPatch());
     }
 
     @NonNull
-    public MSG_ProtocolVersion toProto(@NonNull ProtocolVersion v) {
-        return MSG_ProtocolVersion.newBuilder()
+    public Map<String, String> fromProto(@NonNull MSG_ServerProperties msg) {
+        return msg.getPropertyMap();
+    }
+
+    @NonNull
+    public ServerConfig fromProto(@NonNull MSG_ServerConfig msg) {
+        return ServerConfig.of(fromProto(msg.getVersion()), fromProto(msg.getProperties()));
+    }
+
+    @NonNull
+    public MSG_ServerProtocolVersion toProto(@NonNull ProtocolVersion v) {
+        return MSG_ServerProtocolVersion.newBuilder()
                 .setMajor(v.major())
                 .setMinor(v.minor())
                 .setPatch(v.patch())
                 .build();
+    }
+
+    @NonNull
+    public MSG_ServerConfig toProto(@NonNull ServerConfig cfg) {
+        return MSG_ServerConfig.newBuilder()
+                .setVersion(toProto(cfg.version()))
+                .setProperties(toProto(cfg.properties()))
+                .build();
+    }
+
+    private MSG_ServerProperties toProto(Map<String, String> property) {
+        return MSG_ServerProperties.newBuilder().putAllProperty(property).build();
     }
 
     public MSG_Empty empty() {

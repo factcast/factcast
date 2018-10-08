@@ -18,9 +18,11 @@ package org.factcast.client.grpc;
 import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
@@ -29,8 +31,10 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
+import org.factcast.grpc.api.conv.ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
@@ -40,13 +44,15 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
-import org.springframework.beans.factory.InitializingBean;
+import org.factcast.grpc.compression.lz4.LZ4Codec;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.annotations.VisibleForTesting;
 
 import io.grpc.Channel;
 import io.grpc.ClientCall;
+import io.grpc.CompressorRegistry;
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -59,17 +65,21 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
  *
  */
 @Slf4j
-class GrpcFactStore implements FactStore, InitializingBean {
+class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     static final String CHANNEL_NAME = "factstore";
 
     static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 0, 0);
 
-    final RemoteFactStoreBlockingStub blockingStub;
+    private RemoteFactStoreBlockingStub blockingStub;
 
-    final RemoteFactStoreStub stub;
+    private RemoteFactStoreStub stub;
 
-    final ProtoConverter converter = new ProtoConverter();
+    private final ProtoConverter converter = new ProtoConverter();
+
+    private ProtocolVersion serverProtocolVersion;
+
+    private Map<String, String> serverProperties;
 
     @Autowired
     GrpcFactStore(AddressChannelFactory channelFactory) {
@@ -109,6 +119,7 @@ class GrpcFactStore implements FactStore, InitializingBean {
                     .collect(Collectors
                             .toList());
             MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
+            // blockingStub.getCallOptions().withCompression(compressor);
             blockingStub.publish(mfs);
         } catch (Exception e) {
             log.warn("failed to publish {} facts: {}", factsToPublish.size(), e);
@@ -126,8 +137,7 @@ class GrpcFactStore implements FactStore, InitializingBean {
         ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()
                 .newCall(
                         RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions()
-                                .withWaitForReady()
-                                .withCompression("gzip"));
+                                .withWaitForReady());
 
         asyncServerStreamingCall(call, converter.toProto(req), responseObserver);
 
@@ -145,14 +155,18 @@ class GrpcFactStore implements FactStore, InitializingBean {
         return converter.fromProto(blockingStub.serialOf(converter.toProto(l)));
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        testCompatibility();
-    }
+    public synchronized void initialize() {
+        if (initialized.getAndSet(true))
+            initialize();
 
-    public void testCompatibility() {
-        ProtocolVersion serverProtocolVersion = converter.fromProto(blockingStub.protocolVersion(
+        log.debug("Invoking handshake");
+
+        ServerConfig cfg = converter.fromProto(blockingStub.handshake(
                 converter.empty()));
+
+        serverProtocolVersion = cfg.version();
+        serverProperties = cfg.properties();
+
         if (!PROTOCOL_VERSION.isCompatibleTo(serverProtocolVersion))
             throw new IncompatibleProtocolVersions("Apparently, the local Protocol Version "
                     + PROTOCOL_VERSION + " is not compatible with the Server's "
@@ -164,5 +178,30 @@ class GrpcFactStore implements FactStore, InitializingBean {
                     PROTOCOL_VERSION, serverProtocolVersion);
         else
             log.info("Matching protocol version encountered {}", serverProtocolVersion);
+
+        configure();
     }
+
+    private void configure() {
+
+        boolean localLz4 = CompressorRegistry
+                .getDefaultInstance()
+                .lookupCompressor("lz4") != null;
+
+        boolean remoteLz4 = Boolean.valueOf(serverProperties.get(
+                Capabilities.CODEC_LZ4.toString()));
+
+        if (localLz4 && remoteLz4) {
+            this.blockingStub = blockingStub.withCompression(new LZ4Codec().getMessageEncoding());
+            this.stub = stub.withCompression(LZ4Codec.ENCODING);
+        }
+    }
+
+    private AtomicBoolean initialized = new AtomicBoolean(false);
+
+    @Override
+    public synchronized void afterSingletonsInstantiated() {
+        initialize();
+    }
+
 }

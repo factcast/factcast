@@ -1,11 +1,17 @@
 package org.factcast.client.grpc;
 
-import static org.factcast.core.TestHelper.*;
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.factcast.core.TestHelper.expectNPE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,6 +21,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
+import org.factcast.grpc.api.conv.ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
@@ -113,24 +120,34 @@ public class GrpcFactStore0Test {
 
     @Test
     public void testMatchingProtocolVersion() throws Exception {
-        when(blockingStub.protocolVersion(any())).thenReturn(conv.toProto(ProtocolVersion.of(1, 0,
-                0)));
+        when(blockingStub.handshake(any())).thenReturn(
+                conv.toProto(
+                        ServerConfig.of(
+                                ProtocolVersion.of(1, 0, 0),
+                                new HashMap<>())));
 
-        uut.testCompatibility();
+        uut.initialize();
     }
 
     @Test
     public void testCompatibleProtocolVersion() throws Exception {
-        when(blockingStub.protocolVersion(any())).thenReturn(conv.toProto(ProtocolVersion.of(1, 1,
-                0)));
-        uut.testCompatibility();
+        when(blockingStub.handshake(any())).thenReturn(
+                conv.toProto(
+                        ServerConfig.of(
+                                ProtocolVersion.of(1, 1, 0),
+                                new HashMap<>())));
+        uut.initialize();
     }
 
     @Test(expected = IncompatibleProtocolVersions.class)
     public void testIncompatibleProtocolVersion() throws Exception {
-        when(blockingStub.protocolVersion(any())).thenReturn(conv.toProto(ProtocolVersion.of(2, 0,
-                0)));
-        uut.testCompatibility();
+        when(blockingStub.handshake(any())).thenReturn(
+                conv.toProto(
+                        ServerConfig.of(
+                                ProtocolVersion.of(2, 0, 0),
+                                new HashMap<>())));
+
+        uut.initialize();
     }
 
 }
