@@ -15,12 +15,11 @@
  */
 package org.factcast.grpc.api;
 
-import io.grpc.CallOptions.Key;
+public enum Capabilities {
 
-public class GrpcConstants {
+    CODEC_LZ4;
 
-    public static final String COMPRESSOR_LZ4 = "LZ4";
-
-    public static final Key<String> PREFERRED_COMPRESSOR = Key.of("prefcomp", COMPRESSOR_LZ4);
-
+    public String toString() {
+        return getClass().getCanonicalName() + "." + name();
+    }
 }

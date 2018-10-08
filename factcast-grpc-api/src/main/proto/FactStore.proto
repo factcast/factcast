@@ -71,16 +71,26 @@ message MSG_Facts {
 message MSG_Empty {
 }
 
-message MSG_ProtocolVersion {
+message MSG_ServerProtocolVersion {
   int32 major=1;
   int32 minor=2;
   int32 patch=3;
 }
+
+message MSG_ServerProperties {
+  map<string, string> property=1;
+}
+
+message MSG_ServerConfig {
+  MSG_ServerProtocolVersion version= 1;
+  MSG_ServerProperties properties= 2;
+}
+
 
 service RemoteFactStore {
 	rpc subscribe (MSG_SubscriptionRequest) returns (stream MSG_Notification) {}
 	rpc fetchById (MSG_UUID) returns (MSG_OptionalFact) {}
 	rpc publish (MSG_Facts) returns (MSG_Empty) {}
 	rpc serialOf (MSG_UUID) returns (MSG_OptionalSerial) {}
-	rpc protocolVersion (MSG_Empty) returns (MSG_ProtocolVersion) {}
+	rpc handshake (MSG_Empty) returns (MSG_ServerConfig) {}
 }
