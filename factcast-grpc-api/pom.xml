@@ -8,10 +8,6 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-grpc-api</artifactId>
-  <properties>
-    <grpc.version>1.6.1</grpc.version>
-    <!-- CURRENT_GRPC_VERSION -->
-  </properties>
   <dependencies>
     <dependency>
       <groupId>io.grpc</groupId>
@@ -60,14 +56,12 @@
       <artifactId>junit-jupiter-migrationsupport</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>26.0-jre</version>
+    </dependency>
   </dependencies>
-  <repositories>
-    <repository>
-      <id>lognet</id>
-      <name>lognet</name>
-      <url>http://oss.jfrog.org/oss-snapshot-local</url>
-    </repository>
-  </repositories>
   <build>
     <extensions>
       <extension>
