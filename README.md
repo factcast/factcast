@@ -30,11 +30,5 @@ While all of them are most probably great, when it comes to clustering, backup, 
 Gee, i wish there was a solution, that is flexible, platform neutral and could be operated at scale with what we already know...
 
 [Read more on factcast.org](https://factcast.org)
-
-#### Latest Version on maven central [0.0.12 (milestone)](https://search.maven.org/search?q=factcast)
-
-#### Upcoming: [0.0.14 (milestone)](https://github.com/Mercateo/factcast/projects/3)
-
-
 [Detailed changlelog](https://docs.factcast.org/changelog)
 
