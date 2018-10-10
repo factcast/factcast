@@ -30,5 +30,6 @@ While all of them are most probably great, when it comes to clustering, backup, 
 Gee, i wish there was a solution, that is flexible, platform neutral and could be operated at scale with what we already know...
 
 [Read more on factcast.org](https://factcast.org)
+
 [Detailed changlelog](https://docs.factcast.org/changelog)
 
