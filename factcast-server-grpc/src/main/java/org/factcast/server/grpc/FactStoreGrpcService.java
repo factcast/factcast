@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -34,6 +35,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
@@ -165,4 +167,13 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         log.info("subscribing {} for {} defined as {}", newId, req, req.dump());
         req.debugInfo(newId);
     }
+
+    @Override
+    public void serialOf(MSG_UUID request, StreamObserver<MSG_OptionalSerial> responseObserver) {
+        OptionalLong serialOf = store.serialOf(converter.fromProto(request));
+
+        responseObserver.onNext(converter.toProto(serialOf));
+        responseObserver.onCompleted();
+    }
+
 }

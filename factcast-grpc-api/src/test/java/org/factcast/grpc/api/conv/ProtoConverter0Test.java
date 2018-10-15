@@ -1,9 +1,13 @@
 package org.factcast.grpc.api.conv;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
@@ -12,6 +16,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.junit.Test;
 
@@ -170,4 +175,17 @@ public class ProtoConverter0Test {
         assertEquals(to.specs().get(1).ns(), copy.specs().get(1).ns());
     }
 
+    @Test
+    public void testToProtoOptionalLongPresent() throws Exception {
+        MSG_OptionalSerial msg = uut.toProto(OptionalLong.of(133));
+        assertTrue(msg.getPresent());
+        assertEquals(133, msg.getSerial());
+
+    }
+
+    @Test
+    public void testToProtoOptionalLongEmpty() throws Exception {
+        MSG_OptionalSerial msg = uut.toProto(OptionalLong.empty());
+        assertFalse(msg.getPresent());
+    }
 }

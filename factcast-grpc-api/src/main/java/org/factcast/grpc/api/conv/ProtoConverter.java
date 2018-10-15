@@ -184,4 +184,14 @@ public class ProtoConverter {
         return EMPTY;
     }
 
+    public MSG_OptionalSerial toProto(OptionalLong serialOf) {
+        if (serialOf.isPresent()) {
+            return MSG_OptionalSerial.newBuilder()
+                    .setPresent(true)
+                    .setSerial(serialOf.getAsLong())
+                    .build();
+        } else
+            return MSG_OptionalSerial.newBuilder().setPresent(false).build();
+    }
+
 }
