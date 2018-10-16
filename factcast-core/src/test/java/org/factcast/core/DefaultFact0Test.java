@@ -35,7 +35,7 @@ public class DefaultFact0Test {
         DefaultFact.of("not json at all", "{}");
     }
 
-    @Test(expected = IOException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testNoId() throws Exception {
         DefaultFact.of("{\"ns\":\"default\"}", "{}");
     }
@@ -101,8 +101,8 @@ public class DefaultFact0Test {
                 + "\"],\"meta\":{\"foo\":7}}";
 
         Fact f = DefaultFact.of(header, "{}");
-        Fact f2 = DefaultFact.of("{\"id\":\"" + id + "\"}", "{}");
-        Fact f3 = DefaultFact.of("{\"id\":\"" + aid + "\"}", "{}");
+        Fact f2 = DefaultFact.of("{\"ns\":\"ns\",\"id\":\"" + id + "\"}", "{}");
+        Fact f3 = DefaultFact.of("{\"ns\":\"ns\",\"id\":\"" + aid + "\"}", "{}");
 
         assertEquals(f, f);
         assertEquals(f, f2);
