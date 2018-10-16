@@ -62,6 +62,6 @@ src="https://circleci.com/gh/Mercateo/factcast.svg?style=svg" alt="circleci" tit
 * 2018-09-11 <a href="https://github.com/Mercateo/factcast/projects/1">0.0.10 (milestone)</a>
 
 ### Upcoming 
-* <a href="https://github.com/Mercateo/factcast/projects/3">
+* <a href="https://github.com/Mercateo/factcast/projects/4">
     0.2.0 (milestone)
 </a>
