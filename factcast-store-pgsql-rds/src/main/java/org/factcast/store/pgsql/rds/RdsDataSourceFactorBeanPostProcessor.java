@@ -47,12 +47,15 @@ public class RdsDataSourceFactorBeanPostProcessor implements BeanPostProcessor {
         return bean;
     }
 
+    // TODO this was reset to 0.0.6 state. Will be discussed with the original
+    // author of that change
     TomcatJdbcDataSourceFactory tomcatJdbcDataSourceFactory() {
 
         TomcatJdbcDataSourceFactory fac = new TomcatJdbcDataSourceFactory();
 
-        fac.setTestOnBorrow(env.getProperty("tomcat.testOnBorrow", Boolean.class));
-        fac.setConnectionProperties(env.getProperty("tomcat.connectionProperties", String.class));
+        fac.setRemoveAbandonedTimeout(360000);
+        fac.setMaxWait(20000);
+
         return fac;
 
     }
