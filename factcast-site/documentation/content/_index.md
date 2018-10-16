@@ -54,8 +54,7 @@ src="https://circleci.com/gh/Mercateo/factcast.svg?style=svg" alt="circleci" tit
 
 * 2018-10-16 0.0.15 (emergency release)
  * fixed a potential NPE when using RDS
-* 2018-10-09 <a href="https://github.com/Mercateo/factcast/projects/3">0.0.14
-   (milestone)</a>
+* 2018-10-09 <a href="https://github.com/Mercateo/factcast/projects/3">0.0.14 (milestone)</a>
  * GRPC API has changed to enable non-breaking changes later.
 * 2018-10-03 <a href="https://github.com/Mercateo/factcast/projects/2">0.0.12 (milestone)</a>
  * Note that the jersey impl of the REST interface has its own <a href="https://github.com/Mercateo/factcast-rest-jersey">place on github now.</a> and got new coordinates: **org.factcast:factcast-server-rest-jersey:0.0.12.** If you use the REST Server, you'll need to change your dependencies accordingly
