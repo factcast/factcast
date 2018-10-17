@@ -43,7 +43,7 @@ public class ClientStreamObserver0Test {
 
     @Test
     public void testOnNext() throws Exception {
-        Fact f = Fact.of("{\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+        Fact f = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
         MSG_Notification n = converter.createNotificationFor(f);
         uut.onNext(n);
         verify(factObserver).onNext(eq(f));

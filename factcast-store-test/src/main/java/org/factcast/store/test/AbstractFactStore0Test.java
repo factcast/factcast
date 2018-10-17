@@ -655,4 +655,15 @@ public abstract class AbstractFactStore0Test {
         }
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testChecksMandatoryNamespaceOnPublish() throws Exception {
+        uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"type\":\"someType\"}", "{}"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testChecksMandatoryIdOnPublish() throws Exception {
+        uut.publish(Fact.of("{\"ns\":\"default\",\"type\":\"someType\"}", "{}"));
+    }
+
 }
