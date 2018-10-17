@@ -23,6 +23,8 @@ import io.grpc.Codec;
 import net.jpountz.lz4.LZ4BlockInputStream;
 import net.jpountz.lz4.LZ4BlockOutputStream;
 
+// TODO add @GrpcCodec
+// waits for release of https://github.com/yidongnan/grpc-spring-boot-starter/issues/96
 public class LZ4Codec implements Codec {
 
     public static final String ENCODING = "lz4";
