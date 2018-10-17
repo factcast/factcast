@@ -1,16 +1,47 @@
 # Change Log
 
-## [upcoming](https://github.com/Mercateo/factcast/tree/upcoming) (2018-10-04)
-[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.12...upcoming)
+## [factcast-0.0.15](https://github.com/Mercateo/factcast/tree/factcast-0.0.15) (2018-10-16)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.14...factcast-0.0.15)
 
-**Closed issues:**
+**Fixed bugs:**
 
-- Replace favicon... [\#119](https://github.com/Mercateo/factcast/issues/119)
-- Automatic changelog generation from Issue & PR Data [\#117](https://github.com/Mercateo/factcast/issues/117)
-- Extract REST code to separate repo [\#84](https://github.com/Mercateo/factcast/issues/84)
+- Implement serialOf in grpc server [\#133](https://github.com/Mercateo/factcast/issues/133)
 
 **Merged pull requests:**
 
+- \#135: reset RDS autoconfig to 0.0.6 [\#136](https://github.com/Mercateo/factcast/pull/136) ([uweschaefer](https://github.com/uweschaefer))
+- \#133: added serialOf to GRPC Service [\#134](https://github.com/Mercateo/factcast/pull/134) ([uweschaefer](https://github.com/uweschaefer))
+
+## [factcast-0.0.14](https://github.com/Mercateo/factcast/tree/factcast-0.0.14) (2018-10-09)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.12...factcast-0.0.14)
+
+**Implemented enhancements:**
+
+- gRPC: add Codec for snappy or lz4 compression [\#77](https://github.com/Mercateo/factcast/issues/77)
+- Enable GZIP for REST-API [\#27](https://github.com/Mercateo/factcast/issues/27)
+
+**Fixed bugs:**
+
+- GRPC Service RemoteFactCast is not auto-configured [\#124](https://github.com/Mercateo/factcast/issues/124)
+
+**Closed issues:**
+
+- Cleanup for 0.0.14 release [\#130](https://github.com/Mercateo/factcast/issues/130)
+- Upgrade grpc deps to 1.12.0 [\#125](https://github.com/Mercateo/factcast/issues/125)
+- Implement GRPC negotiation protocol [\#123](https://github.com/Mercateo/factcast/issues/123)
+- Replace favicon... [\#119](https://github.com/Mercateo/factcast/issues/119)
+- Automatic changelog generation from Issue & PR Data [\#117](https://github.com/Mercateo/factcast/issues/117)
+- Extract REST code to separate repo [\#84](https://github.com/Mercateo/factcast/issues/84)
+- unify schema for subscription-request between rest & grpc api [\#20](https://github.com/Mercateo/factcast/issues/20)
+- publish schema for subscriptionrequest [\#19](https://github.com/Mercateo/factcast/issues/19)
+
+**Merged pull requests:**
+
+- \#130: cleanup, added guava,pgsql versions to BOM [\#131](https://github.com/Mercateo/factcast/pull/131) ([uweschaefer](https://github.com/uweschaefer))
+- \#123: added handshake method that transports a string map & the proto… [\#128](https://github.com/Mercateo/factcast/pull/128) ([uweschaefer](https://github.com/uweschaefer))
+- Issue125 [\#127](https://github.com/Mercateo/factcast/pull/127) ([uweschaefer](https://github.com/uweschaefer))
+- added autoconfig [\#126](https://github.com/Mercateo/factcast/pull/126) ([uweschaefer](https://github.com/uweschaefer))
+- Issue119 [\#121](https://github.com/Mercateo/factcast/pull/121) ([uweschaefer](https://github.com/uweschaefer))
 - changed favicon [\#120](https://github.com/Mercateo/factcast/pull/120) ([uweschaefer](https://github.com/uweschaefer))
 - \#117: added automatically generated changelog to site [\#118](https://github.com/Mercateo/factcast/pull/118) ([uweschaefer](https://github.com/uweschaefer))
 
