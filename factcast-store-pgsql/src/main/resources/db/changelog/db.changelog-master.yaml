@@ -11,3 +11,7 @@ databaseChangeLog:
     - include:
          file: factcast/issue82/uniqueConstraintForIdent.sql
          relativeToChangelogFile: true
+    - include:
+         file: factcast/issue145/nonNullConstraintForNS.sql
+         relativeToChangelogFile: true         
+         
