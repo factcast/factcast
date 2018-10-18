@@ -1,5 +1,23 @@
 # Change Log
 
+## [upcoming](https://github.com/Mercateo/factcast/tree/upcoming) (2018-10-18)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.15...upcoming)
+
+**Fixed bugs:**
+
+- Bug: GRPC API Accepts publishing of Facts without namespace [\#137](https://github.com/Mercateo/factcast/issues/137)
+
+**Closed issues:**
+
+- store-pgsql must not accept facts without namespace [\#145](https://github.com/Mercateo/factcast/issues/145)
+- Add LZ4 Codecs according to upstream @GrpcCodec Feature [\#140](https://github.com/Mercateo/factcast/issues/140)
+
+**Merged pull requests:**
+
+- \#145: added constraints for header.ns and header.id, added migration … [\#146](https://github.com/Mercateo/factcast/pull/146) ([uweschaefer](https://github.com/uweschaefer))
+- \#140: prepared codec for grpc-spring-boot-starter/issues/96 [\#141](https://github.com/Mercateo/factcast/pull/141) ([uweschaefer](https://github.com/uweschaefer))
+- \#137: enforce namespace attribute on publish [\#138](https://github.com/Mercateo/factcast/pull/138) ([uweschaefer](https://github.com/uweschaefer))
+
 ## [factcast-0.0.15](https://github.com/Mercateo/factcast/tree/factcast-0.0.15) (2018-10-16)
 [Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.14...factcast-0.0.15)
 
