@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -29,9 +30,11 @@ import org.factcast.core.util.FactCastJson;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.SneakyThrows;
 
 /**
@@ -74,8 +77,19 @@ public class DefaultFact implements Fact, Externalizable {
 
     }
 
+    public DefaultFact(Header header, String payload) {
+        deserializedHeader = header;
+        jsonPayload = payload;
+        jsonHeader = FactCastJson.writeValueAsString(header);
+        validate();
+    }
+
     private void init(String jsonHeader) throws IOException {
         deserializedHeader = FactCastJson.readValue(Header.class, jsonHeader);
+        validate();
+    }
+
+    private void validate() {
         if (deserializedHeader.id == null) {
             throw new IllegalArgumentException("id attribute missing from " + jsonHeader);
         }
@@ -85,6 +99,7 @@ public class DefaultFact implements Fact, Externalizable {
     }
 
     @Getter
+    @Setter(value = AccessLevel.PROTECTED)
     @JsonIgnoreProperties(ignoreUnknown = true)
     @EqualsAndHashCode(of = { "id" })
     static class Header {
@@ -101,7 +116,7 @@ public class DefaultFact implements Fact, Externalizable {
         String type;
 
         @JsonProperty
-        Set<UUID> aggIds;
+        Set<UUID> aggIds = new HashSet<>();
 
         @JsonProperty
         final Map<String, String> meta = new HashMap<>();

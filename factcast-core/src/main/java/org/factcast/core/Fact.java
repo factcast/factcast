@@ -18,6 +18,8 @@ package org.factcast.core;
 import java.util.Set;
 import java.util.UUID;
 
+import org.factcast.core.DefaultFact.Header;
+
 import lombok.NonNull;
 
 /**
@@ -68,4 +70,43 @@ public interface Fact {
     default boolean before(Fact other) {
         return serial() < other.serial();
     }
+
+    static Fact.Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        final Header header = new Header().id(UUID.randomUUID()).ns("default");
+
+        Builder aggId(@NonNull UUID aggId) {
+            this.header.aggIds().add(aggId);
+            return this;
+        }
+
+        Builder ns(@NonNull String ns) {
+            this.header.ns(ns);
+            return this;
+        }
+
+        Builder id(@NonNull UUID id) {
+            this.header.id(id);
+            return this;
+        }
+
+        Builder type(@NonNull String type) {
+            this.header.type(type);
+            return this;
+        }
+
+        Builder meta(@NonNull String key, String value) {
+            this.header.meta().put(key, value);
+            return this;
+        }
+
+        public Fact build(@NonNull String payload) {
+            return new DefaultFact(header, payload);
+        }
+    }
+
 }
