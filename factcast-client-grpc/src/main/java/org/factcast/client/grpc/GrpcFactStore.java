@@ -112,18 +112,15 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     @Override
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
-        try {
-            log.trace("publishing {} facts to remote store", factsToPublish.size());
-            List<MSG_Fact> mf = factsToPublish.stream()
-                    .map(converter::toProto)
-                    .collect(Collectors
-                            .toList());
-            MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
-            // blockingStub.getCallOptions().withCompression(compressor);
-            blockingStub.publish(mfs);
-        } catch (Exception e) {
-            log.warn("failed to publish {} facts: {}", factsToPublish.size(), e);
-        }
+        log.trace("publishing {} facts to remote store", factsToPublish.size());
+        List<MSG_Fact> mf = factsToPublish.stream()
+                .map(converter::toProto)
+                .collect(Collectors
+                        .toList());
+        MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
+        // blockingStub.getCallOptions().withCompression(compressor);
+        blockingStub.publish(mfs);
+
     }
 
     @Override

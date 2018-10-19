@@ -102,6 +102,16 @@ public class GrpcFactStore0Test {
         assertEquals(fact.id(), published.id());
     }
 
+    static class SomeException extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+    };
+
+    @Test(expected = SomeException.class)
+    public void testPublishPropagatesException() throws Exception {
+        when(blockingStub.publish(any())).thenThrow(new SomeException());
+        uut.publish(Arrays.asList(Fact.builder().build("{}")));
+    }
+
     @Test
     public void testConstruction() throws Exception {
         expectNPE(() -> new GrpcFactStore((AddressChannelFactory) null));
