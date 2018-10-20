@@ -69,14 +69,10 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
             subscription.notifyElement(new IdOnlyFact(converter.fromProto(f.getId())));
             break;
 
-        case UNRECOGNIZED:
+        default:
             subscription.notifyError(new RuntimeException(
                     "Unrecognized notification type. THIS IS A BUG!"));
             break;
-
-        default:
-            throw new IllegalArgumentException(
-                    "Unknown type of notification received! THIS IS A BUG!");
         }
     }
 

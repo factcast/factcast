@@ -1,10 +1,17 @@
 package org.factcast.client.cache;
 
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.same;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -67,6 +74,16 @@ public class CachingFactCast0Test {
         verify(fc).publish(same(facts));
     }
 
+    @Test(expected = NullPointerException.class)
+    public void testPublishNull() throws Exception {
+        uut.publish((Fact) null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testPublishNullArgs() throws Exception {
+        uut.publish((List<Fact>) null);
+    }
+
     @Test
     public void testSubscribeToIds() throws Exception {
         SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.forMark()).fromScratch();
@@ -76,6 +93,38 @@ public class CachingFactCast0Test {
         uut.subscribeToIds(rs, observer);
 
         verify(fc).subscribeToIds(same(rs), same(observer));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSubscribeToIdsNullParam() throws Exception {
+        uut.subscribeToIds(null, f -> {
+        });
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSubscribeToIdsNullParams() throws Exception {
+        uut.subscribeToIds(null, null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSubscribeToIdsNullObserverParam() throws Exception {
+        uut.subscribeToIds(mock(SubscriptionRequest.class), null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSubscribeToFactsNullParam() throws Exception {
+        uut.subscribeToFacts(null, f -> {
+        });
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSubscribeToFactsNullParams() throws Exception {
+        uut.subscribeToFacts(null, null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSubscribeToFactsNullObserverParam() throws Exception {
+        uut.subscribeToFacts(mock(SubscriptionRequest.class), null);
     }
 
     @Test
@@ -111,4 +160,15 @@ public class CachingFactCast0Test {
         verify(observer).onError(same(e));
     }
 
+    @Test
+    public void testSerialOf() throws Exception {
+        UUID id = UUID.randomUUID();
+        uut.serialOf(id);
+        verify(fc).serialOf(same(id));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSerialOfNull() throws Exception {
+        uut.serialOf(null);
+    }
 }

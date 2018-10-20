@@ -176,7 +176,7 @@ public class ProtoConverter {
                 .build();
     }
 
-    private MSG_ServerProperties toProto(Map<String, String> property) {
+    private MSG_ServerProperties toProto(@NonNull Map<String, String> property) {
         return MSG_ServerProperties.newBuilder().putAllProperty(property).build();
     }
 

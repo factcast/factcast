@@ -150,4 +150,19 @@ public class DefaultFact0Test {
         assertEquals(f1, f2);
 
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testOfNoId() throws Exception {
+        Fact.of("{\"ns\":\"narf\"}", "{}");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testOfNoNs() throws Exception {
+        Fact.of("{\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testOfEmptyNs() throws Exception {
+        Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"\"}", "{}");
+    }
 }

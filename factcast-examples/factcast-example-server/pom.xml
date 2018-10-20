@@ -40,7 +40,7 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
         <version>1.5.2.RELEASE</version>
         <configuration>
-          <mainClass>org.factcast.server.Application</mainClass>
+          <mainClass>org.factcast.example.server.Application</mainClass>
           <layout>ZIP</layout>
         </configuration>
         <executions>

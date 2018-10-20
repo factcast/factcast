@@ -29,8 +29,6 @@ import lombok.NonNull;
  * Strings: jsonHeader and jsonPayload. Also provides convenience getters for
  * id,ns,type and aggId.
  *
- * Only generated code, does not need unit testing.
- *
  * @author uwe.schaefer@mercateo.com
  *
  */

@@ -23,17 +23,18 @@ import org.springframework.cloud.aws.jdbc.datasource.TomcatJdbcDataSourceFactory
 import org.springframework.cloud.aws.jdbc.rds.AmazonRdsDataSourceFactoryBean;
 import org.springframework.core.env.Environment;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * exchange the given TomcatJdbcDataSourceFactory with a customized factory so
  * we can configure the datasource connection pool
  * 
  *
  */
-
+@RequiredArgsConstructor
 public class RdsDataSourceFactorBeanPostProcessor implements BeanPostProcessor {
 
-    @Resource
-    private Environment env;
+    private final Environment env;
 
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName)
@@ -51,8 +52,10 @@ public class RdsDataSourceFactorBeanPostProcessor implements BeanPostProcessor {
 
         TomcatJdbcDataSourceFactory fac = new TomcatJdbcDataSourceFactory();
 
-        fac.setTestOnBorrow(env.getProperty("spring.datasource.tomcat.testOnBorrow", Boolean.class, true));
-        fac.setConnectionProperties(env.getProperty("spring.datasource.tomcat.connectionProperties", String.class,
+        fac.setTestOnBorrow(env.getProperty("spring.datasource.tomcat.testOnBorrow", Boolean.class,
+                true));
+        fac.setConnectionProperties(env.getProperty("spring.datasource.tomcat.connectionProperties",
+                String.class,
                 "socketTimeout=20;connectTimeout=10;loginTimeout=10"));
         return fac;
     }

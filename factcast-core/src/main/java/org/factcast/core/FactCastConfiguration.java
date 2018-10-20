@@ -20,6 +20,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
+import lombok.Generated;
+
 /**
  * Spring config that provides a FactCast instance from a FactStore
  * 
@@ -27,6 +29,7 @@ import org.springframework.context.annotation.Primary;
  *
  */
 @Configuration
+@Generated // to exclude from coverage analysis
 public class FactCastConfiguration {
 
     @Bean

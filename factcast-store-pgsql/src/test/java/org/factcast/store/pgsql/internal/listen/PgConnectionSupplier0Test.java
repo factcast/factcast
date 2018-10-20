@@ -1,9 +1,11 @@
 package org.factcast.store.pgsql.internal.listen;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-import static org.mockito.MockitoAnnotations.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.sql.SQLException;
 import java.util.Properties;

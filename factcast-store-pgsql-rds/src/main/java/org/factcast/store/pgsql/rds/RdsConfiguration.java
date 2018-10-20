@@ -17,13 +17,14 @@ package org.factcast.store.pgsql.rds;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 @Configuration
 public class RdsConfiguration {
 
     @Bean
-    RdsDataSourceFactorBeanPostProcessor rdsDataSourceFactorBeanPostProcessor() {
-        return new RdsDataSourceFactorBeanPostProcessor();
+    RdsDataSourceFactorBeanPostProcessor rdsDataSourceFactorBeanPostProcessor(Environment env) {
+        return new RdsDataSourceFactorBeanPostProcessor(env);
     }
 
 }

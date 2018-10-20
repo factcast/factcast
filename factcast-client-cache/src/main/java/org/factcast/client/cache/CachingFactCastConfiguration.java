@@ -20,6 +20,7 @@ import org.factcast.core.store.FactStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import lombok.Generated;
 import lombok.NonNull;
 
 /**
@@ -30,6 +31,7 @@ import lombok.NonNull;
  *
  */
 @Configuration
+@Generated // to exclude from coverage analysis
 public class CachingFactCastConfiguration {
 
     @Bean
