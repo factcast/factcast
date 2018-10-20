@@ -23,7 +23,7 @@ public class Fact0Test {
 
     @Test(expected = NullPointerException.class)
     public void testOfNull() throws Exception {
-        Fact.of(null, null);
+        Fact.of((String) null, null);
     }
 
     @Test

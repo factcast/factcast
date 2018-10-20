@@ -20,6 +20,8 @@ import java.util.UUID;
 
 import org.factcast.core.DefaultFact.Header;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import lombok.NonNull;
 
 /**
@@ -65,6 +67,10 @@ public interface Fact {
     // hint to where to get the default from
     static Fact of(@NonNull String jsonHeader, @NonNull String jsonPayload) {
         return DefaultFact.of(jsonHeader, jsonPayload);
+    }
+
+    static Fact of(@NonNull JsonNode jsonHeader, @NonNull JsonNode jsonPayload) {
+        return DefaultFact.of(jsonHeader.toString(), jsonPayload.toString());
     }
 
     default boolean before(Fact other) {
