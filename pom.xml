@@ -21,6 +21,7 @@
     <module>factcast-bom</module>
     <module>factcast-site</module>
     <module>factcast-client-grpc</module>
+    <module>factcast-client-grpc-cli</module>
     <module>factcast-client-cache</module>
     <module>factcast-client-cache-infinispan</module>
     <module>factcast-store-pgsql</module>

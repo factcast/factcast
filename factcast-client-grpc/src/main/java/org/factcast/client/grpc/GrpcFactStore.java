@@ -81,6 +81,8 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private Map<String, String> serverProperties;
 
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
+
     @Autowired
     GrpcFactStore(AddressChannelFactory channelFactory) {
         this(channelFactory.createChannel(CHANNEL_NAME));
@@ -193,8 +195,6 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
             this.stub = stub.withCompression(LZ4Codec.ENCODING);
         }
     }
-
-    private AtomicBoolean initialized = new AtomicBoolean(false);
 
     @Override
     public synchronized void afterSingletonsInstantiated() {

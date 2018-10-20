@@ -60,8 +60,10 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     private String createDebugInfo() {
         StackTraceElement stackTraceElement = new Exception().getStackTrace()[3];
-        return UUID.randomUUID() + " (" + stackTraceElement.getClassName().substring(
-                stackTraceElement.getClassName().lastIndexOf(".") + 1) + "." + stackTraceElement
+        return UUID.randomUUID() + " (" + stackTraceElement.getClassName()
+                .substring(
+                        stackTraceElement.getClassName().lastIndexOf(".") + 1) + "."
+                + stackTraceElement
                         .getMethodName() + ":" + stackTraceElement.getLineNumber() + ")";
     }
 
@@ -124,19 +126,6 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     @Override
     public java.util.Optional<UUID> startingAfter() {
         return java.util.Optional.ofNullable(startingAfter);
-    }
-
-    public interface SpecBuilder {
-        SpecBuilder or(@NonNull FactSpec specification);
-
-        SpecBuilder skipMarks();
-
-        SubscriptionRequest from(@NonNull UUID id);
-
-        SubscriptionRequest fromScratch();
-
-        SubscriptionRequest fromNowOn();
-
     }
 
     @Override
