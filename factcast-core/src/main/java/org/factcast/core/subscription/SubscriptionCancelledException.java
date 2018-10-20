@@ -29,10 +29,6 @@ public class SubscriptionCancelledException extends RuntimeException {
         super(e);
     }
 
-    public SubscriptionCancelledException(String msg, Throwable e) {
-        super(msg, e);
-    }
-
     public SubscriptionCancelledException(String msg) {
         super(msg);
     }

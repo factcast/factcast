@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.UUID;
 
 import org.factcast.core.spec.FactSpec;
@@ -108,6 +109,16 @@ public class DefaultFactCast0Test {
 
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testNoId() throws Exception {
+        uut.publish(new Test0Fact().id(null));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNoNamespace() throws Exception {
+        uut.publish(new Test0Fact().ns(null));
+    }
+
     @Test(expected = NullPointerException.class)
     public void testPublishOneNull() throws Exception {
         uut.publish((Fact) null);
@@ -168,5 +179,18 @@ public class DefaultFactCast0Test {
     @Test(expected = NullPointerException.class)
     public void testpublishWithMarkManyNull() throws Exception {
         uut.publishWithMark((List<Fact>) null);
+    }
+
+    @Test
+    public void testSerialOf() throws Exception {
+        when(store.serialOf(any(UUID.class))).thenReturn(OptionalLong.empty());
+        UUID id = UUID.randomUUID();
+        uut.serialOf(id);
+        verify(store).serialOf(same(id));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSerialOfNull() throws Exception {
+        uut.serialOf(null);
     }
 }

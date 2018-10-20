@@ -14,6 +14,8 @@ import org.factcast.core.Fact;
 import org.factcast.core.Test0Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_EmptyOrBuilder;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
@@ -187,5 +189,10 @@ public class ProtoConverter0Test {
     public void testToProtoOptionalLongEmpty() throws Exception {
         MSG_OptionalSerial msg = uut.toProto(OptionalLong.empty());
         assertFalse(msg.getPresent());
+    }
+
+    @Test
+    public void testEmpty() throws Exception {
+        assertEquals(MSG_Empty.newBuilder().build(), uut.empty());
     }
 }

@@ -52,4 +52,9 @@ public class CachingFactLookup0Test {
         verify(store).fetchById(f.id());
     }
 
+    @Test(expected = NullPointerException.class)
+    public void testConstructorNullParam() throws Exception {
+        new CachingFactLookup(null);
+    }
+
 }

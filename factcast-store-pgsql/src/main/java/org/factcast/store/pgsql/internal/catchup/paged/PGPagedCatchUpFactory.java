@@ -26,22 +26,28 @@ import org.factcast.store.pgsql.internal.catchup.PGCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import lombok.Generated;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
+@Generated // not code in here, just generated @nonnull checks
 public class PGPagedCatchUpFactory implements PGCatchupFactory {
-
+    @NonNull
     final JdbcTemplate jdbc;
 
+    @NonNull
     final PGConfigurationProperties props;
 
+    @NonNull
     final PGFactIdToSerialMapper serMapper;
 
     public PGPagedCatchup create(
 
-            @NonNull SubscriptionRequestTO request, @NonNull PGPostQueryMatcher postQueryMatcher,
-            @NonNull SubscriptionImpl<Fact> subscription, @NonNull AtomicLong serial) {
+            @NonNull SubscriptionRequestTO request,
+            @NonNull PGPostQueryMatcher postQueryMatcher,
+            @NonNull SubscriptionImpl<Fact> subscription,
+            @NonNull AtomicLong serial) {
 
         return new PGPagedCatchup(jdbc, props, serMapper, request, postQueryMatcher, subscription,
                 serial);

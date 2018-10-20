@@ -105,4 +105,9 @@ public class FactSpecMatcher0Test {
 
     }
 
+    @Test(expected = NullPointerException.class)
+    public void testFactSpecMatcherNullConstructor() throws Exception {
+        new FactSpecMatcher(null);
+    }
+
 }
