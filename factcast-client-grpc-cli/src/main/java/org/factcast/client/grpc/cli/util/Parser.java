@@ -68,6 +68,18 @@ public class Parser {
     }
 
     public static class Options {
+        @Parameter(names = { "--help", "-help", "-?", "--?" }, help = true, hidden = true)
+        boolean help;
+
+        @Getter
+        @Parameter(names = { "--pretty", "-p" }, help = true, description = "format JSON output")
+        boolean pretty = false;
+
+        @Parameter(names = "--host", description = "the hostname to connect to")
+        String host = "localhost";
+
+        @Parameter(names = "--port", description = "the port to connect to")
+        int port = 9090;
 
         public Options() {
             String fc = System.getenv("FACTCAST_SERVER");
@@ -85,19 +97,6 @@ public class Parser {
                 }
             }
         }
-
-        @Parameter(names = { "--help", "-help", "-?", "--?" }, help = true, hidden = true)
-        boolean help;
-
-        @Getter
-        @Parameter(names = { "--pretty", "-p" }, help = true, description = "format JSON output")
-        boolean pretty = false;
-
-        @Parameter(names = "--host", description = "the hostname to connect to")
-        String host = "localhost";
-
-        @Parameter(names = "--port", description = "the port to connect to")
-        int port = 9090;
 
     }
 
