@@ -16,6 +16,7 @@
 package org.factcast.client.grpc.cli.util;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import org.factcast.client.grpc.cli.conv.Converters;
@@ -64,6 +65,23 @@ public class Parser {
     }
 
     static class Options {
+
+        public Options() {
+            String fc = System.getenv("FACTCAST_SERVER");
+            if (fc != null) {
+                Iterator<String> i = Arrays.asList(fc.split(":")).iterator();
+                if (i.hasNext()) {
+                    String h = i.next();
+                    if (h != null && h.trim().length() > 0)
+                        host = h;
+                }
+                if (i.hasNext()) {
+                    String p = i.next();
+                    if (p != null && p.trim().length() > 0)
+                        port = Integer.parseInt(p);
+                }
+            }
+        }
 
         @Parameter(names = "--help", help = true, hidden = true)
         boolean help;
