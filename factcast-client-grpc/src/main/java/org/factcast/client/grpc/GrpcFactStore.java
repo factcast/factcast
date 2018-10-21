@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -40,6 +41,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
@@ -116,8 +118,10 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @Override
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
         log.trace("publishing {} facts to remote store", factsToPublish.size());
-        List<MSG_Fact> mf = factsToPublish.stream().map(converter::toProto).collect(Collectors
-                .toList());
+        List<MSG_Fact> mf = factsToPublish.stream()
+                .map(converter::toProto)
+                .collect(Collectors
+                        .toList());
         MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
         // blockingStub.getCallOptions().withCompression(compressor);
         blockingStub.publish(mfs);
@@ -217,6 +221,18 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @Override
     public synchronized void afterSingletonsInstantiated() {
         initialize();
+    }
+
+    @Override
+    public Set<String> enumerateNamespaces() {
+        MSG_StringSet set = blockingStub.enumerateNamespaces(converter.empty());
+        return converter.fromProto(set);
+    }
+
+    @Override
+    public Set<String> enumerateTypes(String ns) {
+        MSG_StringSet set = blockingStub.enumerateTypes(converter.toProto(ns));
+        return converter.fromProto(set);
     }
 
 }

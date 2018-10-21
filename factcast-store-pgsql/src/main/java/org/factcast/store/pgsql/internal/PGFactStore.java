@@ -20,7 +20,9 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
@@ -79,6 +81,10 @@ public class PGFactStore implements FactStore {
 
     private Timer seqLookupLatency;
 
+    private Timer namespaceLatency;
+
+    private Timer typeLatency;
+
     private Meter subscriptionCatchupMeter;
 
     private Meter subscriptionFollowMeter;
@@ -95,6 +101,8 @@ public class PGFactStore implements FactStore {
         publishMeter = registry.meter(names.factPublishingMeter());
 
         fetchLatency = registry.timer(names.fetchLatency());
+        namespaceLatency = registry.timer(names.namespaceLatency());
+        typeLatency = registry.timer(names.typeLatency());
         seqLookupLatency = registry.timer(names.seqLookupLatency());
 
         subscriptionCatchupMeter = registry.meter(names.subscribeCatchup());
@@ -141,6 +149,10 @@ public class PGFactStore implements FactStore {
         return PGFact.from(resultSet);
     }
 
+    private String extractStringFromResultSet(ResultSet resultSet, int rowNum) throws SQLException {
+        return resultSet.getString(1);
+    }
+
     private Long extractSerFromResultSet(ResultSet resultSet, int rowNum) throws SQLException {
         return Long.valueOf(resultSet.getString(PGConstants.COLUMN_SER));
     }
@@ -184,6 +196,23 @@ public class PGFactStore implements FactStore {
                 return OptionalLong.empty();
             }
 
+        }
+    }
+
+    @Override
+    public Set<String> enumerateNamespaces() {
+        try (Context time = namespaceLatency.time();) {
+            return jdbcTemplate.query(PGConstants.SELECT_DICTINCT_NAMESPACE,
+                    this::extractStringFromResultSet).stream().collect(Collectors.toSet());
+        }
+    }
+
+    @Override
+    public Set<String> enumerateTypes(String ns) {
+        try (Context time = typeLatency.time();) {
+            return jdbcTemplate.query(PGConstants.SELECT_DICTINCT_TYPE_IN_NAMESPACE, new Object[] {
+                    ns },
+                    this::extractStringFromResultSet).stream().collect(Collectors.toSet());
         }
     }
 

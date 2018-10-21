@@ -16,6 +16,8 @@
 package org.factcast.client.grpc.cli;
 
 import org.factcast.client.grpc.cli.cmd.Catchup;
+import org.factcast.client.grpc.cli.cmd.EnumerateNamespaces;
+import org.factcast.client.grpc.cli.cmd.EnumerateTypes;
 import org.factcast.client.grpc.cli.cmd.Fetch;
 import org.factcast.client.grpc.cli.cmd.Follow;
 import org.factcast.client.grpc.cli.cmd.Publish;
@@ -46,6 +48,8 @@ public class CLI {
                 new Follow(),
                 new Publish(),
                 new Fetch(),
+                new EnumerateNamespaces(),
+                new EnumerateTypes(),
                 new SerialOf());
         try {
             Command cmd = parser.parse(arguments);

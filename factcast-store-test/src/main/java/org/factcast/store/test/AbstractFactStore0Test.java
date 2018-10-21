@@ -15,14 +15,24 @@
  */
 package org.factcast.store.test;
 
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -664,6 +674,48 @@ public abstract class AbstractFactStore0Test {
     @Test(expected = IllegalArgumentException.class)
     public void testChecksMandatoryIdOnPublish() throws Exception {
         uut.publish(Fact.of("{\"ns\":\"default\",\"type\":\"someType\"}", "{}"));
+    }
+
+    @Test
+    public void testEnumerateNameSpaces() throws Exception {
+
+        // no namespaces
+        assertEquals(0, uut.enumerateNamespaces().size());
+
+        uut.publish(Fact.builder().ns("ns1").build("{}"));
+        uut.publish(Fact.builder().ns("ns2").build("{}"));
+
+        Set<String> ns = uut.enumerateNamespaces();
+        assertEquals(2, ns.size());
+        assertTrue(ns.contains("ns1"));
+        assertTrue(ns.contains("ns2"));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testEnumerateTypesNull() throws Exception {
+        uut.enumerateTypes(null);
+    }
+
+    @Test
+    public void testEnumerateTypes() throws Exception {
+
+        uut.publish(Fact.builder().ns("ns1").type("t1").build("{}"));
+        uut.publish(Fact.builder().ns("ns2").type("t2").build("{}"));
+
+        assertEquals(1, uut.enumerateTypes("ns1").size());
+        assertTrue(uut.enumerateTypes("ns1").contains("t1"));
+
+        uut.publish(Fact.builder().ns("ns1").type("t1").build("{}"));
+        uut.publish(Fact.builder().ns("ns1").type("t1").build("{}"));
+        uut.publish(Fact.builder().ns("ns1").type("t2").build("{}"));
+        uut.publish(Fact.builder().ns("ns1").type("t3").build("{}"));
+        uut.publish(Fact.builder().ns("ns1").type("t2").build("{}"));
+
+        assertEquals(3, uut.enumerateTypes("ns1").size());
+        assertTrue(uut.enumerateTypes("ns1").contains("t1"));
+        assertTrue(uut.enumerateTypes("ns1").contains("t2"));
+        assertTrue(uut.enumerateTypes("ns1").contains("t3"));
+
     }
 
 }

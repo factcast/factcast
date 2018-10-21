@@ -86,6 +86,13 @@ message MSG_ServerConfig {
   MSG_ServerProperties properties= 2;
 }
 
+message MSG_StringSet {
+  repeated string embeddedString = 1;
+}
+message MSG_String {
+  string embeddedString = 1;
+}
+
 
 service RemoteFactStore {
 	rpc subscribe (MSG_SubscriptionRequest) returns (stream MSG_Notification) {}
@@ -93,4 +100,6 @@ service RemoteFactStore {
 	rpc publish (MSG_Facts) returns (MSG_Empty) {}
 	rpc serialOf (MSG_UUID) returns (MSG_OptionalSerial) {}
 	rpc handshake (MSG_Empty) returns (MSG_ServerConfig) {}
+	rpc enumerateNamespaces (MSG_Empty) returns (MSG_StringSet) {}
+	rpc enumerateTypes (MSG_String) returns (MSG_StringSet) {}
 }

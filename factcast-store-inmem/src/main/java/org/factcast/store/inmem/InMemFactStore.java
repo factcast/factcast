@@ -170,9 +170,10 @@ public class InMemFactStore implements FactStore, DisposableBean {
                     "duplicate unique_identifier in factsToPublish - unique_identifier must be unique!");
         }
 
-        // test on unique idents in log        
-        if (factsToPublish.stream().anyMatch(f -> uniqueIdentifiers.contains(f.meta(
-                "unique_identifier")))) {
+        // test on unique idents in log
+        if (factsToPublish.stream()
+                .anyMatch(f -> uniqueIdentifiers.contains(f.meta(
+                        "unique_identifier")))) {
             throw new IllegalArgumentException(
                     "duplicate unique_identifier - unique_identifier must be unique!");
         }
@@ -237,6 +238,24 @@ public class InMemFactStore implements FactStore, DisposableBean {
             }
         }
         return OptionalLong.empty();
+    }
+
+    @Override
+    public Set<String> enumerateNamespaces() {
+        return store.values()
+                .stream()
+                .map(Fact::ns)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<String> enumerateTypes(String ns) {
+        return store.values()
+                .stream()
+                .filter(f -> f.ns().equals(ns))
+                .map(Fact::type)
+                .filter(t -> t != null)
+                .collect(Collectors.toSet());
     }
 
 }

@@ -15,9 +15,11 @@
  */
 package org.factcast.grpc.api.conv;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
@@ -32,8 +34,12 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProperties;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProtocolVersion;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
+
+import com.google.protobuf.ProtocolStringList;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -192,6 +198,23 @@ public class ProtoConverter {
                     .build();
         } else
             return MSG_OptionalSerial.newBuilder().setPresent(false).build();
+    }
+
+    public Set<String> fromProto(MSG_StringSet set) {
+        ProtocolStringList sList = set.getEmbeddedStringList();
+        return new HashSet<>(sList);
+    }
+
+    public MSG_StringSet toProto(Set<String> set) {
+        return MSG_StringSet.newBuilder().addAllEmbeddedString(set).build();
+    }
+
+    public MSG_String toProto(String ns) {
+        return MSG_String.newBuilder().setEmbeddedString(ns).build();
+    }
+
+    public String fromProto(MSG_String request) {
+        return request.getEmbeddedString();
     }
 
 }

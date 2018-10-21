@@ -79,7 +79,6 @@ public interface Fact {
         return new Builder();
     }
 
-    
     public static class Builder {
 
         final Header header = new Header().id(UUID.randomUUID()).ns("default");
