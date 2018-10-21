@@ -38,6 +38,10 @@ public class FactStoreMetricNames {
 
     final String fetchLatency;
 
+    final String namespaceLatency;
+
+    final String typeLatency;
+
     final String seqLookupLatency;
 
     final String subscribeCatchup;
@@ -54,6 +58,8 @@ public class FactStoreMetricNames {
         factPublishingMeter = PREFIX + type + ".publish.fact.meter";
 
         fetchLatency = PREFIX + type + ".fetchById.latency";
+        namespaceLatency = PREFIX + type + ".distinctNamespaces.latency";
+        typeLatency = PREFIX + type + ".distinctTypeByNamespace.latency";
         seqLookupLatency = PREFIX + type + ".seqLookup.latency";
         subscribeCatchup = PREFIX + type + ".subscribe.catchup";
         subscribeFollow = PREFIX + type + ".subscribe.follow";

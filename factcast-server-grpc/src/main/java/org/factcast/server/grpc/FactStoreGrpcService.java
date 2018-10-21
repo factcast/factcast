@@ -37,6 +37,8 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
@@ -173,6 +175,20 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         OptionalLong serialOf = store.serialOf(converter.fromProto(request));
 
         responseObserver.onNext(converter.toProto(serialOf));
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void enumerateNamespaces(MSG_Empty request,
+            StreamObserver<MSG_StringSet> responseObserver) {
+        responseObserver.onNext(converter.toProto(store.enumerateNamespaces()));
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void enumerateTypes(MSG_String request, StreamObserver<MSG_StringSet> responseObserver) {
+        responseObserver.onNext(converter.toProto(store.enumerateTypes(converter.fromProto(
+                request))));
         responseObserver.onCompleted();
     }
 

@@ -18,6 +18,7 @@ package org.factcast.core;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.store.FactStore;
@@ -86,6 +87,16 @@ class DefaultFactCast implements FactCast {
     @NonNull
     public OptionalLong serialOf(@NonNull UUID id) {
         return store.serialOf(id);
+    }
+
+    @Override
+    public Set<String> enumerateNamespaces() {
+        return store.enumerateNamespaces();
+    }
+
+    @Override
+    public Set<String> enumerateTypes(@NonNull String ns) {
+        return store.enumerateTypes(ns);
     }
 
 }

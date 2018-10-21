@@ -18,6 +18,7 @@ package org.factcast.client.cache;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
@@ -101,6 +102,16 @@ public class CachingFactCast implements FactCast {
     @Override
     public OptionalLong serialOf(@NonNull UUID ids) {
         return delegate.serialOf(ids);
+    }
+
+    @Override
+    public Set<String> enumerateNamespaces() {
+        return delegate.enumerateNamespaces();
+    }
+
+    @Override
+    public Set<String> enumerateTypes(String ns) {
+        return delegate.enumerateTypes(ns);
     }
 
 }

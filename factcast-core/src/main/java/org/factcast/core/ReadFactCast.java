@@ -17,6 +17,7 @@ package org.factcast.core;
 
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.subscription.Subscription;
@@ -42,4 +43,9 @@ public interface ReadFactCast {
     Optional<Fact> fetchById(@NonNull UUID id);
 
     OptionalLong serialOf(@NonNull UUID id);
+
+    // see #153
+    Set<String> enumerateNamespaces();
+
+    Set<String> enumerateTypes(@NonNull String ns);
 }

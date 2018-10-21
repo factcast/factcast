@@ -18,12 +18,15 @@ package org.factcast.core.store;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+
+import lombok.NonNull;
 
 /**
  * A read/Write FactStore.
@@ -46,5 +49,10 @@ public interface FactStore {
     Optional<Fact> fetchById(UUID id);
 
     OptionalLong serialOf(UUID l);
+
+    // see #153
+    Set<String> enumerateNamespaces();
+
+    Set<String> enumerateTypes(@NonNull String ns);
 
 }
