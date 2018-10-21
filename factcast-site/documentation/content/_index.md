@@ -50,8 +50,10 @@ src="https://circleci.com/gh/Mercateo/factcast.svg?style=svg" alt="circleci" tit
 </a>
 
 
-## Releases
+## Noteworthy Releases
 
+* 2018-10-21 0.0.20 (milestone)
+ * added CLI
 * 2018-10-16 0.0.15 (emergency release)
  * fixed a potential NPE when using RDS
 * 2018-10-09 <a href="https://github.com/Mercateo/factcast/projects/3">0.0.14 (milestone)</a>
