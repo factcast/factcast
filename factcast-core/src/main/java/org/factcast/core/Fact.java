@@ -79,31 +79,32 @@ public interface Fact {
         return new Builder();
     }
 
+    
     public static class Builder {
 
         final Header header = new Header().id(UUID.randomUUID()).ns("default");
 
-        Builder aggId(@NonNull UUID aggId) {
+        public Builder aggId(@NonNull UUID aggId) {
             this.header.aggIds().add(aggId);
             return this;
         }
 
-        Builder ns(@NonNull String ns) {
+        public Builder ns(@NonNull String ns) {
             this.header.ns(ns);
             return this;
         }
 
-        Builder id(@NonNull UUID id) {
+        public Builder id(@NonNull UUID id) {
             this.header.id(id);
             return this;
         }
 
-        Builder type(@NonNull String type) {
+        public Builder type(@NonNull String type) {
             this.header.type(type);
             return this;
         }
 
-        Builder meta(@NonNull String key, String value) {
+        public Builder meta(@NonNull String key, String value) {
             this.header.meta().put(key, value);
             return this;
         }
