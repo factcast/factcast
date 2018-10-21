@@ -19,6 +19,7 @@ import org.factcast.client.grpc.cli.cmd.Catchup;
 import org.factcast.client.grpc.cli.cmd.Fetch;
 import org.factcast.client.grpc.cli.cmd.Follow;
 import org.factcast.client.grpc.cli.cmd.Publish;
+import org.factcast.client.grpc.cli.cmd.SerialOf;
 import org.factcast.client.grpc.cli.util.Command;
 import org.factcast.client.grpc.cli.util.Parser;
 import org.factcast.core.FactCast;
@@ -44,7 +45,8 @@ public class CLI {
                 new Catchup(),
                 new Follow(),
                 new Publish(),
-                new Fetch());
+                new Fetch(),
+                new SerialOf());
         try {
             Command cmd = parser.parse(arguments);
             if (cmd != null)
