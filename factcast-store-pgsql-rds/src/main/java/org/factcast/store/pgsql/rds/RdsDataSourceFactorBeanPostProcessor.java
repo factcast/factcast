@@ -15,8 +15,6 @@
  */
 package org.factcast.store.pgsql.rds;
 
-import javax.annotation.Resource;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.cloud.aws.jdbc.datasource.TomcatJdbcDataSourceFactory;
