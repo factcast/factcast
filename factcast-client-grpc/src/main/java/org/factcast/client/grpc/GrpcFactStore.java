@@ -52,6 +52,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.grpc.Channel;
 import io.grpc.ClientCall;
+import io.grpc.Compressor;
 import io.grpc.CompressorRegistry;
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
@@ -115,10 +116,8 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @Override
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
         log.trace("publishing {} facts to remote store", factsToPublish.size());
-        List<MSG_Fact> mf = factsToPublish.stream()
-                .map(converter::toProto)
-                .collect(Collectors
-                        .toList());
+        List<MSG_Fact> mf = factsToPublish.stream().map(converter::toProto).collect(Collectors
+                .toList());
         MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
         // blockingStub.getCallOptions().withCompression(compressor);
         blockingStub.publish(mfs);
@@ -134,9 +133,8 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
                 subscription);
 
         ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()
-                .newCall(
-                        RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions()
-                                .withWaitForReady());
+                .newCall(RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions()
+                        .withWaitForReady());
 
         asyncServerStreamingCall(call, converter.toProto(req), responseObserver);
 
@@ -160,21 +158,21 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
         log.debug("Invoking handshake");
 
-        ServerConfig cfg = converter.fromProto(blockingStub.handshake(
-                converter.empty()));
+        ServerConfig cfg = converter.fromProto(blockingStub.handshake(converter.empty()));
 
         serverProtocolVersion = cfg.version();
         serverProperties = cfg.properties();
 
         if (!PROTOCOL_VERSION.isCompatibleTo(serverProtocolVersion))
             throw new IncompatibleProtocolVersions("Apparently, the local Protocol Version "
-                    + PROTOCOL_VERSION + " is not compatible with the Server's "
-                    + serverProtocolVersion
+                    + PROTOCOL_VERSION
+                    + " is not compatible with the Server's " + serverProtocolVersion
                     + ". \nPlease choose a compatible GRPC Client to connect to this Server.");
 
         if (!PROTOCOL_VERSION.equals(serverProtocolVersion))
             log.info("Compatible protocol version encountered client={}, server={}",
-                    PROTOCOL_VERSION, serverProtocolVersion);
+                    PROTOCOL_VERSION,
+                    serverProtocolVersion);
         else
             log.info("Matching protocol version encountered {}", serverProtocolVersion);
 
@@ -183,17 +181,37 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private void configure() {
 
-        boolean localLz4 = CompressorRegistry
-                .getDefaultInstance()
-                .lookupCompressor("lz4") != null;
+        if (!configureLZ4())
+            configureGZip();
+    }
 
-        boolean remoteLz4 = Boolean.valueOf(serverProperties.get(
-                Capabilities.CODEC_LZ4.toString()));
+    private boolean configureGZip() {
+        Compressor gzip = CompressorRegistry.getDefaultInstance().lookupCompressor("gzip");
+        if (gzip != null) {
+            log.info("configuring GZip");
+            String encoding = gzip.getMessageEncoding();
+            this.blockingStub = blockingStub.withCompression(encoding);
+            this.stub = stub.withCompression(encoding);
+            return true;
+        } else
+            return false;
+    }
+
+    private boolean configureLZ4() {
+        Compressor lz4Compressor = CompressorRegistry.getDefaultInstance().lookupCompressor("lz4");
+        boolean localLz4 = lz4Compressor != null;
+        boolean remoteLz4 = Boolean.valueOf(serverProperties.get(Capabilities.CODEC_LZ4
+                .toString()));
 
         if (localLz4 && remoteLz4) {
-            this.blockingStub = blockingStub.withCompression(new LZ4Codec().getMessageEncoding());
-            this.stub = stub.withCompression(LZ4Codec.ENCODING);
-        }
+            log.info("LZ4 Codec available on client and server - configuring LZ4");
+            String encoding = lz4Compressor.getMessageEncoding();
+            this.blockingStub = blockingStub.withCompression(encoding);
+            this.stub = stub.withCompression(encoding);
+            return true;
+        } else
+            return false;
+
     }
 
     @Override

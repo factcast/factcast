@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.client.grpc;
+package org.factcast.server.grpc;
 
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.factcast.grpc.compression.lz4.LZ4Codec;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Configuration
-@AutoConfigureBefore(GrpcFactStoreConfiguration.class)
 @ConditionalOnClass(name = "net.jpountz.lz4.LZ4Constants")
 @Slf4j
-public class LZ4Configuration {
-    static {
-        log.info("Initializing Client-side LZ4 Compression");
-        // registration not possible without
-        // https://github.com/yidongnan/grpc-spring-boot-starter/issues/96
+public class ServerLZ4Configuration {
+    @Bean
+    public LZ4Codec lz4Codec() {
+        log.info("offering LZ4 Codec");
+        return new LZ4Codec();
     }
 }
