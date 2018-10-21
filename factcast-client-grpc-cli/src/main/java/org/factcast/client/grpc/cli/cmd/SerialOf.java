@@ -21,6 +21,7 @@ import java.util.OptionalLong;
 import java.util.UUID;
 
 import org.factcast.client.grpc.cli.util.Command;
+import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.FactCast;
 
 import com.beust.jcommander.Parameter;
@@ -36,7 +37,7 @@ public class SerialOf implements Command {
     List<UUID> ids = new LinkedList<>();
 
     @Override
-    public void runWith(FactCast fc) {
+    public void runWith(FactCast fc, Options opt) {
         ids.forEach(id -> {
             System.out.print(id + ": ");
             OptionalLong serial = fc.serialOf(id);

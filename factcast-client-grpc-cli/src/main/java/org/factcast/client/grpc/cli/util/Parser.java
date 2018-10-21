@@ -25,6 +25,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.JCommander.Builder;
 import com.beust.jcommander.Parameter;
 
+import lombok.Getter;
+
 public class Parser {
     private static final String HOST_SYSPROP_NAME = "grpc.client.factstore.host";
 
@@ -32,6 +34,7 @@ public class Parser {
 
     final JCommander jc;
 
+    @Getter
     final Options options = new Options();
 
     public Parser(Command... commands) {
@@ -64,7 +67,7 @@ public class Parser {
         System.setProperty(PORT_SYSPROP_NAME, String.valueOf(options.port));
     }
 
-    static class Options {
+    public static class Options {
 
         public Options() {
             String fc = System.getenv("FACTCAST_SERVER");
@@ -83,8 +86,12 @@ public class Parser {
             }
         }
 
-        @Parameter(names = "--help", help = true, hidden = true)
+        @Parameter(names = { "--help", "-help", "-?", "--?" }, help = true, hidden = true)
         boolean help;
+
+        @Getter
+        @Parameter(names = { "--pretty", "-p" }, help = true, description = "format JSON output")
+        boolean pretty = false;
 
         @Parameter(names = "--host", description = "the hostname to connect to")
         String host = "localhost";
@@ -97,4 +104,5 @@ public class Parser {
     public void usage() {
         jc.usage();
     }
+
 }

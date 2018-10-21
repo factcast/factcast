@@ -51,7 +51,7 @@ public class CLI {
             Command cmd = parser.parse(arguments);
             if (cmd != null)
                 cmd.runWith(SpringApplication.run(CLI.class, new String[] {})
-                        .getBean(FactCast.class));
+                        .getBean(FactCast.class), parser.options());
         } catch (ParameterException e) {
             System.err.println();
             System.err.println("*** Error: " + e.getMessage());

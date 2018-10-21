@@ -15,12 +15,17 @@
  */
 package org.factcast.client.grpc.cli.util;
 
+import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.Fact;
+import org.factcast.core.util.FactCastJson;
 
-import lombok.experimental.UtilityClass;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-@UtilityClass
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 public class FactRenderer {
+    final Options options;
 
     private final String TAB = "\t";
 
@@ -29,10 +34,20 @@ public class FactRenderer {
     public String render(Fact f) {
         StringBuilder sb = new StringBuilder();
         sb.append("Fact: id=" + f.id() + CR);
-        sb.append(TAB + "header: " + f.jsonHeader() + CR);
-        sb.append(TAB + "payload: " + f.jsonPayload() + CR);
+        sb.append(TAB + "header: " + renderJson(f.jsonHeader()).replaceAll(CR, CR + TAB + TAB)
+                + CR);
+        sb.append(TAB + "payload: " + renderJson(f.jsonPayload()).replaceAll(CR, CR + TAB + TAB)
+                + CR);
         sb.append(CR);
         return sb.toString();
+    }
+
+    private String renderJson(String jsonString) {
+        if (options.pretty()) {
+            ObjectNode objectNode = FactCastJson.toObjectNode(jsonString);
+            return FactCastJson.writeValueAsPrettyString(objectNode);
+        } else
+            return jsonString;
     }
 
 }

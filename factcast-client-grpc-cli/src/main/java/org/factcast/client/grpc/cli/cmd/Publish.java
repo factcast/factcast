@@ -18,6 +18,7 @@ package org.factcast.client.grpc.cli.cmd;
 import org.factcast.client.grpc.cli.conv.ExistingJsonFile;
 import org.factcast.client.grpc.cli.util.Command;
 import org.factcast.client.grpc.cli.util.FactRenderer;
+import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 
@@ -40,11 +41,13 @@ public class Publish implements Command {
     ExistingJsonFile payloadFile;
 
     @Override
-    public void runWith(FactCast fc) {
+    public void runWith(FactCast fc, Options opt) {
+        FactRenderer factRenderer = new FactRenderer(opt);
         Fact f = Fact.of(headerFile.read(), payloadFile.read());
         fc.publish(f);
         System.out.println("Published:");
-        System.out.println(FactRenderer.render(f));
+
+        System.out.println(factRenderer.render(f));
     }
 
 }
