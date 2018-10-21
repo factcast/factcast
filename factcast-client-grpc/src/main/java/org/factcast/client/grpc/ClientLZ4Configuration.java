@@ -15,27 +15,22 @@
  */
 package org.factcast.client.grpc;
 
-import org.factcast.core.FactCastConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.factcast.grpc.compression.lz4.LZ4Codec;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
-import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
+import lombok.extern.slf4j.Slf4j;
 
-/**
- * Provides a GrpcFactStore as a FactStore implementation.
- * 
- * @author uwe.schaefer@mercateo.com
- *
- */
-@Import({ FactCastConfiguration.class, ClientLZ4Configuration.class })
 @Configuration
-@AutoConfigureAfter(ClientLZ4Configuration.class)
-public class GrpcFactStoreConfiguration {
-
+@AutoConfigureBefore(GrpcFactStoreConfiguration.class)
+@ConditionalOnClass(name = "net.jpountz.lz4.LZ4Constants")
+@Slf4j
+public class ClientLZ4Configuration {
     @Bean
-    public GrpcFactStore grpcFactStore(AddressChannelFactory af) {
-        return new GrpcFactStore(af);
+    public LZ4Codec lz4Codec() {
+        log.info("offering LZ4 Codec");
+        return new LZ4Codec();
     }
 }
