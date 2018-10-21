@@ -202,7 +202,7 @@ public class PGFactStore implements FactStore {
     @Override
     public Set<String> enumerateNamespaces() {
         try (Context time = namespaceLatency.time();) {
-            return jdbcTemplate.query(PGConstants.SELECT_DICTINCT_NAMESPACE,
+            return jdbcTemplate.query(PGConstants.SELECT_DISTINCT_NAMESPACE,
                     this::extractStringFromResultSet).stream().collect(Collectors.toSet());
         }
     }
@@ -210,7 +210,7 @@ public class PGFactStore implements FactStore {
     @Override
     public Set<String> enumerateTypes(String ns) {
         try (Context time = typeLatency.time();) {
-            return jdbcTemplate.query(PGConstants.SELECT_DICTINCT_TYPE_IN_NAMESPACE, new Object[] {
+            return jdbcTemplate.query(PGConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE, new Object[] {
                     ns },
                     this::extractStringFromResultSet).stream().collect(Collectors.toSet());
         }

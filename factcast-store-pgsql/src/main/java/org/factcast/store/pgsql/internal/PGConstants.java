@@ -101,12 +101,12 @@ public class PGConstants {
             + "->'meta','{}') || concat('{\"_ser\":', " + COLUMN_SER
             + " ,'}' )::jsonb , true) WHERE header @> ?::jsonb";
 
-    public static final String SELECT_DICTINCT_NAMESPACE = "SELECT DISTINCT(" + COLUMN_HEADER
+    public static final String SELECT_DISTINCT_NAMESPACE = "SELECT DISTINCT(" + COLUMN_HEADER
             + "->>'" + ALIAS_NS + "') " + ALIAS_NS
             + " FROM " + TABLE_FACT + " WHERE " + COLUMN_HEADER + "->>'" + ALIAS_NS
             + "' IS NOT NULL";
 
-    public static final String SELECT_DICTINCT_TYPE_IN_NAMESPACE = "SELECT DISTINCT("
+    public static final String SELECT_DISTINCT_TYPE_IN_NAMESPACE = "SELECT DISTINCT("
             + COLUMN_HEADER + "->>'" + ALIAS_TYPE + "') "
             + " FROM " + TABLE_FACT + " WHERE (" + COLUMN_HEADER + "->>'" + ALIAS_NS
             + "')=? AND ( " + COLUMN_HEADER + "->>'" + ALIAS_TYPE + "') IS NOT NULL";
