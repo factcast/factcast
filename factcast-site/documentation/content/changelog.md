@@ -1,7 +1,60 @@
 # Change Log
 
-## [upcoming](https://github.com/Mercateo/factcast/tree/upcoming) (2018-10-18)
-[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.15...upcoming)
+## [factcast-0.0.20](https://github.com/Mercateo/factcast/tree/factcast-0.0.20) (2018-10-21)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.19...factcast-0.0.20)
+
+**Closed issues:**
+
+- CLI: add -pretty option to format JSON in output [\#163](https://github.com/Mercateo/factcast/issues/163)
+- CLI: Implement serialOf [\#161](https://github.com/Mercateo/factcast/issues/161)
+
+**Merged pull requests:**
+
+- Prettify JSON output [\#164](https://github.com/Mercateo/factcast/pull/164) ([uweschaefer](https://github.com/uweschaefer))
+
+## [factcast-0.0.19](https://github.com/Mercateo/factcast/tree/factcast-0.0.19) (2018-10-21)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.18...factcast-0.0.19)
+
+**Closed issues:**
+
+- Cleanup LZ4 & GZIP Configuration [\#159](https://github.com/Mercateo/factcast/issues/159)
+- CLI: reintroduce getting defaults for -h and -p from environment [\#157](https://github.com/Mercateo/factcast/issues/157)
+
+**Merged pull requests:**
+
+- compression config cleanup [\#160](https://github.com/Mercateo/factcast/pull/160) ([uweschaefer](https://github.com/uweschaefer))
+- \#157: introduced FACTCAST\_SERVER env variable [\#158](https://github.com/Mercateo/factcast/pull/158) ([uweschaefer](https://github.com/uweschaefer))
+
+## [factcast-0.0.18](https://github.com/Mercateo/factcast/tree/factcast-0.0.18) (2018-10-20)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.17...factcast-0.0.18)
+
+**Implemented enhancements:**
+
+- Provide CLI Client for GRPC  [\#152](https://github.com/Mercateo/factcast/issues/152)
+- Provide Builder for Fact to make sure it has a namespace [\#147](https://github.com/Mercateo/factcast/issues/147)
+
+**Fixed bugs:**
+
+- Facts with same id are not reported as duplicate to grpc client [\#149](https://github.com/Mercateo/factcast/issues/149)
+- \[emergency\] RDS autoConfig throws NPE [\#135](https://github.com/Mercateo/factcast/issues/135)
+
+**Closed issues:**
+
+- Factory Method Fact.of\(JsonNode, JsonNode\) [\#155](https://github.com/Mercateo/factcast/issues/155)
+- Open SpecBuilder [\#154](https://github.com/Mercateo/factcast/issues/154)
+- Improve coverage [\#142](https://github.com/Mercateo/factcast/issues/142)
+
+**Merged pull requests:**
+
+- added CLI [\#156](https://github.com/Mercateo/factcast/pull/156) ([uweschaefer](https://github.com/uweschaefer))
+- \#149: propage exception in GrpcFactStore::publish [\#151](https://github.com/Mercateo/factcast/pull/151) ([uweschaefer](https://github.com/uweschaefer))
+- \#147: provide build for fact [\#150](https://github.com/Mercateo/factcast/pull/150) ([uweschaefer](https://github.com/uweschaefer))
+- WIP: ITD-55540: Added cli [\#148](https://github.com/Mercateo/factcast/pull/148) ([BernhardBln](https://github.com/BernhardBln))
+- Issue135: add default values for tomcat properties [\#144](https://github.com/Mercateo/factcast/pull/144) ([Mortinke](https://github.com/Mortinke))
+- \#142: some coverage improvements [\#143](https://github.com/Mercateo/factcast/pull/143) ([uweschaefer](https://github.com/uweschaefer))
+
+## [factcast-0.0.17](https://github.com/Mercateo/factcast/tree/factcast-0.0.17) (2018-10-18)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.15...factcast-0.0.17)
 
 **Fixed bugs:**
 
