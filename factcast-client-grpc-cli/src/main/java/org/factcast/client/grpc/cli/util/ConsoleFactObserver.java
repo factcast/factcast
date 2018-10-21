@@ -15,6 +15,7 @@
  */
 package org.factcast.client.grpc.cli.util;
 
+import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.FactObserver;
 
@@ -22,9 +23,15 @@ import lombok.SneakyThrows;
 
 public class ConsoleFactObserver implements FactObserver {
 
+    private FactRenderer factRenderer;
+
+    public ConsoleFactObserver(Options opt) {
+        this.factRenderer = new FactRenderer(opt);
+    }
+
     @Override
     public synchronized void onNext(Fact f) {
-        System.out.println(FactRenderer.render(f));
+        System.out.println(factRenderer.render(f));
     }
 
     @SneakyThrows

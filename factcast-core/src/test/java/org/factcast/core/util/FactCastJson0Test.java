@@ -1,7 +1,12 @@
 package org.factcast.core.util;
 
-import static org.factcast.core.TestHelper.*;
-import static org.junit.Assert.*;
+import static org.factcast.core.TestHelper.expectNPE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -74,6 +79,14 @@ public class FactCastJson0Test {
         JsonNode jsonNode = objectNode.get("x");
         assertEquals(1, jsonNode.asInt());
         assertNull(objectNode.get("y"));
+    }
+
+    @Test
+    public void testWriteValueAsPrettyString() throws Exception {
+        String json = "{\"a\":1}";
+        String pretty = FactCastJson.writeValueAsPrettyString(FactCastJson.toObjectNode(json));
+        assertTrue(pretty.contains("\n"));
+        assertTrue(pretty.contains(" "));
     }
 
 }

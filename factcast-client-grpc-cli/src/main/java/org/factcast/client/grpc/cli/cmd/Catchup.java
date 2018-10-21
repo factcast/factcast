@@ -19,6 +19,7 @@ import java.util.UUID;
 
 import org.factcast.client.grpc.cli.util.Command;
 import org.factcast.client.grpc.cli.util.ConsoleFactObserver;
+import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SpecBuilder;
@@ -37,10 +38,9 @@ public class Catchup implements Command {
     @Parameter(names = "-from", description = "start reading AFTER the fact with the given id")
     UUID from;
 
-    final ConsoleFactObserver obs = new ConsoleFactObserver();
-
     @Override
-    public void runWith(FactCast fc) {
+    public void runWith(FactCast fc, Options opt) {
+        ConsoleFactObserver obs = new ConsoleFactObserver(opt);
         SpecBuilder catchup = SubscriptionRequest.catchup(FactSpec.ns(ns));
 
         if (from == null)

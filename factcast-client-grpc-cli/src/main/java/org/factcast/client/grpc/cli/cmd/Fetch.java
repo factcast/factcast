@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import org.factcast.client.grpc.cli.util.Command;
 import org.factcast.client.grpc.cli.util.FactRenderer;
+import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.FactCast;
 
 import com.beust.jcommander.Parameter;
@@ -34,9 +35,10 @@ public class Fetch implements Command {
     List<UUID> ids = new LinkedList<>();
 
     @Override
-    public void runWith(FactCast fc) {
+    public void runWith(FactCast fc, Options opt) {
+        FactRenderer factRenderer = new FactRenderer(opt);
         ids.forEach(id -> System.out.println(fc.fetchById(id)
-                .map(FactRenderer::render)
+                .map(factRenderer::render)
                 .orElse("not found")));
     }
 
