@@ -34,7 +34,7 @@ public class Issue72MT implements CommandLineRunner {
                 .fromScratch(),
                 f -> System.out.println(f)).awaitCatchup(5000);
 
-        //sub.close();
+        sub.close();
 
     }
 
