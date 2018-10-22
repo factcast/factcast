@@ -15,11 +15,15 @@
  */
 package org.factcast.server.grpc;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -144,9 +148,30 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     private Map<String, String> collectProperties() {
         HashMap<String, String> properties = new HashMap<>();
         evaluateLZ4Availability(properties);
+        retrieveImplementationVersion(properties);
 
         log.info("Handshake properties: {} ", properties);
         return properties;
+    }
+
+    private void retrieveImplementationVersion(HashMap<String, String> properties) {
+
+        String implVersion = "UNKNOWN";
+        URL propertiesUrl = FactStoreGrpcService.class.getResource(
+                "/META-INF/maven/org.factcast/factcast-server-grpc/pom.properties");
+        Properties buildProperties = new Properties();
+        if (propertiesUrl != null)
+            try {
+                InputStream is = propertiesUrl.openStream();
+                if (is != null) {
+                    buildProperties.load(is);
+                    String v = buildProperties.getProperty("version");
+                    if (v != null)
+                        implVersion = v;
+                }
+            } catch (IOException e) {
+            }
+        properties.put(Capabilities.FACTCAST_IMPL_VERSION.toString(), implVersion);
     }
 
     private void evaluateLZ4Availability(HashMap<String, String> properties) {

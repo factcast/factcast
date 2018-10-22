@@ -17,7 +17,7 @@ package org.factcast.grpc.api;
 
 public enum Capabilities {
 
-    CODEC_LZ4;
+    CODEC_LZ4, FACTCAST_IMPL_VERSION;
 
     public String toString() {
         return getClass().getCanonicalName() + "." + name();
