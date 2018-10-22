@@ -65,6 +65,11 @@ public class Parser {
     private void init() {
         System.setProperty(HOST_SYSPROP_NAME, options.host);
         System.setProperty(PORT_SYSPROP_NAME, String.valueOf(options.port));
+
+        if (options.debug) {
+            System.setProperty("debug", Boolean.TRUE.toString());
+        }
+
     }
 
     public static class Options {
@@ -72,13 +77,21 @@ public class Parser {
         boolean help;
 
         @Getter
-        @Parameter(names = { "--pretty", "-p" }, help = true, description = "format JSON output")
+        @Parameter(names = { "--pretty" }, help = true, description = "format JSON output")
         boolean pretty = false;
 
-        @Parameter(names = "--host", description = "the hostname to connect to")
+        @Getter
+        @Parameter(
+                names = { "--debug" },
+                help = true,
+                description = "show debug-level debug messages",
+                order = 0)
+        boolean debug = false;
+
+        @Parameter(names = "--host", description = "the hostname to connect to", order = 1)
         String host = "localhost";
 
-        @Parameter(names = "--port", description = "the port to connect to")
+        @Parameter(names = "--port", description = "the port to connect to", order = 2)
         int port = 9090;
 
         public Options() {
