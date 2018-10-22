@@ -46,7 +46,6 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
-import org.factcast.grpc.compression.lz4.LZ4Codec;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -167,6 +166,17 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
         serverProtocolVersion = cfg.version();
         serverProperties = cfg.properties();
 
+        logProtocolVersion(serverProtocolVersion);
+        logServerVersion(serverProperties);
+        configure();
+    }
+
+    private static void logServerVersion(Map<String, String> serverProperties) {
+        String serverVersion = serverProperties.get(Capabilities.FACTCAST_IMPL_VERSION.toString());
+        log.info("Server reported implementation version {}", serverVersion);
+    }
+
+    private static void logProtocolVersion(ProtocolVersion serverProtocolVersion) {
         if (!PROTOCOL_VERSION.isCompatibleTo(serverProtocolVersion))
             throw new IncompatibleProtocolVersions("Apparently, the local Protocol Version "
                     + PROTOCOL_VERSION
@@ -179,8 +189,6 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
                     serverProtocolVersion);
         else
             log.info("Matching protocol version encountered {}", serverProtocolVersion);
-
-        configure();
     }
 
     private void configure() {
