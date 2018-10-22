@@ -1,5 +1,38 @@
 # Change Log
 
+## [upcoming](https://github.com/Mercateo/factcast/tree/upcoming) (2018-10-22)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.21...upcoming)
+
+**Closed issues:**
+
+- CLI: add --debug to log at least info-level messages to the console [\#175](https://github.com/Mercateo/factcast/issues/175)
+- CLI: Print exception details when failing [\#171](https://github.com/Mercateo/factcast/issues/171)
+- PSQL Store: Create index to support enumeration queries [\#170](https://github.com/Mercateo/factcast/issues/170)
+- Add Server Implementation Version to ServerConfig [\#169](https://github.com/Mercateo/factcast/issues/169)
+
+**Merged pull requests:**
+
+- \#175: added debug switch [\#176](https://github.com/Mercateo/factcast/pull/176) ([uweschaefer](https://github.com/uweschaefer))
+- \#169: added server impl version to handshake, and log it on the client [\#174](https://github.com/Mercateo/factcast/pull/174) ([uweschaefer](https://github.com/uweschaefer))
+- \#170: added index for enumeration of ns and type [\#173](https://github.com/Mercateo/factcast/pull/173) ([uweschaefer](https://github.com/uweschaefer))
+- \#171: added exception message to output [\#172](https://github.com/Mercateo/factcast/pull/172) ([uweschaefer](https://github.com/uweschaefer))
+
+## [factcast-0.0.21](https://github.com/Mercateo/factcast/tree/factcast-0.0.21) (2018-10-22)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.20...factcast-0.0.21)
+
+**Implemented enhancements:**
+
+- Extend API to enumerate existing namespaces & types in store [\#153](https://github.com/Mercateo/factcast/issues/153)
+
+**Fixed bugs:**
+
+- Fact.Builder needs public methods [\#165](https://github.com/Mercateo/factcast/issues/165)
+
+**Merged pull requests:**
+
+- \#153 add Namespace and Type enumeration [\#167](https://github.com/Mercateo/factcast/pull/167) ([uweschaefer](https://github.com/uweschaefer))
+- \#165: opened Fact.Builder methods [\#166](https://github.com/Mercateo/factcast/pull/166) ([uweschaefer](https://github.com/uweschaefer))
+
 ## [factcast-0.0.20](https://github.com/Mercateo/factcast/tree/factcast-0.0.20) (2018-10-21)
 [Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.19...factcast-0.0.20)
 
