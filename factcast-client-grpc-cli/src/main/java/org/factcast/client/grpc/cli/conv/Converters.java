@@ -55,7 +55,9 @@ public class Converters {
             try {
                 return l.apply(value);
             } catch (Exception e) {
-                throw new ParameterException(getErrorString(value, clazz.getCanonicalName()));
+                throw new ParameterException(getErrorString(value, clazz.getCanonicalName()) + " : "
+                        + e
+                                .getMessage());
             }
 
         }
