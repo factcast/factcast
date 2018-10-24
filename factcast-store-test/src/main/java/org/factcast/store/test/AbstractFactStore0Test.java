@@ -35,6 +35,9 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
@@ -716,6 +719,37 @@ public abstract class AbstractFactStore0Test {
         assertTrue(uut.enumerateTypes("ns1").contains("t2"));
         assertTrue(uut.enumerateTypes("ns1").contains("t3"));
 
+    }
+
+    @Test
+    public void testFollow() throws Exception {
+        Fact f = Fact.builder().ns("followtest").id(UUID.randomUUID()).build("{}");
+        uut.publish(f);
+        AtomicReference<CountDownLatch> l = new AtomicReference<CountDownLatch>(new CountDownLatch(
+                1));
+        SubscriptionRequest request = SubscriptionRequest.follow(FactSpec.ns("followtest"))
+                .fromScratch();
+        FactObserver observer = new FactObserver() {
+
+            @Override
+            public void onNext(Fact element) {
+                l.get().countDown();
+            }
+        };
+        uut.subscribeToFacts(request, observer);
+
+        l.get().await();
+        l.set(new CountDownLatch(3));
+
+        uut.publish(Fact.builder().ns("followtest").id(UUID.randomUUID()).build("{}"));
+        uut.publish(Fact.builder().ns("followtest").id(UUID.randomUUID()).build("{}"));
+
+        // needs to fail
+        assertFalse(l.get().await(500, TimeUnit.MILLISECONDS));
+
+        uut.publish(Fact.builder().ns("followtest").id(UUID.randomUUID()).build("{}"));
+
+        l.get().await();
     }
 
 }
