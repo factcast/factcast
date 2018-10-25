@@ -1,6 +1,6 @@
 package org.factcast.client.grpc;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertSame;
 
 import java.util.UUID;
 
