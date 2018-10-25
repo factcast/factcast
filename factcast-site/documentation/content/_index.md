@@ -35,9 +35,8 @@ The current project health is
 src="https://circleci.com/gh/Mercateo/factcast.svg?style=svg" alt="circleci" title="circleci" style="max-width:100%;"></a>
 
 
-
-<a href="https://coveralls.io/github/uweschaefer/factcast?branch=master">
-    <img class="inline" src="https://coveralls.io/repos/github/uweschaefer/factcast/badge.svg?branch=master" alt="Coverage Status" style="width: auto; height: auto;">
+<a href="https://codecov.io/gh/Mercateo/factcast">
+  <img style="width: auto; height: auto;" class="inline" src="https://codecov.io/gh/Mercateo/factcast/branch/master/graph/badge.svg" />
 </a>
 <a href="https://www.codacy.com/app/uwe/factcast?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=uweschaefer/factcast&amp;utm_campaign=badger">
     <img src="https://camo.githubusercontent.com/1c83cab4eec41ad80d9920cba1bc06f849a97b03/68747470733a2f2f6170692e636f646163792e636f6d2f70726f6a6563742f62616467652f47726164652f6464353932316366656238313438326462373266613864396466363830343866" alt="Codacy Badge" data-canonical-src="https://api.codacy.com/project/badge/Grade/dd5921cfeb81482db72fa8d9df68048f" style="max-width:100%;" class="inline">
