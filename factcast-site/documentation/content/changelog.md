@@ -1,7 +1,21 @@
 # Change Log
 
-## [upcoming](https://github.com/Mercateo/factcast/tree/upcoming) (2018-10-22)
-[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.21...upcoming)
+## [upcoming](https://github.com/Mercateo/factcast/tree/upcoming) (2018-10-26)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.25...upcoming)
+
+**Closed issues:**
+
+- GenericObserver.next should guarantee to not be called with null parameter [\#185](https://github.com/Mercateo/factcast/issues/185)
+- replace use of powermock [\#183](https://github.com/Mercateo/factcast/issues/183)
+- Recheck pg store internal notification [\#180](https://github.com/Mercateo/factcast/issues/180)
+
+**Merged pull requests:**
+
+- \#185: added @NonNull contract to obserer.onNext [\#186](https://github.com/Mercateo/factcast/pull/186) ([uweschaefer](https://github.com/uweschaefer))
+- \#183 remove use of powermock [\#184](https://github.com/Mercateo/factcast/pull/184) ([uweschaefer](https://github.com/uweschaefer))
+
+## [factcast-0.0.25](https://github.com/Mercateo/factcast/tree/factcast-0.0.25) (2018-10-24)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.21...factcast-0.0.25)
 
 **Closed issues:**
 
@@ -12,6 +26,8 @@
 
 **Merged pull requests:**
 
+- \#180 Recheck PGStore notification mechanism \(follow-subscriptions sometimes seem to starve\) [\#182](https://github.com/Mercateo/factcast/pull/182) ([uweschaefer](https://github.com/uweschaefer))
+- \#178: codacy review [\#179](https://github.com/Mercateo/factcast/pull/179) ([uweschaefer](https://github.com/uweschaefer))
 - \#175: added debug switch [\#176](https://github.com/Mercateo/factcast/pull/176) ([uweschaefer](https://github.com/uweschaefer))
 - \#169: added server impl version to handshake, and log it on the client [\#174](https://github.com/Mercateo/factcast/pull/174) ([uweschaefer](https://github.com/uweschaefer))
 - \#170: added index for enumeration of ns and type [\#173](https://github.com/Mercateo/factcast/pull/173) ([uweschaefer](https://github.com/uweschaefer))
