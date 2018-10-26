@@ -34,7 +34,7 @@ import lombok.RequiredArgsConstructor;
  * @param <T>
  */
 public interface GenericObserver<I> {
-    void onNext(I element);
+    void onNext(@NonNull I element);
 
     default void onCatchup() {
         // implement if you are interested in that event
@@ -44,7 +44,7 @@ public interface GenericObserver<I> {
         // implement if you are interested in that event
     }
 
-    default void onError(Throwable exception) {
+    default void onError(@NonNull Throwable exception) {
         LoggerFactory.getLogger(GenericObserver.class).warn("Unhandled onError:", exception);
     }
 
@@ -60,7 +60,7 @@ public interface GenericObserver<I> {
         private final Function<Fact, I> project;
 
         @Override
-        public void onNext(Fact from) {
+        public void onNext(@NonNull Fact from) {
             delegate.onNext(project.apply(from));
         }
 
@@ -70,7 +70,7 @@ public interface GenericObserver<I> {
         }
 
         @Override
-        public void onError(Throwable exception) {
+        public void onError(@NonNull Throwable exception) {
             delegate.onError(exception);
         }
 
