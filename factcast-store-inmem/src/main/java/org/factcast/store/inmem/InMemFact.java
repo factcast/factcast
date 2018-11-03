@@ -21,6 +21,7 @@ import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+@SuppressWarnings("ExternalizableWithoutPublicNoArgConstructor")
 class InMemFact extends DefaultFact {
 
     public InMemFact(long ser, Fact toCopyFrom) {

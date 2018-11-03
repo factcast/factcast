@@ -15,15 +15,8 @@
  */
 package org.factcast.store.inmem;
 
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -55,21 +48,22 @@ import lombok.extern.slf4j.Slf4j;
  * @author uwe.schaefer@mercateo.com, joerg.adler@mercateo.com
  *
  */
+@SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
 @Slf4j
 public class InMemFactStore implements FactStore, DisposableBean {
-    final AtomicLong highwaterMark = new AtomicLong(0);
+    private final AtomicLong highwaterMark = new AtomicLong(0);
 
     @VisibleForTesting
-    protected final LinkedHashMap<Long, Fact> store = new LinkedHashMap<>();
+    private final LinkedHashMap<Long, Fact> store = new LinkedHashMap<>();
 
-    final Set<UUID> ids = new HashSet<>();
+    private final Set<UUID> ids = new HashSet<>();
 
-    final Set<String> uniqueIdentifiers = new HashSet<>();
+    private final Set<String> uniqueIdentifiers = new HashSet<>();
 
-    final CopyOnWriteArrayList<InMemFollower> activeFollowers = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<InMemFollower> activeFollowers = new CopyOnWriteArrayList<>();
 
-    final ExecutorService executorService;
+    private final ExecutorService executorService;
 
     @VisibleForTesting
     InMemFactStore(@NonNull ExecutorService es) {
@@ -112,7 +106,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
     }
 
     private class InMemFollower implements Predicate<Fact>, Consumer<Fact>, AutoCloseable {
-        Predicate<Fact> matcher;
+        final Predicate<Fact> matcher;
 
         final SubscriptionImpl<Fact> subscription;
 
@@ -149,7 +143,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
     @Override
     public synchronized Optional<Fact> fetchById(@NonNull UUID id) {
         Stream<Entry<Long, Fact>> stream = store.entrySet().stream();
-        return stream.filter(e -> e.getValue().id().equals(id)).findFirst().map(e -> e.getValue());
+        return stream.filter(e -> e.getValue().id().equals(id)).findFirst().map(Entry::getValue);
     }
 
     @Override
@@ -225,7 +219,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
     }
 
     @Override
-    public synchronized void destroy() throws Exception {
+    public synchronized void destroy() {
         executorService.shutdown();
     }
 
@@ -234,7 +228,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
         // hilariously inefficient
         for (Map.Entry<Long, Fact> e : store.entrySet()) {
             if (l.equals(e.getValue().id())) {
-                return OptionalLong.of(e.getKey().longValue());
+                return OptionalLong.of(e.getKey());
             }
         }
         return OptionalLong.empty();
@@ -254,7 +248,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
                 .stream()
                 .filter(f -> f.ns().equals(ns))
                 .map(Fact::type)
-                .filter(t -> t != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
 
