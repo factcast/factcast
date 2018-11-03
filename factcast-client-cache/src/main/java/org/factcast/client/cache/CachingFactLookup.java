@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright © 2018 Mercateo AG (http://www.mercateo.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,25 +15,23 @@
  */
 package org.factcast.client.cache;
 
-import java.util.Optional;
-import java.util.UUID;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * A cacheable wrapper for a lookup of facts by their id.
- * 
+ * <p>
  * Not intended for direct usage from with application code. This is used by the
  * CachingFactCast wrapper as a strategy to lookup facts.
- * 
- * @author <uwe.schaefer@mercateo.com>
  *
+ * @author <uwe.schaefer@mercateo.com>
  */
 @Component
 @RequiredArgsConstructor
@@ -41,8 +39,7 @@ public class CachingFactLookup {
 
     public static final String CACHE_NAME = "factcast.lookup.fact";
 
-    @NonNull
-    final FactStore store;
+    @NonNull final FactStore store;
 
     @Cacheable(CACHE_NAME)
     public Optional<Fact> lookup(UUID id) {
