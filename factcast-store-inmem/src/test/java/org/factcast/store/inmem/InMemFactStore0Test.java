@@ -1,20 +1,23 @@
 package org.factcast.store.inmem;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
+import java.util.concurrent.ExecutorService;
+
 import org.factcast.core.store.FactStore;
 import org.factcast.store.test.AbstractFactStore0Test;
 import org.junit.Test;
 
-import java.util.concurrent.ExecutorService;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
 @SuppressWarnings("deprecation")
 public class InMemFactStore0Test extends AbstractFactStore0Test {
 
+    private InMemFactStore store;
+
     @Override
     protected FactStore createStoreToTest() {
-        return new InMemFactStore();
+        this.store = new InMemFactStore();
+        return store;
     }
 
     @Test

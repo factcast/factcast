@@ -1,6 +1,7 @@
 package org.factcast.client.cache;
 
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Optional;
