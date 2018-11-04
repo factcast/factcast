@@ -9,7 +9,6 @@ import java.util.function.Predicate;
 import org.factcast.core.Fact;
 import org.factcast.core.Test0Fact;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class FactSpecMatcher0Test {
@@ -60,7 +59,6 @@ public class FactSpecMatcher0Test {
     }
 
     @Test
-    @Ignore
     public void testScriptMatch() throws Exception {
         assertTrue(scriptMatch(FactSpec.ns("default"), new Test0Fact()));
         assertFalse(scriptMatch(FactSpec.ns("default").jsFilterScript(
