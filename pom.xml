@@ -86,6 +86,7 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
+      <version>4.12</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -187,7 +188,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.1</version>
+        <version>2.22.0</version>
         <configuration>
           <excludes>
             <exclude>**/*IT.java</exclude>
@@ -198,7 +199,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.22.1</version>
+        <version>2.22.0</version>
         <executions>
           <execution>
             <goals>
