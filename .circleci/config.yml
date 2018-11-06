@@ -8,7 +8,6 @@ jobs:
     docker:
       # specify the version you desire here
       - image: circleci/openjdk:8-jdk
-      
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
@@ -25,6 +24,9 @@ jobs:
 #      MAVEN_OPTS: -Xmx2600m
       pg_url: jdbc:postgresql://localhost/test?currentSchema=public&username=circleci&password=test
       CODECOV_TOKEN: 48e19fae-3c35-4c56-9297-8620e6808cc9
+      MAVEN_OPTS: "-Xmx1500M"
+      JAVA_OPTS: "-Xms1500M -Xmx1500M"
+      _JAVA_OPTIONS : "-Xms1500M -Xmx1500M"
     
     steps:
       - checkout
