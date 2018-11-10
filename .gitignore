@@ -14,3 +14,5 @@ test_local.sh
 /.metadata/
 .recommenders
 **/dependency-reduced*
+**/*.releaseBackup
+release.properties
