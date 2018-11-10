@@ -8,16 +8,25 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-client-cache-infinispan</artifactId>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-internal-dep-boot1</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-core</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-client-cache</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>javax.cache</groupId>

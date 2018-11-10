@@ -13,9 +13,13 @@ TMP_SPACE=/tmp/git-hooks/pre-commit/$REPO_NAME/$(date +%s%N)
 mkdir -p $TMP_SPACE
 
 for X in `git diff --cached --name-only |grep -i "\.xml$"`; do
-  TX=$TMP_SPACE/tmp_formatted_xml
-  xmllint --format -o $TX $X
-  cmp -s $X $TX || (mv $TX $X && git-update-index $X && echo "$PREFIX Formatted $X" )
+
+  if [ -f $X ]; then
+	  TX=$TMP_SPACE/tmp_formatted_xml
+	  xmllint --format -o $TX $X
+	  cmp -s $X $TX || (mv $TX $X && git-update-index $X && echo "$PREFIX Formatted $X")
+  fi	  
+	  
 done
 
 rm -rf $TMP_SPACE

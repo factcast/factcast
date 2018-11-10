@@ -1,14 +1,17 @@
 package org.factcast.server.grpc;
 
-import static org.factcast.core.TestHelper.*;
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
+import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 import org.factcast.core.Fact;
-import org.factcast.core.Test0Fact;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.junit.Test;
@@ -16,7 +19,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import io.grpc.stub.StreamObserver;
 
@@ -90,7 +93,7 @@ public class GrpcObserverAdapter0Test {
         doNothing().when(observer).onNext(msg.capture());
         verify(observer, never()).onNext(any());
 
-        final Test0Fact f = new Test0Fact();
+        Fact f = Fact.builder().ns("test").build("{}");
         uut.onNext(f);
 
         verify(observer).onNext(any());
@@ -98,4 +101,21 @@ public class GrpcObserverAdapter0Test {
         assertEquals(f.id(), conv.fromProto(msg.getValue().getFact()).id());
 
     }
+
+    public static void expectNPE(Callable<?> e) {
+        expect(NullPointerException.class, e);
+    }
+
+    public static void expect(Class<? extends Throwable> ex, Callable<?> e) {
+        try {
+            e.call();
+            fail("expected " + ex);
+        } catch (Throwable actual) {
+            if (!ex.isInstance(actual)) {
+                fail("Wrong exception, expected " + ex + " but got " + actual);
+            }
+
+        }
+    }
+
 }

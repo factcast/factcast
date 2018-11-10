@@ -2,6 +2,7 @@ package org.factcast.core;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -9,7 +10,6 @@ import java.util.UUID;
 import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.Sets;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -29,7 +29,7 @@ public class Test0Fact implements Fact {
     UUID id = UUID.randomUUID();
 
     @JsonProperty
-    Set<UUID> aggIds = Sets.newLinkedHashSet();
+    Set<UUID> aggIds = new LinkedHashSet<>();
 
     @JsonProperty
     String type;

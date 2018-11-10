@@ -15,7 +15,6 @@ import org.factcast.core.Test0Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_EmptyOrBuilder;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
@@ -60,13 +59,14 @@ public class ProtoConverter0Test {
         String key2 = "k2";
         String type = "da-type";
         String ns = "da-ns";
-        Fact probe = new Test0Fact().aggId(aggId)
-                .jsonPayload(payload)
+        Fact probe = Fact.builder()
+                .ns(ns)
+                .aggId(aggId)
                 .meta(key1, value1)
-                .meta(key2,
-                        value2)
+                .meta(key2, value2)
                 .type(type)
-                .ns(ns);
+                .ns(ns)
+                .build(payload);
 
         Fact copy = uut.fromProto(uut.toProto(probe));
 

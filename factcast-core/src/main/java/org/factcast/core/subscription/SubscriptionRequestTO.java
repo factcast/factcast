@@ -15,8 +15,6 @@
  */
 package org.factcast.core.subscription;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -28,7 +26,6 @@ import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.Lists;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -115,9 +112,14 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
         specs.addAll(factSpecs);
     }
 
+    private void checkArgument(boolean b) {
+        if (!b)
+            throw new IllegalArgumentException();
+    }
+
     @Override
     public List<FactSpec> specs() {
-        ArrayList<FactSpec> l = Lists.newArrayList(specs);
+        ArrayList<FactSpec> l = new ArrayList<>(specs);
         if (marks) {
             l.add(0, FactSpec.forMark());
         }

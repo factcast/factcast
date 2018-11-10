@@ -1,6 +1,9 @@
 package org.factcast.core.spec;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 
 import java.util.UUID;
 
@@ -61,7 +64,7 @@ public class FactSpec0Test {
     public void testFactSpecEquality() throws Exception {
         FactSpec f1 = FactSpec.ns("x");
         FactSpec f2 = FactSpec.ns("x");
-        assertNotEquals(f1, f2); // do not compare FactSpecs!
+        assertFalse(f1.equals(f2)); // do not compare FactSpecs!
         assertNotSame(f1, f2);
     }
 }

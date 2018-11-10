@@ -1,6 +1,9 @@
 package org.factcast.core;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -106,7 +109,7 @@ public class DefaultFact0Test {
 
         assertEquals(f, f);
         assertEquals(f, f2);
-        assertNotEquals(f, f3);
+        assertFalse(f.equals(f3));
     }
 
     @Test

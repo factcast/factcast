@@ -1,7 +1,8 @@
 package org.factcast.store.pgsql.internal.rowmapper;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.sql.ResultSet;
 import java.util.UUID;
@@ -12,9 +13,8 @@ import org.factcast.store.pgsql.internal.PGConstants;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(org.mockito.junit.MockitoJUnitRunner.class)
 public class PGIdFactExtractor0Test {
 
     private AtomicLong serial = new AtomicLong(5);
@@ -28,7 +28,6 @@ public class PGIdFactExtractor0Test {
     @Test
     public void testMapRow() throws Exception {
         ResultSet rs = mock(ResultSet.class);
-        when(rs.next()).thenReturn(true, false);
         final UUID id = UUID.randomUUID();
         when(rs.getString(PGConstants.ALIAS_ID)).thenReturn(id.toString());
         when(rs.getLong(PGConstants.COLUMN_SER)).thenReturn(27L);

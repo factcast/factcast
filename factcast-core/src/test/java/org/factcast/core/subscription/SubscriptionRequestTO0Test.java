@@ -1,10 +1,12 @@
 package org.factcast.core.subscription;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.Collections;
 
-import org.assertj.core.util.Lists;
 import org.factcast.core.MarkFact;
 import org.factcast.core.spec.FactSpec;
 import org.junit.Before;
@@ -82,7 +84,7 @@ public class SubscriptionRequestTO0Test {
         final FactSpec s = FactSpec.ns("foo");
         SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
         SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
-        uut.addSpecs(Lists.emptyList());
+        uut.addSpecs(Collections.emptyList());
     }
 
     @Test

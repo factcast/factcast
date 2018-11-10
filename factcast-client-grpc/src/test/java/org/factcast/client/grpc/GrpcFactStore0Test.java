@@ -78,7 +78,7 @@ public class GrpcFactStore0Test {
     public void testFetchByIdFound() throws Exception {
         UUID id = UUID.randomUUID();
         when(blockingStub.fetchById(eq(conv.toProto(id)))).thenReturn(conv.toProto(Optional.of(
-                new Test0Fact())));
+                Fact.builder().ns("test").build("{}"))));
 
         Optional<Fact> fetchById = uut.fetchById(id);
 

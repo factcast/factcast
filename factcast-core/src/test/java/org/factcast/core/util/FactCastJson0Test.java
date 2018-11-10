@@ -2,7 +2,7 @@ package org.factcast.core.util;
 
 import static org.factcast.core.TestHelper.expectNPE;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
@@ -32,7 +32,7 @@ public class FactCastJson0Test {
         Foo copy = FactCastJson.copy(foo);
 
         assertNotSame(foo, copy);
-        assertNotEquals(foo, copy);
+        assertFalse(foo.equals(copy));
 
         assertEquals(foo.bar(), copy.bar());
         assertNull(copy.baz());

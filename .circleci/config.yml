@@ -38,14 +38,10 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
-      - run: 
-          name: Quick install
-          command: mvn -B -DskipTests -DskipITs install
-
-      - save_cache:
-          paths:
-            - ~/.m2
-          key: v1-dependencies-{{ checksum "pom.xml" }}
+#      - run: 
+#          name: Resolve external deps
+#          command: mvn dependency:resolve
+#
 
       - run:
           name: Wait for DB
@@ -56,6 +52,14 @@ jobs:
       - run: 
           name: FullTest
           command: |
-            mvn -B clean install verify jacoco:report coveralls:report -DrepoToken=sMBbBcjrybuhdwKHFC61BvBU5y4oAjNEt -Dpg_url=$pg_url
+            mvn -B clean install jacoco:report -DrepoToken=sMBbBcjrybuhdwKHFC61BvBU5y4oAjNEt -Dpg_url=$pg_url
             bash <(curl -s https://codecov.io/bash)
 
+      - run: 
+          name: Remove factcast artifacts from local repo
+          command: rm ~/.m2/repository/org/factcast -rf
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "pom.xml" }}
