@@ -83,13 +83,13 @@ public class BlockingStreamObserver0Test {
         CompletableFuture<Void> onNextCall = CompletableFuture.runAsync(() -> uut.onNext(
                 new Object()));
 
-        Thread.sleep(30);
+        Thread.sleep(100);
         assertFalse(onNextCall.isDone());
 
         cancelled.set(true);
         uut.wakeup();
 
-        Thread.sleep(30);
+        Thread.sleep(100);
         assertTrue(onNextCall.isDone());
 
         verify(delegate, never()).onNext(any());
