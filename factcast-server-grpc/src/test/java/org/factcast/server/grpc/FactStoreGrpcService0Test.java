@@ -1,15 +1,21 @@
 package org.factcast.server.grpc;
 
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
-import org.factcast.core.Test0Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.SubscriptionRequest;
@@ -24,12 +30,11 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(org.mockito.junit.MockitoJUnitRunner.class)
 @SuppressWarnings("unchecked")
 public class FactStoreGrpcService0Test {
     @Mock
@@ -73,8 +78,8 @@ public class FactStoreGrpcService0Test {
         doNothing().when(backend).publish(acFactList.capture());
         Builder b = MSG_Facts.newBuilder();
 
-        Test0Fact f1 = new Test0Fact();
-        Test0Fact f2 = new Test0Fact();
+        Fact f1 = Fact.builder().ns("test").build("{}");
+        Fact f2 = Fact.builder().ns("test").build("{}");
         MSG_Fact msg1 = protoConverter.toProto(f1);
         MSG_Fact msg2 = protoConverter.toProto(f2);
 

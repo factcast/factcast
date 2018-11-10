@@ -1,8 +1,11 @@
 package org.factcast.core.subscription;
 
-import static org.factcast.core.TestHelper.*;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.factcast.core.TestHelper.expect;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
@@ -14,7 +17,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SubscriptionImpl0Test {

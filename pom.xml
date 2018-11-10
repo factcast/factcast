@@ -20,6 +20,10 @@
   <modules>
     <module>factcast-bom</module>
     <module>factcast-site</module>
+    <module>factcast-internal-dep</module>
+    <module>factcast-internal-dep-boot1</module>
+    <module>factcast-internal-dep-boot2</module>
+    <module>factcast-spring-boot-autoconfigure</module>
     <module>factcast-client-grpc</module>
     <module>factcast-client-grpc-cli</module>
     <module>factcast-client-cache</module>
@@ -57,71 +61,49 @@
   </developers>
   <properties>
     <grpc.version>1.12.0</grpc.version>
-    <spring-boot.version>1.5.9.RELEASE</spring-boot.version>
-    <spring-cloud.version>Edgware.SR1</spring-cloud.version>
+    <assertj.version>2.6.0</assertj.version>
+    <junit.version>4.12</junit.version>
+    <mockito.version>2.23.0</mockito.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <formatter.config>${project.basedir}/src/eclipse/config/</formatter.config>
+    <lombok.version>1.18.4</lombok.version>
   </properties>
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring-boot.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-dependencies</artifactId>
-        <version>${spring-cloud.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
   <dependencies>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.22</version>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
-      <version>4.12</version>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-actuator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
+      <version>${junit.version}</version>
     </dependency>
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
       <scope>test</scope>
+      <version>${assertj.version}</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <scope>provided</scope>
-      <version>1.18.2</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>annotations</artifactId>
       <version>3.0.1u2</version>
-      <scope>compile</scope>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+      <version>${lombok.version}</version>
     </dependency>
   </dependencies>
   <build>
@@ -179,11 +161,6 @@
             </goals>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.eluder.coveralls</groupId>
-        <artifactId>coveralls-maven-plugin</artifactId>
-        <version>4.3.0</version>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

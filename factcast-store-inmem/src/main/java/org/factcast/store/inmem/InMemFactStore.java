@@ -40,9 +40,6 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.springframework.beans.factory.DisposableBean;
-
-import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +54,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Deprecated
 @Slf4j
-public class InMemFactStore implements FactStore, DisposableBean {
+public class InMemFactStore implements FactStore {
     final AtomicLong highwaterMark = new AtomicLong(0);
 
     @VisibleForTesting
@@ -75,19 +72,6 @@ public class InMemFactStore implements FactStore, DisposableBean {
     InMemFactStore(@NonNull ExecutorService es) {
         executorService = es;
 
-        if (Package.getPackage("org.junit") == null) {
-
-            log.warn("");
-            log.warn(
-                    "***********************************************************************************************************");
-            log.warn(
-                    "* You are using an inmem-impl of a FactStore. This implementation is for quick testing ONLY and will fail *");
-            log.warn(
-                    "*   with OOM if you load it with a significant amount of Facts.                                           *");
-            log.warn(
-                    "***********************************************************************************************************");
-            log.warn("");
-        }
     }
 
     public InMemFactStore() {
@@ -224,8 +208,7 @@ public class InMemFactStore implements FactStore, DisposableBean {
         return subscription.onClose(s::close);
     }
 
-    @Override
-    public synchronized void destroy() throws Exception {
+    public synchronized void shutdown() throws Exception {
         executorService.shutdown();
     }
 

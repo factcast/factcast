@@ -1,7 +1,11 @@
 package org.factcast.store.pgsql.internal;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.UUID;
 
@@ -74,7 +78,7 @@ public class PGQuery3IT {
 
         pq.subscribe(req, c).awaitComplete();
 
-        verify(c, never()).onNext(anyObject());
+        verify(c, never()).onNext(any());
         verify(c).onCatchup();
         verify(c).onComplete();
 
@@ -99,7 +103,7 @@ public class PGQuery3IT {
 
         verify(c).onCatchup();
         verify(c).onComplete();
-        verify(c, times(2)).onNext(anyObject());
+        verify(c, times(2)).onNext(any());
     }
 
     private void insertTestFact(TestHeader header) {
@@ -214,19 +218,19 @@ public class PGQuery3IT {
         Subscription sub = pq.subscribe(req, c).awaitCatchup();
 
         verify(c).onCatchup();
-        verify(c, times(1)).onNext(anyObject());
+        verify(c, times(1)).onNext(any());
 
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
         sleep(200);
-        verify(c, times(3)).onNext(anyObject());
+        verify(c, times(3)).onNext(any());
 
         sub.close();
 
         insertTestFact(TestHeader.create()); // must not show up
         insertTestFact(TestHeader.create());// must not show up
         sleep(200);
-        verify(c, times(3)).onNext(anyObject());
+        verify(c, times(3)).onNext(any());
 
     }
 

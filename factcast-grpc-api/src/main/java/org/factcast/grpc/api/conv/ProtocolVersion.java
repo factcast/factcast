@@ -19,17 +19,19 @@ import java.util.Arrays;
 
 import com.google.common.base.Joiner;
 
-import lombok.Value;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.Wither;
 
-@Value(staticConstructor = "of")
+@RequiredArgsConstructor(staticName = "of")
+@Getter
 @Wither
 public class ProtocolVersion {
-    int major;
+    final int major;
 
-    int minor;
+    final int minor;
 
-    int patch;
+    final int patch;
 
     public boolean isCompatibleTo(ProtocolVersion other) {
         // patch level must be irrelevant

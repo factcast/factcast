@@ -25,7 +25,7 @@ public class InMemFactStore0Test extends AbstractFactStore0Test {
         ExecutorService es = mock(ExecutorService.class);
         InMemFactStore inMemFactStore = new InMemFactStore(es);
 
-        inMemFactStore.destroy();
+        inMemFactStore.shutdown();
         verify(es).shutdown();
     }
 }

@@ -18,6 +18,13 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-internal-dep-boot1</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <dependencies>
@@ -26,9 +33,22 @@
       <artifactId>factcast-client-grpc</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-spring-boot-autoconfigure</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.beust</groupId>
       <artifactId>jcommander</artifactId>
       <version>1.72</version>
+    </dependency>
+    <!-- TODO remove -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
     </dependency>
   </dependencies>
   <build>

@@ -1,1 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=org.factcast.client.cache.infinispan.FactCastInfinispanConfiguration

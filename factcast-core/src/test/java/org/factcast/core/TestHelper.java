@@ -1,11 +1,10 @@
 package org.factcast.core;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.util.concurrent.Callable;
 
 public class TestHelper {
-
     public static void expectNPE(Callable<?> e) {
         expect(NullPointerException.class, e);
     }

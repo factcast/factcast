@@ -8,29 +8,37 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-client-grpc</artifactId>
-  <properties>
-    <powermock.version>1.7.0RC4</powermock.version>
-  </properties>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-internal-dep-boot1</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-core</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-grpc-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>net.devh</groupId>
-      <artifactId>grpc-client-spring-boot-starter</artifactId>
-      <version>1.4.1.RELEASE</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>26.0-jre</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -39,17 +47,9 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
     <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <version>2.23.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
+      <groupId>net.devh</groupId>
+      <artifactId>grpc-client-spring-boot-starter</artifactId>
     </dependency>
   </dependencies>
 </project>

@@ -1,7 +1,14 @@
 package org.factcast.store.pgsql.internal;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -12,9 +19,8 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(org.mockito.junit.MockitoJUnitRunner.class)
 public class CondensedQueryExecutor0Test {
 
     @Mock
@@ -36,7 +42,7 @@ public class CondensedQueryExecutor0Test {
         CondensedQueryExecutor uut = new CondensedQueryExecutor(1, callback, () -> true, mockTimer);
 
         uut.trigger();
-        verify(mockTimer).schedule(anyObject(), eq(1L));
+        verify(mockTimer).schedule(any(), eq(1L));
 
         task.getValue().run();
         verify(callback).run(anyBoolean());
@@ -47,7 +53,7 @@ public class CondensedQueryExecutor0Test {
         CondensedQueryExecutor uut = new CondensedQueryExecutor(22, callback, () -> true,
                 mockTimer);
 
-        verify(mockTimer, never()).schedule(anyObject(), anyLong());
+        verify(mockTimer, never()).schedule(any(), anyLong());
 
         uut.trigger();
         task.getAllValues().get(0).run();
@@ -64,36 +70,36 @@ public class CondensedQueryExecutor0Test {
                 mockTimer);
 
         // not yet scheduled anything
-        verify(mockTimer, never()).schedule(anyObject(), anyLong());
+        verify(mockTimer, never()).schedule(any(), anyLong());
 
         uut.trigger();
 
         // scheduled once
-        verify(mockTimer).schedule(anyObject(), eq(104L));
+        verify(mockTimer).schedule(any(), eq(104L));
 
         uut.trigger();
         uut.trigger();
         uut.trigger();
         uut.trigger();
         // still scheduled only once
-        verify(mockTimer).schedule(anyObject(), eq(104L));
+        verify(mockTimer).schedule(any(), eq(104L));
 
         TimerTask taskArg = task.getValue();
         taskArg.run();
 
         // executing must noch change anything for scheduling
-        verify(mockTimer).schedule(anyObject(), eq(104L));
+        verify(mockTimer).schedule(any(), eq(104L));
         verifyNoMoreInteractions(mockTimer);
 
         uut.trigger();
         // a second call is scheduled
-        verify(mockTimer, times(2)).schedule(anyObject(), eq(104L));
+        verify(mockTimer, times(2)).schedule(any(), eq(104L));
 
         uut.trigger();
         uut.trigger();
         uut.trigger();
         // no change: second call is scheduled
-        verify(mockTimer, times(2)).schedule(anyObject(), eq(104L));
+        verify(mockTimer, times(2)).schedule(any(), eq(104L));
 
     }
 
