@@ -145,22 +145,21 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     }
 
     private static ScriptEngine getJavascriptEngine() {
-        ScriptEngine engine = engineManager.getEngineByName("nashorn");
-        if (engine != null)
-            return engine;
-        log.error("Nashorn engine unavailable.");
+        ScriptEngine engine = getEngineByName("nashorn", "javascript", "js");
+        if (engine == null)
+            throw new IllegalStateException("Cannot find any engine to run javascript code.");
+        return engine;
+    }
 
-        engine = engineManager.getEngineByName("javascript");
-        if (engine != null)
-            return engine;
-        log.error("'javascript' engine unavailable.");
-
-        engine = engineManager.getEngineByName("javascript");
-        if (engine != null)
-            return engine;
-        log.error("'js' engine unavailable. Giving up.");
-
-        throw new IllegalStateException("Cannot find any engine to run javascript code.");
+    private static ScriptEngine getEngineByName(String... names) {
+        for (String name : names) {
+            ScriptEngine engine = engineManager.getEngineByName(name);
+            if (engine == null)
+                log.error("'{}' engine unavailable.", name);
+            else
+                return engine;
+        }
+        return null;
     }
 
     public static Predicate<Fact> matchesAnyOf(@NonNull List<FactSpec> spec) {
