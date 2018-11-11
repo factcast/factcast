@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.util.LRUMap;
 
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Matches facts against specifications.
@@ -38,6 +39,7 @@ import lombok.SneakyThrows;
  * @author uwe.schaefer@mercateo.com
  *
  */
+@Slf4j
 public final class FactSpecMatcher implements Predicate<Fact> {
 
     static final ScriptEngineManager engineManager = new ScriptEngineManager();
@@ -134,12 +136,31 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         if (cachedEngine != null) {
             return cachedEngine;
         } else {
-            ScriptEngine engine = engineManager.getEngineByName("nashorn");
+            ScriptEngine engine = getJavascriptEngine();
             engine.eval("var test=" + js);
             scriptEngineCache.put(js, engine);
             return engine;
         }
 
+    }
+
+    private static ScriptEngine getJavascriptEngine() {
+        ScriptEngine engine = engineManager.getEngineByName("nashorn");
+        if (engine != null)
+            return engine;
+        log.error("Nashorn engine unavailable.");
+
+        engine = engineManager.getEngineByName("javascript");
+        if (engine != null)
+            return engine;
+        log.error("'javascript' engine unavailable.");
+
+        engine = engineManager.getEngineByName("javascript");
+        if (engine != null)
+            return engine;
+        log.error("'js' engine unavailable. Giving up.");
+
+        throw new IllegalStateException("Cannot find any engine to run javascript code.");
     }
 
     public static Predicate<Fact> matchesAnyOf(@NonNull List<FactSpec> spec) {
