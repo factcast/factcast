@@ -15,14 +15,12 @@
  */
 package org.factcast.core;
 
-import java.util.Set;
-import java.util.UUID;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.NonNull;
 import org.factcast.core.DefaultFact.Header;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-import lombok.NonNull;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Defines a fact to be either published or consumed. Consists of two JSON
@@ -32,7 +30,6 @@ import lombok.NonNull;
  * @author uwe.schaefer@mercateo.com
  *
  */
-// TODO add schema
 public interface Fact {
 
     @NonNull
