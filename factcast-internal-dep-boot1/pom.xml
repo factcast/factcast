@@ -40,13 +40,6 @@
       <dependency>
         <groupId>net.devh</groupId>
         <artifactId>grpc-client-spring-boot-starter</artifactId>
-        <!-- TODO -->
-        <version>1.4.1.RELEASE</version>
-      </dependency>
-      <dependency>
-        <groupId>net.devh</groupId>
-        <artifactId>grpc-client-spring-boot-starter</artifactId>
-        <!-- TODO -->
         <version>${spring-grpc.version}</version>
       </dependency>
       <dependency>

@@ -12,7 +12,7 @@
     <dependencies>
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-internal-dep-boot1</artifactId>
+        <artifactId>factcast-internal-dep-boot2</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
         <scope>import</scope>
@@ -33,12 +33,21 @@
       <artifactId>factcast-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-spring-boot-autoconfigure</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
+    </dependency>
+    <!-- TODO should be replaced with micrometer -->
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
     </dependency>
   </dependencies>
 </project>

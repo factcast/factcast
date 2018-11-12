@@ -10,14 +10,12 @@
   <artifactId>factcast-example-server</artifactId>
   <properties>
     <docker.image.prefix>factcast</docker.image.prefix>
-    <spring-boot.version>1.5.9.RELEASE</spring-boot.version>
-    <spring-cloud.version>Edgware.SR1</spring-cloud.version>
   </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-internal-dep-boot1</artifactId>
+        <artifactId>factcast-internal-dep-boot2</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
         <scope>import</scope>
@@ -48,11 +46,6 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
-        <version>1.5.9.RELEASE</version>
-        <configuration>
-          <mainClass>org.factcast.example.server.Application</mainClass>
-          <layout>ZIP</layout>
-        </configuration>
         <executions>
           <execution>
             <goals>
