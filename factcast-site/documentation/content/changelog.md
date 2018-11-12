@@ -1,16 +1,24 @@
 # Change Log
 
-## [upcoming](https://github.com/Mercateo/factcast/tree/upcoming) (2018-10-26)
-[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.25...upcoming)
+## [factcast-0.0.26](https://github.com/Mercateo/factcast/tree/factcast-0.0.26) (2018-11-10)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.25...factcast-0.0.26)
 
 **Closed issues:**
 
+- Try to improve test flakyness by using different base image [\#194](https://github.com/Mercateo/factcast/issues/194)
+- Remove direct dependencies from parent pom [\#188](https://github.com/Mercateo/factcast/issues/188)
+- Extract dependency management to factcast-dependencies project [\#187](https://github.com/Mercateo/factcast/issues/187)
 - GenericObserver.next should guarantee to not be called with null parameter [\#185](https://github.com/Mercateo/factcast/issues/185)
 - replace use of powermock [\#183](https://github.com/Mercateo/factcast/issues/183)
 - Recheck pg store internal notification [\#180](https://github.com/Mercateo/factcast/issues/180)
+- Avoid unused local variables such as 'sub'. [\#178](https://github.com/Mercateo/factcast/issues/178)
+- Avoid unused imports such as 'org.factcast.grpc.compression.lz4.LZ4Codec' [\#177](https://github.com/Mercateo/factcast/issues/177)
 
 **Merged pull requests:**
 
+- Issue194 tried to limit memory usage again for use in circleci [\#195](https://github.com/Mercateo/factcast/pull/195) ([uweschaefer](https://github.com/uweschaefer))
+- minor changes [\#193](https://github.com/Mercateo/factcast/pull/193) ([uweschaefer](https://github.com/uweschaefer))
+- Issue188 dependency cleanup [\#191](https://github.com/Mercateo/factcast/pull/191) ([uweschaefer](https://github.com/uweschaefer))
 - \#185: added @NonNull contract to obserer.onNext [\#186](https://github.com/Mercateo/factcast/pull/186) ([uweschaefer](https://github.com/uweschaefer))
 - \#183 remove use of powermock [\#184](https://github.com/Mercateo/factcast/pull/184) ([uweschaefer](https://github.com/uweschaefer))
 
