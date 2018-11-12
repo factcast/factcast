@@ -25,26 +25,26 @@ public class BlockingStreamObserver0Test {
     private BlockingStreamObserver<Object> uut;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         uut = new BlockingStreamObserver<>("foo", delegate);
     }
 
     @Test
-    public void testOnCompleted() throws Exception {
+    public void testOnCompleted() {
         verify(delegate, never()).onCompleted();
         uut.onCompleted();
         verify(delegate).onCompleted();
     }
 
     @Test
-    public void testOnError() throws Exception {
+    public void testOnError() {
         verify(delegate, never()).onError(any());
         uut.onError(new Exception());
         verify(delegate).onError(any());
     }
 
     @Test
-    public void testOnNextWhenReady() throws Exception {
+    public void testOnNextWhenReady() {
         when(delegate.isReady()).thenReturn(true);
         uut.onNext(new Object());
         verify(delegate).onNext(any());

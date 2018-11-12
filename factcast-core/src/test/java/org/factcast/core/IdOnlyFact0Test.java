@@ -7,37 +7,37 @@ import org.junit.Test;
 public class IdOnlyFact0Test {
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testNs() throws Exception {
+    public void testNs() {
         new IdOnlyFact(UUID.randomUUID()).ns();
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testType() throws Exception {
+    public void testType() {
         new IdOnlyFact(UUID.randomUUID()).type();
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testAggIds() throws Exception {
+    public void testAggIds() {
         new IdOnlyFact(UUID.randomUUID()).aggIds();
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testJsonHeader() throws Exception {
+    public void testJsonHeader() {
         new IdOnlyFact(UUID.randomUUID()).jsonHeader();
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testJsonPayload() throws Exception {
+    public void testJsonPayload() {
         new IdOnlyFact(UUID.randomUUID()).jsonPayload();
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testMeta() throws Exception {
+    public void testMeta() {
         new IdOnlyFact(UUID.randomUUID()).meta("");
     }
 
     @Test(expected = NullPointerException.class)
-    public void testNullId() throws Exception {
+    public void testNullId() {
         new IdOnlyFact(null);
     }
 }

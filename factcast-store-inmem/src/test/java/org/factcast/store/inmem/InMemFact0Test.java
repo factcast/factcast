@@ -10,14 +10,14 @@ import org.junit.Test;
 public class InMemFact0Test {
 
     @Test
-    public void testAddMeta() throws Exception {
+    public void testAddMeta() {
         Fact f1 = Fact.of("{\"ns\":\"someNs\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
         InMemFact uut = new InMemFact(21, f1);
         assertEquals(21, uut.serial());
     }
 
     @Test
-    public void testAddToExistingMeta() throws Exception {
+    public void testAddToExistingMeta() {
         Fact f1 = Fact.of("{\"ns\":\"someNs\",\"id\":\"" + UUID.randomUUID()
                 + "\", \"meta\":{\"foo\":\"bar\"}}",
                 "{}");
@@ -27,7 +27,7 @@ public class InMemFact0Test {
     }
 
     @Test
-    public void testReplaceFraudulentSer() throws Exception {
+    public void testReplaceFraudulentSer() {
         Fact f1 = Fact.of("{\"ns\":\"someNs\",\"id\":\"" + UUID.randomUUID()
                 + "\", \"meta\":{\"_ser\":99999}}",
                 "{}");

@@ -32,7 +32,7 @@ public class Issue72MT implements CommandLineRunner {
 
         Subscription sub = fc.subscribeToIds(SubscriptionRequest.follow(FactSpec.ns("smoke"))
                 .fromScratch(),
-                f -> System.out.println(f)).awaitCatchup(5000);
+                System.out::println).awaitCatchup(5000);
 
         sub.close();
 

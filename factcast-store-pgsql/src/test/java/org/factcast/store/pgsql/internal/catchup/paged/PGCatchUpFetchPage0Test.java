@@ -11,7 +11,6 @@ import org.factcast.store.pgsql.PGConfigurationProperties;
 import org.factcast.store.pgsql.internal.PGConstants;
 import org.factcast.store.pgsql.internal.catchup.PGCatchUpFetchPage;
 import org.factcast.store.pgsql.internal.rowmapper.PGIdFactExtractor;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -32,12 +31,8 @@ public class PGCatchUpFetchPage0Test {
 
     private PGCatchUpFetchPage uut;
 
-    @Before
-    public void setUp() throws Exception {
-    }
-
     @Test
-    public void testFetchIdFacts() throws Exception {
+    public void testFetchIdFacts() {
         uut = new PGCatchUpFetchPage(jdbc, properties.getPageSize(), req, 12);
         uut.fetchIdFacts(new AtomicLong());
 

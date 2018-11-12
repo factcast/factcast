@@ -15,7 +15,6 @@
  */
 package org.factcast.grpc.compression.lz4;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -37,12 +36,12 @@ public class LZ4Codec implements Codec {
     }
 
     @Override
-    public OutputStream compress(OutputStream os) throws IOException {
+    public OutputStream compress(OutputStream os) {
         return new LZ4BlockOutputStream(os);
     }
 
     @Override
-    public InputStream decompress(InputStream is) throws IOException {
+    public InputStream decompress(InputStream is) {
         return new LZ4BlockInputStream(is);
     }
 

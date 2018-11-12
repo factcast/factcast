@@ -9,22 +9,22 @@ public class PGConfigurationProperties0Test {
     private PGConfigurationProperties uut = new PGConfigurationProperties();
 
     @Test
-    public void testGetPageSizeForIds() throws Exception {
+    public void testGetPageSizeForIds() {
         assertEquals(100000, uut.getPageSizeForIds());
     }
 
     @Test
-    public void testGetQueueSizeForIds() throws Exception {
+    public void testGetQueueSizeForIds() {
         assertEquals(100000, uut.getQueueSizeForIds());
     }
 
     @Test
-    public void testGetFetchSizeForIds() throws Exception {
+    public void testGetFetchSizeForIds() {
         assertEquals(25000, uut.getFetchSizeForIds());
     }
 
     @Test
-    public void testGetFetchSize() throws Exception {
+    public void testGetFetchSize() {
         assertEquals(250, uut.getFetchSize());
     }
 

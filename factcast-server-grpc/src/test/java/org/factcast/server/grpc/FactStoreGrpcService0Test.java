@@ -56,12 +56,12 @@ public class FactStoreGrpcService0Test {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testPublishNull() throws Exception {
+    public void testPublishNull() {
         uut.publish(null, mock(StreamObserver.class));
     }
 
     @Test
-    public void testPublishNone() throws Exception {
+    public void testPublishNone() {
         doNothing().when(backend).publish(acFactList.capture());
         MSG_Facts r = MSG_Facts.newBuilder().build();
 
@@ -73,7 +73,7 @@ public class FactStoreGrpcService0Test {
     }
 
     @Test
-    public void testPublishSome() throws Exception {
+    public void testPublishSome() {
 
         doNothing().when(backend).publish(acFactList.capture());
         Builder b = MSG_Facts.newBuilder();
@@ -99,12 +99,12 @@ public class FactStoreGrpcService0Test {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testFetchByIdNull() throws Exception {
+    public void testFetchByIdNull() {
         uut.fetchById(null, mock(StreamObserver.class));
     }
 
     @Test
-    public void testFetchById() throws Exception {
+    public void testFetchById() {
         UUID id = UUID.randomUUID();
         uut.fetchById(protoConverter.toProto(id), mock(ServerCallStreamObserver.class));
 
@@ -112,7 +112,7 @@ public class FactStoreGrpcService0Test {
     }
 
     @Test
-    public void testSubscribeFacts() throws Exception {
+    public void testSubscribeFacts() {
         SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.forMark()).fromNowOn();
         when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
         uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)), mock(
@@ -124,7 +124,7 @@ public class FactStoreGrpcService0Test {
     }
 
     @Test
-    public void testSubscribeIds() throws Exception {
+    public void testSubscribeIds() {
         SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.forMark()).fromNowOn();
         when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
         uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forIds(req)), mock(

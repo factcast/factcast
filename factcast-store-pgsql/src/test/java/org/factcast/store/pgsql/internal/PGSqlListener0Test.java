@@ -60,7 +60,7 @@ public class PGSqlListener0Test {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testCheckFails() throws Exception {
+    public void testCheckFails() {
         tester = mock(Predicate.class);
         Mockito.when(tester.test(any())).thenReturn(false, false, true, false);
 
@@ -136,12 +136,12 @@ public class PGSqlListener0Test {
     private void sleep(int i) {
         try {
             Thread.sleep(i);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignored) {
         }
     }
 
     @Test
-    public void testStopWithoutStarting() throws Exception {
+    public void testStopWithoutStarting() {
         PGListener l = new PGListener(ds, bus, tester);
         l.destroy();
 

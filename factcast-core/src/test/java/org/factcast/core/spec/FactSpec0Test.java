@@ -1,70 +1,67 @@
 package org.factcast.core.spec;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
-
 import java.util.UUID;
 
 import org.factcast.core.MarkFact;
 import org.junit.Test;
 
+import static org.junit.Assert.*;
+
 //TODO remove?
 public class FactSpec0Test {
 
     @Test
-    public void testMarkMatcher() throws Exception {
+    public void testMarkMatcher() {
         assertTrue(new FactSpecMatcher(FactSpec.forMark()).test(new MarkFact()));
     }
 
     @Test(expected = NullPointerException.class)
-    public void testMetaBothNull() throws Exception {
+    public void testMetaBothNull() {
         FactSpec.ns("foo").meta(null, null);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testMetaKeyNull() throws Exception {
+    public void testMetaKeyNull() {
         FactSpec.ns("foo").meta(null, "");
     }
 
     @Test(expected = NullPointerException.class)
-    public void testMetaValueNull() throws Exception {
+    public void testMetaValueNull() {
         FactSpec.ns("foo").meta("", null);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testFactSpecConstructorNull() throws Exception {
+    public void testFactSpecConstructorNull() {
         new FactSpec(null);
     }
 
     @SuppressWarnings("static-access")
     @Test
-    public void testFactSpecNs() throws Exception {
+    public void testFactSpecNs() {
         assertEquals("y", FactSpec.ns("x").ns("y").ns());
     }
 
     @Test
-    public void testFactSpecType() throws Exception {
+    public void testFactSpecType() {
         assertEquals("y", FactSpec.ns("x").type("y").type());
     }
 
     @Test
-    public void testFactSpecAggId() throws Exception {
+    public void testFactSpecAggId() {
         UUID id = UUID.randomUUID();
         assertEquals(id, FactSpec.ns("x").aggId(id).aggId());
     }
 
     @Test
-    public void testFactSpecJsFilter() throws Exception {
+    public void testFactSpecJsFilter() {
         assertEquals("foo", FactSpec.ns("x").jsFilterScript("foo").jsFilterScript());
     }
 
     @Test
-    public void testFactSpecEquality() throws Exception {
+    public void testFactSpecEquality() {
         FactSpec f1 = FactSpec.ns("x");
         FactSpec f2 = FactSpec.ns("x");
-        assertFalse(f1.equals(f2)); // do not compare FactSpecs!
+        assertNotEquals(f1, f2); // do not compare FactSpecs!
         assertNotSame(f1, f2);
     }
 }

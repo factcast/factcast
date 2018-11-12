@@ -3,7 +3,7 @@ package org.factcast.store.pgsql.internal;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
 
 import org.factcast.core.MarkFact;
@@ -30,20 +30,20 @@ public class PGFactIdToSerMapper3IT {
     FactStore store;
 
     @Test
-    public void testRetrieve() throws Exception {
+    public void testRetrieve() {
         MarkFact m = new MarkFact();
-        store.publish(Arrays.asList(m));
+        store.publish(Collections.singletonList(m));
         long retrieve = new PGFactIdToSerialMapper(tpl).retrieve(m.id());
         assertTrue(retrieve > 0);
     }
 
     @Test
-    public void testRetrieveNonExistant() throws Exception {
+    public void testRetrieveNonExistant() {
         try {
             new PGFactIdToSerialMapper(tpl).retrieve(UUID.fromString(
                     "2b86d90e-2755-4f82-b86d-fd092b25ccc8"));
             fail();
-        } catch (Throwable e) {
+        } catch (Throwable ignored) {
         }
     }
 }

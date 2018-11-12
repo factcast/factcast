@@ -9,22 +9,22 @@ import org.junit.Test;
 public class SubscriptionRequest0Test {
 
     @Test(expected = NullPointerException.class)
-    public void testCatchupNullSpec() throws Exception {
+    public void testCatchupNullSpec() {
         SubscriptionRequest.catchup((FactSpec) null);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testFollowNullSpec() throws Exception {
+    public void testFollowNullSpec() {
         SubscriptionRequest.follow((FactSpec) null);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testFollowDelayNullSpec() throws Exception {
+    public void testFollowDelayNullSpec() {
         SubscriptionRequest.follow(1, null);
     }
 
     @Test
-    public void testCatchup() throws Exception {
+    public void testCatchup() {
         FactSpec s = FactSpec.ns("xx");
         final SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
         assertTrue(r.specs().contains(s));
@@ -32,7 +32,7 @@ public class SubscriptionRequest0Test {
     }
 
     @Test
-    public void testFollow() throws Exception {
+    public void testFollow() {
         FactSpec s = FactSpec.ns("xx");
         final SubscriptionRequest r = SubscriptionRequest.follow(s).fromScratch();
         assertTrue(r.specs().contains(s));
@@ -40,7 +40,7 @@ public class SubscriptionRequest0Test {
     }
 
     @Test
-    public void testFollowMaxDelay() throws Exception {
+    public void testFollowMaxDelay() {
         FactSpec s = FactSpec.ns("xx");
         final SubscriptionRequest r = SubscriptionRequest.follow(7, s).fromScratch();
         assertTrue(r.specs().contains(s));

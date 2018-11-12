@@ -29,7 +29,7 @@ public class SubscriptionImpl0Test {
 
     @SuppressWarnings("unchecked")
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         obs = mock(GenericObserver.class);
     }
 
@@ -47,7 +47,7 @@ public class SubscriptionImpl0Test {
     }
 
     @Test
-    public void testAwaitCatchup() throws Exception {
+    public void testAwaitCatchup() {
 
         expect(TimeoutException.class, () -> uut.awaitCatchup(10));
         expect(TimeoutException.class, () -> uut.awaitComplete(10));
@@ -60,7 +60,7 @@ public class SubscriptionImpl0Test {
     }
 
     @Test
-    public void testAwaitComplete() throws Exception {
+    public void testAwaitComplete() {
 
         expect(TimeoutException.class, () -> uut.awaitCatchup(10));
         expect(TimeoutException.class, () -> uut.awaitComplete(10));
@@ -73,17 +73,17 @@ public class SubscriptionImpl0Test {
 
     @SuppressWarnings("resource")
     @Test(expected = NullPointerException.class)
-    public void testNullConst() throws Exception {
+    public void testNullConst() {
         new SubscriptionImpl<>(null);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testNotifyElementNull() throws Exception {
+    public void testNotifyElementNull() {
         uut.notifyElement(null);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testNotifyErrorNull() throws Exception {
+    public void testNotifyErrorNull() {
         uut.notifyError(null);
     }
 
@@ -92,7 +92,7 @@ public class SubscriptionImpl0Test {
 
         CountDownLatch l = new CountDownLatch(1);
 
-        uut.onClose(() -> l.countDown());
+        uut.onClose(l::countDown);
 
         uut.close();
         l.await();
@@ -101,12 +101,12 @@ public class SubscriptionImpl0Test {
     private GenericObserver<Integer> obs;
 
     @Test(expected = NullPointerException.class)
-    public void testOnNull() throws Exception {
+    public void testOnNull() {
         SubscriptionImpl.on(null);
     }
 
     @Test
-    public void testOn() throws Exception {
+    public void testOn() {
         SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
 
         verify(obs, never()).onNext(any());
@@ -127,7 +127,7 @@ public class SubscriptionImpl0Test {
     }
 
     @Test
-    public void testOnError() throws Exception {
+    public void testOnError() {
         SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
 
         verify(obs, never()).onError(any());
@@ -137,7 +137,7 @@ public class SubscriptionImpl0Test {
     }
 
     @Test
-    public void testOnErrorCloses() throws Exception {
+    public void testOnErrorCloses() {
         SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
 
         on.notifyError(new Throwable("ignore me"));
@@ -153,7 +153,7 @@ public class SubscriptionImpl0Test {
     }
 
     @Test
-    public void testOnCompleteCloses() throws Exception {
+    public void testOnCompleteCloses() {
         SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
 
         on.notifyComplete();
@@ -169,7 +169,7 @@ public class SubscriptionImpl0Test {
     }
 
     @Test
-    public void testOnCatchupDoesNotClose() throws Exception {
+    public void testOnCatchupDoesNotClose() {
         SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
 
         on.notifyCatchup();
@@ -184,7 +184,7 @@ public class SubscriptionImpl0Test {
     }
 
     @Test(expected = SubscriptionCancelledException.class)
-    public void testOnErrorCompletesFutureCatchup() throws Exception {
+    public void testOnErrorCompletesFutureCatchup() {
         SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
 
         verify(obs, never()).onError(any());
@@ -195,7 +195,7 @@ public class SubscriptionImpl0Test {
     }
 
     @Test(expected = SubscriptionCancelledException.class)
-    public void testOnErrorCompletesFutureComplete() throws Exception {
+    public void testOnErrorCompletesFutureComplete() {
         SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
 
         verify(obs, never()).onError(any());

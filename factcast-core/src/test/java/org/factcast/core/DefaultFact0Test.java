@@ -1,10 +1,5 @@
 package org.factcast.core;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,45 +11,47 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonParseException;
 
+import static org.junit.Assert.*;
+
 public class DefaultFact0Test {
 
     @Test(expected = NullPointerException.class)
-    public void testNullHeader() throws Exception {
+    public void testNullHeader() {
         DefaultFact.of("{}", null);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testNullPayload() throws Exception {
+    public void testNullPayload() {
         DefaultFact.of(null, "{}");
     }
 
     @Test(expected = NullPointerException.class)
-    public void testNullContracts() throws Exception {
+    public void testNullContracts() {
         DefaultFact.of(null, null);
     }
 
     @Test(expected = JsonParseException.class)
-    public void testUnparsableHeader() throws Exception {
+    public void testUnparsableHeader() {
         DefaultFact.of("not json at all", "{}");
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testNoId() throws Exception {
+    public void testNoId() {
         DefaultFact.of("{\"ns\":\"default\"}", "{}");
     }
 
     @Test(expected = IOException.class)
-    public void testIdNotUUID() throws Exception {
+    public void testIdNotUUID() {
         DefaultFact.of("{\"id\":\"buh\",\"ns\":\"default\"}", "{}");
     }
 
     @Test
-    public void testValidFact() throws Exception {
+    public void testValidFact() {
         DefaultFact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\"}", "{}");
     }
 
     @Test
-    public void testMetaDeser() throws Exception {
+    public void testMetaDeser() {
         Fact f = DefaultFact.of("{\"id\":\"" + UUID.randomUUID()
                 + "\",\"ns\":\"default\",\"meta\":{\"foo\":7}}", "{}");
         assertEquals("7", f.meta("foo"));
@@ -84,7 +81,7 @@ public class DefaultFact0Test {
     }
 
     @Test
-    public void testJsonHeader() throws Exception {
+    public void testJsonHeader() {
         final UUID id = UUID.randomUUID();
         final UUID aid = UUID.randomUUID();
         final String header = "{\"id\":\"" + id
@@ -96,7 +93,7 @@ public class DefaultFact0Test {
     }
 
     @Test
-    public void testEqualityBasedOnId() throws Exception {
+    public void testEqualityBasedOnId() {
         final UUID id = UUID.randomUUID();
         final UUID aid = UUID.randomUUID();
         final String header = "{\"id\":\"" + id
@@ -109,7 +106,7 @@ public class DefaultFact0Test {
 
         assertEquals(f, f);
         assertEquals(f, f2);
-        assertFalse(f.equals(f3));
+        assertNotEquals(f, f3);
     }
 
     @Test
@@ -138,7 +135,7 @@ public class DefaultFact0Test {
     }
 
     @Test
-    public void testEqualityMustBeBasedOnIDOnly() throws Exception {
+    public void testEqualityMustBeBasedOnIDOnly() {
 
         UUID id = UUID.randomUUID();
 
@@ -155,17 +152,17 @@ public class DefaultFact0Test {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testOfNoId() throws Exception {
+    public void testOfNoId() {
         Fact.of("{\"ns\":\"narf\"}", "{}");
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testOfNoNs() throws Exception {
+    public void testOfNoNs() {
         Fact.of("{\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testOfEmptyNs() throws Exception {
+    public void testOfEmptyNs() {
         Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"\"}", "{}");
     }
 }

@@ -141,9 +141,7 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
         asyncServerStreamingCall(call, converter.toProto(req), responseObserver);
 
-        return subscription.onClose(() -> {
-            cancel(call);
-        });
+        return subscription.onClose(() -> cancel(call));
     }
 
     private void cancel(final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call) {

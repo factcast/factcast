@@ -10,10 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import org.factcast.core.Fact;
 import org.factcast.core.Test0Fact;
@@ -26,7 +23,6 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
@@ -58,13 +54,8 @@ public class GrpcFactStore0Test {
     @Captor
     private ArgumentCaptor<MSG_Facts> factsCap;
 
-    @Before
-    public void setUp() throws Exception {
-
-    }
-
     @Test
-    public void testFetchByIdNotFound() throws Exception {
+    public void testFetchByIdNotFound() {
         UUID id = UUID.randomUUID();
         when(blockingStub.fetchById(eq(conv.toProto(id)))).thenReturn(conv.toProto(Optional
                 .empty()));
@@ -75,7 +66,7 @@ public class GrpcFactStore0Test {
     }
 
     @Test
-    public void testFetchByIdFound() throws Exception {
+    public void testFetchByIdFound() {
         UUID id = UUID.randomUUID();
         when(blockingStub.fetchById(eq(conv.toProto(id)))).thenReturn(conv.toProto(Optional.of(
                 Fact.builder().ns("test").build("{}"))));
@@ -86,12 +77,12 @@ public class GrpcFactStore0Test {
     }
 
     @Test
-    public void testPublish() throws Exception {
+    public void testPublish() {
 
         when(blockingStub.publish(factsCap.capture())).thenReturn(MSG_Empty.newBuilder().build());
 
         final Test0Fact fact = new Test0Fact();
-        uut.publish(Arrays.asList(fact));
+        uut.publish(Collections.singletonList(fact));
         verify(blockingStub).publish(any());
 
         final MSG_Facts pfacts = factsCap.getValue();
@@ -101,16 +92,16 @@ public class GrpcFactStore0Test {
 
     static class SomeException extends RuntimeException {
         private static final long serialVersionUID = 1L;
-    };
+    }
 
     @Test(expected = SomeException.class)
-    public void testPublishPropagatesException() throws Exception {
+    public void testPublishPropagatesException() {
         when(blockingStub.publish(any())).thenThrow(new SomeException());
-        uut.publish(Arrays.asList(Fact.builder().build("{}")));
+        uut.publish(Collections.singletonList(Fact.builder().build("{}")));
     }
 
     @Test
-    public void testConstruction() throws Exception {
+    public void testConstruction() {
         expectNPE(() -> new GrpcFactStore((AddressChannelFactory) null));
         expectNPE(() -> new GrpcFactStore((Channel) null));
         expectNPE(() -> new GrpcFactStore(mock(RemoteFactStoreBlockingStub.class), null));
@@ -119,14 +110,14 @@ public class GrpcFactStore0Test {
     }
 
     @Test
-    public void testSubscribeNull() throws Exception {
+    public void testSubscribeNull() {
         expectNPE(() -> uut.subscribe(null, mock(FactObserver.class)));
         expectNPE(() -> uut.subscribe(null, null));
         expectNPE(() -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
     }
 
     @Test
-    public void testMatchingProtocolVersion() throws Exception {
+    public void testMatchingProtocolVersion() {
         when(blockingStub.handshake(any())).thenReturn(
                 conv.toProto(
                         ServerConfig.of(
@@ -137,7 +128,7 @@ public class GrpcFactStore0Test {
     }
 
     @Test
-    public void testCompatibleProtocolVersion() throws Exception {
+    public void testCompatibleProtocolVersion() {
         when(blockingStub.handshake(any())).thenReturn(
                 conv.toProto(
                         ServerConfig.of(
@@ -147,7 +138,7 @@ public class GrpcFactStore0Test {
     }
 
     @Test(expected = IncompatibleProtocolVersions.class)
-    public void testIncompatibleProtocolVersion() throws Exception {
+    public void testIncompatibleProtocolVersion() {
         when(blockingStub.handshake(any())).thenReturn(
                 conv.toProto(
                         ServerConfig.of(

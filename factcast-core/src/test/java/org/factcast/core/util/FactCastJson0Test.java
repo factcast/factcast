@@ -1,12 +1,7 @@
 package org.factcast.core.util;
 
 import static org.factcast.core.TestHelper.expectNPE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -22,17 +17,17 @@ import lombok.NoArgsConstructor;
 public class FactCastJson0Test {
 
     @Test(expected = NullPointerException.class)
-    public void testCopyNull() throws Exception {
+    public void testCopyNull() {
         FactCastJson.copy(null);
     }
 
     @Test
-    public void testCopy() throws Exception {
+    public void testCopy() {
         final Foo foo = new Foo("bar", "baz");
         Foo copy = FactCastJson.copy(foo);
 
         assertNotSame(foo, copy);
-        assertFalse(foo.equals(copy));
+        assertNotEquals(foo, copy);
 
         assertEquals(foo.bar(), copy.bar());
         assertNull(copy.baz());
@@ -51,30 +46,30 @@ public class FactCastJson0Test {
     }
 
     @Test
-    public void testReadValueNull() throws Exception {
+    public void testReadValueNull() {
         expectNPE(() -> FactCastJson.readValue(null, ""));
         expectNPE(() -> FactCastJson.readValue(null, null));
         expectNPE(() -> FactCastJson.readValue(FactCastJson.class, null));
     }
 
     @Test
-    public void testWriteValueNull() throws Exception {
+    public void testWriteValueNull() {
         expectNPE(() -> FactCastJson.writeValueAsString(null));
     }
 
     @Test
-    public void testNewObjectNode() throws Exception {
+    public void testNewObjectNode() {
         assertNotNull(FactCastJson.newObjectNode());
         assertTrue(FactCastJson.newObjectNode() instanceof ObjectNode);
     }
 
     @Test(expected = RuntimeException.class)
-    public void testToObjectNodeNonJson() throws Exception {
+    public void testToObjectNodeNonJson() {
         FactCastJson.toObjectNode("no-json");
     }
 
     @Test()
-    public void testToObjectNode() throws Exception {
+    public void testToObjectNode() {
         ObjectNode objectNode = FactCastJson.toObjectNode("{\"x\":1}");
         JsonNode jsonNode = objectNode.get("x");
         assertEquals(1, jsonNode.asInt());
@@ -82,7 +77,7 @@ public class FactCastJson0Test {
     }
 
     @Test
-    public void testWriteValueAsPrettyString() throws Exception {
+    public void testWriteValueAsPrettyString() {
         String json = "{\"a\":1}";
         String pretty = FactCastJson.writeValueAsPrettyString(FactCastJson.toObjectNode(json));
         assertTrue(pretty.contains("\n"));

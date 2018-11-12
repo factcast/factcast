@@ -27,6 +27,10 @@ class InMemFact extends DefaultFact {
         super(addSerToHeader(ser, toCopyFrom.jsonHeader()), toCopyFrom.jsonPayload());
     }
 
+    @SuppressWarnings("deprecation")
+    public InMemFact() {
+    }
+
     private static String addSerToHeader(long ser, String jsonHeader) {
 
         ObjectNode json = FactCastJson.toObjectNode(jsonHeader);

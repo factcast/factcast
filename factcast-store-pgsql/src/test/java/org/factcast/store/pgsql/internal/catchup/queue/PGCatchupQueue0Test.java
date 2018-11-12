@@ -11,19 +11,19 @@ public class PGCatchupQueue0Test {
     private PGCatchupQueue uut = new PGCatchupQueue(71);
 
     @Test
-    public void testInitialIsDone() throws Exception {
+    public void testInitialIsDone() {
         assertFalse(uut.isDone());
     }
 
     @Test
-    public void testDone() throws Exception {
+    public void testDone() {
         assertFalse(uut.isDone());
         uut.notifyDone();
         assertTrue(uut.isDone());
     }
 
     @Test
-    public void testCapacity() throws Exception {
+    public void testCapacity() {
         assertEquals(71, uut.remainingCapacity());
     }
 }

@@ -124,7 +124,7 @@ public class PGConnectionTester0Test {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testPGConnectionTester() throws Exception {
+    public void testPGConnectionTester() {
         new PGConnectionTester(null);
     }
 

@@ -15,15 +15,8 @@
  */
 package org.factcast.store.inmem;
 
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -133,7 +126,7 @@ public class InMemFactStore implements FactStore {
     @Override
     public synchronized Optional<Fact> fetchById(@NonNull UUID id) {
         Stream<Entry<Long, Fact>> stream = store.entrySet().stream();
-        return stream.filter(e -> e.getValue().id().equals(id)).findFirst().map(e -> e.getValue());
+        return stream.filter(e -> e.getValue().id().equals(id)).findFirst().map(Entry::getValue);
     }
 
     @Override
@@ -208,7 +201,7 @@ public class InMemFactStore implements FactStore {
         return subscription.onClose(s::close);
     }
 
-    public synchronized void shutdown() throws Exception {
+    public synchronized void shutdown() {
         executorService.shutdown();
     }
 
@@ -217,7 +210,7 @@ public class InMemFactStore implements FactStore {
         // hilariously inefficient
         for (Map.Entry<Long, Fact> e : store.entrySet()) {
             if (l.equals(e.getValue().id())) {
-                return OptionalLong.of(e.getKey().longValue());
+                return OptionalLong.of(e.getKey());
             }
         }
         return OptionalLong.empty();
@@ -237,7 +230,7 @@ public class InMemFactStore implements FactStore {
                 .stream()
                 .filter(f -> f.ns().equals(ns))
                 .map(Fact::type)
-                .filter(t -> t != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
 

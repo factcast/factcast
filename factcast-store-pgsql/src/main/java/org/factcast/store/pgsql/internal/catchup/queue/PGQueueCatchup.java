@@ -117,7 +117,7 @@ public class PGQueueCatchup implements PGCatchup {
                                     throw new SubscriptionCancelledException(
                                             "Queue insertion timeout. Subscription closed.");
                                 }
-                            } catch (InterruptedException meh) {
+                            } catch (InterruptedException ignored) {
                             }
                         });
                     }

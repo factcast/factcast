@@ -15,38 +15,26 @@
  */
 package org.factcast.core;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
+import org.factcast.core.util.FactCastJson;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
-import org.factcast.core.util.FactCastJson;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
-import lombok.SneakyThrows;
+import java.util.*;
 
 /**
  * Note: creating an instance involves deserializing the header from JS. This is
  * probably not optimal considering performance. If you extend FactCast,
  * consider creating a dedicated Fact Impl.
- * 
+ * <p>
  * For caching purposes, this thing should be Externalizable.
- * 
- * @see PGFact
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
+ * @see Fact
  */
 @EqualsAndHashCode(of = { "deserializedHeader" })
 public class DefaultFact implements Fact, Externalizable {
@@ -84,7 +72,7 @@ public class DefaultFact implements Fact, Externalizable {
         validate();
     }
 
-    private void init(String jsonHeader) throws IOException {
+    private void init(String jsonHeader) {
         deserializedHeader = FactCastJson.readValue(Header.class, jsonHeader);
         validate();
     }
@@ -135,7 +123,7 @@ public class DefaultFact implements Fact, Externalizable {
     }
 
     @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternal(ObjectInput in) throws IOException {
         // read only header & payload
         jsonHeader = in.readUTF();
         jsonPayload = in.readUTF();
