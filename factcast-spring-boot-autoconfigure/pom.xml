@@ -45,5 +45,11 @@
       <artifactId>factcast-store-inmem</artifactId>
       <optional>true</optional>
     </dependency>
+    <!-- TODO should be replaced with micrometer -->
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
 </project>
