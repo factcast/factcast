@@ -59,6 +59,7 @@ public class PGPagedCatchup implements PGCatchup {
     @NonNull
     final AtomicLong serial;
 
+    @SuppressWarnings("FieldCanBeLocal")
     private long clientId = 0;
 
     public LinkedList<Fact> doFetch(PGCatchUpFetchPage fetch) {

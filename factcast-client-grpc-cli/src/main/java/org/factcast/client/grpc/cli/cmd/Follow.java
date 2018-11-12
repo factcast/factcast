@@ -40,7 +40,7 @@ public class Follow implements Command {
     UUID from;
 
     @Parameter(names = "-fromNowOn", help = true, description = "read only future facts")
-    boolean fromNow = false;
+    final boolean fromNow = false;
 
     @Override
     public void runWith(FactCast fc, Options opt) {

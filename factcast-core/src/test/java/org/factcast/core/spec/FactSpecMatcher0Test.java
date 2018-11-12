@@ -1,16 +1,15 @@
 package org.factcast.core.spec;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.factcast.core.Fact;
+import org.factcast.core.Test0Fact;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-import org.factcast.core.Fact;
-import org.factcast.core.Test0Fact;
-import org.junit.Ignore;
-import org.junit.Test;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class FactSpecMatcher0Test {
 
@@ -56,7 +55,6 @@ public class FactSpecMatcher0Test {
     }
 
     @Test
-    @Ignore("tmp disabled")
     public void testScriptMatch() {
         assertTrue(scriptMatch(FactSpec.ns("default"), new Test0Fact()));
         assertFalse(scriptMatch(FactSpec.ns("default").jsFilterScript(

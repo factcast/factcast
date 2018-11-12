@@ -49,7 +49,7 @@ public class SubscriptionImpl<T> implements Subscription {
     Runnable onClose = () -> {
     };
 
-    AtomicBoolean closed = new AtomicBoolean(false);
+    final AtomicBoolean closed = new AtomicBoolean(false);
 
     final CompletableFuture<Void> catchup = new CompletableFuture<>();
 

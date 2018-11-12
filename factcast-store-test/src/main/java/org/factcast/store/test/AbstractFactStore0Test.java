@@ -124,7 +124,7 @@ public abstract class AbstractFactStore0Test {
 
     private static class TestFactObserver implements FactObserver {
 
-        private List<Fact> values = new CopyOnWriteArrayList<>();
+        private final List<Fact> values = new CopyOnWriteArrayList<>();
 
         @Override
         public void onNext(Fact element) {

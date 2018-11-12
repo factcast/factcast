@@ -15,12 +15,10 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
+import com.google.common.eventbus.EventBus;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
@@ -33,15 +31,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
-import com.google.common.eventbus.EventBus;
-
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Creates and maintains a subscription.
- * 
+ *
  * @author <uwe.schaefer@mercateo.com>
  *
  */
@@ -188,7 +186,7 @@ public class PGFactStream {
         final PGPostQueryMatcher postQueryMatcher;
 
         @Override
-        public void processRow(ResultSet rs) throws SQLException {
+        public void processRow(@NonNull ResultSet rs) throws SQLException {
             if (isConnected()) {
 
                 if (rs.isClosed()) {
