@@ -57,7 +57,7 @@ public class PGConnectionTester implements Predicate<Connection> {
     @Override
     public boolean test(@Nonnull Connection connection) {
         try (PreparedStatement statement = connection.prepareStatement("SELECT 42");
-                ResultSet resultSet = statement.executeQuery();) {
+                ResultSet resultSet = statement.executeQuery()) {
             resultSet.next();
             if (resultSet.getInt(1) == 42) {
                 log.trace("Connection test passed");

@@ -22,8 +22,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import lombok.NonNull;
@@ -91,14 +89,11 @@ class PGSynchronizedQuery {
 
             long latest = latestFetcher.retrieveLatestSer();
 
-            transactionTemplate.execute(new TransactionCallback<Object>() {
-                @Override
-                public Object doInTransaction(TransactionStatus status) {
+            transactionTemplate.execute(status -> {
 
-                    jdbcTemplate.execute("SET LOCAL enable_bitmapscan=0;");
-                    jdbcTemplate.query(sql, setter, rowHandler);
-                    return null;
-                }
+                jdbcTemplate.execute("SET LOCAL enable_bitmapscan=0;");
+                jdbcTemplate.query(sql, setter, rowHandler);
+                return null;
             });
 
             // shift to max(retrievedLatestSer, and ser as updated in

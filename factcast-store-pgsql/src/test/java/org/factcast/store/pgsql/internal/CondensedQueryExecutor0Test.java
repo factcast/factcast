@@ -38,7 +38,7 @@ public class CondensedQueryExecutor0Test {
     }
 
     @Test
-    public void testDelayedExecution() throws Exception {
+    public void testDelayedExecution() {
         CondensedQueryExecutor uut = new CondensedQueryExecutor(1, callback, () -> true, mockTimer);
 
         uut.trigger();
@@ -49,7 +49,7 @@ public class CondensedQueryExecutor0Test {
     }
 
     @Test
-    public void testDelayedMultipleExecution() throws Exception {
+    public void testDelayedMultipleExecution() {
         CondensedQueryExecutor uut = new CondensedQueryExecutor(22, callback, () -> true,
                 mockTimer);
 
@@ -65,7 +65,7 @@ public class CondensedQueryExecutor0Test {
     }
 
     @Test
-    public void testDelayedCondensedExecution() throws Exception {
+    public void testDelayedCondensedExecution() {
         CondensedQueryExecutor uut = new CondensedQueryExecutor(104, callback, () -> true,
                 mockTimer);
 

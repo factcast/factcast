@@ -90,7 +90,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         if ((meta == null) || meta.isEmpty()) {
             return true;
         }
-        return !meta.entrySet().parallelStream().anyMatch(e -> !e.getValue().equals(t.meta(e
+        return meta.entrySet().parallelStream().allMatch(e -> e.getValue().equals(t.meta(e
                 .getKey())));
     }
 
@@ -121,9 +121,8 @@ public final class FactSpecMatcher implements Predicate<Fact> {
             return true;
         }
 
-        Boolean jsEval = (Boolean) scriptEngine.eval("test(" + t.jsonHeader() + "," + t
+        return (Boolean) scriptEngine.eval("test(" + t.jsonHeader() + "," + t
                 .jsonPayload() + ")");
-        return jsEval;
     }
 
     @SneakyThrows

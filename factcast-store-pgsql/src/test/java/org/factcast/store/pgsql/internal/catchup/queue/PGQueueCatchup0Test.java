@@ -14,7 +14,6 @@ import org.factcast.store.pgsql.PGConfigurationProperties;
 import org.factcast.store.pgsql.internal.PGPostQueryMatcher;
 import org.factcast.store.pgsql.internal.catchup.PGCatchUpFetchPage;
 import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -47,12 +46,8 @@ public class PGQueueCatchup0Test {
     @InjectMocks
     private PGQueueCatchup uut;
 
-    @Before
-    public void setUp() throws Exception {
-    }
-
     @Test
-    public void testDoFetchFacts() throws Exception {
+    public void testDoFetchFacts() {
         final PGCatchUpFetchPage page = mock(PGCatchUpFetchPage.class);
         uut.doFetch(page);
 
@@ -60,7 +55,7 @@ public class PGQueueCatchup0Test {
     }
 
     @Test
-    public void testDoFetchIds() throws Exception {
+    public void testDoFetchIds() {
         final PGCatchUpFetchPage page = mock(PGCatchUpFetchPage.class);
 
         when(request.idOnly()).thenReturn(true);

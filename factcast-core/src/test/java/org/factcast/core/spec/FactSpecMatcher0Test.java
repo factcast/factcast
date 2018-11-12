@@ -9,18 +9,13 @@ import java.util.function.Predicate;
 
 import org.factcast.core.Fact;
 import org.factcast.core.Test0Fact;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
 public class FactSpecMatcher0Test {
 
-    @Before
-    public void setUp() throws Exception {
-    }
-
     @Test
-    public void testMetaMatch() throws Exception {
+    public void testMetaMatch() {
         assertTrue(metaMatch(FactSpec.ns("default").meta("foo", "bar"), new Test0Fact().meta("foo",
                 "bar")));
         assertTrue(metaMatch(FactSpec.ns("default").meta("foo", "bar"), new Test0Fact().meta("x",
@@ -34,14 +29,14 @@ public class FactSpecMatcher0Test {
     }
 
     @Test
-    public void testNsMatch() throws Exception {
+    public void testNsMatch() {
         assertTrue(nsMatch(FactSpec.ns("default"), new Test0Fact().ns("default")));
         assertFalse(nsMatch(FactSpec.ns("default"), new Test0Fact().ns("xxx")));
 
     }
 
     @Test
-    public void testTypeMatch() throws Exception {
+    public void testTypeMatch() {
         assertTrue(typeMatch(FactSpec.ns("default").type("a"), new Test0Fact().type("a")));
         assertTrue(typeMatch(FactSpec.ns("default"), new Test0Fact().type("a")));
         assertFalse(typeMatch(FactSpec.ns("default").type("a"), new Test0Fact().type("x")));
@@ -49,7 +44,7 @@ public class FactSpecMatcher0Test {
     }
 
     @Test
-    public void testAggIdMatch() throws Exception {
+    public void testAggIdMatch() {
 
         UUID u1 = UUID.randomUUID();
         UUID u2 = UUID.randomUUID();
@@ -62,7 +57,7 @@ public class FactSpecMatcher0Test {
 
     @Test
     @Ignore("tmp disabled")
-    public void testScriptMatch() throws Exception {
+    public void testScriptMatch() {
         assertTrue(scriptMatch(FactSpec.ns("default"), new Test0Fact()));
         assertFalse(scriptMatch(FactSpec.ns("default").jsFilterScript(
                 "function (h,e){ return false }"), new Test0Fact()));
@@ -93,12 +88,12 @@ public class FactSpecMatcher0Test {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testMatchesAnyOfNull() throws Exception {
+    public void testMatchesAnyOfNull() {
         FactSpecMatcher.matchesAnyOf(null);
     }
 
     @Test
-    public void testMatchesAnyOf() throws Exception {
+    public void testMatchesAnyOf() {
         Predicate<Fact> p = FactSpecMatcher.matchesAnyOf(Arrays.asList(FactSpec.ns("1"), FactSpec
                 .ns("2")));
 
@@ -109,7 +104,7 @@ public class FactSpecMatcher0Test {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testFactSpecMatcherNullConstructor() throws Exception {
+    public void testFactSpecMatcherNullConstructor() {
         new FactSpecMatcher(null);
     }
 

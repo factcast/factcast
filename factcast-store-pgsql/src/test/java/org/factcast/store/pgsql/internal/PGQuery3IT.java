@@ -70,7 +70,7 @@ public class PGQuery3IT {
 
     @Test
     @DirtiesContext
-    public void testRoundtrip() throws Exception {
+    public void testRoundtrip() {
         SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(
                 DEFAULT_SPEC).fromScratch());
 
@@ -86,7 +86,7 @@ public class PGQuery3IT {
 
     @Test
     @DirtiesContext
-    public void testRoundtripInsertBefore() throws Exception {
+    public void testRoundtripInsertBefore() {
 
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());

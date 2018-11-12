@@ -2,17 +2,12 @@ package org.factcast.core.store;
 
 import static org.junit.Assert.*;
 
-import org.junit.Before;
 import org.junit.Test;
 
 public class FactStoreMetricNames0Test {
 
-    @Before
-    public void setUp() throws Exception {
-    }
-
     @Test
-    public void testFactStoreMetricNames() throws Exception {
+    public void testFactStoreMetricNames() {
         final String type = "something";
         FactStoreMetricNames n = new FactStoreMetricNames(type);
 
@@ -33,7 +28,7 @@ public class FactStoreMetricNames0Test {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testFactStoreMetricNamesNull() throws Exception {
+    public void testFactStoreMetricNamesNull() {
         new FactStoreMetricNames(null);
     }
 

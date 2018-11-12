@@ -51,12 +51,12 @@ public class SubscriptionImpl<T> implements Subscription {
 
     AtomicBoolean closed = new AtomicBoolean(false);
 
-    final CompletableFuture<Void> catchup = new CompletableFuture<Void>();
+    final CompletableFuture<Void> catchup = new CompletableFuture<>();
 
-    final CompletableFuture<Void> complete = new CompletableFuture<Void>();
+    final CompletableFuture<Void> complete = new CompletableFuture<>();
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         closed.set(true);
         SubscriptionCancelledException closedException = new SubscriptionCancelledException(
                 "Client closed the subscription");

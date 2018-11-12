@@ -136,7 +136,7 @@ public class PGFactStream {
                         .maxBatchDelayInMs());
             }
 
-            condensedExecutor = new CondensedQueryExecutor(delayInMs, query, () -> isConnected());
+            condensedExecutor = new CondensedQueryExecutor(delayInMs, query, this::isConnected);
             eventBus.register(condensedExecutor);
             // catchup phase 3 – make sure, we did not miss any fact due to
             // slow registration

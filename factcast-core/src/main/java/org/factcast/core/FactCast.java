@@ -15,10 +15,7 @@
  */
 package org.factcast.core;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import org.factcast.core.store.FactStore;
 
@@ -40,7 +37,7 @@ public interface FactCast extends ReadFactCast {
     /// ---------- defaults
 
     default void publish(@NonNull Fact factToPublish) {
-        publish(Arrays.asList(factToPublish));
+        publish(Collections.singletonList(factToPublish));
     }
 
     default UUID publishWithMark(@NonNull Fact factToPublish) {

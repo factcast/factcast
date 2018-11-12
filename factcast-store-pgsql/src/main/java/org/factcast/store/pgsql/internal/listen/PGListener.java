@@ -120,14 +120,14 @@ public class PGListener implements InitializingBean, DisposableBean {
                 + " encountered an unhandled exception", e));
         try {
             l.await(15, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignored) {
         }
     }
 
     private void sleepUnlessTest(int i) {
         try {
             Thread.sleep(inJunitTest() ? Math.min(50, i) : i);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignored) {
         }
     }
 

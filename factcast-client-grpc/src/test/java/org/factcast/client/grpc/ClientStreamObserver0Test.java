@@ -1,13 +1,5 @@
 package org.factcast.client.grpc;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-
-import java.io.IOException;
-import java.util.UUID;
-
 import org.factcast.core.Fact;
 import org.factcast.core.IdOnlyFact;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -18,7 +10,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import java.io.IOException;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClientStreamObserver0Test {
@@ -33,18 +33,18 @@ public class ClientStreamObserver0Test {
     private SubscriptionImpl<Fact> subscription;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         subscription = spy(new SubscriptionImpl<>(factObserver));
         uut = new ClientStreamObserver(subscription);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testConstructorNull() throws Exception {
+    public void testConstructorNull() {
         new ClientStreamObserver(null);
     }
 
     @Test
-    public void testOnNext() throws Exception {
+    public void testOnNext() {
         Fact f = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
         MSG_Notification n = converter.createNotificationFor(f);
         uut.onNext(n);
@@ -52,32 +52,32 @@ public class ClientStreamObserver0Test {
     }
 
     @Test
-    public void testOnNextId() throws Exception {
+    public void testOnNextId() {
         MSG_Notification n = converter.createNotificationFor(UUID.randomUUID());
         uut.onNext(n);
         verify(factObserver).onNext(any(IdOnlyFact.class));
     }
 
     @Test
-    public void testOnCatchup() throws Exception {
+    public void testOnCatchup() {
         uut.onNext(converter.createCatchupNotification());
         verify(factObserver).onCatchup();
     }
 
     @Test
-    public void testOnComplete() throws Exception {
+    public void testOnComplete() {
         uut.onNext(converter.createCompleteNotification());
         verify(factObserver).onComplete();
     }
 
     @Test
-    public void testOnTransportComplete() throws Exception {
+    public void testOnTransportComplete() {
         uut.onCompleted();
         verify(factObserver).onComplete();
     }
 
     @Test
-    public void testOnError() throws Exception {
+    public void testOnError() {
         uut.onError(new IOException());
         verify(factObserver).onError(any());
     }

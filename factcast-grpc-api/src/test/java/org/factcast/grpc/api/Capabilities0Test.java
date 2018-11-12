@@ -7,7 +7,7 @@ import org.junit.Test;
 public class Capabilities0Test {
 
     @Test
-    public void testToString() throws Exception {
+    public void testToString() {
         assertEquals("org.factcast.grpc.api.Capabilities.CODEC_LZ4", Capabilities.CODEC_LZ4
                 .toString());
     }

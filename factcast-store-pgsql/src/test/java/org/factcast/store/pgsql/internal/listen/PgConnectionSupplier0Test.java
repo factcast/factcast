@@ -142,13 +142,13 @@ public class PgConnectionSupplier0Test {
     }
 
     @Test
-    public void testExceptionOnDriverManager_getConnection() throws Exception {
+    public void testExceptionOnDriverManager_getConnection() {
         String url = "jdbc:xyz:foo";
         org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
         ds.setUrl(url);
 
         PgConnectionSupplier uut = new PgConnectionSupplier(ds);
 
-        assertThatThrownBy(() -> uut.get()).isInstanceOf(SQLException.class);
+        assertThatThrownBy(uut::get).isInstanceOf(SQLException.class);
     }
 }

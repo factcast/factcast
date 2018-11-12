@@ -15,23 +15,22 @@
  */
 package org.factcast.core.subscription.observer;
 
-import java.util.function.Function;
-
-import org.factcast.core.Fact;
-import org.slf4j.LoggerFactory;
-
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.factcast.core.Fact;
+import org.slf4j.LoggerFactory;
+
+import java.util.function.Function;
 
 /**
  * Callback interface to use when subscribing to Facts or Ids from a FactCast.
- * 
+ *
  * see {@link IdObserver}, {@link FactObserver}
- * 
+ *
  * @author uwe.schaefer@mercateo.com
  *
- * @param <T>
+ *
  */
 public interface GenericObserver<I> {
     void onNext(@NonNull I element);
@@ -49,7 +48,7 @@ public interface GenericObserver<I> {
     }
 
     default FactObserver map(@NonNull Function<Fact, I> projection) {
-        return new ObserverBridge<I>(this, projection);
+        return new ObserverBridge<>(this, projection);
     }
 
     @RequiredArgsConstructor(access = AccessLevel.PRIVATE)

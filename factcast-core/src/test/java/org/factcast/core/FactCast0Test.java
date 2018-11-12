@@ -6,7 +6,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.factcast.core.spec.FactSpec;
@@ -24,7 +24,7 @@ public class FactCast0Test {
     ArgumentCaptor<List<Fact>> facts;
 
     @Test
-    public void testFrom() throws Exception {
+    public void testFrom() {
         FactStore store = mock(FactStore.class);
         FactCast fc = FactCast.from(store);
 
@@ -33,17 +33,17 @@ public class FactCast0Test {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testFromNull() throws Exception {
+    public void testFromNull() {
         FactCast.from(null);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testFromReadOnlyNull() throws Exception {
+    public void testFromReadOnlyNull() {
         FactCast.fromReadOnly(null);
     }
 
     @Test
-    public void testFromReadOnly() throws Exception {
+    public void testFromReadOnly() {
         FactStore store = mock(FactStore.class);
         ReadFactCast fc = FactCast.fromReadOnly(store);
 
@@ -52,7 +52,7 @@ public class FactCast0Test {
     }
 
     @Test
-    public void testPublishWithMarkOne() throws Exception {
+    public void testPublishWithMarkOne() {
         FactStore store = mock(FactStore.class);
         doNothing().when(store).publish(facts.capture());
 
@@ -68,12 +68,12 @@ public class FactCast0Test {
     }
 
     @Test
-    public void testPublishWithMarkMany() throws Exception {
+    public void testPublishWithMarkMany() {
         FactStore store = mock(FactStore.class);
         doNothing().when(store).publish(facts.capture());
 
         final Test0Fact f = new Test0Fact();
-        FactCast.from(store).publishWithMark(Arrays.asList(f));
+        FactCast.from(store).publishWithMark(Collections.singletonList(f));
 
         List<Fact> published = facts.getValue();
 

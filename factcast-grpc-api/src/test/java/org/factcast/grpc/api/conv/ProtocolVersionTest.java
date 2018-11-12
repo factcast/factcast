@@ -8,7 +8,7 @@ import org.junit.Test;
 public class ProtocolVersionTest {
 
     @Test
-    public void testIsCompatibleTo() throws Exception {
+    public void testIsCompatibleTo() {
         assertTrue(ProtocolVersion.of(1, 0, 0).isCompatibleTo(ProtocolVersion.of(1, 0, 0)));
         assertTrue(ProtocolVersion.of(1, 0, 0).isCompatibleTo(ProtocolVersion.of(1, 0, 1)));
         assertTrue(ProtocolVersion.of(1, 0, 0).isCompatibleTo(ProtocolVersion.of(1, 1, 0)));

@@ -10,14 +10,9 @@ import java.sql.ResultSet;
 import java.util.Set;
 import java.util.UUID;
 
-import org.junit.Before;
 import org.junit.Test;
 
 public class PGFact0Test {
-
-    @Before
-    public void setUp() throws Exception {
-    }
 
     @Test
     public void testFrom() throws Exception {
@@ -27,11 +22,10 @@ public class PGFact0Test {
         String type = "type";
         String aggId = UUID.randomUUID().toString();
         String aggIdArr = "[\"" + aggId + "\"]";
-        String id = aggId;
         String header = "{\"meta\":{\"foo\":\"1\",\"bar\":\"2\",\"baz\":\"3\"}}";
         String payload = "{}";
 
-        when(rs.getString(eq(PGConstants.ALIAS_ID))).thenReturn(id);
+        when(rs.getString(eq(PGConstants.ALIAS_ID))).thenReturn(aggId);
         when(rs.getString(eq(PGConstants.ALIAS_NS))).thenReturn(ns);
         when(rs.getString(eq(PGConstants.ALIAS_TYPE))).thenReturn(type);
         when(rs.getString(eq(PGConstants.ALIAS_AGGID))).thenReturn(aggIdArr);
@@ -45,7 +39,7 @@ public class PGFact0Test {
         assertEquals(ns, uut.ns());
         assertEquals(type, uut.type());
         assertEquals(aggId, uut.aggIds().iterator().next().toString());
-        assertEquals(id, uut.id().toString());
+        assertEquals(aggId, uut.id().toString());
         assertEquals(header, uut.jsonHeader());
         assertEquals(payload, uut.jsonPayload());
 
@@ -56,19 +50,19 @@ public class PGFact0Test {
     }
 
     @Test
-    public void testToUUIDArrayNull() throws Exception {
+    public void testToUUIDArrayNull() {
         Set<UUID> res = PGFact.toUUIDArray(null);
         assertTrue(res.isEmpty());
     }
 
     @Test
-    public void testToUUIDArrayEmpty() throws Exception {
+    public void testToUUIDArrayEmpty() {
         Set<UUID> res = PGFact.toUUIDArray("[]");
         assertTrue(res.isEmpty());
     }
 
     @Test
-    public void testToUUIDArraySingle() throws Exception {
+    public void testToUUIDArraySingle() {
         UUID aggId1 = UUID.randomUUID();
         Set<UUID> res = PGFact.toUUIDArray("[\"" + aggId1 + "\"]");
         assertEquals(1, res.size());
@@ -76,7 +70,7 @@ public class PGFact0Test {
     }
 
     @Test
-    public void testToUUIDArrayMutli() throws Exception {
+    public void testToUUIDArrayMutli() {
         UUID aggId1 = UUID.randomUUID();
         UUID aggId2 = UUID.randomUUID();
         Set<UUID> res = PGFact.toUUIDArray("[\"" + aggId1 + "\",\"" + aggId2 + "\"]");

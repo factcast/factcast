@@ -10,42 +10,42 @@ import org.junit.Test;
 public class IdOnlyFact0Test {
 
     @Test(expected = NullPointerException.class)
-    public void testIdNonNull() throws Exception {
+    public void testIdNonNull() {
         new IdOnlyFact(null);
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testNsUnsupported() throws Exception {
+    public void testNsUnsupported() {
         new IdOnlyFact(UUID.randomUUID()).ns();
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testaggIdUnsupported() throws Exception {
+    public void testaggIdUnsupported() {
         new IdOnlyFact(UUID.randomUUID()).aggIds();
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testtypeUnsupported() throws Exception {
+    public void testtypeUnsupported() {
         new IdOnlyFact(UUID.randomUUID()).type();
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testHeaderUnsupported() throws Exception {
+    public void testHeaderUnsupported() {
         new IdOnlyFact(UUID.randomUUID()).jsonHeader();
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testPayloadUnsupported() throws Exception {
+    public void testPayloadUnsupported() {
         new IdOnlyFact(UUID.randomUUID()).jsonPayload();
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testMetaUnsupported() throws Exception {
+    public void testMetaUnsupported() {
         new IdOnlyFact(UUID.randomUUID()).meta("foo");
     }
 
     @Test
-    public void testId() throws Exception {
+    public void testId() {
         UUID id = UUID.randomUUID();
         assertSame(id, new IdOnlyFact(id).id());
     }

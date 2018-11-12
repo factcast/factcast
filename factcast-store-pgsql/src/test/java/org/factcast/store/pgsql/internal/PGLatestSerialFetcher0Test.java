@@ -28,7 +28,7 @@ public class PGLatestSerialFetcher0Test {
     private PGLatestSerialFetcher uut;
 
     @Test
-    public void testRetrieveLatestSer() throws Exception {
+    public void testRetrieveLatestSer() {
 
         uut = new PGLatestSerialFetcher(jdbcTemplate);
 
@@ -54,7 +54,7 @@ public class PGLatestSerialFetcher0Test {
     }
 
     @Test
-    public void testRetrieveLatestSerWithException() throws Exception {
+    public void testRetrieveLatestSerWithException() {
 
         JdbcTemplate jdbcMock = mock(JdbcTemplate.class);
         when(jdbcMock.queryForRowSet(anyString())).thenThrow(new EmptyResultDataAccessException(1));

@@ -7,7 +7,7 @@ import org.junit.Test;
 public class ProtocolVersion0Test {
 
     @Test
-    public void testToString() throws Exception {
+    public void testToString() {
         assertEquals("3.1.2", ProtocolVersion.of(3, 1, 2)
                 .toString());
     }

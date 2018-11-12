@@ -25,13 +25,13 @@ public class CachingFactLookup0Test {
     private FactStore store;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         store = mock(FactStore.class);
         uut = new CachingFactLookup(store);
     }
 
     @Test
-    public void testLookupFails() throws Exception {
+    public void testLookupFails() {
         when(store.fetchById(any())).thenReturn(Optional.empty());
 
         final UUID id = UUID.randomUUID();
@@ -42,7 +42,7 @@ public class CachingFactLookup0Test {
     }
 
     @Test
-    public void testLookupWorks() throws Exception {
+    public void testLookupWorks() {
         final Fact f = Fact.builder().ns("test").build("{}");
         when(store.fetchById(f.id())).thenReturn(Optional.of(f));
 
@@ -55,7 +55,7 @@ public class CachingFactLookup0Test {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testConstructorNullParam() throws Exception {
+    public void testConstructorNullParam() {
         new CachingFactLookup(null);
     }
 

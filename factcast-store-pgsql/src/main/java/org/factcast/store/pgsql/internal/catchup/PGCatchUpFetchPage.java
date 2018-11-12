@@ -50,7 +50,7 @@ public class PGCatchUpFetchPage {
     // order to release Facts for GC asap.
     public LinkedList<Fact> fetchFacts(@NonNull AtomicLong serial) {
         Stopwatch sw = Stopwatch.createStarted();
-        final LinkedList<Fact> list = new LinkedList<Fact>(jdbc.query(
+        final LinkedList<Fact> list = new LinkedList<>(jdbc.query(
                 PGConstants.SELECT_FACT_FROM_CATCHUP, createSetter(serial, pageSize),
                 new PGFactExtractor(serial)));
         sw.stop();

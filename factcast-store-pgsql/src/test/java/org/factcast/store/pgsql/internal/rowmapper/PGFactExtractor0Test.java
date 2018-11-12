@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
 import org.factcast.store.pgsql.internal.PGConstants;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -20,10 +19,6 @@ public class PGFactExtractor0Test {
     private AtomicLong serial = new AtomicLong(5);
 
     private PGFactExtractor uut = new PGFactExtractor(serial);
-
-    @Before
-    public void setUp() throws Exception {
-    }
 
     @Test
     public void testMapRow() throws Exception {

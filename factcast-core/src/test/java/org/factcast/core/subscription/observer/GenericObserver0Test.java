@@ -1,22 +1,15 @@
 package org.factcast.core.subscription.observer;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-
 import org.factcast.core.Test0Fact;
-import org.junit.Before;
 import org.junit.Test;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 public class GenericObserver0Test {
 
-    @Before
-    public void setUp() throws Exception {
-    }
-
     @Test
-    public void testMap() throws Exception {
+    public void testMap() {
         GenericObserver<Integer> i = spy(new GenericObserver<Integer>() {
 
             @Override
@@ -54,13 +47,9 @@ public class GenericObserver0Test {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testMapNull() throws Exception {
-        GenericObserver<Integer> i = new GenericObserver<Integer>() {
+    public void testMapNull() {
+        GenericObserver<Integer> i = element -> {
 
-            @Override
-            public void onNext(Integer element) {
-
-            }
         };
 
         i.map(null);

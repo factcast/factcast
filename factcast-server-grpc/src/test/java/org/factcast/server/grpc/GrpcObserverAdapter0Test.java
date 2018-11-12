@@ -37,7 +37,7 @@ public class GrpcObserverAdapter0Test {
     private ArgumentCaptor<MSG_Notification> msg;
 
     @Test
-    public void testNullsOnConstructor() throws Exception {
+    public void testNullsOnConstructor() {
 
         String id = "id";
         StreamObserver so = mock(StreamObserver.class);
@@ -54,7 +54,7 @@ public class GrpcObserverAdapter0Test {
     }
 
     @Test
-    public void testOnComplete() throws Exception {
+    public void testOnComplete() {
         GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
 
         uut.onComplete();
@@ -63,7 +63,7 @@ public class GrpcObserverAdapter0Test {
     }
 
     @Test
-    public void testOnCatchup() throws Exception {
+    public void testOnCatchup() {
         GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
 
         doNothing().when(observer).onNext(msg.capture());
@@ -76,7 +76,7 @@ public class GrpcObserverAdapter0Test {
     }
 
     @Test
-    public void testOnError() throws Exception {
+    public void testOnError() {
         GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
 
         verify(observer, never()).onNext(any());
@@ -86,7 +86,7 @@ public class GrpcObserverAdapter0Test {
     }
 
     @Test
-    public void testOnNext() throws Exception {
+    public void testOnNext() {
         ProtoConverter conv = new ProtoConverter();
         GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer,
                 conv::createNotificationFor);

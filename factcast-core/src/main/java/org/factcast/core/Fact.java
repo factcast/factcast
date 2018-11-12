@@ -56,7 +56,7 @@ public interface Fact {
     default long serial() {
         String s = meta("_ser");
         if (s != null) {
-            return Long.valueOf(s).longValue();
+            return Long.valueOf(s);
         } else {
             throw new IllegalStateException("'_ser' Meta attribute not found");
         }
@@ -79,7 +79,7 @@ public interface Fact {
         return new Builder();
     }
 
-    public static class Builder {
+    class Builder {
 
         final Header header = new Header().id(UUID.randomUUID()).ns("default");
 

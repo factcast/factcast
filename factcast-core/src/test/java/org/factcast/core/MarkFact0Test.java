@@ -2,23 +2,18 @@ package org.factcast.core;
 
 import static org.junit.Assert.*;
 
-import org.junit.Before;
 import org.junit.Test;
 
 public class MarkFact0Test {
     final MarkFact uut = new MarkFact();
 
-    @Before
-    public void setUp() throws Exception {
-    }
-
     @Test
-    public void testJsonPayload() throws Exception {
+    public void testJsonPayload() {
         assertEquals("{}", new MarkFact().jsonPayload());
     }
 
     @Test
-    public void testJsonHeader() throws Exception {
+    public void testJsonHeader() {
         assertNotNull(uut.jsonHeader());
         // intentionally not using the constants here. i am sure you see why :)
         assertEquals("_", uut.ns());
@@ -28,7 +23,7 @@ public class MarkFact0Test {
     }
 
     @Test
-    public void testMeta() throws Exception {
+    public void testMeta() {
         assertNull(new MarkFact().meta("any"));
     }
 

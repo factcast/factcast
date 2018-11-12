@@ -89,22 +89,21 @@ public class PGQueryBuilder {
             StringBuilder sb = new StringBuilder();
             sb.append("( ");
 
-            sb.append(PGConstants.COLUMN_HEADER + " @> ?::jsonb ");
+            sb.append(PGConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
 
             String type = spec.type();
             if (type != null) {
-                sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ?::jsonb ");
+                sb.append("AND ").append(PGConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
             }
 
             UUID agg = spec.aggId();
             if (agg != null) {
-                sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ?::jsonb ");
+                sb.append("AND ").append(PGConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
             }
 
             Map<String, String> meta = spec.meta();
-            meta.entrySet().forEach(e -> {
-                sb.append("AND " + PGConstants.COLUMN_HEADER + " @> ?::jsonb ");
-            });
+            meta.forEach((key, value) -> sb.append("AND ").append(PGConstants.COLUMN_HEADER).append(
+                    " @> ?::jsonb "));
 
             sb.append(") ");
 
