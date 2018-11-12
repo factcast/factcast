@@ -40,9 +40,9 @@ public class Converters {
 
     static class SimpleConverter<T> extends BaseConverter<T> {
 
-        private Function<String, T> l;
+        private final Function<String, T> l;
 
-        private Class<T> clazz;
+        private final Class<T> clazz;
 
         public SimpleConverter(String optionName, Class<T> clazz, Function<String, T> l) {
             super(optionName);

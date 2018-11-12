@@ -79,6 +79,7 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private final ProtoConverter converter = new ProtoConverter();
 
+    @SuppressWarnings("FieldCanBeLocal")
     private ProtocolVersion serverProtocolVersion;
 
     private Map<String, String> serverProperties;
@@ -195,6 +196,7 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
             configureGZip();
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     private boolean configureGZip() {
         Compressor gzip = CompressorRegistry.getDefaultInstance().lookupCompressor("gzip");
         if (gzip != null) {

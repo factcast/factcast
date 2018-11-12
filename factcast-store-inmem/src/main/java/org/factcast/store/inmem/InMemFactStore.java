@@ -89,7 +89,7 @@ public class InMemFactStore implements FactStore {
     }
 
     private class InMemFollower implements Predicate<Fact>, Consumer<Fact>, AutoCloseable {
-        Predicate<Fact> matcher;
+        final Predicate<Fact> matcher;
 
         final SubscriptionImpl<Fact> subscription;
 

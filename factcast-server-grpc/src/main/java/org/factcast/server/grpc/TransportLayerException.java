@@ -25,7 +25,7 @@ package org.factcast.server.grpc;
 class TransportLayerException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
-    TransportLayerException(String msg) {
+    TransportLayerException(@SuppressWarnings("SameParameterValue") String msg) {
         super(msg);
     }
 

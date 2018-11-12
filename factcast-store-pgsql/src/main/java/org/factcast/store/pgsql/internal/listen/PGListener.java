@@ -62,7 +62,7 @@ public class PGListener implements InitializingBean, DisposableBean {
 
     private Thread listenerThread;
 
-    private int blockingWaitTimeInMillis = 1000 * 60;
+    private final int blockingWaitTimeInMillis = 1000 * 60;
 
     private void listen() {
         log.trace("Starting instance Listener");
@@ -100,7 +100,7 @@ public class PGListener implements InitializingBean, DisposableBean {
                             }
                         } else {
                             log("Connection is failing test", null);
-                            sleepUnlessTest(1000);
+                            sleepOneSecondUnlessTesting(1000);
                             break;
                         }
                     }
@@ -108,7 +108,7 @@ public class PGListener implements InitializingBean, DisposableBean {
                 } catch (SQLException e) {
 
                     log("While waiting for Notifications", e);
-                    sleepUnlessTest(1000);
+                    sleepOneSecondUnlessTesting(1000);
 
                 }
             }
@@ -124,7 +124,7 @@ public class PGListener implements InitializingBean, DisposableBean {
         }
     }
 
-    private void sleepUnlessTest(int i) {
+    private void sleepOneSecondUnlessTesting(int i) {
         try {
             Thread.sleep(inJunitTest() ? Math.min(50, i) : i);
         } catch (InterruptedException ignored) {

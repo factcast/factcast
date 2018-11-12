@@ -27,6 +27,7 @@ public enum CatchupStrategy {
 
     PAGED, QUEUED;
 
+    @SuppressWarnings("SameReturnValue")
     public static CatchupStrategy getDefault() {
         return PAGED;
     }

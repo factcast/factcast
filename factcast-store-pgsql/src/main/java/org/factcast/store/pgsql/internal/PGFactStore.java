@@ -15,10 +15,14 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
+import com.google.common.collect.Lists;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
@@ -32,21 +36,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
-import com.codahale.metrics.Timer.Context;
-import com.google.common.collect.Lists;
-
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
 
 /**
  * A PostgreSQL based FactStore implementation
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 @Slf4j
 @Component("factStore")
@@ -70,19 +67,19 @@ public class PGFactStore implements FactStore {
 
     final PGMetricNames names = new PGMetricNames();
 
-    private Meter publishMeter;
+    private final Meter publishMeter;
 
-    private Timer fetchLatency;
+    private final Timer fetchLatency;
 
-    private Timer seqLookupLatency;
+    private final Timer seqLookupLatency;
 
-    private Timer namespaceLatency;
+    private final Timer namespaceLatency;
 
-    private Timer typeLatency;
+    private final Timer typeLatency;
 
-    private Meter subscriptionCatchupMeter;
+    private final Meter subscriptionCatchupMeter;
 
-    private Meter subscriptionFollowMeter;
+    private final Meter subscriptionFollowMeter;
 
     @Autowired
     public PGFactStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory subscriptionFactory,
@@ -144,11 +141,13 @@ public class PGFactStore implements FactStore {
         return PGFact.from(resultSet);
     }
 
-    private String extractStringFromResultSet(ResultSet resultSet, int rowNum) throws SQLException {
+    private @NonNull String extractStringFromResultSet(@NonNull ResultSet resultSet, int rowNum)
+            throws SQLException {
         return resultSet.getString(1);
     }
 
-    private Long extractSerFromResultSet(ResultSet resultSet, int rowNum) throws SQLException {
+    private @NonNull Long extractSerFromResultSet(@NonNull ResultSet resultSet, int rowNum)
+            throws SQLException {
         return Long.valueOf(resultSet.getString(PGConstants.COLUMN_SER));
     }
 

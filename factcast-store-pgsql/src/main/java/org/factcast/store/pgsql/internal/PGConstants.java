@@ -29,49 +29,52 @@ import lombok.experimental.FieldDefaults;
 @Generated
 public class PGConstants {
 
-    public static String NEXT_FROM_CATCHUP_SEQ = "SELECT nextval('catchup_seq')";
+    public static final String NEXT_FROM_CATCHUP_SEQ = "SELECT nextval('catchup_seq')";
 
-    public static String TABLE_CATCHUP = "catchup";
+    public static final String TABLE_CATCHUP = "catchup";
 
-    public static String TABLE_FACT = "fact";
+    public static final String TABLE_FACT = "fact";
 
-    public static String CHANNEL_NAME = "fact_insert";
+    public static final String CHANNEL_NAME = "fact_insert";
 
-    public static String COLUMN_PAYLOAD = "payload";
+    public static final String COLUMN_PAYLOAD = "payload";
 
-    public static String COLUMN_HEADER = "header";
+    public static final String COLUMN_HEADER = "header";
 
-    public static String COLUMN_SER = "ser";
+    public static final String COLUMN_SER = "ser";
 
-    public static String COLUMN_CID = "cid";
+    public static final String COLUMN_CID = "cid";
 
-    public static String ALIAS_ID = "id";
+    public static final String ALIAS_ID = "id";
 
-    public static String ALIAS_NS = "ns";
+    public static final String ALIAS_NS = "ns";
 
-    public static String ALIAS_TYPE = "type";
+    public static final String ALIAS_TYPE = "type";
 
-    public static String ALIAS_AGGID = "aggIds";
+    public static final String ALIAS_AGGID = "aggIds";
 
-    public static String PROJECTION_FACT = String.join(", ", COLUMN_SER, COLUMN_HEADER,
+    public static final String PROJECTION_FACT = String.join(", ", COLUMN_SER, COLUMN_HEADER,
             COLUMN_PAYLOAD,
             fromHeader(ALIAS_ID), fromHeader(ALIAS_AGGID), fromHeader(ALIAS_NS), fromHeader(
                     ALIAS_TYPE));
 
-    public static String PROJECTION_ID = String.join(", ", COLUMN_SER, empty(COLUMN_HEADER), empty(
-            COLUMN_PAYLOAD), fromHeader(ALIAS_ID), fromHeader(ALIAS_AGGID), fromHeader(ALIAS_NS),
+    public static final String PROJECTION_ID = String.join(", ", COLUMN_SER, empty(COLUMN_HEADER),
+            empty(
+                    COLUMN_PAYLOAD), fromHeader(ALIAS_ID), fromHeader(ALIAS_AGGID), fromHeader(
+                            ALIAS_NS),
             fromHeader(ALIAS_TYPE));
 
-    public static String INSERT_FACT = "INSERT INTO " + TABLE_FACT + "(" + COLUMN_HEADER + ","
+    public static final String INSERT_FACT = "INSERT INTO " + TABLE_FACT + "(" + COLUMN_HEADER + ","
             + COLUMN_PAYLOAD + ") VALUES (cast(? as jsonb),cast (? as jsonb))";
 
-    public static String SELECT_BY_ID = "SELECT " + PROJECTION_FACT + " FROM " + TABLE_FACT
+    public static final String SELECT_BY_ID = "SELECT " + PROJECTION_FACT + " FROM " + TABLE_FACT
             + " WHERE "
             + COLUMN_HEADER + " @> cast (? as jsonb)";
 
-    public static String SELECT_LATEST_SER = "SELECT max(" + COLUMN_SER + ") FROM " + TABLE_FACT;
+    public static final String SELECT_LATEST_SER = "SELECT max(" + COLUMN_SER + ") FROM "
+            + TABLE_FACT;
 
-    public static String SELECT_ID_FROM_CATCHUP = //
+    public static final String SELECT_ID_FROM_CATCHUP = //
             "SELECT " + PROJECTION_ID + //
                     " FROM " + TABLE_FACT + //
                     " WHERE " + COLUMN_SER + " IN ( " + //
@@ -79,7 +82,7 @@ public class PGConstants {
                     "   WHERE ( " + COLUMN_CID + "=? AND " + COLUMN_SER + ">? ) LIMIT ? " + //
                     ") ORDER BY " + COLUMN_SER + " ASC";
 
-    public static String SELECT_FACT_FROM_CATCHUP = //
+    public static final String SELECT_FACT_FROM_CATCHUP = //
             "SELECT " + PROJECTION_FACT + //
                     " FROM " + TABLE_FACT + //
                     " WHERE " + COLUMN_SER + " IN ( " + //
@@ -87,7 +90,7 @@ public class PGConstants {
                     "   WHERE ( " + COLUMN_CID + "=? AND " + COLUMN_SER + ">? ) LIMIT ? " + //
                     ") ORDER BY " + COLUMN_SER + " ASC";
 
-    public static String DELETE_CATCH_BY_CID = "DELETE FROM " + TABLE_CATCHUP + //
+    public static final String DELETE_CATCH_BY_CID = "DELETE FROM " + TABLE_CATCHUP + //
             " WHERE cid=?";
 
     public static final String SELECT_BY_HEADER_JSON = "SELECT " + COLUMN_SER + " FROM "
@@ -111,7 +114,7 @@ public class PGConstants {
             + " FROM " + TABLE_FACT + " WHERE (" + COLUMN_HEADER + "->>'" + ALIAS_NS
             + "')=? AND ( " + COLUMN_HEADER + "->>'" + ALIAS_TYPE + "') IS NOT NULL";
 
-    public static String SELECT_SER_BY_ID = "SELECT " + COLUMN_SER + " FROM " + TABLE_FACT
+    public static final String SELECT_SER_BY_ID = "SELECT " + COLUMN_SER + " FROM " + TABLE_FACT
             + " WHERE "
             + COLUMN_HEADER + " @> cast (? as jsonb)";
 

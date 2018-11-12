@@ -23,7 +23,7 @@ import lombok.SneakyThrows;
 
 public class ConsoleFactObserver implements FactObserver {
 
-    private FactRenderer factRenderer;
+    private final FactRenderer factRenderer;
 
     public ConsoleFactObserver(Options opt) {
         this.factRenderer = new FactRenderer(opt);

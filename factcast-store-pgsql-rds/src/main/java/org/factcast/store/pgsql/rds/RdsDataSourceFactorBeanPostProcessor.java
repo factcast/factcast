@@ -15,19 +15,17 @@
  */
 package org.factcast.store.pgsql.rds;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.cloud.aws.jdbc.datasource.TomcatJdbcDataSourceFactory;
 import org.springframework.cloud.aws.jdbc.rds.AmazonRdsDataSourceFactoryBean;
 import org.springframework.core.env.Environment;
 
-import lombok.RequiredArgsConstructor;
-
 /**
  * exchange the given TomcatJdbcDataSourceFactory with a customized factory so
  * we can configure the datasource connection pool
- * 
- *
  */
 @RequiredArgsConstructor
 public class RdsDataSourceFactorBeanPostProcessor implements BeanPostProcessor {
@@ -35,7 +33,8 @@ public class RdsDataSourceFactorBeanPostProcessor implements BeanPostProcessor {
     private final Environment env;
 
     @Override
-    public Object postProcessBeforeInitialization(Object bean, String beanName)
+    public @NonNull Object postProcessBeforeInitialization(@NonNull Object bean,
+            @NonNull String beanName)
             throws BeansException {
 
         if (bean instanceof AmazonRdsDataSourceFactoryBean) {
@@ -59,7 +58,8 @@ public class RdsDataSourceFactorBeanPostProcessor implements BeanPostProcessor {
     }
 
     @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName)
+    public @NonNull Object postProcessAfterInitialization(@NonNull Object bean,
+            @NonNull String beanName)
             throws BeansException {
         return bean;
     }
