@@ -15,6 +15,18 @@
  */
 package org.factcast.store.pgsql.internal.listen;
 
+import com.google.common.eventbus.EventBus;
+import lombok.AccessLevel;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.store.pgsql.internal.PGConstants;
+import org.postgresql.PGNotification;
+import org.postgresql.jdbc.PgConnection;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -23,27 +35,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
-import org.factcast.store.pgsql.internal.PGConstants;
-import org.postgresql.PGNotification;
-import org.postgresql.jdbc.PgConnection;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
-
-import com.google.common.eventbus.EventBus;
-
-import lombok.AccessLevel;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * Listens (sql LISTEN command) to a channel on Postgresql and passes a trigger
  * on an EventBus.
- * 
+ *
  * This trigger then is supposed to "encourage" active subscriptions to query
  * for new Facts from PG.
- * 
+ *
  * @author uwe.schaefer@mercateo.com
  *
  */
@@ -58,7 +56,7 @@ public class PGListener implements InitializingBean, DisposableBean {
 
     final @NonNull Predicate<Connection> pgConnectionTester;
 
-    final AtomicBoolean running = new AtomicBoolean(true);
+    private final AtomicBoolean running = new AtomicBoolean(true);
 
     private Thread listenerThread;
 
@@ -100,7 +98,7 @@ public class PGListener implements InitializingBean, DisposableBean {
                             }
                         } else {
                             log("Connection is failing test", null);
-                            sleepOneSecondUnlessTesting(1000);
+                            sleepOneSecondUnlessTesting();
                             break;
                         }
                     }
@@ -108,7 +106,7 @@ public class PGListener implements InitializingBean, DisposableBean {
                 } catch (SQLException e) {
 
                     log("While waiting for Notifications", e);
-                    sleepOneSecondUnlessTesting(1000);
+                    sleepOneSecondUnlessTesting();
 
                 }
             }
@@ -124,9 +122,9 @@ public class PGListener implements InitializingBean, DisposableBean {
         }
     }
 
-    private void sleepOneSecondUnlessTesting(int i) {
+    private void sleepOneSecondUnlessTesting() {
         try {
-            Thread.sleep(inJunitTest() ? Math.min(50, i) : i);
+            Thread.sleep(inJunitTest() ? 50 : 1000);
         } catch (InterruptedException ignored) {
         }
     }
