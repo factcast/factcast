@@ -15,17 +15,18 @@
  */
 package org.factcast.store.pgsql.internal.rowmapper;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.factcast.core.Fact;
 import org.factcast.core.IdOnlyFact;
 import org.factcast.store.pgsql.internal.PGConstants;
 import org.springframework.jdbc.core.RowMapper;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class PGIdFactExtractor implements RowMapper<Fact> {

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+
+PREFIX="> pre-commit [$(basename $0)]"
+echo "$PREFIX enforcing sort order of java import section"
+mvn -q impsort:sort

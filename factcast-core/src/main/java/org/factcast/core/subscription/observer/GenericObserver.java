@@ -15,13 +15,14 @@
  */
 package org.factcast.core.subscription.observer;
 
-import lombok.AccessLevel;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import java.util.function.Function;
+
 import org.factcast.core.Fact;
 import org.slf4j.LoggerFactory;
 
-import java.util.function.Function;
+import lombok.AccessLevel;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Callback interface to use when subscribing to Facts or Ids from a FactCast.

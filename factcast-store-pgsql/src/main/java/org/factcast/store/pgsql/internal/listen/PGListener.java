@@ -15,18 +15,6 @@
  */
 package org.factcast.store.pgsql.internal.listen;
 
-import com.google.common.eventbus.EventBus;
-import lombok.AccessLevel;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.factcast.store.pgsql.internal.PGConstants;
-import org.postgresql.PGNotification;
-import org.postgresql.jdbc.PgConnection;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -34,6 +22,20 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
+
+import org.factcast.store.pgsql.internal.PGConstants;
+import org.postgresql.PGNotification;
+import org.postgresql.jdbc.PgConnection;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
+
+import com.google.common.eventbus.EventBus;
+
+import lombok.AccessLevel;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Listens (sql LISTEN command) to a channel on Postgresql and passes a trigger

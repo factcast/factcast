@@ -15,16 +15,18 @@
  */
 package org.factcast.core;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
-import org.factcast.core.util.FactCastJson;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
+
+import org.factcast.core.util.FactCastJson;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import lombok.*;
 
 /**
  * Note: creating an instance involves deserializing the header from JS. This is

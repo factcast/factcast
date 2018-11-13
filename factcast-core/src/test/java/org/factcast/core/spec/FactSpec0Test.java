@@ -1,11 +1,11 @@
 package org.factcast.core.spec;
 
+import static org.junit.Assert.*;
+
 import java.util.UUID;
 
 import org.factcast.core.MarkFact;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 //TODO remove?
 public class FactSpec0Test {

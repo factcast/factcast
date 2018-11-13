@@ -15,11 +15,13 @@
  */
 package org.factcast.client.grpc.cli.util;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.RequiredArgsConstructor;
 import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.Fact;
 import org.factcast.core.util.FactCastJson;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class FactRenderer {
