@@ -16,3 +16,5 @@ test_local.sh
 **/dependency-reduced*
 **/*.releaseBackup
 release.properties
+.attach_pid*
+
