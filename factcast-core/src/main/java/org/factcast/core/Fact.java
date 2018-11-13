@@ -15,12 +15,14 @@
  */
 package org.factcast.core;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import lombok.NonNull;
-import org.factcast.core.DefaultFact.Header;
-
 import java.util.Set;
 import java.util.UUID;
+
+import org.factcast.core.DefaultFact.Header;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
+import lombok.NonNull;
 
 /**
  * Defines a fact to be either published or consumed. Consists of two JSON

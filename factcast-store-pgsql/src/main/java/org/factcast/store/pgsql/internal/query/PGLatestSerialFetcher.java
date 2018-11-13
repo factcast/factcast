@@ -15,13 +15,14 @@
  */
 package org.factcast.store.pgsql.internal.query;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.factcast.store.pgsql.internal.PGConstants;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Fetches the latest SERIAL from the fact table.

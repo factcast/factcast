@@ -1,5 +1,7 @@
 package org.factcast.core;
 
+import static org.junit.Assert.*;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -10,8 +12,6 @@ import java.util.UUID;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonParseException;
-
-import static org.junit.Assert.*;
 
 public class DefaultFact0Test {
 

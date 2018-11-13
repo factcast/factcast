@@ -1,10 +1,10 @@
 package org.factcast.core.subscription.observer;
 
-import org.factcast.core.Test0Fact;
-import org.junit.Test;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+
+import org.factcast.core.Test0Fact;
+import org.junit.Test;
 
 public class GenericObserver0Test {
 

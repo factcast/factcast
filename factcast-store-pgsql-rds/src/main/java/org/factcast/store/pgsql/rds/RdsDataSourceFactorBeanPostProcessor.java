@@ -15,13 +15,14 @@
  */
 package org.factcast.store.pgsql.rds;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.cloud.aws.jdbc.datasource.TomcatJdbcDataSourceFactory;
 import org.springframework.cloud.aws.jdbc.rds.AmazonRdsDataSourceFactoryBean;
 import org.springframework.core.env.Environment;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 /**
  * exchange the given TomcatJdbcDataSourceFactory with a customized factory so
