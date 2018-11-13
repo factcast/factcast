@@ -2,6 +2,6 @@
 
 set -e
 
-PREFIX="> pre-commit [$(basename $0)]"
-echo "$PREFIX enforcing sort order of java import section"
+PREFIX="> pre-commit [$(basename $0)]\t\t"
+echo -e "$PREFIX enforcing sort order of java import section"
 mvn -q impsort:sort
