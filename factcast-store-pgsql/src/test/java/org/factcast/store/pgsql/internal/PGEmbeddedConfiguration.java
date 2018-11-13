@@ -2,8 +2,6 @@ package org.factcast.store.pgsql.internal;
 
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 
-import java.io.IOException;
-
 import org.factcast.store.pgsql.PGConfigurationProperties;
 import org.mockito.Mockito;
 import org.postgresql.Driver;
@@ -15,67 +13,44 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import com.codahale.metrics.MetricRegistry;
 
-import ru.yandex.qatools.embed.postgresql.PostgresExecutable;
-import ru.yandex.qatools.embed.postgresql.PostgresProcess;
-import ru.yandex.qatools.embed.postgresql.PostgresStarter;
-import ru.yandex.qatools.embed.postgresql.config.AbstractPostgresConfig.Credentials;
-import ru.yandex.qatools.embed.postgresql.config.AbstractPostgresConfig.Net;
-import ru.yandex.qatools.embed.postgresql.config.AbstractPostgresConfig.Storage;
-import ru.yandex.qatools.embed.postgresql.config.AbstractPostgresConfig.Timeout;
-import ru.yandex.qatools.embed.postgresql.config.PostgresConfig;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @ComponentScan(basePackageClasses = PGConfigurationProperties.class)
 @Import(PGFactStoreInternalConfiguration.class)
 @ImportAutoConfiguration({ DataSourceAutoConfiguration.class, JdbcTemplateAutoConfiguration.class,
         TransactionAutoConfiguration.class })
+@Slf4j
 public class PGEmbeddedConfiguration {
 
     static org.apache.tomcat.jdbc.pool.DataSource ds;
 
     static {
-
         String url = System.getenv("pg_url");
 
         if (url == null) {
-            try {
-                PostgresConfig pgConfig =
+            log.info("Trying to start postgres testcontainer");
 
-                        new PostgresConfig(
-                                ru.yandex.qatools.embed.postgresql.distribution.Version.V10_3,
-                                new Net(), new Storage("embedded"), new Timeout(),
-                                new Credentials("test", "test"));
-                PostgresStarter<PostgresExecutable, PostgresProcess> runtime = PostgresStarter
-                        .getDefaultInstance();
-                PostgresExecutable exec = runtime.prepare(pgConfig);
-                exec.start();
+            PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>();
+            postgres.start();
 
-                String host = pgConfig.net().host();
-                int port = pgConfig.net().port();
-                String dbName = pgConfig.storage().dbName();
-                url = String.format("jdbc:postgresql://%s:%s/%s", host, port, dbName);
-                //
+            url = postgres.getJdbcUrl();
 
-                System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
-
-                System.setProperty("spring.datasource.username", pgConfig.credentials().username());
-                System.setProperty("spring.datasource.password", pgConfig.credentials().password());
-                System.setProperty("spring.datasource.host", host);
-                System.setProperty("spring.datasource.port", Integer.valueOf(port).toString());
-
-                System.setProperty("spring.datasource.url", url);
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
+            System.setProperty("spring.datasource.url", url);
+            System.setProperty("spring.datasource.username", postgres.getUsername());
+            System.setProperty("spring.datasource.password", postgres.getPassword());
         } else {
+
+            log.info("Using predefined external postgres URL: " + url);
+
             // use predefined url
             System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
             System.setProperty("spring.datasource.url", url);
-
         }
     }
 
