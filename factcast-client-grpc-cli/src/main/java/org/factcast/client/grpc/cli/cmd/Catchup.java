@@ -32,6 +32,7 @@ import com.beust.jcommander.Parameters;
         commandNames = "catchup",
         commandDescription = "Read all the matching facts up to now and exit.")
 public class Catchup implements Command {
+
     @Parameter(names = "-ns", description = "the namespace filtered on", required = true)
     String ns;
 
@@ -42,13 +43,10 @@ public class Catchup implements Command {
     public void runWith(FactCast fc, Options opt) {
         ConsoleFactObserver obs = new ConsoleFactObserver(opt);
         SpecBuilder catchup = SubscriptionRequest.catchup(FactSpec.ns(ns));
-
         if (from == null)
             fc.subscribeToFacts(catchup.fromScratch(), obs);
         else
             fc.subscribeToFacts(catchup.from(from), obs);
-
         obs.awaitTermination();
     }
-
 }

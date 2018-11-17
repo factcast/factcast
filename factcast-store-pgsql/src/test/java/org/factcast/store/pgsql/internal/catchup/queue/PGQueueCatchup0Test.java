@@ -14,14 +14,16 @@ import org.factcast.store.pgsql.PGConfigurationProperties;
 import org.factcast.store.pgsql.internal.PGPostQueryMatcher;
 import org.factcast.store.pgsql.internal.catchup.PGCatchUpFetchPage;
 import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-@RunWith(org.mockito.junit.MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PGQueueCatchup0Test {
+
     @Mock
     private JdbcTemplate jdbc;
 
@@ -50,20 +52,15 @@ public class PGQueueCatchup0Test {
     public void testDoFetchFacts() {
         final PGCatchUpFetchPage page = mock(PGCatchUpFetchPage.class);
         uut.doFetch(page);
-
         verify(page).fetchFacts(any(AtomicLong.class));
     }
 
     @Test
     public void testDoFetchIds() {
         final PGCatchUpFetchPage page = mock(PGCatchUpFetchPage.class);
-
         when(request.idOnly()).thenReturn(true);
         when(postQueryMatcher.canBeSkipped()).thenReturn(true);
-
         uut.doFetch(page);
-
         verify(page).fetchIdFacts(any(AtomicLong.class));
     }
-
 }

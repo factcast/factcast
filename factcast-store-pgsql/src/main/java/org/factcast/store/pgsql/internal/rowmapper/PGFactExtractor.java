@@ -29,12 +29,13 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class PGFactExtractor implements RowMapper<Fact> {
+
     final AtomicLong serial;
 
     @Override
-    public @NonNull Fact mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
+    @NonNull
+    public Fact mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
         serial.set(rs.getLong(PGConstants.COLUMN_SER));
         return PGFact.from(rs);
     }
-
 }

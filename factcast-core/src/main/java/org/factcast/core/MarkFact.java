@@ -28,7 +28,6 @@ import lombok.NonNull;
  * views.
  *
  * @author uwe.schaefer@mercateo.com
- *
  */
 @Getter
 public class MarkFact implements Fact {
@@ -63,5 +62,4 @@ public class MarkFact implements Fact {
     public String meta(String key) {
         return null;
     }
-
 }

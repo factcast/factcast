@@ -1,7 +1,7 @@
 package org.factcast.store.pgsql.internal;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Collections;
 import java.util.UUID;
@@ -9,18 +9,20 @@ import java.util.UUID;
 import org.factcast.core.MarkFact;
 import org.factcast.core.store.FactStore;
 import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.factcast.store.test.IntegrationTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { PGEmbeddedConfiguration.class })
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
+@ExtendWith(SpringExtension.class)
+@IntegrationTest
 public class PGFactIdToSerMapper3IT {
 
     @Autowired

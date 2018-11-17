@@ -20,12 +20,12 @@ import lombok.NonNull;
 
 /**
  * Constants based on a given prefix for metrics-names.
- * 
- * @author <uwe.schaefer@mercateo.com>
  *
+ * @author <uwe.schaefer@mercateo.com>
  */
 @Getter
 public class FactStoreMetricNames {
+
     static final String PREFIX = "factstore.";
 
     final String type;
@@ -52,18 +52,15 @@ public class FactStoreMetricNames {
 
     protected FactStoreMetricNames(@NonNull String type) {
         this.type = type;
-
         factPublishingFailed = PREFIX + type + ".publish.failure";
         factPublishingLatency = PREFIX + type + ".publish.fact.latency";
         factPublishingMeter = PREFIX + type + ".publish.fact.meter";
-
         fetchLatency = PREFIX + type + ".fetchById.latency";
         namespaceLatency = PREFIX + type + ".distinctNamespaces.latency";
         typeLatency = PREFIX + type + ".distinctTypeByNamespace.latency";
         seqLookupLatency = PREFIX + type + ".seqLookup.latency";
         subscribeCatchup = PREFIX + type + ".subscribe.catchup";
         subscribeFollow = PREFIX + type + ".subscribe.follow";
-
         connectionFailure = PREFIX + type + ".pgsql.reconnect";
     }
 }

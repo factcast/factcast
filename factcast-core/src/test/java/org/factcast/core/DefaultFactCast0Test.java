@@ -1,9 +1,9 @@
 package org.factcast.core;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doNothing;
@@ -21,15 +21,18 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(org.mockito.junit.MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DefaultFactCast0Test {
+
     @Mock
     private FactStore store;
 
@@ -48,18 +51,13 @@ public class DefaultFactCast0Test {
     @Test
     public void testSubscribeToFacts() {
         when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
-
         final UUID since = UUID.randomUUID();
         SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.forMark())
-                .or(FactSpec.ns(
-                        "some").type("type"))
+                .or(FactSpec.ns("some").type("type"))
                 .from(since);
-
         uut.subscribeToFacts(r, f -> {
         });
-
         verify(store).subscribe(any(), any());
-
         final SubscriptionRequestTO req = csr.getValue();
         assertTrue(req.continuous());
         assertFalse(req.idOnly());
@@ -70,17 +68,12 @@ public class DefaultFactCast0Test {
     @Test
     public void testSubscribeToIds() {
         when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
-
         SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.forMark())
-                .or(FactSpec.ns(
-                        "some").type("type"))
+                .or(FactSpec.ns("some").type("type"))
                 .fromScratch();
-
         uut.subscribeToIds(r, f -> {
         });
-
         verify(store).subscribe(any(), any());
-
         final SubscriptionRequestTO req = csr.getValue();
         assertTrue(req.continuous());
         assertTrue(req.idOnly());
@@ -90,96 +83,120 @@ public class DefaultFactCast0Test {
     @Test
     public void testFetchById() {
         when(store.fetchById(cuuid.capture())).thenReturn(Optional.empty());
-
         final UUID id = UUID.randomUUID();
         uut.fetchById(id);
-
         assertSame(id, cuuid.getValue());
     }
 
     @Test
     public void testPublish() {
         doNothing().when(store).publish(cfacts.capture());
-
         final Test0Fact f = new Test0Fact();
         uut.publish(f);
-
         final List<Fact> l = cfacts.getValue();
         assertEquals(1, l.size());
         assertTrue(l.contains(f));
-
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNoId() {
-        uut.publish(new Test0Fact().id(null));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            uut.publish(new Test0Fact().id(null));
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNoNamespace() {
-        uut.publish(new Test0Fact().ns(null));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            uut.publish(new Test0Fact().ns(null));
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testPublishOneNull() {
-        uut.publish((Fact) null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.publish((Fact) null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testPublishManyNull() {
-        uut.publish((List<Fact>) null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.publish((List<Fact>) null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testFetchByIdNull() {
-        uut.fetchById(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.fetchById(null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testSubscribeIdsNull() {
-        uut.subscribeToIds(null, null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToIds(null, null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testSubscribeFactsNull() {
-        uut.subscribeToFacts(null, null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToFacts(null, null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testSubscribeIds1stArgNull() {
-        uut.subscribeToIds(null, f -> {
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToIds(null, f -> {
+            });
         });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testSubscribeFacts1stArgNull() {
-        uut.subscribeToFacts(null, f -> {
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToFacts(null, f -> {
+            });
         });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testSubscribeIds2ndArgNull() {
-        uut.subscribeToIds(SubscriptionRequest.follow(FactSpec.forMark()).fromScratch(), null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToIds(SubscriptionRequest.follow(FactSpec.forMark()).fromScratch(), null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testSubscribeFacts2ndArgNull() {
-        uut.subscribeToFacts(SubscriptionRequest.follow(FactSpec.forMark()).fromScratch(), null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToFacts(SubscriptionRequest.follow(FactSpec.forMark()).fromScratch(),
+                    null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testDefaultFactCast() {
-        new DefaultFactCast(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            new DefaultFactCast(null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testpublishWithMarkOneNull() {
-        uut.publishWithMark((Fact) null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.publishWithMark((Fact) null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testpublishWithMarkManyNull() {
-        uut.publishWithMark((List<Fact>) null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.publishWithMark((List<Fact>) null);
+        });
     }
 
     @Test
@@ -190,8 +207,10 @@ public class DefaultFactCast0Test {
         verify(store).serialOf(same(id));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testSerialOfNull() {
-        uut.serialOf(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.serialOf(null);
+        });
     }
 }

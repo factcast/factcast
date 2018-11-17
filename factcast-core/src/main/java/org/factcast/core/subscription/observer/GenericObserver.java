@@ -30,10 +30,9 @@ import lombok.RequiredArgsConstructor;
  * see {@link IdObserver}, {@link FactObserver}
  *
  * @author uwe.schaefer@mercateo.com
- *
- *
  */
 public interface GenericObserver<I> {
+
     void onNext(@NonNull I element);
 
     default void onCatchup() {

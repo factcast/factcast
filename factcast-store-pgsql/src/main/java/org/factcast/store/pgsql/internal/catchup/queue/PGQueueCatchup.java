@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class PGQueueCatchup implements PGCatchup {
+
     @NonNull
     final JdbcTemplate jdbc;
 
@@ -66,7 +67,6 @@ public class PGQueueCatchup implements PGCatchup {
     private long clientId = 0;
 
     public LinkedList<Fact> doFetch(PGCatchUpFetchPage fetch) {
-
         if (idsOnly()) {
             return fetch.fetchIdFacts(serial);
         } else {
@@ -80,21 +80,16 @@ public class PGQueueCatchup implements PGCatchup {
 
     @Override
     public void run() {
-
         PGCatchUpPrepare prep = new PGCatchUpPrepare(jdbc, request);
         clientId = prep.prepareCatchup(serial);
-
         if (clientId > 0) {
             try {
                 final boolean idsOnly = idsOnly();
                 final int queueSize = idsOnly ? props.getQueueSizeForIds() : props.getQueueSize();
                 final int fetchSize = idsOnly ? props.getFetchSizeForIds() : props.getFetchSize();
-
                 PGCatchupQueue q = new PGCatchupQueue(queueSize);
-
                 PGCatchUpFetchPage fetch = new PGCatchUpFetchPage(jdbc, fetchSize, request,
                         clientId);
-
                 Runnable refill = () -> {
                     while (true) {
                         LinkedList<Fact> facts = doFetch(fetch);
@@ -103,7 +98,6 @@ public class PGQueueCatchup implements PGCatchup {
                             q.notifyDone();
                             break;
                         }
-
                         facts.stream().filter(postQueryMatcher).forEachOrdered(f -> {
                             try {
                                 if (!q.offer(f, 15, TimeUnit.MINUTES)) {
@@ -123,9 +117,7 @@ public class PGQueueCatchup implements PGCatchup {
                         });
                     }
                 };
-
                 CompletableFuture.runAsync(refill);
-
                 while (true) {
                     Fact f = q.poll(50, TimeUnit.MILLISECONDS);
                     if (f != null) {
@@ -139,7 +131,6 @@ public class PGQueueCatchup implements PGCatchup {
                             // disconnecting clients.
                             log.debug("{} exception from subscription: {}", request, e
                                     .getMessage());
-
                             try {
                                 subscription.close();
                             } catch (Exception e1) {
@@ -161,5 +152,4 @@ public class PGQueueCatchup implements PGCatchup {
             }
         }
     }
-
 }

@@ -37,25 +37,16 @@ import lombok.RequiredArgsConstructor;
 public class CLI {
 
     public static void main(String[] args) {
-
         String[] arguments = args;
-
         if (arguments == null || arguments.length == 0)
             arguments = new String[] { "--help" };
-
-        Parser parser = new Parser(
-                new Catchup(),
-                new Follow(),
-                new Publish(),
-                new Fetch(),
-                new EnumerateNamespaces(),
-                new EnumerateTypes(),
-                new SerialOf());
+        Parser parser = new Parser(new Catchup(), new Follow(), new Publish(), new Fetch(),
+                new EnumerateNamespaces(), new EnumerateTypes(), new SerialOf());
         try {
             Command cmd = parser.parse(arguments);
             if (cmd != null)
-                cmd.runWith(SpringApplication.run(CLI.class)
-                        .getBean(FactCast.class), parser.options());
+                cmd.runWith(SpringApplication.run(CLI.class).getBean(FactCast.class), parser
+                        .options());
         } catch (ParameterException e) {
             System.err.println();
             System.err.println("*** Error: " + e.getMessage());

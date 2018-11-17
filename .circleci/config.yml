@@ -8,6 +8,7 @@ jobs:
     docker:
       # specify the version you desire here
       - image: circleci/openjdk:8-jdk
+#      - image: maven/3.6.0-jdk-8
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
@@ -24,9 +25,9 @@ jobs:
 #      MAVEN_OPTS: -Xmx2600m
       pg_url: jdbc:postgresql://localhost/test?currentSchema=public&username=circleci&password=test
       CODECOV_TOKEN: 48e19fae-3c35-4c56-9297-8620e6808cc9
-      MAVEN_OPTS: "-Xmx1500M"
-      JAVA_OPTS: "-Xms1500M -Xmx1500M"
-      _JAVA_OPTIONS : "-Xms1500M -Xmx1500M"
+      MAVEN_OPTS: "-Xmx512M"
+      JAVA_OPTS: "-Xms512M -Xmx512M"
+      _JAVA_OPTIONS : "-Xms512M -Xmx512M"
     
     steps:
       - checkout
@@ -52,6 +53,7 @@ jobs:
       - run: 
           name: FullTest
           command: |
+            mvn --version
             mvn -B clean install jacoco:report -DrepoToken=sMBbBcjrybuhdwKHFC61BvBU5y4oAjNEt -Dpg_url=$pg_url
             bash <(curl -s https://codecov.io/bash)
 

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.factcast</groupId>
+    <artifactId>factcast</artifactId>
+    <version>0.0.27-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+  <artifactId>factcast-example-client-spring-boot1</artifactId>
+  <properties>
+    <spring-boot.version>1.5.9.RELEASE</spring-boot.version>
+  </properties>
+  <dependencyManagement>
+    <dependencies>
+      <!-- note: the order is important here! -->
+      <!-- first, get all the factcast artifact's versions pinned -->
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-bom</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- second, pick the spring boot versions you want to use -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-client-grpc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-spring-boot-autoconfigure</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+    <!--
+    only needed, if you want to use TLS
+    -->
+    <!--
+        <dependency>
+          <groupId>io.netty</groupId>
+          <artifactId>netty-tcnative-boringssl-static</artifactId>
+          <version>2.0.20.Final</version>
+        </dependency>
+    -->
+    <!--
+    if, for some reason, you want to stick to the "old" spring boot grpc lib,
+    see https://github.com/yidongnan/grpc-spring-boot-starter
+    -->
+    <!--<dependency>
+      <groupId>net.devh</groupId>
+      <artifactId>grpc-client-spring-boot-starter</artifactId>
+      <version>1.4.1.RELEASE</version>
+    </dependency>-->
+  </dependencies>
+</project>

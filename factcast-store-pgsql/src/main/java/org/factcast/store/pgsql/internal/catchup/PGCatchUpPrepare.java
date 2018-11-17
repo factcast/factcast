@@ -33,9 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Copies all matching SERs from fact to the catchup table, in order to be able
  * to page effectively, without repeatingly doing the index scan.
- * 
- * @author <uwe.schaefer@mercateo.com>
  *
+ * @author <uwe.schaefer@mercateo.com>
  */
 @RequiredArgsConstructor
 @Slf4j
@@ -50,7 +49,6 @@ public class PGCatchUpPrepare {
         long clientId = jdbc.queryForObject(PGConstants.NEXT_FROM_CATCHUP_SEQ, Long.class);
         String catchupSQL = b.catchupSQL(clientId);
         return jdbc.execute(catchupSQL, (PreparedStatementCallback<Long>) ps -> {
-
             log.debug("{} preparing paging for matches after {}", req, serial.get());
             try {
                 Stopwatch sw = Stopwatch.createStarted();
@@ -59,8 +57,7 @@ public class PGCatchUpPrepare {
                 sw.stop();
                 if (numberOfFactsToCatchup > 0) {
                     log.debug("{} prepared {} facts for cid={} in {}ms", req,
-                            numberOfFactsToCatchup, clientId, sw.elapsed(
-                                    TimeUnit.MILLISECONDS));
+                            numberOfFactsToCatchup, clientId, sw.elapsed(TimeUnit.MILLISECONDS));
                     return clientId;
                 } else {
                     log.debug("{} nothing to catch up", req);
@@ -71,7 +68,5 @@ public class PGCatchUpPrepare {
                 throw ex;
             }
         });
-
     }
-
 }

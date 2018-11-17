@@ -4,4 +4,4 @@ set -e
 
 PREFIX="> pre-commit [$(basename $0)]\t\t"
 echo -e "$PREFIX checking format of java files"
-mvn -q formatter:validate || ( echo "$PREFIX Please format your java files according to the format definition in src/eclipse" && echo "$PREFIX You can do that by typing 'mvn formatter:format' if your IDE does not help with that." && exit 1)
+mvn -q formatter:validate || ( echo -e "$PREFIX Please format your java files according to the format definition in src/eclipse" && echo -e "$PREFIX You can do that by typing 'mvn formatter:format' if your IDE does not help with that." && exit 1)

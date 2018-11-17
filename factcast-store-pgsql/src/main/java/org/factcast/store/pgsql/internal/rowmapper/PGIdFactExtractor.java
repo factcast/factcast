@@ -34,10 +34,9 @@ public class PGIdFactExtractor implements RowMapper<Fact> {
     final AtomicLong serial;
 
     @Override
-    public @NonNull Fact mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
+    @NonNull
+    public Fact mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
         serial.set(rs.getLong(PGConstants.COLUMN_SER));
         return new IdOnlyFact(UUID.fromString(rs.getString(PGConstants.ALIAS_ID)));
-
     }
-
 }

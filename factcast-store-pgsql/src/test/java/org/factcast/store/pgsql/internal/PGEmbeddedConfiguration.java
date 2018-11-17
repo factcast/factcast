@@ -31,23 +31,17 @@ public class PGEmbeddedConfiguration {
 
     static {
         String url = System.getenv("pg_url");
-
         if (url == null) {
             log.info("Trying to start postgres testcontainer");
-
             PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>();
             postgres.start();
-
             url = postgres.getJdbcUrl();
-
             System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
             System.setProperty("spring.datasource.url", url);
             System.setProperty("spring.datasource.username", postgres.getUsername());
             System.setProperty("spring.datasource.password", postgres.getPassword());
         } else {
-
             log.info("Using predefined external postgres URL: " + url);
-
             // use predefined url
             System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
             System.setProperty("spring.datasource.url", url);

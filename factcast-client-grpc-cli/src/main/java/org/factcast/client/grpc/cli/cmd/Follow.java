@@ -40,13 +40,12 @@ public class Follow implements Command {
     UUID from;
 
     @Parameter(names = "-fromNowOn", help = true, description = "read only future facts")
-    final boolean fromNow = false;
+    boolean fromNow = false;
 
     @Override
     public void runWith(FactCast fc, Options opt) {
         ConsoleFactObserver obs = new ConsoleFactObserver(opt);
         SpecBuilder catchup = SubscriptionRequest.follow(FactSpec.ns(ns));
-
         if (fromNow)
             fc.subscribeToFacts(catchup.fromNowOn(), obs);
         else {
@@ -55,8 +54,6 @@ public class Follow implements Command {
             else
                 fc.subscribeToFacts(catchup.from(from), obs);
         }
-
         obs.awaitTermination();
     }
-
 }

@@ -2,42 +2,57 @@ package org.factcast.core;
 
 import java.util.UUID;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class IdOnlyFact0Test {
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testNs() {
-        new IdOnlyFact(UUID.randomUUID()).ns();
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+            new IdOnlyFact(UUID.randomUUID()).ns();
+        });
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testType() {
-        new IdOnlyFact(UUID.randomUUID()).type();
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+            new IdOnlyFact(UUID.randomUUID()).type();
+        });
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testAggIds() {
-        new IdOnlyFact(UUID.randomUUID()).aggIds();
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+            new IdOnlyFact(UUID.randomUUID()).aggIds();
+        });
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testJsonHeader() {
-        new IdOnlyFact(UUID.randomUUID()).jsonHeader();
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+            new IdOnlyFact(UUID.randomUUID()).jsonHeader();
+        });
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testJsonPayload() {
-        new IdOnlyFact(UUID.randomUUID()).jsonPayload();
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+            new IdOnlyFact(UUID.randomUUID()).jsonPayload();
+        });
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testMeta() {
-        new IdOnlyFact(UUID.randomUUID()).meta("");
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+            new IdOnlyFact(UUID.randomUUID()).meta("");
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testNullId() {
-        new IdOnlyFact(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            new IdOnlyFact(null);
+        });
     }
 }

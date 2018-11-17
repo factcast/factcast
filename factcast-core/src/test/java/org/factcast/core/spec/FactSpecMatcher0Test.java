@@ -1,7 +1,7 @@
 package org.factcast.core.spec;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -9,7 +9,8 @@ import java.util.function.Predicate;
 
 import org.factcast.core.Fact;
 import org.factcast.core.Test0Fact;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class FactSpecMatcher0Test {
 
@@ -24,14 +25,12 @@ public class FactSpecMatcher0Test {
         assertFalse(metaMatch(FactSpec.ns("default").meta("foo", "bar"), new Test0Fact().meta("foo",
                 "baz")));
         assertFalse(metaMatch(FactSpec.ns("default").meta("foo", "bar"), new Test0Fact()));
-
     }
 
     @Test
     public void testNsMatch() {
         assertTrue(nsMatch(FactSpec.ns("default"), new Test0Fact().ns("default")));
         assertFalse(nsMatch(FactSpec.ns("default"), new Test0Fact().ns("xxx")));
-
     }
 
     @Test
@@ -44,10 +43,8 @@ public class FactSpecMatcher0Test {
 
     @Test
     public void testAggIdMatch() {
-
         UUID u1 = UUID.randomUUID();
         UUID u2 = UUID.randomUUID();
-
         assertTrue(aggIdMatch(FactSpec.ns("default").aggId(u1), new Test0Fact().aggId(u1)));
         assertTrue(aggIdMatch(FactSpec.ns("default"), new Test0Fact().aggId(u1)));
         assertFalse(aggIdMatch(FactSpec.ns("default").aggId(u1), new Test0Fact().aggId(u2)));
@@ -64,7 +61,6 @@ public class FactSpecMatcher0Test {
     }
 
     // ---------------------------
-
     private boolean nsMatch(FactSpec s, Test0Fact f) {
         return new FactSpecMatcher(s).nsMatch(f);
     }
@@ -85,25 +81,26 @@ public class FactSpecMatcher0Test {
         return new FactSpecMatcher(s).metaMatch(f);
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testMatchesAnyOfNull() {
-        FactSpecMatcher.matchesAnyOf(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            FactSpecMatcher.matchesAnyOf(null);
+        });
     }
 
     @Test
     public void testMatchesAnyOf() {
         Predicate<Fact> p = FactSpecMatcher.matchesAnyOf(Arrays.asList(FactSpec.ns("1"), FactSpec
                 .ns("2")));
-
         assertTrue(p.test(new Test0Fact().ns("1")));
         assertTrue(p.test(new Test0Fact().ns("2")));
         assertFalse(p.test(new Test0Fact().ns("3")));
-
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testFactSpecMatcherNullConstructor() {
-        new FactSpecMatcher(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            new FactSpecMatcher(null);
+        });
     }
-
 }

@@ -32,20 +32,11 @@ import com.google.common.eventbus.EventBus;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * Creates Subscription connecting {@link SubscriptionRequestTO} and
- * {@link FactObserver}
- * 
- * 
- * @see PGFactStream
- * 
- * @author uwe.schaefer@mercateo.com
- *
- */
 // TODO integrate with PGQuery
 @RequiredArgsConstructor
 @Component
 class PGSubscriptionFactory {
+
     final JdbcTemplate jdbcTemplate;
 
     final EventBus eventBus;
@@ -58,12 +49,9 @@ class PGSubscriptionFactory {
 
     public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
         final SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
-
         PGFactStream pgsub = new PGFactStream(jdbcTemplate, eventBus, idToSerialMapper,
                 subscription, fetcher, catchupFactory);
         CompletableFuture.runAsync(() -> pgsub.connect(req));
-
         return subscription.onClose(pgsub::close);
     }
-
 }

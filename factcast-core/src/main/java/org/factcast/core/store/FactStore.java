@@ -30,15 +30,14 @@ import lombok.NonNull;
 
 /**
  * A read/Write FactStore.
- * 
+ *
  * Where FactCast is an interface to work with as an application, FactStore is
  * something that FactCast impls use to actually store and retrieve Facts.
- * 
+ *
  * In a sense it is an internal interface, or SPI implemented by for instance
  * InMemFactStore or PGFactStore.
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 public interface FactStore {
 
@@ -54,5 +53,4 @@ public interface FactStore {
     Set<String> enumerateNamespaces();
 
     Set<String> enumerateTypes(@NonNull String ns);
-
 }

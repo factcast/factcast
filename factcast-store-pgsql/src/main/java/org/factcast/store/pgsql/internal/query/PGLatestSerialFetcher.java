@@ -32,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Component
 public class PGLatestSerialFetcher {
+
     @NonNull
     final JdbcTemplate jdbcTemplate;
 
@@ -39,7 +40,6 @@ public class PGLatestSerialFetcher {
      * @return 0, if no Fact is found,
      */
     public long retrieveLatestSer() {
-
         try {
             SqlRowSet rs = jdbcTemplate.queryForRowSet(PGConstants.SELECT_LATEST_SER);
             if (rs.next()) {
@@ -49,5 +49,4 @@ public class PGLatestSerialFetcher {
         }
         return 0;
     }
-
 }

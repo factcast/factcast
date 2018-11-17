@@ -26,9 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Configuration to include in order to use an InMemStore
- * 
- * @author uwe.schaefer@mercateo.com, joerg.adler@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com, joerg.adler@mercateo.com
  */
 @SuppressWarnings("deprecation")
 @Configuration
@@ -39,7 +38,6 @@ public class InMemFactStoreAutoConfiguration {
     @Bean(destroyMethod = "shutdown")
     @Primary
     public FactStore factStore() {
-
         log.warn("");
         log.warn(
                 "***********************************************************************************************************");
@@ -50,7 +48,6 @@ public class InMemFactStoreAutoConfiguration {
         log.warn(
                 "***********************************************************************************************************");
         log.warn("");
-
         return new InMemFactStore();
     }
 }

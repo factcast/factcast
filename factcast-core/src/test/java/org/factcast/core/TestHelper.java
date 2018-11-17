@@ -1,10 +1,11 @@
 package org.factcast.core;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.Callable;
 
 public class TestHelper {
+
     public static void expectNPE(Callable<?> e) {
         expect(NullPointerException.class, e);
     }
@@ -17,8 +18,6 @@ public class TestHelper {
             if (!ex.isInstance(actual)) {
                 fail("Wrong exception, expected " + ex + " but got " + actual);
             }
-
         }
     }
-
 }

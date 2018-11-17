@@ -35,8 +35,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 #
-
-CREATE TRIGGER tr_fact_insert AFTER INSERT ON fact FOR EACH ROW EXECUTE PROCEDURE notifyFactInsert();
+CREATE CONSTRAINT TRIGGER tr_deferred_fact_insert AFTER INSERT ON fact DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE PROCEDURE notifyFactInsert();
 
 #
 create sequence catchup_seq;

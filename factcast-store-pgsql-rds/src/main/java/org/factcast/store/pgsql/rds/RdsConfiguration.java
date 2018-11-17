@@ -26,5 +26,4 @@ public class RdsConfiguration {
     RdsDataSourceFactorBeanPostProcessor rdsDataSourceFactorBeanPostProcessor(Environment env) {
         return new RdsDataSourceFactorBeanPostProcessor(env);
     }
-
 }

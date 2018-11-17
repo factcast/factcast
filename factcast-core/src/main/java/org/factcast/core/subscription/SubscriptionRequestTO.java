@@ -36,12 +36,11 @@ import lombok.experimental.FieldDefaults;
 /**
  * Implementation of {@link SubscriptionRequest}, that is supposed to be used
  * when transfered on the wire to a remote store (for instance via GRPC or REST)
- * 
+ *
  * Note that FactSpec.forMark() is silently added to the list of specifications,
  * if marks is true.
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter

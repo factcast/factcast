@@ -1,8 +1,14 @@
 package org.factcast.client.cache;
 
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.List;
@@ -16,16 +22,18 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.IdObserver;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CachingFactCast0Test {
+
     @Mock
     CachingFactLookup l;
 
@@ -39,7 +47,7 @@ public class CachingFactCast0Test {
 
     CachingFactCast uut;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         uut = new CachingFactCast(fc, l);
     }
@@ -48,76 +56,84 @@ public class CachingFactCast0Test {
     public void testFetchById() {
         CachingFactCast uut = new CachingFactCast(fc, l);
         when(l.lookup(any())).thenReturn(Optional.of(f));
-
         Optional<Fact> of = uut.fetchById(UUID.randomUUID());
-
         assertTrue(of.isPresent());
         assertSame(f, of.get());
         verify(l).lookup(any(UUID.class));
-
     }
 
     @Test
     public void testPublish() {
-
         List<Fact> facts = Collections.singletonList(f);
-
         uut.publish(facts);
-
         verify(fc).publish(same(facts));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testPublishNull() {
-        uut.publish((Fact) null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.publish((Fact) null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testPublishNullArgs() {
-        uut.publish((List<Fact>) null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.publish((List<Fact>) null);
+        });
     }
 
     @Test
     public void testSubscribeToIds() {
         SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.forMark()).fromScratch();
-
         final IdObserver observer = id -> {
         };
         uut.subscribeToIds(rs, observer);
-
         verify(fc).subscribeToIds(same(rs), same(observer));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testSubscribeToIdsNullParam() {
-        uut.subscribeToIds(null, f -> {
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToIds(null, f -> {
+            });
         });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testSubscribeToIdsNullParams() {
-        uut.subscribeToIds(null, null);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testSubscribeToIdsNullObserverParam() {
-        uut.subscribeToIds(mock(SubscriptionRequest.class), null);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testSubscribeToFactsNullParam() {
-        uut.subscribeToFacts(null, f -> {
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToIds(null, null);
         });
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testSubscribeToFactsNullParams() {
-        uut.subscribeToFacts(null, null);
+    @Test
+    public void testSubscribeToIdsNullObserverParam() {
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToIds(mock(SubscriptionRequest.class), null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
+    public void testSubscribeToFactsNullParam() {
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToFacts(null, f -> {
+            });
+        });
+    }
+
+    @Test
+    public void testSubscribeToFactsNullParams() {
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToFacts(null, null);
+        });
+    }
+
+    @Test
     public void testSubscribeToFactsNullObserverParam() {
-        uut.subscribeToFacts(mock(SubscriptionRequest.class), null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToFacts(mock(SubscriptionRequest.class), null);
+        });
     }
 
     @Test
@@ -126,28 +142,21 @@ public class CachingFactCast0Test {
         when(l.lookup(any())).thenReturn(Optional.of(f));
         when(fc.subscribeToIds(same(rs), obsCap.capture())).thenReturn(null);
         final FactObserver observer = mock(FactObserver.class);
-
         uut.subscribeToFacts(rs, observer);
-
         IdObserver underlyingObserver = obsCap.getValue();
         verify(fc).subscribeToIds(same(rs), any());
-
         verify(observer, never()).onCatchup();
         verify(observer, never()).onComplete();
         verify(observer, never()).onError(any());
-
         // provide an id
         underlyingObserver.onNext(f.id());
         // assume lookup for id
         verify(l).lookup(eq(f.id()));
-
         // verify signals get through
         underlyingObserver.onCatchup();
         verify(observer).onCatchup();
-
         underlyingObserver.onComplete();
         verify(observer).onComplete();
-
         Exception e = new Exception();
         underlyingObserver.onError(e);
         verify(observer).onError(same(e));
@@ -160,8 +169,10 @@ public class CachingFactCast0Test {
         verify(fc).serialOf(same(id));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testSerialOfNull() {
-        uut.serialOf(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            uut.serialOf(null);
+        });
     }
 }

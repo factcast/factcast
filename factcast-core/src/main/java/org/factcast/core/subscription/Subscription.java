@@ -19,13 +19,12 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * @author <uwe.schaefer@mercateo.com>
- *
  */
 public interface Subscription extends AutoCloseable {
 
     /**
      * blocks until Catchup or Cancelled event received
-     * 
+     *
      * @return this
      * @throws SubscriptionCancelledException
      */
@@ -33,7 +32,7 @@ public interface Subscription extends AutoCloseable {
 
     /**
      * blocks until Catchup or Cancelled event received
-     * 
+     *
      * @param waitTimeInMillis
      * @return this
      * @throws SubscriptionCancelledException
@@ -45,7 +44,7 @@ public interface Subscription extends AutoCloseable {
 
     /**
      * blocks until Complete or Cancelled event received
-     * 
+     *
      * @return
      * @throws SubscriptionCancelledException
      */
@@ -53,7 +52,7 @@ public interface Subscription extends AutoCloseable {
 
     /**
      * blocks until Complete or Cancelled event received
-     * 
+     *
      * @param waitTimeInMillis
      * @return this
      * @throws SubscriptionCancelledException
@@ -62,5 +61,4 @@ public interface Subscription extends AutoCloseable {
      */
     Subscription awaitComplete(long waitTimeInMillis) throws SubscriptionCancelledException,
             TimeoutException;
-
 }

@@ -56,5 +56,4 @@ public class ConsoleFactObserver implements FactObserver {
         exception.printStackTrace();
         notify();
     }
-
 }

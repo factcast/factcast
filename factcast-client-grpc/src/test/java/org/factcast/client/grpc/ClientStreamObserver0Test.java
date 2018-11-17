@@ -14,13 +14,14 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ClientStreamObserver0Test {
 
     @Mock
@@ -32,15 +33,17 @@ public class ClientStreamObserver0Test {
 
     private SubscriptionImpl<Fact> subscription;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         subscription = spy(new SubscriptionImpl<>(factObserver));
         uut = new ClientStreamObserver(subscription);
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testConstructorNull() {
-        new ClientStreamObserver(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            new ClientStreamObserver(null);
+        });
     }
 
     @Test
@@ -81,5 +84,4 @@ public class ClientStreamObserver0Test {
         uut.onError(new IOException());
         verify(factObserver).onError(any());
     }
-
 }

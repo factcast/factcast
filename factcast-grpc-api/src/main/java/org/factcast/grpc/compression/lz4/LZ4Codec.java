@@ -23,9 +23,9 @@ import lombok.Generated;
 import net.jpountz.lz4.LZ4BlockInputStream;
 import net.jpountz.lz4.LZ4BlockOutputStream;
 
-// TODO add @GrpcCodec
 // waits for release of https://github.com/yidongnan/grpc-spring-boot-starter/issues/96
-@Generated // exclude from coverage analysis
+// exclude from coverage analysis
+@Generated
 public class LZ4Codec implements Codec {
 
     public static final String ENCODING = "lz4";
@@ -44,5 +44,4 @@ public class LZ4Codec implements Codec {
     public InputStream decompress(InputStream is) {
         return new LZ4BlockInputStream(is);
     }
-
 }

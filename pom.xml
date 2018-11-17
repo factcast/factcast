@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.mercateo.oss</groupId>
@@ -24,8 +23,7 @@
     <module>factcast-bom</module>
     <module>factcast-site</module>
     <module>factcast-internal-dep</module>
-    <module>factcast-internal-dep-boot1</module>
-    <module>factcast-internal-dep-boot2</module>
+    <module>factcast-internal-dep-boot</module>
     <module>factcast-spring-boot-autoconfigure</module>
     <module>factcast-client-grpc</module>
     <module>factcast-client-grpc-cli</module>
@@ -38,7 +36,8 @@
     <module>factcast-core</module>
     <module>factcast-server-grpc</module>
     <module>factcast-grpc-api</module>
-    <module>factcast-examples/factcast-example-grpc</module>
+    <module>factcast-examples/factcast-example-client-spring-boot1</module>
+    <module>factcast-examples/factcast-example-client-spring-boot2</module>
     <module>factcast-examples/factcast-example-server</module>
   </modules>
   <url>https://github.com/uweschaefer/factcast/tree/master/</url>
@@ -65,7 +64,6 @@
   <properties>
     <grpc.version>1.12.0</grpc.version>
     <assertj.version>2.6.0</assertj.version>
-    <junit.version>4.12</junit.version>
     <mockito.version>2.23.0</mockito.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
@@ -74,15 +72,32 @@
   </properties>
   <dependencies>
     <dependency>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
+      <version>1.3.2</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>1.7.22</version>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>5.3.1</version>
       <scope>test</scope>
-      <version>${junit.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>5.3.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-engine</artifactId>
+      <version>1.3.1</version>
     </dependency>
     <dependency>
       <groupId>org.assertj</groupId>
@@ -95,6 +110,11 @@
       <artifactId>mockito-core</artifactId>
       <version>${mockito.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <version>${mockito.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
@@ -168,21 +188,17 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.19.1</version>
+        <version>3.0.0-M1</version>
         <configuration>
-          <useSystemClassLoader>false</useSystemClassLoader>
-          <excludes>
-            <exclude>**/*IT.java</exclude>
-            <exclude>**/*MT.java</exclude>
-          </excludes>
+          <excludedGroups>integration</excludedGroups>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.19.1</version>
+        <version>3.0.0-M1</version>
         <configuration>
-          <useSystemClassLoader>false</useSystemClassLoader>
+          <groups>integration</groups>
         </configuration>
         <executions>
           <execution>
@@ -205,12 +221,12 @@
           <execution>
             <id>sort-imports</id>
             <goals>
-              <goal>sort</goal><!-- runs at process-sources phase by default -->
+              <goal>sort</goal>
+              <!-- runs at process-sources phase by default -->
             </goals>
           </execution>
         </executions>
       </plugin>
-
     </plugins>
     <resources>
       <resource>

@@ -29,9 +29,8 @@ import lombok.Setter;
 
 /**
  * Defines a Specification of facts to match for a subscription.
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 @Getter
 @Setter

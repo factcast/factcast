@@ -17,7 +17,12 @@ package org.factcast.store.pgsql.internal;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Set;
+import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
@@ -50,6 +55,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component("factStore")
 public class PGFactStore implements FactStore {
+
     // is that interesting to configure?
     private static final int BATCH_SIZE = 500;
 
@@ -89,16 +95,13 @@ public class PGFactStore implements FactStore {
         this.jdbcTemplate = jdbcTemplate;
         this.subscriptionFactory = subscriptionFactory;
         this.registry = registry;
-
         publishFailedCounter = registry.counter(names.factPublishingFailed());
         publishLatency = registry.timer(names.factPublishingLatency());
         publishMeter = registry.meter(names.factPublishingMeter());
-
         fetchLatency = registry.timer(names.fetchLatency());
         namespaceLatency = registry.timer(names.namespaceLatency());
         typeLatency = registry.timer(names.typeLatency());
         seqLookupLatency = registry.timer(names.seqLookupLatency());
-
         subscriptionCatchupMeter = registry.meter(names.subscribeCatchup());
         subscriptionFollowMeter = registry.meter(names.subscribeFollow());
     }
@@ -107,29 +110,21 @@ public class PGFactStore implements FactStore {
     @Transactional
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
         try (Context time = publishLatency.time()) {
-
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
             final int numberOfFactsToPublish = factsToPublish.size();
-
             log.trace("Inserting {} fact(s) in batches of {}", numberOfFactsToPublish, BATCH_SIZE);
-
-            jdbcTemplate.batchUpdate(PGConstants.INSERT_FACT, copiedListOfFacts,
-                    BATCH_SIZE, (
-                            statement, fact) -> {
-                        statement.setString(1, fact.jsonHeader());
-                        statement.setString(2, fact.jsonPayload());
-                    });
-
+            jdbcTemplate.batchUpdate(PGConstants.INSERT_FACT, copiedListOfFacts, BATCH_SIZE, (
+                    statement, fact) -> {
+                statement.setString(1, fact.jsonHeader());
+                statement.setString(2, fact.jsonPayload());
+            });
             // add serials to headers
-            jdbcTemplate.batchUpdate(PGConstants.UPDATE_FACT_SERIALS, copiedListOfFacts,
-                    BATCH_SIZE, (
-                            statement, fact) -> {
+            jdbcTemplate.batchUpdate(PGConstants.UPDATE_FACT_SERIALS, copiedListOfFacts, BATCH_SIZE,
+                    (statement, fact) -> {
                         final String idMatch = "{\"id\":\"" + fact.id() + "\"}";
                         statement.setString(1, idMatch);
                     });
-
             publishMeter.mark(numberOfFactsToPublish);
-
         } catch (DuplicateKeyException dupkey) {
             publishFailedCounter.inc();
             throw new IllegalArgumentException(dupkey.getMessage());
@@ -143,12 +138,14 @@ public class PGFactStore implements FactStore {
         return PGFact.from(resultSet);
     }
 
-    private @NonNull String extractStringFromResultSet(@NonNull ResultSet resultSet, int rowNum)
+    @NonNull
+    private String extractStringFromResultSet(@NonNull ResultSet resultSet, int rowNum)
             throws SQLException {
         return resultSet.getString(1);
     }
 
-    private @NonNull Long extractSerFromResultSet(@NonNull ResultSet resultSet, int rowNum)
+    @NonNull
+    private Long extractSerFromResultSet(@NonNull ResultSet resultSet, int rowNum)
             throws SQLException {
         return Long.valueOf(resultSet.getString(PGConstants.COLUMN_SER));
     }
@@ -156,7 +153,6 @@ public class PGFactStore implements FactStore {
     @Override
     public Subscription subscribe(@NonNull SubscriptionRequestTO request,
             @NonNull FactObserver observer) {
-
         if (request.continuous()) {
             subscriptionFollowMeter.mark();
         } else {
@@ -178,20 +174,17 @@ public class PGFactStore implements FactStore {
         try (Context time = seqLookupLatency.time()) {
             List<Long> res = jdbcTemplate.query(PGConstants.SELECT_SER_BY_ID, new Object[] {
                     "{\"id\":\"" + l + "\"}" }, this::extractSerFromResultSet);
-
             if (res.size() > 1) {
                 throw new IllegalStateException("Event ID appeared twice!?");
             } else if (res.isEmpty()) {
                 return OptionalLong.empty();
             }
-
             Long ser = res.get(0);
             if (ser != null && ser > 0) {
                 return OptionalLong.of(ser);
             } else {
                 return OptionalLong.empty();
             }
-
         }
     }
 
@@ -207,10 +200,7 @@ public class PGFactStore implements FactStore {
     public Set<String> enumerateTypes(String ns) {
         try (Context time = typeLatency.time()) {
             return new HashSet<>(jdbcTemplate.query(PGConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
-                    new Object[] {
-                            ns },
-                    this::extractStringFromResultSet));
+                    new Object[] { ns }, this::extractStringFromResultSet));
         }
     }
-
 }

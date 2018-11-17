@@ -46,9 +46,8 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * Converts Protobuf messages to Java Objects and back.
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 @RequiredArgsConstructor
 public class ProtoConverter {
@@ -61,23 +60,19 @@ public class ProtoConverter {
 
     public MSG_Notification createCompleteNotification() {
         return MSG_Notification.newBuilder().setType(MSG_Notification.Type.Complete).build();
-
     }
 
     public MSG_Notification createNotificationFor(@NonNull Fact t) {
-        MSG_Notification.Builder builder = MSG_Notification.newBuilder()
-                .setType(
-                        MSG_Notification.Type.Fact);
+        MSG_Notification.Builder builder = MSG_Notification.newBuilder().setType(
+                MSG_Notification.Type.Fact);
         builder.setFact(toProto(t));
         builder.setType(MSG_Notification.Type.Fact);
         return builder.build();
-
     }
 
     public MSG_Notification createNotificationFor(@NonNull UUID id) {
-        MSG_Notification.Builder builder = MSG_Notification.newBuilder()
-                .setType(
-                        MSG_Notification.Type.Id);
+        MSG_Notification.Builder builder = MSG_Notification.newBuilder().setType(
+                MSG_Notification.Type.Id);
         builder.setId(toProto(id));
         builder.setType(MSG_Notification.Type.Id);
         return builder.build();
@@ -86,8 +81,7 @@ public class ProtoConverter {
     public MSG_UUID toProto(@NonNull UUID id) {
         return MSG_UUID.newBuilder()
                 .setLsb(id.getLeastSignificantBits())
-                .setMsb(id
-                        .getMostSignificantBits())
+                .setMsb(id.getMostSignificantBits())
                 .build();
     }
 
@@ -97,15 +91,13 @@ public class ProtoConverter {
 
     public MSG_SubscriptionRequest toProto(SubscriptionRequestTO request) {
         return MSG_SubscriptionRequest.newBuilder()
-                .setJson(FactCastJson.writeValueAsString(
-                        request))
+                .setJson(FactCastJson.writeValueAsString(request))
                 .build();
     }
 
     public UUID fromProto(MSG_UUID request) {
         long lsb = request.getLsb();
         long msb = request.getMsb();
-
         return new UUID(msb, lsb);
     }
 
@@ -123,7 +115,6 @@ public class ProtoConverter {
     public MSG_OptionalFact toProto(Optional<Fact> optFact) {
         Builder proto = MSG_OptionalFact.newBuilder();
         boolean present = optFact.isPresent();
-
         proto.setPresent(present);
         if (present) {
             proto.setFact(toProto(optFact.get()));
@@ -141,7 +132,6 @@ public class ProtoConverter {
 
     @NonNull
     public OptionalLong fromProto(@NonNull MSG_OptionalSerial serialOf) {
-        // note that an unsigned is used to transport the serial. Serials MUST
         // be >0
         if (serialOf.getPresent() && serialOf.getSerial() > 0) {
             return OptionalLong.of(serialOf.getSerial());
@@ -216,5 +206,4 @@ public class ProtoConverter {
     public String fromProto(MSG_String request) {
         return request.getEmbeddedString();
     }
-
 }

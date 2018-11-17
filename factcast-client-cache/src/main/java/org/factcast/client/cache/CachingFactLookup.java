@@ -28,12 +28,11 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * A cacheable wrapper for a lookup of facts by their id.
- * 
+ *
  * Not intended for direct usage from with application code. This is used by the
  * CachingFactCast wrapper as a strategy to lookup facts.
- * 
- * @author <uwe.schaefer@mercateo.com>
  *
+ * @author <uwe.schaefer@mercateo.com>
  */
 @Component
 @RequiredArgsConstructor

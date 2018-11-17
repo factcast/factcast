@@ -23,17 +23,15 @@ import org.springframework.context.annotation.Import;
 
 /**
  * Configuration to include in order to use a PGFactStore
- * 
+ *
  * just forwards to {@link PGFactStoreInternalConfiguration}, so that IDEs can
  * still complain about internal references.
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 @Configuration
 @EnableConfigurationProperties
 @Import(PGFactStoreInternalConfiguration.class)
 @ComponentScan
 public class PGFactStoreConfiguration {
-
 }

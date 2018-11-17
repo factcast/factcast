@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class PGPagedCatchup implements PGCatchup {
+
     @NonNull
     final JdbcTemplate jdbc;
 
@@ -63,7 +64,6 @@ public class PGPagedCatchup implements PGCatchup {
     private long clientId = 0;
 
     public LinkedList<Fact> doFetch(PGCatchUpFetchPage fetch) {
-
         if (idsOnly()) {
             return fetch.fetchIdFacts(serial);
         } else {
@@ -79,7 +79,6 @@ public class PGPagedCatchup implements PGCatchup {
     public void run() {
         PGCatchUpPrepare prep = new PGCatchUpPrepare(jdbc, request);
         clientId = prep.prepareCatchup(serial);
-
         if (clientId > 0) {
             try {
                 PGCatchUpFetchPage fetch = new PGCatchUpFetchPage(jdbc, idsOnly() ? props
@@ -90,11 +89,9 @@ public class PGPagedCatchup implements PGCatchup {
                         // we have reached the end
                         break;
                     }
-
                     while (!facts.isEmpty()) {
                         Fact f = facts.removeFirst();
                         UUID factId = f.id();
-
                         if (postQueryMatcher.test(f)) {
                             try {
                                 subscription.notifyElement(f);
@@ -105,7 +102,6 @@ public class PGPagedCatchup implements PGCatchup {
                                 // disconnecting clients.
                                 log.debug("{} exception from subscription: {}", request, e
                                         .getMessage());
-
                                 try {
                                     subscription.close();
                                 } catch (Exception e1) {
@@ -126,5 +122,4 @@ public class PGPagedCatchup implements PGCatchup {
             }
         }
     }
-
 }

@@ -26,18 +26,18 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * Fetches a SER from a Fact-Id.
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 @Component
 @RequiredArgsConstructor
 public class PGFactIdToSerialMapper {
+
     final JdbcTemplate jdbcTemplate;
 
     /**
      * Fetches the SER of a particular Fact identified by id
-     * 
+     *
      * @param id
      *            the FactId to look for
      * @return the corresponding SER, 0, if no Fact is found for the id given.
@@ -53,5 +53,4 @@ public class PGFactIdToSerialMapper {
         }
         return 0;
     }
-
 }

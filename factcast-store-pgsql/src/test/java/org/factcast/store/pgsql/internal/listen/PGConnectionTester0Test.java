@@ -1,7 +1,7 @@
 package org.factcast.store.pgsql.internal.listen;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -14,16 +14,19 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.factcast.store.pgsql.internal.metrics.PGMetricNames;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 
-@RunWith(org.mockito.junit.MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PGConnectionTester0Test {
+
     @Mock
     private MetricRegistry registry;
 
@@ -38,7 +41,7 @@ public class PGConnectionTester0Test {
     @Mock
     private Counter counter;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         final String fail = new PGMetricNames().connectionFailure();
         when(registry.counter(fail)).thenReturn(counter);
@@ -47,13 +50,11 @@ public class PGConnectionTester0Test {
 
     @Test
     public void testTestPositive() throws Exception {
-
         Connection c = mock(Connection.class);
         when(c.prepareStatement(anyString())).thenReturn(st);
         when(st.executeQuery()).thenReturn(rs);
         when(rs.next()).thenReturn(true, false);
         when(rs.getInt(1)).thenReturn(42);
-
         boolean test = uut.test(c);
         assertTrue(test);
         verifyZeroInteractions(counter);
@@ -61,13 +62,11 @@ public class PGConnectionTester0Test {
 
     @Test
     public void testTestFailure() throws Exception {
-
         Connection c = mock(Connection.class);
         when(c.prepareStatement(anyString())).thenReturn(st);
         when(st.executeQuery()).thenReturn(rs);
         when(rs.next()).thenReturn(true, false);
         when(rs.getInt(1)).thenReturn(1);
-
         boolean test = uut.test(c);
         assertFalse(test);
         verify(counter).inc();
@@ -75,13 +74,11 @@ public class PGConnectionTester0Test {
 
     @Test
     public void testTestException1() throws Exception {
-
         Connection c = mock(Connection.class);
         when(c.prepareStatement(anyString())).thenReturn(st);
         when(st.executeQuery()).thenReturn(rs);
         when(rs.next()).thenReturn(true, false);
         when(rs.getInt(1)).thenThrow(new SQLException("BAM"));
-
         boolean test = uut.test(c);
         assertFalse(test);
         verify(counter).inc();
@@ -89,12 +86,10 @@ public class PGConnectionTester0Test {
 
     @Test
     public void testTestException2() throws Exception {
-
         Connection c = mock(Connection.class);
         when(c.prepareStatement(anyString())).thenReturn(st);
         when(st.executeQuery()).thenReturn(rs);
         when(rs.next()).thenThrow(new SQLException("BAM"));
-
         boolean test = uut.test(c);
         assertFalse(test);
         verify(counter).inc();
@@ -102,11 +97,9 @@ public class PGConnectionTester0Test {
 
     @Test
     public void testTestException3() throws Exception {
-
         Connection c = mock(Connection.class);
         when(c.prepareStatement(anyString())).thenReturn(st);
         when(st.executeQuery()).thenThrow(new SQLException("BAM"));
-
         boolean test = uut.test(c);
         assertFalse(test);
         verify(counter).inc();
@@ -114,18 +107,17 @@ public class PGConnectionTester0Test {
 
     @Test
     public void testTestException4() throws Exception {
-
         Connection c = mock(Connection.class);
         when(c.prepareStatement(anyString())).thenThrow(new SQLException("BAM"));
-
         boolean test = uut.test(c);
         assertFalse(test);
         verify(counter).inc();
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testPGConnectionTester() {
-        new PGConnectionTester(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            new PGConnectionTester(null);
+        });
     }
-
 }

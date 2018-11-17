@@ -31,12 +31,11 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Bridges GRPC Specific StreamObserver to a subscription by switching over the
  * notification type and dispatching to the appropriate subscription method.
- * 
+ *
  * @see StreamObserver
  * @see Subscription
- * 
- * @author <uwe.schaefer@mercateo.com>
  *
+ * @author <uwe.schaefer@mercateo.com>
  */
 @RequiredArgsConstructor
 @Slf4j
@@ -49,9 +48,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
     @Override
     public void onNext(MSG_Notification f) {
-
         log.trace("observer got msg: {}", f);
-
         switch (f.getType()) {
         case Catchup:
             log.debug("received onCatchup signal");
@@ -68,7 +65,6 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
             // wrap id in a fact
             subscription.notifyElement(new IdOnlyFact(converter.fromProto(f.getId())));
             break;
-
         default:
             subscription.notifyError(new RuntimeException(
                     "Unrecognized notification type. THIS IS A BUG!"));

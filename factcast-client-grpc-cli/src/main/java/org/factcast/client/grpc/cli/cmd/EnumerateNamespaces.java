@@ -30,5 +30,4 @@ public class EnumerateNamespaces implements Command {
     public void runWith(FactCast fc, Options opt) {
         fc.enumerateNamespaces().forEach(System.out::println);
     }
-
 }

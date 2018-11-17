@@ -10,7 +10,8 @@
   <artifactId>factcast-internal-dep</artifactId>
   <packaging>pom</packaging>
   <properties>
-    <grpc.version>1.14.0</grpc.version>
+    <grpc.version>1.16.1</grpc.version>
+    <slf4j-api.version>1.7.25</slf4j-api.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -40,6 +41,17 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>27.0-jre</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+        <version>${slf4j-api.version}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.projectlombok</groupId>

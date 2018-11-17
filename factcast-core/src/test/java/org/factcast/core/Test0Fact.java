@@ -25,6 +25,7 @@ import lombok.SneakyThrows;
 @Setter
 @EqualsAndHashCode(of = "id")
 public class Test0Fact implements Fact {
+
     @JsonProperty
     UUID id = UUID.randomUUID();
 

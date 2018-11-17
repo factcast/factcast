@@ -44,13 +44,12 @@ public class PgConnectionSupplier {
 
     @Autowired
     PgConnectionSupplier(@NonNull DataSource dataSource) {
-
         if (dataSource instanceof org.apache.tomcat.jdbc.pool.DataSource) {
             this.ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
         } else {
             throw new IllegalStateException("expected "
-                    + org.apache.tomcat.jdbc.pool.DataSource.class.getName()
-                    + " , but got " + dataSource.getClass().getName());
+                    + org.apache.tomcat.jdbc.pool.DataSource.class.getName() + " , but got "
+                    + dataSource.getClass().getName());
         }
     }
 
@@ -72,14 +71,11 @@ public class PgConnectionSupplier {
 
     @VisibleForTesting
     Properties buildPgConnectionProperties(org.apache.tomcat.jdbc.pool.DataSource ds) {
-
         Properties dbp = new Properties();
-
         final PoolConfiguration poolProperties = ds.getPoolProperties();
         if (poolProperties != null) {
             setProperty(dbp, "user", poolProperties.getUsername());
             setProperty(dbp, "password", poolProperties.getPassword());
-
             final String connectionProperties = poolProperties.getConnectionProperties();
             if (connectionProperties != null) {
                 try {
@@ -87,7 +83,6 @@ public class PgConnectionSupplier {
                             .omitEmptyStrings()
                             .withKeyValueSeparator("=")
                             .split(connectionProperties);
-
                     setProperty(dbp, "socketTimeout", singleConnectionProperties.get(
                             "socketTimeout"));
                     setProperty(dbp, "connectTimeout", singleConnectionProperties.get(
@@ -100,7 +95,6 @@ public class PgConnectionSupplier {
                 }
             }
         }
-
         return dbp;
     }
 }

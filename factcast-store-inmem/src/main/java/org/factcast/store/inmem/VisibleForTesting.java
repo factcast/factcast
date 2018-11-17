@@ -26,5 +26,4 @@ import java.lang.annotation.Target;
 @Retention(SOURCE)
 @Target({ FIELD, METHOD, CONSTRUCTOR })
 public @interface VisibleForTesting {
-
 }

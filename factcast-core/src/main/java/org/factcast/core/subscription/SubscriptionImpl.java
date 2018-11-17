@@ -29,17 +29,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 
  * Implements a subscription and offers notifyX methods for the Fact Supplier to
  * write to.
- * 
+ *
  * @author <uwe.schaefer@mercateo.com>
  *
  * @param <T>
  */
 @RequiredArgsConstructor
 @Slf4j
-// TODO usr hide the impl an provide an interface for notify*
 public class SubscriptionImpl<T> implements Subscription {
 
     @NonNull
@@ -73,7 +71,6 @@ public class SubscriptionImpl<T> implements Subscription {
             throw new SubscriptionCancelledException(e);
         }
         return this;
-
     }
 
     public Subscription awaitCatchup(long waitTimeInMillis) throws SubscriptionCancelledException,
@@ -84,7 +81,6 @@ public class SubscriptionImpl<T> implements Subscription {
             throw new SubscriptionCancelledException(e);
         }
         return this;
-
     }
 
     @Override
@@ -124,7 +120,6 @@ public class SubscriptionImpl<T> implements Subscription {
             if (!catchup.isDone()) {
                 catchup.complete(null);
             }
-
             if (!complete.isDone()) {
                 complete.complete(null);
             }
@@ -135,7 +130,6 @@ public class SubscriptionImpl<T> implements Subscription {
     public void notifyError(Throwable e) {
         if (!closed.get()) {
             observer.onError(e);
-
             if (!catchup.isDone()) {
                 catchup.completeExceptionally(e);
             }
@@ -144,7 +138,6 @@ public class SubscriptionImpl<T> implements Subscription {
             }
             tryClose();
         }
-
     }
 
     private void tryClose() {

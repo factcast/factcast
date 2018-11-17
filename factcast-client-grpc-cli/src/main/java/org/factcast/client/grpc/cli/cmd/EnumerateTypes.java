@@ -34,5 +34,4 @@ public class EnumerateTypes implements Command {
     public void runWith(FactCast fc, Options opt) {
         fc.enumerateTypes(ns).forEach(System.out::println);
     }
-
 }

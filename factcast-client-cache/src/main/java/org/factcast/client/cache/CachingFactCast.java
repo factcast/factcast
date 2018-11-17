@@ -32,19 +32,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Integrates local cache for Facts.
- * 
- * Note that this Wrapper does not necessarily make your consumers faster, as
- * the local caching might involve IO. Local caching is a good strategy where,
- * the same Fact is read very often by either restarting Consumers using
- * non-snapshot transient state, or where there are many local consumers that
- * share interest in the same Facts.
- * 
- * @author uwe.schaefer@mercateo.com
- *
- */
-
 @Slf4j
 @RequiredArgsConstructor
 public class CachingFactCast implements FactCast {
@@ -67,9 +54,7 @@ public class CachingFactCast implements FactCast {
     @Override
     public Subscription subscribeToFacts(@NonNull SubscriptionRequest req,
             @NonNull FactObserver observer) {
-
         log.debug("changing Fact Subscription to Id subscription for caching single Fact lookups");
-
         return subscribeToIds(req, new IdObserver() {
 
             @Override
@@ -113,5 +98,4 @@ public class CachingFactCast implements FactCast {
     public Set<String> enumerateTypes(String ns) {
         return delegate.enumerateTypes(ns);
     }
-
 }

@@ -32,9 +32,8 @@ import com.google.common.eventbus.EventBus;
 
 /**
  * Main @Configuration class for a PGFactStore
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 @Configuration
 public class PGFactStoreInternalConfiguration {
@@ -51,13 +50,10 @@ public class PGFactStoreInternalConfiguration {
         switch (props.getCatchupStrategy()) {
         case PAGED:
             return new PGPagedCatchUpFactory(jdbc, props, serMapper);
-
         case QUEUED:
             return new PGQueueCatchUpFactory(jdbc, props, serMapper);
-
         default:
             throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
         }
     }
-
 }
