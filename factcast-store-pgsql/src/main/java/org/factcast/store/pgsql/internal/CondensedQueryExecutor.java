@@ -33,9 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Executes a given runnable if triggered, but ignores all subsequent triggers
  * for maxDelayInMillis.
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -95,5 +94,4 @@ class CondensedQueryExecutor {
         // make sure, the final run did not flip again
         currentlyScheduled.set(true);
     }
-
 }

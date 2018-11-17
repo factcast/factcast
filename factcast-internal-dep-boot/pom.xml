@@ -7,12 +7,12 @@
     <version>0.0.27-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>factcast-internal-dep-boot1</artifactId>
+  <artifactId>factcast-internal-dep-boot</artifactId>
   <packaging>pom</packaging>
   <properties>
-    <spring-boot.version>1.5.9.RELEASE</spring-boot.version>
-    <spring-cloud.version>Edgware.SR1</spring-cloud.version>
-    <spring-grpc.version>1.4.1.RELEASE</spring-grpc.version>
+    <spring-boot.version>2.1.0.RELEASE</spring-boot.version>
+    <spring-cloud.version>Finchley.SR2</spring-cloud.version>
+    <spring-grpc.version>2.1.0.RELEASE</spring-grpc.version>
   </properties>
   <dependencyManagement>
     <dependencies>

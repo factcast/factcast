@@ -62,9 +62,8 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 @Slf4j
 class GrpcFactStore implements FactStore, SmartInitializingSingleton {
@@ -89,7 +88,6 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @Autowired
     GrpcFactStore(AddressChannelFactory channelFactory) {
         this(channelFactory.createChannel(CHANNEL_NAME));
-
     }
 
     @VisibleForTesting
@@ -118,30 +116,22 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @Override
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
         log.trace("publishing {} facts to remote store", factsToPublish.size());
-        List<MSG_Fact> mf = factsToPublish.stream()
-                .map(converter::toProto)
-                .collect(Collectors
-                        .toList());
+        List<MSG_Fact> mf = factsToPublish.stream().map(converter::toProto).collect(Collectors
+                .toList());
         MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
         // blockingStub.getCallOptions().withCompression(compressor);
         blockingStub.publish(mfs);
-
     }
 
     @Override
     public Subscription subscribe(@NonNull SubscriptionRequestTO req,
             @NonNull FactObserver observer) {
         SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
-
         StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new ClientStreamObserver(
                 subscription);
-
-        ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()
-                .newCall(RemoteFactStoreGrpc.METHOD_SUBSCRIBE, stub.getCallOptions()
-                        .withWaitForReady());
-
+        ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel().newCall(
+                RemoteFactStoreGrpc.getSubscribeMethod(), stub.getCallOptions().withWaitForReady());
         asyncServerStreamingCall(call, converter.toProto(req), responseObserver);
-
         return subscription.onClose(() -> cancel(call));
     }
 
@@ -157,14 +147,10 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     public synchronized void initialize() {
         if (initialized.getAndSet(true))
             initialize();
-
         log.debug("Invoking handshake");
-
         ServerConfig cfg = converter.fromProto(blockingStub.handshake(converter.empty()));
-
         serverProtocolVersion = cfg.version();
         serverProperties = cfg.properties();
-
         logProtocolVersion(serverProtocolVersion);
         logServerVersion(serverProperties);
         configure();
@@ -178,20 +164,17 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     private static void logProtocolVersion(ProtocolVersion serverProtocolVersion) {
         if (!PROTOCOL_VERSION.isCompatibleTo(serverProtocolVersion))
             throw new IncompatibleProtocolVersions("Apparently, the local Protocol Version "
-                    + PROTOCOL_VERSION
-                    + " is not compatible with the Server's " + serverProtocolVersion
+                    + PROTOCOL_VERSION + " is not compatible with the Server's "
+                    + serverProtocolVersion
                     + ". \nPlease choose a compatible GRPC Client to connect to this Server.");
-
         if (!PROTOCOL_VERSION.equals(serverProtocolVersion))
             log.info("Compatible protocol version encountered client={}, server={}",
-                    PROTOCOL_VERSION,
-                    serverProtocolVersion);
+                    PROTOCOL_VERSION, serverProtocolVersion);
         else
             log.info("Matching protocol version encountered {}", serverProtocolVersion);
     }
 
     private void configure() {
-
         if (!configureLZ4())
             configureGZip();
     }
@@ -214,7 +197,6 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
         boolean localLz4 = lz4Compressor != null;
         boolean remoteLz4 = Boolean.valueOf(serverProperties.get(Capabilities.CODEC_LZ4
                 .toString()));
-
         if (localLz4 && remoteLz4) {
             log.info("LZ4 Codec available on client and server - configuring LZ4");
             String encoding = lz4Compressor.getMessageEncoding();
@@ -223,7 +205,6 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
             return true;
         } else
             return false;
-
     }
 
     @Override
@@ -242,5 +223,4 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
         MSG_StringSet set = blockingStub.enumerateTypes(converter.toProto(ns));
         return converter.fromProto(set);
     }
-
 }

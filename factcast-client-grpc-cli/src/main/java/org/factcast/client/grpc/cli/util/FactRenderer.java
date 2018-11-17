@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class FactRenderer {
+
     final Options options;
 
     private static final String TAB = "\t";
@@ -32,11 +33,9 @@ public class FactRenderer {
     private static final String CR = "\n";
 
     public String render(Fact f) {
-        return "Fact: id=" + f.id() + CR +
-                TAB + "header: " + renderJson(f.jsonHeader()).replaceAll(CR, CR + TAB + TAB) + CR +
-                TAB + "payload: " + renderJson(f.jsonPayload()).replaceAll(CR, CR + TAB + TAB) + CR
-                +
-                CR;
+        return "Fact: id=" + f.id() + CR + TAB + "header: " + renderJson(f.jsonHeader()).replaceAll(
+                CR, CR + TAB + TAB) + CR + TAB + "payload: " + renderJson(f.jsonPayload())
+                        .replaceAll(CR, CR + TAB + TAB) + CR + CR;
     }
 
     private String renderJson(String jsonString) {
@@ -46,5 +45,4 @@ public class FactRenderer {
         } else
             return jsonString;
     }
-
 }

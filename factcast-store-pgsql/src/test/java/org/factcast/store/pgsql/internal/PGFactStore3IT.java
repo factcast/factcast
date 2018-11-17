@@ -2,16 +2,18 @@ package org.factcast.store.pgsql.internal;
 
 import org.factcast.core.store.FactStore;
 import org.factcast.store.test.AbstractFactStore0Test;
-import org.junit.runner.RunWith;
+import org.factcast.store.test.IntegrationTest;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { PGEmbeddedConfiguration.class })
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
+@ExtendWith(SpringExtension.class)
+@IntegrationTest
 public class PGFactStore3IT extends AbstractFactStore0Test {
 
     @Autowired
@@ -21,5 +23,4 @@ public class PGFactStore3IT extends AbstractFactStore0Test {
     protected FactStore createStoreToTest() {
         return store;
     }
-
 }

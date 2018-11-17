@@ -24,7 +24,6 @@ import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 
 import org.factcast.store.pgsql.internal.metrics.PGMetricNames;
-import org.postgresql.PGConnection;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.Counter;
@@ -32,17 +31,6 @@ import com.codahale.metrics.MetricRegistry;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-
-/**
- * Used to test if a connection is still alive.
- * 
- * Even though CPools provide this already, this one is intended to used with
- * the one {@link PGConnection}, that listens to changes on the fact table and
- * thus should not be reused in a CPool.
- * 
- * @author uwe.schaefer@mercateo.com
- *
- */
 
 @Slf4j
 @Component
@@ -68,7 +56,6 @@ public class PGConnectionTester implements Predicate<Connection> {
         } catch (SQLException e) {
             log.warn("Connection test failed with exception: {}", e.getMessage());
         }
-
         connectionFailureMetric.inc();
         return false;
     }

@@ -1,0 +1,7 @@
+grpc:
+  client:
+    factstore:
+      host:
+        - localhost
+      port: 
+        - 9090

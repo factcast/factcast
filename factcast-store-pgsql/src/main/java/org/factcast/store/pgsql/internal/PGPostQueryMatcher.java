@@ -31,13 +31,12 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Predicate to filter Facts selected by the database query.
- * 
+ *
  * For PG, we can safely assume that only those rows are returned from the DB,
  * that match the queryable criteria. The only untested thing is the
  * script-match which can be skipped, if no FactSpec has a scripted filter.
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 @Slf4j
 public class PGPostQueryMatcher implements Predicate<Fact> {
@@ -53,8 +52,8 @@ public class PGPostQueryMatcher implements Predicate<Fact> {
         if (canBeSkipped) {
             log.trace("{} post query filtering has been disabled", req);
         } else {
-            this.matchers.addAll(req.specs().stream().map(FactSpecMatcher::new).collect(
-                    Collectors.toList()));
+            this.matchers.addAll(req.specs().stream().map(FactSpecMatcher::new).collect(Collectors
+                    .toList()));
         }
     }
 
@@ -62,5 +61,4 @@ public class PGPostQueryMatcher implements Predicate<Fact> {
     public boolean test(Fact input) {
         return canBeSkipped || matchers.stream().anyMatch(m -> m.test(input));
     }
-
 }

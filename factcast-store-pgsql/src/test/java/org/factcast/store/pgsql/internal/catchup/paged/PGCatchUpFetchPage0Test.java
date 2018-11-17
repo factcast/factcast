@@ -11,13 +11,14 @@ import org.factcast.store.pgsql.PGConfigurationProperties;
 import org.factcast.store.pgsql.internal.PGConstants;
 import org.factcast.store.pgsql.internal.catchup.PGCatchUpFetchPage;
 import org.factcast.store.pgsql.internal.rowmapper.PGIdFactExtractor;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
-@RunWith(org.mockito.junit.MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PGCatchUpFetchPage0Test {
 
     @Mock
@@ -35,9 +36,7 @@ public class PGCatchUpFetchPage0Test {
     public void testFetchIdFacts() {
         uut = new PGCatchUpFetchPage(jdbc, properties.getPageSize(), req, 12);
         uut.fetchIdFacts(new AtomicLong());
-
         verify(jdbc).query(eq(PGConstants.SELECT_ID_FROM_CATCHUP), any(
                 PreparedStatementSetter.class), any(PGIdFactExtractor.class));
     }
-
 }

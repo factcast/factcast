@@ -31,7 +31,8 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-@Generated // no code in here, just generated @NonNull checks
+// no code in here, just generated @NonNull checks
+@Generated
 public class PGQueueCatchUpFactory implements PGCatchupFactory {
 
     @NonNull
@@ -43,14 +44,10 @@ public class PGQueueCatchUpFactory implements PGCatchupFactory {
     @NonNull
     final PGFactIdToSerialMapper serMapper;
 
-    public PGQueueCatchup create(
-            @NonNull SubscriptionRequestTO request,
+    public PGQueueCatchup create(@NonNull SubscriptionRequestTO request,
             @NonNull PGPostQueryMatcher postQueryMatcher,
-            @NonNull SubscriptionImpl<Fact> subscription,
-            @NonNull AtomicLong serial) {
-
+            @NonNull SubscriptionImpl<Fact> subscription, @NonNull AtomicLong serial) {
         return new PGQueueCatchup(jdbc, props, serMapper, request, postQueryMatcher, subscription,
                 serial);
     }
-
 }

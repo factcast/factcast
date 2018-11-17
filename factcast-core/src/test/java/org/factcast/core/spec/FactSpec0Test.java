@@ -1,13 +1,17 @@
 package org.factcast.core.spec;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
 
 import org.factcast.core.MarkFact;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-//TODO remove?
+// TODO remove?
 public class FactSpec0Test {
 
     @Test
@@ -15,24 +19,32 @@ public class FactSpec0Test {
         assertTrue(new FactSpecMatcher(FactSpec.forMark()).test(new MarkFact()));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testMetaBothNull() {
-        FactSpec.ns("foo").meta(null, null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            FactSpec.ns("foo").meta(null, null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testMetaKeyNull() {
-        FactSpec.ns("foo").meta(null, "");
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            FactSpec.ns("foo").meta(null, "");
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testMetaValueNull() {
-        FactSpec.ns("foo").meta("", null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            FactSpec.ns("foo").meta("", null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testFactSpecConstructorNull() {
-        new FactSpec(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            new FactSpec(null);
+        });
     }
 
     @SuppressWarnings("static-access")
@@ -61,7 +73,8 @@ public class FactSpec0Test {
     public void testFactSpecEquality() {
         FactSpec f1 = FactSpec.ns("x");
         FactSpec f2 = FactSpec.ns("x");
-        assertNotEquals(f1, f2); // do not compare FactSpecs!
+        // do not compare FactSpecs!
+        assertNotEquals(f1, f2);
         assertNotSame(f1, f2);
     }
 }

@@ -29,5 +29,4 @@ public interface PGCatchupFactory {
     PGCatchup create(@NonNull SubscriptionRequestTO request,
             @NonNull PGPostQueryMatcher postQueryMatcher,
             @NonNull SubscriptionImpl<Fact> subscription, @NonNull AtomicLong serial);
-
 }

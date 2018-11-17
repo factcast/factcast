@@ -33,9 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Provides {@link PreparedStatementSetter} and the corresponding SQL from a
  * list of {@link FactSpec}s.
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 @Slf4j
 public class PGQueryBuilder {
@@ -51,65 +50,49 @@ public class PGQueryBuilder {
     }
 
     public PreparedStatementSetter createStatementSetter(AtomicLong serial) {
-
         return p -> {
-
             // TODO vulnerable of json injection attack
             int count = 0;
             for (FactSpec spec : req.specs()) {
-
                 p.setString(++count, "{\"ns\": \"" + spec.ns() + "\" }");
-
                 String type = spec.type();
                 if (type != null) {
                     p.setString(++count, "{\"type\": \"" + type + "\" }");
                 }
-
                 UUID agg = spec.aggId();
                 if (agg != null) {
                     p.setString(++count, "{\"aggIds\": [\"" + agg + "\"]}");
                 }
-
                 Map<String, String> meta = spec.meta();
                 for (Entry<String, String> e : meta.entrySet()) {
                     p.setString(++count, "{\"meta\":{\"" + e.getKey() + "\":\"" + e.getValue()
                             + "\" }}");
                 }
             }
-
             p.setLong(++count, serial.get());
         };
     }
 
     private String createWhereClause() {
-
         List<String> predicates = new LinkedList<>();
-
         req.specs().forEach(spec -> {
             StringBuilder sb = new StringBuilder();
             sb.append("( ");
-
             sb.append(PGConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
-
             String type = spec.type();
             if (type != null) {
                 sb.append("AND ").append(PGConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
             }
-
             UUID agg = spec.aggId();
             if (agg != null) {
                 sb.append("AND ").append(PGConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
             }
-
             Map<String, String> meta = spec.meta();
             meta.forEach((key, value) -> sb.append("AND ").append(PGConstants.COLUMN_HEADER).append(
                     " @> ?::jsonb "));
-
             sb.append(") ");
-
             predicates.add(sb.toString());
         });
-
         String predicatesAsString = String.join(" OR ", predicates);
         return "( " + predicatesAsString + " ) AND " + PGConstants.COLUMN_SER + ">?";
     }
@@ -123,12 +106,13 @@ public class PGQueryBuilder {
     }
 
     public String catchupSQL(long clientId) {
-        final String sql = "INSERT INTO " + PGConstants.TABLE_CATCHUP + //
-                " (" + PGConstants.COLUMN_CID + "," + PGConstants.COLUMN_SER + ") " + //
-                "(SELECT " + clientId + "," + PGConstants.COLUMN_SER + //
-                " FROM " + PGConstants.TABLE_FACT + //
-                " WHERE (" + createWhereClause() + ")" + //
-                " ORDER BY " + PGConstants.COLUMN_SER + " ASC)";
+        final String sql = //
+                "INSERT INTO " + PGConstants.TABLE_CATCHUP + " (" + PGConstants.COLUMN_CID + ","
+                        + PGConstants.COLUMN_SER + //
+                        ") " + "(SELECT " + clientId + "," + //
+                        PGConstants.COLUMN_SER + " FROM " + //
+                        PGConstants.TABLE_FACT + " WHERE (" + createWhereClause() + //
+                        ")" + " ORDER BY " + PGConstants.COLUMN_SER + " ASC)";
         log.trace("{} catchupSQL={}", req, sql);
         return sql;
     }

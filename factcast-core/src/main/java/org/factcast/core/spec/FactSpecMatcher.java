@@ -35,9 +35,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Matches facts against specifications.
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 @Slf4j
 public final class FactSpecMatcher implements Predicate<Fact> {
@@ -60,7 +59,6 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     final ScriptEngine scriptEngine;
 
     public FactSpecMatcher(@NonNull FactSpec spec) {
-
         // opt: prevent method calls by prefetching to final fields.
         // yes, they might be inlined at some point, but making decisions based
         // on final fields should help.
@@ -71,18 +69,15 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         aggId = spec.aggId();
         meta = spec.meta().isEmpty() ? null : spec.meta();
         script = spec.jsFilterScript();
-
         scriptEngine = getEngine(script);
     }
 
     public boolean test(Fact t) {
-
         boolean match = nsMatch(t);
         match = match && typeMatch(t);
         match = match && aggIdMatch(t);
         match = match && metaMatch(t);
         match = match && scriptMatch(t);
-
         return match;
     }
 
@@ -120,9 +115,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         if (script == null) {
             return true;
         }
-
-        return (Boolean) scriptEngine.eval("test(" + t.jsonHeader() + "," + t
-                .jsonPayload() + ")");
+        return (Boolean) scriptEngine.eval("test(" + t.jsonHeader() + "," + t.jsonPayload() + ")");
     }
 
     @SneakyThrows
@@ -130,7 +123,6 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         if (js == null) {
             return null;
         }
-
         ScriptEngine cachedEngine = scriptEngineCache.get(js);
         if (cachedEngine != null) {
             return cachedEngine;
@@ -140,7 +132,6 @@ public final class FactSpecMatcher implements Predicate<Fact> {
             scriptEngineCache.put(js, engine);
             return engine;
         }
-
     }
 
     private static ScriptEngine getJavascriptEngine() {
@@ -170,5 +161,4 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     public static Predicate<Fact> matches(@NonNull FactSpec spec) {
         return new FactSpecMatcher(spec);
     }
-
 }

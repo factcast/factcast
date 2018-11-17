@@ -37,7 +37,6 @@ import lombok.SneakyThrows;
  * used outside of FactCast.
  *
  * @author uwe.schaefer@mercateo.com
- *
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FactCastJson {
@@ -49,9 +48,7 @@ public final class FactCastJson {
     private static final ObjectWriter writer;
 
     static {
-
         objectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
-
         writer = objectMapper.writer();
         reader = objectMapper.reader();
     }

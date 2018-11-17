@@ -59,18 +59,18 @@ import net.devh.springboot.autoconfigure.grpc.server.GrpcService;
 
 /**
  * Service that provides access to an injected FactStore via GRPC.
- * 
- * Configure port using {@link GRpcServerProperties}
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * Configure port using {@link GRpcServerProperties}
+ *
+ * @author uwe.schaefer@mercateo.com
  */
 @Slf4j
 @RequiredArgsConstructor
 @GrpcService(RemoteFactStoreGrpc.class)
 @SuppressWarnings("all")
 public class FactStoreGrpcService extends RemoteFactStoreImplBase {
-    final static ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 0, 0);
+
+    static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 0, 0);
 
     final FactStore store;
 
@@ -85,9 +85,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             UUID fromProto = converter.fromProto(request);
             log.trace("fetchById {}", fromProto);
             Optional<Fact> fetchById = store.fetchById(fromProto);
-            log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "")
-                    .orElse(
-                            "NOT "));
+            log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "").orElse(
+                    "NOT "));
             responseObserver.onNext(converter.toProto(fetchById));
             responseObserver.onCompleted();
         } catch (Throwable e) {
@@ -98,16 +97,12 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     @Override
     public void publish(@NonNull MSG_Facts request,
             @NonNull StreamObserver<MSG_Empty> responseObserver) {
-        List<Fact> facts = request.getFactList()
-                .stream()
-                .map(converter::fromProto)
-                .collect(
-                        Collectors.toList());
+        List<Fact> facts = request.getFactList().stream().map(converter::fromProto).collect(
+                Collectors.toList());
         final int size = facts.size();
         log.debug("publish {} fact{}", size, size > 1 ? "s" : "");
         log.trace("publish {}", facts);
         try {
-
             log.trace("store publish {}", facts);
             store.publish(facts);
             log.trace("store publish done");
@@ -125,12 +120,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             @NonNull StreamObserver<MSG_Notification> responseObserver) {
         SubscriptionRequestTO req = converter.fromProto(request);
         resetDebugInfo(req);
-
         BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(req.toString(),
                 (ServerCallStreamObserver) responseObserver);
-
         final boolean idOnly = req.idOnly();
-
         store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp, f -> idOnly ? converter
                 .createNotificationFor(f.id()) : converter.createNotificationFor(f)));
     }
@@ -138,9 +130,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     @Override
     public void handshake(@NonNull MSG_Empty request,
             @NonNull StreamObserver<MSG_ServerConfig> responseObserver) {
-
         ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
-
         responseObserver.onNext(converter.toProto(cfg));
         responseObserver.onCompleted();
     }
@@ -149,13 +139,11 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         HashMap<String, String> properties = new HashMap<>();
         evaluateLZ4Availability(properties);
         retrieveImplementationVersion(properties);
-
         log.info("Handshake properties: {} ", properties);
         return properties;
     }
 
     private void retrieveImplementationVersion(HashMap<String, String> properties) {
-
         String implVersion = "UNKNOWN";
         URL propertiesUrl = FactStoreGrpcService.class.getResource(
                 "/META-INF/maven/org.factcast/factcast-server-grpc/pom.properties");
@@ -175,8 +163,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     private void evaluateLZ4Availability(HashMap<String, String> properties) {
-        String lz4_available = String.valueOf(isClassAvailable(
-                "net.jpountz.lz4.LZ4Constants"));
+        String lz4_available = String.valueOf(isClassAvailable("net.jpountz.lz4.LZ4Constants"));
         properties.put(Capabilities.CODEC_LZ4.toString(), lz4_available);
     }
 
@@ -198,7 +185,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     @Override
     public void serialOf(MSG_UUID request, StreamObserver<MSG_OptionalSerial> responseObserver) {
         OptionalLong serialOf = store.serialOf(converter.fromProto(request));
-
         responseObserver.onNext(converter.toProto(serialOf));
         responseObserver.onCompleted();
     }
@@ -216,5 +202,4 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                 request))));
         responseObserver.onCompleted();
     }
-
 }

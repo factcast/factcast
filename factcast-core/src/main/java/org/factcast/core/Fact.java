@@ -30,7 +30,6 @@ import lombok.NonNull;
  * id,ns,type and aggId.
  *
  * @author uwe.schaefer@mercateo.com
- *
  */
 public interface Fact {
 
@@ -111,5 +110,4 @@ public interface Fact {
             return new DefaultFact(header, payload);
         }
     }
-
 }

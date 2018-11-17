@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.factcast.core.Fact;
 
 public class PGCatchupQueue {
+
     @lombok.experimental.Delegate
     final BlockingQueue<Fact> queue;
 

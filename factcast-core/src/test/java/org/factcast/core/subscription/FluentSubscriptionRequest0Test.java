@@ -1,39 +1,47 @@
 package org.factcast.core.subscription;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.factcast.core.spec.FactSpec;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class FluentSubscriptionRequest0Test {
 
     @Test
     public void testFromSubscription() {
         SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
-
         assertTrue(r.ephemeral());
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testFromNull() {
-        SubscriptionRequest.catchup(FactSpec.ns("foo")).from(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            SubscriptionRequest.catchup(FactSpec.ns("foo")).from(null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testFollowNull() {
-        SubscriptionRequest.follow((FactSpec) null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            SubscriptionRequest.follow((FactSpec) null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testCatchupNull() {
-        SubscriptionRequest.catchup((FactSpec) null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            SubscriptionRequest.catchup((FactSpec) null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testOrNull() {
-        SubscriptionRequest.catchup(FactSpec.forMark()).or(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            SubscriptionRequest.catchup(FactSpec.forMark()).or(null);
+        });
     }
 
     @Test
@@ -49,7 +57,7 @@ public class FluentSubscriptionRequest0Test {
                 .debugInfo();
         assertNotNull(debugInfo);
         assertTrue(debugInfo.contains(this.getClass().getSimpleName()));
-        assertTrue(debugInfo.contains("testDebugInfo")); // method name
+        // method name
+        assertTrue(debugInfo.contains("testDebugInfo"));
     }
-
 }

@@ -23,9 +23,8 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 
 /**
  * Provides a GrpcFactStore as a FactStore implementation.
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 @Import(ClientLZ4Configuration.class)
 @Configuration

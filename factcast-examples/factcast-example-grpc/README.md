@@ -1,3 +1,0 @@
-### factcast-example-grpc
-
-WIP

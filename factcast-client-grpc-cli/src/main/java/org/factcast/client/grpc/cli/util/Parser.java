@@ -28,6 +28,7 @@ import com.beust.jcommander.Parameter;
 import lombok.Getter;
 
 public class Parser {
+
     private static final String HOST_SYSPROP_NAME = "grpc.client.factstore.host";
 
     private static final String PORT_SYSPROP_NAME = "grpc.client.factstore.port";
@@ -38,25 +39,19 @@ public class Parser {
     final Options options = new Options();
 
     public Parser(Command... commands) {
-        Builder builder = JCommander.newBuilder()
-                .addConverterInstanceFactory(Converters.factory());
-
+        Builder builder = JCommander.newBuilder().addConverterInstanceFactory(Converters.factory());
         builder.addObject(options);
         builder.programName("fc-cli");
-
         Arrays.asList(commands).forEach(builder::addCommand);
-
         this.jc = builder.build();
     }
 
     public Command parse(String[] args) {
         jc.parse(args);
-
         if (options.help) {
             jc.usage();
             return null;
         }
-
         init();
         List<Object> objects = jc.getCommands().get(jc.getParsedCommand()).getObjects();
         return (Command) objects.get(0);
@@ -65,14 +60,13 @@ public class Parser {
     private void init() {
         System.setProperty(HOST_SYSPROP_NAME, options.host);
         System.setProperty(PORT_SYSPROP_NAME, String.valueOf(options.port));
-
         if (options.debug) {
             System.setProperty("debug", Boolean.TRUE.toString());
         }
-
     }
 
     public static class Options {
+
         @Parameter(names = { "--help", "-help", "-?", "--?" }, help = true, hidden = true)
         boolean help;
 
@@ -110,11 +104,9 @@ public class Parser {
                 }
             }
         }
-
     }
 
     public void usage() {
         jc.usage();
     }
-
 }

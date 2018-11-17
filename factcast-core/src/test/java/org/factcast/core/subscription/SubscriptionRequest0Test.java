@@ -1,26 +1,33 @@
 package org.factcast.core.subscription;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.factcast.core.spec.FactSpec;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class SubscriptionRequest0Test {
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testCatchupNullSpec() {
-        SubscriptionRequest.catchup((FactSpec) null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            SubscriptionRequest.catchup((FactSpec) null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testFollowNullSpec() {
-        SubscriptionRequest.follow((FactSpec) null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            SubscriptionRequest.follow((FactSpec) null);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testFollowDelayNullSpec() {
-        SubscriptionRequest.follow(1, null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            SubscriptionRequest.follow(1, null);
+        });
     }
 
     @Test

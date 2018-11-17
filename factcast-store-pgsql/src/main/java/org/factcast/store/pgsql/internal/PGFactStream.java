@@ -43,12 +43,9 @@ import lombok.extern.slf4j.Slf4j;
  * Creates and maintains a subscription.
  *
  * @author <uwe.schaefer@mercateo.com>
- *
  */
 @Slf4j
 @RequiredArgsConstructor
-// TODO usr class has too many responsibilities
-// TODO needs new name
 public class PGFactStream {
 
     final JdbcTemplate jdbcTemplate;
@@ -74,20 +71,14 @@ public class PGFactStream {
     PGPostQueryMatcher postQueryMatcher;
 
     void connect(@NonNull SubscriptionRequestTO request) {
-
         this.request = request;
         log.debug("{} connecting subscription {}", request, request.dump());
-
         postQueryMatcher = new PGPostQueryMatcher(request);
         PGQueryBuilder q = new PGQueryBuilder(request);
-
         initializeSerialToStartAfter();
-
         String sql = q.createSQL();
         PreparedStatementSetter setter = q.createStatementSetter(serial);
-
         RowCallbackHandler rsHandler = new FactRowCallbackHandler(subscription, postQueryMatcher);
-
         PGSynchronizedQuery query = new PGSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler,
                 serial, fetcher);
         catchupAndFollow(request, subscription, query);
@@ -101,26 +92,20 @@ public class PGFactStream {
 
     private void catchupAndFollow(SubscriptionRequest request, SubscriptionImpl<Fact> subscription,
             PGSynchronizedQuery query) {
-
         if (request.ephemeral()) {
             // just fast forward to the latest event publish by now
             this.serial.set(fetcher.retrieveLatestSer());
         } else {
             catchup(postQueryMatcher);
         }
-
         // propagate catchup
         if (isConnected()) {
             log.trace("{} signaling catchup", request);
             subscription.notifyCatchup();
         }
-
         if (isConnected() && request.continuous()) {
-
             log.info("{} entering follow mode", request);
-
             long delayInMs;
-
             if (request.maxBatchDelayInMs() < 1) {
                 // ok, instant query after NOTIFY
                 delayInMs = 0;
@@ -130,24 +115,20 @@ public class PGFactStream {
                 // the same latency requirements
                 //
                 // ok, that is unlikely to be necessary, but easy to do, so...
-                delayInMs = ((request.maxBatchDelayInMs() / 4L) * 3L)
-                        + (long) (Math.abs(Math.random() * (request.maxBatchDelayInMs() / 4.0)));
+                delayInMs = ((request.maxBatchDelayInMs() / 4L) * 3L) + (long) (Math.abs(Math
+                        .random() * (request.maxBatchDelayInMs() / 4.0)));
                 log.info("{} setting delay to {}, maxDelay was {}", request, delayInMs, request
                         .maxBatchDelayInMs());
             }
-
             condensedExecutor = new CondensedQueryExecutor(delayInMs, query, this::isConnected);
             eventBus.register(condensedExecutor);
             // catchup phase 3 – make sure, we did not miss any fact due to
             // slow registration
             condensedExecutor.trigger();
-
         } else {
-
             subscription.notifyComplete();
             log.debug("Completed {}", request);
             // FIXME disc.?
-
         }
     }
 
@@ -170,13 +151,11 @@ public class PGFactStream {
     public synchronized void close() {
         log.debug("{} disconnecting ", request);
         disconnected.set(true);
-
         if (condensedExecutor != null) {
             eventBus.unregister(condensedExecutor);
             condensedExecutor.cancel();
             condensedExecutor = null;
         }
-
         log.info("{} disconnected ", request);
     }
 
@@ -190,15 +169,12 @@ public class PGFactStream {
         @Override
         public void processRow(@NonNull ResultSet rs) throws SQLException {
             if (isConnected()) {
-
                 if (rs.isClosed()) {
                     throw new IllegalStateException(
                             "ResultSet already closed. We should not have got here. THIS IS A BUG!");
                 }
-
                 Fact f = PGFact.from(rs);
                 final UUID factId = f.id();
-
                 if (postQueryMatcher.test(f)) {
                     try {
                         subscription.notifyElement(f);
@@ -208,7 +184,6 @@ public class PGFactStream {
                         // disconnecting clients.
                         // TODO add sid
                         log.debug("{} exception from subscription: {}", request, e.getMessage());
-
                         try {
                             subscription.close();
                         } catch (Exception e1) {
@@ -216,13 +191,10 @@ public class PGFactStream {
                             log.warn("{} exception while closing subscription: {}", request, e1
                                     .getMessage());
                         }
-
                         // close result set in order to release DB resources as
                         // early as possible
                         rs.close();
-
                         throw e;
-
                     }
                 } else {
                     // TODO add sid
@@ -231,6 +203,5 @@ public class PGFactStream {
                 serial.set(rs.getLong(PGConstants.COLUMN_SER));
             }
         }
-
     }
 }

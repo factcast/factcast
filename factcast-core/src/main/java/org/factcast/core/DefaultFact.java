@@ -19,14 +19,23 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.SneakyThrows;
 
 /**
  * Note: creating an instance involves deserializing the header from JS. This is
@@ -60,11 +69,9 @@ public class DefaultFact implements Fact, Externalizable {
 
     @SneakyThrows
     protected DefaultFact(String jsonHeader, String jsonPayload) {
-
         this.jsonHeader = jsonHeader;
         this.jsonPayload = jsonPayload;
         init(jsonHeader);
-
     }
 
     public DefaultFact(Header header, String payload) {
@@ -152,5 +159,4 @@ public class DefaultFact implements Fact, Externalizable {
     public Set<UUID> aggIds() {
         return deserializedHeader.aggIds();
     }
-
 }

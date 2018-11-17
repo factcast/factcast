@@ -19,5 +19,6 @@ import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.FactCast;
 
 public interface Command {
+
     void runWith(FactCast fc, Options opt);
 }

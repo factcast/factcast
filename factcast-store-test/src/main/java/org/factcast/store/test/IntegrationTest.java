@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.example.server;
+package org.factcast.store.test;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-/**
- * Spring boot starter for running a factcast server.
- * 
- * This should contain a pgsql backend and grpc API frontend.
- * 
- * @author uwe.schaefer@mercateo.com
- *
- */
-@SpringBootApplication
-public class Application {
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class);
-    }
+import org.junit.jupiter.api.Tag;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@Tag("integration")
+public @interface IntegrationTest {
 }

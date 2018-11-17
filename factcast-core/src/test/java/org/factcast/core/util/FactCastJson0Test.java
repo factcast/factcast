@@ -1,9 +1,15 @@
 package org.factcast.core.util;
 
 import static org.factcast.core.TestHelper.expectNPE;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,28 +22,28 @@ import lombok.NoArgsConstructor;
 
 public class FactCastJson0Test {
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testCopyNull() {
-        FactCastJson.copy(null);
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            FactCastJson.copy(null);
+        });
     }
 
     @Test
     public void testCopy() {
         final Foo foo = new Foo("bar", "baz");
         Foo copy = FactCastJson.copy(foo);
-
         assertNotSame(foo, copy);
         assertNotEquals(foo, copy);
-
         assertEquals(foo.bar(), copy.bar());
         assertNull(copy.baz());
-
     }
 
     @AllArgsConstructor
     @Data
     @NoArgsConstructor
     static class Foo {
+
         @JsonProperty
         String bar;
 
@@ -63,12 +69,14 @@ public class FactCastJson0Test {
         assertTrue(FactCastJson.newObjectNode() instanceof ObjectNode);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testToObjectNodeNonJson() {
-        FactCastJson.toObjectNode("no-json");
+        Assertions.assertThrows(RuntimeException.class, () -> {
+            FactCastJson.toObjectNode("no-json");
+        });
     }
 
-    @Test()
+    @Test
     public void testToObjectNode() {
         ObjectNode objectNode = FactCastJson.toObjectNode("{\"x\":1}");
         JsonNode jsonNode = objectNode.get("x");
@@ -83,5 +91,4 @@ public class FactCastJson0Test {
         assertTrue(pretty.contains("\n"));
         assertTrue(pretty.contains(" "));
     }
-
 }

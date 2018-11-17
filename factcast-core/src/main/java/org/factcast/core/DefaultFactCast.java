@@ -33,9 +33,8 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * Default impl for FactCast used by FactCast.from* methods.
- * 
- * @author uwe.schaefer@mercateo.com
  *
+ * @author uwe.schaefer@mercateo.com
  */
 @RequiredArgsConstructor
 class DefaultFactCast implements FactCast {
@@ -98,5 +97,4 @@ class DefaultFactCast implements FactCast {
     public Set<String> enumerateTypes(@NonNull String ns) {
         return store.enumerateTypes(ns);
     }
-
 }

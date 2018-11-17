@@ -33,14 +33,12 @@ public class Fetch implements Command {
 
     @SuppressWarnings("DefaultAnnotationParam")
     @Parameter(required = true, description = "id", splitter = CommaParameterSplitter.class)
-    final List<UUID> ids = new LinkedList<>();
+    List<UUID> ids = new LinkedList<>();
 
     @Override
     public void runWith(FactCast fc, Options opt) {
         FactRenderer factRenderer = new FactRenderer(opt);
-        ids.forEach(id -> System.out.println(fc.fetchById(id)
-                .map(factRenderer::render)
-                .orElse("not found")));
+        ids.forEach(id -> System.out.println(fc.fetchById(id).map(factRenderer::render).orElse(
+                "not found")));
     }
-
 }

@@ -34,33 +34,28 @@ public class RdsDataSourceFactorBeanPostProcessor implements BeanPostProcessor {
     private final Environment env;
 
     @Override
-    public @NonNull Object postProcessBeforeInitialization(@NonNull Object bean,
-            @NonNull String beanName)
+    @NonNull
+    public Object postProcessBeforeInitialization(@NonNull Object bean, @NonNull String beanName)
             throws BeansException {
-
         if (bean instanceof AmazonRdsDataSourceFactoryBean) {
             ((AmazonRdsDataSourceFactoryBean) bean).setDataSourceFactory(
                     tomcatJdbcDataSourceFactory());
         }
-
         return bean;
     }
 
     TomcatJdbcDataSourceFactory tomcatJdbcDataSourceFactory() {
-
         TomcatJdbcDataSourceFactory fac = new TomcatJdbcDataSourceFactory();
-
         fac.setTestOnBorrow(env.getProperty("spring.datasource.tomcat.testOnBorrow", Boolean.class,
                 true));
         fac.setConnectionProperties(env.getProperty("spring.datasource.tomcat.connectionProperties",
-                String.class,
-                "socketTimeout=20;connectTimeout=10;loginTimeout=10"));
+                String.class, "socketTimeout=20;connectTimeout=10;loginTimeout=10"));
         return fac;
     }
 
     @Override
-    public @NonNull Object postProcessAfterInitialization(@NonNull Object bean,
-            @NonNull String beanName)
+    @NonNull
+    public Object postProcessAfterInitialization(@NonNull Object bean, @NonNull String beanName)
             throws BeansException {
         return bean;
     }

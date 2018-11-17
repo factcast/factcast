@@ -15,8 +15,9 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.factcast.store.test.IntegrationTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -25,21 +26,23 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.google.common.eventbus.EventBus;
 
 import lombok.Data;
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { PGEmbeddedConfiguration.class })
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
+@ExtendWith(SpringExtension.class)
+@IntegrationTest
 public class PGQuery3IT {
 
     static final FactSpec DEFAULT_SPEC = FactSpec.ns("default-ns").type("type1");
 
     @Data
     public static class TestHeader {
+
         String id = UUID.randomUUID().toString();
 
         String ns = "default-ns";
@@ -68,39 +71,30 @@ public class PGQuery3IT {
         return new EventBus(this.getClass().getSimpleName());
     }
 
-    @Test
     @DirtiesContext
+    @Test
     public void testRoundtrip() {
         SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(
                 DEFAULT_SPEC).fromScratch());
-
         FactObserver c = mock(FactObserver.class);
-
         pq.subscribe(req, c).awaitComplete();
-
         verify(c, never()).onNext(any());
         verify(c).onCatchup();
         verify(c).onComplete();
-
     }
 
-    @Test
     @DirtiesContext
+    @Test
     public void testRoundtripInsertBefore() {
-
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create().ns("other-ns"));
         insertTestFact(TestHeader.create().type("type2"));
         insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
-
         SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(
                 DEFAULT_SPEC).fromScratch());
-
         FactObserver c = mock(FactObserver.class);
-
         pq.subscribe(req, c).awaitComplete();
-
         verify(c).onCatchup();
         verify(c).onComplete();
         verify(c, times(2)).onNext(any());
@@ -110,34 +104,27 @@ public class PGQuery3IT {
         tpl.execute("INSERT INTO fact(header,payload) VALUES ('" + header + "','{}')");
     }
 
-    @Test
     @DirtiesContext()
+    @Test
     public void testRoundtripInsertAfter() throws Exception {
         SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(
                 DEFAULT_SPEC).fromScratch());
-
         FactObserver c = mock(FactObserver.class);
-
         pq.subscribe(req, c).awaitCatchup();
-
         verify(c).onCatchup();
         verify(c, never()).onNext(any(Fact.class));
-
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create().ns("other-ns"));
         insertTestFact(TestHeader.create().type("type2"));
         insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
-
         sleep(200);
         verify(c, times(2)).onNext(any(Fact.class));
-
     }
 
-    @Test
     @DirtiesContext()
+    @Test
     public void testRoundtripCatchupEventsInsertedAfterStart() throws Exception {
-
         SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(
                 DEFAULT_SPEC).fromScratch());
         FactObserver c = mock(FactObserver.class);
@@ -145,28 +132,21 @@ public class PGQuery3IT {
             sleep(50);
             return null;
         }).when(c).onNext(any());
-
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
-
         Subscription s = pq.subscribe(req, c);
-
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
-
         s.awaitCatchup();
         verify(c).onCatchup();
         verify(c, times(8)).onNext(any(Fact.class));
-
         insertTestFact(TestHeader.create());
-
         sleep(200);
         verify(c, times(9)).onNext(any(Fact.class));
-
     }
 
     // TODO remove all the Thread.sleeps
@@ -174,64 +154,48 @@ public class PGQuery3IT {
         Thread.sleep(ms);
     }
 
-    @Test
     @DirtiesContext()
+    @Test
     public void testRoundtripCompletion() throws Exception {
-
         SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(
                 DEFAULT_SPEC).fromScratch());
         FactObserver c = mock(FactObserver.class);
-
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
-
         pq.subscribe(req, c).awaitComplete();
-
         verify(c).onCatchup();
         verify(c).onComplete();
         verify(c, times(5)).onNext(any(Fact.class));
-
         insertTestFact(TestHeader.create());
-
         sleep(300);
-
         verify(c).onCatchup();
         verify(c).onComplete();
         verify(c, times(5)).onNext(any(Fact.class));
-
     }
 
-    @Test
     @DirtiesContext()
+    @Test
     public void testCancel() throws Exception {
-
         SubscriptionRequestTO req = SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(
                 DEFAULT_SPEC).fromScratch());
-
         FactObserver c = mock(FactObserver.class);
-
         insertTestFact(TestHeader.create());
-
         Subscription sub = pq.subscribe(req, c).awaitCatchup();
-
         verify(c).onCatchup();
         verify(c, times(1)).onNext(any());
-
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
         sleep(200);
         verify(c, times(3)).onNext(any());
-
         sub.close();
-
-        insertTestFact(TestHeader.create()); // must not show up
-        insertTestFact(TestHeader.create());// must not show up
+        // must not show up
+        insertTestFact(TestHeader.create());
+        // must not show up
+        insertTestFact(TestHeader.create());
         sleep(200);
         verify(c, times(3)).onNext(any());
-
     }
-
 }

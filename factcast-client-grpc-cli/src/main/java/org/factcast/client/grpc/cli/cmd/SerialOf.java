@@ -34,7 +34,7 @@ import com.beust.jcommander.converters.CommaParameterSplitter;
 public class SerialOf implements Command {
 
     @Parameter(required = true, description = "id", splitter = CommaParameterSplitter.class)
-    final List<UUID> ids = new LinkedList<>();
+    List<UUID> ids = new LinkedList<>();
 
     @Override
     public void runWith(FactCast fc, Options opt) {
@@ -47,5 +47,4 @@ public class SerialOf implements Command {
                 System.out.println("not found");
         });
     }
-
 }

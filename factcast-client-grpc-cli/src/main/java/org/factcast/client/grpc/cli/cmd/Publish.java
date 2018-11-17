@@ -46,8 +46,6 @@ public class Publish implements Command {
         Fact f = Fact.of(headerFile.read(), payloadFile.read());
         fc.publish(f);
         System.out.println("Published:");
-
         System.out.println(factRenderer.render(f));
     }
-
 }

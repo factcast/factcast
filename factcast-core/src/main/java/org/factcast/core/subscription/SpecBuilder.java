@@ -22,6 +22,7 @@ import org.factcast.core.spec.FactSpec;
 import lombok.NonNull;
 
 public interface SpecBuilder {
+
     SpecBuilder or(@NonNull FactSpec specification);
 
     SpecBuilder skipMarks();
@@ -31,5 +32,4 @@ public interface SpecBuilder {
     SubscriptionRequest fromScratch();
 
     SubscriptionRequest fromNowOn();
-
 }

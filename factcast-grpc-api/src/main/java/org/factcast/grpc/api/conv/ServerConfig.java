@@ -19,6 +19,7 @@ import java.util.Map;
 
 @lombok.Value(staticConstructor = "of")
 public class ServerConfig {
+
     ProtocolVersion version;
 
     Map<String, String> properties;

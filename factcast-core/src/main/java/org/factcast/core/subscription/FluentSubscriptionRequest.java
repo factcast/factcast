@@ -32,7 +32,6 @@ import lombok.experimental.FieldDefaults;
  * SubscriptionRequest intended to be used by clients for convenience.
  *
  * @author uwe.schaefer@mercateo.com
- *
  */
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
@@ -60,15 +59,14 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     private String createDebugInfo() {
         StackTraceElement stackTraceElement = new Exception().getStackTrace()[3];
-        return UUID.randomUUID() + " (" + stackTraceElement.getClassName()
-                .substring(
-                        stackTraceElement.getClassName().lastIndexOf(".") + 1) + "."
-                + stackTraceElement
+        return UUID.randomUUID() + " (" + stackTraceElement.getClassName().substring(
+                stackTraceElement.getClassName().lastIndexOf(".") + 1) + "." + stackTraceElement
                         .getMethodName() + ":" + stackTraceElement.getLineNumber() + ")";
     }
 
     @RequiredArgsConstructor
     public static class Builder implements SpecBuilder {
+
         private final FluentSubscriptionRequest toBuild;
 
         @Override

@@ -27,6 +27,7 @@ import lombok.experimental.Wither;
 @Getter
 @Wither
 public class ProtocolVersion {
+
     final int major;
 
     final int minor;
@@ -35,8 +36,7 @@ public class ProtocolVersion {
 
     public boolean isCompatibleTo(ProtocolVersion other) {
         // patch level must be irrelevant
-        return (major == other.major) &&
-                (minor <= other.minor);
+        return (major == other.major) && (minor <= other.minor);
     }
 
     @Override
