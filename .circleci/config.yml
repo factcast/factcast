@@ -24,7 +24,6 @@ jobs:
       # Customize the JVM maximum heap limit
 #      MAVEN_OPTS: -Xmx2600m
       pg_url: jdbc:postgresql://localhost/test?currentSchema=public&username=circleci&password=test
-      CODECOV_TOKEN: 48e19fae-3c35-4c56-9297-8620e6808cc9
       MAVEN_OPTS: "-Xmx512M"
       JAVA_OPTS: "-Xms512M -Xmx512M"
       _JAVA_OPTIONS : "-Xms512M -Xmx512M"
@@ -54,7 +53,7 @@ jobs:
           name: FullTest
           command: |
             mvn --version
-            mvn -B clean install jacoco:report -DrepoToken=sMBbBcjrybuhdwKHFC61BvBU5y4oAjNEt -Dpg_url=$pg_url
+            mvn -B clean install jacoco:report -Dpg_url=$pg_url
             bash <(curl -s https://codecov.io/bash)
 
       - run: 

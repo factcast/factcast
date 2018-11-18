@@ -21,12 +21,6 @@ identifier = "github"
 url = "https://github.com/uweschaefer/factcast/"
 weight = 1
 
-[[menu.shortcuts]]
-
-name = "Contribution"
-identifier = "thanks"
-url = "/thanks"
-weight = 3
 
 [[menu.shortcuts]]
 
@@ -37,8 +31,23 @@ weight = 2
 
 [[menu.shortcuts]]
 
+name = "Migration"
+identifier = "migration"
+url = "/migration"
+weight = 3
+
+
+[[menu.shortcuts]]
+
+name = "Contribution"
+identifier = "thanks"
+url = "/thanks"
+weight = 100
+
+[[menu.shortcuts]]
+
 name = "Legal / Impressum"
 identifier = "legal"
 url = "/imprint"
-weight = 99
+weight = 999
 
