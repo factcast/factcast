@@ -9,6 +9,7 @@ It is not yet released, the API may change, the documentation is incomplete.
 [![CircleCI](https://circleci.com/gh/Mercateo/factcast.svg?style=svg)](https://circleci.com/gh/Mercateo/factcast)
 [![codecov](https://codecov.io/gh/Mercateo/factcast/branch/master/graph/badge.svg)](https://codecov.io/gh/Mercateo/factcast)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/dd5921cfeb81482db72fa8d9df68048f)](https://www.codacy.com/app/uwe/factcast?utm_source=github.com&utm_medium=referral&utm_content=uweschaefer/factcast&utm_campaign=badger)
+[![CodeFactor](https://www.codefactor.io/repository/github/mercateo/factcast/badge)](https://www.codefactor.io/repository/github/mercateo/factcast)
 [![MavenCentral](https://img.shields.io/maven-central/v/org.factcast/factcast.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast%22)
 <a href="https://www.apache.org/licenses/LICENSE-2.0">
     <img class="inline" src="https://img.shields.io/badge/license-ASL2-green.svg?style=flat">
