@@ -49,8 +49,12 @@ src="https://circleci.com/gh/Mercateo/factcast.svg?style=svg" alt="circleci" tit
 </a>
 
 
-## Noteworthy Releases
+## Latest Noteworthy Releases
 
+* 2018-11-18 0.0.30 (milestone)
+ * Introduces / switches to: JUnit5, Spring Boot 2, Testcontainers
+ * new example projects
+ * **Not a drop-in replacement: See [Migration Guide](migration)**
 * 2018-10-21 0.0.20 (milestone)
  * added CLI
 * 2018-10-16 0.0.17 (minor bugfix release)
