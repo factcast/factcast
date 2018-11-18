@@ -1,5 +1,47 @@
 # Change Log
 
+## [factcast-0.0.30](https://github.com/Mercateo/factcast/tree/factcast-0.0.30) (2018-11-18)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.26...factcast-0.0.30)
+
+**Fixed bugs:**
+
+- Update compilation problem with Java10 [\#139](https://github.com/Mercateo/factcast/issues/139)
+
+**Closed issues:**
+
+- Fix 'Trailing spaces' issue in .circleci\config.yml [\#218](https://github.com/Mercateo/factcast/issues/218)
+- Fix 'Overload methods should not be split. Previous overloaded method located at line '104'.' issue in factcast-grpc-api\src\main\java\org\factcast\grpc\api\conv\ProtoConverter.java [\#217](https://github.com/Mercateo/factcast/issues/217)
+- Add migration Guide to documentation [\#215](https://github.com/Mercateo/factcast/issues/215)
+- fix verson and scope for slf4j-simple dep. [\#211](https://github.com/Mercateo/factcast/issues/211)
+- Switch Server-side depenencies to boot2 [\#209](https://github.com/Mercateo/factcast/issues/209)
+- Introduce proper test categorization [\#208](https://github.com/Mercateo/factcast/issues/208)
+- Unify and enforce import order on java sources [\#205](https://github.com/Mercateo/factcast/issues/205)
+- Consider using testcontainers for local testing with postgres instead of flapdoodle [\#203](https://github.com/Mercateo/factcast/issues/203)
+- Consider IDEAs analysis suggestions [\#201](https://github.com/Mercateo/factcast/issues/201)
+- Upgrade dependencies to spring-grpc [\#192](https://github.com/Mercateo/factcast/issues/192)
+- Handle unavailable Nashorn engine [\#190](https://github.com/Mercateo/factcast/issues/190)
+- Migrate Tests to JUNIT5 [\#98](https://github.com/Mercateo/factcast/issues/98)
+- Move Spring code to spring boot 2.x [\#78](https://github.com/Mercateo/factcast/issues/78)
+
+**Merged pull requests:**
+
+- Bump build-helper-maven-plugin from 1.8 to 3.0.0 [\#223](https://github.com/Mercateo/factcast/pull/223) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump postgresql from 42.2.5.jre7 to 42.2.5 [\#222](https://github.com/Mercateo/factcast/pull/222) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump assertj-core from 2.6.0 to 3.11.1 [\#221](https://github.com/Mercateo/factcast/pull/221) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump oss-parent-pom from 1.0.0 to 1.0.4 [\#220](https://github.com/Mercateo/factcast/pull/220) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump os-maven-plugin from 1.4.1.Final to 1.6.1 [\#219](https://github.com/Mercateo/factcast/pull/219) ([dependabot[bot]](https://github.com/apps/dependabot))
+- migration guide [\#216](https://github.com/Mercateo/factcast/pull/216) ([uweschaefer](https://github.com/uweschaefer))
+- Issue98 JUNIT5, Spring Boot2, better example projects \(boot1.5 & boot2.1\) [\#213](https://github.com/Mercateo/factcast/pull/213) ([uweschaefer](https://github.com/uweschaefer))
+- \[Snyk\] Fix for 4 vulnerable dependencies [\#207](https://github.com/Mercateo/factcast/pull/207) ([snyk-bot](https://github.com/snyk-bot))
+- introduce impsort plugin and pre-commit hook [\#206](https://github.com/Mercateo/factcast/pull/206) ([uweschaefer](https://github.com/uweschaefer))
+- Issue203 [\#204](https://github.com/Mercateo/factcast/pull/204) ([uweschaefer](https://github.com/uweschaefer))
+- minor changes suggested by IDEA inspection [\#202](https://github.com/Mercateo/factcast/pull/202) ([uweschaefer](https://github.com/uweschaefer))
+- Issue78 integrated spring-boot-2 branch [\#200](https://github.com/Mercateo/factcast/pull/200) ([uweschaefer](https://github.com/uweschaefer))
+- Issue190 applied review comments [\#199](https://github.com/Mercateo/factcast/pull/199) ([uweschaefer](https://github.com/uweschaefer))
+- \[Snyk\] Fix for 6 vulnerable dependencies [\#198](https://github.com/Mercateo/factcast/pull/198) ([snyk-bot](https://github.com/snyk-bot))
+- \[Snyk\] Fix for 6 vulnerable dependencies [\#197](https://github.com/Mercateo/factcast/pull/197) ([snyk-bot](https://github.com/snyk-bot))
+- \#190: added log messages [\#196](https://github.com/Mercateo/factcast/pull/196) ([uweschaefer](https://github.com/uweschaefer))
+
 ## [factcast-0.0.26](https://github.com/Mercateo/factcast/tree/factcast-0.0.26) (2018-11-10)
 [Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.25...factcast-0.0.26)
 
