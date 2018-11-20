@@ -15,9 +15,7 @@
  */
 package org.factcast.grpc.api.conv;
 
-import java.util.Arrays;
-
-import com.google.common.base.Joiner;
+import java.util.StringJoiner;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +39,8 @@ public class ProtocolVersion {
 
     @Override
     public String toString() {
-        return Joiner.on(".").join(Arrays.asList(major, minor, patch));
+        StringJoiner joiner = new StringJoiner(".");
+        joiner.add(String.valueOf(major)).add(String.valueOf(minor)).add(String.valueOf(patch));
+        return joiner.toString();
     }
 }
