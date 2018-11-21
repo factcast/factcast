@@ -41,6 +41,8 @@
     <module>factcast-examples/factcast-example-server</module>
     <module>factcast-examples/factcast-example-tls-client</module>
     <module>factcast-examples/factcast-example-tls-server</module>
+    <module>factcast-examples/factcast-example-auth-client</module>
+    <module>factcast-examples/factcast-example-auth-server</module>
   </modules>
   <url>https://github.com/uweschaefer/factcast/tree/master/</url>
   <licenses>
