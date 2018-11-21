@@ -1,7 +1,0 @@
-|===
-|Relation|Description
-
-|`self`
-|The link to that specific resource
-
-|===

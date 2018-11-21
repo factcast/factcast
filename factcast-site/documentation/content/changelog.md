@@ -1,5 +1,18 @@
 # Change Log
 
+## [upcoming](https://github.com/Mercateo/factcast/tree/upcoming) (2018-11-21)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.31...upcoming)
+
+**Closed issues:**
+
+- Migrate copyright headers from javadoc to slashstar [\#235](https://github.com/Mercateo/factcast/issues/235)
+- Reconsider usage of spring-starter for grpc client [\#132](https://github.com/Mercateo/factcast/issues/132)
+
+**Merged pull requests:**
+
+- Bump mockito.version from 2.23.0 to 2.23.4 [\#237](https://github.com/Mercateo/factcast/pull/237) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Issue235 copyright header migration from javadoc to slash-star [\#236](https://github.com/Mercateo/factcast/pull/236) ([uweschaefer](https://github.com/uweschaefer))
+
 ## [factcast-0.0.31](https://github.com/Mercateo/factcast/tree/factcast-0.0.31) (2018-11-20)
 [Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.30...factcast-0.0.31)
 

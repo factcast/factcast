@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.mercateo.oss</groupId>
     <artifactId>oss-parent-pom</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
   </parent>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
@@ -39,6 +39,8 @@
     <module>factcast-examples/factcast-example-client-spring-boot1</module>
     <module>factcast-examples/factcast-example-client-spring-boot2</module>
     <module>factcast-examples/factcast-example-server</module>
+    <module>factcast-examples/factcast-example-tls-client</module>
+    <module>factcast-examples/factcast-example-tls-server</module>
   </modules>
   <url>https://github.com/uweschaefer/factcast/tree/master/</url>
   <licenses>
@@ -226,15 +228,6 @@
             </goals>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <configuration>
-          <headerDefinitions>
-            <headerDefinition>src/etc/header-definition.xml</headerDefinition>
-          </headerDefinitions>
-        </configuration>
       </plugin>
     </plugins>
     <resources>

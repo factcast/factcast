@@ -51,6 +51,9 @@ src="https://circleci.com/gh/Mercateo/factcast.svg?style=svg" alt="circleci" tit
 
 ## Latest Noteworthy Releases
 
+#### 2018-11-21 0.0.32 (milestone)
+  * new example projects for TLS usage
+
 #### 2018-11-18 0.0.31 (milestone)
   * Introduces / switches to: JUnit5, Spring Boot 2, Testcontainers
   * new example projects
