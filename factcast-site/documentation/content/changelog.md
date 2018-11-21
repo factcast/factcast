@@ -1,5 +1,17 @@
 # Change Log
 
+## [factcast-0.0.31](https://github.com/Mercateo/factcast/tree/factcast-0.0.31) (2018-11-20)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.30...factcast-0.0.31)
+
+**Merged pull requests:**
+
+- Bump guava from 27.0-jre to 27.0.1-jre [\#233](https://github.com/Mercateo/factcast/pull/233) ([dependabot[bot]](https://github.com/apps/dependabot))
+- fixed empty catch block [\#232](https://github.com/Mercateo/factcast/pull/232) ([uweschaefer](https://github.com/uweschaefer))
+- Bump docker-maven-plugin from 0.4.9 to 1.2.0 [\#230](https://github.com/Mercateo/factcast/pull/230) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump guava from 26.0-jre to 27.0-jre [\#229](https://github.com/Mercateo/factcast/pull/229) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump slf4j-api from 1.7.22 to 1.7.25 [\#228](https://github.com/Mercateo/factcast/pull/228) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump protobuf-maven-plugin from 0.5.1 to 0.6.1 [\#227](https://github.com/Mercateo/factcast/pull/227) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [factcast-0.0.30](https://github.com/Mercateo/factcast/tree/factcast-0.0.30) (2018-11-18)
 [Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.26...factcast-0.0.30)
 
