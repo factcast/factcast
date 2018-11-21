@@ -1,7 +1,11 @@
 # Change Log
 
-## [upcoming](https://github.com/Mercateo/factcast/tree/upcoming) (2018-11-21)
-[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.31...upcoming)
+## [factcast-0.0.32](https://github.com/Mercateo/factcast/tree/factcast-0.0.32) (2018-11-21)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.31...factcast-0.0.32)
+
+**Implemented enhancements:**
+
+- Add TLS for communication encryption [\#122](https://github.com/Mercateo/factcast/issues/122)
 
 **Closed issues:**
 
@@ -10,6 +14,7 @@
 
 **Merged pull requests:**
 
+- Issue122 TLS examples [\#238](https://github.com/Mercateo/factcast/pull/238) ([uweschaefer](https://github.com/uweschaefer))
 - Bump mockito.version from 2.23.0 to 2.23.4 [\#237](https://github.com/Mercateo/factcast/pull/237) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Issue235 copyright header migration from javadoc to slash-star [\#236](https://github.com/Mercateo/factcast/pull/236) ([uweschaefer](https://github.com/uweschaefer))
 
