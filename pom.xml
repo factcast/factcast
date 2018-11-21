@@ -64,7 +64,7 @@
   <properties>
     <grpc.version>1.12.0</grpc.version>
     <assertj.version>3.11.1</assertj.version>
-    <mockito.version>2.23.0</mockito.version>
+    <mockito.version>2.23.4</mockito.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <formatter.config>${project.basedir}/src/eclipse/config/</formatter.config>
