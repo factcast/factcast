@@ -58,7 +58,7 @@ import net.devh.springboot.autoconfigure.grpc.server.GrpcService;
 
 /**
  * Service that provides access to an injected FactStore via GRPC.
- *
+ * <p>
  * Configure port using {@link GRpcServerProperties}
  *
  * @author uwe.schaefer@mercateo.com
@@ -172,7 +172,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         try {
             Class<?> forName = Class.forName(string);
             return forName != null;
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException ignore) {
+            // unfortunately, this is expected bahavior, when the class is not in the
+            // classpath
         }
         return false;
     }
