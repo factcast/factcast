@@ -227,6 +227,15 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <configuration>
+          <headerDefinitions>
+            <headerDefinition>src/etc/header-definition.xml</headerDefinition>
+          </headerDefinitions>
+        </configuration>
+      </plugin>
     </plugins>
     <resources>
       <resource>
@@ -248,11 +257,11 @@
                 <pluginExecution>
                   <pluginExecutionFilter>
                     <groupId>org.commonjava.maven.plugins
-                    </groupId>
+										</groupId>
                     <artifactId>directory-maven-plugin
-                    </artifactId>
+										</artifactId>
                     <versionRange>[0.3.1,)
-                    </versionRange>
+										</versionRange>
                     <goals>
                       <goal>highest-basedir</goal>
                     </goals>
@@ -264,11 +273,11 @@
                 <pluginExecution>
                   <pluginExecutionFilter>
                     <groupId>org.apache.maven.plugins
-                    </groupId>
+										</groupId>
                     <artifactId>maven-enforcer-plugin
-                    </artifactId>
+										</artifactId>
                     <versionRange>[1.0,)
-                    </versionRange>
+										</versionRange>
                     <goals>
                       <goal>enforce</goal>
                     </goals>
