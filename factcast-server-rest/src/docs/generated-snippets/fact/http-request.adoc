@@ -1,6 +1,0 @@
-[source,http,options="nowrap"]
-----
-GET /facts/d941087a-cb63-400f-bca2-7b65214fafa4 HTTP/1.1
-Host: localhost:9998
-
-----

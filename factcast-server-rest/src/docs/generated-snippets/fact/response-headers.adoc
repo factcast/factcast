@@ -1,7 +1,0 @@
-|===
-|Name|Description
-
-|`Cache-Control`
-|Caching for 1000000 seconds.
-
-|===
