@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.*;
 
 import org.factcast.core.Fact;
-import org.factcast.core.Test0Fact;
+import org.factcast.core.TestFact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
@@ -21,35 +21,35 @@ public class ProtoConverter0Test {
     ProtoConverter uut = new ProtoConverter();
 
     @Test
-    public void testToProtoUUID() {
+    void testToProtoUUID() {
         UUID probe = UUID.randomUUID();
         UUID copy = uut.fromProto(uut.toProto(probe));
         assertEquals(probe, copy);
     }
 
     @Test
-    public void testToProtoUUIDNull() {
+    void testToProtoUUIDNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
             uut.toProto((UUID) null);
         });
     }
 
     @Test
-    public void testToProtoFactNull() {
+    void testToProtoFactNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
             uut.toProto((Fact) null);
         });
     }
 
     @Test
-    public void testFromProtoOptionalNull() {
+    void testFromProtoOptionalNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
             uut.fromProto((MSG_OptionalFact) null);
         });
     }
 
     @Test
-    public void testToProtoFact() {
+    void testToProtoFact() {
         UUID aggId = UUID.randomUUID();
         String payload = "{\"foo\":\"bar\"}";
         String value1 = "1";
@@ -78,51 +78,51 @@ public class ProtoConverter0Test {
     }
 
     @Test
-    public void testToOptionalProtoFactEmpty() {
+    void testToOptionalProtoFactEmpty() {
         Optional<Fact> probe = Optional.empty();
         Optional<Fact> copy = uut.fromProto(uut.toProto(probe));
         assertFalse(copy.isPresent());
     }
 
     @Test
-    public void testToOptionalProtoFact() {
-        Optional<Fact> probe = Optional.of(new Test0Fact().ns("oink"));
+    void testToOptionalProtoFact() {
+        Optional<Fact> probe = Optional.of(new TestFact().ns("oink"));
         Optional<Fact> copy = uut.fromProto(uut.toProto(probe));
         assertTrue(copy.isPresent());
         assertEquals(probe.get().ns(), copy.get().ns());
     }
 
     @Test
-    public void testCreateCatchupNotification() {
+    void testCreateCatchupNotification() {
         MSG_Notification n = uut.createCatchupNotification();
         assertNotNull(n);
         assertEquals(MSG_Notification.Type.Catchup, n.getType());
     }
 
     @Test
-    public void testCreateCompleteNotification() {
+    void testCreateCompleteNotification() {
         MSG_Notification n = uut.createCompleteNotification();
         assertNotNull(n);
         assertEquals(MSG_Notification.Type.Complete, n.getType());
     }
 
     @Test
-    public void testCreateNotificationForFactNull() {
+    void testCreateNotificationForFactNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
             uut.createNotificationFor((Fact) null);
         });
     }
 
     @Test
-    public void testCreateNotificationForIdNull() {
+    void testCreateNotificationForIdNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
             uut.createNotificationFor((UUID) null);
         });
     }
 
     @Test
-    public void testCreateNotificationForFact() {
-        final Test0Fact probe = new Test0Fact().ns("123");
+    void testCreateNotificationForFact() {
+        final TestFact probe = new TestFact().ns("123");
         MSG_Notification n = uut.createNotificationFor(probe);
         assertNotNull(n);
         assertEquals(MSG_Notification.Type.Fact, n.getType());
@@ -130,7 +130,7 @@ public class ProtoConverter0Test {
     }
 
     @Test
-    public void testCreateNotificationForUUID() {
+    void testCreateNotificationForUUID() {
         final UUID probe = UUID.randomUUID();
         MSG_Notification n = uut.createNotificationFor(probe);
         assertNotNull(n);
@@ -139,21 +139,21 @@ public class ProtoConverter0Test {
     }
 
     @Test
-    public void testFromProtoMSG_SubscriptionRequestNull() {
+    void testFromProtoMSG_SubscriptionRequestNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
             uut.fromProto((MSG_SubscriptionRequest) null);
         });
     }
 
     @Test
-    public void testToProtoSubscriptionRequestNull() {
+    void testToProtoSubscriptionRequestNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
             uut.toProto((SubscriptionRequestTO) null);
         });
     }
 
     @Test
-    public void testToProtoSubscriptionRequest() {
+    void testToProtoSubscriptionRequest() {
         SubscriptionRequestTO to = new SubscriptionRequestTO().continuous(true)
                 .ephemeral(false)
                 .debugInfo("test")
@@ -172,20 +172,20 @@ public class ProtoConverter0Test {
     }
 
     @Test
-    public void testToProtoOptionalLongPresent() {
+    void testToProtoOptionalLongPresent() {
         MSG_OptionalSerial msg = uut.toProto(OptionalLong.of(133));
         assertTrue(msg.getPresent());
         assertEquals(133, msg.getSerial());
     }
 
     @Test
-    public void testToProtoOptionalLongEmpty() {
+    void testToProtoOptionalLongEmpty() {
         MSG_OptionalSerial msg = uut.toProto(OptionalLong.empty());
         assertFalse(msg.getPresent());
     }
 
     @Test
-    public void testEmpty() {
+    void testEmpty() {
         assertEquals(MSG_Empty.newBuilder().build(), uut.empty());
     }
 }
