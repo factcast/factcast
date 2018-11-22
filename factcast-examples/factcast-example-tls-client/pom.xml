@@ -44,19 +44,7 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-tcnative-boringssl-static</artifactId>
-      <version>2.0.20.Final</version>
     </dependency>
     <!-- This is important for java <11 to not run into problems with using TLS1.3 -->
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-all</artifactId>
-      <version>4.1.31.Final</version>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-handler
-      </artifactId>
-      <version>4.1.31.Final</version>
-    </dependency>
   </dependencies>
 </project>
