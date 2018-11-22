@@ -1,5 +1,14 @@
 # Change Log
 
+## [upcoming](https://github.com/Mercateo/factcast/tree/upcoming) (2018-11-22)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.32...upcoming)
+
+**Closed issues:**
+
+- GRPC Client-\>Server communication regression [\#234](https://github.com/Mercateo/factcast/issues/234)
+- Fix 'Empty catch block.' issue in factcast-server-grpc\src\main\java\org\factcast\server\grpc\FactStoreGrpcService.java [\#226](https://github.com/Mercateo/factcast/issues/226)
+- Fix 'Empty catch block.' issue in factcast-server-grpc\src\main\java\org\factcast\server\grpc\FactStoreGrpcService.java [\#225](https://github.com/Mercateo/factcast/issues/225)
+
 ## [factcast-0.0.32](https://github.com/Mercateo/factcast/tree/factcast-0.0.32) (2018-11-21)
 [Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.31...factcast-0.0.32)
 
