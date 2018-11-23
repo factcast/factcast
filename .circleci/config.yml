@@ -38,10 +38,10 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
-#      - run: 
-#          name: Resolve external deps
-#          command: mvn dependency:resolve
-#
+      - run: 
+          name: Validate formal standards
+          command: mvn formatter:validate license:check impsort:check
+
 
       - run:
           name: Wait for DB

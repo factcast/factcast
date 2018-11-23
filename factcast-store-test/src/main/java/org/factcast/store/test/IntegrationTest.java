@@ -26,4 +26,5 @@ import org.junit.jupiter.api.Tag;
 @Target(ElementType.TYPE)
 @Tag("integration")
 public @interface IntegrationTest {
+
 }
