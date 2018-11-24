@@ -177,19 +177,40 @@ public class InMemFactStore implements FactStore {
         InMemFollower s = new InMemFollower(request, subscription);
         executorService.submit(() -> {
             // catchup
+            AtomicLong ser = new AtomicLong(-1);
             if (!request.ephemeral()) {
-                store.values().stream().filter(s).forEachOrdered(s);
+                // this could take some time, so we dont waant to lock the store here
+                doCatchUp(s, ser);
             }
-            if (request.continuous()) {
-                activeFollowers.add(s);
+
+            synchronized (InMemFactStore.this) {
+                if (!request.ephemeral()) {
+                    // pick up the late ones
+                    doCatchUp(s, ser);
+                }
+                // and connect
+                if (request.continuous()) {
+                    activeFollowers.add(s);
+                }
             }
             subscription.notifyCatchup();
+
             // follow
             if (!request.continuous()) {
                 subscription.notifyComplete();
             }
         });
         return subscription.onClose(s::close);
+    }
+
+    private void doCatchUp(InMemFollower s, AtomicLong highwater) {
+        store.values()
+                .stream()
+                .filter(f -> f.serial() > highwater.get() && s.test(f))
+                .forEachOrdered(f -> {
+                    highwater.set(f.serial());
+                    s.accept(f);
+                });
     }
 
     public synchronized void shutdown() {
