@@ -14,6 +14,7 @@ It is not yet released, the API may change, the documentation is incomplete.
 <a href="https://www.apache.org/licenses/LICENSE-2.0">
     <img class="inline" src="https://img.shields.io/badge/license-ASL2-green.svg?style=flat">
 </a>
+[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=Mercateo/factcast)](https://dependabot.com)
 
 ... under active development.
 
