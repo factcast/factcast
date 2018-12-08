@@ -1,9 +1,6 @@
 package org.factcast.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.UUID;
 
@@ -46,12 +43,18 @@ public class FactTest {
 
     @Test
     void testBefore() {
-        Fact one = Fact.of("{" + "\"ns\":\"ns\"," + "\"id\":\"" + UUID.randomUUID() + "\","
-                + "\"meta\":{ \"_ser\":1 }" + "}", "{}");
-        Fact two = Fact.of("{" + "\"ns\":\"ns\"," + "\"id\":\"" + UUID.randomUUID() + "\","
-                + "\"meta\":{ \"_ser\":2 }" + "}", "{}");
-        Fact three = Fact.of("{" + "\"ns\":\"ns\"," + "\"id\":\"" + UUID.randomUUID() + "\","
-                + "\"meta\":{ \"_ser\":3 }" + "}", "{}");
+        Fact one = Fact.of(
+                "{" + "\"ns\":\"ns\"," + "\"id\":\"" + UUID.randomUUID() + "\","
+                        + "\"meta\":{ \"_ser\":1 }" + "}",
+                "{}");
+        Fact two = Fact.of(
+                "{" + "\"ns\":\"ns\"," + "\"id\":\"" + UUID.randomUUID() + "\","
+                        + "\"meta\":{ \"_ser\":2 }" + "}",
+                "{}");
+        Fact three = Fact.of(
+                "{" + "\"ns\":\"ns\"," + "\"id\":\"" + UUID.randomUUID() + "\","
+                        + "\"meta\":{ \"_ser\":3 }" + "}",
+                "{}");
         assertTrue(one.before(two));
         assertTrue(two.before(three));
         assertTrue(one.before(three));
@@ -101,6 +104,33 @@ public class FactTest {
         assertEquals("bar", f.meta("foo"));
         assertEquals("bang", f.meta("buh"));
         assertEquals("{\"a\":2}", f.jsonPayload());
+    }
+
+    @Test
+    void testBuilderNullContracts() {
+
+        assertThrows(NullPointerException.class, () -> {
+            Fact.builder().ns(null);
+        });
+
+        assertThrows(NullPointerException.class, () -> {
+            Fact.builder().type(null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            Fact.builder().aggId(null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            Fact.builder().meta(null, "x");
+        });
+        assertThrows(NullPointerException.class, () -> {
+            Fact.builder().id(null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            Fact.builder().build(null);
+        });
+
+        Fact.builder().meta("x", null).build("{}");
+
     }
 
     @Test
