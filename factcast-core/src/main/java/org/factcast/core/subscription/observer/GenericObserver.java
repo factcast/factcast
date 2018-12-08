@@ -51,8 +51,8 @@ public interface GenericObserver<I> {
         return new ObserverBridge<>(this, projection);
     }
 
-    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-    class ObserverBridge<I> implements FactObserver {
+    @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
+    static class ObserverBridge<I> implements FactObserver {
 
         private final GenericObserver<I> delegate;
 

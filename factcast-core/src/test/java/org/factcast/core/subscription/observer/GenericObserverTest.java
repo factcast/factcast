@@ -50,4 +50,5 @@ public class GenericObserverTest {
             i.map(null);
         });
     }
+
 }
