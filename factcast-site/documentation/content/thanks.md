@@ -8,7 +8,6 @@ creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 
 
-
 +++
 
 #### Contribution
@@ -30,4 +29,5 @@ Any Contribution, be it code, issues, docs etc. are more than welcome if they co
 
 and of course all the [Contributors](https://github.com/uweschaefer/factcast/graphs/contributors) 
 
-{{%ghcontributors "https://api.github.com/repos/uweschaefer/factcast/contributors?per_page=100" %}}
+{{%ghcontributors
+"https://api.github.com/repos/Mercateo/factcast/contributors?per_page=101" %}}
