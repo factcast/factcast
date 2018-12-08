@@ -41,7 +41,8 @@ public class CLI {
         if (arguments == null || arguments.length == 0)
             arguments = new String[] { "--help" };
         Parser parser = new Parser(new Catchup(), new Follow(), new Publish(), new Fetch(),
-                new EnumerateNamespaces(), new EnumerateTypes(), new SerialOf());
+                new EnumerateNamespaces(),
+                new EnumerateTypes(), new SerialOf());
         try {
             Command cmd = parser.parse(arguments);
             if (cmd != null)
