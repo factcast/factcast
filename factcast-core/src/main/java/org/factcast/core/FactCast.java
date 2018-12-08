@@ -64,4 +64,18 @@ public interface FactCast extends ReadFactCast {
     static ReadFactCast fromReadOnly(@NonNull FactStore store) {
         return new DefaultFactCast(store);
     }
+
+    default FactCast retry(int maxAttempts) {
+        return retry(maxAttempts, Retry.DEFAULT_WAIT_TIME_MILLIS);
+    }
+
+    default FactCast retry(int maxAttempts, long minimumWaitIntervalMillis) {
+        if (maxAttempts <= 0) {
+            throw new IllegalArgumentException("maxAttempts must be > 0");
+        }
+        if (minimumWaitIntervalMillis < 0) {
+            throw new IllegalArgumentException("minimumWaitIntervalMillis must be >= 0");
+        }
+        return Retry.wrap(false, this, maxAttempts, minimumWaitIntervalMillis);
+    }
 }

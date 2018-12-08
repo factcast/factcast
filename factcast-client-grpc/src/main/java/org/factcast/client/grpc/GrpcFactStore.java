@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -37,12 +38,16 @@ import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
@@ -53,6 +58,8 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.grpc.Channel;
 import io.grpc.ClientCall;
+import io.grpc.Status.Code;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -103,8 +110,14 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @Override
     public Optional<Fact> fetchById(UUID id) {
         log.trace("fetching {} from remote store", id);
-        MSG_OptionalFact fetchById = blockingStub.fetchById(converter.toProto(id));
-        if (!fetchById.getPresent()) {
+
+        MSG_OptionalFact fetchById = null;
+        try {
+            fetchById = blockingStub.fetchById(converter.toProto(id));
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+        if (fetchById == null || !fetchById.getPresent()) {
             return Optional.empty();
         } else {
             return converter.fromProto(fetchById);
@@ -118,7 +131,11 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
                 .toList());
         MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
         // blockingStub.getCallOptions().withCompression(compressor);
-        blockingStub.publish(mfs);
+        try {
+            blockingStub.publish(mfs);
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
     }
 
     @Override
@@ -127,31 +144,49 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
         SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
         StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new ClientStreamObserver(
                 subscription);
-        ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel().newCall(
-                RemoteFactStoreGrpc.getSubscribeMethod(), stub.getCallOptions().withWaitForReady());
-        asyncServerStreamingCall(call, converter.toProto(req), responseObserver);
+        ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()
+                .newCall(RemoteFactStoreGrpc.getSubscribeMethod(), stub.getCallOptions()
+                        .withWaitForReady());
+        try {
+            asyncServerStreamingCall(call, converter.toProto(req), responseObserver);
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
         return subscription.onClose(() -> cancel(call));
     }
 
-    private void cancel(final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call) {
+    @VisibleForTesting
+    void cancel(final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call) {
+        // cancel does not need to be retried.
         call.cancel("Client is no longer interested", null);
     }
 
     @Override
     public OptionalLong serialOf(@NonNull UUID l) {
-        return converter.fromProto(blockingStub.serialOf(converter.toProto(l)));
+        MSG_UUID protoMessage = converter.toProto(l);
+        MSG_OptionalSerial responseMessage;
+        try {
+            responseMessage = blockingStub.serialOf(protoMessage);
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+        return converter.fromProto(responseMessage);
     }
 
     public synchronized void initialize() {
-        if (initialized.getAndSet(true))
-            initialize();
-        log.debug("Invoking handshake");
-        ServerConfig cfg = converter.fromProto(blockingStub.handshake(converter.empty()));
-        serverProtocolVersion = cfg.version();
-        serverProperties = cfg.properties();
-        logProtocolVersion(serverProtocolVersion);
-        logServerVersion(serverProperties);
-        configure();
+        if (!initialized.getAndSet(true)) {
+            log.debug("Invoking handshake");
+            try {
+                ServerConfig cfg = converter.fromProto(blockingStub.handshake(converter.empty()));
+                serverProtocolVersion = cfg.version();
+                serverProperties = cfg.properties();
+            } catch (StatusRuntimeException e) {
+                throw wrapRetryable(e);
+            }
+            logProtocolVersion(serverProtocolVersion);
+            logServerVersion(serverProperties);
+            configure();
+        }
     }
 
     private static void logServerVersion(Map<String, String> serverProperties) {
@@ -162,12 +197,13 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     private static void logProtocolVersion(ProtocolVersion serverProtocolVersion) {
         if (!PROTOCOL_VERSION.isCompatibleTo(serverProtocolVersion))
             throw new IncompatibleProtocolVersions("Apparently, the local Protocol Version "
-                    + PROTOCOL_VERSION + " is not compatible with the Server's "
-                    + serverProtocolVersion
+                    + PROTOCOL_VERSION
+                    + " is not compatible with the Server's " + serverProtocolVersion
                     + ". \nPlease choose a compatible GRPC Client to connect to this Server.");
         if (!PROTOCOL_VERSION.equals(serverProtocolVersion))
             log.info("Compatible protocol version encountered client={}, server={}",
-                    PROTOCOL_VERSION, serverProtocolVersion);
+                    PROTOCOL_VERSION,
+                    serverProtocolVersion);
         else
             log.info("Matching protocol version encountered {}", serverProtocolVersion);
     }
@@ -181,6 +217,10 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     private boolean configureGZip() {
         // TODO this was temporarily disabled, due to
         // https://github.com/Mercateo/factcast/issues/234
+        //
+        // TODO when reenabling this code, make sure to throw
+        // RetryableException on caught RuntimeStatusException around remote
+        // call
         /*
          * Compressor gzip =
          * CompressorRegistry.getDefaultInstance().lookupCompressor("gzip"); if (gzip !=
@@ -195,13 +235,17 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     private boolean configureLZ4() {
         // TODO this was temporarily disabled, due to
         // https://github.com/Mercateo/factcast/issues/234
+        //
+        // TODO when reenabling this code, make sure to throw
+        // RetryableException on caught RuntimeStatusException around remote
+        // call
         /*
          * Compressor lz4Compressor =
          * CompressorRegistry.getDefaultInstance().lookupCompressor("lz4"); boolean
          * localLz4 = lz4Compressor != null; boolean remoteLz4 =
          * Boolean.valueOf(serverProperties.get(Capabilities.CODEC_LZ4 .toString())); if
          * (localLz4 && remoteLz4) {
-         * log.info("LZ4 Codec available on client and server - configuring LZ4");
+         * log.info("LZ4 Codec available on client and server - configuring LZ4" );
          * String encoding = lz4Compressor.getMessageEncoding(); // this.blockingStub =
          * blockingStub.withCompression(encoding); // this.stub =
          * stub.withCompression(encoding); return true; } else
@@ -216,13 +260,34 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     @Override
     public Set<String> enumerateNamespaces() {
-        MSG_StringSet set = blockingStub.enumerateNamespaces(converter.empty());
-        return converter.fromProto(set);
+        MSG_Empty empty = converter.empty();
+        MSG_StringSet resp;
+        try {
+            resp = blockingStub.enumerateNamespaces(empty);
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+        return converter.fromProto(resp);
     }
 
     @Override
     public Set<String> enumerateTypes(String ns) {
-        MSG_StringSet set = blockingStub.enumerateTypes(converter.toProto(ns));
-        return converter.fromProto(set);
+        MSG_String ns_message = converter.toProto(ns);
+        MSG_StringSet resp;
+        try {
+            resp = blockingStub.enumerateTypes(ns_message);
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+        return converter.fromProto(resp);
+    }
+
+    @VisibleForTesting
+    static RuntimeException wrapRetryable(StatusRuntimeException e) {
+        if (e.getStatus().getCode() == Code.UNAVAILABLE) {
+            return new RetryableException(e);
+        } else {
+            return e;
+        }
     }
 }
