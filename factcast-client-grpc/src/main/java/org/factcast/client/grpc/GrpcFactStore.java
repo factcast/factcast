@@ -15,7 +15,7 @@
  */
 package org.factcast.client.grpc;
 
-import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
+import static io.grpc.stub.ClientCalls.*;
 
 import java.util.List;
 import java.util.Map;
@@ -25,8 +25,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-
-import javax.annotation.Generated;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;

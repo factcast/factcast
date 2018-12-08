@@ -34,8 +34,9 @@ public class FactRenderer {
 
     public String render(Fact f) {
         return "Fact: id=" + f.id() + CR + TAB + "header: " + renderJson(f.jsonHeader()).replaceAll(
-                CR, CR + TAB + TAB) + CR + TAB + "payload: " + renderJson(f.jsonPayload())
-                        .replaceAll(CR, CR + TAB + TAB) + CR + CR;
+                CR, CR + TAB + TAB)
+                + CR + TAB + "payload: " + renderJson(f.jsonPayload()).replaceAll(CR, CR + TAB
+                        + TAB) + CR + CR;
     }
 
     private String renderJson(String jsonString) {

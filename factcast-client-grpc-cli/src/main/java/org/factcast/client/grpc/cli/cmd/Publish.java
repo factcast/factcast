@@ -29,13 +29,15 @@ import com.beust.jcommander.Parameters;
 public class Publish implements Command {
 
     @Parameter(
-            names = { "--header", "-h" },
+            names = { "--header",
+                    "-h" },
             required = true,
             description = "Filename of an existing json file to read the header from")
     ExistingJsonFile headerFile;
 
     @Parameter(
-            names = { "--payload", "-p" },
+            names = { "--payload",
+                    "-p" },
             required = true,
             description = "Filename of an existing json file to read the payload from")
     ExistingJsonFile payloadFile;
