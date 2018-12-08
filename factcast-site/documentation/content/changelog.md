@@ -1,13 +1,42 @@
 # Change Log
 
-## [upcoming](https://github.com/Mercateo/factcast/tree/upcoming) (2018-11-22)
-[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.32...upcoming)
+## [factcast-0.0.34](https://github.com/Mercateo/factcast/tree/factcast-0.0.34) (2018-12-08)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.33...factcast-0.0.34)
 
 **Closed issues:**
 
+- Create abstraction for Retryable Exceptions between Store and FactCast [\#260](https://github.com/Mercateo/factcast/issues/260)
+
+**Merged pull requests:**
+
+- Issue260 [\#263](https://github.com/Mercateo/factcast/pull/263) ([henningwendt](https://github.com/henningwendt))
+
+## [factcast-0.0.33](https://github.com/Mercateo/factcast/tree/factcast-0.0.33) (2018-12-04)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.32...factcast-0.0.33)
+
+**Closed issues:**
+
+- Check formal requirements on CI [\#247](https://github.com/Mercateo/factcast/issues/247)
+- Flaky test in InMemStore  [\#246](https://github.com/Mercateo/factcast/issues/246)
+- Cleanup Tests [\#240](https://github.com/Mercateo/factcast/issues/240)
 - GRPC Client-\>Server communication regression [\#234](https://github.com/Mercateo/factcast/issues/234)
 - Fix 'Empty catch block.' issue in factcast-server-grpc\src\main\java\org\factcast\server\grpc\FactStoreGrpcService.java [\#226](https://github.com/Mercateo/factcast/issues/226)
 - Fix 'Empty catch block.' issue in factcast-server-grpc\src\main\java\org\factcast\server\grpc\FactStoreGrpcService.java [\#225](https://github.com/Mercateo/factcast/issues/225)
+
+**Merged pull requests:**
+
+- Fix scope of test dependencies and some order shuffling. [\#261](https://github.com/Mercateo/factcast/pull/261) ([mweirauch](https://github.com/mweirauch))
+- Bump spring-boot-dependencies from 2.1.0.RELEASE to 2.1.1.RELEASE [\#259](https://github.com/Mercateo/factcast/pull/259) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump postgresql from 1.10.1 to 1.10.2 [\#257](https://github.com/Mercateo/factcast/pull/257) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump junit-jupiter-api from 5.3.1 to 5.3.2 [\#256](https://github.com/Mercateo/factcast/pull/256) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump junit-platform-engine from 1.3.1 to 1.3.2 [\#255](https://github.com/Mercateo/factcast/pull/255) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump junit-jupiter-engine from 5.3.1 to 5.3.2 [\#253](https://github.com/Mercateo/factcast/pull/253) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Issue247 [\#252](https://github.com/Mercateo/factcast/pull/252) ([uweschaefer](https://github.com/uweschaefer))
+- \#246: more careful catchup mechanics [\#249](https://github.com/Mercateo/factcast/pull/249) ([uweschaefer](https://github.com/uweschaefer))
+- this should break the build due to formal incorrectnes [\#248](https://github.com/Mercateo/factcast/pull/248) ([uweschaefer](https://github.com/uweschaefer))
+- Issue240 make test methods package private [\#244](https://github.com/Mercateo/factcast/pull/244) ([uweschaefer](https://github.com/uweschaefer))
+- Issue240 Rename TestCases and limit test method scopes \(JUnit5\) [\#242](https://github.com/Mercateo/factcast/pull/242) ([uweschaefer](https://github.com/uweschaefer))
+- Issue122 [\#241](https://github.com/Mercateo/factcast/pull/241) ([uweschaefer](https://github.com/uweschaefer))
 
 ## [factcast-0.0.32](https://github.com/Mercateo/factcast/tree/factcast-0.0.32) (2018-11-21)
 [Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.31...factcast-0.0.32)
