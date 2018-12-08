@@ -1,8 +1,6 @@
 package org.factcast.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 
@@ -75,5 +73,42 @@ public class FactCastTest {
         assertEquals(2, published.size());
         assertSame(f, published.get(0));
         assertTrue(FactSpecMatcher.matches(FactSpec.forMark()).test(published.get(1)));
+    }
+
+    @Test
+    void testRetryValidatesMaxAttempts() {
+        FactStore store = mock(FactStore.class);
+        assertThrows(IllegalArgumentException.class, () -> FactCast.from(store).retry(-42));
+    }
+
+    @Test
+    public void testRetryChecksNumberOfAttempts() throws Exception {
+        FactStore store = mock(FactStore.class);
+        FactCast fc = FactCast.from(store);
+        assertThrows(IllegalArgumentException.class, () -> {
+            fc.retry(0);
+        });
+        assertThrows(IllegalArgumentException.class, () -> {
+            fc.retry(0, 100);
+        });
+
+        assertNotNull(fc.retry(10));
+
+    }
+
+    @Test
+    public void testRetryChecksWaitInterval() throws Exception {
+
+        FactStore store = mock(FactStore.class);
+        FactCast fc = FactCast.from(store);
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            fc.retry(10, -100);
+        });
+
+        assertNotNull(fc.retry(10, 0));
+        assertNotNull(fc.retry(10, 1));
+        assertNotNull(fc.retry(10, 100));
+
     }
 }
