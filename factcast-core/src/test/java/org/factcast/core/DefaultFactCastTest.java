@@ -1,9 +1,6 @@
 package org.factcast.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doNothing;
@@ -11,11 +8,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.UUID;
 
+import org.assertj.core.util.Sets;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
@@ -28,6 +29,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -212,5 +214,30 @@ public class DefaultFactCastTest {
         Assertions.assertThrows(NullPointerException.class, () -> {
             uut.serialOf(null);
         });
+    }
+
+    @Test
+    public void testEnumerateNamespaces() throws Exception {
+        Set<String> set = new HashSet<>();
+        when(store.enumerateNamespaces()).thenReturn(set);
+
+        assertSame(set, FactCast.from(store).enumerateNamespaces());
+    }
+
+    @Test
+    public void testEnumerateTypesNullContract() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            FactCast.from(store).enumerateTypes(null);
+        });
+    }
+
+    @Test
+    public void testEnumerateTypes() throws Exception {
+        Set<String> test = new HashSet<>();
+        LinkedHashSet<String> other = Sets.newLinkedHashSet("foo");
+
+        when(store.enumerateTypes("test")).thenReturn(test);
+        assertSame(test, FactCast.from(store).enumerateTypes("test"));
+
     }
 }
