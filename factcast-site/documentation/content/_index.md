@@ -53,7 +53,7 @@ src="https://circleci.com/gh/Mercateo/factcast.svg?style=svg" alt="circleci" tit
 
 #### 2018-12-08 0.0.34 (milestone)
   * Automatic retries via (Read)FactCast::retry (thx <a
-    href="https://github.com/henningwendt">@henningwendt</a>
+    href="https://github.com/henningwendt">@henningwendt</a>)
 
 #### 2018-11-21 0.0.32 (milestone)
   * new example projects for TLS usage
