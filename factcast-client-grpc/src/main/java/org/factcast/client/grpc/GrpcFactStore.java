@@ -26,6 +26,8 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import javax.annotation.Generated;
+
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.RetryableException;
@@ -96,11 +98,13 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     }
 
     @VisibleForTesting
+    @lombok.Generated
     GrpcFactStore(@NonNull Channel channel) {
         this(RemoteFactStoreGrpc.newBlockingStub(channel), RemoteFactStoreGrpc.newStub(channel));
     }
 
     @VisibleForTesting
+    @lombok.Generated
     GrpcFactStore(@NonNull RemoteFactStoreBlockingStub newBlockingStub,
             @NonNull RemoteFactStoreStub newStub) {
         this.blockingStub = newBlockingStub;
