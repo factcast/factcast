@@ -40,6 +40,7 @@ public class FactSpec {
     @JsonProperty
     final String ns;
 
+    // type & aggId should probably be sets?
     @JsonProperty
     String type = null;
 

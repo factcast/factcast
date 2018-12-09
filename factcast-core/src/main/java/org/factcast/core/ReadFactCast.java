@@ -49,17 +49,7 @@ public interface ReadFactCast {
 
     Set<String> enumerateTypes(@NonNull String ns);
 
-    default ReadFactCast retry(int maxAttempts) {
-        return retry(maxAttempts, Retry.DEFAULT_WAIT_TIME_MILLIS);
-    }
+    ReadFactCast retry(int maxAttempts);
 
-    default ReadFactCast retry(int maxAttempts, long minimumWaitIntervalMillis) {
-        if (maxAttempts <= 0) {
-            throw new IllegalArgumentException("maxAttempts must be > 0");
-        }
-        if (minimumWaitIntervalMillis < 0) {
-            throw new IllegalArgumentException("minimumWaitIntervalMillis must be >= 0");
-        }
-        return Retry.wrap(true, this, maxAttempts, minimumWaitIntervalMillis);
-    }
+    ReadFactCast retry(int maxAttempts, long minimumWaitIntervalMillis);
 }
