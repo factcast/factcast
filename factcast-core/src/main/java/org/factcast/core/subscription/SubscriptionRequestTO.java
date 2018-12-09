@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
@@ -46,6 +47,7 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @JsonIgnoreProperties
+@NoArgsConstructor
 public class SubscriptionRequestTO implements SubscriptionRequest {
 
     @JsonProperty
@@ -71,9 +73,6 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 
     @JsonProperty
     final List<FactSpec> specs = new LinkedList<>();
-
-    public SubscriptionRequestTO() {
-    }
 
     public boolean hasAnyScriptFilters() {
         return specs.stream().anyMatch(s -> s.jsFilterScript() != null);

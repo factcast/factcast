@@ -1,12 +1,10 @@
 package org.factcast.core.subscription;
 
-import static org.factcast.core.TestHelper.expect;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.factcast.core.TestHelper.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
@@ -197,5 +195,14 @@ public class SubscriptionImplTest {
             uut.notifyComplete();
             uut.awaitComplete(100000);
         });
+    }
+
+    @Test
+    public void testCloseThrowsException() throws Exception {
+        uut = spy(uut);
+        doThrow(RuntimeException.class).when(uut).close();
+
+        // this must return without exceptions
+        uut.notifyComplete();
     }
 }

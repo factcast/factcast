@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.factcast.core.subscription.observer.GenericObserver;
 
+import com.fasterxml.jackson.databind.annotation.JsonValueInstantiator;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -55,12 +57,13 @@ public class SubscriptionImpl<T> implements Subscription {
 
     @Override
     public void close() {
-        closed.set(true);
-        SubscriptionCancelledException closedException = new SubscriptionCancelledException(
-                "Client closed the subscription");
-        catchup.completeExceptionally(closedException);
-        complete.completeExceptionally(closedException);
-        onClose.run();
+        if (!closed.getAndSet(true)) {
+            SubscriptionCancelledException closedException = new SubscriptionCancelledException(
+                    "Client closed the subscription");
+            catchup.completeExceptionally(closedException);
+            complete.completeExceptionally(closedException);
+            onClose.run();
+        }
     }
 
     @Override
@@ -144,7 +147,7 @@ public class SubscriptionImpl<T> implements Subscription {
         try {
             close();
         } catch (Exception e) {
-            log.trace("Irrelevant Excption during close: ", e);
+            log.trace("Irrelevant Exception during close: ", e);
         }
     }
 

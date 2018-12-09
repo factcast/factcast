@@ -173,18 +173,6 @@ public class GrpcFactStoreTest {
         });
     }
 
-    @Disabled
-    @Test
-    void testConfigureGZipPropagatesRetryableExceptionOnUnavailableStatus() {
-        fail("unimplemented");
-    }
-
-    @Disabled
-    @Test
-    void testConfigureLZ4PropagatesRetryableExceptionOnUnavailableStatus() {
-        fail("unimplemented");
-    }
-
     @Test
     void testEnumerateNamespacesPropagatesRetryableExceptionOnUnavailableStatus() {
         when(blockingStub.enumerateNamespaces(any())).thenThrow(new StatusRuntimeException(

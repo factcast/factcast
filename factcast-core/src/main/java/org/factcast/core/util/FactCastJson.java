@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import lombok.AccessLevel;
+import lombok.Generated;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -82,6 +83,7 @@ public final class FactCastJson {
     }
 
     @SneakyThrows
+    @Generated
     public static String writeValueAsPrettyString(ObjectNode objectNode) {
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(objectNode);
     }

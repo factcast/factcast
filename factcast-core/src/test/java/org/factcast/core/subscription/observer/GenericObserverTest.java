@@ -6,8 +6,11 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import org.factcast.core.TestFact;
+import org.factcast.core.TestHelper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import lombok.NonNull;
 
 public class GenericObserverTest {
 
@@ -48,6 +51,21 @@ public class GenericObserverTest {
             GenericObserver<Integer> i = element -> {
             };
             i.map(null);
+        });
+    }
+
+    @Test
+    public void testOnErrorNullParameter() throws Exception {
+        GenericObserver<Integer> uut = new GenericObserver<Integer>() {
+
+            @Override
+            public void onNext(@NonNull Integer element) {
+                // TODO Auto-generated method stub
+
+            }
+        };
+        TestHelper.expectNPE(() -> {
+            uut.onError(null);
         });
     }
 

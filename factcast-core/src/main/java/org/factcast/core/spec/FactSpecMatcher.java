@@ -29,6 +29,7 @@ import org.factcast.core.Fact;
 
 import com.fasterxml.jackson.databind.util.LRUMap;
 
+import lombok.Generated;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +68,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         ns = spec.ns();
         type = spec.type();
         aggId = spec.aggId();
-        meta = spec.meta().isEmpty() ? null : spec.meta();
+        meta = spec.meta();
         script = spec.jsFilterScript();
         scriptEngine = getEngine(script);
     }
@@ -82,10 +83,10 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     }
 
     protected boolean metaMatch(Fact t) {
-        if ((meta == null) || meta.isEmpty()) {
+        if ((meta.isEmpty())) {
             return true;
         }
-        return meta.entrySet().parallelStream().allMatch(e -> e.getValue().equals(t.meta(e
+        return meta.entrySet().stream().allMatch(e -> e.getValue().equals(t.meta(e
                 .getKey())));
     }
 
@@ -111,6 +112,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     }
 
     @SneakyThrows
+    @Generated
     protected boolean scriptMatch(Fact t) {
         if (script == null) {
             return true;

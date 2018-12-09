@@ -18,8 +18,9 @@ public class FactSpecMatcherTest {
     void testMetaMatch() {
         assertTrue(metaMatch(FactSpec.ns("default").meta("foo", "bar"), new TestFact().meta("foo",
                 "bar")));
-        assertTrue(metaMatch(FactSpec.ns("default").meta("foo", "bar"), new TestFact().meta("x",
-                "y").meta("foo", "bar")));
+        assertTrue(
+                metaMatch(FactSpec.ns("default").meta("foo", "bar"), new TestFact().meta("x", "y")
+                        .meta("foo", "bar")));
         assertTrue(metaMatch(FactSpec.ns("default"), new TestFact().meta("x", "y").meta("foo",
                 "bar")));
         assertFalse(metaMatch(FactSpec.ns("default").meta("foo", "bar"), new TestFact().meta("foo",
@@ -54,10 +55,12 @@ public class FactSpecMatcherTest {
     @Test
     void testScriptMatch() {
         assertTrue(scriptMatch(FactSpec.ns("default"), new TestFact()));
-        assertFalse(scriptMatch(FactSpec.ns("default").jsFilterScript(
-                "function (h,e){ return false }"), new TestFact()));
+        assertFalse(
+                scriptMatch(FactSpec.ns("default").jsFilterScript("function (h,e){ return false }"),
+                        new TestFact()));
         assertTrue(scriptMatch(FactSpec.ns("default").jsFilterScript(
-                "function (h,e){ return h.meta.x=='y' }"), new TestFact().meta("x", "y")));
+                "function (h,e){ return h.meta.x=='y' }"),
+                new TestFact().meta("x", "y")));
     }
 
     // ---------------------------
@@ -95,6 +98,59 @@ public class FactSpecMatcherTest {
         assertTrue(p.test(new TestFact().ns("1")));
         assertTrue(p.test(new TestFact().ns("2")));
         assertFalse(p.test(new TestFact().ns("3")));
+    }
+
+    @Test
+    void testMatchesByNS() {
+        Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1"));
+        assertTrue(p.test(new TestFact().ns("1")));
+        assertFalse(p.test(new TestFact().ns("3")));
+    }
+
+    @Test
+    void testMatchesByType() {
+        Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").type("t1"));
+        assertTrue(p.test(new TestFact().ns("1").type("t1")));
+        assertFalse(p.test(new TestFact().ns("1")));
+    }
+
+    @Test
+    void testMatchesByAggId() {
+        Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").aggId(new UUID(0, 1)));
+        assertTrue(p.test(new TestFact().ns("1").aggId(new UUID(0, 1))));
+        assertFalse(p.test(new TestFact().ns("1").aggId(new UUID(0, 2))));
+    }
+
+    @Test
+    void testMatchesByMeta() {
+        Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").meta("foo", "bar"));
+        assertTrue(p.test(new TestFact().ns("1").meta("foo", "bar")));
+        assertTrue(p.test(new TestFact().ns("1").meta("poit", "zort").meta("foo", "bar")));
+        assertFalse(p.test(new TestFact().ns("1").meta("foo", "baz")));
+        assertFalse(p.test(new TestFact().ns("1")));
+    }
+
+    @Test
+    void testMatchesByMetaAllMatch() {
+        Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").meta("foo", "bar").meta("poit",
+                "zort"));
+        assertTrue(p.test(new TestFact().ns("1")
+                .meta("some", "other")
+                .meta("poit", "zort")
+                .meta("foo", "bar")));
+
+        assertFalse(p.test(new TestFact().ns("1").meta("foo", "bar")));
+        assertFalse(p.test(new TestFact().ns("1").meta("poit", "zort")));
+        assertFalse(p.test(new TestFact().ns("1")));
+    }
+
+    @Test
+    void testMatchesByScript() {
+        String script = "function (h,p) { return p.test == 1 }";
+        Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").jsFilterScript(script));
+        assertTrue(p.test(new TestFact().ns("1").jsonPayload("{\"test\":1}")));
+        assertFalse(p.test(new TestFact().ns("1").jsonPayload("{\"test\":2}")));
+        assertFalse(p.test(new TestFact().ns("1")));
     }
 
     @Test
