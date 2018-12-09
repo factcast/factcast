@@ -815,13 +815,24 @@ public abstract class AbstractFactStoreTest {
     }
 
     @Test
-    public void testSubscribeParameterContract() throws Exception {
+    public void testSubscribeToIdsParameterContract() throws Exception {
         IdObserver observer = mock(IdObserver.class);
         assertThrows(NullPointerException.class, () -> {
             uut.subscribeToIds(null, observer);
         });
         assertThrows(NullPointerException.class, () -> {
             uut.subscribeToIds(mock(SubscriptionRequestTO.class), null);
+        });
+    }
+
+    @Test
+    public void testSubscribeToFactsParameterContract() throws Exception {
+        FactObserver observer = mock(FactObserver.class);
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToFacts(null, observer);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToFacts(mock(SubscriptionRequestTO.class), null);
         });
     }
 }
