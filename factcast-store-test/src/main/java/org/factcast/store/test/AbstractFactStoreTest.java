@@ -15,10 +15,7 @@
  */
 package org.factcast.store.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -30,6 +27,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -38,6 +36,7 @@ import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.factcast.core.Fact;
@@ -48,6 +47,7 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.IdObserver;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,6 +55,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.test.annotation.DirtiesContext;
 
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
@@ -113,10 +114,12 @@ public abstract class AbstractFactStoreTest {
             verify(observer, never()).onComplete();
             verify(observer, never()).onError(any());
             verify(observer, never()).onNext(any());
-            uut.publishWithMark(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"other\"}", "{}"));
-            uut.publishWithMark(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"other\"}", "{}"));
+            uut.publishWithMark(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"other\"}", "{}"));
+            uut.publishWithMark(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"other\"}", "{}"));
             observer.await(2);
             // the mark facts only
             verify(observer, times(2)).onNext(any());
@@ -161,8 +164,9 @@ public abstract class AbstractFactStoreTest {
             verify(observer, never()).onComplete();
             verify(observer, never()).onError(any());
             verify(observer, never()).onNext(any());
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             observer.await(1);
         });
     }
@@ -171,12 +175,15 @@ public abstract class AbstractFactStoreTest {
     @Test
     protected void testEmptyStoreEphemeral() {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             TestFactObserver observer = testObserver();
             uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromNowOn(), observer)
                     .awaitCatchup();
@@ -185,8 +192,9 @@ public abstract class AbstractFactStoreTest {
             verify(observer, never()).onComplete();
             verify(observer, never()).onError(any());
             verify(observer, never()).onNext(any());
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             observer.await(1);
             verify(observer, times(1)).onNext(any());
         });
@@ -197,26 +205,32 @@ public abstract class AbstractFactStoreTest {
     protected void testEmptyStoreEphemeralWithCancel() {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
             TestFactObserver observer = testObserver();
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.follow(ANY)
-                    .fromNowOn(), observer).awaitCatchup();
+                    .fromNowOn(), observer)
+                    .awaitCatchup();
             // nothing recieved
             verify(observer).onCatchup();
             verify(observer, never()).onComplete();
             verify(observer, never()).onError(any());
             verify(observer, never()).onNext(any());
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             observer.await(1);
             verify(observer, times(1)).onNext(any());
             subscription.close();
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             Thread.sleep(100);
             // additional event not received
             verify(observer, times(1)).onNext(any());
@@ -228,25 +242,31 @@ public abstract class AbstractFactStoreTest {
     protected void testEmptyStoreFollowWithCancel() {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
             TestFactObserver observer = testObserver();
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.follow(ANY)
-                    .fromScratch(), observer).awaitCatchup();
+                    .fromScratch(), observer)
+                    .awaitCatchup();
             // nothing recieved
             verify(observer).onCatchup();
             verify(observer, never()).onComplete();
             verify(observer, never()).onError(any());
             verify(observer, times(3)).onNext(any());
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             observer.await(4);
             subscription.close();
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             Thread.sleep(100);
             // additional event not received
             verify(observer, times(4)).onNext(any());
@@ -258,8 +278,9 @@ public abstract class AbstractFactStoreTest {
     protected void testEmptyStoreCatchupMatching() {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
             FactObserver observer = mock(FactObserver.class);
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).fromScratch(), observer)
                     .awaitComplete();
             verify(observer).onCatchup();
@@ -274,16 +295,18 @@ public abstract class AbstractFactStoreTest {
     protected void testEmptyStoreFollowMatchingDelayed() {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
             TestFactObserver observer = testObserver();
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
                     .awaitCatchup();
             verify(observer).onCatchup();
             verify(observer, never()).onComplete();
             verify(observer, never()).onError(any());
             verify(observer).onNext(any());
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             observer.await(2);
         });
     }
@@ -311,11 +334,13 @@ public abstract class AbstractFactStoreTest {
     @Test
     protected void testFetchById() {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             UUID id = UUID.randomUUID();
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+            uut.publish(
+                    Fact.of("{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             Optional<Fact> f = uut.fetchById(id);
             assertFalse(f.isPresent());
             uut.publish(Fact.of("{\"id\":\"" + id + "\",\"type\":\"someType\",\"ns\":\"default\"}",
@@ -332,7 +357,8 @@ public abstract class AbstractFactStoreTest {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
             FactObserver observer = mock(FactObserver.class);
             UUID mark = uut.publishWithMark(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"ns\":\"" + UUID.randomUUID() + "\",\"type\":\"noone_knows\"}", "{}"));
+                    + "\",\"ns\":\""
+                    + UUID.randomUUID() + "\",\"type\":\"noone_knows\"}", "{}"));
             ArgumentCaptor<Fact> af = ArgumentCaptor.forClass(Fact.class);
             doNothing().when(observer).onNext(af.capture());
             uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).fromScratch(), observer)
@@ -351,7 +377,8 @@ public abstract class AbstractFactStoreTest {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
             FactObserver observer = mock(FactObserver.class);
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"ns\":\"default\",\"type\":\"noone_knows\"}", "{}"));
+                    + "\",\"ns\":\"default\",\"type\":\"noone_knows\"}",
+                    "{}"));
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                     "{}"));
@@ -370,8 +397,10 @@ public abstract class AbstractFactStoreTest {
     protected void testScriptedWithPayloadFiltering() {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
             FactObserver observer = mock(FactObserver.class);
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}", "{}"));
+            uut.publish(Fact.of(
+                    "{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}",
+                    "{}"));
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                     "{}"));
@@ -391,8 +420,10 @@ public abstract class AbstractFactStoreTest {
     protected void testScriptedWithHeaderFiltering() {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
             FactObserver observer = mock(FactObserver.class);
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}", "{}"));
+            uut.publish(Fact.of(
+                    "{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}",
+                    "{}"));
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                     "{}"));
@@ -412,8 +443,10 @@ public abstract class AbstractFactStoreTest {
     protected void testScriptedFilteringMatchAll() {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
             FactObserver observer = mock(FactObserver.class);
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}", "{}"));
+            uut.publish(Fact.of(
+                    "{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}",
+                    "{}"));
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                     "{}"));
@@ -433,8 +466,10 @@ public abstract class AbstractFactStoreTest {
     protected void testScriptedFilteringMatchNone() {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
             FactObserver observer = mock(FactObserver.class);
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
-                    + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}", "{}"));
+            uut.publish(Fact.of(
+                    "{\"id\":\"" + UUID.randomUUID()
+                            + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"hit\":\"me\"}",
+                    "{}"));
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                     "{}"));
@@ -457,7 +492,8 @@ public abstract class AbstractFactStoreTest {
                     + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             FactObserver observer = mock(FactObserver.class);
             uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default")).fromScratch(),
-                    observer).awaitComplete();
+                    observer)
+                    .awaitComplete();
             verify(observer, times(2)).onNext(any());
         });
     }
@@ -472,7 +508,8 @@ public abstract class AbstractFactStoreTest {
             FactObserver observer = mock(FactObserver.class);
             uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default"))
                     .skipMarks()
-                    .fromScratch(), observer).awaitComplete();
+                    .fromScratch(),
+                    observer).awaitComplete();
             verify(observer, times(1)).onNext(any());
         });
     }
@@ -483,13 +520,16 @@ public abstract class AbstractFactStoreTest {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
             final UUID id = UUID.randomUUID();
             final UUID aggId1 = UUID.randomUUID();
-            uut.publishWithMark(Fact.of("{\"id\":\"" + id
-                    + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + aggId1
-                    + "\"]}", "{}"));
+            uut.publishWithMark(Fact.of(
+                    "{\"id\":\"" + id + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\""
+                            + aggId1 + "\"]}",
+                    "{}"));
             FactObserver observer = mock(FactObserver.class);
-            uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId1))
-                    .skipMarks()
-                    .fromScratch(), observer).awaitComplete();
+            uut.subscribeToFacts(
+                    SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId1))
+                            .skipMarks()
+                            .fromScratch(),
+                    observer).awaitComplete();
             verify(observer, times(1)).onNext(any());
         });
     }
@@ -502,17 +542,21 @@ public abstract class AbstractFactStoreTest {
             final UUID aggId1 = UUID.randomUUID();
             final UUID aggId2 = UUID.randomUUID();
             uut.publishWithMark(Fact.of("{\"id\":\"" + id
-                    + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + aggId1
-                    + "\",\"" + aggId2 + "\"]}", "{}"));
+                    + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\""
+                    + aggId1 + "\",\"" + aggId2 + "\"]}", "{}"));
             FactObserver observer = mock(FactObserver.class);
-            uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId1))
-                    .skipMarks()
-                    .fromScratch(), observer).awaitComplete();
+            uut.subscribeToFacts(
+                    SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId1))
+                            .skipMarks()
+                            .fromScratch(),
+                    observer).awaitComplete();
             verify(observer, times(1)).onNext(any());
             observer = mock(FactObserver.class);
-            uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId2))
-                    .skipMarks()
-                    .fromScratch(), observer).awaitComplete();
+            uut.subscribeToFacts(
+                    SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId2))
+                            .skipMarks()
+                            .fromScratch(),
+                    observer).awaitComplete();
             verify(observer, times(1)).onNext(any());
         });
     }
@@ -525,12 +569,14 @@ public abstract class AbstractFactStoreTest {
             final UUID aggId1 = UUID.randomUUID();
             final UUID aggId2 = UUID.randomUUID();
             uut.publishWithMark(Fact.of("{\"id\":\"" + id
-                    + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + aggId1
-                    + "\",\"" + aggId2 + "\"]}", "{}"));
+                    + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\""
+                    + aggId1 + "\",\"" + aggId2 + "\"]}", "{}"));
             FactObserver observer = mock(FactObserver.class);
-            uut.subscribeToFacts(SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId2))
-                    .skipMarks()
-                    .fromScratch(), observer).awaitComplete();
+            uut.subscribeToFacts(
+                    SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId2))
+                            .skipMarks()
+                            .fromScratch(),
+                    observer).awaitComplete();
             verify(observer, times(1)).onNext(any());
         });
     }
@@ -541,11 +587,15 @@ public abstract class AbstractFactStoreTest {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
             final UUID id = UUID.randomUUID();
             TestFactObserver obs = new TestFactObserver();
-            try (Subscription s = uut.subscribeToFacts(SubscriptionRequest.follow(500, FactSpec.ns(
-                    "default").aggId(id)).skipMarks().fromScratch(), obs)) {
-                uut.publishWithMark(Fact.of("{\"id\":\"" + id
-                        + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id
-                        + "\"]}", "{}"));
+            try (Subscription s = uut.subscribeToFacts(
+                    SubscriptionRequest.follow(500, FactSpec.ns("default").aggId(id))
+                            .skipMarks()
+                            .fromScratch(), obs)) {
+                uut.publishWithMark(Fact.of(
+                        "{\"id\":\"" + id
+                                + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id
+                                + "\"]}",
+                        "{}"));
                 // will take some time on pgstore
                 obs.await(1);
             }
@@ -558,8 +608,9 @@ public abstract class AbstractFactStoreTest {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
             final UUID id = UUID.randomUUID();
             assertFalse(uut.serialOf(id).isPresent());
-            UUID mark1 = uut.publishWithMark(Fact.of("{\"id\":\"" + id
-                    + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id + "\"]}",
+            UUID mark1 = uut.publishWithMark(Fact.of(
+                    "{\"id\":\"" + id + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\""
+                            + id + "\"]}",
                     "{}"));
             assertTrue(uut.serialOf(mark1).isPresent());
             assertTrue(uut.serialOf(id).isPresent());
@@ -574,13 +625,15 @@ public abstract class AbstractFactStoreTest {
     protected void testSerialHeader() {
         Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
             UUID id = UUID.randomUUID();
-            uut.publish(Fact.of("{\"id\":\"" + id
-                    + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id + "\"]}",
+            uut.publish(Fact.of(
+                    "{\"id\":\"" + id + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\""
+                            + id + "\"]}",
                     "{}"));
             UUID id2 = UUID.randomUUID();
             uut.publish(Fact.of("{\"id\":\"" + id2
                     + "\",\"type\":\"someType\",\"meta\":{\"foo\":\"bar\"},\"ns\":\"default\",\"aggIds\":[\""
-                    + id2 + "\"]}", "{}"));
+                    + id2
+                    + "\"]}", "{}"));
             OptionalLong serialOf = uut.serialOf(id);
             assertTrue(serialOf.isPresent());
             Fact f = uut.fetchById(id).get();
@@ -716,5 +769,47 @@ public abstract class AbstractFactStoreTest {
 
     private Fact newFollowTestFact() {
         return Fact.builder().ns("followtest").id(UUID.randomUUID()).build("{}");
+    }
+
+    @Test
+    void testFetchByIdNullParameter() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            createStoreToTest().fetchById(null);
+        });
+    }
+
+    @Test
+    public void testPublishNullParameter() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            createStoreToTest().publish(null);
+        });
+    }
+
+    @Test
+    public void testSubscribeStartingAfter() throws Exception {
+        for (int i = 0; i < 10; i++) {
+            uut.publish(Fact.builder().id(new UUID(0L, i)).ns("ns1").type("t1").build("{}"));
+        }
+
+        ToListObserver toListObserver = new ToListObserver();
+
+        SubscriptionRequest request = SubscriptionRequest.catchup(FactSpec.ns("ns1")).from(new UUID(
+                0L, 7L));
+        Subscription s = uut.subscribeToFacts(request, toListObserver);
+        s.awaitComplete();
+
+        assertEquals(2, toListObserver.list().size());
+
+    }
+
+    static class ToListObserver implements FactObserver {
+        @Getter
+        private List<Fact> list = new LinkedList<>();
+
+        @Override
+        public void onNext(Fact element) {
+            list.add(element);
+        }
+
     }
 }

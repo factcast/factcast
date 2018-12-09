@@ -42,6 +42,7 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 
+import lombok.Generated;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -70,6 +71,7 @@ public class InMemFactStore implements FactStore {
     final ExecutorService executorService;
 
     @VisibleForTesting
+
     InMemFactStore(@NonNull ExecutorService es) {
         executorService = es;
     }
@@ -79,7 +81,7 @@ public class InMemFactStore implements FactStore {
     }
 
     @RequiredArgsConstructor
-    class AfterPredicate implements Predicate<Fact> {
+    static class AfterPredicate implements Predicate<Fact> {
 
         final UUID after;
 

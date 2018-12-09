@@ -21,14 +21,13 @@ import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
 class InMemFact extends DefaultFact {
 
     public InMemFact(long ser, Fact toCopyFrom) {
         super(addSerToHeader(ser, toCopyFrom.jsonHeader()), toCopyFrom.jsonPayload());
-    }
-
-    @SuppressWarnings("deprecation")
-    public InMemFact() {
     }
 
     private static String addSerToHeader(long ser, String jsonHeader) {
