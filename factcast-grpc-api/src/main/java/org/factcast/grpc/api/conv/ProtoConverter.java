@@ -209,7 +209,7 @@ public class ProtoConverter {
     }
 
     public @NonNull MSG_Facts toProto(List<Fact> toPublish) {
-        org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder ret = MSG_Facts.newBuilder();
+        MSG_Facts.Builder ret = MSG_Facts.newBuilder();
         for (Fact fact : toPublish) {
             ret.addFact(toProto(fact));
         }

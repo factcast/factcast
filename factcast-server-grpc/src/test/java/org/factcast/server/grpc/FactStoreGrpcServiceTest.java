@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.net.URL;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.UUID;
@@ -14,6 +16,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
@@ -238,6 +241,42 @@ public class FactStoreGrpcServiceTest {
 
         verify(so).onCompleted();
         verify(so).onNext(any(MSG_ServerConfig.class));
+
+    }
+
+    @Test
+    public void testRetrieveImplementationVersion() throws Exception {
+        uut = spy(uut);
+        when(uut.getProjectProperties()).thenReturn(this.getClass().getResource("test.properties"));
+        HashMap<String, String> map = new HashMap<>();
+        uut.retrieveImplementationVersion(map);
+
+        assertEquals("9.9.9", map.get(Capabilities.FACTCAST_IMPL_VERSION.toString()));
+
+    }
+
+    @Test
+    public void testRetrieveImplementationVersionEmptyPropertyFile() throws Exception {
+        uut = spy(uut);
+        when(uut.getProjectProperties()).thenReturn(this.getClass().getResource(
+                "no-version.properties"));
+        HashMap<String, String> map = new HashMap<>();
+        uut.retrieveImplementationVersion(map);
+
+        assertEquals("UNKNOWN", map.get(Capabilities.FACTCAST_IMPL_VERSION.toString()));
+
+    }
+
+    @Test
+    public void testRetrieveImplementationVersionCannotReadFile() throws Exception {
+        uut = spy(uut);
+        URL url = mock(URL.class);
+        when(url.openStream()).thenReturn(null);
+        when(uut.getProjectProperties()).thenReturn(url);
+        HashMap<String, String> map = new HashMap<>();
+        uut.retrieveImplementationVersion(map);
+
+        assertEquals("UNKNOWN", map.get(Capabilities.FACTCAST_IMPL_VERSION.toString()));
 
     }
 }
