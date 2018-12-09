@@ -170,7 +170,7 @@
             <exclude>**/*ConfigurationProperties.*</exclude>
             <exclude>**/org/factcast/example/**/*</exclude>
             <exclude>**/org/factcast/example/*</exclude>
-            <exclude>**/org/factcast/grpc/api/gen/*</exclude>
+            <exclude>**/org/factcast/grpc/api/gen/**</exclude>
             <exclude>**/org/factcast/client/grpc/cli/**</exclude>
             <exclude>**/org/factcast/store/test/**</exclude>
           </excludes>

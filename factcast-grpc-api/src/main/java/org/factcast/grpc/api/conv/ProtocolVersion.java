@@ -19,11 +19,12 @@ import java.util.StringJoiner;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import lombok.experimental.Wither;
 
 @RequiredArgsConstructor(staticName = "of")
-@Getter
 @Wither
+@Value
 public class ProtocolVersion {
 
     final int major;

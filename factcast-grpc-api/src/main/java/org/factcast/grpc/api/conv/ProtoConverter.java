@@ -131,8 +131,7 @@ public class ProtoConverter {
 
     @NonNull
     public OptionalLong fromProto(@NonNull MSG_OptionalSerial serialOf) {
-        // be >0
-        if (serialOf.getPresent() && serialOf.getSerial() > 0) {
+        if (serialOf.getPresent()) {
             return OptionalLong.of(serialOf.getSerial());
         } else {
             return OptionalLong.empty();
@@ -171,7 +170,8 @@ public class ProtoConverter {
                 .build();
     }
 
-    private MSG_ServerProperties toProto(@NonNull Map<String, String> property) {
+    @NonNull
+    public MSG_ServerProperties toProto(@NonNull Map<String, String> property) {
         return MSG_ServerProperties.newBuilder().putAllProperty(property).build();
     }
 
