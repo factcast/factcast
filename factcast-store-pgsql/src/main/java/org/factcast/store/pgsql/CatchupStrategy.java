@@ -23,7 +23,7 @@ package org.factcast.store.pgsql;
  */
 public enum CatchupStrategy {
 
-    PAGED, QUEUED;
+    PAGED;
 
     @SuppressWarnings("SameReturnValue")
     public static CatchupStrategy getDefault() {

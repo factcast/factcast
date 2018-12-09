@@ -20,7 +20,6 @@ import java.util.concurrent.Executors;
 import org.factcast.store.pgsql.PGConfigurationProperties;
 import org.factcast.store.pgsql.internal.catchup.PGCatchupFactory;
 import org.factcast.store.pgsql.internal.catchup.paged.PGPagedCatchUpFactory;
-import org.factcast.store.pgsql.internal.catchup.queue.PGQueueCatchUpFactory;
 import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -50,8 +49,6 @@ public class PGFactStoreInternalConfiguration {
         switch (props.getCatchupStrategy()) {
         case PAGED:
             return new PGPagedCatchUpFactory(jdbc, props, serMapper);
-        case QUEUED:
-            return new PGQueueCatchUpFactory(jdbc, props, serMapper);
         default:
             throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
         }
