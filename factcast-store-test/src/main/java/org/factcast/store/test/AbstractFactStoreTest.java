@@ -46,6 +46,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.IdObserver;
 import org.junit.jupiter.api.Assertions;
@@ -772,7 +773,7 @@ public abstract class AbstractFactStoreTest {
     }
 
     @Test
-    void testFetchByIdNullParameter() throws Exception {
+    public void testFetchByIdNullParameter() throws Exception {
         assertThrows(NullPointerException.class, () -> {
             createStoreToTest().fetchById(null);
         });
@@ -811,5 +812,16 @@ public abstract class AbstractFactStoreTest {
             list.add(element);
         }
 
+    }
+
+    @Test
+    public void testSubscribeParameterContract() throws Exception {
+        IdObserver observer = mock(IdObserver.class);
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToIds(null, observer);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribeToIds(mock(SubscriptionRequestTO.class), null);
+        });
     }
 }

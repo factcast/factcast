@@ -174,11 +174,11 @@ public class PGFactStore implements FactStore {
         try (Context time = seqLookupLatency.time()) {
             List<Long> res = jdbcTemplate.query(PGConstants.SELECT_SER_BY_ID, new Object[] {
                     "{\"id\":\"" + l + "\"}" }, this::extractSerFromResultSet);
-            if (res.size() > 1) {
-                throw new IllegalStateException("Event ID appeared twice!?");
-            } else if (res.isEmpty()) {
+
+            if (res.isEmpty()) {
                 return OptionalLong.empty();
             }
+
             Long ser = res.get(0);
             if (ser != null && ser > 0) {
                 return OptionalLong.of(ser);
