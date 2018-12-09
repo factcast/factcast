@@ -41,6 +41,7 @@ public interface Fact {
 
     String type();
 
+    @NonNull
     Set<UUID> aggIds();
 
     @NonNull

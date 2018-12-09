@@ -1,7 +1,6 @@
 package org.factcast.core.spec;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -9,6 +8,7 @@ import java.util.function.Predicate;
 
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
+import org.factcast.core.TestHelper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -134,10 +134,8 @@ public class FactSpecMatcherTest {
     void testMatchesByMetaAllMatch() {
         Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").meta("foo", "bar").meta("poit",
                 "zort"));
-        assertTrue(p.test(new TestFact().ns("1")
-                .meta("some", "other")
-                .meta("poit", "zort")
-                .meta("foo", "bar")));
+        assertTrue(p.test(new TestFact().ns("1").meta("some", "other").meta("poit", "zort").meta(
+                "foo", "bar")));
 
         assertFalse(p.test(new TestFact().ns("1").meta("foo", "bar")));
         assertFalse(p.test(new TestFact().ns("1").meta("poit", "zort")));
@@ -159,4 +157,12 @@ public class FactSpecMatcherTest {
             new FactSpecMatcher(null);
         });
     }
+
+    @Test
+    public void testMatchesNull() throws Exception {
+        TestHelper.expectNPE(() -> {
+            FactSpecMatcher.matches(null);
+        });
+    }
+
 }

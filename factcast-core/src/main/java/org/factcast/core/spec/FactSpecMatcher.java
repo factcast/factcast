@@ -17,9 +17,9 @@ package org.factcast.core.spec;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.script.ScriptEngine;
@@ -42,8 +42,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class FactSpecMatcher implements Predicate<Fact> {
 
-    static final ScriptEngineManager engineManager = new ScriptEngineManager();
-
     static final LRUMap<String, ScriptEngine> scriptEngineCache = new LRUMap<>(10, 200);
 
     @NonNull
@@ -58,6 +56,8 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     final String script;
 
     final ScriptEngine scriptEngine;
+
+    private static final Supplier<ScriptEngine> scriptEngineSupplier = new JavaScriptEngineSupplier();
 
     public FactSpecMatcher(@NonNull FactSpec spec) {
         // opt: prevent method calls by prefetching to final fields.
@@ -91,8 +91,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     }
 
     protected boolean nsMatch(Fact t) {
-        String otherNs = t.ns();
-        return (ns.hashCode() == otherNs.hashCode()) && ns.equals(otherNs);
+        return ns.equals(t.ns());
     }
 
     protected boolean typeMatch(Fact t) {
@@ -107,8 +106,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         if (aggId == null) {
             return true;
         }
-        Set<UUID> otherAggId = t.aggIds();
-        return otherAggId != null && otherAggId.contains(aggId);
+        return t.aggIds().contains(aggId);
     }
 
     @SneakyThrows
@@ -121,6 +119,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     }
 
     @SneakyThrows
+    @Generated
     private static synchronized ScriptEngine getEngine(String js) {
         if (js == null) {
             return null;
@@ -129,29 +128,11 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         if (cachedEngine != null) {
             return cachedEngine;
         } else {
-            ScriptEngine engine = getJavascriptEngine();
+            ScriptEngine engine = scriptEngineSupplier.get();
             engine.eval("var test=" + js);
             scriptEngineCache.put(js, engine);
             return engine;
         }
-    }
-
-    private static ScriptEngine getJavascriptEngine() {
-        ScriptEngine engine = getEngineByName("nashorn", "javascript", "js");
-        if (engine == null)
-            throw new IllegalStateException("Cannot find any engine to run javascript code.");
-        return engine;
-    }
-
-    private static ScriptEngine getEngineByName(String... names) {
-        for (String name : names) {
-            ScriptEngine engine = engineManager.getEngineByName(name);
-            if (engine == null)
-                log.error("'{}' engine unavailable.", name);
-            else
-                return engine;
-        }
-        return null;
     }
 
     public static Predicate<Fact> matchesAnyOf(@NonNull List<FactSpec> spec) {

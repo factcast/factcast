@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.store.RetryableException;
 
+import lombok.Generated;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -96,6 +97,7 @@ class Retry {
                     + ")";
         }
 
+        @Generated
         private void sleep(long millis) {
             try {
                 Thread.sleep(millis);
