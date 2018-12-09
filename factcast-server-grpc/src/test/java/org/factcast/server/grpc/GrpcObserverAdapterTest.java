@@ -3,10 +3,7 @@ package org.factcast.server.grpc;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.util.concurrent.Callable;
 import java.util.function.Function;
@@ -52,6 +49,14 @@ public class GrpcObserverAdapterTest {
     @Test
     void testOnComplete() {
         GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
+        uut.onComplete();
+        verify(observer).onCompleted();
+    }
+
+    @Test
+    void testOnCompleteWithException() {
+        GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
+        doThrow(UnsupportedOperationException.class).when(observer).onCompleted();
         uut.onComplete();
         verify(observer).onCompleted();
     }
