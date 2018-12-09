@@ -1,7 +1,6 @@
 package org.factcast.client.cache;
 
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
@@ -11,8 +10,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.DefaultFact;
@@ -174,5 +175,25 @@ public class CachingFactCastTest {
         Assertions.assertThrows(NullPointerException.class, () -> {
             uut.serialOf(null);
         });
+    }
+
+    @Test
+    public void testEnumerateNamespaces() throws Exception {
+        Set<String> set = new HashSet<>();
+        when(fc.enumerateNamespaces()).thenReturn(set);
+
+        assertSame(set, uut.enumerateNamespaces());
+        verify(fc).enumerateNamespaces();
+
+    }
+
+    @Test
+    public void testEnumerateTypes() throws Exception {
+        Set<String> set = new HashSet<>();
+        when(fc.enumerateTypes("foo")).thenReturn(set);
+
+        assertSame(set, uut.enumerateTypes("foo"));
+        verify(fc).enumerateTypes("foo");
+
     }
 }
