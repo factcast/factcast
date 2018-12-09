@@ -70,12 +70,6 @@ public interface FactCast extends ReadFactCast {
     }
 
     default FactCast retry(int maxAttempts, long minimumWaitIntervalMillis) {
-        if (maxAttempts <= 0) {
-            throw new IllegalArgumentException("maxAttempts must be > 0");
-        }
-        if (minimumWaitIntervalMillis < 0) {
-            throw new IllegalArgumentException("minimumWaitIntervalMillis must be >= 0");
-        }
-        return Retry.wrap(false, this, maxAttempts, minimumWaitIntervalMillis);
+        return Retry.wrap(this, maxAttempts, minimumWaitIntervalMillis);
     }
 }
