@@ -48,6 +48,8 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
@@ -143,10 +145,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         return properties;
     }
 
-    private void retrieveImplementationVersion(HashMap<String, String> properties) {
+    @VisibleForTesting
+    void retrieveImplementationVersion(HashMap<String, String> properties) {
         String implVersion = "UNKNOWN";
-        URL propertiesUrl = FactStoreGrpcService.class.getResource(
-                "/META-INF/maven/org.factcast/factcast-server-grpc/pom.properties");
+        URL propertiesUrl = getProjectProperties();
         Properties buildProperties = new Properties();
         if (propertiesUrl != null)
             try {
@@ -162,6 +164,12 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                 // "UNKNOWN"
             }
         properties.put(Capabilities.FACTCAST_IMPL_VERSION.toString(), implVersion);
+    }
+
+    @VisibleForTesting
+    URL getProjectProperties() {
+        return FactStoreGrpcService.class.getResource(
+                "/META-INF/maven/org.factcast/factcast-server-grpc/pom.properties");
     }
 
     private void evaluateLZ4Availability(HashMap<String, String> properties) {
@@ -181,7 +189,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         return false;
     }
 
-    private void resetDebugInfo(@NonNull SubscriptionRequestTO req) {
+    private void resetDebugInfo(SubscriptionRequestTO req) {
         String newId = "grpc-sub#" + subscriptionIdStore.incrementAndGet();
         log.info("subscribing {} for {} defined as {}", newId, req, req.dump());
         req.debugInfo(newId);
