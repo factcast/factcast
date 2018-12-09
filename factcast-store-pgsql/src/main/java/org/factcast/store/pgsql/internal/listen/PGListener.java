@@ -103,9 +103,9 @@ public class PGListener implements InitializingBean, DisposableBean {
             }
         }, "PG Instance Listener");
         listenerThread.setDaemon(true);
-        listenerThread.start();
         listenerThread.setUncaughtExceptionHandler((t, e) -> log.error("thread " + t
                 + " encountered an unhandled exception", e));
+        listenerThread.start();
         try {
             l.await(15, TimeUnit.SECONDS);
         } catch (InterruptedException ignored) {

@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Fetches the latest SERIAL from the fact table.
@@ -31,13 +32,14 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 @Component
+@Slf4j
 public class PGLatestSerialFetcher {
 
     @NonNull
     final JdbcTemplate jdbcTemplate;
 
     /**
-     * @return 0, if no Fact is found,
+     * @return 0, if no Fact is found, or exception is raised.
      */
     public long retrieveLatestSer() {
         try {
@@ -45,7 +47,8 @@ public class PGLatestSerialFetcher {
             if (rs.next()) {
                 return rs.getLong(1);
             }
-        } catch (EmptyResultDataAccessException ignored) {
+        } catch (Exception ignored) {
+            log.warn("While retrieveLatestSer:", ignored);
         }
         return 0;
     }
