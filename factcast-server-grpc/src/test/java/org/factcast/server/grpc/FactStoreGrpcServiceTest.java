@@ -247,7 +247,8 @@ public class FactStoreGrpcServiceTest {
     @Test
     public void testRetrieveImplementationVersion() throws Exception {
         uut = spy(uut);
-        when(uut.getProjectProperties()).thenReturn(this.getClass().getResource("test.properties"));
+        when(uut.getProjectProperties()).thenReturn(this.getClass().getResource(
+                "/test.properties"));
         HashMap<String, String> map = new HashMap<>();
         uut.retrieveImplementationVersion(map);
 
@@ -259,7 +260,7 @@ public class FactStoreGrpcServiceTest {
     public void testRetrieveImplementationVersionEmptyPropertyFile() throws Exception {
         uut = spy(uut);
         when(uut.getProjectProperties()).thenReturn(this.getClass().getResource(
-                "no-version.properties"));
+                "/no-version.properties"));
         HashMap<String, String> map = new HashMap<>();
         uut.retrieveImplementationVersion(map);
 
