@@ -1,8 +1,14 @@
 package org.factcast.store.pgsql.internal;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.IdObserver;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.store.test.IntegrationTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -23,4 +29,5 @@ public class PGFactStoreTest extends AbstractFactStoreTest {
     protected FactStore createStoreToTest() {
         return store;
     }
+
 }
