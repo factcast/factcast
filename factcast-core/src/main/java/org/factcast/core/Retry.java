@@ -27,9 +27,11 @@ import org.factcast.core.store.RetryableException;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@UtilityClass
 class Retry {
     private static final ClassLoader classLoader = Retry.class.getClassLoader();
 
