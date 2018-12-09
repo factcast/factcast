@@ -171,6 +171,7 @@
             <exclude>**/org/factcast/example/**/*</exclude>
             <exclude>**/org/factcast/example/*</exclude>
             <exclude>**/org/factcast/grpc/api/gen/*</exclude>
+            <exclude>**/org/factcast/client/grpc/cli/**</exclude>
           </excludes>
         </configuration>
         <executions>
