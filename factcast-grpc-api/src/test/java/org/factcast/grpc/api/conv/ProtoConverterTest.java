@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
 
+import org.assertj.core.util.Maps;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.spec.FactSpec;
@@ -12,11 +13,18 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProperties;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProtocolVersion;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class ProtoConverter0Test {
+import com.google.common.collect.Sets;
+
+import lombok.NonNull;
+
+public class ProtoConverterTest {
 
     ProtoConverter uut = new ProtoConverter();
 
@@ -187,5 +195,147 @@ public class ProtoConverter0Test {
     @Test
     void testEmpty() {
         assertEquals(MSG_Empty.newBuilder().build(), uut.empty());
+    }
+
+    @Test
+    public void testFromProtoMSG_OptionalSerial() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.fromProto((MSG_OptionalSerial) null);
+        });
+
+        assertFalse(uut.fromProto(MSG_OptionalSerial.newBuilder()
+                .setPresent(false)
+                .setSerial(4)
+                .build()).isPresent());
+
+        assertFalse(uut.fromProto(MSG_OptionalSerial.newBuilder().setPresent(false).build())
+                .isPresent());
+        @NonNull
+        OptionalLong optSerial = uut.fromProto(MSG_OptionalSerial.newBuilder()
+                .setPresent(true)
+                .setSerial(4)
+                .build());
+        assertTrue(optSerial.isPresent());
+        assertEquals(4, optSerial.getAsLong());
+
+    }
+
+    @Test
+    public void testFromProtoMSG_ServerProtocolVersion() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.fromProto((MSG_ServerProtocolVersion) null);
+        });
+
+        assertEquals(ProtocolVersion.of(1, 2, 3),
+                uut.fromProto(MSG_ServerProtocolVersion.newBuilder()
+                        .setMajor(1)
+                        .setMinor(2)
+                        .setPatch(3)
+                        .build()));
+
+    }
+
+    @Test
+    public void testFromProtoMSG_ServerProperties() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.fromProto((MSG_ServerProperties) null);
+        });
+
+        assertEquals(Maps.newHashMap("foo", "bar"),
+                uut.fromProto(MSG_ServerProperties.newBuilder().putProperty("foo", "bar").build()));
+    }
+
+    @Test
+    public void testFromProtoMSG_ServerConfig() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.fromProto((MSG_ServerConfig) null);
+        });
+
+        MSG_ServerProperties props = MSG_ServerProperties.newBuilder()
+                .putProperty("foo", "bar")
+                .build();
+        ProtocolVersion v = ProtocolVersion.of(1, 2, 3);
+        MSG_ServerProtocolVersion version = uut.toProto(v);
+
+        ServerConfig config = uut
+                .fromProto(MSG_ServerConfig.newBuilder()
+                        .setProperties(props)
+                        .setVersion(version)
+                        .build());
+
+        assertEquals(v, config.version());
+        assertEquals(Maps.newHashMap("foo", "bar"), config.properties());
+
+    }
+
+    @Test
+    public void testToProtoProtocolVersion() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.toProto((ProtocolVersion) null);
+        });
+
+        ProtocolVersion v1 = ProtocolVersion.of(1, 2, 3);
+        ProtocolVersion v2 = uut.fromProto(uut.toProto(v1));
+
+        assertNotSame(v1, v2);
+        assertEquals(v1, v2);
+
+    }
+
+    @Test
+    public void testToProtoServerConfig() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.toProto((ServerConfig) null);
+        });
+
+        ProtocolVersion v = ProtocolVersion.of(1, 2, 3);
+        ServerConfig cfg1 = ServerConfig.of(v, Maps.newHashMap("foo", "bar"));
+        ServerConfig cfg2 = uut.fromProto(uut.toProto(cfg1));
+
+        assertNotSame(cfg1, cfg2);
+        assertEquals(cfg1, cfg2);
+
+    }
+
+    @Test
+    public void testToProtoServerProperties() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.toProto((HashMap<String, String>) null);
+        });
+
+        Map<String, String> map1 = Maps.newHashMap("poit", "narf");
+        Map<String, String> map2 = uut.fromProto(uut.toProto(map1));
+
+        assertNotSame(map1, map2);
+        assertEquals(map1, map2);
+
+    }
+
+    @Test
+    public void testFromProtoMSG_StringSet() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.toProto((Set<String>) null);
+        });
+
+        HashSet<String> set1 = Sets.newHashSet("foo", "bar");
+        Set<String> set2 = uut.fromProto(uut.toProto(set1));
+
+        assertNotSame(set1, set2);
+        assertEquals(set1, set2);
+
+    }
+
+    @Test
+    public void testToProtoString() throws Exception {
+
+        assertThrows(NullPointerException.class, () -> {
+            uut.toProto((String) null);
+        });
+
+        String s1 = UUID.randomUUID().toString();
+        String s2 = uut.fromProto(uut.toProto(s1));
+
+        assertSame(s1, s2);
+
     }
 }
