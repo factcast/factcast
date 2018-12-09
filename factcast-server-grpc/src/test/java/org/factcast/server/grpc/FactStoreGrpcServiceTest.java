@@ -1,18 +1,12 @@
 package org.factcast.server.grpc;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
@@ -21,9 +15,11 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.conv.ProtoConverter;
+import org.factcast.grpc.api.conv.ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +28,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -48,7 +47,7 @@ public class FactStoreGrpcServiceTest {
     @Captor
     ArgumentCaptor<List<Fact>> acFactList;
 
-    final ProtoConverter protoConverter = new ProtoConverter();
+    final ProtoConverter conv = new ProtoConverter();
 
     @Captor
     private ArgumentCaptor<SubscriptionRequestTO> reqCaptor;
@@ -80,8 +79,8 @@ public class FactStoreGrpcServiceTest {
         Builder b = MSG_Facts.newBuilder();
         Fact f1 = Fact.builder().ns("test").build("{}");
         Fact f2 = Fact.builder().ns("test").build("{}");
-        MSG_Fact msg1 = protoConverter.toProto(f1);
-        MSG_Fact msg2 = protoConverter.toProto(f2);
+        MSG_Fact msg1 = conv.toProto(f1);
+        MSG_Fact msg2 = conv.toProto(f2);
         b.addAllFact(Arrays.asList(msg1, msg2));
         MSG_Facts r = b.build();
         uut.publish(r, mock(StreamObserver.class));
@@ -103,7 +102,7 @@ public class FactStoreGrpcServiceTest {
     @Test
     void testFetchById() {
         UUID id = UUID.randomUUID();
-        uut.fetchById(protoConverter.toProto(id), mock(ServerCallStreamObserver.class));
+        uut.fetchById(conv.toProto(id), mock(ServerCallStreamObserver.class));
         verify(backend).fetchById(eq(id));
     }
 
@@ -111,8 +110,8 @@ public class FactStoreGrpcServiceTest {
     void testSubscribeFacts() {
         SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.forMark()).fromNowOn();
         when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
-        uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)), mock(
-                ServerCallStreamObserver.class));
+        uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)),
+                mock(ServerCallStreamObserver.class));
         verify(backend).subscribe(any(), any());
         assertFalse(reqCaptor.getValue().idOnly());
     }
@@ -121,9 +120,124 @@ public class FactStoreGrpcServiceTest {
     void testSubscribeIds() {
         SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.forMark()).fromNowOn();
         when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
-        uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forIds(req)), mock(
-                ServerCallStreamObserver.class));
+        uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forIds(req)),
+                mock(ServerCallStreamObserver.class));
         verify(backend).subscribe(any(), any());
         assertTrue(reqCaptor.getValue().idOnly());
+    }
+
+    @Test
+    public void testSerialOf() throws Exception {
+        uut = new FactStoreGrpcService(backend);
+
+        StreamObserver so = mock(StreamObserver.class);
+        assertThrows(NullPointerException.class, () -> {
+            uut.serialOf(null, so);
+        });
+
+        UUID id = new UUID(0, 1);
+        OptionalLong twenty_two = OptionalLong.of(22);
+        when(backend.serialOf(id)).thenReturn(twenty_two);
+
+        uut.serialOf(conv.toProto(id), so);
+
+        verify(so).onCompleted();
+        verify(so).onNext(conv.toProto(twenty_two));
+        verifyNoMoreInteractions(so);
+    }
+
+    @Test
+    public void testSerialOfThrows() throws Exception {
+        uut = new FactStoreGrpcService(backend);
+
+        StreamObserver so = mock(StreamObserver.class);
+        when(backend.serialOf(any(UUID.class))).thenThrow(UnsupportedOperationException.class);
+
+        assertThrows(UnsupportedOperationException.class, () -> {
+            uut.serialOf(conv.toProto(UUID.randomUUID()), so);
+        });
+    }
+
+    @Test
+    public void testEnumerateNamespaces() throws Exception {
+        uut = new FactStoreGrpcService(backend);
+        StreamObserver so = mock(StreamObserver.class);
+        when(backend.enumerateNamespaces()).thenReturn(Sets.newHashSet("foo", "bar"));
+
+        uut.enumerateNamespaces(conv.empty(), so);
+
+        verify(so).onCompleted();
+        verify(so).onNext(eq(conv.toProto(Sets.newHashSet("foo", "bar"))));
+        verifyNoMoreInteractions(so);
+    }
+
+    @Test
+    public void testEnumerateNamespacesThrows() throws Exception {
+        uut = new FactStoreGrpcService(backend);
+        StreamObserver so = mock(StreamObserver.class);
+        when(backend.enumerateNamespaces()).thenThrow(UnsupportedOperationException.class);
+
+        uut.enumerateNamespaces(conv.empty(), so);
+        verify(so).onError(any(UnsupportedOperationException.class));
+
+    }
+
+    @Test
+    public void testEnumerateTypes() throws Exception {
+        uut = new FactStoreGrpcService(backend);
+        StreamObserver so = mock(StreamObserver.class);
+
+        assertThrows(NullPointerException.class, () -> {
+            uut.enumerateTypes(null, so);
+        });
+
+        when(backend.enumerateTypes(eq("ns"))).thenReturn(Sets.newHashSet("foo", "bar"));
+
+        uut.enumerateTypes(conv.toProto("ns"), so);
+
+        verify(so).onCompleted();
+        verify(so).onNext(eq(conv.toProto(Sets.newHashSet("foo", "bar"))));
+        verifyNoMoreInteractions(so);
+    }
+
+    @Test
+    public void testEnumerateTypesThrows() throws Exception {
+        uut = new FactStoreGrpcService(backend);
+        StreamObserver so = mock(StreamObserver.class);
+        when(backend.enumerateTypes(eq("ns"))).thenThrow(UnsupportedOperationException.class);
+
+        uut.enumerateTypes(conv.toProto("ns"), so);
+        verify(so).onError(any(UnsupportedOperationException.class));
+    }
+
+    @Test
+    void testFetchByIdThrows() {
+        UUID id = UUID.randomUUID();
+        when(backend.fetchById(any(UUID.class))).thenThrow(UnsupportedOperationException.class);
+        StreamObserver so = mock(StreamObserver.class);
+        uut.fetchById(conv.toProto(id), so);
+        verify(so).onError(any(UnsupportedOperationException.class));
+
+    }
+
+    @Test
+    public void testPublishThrows() throws Exception {
+        doThrow(UnsupportedOperationException.class).when(backend).publish(anyListOf(Fact.class));
+        List<Fact> toPublish = Lists.newArrayList(Fact.builder().build("{}"));
+        StreamObserver so = mock(StreamObserver.class);
+
+        uut.publish(conv.toProto(toPublish), so);
+        verify(so).onError(any(UnsupportedOperationException.class));
+    }
+
+    @Test
+    public void testHandshake() throws Exception {
+
+        StreamObserver so = mock(StreamObserver.class);
+        uut.handshake(conv.empty(), so);
+
+        verify(so).onCompleted();
+        verify(so).onNext(any(MSG_ServerConfig.class));
+
     }
 }

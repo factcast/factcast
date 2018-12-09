@@ -16,6 +16,7 @@
 package org.factcast.grpc.api.conv;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -27,6 +28,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact.Builder;
@@ -204,5 +206,13 @@ public class ProtoConverter {
 
     public String fromProto(MSG_String request) {
         return request.getEmbeddedString();
+    }
+
+    public @NonNull MSG_Facts toProto(List<Fact> toPublish) {
+        org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder ret = MSG_Facts.newBuilder();
+        for (Fact fact : toPublish) {
+            ret.addFact(toProto(fact));
+        }
+        return ret.build();
     }
 }

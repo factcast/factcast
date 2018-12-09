@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -51,6 +52,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+import lombok.Generated;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -109,8 +111,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             responseObserver.onCompleted();
         } catch (Throwable e) {
             log.error("Problem while publishing: ", e);
-            responseObserver.onError(new StatusRuntimeException(Status.INTERNAL.withDescription(e
-                    .getMessage())));
+            responseObserver.onError(e);
         }
     }
 
@@ -168,6 +169,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         properties.put(Capabilities.CODEC_LZ4.toString(), lz4_available);
     }
 
+    @Generated
     private boolean isClassAvailable(String string) {
         try {
             Class<?> forName = Class.forName(string);
@@ -195,14 +197,25 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     @Override
     public void enumerateNamespaces(MSG_Empty request,
             StreamObserver<MSG_StringSet> responseObserver) {
-        responseObserver.onNext(converter.toProto(store.enumerateNamespaces()));
-        responseObserver.onCompleted();
+        try {
+            responseObserver.onNext(converter.toProto(store.enumerateNamespaces()));
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            responseObserver.onError(e);
+        }
     }
 
     @Override
-    public void enumerateTypes(MSG_String request, StreamObserver<MSG_StringSet> responseObserver) {
-        responseObserver.onNext(converter.toProto(store.enumerateTypes(converter.fromProto(
-                request))));
-        responseObserver.onCompleted();
+    public void enumerateTypes(@NonNull MSG_String request,
+            StreamObserver<MSG_StringSet> responseObserver) {
+        try {
+            Set<String> types = store.enumerateTypes(converter.fromProto(
+                    request));
+            responseObserver.onNext(converter.toProto(types));
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            responseObserver.onError(e);
+        }
+
     }
 }
