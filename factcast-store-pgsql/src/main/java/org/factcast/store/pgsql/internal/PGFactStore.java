@@ -139,14 +139,12 @@ public class PGFactStore implements FactStore {
     }
 
     @NonNull
-    private String extractStringFromResultSet(ResultSet resultSet, int rowNum)
-            throws SQLException {
+    private String extractStringFromResultSet(ResultSet resultSet, int rowNum) throws SQLException {
         return resultSet.getString(1);
     }
 
     @NonNull
-    private Long extractSerFromResultSet(ResultSet resultSet, int rowNum)
-            throws SQLException {
+    private Long extractSerFromResultSet(ResultSet resultSet, int rowNum) throws SQLException {
         return Long.valueOf(resultSet.getString(PGConstants.COLUMN_SER));
     }
 
@@ -165,34 +163,31 @@ public class PGFactStore implements FactStore {
     public Optional<Fact> fetchById(@NonNull UUID id) {
         try (Context time = fetchLatency.time()) {
             return jdbcTemplate.query(PGConstants.SELECT_BY_ID, new Object[] { "{\"id\":\"" + id
-                    + "\"}" }, this::extractFactFromResultSet).stream().findFirst();
+                    + "\"}" },
+                    this::extractFactFromResultSet).stream().findFirst();
         }
     }
 
     @Override
     public OptionalLong serialOf(UUID l) {
         try (Context time = seqLookupLatency.time()) {
-            List<Long> res = jdbcTemplate.query(PGConstants.SELECT_SER_BY_ID, new Object[] {
-                    "{\"id\":\"" + l + "\"}" }, this::extractSerFromResultSet);
+            Long res = jdbcTemplate.queryForObject(PGConstants.SELECT_SER_BY_ID,
+                    new Object[] { "{\"id\":\"" + l + "\"}" }, Long.class);
 
-            if (res.isEmpty()) {
-                return OptionalLong.empty();
+            if (res != null && res.longValue() > 0) {
+                return OptionalLong.of(res.longValue());
             }
 
-            Long ser = res.get(0);
-            if (ser != null && ser > 0) {
-                return OptionalLong.of(ser);
-            } else {
-                return OptionalLong.empty();
-            }
+            return OptionalLong.empty();
         }
     }
 
     @Override
     public Set<String> enumerateNamespaces() {
         try (Context time = namespaceLatency.time()) {
-            return new HashSet<>(jdbcTemplate.query(PGConstants.SELECT_DISTINCT_NAMESPACE,
-                    this::extractStringFromResultSet));
+            return new HashSet<>(
+                    jdbcTemplate.query(PGConstants.SELECT_DISTINCT_NAMESPACE,
+                            this::extractStringFromResultSet));
         }
     }
 
@@ -200,7 +195,8 @@ public class PGFactStore implements FactStore {
     public Set<String> enumerateTypes(String ns) {
         try (Context time = typeLatency.time()) {
             return new HashSet<>(jdbcTemplate.query(PGConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
-                    new Object[] { ns }, this::extractStringFromResultSet));
+                    new Object[] { ns },
+                    this::extractStringFromResultSet));
         }
     }
 }
