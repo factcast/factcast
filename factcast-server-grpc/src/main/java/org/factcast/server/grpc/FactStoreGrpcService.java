@@ -83,7 +83,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     @Override
     public void fetchById(@NonNull MSG_UUID request,
-            @NonNull StreamObserver<MSG_OptionalFact> responseObserver) {
+            StreamObserver<MSG_OptionalFact> responseObserver) {
         try {
             UUID fromProto = converter.fromProto(request);
             log.trace("fetchById {}", fromProto);
@@ -99,7 +99,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     @Override
     public void publish(@NonNull MSG_Facts request,
-            @NonNull StreamObserver<MSG_Empty> responseObserver) {
+            StreamObserver<MSG_Empty> responseObserver) {
         List<Fact> facts = request.getFactList().stream().map(converter::fromProto).collect(
                 Collectors.toList());
         final int size = facts.size();
@@ -119,7 +119,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     @Override
     public void subscribe(@NonNull MSG_SubscriptionRequest request,
-            @NonNull StreamObserver<MSG_Notification> responseObserver) {
+            StreamObserver<MSG_Notification> responseObserver) {
         SubscriptionRequestTO req = converter.fromProto(request);
         resetDebugInfo(req);
         BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(req.toString(),
@@ -131,7 +131,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     @Override
     public void handshake(@NonNull MSG_Empty request,
-            @NonNull StreamObserver<MSG_ServerConfig> responseObserver) {
+            StreamObserver<MSG_ServerConfig> responseObserver) {
         ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
         responseObserver.onNext(converter.toProto(cfg));
         responseObserver.onCompleted();
