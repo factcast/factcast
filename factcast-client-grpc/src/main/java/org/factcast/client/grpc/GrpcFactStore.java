@@ -61,6 +61,7 @@ import io.grpc.ClientCall;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
+import lombok.Generated;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
@@ -91,6 +92,7 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
     @Autowired
+    @Generated
     GrpcFactStore(AddressChannelFactory channelFactory) {
         this(channelFactory.createChannel(CHANNEL_NAME));
     }
@@ -119,7 +121,7 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
         } catch (StatusRuntimeException e) {
             throw wrapRetryable(e);
         }
-        if (fetchById == null || !fetchById.getPresent()) {
+        if (!fetchById.getPresent()) {
             return Optional.empty();
         } else {
             return converter.fromProto(fetchById);
@@ -187,7 +189,7 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
             }
             logProtocolVersion(serverProtocolVersion);
             logServerVersion(serverProperties);
-            configure();
+            configureCompression();
         }
     }
 
@@ -210,13 +212,15 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
             log.info("Matching protocol version encountered {}", serverProtocolVersion);
     }
 
-    private void configure() {
+    @VisibleForTesting
+    void configureCompression() {
         if (!configureLZ4())
             configureGZip();
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    private boolean configureGZip() {
+    @VisibleForTesting
+    boolean configureGZip() {
         // TODO this was temporarily disabled, due to
         // https://github.com/Mercateo/factcast/issues/234
         //
@@ -234,7 +238,8 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
         return false;
     }
 
-    private boolean configureLZ4() {
+    @VisibleForTesting
+    boolean configureLZ4() {
         // TODO this was temporarily disabled, due to
         // https://github.com/Mercateo/factcast/issues/234
         //

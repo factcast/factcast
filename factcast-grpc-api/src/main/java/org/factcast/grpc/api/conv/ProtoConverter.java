@@ -66,7 +66,6 @@ public class ProtoConverter {
         MSG_Notification.Builder builder = MSG_Notification.newBuilder().setType(
                 MSG_Notification.Type.Fact);
         builder.setFact(toProto(t));
-        builder.setType(MSG_Notification.Type.Fact);
         return builder.build();
     }
 
@@ -74,10 +73,10 @@ public class ProtoConverter {
         MSG_Notification.Builder builder = MSG_Notification.newBuilder().setType(
                 MSG_Notification.Type.Id);
         builder.setId(toProto(id));
-        builder.setType(MSG_Notification.Type.Id);
         return builder.build();
     }
 
+    @NonNull
     public MSG_UUID toProto(@NonNull UUID id) {
         return MSG_UUID.newBuilder()
                 .setLsb(id.getLeastSignificantBits())

@@ -38,6 +38,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 
 import io.grpc.Channel;
@@ -93,6 +94,13 @@ public class GrpcFactStoreTest {
         final MSG_Facts pfacts = factsCap.getValue();
         Fact published = conv.fromProto(pfacts.getFact(0));
         assertEquals(fact.id(), published.id());
+    }
+
+    @Test
+    void testPublishNullParameter() {
+        assertThrows(NullPointerException.class, () -> {
+            uut.publish(null);
+        });
     }
 
     static class SomeException extends RuntimeException {
@@ -316,4 +324,40 @@ public class GrpcFactStoreTest {
         verify(uut).initialize();
     }
 
+    @Test
+    public void testSubscribeNullParameters() throws Exception {
+        expectNPE(() -> {
+            uut.subscribe(null, mock(FactObserver.class));
+        });
+        expectNPE(() -> {
+            uut.subscribe(mock(SubscriptionRequestTO.class), null);
+        });
+        expectNPE(() -> {
+            uut.subscribe(null, null);
+        });
+    }
+
+    @Test
+    public void testSerialOfNullParameters() throws Exception {
+        expectNPE(() -> {
+            uut.serialOf(null);
+        });
+    }
+
+    @Test
+    public void testConfigureCompressionGZIP() throws Exception {
+        uut = spy(uut);
+        uut.configureCompression();
+        verify(uut).configureGZip();
+    }
+
+    @Test
+    public void testConfigureCompressionLZ4() throws Exception {
+        uut = spy(uut);
+        when(uut.configureLZ4()).thenReturn(true);
+        uut.configureCompression();
+        verify(uut, never()).configureGZip();
+        verify(uut).configureLZ4();
+
+    }
 }
