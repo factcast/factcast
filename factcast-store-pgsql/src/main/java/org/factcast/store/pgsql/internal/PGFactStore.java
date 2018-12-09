@@ -33,6 +33,7 @@ import org.factcast.store.pgsql.internal.metrics.PGMetricNames;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -143,11 +144,6 @@ public class PGFactStore implements FactStore {
         return resultSet.getString(1);
     }
 
-    @NonNull
-    private Long extractSerFromResultSet(ResultSet resultSet, int rowNum) throws SQLException {
-        return Long.valueOf(resultSet.getString(PGConstants.COLUMN_SER));
-    }
-
     @Override
     public Subscription subscribe(@NonNull SubscriptionRequestTO request,
             @NonNull FactObserver observer) {
@@ -178,8 +174,9 @@ public class PGFactStore implements FactStore {
                 return OptionalLong.of(res.longValue());
             }
 
-            return OptionalLong.empty();
+        } catch (EmptyResultDataAccessException ignore) {
         }
+        return OptionalLong.empty();
     }
 
     @Override
