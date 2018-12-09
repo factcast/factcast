@@ -24,6 +24,8 @@ import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -82,18 +84,16 @@ class PGSynchronizedQuery {
 
     // the synchronized here is crucial!
     public synchronized void run(boolean useIndex) {
-        if (useIndex) {
-            jdbcTemplate.query(sql, setter, rowHandler);
-        } else {
-            long latest = latestFetcher.retrieveLatestSer();
-            transactionTemplate.execute(status -> {
+        // TODO recheck latest handling - looks broken
+        long latest = latestFetcher.retrieveLatestSer();
+        transactionTemplate.execute(status -> {
+            if (!useIndex)
                 jdbcTemplate.execute("SET LOCAL enable_bitmapscan=0;");
-                jdbcTemplate.query(sql, setter, rowHandler);
-                return null;
-            });
-            // shift to max(retrievedLatestSer, and ser as updated in
-            // rowHandler)
-            serialToContinueFrom.set(Math.max(serialToContinueFrom.get(), latest));
-        }
+            jdbcTemplate.query(sql, setter, rowHandler);
+            return null;
+        });
+        // shift to max(retrievedLatestSer, and ser as updated in
+        // rowHandler)
+        serialToContinueFrom.set(Math.max(latest, serialToContinueFrom.get()));
     }
 }
