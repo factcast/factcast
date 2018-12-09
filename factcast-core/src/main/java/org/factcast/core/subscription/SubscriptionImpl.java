@@ -23,8 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.factcast.core.subscription.observer.GenericObserver;
 
-import com.fasterxml.jackson.databind.annotation.JsonValueInstantiator;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
