@@ -31,7 +31,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-// not code in here, just generated @nonnull checks
+// no code in here, just generated @nonnull checks
 @Generated
 public class PGPagedCatchUpFactory implements PGCatchupFactory {
 

@@ -43,7 +43,7 @@ public class PgConnectionSupplier {
     private final org.apache.tomcat.jdbc.pool.DataSource ds;
 
     @Autowired
-    PgConnectionSupplier(@NonNull DataSource dataSource) {
+    PgConnectionSupplier(DataSource dataSource) {
         if (dataSource instanceof org.apache.tomcat.jdbc.pool.DataSource) {
             this.ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
         } else {
