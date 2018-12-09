@@ -18,6 +18,7 @@ package org.factcast.store.pgsql.internal;
 import lombok.AccessLevel;
 import lombok.Generated;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.UtilityClass;
 
 /**
  * String constants mainly used in SQL-Statement creation
@@ -26,6 +27,7 @@ import lombok.experimental.FieldDefaults;
  */
 @FieldDefaults(level = AccessLevel.PUBLIC, makeFinal = true)
 @Generated
+@UtilityClass
 public class PGConstants {
 
     public static final String NEXT_FROM_CATCHUP_SEQ = "SELECT nextval('catchup_seq')";

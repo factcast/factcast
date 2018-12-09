@@ -49,7 +49,7 @@ public class PGQueryBuilder {
         selectIdOnly = request.idOnly() && !request.hasAnyScriptFilters();
     }
 
-    public PreparedStatementSetter createStatementSetter(AtomicLong serial) {
+    public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
         return p -> {
             // TODO vulnerable of json injection attack
             int count = 0;
