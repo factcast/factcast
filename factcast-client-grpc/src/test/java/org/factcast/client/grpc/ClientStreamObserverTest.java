@@ -1,5 +1,6 @@
 package org.factcast.client.grpc;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
@@ -14,6 +15,7 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,6 +54,14 @@ public class ClientStreamObserverTest {
         MSG_Notification n = converter.createNotificationFor(f);
         uut.onNext(n);
         verify(factObserver).onNext(eq(f));
+    }
+
+    @Test
+    void testOnNextFailsOnUnknownMessage() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            MSG_Notification n = MSG_Notification.newBuilder().setType(Type.UNRECOGNIZED).build();
+            uut.onNext(n);
+        });
     }
 
     @Test
