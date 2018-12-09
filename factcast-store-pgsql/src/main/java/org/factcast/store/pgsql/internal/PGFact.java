@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 
 import lombok.AccessLevel;
+import lombok.Generated;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -83,6 +84,7 @@ public class PGFact implements Fact {
     }
 
     @SneakyThrows
+    @Generated
     private Map<String, String> deser() {
         Meta deserializedMeta = FactCastJson.readValue(Meta.class, jsonHeader);
         return deserializedMeta.meta;
@@ -97,6 +99,7 @@ public class PGFact implements Fact {
     }
 
     @SneakyThrows
+    @Generated
     public static Fact from(ResultSet resultSet) {
         String id = resultSet.getString(PGConstants.ALIAS_ID);
         String aggId = resultSet.getString(PGConstants.ALIAS_AGGID);

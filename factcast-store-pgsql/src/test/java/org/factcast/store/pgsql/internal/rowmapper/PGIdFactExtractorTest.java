@@ -1,6 +1,6 @@
 package org.factcast.store.pgsql.internal.rowmapper;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -30,5 +30,13 @@ public class PGIdFactExtractorTest {
         Fact mapRow = uut.mapRow(rs, 1);
         assertEquals(27, serial.get());
         assertEquals(id, mapRow.id());
+    }
+
+    @Test
+    void testMapRowNullContracts() throws Exception {
+
+        assertThrows(NullPointerException.class, () -> {
+            uut.mapRow(null, 1);
+        });
     }
 }

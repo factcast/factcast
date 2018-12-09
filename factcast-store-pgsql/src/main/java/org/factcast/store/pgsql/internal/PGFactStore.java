@@ -139,13 +139,13 @@ public class PGFactStore implements FactStore {
     }
 
     @NonNull
-    private String extractStringFromResultSet(@NonNull ResultSet resultSet, int rowNum)
+    private String extractStringFromResultSet(ResultSet resultSet, int rowNum)
             throws SQLException {
         return resultSet.getString(1);
     }
 
     @NonNull
-    private Long extractSerFromResultSet(@NonNull ResultSet resultSet, int rowNum)
+    private Long extractSerFromResultSet(ResultSet resultSet, int rowNum)
             throws SQLException {
         return Long.valueOf(resultSet.getString(PGConstants.COLUMN_SER));
     }
