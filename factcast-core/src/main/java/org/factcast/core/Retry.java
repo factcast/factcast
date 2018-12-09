@@ -36,16 +36,18 @@ class Retry {
     static final long DEFAULT_WAIT_TIME_MILLIS = 10;
 
     @SuppressWarnings("unchecked")
-    public static <T extends ReadFactCast> T wrap(boolean readOnly, T toWrap, int maxRetries,
-            long minimumWaitTimeMillis) {
-
-        if (minimumWaitTimeMillis < 0) {
-            throw new IllegalArgumentException("minimumWaitTimeMillis must be >= 0");
+    public static FactCast wrap(FactCast toWrap, int maxRetryAttempts,
+            long minimumWaitIntervalMillis) {
+        if (!(maxRetryAttempts > 0)) {
+            throw new IllegalArgumentException("maxRetryAttempts must be > 0");
+        }
+        if (!(minimumWaitIntervalMillis >= 0)) {
+            throw new IllegalArgumentException("minimumWaitIntervalMillis must be >= 0");
         }
 
-        Class<?> interfaceToProxy = readOnly ? ReadFactCast.class : FactCast.class;
-        return (T) Proxy.newProxyInstance(classLoader, new Class[] { interfaceToProxy },
-                new RetryProxyInvocationHandler(toWrap, maxRetries, minimumWaitTimeMillis));
+        return (FactCast) Proxy.newProxyInstance(classLoader, new Class[] { FactCast.class },
+                new RetryProxyInvocationHandler(toWrap, maxRetryAttempts,
+                        minimumWaitIntervalMillis));
     }
 
     @RequiredArgsConstructor
@@ -53,9 +55,9 @@ class Retry {
         @NonNull
         final Object delegateObject;
 
-        final int maxRetries;
+        final int maxRetryAttempts;
 
-        final long minimumWaitTimeMillis;
+        final long minimumWaitIntervalMillis;
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -76,15 +78,15 @@ class Retry {
                     if (cause instanceof RetryableException) {
                         RetryableException e = (RetryableException) cause;
                         log.warn("{} failed: ", description, e.getCause());
-                        if (retryAttempt++ < maxRetries) {
-                            sleep(minimumWaitTimeMillis);
-                            log.warn("Retrying attempt {}/{}", retryAttempt, maxRetries);
+                        if (retryAttempt++ < maxRetryAttempts) {
+                            sleep(minimumWaitIntervalMillis);
+                            log.warn("Retrying attempt {}/{}", retryAttempt, maxRetryAttempts);
                         }
                     } else {
                         throw cause;
                     }
                 }
-            } while (retryAttempt <= maxRetries);
+            } while (retryAttempt <= maxRetryAttempts);
             throw new MaxRetryAttemptsExceededException(
                     "Exceeded max retry attempts of '" + description + "', giving up.");
         }
