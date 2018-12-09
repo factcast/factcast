@@ -1,5 +1,6 @@
 package org.factcast.store.inmem;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -27,4 +28,12 @@ public class InMemFactStoreTest extends AbstractFactStoreTest {
         inMemFactStore.shutdown();
         verify(es).shutdown();
     }
+
+    @Test
+    public void testInMemFactStoreExecutorServiceNullConstructor() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            new InMemFactStore(null);
+        });
+    }
+
 }
