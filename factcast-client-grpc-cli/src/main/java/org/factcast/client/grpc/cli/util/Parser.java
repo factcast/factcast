@@ -48,13 +48,15 @@ public class Parser {
 
     public Command parse(String[] args) {
         jc.parse(args);
-        if (options.help) {
-            jc.usage();
-            return null;
+
+        JCommander parsedCommand = jc.getCommands().get(jc.getParsedCommand());
+        if (parsedCommand != null) {
+            init();
+            List<Object> objects = parsedCommand.getObjects();
+            return (Command) objects.get(0);
         }
-        init();
-        List<Object> objects = jc.getCommands().get(jc.getParsedCommand()).getObjects();
-        return (Command) objects.get(0);
+        jc.usage();
+        return null;
     }
 
     private void init() {
