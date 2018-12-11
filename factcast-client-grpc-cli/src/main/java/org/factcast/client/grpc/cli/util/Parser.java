@@ -33,6 +33,8 @@ public class Parser {
 
     private static final String PORT_SYSPROP_NAME = "grpc.client.factstore.port";
 
+    private static final String NEGOTIATION_SYSPROP_NAME = "grpc.client.factstore.negotiationType";
+
     final JCommander jc;
 
     @Getter
@@ -65,6 +67,9 @@ public class Parser {
         if (options.debug) {
             System.setProperty("debug", Boolean.TRUE.toString());
         }
+        if (options.notls) {
+            System.setProperty(NEGOTIATION_SYSPROP_NAME, "plaintext");
+        }
     }
 
     public static class Options {
@@ -75,6 +80,14 @@ public class Parser {
         @Getter
         @Parameter(names = { "--pretty" }, help = true, description = "format JSON output")
         boolean pretty = false;
+
+        @Getter
+        @Parameter(
+                names = {
+                        "--no-tls" },
+                help = true,
+                description = "do NOT use TLS to connect (plaintext-communication)")
+        boolean notls = false;
 
         @Getter
         @Parameter(
