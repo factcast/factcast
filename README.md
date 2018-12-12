@@ -6,7 +6,7 @@
 
 It is not yet released, the API may change, the documentation is incomplete.
 
-[![CircleCI](https://circleci.com/gh/Mercateo/factcast.svg?style=svg)](https://circleci.com/gh/Mercateo/factcast)
+[![CircleCI](https://circleci.com/gh/Mercateo/factcast.svg?style=shield)](https://circleci.com/gh/Mercateo/factcast)
 [![codecov](https://codecov.io/gh/Mercateo/factcast/branch/master/graph/badge.svg)](https://codecov.io/gh/Mercateo/factcast)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/dd5921cfeb81482db72fa8d9df68048f)](https://www.codacy.com/app/uwe/factcast?utm_source=github.com&utm_medium=referral&utm_content=uweschaefer/factcast&utm_campaign=badger)
 [![CodeFactor](https://www.codefactor.io/repository/github/mercateo/factcast/badge)](https://www.codefactor.io/repository/github/mercateo/factcast)
