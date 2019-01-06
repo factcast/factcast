@@ -15,6 +15,8 @@
  */
 package org.factcast.client.grpc.cli.util;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -24,6 +26,8 @@ import lombok.SneakyThrows;
 public class ConsoleFactObserver implements FactObserver {
 
     private final FactRenderer factRenderer;
+
+    private final AtomicBoolean done = new AtomicBoolean(false);
 
     public ConsoleFactObserver(Options opt) {
         this.factRenderer = new FactRenderer(opt);
@@ -36,7 +40,8 @@ public class ConsoleFactObserver implements FactObserver {
 
     @SneakyThrows
     public synchronized void awaitTermination() {
-        this.wait();
+        while (!done.get())
+            this.wait();
     }
 
     @Override
@@ -47,6 +52,7 @@ public class ConsoleFactObserver implements FactObserver {
     @Override
     public synchronized void onComplete() {
         System.out.println("-> Signal: Complete");
+        done.set(true);
         notify();
     }
 
