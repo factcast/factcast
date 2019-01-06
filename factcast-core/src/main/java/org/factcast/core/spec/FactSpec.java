@@ -23,17 +23,15 @@ import org.factcast.core.MarkFact;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.Getter;
+import lombok.Data;
 import lombok.NonNull;
-import lombok.Setter;
 
 /**
  * Defines a Specification of facts to match for a subscription.
  *
  * @author uwe.schaefer@mercateo.com
  */
-@Getter
-@Setter
+@Data
 public class FactSpec {
 
     @NonNull

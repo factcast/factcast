@@ -28,9 +28,14 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
 @Parameters(
         commandNames = "catchup",
         commandDescription = "Read all the matching facts up to now and exit.")
+@NoArgsConstructor
+@AllArgsConstructor
 public class Catchup implements Command {
 
     @Parameter(names = "-ns", description = "the namespace filtered on", required = true)
