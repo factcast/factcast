@@ -11,7 +11,7 @@
   <packaging>pom</packaging>
   <properties>
     <grpc.version>1.18.0</grpc.version>
-    <slf4j-api.version>1.7.25</slf4j-api.version>
+    <slf4j-api.version>1.7.26</slf4j-api.version>
   </properties>
   <dependencyManagement>
     <dependencies>
