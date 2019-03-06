@@ -11,7 +11,7 @@
   <packaging>pom</packaging>
   <properties>
     <spring-boot.version>2.1.3.RELEASE</spring-boot.version>
-    <spring-cloud.version>Greenwich.RELEASE</spring-cloud.version>
+    <spring-cloud.version>Greenwich.SR1</spring-cloud.version>
     <spring-grpc.version>2.1.0.RELEASE</spring-grpc.version>
   </properties>
   <dependencyManagement>
