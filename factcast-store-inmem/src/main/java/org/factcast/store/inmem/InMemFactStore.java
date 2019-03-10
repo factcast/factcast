@@ -15,6 +15,7 @@
  */
 package org.factcast.store.inmem;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -205,7 +206,7 @@ public class InMemFactStore implements FactStore {
     }
 
     private void doCatchUp(InMemFollower s, AtomicLong highwater) {
-        store.values()
+        new ArrayList<>(store.values())
                 .stream()
                 .filter(f -> f.serial() > highwater.get() && s.test(f))
                 .forEachOrdered(f -> {
