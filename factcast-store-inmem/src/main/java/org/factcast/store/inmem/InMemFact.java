@@ -42,8 +42,7 @@ class InMemFact extends DefaultFact {
         meta.put("_ser", ser);
         return json.toString();
     }
-    
-    
+
     @Override
     public String toString() {
         return FactCastJson.writeValueAsPrettyString(this);
