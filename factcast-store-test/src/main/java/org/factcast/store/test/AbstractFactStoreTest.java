@@ -15,8 +15,13 @@
  */
 package org.factcast.store.test;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -36,7 +41,6 @@ import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.factcast.core.Fact;
@@ -53,7 +57,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.springframework.test.annotation.DirtiesContext;
 
 import lombok.Getter;
@@ -405,8 +408,9 @@ public abstract class AbstractFactStoreTest {
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                     "{}"));
-            FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript(
-                    "function (h,e){ return (h.hit=='me')}");
+            FactSpec SCRIPTED = FactSpec.ns("default")
+                    .jsFilterScript(
+                            "function (h,e){ return (h.hit=='me')}");
             uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                     .awaitComplete();
             verify(observer).onNext(any());
@@ -428,8 +432,9 @@ public abstract class AbstractFactStoreTest {
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                     "{}"));
-            FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript(
-                    "function (h){ return (h.hit=='me')}");
+            FactSpec SCRIPTED = FactSpec.ns("default")
+                    .jsFilterScript(
+                            "function (h){ return (h.hit=='me')}");
             uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                     .awaitComplete();
             verify(observer).onNext(any());
@@ -451,8 +456,9 @@ public abstract class AbstractFactStoreTest {
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                     "{}"));
-            FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript(
-                    "function (h){ return true }");
+            FactSpec SCRIPTED = FactSpec.ns("default")
+                    .jsFilterScript(
+                            "function (h){ return true }");
             uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                     .awaitComplete();
             verify(observer, times(2)).onNext(any());
@@ -474,8 +480,9 @@ public abstract class AbstractFactStoreTest {
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                     "{}"));
-            FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript(
-                    "function (h){ return false }");
+            FactSpec SCRIPTED = FactSpec.ns("default")
+                    .jsFilterScript(
+                            "function (h){ return false }");
             uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                     .awaitComplete();
             verify(observer).onCatchup();
@@ -768,8 +775,69 @@ public abstract class AbstractFactStoreTest {
                 "failed to see all the facts published within 10 seconds.");
     }
 
+    @Test
+    protected void testCatchup() throws Exception {
+        String ns = "catchuptest";
+        uut.publish(newTestFact(ns));
+        AtomicReference<UUID> last = new AtomicReference<>();
+
+        // fetch all there is from scratch
+        SubscriptionRequest request = SubscriptionRequest.catchup(FactSpec.ns(ns))
+                .fromScratch();
+        FactObserver observer = element -> {
+            last.set(element.id());
+        };
+        uut.subscribeToFacts(request, observer).awaitComplete();
+
+        // now we should have the published one in last
+        assertNotNull(last.get());
+
+        // catchup from last, should not bring anything new.
+        request = SubscriptionRequest.catchup(FactSpec.ns(ns))
+                .from(last.get());
+        observer = new FactObserver() {
+
+            @Override
+            public void onNext(@NonNull Fact element) {
+                System.out.println("unexpected fact recieved");
+                fail();
+            }
+        };
+        uut.subscribeToFacts(request, observer).awaitComplete();
+
+        // now, add two more
+        uut.publish(newTestFact(ns));
+        uut.publish(newTestFact(ns));
+
+        // and catchup from the last recorded should bring exactly two
+        CountDownLatch expectingTwo = new CountDownLatch(2);
+        request = SubscriptionRequest.catchup(FactSpec.ns(ns))
+                .from(last.get());
+        observer = new FactObserver() {
+
+            @Override
+            public void onNext(@NonNull Fact element) {
+                expectingTwo.countDown();
+                if (element.id().equals(last.get())) {
+                    System.out.println("duplicate fact recieved");
+                    fail();
+                }
+            }
+
+        };
+        uut.subscribeToFacts(request, observer);
+        assertTrue(expectingTwo.await(2, TimeUnit.SECONDS));
+
+        // apparently, all fine
+
+    }
+
+    private Fact newTestFact(String ns) {
+        return Fact.builder().ns(ns).id(UUID.randomUUID()).build("{}");
+    }
+
     private Fact newFollowTestFact() {
-        return Fact.builder().ns("followtest").id(UUID.randomUUID()).build("{}");
+        return newTestFact("followtest");
     }
 
     @Test
@@ -794,8 +862,9 @@ public abstract class AbstractFactStoreTest {
 
         ToListObserver toListObserver = new ToListObserver();
 
-        SubscriptionRequest request = SubscriptionRequest.catchup(FactSpec.ns("ns1")).from(new UUID(
-                0L, 7L));
+        SubscriptionRequest request = SubscriptionRequest.catchup(FactSpec.ns("ns1"))
+                .from(new UUID(
+                        0L, 7L));
         Subscription s = uut.subscribeToFacts(request, toListObserver);
         s.awaitComplete();
 
