@@ -106,13 +106,14 @@ public class FactCastJsonTest {
         assertTrue(pretty.contains("\n"));
         assertTrue(pretty.contains(" "));
     }
+
     @Test
     void testWriteValueAsPrettyFromObject() {
         @Data
-        class TestObject{
-            String foo="bar";
+        class TestObject {
+            String foo = "bar";
         }
-        
+
         String pretty = FactCastJson.writeValueAsPrettyString(new TestObject());
         System.out.println(pretty);
         assertTrue(pretty.contains("\"foo\" : \"bar\""));
