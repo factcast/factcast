@@ -16,6 +16,7 @@
 package org.factcast.store.inmem;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -60,7 +61,7 @@ public class InMemFactStore implements FactStore {
     final AtomicLong highwaterMark = new AtomicLong(0);
 
     @VisibleForTesting
-    protected final LinkedHashMap<Long, Fact> store = new LinkedHashMap<>();
+    protected final Map<Long, Fact> store = Collections.synchronizedMap(new LinkedHashMap<>());
 
     final Set<UUID> ids = new HashSet<>();
 
