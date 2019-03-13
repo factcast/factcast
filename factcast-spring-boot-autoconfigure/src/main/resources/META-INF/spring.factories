@@ -5,3 +5,5 @@ org.factcast.spring.boot.autoconfigure.core.FactCastAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.store.inmem.InMemFactStoreAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.metrics.MetricsAutoConfiguration\
 org.factcast.spring.boot.autoconfigure.client.grpc.GrpcFactStoreConfiguration,\
+org.factcast.spring.boot.autoconfigure.server.grpc.FactCastGrpcServerConfiguration,\
+
