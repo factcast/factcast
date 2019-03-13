@@ -26,7 +26,8 @@ import org.springframework.core.env.Environment;
 public class RdsConfiguration {
 
     @Bean
-    RdsDataSourceFactoryBeanPostProcessor rdsDataSourceFactorBeanPostProcessor(Environment env) {
+    public RdsDataSourceFactoryBeanPostProcessor rdsDataSourceFactorBeanPostProcessor(
+            Environment env) {
         return new RdsDataSourceFactoryBeanPostProcessor(env);
     }
 }

@@ -3,8 +3,8 @@ org.factcast.spring.boot.autoconfigure.client.cache.CachingFactCastAutoConfigura
 org.factcast.spring.boot.autoconfigure.client.cache.infinispan.FactCastInfinispanAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.core.FactCastAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.store.inmem.InMemFactStoreAutoConfiguration,\
-org.factcast.spring.boot.autoconfigure.metrics.MetricsAutoConfiguration\
+org.factcast.spring.boot.autoconfigure.metrics.MetricsAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.client.grpc.GrpcFactStoreConfiguration,\
 org.factcast.spring.boot.autoconfigure.server.grpc.FactCastGrpcServerConfiguration,\
 org.factcast.spring.boot.autoconfigure.store.pgsql.rds.RdsConfiguration,\
-org.factcast.spring.boot.autoconfigure.store.pgsql.PGFactStoreConfiguration,\
+org.factcast.spring.boot.autoconfigure.store.pgsql.PGFactStoreConfiguration\
