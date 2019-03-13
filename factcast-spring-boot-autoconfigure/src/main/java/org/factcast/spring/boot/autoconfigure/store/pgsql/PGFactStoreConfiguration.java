@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql;
+package org.factcast.spring.boot.autoconfigure.store.pgsql;
 
+import org.factcast.store.pgsql.PGConfigurationProperties;
 import org.factcast.store.pgsql.internal.PGFactStoreInternalConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +33,8 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration
 @EnableConfigurationProperties
+@ConditionalOnClass(PGFactStoreInternalConfiguration.class)
 @Import(PGFactStoreInternalConfiguration.class)
-@ComponentScan
+@ComponentScan(basePackageClasses = PGConfigurationProperties.class)
 public class PGFactStoreConfiguration {
 }
