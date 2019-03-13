@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.rds;
+package org.factcast.spring.boot.autoconfigure.store.pgsql.rds;
 
+import org.factcast.store.pgsql.rds.RdsDataSourceFactoryBeanPostProcessor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
 @Configuration
+@ConditionalOnClass(RdsDataSourceFactoryBeanPostProcessor.class)
 public class RdsConfiguration {
 
     @Bean
-    RdsDataSourceFactorBeanPostProcessor rdsDataSourceFactorBeanPostProcessor(Environment env) {
-        return new RdsDataSourceFactorBeanPostProcessor(env);
+    RdsDataSourceFactoryBeanPostProcessor rdsDataSourceFactorBeanPostProcessor(Environment env) {
+        return new RdsDataSourceFactoryBeanPostProcessor(env);
     }
 }
