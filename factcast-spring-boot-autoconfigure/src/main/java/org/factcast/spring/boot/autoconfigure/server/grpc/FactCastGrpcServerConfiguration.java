@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc;
+package org.factcast.spring.boot.autoconfigure.server.grpc;
 
+import org.factcast.server.grpc.FactStoreGrpcService;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
