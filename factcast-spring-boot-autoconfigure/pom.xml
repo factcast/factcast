@@ -37,6 +37,11 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-client-grpc</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-client-cache-infinispan</artifactId>
       <optional>true</optional>
     </dependency>

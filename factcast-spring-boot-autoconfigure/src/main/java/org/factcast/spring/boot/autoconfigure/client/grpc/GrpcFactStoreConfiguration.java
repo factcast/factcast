@@ -13,25 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.client.grpc;
+package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import org.factcast.grpc.compression.lz4.LZ4Codec;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.factcast.client.grpc.GrpcFactStore;
+import org.factcast.core.store.FactStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import lombok.extern.slf4j.Slf4j;
+import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
+
+/**
+ * Provides a GrpcFactStore as a FactStore implementation.
+ *
+ * @author uwe.schaefer@mercateo.com
+ */
 
 @Configuration
-@AutoConfigureBefore(GrpcFactStoreConfiguration.class)
-@ConditionalOnClass(name = "net.jpountz.lz4.LZ4Constants")
-@Slf4j
-public class ClientLZ4Configuration {
+@ConditionalOnClass(GrpcFactStore.class)
+public class GrpcFactStoreConfiguration {
 
     @Bean
-    public LZ4Codec lz4Codec() {
-        log.info("offering LZ4 Codec");
-        return new LZ4Codec();
+    @ConditionalOnMissingBean
+    public FactStore factStore(AddressChannelFactory af) {
+        return new GrpcFactStore(af);
     }
 }
