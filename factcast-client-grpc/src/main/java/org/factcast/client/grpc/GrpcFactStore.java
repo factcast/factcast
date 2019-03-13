@@ -15,7 +15,7 @@
  */
 package org.factcast.client.grpc;
 
-import static io.grpc.stub.ClientCalls.*;
+import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
 
 import java.util.List;
 import java.util.Map;
@@ -72,7 +72,7 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
  * @author uwe.schaefer@mercateo.com
  */
 @Slf4j
-class GrpcFactStore implements FactStore, SmartInitializingSingleton {
+public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     static final String CHANNEL_NAME = "factstore";
 
@@ -93,7 +93,7 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     @Autowired
     @Generated
-    GrpcFactStore(AddressChannelFactory channelFactory) {
+    public GrpcFactStore(AddressChannelFactory channelFactory) {
         this(channelFactory.createChannel(CHANNEL_NAME));
     }
 
