@@ -16,12 +16,11 @@
 package org.factcast.spring.boot.autoconfigure.store.pgsql;
 
 import org.factcast.spring.boot.autoconfigure.store.inmem.InMemFactStoreAutoConfiguration;
-import org.factcast.store.pgsql.PGConfigurationProperties;
+import org.factcast.store.pgsql.PGFactStoreConfiguration;
 import org.factcast.store.pgsql.internal.PGFactStoreInternalConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
@@ -35,9 +34,8 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration
 @EnableConfigurationProperties
-@ConditionalOnClass(PGFactStoreInternalConfiguration.class)
-@Import(PGFactStoreInternalConfiguration.class)
-@ComponentScan(basePackageClasses = PGConfigurationProperties.class)
+@ConditionalOnClass(PGFactStoreConfiguration.class)
+@Import({ PGFactStoreConfiguration.class, PGFactStoreInternalConfiguration.class })
 @AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
 public class PGFactStoreAutoConfiguration {
 }

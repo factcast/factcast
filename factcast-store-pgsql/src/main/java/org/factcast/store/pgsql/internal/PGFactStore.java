@@ -35,7 +35,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.codahale.metrics.Counter;
@@ -54,7 +53,6 @@ import lombok.extern.slf4j.Slf4j;
  * @author uwe.schaefer@mercateo.com
  */
 @Slf4j
-@Component("factStore")
 public class PGFactStore implements FactStore {
 
     // is that interesting to configure?

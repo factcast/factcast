@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.server.grpc;
+package org.factcast.store.pgsql.rds;
 
-import org.factcast.server.grpc.FactCastGrpcServerConfiguration;
-import org.factcast.server.grpc.FactStoreGrpcService;
-import org.factcast.spring.boot.autoconfigure.store.inmem.InMemFactStoreAutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
 
 @Configuration
-@Import(FactCastGrpcServerConfiguration.class)
-@ConditionalOnClass(FactStoreGrpcService.class)
-@AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
-public class FactCastGrpcServerAutoConfiguration {
+public class RdsConfiguration {
+
+    @Bean
+    public RdsDataSourceFactoryBeanPostProcessor rdsDataSourceFactorBeanPostProcessor(
+            Environment env) {
+        return new RdsDataSourceFactoryBeanPostProcessor(env);
+    }
 }

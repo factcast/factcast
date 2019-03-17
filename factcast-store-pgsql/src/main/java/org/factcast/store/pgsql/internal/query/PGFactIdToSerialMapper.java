@@ -20,7 +20,6 @@ import java.util.UUID;
 import org.factcast.store.pgsql.internal.PGConstants;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,7 +28,6 @@ import lombok.RequiredArgsConstructor;
  *
  * @author uwe.schaefer@mercateo.com
  */
-@Component
 @RequiredArgsConstructor
 public class PGFactIdToSerialMapper {
 

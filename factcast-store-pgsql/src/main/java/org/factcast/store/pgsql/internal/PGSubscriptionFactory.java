@@ -26,7 +26,6 @@ import org.factcast.store.pgsql.internal.catchup.PGCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PGLatestSerialFetcher;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
 
 import com.google.common.eventbus.EventBus;
 
@@ -34,7 +33,6 @@ import lombok.RequiredArgsConstructor;
 
 // TODO integrate with PGQuery
 @RequiredArgsConstructor
-@Component
 class PGSubscriptionFactory {
 
     final JdbcTemplate jdbcTemplate;

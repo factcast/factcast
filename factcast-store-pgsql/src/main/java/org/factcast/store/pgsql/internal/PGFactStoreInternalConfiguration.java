@@ -15,19 +15,30 @@
  */
 package org.factcast.store.pgsql.internal;
 
+import java.sql.Connection;
 import java.util.concurrent.Executors;
+import java.util.function.Predicate;
 
+import org.apache.tomcat.jdbc.pool.DataSource;
+import org.factcast.core.store.FactStore;
 import org.factcast.store.pgsql.PGConfigurationProperties;
 import org.factcast.store.pgsql.internal.catchup.PGCatchupFactory;
 import org.factcast.store.pgsql.internal.catchup.paged.PGPagedCatchUpFactory;
+import org.factcast.store.pgsql.internal.listen.PGConnectionTester;
+import org.factcast.store.pgsql.internal.listen.PGListener;
+import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
 import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
+import org.factcast.store.pgsql.internal.query.PGLatestSerialFetcher;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
+
+import lombok.NonNull;
 
 /**
  * Main @Configuration class for a PGFactStore
@@ -52,5 +63,46 @@ public class PGFactStoreInternalConfiguration {
         default:
             throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
         }
+    }
+
+    @Bean
+    public FactStore factStore(JdbcTemplate jdbcTemplate, PGSubscriptionFactory subscriptionFactory,
+            MetricRegistry registry) {
+        return new PGFactStore(jdbcTemplate, subscriptionFactory, registry);
+    }
+
+    @Bean
+    public PGSubscriptionFactory pgSubscriptionFactory(JdbcTemplate jdbcTemplate, EventBus eventBus,
+            PGFactIdToSerialMapper pgFactIdToSerialMapper,
+            PGLatestSerialFetcher pgLatestSerialFetcher, PGCatchupFactory pgCatchupFactory) {
+        return new PGSubscriptionFactory(jdbcTemplate, eventBus, pgFactIdToSerialMapper,
+                pgLatestSerialFetcher, pgCatchupFactory);
+
+    }
+
+    @Bean
+    public PgConnectionSupplier pgConnectionSupplier(DataSource ds) {
+        return new PgConnectionSupplier(ds);
+    }
+
+    @Bean
+    public PGConnectionTester pgConnectionTester(@NonNull MetricRegistry metric) {
+        return new PGConnectionTester(metric);
+    }
+
+    @Bean
+    public PGListener pgListener(@NonNull PgConnectionSupplier pgConnectionSupplier,
+            @NonNull EventBus eventBus, @NonNull Predicate<Connection> predicate) {
+        return new PGListener(pgConnectionSupplier, eventBus, predicate);
+    }
+
+    @Bean
+    public PGFactIdToSerialMapper pgFactIdToSerialMapper(JdbcTemplate jdbcTemplate) {
+        return new PGFactIdToSerialMapper(jdbcTemplate);
+    }
+
+    @Bean
+    public PGLatestSerialFetcher pgLatestSerialFetcher(JdbcTemplate jdbcTemplate) {
+        return new PGLatestSerialFetcher(jdbcTemplate);
     }
 }
