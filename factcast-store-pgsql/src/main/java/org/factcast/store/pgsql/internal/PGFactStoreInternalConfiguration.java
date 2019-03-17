@@ -74,9 +74,11 @@ public class PGFactStoreInternalConfiguration {
     @Bean
     public PGSubscriptionFactory pgSubscriptionFactory(JdbcTemplate jdbcTemplate, EventBus eventBus,
             PGFactIdToSerialMapper pgFactIdToSerialMapper,
-            PGLatestSerialFetcher pgLatestSerialFetcher, PGCatchupFactory pgCatchupFactory) {
+            PGLatestSerialFetcher pgLatestSerialFetcher,
+            PGCatchupFactory pgCatchupFactory) {
         return new PGSubscriptionFactory(jdbcTemplate, eventBus, pgFactIdToSerialMapper,
-                pgLatestSerialFetcher, pgCatchupFactory);
+                pgLatestSerialFetcher,
+                pgCatchupFactory);
 
     }
 
@@ -92,7 +94,8 @@ public class PGFactStoreInternalConfiguration {
 
     @Bean
     public PGListener pgListener(@NonNull PgConnectionSupplier pgConnectionSupplier,
-            @NonNull EventBus eventBus, @NonNull Predicate<Connection> predicate) {
+            @NonNull EventBus eventBus,
+            @NonNull Predicate<Connection> predicate) {
         return new PGListener(pgConnectionSupplier, eventBus, predicate);
     }
 

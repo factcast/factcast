@@ -52,6 +52,7 @@ public class PGCatchUpFetchPageTest {
         uut = new PGCatchUpFetchPage(jdbc, properties.getPageSize(), req, 12);
         uut.fetchIdFacts(new AtomicLong());
         verify(jdbc).query(eq(PGConstants.SELECT_ID_FROM_CATCHUP), any(
-                PreparedStatementSetter.class), any(PGIdFactExtractor.class));
+                PreparedStatementSetter.class),
+                any(PGIdFactExtractor.class));
     }
 }

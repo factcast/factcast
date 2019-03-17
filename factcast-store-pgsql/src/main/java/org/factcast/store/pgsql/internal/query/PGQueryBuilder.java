@@ -99,8 +99,9 @@ public class PGQueryBuilder {
 
     public String createSQL() {
         final String sql = "SELECT " + (selectIdOnly ? PGConstants.PROJECTION_ID
-                : PGConstants.PROJECTION_FACT) + " FROM " + PGConstants.TABLE_FACT + " WHERE "
-                + createWhereClause() + " ORDER BY " + PGConstants.COLUMN_SER + " ASC";
+                : PGConstants.PROJECTION_FACT)
+                + " FROM " + PGConstants.TABLE_FACT + " WHERE " + createWhereClause() + " ORDER BY "
+                + PGConstants.COLUMN_SER + " ASC";
         log.trace("{} createSQL={}", req, sql);
         return sql;
     }
