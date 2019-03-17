@@ -44,8 +44,8 @@ public class PGFactIdToSerialMapper {
         if (id != null) {
             try {
                 // throws EmptyResultDataAccessException if is not found!
-                return jdbcTemplate.queryForObject(PGConstants.SELECT_BY_HEADER_JSON, new Object[] {
-                        "{\"id\":\"" + id + "\"}" }, Long.class);
+                return jdbcTemplate.queryForObject(PGConstants.SELECT_BY_HEADER_JSON,
+                        new Object[] { "{\"id\":\"" + id + "\"}" }, Long.class);
             } catch (EmptyResultDataAccessException ignored) {
             }
         }

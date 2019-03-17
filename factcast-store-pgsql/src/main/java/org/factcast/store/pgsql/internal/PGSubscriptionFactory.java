@@ -48,7 +48,8 @@ class PGSubscriptionFactory {
     public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
         final SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
         PGFactStream pgsub = new PGFactStream(jdbcTemplate, eventBus, idToSerialMapper,
-                subscription, fetcher, catchupFactory);
+                subscription, fetcher,
+                catchupFactory);
         CompletableFuture.runAsync(() -> pgsub.connect(req));
         return subscription.onClose(pgsub::close);
     }

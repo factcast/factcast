@@ -165,8 +165,9 @@ public class PGFactStore implements FactStore {
     @Override
     public OptionalLong serialOf(UUID l) {
         try (Context time = seqLookupLatency.time()) {
-            Long res = jdbcTemplate.queryForObject(PGConstants.SELECT_SER_BY_ID,
-                    new Object[] { "{\"id\":\"" + l + "\"}" }, Long.class);
+            Long res = jdbcTemplate.queryForObject(PGConstants.SELECT_SER_BY_ID, new Object[] {
+                    "{\"id\":\"" + l + "\"}" },
+                    Long.class);
 
             if (res != null && res.longValue() > 0) {
                 return OptionalLong.of(res.longValue());
