@@ -13,19 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.server.grpc;
+package org.factcast.store.pgsql;
 
-import org.factcast.server.grpc.FactCastGrpcServerConfiguration;
-import org.factcast.server.grpc.FactStoreGrpcService;
-import org.factcast.spring.boot.autoconfigure.store.inmem.InMemFactStoreAutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.factcast.store.pgsql.internal.PGFactStoreInternalConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+/**
+ * Configuration to include in order to use a PGFactStore
+ *
+ * just forwards to {@link PGFactStoreInternalConfiguration}, so that IDEs can
+ * still complain about internal references.
+ *
+ * @author uwe.schaefer@mercateo.com
+ */
 @Configuration
-@Import(FactCastGrpcServerConfiguration.class)
-@ConditionalOnClass(FactStoreGrpcService.class)
-@AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
-public class FactCastGrpcServerAutoConfiguration {
+@EnableConfigurationProperties
+@Import(PGFactStoreInternalConfiguration.class)
+public class PGFactStoreConfiguration {
+    @Bean
+    PGConfigurationProperties PGConfigurationProperties() {
+        return new PGConfigurationProperties();
+    }
 }

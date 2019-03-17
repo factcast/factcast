@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.server.grpc;
+package org.factcast.server.grpc;
 
-import org.factcast.server.grpc.FactCastGrpcServerConfiguration;
-import org.factcast.server.grpc.FactStoreGrpcService;
-import org.factcast.spring.boot.autoconfigure.store.inmem.InMemFactStoreAutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.factcast.core.store.FactStore;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
 @Configuration
-@Import(FactCastGrpcServerConfiguration.class)
-@ConditionalOnClass(FactStoreGrpcService.class)
-@AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
-public class FactCastGrpcServerAutoConfiguration {
+public class FactCastGrpcServerConfiguration {
+
+    @Bean
+    public FactStoreGrpcService factStoreGrpcService(FactStore store) {
+        return new FactStoreGrpcService(store);
+    }
 }
