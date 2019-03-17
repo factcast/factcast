@@ -15,19 +15,16 @@
  */
 package org.factcast.spring.boot.autoconfigure.store.pgsql.rds;
 
+import org.factcast.store.pgsql.rds.RdsConfiguration;
 import org.factcast.store.pgsql.rds.RdsDataSourceFactoryBeanPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
+import org.springframework.context.annotation.Import;
 
 @Configuration
 @ConditionalOnClass(RdsDataSourceFactoryBeanPostProcessor.class)
+@ConditionalOnMissingBean(RdsDataSourceFactoryBeanPostProcessor.class)
+@Import(RdsConfiguration.class)
 public class RdsAutoConfiguration {
-
-    @Bean
-    public RdsDataSourceFactoryBeanPostProcessor rdsDataSourceFactorBeanPostProcessor(
-            Environment env) {
-        return new RdsDataSourceFactoryBeanPostProcessor(env);
-    }
 }
