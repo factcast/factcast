@@ -16,10 +16,8 @@
 package org.factcast.store.pgsql.internal.query;
 
 import org.factcast.store.pgsql.internal.PGConstants;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
-import org.springframework.stereotype.Component;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
  * @author uwe.schaefer@mercateo.com
  */
 @RequiredArgsConstructor
-@Component
 @Slf4j
 public class PGLatestSerialFetcher {
 

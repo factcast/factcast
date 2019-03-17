@@ -38,7 +38,7 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 public class GrpcFactStoreAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean(name = "factStore")
+    @ConditionalOnMissingBean(FactStore.class)
     public FactStore factStore(AddressChannelFactory af) {
         return new GrpcFactStore(af);
     }
