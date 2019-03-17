@@ -50,6 +50,11 @@
       <artifactId>factcast-store-inmem</artifactId>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-client-grpc-spring</artifactId>
+      <optional>true</optional>
+    </dependency>
     <!-- TODO should be replaced with micrometer -->
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>

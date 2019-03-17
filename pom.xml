@@ -26,6 +26,7 @@
     <module>factcast-internal-dep-boot</module>
     <module>factcast-spring-boot-autoconfigure</module>
     <module>factcast-client-grpc</module>
+    <module>factcast-client-grpc-spring</module>
     <module>factcast-client-grpc-cli</module>
     <module>factcast-client-cache</module>
     <module>factcast-client-cache-infinispan</module>

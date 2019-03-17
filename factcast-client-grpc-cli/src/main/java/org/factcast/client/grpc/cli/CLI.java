@@ -15,6 +15,7 @@
  */
 package org.factcast.client.grpc.cli;
 
+import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.client.grpc.cli.cmd.Catchup;
 import org.factcast.client.grpc.cli.cmd.EnumerateNamespaces;
 import org.factcast.client.grpc.cli.cmd.EnumerateTypes;
@@ -24,16 +25,17 @@ import org.factcast.client.grpc.cli.cmd.Publish;
 import org.factcast.client.grpc.cli.cmd.SerialOf;
 import org.factcast.client.grpc.cli.util.Command;
 import org.factcast.client.grpc.cli.util.Parser;
+import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.FactCast;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.beust.jcommander.ParameterException;
 
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-@SpringBootApplication
+
 public class CLI {
 
     public static void main(String[] args) {
@@ -45,9 +47,19 @@ public class CLI {
                 new EnumerateTypes(), new SerialOf());
         try {
             Command cmd = parser.parse(arguments);
-            if (cmd != null)
-                cmd.runWith(SpringApplication.run(CLI.class).getBean(FactCast.class), parser
-                        .options());
+            Options options = parser.options();
+
+            ManagedChannelBuilder<?> cb = ManagedChannelBuilder.forAddress(options.host(), options
+                    .port());
+            if (options.notls())
+                cb.usePlaintext();
+
+            ManagedChannel channel = cb.build();
+
+            GrpcFactStore store = new GrpcFactStore(channel);
+            store.initialize();
+            FactCast fc = FactCast.from(store);
+            cmd.runWith(fc, options);
         } catch (ParameterException e) {
             System.err.println();
             System.err.println("*** Error: " + e.getMessage());

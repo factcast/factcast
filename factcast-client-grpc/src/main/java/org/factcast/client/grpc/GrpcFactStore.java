@@ -15,7 +15,7 @@
  */
 package org.factcast.client.grpc;
 
-import static io.grpc.stub.ClientCalls.*;
+import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
 
 import java.util.List;
 import java.util.Map;
@@ -51,8 +51,6 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
-import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -61,10 +59,8 @@ import io.grpc.ClientCall;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
-import lombok.Generated;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
@@ -72,7 +68,9 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
  * @author uwe.schaefer@mercateo.com
  */
 @Slf4j
-class GrpcFactStore implements FactStore, SmartInitializingSingleton {
+public class GrpcFactStore implements FactStore
+
+{
 
     static final String CHANNEL_NAME = "factstore";
 
@@ -91,21 +89,13 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-    @Autowired
-    @Generated
-    GrpcFactStore(AddressChannelFactory channelFactory) {
-        this(channelFactory.createChannel(CHANNEL_NAME));
-    }
-
-    @VisibleForTesting
     @lombok.Generated
-    GrpcFactStore(@NonNull Channel channel) {
+    public GrpcFactStore(@NonNull Channel channel) {
         this(RemoteFactStoreGrpc.newBlockingStub(channel), RemoteFactStoreGrpc.newStub(channel));
     }
 
-    @VisibleForTesting
     @lombok.Generated
-    GrpcFactStore(@NonNull RemoteFactStoreBlockingStub newBlockingStub,
+    protected GrpcFactStore(@NonNull RemoteFactStoreBlockingStub newBlockingStub,
             @NonNull RemoteFactStoreStub newStub) {
         this.blockingStub = newBlockingStub;
         this.stub = newStub;
@@ -131,8 +121,10 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @Override
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
         log.trace("publishing {} facts to remote store", factsToPublish.size());
-        List<MSG_Fact> mf = factsToPublish.stream().map(converter::toProto).collect(Collectors
-                .toList());
+        List<MSG_Fact> mf = factsToPublish.stream()
+                .map(converter::toProto)
+                .collect(Collectors
+                        .toList());
         MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
         // blockingStub.getCallOptions().withCompression(compressor);
         try {
@@ -258,11 +250,6 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
          * stub.withCompression(encoding); return true; } else
          */
         return false;
-    }
-
-    @Override
-    public synchronized void afterSingletonsInstantiated() {
-        initialize();
     }
 
     @Override

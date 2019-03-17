@@ -72,16 +72,15 @@ public class Parser {
         }
     }
 
+    @Getter
     public static class Options {
 
         @Parameter(names = { "--help", "-help", "-?", "--?" }, help = true, hidden = true)
         boolean help;
 
-        @Getter
         @Parameter(names = { "--pretty" }, help = true, description = "format JSON output")
         boolean pretty = false;
 
-        @Getter
         @Parameter(
                 names = {
                         "--no-tls" },
@@ -89,7 +88,6 @@ public class Parser {
                 description = "do NOT use TLS to connect (plaintext-communication)")
         boolean notls = false;
 
-        @Getter
         @Parameter(
                 names = { "--debug" },
                 help = true,
