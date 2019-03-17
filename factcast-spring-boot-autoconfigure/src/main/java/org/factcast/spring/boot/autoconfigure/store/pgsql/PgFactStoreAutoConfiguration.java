@@ -28,6 +28,6 @@ import org.springframework.context.annotation.Import;
 @ConditionalOnClass(PgFactStoreConfiguration.class)
 @Import(PgFactStoreConfiguration.class)
 @AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
-public class PGFactStoreAutoConfiguration {
+public class PgFactStoreAutoConfiguration {
 
 }
