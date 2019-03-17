@@ -37,7 +37,7 @@ However, where Subsystems communicate with each other (most likely corssing thos
 
 ##### So, what is needed is some technical solution, that everyone can easily agree on, because it forces as little technical dependencies on the clients as possible.
 
-REST and similar technological choices provide this solution, and if spiced with streaming, we have all we need.
+GRPC and similar technological choices provide this solution including streaming, secure transport in a language agnostic way.
 Oh and one thing: Whatever solution we choose to store and stream forward needs to be failure tolerant, somewhat scalable and should pose minimal operational complexity and overhead to an existing system.
 
 **This** is where some of the above solutions pose a possible problem:
