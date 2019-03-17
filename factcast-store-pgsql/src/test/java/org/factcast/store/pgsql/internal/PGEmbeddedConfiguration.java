@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.internal;
 
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 
+import org.factcast.store.pgsql.PGFactStoreConfiguration;
 import org.mockito.Mockito;
 import org.postgresql.Driver;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -33,7 +34,7 @@ import com.codahale.metrics.MetricRegistry;
 import lombok.extern.slf4j.Slf4j;
 
 @Configuration
-@Import(PGFactStoreInternalConfiguration.class)
+@Import(PGFactStoreConfiguration.class)
 @ImportAutoConfiguration({ DataSourceAutoConfiguration.class, JdbcTemplateAutoConfiguration.class,
         TransactionAutoConfiguration.class })
 @Slf4j
