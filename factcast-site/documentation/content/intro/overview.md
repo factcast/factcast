@@ -27,8 +27,9 @@ Amongst others in no particular order:
 * [Kafka – for building real-time data pipelines and streaming apps](https://kafka.apache.org/)
 * [The Eventuate™ Platform ](http://eventuate.io/)
 * [event-store-commons – a common event store Java interface ](https://github.com/fuinorg/event-store-commons)
+* [vlingo](https://github.com/vlingo)
 
-All of these have a slightly different focus, but all of them deal with persisting and streaming of Events.
+All of these have a slightly different focus, but all of them deal with persisting, streaming and sometimes processing of Events.
 
 ### The Problem at hand
 
