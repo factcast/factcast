@@ -88,8 +88,10 @@ public class PgQueryBuilder {
                 sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
             }
             Map<String, String> meta = spec.meta();
-            meta.forEach((key, value) -> sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(
-                    " @> ?::jsonb "));
+            meta.forEach((key, value) -> sb.append("AND ")
+                    .append(PgConstants.COLUMN_HEADER)
+                    .append(
+                            " @> ?::jsonb "));
             sb.append(") ");
             predicates.add(sb.toString());
         });

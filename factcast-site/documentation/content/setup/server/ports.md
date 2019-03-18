@@ -14,6 +14,9 @@ weight = 50
 
 +++
 
+### DEPRECATED Documentation. Will be updated https://github.com/Mercateo/factcast/issues/312
+
+
 ## Port defaults and how to change them
 
 The default TCP-Ports exposed are 8080 and 9090. As usual you can set them via environment variables.

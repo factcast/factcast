@@ -46,8 +46,8 @@ public class PgConnectionSupplier {
             this.ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
         } else {
             throw new IllegalStateException("expected "
-                    + org.apache.tomcat.jdbc.pool.DataSource.class.getName() + " , but got "
-                    + dataSource.getClass().getName());
+                    + org.apache.tomcat.jdbc.pool.DataSource.class.getName()
+                    + " , but got " + dataSource.getClass().getName());
         }
     }
 

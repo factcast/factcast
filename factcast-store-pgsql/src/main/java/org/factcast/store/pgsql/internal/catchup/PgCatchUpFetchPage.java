@@ -56,7 +56,8 @@ public class PgCatchUpFetchPage {
                 new PgFactExtractor(serial)));
         sw.stop();
         log.debug("{}  fetched next page of Facts for cid={}, limit={}, ser>{} in {}ms", req,
-                clientId, pageSize, serial.get(), sw.elapsed(TimeUnit.MILLISECONDS));
+                clientId, pageSize,
+                serial.get(), sw.elapsed(TimeUnit.MILLISECONDS));
         return list;
     }
 
@@ -77,7 +78,8 @@ public class PgCatchUpFetchPage {
                 new PgIdFactExtractor(serial)));
         sw.stop();
         log.debug("{}  fetched next page of Ids for cid={}, limit={}, ser>{} in {}ms", req,
-                clientId, pageSize, serial.get(), sw.elapsed(TimeUnit.MILLISECONDS));
+                clientId, pageSize,
+                serial.get(), sw.elapsed(TimeUnit.MILLISECONDS));
         return list;
     }
 }
