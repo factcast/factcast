@@ -57,7 +57,8 @@ public class PgCatchUpPrepare {
                 sw.stop();
                 if (numberOfFactsToCatchup > 0) {
                     log.debug("{} prepared {} facts for cid={} in {}ms", req,
-                            numberOfFactsToCatchup, clientId, sw.elapsed(TimeUnit.MILLISECONDS));
+                            numberOfFactsToCatchup, clientId,
+                            sw.elapsed(TimeUnit.MILLISECONDS));
                     return clientId;
                 } else {
                     log.debug("{} nothing to catch up", req);

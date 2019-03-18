@@ -92,4 +92,4 @@ One special attribute is the optional '**unique_identifier**' attribute of type 
 
 has no constraints other than being a valid JSON document.
 
-please, see REST docs / GRPC docs for further details.
+please, see GRPC docs for further details.

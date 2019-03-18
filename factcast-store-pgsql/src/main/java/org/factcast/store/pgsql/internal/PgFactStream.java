@@ -115,8 +115,8 @@ public class PgFactStream {
                 // the same latency requirements
                 //
                 // ok, that is unlikely to be necessary, but easy to do, so...
-                delayInMs = ((request.maxBatchDelayInMs() / 4L) * 3L) + (long) (Math.abs(Math
-                        .random() * (request.maxBatchDelayInMs() / 4.0)));
+                delayInMs = ((request.maxBatchDelayInMs() / 4L) * 3L)
+                        + (long) (Math.abs(Math.random() * (request.maxBatchDelayInMs() / 4.0)));
                 log.info("{} setting delay to {}, maxDelay was {}", request, delayInMs, request
                         .maxBatchDelayInMs());
             }

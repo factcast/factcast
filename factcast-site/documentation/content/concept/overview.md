@@ -49,7 +49,7 @@ The three usual subscription Models and their corresponding UseCases are:
 | Catchup | <p>This subscription differs from Follow by completing, once the consumer has read the last of the currently published Facts.</p> <p>A usual Use-case for this kind of subscription is a write model, that needs to aggregate all information about a specific aggregate, in order to validate or reject an incoming command.</p>|
 | Ephemeral | The consumer *does not catch up* with Events that happened in the past, but only receives matching Facts *from now on*. <p>A good Use-Case is cache invalidation, but certainly not building Read Models.</p> |
 
-Obviously all these subscription types rely on streaming transport which is implemented (at the time of writing) by REST-SSE or GRPC.
+Obviously all these subscription types rely on streaming transport which is implemented (at the time of writing) by GRPC.
 
 ### Read (fetchById)
 
