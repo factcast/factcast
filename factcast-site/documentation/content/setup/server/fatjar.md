@@ -14,26 +14,33 @@ weight = 10
 
 +++
 
-### DEPRECATED Documentation. Will be updated https://github.com/Mercateo/factcast/issues/312
-
-
 ## Building
 
-In order to build a fat jar from source, enter the project **factcast-server** and run
+First of all, build factcast completely if not yet done by running
+
+
+```sh
+mvn install
+```
+
+
+In order to run a simple example Factcast Server, you could enter the project **factcast-examples/factcast-example-server]** and run
+
+```sh
+mvn spring-boot:run
+```
+
+or run it in your IDE. Note that it will use **TestContainer** to *start an ephemeral postgres instance* for you. That means, you need to have a **runnable Docker** installed on your machine. 
+
+In case you want to use your local Postgres instead, take a look at ExampleServerWithPostgresContainer to find out how what is necessary to use a pgsql. After all, this is just a very simple Spring Boot application using JDBC.
+
+As expected, running
+
 
 ```sh
 mvn package
 ```
 
+will create a standard spring boot fat jar ```target/factcast.jar``` that can be run instantly.
 
-This will create a standard spring boot fat jar ```target/factcast-server.jar``` that can be run instantly.
-
-## Usage:
-
-To run the jar, pass the necessary configuration info as -D parameters:
-
-```sh
-java -Dspring.datasource.url=jdbc:postgresql://<POSTGRES-SERVER>/<DATABASENAME>?user=<USERNAME>&password=<PASSWORD> -Dmanagement.security.enabled=false -jar target/factcast.jar
-
-```
 [{{%icon circle-arrow-right%}}Read more on Ports]({{%relref "/setup/server/ports.md"%}})
