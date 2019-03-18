@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc;
+package org.factcast.store.pgsql.internal.metrics;
 
-import org.factcast.core.store.FactStore;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.factcast.core.store.FactStoreMetricNames;
 
-@Configuration
-public class FactCastGrpcServerConfiguration {
+/**
+ * Constants for metrics-names.
+ *
+ * @author <uwe.schaefer@mercateo.com>
+ */
+public class PgMetricNames extends FactStoreMetricNames {
 
-    @Bean
-    public FactStoreGrpcService factStoreGrpcService(FactStore store) {
-        return new FactStoreGrpcService(store);
+    public PgMetricNames() {
+        super("pg");
     }
 }

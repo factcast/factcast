@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc;
+package org.factcast.store.pgsql.internal.catchup;
 
-import org.factcast.core.store.FactStore;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import java.util.concurrent.atomic.AtomicLong;
 
-@Configuration
-public class FactCastGrpcServerConfiguration {
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
 
-    @Bean
-    public FactStoreGrpcService factStoreGrpcService(FactStore store) {
-        return new FactStoreGrpcService(store);
-    }
+import lombok.NonNull;
+
+public interface PgCatchupFactory {
+
+    PgCatchup create(@NonNull SubscriptionRequestTO request,
+            @NonNull PgPostQueryMatcher postQueryMatcher,
+            @NonNull SubscriptionImpl<Fact> subscription, @NonNull AtomicLong serial);
 }

@@ -13,17 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc;
+package org.factcast.store.pgsql.internal.catchup;
 
-import org.factcast.core.store.FactStore;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
-@Configuration
-public class FactCastGrpcServerConfiguration {
-
-    @Bean
-    public FactStoreGrpcService factStoreGrpcService(FactStore store) {
-        return new FactStoreGrpcService(store);
-    }
+public interface PgCatchup extends Runnable {
 }
