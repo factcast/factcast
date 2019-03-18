@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc;
+package org.factcast.spring.boot.autoconfigure.store.pgsql.rds;
 
-import org.factcast.grpc.compression.lz4.LZ4Codec;
+import org.factcast.store.pgsql.rds.RdsConfiguration;
+import org.factcast.store.pgsql.rds.RdsDataSourceFactoryBeanPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.Generated;
 
+@Generated
 @Configuration
-@ConditionalOnClass(name = "net.jpountz.lz4.LZ4Constants")
-@Slf4j
-public class ServerLZ4Configuration {
-
-    @Bean
-    public LZ4Codec lz4Codec() {
-        log.info("offering LZ4 Codec");
-        return new LZ4Codec();
-    }
+@ConditionalOnClass(RdsDataSourceFactoryBeanPostProcessor.class)
+@ConditionalOnMissingBean(RdsDataSourceFactoryBeanPostProcessor.class)
+@Import(RdsConfiguration.class)
+public class RdsAutoConfiguration {
 }

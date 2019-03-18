@@ -51,15 +51,18 @@ public class PGLatestSerialFetcherTest {
         assertEquals(0, uut.retrieveLatestSer());
         assertEquals(0, uut.retrieveLatestSer());
         jdbcTemplate.execute("INSERT INTO " + PGConstants.TABLE_FACT + "("
-                + PGConstants.COLUMN_HEADER + "," + PGConstants.COLUMN_PAYLOAD
-                + ") VALUES('{\"id\":\"" + UUID.randomUUID() + "\"}','{}') ");
+                + PGConstants.COLUMN_HEADER + ","
+                + PGConstants.COLUMN_PAYLOAD + ") VALUES('{\"id\":\"" + UUID.randomUUID()
+                + "\"}','{}') ");
         assertEquals(1, uut.retrieveLatestSer());
         jdbcTemplate.execute("INSERT INTO " + PGConstants.TABLE_FACT + "("
-                + PGConstants.COLUMN_HEADER + "," + PGConstants.COLUMN_PAYLOAD
-                + ") VALUES('{\"id\":\"" + UUID.randomUUID() + "\"}','{}') ");
+                + PGConstants.COLUMN_HEADER + ","
+                + PGConstants.COLUMN_PAYLOAD + ") VALUES('{\"id\":\"" + UUID.randomUUID()
+                + "\"}','{}') ");
         jdbcTemplate.execute("INSERT INTO " + PGConstants.TABLE_FACT + "("
-                + PGConstants.COLUMN_HEADER + "," + PGConstants.COLUMN_PAYLOAD
-                + ") VALUES('{\"id\":\"" + UUID.randomUUID() + "\"}','{}') ");
+                + PGConstants.COLUMN_HEADER + ","
+                + PGConstants.COLUMN_PAYLOAD + ") VALUES('{\"id\":\"" + UUID.randomUUID()
+                + "\"}','{}') ");
         assertEquals(3, uut.retrieveLatestSer());
     }
 

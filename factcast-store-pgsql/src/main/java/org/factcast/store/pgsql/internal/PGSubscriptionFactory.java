@@ -26,7 +26,6 @@ import org.factcast.store.pgsql.internal.catchup.PGCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PGFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PGLatestSerialFetcher;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
 
 import com.google.common.eventbus.EventBus;
 
@@ -34,7 +33,6 @@ import lombok.RequiredArgsConstructor;
 
 // TODO integrate with PGQuery
 @RequiredArgsConstructor
-@Component
 class PGSubscriptionFactory {
 
     final JdbcTemplate jdbcTemplate;
@@ -50,7 +48,8 @@ class PGSubscriptionFactory {
     public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
         final SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
         PGFactStream pgsub = new PGFactStream(jdbcTemplate, eventBus, idToSerialMapper,
-                subscription, fetcher, catchupFactory);
+                subscription, fetcher,
+                catchupFactory);
         CompletableFuture.runAsync(() -> pgsub.connect(req));
         return subscription.onClose(pgsub::close);
     }

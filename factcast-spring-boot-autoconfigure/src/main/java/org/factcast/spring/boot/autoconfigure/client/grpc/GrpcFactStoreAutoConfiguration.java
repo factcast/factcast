@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.client.grpc;
+package org.factcast.spring.boot.autoconfigure.client.grpc;
 
+import org.factcast.client.grpc.GrpcFactStore;
+import org.factcast.core.store.FactStore;
+import org.factcast.spring.boot.autoconfigure.store.inmem.InMemFactStoreAutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
 import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 
@@ -26,12 +31,15 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
  *
  * @author uwe.schaefer@mercateo.com
  */
-@Import(ClientLZ4Configuration.class)
+
 @Configuration
-public class GrpcFactStoreConfiguration {
+@ConditionalOnClass(GrpcFactStore.class)
+@AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
+public class GrpcFactStoreAutoConfiguration {
 
     @Bean
-    public GrpcFactStore grpcFactStore(AddressChannelFactory af) {
+    @ConditionalOnMissingBean(FactStore.class)
+    public FactStore factStore(AddressChannelFactory af) {
         return new GrpcFactStore(af);
     }
 }

@@ -17,7 +17,7 @@ package org.factcast.store.pgsql.internal;
 
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 
-import org.factcast.store.pgsql.PGConfigurationProperties;
+import org.factcast.store.pgsql.PGFactStoreConfiguration;
 import org.mockito.Mockito;
 import org.postgresql.Driver;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -25,7 +25,6 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -35,8 +34,7 @@ import com.codahale.metrics.MetricRegistry;
 import lombok.extern.slf4j.Slf4j;
 
 @Configuration
-@ComponentScan(basePackageClasses = PGConfigurationProperties.class)
-@Import(PGFactStoreInternalConfiguration.class)
+@Import(PGFactStoreConfiguration.class)
 @ImportAutoConfiguration({ DataSourceAutoConfiguration.class, JdbcTemplateAutoConfiguration.class,
         TransactionAutoConfiguration.class })
 @Slf4j

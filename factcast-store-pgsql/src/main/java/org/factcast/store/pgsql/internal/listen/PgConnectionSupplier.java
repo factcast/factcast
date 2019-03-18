@@ -25,7 +25,6 @@ import javax.sql.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -35,7 +34,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Component
 @RequiredArgsConstructor
 public class PgConnectionSupplier {
 
@@ -48,8 +46,8 @@ public class PgConnectionSupplier {
             this.ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
         } else {
             throw new IllegalStateException("expected "
-                    + org.apache.tomcat.jdbc.pool.DataSource.class.getName() + " , but got "
-                    + dataSource.getClass().getName());
+                    + org.apache.tomcat.jdbc.pool.DataSource.class.getName()
+                    + " , but got " + dataSource.getClass().getName());
         }
     }
 
