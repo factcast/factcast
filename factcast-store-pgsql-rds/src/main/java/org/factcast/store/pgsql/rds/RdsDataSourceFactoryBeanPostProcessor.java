@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
  * we can configure the datasource connection pool
  */
 @RequiredArgsConstructor
-public class RdsDataSourceFactorBeanPostProcessor implements BeanPostProcessor {
+public class RdsDataSourceFactoryBeanPostProcessor implements BeanPostProcessor {
 
     private final Environment env;
 

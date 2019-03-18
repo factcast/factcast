@@ -81,8 +81,9 @@ public class PGPagedCatchup implements PGCatchup {
         clientId = prep.prepareCatchup(serial);
         if (clientId > 0) {
             try {
-                PGCatchUpFetchPage fetch = new PGCatchUpFetchPage(jdbc, idsOnly() ? props
-                        .getPageSizeForIds() : props.getPageSize(), request, clientId);
+                PGCatchUpFetchPage fetch = new PGCatchUpFetchPage(jdbc,
+                        idsOnly() ? props.getPageSizeForIds() : props.getPageSize(), request,
+                        clientId);
                 while (true) {
                     LinkedList<Fact> facts = doFetch(fetch);
                     if (facts.isEmpty()) {

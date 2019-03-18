@@ -24,7 +24,6 @@ import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 
 import org.factcast.store.pgsql.internal.metrics.PGMetricNames;
-import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
@@ -33,12 +32,11 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Component
 public class PGConnectionTester implements Predicate<Connection> {
 
     final Counter connectionFailureMetric;
 
-    PGConnectionTester(@NonNull MetricRegistry registry) {
+    public PGConnectionTester(@NonNull MetricRegistry registry) {
         connectionFailureMetric = registry.counter(new PGMetricNames().connectionFailure());
     }
 

@@ -28,7 +28,6 @@ import org.postgresql.PGNotification;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
 
 import com.google.common.eventbus.EventBus;
 
@@ -48,7 +47,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RequiredArgsConstructor
-@Component
 public class PGListener implements InitializingBean, DisposableBean {
 
     @NonNull
@@ -103,8 +101,8 @@ public class PGListener implements InitializingBean, DisposableBean {
             }
         }, "PG Instance Listener");
         listenerThread.setDaemon(true);
-        listenerThread.setUncaughtExceptionHandler((t, e) -> log.error("thread " + t
-                + " encountered an unhandled exception", e));
+        listenerThread.setUncaughtExceptionHandler(
+                (t, e) -> log.error("thread " + t + " encountered an unhandled exception", e));
         listenerThread.start();
         try {
             l.await(15, TimeUnit.SECONDS);

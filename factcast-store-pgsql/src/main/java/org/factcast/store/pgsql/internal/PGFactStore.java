@@ -35,7 +35,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.codahale.metrics.Counter;
@@ -54,7 +53,6 @@ import lombok.extern.slf4j.Slf4j;
  * @author uwe.schaefer@mercateo.com
  */
 @Slf4j
-@Component("factStore")
 public class PGFactStore implements FactStore {
 
     // is that interesting to configure?
@@ -167,8 +165,9 @@ public class PGFactStore implements FactStore {
     @Override
     public OptionalLong serialOf(UUID l) {
         try (Context time = seqLookupLatency.time()) {
-            Long res = jdbcTemplate.queryForObject(PGConstants.SELECT_SER_BY_ID,
-                    new Object[] { "{\"id\":\"" + l + "\"}" }, Long.class);
+            Long res = jdbcTemplate.queryForObject(PGConstants.SELECT_SER_BY_ID, new Object[] {
+                    "{\"id\":\"" + l + "\"}" },
+                    Long.class);
 
             if (res != null && res.longValue() > 0) {
                 return OptionalLong.of(res.longValue());

@@ -108,8 +108,8 @@ public class PGSqlListenerTest {
         when(conn.getNotifications(anyInt())).thenReturn(new PGNotification[] { //
                 new Notification(PGConstants.CHANNEL_NAME, 1), //
                 new Notification(PGConstants.CHANNEL_NAME, 1), //
-                new Notification(PGConstants.CHANNEL_NAME, 1) }, new PGNotification[] {
-                        new Notification(PGConstants.CHANNEL_NAME, 2) }, //
+                new Notification(PGConstants.CHANNEL_NAME, 1) },
+                new PGNotification[] { new Notification(PGConstants.CHANNEL_NAME, 2) }, //
                 new PGNotification[] { new Notification(PGConstants.CHANNEL_NAME, 3) }, null);
         l.afterPropertiesSet();
         sleep(400);

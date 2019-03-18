@@ -52,11 +52,12 @@ public class PGCatchUpFetchPage {
     public LinkedList<Fact> fetchFacts(@NonNull AtomicLong serial) {
         Stopwatch sw = Stopwatch.createStarted();
         final LinkedList<Fact> list = new LinkedList<>(jdbc.query(
-                PGConstants.SELECT_FACT_FROM_CATCHUP, createSetter(serial, pageSize),
-                new PGFactExtractor(serial)));
+                PGConstants.SELECT_FACT_FROM_CATCHUP,
+                createSetter(serial, pageSize), new PGFactExtractor(serial)));
         sw.stop();
         log.debug("{}  fetched next page of Facts for cid={}, limit={}, ser>{} in {}ms", req,
-                clientId, pageSize, serial.get(), sw.elapsed(TimeUnit.MILLISECONDS));
+                clientId, pageSize,
+                serial.get(), sw.elapsed(TimeUnit.MILLISECONDS));
         return list;
     }
 
@@ -73,11 +74,12 @@ public class PGCatchUpFetchPage {
     public LinkedList<Fact> fetchIdFacts(@NonNull AtomicLong serial) {
         Stopwatch sw = Stopwatch.createStarted();
         final LinkedList<Fact> list = new LinkedList<>(jdbc.query(
-                PGConstants.SELECT_ID_FROM_CATCHUP, createSetter(serial, pageSize),
-                new PGIdFactExtractor(serial)));
+                PGConstants.SELECT_ID_FROM_CATCHUP,
+                createSetter(serial, pageSize), new PGIdFactExtractor(serial)));
         sw.stop();
         log.debug("{}  fetched next page of Ids for cid={}, limit={}, ser>{} in {}ms", req,
-                clientId, pageSize, serial.get(), sw.elapsed(TimeUnit.MILLISECONDS));
+                clientId, pageSize,
+                serial.get(), sw.elapsed(TimeUnit.MILLISECONDS));
         return list;
     }
 }
