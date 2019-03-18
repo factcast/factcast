@@ -44,13 +44,9 @@ A solved problem, that might help you with *more than moderate* traffic. While w
 
 With AWS RDS for instance, it is rather trivial to setup and operate a PostgreSQL that satisfies the above needs. It is unlikely to find a respectable cloud platform without postgresql.   
 
-## Choice #2: REST
+## Choice #2: GRPC
 
-The obvious choice for implementing platform neutrsal APIs nowadays is REST. If we say REST were, we actually mean REST - not RPCish JSON over HTTP. The FactCast Rest Adapter provides an API with HATEOAS properties.
-
-## Choice #3: GRPC
-
-When it comes to raaw performance though, REST might not always be the best option. In order to offer a more compact transport, but yet stay platform neutral, FactCast also has a GRPC API. 
+When it comes to raw performance, REST might not always be the best option. In order to offer a more compact transport, but yet stay platform neutral, FactCast also has a GRPC API. 
 GRPC has a lot of implementations in languages like: 
 
 * C++
@@ -66,11 +62,11 @@ GRPC has a lot of implementations in languages like:
 
 [{{%icon circle-arrow-right%}}GRPC.io ](http://www.grpc.io/)
 
-## Choice #4: Spring Boot (Server)
+## Choice #3: Spring Boot (Server)
 
 [Spring Boot](https://projects.spring.io/spring-boot/) is a simple Framework to quickly spin up Java Servers. The FactCast Server is implemented using Spring Boot as a container.
 
-## Choice #5: Spring (GRPC Client)
+## Choice #4: Spring (GRPC Client)
 
 In order to make it easy to use the GRPC Client from java, the factcast-client-grpc module depends on Spring as well. This dependency is not exactly tight, so if there is a good reason to, you might want to implement a GRPC CLient free of Spring dependencies. If so, let us know.
 
