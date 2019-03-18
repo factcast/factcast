@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.core;
+package org.factcast.store.pgsql;
 
-import org.factcast.core.FactCast;
-import org.factcast.core.store.FactStore;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.factcast.store.pgsql.internal.PgFactStoreInternalConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
-import lombok.Generated;
-
+/**
+ * Configuration to include in order to use a PGFactStore
+ *
+ * just forwards to {@link PgFactStoreInternalConfiguration}, so that IDEs can
+ * still complain about internal references.
+ *
+ * @author uwe.schaefer@mercateo.com
+ */
 @Configuration
-@ConditionalOnClass(FactCast.class)
-@ConditionalOnMissingBean(FactCast.class)
-@Generated
-public class FactCastAutoConfiguration {
-
+@EnableConfigurationProperties
+@Import(PgFactStoreInternalConfiguration.class)
+public class PgFactStoreConfiguration {
     @Bean
-    public FactCast factCast(FactStore store) {
-        return FactCast.from(store);
+    PgConfigurationProperties PGConfigurationProperties() {
+        return new PgConfigurationProperties();
     }
 }

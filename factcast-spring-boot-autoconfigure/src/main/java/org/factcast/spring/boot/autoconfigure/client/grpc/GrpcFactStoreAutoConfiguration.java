@@ -13,25 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.core;
+package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import org.factcast.core.FactCast;
+import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.store.FactStore;
+import org.factcast.spring.boot.autoconfigure.store.inmem.InMemFactStoreAutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import lombok.Generated;
+import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
+
+/**
+ * Provides a GrpcFactStore as a FactStore implementation.
+ *
+ * @author uwe.schaefer@mercateo.com
+ */
 
 @Configuration
-@ConditionalOnClass(FactCast.class)
-@ConditionalOnMissingBean(FactCast.class)
-@Generated
-public class FactCastAutoConfiguration {
+@ConditionalOnClass(GrpcFactStore.class)
+@AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
+public class GrpcFactStoreAutoConfiguration {
 
     @Bean
-    public FactCast factCast(FactStore store) {
-        return FactCast.from(store);
+    @ConditionalOnMissingBean(FactStore.class)
+    public FactStore factStore(AddressChannelFactory af) {
+        return new GrpcFactStore(af);
     }
 }

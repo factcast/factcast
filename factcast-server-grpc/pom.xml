@@ -33,10 +33,6 @@
       <artifactId>factcast-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-spring-boot-autoconfigure</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>

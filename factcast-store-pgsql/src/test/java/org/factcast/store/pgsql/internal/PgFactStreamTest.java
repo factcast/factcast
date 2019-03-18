@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc;
+package org.factcast.store.pgsql.internal;
 
-import org.factcast.core.store.FactStore;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@Configuration
-public class FactCastGrpcServerConfiguration {
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
 
-    @Bean
-    public FactStoreGrpcService factStoreGrpcService(FactStore store) {
-        return new FactStoreGrpcService(store);
+public class PgFactStreamTest {
+
+    @InjectMocks
+    PgFactStream uut;
+
+    @Test
+    public void testConnectNullParameter() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.connect(null);
+        });
     }
+
 }

@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.core;
+package org.factcast.spring.boot.autoconfigure.store.pgsql;
 
-import org.factcast.core.FactCast;
-import org.factcast.core.store.FactStore;
+import org.factcast.spring.boot.autoconfigure.store.inmem.InMemFactStoreAutoConfiguration;
+import org.factcast.store.pgsql.PgFactStoreConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-
-import lombok.Generated;
+import org.springframework.context.annotation.Import;
 
 @Configuration
-@ConditionalOnClass(FactCast.class)
-@ConditionalOnMissingBean(FactCast.class)
-@Generated
-public class FactCastAutoConfiguration {
+@EnableConfigurationProperties
+@ConditionalOnClass(PgFactStoreConfiguration.class)
+@Import(PgFactStoreConfiguration.class)
+@AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
+public class PgFactStoreAutoConfiguration {
 
-    @Bean
-    public FactCast factCast(FactStore store) {
-        return FactCast.from(store);
-    }
 }
