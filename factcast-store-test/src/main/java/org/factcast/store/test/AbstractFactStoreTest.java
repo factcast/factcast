@@ -60,6 +60,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.test.annotation.DirtiesContext;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
