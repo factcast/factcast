@@ -8,7 +8,7 @@ rm -rf public
 mkdir stage -p
 mv public/* stage
 cp favicon.png stage/images/
-rsync --delete -rcv stage/* wv:/www/docs.factcast.org
+rsync --delete -rcv stage/* con:/www/docs.factcast.org
 rm -rf stage
 
 

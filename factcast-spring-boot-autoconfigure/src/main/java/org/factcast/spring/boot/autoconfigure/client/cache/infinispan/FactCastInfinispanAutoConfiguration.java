@@ -31,6 +31,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import lombok.Generated;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -43,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author uwe.schaefer@mercateo.com
  */
 @Configuration
-@lombok.Generated
+@Generated
 @EnableCaching
 @Slf4j
 @ConditionalOnClass(org.infinispan.Version.class)
