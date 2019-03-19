@@ -60,7 +60,6 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.test.annotation.DirtiesContext;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -80,7 +79,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testEmptyStore() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             FactObserver observer = mock(FactObserver.class);
             Subscription s = uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).fromScratch(),
                     observer);
@@ -95,7 +94,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testUniquenessConstraint() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             Assertions.assertThrows(IllegalArgumentException.class, () -> {
                 final UUID id = UUID.randomUUID();
                 uut.publish(Fact.of("{\"id\":\"" + id
@@ -110,7 +109,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testEmptyStoreFollowNonMatching() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             TestFactObserver observer = testObserver();
             uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
                     .awaitCatchup();
@@ -160,7 +159,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testEmptyStoreFollowMatching() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             TestFactObserver observer = testObserver();
             uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
                     .awaitCatchup();
@@ -178,7 +177,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testEmptyStoreEphemeral() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             uut.publish(
                     Fact.of("{\"id\":\"" + UUID.randomUUID()
                             + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
@@ -207,7 +206,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testEmptyStoreEphemeralWithCancel() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             TestFactObserver observer = testObserver();
             uut.publish(
                     Fact.of("{\"id\":\"" + UUID.randomUUID()
@@ -244,7 +243,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testEmptyStoreFollowWithCancel() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             TestFactObserver observer = testObserver();
             uut.publish(
                     Fact.of("{\"id\":\"" + UUID.randomUUID()
@@ -280,7 +279,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testEmptyStoreCatchupMatching() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             FactObserver observer = mock(FactObserver.class);
             uut.publish(
                     Fact.of("{\"id\":\"" + UUID.randomUUID()
@@ -297,7 +296,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testEmptyStoreFollowMatchingDelayed() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             TestFactObserver observer = testObserver();
             uut.publish(
                     Fact.of("{\"id\":\"" + UUID.randomUUID()
@@ -318,7 +317,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testEmptyStoreFollowNonMatchingDelayed() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             TestFactObserver observer = testObserver();
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"t1\"}", "{}"));
@@ -337,7 +336,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testFetchById() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             uut.publish(
                     Fact.of("{\"id\":\"" + UUID.randomUUID()
                             + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
@@ -358,7 +357,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testAnySubscriptionsMatchesMark() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             FactObserver observer = mock(FactObserver.class);
             UUID mark = uut.publishWithMark(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\""
@@ -378,7 +377,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testRequiredMetaAttribute() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             FactObserver observer = mock(FactObserver.class);
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\"}",
@@ -399,7 +398,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testScriptedWithPayloadFiltering() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             FactObserver observer = mock(FactObserver.class);
             uut.publish(Fact.of(
                     "{\"id\":\"" + UUID.randomUUID()
@@ -423,7 +422,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testScriptedWithHeaderFiltering() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             FactObserver observer = mock(FactObserver.class);
             uut.publish(Fact.of(
                     "{\"id\":\"" + UUID.randomUUID()
@@ -447,7 +446,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testScriptedFilteringMatchAll() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             FactObserver observer = mock(FactObserver.class);
             uut.publish(Fact.of(
                     "{\"id\":\"" + UUID.randomUUID()
@@ -471,7 +470,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testScriptedFilteringMatchNone() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             FactObserver observer = mock(FactObserver.class);
             uut.publish(Fact.of(
                     "{\"id\":\"" + UUID.randomUUID()
@@ -494,7 +493,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testIncludeMarks() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             final UUID id = UUID.randomUUID();
             uut.publishWithMark(Fact.of("{\"id\":\"" + id
                     + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
@@ -509,7 +508,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testSkipMarks() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             final UUID id = UUID.randomUUID();
             uut.publishWithMark(Fact.of("{\"id\":\"" + id
                     + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
@@ -525,7 +524,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testMatchBySingleAggId() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             final UUID id = UUID.randomUUID();
             final UUID aggId1 = UUID.randomUUID();
             uut.publishWithMark(Fact.of(
@@ -545,7 +544,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testMatchByOneOfAggId() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             final UUID id = UUID.randomUUID();
             final UUID aggId1 = UUID.randomUUID();
             final UUID aggId2 = UUID.randomUUID();
@@ -572,7 +571,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testMatchBySecondAggId() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             final UUID id = UUID.randomUUID();
             final UUID aggId1 = UUID.randomUUID();
             final UUID aggId2 = UUID.randomUUID();
@@ -592,7 +591,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testDelayed() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             final UUID id = UUID.randomUUID();
             TestFactObserver obs = new TestFactObserver();
             try (Subscription s = uut.subscribeToFacts(
@@ -613,7 +612,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testSerialOf() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             final UUID id = UUID.randomUUID();
             assertFalse(uut.serialOf(id).isPresent());
             UUID mark1 = uut.publishWithMark(Fact.of(
@@ -631,7 +630,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testSerialHeader() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             UUID id = UUID.randomUUID();
             uut.publish(Fact.of(
                     "{\"id\":\"" + id + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\""
@@ -654,7 +653,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testUniqueIdentConstraintInLog() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             String ident = UUID.randomUUID().toString();
             UUID id = UUID.randomUUID();
             UUID id2 = UUID.randomUUID();
@@ -679,7 +678,7 @@ public abstract class AbstractFactStoreTest {
     @DirtiesContext
     @Test
     protected void testUniqueIdentConstraintInBatch() {
-        Assertions.assertTimeout(Duration.ofMillis(10000), () -> {
+        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             String ident = UUID.randomUUID().toString();
             UUID id = UUID.randomUUID();
             UUID id2 = UUID.randomUUID();

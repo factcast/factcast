@@ -20,7 +20,7 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-import org.factcast.store.pgsql.internal.listen.PGListener.FactInsertionEvent;
+import org.factcast.store.pgsql.internal.listen.PgListener.FactInsertionEvent;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
@@ -43,7 +43,7 @@ class CondensedQueryExecutor {
 
     final long maxDelayInMillis;
 
-    final PGSynchronizedQuery target;
+    final PgSynchronizedQuery target;
 
     final Supplier<Boolean> connectionStateSupplier;
 
