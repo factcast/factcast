@@ -15,10 +15,15 @@
  */
 package org.factcast.server.grpc;
 
-import org.springframework.context.annotation.ComponentScan;
+import org.factcast.core.store.FactStore;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ComponentScan(basePackageClasses = FactStoreGrpcService.class)
 public class FactCastGrpcServerConfiguration {
+
+    @Bean
+    public FactStoreGrpcService factStoreGrpcService(FactStore store) {
+        return new FactStoreGrpcService(store);
+    }
 }

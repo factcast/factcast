@@ -14,6 +14,9 @@ weight = 10
 
 +++
 
+### DEPRECATED Documentation. Will be updated https://github.com/Mercateo/factcast/issues/312
+
+
 ## Building
 
 In order to build a fat jar from source, enter the project **factcast-server** and run

@@ -14,6 +14,8 @@ weight = 20
 
 +++
 
+### DEPRECATED Documentation. Will be updated https://github.com/Mercateo/factcast/issues/312
+
 ## Building
 
 In order to build a standard docker container from source, enter the project **factcast-server** and run

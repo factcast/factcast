@@ -43,7 +43,7 @@ public class CondensedQueryExecutorTest {
     Timer mockTimer;
 
     @Mock
-    PGSynchronizedQuery callback;
+    PgSynchronizedQuery callback;
 
     @Captor
     ArgumentCaptor<TimerTask> task;
