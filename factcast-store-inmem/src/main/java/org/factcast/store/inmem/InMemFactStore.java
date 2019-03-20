@@ -45,7 +45,6 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -62,6 +61,9 @@ public class InMemFactStore implements FactStore {
 
     @VisibleForTesting
     protected final Map<Long, Fact> store = Collections.synchronizedMap(new LinkedHashMap<>());
+
+    @VisibleForTesting
+    protected final Map<UUID, Long> factid2ser = Collections.synchronizedMap(new LinkedHashMap<>());
 
     final Set<UUID> ids = new HashSet<>();
 
@@ -81,20 +83,16 @@ public class InMemFactStore implements FactStore {
         this(Executors.newCachedThreadPool());
     }
 
-    @RequiredArgsConstructor
-    static class AfterPredicate implements Predicate<Fact> {
+    class AfterPredicate implements Predicate<Fact> {
+        final Long serAfter;
 
-        final UUID after;
-
-        boolean flipSwitch = false;
+        public AfterPredicate(UUID after) {
+            serAfter = InMemFactStore.this.factid2ser.getOrDefault(after, -1L);
+        }
 
         @Override
         public boolean test(Fact t) {
-            if (flipSwitch) {
-                return true;
-            }
-            flipSwitch = after.equals(t.id());
-            return false;
+            return t.serial() > serAfter;
         }
     }
 
@@ -155,8 +153,9 @@ public class InMemFactStore implements FactStore {
                     "duplicate unique_identifier in factsToPublish - unique_identifier must be unique!");
         }
         // test on unique idents in log
-        if (factsToPublish.stream().anyMatch(f -> uniqueIdentifiers.contains(f.meta(
-                "unique_identifier")))) {
+        if (factsToPublish.stream()
+                .anyMatch(f -> uniqueIdentifiers.contains(f.meta(
+                        "unique_identifier")))) {
             throw new IllegalArgumentException(
                     "duplicate unique_identifier - unique_identifier must be unique!");
         }
@@ -164,6 +163,7 @@ public class InMemFactStore implements FactStore {
             long ser = highwaterMark.incrementAndGet();
             Fact inMemFact = new InMemFact(ser, f);
             store.put(ser, inMemFact);
+            factid2ser.put(inMemFact.id(), ser);
             ids.add(inMemFact.id());
             Optional.ofNullable(f.meta("unique_identifier")).ifPresent(uniqueIdentifiers::add);
             List<InMemFollower> subscribers = activeFollowers.stream()
@@ -181,6 +181,10 @@ public class InMemFactStore implements FactStore {
         executorService.submit(() -> {
             // catchup
             AtomicLong ser = new AtomicLong(-1);
+            if (!request.ephemeral()) {
+                // pick up the late ones
+                doCatchUp(s, ser);
+            }
             synchronized (InMemFactStore.this) {
                 if (!request.ephemeral()) {
                     // pick up the late ones
