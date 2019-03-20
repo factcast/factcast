@@ -182,7 +182,6 @@ public class InMemFactStore implements FactStore {
             // catchup
             AtomicLong ser = new AtomicLong(-1);
             if (!request.ephemeral()) {
-                // pick up the late ones
                 doCatchUp(s, ser);
             }
             synchronized (InMemFactStore.this) {
