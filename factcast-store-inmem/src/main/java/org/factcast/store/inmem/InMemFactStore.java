@@ -174,7 +174,7 @@ public class InMemFactStore implements FactStore {
     }
 
     @Override
-    public synchronized Subscription subscribe(SubscriptionRequestTO request,
+    public Subscription subscribe(SubscriptionRequestTO request,
             FactObserver observer) {
         SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
         InMemFollower s = new InMemFollower(request, subscription);
