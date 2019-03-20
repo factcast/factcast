@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
+import lombok.Generated;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author uwe.schaefer@mercateo.com, joerg.adler@mercateo.com
  */
+@Generated
 @SuppressWarnings("deprecation")
 @Configuration
 @ConditionalOnClass(InMemFactStore.class)
