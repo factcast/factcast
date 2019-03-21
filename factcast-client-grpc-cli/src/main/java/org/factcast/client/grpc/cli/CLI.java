@@ -24,8 +24,8 @@ import org.factcast.client.grpc.cli.cmd.Follow;
 import org.factcast.client.grpc.cli.cmd.Publish;
 import org.factcast.client.grpc.cli.cmd.SerialOf;
 import org.factcast.client.grpc.cli.util.Command;
+import org.factcast.client.grpc.cli.util.Options;
 import org.factcast.client.grpc.cli.util.Parser;
-import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.FactCast;
 
 import com.beust.jcommander.ParameterException;
@@ -49,9 +49,9 @@ public class CLI {
             Command cmd = parser.parse(arguments);
             Options options = parser.options();
 
-            ManagedChannelBuilder<?> cb = ManagedChannelBuilder.forAddress(options.host(), options
-                    .port());
-            if (options.notls())
+            ManagedChannelBuilder<?> cb = ManagedChannelBuilder.forAddress(options.host(),
+                    Integer.valueOf(options.port()));
+            if (Boolean.valueOf(options.notls()))
                 cb.usePlaintext();
 
             ManagedChannel channel = cb.build();

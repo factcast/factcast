@@ -16,7 +16,7 @@
 package org.factcast.client.grpc.cli.cmd;
 
 import org.factcast.client.grpc.cli.util.Command;
-import org.factcast.client.grpc.cli.util.Parser.Options;
+import org.factcast.client.grpc.cli.util.Options;
 import org.factcast.core.FactCast;
 
 import com.beust.jcommander.Parameters;

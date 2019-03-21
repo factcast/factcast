@@ -15,11 +15,10 @@
  */
 package org.factcast.client.grpc.cli.util;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.UUID;
 
-import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.Fact;
 import org.junit.jupiter.api.Test;
 
@@ -45,8 +44,8 @@ public class FactRendererTest {
     void testRenderPretty() throws Exception {
         Options options = new Options() {
             @Override
-            public boolean pretty() {
-                return true;
+            public String pretty() {
+                return "true";
             }
         };
 

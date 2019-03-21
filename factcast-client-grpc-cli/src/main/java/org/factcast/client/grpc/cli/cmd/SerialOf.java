@@ -21,7 +21,7 @@ import java.util.OptionalLong;
 import java.util.UUID;
 
 import org.factcast.client.grpc.cli.util.Command;
-import org.factcast.client.grpc.cli.util.Parser.Options;
+import org.factcast.client.grpc.cli.util.Options;
 import org.factcast.core.FactCast;
 
 import com.beust.jcommander.Parameter;

@@ -19,7 +19,7 @@ import java.util.UUID;
 
 import org.factcast.client.grpc.cli.util.Command;
 import org.factcast.client.grpc.cli.util.ConsoleFactObserver;
-import org.factcast.client.grpc.cli.util.Parser.Options;
+import org.factcast.client.grpc.cli.util.Options;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SpecBuilder;

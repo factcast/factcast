@@ -18,7 +18,7 @@ package org.factcast.client.grpc.cli.cmd;
 import org.factcast.client.grpc.cli.conv.ExistingJsonFile;
 import org.factcast.client.grpc.cli.util.Command;
 import org.factcast.client.grpc.cli.util.FactRenderer;
-import org.factcast.client.grpc.cli.util.Parser.Options;
+import org.factcast.client.grpc.cli.util.Options;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 

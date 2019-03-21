@@ -19,7 +19,7 @@ import java.util.UUID;
 
 import org.factcast.client.grpc.cli.util.Command;
 import org.factcast.client.grpc.cli.util.ConsoleFactObserver;
-import org.factcast.client.grpc.cli.util.Parser.Options;
+import org.factcast.client.grpc.cli.util.Options;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SpecBuilder;
@@ -40,13 +40,14 @@ public class Follow implements Command {
     UUID from;
 
     @Parameter(names = "-fromNowOn", help = true, description = "read only future facts")
-    boolean fromNow = false;
+    String fromNow = "false";
 
     @Override
     public void runWith(FactCast fc, Options opt) {
+        System.out.println("ns=" + ns);
         ConsoleFactObserver obs = new ConsoleFactObserver(opt);
         SpecBuilder catchup = SubscriptionRequest.follow(FactSpec.ns(ns));
-        if (fromNow)
+        if (Boolean.valueOf(fromNow))
             fc.subscribeToFacts(catchup.fromNowOn(), obs);
         else {
             if (from == null)

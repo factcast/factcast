@@ -43,7 +43,7 @@ import lombok.experimental.FieldDefaults;
  *
  * @author uwe.schaefer@mercateo.com
  */
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
 @Setter
 @JsonIgnoreProperties

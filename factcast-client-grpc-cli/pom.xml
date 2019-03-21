@@ -83,6 +83,7 @@
             <version>1.0.0-rc13</version>
             <configuration>
               <start-class>fccli</start-class>
+              <buildArgs>--enable-all-security-services --static -H:ReflectionConfigurationFiles=${project.basedir}/reflection.json</buildArgs>
             </configuration>
             <executions>
               <execution>
