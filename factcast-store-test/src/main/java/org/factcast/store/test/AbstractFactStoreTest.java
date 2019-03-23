@@ -15,6 +15,7 @@
  */
 package org.factcast.store.test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -44,7 +45,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.core.IntermediatePublishResult;
 import org.factcast.core.MarkFact;
+import org.factcast.core.PublishResult;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
@@ -68,9 +71,12 @@ public abstract class AbstractFactStoreTest {
 
     protected FactCast uut;
 
+    protected FactStore store;
+
     @BeforeEach
     void setUp() {
-        uut = FactCast.from(createStoreToTest());
+        store = spy(createStoreToTest());
+        uut = spy(FactCast.from(store));
     }
 
     protected abstract FactStore createStoreToTest();
@@ -406,8 +412,9 @@ public abstract class AbstractFactStoreTest {
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                     "{}"));
-            FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript(
-                    "function (h,e){ return (h.hit=='me')}");
+            FactSpec SCRIPTED = FactSpec.ns("default")
+                    .jsFilterScript(
+                            "function (h,e){ return (h.hit=='me')}");
             uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                     .awaitComplete();
             verify(observer).onNext(any());
@@ -429,8 +436,9 @@ public abstract class AbstractFactStoreTest {
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                     "{}"));
-            FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript(
-                    "function (h){ return (h.hit=='me')}");
+            FactSpec SCRIPTED = FactSpec.ns("default")
+                    .jsFilterScript(
+                            "function (h){ return (h.hit=='me')}");
             uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                     .awaitComplete();
             verify(observer).onNext(any());
@@ -452,8 +460,9 @@ public abstract class AbstractFactStoreTest {
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                     "{}"));
-            FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript(
-                    "function (h){ return true }");
+            FactSpec SCRIPTED = FactSpec.ns("default")
+                    .jsFilterScript(
+                            "function (h){ return true }");
             uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                     .awaitComplete();
             verify(observer, times(2)).onNext(any());
@@ -475,8 +484,9 @@ public abstract class AbstractFactStoreTest {
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                     "{}"));
-            FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript(
-                    "function (h){ return false }");
+            FactSpec SCRIPTED = FactSpec.ns("default")
+                    .jsFilterScript(
+                            "function (h){ return false }");
             uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                     .awaitComplete();
             verify(observer).onCatchup();
@@ -795,8 +805,9 @@ public abstract class AbstractFactStoreTest {
 
         ToListObserver toListObserver = new ToListObserver();
 
-        SubscriptionRequest request = SubscriptionRequest.catchup(FactSpec.ns("ns1")).from(new UUID(
-                0L, 7L));
+        SubscriptionRequest request = SubscriptionRequest.catchup(FactSpec.ns("ns1"))
+                .from(new UUID(
+                        0L, 7L));
         Subscription s = uut.subscribeToFacts(request, toListObserver);
         s.awaitComplete();
 
@@ -835,5 +846,204 @@ public abstract class AbstractFactStoreTest {
         assertThrows(NullPointerException.class, () -> {
             uut.subscribeToFacts(mock(SubscriptionRequestTO.class), null);
         });
+    }
+
+    @Test
+    void testOptimisticLocking_HappyPath() throws Exception {
+
+        UUID agg1 = UUID.randomUUID();
+
+        Fact f1 = Fact.builder().id(new UUID(0L, 1L)).ns("ns1").type("t1").aggId(agg1).build("{}");
+        uut.publish(f1);
+
+        PublishResult r = uut.locks().optimistic(agg1).publish(() -> {
+            Fact f2 = Fact.builder()
+                    .id(new UUID(0L, 2L))
+                    .ns("ns1")
+                    .type("t1")
+                    .aggId(agg1)
+                    .build("{}");
+
+            return IntermediatePublishResult.of(f2);
+        });
+
+        org.assertj.core.api.Assertions.assertThat(catchup(FactSpec.ns("ns1"))).hasSize(2);
+
+    }
+
+    @Test
+    void testOptimisticLocking_firstFact() throws Exception {
+
+        UUID agg1 = UUID.randomUUID();
+
+        uut.locks().optimistic(agg1).publish(() -> {
+            Fact f2 = Fact.builder()
+                    .id(new UUID(0L, 2L))
+                    .ns("ns1")
+                    .type("t1")
+                    .aggId(agg1)
+                    .build("{}");
+
+            return IntermediatePublishResult.of(f2);
+        });
+
+        org.assertj.core.api.Assertions.assertThat(catchup(FactSpec.ns("ns1"))).hasSize(1);
+    }
+
+    @Test
+    void testOptimisticLocking_withConcurrentWriteUnrelated() throws Exception {
+
+        UUID agg1 = UUID.randomUUID();
+
+        uut.locks().optimistic(agg1).publish(() -> {
+            Fact unrelated = Fact.builder()
+                    .ns("ns1")
+                    .build("{}");
+            uut.publish(unrelated);
+
+            Fact f2 = Fact.builder()
+                    .id(new UUID(0L, 2L))
+                    .ns("ns1")
+                    .type("t1")
+                    .aggId(agg1)
+                    .build("{}");
+
+            return IntermediatePublishResult.of(f2);
+        });
+
+        org.assertj.core.api.Assertions.assertThat(catchup(FactSpec.ns("ns1").aggId(agg1)))
+                .hasSize(1);
+    }
+
+    @Test
+    void testOptimisticLocking_withConcurrentWriteConflicting() throws Exception {
+
+        UUID agg1 = UUID.randomUUID();
+
+        PublishResult result = uut.locks().optimistic(agg1).retry(10).interval(10).publish(() -> {
+            Fact conflicting = Fact.builder()
+                    .ns("ns1")
+                    .aggId(agg1)
+                    .build("{}");
+            uut.publish(conflicting);
+
+            Fact f2 = Fact.builder()
+                    .id(new UUID(0L, 2L))
+                    .ns("ns1")
+                    .type("t1")
+                    .aggId(agg1)
+                    .build("{}");
+
+            return IntermediatePublishResult.of(f2);
+        });
+
+        assertThat(result).isInstanceOf(PublishResult.FAILURE.class);
+        verify(store, times(10)).publishIfUnchanged(any(), any());
+    }
+
+    @Test
+    void testOptimisticLocking_withListOfAggregateIds() throws Exception {
+
+        UUID agg1 = UUID.randomUUID();
+        UUID agg2 = UUID.randomUUID();
+
+        Fact f1 = Fact.builder()
+                .ns("ns1")
+                .aggId(agg1)
+                .build("{}");
+        uut.publish(f1);
+        Fact f2 = Fact.builder()
+                .ns("ns1")
+                .aggId(agg2)
+                .build("{}");
+        uut.publish(f2);
+
+        PublishResult result = uut.locks().optimistic(agg1, agg2).publish(() -> {
+
+            Fact p = Fact.builder()
+                    .id(new UUID(0L, 2L))
+                    .ns("ns1")
+                    .type("t1")
+                    .aggId(agg1)
+                    .build("{}");
+
+            return IntermediatePublishResult.of(p);
+        });
+
+        assertThat(result).isInstanceOf(PublishResult.SUCCESS.class);
+        verify(store, times(1)).publishIfUnchanged(any(), any());
+    }
+
+    @Test
+    void testOptimisticLocking_withListOfAggregateIdsFailsWithConflictingFactForAgg1()
+            throws Exception {
+
+        UUID agg1 = UUID.randomUUID();
+        UUID agg2 = UUID.randomUUID();
+
+        uut.publish(Fact.builder()
+                .ns("ns1")
+                .aggId(agg1)
+                .build("{}"));
+        uut.publish(Fact.builder()
+                .ns("ns1")
+                .aggId(agg2)
+                .build("{}"));
+
+        PublishResult result = uut.locks().optimistic(agg1, agg2).publish(() -> {
+
+            uut.publish(Fact.builder()
+                    .ns("ns1")
+                    .aggId(agg1)
+                    .build("{}"));
+
+            return IntermediatePublishResult.of(Fact.builder()
+                    .ns("ns1")
+                    .aggId(agg1)
+                    .build("{}"));
+        });
+
+        assertThat(result).isInstanceOf(PublishResult.FAILURE.class);
+        verify(store, times(1)).publishIfUnchanged(any(), any());
+    }
+
+    @Test
+    void testOptimisticLocking_withListOfAggregateIdsFailsWithConflictingFactForAgg2()
+            throws Exception {
+
+        UUID agg1 = UUID.randomUUID();
+        UUID agg2 = UUID.randomUUID();
+
+        uut.publish(Fact.builder()
+                .ns("ns1")
+                .aggId(agg1)
+                .build("{}"));
+        uut.publish(Fact.builder()
+                .ns("ns1")
+                .aggId(agg2)
+                .build("{}"));
+
+        PublishResult result = uut.locks().optimistic(agg1, agg2).publish(() -> {
+
+            uut.publish(Fact.builder()
+                    .ns("ns1")
+                    .aggId(agg2)
+                    .build("{}"));
+
+            return IntermediatePublishResult.of(Fact.builder()
+                    .ns("ns1")
+                    .aggId(agg1)
+                    .build("{}"));
+        });
+
+        assertThat(result).isInstanceOf(PublishResult.FAILURE.class);
+        verify(store, times(1)).publishIfUnchanged(any(), any());
+    }
+
+    private List<Fact> catchup(FactSpec ns) {
+        LinkedList<Fact> l = new LinkedList<>();
+        FactObserver o = f -> l.add(f);
+        uut.subscribeToFacts(SubscriptionRequest.catchup(ns).fromScratch(), o).awaitCatchup();
+        return l;
     }
 }

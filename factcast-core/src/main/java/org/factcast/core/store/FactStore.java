@@ -53,4 +53,12 @@ public interface FactStore {
     Set<String> enumerateNamespaces();
 
     Set<String> enumerateTypes(@NonNull String ns);
+
+    // playing with api - this is experimental!
+
+    boolean publishIfUnchanged(StateToken token, List<? extends Fact> factsToPublish);
+
+    // TODO what about namespaces?
+    StateToken stateFor(List<UUID> forAggIds);
+
 }
