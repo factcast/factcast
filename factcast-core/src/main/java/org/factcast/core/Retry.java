@@ -22,7 +22,6 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.factcast.core.lock.opt.MaxRetryAttemptsExceededException;
 import org.factcast.core.store.RetryableException;
 
 import lombok.Generated;

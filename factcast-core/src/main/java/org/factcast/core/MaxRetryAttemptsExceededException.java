@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.lock.opt;
+package org.factcast.core;
 
 import lombok.NonNull;
 

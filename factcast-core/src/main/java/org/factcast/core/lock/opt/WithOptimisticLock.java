@@ -27,6 +27,7 @@ import org.factcast.core.lock.IntermediatePublishResult;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
 
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -35,7 +36,7 @@ import lombok.experimental.Accessors;
 
 @RequiredArgsConstructor
 @Accessors(fluent = true, chain = true)
-public class WithOptimisticLock<T> {
+public class WithOptimisticLock {
     @NonNull
     final FactStore store;
 
@@ -55,7 +56,7 @@ public class WithOptimisticLock<T> {
 
     @NonNull
     public UUID attempt(@NonNull Attempt operation) throws AttemptAbortedException,
-            RetriesExceededException,
+            OptimisticRetriesExceededException,
             ExceptionAfterPublish {
         while (++count <= retry) {
 
@@ -92,7 +93,7 @@ public class WithOptimisticLock<T> {
             }
         }
 
-        throw new RetriesExceededException(retry);
+        throw new OptimisticRetriesExceededException(retry);
     }
 
     @SneakyThrows
@@ -109,12 +110,17 @@ public class WithOptimisticLock<T> {
         return factsToPublish.get(factsToPublish.size() - 1).id();
     }
 
-    public static final class RetriesExceededException extends ConcurrentModificationException {
+    @Getter
+    public static final class OptimisticRetriesExceededException extends
+            ConcurrentModificationException {
 
         private static final long serialVersionUID = 1L;
 
-        public RetriesExceededException(int retry) {
+        private int retries;
+
+        public OptimisticRetriesExceededException(int retry) {
             super("Exceeded the maximum number of retrys allowed (" + retry + ")");
+            retries = retry;
         }
 
     }

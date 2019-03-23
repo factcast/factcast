@@ -17,9 +17,11 @@ package org.factcast.core.lock;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
 import org.factcast.core.lock.opt.WithOptimisticLock;
+import org.factcast.core.lock.opt.WithOptimisticLock.OptimisticRetriesExceededException;
 import org.factcast.core.store.FactStore;
 
 import lombok.NonNull;
@@ -33,12 +35,33 @@ public final class LockedOperationBuilder {
     @NonNull
     final String ns;
 
-    public final <T> WithOptimisticLock<T> optimistic(@NonNull UUID aggId, UUID... otherAggIds) {
+    public final OnBuilderStep on(@NonNull UUID aggId, UUID... otherAggIds) {
         LinkedList<UUID> ids = new LinkedList<>();
         ids.add(aggId);
         if (otherAggIds != null)
             ids.addAll(Arrays.asList(otherAggIds));
 
-        return new WithOptimisticLock<T>(store, ns, ids);
+        return new OnBuilderStep(ids);
+    }
+
+    public class OnBuilderStep {
+        final List<UUID> ids;
+
+        public OnBuilderStep(LinkedList<UUID> ids) {
+            this.ids = ids;
+        }
+
+        public WithOptimisticLock optimistic() {
+            return new WithOptimisticLock(store, ns, ids);
+        }
+
+        // we MIGHT add pessimistic if we REALLY REALLY have to
+
+        // convenience, defaults to optimistic locking
+        public @NonNull UUID attempt(@NonNull Attempt operation) throws OptimisticRetriesExceededException,
+                ExceptionAfterPublish, AttemptAbortedException {
+            return optimistic().attempt(operation);
+        }
+
     }
 }
