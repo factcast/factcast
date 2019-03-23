@@ -101,7 +101,9 @@ class DefaultFactCast implements FactCast {
     }
 
     @Override
-    public LockedOperationBuilder lock(String ns) {
+    public LockedOperationBuilder lock(@NonNull String ns) {
+        if (ns.trim().isEmpty())
+            throw new IllegalArgumentException("Namespace must not be empty");
         return new LockedOperationBuilder(this.store, ns);
     }
 }

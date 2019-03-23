@@ -88,6 +88,8 @@ public interface Fact {
         }
 
         public Builder ns(@NonNull String ns) {
+            if (ns.trim().isEmpty())
+                throw new IllegalArgumentException("Namespace must not be empty");
             this.header.ns(ns);
             return this;
         }
@@ -98,6 +100,9 @@ public interface Fact {
         }
 
         public Builder type(@NonNull String type) {
+            if (type.trim().isEmpty())
+                throw new IllegalArgumentException("type must not be empty");
+
             this.header.type(type);
             return this;
         }
@@ -107,7 +112,15 @@ public interface Fact {
             return this;
         }
 
-        public Fact build(@NonNull String payload) {
+        public Fact buildWithoutPayload() {
+            return build(null);
+        }
+
+        public Fact build(String payload) {
+            if (payload == null || payload
+                    .trim()
+                    .isEmpty())
+                payload = "{}";
             return new DefaultFact(header, payload);
         }
     }

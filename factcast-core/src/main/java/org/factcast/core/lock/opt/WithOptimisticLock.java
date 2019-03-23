@@ -53,10 +53,12 @@ public class WithOptimisticLock<T> {
 
     private int count = 0;
 
-    public UUID attempt(Attempt operation) throws AttemptAbortedException, RetriesExceededException,
+    @NonNull
+    public UUID attempt(@NonNull Attempt operation) throws AttemptAbortedException,
+            RetriesExceededException,
             ExceptionAfterPublish {
         while (++count <= retry) {
-            
+
             // fetch current state
             StateToken token = store.stateFor(ns, ids);
             try {
