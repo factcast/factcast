@@ -874,6 +874,59 @@ public abstract class AbstractFactStoreTest {
         }
 
         @Test
+        void happyPathWithEmptyStore() throws Exception {
+
+            // setup
+            UUID agg1 = UUID.randomUUID();
+
+            UUID ret = uut.lock(NS).optimistic(agg1).attempt(() -> {
+                return Attempt.publish(fact(agg1));
+            });
+
+            verify(store).publishIfUnchanged(any(), any());
+            assertThat(catchup()).hasSize(1);
+            assertThat(ret).isNotNull();
+
+        }
+
+        @Test
+        void npeOnNamespaceMissing() throws Exception {
+            assertThrows(NullPointerException.class, () -> {
+                uut.lock(null);
+            });
+        }
+
+        @Test
+        void npeOnNamespaceEmpty() throws Exception {
+            assertThrows(IllegalArgumentException.class, () -> {
+                uut.lock("");
+            });
+        }
+
+        @Test
+        void npeOnAggIdMissing() throws Exception {
+            assertThrows(NullPointerException.class, () -> {
+                uut.lock("foo").optimistic(null);
+            });
+        }
+
+        @Test
+        void npeOnAttemptIsNull() throws Exception {
+            assertThrows(NullPointerException.class, () -> {
+                uut.lock("foo").optimistic(UUID.randomUUID()).attempt(null);
+            });
+        }
+
+        @Test
+        void npeOnAttemptReturningNull() throws Exception {
+            assertThrows(NullPointerException.class, () -> {
+                uut.lock("foo").optimistic(UUID.randomUUID()).attempt(() -> {
+                    return null;
+                });
+            });
+        }
+
+        @Test
         void happyPathWithMoreThanOneAggregate() throws Exception {
 
             // setup
