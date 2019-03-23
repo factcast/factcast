@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import org.factcast.core.lock.LockedOperationBuilder;
 import org.factcast.core.store.FactStore;
 
 import lombok.NonNull;
@@ -72,5 +73,5 @@ public interface FactCast extends ReadFactCast {
         return Retry.wrap(this, maxAttempts, minimumWaitIntervalMillis);
     }
 
-    LockedOperationBuilder locks();
+    LockedOperationBuilder lock(String ns);
 }

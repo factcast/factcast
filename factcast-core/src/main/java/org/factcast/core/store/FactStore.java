@@ -58,7 +58,8 @@ public interface FactStore {
 
     boolean publishIfUnchanged(StateToken token, List<? extends Fact> factsToPublish);
 
-    // TODO what about namespaces?
-    StateToken stateFor(List<UUID> forAggIds);
+    StateToken stateFor(@NonNull String ns, @NonNull List<UUID> forAggIds);
+
+    void invalidate(@NonNull StateToken token);
 
 }

@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import org.factcast.core.lock.opt.MaxRetryAttemptsExceededException;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.RetryableException;
 import org.junit.jupiter.api.Test;
