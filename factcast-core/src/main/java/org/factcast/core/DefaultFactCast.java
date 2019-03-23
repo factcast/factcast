@@ -98,4 +98,9 @@ class DefaultFactCast implements FactCast {
     public Set<String> enumerateTypes(@NonNull String ns) {
         return store.enumerateTypes(ns);
     }
+
+    @Override
+    public LockedOperationBuilder locks() {
+        return new LockedOperationBuilder(this.store);
+    }
 }

@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpecMatcher;
-import org.factcast.core.store.FactStore;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -54,7 +54,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Deprecated
 @Slf4j
-public class InMemFactStore implements FactStore {
+public class InMemFactStore extends AbstractFactStore {
 
     final AtomicLong highwaterMark = new AtomicLong(0);
 
@@ -70,9 +70,9 @@ public class InMemFactStore implements FactStore {
     final ExecutorService executorService;
 
     @VisibleForTesting
-
-    InMemFactStore(@NonNull ExecutorService es) {
-        executorService = es;
+    InMemFactStore(@NonNull ExecutorService e) {
+        super(new InMemTokenStore());
+        executorService = e;
     }
 
     public InMemFactStore() {
@@ -153,8 +153,9 @@ public class InMemFactStore implements FactStore {
                     "duplicate unique_identifier in factsToPublish - unique_identifier must be unique!");
         }
         // test on unique idents in log
-        if (factsToPublish.stream().anyMatch(f -> uniqueIdentifiers.contains(f.meta(
-                "unique_identifier")))) {
+        if (factsToPublish.stream()
+                .anyMatch(f -> uniqueIdentifiers.contains(f.meta(
+                        "unique_identifier")))) {
             throw new IllegalArgumentException(
                     "duplicate unique_identifier - unique_identifier must be unique!");
         }
@@ -180,7 +181,8 @@ public class InMemFactStore implements FactStore {
             // catchup
             AtomicLong ser = new AtomicLong(-1);
             if (!request.ephemeral()) {
-                // this could take some time, so we dont waant to lock the store here
+                // this could take some time, so we dont waant to lock the store
+                // here
                 doCatchUp(s, ser);
             }
 
@@ -243,4 +245,21 @@ public class InMemFactStore implements FactStore {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
+
+    protected Optional<UUID> latestFactFor(UUID aggId) {
+        Fact last = store.values()
+                .stream()
+                .filter(f -> f.aggIds().contains(aggId))
+                .reduce(null, (oldId, newId) -> newId);
+        return Optional.ofNullable(last).map(Fact::id);
+
+    }
+
+    @Override
+    public StateToken stateFor(List<UUID> forAggIds) {
+        Map<UUID, Optional<UUID>> state = new LinkedHashMap<>();
+        forAggIds.forEach(id -> state.put(id, latestFactFor(id)));
+        return tokenStore.create(state);
+    }
+
 }

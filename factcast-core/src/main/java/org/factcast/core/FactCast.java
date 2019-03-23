@@ -27,7 +27,7 @@ import lombok.NonNull;
 
 /**
  * Main interface to work against as a client.
- *
+ * <p>
  * FactCast provides methods to publish Facts in a sync/async fashion, as well
  * as a subscription mechanism to listen for changes and catching up.
  *
@@ -56,7 +56,6 @@ public interface FactCast extends ReadFactCast {
         return mark.id();
     }
 
-    // Factory
     static FactCast from(@NonNull FactStore store) {
         return new DefaultFactCast(store);
     }
@@ -72,4 +71,6 @@ public interface FactCast extends ReadFactCast {
     default FactCast retry(int maxAttempts, long minimumWaitIntervalMillis) {
         return Retry.wrap(this, maxAttempts, minimumWaitIntervalMillis);
     }
+
+    LockedOperationBuilder locks();
 }
