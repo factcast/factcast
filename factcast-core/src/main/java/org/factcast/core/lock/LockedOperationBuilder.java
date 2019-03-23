@@ -47,7 +47,7 @@ public final class LockedOperationBuilder {
     public class OnBuilderStep {
         final List<UUID> ids;
 
-        public OnBuilderStep(LinkedList<UUID> ids) {
+        public OnBuilderStep(@NonNull LinkedList<UUID> ids) {
             this.ids = ids;
         }
 
@@ -57,8 +57,19 @@ public final class LockedOperationBuilder {
 
         // we MIGHT add pessimistic if we REALLY REALLY have to
 
-        // convenience, defaults to optimistic locking
-        public @NonNull UUID attempt(@NonNull Attempt operation) throws OptimisticRetriesExceededException,
+        /**
+         * convenience method that uses optimistic locking with defaults.
+         * Alternatively, you can call optimistic() to get control over the
+         * optimistic settings.
+         * 
+         * @param operation
+         * @return id of the last fact published
+         * @throws OptimisticRetriesExceededException
+         * @throws ExceptionAfterPublish
+         * @throws AttemptAbortedException
+         */
+        public @NonNull UUID attempt(@NonNull Attempt operation)
+                throws OptimisticRetriesExceededException,
                 ExceptionAfterPublish, AttemptAbortedException {
             return optimistic().attempt(operation);
         }

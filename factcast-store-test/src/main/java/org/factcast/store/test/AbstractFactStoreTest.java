@@ -68,6 +68,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
+@SuppressWarnings("deprecation")
 public abstract class AbstractFactStoreTest {
 
     static final FactSpec ANY = FactSpec.ns("default");
@@ -833,6 +834,7 @@ public abstract class AbstractFactStoreTest {
     }
 
     @Nested
+    @SuppressWarnings("deprecation")
     class OptimisticLocking {
         final String NS = "ns1";
 
@@ -864,7 +866,7 @@ public abstract class AbstractFactStoreTest {
             UUID agg1 = UUID.randomUUID();
             uut.publish(fact(agg1));
 
-            UUID ret = uut.lock(NS).on(agg1).optimistic().attempt(() -> {
+            UUID ret = uut.lock(NS).on(agg1).attempt(() -> {
                 return Attempt.publish(fact(agg1));
             });
 
@@ -880,7 +882,7 @@ public abstract class AbstractFactStoreTest {
             // setup
             UUID agg1 = UUID.randomUUID();
 
-            UUID ret = uut.lock(NS).on(agg1).optimistic().attempt(() -> {
+            UUID ret = uut.lock(NS).on(agg1).attempt(() -> {
                 return Attempt.publish(fact(agg1));
             });
 
@@ -914,14 +916,14 @@ public abstract class AbstractFactStoreTest {
         @Test
         void npeOnAttemptIsNull() throws Exception {
             assertThrows(NullPointerException.class, () -> {
-                uut.lock("foo").on(UUID.randomUUID()).optimistic().attempt(null);
+                uut.lock("foo").on(UUID.randomUUID()).attempt(null);
             });
         }
 
         @Test
         void npeOnAttemptReturningNull() throws Exception {
             assertThrows(NullPointerException.class, () -> {
-                uut.lock("foo").on(UUID.randomUUID()).optimistic().attempt(() -> {
+                uut.lock("foo").on(UUID.randomUUID()).attempt(() -> {
                     return null;
                 });
             });
@@ -935,7 +937,7 @@ public abstract class AbstractFactStoreTest {
             UUID agg2 = UUID.randomUUID();
             uut.publish(fact(agg1));
 
-            UUID ret = uut.lock(NS).on(agg1, agg2).optimistic().attempt(() -> {
+            UUID ret = uut.lock(NS).on(agg1, agg2).attempt(() -> {
                 return Attempt.publish(fact(agg1));
             });
 
@@ -983,7 +985,7 @@ public abstract class AbstractFactStoreTest {
         @Test
         void shouldThrowAttemptAbortedException() {
             assertThrows(AttemptAbortedException.class, () -> {
-                uut.lock(NS).on(UUID.randomUUID()).optimistic().attempt(() -> {
+                uut.lock(NS).on(UUID.randomUUID()).attempt(() -> {
                     return Attempt.abort("don't want to");
                 });
             });
@@ -1042,7 +1044,7 @@ public abstract class AbstractFactStoreTest {
             CountDownLatch c = new CountDownLatch(5);
             UUID agg1 = UUID.randomUUID();
 
-            uut.lock(NS).on(agg1).optimistic().attempt(() -> {
+            uut.lock(NS).on(agg1).attempt(() -> {
 
                 c.countDown();
                 if (c.getCount() > 0) {
@@ -1092,7 +1094,7 @@ public abstract class AbstractFactStoreTest {
             UUID agg1 = UUID.randomUUID();
 
             try {
-                uut.lock(NS).on(agg1).optimistic().attempt(() -> {
+                uut.lock(NS).on(agg1).attempt(() -> {
                     throw new MyAbortException(42);
                 });
                 fail("should not have gotten here");
@@ -1110,7 +1112,7 @@ public abstract class AbstractFactStoreTest {
             UUID agg1 = UUID.randomUUID();
             UUID agg2 = UUID.randomUUID();
 
-            uut.lock(NS).on(agg1).optimistic().attempt(() -> {
+            uut.lock(NS).on(agg1).attempt(() -> {
 
                 // write unrelated fact first
                 uut.publish(fact(agg2));
@@ -1128,7 +1130,7 @@ public abstract class AbstractFactStoreTest {
             UUID agg1 = UUID.randomUUID();
 
             assertThrows(OptimisticRetriesExceededException.class, () -> {
-                uut.lock(NS).on(agg1).optimistic().attempt(() -> {
+                uut.lock(NS).on(agg1).attempt(() -> {
 
                     // write conflicting fact first
                     uut.publish(fact(agg1));
@@ -1145,7 +1147,7 @@ public abstract class AbstractFactStoreTest {
 
             UUID expected = UUID.randomUUID();
 
-            UUID lastFactId = uut.lock(NS).on(agg1).optimistic().attempt(() -> {
+            UUID lastFactId = uut.lock(NS).on(agg1).attempt(() -> {
 
                 Fact lastFact = Fact.builder().ns(NS).id(expected).build("{}");
                 return Attempt.publish(fact(agg1), fact(agg1), fact(agg1), lastFact);
