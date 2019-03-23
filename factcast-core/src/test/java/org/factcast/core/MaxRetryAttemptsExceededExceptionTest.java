@@ -17,7 +17,7 @@ package org.factcast.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.factcast.core.lock.opt.MaxRetryAttemptsExceededException;
+import org.factcast.core.lock.MaxRetryAttemptsExceededException;
 import org.junit.jupiter.api.Test;
 
 public class MaxRetryAttemptsExceededExceptionTest {
