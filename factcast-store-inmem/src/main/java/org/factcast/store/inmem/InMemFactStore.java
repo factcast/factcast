@@ -53,13 +53,12 @@ import lombok.extern.slf4j.Slf4j;
  * @author uwe.schaefer@mercateo.com, joerg.adler@mercateo.com
  */
 @Deprecated
-@Slf4j
 public class InMemFactStore extends AbstractFactStore {
 
     final AtomicLong highwaterMark = new AtomicLong(0);
 
     @VisibleForTesting
-    protected final LinkedHashMap<Long, Fact> store = new LinkedHashMap<>();
+    protected final Map<Long, Fact> store = new LinkedHashMap<>();
 
     final Set<UUID> ids = new HashSet<>();
 
@@ -246,20 +245,32 @@ public class InMemFactStore extends AbstractFactStore {
                 .collect(Collectors.toSet());
     }
 
-    protected Optional<UUID> latestFactFor(UUID aggId) {
+    protected Optional<UUID> latestFactFor(String ns, UUID aggId) {
         Fact last = store.values()
                 .stream()
-                .filter(f -> f.aggIds().contains(aggId))
+                .filter(f -> f.ns().equals(ns) && f.aggIds().contains(aggId))
                 .reduce(null, (oldId, newId) -> newId);
         return Optional.ofNullable(last).map(Fact::id);
 
     }
 
     @Override
-    public StateToken stateFor(List<UUID> forAggIds) {
+    public StateToken stateFor(@NonNull String ns, @NonNull List<UUID> forAggIds) {
         Map<UUID, Optional<UUID>> state = new LinkedHashMap<>();
-        forAggIds.forEach(id -> state.put(id, latestFactFor(id)));
-        return tokenStore.create(state);
+        forAggIds.forEach(id -> state.put(id, latestFactFor(ns, id)));
+        return tokenStore.create(ns, state);
+    }
+
+    @Override
+    public void invalidate(@NonNull StateToken token) {
+        tokenStore.invalidate(token);
+    }
+
+    // needs to be overridden for synchronization
+    @Override
+    public synchronized boolean publishIfUnchanged(@NonNull StateToken token,
+            @NonNull List<? extends Fact> factsToPublish) {
+        return super.publishIfUnchanged(token, factsToPublish);
     }
 
 }

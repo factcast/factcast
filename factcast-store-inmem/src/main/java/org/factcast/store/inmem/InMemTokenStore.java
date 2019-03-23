@@ -26,17 +26,27 @@ class InMemTokenStore implements TokenStore {
 
     final Map<StateToken, Map<UUID, Optional<UUID>>> tokens = new HashMap<>();
 
-    public StateToken create(Map<UUID, Optional<UUID>> state) {
+    final Map<StateToken, String> namespaces = new HashMap<>();
+
+    public StateToken create(String ns, Map<UUID, Optional<UUID>> state) {
         StateToken token = new StateToken();
         tokens.put(token, state);
+        namespaces.put(token, ns);
         return token;
     }
 
     public void invalidate(StateToken token) {
         tokens.remove(token);
+        namespaces.remove(token);
     }
 
-    public Map<UUID, Optional<UUID>> get(StateToken token) {
+    @Override
+    public Map<UUID, Optional<UUID>> getState(StateToken token) {
         return tokens.get(token);
+    }
+
+    @Override
+    public String getNs(StateToken token) {
+        return namespaces.get(token);
     }
 }

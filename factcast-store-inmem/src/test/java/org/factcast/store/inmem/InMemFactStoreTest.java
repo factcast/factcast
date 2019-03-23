@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.factcast.core.store.FactStore;
 import org.factcast.store.test.AbstractFactStoreTest;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("deprecation")
@@ -35,20 +36,25 @@ public class InMemFactStoreTest extends AbstractFactStoreTest {
         this.store = new InMemFactStore();
         return store;
     }
-
-    @Test
-    void testDestroy() throws Exception {
-        ExecutorService es = mock(ExecutorService.class);
-        InMemFactStore inMemFactStore = new InMemFactStore(es);
-        inMemFactStore.shutdown();
-        verify(es).shutdown();
+    
+    @Nested
+    class InMemSpecific{
+        
+        @Test
+        void testDestroy() throws Exception {
+            ExecutorService es = mock(ExecutorService.class);
+            InMemFactStore inMemFactStore = new InMemFactStore(es);
+            inMemFactStore.shutdown();
+            verify(es).shutdown();
+        }
+        
+        @Test
+        public void testInMemFactStoreExecutorServiceNullConstructor() throws Exception {
+            assertThrows(NullPointerException.class, () -> {
+                new InMemFactStore(null);
+            });
+        }
     }
 
-    @Test
-    public void testInMemFactStoreExecutorServiceNullConstructor() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new InMemFactStore(null);
-        });
-    }
 
 }
