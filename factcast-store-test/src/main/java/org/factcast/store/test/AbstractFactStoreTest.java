@@ -992,6 +992,15 @@ public abstract class AbstractFactStoreTest {
         }
 
         @Test
+        void shouldWrapExceptionIntoAttemptAbortedException() {
+            assertThrows(AttemptAbortedException.class, () -> {
+                uut.lock(NS).on(UUID.randomUUID()).attempt(() -> {
+                    throw new UnsupportedOperationException();
+                });
+            });
+        }
+
+        @Test
         void shouldNotExecuteAndThenDueToAbort() {
 
             Runnable e = mock(Runnable.class);

@@ -12,4 +12,8 @@ public class AttemptAbortedException extends Exception {
         super(msg);
     }
 
+    public AttemptAbortedException(Exception e) {
+        super(e);
+    }
+
 }
