@@ -67,7 +67,7 @@ public class WithOptimisticLock {
                 // execute the business logic
                 // in case an AttemptAbortedException is thrown, just pass it
                 // through
-                IntermediatePublishResult r = operation.run();
+                IntermediatePublishResult r = runAndWrapException(operation);
 
                 UUID lastFactId = lastFactId(r.factsToPublish());
 
@@ -94,6 +94,19 @@ public class WithOptimisticLock {
         }
 
         throw new OptimisticRetriesExceededException(retry);
+    }
+
+    private IntermediatePublishResult runAndWrapException(Attempt operation)
+            throws AttemptAbortedException {
+
+        try {
+            return operation.run();
+        } catch (Exception e) {
+            if (!AttemptAbortedException.class.isAssignableFrom(e.getClass()))
+                throw new AttemptAbortedException(e);
+            else
+                throw e;
+        }
     }
 
     @SneakyThrows
