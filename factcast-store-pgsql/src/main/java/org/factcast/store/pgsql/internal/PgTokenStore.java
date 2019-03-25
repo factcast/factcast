@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.inmem;
+package org.factcast.store.pgsql.internal;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,31 +22,30 @@ import java.util.UUID;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
 
-class InMemTokenStore implements TokenStore {
+public class PgTokenStore implements TokenStore {
 
-    final Map<StateToken, Map<UUID, Optional<UUID>>> tokens = new HashMap<>();
-
-    final Map<StateToken, String> namespaces = new HashMap<>();
-
+    @Override
     public StateToken create(String ns, Map<UUID, Optional<UUID>> state) {
-        StateToken token = new StateToken();
-        tokens.put(token, state);
-        namespaces.put(token, ns);
-        return token;
+        // TODO Auto-generated method stub
+        return null;
     }
 
+    @Override
     public void invalidate(StateToken token) {
-        tokens.remove(token);
-        namespaces.remove(token);
+        // TODO Auto-generated method stub
+
     }
 
     @Override
     public Map<UUID, Optional<UUID>> getState(StateToken token) {
-        return tokens.get(token);
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public String getNs(StateToken token) {
-        return namespaces.get(token);
+        // TODO Auto-generated method stub
+        return null;
     }
+
 }

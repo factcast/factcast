@@ -36,6 +36,7 @@ import java.util.stream.Stream;
 
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpecMatcher;
+import org.factcast.core.store.AbstractFactStore;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -44,7 +45,6 @@ import org.factcast.core.subscription.observer.FactObserver;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Eternally-growing InMem Implementation of a FactStore. USE FOR TESTING
@@ -271,6 +271,16 @@ public class InMemFactStore extends AbstractFactStore {
     public synchronized boolean publishIfUnchanged(@NonNull StateToken token,
             @NonNull List<? extends Fact> factsToPublish) {
         return super.publishIfUnchanged(token, factsToPublish);
+    }
+
+    @Override
+    protected boolean isStateUnchanged(@NonNull String ns,
+            @NonNull Map<UUID, Optional<UUID>> state) {
+        for (Entry<UUID, Optional<UUID>> e : state.entrySet()) {
+            if (!latestFactFor(ns, e.getKey()).equals(e.getValue()))
+                return false;
+        }
+        return true;
     }
 
 }

@@ -19,13 +19,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
-import org.factcast.core.store.FactStore;
+import org.factcast.core.store.AbstractFactStore;
+import org.factcast.core.store.StateToken;
+import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -53,7 +56,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author uwe.schaefer@mercateo.com
  */
 @Slf4j
-public class PgFactStore implements FactStore {
+public class PgFactStore extends AbstractFactStore {
 
     // is that interesting to configure?
     private static final int BATCH_SIZE = 500;
@@ -90,7 +93,9 @@ public class PgFactStore implements FactStore {
 
     @Autowired
     public PgFactStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
-            MetricRegistry registry) {
+            MetricRegistry registry, TokenStore tokenStore) {
+        super(tokenStore);
+
         this.jdbcTemplate = jdbcTemplate;
         this.subscriptionFactory = subscriptionFactory;
         this.registry = registry;
@@ -193,5 +198,29 @@ public class PgFactStore implements FactStore {
                     new Object[] { ns },
                     this::extractStringFromResultSet));
         }
+    }
+
+    @Override
+    public boolean publishIfUnchanged(StateToken token, List<? extends Fact> factsToPublish) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public StateToken stateFor(@NonNull String ns, @NonNull List<UUID> forAggIds) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void invalidate(@NonNull StateToken token) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    protected boolean isStateUnchanged(String ns, Map<UUID, Optional<UUID>> state) {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

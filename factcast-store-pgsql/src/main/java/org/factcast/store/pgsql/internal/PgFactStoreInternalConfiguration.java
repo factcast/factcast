@@ -67,8 +67,8 @@ public class PgFactStoreInternalConfiguration {
 
     @Bean
     public FactStore factStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
-            MetricRegistry registry) {
-        return new PgFactStore(jdbcTemplate, subscriptionFactory, registry);
+            MetricRegistry registry, PgTokenStore tokenStore) {
+        return new PgFactStore(jdbcTemplate, subscriptionFactory, registry, tokenStore);
     }
 
     @Bean

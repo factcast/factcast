@@ -13,27 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.inmem;
+package org.factcast.core.store;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
-import org.factcast.core.store.FactStore;
-import org.factcast.core.store.StateToken;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-
 public abstract class AbstractFactStore implements FactStore {
     protected final TokenStore tokenStore;
-
-    protected abstract Optional<UUID> latestFactFor(String ns, UUID aggId);
 
     @Override
     public boolean publishIfUnchanged(@NonNull StateToken token,
@@ -48,12 +42,6 @@ public abstract class AbstractFactStore implements FactStore {
             return false;
     }
 
-    private boolean isStateUnchanged(@NonNull String ns, @NonNull Map<UUID, Optional<UUID>> state) {
-        for (Entry<UUID, Optional<UUID>> e : state.entrySet()) {
-            if (!latestFactFor(ns, e.getKey()).equals(e.getValue()))
-                return false;
-        }
-        return true;
-    }
+    protected abstract boolean isStateUnchanged(String ns, Map<UUID, Optional<UUID>> state);
 
 }
