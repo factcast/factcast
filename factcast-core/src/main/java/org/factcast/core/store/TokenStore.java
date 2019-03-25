@@ -19,12 +19,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import lombok.NonNull;
+
 public interface TokenStore {
-    StateToken create(String ns, Map<UUID, Optional<UUID>> state);
 
-    void invalidate(StateToken token);
+    @NonNull
+    StateToken create(@NonNull String ns, @NonNull Map<UUID, Optional<UUID>> state);
 
-    Map<UUID, Optional<UUID>> getState(StateToken token);
+    void invalidate(@NonNull StateToken token);
 
-    String getNs(StateToken token);
+    @NonNull
+    Optional<Map<UUID, Optional<UUID>>> getState(@NonNull StateToken token);
+
+    Optional<String> getNs(@NonNull StateToken token);
 }

@@ -33,13 +33,20 @@ public abstract class AbstractFactStore implements FactStore {
     public boolean publishIfUnchanged(@NonNull StateToken token,
             @NonNull List<? extends Fact> factsToPublish) {
 
-        String ns = tokenStore.getNs(token);
-        if (isStateUnchanged(ns, tokenStore.getState(token))) {
-            publish(factsToPublish);
-            tokenStore.invalidate(token);
-            return true;
-        } else
+        Optional<String> ns = tokenStore.getNs(token);
+        Optional<Map<UUID, Optional<UUID>>> state = tokenStore.getState(token);
+
+        if (ns.isPresent() && state.isPresent()) {
+            if (isStateUnchanged(ns.get(), state.get())) {
+                publish(factsToPublish);
+                tokenStore.invalidate(token);
+                return true;
+            } else
+                return false;
+        } else {
+            // token is unknown, just reject.
             return false;
+        }
     }
 
     protected abstract boolean isStateUnchanged(String ns, Map<UUID, Optional<UUID>> state);
