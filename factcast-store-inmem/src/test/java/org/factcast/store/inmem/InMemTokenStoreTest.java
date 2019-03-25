@@ -13,24 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.store;
+package org.factcast.store.inmem;
 
-import java.util.UUID;
+import org.factcast.core.store.TokenStore;
+import org.factcast.store.test.AbstractTokenStoreTest;
 
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
+public class InMemTokenStoreTest extends AbstractTokenStoreTest {
 
-/**
- * represents a state for one or more aggregates in a lock. Used to validate, if
- * the state has changed between acquiring and using the token (optimistic lock)
- */
-@Value
-@RequiredArgsConstructor
-public class StateToken {
-
-    UUID uuid;
-
-    public StateToken() {
-        this(UUID.randomUUID());
+    protected TokenStore createTokenStore() {
+        return new InMemTokenStore();
     }
+
 }

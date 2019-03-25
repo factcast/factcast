@@ -22,28 +22,31 @@ import java.util.UUID;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
 
+import lombok.NonNull;
+
 public class PgTokenStore implements TokenStore {
 
     @Override
-    public StateToken create(String ns, Map<UUID, Optional<UUID>> state) {
+    public @NonNull StateToken create(@NonNull String ns,
+            @NonNull Map<UUID, Optional<UUID>> state) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public void invalidate(StateToken token) {
+    public void invalidate(@NonNull StateToken token) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public Map<UUID, Optional<UUID>> getState(StateToken token) {
+    public @NonNull Optional<Map<UUID, Optional<UUID>>> getState(@NonNull StateToken token) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public String getNs(StateToken token) {
+    public Optional<String> getNs(@NonNull StateToken token) {
         // TODO Auto-generated method stub
         return null;
     }
