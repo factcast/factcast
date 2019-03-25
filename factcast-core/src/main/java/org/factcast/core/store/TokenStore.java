@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.inmem;
+package org.factcast.core.store;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.factcast.core.store.StateToken;
-
-interface TokenStore {
+public interface TokenStore {
     StateToken create(String ns, Map<UUID, Optional<UUID>> state);
 
     void invalidate(StateToken token);

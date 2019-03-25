@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.RetryableException;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -131,8 +132,10 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @Override
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
         log.trace("publishing {} facts to remote store", factsToPublish.size());
-        List<MSG_Fact> mf = factsToPublish.stream().map(converter::toProto).collect(Collectors
-                .toList());
+        List<MSG_Fact> mf = factsToPublish.stream()
+                .map(converter::toProto)
+                .collect(Collectors
+                        .toList());
         MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
         // blockingStub.getCallOptions().withCompression(compressor);
         try {
@@ -296,5 +299,23 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
         } else {
             return e;
         }
+    }
+
+    @Override
+    public boolean publishIfUnchanged(StateToken token, List<? extends Fact> factsToPublish) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public StateToken stateFor(@NonNull String ns, @NonNull List<UUID> forAggIds) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void invalidate(@NonNull StateToken token) {
+        // TODO Auto-generated method stub
+
     }
 }

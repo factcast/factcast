@@ -36,10 +36,10 @@ public class InMemFactStoreTest extends AbstractFactStoreTest {
         this.store = new InMemFactStore();
         return store;
     }
-    
+
     @Nested
-    class InMemSpecific{
-        
+    class InMemSpecific {
+
         @Test
         void testDestroy() throws Exception {
             ExecutorService es = mock(ExecutorService.class);
@@ -47,7 +47,7 @@ public class InMemFactStoreTest extends AbstractFactStoreTest {
             inMemFactStore.shutdown();
             verify(es).shutdown();
         }
-        
+
         @Test
         public void testInMemFactStoreExecutorServiceNullConstructor() throws Exception {
             assertThrows(NullPointerException.class, () -> {
@@ -55,6 +55,5 @@ public class InMemFactStoreTest extends AbstractFactStoreTest {
             });
         }
     }
-
 
 }

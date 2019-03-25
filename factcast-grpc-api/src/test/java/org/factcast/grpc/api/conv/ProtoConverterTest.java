@@ -15,13 +15,25 @@
  */
 package org.factcast.grpc.api.conv;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Set;
+import java.util.UUID;
 
 import org.assertj.core.util.Maps;
 import org.factcast.core.Fact;
-import org.factcast.core.TestFact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
