@@ -17,7 +17,9 @@ package org.factcast.store.pgsql.internal;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,6 +40,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.codahale.metrics.Counter;
@@ -201,26 +204,33 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Override
-    public boolean publishIfUnchanged(StateToken token, List<? extends Fact> factsToPublish) {
-        // TODO Auto-generated method stub
-        return false;
+    protected Map<UUID, Optional<UUID>> getStateFor(String ns, Collection<UUID> forAggIds) {
+        // just prototype code
+        // can probably be optimized, suggestions/PRs welcome
+        RowMapper<Optional<UUID>> rse = (rs, i) -> Optional.of(UUID.fromString(rs
+                .getString(1)));
+        Map<UUID, Optional<UUID>> ret = new LinkedHashMap<UUID, Optional<UUID>>();
+        for (UUID uuid : forAggIds) {
+
+            String json = "{\"ns\":\"" + ns + "\",\"aggIds\":[\"" + uuid + "\"]}";
+
+            try {
+                ret.put(uuid, jdbcTemplate.queryForObject(
+                        PgConstants.SELECT_LATEST_FACTID_FOR_AGGID,
+                        new Object[] {
+                                json }, rse));
+            } catch (EmptyResultDataAccessException dont_care) {
+                ret.put(uuid, Optional.empty());
+            }
+        }
+
+        return ret;
     }
 
     @Override
-    public StateToken stateFor(@NonNull String ns, @NonNull List<UUID> forAggIds) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void invalidate(@NonNull StateToken token) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    protected boolean isStateUnchanged(String ns, Map<UUID, Optional<UUID>> state) {
-        // TODO Auto-generated method stub
-        return false;
+    @Transactional
+    public boolean publishIfUnchanged(@NonNull StateToken token,
+            @NonNull List<? extends Fact> factsToPublish) {
+        return super.publishIfUnchanged(token, factsToPublish);
     }
 }

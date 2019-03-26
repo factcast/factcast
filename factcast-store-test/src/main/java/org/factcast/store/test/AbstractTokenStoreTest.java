@@ -52,6 +52,14 @@ public abstract class AbstractTokenStoreTest {
     }
 
     @Test
+    public void tokenMustMaintainNamespace() throws Exception {
+        StateToken token = uut.create("123123", new HashMap<UUID, Optional<UUID>>());
+        assertThat(uut.getNs(token)).isPresent();
+        assertThat(uut.getNs(token).get()).isEqualTo("123123");
+
+    }
+
+    @Test
     public void createShouldActuallyCreateARecord() throws Exception {
         StateToken token = uut.create("foo", new HashMap<UUID, Optional<UUID>>());
 

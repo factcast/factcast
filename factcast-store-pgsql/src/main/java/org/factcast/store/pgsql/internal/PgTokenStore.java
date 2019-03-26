@@ -62,10 +62,11 @@ public class PgTokenStore implements TokenStore {
 
         String stateAsJson = FactCastJson.writeValueAsString(StateJson.from(state));
 
-        return new StateToken(
+        StateToken stateToken = new StateToken(
                 tpl.queryForObject(PgConstants.INSERT_TOKEN,
                         new Object[] { ns, stateAsJson },
                         UUID.class));
+        return stateToken;
 
     }
 
