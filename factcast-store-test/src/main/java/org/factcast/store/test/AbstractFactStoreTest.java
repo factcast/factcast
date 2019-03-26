@@ -1169,6 +1169,35 @@ public abstract class AbstractFactStoreTest {
             assertThat(lastFactId).isEqualTo(expected);
 
         }
+
+        @Test
+        void shouldReleaseTokenOnAbort() throws Exception {
+
+            UUID agg1 = UUID.randomUUID();
+
+            try {
+                uut.lock(NS).on(agg1).attempt(() -> {
+                    return Attempt.abort("narf");
+                });
+            } catch (AttemptAbortedException expected) {
+            }
+
+            verify(store, times(1)).stateFor(any(), any());
+            verify(store, times(1)).invalidate(any());
+        }
+
+        @Test
+        void shouldReleaseTokenOnPublish() throws Exception {
+
+            UUID agg1 = UUID.randomUUID();
+
+            uut.lock(NS).on(agg1).attempt(() -> {
+                return Attempt.publish(fact(agg1));
+            });
+
+            verify(store, times(1)).stateFor(any(), any());
+            verify(store, times(1)).invalidate(any());
+        }
     }
 
     static class ToListObserver implements FactObserver {
