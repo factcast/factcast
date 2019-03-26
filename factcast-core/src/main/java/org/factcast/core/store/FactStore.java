@@ -15,6 +15,7 @@
  */
 package org.factcast.core.store;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -58,7 +59,7 @@ public interface FactStore {
 
     boolean publishIfUnchanged(StateToken token, List<? extends Fact> factsToPublish);
 
-    StateToken stateFor(@NonNull String ns, @NonNull List<UUID> forAggIds);
+    StateToken stateFor(@NonNull String ns, @NonNull Collection<UUID> forAggIds);
 
     void invalidate(@NonNull StateToken token);
 
