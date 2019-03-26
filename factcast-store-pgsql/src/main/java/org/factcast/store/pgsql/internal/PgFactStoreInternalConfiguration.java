@@ -105,4 +105,9 @@ public class PgFactStoreInternalConfiguration {
     public PgLatestSerialFetcher pgLatestSerialFetcher(JdbcTemplate jdbcTemplate) {
         return new PgLatestSerialFetcher(jdbcTemplate);
     }
+
+    @Bean
+    public PgTokenStore pgTokenStore(JdbcTemplate jdbcTemplate) {
+        return new PgTokenStore(jdbcTemplate);
+    }
 }

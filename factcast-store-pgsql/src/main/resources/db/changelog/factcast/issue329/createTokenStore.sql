@@ -8,6 +8,6 @@ CREATE TABLE IF NOT EXISTS tokenstore (
 	state 	JSONB 		NOT NULL,
 	ts	 	TIMESTAMP 						DEFAULT now()
 );
-CREATE INDEX idx_tokenstore_ts ON tokenstore(ts);
+CREATE INDEX IF NOT EXISTS idx_tokenstore_ts ON tokenstore(ts);
 
  
