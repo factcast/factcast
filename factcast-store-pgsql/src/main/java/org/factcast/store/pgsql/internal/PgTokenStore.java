@@ -16,6 +16,7 @@
 package org.factcast.store.pgsql.internal;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,7 +37,7 @@ public class PgTokenStore implements TokenStore {
 
     static class StateJson {
 
-        private Map<UUID, UUID> lastFactIdByAggregate = new HashMap<>();
+        private Map<UUID, UUID> lastFactIdByAggregate = new LinkedHashMap<>();
 
         public static StateJson from(@NonNull Map<UUID, Optional<UUID>> state) {
             StateJson json = new StateJson();
