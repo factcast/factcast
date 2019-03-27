@@ -22,6 +22,7 @@ import org.factcast.core.Fact;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
@@ -29,9 +30,11 @@ import lombok.Setter;
 public final class IntermediatePublishResult {
 
     @Getter
+    @NonNull
     final List<Fact> factsToPublish;
 
     @Setter
+    @NonNull
     private Runnable andThen = null;
 
     public Optional<Runnable> andThen() {

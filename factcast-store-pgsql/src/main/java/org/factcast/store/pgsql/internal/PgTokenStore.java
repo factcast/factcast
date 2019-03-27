@@ -37,7 +37,7 @@ public class PgTokenStore implements TokenStore {
 
     static class StateJson {
 
-        private Map<UUID, UUID> lastFactIdByAggregate = new LinkedHashMap<>();
+        private final Map<UUID, UUID> lastFactIdByAggregate = new LinkedHashMap<>();
 
         public static StateJson from(@NonNull Map<UUID, Optional<UUID>> state) {
             StateJson json = new StateJson();
