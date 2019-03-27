@@ -17,6 +17,7 @@ package org.factcast.client.grpc;
 
 import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -308,14 +309,14 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     }
 
     @Override
-    public StateToken stateFor(@NonNull String ns, @NonNull List<UUID> forAggIds) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public void invalidate(@NonNull StateToken token) {
         // TODO Auto-generated method stub
 
+    }
+
+    @Override
+    public StateToken stateFor(@NonNull String ns, @NonNull Collection<UUID> forAggIds) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }
