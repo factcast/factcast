@@ -34,6 +34,7 @@ import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.factcast.store.pgsql.internal.metrics.PgMetricNames;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -41,6 +42,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.codahale.metrics.Counter;
@@ -94,14 +96,17 @@ public class PgFactStore extends AbstractFactStore {
 
     private final Meter subscriptionFollowMeter;
 
+    private FactTableWriteLock lock;
+
     @Autowired
     public PgFactStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
-            MetricRegistry registry, TokenStore tokenStore) {
+            MetricRegistry registry, TokenStore tokenStore, FactTableWriteLock lock) {
         super(tokenStore);
 
         this.jdbcTemplate = jdbcTemplate;
         this.subscriptionFactory = subscriptionFactory;
         this.registry = registry;
+        this.lock = lock;
         publishFailedCounter = registry.counter(names.factPublishingFailed());
         publishLatency = registry.timer(names.factPublishingLatency());
         publishMeter = registry.meter(names.factPublishingMeter());
@@ -114,9 +119,12 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
+
         try (Context time = publishLatency.time()) {
+            lock.aquireExclusiveLock();
+
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
             final int numberOfFactsToPublish = factsToPublish.size();
             log.trace("Inserting {} fact(s) in batches of {}", numberOfFactsToPublish, BATCH_SIZE);
@@ -138,6 +146,8 @@ public class PgFactStore extends AbstractFactStore {
         } catch (DataAccessException sql) {
             publishFailedCounter.inc();
             throw sql;
+        } finally {
+            lock.release();
         }
     }
 
@@ -228,9 +238,14 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public boolean publishIfUnchanged(@NonNull StateToken token,
             @NonNull List<? extends Fact> factsToPublish) {
-        return super.publishIfUnchanged(token, factsToPublish);
+        try {
+            lock.aquireExclusiveLock();
+            return super.publishIfUnchanged(token, factsToPublish);
+        } finally {
+            lock.release();
+        }
     }
 }

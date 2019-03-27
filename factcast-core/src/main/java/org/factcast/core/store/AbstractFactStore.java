@@ -35,8 +35,6 @@ public abstract class AbstractFactStore implements FactStore {
     public boolean publishIfUnchanged(@NonNull StateToken token,
             @NonNull List<? extends Fact> factsToPublish) {
 
-        // TODO lock
-
         Optional<String> ns = tokenStore.getNs(token);
         Optional<Map<UUID, Optional<UUID>>> state = tokenStore.getState(token);
 
