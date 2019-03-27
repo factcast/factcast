@@ -139,15 +139,15 @@ public class PgFactStore extends AbstractFactStore {
                         final String idMatch = "{\"id\":\"" + fact.id() + "\"}";
                         statement.setString(1, idMatch);
                     });
+            lock.release();
             publishMeter.mark(numberOfFactsToPublish);
+
         } catch (DuplicateKeyException dupkey) {
             publishFailedCounter.inc();
             throw new IllegalArgumentException(dupkey.getMessage());
         } catch (DataAccessException sql) {
             publishFailedCounter.inc();
             throw sql;
-        } finally {
-            lock.release();
         }
     }
 
@@ -241,11 +241,9 @@ public class PgFactStore extends AbstractFactStore {
     @Transactional(propagation = Propagation.REQUIRED)
     public boolean publishIfUnchanged(@NonNull StateToken token,
             @NonNull List<? extends Fact> factsToPublish) {
-        try {
-            lock.aquireExclusiveLock();
-            return super.publishIfUnchanged(token, factsToPublish);
-        } finally {
-            lock.release();
-        }
+        lock.aquireExclusiveLock();
+        boolean publishIfUnchanged = super.publishIfUnchanged(token, factsToPublish);
+        lock.release();
+        return publishIfUnchanged;
     }
 }
