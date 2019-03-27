@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.LinkedList;
+import java.util.List;
 
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
@@ -39,7 +40,10 @@ public class AttemptTest {
     @Test
     public void testPublishNPE() throws Exception {
         assertThrows(NullPointerException.class, () -> {
-            Attempt.publish(null);
+            Attempt.publish((List<Fact>) null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            Attempt.publish((Fact) null);
         });
     }
 
@@ -57,5 +61,12 @@ public class AttemptTest {
         Fact f3 = new TestFact();
         IntermediatePublishResult r = Attempt.publish(f1, f2, f3);
         assertThat(r.factsToPublish().size()).isEqualTo(3);
+    }
+
+    @Test
+    public void testPublishFact() throws Exception {
+        Fact f1 = new TestFact();
+        IntermediatePublishResult r = Attempt.publish(f1);
+        assertThat(r.factsToPublish().size()).isEqualTo(1);
     }
 }
