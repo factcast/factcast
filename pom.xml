@@ -194,7 +194,9 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.0.0-M3</version>
         <configuration>
-          <includes>*</includes>
+          <includes>
+            <include>*</include>
+          </includes>
           <excludedGroups>integration</excludedGroups>
         </configuration>
       </plugin>
@@ -204,7 +206,9 @@
         <version>3.0.0-M3</version>
         <configuration>
           <groups>integration</groups>
-          <includes>*</includes>
+          <includes>
+            <include>*</include>
+          </includes>
         </configuration>
         <executions>
           <execution>
