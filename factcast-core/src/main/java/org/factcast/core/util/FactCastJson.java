@@ -87,4 +87,10 @@ public final class FactCastJson {
     public static String writeValueAsPrettyString(ObjectNode objectNode) {
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(objectNode);
     }
+
+    @SneakyThrows
+    @Generated
+    public static String writeValueAsPrettyString(Object object) {
+        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
+    }
 }
