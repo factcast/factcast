@@ -32,22 +32,29 @@ public abstract class AbstractFactStore implements FactStore {
     protected final TokenStore tokenStore;
 
     @Override
-    public boolean publishIfUnchanged(@NonNull StateToken token,
-            @NonNull List<? extends Fact> factsToPublish) {
+    public boolean publishIfUnchanged(
+            @NonNull List<? extends Fact> factsToPublish, Optional<StateToken> optionalToken) {
 
-        Optional<String> ns = tokenStore.getNs(token);
-        Optional<Map<UUID, Optional<UUID>>> state = tokenStore.getState(token);
+        if (optionalToken.isPresent()) {
+            StateToken token = optionalToken.get();
+            Optional<String> ns = tokenStore.getNs(token);
+            Optional<Map<UUID, Optional<UUID>>> state = tokenStore.getState(token);
 
-        if (ns.isPresent() && state.isPresent()) {
-            if (isStateUnchanged(ns.get(), state.get())) {
-                publish(factsToPublish);
-                tokenStore.invalidate(token);
-                return true;
-            } else
+            if (ns.isPresent() && state.isPresent()) {
+                if (isStateUnchanged(ns.get(), state.get())) {
+                    publish(factsToPublish);
+                    tokenStore.invalidate(token);
+                    return true;
+                } else
+                    return false;
+            } else {
+                // token is unknown, just reject.
                 return false;
+            }
         } else {
-            // token is unknown, just reject.
-            return false;
+            // publish unconditionally
+            publish(factsToPublish);
+            return true;
         }
     }
 

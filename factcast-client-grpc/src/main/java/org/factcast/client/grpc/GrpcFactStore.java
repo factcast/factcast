@@ -303,7 +303,8 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     }
 
     @Override
-    public boolean publishIfUnchanged(StateToken token, List<? extends Fact> factsToPublish) {
+    public boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
+           @NonNull Optional<StateToken> token) {
         // TODO Auto-generated method stub
         return false;
     }
