@@ -473,4 +473,18 @@ public class GrpcFactStoreTest {
         }
 
     }
+
+    @Test
+    public void testSubscribe() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribe(mock(SubscriptionRequestTO.class), null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribe(null, null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribe(null, mock(FactObserver.class));
+        });
+
+    }
 }
