@@ -252,7 +252,7 @@ public class ProtoConverter {
 
     public MSG_StateForRequest toProto(@NonNull StateForRequest req) {
         String ns = req.ns();
-        org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest.Builder b = MSG_StateForRequest
+        MSG_StateForRequest.Builder b = MSG_StateForRequest
                 .newBuilder()
                 .setNsPresent(ns != null)
                 .addAllAggIds(req.aggIds()
@@ -267,7 +267,7 @@ public class ProtoConverter {
     }
 
     public MSG_ConditionalPublishRequest toProto(@NonNull ConditionalPublishRequest req) {
-        org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest.Builder b = MSG_ConditionalPublishRequest
+        MSG_ConditionalPublishRequest.Builder b = MSG_ConditionalPublishRequest
                 .newBuilder();
         b.setFacts(toProto(req.facts()));
         Optional<StateToken> token = req.token();
