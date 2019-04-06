@@ -15,40 +15,87 @@
  */
 package org.factcast.store.pgsql.internal;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
+import org.factcast.core.util.FactCastJson;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class PgTokenStore implements TokenStore {
+
+    final JdbcTemplate tpl;
+
+    static class StateJson {
+
+        private Map<UUID, UUID> lastFactIdByAggregate = new LinkedHashMap<>();
+
+        public static StateJson from(@NonNull Map<UUID, Optional<UUID>> state) {
+            StateJson json = new StateJson();
+            state.entrySet().forEach(e -> {
+                json.lastFactIdByAggregate.put(e.getKey(), e.getValue().orElse(null));
+            });
+            return json;
+        }
+
+        public Map<UUID, Optional<UUID>> toMap() {
+            HashMap<UUID, Optional<UUID>> ret = new HashMap<UUID, Optional<UUID>>();
+            lastFactIdByAggregate.entrySet().forEach(e -> {
+                ret.put(e.getKey(), Optional.ofNullable(e.getValue()));
+            });
+            return ret;
+        }
+    }
 
     @Override
     public @NonNull StateToken create(@NonNull String ns,
             @NonNull Map<UUID, Optional<UUID>> state) {
-        // TODO Auto-generated method stub
-        return null;
+
+        String stateAsJson = FactCastJson.writeValueAsString(StateJson.from(state));
+
+        return new StateToken(
+                tpl.queryForObject(PgConstants.INSERT_TOKEN,
+                        new Object[] { ns, stateAsJson },
+                        UUID.class));
+
     }
 
     @Override
     public void invalidate(@NonNull StateToken token) {
-        // TODO Auto-generated method stub
-
+        tpl.update(PgConstants.DELETE_TOKEN, token.uuid());
     }
 
     @Override
     public @NonNull Optional<Map<UUID, Optional<UUID>>> getState(@NonNull StateToken token) {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            String state = tpl.queryForObject(PgConstants.SELECT_STATE_FROM_TOKEN,
+                    new Object[] { token.uuid() },
+                    String.class);
+            return Optional.of(FactCastJson.readValue(StateJson.class, state).toMap());
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 
     @Override
     public Optional<String> getNs(@NonNull StateToken token) {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            String ns = tpl.queryForObject(PgConstants.SELECT_NS_FROM_TOKEN,
+                    new Object[] { token.uuid() },
+                    String.class);
+            return Optional.ofNullable(ns);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 
 }
