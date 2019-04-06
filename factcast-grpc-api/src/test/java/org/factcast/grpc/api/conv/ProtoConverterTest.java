@@ -139,11 +139,8 @@ public class ProtoConverterTest {
                 .meta(key2, value2)
                 .type(type)
                 .build(payload);
-        Fact probe2 = Fact.builder()
-                .ns(ns + "foo")
-                .aggId(UUID.randomUUID())
-                .type("narf")
-                .build(payload);
+        Fact probe2 = Fact.builder().ns(ns + "foo").aggId(UUID.randomUUID()).type("narf").build(
+                payload);
 
         MSG_Facts proto = uut.toProto(Arrays.asList(probe, probe2));
 
@@ -463,9 +460,7 @@ public class ProtoConverterTest {
     @Test
     public void testFromProtoMSG_StateForRequest_emptyAggIds() throws Exception {
 
-        MSG_StateForRequest request = MSG_StateForRequest.newBuilder()
-                .setNsPresent(false)
-                .build();
+        MSG_StateForRequest request = MSG_StateForRequest.newBuilder().setNsPresent(false).build();
         StateForRequest req = uut.fromProto(request);
         assertNotNull(req.aggIds());
         assertEquals(0, req.aggIds().size());
@@ -549,9 +544,46 @@ public class ProtoConverterTest {
         assertThat(msg.getNsPresent()).isTrue();
         assertThat(msg.getNs()).isEqualTo("foo");
         assertThat(msg.getAggIdsList()).isNotEmpty();
-        assertThat(msg.getAggIdsList().size()).isEqualByComparingTo(2);
+        assertThat(msg.getAggIdsList().size()).isEqualTo(2);
         assertThat(msg.getAggIdsList().get(0)).isEqualTo(uut.toProto(u1));
         assertThat(msg.getAggIdsList().get(1)).isEqualTo(uut.toProto(u2));
+
+    }
+
+    @Test
+    public void testToProtoConditionalPublishRequest() throws Exception {
+
+        assertThrows(NullPointerException.class, () -> {
+            uut.toProto((ConditionalPublishRequest) null);
+        });
+
+        {
+            UUID id = UUID.randomUUID();
+            Fact f2 = new TestFact();
+            Fact f1 = new TestFact();
+            ConditionalPublishRequest req = new ConditionalPublishRequest(Lists.newArrayList(f1,
+                    f2), id);
+
+            MSG_ConditionalPublishRequest msg = uut.toProto(req);
+            assertThat(msg.getTokenPresent()).isTrue();
+            assertThat(msg.getToken()).isEqualTo(uut.toProto(id));
+            assertThat(msg.getFacts().getFactList().get(0)).isEqualTo(uut.toProto(f1));
+            assertThat(msg.getFacts().getFactList().get(1)).isEqualTo(uut.toProto(f2));
+            assertThat(msg.getFacts().getFactList().size()).isEqualTo(2);
+        }
+
+        {
+            Fact f2 = new TestFact();
+            Fact f1 = new TestFact();
+            ConditionalPublishRequest req = new ConditionalPublishRequest(Lists.newArrayList(f1,
+                    f2), null);
+
+            MSG_ConditionalPublishRequest msg = uut.toProto(req);
+            assertThat(msg.getTokenPresent()).isFalse();
+            assertThat(msg.getFacts().getFactList().get(0)).isEqualTo(uut.toProto(f1));
+            assertThat(msg.getFacts().getFactList().get(1)).isEqualTo(uut.toProto(f2));
+            assertThat(msg.getFacts().getFactList().size()).isEqualTo(2);
+        }
 
     }
 }
