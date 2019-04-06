@@ -15,6 +15,7 @@
  */
 package org.factcast.core.store;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public abstract class AbstractFactStore implements FactStore {
+    @NonNull
     protected final TokenStore tokenStore;
 
     @Override
@@ -49,6 +51,42 @@ public abstract class AbstractFactStore implements FactStore {
         }
     }
 
-    protected abstract boolean isStateUnchanged(String ns, Map<UUID, Optional<UUID>> state);
+    @Override
+    public final void invalidate(@NonNull StateToken token) {
+        tokenStore.invalidate(token);
+    }
+
+    @Override
+    public final StateToken stateFor(@NonNull String ns, @NonNull Collection<UUID> forAggIds) {
+        Map<UUID, Optional<UUID>> state = getStateFor(ns, forAggIds);
+        return tokenStore.create(ns, state);
+    }
+
+    protected final boolean isStateUnchanged(String ns, Map<UUID, Optional<UUID>> snapshotState) {
+        Map<UUID, Optional<UUID>> currentState = getStateFor(ns, snapshotState.keySet());
+
+        if (currentState.size() == snapshotState.size()) {
+            for (UUID k : currentState.keySet()) {
+                if (!sameValue(currentState, snapshotState, k))
+                    return false;
+            }
+            return true;
+        } else
+            return false;
+    }
+
+    private boolean sameValue(Map<UUID, Optional<UUID>> currentState,
+            Map<UUID, Optional<UUID>> snapshotState, UUID k) {
+        Optional<UUID> current = currentState.get(k);
+        Optional<UUID> snap = snapshotState.get(k);
+        if (current == null && snap == null)
+            return true;
+        else if (current == null || snap == null)
+            return false;
+        else
+            return snap.equals(current);
+    }
+
+    protected abstract Map<UUID, Optional<UUID>> getStateFor(String ns, Collection<UUID> forAggIds);
 
 }

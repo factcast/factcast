@@ -37,7 +37,7 @@ public class PgTokenStore implements TokenStore {
 
     static class StateJson {
 
-        private Map<UUID, UUID> lastFactIdByAggregate = new LinkedHashMap<>();
+        private final Map<UUID, UUID> lastFactIdByAggregate = new LinkedHashMap<>();
 
         public static StateJson from(@NonNull Map<UUID, Optional<UUID>> state) {
             StateJson json = new StateJson();
@@ -61,12 +61,10 @@ public class PgTokenStore implements TokenStore {
             @NonNull Map<UUID, Optional<UUID>> state) {
 
         String stateAsJson = FactCastJson.writeValueAsString(StateJson.from(state));
-
         return new StateToken(
                 tpl.queryForObject(PgConstants.INSERT_TOKEN,
                         new Object[] { ns, stateAsJson },
                         UUID.class));
-
     }
 
     @Override

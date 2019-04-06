@@ -17,7 +17,9 @@ package org.factcast.store.pgsql.internal;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,12 +34,15 @@ import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.factcast.store.pgsql.internal.metrics.PgMetricNames;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.codahale.metrics.Counter;
@@ -91,14 +96,17 @@ public class PgFactStore extends AbstractFactStore {
 
     private final Meter subscriptionFollowMeter;
 
+    private FactTableWriteLock lock;
+
     @Autowired
     public PgFactStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
-            MetricRegistry registry, TokenStore tokenStore) {
+            MetricRegistry registry, TokenStore tokenStore, FactTableWriteLock lock) {
         super(tokenStore);
 
         this.jdbcTemplate = jdbcTemplate;
         this.subscriptionFactory = subscriptionFactory;
         this.registry = registry;
+        this.lock = lock;
         publishFailedCounter = registry.counter(names.factPublishingFailed());
         publishLatency = registry.timer(names.factPublishingLatency());
         publishMeter = registry.meter(names.factPublishingMeter());
@@ -111,9 +119,12 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
+
         try (Context time = publishLatency.time()) {
+            lock.aquireExclusiveLock();
+
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
             final int numberOfFactsToPublish = factsToPublish.size();
             log.trace("Inserting {} fact(s) in batches of {}", numberOfFactsToPublish, BATCH_SIZE);
@@ -128,7 +139,9 @@ public class PgFactStore extends AbstractFactStore {
                         final String idMatch = "{\"id\":\"" + fact.id() + "\"}";
                         statement.setString(1, idMatch);
                     });
+            lock.release();
             publishMeter.mark(numberOfFactsToPublish);
+
         } catch (DuplicateKeyException dupkey) {
             publishFailedCounter.inc();
             throw new IllegalArgumentException(dupkey.getMessage());
@@ -201,26 +214,36 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Override
-    public boolean publishIfUnchanged(StateToken token, List<? extends Fact> factsToPublish) {
-        // TODO Auto-generated method stub
-        return false;
+    protected Map<UUID, Optional<UUID>> getStateFor(String ns, Collection<UUID> forAggIds) {
+        // just prototype code
+        // can probably be optimized, suggestions/PRs welcome
+        RowMapper<Optional<UUID>> rse = (rs, i) -> Optional.of(UUID.fromString(rs
+                .getString(1)));
+        Map<UUID, Optional<UUID>> ret = new LinkedHashMap<UUID, Optional<UUID>>();
+        for (UUID uuid : forAggIds) {
+
+            String json = "{\"ns\":\"" + ns + "\",\"aggIds\":[\"" + uuid + "\"]}";
+
+            try {
+                ret.put(uuid, jdbcTemplate.queryForObject(
+                        PgConstants.SELECT_LATEST_FACTID_FOR_AGGID,
+                        new Object[] {
+                                json }, rse));
+            } catch (EmptyResultDataAccessException dont_care) {
+                ret.put(uuid, Optional.empty());
+            }
+        }
+
+        return ret;
     }
 
     @Override
-    public StateToken stateFor(@NonNull String ns, @NonNull List<UUID> forAggIds) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void invalidate(@NonNull StateToken token) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    protected boolean isStateUnchanged(String ns, Map<UUID, Optional<UUID>> state) {
-        // TODO Auto-generated method stub
-        return false;
+    @Transactional(propagation = Propagation.REQUIRED)
+    public boolean publishIfUnchanged(@NonNull StateToken token,
+            @NonNull List<? extends Fact> factsToPublish) {
+        lock.aquireExclusiveLock();
+        boolean publishIfUnchanged = super.publishIfUnchanged(token, factsToPublish);
+        lock.release();
+        return publishIfUnchanged;
     }
 }

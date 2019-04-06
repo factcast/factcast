@@ -103,6 +103,12 @@ public class PgConstants {
                     TABLE_CATCHUP + "   WHERE ( " + COLUMN_CID + "=? AND " + COLUMN_SER + //
                     ">? ) LIMIT ? " + ") ORDER BY " + COLUMN_SER + " ASC";
 
+    public static final //
+    String SELECT_LATEST_FACTID_FOR_AGGID = //
+            "SELECT " + COLUMN_HEADER + "->>'id' FROM " + //
+                    TABLE_FACT + " WHERE " + COLUMN_HEADER + //
+                    " @> cast (? as jsonb) ORDER BY ser DESC LIMIT 1";
+
     public static final String DELETE_CATCH_BY_CID = //
             "DELETE FROM " + TABLE_CATCHUP + " WHERE cid=?";
 

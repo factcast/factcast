@@ -44,10 +44,10 @@ public final class LockedOperationBuilder {
         return new OnBuilderStep(ids);
     }
 
-    public class OnBuilderStep {
-        final List<UUID> ids;
+    public final class OnBuilderStep {
+        protected final List<UUID> ids;
 
-        public OnBuilderStep(@NonNull LinkedList<UUID> ids) {
+        private OnBuilderStep(LinkedList<UUID> ids) {
             this.ids = ids;
         }
 

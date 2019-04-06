@@ -15,6 +15,7 @@
  */
 package org.factcast.store.inmem;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -254,16 +255,10 @@ public class InMemFactStore extends AbstractFactStore {
 
     }
 
-    @Override
-    public StateToken stateFor(@NonNull String ns, @NonNull List<UUID> forAggIds) {
+    protected Map<UUID, Optional<UUID>> getStateFor(String ns, Collection<UUID> forAggIds) {
         Map<UUID, Optional<UUID>> state = new LinkedHashMap<>();
         forAggIds.forEach(id -> state.put(id, latestFactFor(ns, id)));
-        return tokenStore.create(ns, state);
-    }
-
-    @Override
-    public void invalidate(@NonNull StateToken token) {
-        tokenStore.invalidate(token);
+        return state;
     }
 
     // needs to be overridden for synchronization
@@ -271,16 +266,6 @@ public class InMemFactStore extends AbstractFactStore {
     public synchronized boolean publishIfUnchanged(@NonNull StateToken token,
             @NonNull List<? extends Fact> factsToPublish) {
         return super.publishIfUnchanged(token, factsToPublish);
-    }
-
-    @Override
-    protected boolean isStateUnchanged(@NonNull String ns,
-            @NonNull Map<UUID, Optional<UUID>> state) {
-        for (Entry<UUID, Optional<UUID>> e : state.entrySet()) {
-            if (!latestFactFor(ns, e.getKey()).equals(e.getValue()))
-                return false;
-        }
-        return true;
     }
 
 }
