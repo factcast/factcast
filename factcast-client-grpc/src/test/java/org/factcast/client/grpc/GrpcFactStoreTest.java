@@ -41,11 +41,14 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 
+import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.store.RetryableException;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
@@ -365,5 +368,67 @@ public class GrpcFactStoreTest {
         verify(uut, never()).configureGZip();
         verify(uut).configureLZ4();
 
+    }
+
+    @Test
+    public void testInvalidate() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.invalidate(null);
+        });
+
+        {
+            UUID id = new UUID(0, 1);
+            StateToken token = new StateToken(id);
+            uut.invalidate(token);
+            verify(blockingStub).invalidate(eq(conv.toProto(id)));
+        }
+
+        {
+            when(blockingStub.invalidate(any())).thenThrow(
+                    new StatusRuntimeException(
+                            Status.UNAVAILABLE));
+
+            UUID id = new UUID(0, 1);
+            StateToken token = new StateToken(id);
+            try {
+                uut.invalidate(token);
+                fail();
+            } catch (RetryableException expected) {
+            }
+        }
+    }
+
+    @Test
+    public void testStateFor() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.stateFor(null, Lists.emptyList());
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.stateFor(null, null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.stateFor("foo", null);
+        });
+
+        {
+            UUID id = new UUID(0, 1);
+            StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
+            when(blockingStub.stateFor(any())).thenReturn(conv.toProto(id));
+
+            StateToken stateFor = uut.stateFor("foo", Lists.emptyList());
+            verify(blockingStub).stateFor(conv.toProto(req));
+        }
+
+        {
+            StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
+            when(blockingStub.stateFor(any())).thenThrow(
+                    new StatusRuntimeException(
+                            Status.UNAVAILABLE));
+            try {
+                uut.stateFor("foo", Lists.emptyList());
+                fail();
+            } catch (RetryableException expected) {
+            }
+        }
     }
 }
