@@ -30,17 +30,23 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.Capabilities;
+import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
@@ -50,8 +56,6 @@ import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.Generated;
@@ -73,7 +77,7 @@ import net.devh.springboot.autoconfigure.grpc.server.GrpcService;
 @SuppressWarnings("all")
 public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
-    static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 0, 0);
+    static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
 
     final FactStore store;
 
@@ -88,8 +92,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             UUID fromProto = converter.fromProto(request);
             log.trace("fetchById {}", fromProto);
             Optional<Fact> fetchById = store.fetchById(fromProto);
-            log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "").orElse(
-                    "NOT "));
+            log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "")
+                    .orElse(
+                            "NOT "));
             responseObserver.onNext(converter.toProto(fetchById));
             responseObserver.onCompleted();
         } catch (Throwable e) {
@@ -100,8 +105,11 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     @Override
     public void publish(@NonNull MSG_Facts request,
             StreamObserver<MSG_Empty> responseObserver) {
-        List<Fact> facts = request.getFactList().stream().map(converter::fromProto).collect(
-                Collectors.toList());
+        List<Fact> facts = request.getFactList()
+                .stream()
+                .map(converter::fromProto)
+                .collect(
+                        Collectors.toList());
         final int size = facts.size();
         log.debug("publish {} fact{}", size, size > 1 ? "s" : "");
         log.trace("publish {}", facts);
@@ -160,7 +168,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                         implVersion = v;
                 }
             } catch (Exception ignore) {
-                // whatever fails when reading the version implies, that the impl Version is
+                // whatever fails when reading the version implies, that the
+                // impl Version is
                 // "UNKNOWN"
             }
         properties.put(Capabilities.FACTCAST_IMPL_VERSION.toString(), implVersion);
@@ -183,7 +192,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             Class<?> forName = Class.forName(string);
             return forName != null;
         } catch (ClassNotFoundException ignore) {
-            // unfortunately, this is expected bahavior, when the class is not in the
+            // unfortunately, this is expected bahavior, when the class is not
+            // in the
             // classpath
         }
         return false;
@@ -224,6 +234,47 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         } catch (Throwable e) {
             responseObserver.onError(e);
         }
-
     }
+
+    @Override
+    public void publishConditional(MSG_ConditionalPublishRequest request,
+            StreamObserver<MSG_ConditionalPublishResult> responseObserver) {
+        try {
+            ConditionalPublishRequest req = converter.fromProto(request);
+            // TODO token is prepared to be optional
+            // will be implemented in a different branch
+            boolean result = store.publishIfUnchanged(req.facts(), req.token());
+            responseObserver.onNext(converter.toProto(result));
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            responseObserver.onError(e);
+        }
+    }
+
+    @Override
+    public void stateFor(MSG_StateForRequest request, StreamObserver<MSG_UUID> responseObserver) {
+        try {
+            StateForRequest req = converter.fromProto(request);
+            // TODO ns is prepared to be optional as per request by the core
+            // team. will be implemented in a different branch
+            StateToken token = store.stateFor(req.ns(), req.aggIds());
+            responseObserver.onNext(converter.toProto(token.uuid()));
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            responseObserver.onError(e);
+        }
+    }
+
+    @Override
+    public void invalidate(MSG_UUID request, StreamObserver<MSG_Empty> responseObserver) {
+        try {
+            UUID tokenId = converter.fromProto(request);
+            store.invalidate(new StateToken(tokenId));
+            responseObserver.onNext(MSG_Empty.getDefaultInstance());
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            responseObserver.onError(e);
+        }
+    }
+
 }
