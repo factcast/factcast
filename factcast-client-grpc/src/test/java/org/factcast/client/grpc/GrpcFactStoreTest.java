@@ -15,6 +15,7 @@
  */
 package org.factcast.client.grpc;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.factcast.core.TestHelper.expectNPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -48,6 +49,7 @@ import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
@@ -430,5 +432,45 @@ public class GrpcFactStoreTest {
             } catch (RetryableException expected) {
             }
         }
+    }
+
+    @Test
+    public void testPublishIfUnchanged() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.publishIfUnchanged(Lists.emptyList(), null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.publishIfUnchanged(null, null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.publishIfUnchanged(null, Optional.empty());
+        });
+
+        {
+            UUID id = new UUID(0, 1);
+            ConditionalPublishRequest req = new ConditionalPublishRequest(Lists.emptyList(), id);
+            when(blockingStub.publishConditional(any())).thenReturn(conv.toProto(true));
+
+            boolean publishIfUnchanged = uut.publishIfUnchanged(Lists.emptyList(), Optional.of(
+                    new StateToken(id)));
+            assertThat(publishIfUnchanged).isTrue();
+
+            verify(blockingStub).publishConditional(conv.toProto(req));
+        }
+
+        {
+            UUID id = new UUID(0, 1);
+            ConditionalPublishRequest req = new ConditionalPublishRequest(Lists.emptyList(), id);
+            when(blockingStub.publishConditional(any())).thenThrow(
+                    new StatusRuntimeException(
+                            Status.UNAVAILABLE));
+            try {
+                uut.publishIfUnchanged(Lists.emptyList(), Optional.of(
+                        new StateToken(id)));
+                fail();
+            } catch (RetryableException expected) {
+            }
+        }
+
     }
 }
