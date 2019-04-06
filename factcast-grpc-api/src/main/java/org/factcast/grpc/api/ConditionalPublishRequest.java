@@ -13,16 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.grpc.api.conv;
+package org.factcast.grpc.api;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-import org.junit.jupiter.api.Test;
+import org.factcast.core.Fact;
+import org.factcast.core.store.StateToken;
 
-public class ProtocolVersion0Test {
+import lombok.NonNull;
+import lombok.Value;
 
-    @Test
-    void testToString() {
-        assertEquals("3.1.2", ProtocolVersion.of(3, 1, 2).toString());
+@Value
+public class ConditionalPublishRequest {
+    @NonNull
+    List<? extends Fact> facts;
+
+    private UUID token;
+
+    public Optional<StateToken> token() {
+        if (token == null)
+            return Optional.empty();
+        else
+            return Optional.of(new StateToken(token));
     }
+
 }

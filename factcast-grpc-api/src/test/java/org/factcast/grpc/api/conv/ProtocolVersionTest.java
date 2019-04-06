@@ -15,7 +15,9 @@
  */
 package org.factcast.grpc.api.conv;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -28,5 +30,10 @@ public class ProtocolVersionTest {
         assertTrue(ProtocolVersion.of(1, 0, 0).isCompatibleTo(ProtocolVersion.of(1, 1, 0)));
         assertFalse(ProtocolVersion.of(1, 1, 0).isCompatibleTo(ProtocolVersion.of(1, 0, 0)));
         assertFalse(ProtocolVersion.of(1, 1, 0).isCompatibleTo(ProtocolVersion.of(2, 0, 0)));
+    }
+
+    @Test
+    void testToString() {
+        assertEquals("3.1.2", ProtocolVersion.of(3, 1, 2).toString());
     }
 }
