@@ -15,9 +15,21 @@
  */
 package org.factcast.server.grpc;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyListOf;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import java.net.URL;
 import java.util.Arrays;
@@ -29,15 +41,16 @@ import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.conv.ProtoConverter;
-import org.factcast.grpc.api.conv.ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +63,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
@@ -262,8 +277,9 @@ public class FactStoreGrpcServiceTest {
     @Test
     public void testRetrieveImplementationVersion() throws Exception {
         uut = spy(uut);
-        when(uut.getProjectProperties()).thenReturn(this.getClass().getResource(
-                "/test.properties"));
+        when(uut.getProjectProperties()).thenReturn(this.getClass()
+                .getResource(
+                        "/test.properties"));
         HashMap<String, String> map = new HashMap<>();
         uut.retrieveImplementationVersion(map);
 
@@ -274,8 +290,9 @@ public class FactStoreGrpcServiceTest {
     @Test
     public void testRetrieveImplementationVersionEmptyPropertyFile() throws Exception {
         uut = spy(uut);
-        when(uut.getProjectProperties()).thenReturn(this.getClass().getResource(
-                "/no-version.properties"));
+        when(uut.getProjectProperties()).thenReturn(this.getClass()
+                .getResource(
+                        "/no-version.properties"));
         HashMap<String, String> map = new HashMap<>();
         uut.retrieveImplementationVersion(map);
 
@@ -293,6 +310,37 @@ public class FactStoreGrpcServiceTest {
         uut.retrieveImplementationVersion(map);
 
         assertEquals("UNKNOWN", map.get(Capabilities.FACTCAST_IMPL_VERSION.toString()));
+
+    }
+
+    @Test
+    public void testInvalidate() throws Exception {
+
+        {
+            doNothing().when(backend).invalidate(any());
+
+            UUID id = UUID.randomUUID();
+            MSG_UUID req = conv.toProto(id);
+            StreamObserver o = mock(StreamObserver.class);
+            uut.invalidate(req, o);
+
+            verify(backend).invalidate(eq(new StateToken(id)));
+            verify(o).onNext(any());
+            verify(o).onCompleted();
+        }
+
+        {
+            doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend).invalidate(any());
+
+            UUID id = UUID.randomUUID();
+            MSG_UUID req = conv.toProto(id);
+            StreamObserver o = mock(StreamObserver.class);
+            uut.invalidate(req, o);
+
+            verify(backend).invalidate(eq(new StateToken(id)));
+            verify(o).onError(any());
+            verifyNoMoreInteractions(o);
+        }
 
     }
 }
