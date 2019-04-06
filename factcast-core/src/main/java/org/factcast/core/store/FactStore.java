@@ -55,9 +55,8 @@ public interface FactStore {
 
     Set<String> enumerateTypes(@NonNull String ns);
 
-    // playing with api - this is experimental!
-
-    boolean publishIfUnchanged(StateToken token, List<? extends Fact> factsToPublish);
+    boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
+            Optional<StateToken> token);
 
     StateToken stateFor(@NonNull String ns, @NonNull Collection<UUID> forAggIds);
 

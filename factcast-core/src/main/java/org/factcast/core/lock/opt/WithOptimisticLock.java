@@ -17,6 +17,7 @@ package org.factcast.core.lock.opt;
 
 import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
@@ -72,7 +73,7 @@ public class WithOptimisticLock {
                 UUID lastFactId = lastFactId(r.factsToPublish());
 
                 // try to publish
-                if (store.publishIfUnchanged(token, r.factsToPublish())) {
+                if (store.publishIfUnchanged(r.factsToPublish(), Optional.of(token))) {
 
                     // publishing worked
                     // now run the 'andThen' operation
