@@ -35,6 +35,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
 
@@ -45,8 +46,10 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.Capabilities;
+import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
@@ -363,8 +366,9 @@ public class FactStoreGrpcServiceTest {
         }
 
         {
-            doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend).stateFor(any(),
-                    any());
+            doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend)
+                    .stateFor(any(),
+                            any());
 
             UUID id = UUID.randomUUID();
             StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
@@ -377,5 +381,40 @@ public class FactStoreGrpcServiceTest {
             verifyNoMoreInteractions(o);
         }
 
+    }
+
+    @Test
+    public void testPublishConditional() throws Exception {
+        {
+            UUID id = UUID.randomUUID();
+
+            ConditionalPublishRequest sfr = new ConditionalPublishRequest(Lists.newArrayList(), id);
+            MSG_ConditionalPublishRequest req = conv.toProto(sfr);
+            StreamObserver o = mock(StreamObserver.class);
+            when(backend.publishIfUnchanged(any(), any())).thenReturn(true);
+
+            uut.publishConditional(req, o);
+
+            verify(backend).publishIfUnchanged(eq(Lists.newArrayList()), eq(Optional.of(
+                    new StateToken(id))));
+            verify(o).onNext(eq(conv.toProto(true)));
+            verify(o).onCompleted();
+        }
+
+        {
+            doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend)
+                    .publishIfUnchanged(any(), any());
+
+            UUID id = UUID.randomUUID();
+
+            ConditionalPublishRequest sfr = new ConditionalPublishRequest(Lists.newArrayList(), id);
+            MSG_ConditionalPublishRequest req = conv.toProto(sfr);
+            StreamObserver o = mock(StreamObserver.class);
+
+            uut.publishConditional(req, o);
+
+            verify(o).onError(any());
+            verifyNoMoreInteractions(o);
+        }
     }
 }
