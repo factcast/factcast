@@ -43,6 +43,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.MarkFact;
@@ -1222,5 +1223,20 @@ public abstract class AbstractFactStoreTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void nullContracts_publishIfUnchanged() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            store.publishIfUnchanged(Lists.emptyList(), null);
+        });
+
+        assertThrows(NullPointerException.class, () -> {
+            store.publishIfUnchanged(null, null);
+        });
+
+        assertThrows(NullPointerException.class, () -> {
+            store.publishIfUnchanged(null, Optional.empty());
+        });
     }
 }

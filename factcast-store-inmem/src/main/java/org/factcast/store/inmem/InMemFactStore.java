@@ -267,7 +267,6 @@ public class InMemFactStore extends AbstractFactStore {
     @Override
     public synchronized boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
             Optional<StateToken> optionalToken) {
-        // TODO Auto-generated method stub
         return super.publishIfUnchanged(factsToPublish, optionalToken);
     }
 
