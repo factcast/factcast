@@ -255,6 +255,7 @@ public class InMemFactStore extends AbstractFactStore {
 
     }
 
+    @Override
     protected Map<UUID, Optional<UUID>> getStateFor(String ns, Collection<UUID> forAggIds) {
         Map<UUID, Optional<UUID>> state = new LinkedHashMap<>();
         forAggIds.forEach(id -> state.put(id, latestFactFor(ns, id)));
@@ -262,10 +263,12 @@ public class InMemFactStore extends AbstractFactStore {
     }
 
     // needs to be overridden for synchronization
+
     @Override
-    public synchronized boolean publishIfUnchanged(@NonNull StateToken token,
-            @NonNull List<? extends Fact> factsToPublish) {
-        return super.publishIfUnchanged(token, factsToPublish);
+    public synchronized boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
+            Optional<StateToken> optionalToken) {
+        // TODO Auto-generated method stub
+        return super.publishIfUnchanged(factsToPublish, optionalToken);
     }
 
 }
