@@ -15,10 +15,23 @@
  */
 package org.factcast.client.grpc;
 
-import static org.factcast.core.TestHelper.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.factcast.core.TestHelper.expectNPE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,7 +56,6 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
@@ -53,7 +65,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 
 import io.grpc.Channel;
@@ -243,14 +254,6 @@ public class GrpcFactStoreTest {
     }
 
     @Test
-    void testMatchingProtocolVersion() {
-        when(blockingStub.handshake(any()))
-                .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(1, 0, 0),
-                        new HashMap<>())));
-        uut.initialize();
-    }
-
-    @Test
     void testCompatibleProtocolVersion() {
         when(blockingStub.handshake(any()))
                 .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(1, 1, 0),
@@ -261,7 +264,7 @@ public class GrpcFactStoreTest {
     @Test
     void testIncompatibleProtocolVersion() {
         when(blockingStub.handshake(any()))
-                .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(2, 0, 0),
+                .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(99, 0, 0),
                         new HashMap<>())));
         Assertions.assertThrows(IncompatibleProtocolVersions.class, () -> {
             uut.initialize();

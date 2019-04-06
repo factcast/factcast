@@ -22,10 +22,16 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.StateForRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
@@ -36,6 +42,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProperties;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProtocolVersion;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
@@ -65,15 +72,17 @@ public class ProtoConverter {
     }
 
     public MSG_Notification createNotificationFor(@NonNull Fact t) {
-        MSG_Notification.Builder builder = MSG_Notification.newBuilder().setType(
-                MSG_Notification.Type.Fact);
+        MSG_Notification.Builder builder = MSG_Notification.newBuilder()
+                .setType(
+                        MSG_Notification.Type.Fact);
         builder.setFact(toProto(t));
         return builder.build();
     }
 
     public MSG_Notification createNotificationFor(@NonNull UUID id) {
-        MSG_Notification.Builder builder = MSG_Notification.newBuilder().setType(
-                MSG_Notification.Type.Id);
+        MSG_Notification.Builder builder = MSG_Notification.newBuilder()
+                .setType(
+                        MSG_Notification.Type.Id);
         builder.setId(toProto(id));
         return builder.build();
     }
@@ -208,11 +217,65 @@ public class ProtoConverter {
         return request.getEmbeddedString();
     }
 
-    public @NonNull MSG_Facts toProto(List<Fact> toPublish) {
+    public @NonNull MSG_Facts toProto(@NonNull List<? extends Fact> toPublish) {
         MSG_Facts.Builder ret = MSG_Facts.newBuilder();
         for (Fact fact : toPublish) {
             ret.addFact(toProto(fact));
         }
         return ret.build();
+    }
+
+    public StateForRequest fromProto(MSG_StateForRequest request) {
+        List<UUID> aggIds = request.getAggIdsList()
+                .stream()
+                .map(this::fromProto)
+                .collect(Collectors.toList());
+        String ns = request.getNsPresent() ? request.getNs() : null;
+        return new StateForRequest(aggIds, ns);
+    }
+
+    public ConditionalPublishRequest fromProto(@NonNull MSG_ConditionalPublishRequest request) {
+        UUID token = null;
+        if (request.getTokenPresent())
+            token = fromProto(request.getToken());
+
+        return new ConditionalPublishRequest(fromProto(request.getFacts()), token);
+    }
+
+    public @NonNull List<? extends Fact> fromProto(@NonNull MSG_Facts facts) {
+        return facts.getFactList().stream().map(this::fromProto).collect(Collectors.toList());
+    }
+
+    public MSG_ConditionalPublishResult toProto(boolean result) {
+        return MSG_ConditionalPublishResult.newBuilder().setSuccess(result).build();
+    }
+
+    public MSG_StateForRequest toProto(@NonNull StateForRequest req) {
+        String ns = req.ns();
+        org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest.Builder b = MSG_StateForRequest
+                .newBuilder()
+                .setNsPresent(ns != null)
+                .addAllAggIds(req.aggIds()
+                        .stream()
+                        .map(this::toProto)
+                        .collect(Collectors.toList()));
+
+        if (ns != null)
+            b.setNs(ns);
+        return b.build();
+
+    }
+
+    public MSG_ConditionalPublishRequest toProto(@NonNull ConditionalPublishRequest req) {
+        org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest.Builder b = MSG_ConditionalPublishRequest
+                .newBuilder();
+        b.setFacts(toProto(req.facts()));
+        Optional<StateToken> token = req.token();
+        boolean present = token.isPresent();
+        b.setTokenPresent(present);
+        if (present)
+            b.setToken(toProto(token.get().uuid()));
+
+        return b.build();
     }
 }
