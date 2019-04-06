@@ -25,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 
 @ExtendWith(MockitoExtension.class)
 public class PgLatestSerialFetcherTest {
@@ -34,9 +35,20 @@ public class PgLatestSerialFetcherTest {
     @Mock
     JdbcTemplate jdbc;
 
+    @Mock
+    SqlRowSet rs;
+
     @Test
     public void testRetrieveLatestSerRetuns0WhenExceptionThrown() throws Exception {
         when(jdbc.queryForRowSet(anyString())).thenThrow(UnsupportedOperationException.class);
+        assertEquals(0, uut.retrieveLatestSer());
+    }
+
+    @Test
+    public void shouldReturn0IfNotFound() throws Exception {
+        when(jdbc.queryForRowSet(anyString())).thenReturn(rs);
+        when(rs.next()).thenReturn(false);
+
         assertEquals(0, uut.retrieveLatestSer());
     }
 

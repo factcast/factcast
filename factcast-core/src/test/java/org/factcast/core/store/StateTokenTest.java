@@ -13,32 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.lock;
+package org.factcast.core.store;
 
-import java.util.List;
-import java.util.Optional;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import org.factcast.core.Fact;
+import org.junit.jupiter.api.Test;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+public class StateTokenTest {
 
-@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
-public final class IntermediatePublishResult {
-
-    @Getter
-    @NonNull
-    final List<Fact> factsToPublish;
-
-    @Setter
-    @NonNull
-    private Runnable andThen = null;
-
-    public Optional<Runnable> andThen() {
-        return Optional.ofNullable(andThen);
+    @Test
+    public void testStateToken() throws Exception {
+        assertThat(new StateToken().uuid()).isNotNull();
     }
 
 }

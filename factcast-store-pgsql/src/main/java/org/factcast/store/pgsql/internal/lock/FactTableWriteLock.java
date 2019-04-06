@@ -13,32 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.lock;
+package org.factcast.store.pgsql.internal.lock;
 
-import java.util.List;
-import java.util.Optional;
+public interface FactTableWriteLock {
 
-import org.factcast.core.Fact;
+    void aquireExclusiveLock();
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-
-@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
-public final class IntermediatePublishResult {
-
-    @Getter
-    @NonNull
-    final List<Fact> factsToPublish;
-
-    @Setter
-    @NonNull
-    private Runnable andThen = null;
-
-    public Optional<Runnable> andThen() {
-        return Optional.ofNullable(andThen);
-    }
+    void release();
 
 }

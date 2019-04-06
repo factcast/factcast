@@ -15,6 +15,7 @@
  */
 package org.factcast.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class FactTest {
 
@@ -176,5 +178,50 @@ public class FactTest {
         String headerString = "{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"ns\"}";
         JsonNode header = FactCastJson.toObjectNode(headerString);
         assertEquals(headerString, Fact.of(header, payload).jsonHeader());
+    }
+
+    @Test
+    public void testBuildWithoutPayload() throws Exception {
+        Fact f = Fact.builder().ns("foo").buildWithoutPayload();
+        assertThat(f.ns()).isEqualTo("foo");
+        assertThat(f.jsonPayload()).isEqualTo("{}");
+    }
+
+    @Test
+    public void testMeta() throws Exception {
+        Fact f = Fact.builder().ns("foo").meta("a", "1").buildWithoutPayload();
+        assertThat(f.meta("a")).isEqualTo("1");
+    }
+
+    @Test
+    public void testTypeEmpty() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> {
+            Fact.builder().type("");
+        });
+    }
+
+    @Test
+    public void testNsEmpty() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> {
+            Fact.builder().ns("");
+        });
+    }
+
+    @Test
+    public void testSerialMustExistInMeta() throws Exception {
+        assertThrows(IllegalStateException.class, () -> {
+            Fact f = Fact.builder().ns("a").buildWithoutPayload();
+            f.serial();
+        });
+    }
+
+    @Test
+    public void testOfJsonNodeJsonNode() throws Exception {
+        ObjectNode h = FactCastJson.toObjectNode("{\"id\":\"" + new UUID(0, 1)
+                + "\",\"ns\":\"foo\"}");
+        ObjectNode p = FactCastJson.toObjectNode("{}");
+        Fact f = Fact.of(h, p);
+        assertThat(f.ns()).isEqualTo("foo");
+        assertThat(f.id()).isEqualTo(new UUID(0, 1));
     }
 }

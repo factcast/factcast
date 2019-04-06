@@ -40,6 +40,8 @@ public interface Attempt {
     }
 
     static IntermediatePublishResult publish(@NonNull List<Fact> factsToPublish) {
+        if (factsToPublish.isEmpty())
+            throw new IllegalArgumentException("List of Facts to publish must not be empty");
         return new IntermediatePublishResult(factsToPublish);
     }
 
