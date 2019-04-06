@@ -45,11 +45,13 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.Capabilities;
+import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -317,8 +319,6 @@ public class FactStoreGrpcServiceTest {
     public void testInvalidate() throws Exception {
 
         {
-            doNothing().when(backend).invalidate(any());
-
             UUID id = UUID.randomUUID();
             MSG_UUID req = conv.toProto(id);
             StreamObserver o = mock(StreamObserver.class);
@@ -338,6 +338,41 @@ public class FactStoreGrpcServiceTest {
             uut.invalidate(req, o);
 
             verify(backend).invalidate(eq(new StateToken(id)));
+            verify(o).onError(any());
+            verifyNoMoreInteractions(o);
+        }
+
+    }
+
+    @Test
+    public void testStateFor() throws Exception {
+
+        {
+            UUID id = UUID.randomUUID();
+
+            StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
+            MSG_StateForRequest req = conv.toProto(sfr);
+            StreamObserver o = mock(StreamObserver.class);
+            UUID token = UUID.randomUUID();
+            when(backend.stateFor(any(), any())).thenReturn(new StateToken(token));
+            uut.stateFor(req, o);
+
+            verify(backend).stateFor(eq("foo"), eq(Lists.newArrayList(id)));
+            verify(o).onNext(eq(conv.toProto(token)));
+            verify(o).onCompleted();
+        }
+
+        {
+            doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend).stateFor(any(),
+                    any());
+
+            UUID id = UUID.randomUUID();
+            StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
+            MSG_StateForRequest req = conv.toProto(sfr);
+            StreamObserver o = mock(StreamObserver.class);
+
+            uut.stateFor(req, o);
+
             verify(o).onError(any());
             verifyNoMoreInteractions(o);
         }
