@@ -56,9 +56,9 @@ public interface FactStore {
     Set<String> enumerateTypes(@NonNull String ns);
 
     boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
-            Optional<StateToken> token);
+            @NonNull Optional<StateToken> token);
 
-    StateToken stateFor(@NonNull Collection<UUID> forAggIds, String nsOrNull);
+    StateToken stateFor(@NonNull Collection<UUID> forAggIds, @NonNull Optional<String> ns);
 
     void invalidate(@NonNull StateToken token);
 

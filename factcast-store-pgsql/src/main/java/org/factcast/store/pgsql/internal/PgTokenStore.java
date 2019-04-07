@@ -58,11 +58,11 @@ public class PgTokenStore implements TokenStore {
 
     @Override
     public @NonNull StateToken create(
-            @NonNull Map<UUID, Optional<UUID>> state, String nsOrNull) {
+            @NonNull Map<UUID, Optional<UUID>> state, @NonNull Optional<String> nsOrNull) {
 
         String stateAsJson = FactCastJson.writeValueAsString(StateJson.from(state));
         UUID queryForObject = tpl.queryForObject(PgConstants.INSERT_TOKEN,
-                new Object[] { nsOrNull, stateAsJson },
+                new Object[] { nsOrNull.orElse(null), stateAsJson },
                 UUID.class);
         return new StateToken(
                 queryForObject);

@@ -61,7 +61,7 @@ public class WithOptimisticLock {
         while (++count <= retry) {
 
             // fetch current state
-            StateToken token = store.stateFor(ids, ns);
+            StateToken token = store.stateFor(ids, Optional.ofNullable(ns));
             try {
 
                 // execute the business logic

@@ -246,10 +246,10 @@ public class InMemFactStore extends AbstractFactStore {
                 .collect(Collectors.toSet());
     }
 
-    protected Optional<UUID> latestFactFor(String nsOrNull, UUID aggId) {
+    protected Optional<UUID> latestFactFor(Optional<String> ns, UUID aggId) {
         Fact last = store.values()
                 .stream()
-                .filter(f -> (nsOrNull == null || f.ns().equals(nsOrNull))
+                .filter(f -> ((!ns.isPresent()) || f.ns().equals(ns.get()))
                         && f.aggIds().contains(aggId))
                 .reduce(null, (oldId, newId) -> newId);
         return Optional.ofNullable(last).map(Fact::id);
@@ -257,7 +257,8 @@ public class InMemFactStore extends AbstractFactStore {
     }
 
     @Override
-    protected Map<UUID, Optional<UUID>> getStateFor(String ns, Collection<UUID> forAggIds) {
+    protected Map<UUID, Optional<UUID>> getStateFor(Optional<String> ns,
+            Collection<UUID> forAggIds) {
         Map<UUID, Optional<UUID>> state = new LinkedHashMap<>();
         forAggIds.forEach(id -> state.put(id, latestFactFor(ns, id)));
         return state;
@@ -267,7 +268,7 @@ public class InMemFactStore extends AbstractFactStore {
 
     @Override
     public synchronized boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
-            Optional<StateToken> optionalToken) {
+            @NonNull Optional<StateToken> optionalToken) {
         return super.publishIfUnchanged(factsToPublish, optionalToken);
     }
 

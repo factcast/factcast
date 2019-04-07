@@ -33,7 +33,8 @@ public abstract class AbstractFactStore implements FactStore {
 
     @Override
     public boolean publishIfUnchanged(
-            @NonNull List<? extends Fact> factsToPublish, Optional<StateToken> optionalToken) {
+            @NonNull List<? extends Fact> factsToPublish,
+            @NonNull Optional<StateToken> optionalToken) {
 
         if (optionalToken.isPresent()) {
             StateToken token = optionalToken.get();
@@ -64,14 +65,15 @@ public abstract class AbstractFactStore implements FactStore {
     }
 
     @Override
-    public final StateToken stateFor(@NonNull Collection<UUID> forAggIds, String nsOrNull) {
-        Map<UUID, Optional<UUID>> state = getStateFor(nsOrNull, forAggIds);
-        return tokenStore.create(state, nsOrNull);
+    public final StateToken stateFor(@NonNull Collection<UUID> forAggIds,
+            @NonNull Optional<String> ns) {
+        Map<UUID, Optional<UUID>> state = getStateFor(ns, forAggIds);
+        return tokenStore.create(state, ns);
     }
 
-    protected final boolean isStateUnchanged(Optional<String> ns,
-            Map<UUID, Optional<UUID>> snapshotState) {
-        Map<UUID, Optional<UUID>> currentState = getStateFor(ns.orElse(null), snapshotState
+    protected final boolean isStateUnchanged(@NonNull Optional<String> ns,
+            @NonNull Map<UUID, Optional<UUID>> snapshotState) {
+        Map<UUID, Optional<UUID>> currentState = getStateFor(ns, snapshotState
                 .keySet());
 
         if (currentState.size() == snapshotState.size()) {
@@ -96,6 +98,7 @@ public abstract class AbstractFactStore implements FactStore {
             return snap.equals(current);
     }
 
-    protected abstract Map<UUID, Optional<UUID>> getStateFor(String ns, Collection<UUID> forAggIds);
+    protected abstract Map<UUID, Optional<UUID>> getStateFor(@NonNull Optional<String> ns,
+            @NonNull Collection<UUID> forAggIds);
 
 }
