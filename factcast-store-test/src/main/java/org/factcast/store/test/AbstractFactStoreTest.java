@@ -32,7 +32,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -659,55 +658,6 @@ public abstract class AbstractFactStoreTest {
             Fact fact2 = uut.fetchById(id2).get();
             assertEquals(serialOf.getAsLong(), f.serial());
             assertTrue(f.before(fact2));
-        });
-    }
-
-    @DirtiesContext
-    @Test
-    protected void testUniqueIdentConstraintInLog() {
-        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
-            String ident = UUID.randomUUID().toString();
-            UUID id = UUID.randomUUID();
-            UUID id2 = UUID.randomUUID();
-            Fact f1 = Fact.of("{\"id\":\"" + id
-                    + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id
-                    + "\"],\"meta\":{\"unique_identifier\":\"" + ident + "\"}}", "{}");
-            Fact f2 = Fact.of("{\"id\":\"" + id2
-                    + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id2
-                    + "\"],\"meta\":{\"unique_identifier\":\"" + ident + "\"}}", "{}");
-            uut.publish(f1);
-            // needs to fail due to uniqueIdentitfier not being unique
-            try {
-                uut.publish(f2);
-                fail("Expected IllegalArgumentException due to unique_identifier being used a sencond time");
-            } catch (IllegalArgumentException e) {
-                // make sure, f1 was stored before
-                assertTrue(uut.fetchById(id).isPresent());
-            }
-        });
-    }
-
-    @DirtiesContext
-    @Test
-    protected void testUniqueIdentConstraintInBatch() {
-        Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
-            String ident = UUID.randomUUID().toString();
-            UUID id = UUID.randomUUID();
-            UUID id2 = UUID.randomUUID();
-            Fact f1 = Fact.of("{\"id\":\"" + id
-                    + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id
-                    + "\"],\"meta\":{\"unique_identifier\":\"" + ident + "\"}}", "{}");
-            Fact f2 = Fact.of("{\"id\":\"" + id2
-                    + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id2
-                    + "\"],\"meta\":{\"unique_identifier\":\"" + ident + "\"}}", "{}");
-            // needs to fail due to uniqueIdentitfier not being unique
-            try {
-                uut.publish(Arrays.asList(f1, f2));
-                fail("Expected IllegalArgumentException due to unique_identifier being used twice in a batch");
-            } catch (IllegalArgumentException e) {
-                // make sure, f1 was not stored either
-                assertFalse(uut.fetchById(id).isPresent());
-            }
         });
     }
 
