@@ -2,6 +2,8 @@
 
 set -e
 
+echo "SPOTLESS_AUTO_APPLY=$SPOTLESS_AUTO_APPLY"
+
 PREFIX="> pre-commit [$(basename $0)]\t\t"
 
 
