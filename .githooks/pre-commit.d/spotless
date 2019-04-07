@@ -3,24 +3,24 @@
 set -e
 
 PREFIX="> pre-commit [$(basename $0)]\t\t"
-MAVEN_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
+MAVEN_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Xms768M"
 
 if [ "1" == "$SPOTLESS_AUTO_APPLY" ]; then
 
- echo -e "$PREFIX auto-applying spotless changes"
+ echo -e  "$PREFIX auto-applying spotless changes"
  
  SPOTLESS_BEFORE=`git diff | md5sum `
- mvn -T 1C -q spotless:apply 
+ mvn -o -T 1C -q spotless:apply 
  SPOTLESS_AFTER=`git diff | md5sum `
  
  if [ "$SPOTLESS_BEFORE" != "$SPOTLESS_AFTER" ]; then
-   echo -e "$PREFIX Spotless had to change something. Please check if you are ok with the outcome before re-committing.\n\nModified Files:" && git status --porcelain |grep "M"|cut -f 2 --delimiter ' ' && echo "" && exit 1
+   echo -e  "$PREFIX Spotless had to change something. Please check if you are ok with the outcome before re-committing.\n\nModified Files:" && git status --porcelain |grep "M"|cut -f 2 --delimiter ' ' && echo "" && exit 1
  fi
 
 else
 
- echo -e "$PREFIX checking using spotless"
- mvn -T 1C -q spotless:check || ( echo -e "$PREFIX Please format your java files according to the format definition in src/eclipse" && echo -e "$PREFIX You can do that by typing 'mvn spotless:apply' if your IDE does not help with that." && exit 1)
+ echo -e  "$PREFIX checking using spotless"
+ mvn -o -T 1C -q spotless:check || ( echo -e "$PREFIX Please format your java files according to the format definition in src/eclipse" && echo -e "$PREFIX You can do that by typing 'mvn spotless:apply' if your IDE does not help with that." && exit 1)
 
 fi
 
