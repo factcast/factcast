@@ -34,10 +34,11 @@ class InMemTokenStore implements TokenStore {
     private final Map<StateToken, String> namespaces = Collections.synchronizedMap(new HashMap<>());
 
     @NonNull
-    public StateToken create(@NonNull Map<UUID, Optional<UUID>> state, String nsOrNull) {
+    public StateToken create(@NonNull Map<UUID, Optional<UUID>> state,
+            @NonNull Optional<String> ns) {
         StateToken token = new StateToken();
         tokens.put(token, state);
-        namespaces.put(token, nsOrNull);
+        namespaces.put(token, ns.orElse(null));
         return token;
     }
 

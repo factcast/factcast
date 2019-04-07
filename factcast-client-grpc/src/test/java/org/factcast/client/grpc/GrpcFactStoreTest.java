@@ -409,7 +409,7 @@ public class GrpcFactStoreTest {
             uut.stateFor(null, null);
         });
         assertThrows(NullPointerException.class, () -> {
-            uut.stateFor(null, "foo");
+            uut.stateFor(null, Optional.of("foo"));
         });
 
         {
@@ -417,7 +417,7 @@ public class GrpcFactStoreTest {
             StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
             when(blockingStub.stateFor(any())).thenReturn(conv.toProto(id));
 
-            StateToken stateFor = uut.stateFor(Lists.emptyList(), "foo");
+            StateToken stateFor = uut.stateFor(Lists.emptyList(), Optional.of("foo"));
             verify(blockingStub).stateFor(conv.toProto(req));
         }
 
@@ -427,7 +427,7 @@ public class GrpcFactStoreTest {
                     new StatusRuntimeException(
                             Status.UNAVAILABLE));
             try {
-                uut.stateFor(Lists.emptyList(), "foo");
+                uut.stateFor(Lists.emptyList(), Optional.of("foo"));
                 fail();
             } catch (RetryableException expected) {
             }

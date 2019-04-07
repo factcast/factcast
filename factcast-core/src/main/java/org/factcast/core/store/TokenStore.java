@@ -24,7 +24,7 @@ import lombok.NonNull;
 public interface TokenStore {
 
     @NonNull
-    StateToken create(@NonNull Map<UUID, Optional<UUID>> state, String nsOrNull);
+    StateToken create(@NonNull Map<UUID, Optional<UUID>> state, @NonNull Optional<String> ns);
 
     void invalidate(@NonNull StateToken token);
 

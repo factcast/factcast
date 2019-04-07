@@ -45,7 +45,7 @@ public abstract class AbstractTokenStoreTest {
 
     @Test
     public void invalidateShouldRemoteToken() throws Exception {
-        StateToken token = uut.create(new HashMap<UUID, Optional<UUID>>(), "foo");
+        StateToken token = uut.create(new HashMap<UUID, Optional<UUID>>(), Optional.of("foo"));
         uut.invalidate(token);
         assertThat(uut.getNs(token)).isNotPresent();
         assertThat(uut.getState(token)).isNotPresent();
@@ -54,7 +54,7 @@ public abstract class AbstractTokenStoreTest {
 
     @Test
     public void tokenMustMaintainNamespace() throws Exception {
-        StateToken token = uut.create(new HashMap<UUID, Optional<UUID>>(), "123123");
+        StateToken token = uut.create(new HashMap<UUID, Optional<UUID>>(), Optional.of("123123"));
         assertThat(uut.getNs(token)).isPresent();
         assertThat(uut.getNs(token).get()).isEqualTo("123123");
 
@@ -62,7 +62,7 @@ public abstract class AbstractTokenStoreTest {
 
     @Test
     public void createShouldActuallyCreateARecord() throws Exception {
-        StateToken token = uut.create(new HashMap<UUID, Optional<UUID>>(), "foo");
+        StateToken token = uut.create(new HashMap<UUID, Optional<UUID>>(), Optional.of("foo"));
 
         assertThat(uut.getNs(token)).isPresent();
         assertThat(uut.getNs(token).get()).isEqualTo("foo");
@@ -90,10 +90,10 @@ public abstract class AbstractTokenStoreTest {
             uut.create(null, null);
         });
         assertThrows(NullPointerException.class, () -> {
-            uut.create(null, "foo");
+            uut.create(null, Optional.of("foo"));
         });
 
-        uut.create(new HashMap<>(), null);
+        uut.create(new HashMap<>(), Optional.empty());
     }
 
     @Test
