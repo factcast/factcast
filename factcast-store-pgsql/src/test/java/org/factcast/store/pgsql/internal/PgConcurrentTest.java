@@ -26,8 +26,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import javax.sql.DataSource;
-
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -39,29 +37,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ContextConfiguration(
-        classes = { PGEmbeddedConfiguration.class, PGConcurrentTest.PGTestConfig.class })
+        classes = { PgEmbeddedConfiguration.class })
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
-public class PGConcurrentTest {
-    @Configuration
-    public static class PGTestConfig {
-        @Bean
-        public DataSourceTransactionManager transactionManager(DataSource dataSource) {
-            final DataSourceTransactionManager txManager = new DataSourceTransactionManager();
-            txManager.setDataSource(dataSource);
-            return txManager;
-        }
-    }
+public class PgConcurrentTest {
 
     @Autowired
     FactStore store;
