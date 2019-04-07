@@ -15,7 +15,11 @@
  */
 package org.factcast.core;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doNothing;
@@ -44,7 +48,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -254,5 +257,19 @@ public class DefaultFactCastTest {
         when(store.enumerateTypes("test")).thenReturn(test);
         assertSame(test, FactCast.from(store).enumerateTypes("test"));
 
+    }
+
+    @Test
+    public void testLockNullContract() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.lock(null);
+        });
+    }
+
+    @Test
+    public void testLockNamespaceMustNotBeEmpty() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> {
+            uut.lock(" ");
+        });
     }
 }

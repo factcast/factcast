@@ -20,3 +20,9 @@ databaseChangeLog:
     - include:
          file: factcast/issue180/dropAndRecreateInsertFactTriggerAsDeferrable.sql
          relativeToChangelogFile: true   
+    - include:
+         file: factcast/issue329/createTokenStore.sql
+         relativeToChangelogFile: true   
+    - include:
+         file: factcast/issue341/removeNonNullConstraintForNS.sql
+         relativeToChangelogFile: true   

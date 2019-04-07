@@ -34,6 +34,8 @@ public class PgConstants {
 
     public static final String TABLE_FACT = "fact";
 
+    public static final String TABLE_TOKENSTORE = "tokenstore";
+
     public static final String CHANNEL_NAME = "fact_insert";
 
     public static final String COLUMN_PAYLOAD = "payload";
@@ -43,6 +45,12 @@ public class PgConstants {
     public static final String COLUMN_SER = "ser";
 
     public static final String COLUMN_CID = "cid";
+
+    public static final String COLUMN_STATE = "state";
+
+    public static final String COLUMN_NAMESPACE = "ns";
+
+    public static final String COLUMN_TOKEN = "token";
 
     public static final String ALIAS_ID = "id";
 
@@ -66,6 +74,12 @@ public class PgConstants {
             + COLUMN_PAYLOAD
             + ") VALUES (cast(? as jsonb),cast (? as jsonb))";
 
+    public static final String INSERT_TOKEN = "INSERT INTO " + TABLE_TOKENSTORE + " ("
+            + COLUMN_NAMESPACE + "," + COLUMN_STATE
+            + ") VALUES (?,cast (? as jsonb)) RETURNING token";
+
+    public static final String DELETE_TOKEN = "DELETE FROM " + TABLE_TOKENSTORE + " WHERE token=?";
+
     public static final String SELECT_BY_ID = "SELECT " + PROJECTION_FACT + " FROM " + TABLE_FACT
             + " WHERE "
             + COLUMN_HEADER + " @> cast (? as jsonb)";
@@ -88,6 +102,12 @@ public class PgConstants {
                     " IN ( " + "   SELECT " + COLUMN_SER + " FROM " + //
                     TABLE_CATCHUP + "   WHERE ( " + COLUMN_CID + "=? AND " + COLUMN_SER + //
                     ">? ) LIMIT ? " + ") ORDER BY " + COLUMN_SER + " ASC";
+
+    public static final //
+    String SELECT_LATEST_FACTID_FOR_AGGID = //
+            "SELECT " + COLUMN_HEADER + "->>'id' FROM " + //
+                    TABLE_FACT + " WHERE " + COLUMN_HEADER + //
+                    " @> cast (? as jsonb) ORDER BY ser DESC LIMIT 1";
 
     public static final String DELETE_CATCH_BY_CID = //
             "DELETE FROM " + TABLE_CATCHUP + " WHERE cid=?";
@@ -119,6 +139,12 @@ public class PgConstants {
     public static final String SELECT_SER_BY_ID = "SELECT " + COLUMN_SER + " FROM " + TABLE_FACT
             + " WHERE "
             + COLUMN_HEADER + " @> cast (? as jsonb)";
+
+    public static final String SELECT_STATE_FROM_TOKEN = "SELECT " + COLUMN_STATE + " FROM "
+            + TABLE_TOKENSTORE + " WHERE " + COLUMN_TOKEN + "=?";
+
+    public static final String SELECT_NS_FROM_TOKEN = "SELECT " + COLUMN_NAMESPACE + " FROM "
+            + TABLE_TOKENSTORE + " WHERE " + COLUMN_TOKEN + "=?";
 
     private static String fromHeader(String attributeName) {
         return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;

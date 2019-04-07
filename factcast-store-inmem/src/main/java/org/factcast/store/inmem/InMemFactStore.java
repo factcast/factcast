@@ -38,14 +38,15 @@ import java.util.stream.Stream;
 
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpecMatcher;
-import org.factcast.core.store.FactStore;
+import org.factcast.core.store.AbstractFactStore;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+import lombok.NonNull;import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Eternally-growing InMem Implementation of a FactStore. USE FOR TESTING
@@ -54,8 +55,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author uwe.schaefer@mercateo.com, joerg.adler@mercateo.com
  */
 @Deprecated
-@Slf4j
-public class InMemFactStore implements FactStore {
+public class InMemFactStore extends AbstractFactStore {
 
     final AtomicLong highwaterMark = new AtomicLong(0);
 
@@ -64,6 +64,7 @@ public class InMemFactStore implements FactStore {
 
     @VisibleForTesting
     protected final Map<UUID, Long> factid2ser = Collections.synchronizedMap(new LinkedHashMap<>());
+
 
     final Set<UUID> ids = new HashSet<>();
 
@@ -74,9 +75,9 @@ public class InMemFactStore implements FactStore {
     final ExecutorService executorService;
 
     @VisibleForTesting
-
-    InMemFactStore(@NonNull ExecutorService es) {
-        executorService = es;
+    InMemFactStore(@NonNull ExecutorService e) {
+        super(new InMemTokenStore());
+        executorService = e;
     }
 
     public InMemFactStore() {
@@ -182,6 +183,8 @@ public class InMemFactStore implements FactStore {
             // catchup
             AtomicLong ser = new AtomicLong(-1);
             if (!request.ephemeral()) {
+                // this could take some time, so we dont waant to lock the store
+                // here
                 doCatchUp(s, ser);
             }
             synchronized (InMemFactStore.this) {
@@ -243,4 +246,31 @@ public class InMemFactStore implements FactStore {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
+
+    protected Optional<UUID> latestFactFor(Optional<String> ns, UUID aggId) {
+        Fact last = store.values()
+                .stream()
+                .filter(f -> ((!ns.isPresent()) || f.ns().equals(ns.get()))
+                        && f.aggIds().contains(aggId))
+                .reduce(null, (oldId, newId) -> newId);
+        return Optional.ofNullable(last).map(Fact::id);
+
+    }
+
+    @Override
+    protected Map<UUID, Optional<UUID>> getStateFor(Optional<String> ns,
+            Collection<UUID> forAggIds) {
+        Map<UUID, Optional<UUID>> state = new LinkedHashMap<>();
+        forAggIds.forEach(id -> state.put(id, latestFactFor(ns, id)));
+        return state;
+    }
+
+    // needs to be overridden for synchronization
+
+    @Override
+    public synchronized boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
+            @NonNull Optional<StateToken> optionalToken) {
+        return super.publishIfUnchanged(factsToPublish, optionalToken);
+    }
+
 }
