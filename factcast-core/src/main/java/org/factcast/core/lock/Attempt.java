@@ -31,7 +31,7 @@ public interface Attempt {
      * this is only a convenience method. You can choose to throw
      * AttemptAbortedException from your lambda yourself or use custom subclasses in
      * order to pass additional info out of your lamdba.
-     * 
+     *
      * @param msg
      * @throws AttemptAbortedException
      */

@@ -59,7 +59,7 @@ public final class LockedOperationBuilder {
         /**
          * convenience method that uses optimistic locking with defaults. Alternatively,
          * you can call optimistic() to get control over the optimistic settings.
-         * 
+         *
          * @param operation
          * @return id of the last fact published
          * @throws OptimisticRetriesExceededException
