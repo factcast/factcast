@@ -19,14 +19,14 @@ weight = 1000
 
 If you used the uniqe_identifier feature before, it was removed. It was only a rouge hack that was used to coordinate two instance in case of publishing. By now, coordination can be done via optimistic locking, so that the need for *unique_identifier* is no longer there.
 
+#### optimistic locking
+
+There will be a section on optimitic locking as a new api feature.
+
 #### GRPC Protocol Version
 
 The GRPC Protocol Version shifted from 1.0.0 to 1.1.0. That means, in order to talk to a factcast server with version 0.1.0, you can use and client from 0.0.30 on, but in order to use a 0.1.0 client, you'd need to talk to a factcast server with at least the same protocol version than your client.
 So the idea is: first update your servers, then update the clients. 
-
-#### optimistic locking
-
-There will be a section on optimitic locking as a new api feature.
 
 #### GRPC Adresses, Hosts, Ports
 
