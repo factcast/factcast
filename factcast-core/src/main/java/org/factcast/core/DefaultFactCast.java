@@ -106,4 +106,9 @@ class DefaultFactCast implements FactCast {
             throw new IllegalArgumentException("Namespace must not be empty");
         return new LockedOperationBuilder(this.store, ns);
     }
+
+    @Override
+    public LockedOperationBuilder lockGlobally() {
+        return new LockedOperationBuilder(this.store, null);
+    }
 }

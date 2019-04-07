@@ -24,12 +24,13 @@ import lombok.NonNull;
 public interface TokenStore {
 
     @NonNull
-    StateToken create(@NonNull String ns, @NonNull Map<UUID, Optional<UUID>> state);
+    StateToken create(@NonNull Map<UUID, Optional<UUID>> state, String nsOrNull);
 
     void invalidate(@NonNull StateToken token);
 
     @NonNull
     Optional<Map<UUID, Optional<UUID>>> getState(@NonNull StateToken token);
 
+    @NonNull
     Optional<String> getNs(@NonNull StateToken token);
 }

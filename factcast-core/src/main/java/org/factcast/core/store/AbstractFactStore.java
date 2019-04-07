@@ -40,8 +40,8 @@ public abstract class AbstractFactStore implements FactStore {
             Optional<String> ns = tokenStore.getNs(token);
             Optional<Map<UUID, Optional<UUID>>> state = tokenStore.getState(token);
 
-            if (ns.isPresent() && state.isPresent()) {
-                if (isStateUnchanged(ns.get(), state.get())) {
+            if (state.isPresent()) {
+                if (isStateUnchanged(ns, state.get())) {
                     publish(factsToPublish);
                     tokenStore.invalidate(token);
                     return true;
@@ -64,13 +64,15 @@ public abstract class AbstractFactStore implements FactStore {
     }
 
     @Override
-    public final StateToken stateFor(@NonNull String ns, @NonNull Collection<UUID> forAggIds) {
-        Map<UUID, Optional<UUID>> state = getStateFor(ns, forAggIds);
-        return tokenStore.create(ns, state);
+    public final StateToken stateFor(@NonNull Collection<UUID> forAggIds, String nsOrNull) {
+        Map<UUID, Optional<UUID>> state = getStateFor(nsOrNull, forAggIds);
+        return tokenStore.create(state, nsOrNull);
     }
 
-    protected final boolean isStateUnchanged(String ns, Map<UUID, Optional<UUID>> snapshotState) {
-        Map<UUID, Optional<UUID>> currentState = getStateFor(ns, snapshotState.keySet());
+    protected final boolean isStateUnchanged(Optional<String> ns,
+            Map<UUID, Optional<UUID>> snapshotState) {
+        Map<UUID, Optional<UUID>> currentState = getStateFor(ns.orElse(null), snapshotState
+                .keySet());
 
         if (currentState.size() == snapshotState.size()) {
             for (UUID k : currentState.keySet()) {

@@ -32,7 +32,6 @@ public final class LockedOperationBuilder {
     @NonNull
     final FactStore store;
 
-    @NonNull
     final String ns;
 
     public final OnBuilderStep on(@NonNull UUID aggId, UUID... otherAggIds) {

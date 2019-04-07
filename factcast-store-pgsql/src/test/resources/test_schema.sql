@@ -50,7 +50,7 @@ create unique index unique_metaident on fact ((header->'meta'->'unique_identifie
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS tokenstore (
 	token 	UUID 		PRIMARY KEY 		DEFAULT uuid_generate_v4(),
-	ns	 	varchar 	NOT NULL,
+	ns	 	varchar 	,
 	state 	JSONB 		NOT NULL,
 	ts	 	TIMESTAMP 						DEFAULT now()
 );

@@ -104,4 +104,9 @@ public class CachingFactCast implements FactCast {
     public LockedOperationBuilder lock(String ns) {
         return delegate.lock(ns);
     }
+
+    @Override
+    public LockedOperationBuilder lockGlobally() {
+        return delegate.lockGlobally();
+    }
 }

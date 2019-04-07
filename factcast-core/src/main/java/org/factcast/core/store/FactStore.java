@@ -58,7 +58,7 @@ public interface FactStore {
     boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
             Optional<StateToken> token);
 
-    StateToken stateFor(@NonNull String ns, @NonNull Collection<UUID> forAggIds);
+    StateToken stateFor(@NonNull Collection<UUID> forAggIds, String nsOrNull);
 
     void invalidate(@NonNull StateToken token);
 

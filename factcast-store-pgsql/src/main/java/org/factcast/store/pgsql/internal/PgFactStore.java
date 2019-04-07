@@ -222,7 +222,13 @@ public class PgFactStore extends AbstractFactStore {
         Map<UUID, Optional<UUID>> ret = new LinkedHashMap<UUID, Optional<UUID>>();
         for (UUID uuid : forAggIds) {
 
-            String json = "{\"ns\":\"" + ns + "\",\"aggIds\":[\"" + uuid + "\"]}";
+            StringBuilder sb = new StringBuilder();
+            sb.append("{");
+            if (ns != null)
+                sb.append("\"ns\":\"" + ns + "\",");
+            sb.append("\"aggIds\":[\"" + uuid + "\"]}");
+
+            String json = sb.toString();
 
             try {
                 ret.put(uuid, jdbcTemplate.queryForObject(
