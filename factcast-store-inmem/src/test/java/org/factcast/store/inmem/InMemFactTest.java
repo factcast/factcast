@@ -16,10 +16,13 @@
 package org.factcast.store.inmem;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import java.util.UUID;
 
+import org.factcast.core.DefaultFact;
 import org.factcast.core.Fact;
+import org.factcast.core.util.FactCastJson;
 import org.junit.jupiter.api.Test;
 
 public class InMemFactTest {
@@ -47,5 +50,22 @@ public class InMemFactTest {
         assertEquals(99999, f1.serial());
         InMemFact uut = new InMemFact(12, f1);
         assertEquals(12, uut.serial());
+    }
+
+    @Test
+    public void testToString() throws Exception {
+        Fact f = Fact.of("{\"ns\":\"someNs\",\"id\":\"" + UUID.randomUUID()
+                + "\"}", "{}");
+
+        InMemFact f1 = new InMemFact(32, f);
+        Fact d = FactCastJson.readValue(DefaultFact.class, f1.toString());
+        // needs to be constructed via of, in order to pass _ser handling
+        Fact fact = Fact.of(d.jsonHeader(), d.jsonPayload());
+
+        InMemFact f2 = new InMemFact(fact.serial(), fact);
+
+        assertNotSame(f1, f2);
+        assertEquals(f1, f2);
+
     }
 }

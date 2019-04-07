@@ -123,7 +123,7 @@ public class PgFactStore extends AbstractFactStore {
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
 
         try (Context time = publishLatency.time()) {
-            lock.aquireExclusiveLock();
+            lock.aquireExclusiveTXLock();
 
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
             final int numberOfFactsToPublish = factsToPublish.size();
@@ -139,7 +139,6 @@ public class PgFactStore extends AbstractFactStore {
                         final String idMatch = "{\"id\":\"" + fact.id() + "\"}";
                         statement.setString(1, idMatch);
                     });
-            lock.release();
             publishMeter.mark(numberOfFactsToPublish);
 
         } catch (DuplicateKeyException dupkey) {
@@ -248,11 +247,7 @@ public class PgFactStore extends AbstractFactStore {
     @Transactional(propagation = Propagation.REQUIRED)
     public boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
             @NonNull Optional<StateToken> optionalToken) {
-        try {
-            lock.aquireExclusiveLock();
-            return super.publishIfUnchanged(factsToPublish, optionalToken);
-        } finally {
-            lock.release();
-        }
+        lock.aquireExclusiveTXLock();
+        return super.publishIfUnchanged(factsToPublish, optionalToken);
     }
 }
