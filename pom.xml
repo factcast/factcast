@@ -52,7 +52,7 @@
     </license>
   </licenses>
 
-<scm>
+  <scm>
 
     <connection>scm:git:git@github.com:Mercateo/factcast.git</connection>
     <developerConnection>scm:git:git@github.com:Mercateo/factcast.git</developerConnection>
