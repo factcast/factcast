@@ -2,6 +2,15 @@
 
 set -e
 
+if [ "" == "$SPOTLESS_AUTO_APPLY"]; do
+ SPOTLESS_MODE="check"
+elsif
+ SPOTLESS_MODE="apply"
+fi
+
 PREFIX="> pre-commit [$(basename $0)]\t\t"
-echo -e "$PREFIX checking using spotless"
+echo -e "$PREFIX checking using spotless ($SPOTLESS_MODE)"
 mvn -q spotless:check || ( echo -e "$PREFIX Please format your java files according to the format definition in src/eclipse" && echo -e "$PREFIX You can do that by typing 'mvn spotless:apply' if your IDE does not help with that." && exit 1)
+
+
+exit 99
