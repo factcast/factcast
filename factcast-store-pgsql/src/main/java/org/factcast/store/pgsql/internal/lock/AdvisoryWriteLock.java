@@ -27,14 +27,8 @@ public class AdvisoryWriteLock implements FactTableWriteLock {
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
-    public void aquireExclusiveLock() {
-        tpl.execute("SELECT pg_advisory_lock(" + AdvisoryLocks.PUBLISH.code() + ")");
-    }
-
-    @Override
-    @Transactional(propagation = Propagation.MANDATORY)
-    public void release() {
-        tpl.execute("SELECT pg_advisory_unlock(" + AdvisoryLocks.PUBLISH.code() + ")");
+    public void aquireExclusiveTXLock() {
+        tpl.execute("SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")");
     }
 
 }
