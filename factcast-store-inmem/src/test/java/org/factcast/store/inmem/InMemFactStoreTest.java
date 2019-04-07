@@ -15,14 +15,20 @@
  */
 package org.factcast.store.inmem;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
+import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
+import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.store.test.AbstractFactStoreTest;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("deprecation")
@@ -36,19 +42,32 @@ public class InMemFactStoreTest extends AbstractFactStoreTest {
         return store;
     }
 
-    @Test
-    void testDestroy() throws Exception {
-        ExecutorService es = mock(ExecutorService.class);
-        InMemFactStore inMemFactStore = new InMemFactStore(es);
-        inMemFactStore.shutdown();
-        verify(es).shutdown();
+    @Nested
+    class InMemSpecific {
+
+        @Test
+        void testDestroy() throws Exception {
+            ExecutorService es = mock(ExecutorService.class);
+            InMemFactStore inMemFactStore = new InMemFactStore(es);
+            inMemFactStore.shutdown();
+            verify(es).shutdown();
+        }
+
+        @Test
+        public void testInMemFactStoreExecutorServiceNullConstructor() throws Exception {
+            assertThrows(NullPointerException.class, () -> {
+                new InMemFactStore(null);
+            });
+        }
     }
 
     @Test
-    public void testInMemFactStoreExecutorServiceNullConstructor() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new InMemFactStore(null);
-        });
+    void shouldPublishUnconditionallyIfNoTokenProvided() {
+        ArrayList<Fact> list = new ArrayList<>();
+        InMemFactStore uut = spy(store);
+        boolean publishIfUnchanged = uut.publishIfUnchanged(list, Optional.empty());
+        assertThat(publishIfUnchanged).isTrue();
+        verify(uut).publish(list);
     }
 
 }

@@ -29,14 +29,15 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
-public class PgFactStoreTest extends AbstractFactStoreTest {
+public class PgFactStoreTest
+        extends AbstractFactStoreTest {
 
     @Autowired
-    FactStore store;
+    FactStore fs;
 
     @Override
     protected FactStore createStoreToTest() {
-        return store;
+        return fs;
     }
 
 }

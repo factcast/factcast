@@ -13,16 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.grpc.api.conv;
+package org.factcast.core.lock;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.List;
+import java.util.Optional;
 
-import org.junit.jupiter.api.Test;
+import org.factcast.core.Fact;
 
-public class ProtocolVersion0Test {
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
-    @Test
-    void testToString() {
-        assertEquals("3.1.2", ProtocolVersion.of(3, 1, 2).toString());
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
+public final class IntermediatePublishResult {
+
+    @Getter
+    @NonNull
+    final List<Fact> factsToPublish;
+
+    @Setter
+    @NonNull
+    private Runnable andThen = null;
+
+    public Optional<Runnable> andThen() {
+        return Optional.ofNullable(andThen);
     }
+
 }

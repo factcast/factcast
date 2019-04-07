@@ -21,6 +21,7 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 
+import org.factcast.core.lock.LockedOperationBuilder;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
@@ -97,5 +98,17 @@ class DefaultFactCast implements FactCast {
     @Override
     public Set<String> enumerateTypes(@NonNull String ns) {
         return store.enumerateTypes(ns);
+    }
+
+    @Override
+    public LockedOperationBuilder lock(@NonNull String ns) {
+        if (ns.trim().isEmpty())
+            throw new IllegalArgumentException("Namespace must not be empty");
+        return new LockedOperationBuilder(this.store, ns);
+    }
+
+    @Override
+    public LockedOperationBuilder lockGlobally() {
+        return new LockedOperationBuilder(this.store, null);
     }
 }

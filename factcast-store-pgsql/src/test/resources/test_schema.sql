@@ -47,3 +47,13 @@ create table catchup (
 create index idx_catchup_cid_ser on catchup(cid,ser); 
 create unique index unique_metaident on fact ((header->'meta'->'unique_identifier')) where (header->'meta'->'unique_identifier') notnull;
 #
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE TABLE IF NOT EXISTS tokenstore (
+	token 	UUID 		PRIMARY KEY 		DEFAULT uuid_generate_v4(),
+	ns	 	varchar 	,
+	state 	JSONB 		NOT NULL,
+	ts	 	TIMESTAMP 						DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_tokenstore_ts ON tokenstore(ts);
+
+ 
