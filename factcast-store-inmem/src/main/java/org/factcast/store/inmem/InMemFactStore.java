@@ -16,6 +16,7 @@
 package org.factcast.store.inmem;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -45,8 +46,7 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 
-import lombok.NonNull;import lombok.extern.slf4j.Slf4j;
-import lombok.RequiredArgsConstructor;
+import lombok.NonNull;
 
 /**
  * Eternally-growing InMem Implementation of a FactStore. USE FOR TESTING
@@ -64,7 +64,6 @@ public class InMemFactStore extends AbstractFactStore {
 
     @VisibleForTesting
     protected final Map<UUID, Long> factid2ser = Collections.synchronizedMap(new LinkedHashMap<>());
-
 
     final Set<UUID> ids = new HashSet<>();
 
