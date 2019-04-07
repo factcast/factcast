@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.factcast.core.subscription.observer.GenericObserver;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
