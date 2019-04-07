@@ -16,6 +16,7 @@
 package org.factcast.store.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.HashMap;
 import java.util.Optional;
@@ -81,6 +82,25 @@ public abstract class AbstractTokenStoreTest {
     @Test
     public void getNsShouldReturnAbsentForUnknownToken() throws Exception {
         assertThat(!uut.getNs(new StateToken(UUID.randomUUID())).isPresent());
+    }
+
+    @Test
+    public void testCreateNullContract() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.create(null, null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.create(null, "foo");
+        });
+
+        uut.create(new HashMap<>(), null);
+    }
+
+    @Test
+    public void testInvalidateNullContract() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.invalidate(null);
+        });
     }
 
 }
