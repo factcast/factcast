@@ -145,10 +145,10 @@
         <configuration>
           <java>
             <licenseHeader>
-              <file>${etc}/header.txt</file>
+              <file>file://${etc}/header.txt</file>
             </licenseHeader>
             <eclipse>
-              <file>${formatter.config}/eclipse_code_formatter.xml</file>
+              <file>file://${formatter.config}/eclipse_code_formatter.xml</file>
               <version>4.7.1</version>
             </eclipse>
             <trimTrailingWhitespace />
@@ -156,16 +156,26 @@
             <importOrder>
               <order>java,javax,org,com,lombok</order>
             </importOrder>
+            <includes>
+              <include>
+                src/main/java/**/*.java
+              </include>
+            </includes>
           </java>
           <kotlin>
             <licenseHeader>
-              <file>${etc}/header.txt</file>
+              <file>file://${etc}/header.txt</file>
             </licenseHeader>
             <trimTrailingWhitespace />
             <ktlint>
               <!-- Optional, available versions: https://github.com/shyiko/ktlint/releases -->
               <version>0.31.0</version>
             </ktlint>
+            <includes>
+              <include>
+                src/main/kotlin/**/*.kt
+              </include>
+            </includes>
           </kotlin>
           <xml>
             <trimTrailingWhitespace />
