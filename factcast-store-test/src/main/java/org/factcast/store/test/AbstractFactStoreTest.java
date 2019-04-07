@@ -31,6 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -1115,6 +1116,14 @@ public abstract class AbstractFactStoreTest {
         // but andThen is called only once
         verify(e, times(1)).run();
 
+    }
+
+    @Test
+    void shouldPublishUnconditionallyIfNoTokenProvided() {
+        ArrayList<Fact> list = new ArrayList<>();
+        boolean publishIfUnchanged = store.publishIfUnchanged(list, Optional.empty());
+        assertThat(publishIfUnchanged).isTrue();
+        verify(store).publish(list);
     }
 
     @Test
