@@ -2,15 +2,18 @@
 
 set -e
 
-if [ "" == "$SPOTLESS_AUTO_APPLY"]; do
- SPOTLESS_MODE="check"
-elsif
- SPOTLESS_MODE="apply"
+PREFIX="> pre-commit [$(basename $0)]\t\t"
+
+
+if [ "1" == "$SPOTLESS_AUTO_APPLY" ]; then
+
+ echo -e "$PREFIX auto-applying spotless changes"
+ mvn -q spotless:apply || ( echo -e "$PREFIX Spotless changed a few files. Make sure, you are ok with the outcome, before committing:" && git status && exit 1)
+
+else
+
+ echo -e "$PREFIX checking using spotless"
+ mvn -q spotless:check || ( echo -e "$PREFIX Please format your java files according to the format definition in src/eclipse" && echo -e "$PREFIX You can do that by typing 'mvn spotless:apply' if your IDE does not help with that." && exit 1)
+
 fi
 
-PREFIX="> pre-commit [$(basename $0)]\t\t"
-echo -e "$PREFIX checking using spotless ($SPOTLESS_MODE)"
-mvn -q spotless:check || ( echo -e "$PREFIX Please format your java files according to the format definition in src/eclipse" && echo -e "$PREFIX You can do that by typing 'mvn spotless:apply' if your IDE does not help with that." && exit 1)
-
-
-exit 99
