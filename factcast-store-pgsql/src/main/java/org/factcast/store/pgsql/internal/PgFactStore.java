@@ -247,7 +247,7 @@ public class PgFactStore extends AbstractFactStore {
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
-            Optional<StateToken> optionalToken) {
+            @NonNull Optional<StateToken> optionalToken) {
         try {
             lock.aquireExclusiveLock();
             return super.publishIfUnchanged(factsToPublish, optionalToken);

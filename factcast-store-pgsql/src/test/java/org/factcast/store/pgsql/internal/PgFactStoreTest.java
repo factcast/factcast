@@ -33,11 +33,11 @@ public class PgFactStoreTest
         extends AbstractFactStoreTest {
 
     @Autowired
-    FactStore store;
+    FactStore fs;
 
     @Override
     protected FactStore createStoreToTest() {
-        return store;
+        return fs;
     }
 
 }
