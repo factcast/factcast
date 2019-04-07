@@ -2,10 +2,7 @@
 
 set -e
 
-echo "SPOTLESS_AUTO_APPLY=$SPOTLESS_AUTO_APPLY"
-
 PREFIX="> pre-commit [$(basename $0)]\t\t"
-
 
 if [ "1" == "$SPOTLESS_AUTO_APPLY" ]; then
 
@@ -16,7 +13,7 @@ if [ "1" == "$SPOTLESS_AUTO_APPLY" ]; then
  SPOTLESS_AFTER=`git diff | md5sum `
  
  if [ "$SPOTLESS_BEFORE" != "$SPOTLESS_AFTER" ]; then
-   echo -e "$PREFIX Spotless changed a few files. Make sure, you are ok with the outcome, before committing:" && git status && exit 1
+   echo -e "$PREFIX Spotless had to a few files. Make sure, you are ok with the outcome, before committing:\n\n" && git status && exit 1
  fi
 
 else
