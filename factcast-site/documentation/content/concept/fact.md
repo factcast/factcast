@@ -86,10 +86,10 @@ JSON-Schema:
 ### The Metadata Object
 
 The Meta-Data Object is optional and consist of key:value pairs. The reason for it is that implementations can filter facts on certain attributes efficiently (without indexing the whole Fact payload).
-One special attribute is the optional '**unique_identifier**' attribute of type String, which - if set - will make FactCast roll back a transaction, if not unique.  
+  
 
 ### The Payload
 
-has no constraints other than being a valid JSON document.
+The payload has no constraints other than being a valid JSON document.
 
 please, see GRPC docs for further details.
