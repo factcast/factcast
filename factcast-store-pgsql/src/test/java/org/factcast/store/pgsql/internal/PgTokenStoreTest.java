@@ -16,6 +16,7 @@
 package org.factcast.store.pgsql.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -35,6 +36,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import com.google.common.collect.Maps;
 
 @ContextConfiguration(classes = { PgEmbeddedConfiguration.class })
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
@@ -76,6 +79,32 @@ public class PgTokenStoreTest extends AbstractTokenStoreTest {
 
         Map<UUID, Optional<UUID>> m2 = FactCastJson.readValue(StateJson.class, json).toMap();
         assertThat(m).isEqualTo(m2);
+    }
+
+    @Test
+    public void testStateJsonFromNullContract() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            StateJson.from(null);
+        });
+    }
+
+    @Test
+    public void testCreateNullContract() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            tokenStore.create(null, null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            tokenStore.create(null, "foo");
+        });
+
+        tokenStore.create(Maps.newHashMap(), null);
+    }
+
+    @Test
+    public void testInvalidateNullContract() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            tokenStore.invalidate(null);
+        });
     }
 
 }
