@@ -16,6 +16,7 @@
 package org.factcast.store.pgsql.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -76,6 +77,13 @@ public class PgTokenStoreTest extends AbstractTokenStoreTest {
 
         Map<UUID, Optional<UUID>> m2 = FactCastJson.readValue(StateJson.class, json).toMap();
         assertThat(m).isEqualTo(m2);
+    }
+
+    @Test
+    public void testStateJsonFromNullContract() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            StateJson.from(null);
+        });
     }
 
 }

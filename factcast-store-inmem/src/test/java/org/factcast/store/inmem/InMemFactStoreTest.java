@@ -15,12 +15,17 @@
  */
 package org.factcast.store.inmem;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
+import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
+import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.junit.jupiter.api.Nested;
@@ -54,6 +59,15 @@ public class InMemFactStoreTest extends AbstractFactStoreTest {
                 new InMemFactStore(null);
             });
         }
+    }
+
+    @Test
+    void shouldPublishUnconditionallyIfNoTokenProvided() {
+        ArrayList<Fact> list = new ArrayList<>();
+        InMemFactStore uut = spy(store);
+        boolean publishIfUnchanged = uut.publishIfUnchanged(list, Optional.empty());
+        assertThat(publishIfUnchanged).isTrue();
+        verify(uut).publish(list);
     }
 
 }

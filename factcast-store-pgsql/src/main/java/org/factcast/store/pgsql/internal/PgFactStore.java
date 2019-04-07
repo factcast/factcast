@@ -214,7 +214,8 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Override
-    protected Map<UUID, Optional<UUID>> getStateFor(String ns, Collection<UUID> forAggIds) {
+    protected Map<UUID, Optional<UUID>> getStateFor(@NonNull Optional<String> ns,
+            @NonNull Collection<UUID> forAggIds) {
         // just prototype code
         // can probably be optimized, suggestions/PRs welcome
         RowMapper<Optional<UUID>> rse = (rs, i) -> Optional.of(UUID.fromString(rs
@@ -222,7 +223,13 @@ public class PgFactStore extends AbstractFactStore {
         Map<UUID, Optional<UUID>> ret = new LinkedHashMap<UUID, Optional<UUID>>();
         for (UUID uuid : forAggIds) {
 
-            String json = "{\"ns\":\"" + ns + "\",\"aggIds\":[\"" + uuid + "\"]}";
+            StringBuilder sb = new StringBuilder();
+            sb.append("{");
+            if (ns.isPresent())
+                sb.append("\"ns\":\"" + ns.get() + "\",");
+            sb.append("\"aggIds\":[\"" + uuid + "\"]}");
+
+            String json = sb.toString();
 
             try {
                 ret.put(uuid, jdbcTemplate.queryForObject(
@@ -240,7 +247,7 @@ public class PgFactStore extends AbstractFactStore {
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
-            Optional<StateToken> optionalToken) {
+            @NonNull Optional<StateToken> optionalToken) {
         try {
             lock.aquireExclusiveLock();
             return super.publishIfUnchanged(factsToPublish, optionalToken);

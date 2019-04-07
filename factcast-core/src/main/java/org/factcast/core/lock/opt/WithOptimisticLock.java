@@ -41,7 +41,6 @@ public class WithOptimisticLock {
     @NonNull
     final FactStore store;
 
-    @NonNull
     final String ns;
 
     @NonNull
@@ -62,7 +61,7 @@ public class WithOptimisticLock {
         while (++count <= retry) {
 
             // fetch current state
-            StateToken token = store.stateFor(ns, ids);
+            StateToken token = store.stateFor(ids, Optional.ofNullable(ns));
             try {
 
                 // execute the business logic

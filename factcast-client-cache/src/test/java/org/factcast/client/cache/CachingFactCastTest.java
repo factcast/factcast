@@ -15,7 +15,8 @@
  */
 package org.factcast.client.cache;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
@@ -210,5 +211,11 @@ public class CachingFactCastTest {
         assertSame(set, uut.enumerateTypes("foo"));
         verify(fc).enumerateTypes("foo");
 
+    }
+
+    @Test
+    public void testLockGlobally() throws Exception {
+        uut.lockGlobally();
+        verify(this.fc).lockGlobally();
     }
 }
