@@ -33,15 +33,16 @@ public abstract class AbstractFactStore implements FactStore {
 
     @Override
     public boolean publishIfUnchanged(
-            @NonNull List<? extends Fact> factsToPublish, Optional<StateToken> optionalToken) {
+            @NonNull List<? extends Fact> factsToPublish,
+            @NonNull Optional<StateToken> optionalToken) {
 
         if (optionalToken.isPresent()) {
             StateToken token = optionalToken.get();
             Optional<String> ns = tokenStore.getNs(token);
             Optional<Map<UUID, Optional<UUID>>> state = tokenStore.getState(token);
 
-            if (ns.isPresent() && state.isPresent()) {
-                if (isStateUnchanged(ns.get(), state.get())) {
+            if (state.isPresent()) {
+                if (isStateUnchanged(ns, state.get())) {
                     publish(factsToPublish);
                     tokenStore.invalidate(token);
                     return true;
@@ -64,13 +65,16 @@ public abstract class AbstractFactStore implements FactStore {
     }
 
     @Override
-    public final StateToken stateFor(@NonNull String ns, @NonNull Collection<UUID> forAggIds) {
+    public final StateToken stateFor(@NonNull Collection<UUID> forAggIds,
+            @NonNull Optional<String> ns) {
         Map<UUID, Optional<UUID>> state = getStateFor(ns, forAggIds);
-        return tokenStore.create(ns, state);
+        return tokenStore.create(state, ns);
     }
 
-    protected final boolean isStateUnchanged(String ns, Map<UUID, Optional<UUID>> snapshotState) {
-        Map<UUID, Optional<UUID>> currentState = getStateFor(ns, snapshotState.keySet());
+    protected final boolean isStateUnchanged(@NonNull Optional<String> ns,
+            @NonNull Map<UUID, Optional<UUID>> snapshotState) {
+        Map<UUID, Optional<UUID>> currentState = getStateFor(ns, snapshotState
+                .keySet());
 
         if (currentState.size() == snapshotState.size()) {
             for (UUID k : currentState.keySet()) {
@@ -94,6 +98,7 @@ public abstract class AbstractFactStore implements FactStore {
             return snap.equals(current);
     }
 
-    protected abstract Map<UUID, Optional<UUID>> getStateFor(String ns, Collection<UUID> forAggIds);
+    protected abstract Map<UUID, Optional<UUID>> getStateFor(@NonNull Optional<String> ns,
+            @NonNull Collection<UUID> forAggIds);
 
 }

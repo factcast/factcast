@@ -16,6 +16,7 @@
 package org.factcast.store.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.HashMap;
 import java.util.Optional;
@@ -44,7 +45,7 @@ public abstract class AbstractTokenStoreTest {
 
     @Test
     public void invalidateShouldRemoteToken() throws Exception {
-        StateToken token = uut.create("foo", new HashMap<UUID, Optional<UUID>>());
+        StateToken token = uut.create(new HashMap<UUID, Optional<UUID>>(), Optional.of("foo"));
         uut.invalidate(token);
         assertThat(uut.getNs(token)).isNotPresent();
         assertThat(uut.getState(token)).isNotPresent();
@@ -53,7 +54,7 @@ public abstract class AbstractTokenStoreTest {
 
     @Test
     public void tokenMustMaintainNamespace() throws Exception {
-        StateToken token = uut.create("123123", new HashMap<UUID, Optional<UUID>>());
+        StateToken token = uut.create(new HashMap<UUID, Optional<UUID>>(), Optional.of("123123"));
         assertThat(uut.getNs(token)).isPresent();
         assertThat(uut.getNs(token).get()).isEqualTo("123123");
 
@@ -61,7 +62,7 @@ public abstract class AbstractTokenStoreTest {
 
     @Test
     public void createShouldActuallyCreateARecord() throws Exception {
-        StateToken token = uut.create("foo", new HashMap<UUID, Optional<UUID>>());
+        StateToken token = uut.create(new HashMap<UUID, Optional<UUID>>(), Optional.of("foo"));
 
         assertThat(uut.getNs(token)).isPresent();
         assertThat(uut.getNs(token).get()).isEqualTo("foo");
@@ -81,6 +82,25 @@ public abstract class AbstractTokenStoreTest {
     @Test
     public void getNsShouldReturnAbsentForUnknownToken() throws Exception {
         assertThat(!uut.getNs(new StateToken(UUID.randomUUID())).isPresent());
+    }
+
+    @Test
+    public void testCreateNullContract() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.create(null, null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.create(null, Optional.of("foo"));
+        });
+
+        uut.create(new HashMap<>(), Optional.empty());
+    }
+
+    @Test
+    public void testInvalidateNullContract() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.invalidate(null);
+        });
     }
 
 }

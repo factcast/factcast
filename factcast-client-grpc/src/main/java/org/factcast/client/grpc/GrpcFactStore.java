@@ -334,8 +334,8 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     }
 
     @Override
-    public StateToken stateFor(@NonNull String ns, @NonNull Collection<UUID> forAggIds) {
-        StateForRequest req = new StateForRequest(Lists.newArrayList(forAggIds), ns);
+    public StateToken stateFor(@NonNull Collection<UUID> forAggIds, @NonNull Optional<String> ns) {
+        StateForRequest req = new StateForRequest(Lists.newArrayList(forAggIds), ns.orElse(null));
         MSG_StateForRequest msg = converter.toProto(req);
         try {
             MSG_UUID result = blockingStub.stateFor(msg);

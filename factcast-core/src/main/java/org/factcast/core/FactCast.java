@@ -73,5 +73,7 @@ public interface FactCast extends ReadFactCast {
         return Retry.wrap(this, maxAttempts, minimumWaitIntervalMillis);
     }
 
-    LockedOperationBuilder lock(String ns);
+    LockedOperationBuilder lock(@NonNull String ns);
+
+    LockedOperationBuilder lockGlobally();
 }

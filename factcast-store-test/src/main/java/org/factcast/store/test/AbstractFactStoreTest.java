@@ -924,6 +924,24 @@ public abstract class AbstractFactStoreTest {
     }
 
     @Test
+    void happyPathWithGlobalLock() throws Exception {
+
+        // setup
+        UUID agg1 = UUID.randomUUID();
+        UUID agg2 = UUID.randomUUID();
+        uut.publish(fact(agg1));
+
+        UUID ret = uut.lockGlobally().on(agg1, agg2).attempt(() -> {
+            return Attempt.publish(fact(agg1));
+        });
+
+        verify(store).publishIfUnchanged(any(), any());
+        assertThat(catchup()).hasSize(2);
+        assertThat(ret).isNotNull();
+
+    }
+
+    @Test
     void happyPathWithMoreThanOneAggregate() throws Exception {
 
         // setup
@@ -953,6 +971,41 @@ public abstract class AbstractFactStoreTest {
         CountDownLatch c = new CountDownLatch(8);
 
         UUID ret = uut.lock(NS).on(agg1, agg2).optimistic().retry(100).attempt(() -> {
+
+            if (c.getCount() > 0) {
+                c.countDown();
+
+                if (Math.random() < 0.5)
+                    uut.publish(fact(agg1));
+                else
+                    uut.publish(fact(agg2));
+
+            }
+
+            return Attempt.publish(fact(agg2));
+        });
+
+        assertThat(catchup()).hasSize(11); // 8 conflicting, 2 initial and 1
+                                           // from Attempt
+        assertThat(ret).isNotNull();
+
+        // publishing was properly blocked
+        assertThat(c.getCount()).isEqualTo(0);
+
+    }
+
+    @Test
+    void happyPathWithGlobalLockAndRetry() throws Exception {
+
+        // setup
+        UUID agg1 = UUID.randomUUID();
+        UUID agg2 = UUID.randomUUID();
+        uut.publish(fact(agg1));
+        uut.publish(fact(agg2));
+
+        CountDownLatch c = new CountDownLatch(8);
+
+        UUID ret = uut.lockGlobally().on(agg1, agg2).optimistic().retry(100).attempt(() -> {
 
             if (c.getCount() > 0) {
                 c.countDown();
