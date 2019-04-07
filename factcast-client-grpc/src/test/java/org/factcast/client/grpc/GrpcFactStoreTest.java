@@ -76,7 +76,6 @@ import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
-import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
 
 @ExtendWith(MockitoExtension.class)
 public class GrpcFactStoreTest {
@@ -244,7 +243,6 @@ public class GrpcFactStoreTest {
 
     @Test
     void testConstruction() {
-        expectNPE(() -> new GrpcFactStore((AddressChannelFactory) null));
         expectNPE(() -> new GrpcFactStore((Channel) null));
         expectNPE(() -> new GrpcFactStore(mock(RemoteFactStoreBlockingStub.class), null));
         expectNPE(() -> new GrpcFactStore(null, mock(RemoteFactStoreStub.class)));

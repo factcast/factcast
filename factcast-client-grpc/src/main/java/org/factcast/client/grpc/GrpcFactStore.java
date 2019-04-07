@@ -72,7 +72,7 @@ import io.grpc.stub.StreamObserver;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
+import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
@@ -101,7 +101,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     @Autowired
     @Generated
-    public GrpcFactStore(AddressChannelFactory channelFactory) {
+    public GrpcFactStore(GrpcChannelFactory channelFactory) {
         this(channelFactory.createChannel(CHANNEL_NAME));
     }
 
