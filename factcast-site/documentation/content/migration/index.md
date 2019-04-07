@@ -28,6 +28,29 @@ So the idea is: first update your servers, then update the clients.
 
 There will be a section on optimitic locking as a new api feature.
 
+#### GRPC Adresses, Hosts, Ports
+
+We updated to yidongnan/grpc-spring-boot-starter. In order to direct your client to a particular target address of a Factcast server, you might have specified:
+
+```
+grpc.client.factstore.port=9443
+grpc.client.factstore.host=localhost
+```
+
+this was replaced by
+
+```
+grpc.client.factstore.address=static://localhost:9443
+```
+
+or
+
+```
+grpc.client.factstore.address=dns:///some.host:9443
+```
+
+see https://github.com/yidongnan/grpc-spring-boot-starter for details
+
 
 ## Upgrading to 0.0.30
 
