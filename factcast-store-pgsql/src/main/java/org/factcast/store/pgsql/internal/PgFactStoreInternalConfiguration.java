@@ -27,12 +27,17 @@ import org.factcast.store.pgsql.internal.catchup.paged.PgPagedCatchUpFactory;
 import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
 import org.factcast.store.pgsql.internal.listen.PgConnectionTester;
 import org.factcast.store.pgsql.internal.listen.PgListener;
+import org.factcast.store.pgsql.internal.lock.AdvisoryWriteLock;
+import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.eventbus.AsyncEventBus;
@@ -46,6 +51,7 @@ import lombok.NonNull;
  * @author uwe.schaefer@mercateo.com
  */
 @Configuration
+@EnableTransactionManagement
 public class PgFactStoreInternalConfiguration {
 
     @Bean
@@ -67,8 +73,8 @@ public class PgFactStoreInternalConfiguration {
 
     @Bean
     public FactStore factStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
-            MetricRegistry registry) {
-        return new PgFactStore(jdbcTemplate, subscriptionFactory, registry);
+            MetricRegistry registry, PgTokenStore tokenStore, FactTableWriteLock lock) {
+        return new PgFactStore(jdbcTemplate, subscriptionFactory, registry, tokenStore, lock);
     }
 
     @Bean
@@ -104,5 +110,21 @@ public class PgFactStoreInternalConfiguration {
     @Bean
     public PgLatestSerialFetcher pgLatestSerialFetcher(JdbcTemplate jdbcTemplate) {
         return new PgLatestSerialFetcher(jdbcTemplate);
+    }
+
+    @Bean
+    public PgTokenStore pgTokenStore(JdbcTemplate jdbcTemplate) {
+        return new PgTokenStore(jdbcTemplate);
+    }
+
+    @Bean
+    public FactTableWriteLock factTableWriteLock(JdbcTemplate tpl) {
+        return new AdvisoryWriteLock(tpl);
+    }
+
+    @Bean
+
+    public PlatformTransactionManager txManager(DataSource ds) {
+        return new DataSourceTransactionManager(ds);
     }
 }

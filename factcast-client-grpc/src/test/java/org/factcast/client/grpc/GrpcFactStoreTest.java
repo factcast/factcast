@@ -15,10 +15,24 @@
  */
 package org.factcast.client.grpc;
 
-import static org.factcast.core.TestHelper.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.factcast.core.TestHelper.expectNPE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,11 +42,15 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 
+import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.store.RetryableException;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
@@ -43,7 +61,6 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
@@ -53,7 +70,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 
 import io.grpc.Channel;
@@ -243,14 +259,6 @@ public class GrpcFactStoreTest {
     }
 
     @Test
-    void testMatchingProtocolVersion() {
-        when(blockingStub.handshake(any()))
-                .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(1, 0, 0),
-                        new HashMap<>())));
-        uut.initialize();
-    }
-
-    @Test
     void testCompatibleProtocolVersion() {
         when(blockingStub.handshake(any()))
                 .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(1, 1, 0),
@@ -261,7 +269,7 @@ public class GrpcFactStoreTest {
     @Test
     void testIncompatibleProtocolVersion() {
         when(blockingStub.handshake(any()))
-                .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(2, 0, 0),
+                .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(99, 0, 0),
                         new HashMap<>())));
         Assertions.assertThrows(IncompatibleProtocolVersions.class, () -> {
             uut.initialize();
@@ -361,6 +369,122 @@ public class GrpcFactStoreTest {
         uut.configureCompression();
         verify(uut, never()).configureGZip();
         verify(uut).configureLZ4();
+
+    }
+
+    @Test
+    public void testInvalidate() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.invalidate(null);
+        });
+
+        {
+            UUID id = new UUID(0, 1);
+            StateToken token = new StateToken(id);
+            uut.invalidate(token);
+            verify(blockingStub).invalidate(eq(conv.toProto(id)));
+        }
+
+        {
+            when(blockingStub.invalidate(any())).thenThrow(
+                    new StatusRuntimeException(
+                            Status.UNAVAILABLE));
+
+            UUID id = new UUID(0, 1);
+            StateToken token = new StateToken(id);
+            try {
+                uut.invalidate(token);
+                fail();
+            } catch (RetryableException expected) {
+            }
+        }
+    }
+
+    @Test
+    public void testStateFor() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.stateFor(Lists.emptyList(), null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.stateFor(null, null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.stateFor(null, Optional.of("foo"));
+        });
+
+        {
+            UUID id = new UUID(0, 1);
+            StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
+            when(blockingStub.stateFor(any())).thenReturn(conv.toProto(id));
+
+            StateToken stateFor = uut.stateFor(Lists.emptyList(), Optional.of("foo"));
+            verify(blockingStub).stateFor(conv.toProto(req));
+        }
+
+        {
+            StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
+            when(blockingStub.stateFor(any())).thenThrow(
+                    new StatusRuntimeException(
+                            Status.UNAVAILABLE));
+            try {
+                uut.stateFor(Lists.emptyList(), Optional.of("foo"));
+                fail();
+            } catch (RetryableException expected) {
+            }
+        }
+    }
+
+    @Test
+    public void testPublishIfUnchanged() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.publishIfUnchanged(Lists.emptyList(), null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.publishIfUnchanged(null, null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.publishIfUnchanged(null, Optional.empty());
+        });
+
+        {
+            UUID id = new UUID(0, 1);
+            ConditionalPublishRequest req = new ConditionalPublishRequest(Lists.emptyList(), id);
+            when(blockingStub.publishConditional(any())).thenReturn(conv.toProto(true));
+
+            boolean publishIfUnchanged = uut.publishIfUnchanged(Lists.emptyList(), Optional.of(
+                    new StateToken(id)));
+            assertThat(publishIfUnchanged).isTrue();
+
+            verify(blockingStub).publishConditional(conv.toProto(req));
+        }
+
+        {
+            UUID id = new UUID(0, 1);
+            ConditionalPublishRequest req = new ConditionalPublishRequest(Lists.emptyList(), id);
+            when(blockingStub.publishConditional(any())).thenThrow(
+                    new StatusRuntimeException(
+                            Status.UNAVAILABLE));
+            try {
+                uut.publishIfUnchanged(Lists.emptyList(), Optional.of(
+                        new StateToken(id)));
+                fail();
+            } catch (RetryableException expected) {
+            }
+        }
+
+    }
+
+    @Test
+    public void testSubscribe() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribe(mock(SubscriptionRequestTO.class), null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribe(null, null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribe(null, mock(FactObserver.class));
+        });
 
     }
 }
