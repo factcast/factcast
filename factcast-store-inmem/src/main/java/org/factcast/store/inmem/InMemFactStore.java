@@ -15,7 +15,8 @@
  */
 package org.factcast.store.inmem;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,7 +45,7 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 
-import lombok.NonNull;
+import lombok.NonNull;import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -59,7 +60,11 @@ public class InMemFactStore extends AbstractFactStore {
     final AtomicLong highwaterMark = new AtomicLong(0);
 
     @VisibleForTesting
-    protected final Map<Long, Fact> store = new LinkedHashMap<>();
+    protected final Map<Long, Fact> store = Collections.synchronizedMap(new LinkedHashMap<>());
+
+    @VisibleForTesting
+    protected final Map<UUID, Long> factid2ser = Collections.synchronizedMap(new LinkedHashMap<>());
+
 
     final Set<UUID> ids = new HashSet<>();
 
@@ -79,20 +84,16 @@ public class InMemFactStore extends AbstractFactStore {
         this(Executors.newCachedThreadPool());
     }
 
-    @RequiredArgsConstructor
-    static class AfterPredicate implements Predicate<Fact> {
+    class AfterPredicate implements Predicate<Fact> {
+        final Long serAfter;
 
-        final UUID after;
-
-        boolean flipSwitch = false;
+        public AfterPredicate(UUID after) {
+            serAfter = InMemFactStore.this.factid2ser.getOrDefault(after, -1L);
+        }
 
         @Override
         public boolean test(Fact t) {
-            if (flipSwitch) {
-                return true;
-            }
-            flipSwitch = after.equals(t.id());
-            return false;
+            return t.serial() > serAfter;
         }
     }
 
@@ -163,6 +164,7 @@ public class InMemFactStore extends AbstractFactStore {
             long ser = highwaterMark.incrementAndGet();
             Fact inMemFact = new InMemFact(ser, f);
             store.put(ser, inMemFact);
+            factid2ser.put(inMemFact.id(), ser);
             ids.add(inMemFact.id());
             Optional.ofNullable(f.meta("unique_identifier")).ifPresent(uniqueIdentifiers::add);
             List<InMemFollower> subscribers = activeFollowers.stream()
@@ -173,7 +175,7 @@ public class InMemFactStore extends AbstractFactStore {
     }
 
     @Override
-    public synchronized Subscription subscribe(SubscriptionRequestTO request,
+    public Subscription subscribe(SubscriptionRequestTO request,
             FactObserver observer) {
         SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
         InMemFollower s = new InMemFollower(request, subscription);
@@ -185,7 +187,6 @@ public class InMemFactStore extends AbstractFactStore {
                 // here
                 doCatchUp(s, ser);
             }
-
             synchronized (InMemFactStore.this) {
                 if (!request.ephemeral()) {
                     // pick up the late ones
@@ -207,7 +208,7 @@ public class InMemFactStore extends AbstractFactStore {
     }
 
     private void doCatchUp(InMemFollower s, AtomicLong highwater) {
-        store.values()
+        new ArrayList<>(store.values())
                 .stream()
                 .filter(f -> f.serial() > highwater.get() && s.test(f))
                 .forEachOrdered(f -> {
