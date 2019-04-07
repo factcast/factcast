@@ -40,7 +40,7 @@ jobs:
 
       - run: 
           name: Validate formal standards
-          command: mvn formatter:validate license:check impsort:check
+          command: mvn spotless:check
 
 
       - run:

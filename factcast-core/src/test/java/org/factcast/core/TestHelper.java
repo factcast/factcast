@@ -17,8 +17,6 @@ package org.factcast.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.concurrent.Callable;
-
 import org.junit.jupiter.api.function.Executable;
 
 public class TestHelper {
