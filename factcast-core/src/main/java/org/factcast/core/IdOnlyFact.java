@@ -27,7 +27,7 @@ public final class IdOnlyFact implements Fact {
 
     @Getter
     @NonNull
-    private final UUID id;
+    final UUID id;
 
     @Override
     public String ns() {
