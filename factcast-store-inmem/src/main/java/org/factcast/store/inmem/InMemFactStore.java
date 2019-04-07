@@ -246,10 +246,11 @@ public class InMemFactStore extends AbstractFactStore {
                 .collect(Collectors.toSet());
     }
 
-    protected Optional<UUID> latestFactFor(String ns, UUID aggId) {
+    protected Optional<UUID> latestFactFor(String nsOrNull, UUID aggId) {
         Fact last = store.values()
                 .stream()
-                .filter(f -> f.ns().equals(ns) && f.aggIds().contains(aggId))
+                .filter(f -> (nsOrNull == null || f.ns().equals(nsOrNull))
+                        && f.aggIds().contains(aggId))
                 .reduce(null, (oldId, newId) -> newId);
         return Optional.ofNullable(last).map(Fact::id);
 

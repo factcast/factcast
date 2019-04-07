@@ -257,7 +257,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             StateForRequest req = converter.fromProto(request);
             // TODO ns is prepared to be optional as per request by the core
             // team. will be implemented in a different branch
-            StateToken token = store.stateFor(req.ns(), req.aggIds());
+            StateToken token = store.stateFor(req.aggIds(), req.ns());
             responseObserver.onNext(converter.toProto(token.uuid()));
             responseObserver.onCompleted();
         } catch (Throwable e) {
