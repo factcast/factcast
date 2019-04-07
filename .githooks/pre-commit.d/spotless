@@ -10,7 +10,14 @@ PREFIX="> pre-commit [$(basename $0)]\t\t"
 if [ "1" == "$SPOTLESS_AUTO_APPLY" ]; then
 
  echo -e "$PREFIX auto-applying spotless changes"
- mvn -q spotless:apply || ( echo -e "$PREFIX Spotless changed a few files. Make sure, you are ok with the outcome, before committing:" && git status && exit 1)
+ 
+ SPOTLESS_BEFORE=`git diff | md5sum `
+ mvn -q spotless:apply 
+ SPOTLESS_AFTER=`git diff | md5sum `
+ 
+ if [ "$SPOTLESS_BEFORE" != "$SPOTLESS_AFTER" ]; then
+   echo -e "$PREFIX Spotless changed a few files. Make sure, you are ok with the outcome, before committing:" && git status && exit 1
+ fi
 
 else
 
