@@ -27,7 +27,7 @@ function fallback()
 if [ "1" == "$SPOTLESS_AUTO_APPLY" ]; then
 
  if ! [ -x "$(command -v md5sum)" ] &&  ! [ -x "$(command -v md5)" ]; then
-    echo -e "$PREFIX auto-applying spotless changes requires either md5sum or md5 to be be installed." >&2
+    echo -e "$PREFIX auto-applying spotless changes requires either md5sum or md5 to be installed." >&2
     fallback
  fi
 
