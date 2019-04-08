@@ -18,13 +18,10 @@ package org.factcast.core.lock;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 
 import org.factcast.core.lock.LockedOperationBuilder.OnBuilderStep;
-import org.factcast.core.lock.opt.WithOptimisticLock;
 import org.factcast.core.store.FactStore;
 import org.junit.jupiter.api.Test;
 
@@ -37,11 +34,11 @@ public class LockedOperationBuilderTest {
 
         UUID id = UUID.randomUUID();
         OnBuilderStep on = uut.on(id);
-        assertThat(on.ids).hasSize(1).contains(id);
+        assertThat(on.ids()).hasSize(1).contains(id);
 
         UUID id2 = UUID.randomUUID();
         on = uut.on(id, id2);
-        assertThat(on.ids).hasSize(2).contains(id).contains(id2);
+        assertThat(on.ids()).hasSize(2).contains(id).contains(id2);
 
         assertThrows(NullPointerException.class, () -> {
             uut.on(null);
@@ -49,16 +46,13 @@ public class LockedOperationBuilderTest {
     }
 
     @Test
-    public void testAttempt() throws Exception {
-        OnBuilderStep on = mock(OnBuilderStep.class);
-        WithOptimisticLock wol = mock(WithOptimisticLock.class);
-        when(on.optimistic()).thenReturn(wol);
-        Attempt a = mock(Attempt.class);
-        when(on.attempt(a)).thenCallRealMethod();
-
-        on.attempt(a);
-
-        verify(wol).attempt(a);
+    public void testOptimistic() throws Exception {
+        UUID id = new UUID(1, 2);
+        WithOptimisticLock wol = uut.on(id).optimistic();
+        assertThat(wol).isNotNull();
+        assertThat(wol.ns()).isEqualTo("ns");
+        assertThat(wol.ids().get(0)).isEqualTo(id);
+        assertThat(wol.ids().size()).isEqualTo(1);
     }
 
 }
