@@ -696,6 +696,33 @@ public abstract class AbstractFactStoreTest {
     }
 
     @Test
+    protected void testInvalidateNullContract() {
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            store.invalidate(null);
+        });
+    }
+
+    @Test
+    protected void testPublishIfUnchangedNullContract() {
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            store.publishIfUnchanged(Lists.emptyList(), null);
+        });
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            store.publishIfUnchanged(null, Optional.empty());
+        });
+    }
+
+    @Test
+    protected void testStateForNullContract() {
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            store.stateFor(Lists.emptyList(), null);
+        });
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            store.stateFor(null, Optional.empty());
+        });
+    }
+
+    @Test
     protected void testEnumerateTypes() {
         uut.publish(Fact.builder().ns("ns1").type("t1").build("{}"));
         uut.publish(Fact.builder().ns("ns2").type("t2").build("{}"));
