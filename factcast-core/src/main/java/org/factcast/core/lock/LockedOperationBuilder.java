@@ -20,10 +20,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
-import org.factcast.core.lock.opt.WithOptimisticLock;
-import org.factcast.core.lock.opt.WithOptimisticLock.OptimisticRetriesExceededException;
+import org.factcast.core.lock.WithOptimisticLock.OptimisticRetriesExceededException;
 import org.factcast.core.store.FactStore;
 
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -34,21 +35,17 @@ public final class LockedOperationBuilder {
 
     final String ns;
 
-    public final OnBuilderStep on(@NonNull UUID aggId, UUID... otherAggIds) {
+    public OnBuilderStep on(@NonNull UUID aggId, UUID... otherAggIds) {
         LinkedList<UUID> ids = new LinkedList<>();
         ids.add(aggId);
-        if (otherAggIds != null)
-            ids.addAll(Arrays.asList(otherAggIds));
-
+        ids.addAll(Arrays.asList(otherAggIds));
         return new OnBuilderStep(ids);
     }
 
-    public final class OnBuilderStep {
-        protected final List<UUID> ids;
-
-        private OnBuilderStep(LinkedList<UUID> ids) {
-            this.ids = ids;
-        }
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    public class OnBuilderStep {
+        @Getter(value = AccessLevel.PROTECTED)
+        private final List<UUID> ids;
 
         public WithOptimisticLock optimistic() {
             return new WithOptimisticLock(store, ns, ids);
