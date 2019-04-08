@@ -16,6 +16,7 @@
 package org.factcast.store.pgsql.rds;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
@@ -68,6 +69,29 @@ public class RdsDataSourceFactoryBeanPostProcessorTest {
 
         assertThat(afterInit).isSameAs(instance);
         verify(instance).setDataSourceFactory(any());
+    }
+
+    @Test
+    public void testNullContracts() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            new RdsDataSourceFactoryBeanPostProcessor(null);
+        });
+
+        RdsDataSourceFactoryBeanPostProcessor uut = new RdsDataSourceFactoryBeanPostProcessor(mock(
+                Environment.class));
+        assertThrows(NullPointerException.class, () -> {
+            uut
+                    .postProcessBeforeInitialization(null, "foo");
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.postProcessBeforeInitialization(new Object(), null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.postProcessAfterInitialization(null, "foo");
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.postProcessAfterInitialization(new Object(), null);
+        });
     }
 
 }

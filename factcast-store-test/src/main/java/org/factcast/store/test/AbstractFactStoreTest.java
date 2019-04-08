@@ -50,7 +50,7 @@ import org.factcast.core.MarkFact;
 import org.factcast.core.lock.Attempt;
 import org.factcast.core.lock.AttemptAbortedException;
 import org.factcast.core.lock.ExceptionAfterPublish;
-import org.factcast.core.lock.opt.WithOptimisticLock.OptimisticRetriesExceededException;
+import org.factcast.core.lock.WithOptimisticLock.OptimisticRetriesExceededException;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;

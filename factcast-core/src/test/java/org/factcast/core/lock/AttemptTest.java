@@ -62,11 +62,11 @@ public class AttemptTest {
         IntermediatePublishResult r = Attempt.publish(f1, f2, f3);
         assertThat(r.factsToPublish().size()).isEqualTo(3);
     }
-
     @Test
     public void testPublishFact() throws Exception {
         Fact f1 = new TestFact();
         IntermediatePublishResult r = Attempt.publish(f1);
         assertThat(r.factsToPublish().size()).isEqualTo(1);
+        assertThat(r.factsToPublish().get(0)).isSameAs(f1);
     }
 }

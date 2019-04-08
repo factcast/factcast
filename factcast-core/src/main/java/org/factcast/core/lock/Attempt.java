@@ -49,8 +49,7 @@ public interface Attempt {
     static IntermediatePublishResult publish(@NonNull Fact f, Fact... other) {
         List<Fact> l = new LinkedList<>();
         l.add(f);
-        if (other != null)
-            l.addAll(Arrays.asList(other));
+        l.addAll(Arrays.asList(other));
         return publish(l);
     }
 

@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 public class RdsDataSourceFactoryBeanPostProcessor implements BeanPostProcessor {
-
+    @NonNull
     private final Environment env;
 
     @Override
