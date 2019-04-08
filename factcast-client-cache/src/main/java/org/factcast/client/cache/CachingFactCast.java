@@ -36,9 +36,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class CachingFactCast implements FactCast {
-
+    @NonNull
     final FactCast delegate;
 
+    @NonNull
     final CachingFactLookup lookup;
 
     @Override
