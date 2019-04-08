@@ -59,7 +59,10 @@ This code checks if an account with id *newAccountId* already exists, and if not
 
 ```
 
-You may probably guess what happens, remembering the above steps. Let's dive into details with a more complex scenario:
+You may probably guess what happens, remembering the above steps. Let's dive into details with a more complex scenario.
+
+##### a complete example
+
 The unavoidable imaginary example, of two BankAccounts and a money transfer between them:
 
 ```
@@ -103,11 +106,15 @@ The unavoidable imaginary example, of two BankAccounts and a money transfer betw
 
 ##### Explaination
 
-First, you tell factcast to record a state according to all events that have either *sourceAccountId* or *targetAccountId* in their list of aggIds and are on namespace *myBankNamespace*. While the namespace is not stricly necessary, it is encouraged to use it - but it depends on your decision on how to use namespaces and and group Facts within them.
+First, you tell factcast to record a state according to all events that have either *sourceAccountId* or *targetAccountId* in their list of aggIds and are on namespace *myBankNamespace*. While the namespace is not stricly necessary, it is encouraged to use it - but it depends on your decision on how to use namespaces and group Facts within them.
 
-The number of retries is set to *100* (default is ten, for many systems an acceptable default). In essence this means, that the attempt will be executed at max 100 times, before factcast gives up and throws an ***OptimisticRetriesExceededException*** which extends ConcurrentModificationException.
+The number of retries is set to *100* here (default is ten, which for many systems is an acceptable default). In essence this means, that the attempt will be executed at max 100 times, before factcast gives up and throws an ***OptimisticRetriesExceededException*** which extends ConcurrentModificationException.
 
-If *interval* is not set, it defaults to 0 with the effect, that the code passed into *attempt* is continously retried without a pause until it either *aborts*, succeeds, or the max number of retries was hit (see above).
+If *interval* is not set, it defaults to 0 with the effect, that the code passed into *attempt* is continously retried without any pause until it either *aborts*, succeeds, or the max number of retries was hit (see above).
+Setting it to *5* means, that before retrying, a 5millisecond wait happens. 
+
+{{< warning >}}<b>WARNING</b>: Setting interval to non-zero makes your code block a thread. The above combination of 100 retries with a 5 msec interval means, that at worst, you code could block <i>longer than half a second</i>.{{< /warning >}}
+
 
 Everything starts with passing a lambda to the *attempt* method. The Lambda is of type 
 ```
