@@ -7,9 +7,9 @@ creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 
 [menu.main]
-parent = "concept"
+parent = "usage"
 identifier = "optlocking"
-weight = 90
+weight = 9090
 +++
 
 ## Optimistic Locking
