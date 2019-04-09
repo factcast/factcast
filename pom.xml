@@ -168,7 +168,7 @@
             <trimTrailingWhitespace />
             <removeUnusedImports />
             <importOrder>
-              <order>java,javax,org,com,lombok</order>
+              <file>file://${formatter.config}/eclipse.importorder</file>
             </importOrder>
             <includes>
               <include>
