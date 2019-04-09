@@ -145,6 +145,14 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>net.revelc.code</groupId>
+        <artifactId>impsort-maven-plugin</artifactId>
+        <configuration>
+          <!-- disable impsort from parent (using spotless here) -->
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
         <version>${spotless.version}</version>
