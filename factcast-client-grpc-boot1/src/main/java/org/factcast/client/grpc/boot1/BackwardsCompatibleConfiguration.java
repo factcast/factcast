@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.client.grpc;
+package org.factcast.client.grpc.boot1;
 
 import java.util.List;
 
 import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.store.FactStore;
-import org.factcast.spring.boot.autoconfigure.store.inmem.InMemFactStoreAutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -28,22 +26,14 @@ import org.springframework.context.annotation.Configuration;
 
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
-import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
-
-/**
- * Provides a GrpcFactStore as a FactStore implementation.
- *
- * @author uwe.schaefer@mercateo.com
- */
+import net.devh.springboot.autoconfigure.grpc.client.GrpcChannelFactory;
 
 @Configuration
-@ConditionalOnClass({ GrpcFactStore.class, GrpcChannelFactory.class })
-@AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
-public class GrpcFactStoreAutoConfiguration {
+@ConditionalOnClass(net.devh.springboot.autoconfigure.grpc.client.GrpcChannelFactory.class)
+public class BackwardsCompatibleConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(FactStore.class)
-
     public FactStore factStore(GrpcChannelFactory af) {
         org.factcast.client.grpc.FactCastGrpcChannelFactory f = new org.factcast.client.grpc.FactCastGrpcChannelFactory() {
 
