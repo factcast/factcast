@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author <uwe.schaefer@mercateo.com>
  */
 @Slf4j
-class BlockingStreamObserver<T> implements StreamObserver<T> {
+public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
     static final int RETRY_COUNT = 60;
 

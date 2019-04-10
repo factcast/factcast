@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.0.35-SNAPSHOT</version>
+    <version>0.1.0-M2-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-example-client-spring-boot1</artifactId>
   <properties>
-    <spring-boot.version>2.1.3.RELEASE</spring-boot.version>
+    <spring-boot.version>2.1.4.RELEASE</spring-boot.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -45,24 +47,27 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
     </dependency>
-    <!--
-    only needed, if you want to use TLS
-    -->
-    <!--
-        <dependency>
-          <groupId>io.netty</groupId>
-          <artifactId>netty-tcnative-boringssl-static</artifactId>
-          <version>2.0.20.Final</version>
-        </dependency>
-    -->
-    <!--
-    if, for some reason, you want to stick to the "old" spring boot grpc lib,
-    see https://github.com/yidongnan/grpc-spring-boot-starter
-    -->
-    <!--<dependency>
-      <groupId>net.devh</groupId>
-      <artifactId>grpc-client-spring-boot-starter</artifactId>
-      <version>1.4.1.RELEASE</version>
-    </dependency>-->
+    <!-- only needed, if you want to use TLS -->
+    <!-- <dependency> <groupId>io.netty</groupId> <artifactId>netty-tcnative-boringssl-static</artifactId> 
+      <version>2.0.20.Final</version> </dependency> -->
+    <!-- if, for some reason, you want to stick to the "old" spring boot grpc 
+      lib, see https://github.com/yidongnan/grpc-spring-boot-starter -->
+    <!--<dependency> <groupId>net.devh</groupId> <artifactId>grpc-client-spring-boot-starter</artifactId> 
+      <version>1.4.1.RELEASE</version> </dependency> -->
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

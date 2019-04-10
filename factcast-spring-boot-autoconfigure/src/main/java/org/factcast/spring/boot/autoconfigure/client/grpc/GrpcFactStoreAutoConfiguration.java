@@ -24,7 +24,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
+import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 
 /**
  * Provides a GrpcFactStore as a FactStore implementation.
@@ -39,7 +39,7 @@ public class GrpcFactStoreAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(FactStore.class)
-    public FactStore factStore(AddressChannelFactory af) {
+    public FactStore factStore(GrpcChannelFactory af) {
         return new GrpcFactStore(af);
     }
 }
