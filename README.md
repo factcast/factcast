@@ -1,6 +1,6 @@
 # FactCast 
 
-#### is a 'good enough' event store using PostgreSQL for persistence, and offers REST and GRPC interfaces.
+#### is a 'good enough' event store using PostgreSQL for persistence, and offers remoting via GRPC.
 
 **This project is not yet ready for primetime**
 

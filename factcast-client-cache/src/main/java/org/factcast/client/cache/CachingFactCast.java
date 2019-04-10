@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.core.lock.LockedOperationBuilder;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -35,9 +36,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class CachingFactCast implements FactCast {
-
+    @NonNull
     final FactCast delegate;
 
+    @NonNull
     final CachingFactLookup lookup;
 
     @Override
@@ -97,5 +99,15 @@ public class CachingFactCast implements FactCast {
     @Override
     public Set<String> enumerateTypes(String ns) {
         return delegate.enumerateTypes(ns);
+    }
+
+    @Override
+    public LockedOperationBuilder lock(String ns) {
+        return delegate.lock(ns);
+    }
+
+    @Override
+    public LockedOperationBuilder lockGlobally() {
+        return delegate.lockGlobally();
     }
 }

@@ -23,7 +23,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 
 import org.factcast.core.Fact;
 

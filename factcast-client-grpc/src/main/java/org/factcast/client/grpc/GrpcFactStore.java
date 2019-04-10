@@ -17,6 +17,7 @@ package org.factcast.client.grpc;
 
 import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,21 +30,27 @@ import java.util.stream.Collectors;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.RetryableException;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.Capabilities;
+import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
@@ -55,16 +62,18 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
+
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
+import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
@@ -76,7 +85,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     static final String CHANNEL_NAME = "factstore";
 
-    static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 0, 0);
+    static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
 
     private RemoteFactStoreBlockingStub blockingStub;
 
@@ -93,7 +102,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     @Autowired
     @Generated
-    public GrpcFactStore(AddressChannelFactory channelFactory) {
+    public GrpcFactStore(GrpcChannelFactory channelFactory) {
         this(channelFactory.createChannel(CHANNEL_NAME));
     }
 
@@ -131,8 +140,10 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @Override
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
         log.trace("publishing {} facts to remote store", factsToPublish.size());
-        List<MSG_Fact> mf = factsToPublish.stream().map(converter::toProto).collect(Collectors
-                .toList());
+        List<MSG_Fact> mf = factsToPublish.stream()
+                .map(converter::toProto)
+                .collect(Collectors
+                        .toList());
         MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
         // blockingStub.getCallOptions().withCompression(compressor);
         try {
@@ -295,6 +306,43 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
             return new RetryableException(e);
         } else {
             return e;
+        }
+    }
+
+    @Override
+    public boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
+            @NonNull Optional<StateToken> token) {
+
+        ConditionalPublishRequest req = new ConditionalPublishRequest(factsToPublish, token.map(
+                StateToken::uuid).orElse(null));
+        MSG_ConditionalPublishRequest msg = converter.toProto(req);
+        try {
+            MSG_ConditionalPublishResult r = blockingStub.publishConditional(msg);
+            return r.getSuccess();
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+    }
+
+    @Override
+    public void invalidate(@NonNull StateToken token) {
+        MSG_UUID msg = converter.toProto(token.uuid());
+        try {
+            blockingStub.invalidate(msg);
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+    }
+
+    @Override
+    public StateToken stateFor(@NonNull Collection<UUID> forAggIds, @NonNull Optional<String> ns) {
+        StateForRequest req = new StateForRequest(Lists.newArrayList(forAggIds), ns.orElse(null));
+        MSG_StateForRequest msg = converter.toProto(req);
+        try {
+            MSG_UUID result = blockingStub.stateFor(msg);
+            return new StateToken(converter.fromProto(result));
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
         }
     }
 }

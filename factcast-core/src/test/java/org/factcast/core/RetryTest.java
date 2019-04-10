@@ -15,14 +15,14 @@
  */
 package org.factcast.core;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyListOf;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-
-import javax.sound.sampled.UnsupportedAudioFileException;
 
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.RetryableException;
@@ -30,8 +30,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import edu.umd.cs.findbugs.annotations.ExpectWarning;
 
 @ExtendWith(MockitoExtension.class)
 public class RetryTest {
@@ -43,7 +41,8 @@ public class RetryTest {
     void testHappyPath() throws Exception {
         // arrange
 
-        // Note: we intended the retryableException to be passed from store to factcast,
+        // Note: we intended the retryableException to be passed from store to
+        // factcast,
         // so we mock the store here
 
         doThrow(new RetryableException(new IllegalStateException()))//
@@ -72,10 +71,12 @@ public class RetryTest {
     @Test
     void testMaxRetries() throws Exception {
         int maxRetries = 3;
-        // as we literally "re"-try, we expect the original attempt plus maxRetries:
+        // as we literally "re"-try, we expect the original attempt plus
+        // maxRetries:
         int expectedPublishAttempts = maxRetries + 1;
-        doThrow(new RetryableException(new RuntimeException(""))).when(fs).publish(anyListOf(
-                Fact.class));
+        doThrow(new RetryableException(new RuntimeException(""))).when(fs)
+                .publish(anyListOf(
+                        Fact.class));
         FactCast uut = FactCast.from(fs).retry(maxRetries);
 
         assertThrows(MaxRetryAttemptsExceededException.class, () -> {
@@ -105,8 +106,9 @@ public class RetryTest {
     @Test
     void testThrowNonRetryableException() throws Exception {
         int maxRetries = 3;
-        doThrow(new UnsupportedOperationException("not retryable")).when(fs).publish(anyListOf(
-                Fact.class));
+        doThrow(new UnsupportedOperationException("not retryable")).when(fs)
+                .publish(anyListOf(
+                        Fact.class));
         FactCast uut = FactCast.from(fs).retry(maxRetries);
 
         assertThrows(UnsupportedOperationException.class, () -> {
