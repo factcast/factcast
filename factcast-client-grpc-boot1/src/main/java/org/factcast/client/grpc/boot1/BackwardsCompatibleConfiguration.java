@@ -17,6 +17,7 @@ package org.factcast.client.grpc.boot1;
 
 import java.util.List;
 
+import org.factcast.client.grpc.FactCastGrpcChannelFactory;
 import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.store.FactStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -29,13 +30,13 @@ import io.grpc.ClientInterceptor;
 import net.devh.springboot.autoconfigure.grpc.client.GrpcChannelFactory;
 
 @Configuration
-@ConditionalOnClass(net.devh.springboot.autoconfigure.grpc.client.GrpcChannelFactory.class)
+@ConditionalOnClass(GrpcChannelFactory.class)
 public class BackwardsCompatibleConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(FactStore.class)
     public FactStore factStore(GrpcChannelFactory af) {
-        org.factcast.client.grpc.FactCastGrpcChannelFactory f = new org.factcast.client.grpc.FactCastGrpcChannelFactory() {
+        FactCastGrpcChannelFactory f = new FactCastGrpcChannelFactory() {
 
             @Override
             public Channel createChannel(String name, List<ClientInterceptor> interceptors) {
