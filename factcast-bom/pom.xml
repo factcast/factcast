@@ -30,6 +30,11 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
+        <artifactId>factcast-client-grpc-boot1</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
         <artifactId>factcast-core</artifactId>
         <version>${project.version}</version>
       </dependency>

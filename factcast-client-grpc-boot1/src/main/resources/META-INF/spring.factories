@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+org.factcast.client.grpc.boot1.BackwardsCompatibleConfiguration\
