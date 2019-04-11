@@ -50,7 +50,7 @@ import org.factcast.core.MarkFact;
 import org.factcast.core.lock.Attempt;
 import org.factcast.core.lock.AttemptAbortedException;
 import org.factcast.core.lock.ExceptionAfterPublish;
-import org.factcast.core.lock.opt.WithOptimisticLock.OptimisticRetriesExceededException;
+import org.factcast.core.lock.WithOptimisticLock.OptimisticRetriesExceededException;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
@@ -692,6 +692,33 @@ public abstract class AbstractFactStoreTest {
     protected void testEnumerateTypesNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
             uut.enumerateTypes(null);
+        });
+    }
+
+    @Test
+    protected void testInvalidateNullContract() {
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            store.invalidate(null);
+        });
+    }
+
+    @Test
+    protected void testPublishIfUnchangedNullContract() {
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            store.publishIfUnchanged(Lists.emptyList(), null);
+        });
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            store.publishIfUnchanged(null, Optional.empty());
+        });
+    }
+
+    @Test
+    protected void testStateForNullContract() {
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            store.stateFor(Lists.emptyList(), null);
+        });
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            store.stateFor(null, Optional.empty());
         });
     }
 

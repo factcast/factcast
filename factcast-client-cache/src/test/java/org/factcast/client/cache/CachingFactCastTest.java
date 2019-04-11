@@ -218,4 +218,11 @@ public class CachingFactCastTest {
         uut.lockGlobally();
         verify(this.fc).lockGlobally();
     }
+
+    @Test
+    public void testLock() throws Exception {
+        String ns = "foo";
+        uut.lock(ns);
+        verify(this.fc).lock(ns);
+    }
 }
