@@ -11,7 +11,7 @@
   </parent>
   <artifactId>factcast-example-client-spring-boot1</artifactId>
   <properties>
-    <spring-boot.version>2.1.4.RELEASE</spring-boot.version>
+    <spring-boot.version>1.5.20.RELEASE</spring-boot.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -37,7 +37,7 @@
   <dependencies>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-client-grpc</artifactId>
+      <artifactId>factcast-client-grpc-boot1</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -47,13 +47,6 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
     </dependency>
-    <!-- only needed, if you want to use TLS -->
-    <!-- <dependency> <groupId>io.netty</groupId> <artifactId>netty-tcnative-boringssl-static</artifactId> 
-      <version>2.0.20.Final</version> </dependency> -->
-    <!-- if, for some reason, you want to stick to the "old" spring boot grpc 
-      lib, see https://github.com/yidongnan/grpc-spring-boot-starter -->
-    <!--<dependency> <groupId>net.devh</groupId> <artifactId>grpc-client-spring-boot-starter</artifactId> 
-      <version>1.4.1.RELEASE</version> </dependency> -->
   </dependencies>
   <build>
     <plugins>
