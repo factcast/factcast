@@ -224,4 +224,10 @@ public class FactTest {
         assertThat(f.ns()).isEqualTo("foo");
         assertThat(f.id()).isEqualTo(new UUID(0, 1));
     }
+    
+    @Test
+    public void testEmptyPayload() throws Exception {
+        assertThat(Fact.builder().build("").jsonPayload()).isEqualTo("{}");
+        assertThat(Fact.builder().build("   ").jsonPayload()).isEqualTo("{}");
+    }
 }
