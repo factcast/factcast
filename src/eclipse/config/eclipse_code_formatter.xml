@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <profiles version="12">
-  <profile kind="CodeFormatterProfile"
-    name="mercateo conventions (old eclipse java 100 zeichen  pro zeile)"
+  <profile kind="CodeFormatterProfile" name="FactCast"
     version="12">
     <setting
       id="org.eclipse.jdt.core.formatter.insert_space_after_ellipsis"

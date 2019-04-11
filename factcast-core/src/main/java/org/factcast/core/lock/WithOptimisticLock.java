@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.lock.opt;
+package org.factcast.core.lock;
 
 import java.util.ConcurrentModificationException;
 import java.util.List;
@@ -21,13 +21,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
-import org.factcast.core.lock.Attempt;
-import org.factcast.core.lock.AttemptAbortedException;
-import org.factcast.core.lock.ExceptionAfterPublish;
-import org.factcast.core.lock.IntermediatePublishResult;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -39,12 +36,15 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true, chain = true)
 public class WithOptimisticLock {
     @NonNull
-    final FactStore store;
+    @Getter(value = AccessLevel.PROTECTED)
+    private final FactStore store;
 
-    final String ns;
+    @Getter(value = AccessLevel.PROTECTED)
+    private final String ns;
 
     @NonNull
-    final List<UUID> ids;
+    @Getter(value = AccessLevel.PROTECTED)
+    private final List<UUID> ids;
 
     @Setter
     private int retry = 10;
