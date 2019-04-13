@@ -60,10 +60,12 @@ import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 
+import io.grpc.CallCredentials;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.Status.Code;
@@ -73,6 +75,7 @@ import io.grpc.stub.StreamObserver;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
@@ -101,22 +104,33 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     @Autowired
     @Generated
-    public GrpcFactStore(FactCastGrpcChannelFactory channelFactory) {
-        this(channelFactory.createChannel(CHANNEL_NAME));
+    public GrpcFactStore(FactCastGrpcChannelFactory channelFactory,
+            @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials) {
+        this(channelFactory.createChannel(CHANNEL_NAME), credentials);
     }
 
+    @Generated
     @VisibleForTesting
-    @lombok.Generated
-    GrpcFactStore(@NonNull Channel channel) {
-        this(RemoteFactStoreGrpc.newBlockingStub(channel), RemoteFactStoreGrpc.newStub(channel));
+    GrpcFactStore(Channel channel,
+            Optional<String> credentials) {
+        this(RemoteFactStoreGrpc.newBlockingStub(channel), RemoteFactStoreGrpc.newStub(channel),
+                credentials);
     }
 
-    @VisibleForTesting
-    @lombok.Generated
-    GrpcFactStore(@NonNull RemoteFactStoreBlockingStub newBlockingStub,
-            @NonNull RemoteFactStoreStub newStub) {
+    public GrpcFactStore(RemoteFactStoreBlockingStub newBlockingStub, RemoteFactStoreStub newStub,
+            Optional<String> credentials) {
         this.blockingStub = newBlockingStub;
         this.stub = newStub;
+
+        if (credentials.isPresent()) {
+            String[] sa = credentials.get().split(":");
+            if (sa.length != 2)
+                throw new IllegalArgumentException(
+                        "Credentials in 'grpc.client.factstore.credentials' have to be defined as 'username:password'");
+            CallCredentials basic = CallCredentialsHelper.basicAuth(sa[0], sa[1]);
+            blockingStub = blockingStub.withCallCredentials(basic);
+            stub = stub.withCallCredentials(basic);
+        }
     }
 
     @Override

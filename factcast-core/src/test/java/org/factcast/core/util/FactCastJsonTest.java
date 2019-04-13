@@ -69,8 +69,8 @@ public class FactCastJsonTest {
     @Test
     void testReadValueNull() {
         expectNPE(() -> FactCastJson.readValue(null, ""));
-        expectNPE(() -> FactCastJson.readValue(null, null));
-        expectNPE(() -> FactCastJson.readValue(FactCastJson.class, null));
+        expectNPE(() -> FactCastJson.readValue(null, (String)null));
+        expectNPE(() -> FactCastJson.readValue(FactCastJson.class, (String)null));
     }
 
     @Test
