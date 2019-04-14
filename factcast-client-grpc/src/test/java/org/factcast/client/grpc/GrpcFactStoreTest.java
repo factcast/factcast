@@ -43,12 +43,14 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.assertj.core.util.Lists;
+import org.assertj.core.util.Maps;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
@@ -354,8 +356,29 @@ public class GrpcFactStoreTest {
     }
 
     @Test
+    public void testConfigureCompressionGZIPDisabledWhenServerReturnsNullCapability()
+            throws Exception {
+        uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.name(), null));
+        assertFalse(uut.configureGZip());
+    }
+
+    @Test
+    public void testConfigureCompressionGZIPDisabledWhenServerReturnsFalseCapability()
+            throws Exception {
+        uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.name(), "false"));
+        assertFalse(uut.configureGZip());
+    }
+
+    @Test
+    public void testConfigureCompressionGZIPEnabledWhenServerReturnsCapability() throws Exception {
+        uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.name(), "true"));
+        assertTrue(uut.configureGZip());
+    }
+
+    @Test
     public void testConfigureCompressionGZIP() throws Exception {
         uut = spy(uut);
+        uut.serverProperties(new HashMap<>());
         uut.configureCompression();
         verify(uut).configureGZip();
     }
