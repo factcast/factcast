@@ -96,7 +96,6 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private final ProtoConverter converter = new ProtoConverter();
 
-    @SuppressWarnings("FieldCanBeLocal")
     private ProtocolVersion serverProtocolVersion;
 
     @Setter(value = AccessLevel.PACKAGE)
@@ -229,49 +228,33 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     @VisibleForTesting
     void configureCompression() {
-        if (!configureLZ4())
-            configureGZip();
+        log.info("serverporps: " + serverProperties);
+        if (!configureCompression(Capabilities.CODEC_LZ4))
+            configureCompression(Capabilities.CODEC_GZIP);
     }
 
-    @SuppressWarnings("UnusedReturnValue")
     @VisibleForTesting
-    boolean configureGZip() {
-        String serverGzipProperty = serverProperties.get(
-                Capabilities.CODEC_GZIP.name());
-        boolean serverHasGZIPCapability = serverGzipProperty != null && Boolean.valueOf(
-                serverGzipProperty);
-        Compressor gzip = CompressorRegistry.getDefaultInstance().lookupCompressor("gzip");
+    boolean configureCompression(Capabilities c) {
+        String key = c.toString();
+        String serverProperty = serverProperties.getOrDefault(
+                key, Boolean.FALSE.toString());
+        boolean serverHasCapability = Boolean.valueOf(serverProperty);
+        Compressor localCompessor = CompressorRegistry.getDefaultInstance().lookupCompressor(
+                codecName(c));
 
-        if (serverHasGZIPCapability && gzip != null) {
-            log.info("configuring GZip");
-            String encoding = gzip.getMessageEncoding();
+        if (serverHasCapability && localCompessor != null) {
+            String encoding = localCompessor.getMessageEncoding();
+            log.info("configuring Codec " + encoding);
             this.blockingStub = blockingStub.withCompression(encoding);
             this.stub = stub.withCompression(encoding);
             return true;
-        } else
+        } else {
             return false;
+        }
     }
 
-    @VisibleForTesting
-    boolean configureLZ4() {
-        // TODO this was temporarily disabled, due to
-        // https://github.com/Mercateo/factcast/issues/234
-        //
-        // TODO when reenabling this code, make sure to throw
-        // RetryableException on caught RuntimeStatusException around remote
-        // call
-        /*
-         * Compressor lz4Compressor =
-         * CompressorRegistry.getDefaultInstance().lookupCompressor("lz4"); boolean
-         * localLz4 = lz4Compressor != null; boolean remoteLz4 =
-         * Boolean.valueOf(serverProperties.get(Capabilities.CODEC_LZ4 .toString())); if
-         * (localLz4 && remoteLz4) {
-         * log.info("LZ4 Codec available on client and server - configuring LZ4" );
-         * String encoding = lz4Compressor.getMessageEncoding(); // this.blockingStub =
-         * blockingStub.withCompression(encoding); // this.stub =
-         * stub.withCompression(encoding); return true; } else
-         */
-        return false;
+    private String codecName(Capabilities c) {
+        return c.name().toLowerCase().substring(c.name().indexOf("_") + 1);
     }
 
     @Override

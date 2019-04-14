@@ -26,4 +26,9 @@ public class FactCastGrpcServerConfiguration {
     public FactStoreGrpcService factStoreGrpcService(FactStore store) {
         return new FactStoreGrpcService(store);
     }
+
+    @Bean
+    public Lz4GrpcServerCodec lz4Codec() {
+        return new Lz4GrpcServerCodec();
+    }
 }

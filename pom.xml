@@ -17,7 +17,8 @@
     <url>http://www.mercateo.com</url>
   </organization>
   <name>factcast</name>
-  <description>factcast is a 'good enough' event store using PostgreSQL for persistence, and offers REST and GRPC
+  <description>factcast is a 'good enough' event store using PostgreSQL
+    for persistence, and offers REST and GRPC
     interfaces.
   </description>
   <inceptionYear>2018</inceptionYear>
