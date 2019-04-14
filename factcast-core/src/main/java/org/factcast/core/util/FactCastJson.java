@@ -72,7 +72,7 @@ public final class FactCastJson {
     }
 
     @SneakyThrows
-    public static <T> T readValue(@NonNull Class<T> class1, InputStream json) {
+    public static <T> T readValue(@NonNull Class<T> class1, @NonNull InputStream json) {
         return reader.forType(class1).readValue(json);
     }
 
