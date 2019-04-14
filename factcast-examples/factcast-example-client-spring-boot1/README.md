@@ -1,3 +1,3 @@
 ### factcast-example-client-spring-boot1
 
-WIP
+example of how to use factcast-client-grpc with spring boot1
