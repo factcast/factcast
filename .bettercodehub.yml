@@ -1,0 +1,8 @@
+languages:
+- java
+
+- name: java
+  production:
+    exclude:
+      - .*Test*\.java
+      - .*/src/test/.*
