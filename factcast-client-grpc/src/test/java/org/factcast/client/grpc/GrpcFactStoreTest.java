@@ -72,6 +72,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.google.common.collect.Sets;
 
+import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -90,7 +91,7 @@ public class GrpcFactStoreTest {
 
     @Mock
     private FactCastGrpcChannelFactory factory;
-    
+
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private SubscriptionRequestTO req;
 
@@ -101,7 +102,7 @@ public class GrpcFactStoreTest {
 
     @Mock
     public Optional<String> credentials;
-    
+
     @Test
     void testFetchByIdNotFound() {
         UUID id = UUID.randomUUID();
@@ -246,13 +247,15 @@ public class GrpcFactStoreTest {
 
     }
 
-//    @Test
-//    void testConstruction() {
-//        expectNPE(() -> new GrpcFactStore((Channel) null));
-//        expectNPE(() -> new GrpcFactStore(mock(RemoteFactStoreBlockingStub.class), null));
-//        expectNPE(() -> new GrpcFactStore(null, mock(RemoteFactStoreStub.class)));
-//        expectNPE(() -> new GrpcFactStore(null, null));
-//    }
+    // @Test
+    // void testConstruction() {
+    // expectNPE(() -> new GrpcFactStore((Channel) null));
+    // expectNPE(() -> new
+    // GrpcFactStore(mock(RemoteFactStoreBlockingStub.class), null));
+    // expectNPE(() -> new GrpcFactStore(null,
+    // mock(RemoteFactStoreStub.class)));
+    // expectNPE(() -> new GrpcFactStore(null, null));
+    // }
 
     @Test
     void testSubscribeNull() {
@@ -489,5 +492,26 @@ public class GrpcFactStoreTest {
             uut.subscribe(null, mock(FactObserver.class));
         });
 
+    }
+
+    @Test
+    public void testCredentialsWrongFormat() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> {
+            new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz"));
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new GrpcFactStore(mock(Channel.class), Optional.ofNullable("x:y:z"));
+        });
+
+        assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
+                .isNotNull();
+
+    }
+
+    @Test
+    public void testCredentialsRightFormat() throws Exception {
+        assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
+                .isNotNull();
     }
 }
