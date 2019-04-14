@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.InputStream;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -71,6 +73,8 @@ public class FactCastJsonTest {
         expectNPE(() -> FactCastJson.readValue(null, ""));
         expectNPE(() -> FactCastJson.readValue(null, (String)null));
         expectNPE(() -> FactCastJson.readValue(FactCastJson.class, (String)null));
+        expectNPE(() -> FactCastJson.readValue(null, (InputStream)null));
+        expectNPE(() -> FactCastJson.readValue(FactCastJson.class, (InputStream)null));
     }
 
     @Test
