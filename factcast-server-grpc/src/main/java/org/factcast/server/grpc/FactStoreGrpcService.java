@@ -89,6 +89,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     public void fetchById(MSG_UUID request,
             StreamObserver<MSG_OptionalFact> responseObserver) {
         try {
+            enableResponseCompression(responseObserver);
+
             UUID fromProto = converter.fromProto(request);
             log.trace("fetchById {}", fromProto);
             Optional<Fact> fetchById = store.fetchById(fromProto);
@@ -128,6 +130,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     @Override
     public void subscribe(MSG_SubscriptionRequest request,
             StreamObserver<MSG_Notification> responseObserver) {
+        enableResponseCompression(responseObserver);
+
         SubscriptionRequestTO req = converter.fromProto(request);
         resetDebugInfo(req);
         BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(req.toString(),
@@ -135,6 +139,11 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         final boolean idOnly = req.idOnly();
         store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp, f -> idOnly ? converter
                 .createNotificationFor(f.id()) : converter.createNotificationFor(f)));
+    }
+
+    private void enableResponseCompression(StreamObserver<?> responseObserver) {
+        ServerCallStreamObserver<?> obs = (ServerCallStreamObserver<?>) responseObserver;
+        obs.setMessageCompression(true);
     }
 
     @Override
@@ -232,6 +241,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     @Override
     public void enumerateTypes(MSG_String request,
             StreamObserver<MSG_StringSet> responseObserver) {
+
+        enableResponseCompression(responseObserver);
+
         try {
             Set<String> types = store.enumerateTypes(converter.fromProto(
                     request));
