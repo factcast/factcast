@@ -60,7 +60,6 @@ import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
 import lombok.Generated;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
@@ -87,7 +86,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     static final AtomicLong subscriptionIdStore = new AtomicLong();
 
     @Override
-    public void fetchById(@NonNull MSG_UUID request,
+    public void fetchById(MSG_UUID request,
             StreamObserver<MSG_OptionalFact> responseObserver) {
         try {
             UUID fromProto = converter.fromProto(request);
@@ -104,7 +103,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void publish(@NonNull MSG_Facts request,
+    public void publish(MSG_Facts request,
             StreamObserver<MSG_Empty> responseObserver) {
         List<Fact> facts = request.getFactList()
                 .stream()
@@ -127,7 +126,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void subscribe(@NonNull MSG_SubscriptionRequest request,
+    public void subscribe(MSG_SubscriptionRequest request,
             StreamObserver<MSG_Notification> responseObserver) {
         SubscriptionRequestTO req = converter.fromProto(request);
         resetDebugInfo(req);
@@ -139,7 +138,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void handshake(@NonNull MSG_Empty request,
+    public void handshake(MSG_Empty request,
             StreamObserver<MSG_ServerConfig> responseObserver) {
         ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
         responseObserver.onNext(converter.toProto(cfg));
@@ -232,7 +231,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void enumerateTypes(@NonNull MSG_String request,
+    public void enumerateTypes(MSG_String request,
             StreamObserver<MSG_StringSet> responseObserver) {
         try {
             Set<String> types = store.enumerateTypes(converter.fromProto(
