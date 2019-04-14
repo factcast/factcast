@@ -72,8 +72,10 @@ import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 
+import lombok.AccessLevel;
 import lombok.Generated;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -97,6 +99,8 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @SuppressWarnings("FieldCanBeLocal")
     private ProtocolVersion serverProtocolVersion;
 
+    @Setter(value = AccessLevel.PACKAGE)
+    @VisibleForTesting
     private Map<String, String> serverProperties;
 
     private final AtomicBoolean initialized = new AtomicBoolean(false);
@@ -232,8 +236,13 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @SuppressWarnings("UnusedReturnValue")
     @VisibleForTesting
     boolean configureGZip() {
+        String serverGzipProperty = serverProperties.get(
+                Capabilities.CODEC_GZIP.name());
+        boolean serverHasGZIPCapability = serverGzipProperty != null && Boolean.valueOf(
+                serverGzipProperty);
         Compressor gzip = CompressorRegistry.getDefaultInstance().lookupCompressor("gzip");
-        if (gzip != null) {
+
+        if (serverHasGZIPCapability && gzip != null) {
             log.info("configuring GZip");
             String encoding = gzip.getMessageEncoding();
             this.blockingStub = blockingStub.withCompression(encoding);
