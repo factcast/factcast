@@ -1,8 +1,5 @@
+component_depth: 2
 languages:
 - java
-
-- name: java
-  production:
-    exclude:
-      - .*Test*\.java
-      - .*/src/test/.*
+exclude:
+- .*/src/test/.*
