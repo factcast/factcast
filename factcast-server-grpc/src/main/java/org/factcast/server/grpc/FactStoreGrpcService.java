@@ -55,6 +55,7 @@ import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import io.grpc.CompressorRegistry;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
@@ -148,6 +149,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     private Map<String, String> collectProperties() {
         HashMap<String, String> properties = new HashMap<>();
         evaluateLZ4Availability(properties);
+        evaluateGZIPAvailability(properties);
         retrieveImplementationVersion(properties);
         log.info("Handshake properties: {} ", properties);
         return properties;
@@ -184,6 +186,12 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     private void evaluateLZ4Availability(HashMap<String, String> properties) {
         String lz4_available = String.valueOf(isClassAvailable("net.jpountz.lz4.LZ4Constants"));
         properties.put(Capabilities.CODEC_LZ4.toString(), lz4_available);
+    }
+
+    private void evaluateGZIPAvailability(HashMap<String, String> properties) {
+        Boolean isAvailable = CompressorRegistry.getDefaultInstance()
+                .lookupCompressor("gzip") != null;
+        properties.put(Capabilities.CODEC_GZIP.toString(), isAvailable.toString());
     }
 
     @Generated
