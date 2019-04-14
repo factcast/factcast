@@ -18,6 +18,7 @@ package org.factcast.spring.boot.autoconfigure.client.grpc;
 import java.util.List;
 
 import org.factcast.client.grpc.GrpcFactStore;
+import org.factcast.client.grpc.Lz4GrpcClientCodec;
 import org.factcast.core.store.FactStore;
 import org.factcast.spring.boot.autoconfigure.store.inmem.InMemFactStoreAutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -43,7 +44,6 @@ public class GrpcFactStoreAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(FactStore.class)
-
     public FactStore factStore(GrpcChannelFactory af) {
         org.factcast.client.grpc.FactCastGrpcChannelFactory f = new org.factcast.client.grpc.FactCastGrpcChannelFactory() {
 
@@ -63,5 +63,10 @@ public class GrpcFactStoreAutoConfiguration {
             }
         };
         return new GrpcFactStore(f);
+    }
+
+    @Bean
+    public Lz4GrpcClientCodec lz4Codec() {
+        return new Lz4GrpcClientCodec();
     }
 }

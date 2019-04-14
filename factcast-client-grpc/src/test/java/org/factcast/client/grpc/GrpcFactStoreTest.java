@@ -359,20 +359,20 @@ public class GrpcFactStoreTest {
     public void testConfigureCompressionGZIPDisabledWhenServerReturnsNullCapability()
             throws Exception {
         uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.name(), null));
-        assertFalse(uut.configureGZip());
+        assertFalse(uut.configureCompression(Capabilities.CODEC_GZIP));
     }
 
     @Test
     public void testConfigureCompressionGZIPDisabledWhenServerReturnsFalseCapability()
             throws Exception {
         uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.name(), "false"));
-        assertFalse(uut.configureGZip());
+        assertFalse(uut.configureCompression(Capabilities.CODEC_GZIP));
     }
 
     @Test
     public void testConfigureCompressionGZIPEnabledWhenServerReturnsCapability() throws Exception {
         uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.name(), "true"));
-        assertTrue(uut.configureGZip());
+        assertTrue(uut.configureCompression(Capabilities.CODEC_GZIP));
     }
 
     @Test
@@ -380,17 +380,16 @@ public class GrpcFactStoreTest {
         uut = spy(uut);
         uut.serverProperties(new HashMap<>());
         uut.configureCompression();
-        verify(uut).configureGZip();
+        verify(uut).configureCompression(Capabilities.CODEC_GZIP);
     }
 
     @Test
     public void testConfigureCompressionLZ4() throws Exception {
         uut = spy(uut);
-        when(uut.configureLZ4()).thenReturn(true);
+        uut.serverProperties(new HashMap<>());
+        when(uut.configureCompression(Capabilities.CODEC_LZ4)).thenReturn(true);
         uut.configureCompression();
-        verify(uut, never()).configureGZip();
-        verify(uut).configureLZ4();
-
+        verify(uut, never()).configureCompression(Capabilities.CODEC_GZIP);
     }
 
     @Test
