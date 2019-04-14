@@ -15,7 +15,7 @@
  */
 package org.factcast.client.grpc;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
@@ -90,6 +90,12 @@ public class ClientStreamObserverTest {
     void testOnCatchup() {
         uut.onNext(converter.createCatchupNotification());
         verify(factObserver).onCatchup();
+    }
+
+    @Test
+    void testFailOnUnknownType() {
+            uut.onNext(MSG_Notification.newBuilder().setTypeValue(999).build());
+            verify(subscription).notifyError(any(RuntimeException.class));
     }
 
     @Test
