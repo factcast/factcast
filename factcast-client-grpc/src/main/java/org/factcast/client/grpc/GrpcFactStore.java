@@ -66,6 +66,8 @@ import com.google.common.collect.Lists;
 
 import io.grpc.Channel;
 import io.grpc.ClientCall;
+import io.grpc.Compressor;
+import io.grpc.CompressorRegistry;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -144,7 +146,6 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
                 .collect(Collectors
                         .toList());
         MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
-        // blockingStub.getCallOptions().withCompression(compressor);
         try {
             blockingStub.publish(mfs);
         } catch (StatusRuntimeException e) {
@@ -231,21 +232,15 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @SuppressWarnings("UnusedReturnValue")
     @VisibleForTesting
     boolean configureGZip() {
-        // TODO this was temporarily disabled, due to
-        // https://github.com/Mercateo/factcast/issues/234
-        //
-        // TODO when reenabling this code, make sure to throw
-        // RetryableException on caught RuntimeStatusException around remote
-        // call
-        /*
-         * Compressor gzip =
-         * CompressorRegistry.getDefaultInstance().lookupCompressor("gzip"); if (gzip !=
-         * null) { log.info("configuring GZip"); String encoding =
-         * gzip.getMessageEncoding(); this.blockingStub =
-         * blockingStub.withCompression(encoding); this.stub =
-         * stub.withCompression(encoding); return true; } else
-         */
-        return false;
+        Compressor gzip = CompressorRegistry.getDefaultInstance().lookupCompressor("gzip");
+        if (gzip != null) {
+            log.info("configuring GZip");
+            String encoding = gzip.getMessageEncoding();
+            this.blockingStub = blockingStub.withCompression(encoding);
+            this.stub = stub.withCompression(encoding);
+            return true;
+        } else
+            return false;
     }
 
     @VisibleForTesting
@@ -316,6 +311,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
                 StateToken::uuid).orElse(null));
         MSG_ConditionalPublishRequest msg = converter.toProto(req);
         try {
+
             MSG_ConditionalPublishResult r = blockingStub.publishConditional(msg);
             return r.getSuccess();
         } catch (StatusRuntimeException e) {
