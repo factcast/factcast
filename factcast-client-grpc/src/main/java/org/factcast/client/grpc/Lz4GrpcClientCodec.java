@@ -34,13 +34,11 @@ public class Lz4GrpcClientCodec implements Codec {
 
     @Override
     public InputStream decompress(InputStream inputStream) {
-        System.err.println("using lz4 to decompress");
         return new LZ4BlockInputStream(inputStream);
     }
 
     @Override
     public OutputStream compress(OutputStream outputStream) {
-        System.err.println("using lz4 to compress");
         return new LZ4BlockOutputStream(outputStream);
     }
 }
