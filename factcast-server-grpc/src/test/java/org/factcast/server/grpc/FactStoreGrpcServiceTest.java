@@ -131,13 +131,6 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    void testFetchByIdNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.fetchById(null, mock(StreamObserver.class));
-        });
-    }
-
-    @Test
     void testFetchById() {
         UUID id = UUID.randomUUID();
         uut.fetchById(conv.toProto(id), mock(ServerCallStreamObserver.class));
@@ -224,10 +217,6 @@ public class FactStoreGrpcServiceTest {
     public void testEnumerateTypes() throws Exception {
         uut = new FactStoreGrpcService(backend);
         StreamObserver so = mock(StreamObserver.class);
-
-        assertThrows(NullPointerException.class, () -> {
-            uut.enumerateTypes(null, so);
-        });
 
         when(backend.enumerateTypes(eq("ns"))).thenReturn(Sets.newHashSet("foo", "bar"));
 
@@ -417,4 +406,5 @@ public class FactStoreGrpcServiceTest {
             verifyNoMoreInteractions(o);
         }
     }
+
 }
