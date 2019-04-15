@@ -228,7 +228,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     @VisibleForTesting
     void configureCompression() {
-        log.info("serverporps: " + serverProperties);
+        // TODO extract
         if (!configureCompression(Capabilities.CODEC_LZ4))
             configureCompression(Capabilities.CODEC_GZIP);
     }
@@ -239,8 +239,9 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
         String serverProperty = serverProperties.getOrDefault(
                 key, Boolean.FALSE.toString());
         boolean serverHasCapability = Boolean.valueOf(serverProperty);
-        Compressor localCompessor = CompressorRegistry.getDefaultInstance().lookupCompressor(
-                codecName(c));
+        Compressor localCompessor = CompressorRegistry.getDefaultInstance()
+                .lookupCompressor(
+                        codecName(c));
 
         if (serverHasCapability && localCompessor != null) {
             String encoding = localCompessor.getMessageEncoding();

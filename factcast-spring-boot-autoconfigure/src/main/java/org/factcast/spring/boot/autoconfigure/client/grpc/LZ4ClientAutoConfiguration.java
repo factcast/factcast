@@ -15,20 +15,16 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import java.util.List;
-
 import org.factcast.client.grpc.GrpcFactStore;
-import org.factcast.core.store.FactStore;
+import org.factcast.client.grpc.Lz4GrpcClientCodec;
 import org.factcast.spring.boot.autoconfigure.store.inmem.InMemFactStoreAutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import io.grpc.Channel;
-import io.grpc.ClientInterceptor;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
+import net.jpountz.lz4.LZ4Compressor;
 
 /**
  * Provides a GrpcFactStore as a FactStore implementation.
@@ -37,31 +33,13 @@ import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
  */
 
 @Configuration
-@ConditionalOnClass({ GrpcFactStore.class, GrpcChannelFactory.class })
+@ConditionalOnClass({ LZ4Compressor.class, Lz4GrpcClientCodec.class, GrpcFactStore.class,
+        GrpcChannelFactory.class })
 @AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
-public class GrpcFactStoreAutoConfiguration {
+public class LZ4ClientAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean(FactStore.class)
-    public FactStore factStore(GrpcChannelFactory af) {
-        org.factcast.client.grpc.FactCastGrpcChannelFactory f = new org.factcast.client.grpc.FactCastGrpcChannelFactory() {
-
-            @Override
-            public Channel createChannel(String name, List<ClientInterceptor> interceptors) {
-                return af.createChannel(name, interceptors);
-            }
-
-            @Override
-            public Channel createChannel(String name) {
-                return af.createChannel(name);
-            }
-
-            @Override
-            public void close() throws Exception {
-                af.close();
-            }
-        };
-        return new GrpcFactStore(f);
+    public Lz4GrpcClientCodec lz4Codec() {
+        return new Lz4GrpcClientCodec();
     }
-
 }

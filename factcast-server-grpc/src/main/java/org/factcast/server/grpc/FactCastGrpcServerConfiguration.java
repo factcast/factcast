@@ -28,11 +28,6 @@ public class FactCastGrpcServerConfiguration {
     }
 
     @Bean
-    public Lz4GrpcServerCodec lz4Codec() {
-        return new Lz4GrpcServerCodec();
-    }
-
-    @Bean
     public GrpcCompressionInterceptor grpcCompressionInterceptor() {
         return new GrpcCompressionInterceptor();
     }
