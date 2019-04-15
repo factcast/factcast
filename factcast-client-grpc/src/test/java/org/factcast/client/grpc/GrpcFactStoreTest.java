@@ -358,20 +358,20 @@ public class GrpcFactStoreTest {
     @Test
     public void testConfigureCompressionGZIPDisabledWhenServerReturnsNullCapability()
             throws Exception {
-        uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.name(), null));
+        uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.toString(), null));
         assertFalse(uut.configureCompression(Capabilities.CODEC_GZIP));
     }
 
     @Test
     public void testConfigureCompressionGZIPDisabledWhenServerReturnsFalseCapability()
             throws Exception {
-        uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.name(), "false"));
+        uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.toString(), "false"));
         assertFalse(uut.configureCompression(Capabilities.CODEC_GZIP));
     }
 
     @Test
     public void testConfigureCompressionGZIPEnabledWhenServerReturnsCapability() throws Exception {
-        uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.name(), "true"));
+        uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.toString(), "true"));
         assertTrue(uut.configureCompression(Capabilities.CODEC_GZIP));
     }
 
