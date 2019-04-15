@@ -142,8 +142,11 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     private void enableResponseCompression(StreamObserver<?> responseObserver) {
-        ServerCallStreamObserver<?> obs = (ServerCallStreamObserver<?>) responseObserver;
-        obs.setMessageCompression(true);
+        // need to be defensive not to break tests passing mocks here.
+        if (responseObserver instanceof ServerCallStreamObserver) {
+            ServerCallStreamObserver obs = (ServerCallStreamObserver) responseObserver;
+            obs.setMessageCompression(true);
+        }
     }
 
     @Override
