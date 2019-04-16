@@ -28,7 +28,7 @@ public class GrpcCompressionInterceptor implements ServerInterceptor {
     @Override
     public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
             Metadata headers, ServerCallHandler<ReqT, RespT> next) {
-        io.grpc.Metadata.Key<String> key = Metadata.Key.of("grpc-accept-encoding",
+        Metadata.Key<String> key = Metadata.Key.of("grpc-accept-encoding",
                 Metadata.ASCII_STRING_MARSHALLER);
         String encoding = headers.get(key);
         if (encoding != null) {
