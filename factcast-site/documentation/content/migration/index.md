@@ -23,6 +23,12 @@ If you used the uniqe_identifier feature before, it was removed. It was only a r
 
 There will be a section on optimitic locking as a new api feature.
 
+#### Postgres module uuid-ossp
+
+The Postgres module *uuid-ossp* is necessary for the new optimistic locking api feature. If you want to upgrade your server version, please take a look into the [{{%icon circle-arrow-right%}}Postgres - uuid-oops ]({{%relref "/setup/server/prerequisites.md#uuid-ossp"%}}) section in the prerequisites guide to ensure that this module will be provided.
+
+##### {{% alert theme="warn" %}} *Note, the server start will most likely fail, if you don't follow the instructions.* {{% /alert %}}
+
 #### GRPC Protocol Version
 
 The GRPC Protocol Version shifted from 1.0.0 to 1.1.0. That means, in order to talk to a factcast server with version 0.1.0, you can use and client from 0.0.30 on, but in order to use a 0.1.0 client, you'd need to talk to a factcast server with at least the same protocol version than your client.
