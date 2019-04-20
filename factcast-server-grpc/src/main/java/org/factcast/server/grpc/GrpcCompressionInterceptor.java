@@ -22,7 +22,6 @@ import io.grpc.ServerCall;
 import io.grpc.ServerCall.Listener;
 import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
-
 import lombok.RequiredArgsConstructor;
 import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 
@@ -40,6 +39,8 @@ public class GrpcCompressionInterceptor implements ServerInterceptor {
             Metadata headers, ServerCallHandler<ReqT, RespT> next) {
         codecs.selectFrom(headers.get(key)).ifPresent(c -> {
             call.setCompression(c);
+            // server code still needs to set call response to compressible.
+            // defaults to not use any compression.
             call.setMessageCompression(false);
         });
         ;
