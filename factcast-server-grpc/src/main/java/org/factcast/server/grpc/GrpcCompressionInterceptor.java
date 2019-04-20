@@ -15,31 +15,34 @@
  */
 package org.factcast.server.grpc;
 
+import org.factcast.grpc.api.CompressionCodecs;
+
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
 import io.grpc.ServerCall.Listener;
 import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
+
+import lombok.RequiredArgsConstructor;
 import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 
 @GrpcGlobalServerInterceptor
+@RequiredArgsConstructor
 public class GrpcCompressionInterceptor implements ServerInterceptor {
+
+    private final CompressionCodecs codecs;
+
+    private final Metadata.Key<String> key = Metadata.Key.of("grpc-accept-encoding",
+            Metadata.ASCII_STRING_MARSHALLER);
 
     @Override
     public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
             Metadata headers, ServerCallHandler<ReqT, RespT> next) {
-        io.grpc.Metadata.Key<String> key = Metadata.Key.of("grpc-accept-encoding",
-                Metadata.ASCII_STRING_MARSHALLER);
-        String encoding = headers.get(key);
-        if (encoding != null) {
-            // TODO extract
-            if (encoding.contains("lz4"))
-                call.setCompression("lz4");
-            else if (encoding.contains("gzip"))
-                call.setCompression("gzip");
-            // default to not compress
+        codecs.selectFrom(headers.get(key)).ifPresent(c -> {
+            call.setCompression(c);
             call.setMessageCompression(false);
-        }
+        });
+        ;
         return next.startCall(call, headers);
     }
 

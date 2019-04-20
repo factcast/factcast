@@ -33,6 +33,7 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.Capabilities;
+import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
@@ -55,11 +56,9 @@ import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import io.grpc.CompressorRegistry;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
-import lombok.Generated;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
@@ -80,6 +79,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
 
     final FactStore store;
+
+    private final CompressionCodecs codecs = new CompressionCodecs();
 
     final ProtoConverter converter = new ProtoConverter();
 
@@ -159,9 +160,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     private Map<String, String> collectProperties() {
         HashMap<String, String> properties = new HashMap<>();
-        evaluateCodec(Capabilities.CODEC_GZIP, properties);
-        evaluateCodec(Capabilities.CODEC_LZ4, properties);
         retrieveImplementationVersion(properties);
+        properties.put(Capabilities.CODECS.toString(), codecs.available());
         log.info("Handshake properties: {} ", properties);
         return properties;
     }
@@ -192,29 +192,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     URL getProjectProperties() {
         return FactStoreGrpcService.class.getResource(
                 "/META-INF/maven/org.factcast/factcast-server-grpc/pom.properties");
-    }
-
-    private void evaluateCodec(Capabilities c, HashMap<String, String> properties) {
-        Boolean isAvailable = CompressorRegistry.getDefaultInstance()
-                .lookupCompressor(codecName(c)) != null;
-        properties.put(c.toString(), isAvailable.toString());
-    }
-
-    private String codecName(Capabilities c) {
-        return c.name().toLowerCase().substring(c.name().indexOf("_") + 1);
-    }
-
-    @Generated
-    private boolean isClassAvailable(String string) {
-        try {
-            Class<?> forName = Class.forName(string);
-            return forName != null;
-        } catch (ClassNotFoundException ignore) {
-            // unfortunately, this is expected bahavior, when the class is not
-            // in the
-            // classpath
-        }
-        return false;
     }
 
     private void resetDebugInfo(SubscriptionRequestTO req) {
