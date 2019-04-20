@@ -36,6 +36,7 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.Capabilities;
+import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
@@ -66,8 +67,6 @@ import com.google.common.collect.Lists;
 
 import io.grpc.Channel;
 import io.grpc.ClientCall;
-import io.grpc.Compressor;
-import io.grpc.CompressorRegistry;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -85,6 +84,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
+
+    private final CompressionCodecs codecs = new CompressionCodecs();
 
     static final String CHANNEL_NAME = "factstore";
 
@@ -203,7 +204,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
             }
             logProtocolVersion(serverProtocolVersion);
             logServerVersion(serverProperties);
-            configureCompression();
+            configureCompression(serverProperties.get(Capabilities.CODECS.toString()));
         }
     }
 
@@ -227,35 +228,12 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     }
 
     @VisibleForTesting
-    void configureCompression() {
-        // TODO extract
-        if (!configureCompression(Capabilities.CODEC_LZ4))
-            configureCompression(Capabilities.CODEC_GZIP);
-    }
-
-    @VisibleForTesting
-    boolean configureCompression(Capabilities c) {
-        String key = c.toString();
-        String serverProperty = serverProperties.getOrDefault(
-                key, Boolean.FALSE.toString());
-        boolean serverHasCapability = Boolean.valueOf(serverProperty);
-        Compressor localCompessor = CompressorRegistry.getDefaultInstance()
-                .lookupCompressor(
-                        codecName(c));
-
-        if (serverHasCapability && localCompessor != null) {
-            String encoding = localCompessor.getMessageEncoding();
-            log.info("configuring Codec " + encoding);
-            this.blockingStub = blockingStub.withCompression(encoding);
-            this.stub = stub.withCompression(encoding);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private String codecName(Capabilities c) {
-        return c.name().toLowerCase().substring(c.name().indexOf("_") + 1);
+    void configureCompression(String codecListFromServer) {
+        codecs.selectFrom(codecListFromServer).ifPresent(c -> {
+            log.info("configuring Codec " + c);
+            this.blockingStub = blockingStub.withCompression(c);
+            this.stub = stub.withCompression(c);
+        });
     }
 
     @Override
