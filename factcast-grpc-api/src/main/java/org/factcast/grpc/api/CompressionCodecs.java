@@ -15,14 +15,10 @@
  */
 package org.factcast.grpc.api;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.stream.*;
 
-import io.grpc.CompressorRegistry;
+import io.grpc.*;
 
 public class CompressionCodecs {
 
@@ -39,6 +35,10 @@ public class CompressionCodecs {
                 .collect(Collectors.toList());
         orderedListOfAvailableCodecsAsString = orderedListOfAvailableCodecs.stream()
                 .collect(Collectors.joining(","));
+    }
+
+    private static boolean locallyAvailable(String codec) {
+        return CompressorRegistry.getDefaultInstance().lookupCompressor(codec) != null;
     }
 
     public Optional<String> selectFrom(String commaSeparatedList) {
@@ -61,9 +61,5 @@ public class CompressionCodecs {
             }
         }
         return Optional.empty();
-    }
-
-    private static boolean locallyAvailable(String codec) {
-        return CompressorRegistry.getDefaultInstance().lookupCompressor(codec) != null;
     }
 }
