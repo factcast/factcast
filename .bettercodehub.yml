@@ -1,5 +1,5 @@
 component_depth: 2
 languages:
-- java
+  - java
 exclude:
-- .*/src/test/.*
+  - .*/src/test/.*
