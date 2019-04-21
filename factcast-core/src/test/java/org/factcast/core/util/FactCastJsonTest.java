@@ -15,6 +15,7 @@
  */
 package org.factcast.core.util;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.factcast.core.TestHelper.expectNPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -22,6 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -69,8 +73,25 @@ public class FactCastJsonTest {
     @Test
     void testReadValueNull() {
         expectNPE(() -> FactCastJson.readValue(null, ""));
-        expectNPE(() -> FactCastJson.readValue(null, null));
-        expectNPE(() -> FactCastJson.readValue(FactCastJson.class, null));
+        expectNPE(() -> FactCastJson.readValue(null, (String) null));
+        expectNPE(() -> FactCastJson.readValue(FactCastJson.class, (String) null));
+        expectNPE(() -> FactCastJson.readValue(null, (InputStream) null));
+        expectNPE(() -> FactCastJson.readValue(FactCastJson.class, (InputStream) null));
+    }
+
+    public static class X {
+        String foo;
+
+        int bar;
+    }
+
+    @Test
+    void testReadValueFromInputStream() {
+
+        X x = FactCastJson.readValue(X.class, new ByteArrayInputStream("{\"foo\":\"baz\",\"bar\":7}"
+                .getBytes()));
+        assertThat(x.foo).isEqualTo("baz");
+        assertThat(x.bar).isEqualTo(7);
     }
 
     @Test

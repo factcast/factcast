@@ -28,6 +28,8 @@ import org.factcast.grpc.api.*;
 import org.factcast.grpc.api.conv.*;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.*;
+import org.factcast.server.grpc.auth.*;
+import org.springframework.security.access.annotation.*;
 
 import com.google.common.annotations.*;
 
@@ -48,6 +50,7 @@ import net.devh.boot.grpc.server.service.*;
 @RequiredArgsConstructor
 @GrpcService
 @SuppressWarnings("all")
+@Secured(FactCastRole.READ)
 public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
@@ -80,7 +83,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void publish(MSG_Facts request,
+    @Secured(FactCastRole.WRITE)
+    public void publish(@NonNull MSG_Facts request,
             StreamObserver<MSG_Empty> responseObserver) {
         List<Fact> facts = request.getFactList()
                 .stream()
@@ -209,6 +213,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
+    @Secured(FactCastRole.WRITE)
     public void publishConditional(MSG_ConditionalPublishRequest request,
             StreamObserver<MSG_ConditionalPublishResult> responseObserver) {
         try {
@@ -222,6 +227,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
+    @Secured(FactCastRole.WRITE)
     public void stateFor(MSG_StateForRequest request, StreamObserver<MSG_UUID> responseObserver) {
         try {
             StateForRequest req = converter.fromProto(request);
@@ -234,6 +240,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
+    @Secured(FactCastRole.WRITE)
     public void invalidate(MSG_UUID request, StreamObserver<MSG_Empty> responseObserver) {
         try {
             UUID tokenId = converter.fromProto(request);

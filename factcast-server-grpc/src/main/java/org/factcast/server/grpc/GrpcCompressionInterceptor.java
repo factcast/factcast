@@ -27,10 +27,10 @@ import net.devh.boot.grpc.server.interceptor.*;
 @RequiredArgsConstructor
 public class GrpcCompressionInterceptor implements ServerInterceptor {
 
-    private final CompressionCodecs codecs;
-
     public final Metadata.Key<String> GRPC_ACCEPT_ENCODING = Metadata.Key.of("grpc-accept-encoding",
             Metadata.ASCII_STRING_MARSHALLER);
+
+    private final CompressionCodecs codecs;
 
     @Override
     public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,

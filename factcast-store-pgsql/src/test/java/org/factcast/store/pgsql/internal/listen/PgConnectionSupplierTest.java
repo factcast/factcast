@@ -15,6 +15,7 @@
  */
 package org.factcast.store.pgsql.internal.listen;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -54,7 +55,7 @@ public class PgConnectionSupplierTest {
 
     @Test
     void test_wrongDataSourceImplementation() {
-        Assertions.assertThrows(IllegalStateException.class, () -> {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
             DataSource ds = mock(DataSource.class);
             new PgConnectionSupplier(ds);
             failBecauseExceptionWasNotThrown(IllegalStateException.class);
@@ -152,4 +153,11 @@ public class PgConnectionSupplierTest {
         PgConnectionSupplier uut = new PgConnectionSupplier(ds);
         assertThatThrownBy(uut::get).isInstanceOf(SQLException.class);
     }
+    @Test
+    void testTomcatDataSourceIsUsed() {
+        org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
+        PgConnectionSupplier uut = new PgConnectionSupplier(ds);
+        assertThat(uut.ds).isSameAs(ds);
+    }
+
 }
