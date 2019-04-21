@@ -15,17 +15,13 @@
  */
 package org.factcast.core.subscription.observer;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-import org.factcast.core.TestFact;
-import org.factcast.core.TestHelper;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.factcast.core.*;
+import org.junit.jupiter.api.*;
 
-import lombok.NonNull;
+import lombok.*;
 
 public class GenericObserverTest {
 
@@ -75,7 +71,6 @@ public class GenericObserverTest {
 
             @Override
             public void onNext(@NonNull Integer element) {
-                // TODO Auto-generated method stub
 
             }
         };

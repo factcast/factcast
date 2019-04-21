@@ -15,64 +15,33 @@
  */
 package org.factcast.client.grpc;
 
-import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
+import static io.grpc.stub.ClientCalls.*;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.concurrent.atomic.*;
+import java.util.stream.*;
 
-import org.factcast.core.Fact;
-import org.factcast.core.store.FactStore;
-import org.factcast.core.store.RetryableException;
-import org.factcast.core.store.StateToken;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.grpc.api.Capabilities;
-import org.factcast.grpc.api.ConditionalPublishRequest;
-import org.factcast.grpc.api.StateForRequest;
-import org.factcast.grpc.api.conv.ProtoConverter;
-import org.factcast.grpc.api.conv.ProtocolVersion;
-import org.factcast.grpc.api.conv.ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
-import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.factcast.core.*;
+import org.factcast.core.store.*;
+import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.observer.*;
+import org.factcast.grpc.api.*;
+import org.factcast.grpc.api.conv.*;
+import org.factcast.grpc.api.gen.*;
+import org.factcast.grpc.api.gen.FactStoreProto.*;
+import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.*;
+import org.springframework.beans.factory.*;
+import org.springframework.beans.factory.annotation.*;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
+import com.google.common.annotations.*;
+import com.google.common.collect.*;
 
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.Status.Code;
-import io.grpc.StatusRuntimeException;
-import io.grpc.stub.StreamObserver;
+import io.grpc.*;
+import io.grpc.Status.*;
+import io.grpc.stub.*;
 
-import lombok.Generated;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+import lombok.*;
+import lombok.extern.slf4j.*;
 
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
@@ -81,6 +50,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
+
+    private final CompressionCodecs codecs = new CompressionCodecs();
 
     static final String CHANNEL_NAME = "factstore";
 
@@ -92,7 +63,6 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private final ProtoConverter converter = new ProtoConverter();
 
-    @SuppressWarnings("FieldCanBeLocal")
     private ProtocolVersion serverProtocolVersion;
 
     private Map<String, String> serverProperties;
@@ -144,7 +114,6 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
                 .collect(Collectors
                         .toList());
         MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
-        // blockingStub.getCallOptions().withCompression(compressor);
         try {
             blockingStub.publish(mfs);
         } catch (StatusRuntimeException e) {
@@ -199,7 +168,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
             }
             logProtocolVersion(serverProtocolVersion);
             logServerVersion(serverProperties);
-            configureCompression();
+            configureCompression(serverProperties.get(Capabilities.CODECS.toString()));
         }
     }
 
@@ -223,51 +192,12 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     }
 
     @VisibleForTesting
-    void configureCompression() {
-        if (!configureLZ4())
-            configureGZip();
-    }
-
-    @SuppressWarnings("UnusedReturnValue")
-    @VisibleForTesting
-    boolean configureGZip() {
-        // TODO this was temporarily disabled, due to
-        // https://github.com/Mercateo/factcast/issues/234
-        //
-        // TODO when reenabling this code, make sure to throw
-        // RetryableException on caught RuntimeStatusException around remote
-        // call
-        /*
-         * Compressor gzip =
-         * CompressorRegistry.getDefaultInstance().lookupCompressor("gzip"); if (gzip !=
-         * null) { log.info("configuring GZip"); String encoding =
-         * gzip.getMessageEncoding(); this.blockingStub =
-         * blockingStub.withCompression(encoding); this.stub =
-         * stub.withCompression(encoding); return true; } else
-         */
-        return false;
-    }
-
-    @VisibleForTesting
-    boolean configureLZ4() {
-        // TODO this was temporarily disabled, due to
-        // https://github.com/Mercateo/factcast/issues/234
-        //
-        // TODO when reenabling this code, make sure to throw
-        // RetryableException on caught RuntimeStatusException around remote
-        // call
-        /*
-         * Compressor lz4Compressor =
-         * CompressorRegistry.getDefaultInstance().lookupCompressor("lz4"); boolean
-         * localLz4 = lz4Compressor != null; boolean remoteLz4 =
-         * Boolean.valueOf(serverProperties.get(Capabilities.CODEC_LZ4 .toString())); if
-         * (localLz4 && remoteLz4) {
-         * log.info("LZ4 Codec available on client and server - configuring LZ4" );
-         * String encoding = lz4Compressor.getMessageEncoding(); // this.blockingStub =
-         * blockingStub.withCompression(encoding); // this.stub =
-         * stub.withCompression(encoding); return true; } else
-         */
-        return false;
+    void configureCompression(String codecListFromServer) {
+        codecs.selectFrom(codecListFromServer).ifPresent(c -> {
+            log.info("configuring Codec " + c);
+            this.blockingStub = blockingStub.withCompression(c);
+            this.stub = stub.withCompression(c);
+        });
     }
 
     @Override
@@ -316,6 +246,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
                 StateToken::uuid).orElse(null));
         MSG_ConditionalPublishRequest msg = converter.toProto(req);
         try {
+
             MSG_ConditionalPublishResult r = blockingStub.publishConditional(msg);
             return r.getSuccess();
         } catch (StatusRuntimeException e) {
