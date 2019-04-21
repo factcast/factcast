@@ -16,6 +16,7 @@
 package org.factcast.core.util;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -67,6 +68,11 @@ public final class FactCastJson {
 
     @SneakyThrows
     public static <T> T readValue(@NonNull Class<T> class1, String json) {
+        return reader.forType(class1).readValue(json);
+    }
+
+    @SneakyThrows
+    public static <T> T readValue(@NonNull Class<T> class1, @NonNull InputStream json) {
         return reader.forType(class1).readValue(json);
     }
 

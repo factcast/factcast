@@ -60,12 +60,12 @@ public abstract class AbstractFactStore implements FactStore {
     }
 
     @Override
-    public final void invalidate(@NonNull StateToken token) {
+    public void invalidate(@NonNull StateToken token) {
         tokenStore.invalidate(token);
     }
 
     @Override
-    public final StateToken stateFor(@NonNull Collection<UUID> forAggIds,
+    public StateToken stateFor(@NonNull Collection<UUID> forAggIds,
             @NonNull Optional<String> ns) {
         Map<UUID, Optional<UUID>> state = getStateFor(ns, forAggIds);
         return tokenStore.create(state, ns);
