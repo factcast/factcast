@@ -1,0 +1,10 @@
+{
+	"fullAccess": [
+		{
+			"name": "foo",
+			"password": "bar"
+		}
+	],
+	"readOnlyAccess": [
+	]
+}

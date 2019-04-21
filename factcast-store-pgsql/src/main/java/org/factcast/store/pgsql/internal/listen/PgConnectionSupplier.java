@@ -38,14 +38,15 @@ import lombok.extern.slf4j.Slf4j;
 public class PgConnectionSupplier {
 
     @NonNull
-    private final org.apache.tomcat.jdbc.pool.DataSource ds;
+    @VisibleForTesting
+    protected final org.apache.tomcat.jdbc.pool.DataSource ds;
 
     @Autowired
     PgConnectionSupplier(DataSource dataSource) {
-        if (dataSource instanceof org.apache.tomcat.jdbc.pool.DataSource) {
+        if (org.apache.tomcat.jdbc.pool.DataSource.class.isAssignableFrom(dataSource.getClass())) {
             this.ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
         } else {
-            throw new IllegalStateException("expected "
+            throw new IllegalArgumentException("expected "
                     + org.apache.tomcat.jdbc.pool.DataSource.class.getName()
                     + " , but got " + dataSource.getClass().getName());
         }
