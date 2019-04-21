@@ -15,11 +15,13 @@
  */
 package org.factcast.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doNothing;
@@ -137,6 +139,17 @@ public class DefaultFactCastTest {
         Assertions.assertThrows(NullPointerException.class, () -> {
             uut.publish((Fact) null);
         });
+    }
+
+    @Test
+    void testPublishWithAggregatedException() {
+        try {
+            uut.publish(new NullFact());
+            fail();
+        }catch (FactValidationException e) {
+            assertThat(e.getMessage()).contains("lacks required namespace");
+            assertThat(e.getMessage()).contains("lacks required id");
+        }
     }
 
     @Test

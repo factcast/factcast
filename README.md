@@ -16,6 +16,10 @@ It is not yet released, the API may change, the documentation is incomplete.
 </a>
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=Mercateo/factcast)](https://dependabot.com)
 [![DepShield Badge](https://depshield.sonatype.org/badges/Mercateo/factcast/depshield.svg)](https://depshield.github.io)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/Mercateo/factcast.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Mercateo/factcast/alerts/)
+[![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/Mercateo/factcast.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Mercateo/factcast/context:java)
+
+
 ... under active development.
 
 # The Problem at hand
@@ -23,7 +27,7 @@ It is not yet released, the API may change, the documentation is incomplete.
 In a micro-service world, teams choose their own tools of trade. This is a very important benefit of using Microservices in the first place, and you do not want to mess with this principle. However, where Subsystems communicate with each other (most likely crossing those team borders) you need some common ground. Event Sourcing is a great pattern here (as well as within those subsystems) because of the decoupling effect of its use.
 
 So, what is needed is some technical solution, that everyone can easily agree on, because it forces as little technical dependencies on the clients as possible.
-REST and similar technological choices provide this solution, and if spiced with streaming, we have all we need. Oh and one thing: Whatever solution we choose to store and stream forward needs to be failure tolerant, somewhat scalable and should pose minimal operational complexity and overhead to an existing system.
+GRPC and similar technological choices provide this solution as well as streaming, so we have all we need. Oh and one thing: Whatever solution we choose to store and stream forward needs to be failure tolerant, somewhat scalable and should pose minimal operational complexity and overhead to an existing system.
 
 This is where some of the above solutions pose a possible problem:
 
