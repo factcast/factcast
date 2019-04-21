@@ -15,54 +15,27 @@
  */
 package org.factcast.server.grpc;
 
-import java.io.InputStream;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+import java.io.*;
+import java.net.*;
+import java.util.*;
+import java.util.concurrent.atomic.*;
+import java.util.stream.*;
 
-import org.factcast.core.Fact;
-import org.factcast.core.store.FactStore;
-import org.factcast.core.store.StateToken;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.grpc.api.Capabilities;
-import org.factcast.grpc.api.ConditionalPublishRequest;
-import org.factcast.grpc.api.StateForRequest;
-import org.factcast.grpc.api.conv.ProtoConverter;
-import org.factcast.grpc.api.conv.ProtocolVersion;
-import org.factcast.grpc.api.conv.ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
+import org.factcast.core.*;
+import org.factcast.core.store.*;
+import org.factcast.core.subscription.*;
+import org.factcast.grpc.api.*;
+import org.factcast.grpc.api.conv.*;
+import org.factcast.grpc.api.gen.FactStoreProto.*;
+import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.*;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.annotations.*;
 
-import io.grpc.CompressorRegistry;
-import io.grpc.stub.ServerCallStreamObserver;
-import io.grpc.stub.StreamObserver;
+import io.grpc.stub.*;
 
-import lombok.Generated;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.service.GrpcService;
+import lombok.*;
+import lombok.extern.slf4j.*;
+import net.devh.boot.grpc.server.service.*;
 
 /**
  * Service that provides access to an injected FactStore via GRPC.
@@ -81,6 +54,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     final FactStore store;
 
+    private final CompressionCodecs codecs = new CompressionCodecs();
+
     final ProtoConverter converter = new ProtoConverter();
 
     static final AtomicLong subscriptionIdStore = new AtomicLong();
@@ -89,6 +64,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     public void fetchById(MSG_UUID request,
             StreamObserver<MSG_OptionalFact> responseObserver) {
         try {
+            enableResponseCompression(responseObserver);
+
             UUID fromProto = converter.fromProto(request);
             log.trace("fetchById {}", fromProto);
             Optional<Fact> fetchById = store.fetchById(fromProto);
@@ -128,6 +105,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     @Override
     public void subscribe(MSG_SubscriptionRequest request,
             StreamObserver<MSG_Notification> responseObserver) {
+        enableResponseCompression(responseObserver);
+
         SubscriptionRequestTO req = converter.fromProto(request);
         resetDebugInfo(req);
         BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(req.toString(),
@@ -135,6 +114,14 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         final boolean idOnly = req.idOnly();
         store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp, f -> idOnly ? converter
                 .createNotificationFor(f.id()) : converter.createNotificationFor(f)));
+    }
+
+    private void enableResponseCompression(StreamObserver<?> responseObserver) {
+        // need to be defensive not to break tests passing mocks here.
+        if (responseObserver instanceof ServerCallStreamObserver) {
+            ServerCallStreamObserver obs = (ServerCallStreamObserver) responseObserver;
+            obs.setMessageCompression(true);
+        }
     }
 
     @Override
@@ -147,9 +134,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     private Map<String, String> collectProperties() {
         HashMap<String, String> properties = new HashMap<>();
-        evaluateLZ4Availability(properties);
-        evaluateGZIPAvailability(properties);
         retrieveImplementationVersion(properties);
+        properties.put(Capabilities.CODECS.toString(), codecs.available());
         log.info("Handshake properties: {} ", properties);
         return properties;
     }
@@ -182,30 +168,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                 "/META-INF/maven/org.factcast/factcast-server-grpc/pom.properties");
     }
 
-    private void evaluateLZ4Availability(HashMap<String, String> properties) {
-        String lz4_available = String.valueOf(isClassAvailable("net.jpountz.lz4.LZ4Constants"));
-        properties.put(Capabilities.CODEC_LZ4.toString(), lz4_available);
-    }
-
-    private void evaluateGZIPAvailability(HashMap<String, String> properties) {
-        Boolean isAvailable = CompressorRegistry.getDefaultInstance()
-                .lookupCompressor("gzip") != null;
-        properties.put(Capabilities.CODEC_GZIP.toString(), isAvailable.toString());
-    }
-
-    @Generated
-    private boolean isClassAvailable(String string) {
-        try {
-            Class<?> forName = Class.forName(string);
-            return forName != null;
-        } catch (ClassNotFoundException ignore) {
-            // unfortunately, this is expected bahavior, when the class is not
-            // in the
-            // classpath
-        }
-        return false;
-    }
-
     private void resetDebugInfo(SubscriptionRequestTO req) {
         String newId = "grpc-sub#" + subscriptionIdStore.incrementAndGet();
         log.info("subscribing {} for {} defined as {}", newId, req, req.dump());
@@ -233,6 +195,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     @Override
     public void enumerateTypes(MSG_String request,
             StreamObserver<MSG_StringSet> responseObserver) {
+
+        enableResponseCompression(responseObserver);
+
         try {
             Set<String> types = store.enumerateTypes(converter.fromProto(
                     request));
@@ -248,8 +213,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             StreamObserver<MSG_ConditionalPublishResult> responseObserver) {
         try {
             ConditionalPublishRequest req = converter.fromProto(request);
-            // TODO token is prepared to be optional
-            // will be implemented in a different branch
             boolean result = store.publishIfUnchanged(req.facts(), req.token());
             responseObserver.onNext(converter.toProto(result));
             responseObserver.onCompleted();
@@ -262,8 +225,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     public void stateFor(MSG_StateForRequest request, StreamObserver<MSG_UUID> responseObserver) {
         try {
             StateForRequest req = converter.fromProto(request);
-            // TODO ns is prepared to be optional as per request by the core
-            // team. will be implemented in a different branch
             StateToken token = store.stateFor(req.aggIds(), Optional.ofNullable(req.ns()));
             responseObserver.onNext(converter.toProto(token.uuid()));
             responseObserver.onCompleted();
