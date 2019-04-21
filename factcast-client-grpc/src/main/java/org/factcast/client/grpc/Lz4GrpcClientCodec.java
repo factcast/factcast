@@ -15,14 +15,11 @@
  */
 package org.factcast.client.grpc;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 
-import io.grpc.Codec;
-import net.devh.boot.grpc.common.codec.CodecType;
-import net.devh.boot.grpc.common.codec.GrpcCodec;
-import net.jpountz.lz4.LZ4BlockInputStream;
-import net.jpountz.lz4.LZ4BlockOutputStream;
+import io.grpc.*;
+import net.devh.boot.grpc.common.codec.*;
+import net.jpountz.lz4.*;
 
 @GrpcCodec(advertised = true, codecType = CodecType.ALL)
 public class Lz4GrpcClientCodec implements Codec {
