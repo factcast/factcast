@@ -15,17 +15,14 @@
  */
 package org.factcast.core.spec;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.UUID;
+import java.util.*;
 
-import org.factcast.core.MarkFact;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.factcast.core.*;
+import org.junit.jupiter.api.*;
 
-// TODO remove?
+
 public class FactSpecTest {
 
     @Test
