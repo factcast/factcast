@@ -15,10 +15,9 @@
  */
 package org.factcast.server.grpc;
 
-import org.factcast.core.store.FactStore;
-import org.factcast.grpc.api.CompressionCodecs;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.factcast.core.store.*;
+import org.factcast.grpc.api.*;
+import org.springframework.context.annotation.*;
 
 @Configuration
 public class FactCastGrpcServerConfiguration {
