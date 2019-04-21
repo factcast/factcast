@@ -52,6 +52,7 @@ public class CompressionCodecs {
     private Optional<String> fromCommaSeparatedList(String listOrNull) {
         if (listOrNull != null) {
             List<String> codecs = Arrays.stream(listOrNull.toLowerCase().split(","))
+                    .map(String::trim)
                     .filter(s -> !s.trim().isEmpty())
                     .collect(Collectors.toList());
             for (String codec : orderedListOfAvailableCodecs) {

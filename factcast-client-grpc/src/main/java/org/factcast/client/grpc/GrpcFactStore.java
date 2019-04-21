@@ -15,67 +15,33 @@
  */
 package org.factcast.client.grpc;
 
-import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
+import static io.grpc.stub.ClientCalls.*;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.concurrent.atomic.*;
+import java.util.stream.*;
 
-import org.factcast.core.Fact;
-import org.factcast.core.store.FactStore;
-import org.factcast.core.store.RetryableException;
-import org.factcast.core.store.StateToken;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.grpc.api.Capabilities;
-import org.factcast.grpc.api.CompressionCodecs;
-import org.factcast.grpc.api.ConditionalPublishRequest;
-import org.factcast.grpc.api.StateForRequest;
-import org.factcast.grpc.api.conv.ProtoConverter;
-import org.factcast.grpc.api.conv.ProtocolVersion;
-import org.factcast.grpc.api.conv.ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
-import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.factcast.core.*;
+import org.factcast.core.store.*;
+import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.observer.*;
+import org.factcast.grpc.api.*;
+import org.factcast.grpc.api.conv.*;
+import org.factcast.grpc.api.gen.*;
+import org.factcast.grpc.api.gen.FactStoreProto.*;
+import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.*;
+import org.springframework.beans.factory.*;
+import org.springframework.beans.factory.annotation.*;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
+import com.google.common.annotations.*;
+import com.google.common.collect.*;
 
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.Status.Code;
-import io.grpc.StatusRuntimeException;
-import io.grpc.stub.StreamObserver;
+import io.grpc.*;
+import io.grpc.Status.*;
+import io.grpc.stub.*;
 
-import lombok.AccessLevel;
-import lombok.Generated;
-import lombok.NonNull;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import lombok.*;
+import lombok.extern.slf4j.*;
 
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
@@ -99,8 +65,6 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private ProtocolVersion serverProtocolVersion;
 
-    @Setter(value = AccessLevel.PACKAGE)
-    @VisibleForTesting
     private Map<String, String> serverProperties;
 
     private final AtomicBoolean initialized = new AtomicBoolean(false);

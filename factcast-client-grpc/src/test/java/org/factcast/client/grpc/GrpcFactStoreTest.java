@@ -31,6 +31,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -130,6 +131,19 @@ public class GrpcFactStoreTest {
         assertThrows(NullPointerException.class, () -> {
             uut.publish(null);
         });
+    }
+
+    @Test
+    void configureCompressionChooseGzipIfAvail() {
+        uut.configureCompression(" gzip,lz3,lz4, lz99");
+        verify(stub).withCompression("gzip");
+    }
+
+
+    @Test
+    void configureCompressionSkipCompression() {
+        uut.configureCompression("zip,lz3,lz4, lz99");
+        verifyNoMoreInteractions(stub);
     }
 
     static class SomeException extends RuntimeException {

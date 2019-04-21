@@ -15,16 +15,13 @@
  */
 package org.factcast.server.grpc;
 
-import org.factcast.grpc.api.CompressionCodecs;
+import org.factcast.grpc.api.*;
 
-import io.grpc.Metadata;
-import io.grpc.ServerCall;
-import io.grpc.ServerCall.Listener;
-import io.grpc.ServerCallHandler;
-import io.grpc.ServerInterceptor;
+import io.grpc.*;
+import io.grpc.ServerCall.*;
 
-import lombok.RequiredArgsConstructor;
-import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
+import lombok.*;
+import net.devh.boot.grpc.server.interceptor.*;
 
 @GrpcGlobalServerInterceptor
 @RequiredArgsConstructor
@@ -32,13 +29,13 @@ public class GrpcCompressionInterceptor implements ServerInterceptor {
 
     private final CompressionCodecs codecs;
 
-    private final Metadata.Key<String> key = Metadata.Key.of("grpc-accept-encoding",
+    public final Metadata.Key<String> GRPC_ACCEPT_ENCODING = Metadata.Key.of("grpc-accept-encoding",
             Metadata.ASCII_STRING_MARSHALLER);
 
     @Override
     public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
             Metadata headers, ServerCallHandler<ReqT, RespT> next) {
-        codecs.selectFrom(headers.get(key)).ifPresent(c -> {
+        codecs.selectFrom(headers.get(GRPC_ACCEPT_ENCODING)).ifPresent(c -> {
             call.setCompression(c);
             // server code still needs to set call response to compressible.
             // defaults to not use any compression.
