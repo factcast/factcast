@@ -1332,4 +1332,30 @@ public abstract class AbstractFactStoreTest {
             store.publishIfUnchanged(null, Optional.empty());
         });
     }
+
+    @Test
+    public void testSubscribeNullContract() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            store.subscribe(null, mock(FactObserver.class));
+        });
+        assertThrows(NullPointerException.class, () -> {
+            store.subscribe(null, null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            store.subscribe(mock(SubscriptionRequestTO.class), null);
+        });
+    }
+
+    @Test
+    public void testGetStateForNullContract() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            store.stateFor(null, Optional.ofNullable(""));
+        });
+        assertThrows(NullPointerException.class, () -> {
+            store.stateFor(null, null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            store.stateFor(new LinkedList<>(), null);
+        });
+    }
 }

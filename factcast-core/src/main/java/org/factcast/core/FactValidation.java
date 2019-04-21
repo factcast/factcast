@@ -15,12 +15,11 @@
  */
 package org.factcast.core;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.stream.*;
 
-import lombok.NonNull;
-import lombok.experimental.UtilityClass;
+import lombok.*;
+import lombok.experimental.*;
 
 @UtilityClass
 public class FactValidation {
