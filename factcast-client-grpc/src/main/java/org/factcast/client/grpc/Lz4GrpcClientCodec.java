@@ -13,17 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.grpc.api;
+package org.factcast.client.grpc;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.io.*;
 
-import org.junit.jupiter.api.Test;
+import io.grpc.*;
+import net.devh.boot.grpc.common.codec.*;
+import net.jpountz.lz4.*;
 
-public class Capabilities0Test {
+@GrpcCodec(advertised = true, codecType = CodecType.ALL)
+public class Lz4GrpcClientCodec implements Codec {
 
-    @Test
-    void testToString() {
-        assertEquals("org.factcast.grpc.api.Capabilities.CODEC_LZ4", Capabilities.CODEC_LZ4
-                .toString());
+    @Override
+    public String getMessageEncoding() {
+        return "lz4";
+    }
+
+    @Override
+    public InputStream decompress(InputStream inputStream) {
+        return new LZ4BlockInputStream(inputStream);
+    }
+
+    @Override
+    public OutputStream compress(OutputStream outputStream) {
+        return new LZ4BlockOutputStream(outputStream);
     }
 }
