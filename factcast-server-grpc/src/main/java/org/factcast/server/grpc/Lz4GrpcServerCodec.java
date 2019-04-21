@@ -13,37 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.grpc.compression.lz4;
+package org.factcast.server.grpc;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 
 import io.grpc.Codec;
-
-import lombok.Generated;
-
+import net.devh.boot.grpc.common.codec.CodecType;
+import net.devh.boot.grpc.common.codec.GrpcCodec;
 import net.jpountz.lz4.LZ4BlockInputStream;
 import net.jpountz.lz4.LZ4BlockOutputStream;
 
-// waits for release of https://github.com/yidongnan/grpc-spring-boot-starter/issues/96
-// exclude from coverage analysis
-@Generated
-public class LZ4Codec implements Codec {
-
-    public static final String ENCODING = "lz4";
+@GrpcCodec(advertised = true, codecType = CodecType.ALL)
+public class Lz4GrpcServerCodec implements Codec {
 
     @Override
     public String getMessageEncoding() {
-        return ENCODING;
+        return "lz4";
     }
 
     @Override
-    public OutputStream compress(OutputStream os) {
-        return new LZ4BlockOutputStream(os);
+    public InputStream decompress(InputStream inputStream) {
+        return new LZ4BlockInputStream(inputStream);
     }
 
     @Override
-    public InputStream decompress(InputStream is) {
-        return new LZ4BlockInputStream(is);
+    public OutputStream compress(OutputStream outputStream) {
+        return new LZ4BlockOutputStream(outputStream);
     }
 }

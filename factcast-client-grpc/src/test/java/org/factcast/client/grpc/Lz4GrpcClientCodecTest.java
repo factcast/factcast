@@ -13,17 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.grpc.api;
+package org.factcast.client.grpc;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.Test;
+import java.io.*;
 
-public class Capabilities0Test {
+import org.junit.jupiter.api.*;
+
+import net.jpountz.lz4.*;
+
+class Lz4GrpcClientCodecTest {
+
+    Lz4GrpcClientCodec uut = new Lz4GrpcClientCodec();
 
     @Test
-    void testToString() {
-        assertEquals("org.factcast.grpc.api.Capabilities.CODEC_LZ4", Capabilities.CODEC_LZ4
-                .toString());
+    void getMessageEncoding() {
+        assertEquals("lz4", uut.getMessageEncoding());
+    }
+
+    @Test
+    void decompress() {
+        assertThat(uut.decompress(mock(InputStream.class))).isInstanceOf(LZ4BlockInputStream.class);
+    }
+
+    @Test
+    void compress() {
+        assertThat(uut.compress(mock(OutputStream.class))).isInstanceOf(LZ4BlockOutputStream.class);
     }
 }

@@ -142,7 +142,7 @@ public class PgSqlListenerTest {
         PgListener l = new PgListener(ds, bus, tester);
         l.afterPropertiesSet();
         l.destroy();
-        sleep(50);
+        sleep(150);//TODO flaky
         verify(conn).close();
     }
 
