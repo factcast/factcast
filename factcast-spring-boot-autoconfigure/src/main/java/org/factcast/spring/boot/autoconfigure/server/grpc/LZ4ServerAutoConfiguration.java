@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc;
+package org.factcast.spring.boot.autoconfigure.server.grpc;
 
-import org.factcast.core.store.*;
-import org.factcast.grpc.api.*;
+import org.factcast.server.grpc.*;
+import org.factcast.spring.boot.autoconfigure.store.inmem.*;
+import org.springframework.boot.autoconfigure.*;
+import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.*;
 
+import lombok.*;
+import net.jpountz.lz4.*;
+
+@Generated
 @Configuration
-public class FactCastGrpcServerConfiguration {
-
+@ConditionalOnClass({ FactStoreGrpcService.class, LZ4Compressor.class, Lz4GrpcServerCodec.class })
+@AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
+public class LZ4ServerAutoConfiguration {
     @Bean
-    public FactStoreGrpcService factStoreGrpcService(FactStore store) {
-        return new FactStoreGrpcService(store);
-    }
-
-    @Bean
-    public GrpcCompressionInterceptor grpcCompressionInterceptor() {
-        return new GrpcCompressionInterceptor(new CompressionCodecs());
+    public Lz4GrpcServerCodec lz4Codec() {
+        return new Lz4GrpcServerCodec();
     }
 }

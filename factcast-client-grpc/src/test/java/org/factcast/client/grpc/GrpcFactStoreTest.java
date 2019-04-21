@@ -15,67 +15,32 @@
  */
 package org.factcast.client.grpc;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.core.TestHelper.expectNPE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.factcast.core.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import org.assertj.core.util.Lists;
-import org.factcast.core.Fact;
-import org.factcast.core.TestFact;
-import org.factcast.core.store.RetryableException;
-import org.factcast.core.store.StateToken;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.grpc.api.ConditionalPublishRequest;
-import org.factcast.grpc.api.StateForRequest;
-import org.factcast.grpc.api.conv.ProtoConverter;
-import org.factcast.grpc.api.conv.ProtocolVersion;
-import org.factcast.grpc.api.conv.ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.factcast.core.*;
+import org.factcast.core.store.*;
+import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.observer.*;
+import org.factcast.grpc.api.*;
+import org.factcast.grpc.api.conv.*;
+import org.factcast.grpc.api.gen.FactStoreProto.*;
+import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.*;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.*;
+import org.mockito.junit.jupiter.*;
 
 import com.google.common.collect.Sets;
 
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
+import io.grpc.*;
 
 @ExtendWith(MockitoExtension.class)
 public class GrpcFactStoreTest {
@@ -137,6 +102,19 @@ public class GrpcFactStoreTest {
         assertThrows(NullPointerException.class, () -> {
             uut.publish(null);
         });
+    }
+
+    @Test
+    void configureCompressionChooseGzipIfAvail() {
+        uut.configureCompression(" gzip,lz3,lz4, lz99");
+        verify(stub).withCompression("gzip");
+    }
+
+
+    @Test
+    void configureCompressionSkipCompression() {
+        uut.configureCompression("zip,lz3,lz4, lz99");
+        verifyNoMoreInteractions(stub);
     }
 
     static class SomeException extends RuntimeException {
@@ -360,23 +338,43 @@ public class GrpcFactStoreTest {
             uut.serialOf(null);
         });
     }
-
-    @Test
-    public void testConfigureCompressionGZIP() throws Exception {
-        uut = spy(uut);
-        uut.configureCompression();
-        verify(uut).configureGZip();
-    }
-
-    @Test
-    public void testConfigureCompressionLZ4() throws Exception {
-        uut = spy(uut);
-        when(uut.configureLZ4()).thenReturn(true);
-        uut.configureCompression();
-        verify(uut, never()).configureGZip();
-        verify(uut).configureLZ4();
-
-    }
+//
+//    @Test
+//    public void testConfigureCompressionGZIPDisabledWhenServerReturnsNullCapability()
+//            throws Exception {
+//        uut.serverProperties(Maps.newHashMap(Capabilities.CODECS.toString(), null));
+//        assertFalse(uut.configureCompression(Capabilities.CODEC_GZIP));
+//    }
+//
+//    @Test
+//    public void testConfigureCompressionGZIPDisabledWhenServerReturnsFalseCapability()
+//            throws Exception {
+//        uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.toString(), "false"));
+//        assertFalse(uut.configureCompression(Capabilities.CODEC_GZIP));
+//    }
+//
+//    @Test
+//    public void testConfigureCompressionGZIPEnabledWhenServerReturnsCapability() throws Exception {
+//        uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.toString(), "true"));
+//        assertTrue(uut.configureCompression(Capabilities.CODEC_GZIP));
+//    }
+//
+//    @Test
+//    public void testConfigureCompressionGZIP() throws Exception {
+//        uut = spy(uut);
+//        uut.serverProperties(new HashMap<>());
+//        uut.configureCompression();
+//        verify(uut).configureCompression(Capabilities.CODEC_GZIP);
+//    }
+//
+//    @Test
+//    public void testConfigureCompressionLZ4() throws Exception {
+//        uut = spy(uut);
+//        uut.serverProperties(new HashMap<>());
+//        when(uut.configureCompression(Capabilities.CODEC_LZ4)).thenReturn(true);
+//        uut.configureCompression();
+//        verify(uut, never()).configureCompression(Capabilities.CODEC_GZIP);
+//    }
 
     @Test
     public void testInvalidate() throws Exception {

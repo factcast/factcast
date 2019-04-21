@@ -13,14 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.grpc.api;
+package org.factcast.core;
 
-public enum Capabilities {
+import java.util.*;
 
-    FACTCAST_IMPL_VERSION, CODECS;
+import lombok.*;
+
+class NullFact implements Fact {
+    @Override
+    public @NonNull UUID id() {
+
+        return null;
+    }
 
     @Override
-    public String toString() {
-        return getClass().getCanonicalName() + "." + name();
+    public @NonNull String ns() {
+
+        return null;
+    }
+
+    @Override
+    public String type() {
+
+        return null;
+    }
+
+    @Override
+    public @NonNull Set<UUID> aggIds() {
+
+        return null;
+    }
+
+    @Override
+    public @NonNull String jsonHeader() {
+
+        return null;
+    }
+
+    @Override
+    public @NonNull String jsonPayload() {
+
+        return null;
+    }
+
+    @Override
+    public String meta(String key) {
+
+        return null;
     }
 }
