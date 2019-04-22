@@ -106,7 +106,7 @@ The unavoidable imaginary example, of two BankAccounts and a money transfer betw
 
 ##### Explanation
 
-First, you tell factcast to record a state according to all events that have either *sourceAccountId* or *targetAccountId* in their list of aggIds and are on namespace *myBankNamespace*. While the namespace is not stricly necessary, it is encouraged to use it - but it depends on your decision on how to use namespaces and group Facts within them.
+First, you tell factcast to record a state according to all events that have either *sourceAccountId* or *targetAccountId* in their list of aggIds and are on namespace *myBankNamespace*. While the namespace is not strictly necessary, it is encouraged to use it - but it depends on your decision on how to use namespaces and group Facts within them.
 
 The number of retries is set to *100* here (default is ten, which for many systems is an acceptable default). In essence this means, that the attempt will be executed at max 100 times, before factcast gives up and throws an ***OptimisticRetriesExceededException*** which extends ConcurrentModificationException.
 
