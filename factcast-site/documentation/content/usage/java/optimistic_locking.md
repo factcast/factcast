@@ -104,7 +104,7 @@ The unavoidable imaginary example, of two BankAccounts and a money transfer betw
 
 ```
 
-##### Explaination
+##### Explanation
 
 First, you tell factcast to record a state according to all events that have either *sourceAccountId* or *targetAccountId* in their list of aggIds and are on namespace *myBankNamespace*. While the namespace is not stricly necessary, it is encouraged to use it - but it depends on your decision on how to use namespaces and group Facts within them.
 
