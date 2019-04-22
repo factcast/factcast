@@ -68,7 +68,7 @@ The unavoidable imaginary example, of two BankAccounts and a money transfer betw
 ```
         factcast.lock("myBankNamespace")
                 .on(sourceAccountId,targetAccountId)
-                .optimistic()            // this is optional, defaults to optimistic
+                .optimistic()            // this is optional, defaults to optimistic, currently the only mode supported
                 .retry(100)              // this is optional, default is 10 times
                 .interval(5)             // this is optional, default is no wait interval between attempts (equals to 0)
                 .attempt(() -> {
@@ -95,7 +95,7 @@ The unavoidable imaginary example, of two BankAccounts and a money transfer betw
                     // register for publishing
                     return Attempt.publish(toPublish).andThen(()->{
                         
-                        // this is only executed once, if publishing succeeded
+                        // this is only executed at max once, and only if publishing succeeded
                         log.info("Money was transferred.");
                         
                     });
@@ -108,15 +108,15 @@ The unavoidable imaginary example, of two BankAccounts and a money transfer betw
 
 First, you tell factcast to record a state according to all events that have either *sourceAccountId* or *targetAccountId* in their list of aggIds and are on namespace *myBankNamespace*. While the namespace is not strictly necessary, it is encouraged to use it - but it depends on your decision on how to use namespaces and group Facts within them.
 
-The number of retries is set to *100* here (default is ten, which for many systems is an acceptable default). In essence this means, that the attempt will be executed at max 100 times, before factcast gives up and throws an ***OptimisticRetriesExceededException*** which extends ConcurrentModificationException.
+The number of retries is set to *100* here (default is 10, which for many systems is an acceptable default). In essence this means, that the attempt will be executed at max 100 times, before factcast gives up and throws an ***OptimisticRetriesExceededException*** which extends ConcurrentModificationException.
 
 If *interval* is not set, it defaults to 0 with the effect, that the code passed into *attempt* is continuously retried without any pause until it either *aborts*, succeeds, or the max number of retries was hit (see above).
-Setting it to *5* means, that before retrying, a 5millisecond wait happens. 
+Setting it to *5* means, that before retrying, a 5 msec wait happens. 
 
 {{< warning >}}<b>WARNING</b>: Setting interval to non-zero makes your code block a thread. The above combination of 100 retries with a 5 msec interval means, that at worst, you code could block <i>longer than half a second</i>.{{< /warning >}}
 
 
-Everything starts with passing a lambda to the *attempt* method. The Lambda is of type 
+Everything starts with passing a lambda to the *attempt* method. The lambda is of type 
 ```
 @FunctionalInterface
 public interface Attempt {
