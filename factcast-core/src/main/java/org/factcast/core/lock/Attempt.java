@@ -25,7 +25,7 @@ import lombok.NonNull;
 
 @FunctionalInterface
 public interface Attempt {
-    IntermediatePublishResult run() throws AttemptAbortedException;
+    IntermediatePublishResult call() throws AttemptAbortedException;
 
     /**
      * this is only a convenience method. You can choose to throw
