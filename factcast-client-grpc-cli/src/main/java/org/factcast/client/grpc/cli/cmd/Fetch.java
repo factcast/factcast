@@ -28,12 +28,13 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.CommaParameterSplitter;
 
+@SuppressWarnings("ALL")
 @Parameters(commandNames = "fetch", commandDescription = "fetch a particular fact by id")
 public class Fetch implements Command {
 
     @SuppressWarnings("DefaultAnnotationParam")
     @Parameter(required = true, description = "id", splitter = CommaParameterSplitter.class)
-    final List<UUID> ids = new LinkedList<>();
+    List<UUID> ids = new LinkedList<>();
 
     @Override
     public void runWith(FactCast fc, Options opt) {

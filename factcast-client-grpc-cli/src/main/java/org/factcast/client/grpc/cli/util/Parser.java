@@ -35,7 +35,7 @@ public class Parser {
 
     private static final String NEGOTIATION_SYSPROP_NAME = "grpc.client.factstore.negotiationType";
 
-    final JCommander jc;
+    private final JCommander jc;
 
     @Getter
     final Options options = new Options();

@@ -81,6 +81,7 @@ class PgSynchronizedQuery {
     }
 
     // the synchronized here is crucial!
+    @SuppressWarnings("SameReturnValue")
     public synchronized void run(boolean useIndex) {
         // TODO recheck latest handling - looks broken
         long latest = latestFetcher.retrieveLatestSer();

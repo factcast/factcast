@@ -34,6 +34,7 @@ import net.devh.boot.grpc.client.channelfactory.*;
  * @author uwe.schaefer@mercateo.com
  */
 
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Configuration
 @ConditionalOnClass({ GrpcFactStore.class, GrpcChannelFactory.class })
 @AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)

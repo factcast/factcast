@@ -170,7 +170,7 @@ public class PgFactStore extends AbstractFactStore {
 
             StringBuilder sb = new StringBuilder();
             sb.append("{");
-            ns.ifPresent(s -> sb.append("\"ns\":\"" + s + "\","));
+            ns.ifPresent(s -> sb.append("\"ns\":\"").append(s).append("\","));
             sb.append("\"aggIds\":[\"").append(uuid).append("\"]}");
 
             String json = sb.toString();

@@ -28,7 +28,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.CommaParameterSplitter;
 
-@SuppressWarnings({ "CanBeFinal", "DefaultAnnotationParam" })
+@SuppressWarnings("ALL")
 @Parameters(
         commandNames = "serialOf",
         commandDescription = "get the serial of a fact identified by id")
