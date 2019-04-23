@@ -32,6 +32,7 @@ import com.google.common.eventbus.EventBus;
 import lombok.RequiredArgsConstructor;
 
 // TODO integrate with PGQuery
+@SuppressWarnings("UnstableApiUsage")
 @RequiredArgsConstructor
 class PgSubscriptionFactory {
 
