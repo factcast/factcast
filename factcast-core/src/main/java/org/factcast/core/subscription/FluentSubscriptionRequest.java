@@ -104,12 +104,6 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
             return this;
         }
 
-        @Override
-        public SpecBuilder skipMarks() {
-            toBuild.marks = false;
-            return this;
-        }
-
         public SpecBuilder catchup(Collection<FactSpec> specification) {
             specification.forEach(this::catchup);
             return this;
