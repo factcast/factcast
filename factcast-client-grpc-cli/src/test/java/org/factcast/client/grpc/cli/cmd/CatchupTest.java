@@ -63,7 +63,6 @@ public class CatchupTest {
                 SubscriptionRequest r = (SubscriptionRequest) args[0];
 
                 List<FactSpec> specs = new ArrayList<FactSpec>(r.specs());
-                specs.remove(FactSpec.forMark());
 
                 assertEquals(startId, r.startingAfter().get());
                 assertEquals(ns, specs.iterator().next().ns());

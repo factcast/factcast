@@ -25,10 +25,6 @@ import org.junit.jupiter.api.*;
 
 public class FactSpecTest {
 
-    @Test
-    void testMarkMatcher() {
-        assertTrue(new FactSpecMatcher(FactSpec.forMark()).test(new MarkFact()));
-    }
 
     @Test
     void testMetaBothNull() {

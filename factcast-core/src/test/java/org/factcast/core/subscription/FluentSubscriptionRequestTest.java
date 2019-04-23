@@ -55,19 +55,19 @@ public class FluentSubscriptionRequestTest {
     @Test
     void testOrNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
-            SubscriptionRequest.catchup(FactSpec.forMark()).or(null);
+            SubscriptionRequest.catchup(FactSpec.ns("foo")).or(null);
         });
     }
 
     @Test
     void testToString() {
-        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.forMark()).fromScratch();
+        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch();
         assertSame(r.debugInfo(), r.toString());
     }
 
     @Test
     void testDebugInfo() {
-        String debugInfo = SubscriptionRequest.catchup(FactSpec.forMark())
+        String debugInfo = SubscriptionRequest.catchup(FactSpec.ns("foo"))
                 .fromScratch()
                 .debugInfo();
         assertNotNull(debugInfo);
