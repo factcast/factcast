@@ -64,7 +64,7 @@ class CondensedQueryExecutor {
                         try {
                             CondensedQueryExecutor.this.runTarget();
                         } catch (Throwable e) {
-                            log.debug("Scheduled query failed, closing: ", e.getMessage());
+                            log.debug("Scheduled query failed, closing: {}", e.getMessage());
                             // TODO needed?
                         }
                     }

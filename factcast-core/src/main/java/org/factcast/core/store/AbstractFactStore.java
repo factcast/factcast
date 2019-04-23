@@ -71,6 +71,7 @@ public abstract class AbstractFactStore implements FactStore {
         return tokenStore.create(state, ns);
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected final boolean isStateUnchanged(@NonNull Optional<String> ns,
             @NonNull Map<UUID, Optional<UUID>> snapshotState) {
         Map<UUID, Optional<UUID>> currentState = getStateFor(ns, snapshotState

@@ -15,8 +15,7 @@
  */
 package org.factcast.server.grpc.auth;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -34,7 +33,7 @@ public class ReadOnlyAccessCredential implements AccessCredential {
 
     String password;
 
-    private final static List<String> roles = Arrays.asList(FactCastRole.READ);
+    private final static List<String> roles = Collections.singletonList(FactCastRole.READ);
 
     @NonNull
     public List<String> roles() {

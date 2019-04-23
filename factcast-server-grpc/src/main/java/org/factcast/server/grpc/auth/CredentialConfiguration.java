@@ -30,11 +30,11 @@ public interface CredentialConfiguration {
 
     List<ReadOnlyAccessCredential> readOnlyAccess();
 
-    public static CredentialConfiguration read(InputStream f) {
+    static CredentialConfiguration read(InputStream f) {
         return FactCastJson.readValue(CredentialConfigurationImpl.class, f);
     }
 
-    public static CredentialConfiguration read(String json) {
+    static CredentialConfiguration read(String json) {
         return FactCastJson.readValue(CredentialConfigurationImpl.class, json);
     }
 

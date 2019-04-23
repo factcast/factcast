@@ -63,10 +63,8 @@ import org.mockito.Mockito;
 import org.springframework.test.annotation.DirtiesContext;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 
-@SuppressWarnings("deprecation")
 public abstract class AbstractFactStoreTest {
 
     static final FactSpec ANY = FactSpec.ns("default");
@@ -725,13 +723,9 @@ public abstract class AbstractFactStoreTest {
         // catchup from last, should not bring anything new.
         request = SubscriptionRequest.catchup(FactSpec.ns(ns))
                 .from(last.get());
-        observer = new FactObserver() {
-
-            @Override
-            public void onNext(@NonNull Fact element) {
-                System.out.println("unexpected fact recieved");
-                fail();
-            }
+        observer = element -> {
+            System.out.println("unexpected fact recieved");
+            fail();
         };
         uut.subscribeToFacts(request, observer).awaitComplete();
 
@@ -743,17 +737,12 @@ public abstract class AbstractFactStoreTest {
         CountDownLatch expectingTwo = new CountDownLatch(2);
         request = SubscriptionRequest.catchup(FactSpec.ns(ns))
                 .from(last.get());
-        observer = new FactObserver() {
-
-            @Override
-            public void onNext(@NonNull Fact element) {
-                expectingTwo.countDown();
-                if (element.id().equals(last.get())) {
-                    System.out.println("duplicate fact recieved");
-                    fail();
-                }
+        observer = element -> {
+            expectingTwo.countDown();
+            if (element.id().equals(last.get())) {
+                System.out.println("duplicate fact recieved");
+                fail();
             }
-
         };
         uut.subscribeToFacts(request, observer);
         assertTrue(expectingTwo.await(2, TimeUnit.SECONDS));
@@ -829,7 +818,7 @@ public abstract class AbstractFactStoreTest {
     private List<Fact> catchup(FactSpec s) {
 
         LinkedList<Fact> l = new LinkedList<>();
-        FactObserver o = f -> l.add(f);
+        FactObserver o = l::add;
         uut.subscribeToFacts(SubscriptionRequest.catchup(s).fromScratch(), o)
                 .awaitCatchup();
         return l;

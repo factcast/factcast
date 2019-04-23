@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.factcast.core.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
@@ -42,8 +41,9 @@ import com.google.common.collect.Sets;
 
 import io.grpc.*;
 
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @ExtendWith(MockitoExtension.class)
-public class GrpcFactStoreTest {
+class GrpcFactStoreTest {
 
     @InjectMocks
     private GrpcFactStore uut;
@@ -99,9 +99,7 @@ public class GrpcFactStoreTest {
 
     @Test
     void testPublishNullParameter() {
-        assertThrows(NullPointerException.class, () -> {
-            uut.publish(null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.publish(null));
     }
 
     @Test
@@ -125,26 +123,20 @@ public class GrpcFactStoreTest {
     @Test
     void testPublishPropagatesException() {
         when(blockingStub.publish(any())).thenThrow(new SomeException());
-        assertThrows(SomeException.class, () -> {
-            uut.publish(Collections.singletonList(Fact.builder().build("{}")));
-        });
+        assertThrows(SomeException.class, () -> uut.publish(Collections.singletonList(Fact.builder().build("{}"))));
     }
 
     @Test
     void testFetchByIdPropagatesRetryableExceptionOnUnavailableStatus() {
         when(blockingStub.fetchById(any())).thenThrow(new StatusRuntimeException(
                 Status.UNAVAILABLE));
-        assertThrows(RetryableException.class, () -> {
-            uut.fetchById(UUID.randomUUID());
-        });
+        assertThrows(RetryableException.class, () -> uut.fetchById(UUID.randomUUID()));
     }
 
     @Test
     void testPublishPropagatesRetryableExceptionOnUnavailableStatus() {
         when(blockingStub.publish(any())).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-        assertThrows(RetryableException.class, () -> {
-            uut.publish(Collections.singletonList(Fact.builder().build("{}")));
-        });
+        assertThrows(RetryableException.class, () -> uut.publish(Collections.singletonList(Fact.builder().build("{}"))));
     }
 
     @SuppressWarnings("unchecked")
@@ -152,18 +144,14 @@ public class GrpcFactStoreTest {
     void testCancelNotRetryableExceptionOnUnavailableStatus() {
         ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = mock(ClientCall.class);
         doThrow(new StatusRuntimeException(Status.UNAVAILABLE)).when(call).cancel(any(), any());
-        assertThrows(StatusRuntimeException.class, () -> {
-            uut.cancel(call);
-        });
+        assertThrows(StatusRuntimeException.class, () -> uut.cancel(call));
     }
 
     @Test
     void testSerialOfPropagatesRetryableExceptionOnUnavailableStatus() {
         when(blockingStub.serialOf(any())).thenThrow(new StatusRuntimeException(
                 Status.UNAVAILABLE));
-        assertThrows(RetryableException.class, () -> {
-            uut.serialOf(mock(UUID.class));
-        });
+        assertThrows(RetryableException.class, () -> uut.serialOf(mock(UUID.class)));
     }
 
     @Test
@@ -182,18 +170,14 @@ public class GrpcFactStoreTest {
     void testInitializePropagatesRetryableExceptionOnUnavailableStatus() {
         when(blockingStub.handshake(any())).thenThrow(new StatusRuntimeException(
                 Status.UNAVAILABLE));
-        assertThrows(RetryableException.class, () -> {
-            uut.initialize();
-        });
+        assertThrows(RetryableException.class, () -> uut.initialize());
     }
 
     @Test
     void testEnumerateNamespacesPropagatesRetryableExceptionOnUnavailableStatus() {
         when(blockingStub.enumerateNamespaces(any())).thenThrow(new StatusRuntimeException(
                 Status.UNAVAILABLE));
-        assertThrows(RetryableException.class, () -> {
-            uut.enumerateNamespaces();
-        });
+        assertThrows(RetryableException.class, () -> uut.enumerateNamespaces());
     }
 
     @Test
@@ -210,9 +194,7 @@ public class GrpcFactStoreTest {
     void testEnumerateTypesPropagatesRetryableExceptionOnUnavailableStatus() {
         when(blockingStub.enumerateTypes(any())).thenThrow(new StatusRuntimeException(
                 Status.UNAVAILABLE));
-        assertThrows(RetryableException.class, () -> {
-            uut.enumerateTypes("ns");
-        });
+        assertThrows(RetryableException.class, () -> uut.enumerateTypes("ns"));
     }
 
     @Test
@@ -255,9 +237,7 @@ public class GrpcFactStoreTest {
         when(blockingStub.handshake(any()))
                 .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(99, 0, 0),
                         new HashMap<>())));
-        Assertions.assertThrows(IncompatibleProtocolVersions.class, () -> {
-            uut.initialize();
-        });
+        Assertions.assertThrows(IncompatibleProtocolVersions.class, () -> uut.initialize());
     }
 
     @Test
@@ -271,7 +251,7 @@ public class GrpcFactStoreTest {
     }
 
     @Test
-    public void testWrapRetryable_nonRetryable() throws Exception {
+    void testWrapRetryable_nonRetryable() throws Exception {
         StatusRuntimeException cause = new StatusRuntimeException(Status.DEADLINE_EXCEEDED);
         RuntimeException e = GrpcFactStore.wrapRetryable(cause);
         assertTrue(e instanceof StatusRuntimeException);
@@ -279,7 +259,7 @@ public class GrpcFactStoreTest {
     }
 
     @Test
-    public void testWrapRetryable() throws Exception {
+    void testWrapRetryable() throws Exception {
         StatusRuntimeException cause = new StatusRuntimeException(Status.UNAVAILABLE);
         RuntimeException e = GrpcFactStore.wrapRetryable(cause);
         assertTrue(e instanceof RetryableException);
@@ -287,14 +267,14 @@ public class GrpcFactStoreTest {
     }
 
     @Test
-    public void testCancelIsPropagated() throws Exception {
+    void testCancelIsPropagated() throws Exception {
         ClientCall call = mock(ClientCall.class);
         uut.cancel(call);
         verify(call).cancel(any(), any());
     }
 
     @Test
-    public void testCancelIsNotRetryable() throws Exception {
+    void testCancelIsNotRetryable() throws Exception {
         ClientCall call = mock(ClientCall.class);
         doThrow(StatusRuntimeException.class).when(call).cancel(any(), any());
 
@@ -309,7 +289,7 @@ public class GrpcFactStoreTest {
     }
 
     @Test
-    public void testAfterSingletonsInstantiatedCallsInit() throws Exception {
+    void testAfterSingletonsInstantiatedCallsInit() throws Exception {
         uut = spy(uut);
         when(blockingStub.handshake(any()))
                 .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(1, 999, 0),
@@ -320,23 +300,15 @@ public class GrpcFactStoreTest {
     }
 
     @Test
-    public void testSubscribeNullParameters() throws Exception {
-        expectNPE(() -> {
-            uut.subscribe(null, mock(FactObserver.class));
-        });
-        expectNPE(() -> {
-            uut.subscribe(mock(SubscriptionRequestTO.class), null);
-        });
-        expectNPE(() -> {
-            uut.subscribe(null, null);
-        });
+    void testSubscribeNullParameters() throws Exception {
+        expectNPE(() -> uut.subscribe(null, mock(FactObserver.class)));
+        expectNPE(() -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
+        expectNPE(() -> uut.subscribe(null, null));
     }
 
     @Test
-    public void testSerialOfNullParameters() throws Exception {
-        expectNPE(() -> {
-            uut.serialOf(null);
-        });
+    void testSerialOfNullParameters() throws Exception {
+        expectNPE(() -> uut.serialOf(null));
     }
 //
 //    @Test
@@ -377,10 +349,8 @@ public class GrpcFactStoreTest {
 //    }
 
     @Test
-    public void testInvalidate() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.invalidate(null);
-        });
+    void testInvalidate() throws Exception {
+        assertThrows(NullPointerException.class, () -> uut.invalidate(null));
 
         {
             UUID id = new UUID(0, 1);
@@ -405,16 +375,10 @@ public class GrpcFactStoreTest {
     }
 
     @Test
-    public void testStateFor() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.stateFor(Lists.emptyList(), null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.stateFor(null, null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.stateFor(null, Optional.of("foo"));
-        });
+    void testStateFor() throws Exception {
+        assertThrows(NullPointerException.class, () -> uut.stateFor(Lists.emptyList(), null));
+        assertThrows(NullPointerException.class, () -> uut.stateFor(null, null));
+        assertThrows(NullPointerException.class, () -> uut.stateFor(null, Optional.of("foo")));
 
         {
             UUID id = new UUID(0, 1);
@@ -439,16 +403,10 @@ public class GrpcFactStoreTest {
     }
 
     @Test
-    public void testPublishIfUnchanged() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.publishIfUnchanged(Lists.emptyList(), null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.publishIfUnchanged(null, null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.publishIfUnchanged(null, Optional.empty());
-        });
+    void testPublishIfUnchanged() throws Exception {
+        assertThrows(NullPointerException.class, () -> uut.publishIfUnchanged(Lists.emptyList(), null));
+        assertThrows(NullPointerException.class, () -> uut.publishIfUnchanged(null, null));
+        assertThrows(NullPointerException.class, () -> uut.publishIfUnchanged(null, Optional.empty()));
 
         {
             UUID id = new UUID(0, 1);
@@ -479,28 +437,18 @@ public class GrpcFactStoreTest {
     }
 
     @Test
-    public void testSubscribe() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.subscribe(mock(SubscriptionRequestTO.class), null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.subscribe(null, null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.subscribe(null, mock(FactObserver.class));
-        });
+    void testSubscribe() throws Exception {
+        assertThrows(NullPointerException.class, () -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
+        assertThrows(NullPointerException.class, () -> uut.subscribe(null, null));
+        assertThrows(NullPointerException.class, () -> uut.subscribe(null, mock(FactObserver.class)));
 
     }
 
     @Test
-    public void testCredentialsWrongFormat() throws Exception {
-        assertThrows(IllegalArgumentException.class, () -> {
-            new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz"));
-        });
+    void testCredentialsWrongFormat() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz")));
 
-        assertThrows(IllegalArgumentException.class, () -> {
-            new GrpcFactStore(mock(Channel.class), Optional.ofNullable("x:y:z"));
-        });
+        assertThrows(IllegalArgumentException.class, () -> new GrpcFactStore(mock(Channel.class), Optional.ofNullable("x:y:z")));
 
         assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
                 .isNotNull();
@@ -508,7 +456,7 @@ public class GrpcFactStoreTest {
     }
 
     @Test
-    public void testCredentialsRightFormat() throws Exception {
+    void testCredentialsRightFormat() throws Exception {
         assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
                 .isNotNull();
     }

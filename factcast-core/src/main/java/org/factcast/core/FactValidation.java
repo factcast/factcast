@@ -16,7 +16,6 @@
 package org.factcast.core;
 
 import java.util.*;
-import java.util.stream.*;
 
 import lombok.*;
 import lombok.experimental.*;
@@ -54,7 +53,7 @@ class FactValidationException extends IllegalArgumentException {
     }
 
     private static String render(List<String> errors) {
-        return errors.stream().collect(Collectors.joining("\n"));
+        return String.join("\n", errors);
     }
 
 }
