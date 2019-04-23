@@ -50,14 +50,15 @@ import net.devh.boot.grpc.client.security.*;
  *
  * @author uwe.schaefer@mercateo.com
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
 public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private final CompressionCodecs codecs = new CompressionCodecs();
 
-    static final String CHANNEL_NAME = "factstore";
+    private static final String CHANNEL_NAME = "factstore";
 
-    static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
+    private static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
 
     private RemoteFactStoreBlockingStub blockingStub;
 
@@ -65,12 +66,9 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private final ProtoConverter converter = new ProtoConverter();
 
-    private ProtocolVersion serverProtocolVersion;
-
-    private Map<String, String> serverProperties;
-
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     @Autowired
     @Generated
     public GrpcFactStore(FactCastGrpcChannelFactory channelFactory,
@@ -86,7 +84,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
                 credentials);
     }
 
-    public GrpcFactStore(RemoteFactStoreBlockingStub newBlockingStub, RemoteFactStoreStub newStub,
+    private GrpcFactStore(RemoteFactStoreBlockingStub newBlockingStub, RemoteFactStoreStub newStub,
             Optional<String> credentials) {
         this.blockingStub = newBlockingStub;
         this.stub = newStub;
@@ -106,7 +104,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     public Optional<Fact> fetchById(UUID id) {
         log.trace("fetching {} from remote store", id);
 
-        MSG_OptionalFact fetchById = null;
+        MSG_OptionalFact fetchById;
         try {
             fetchById = blockingStub.fetchById(converter.toProto(id));
         } catch (StatusRuntimeException e) {
@@ -128,7 +126,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
                         .toList());
         MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
         try {
-            blockingStub.publish(mfs);
+            MSG_Empty msgEmpty = blockingStub.publish(mfs);
         } catch (StatusRuntimeException e) {
             throw wrapRetryable(e);
         }
@@ -172,6 +170,8 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     public synchronized void initialize() {
         if (!initialized.getAndSet(true)) {
             log.debug("Invoking handshake");
+            Map<String, String> serverProperties;
+            ProtocolVersion serverProtocolVersion;
             try {
                 ServerConfig cfg = converter.fromProto(blockingStub.handshake(converter.empty()));
                 serverProtocolVersion = cfg.version();
@@ -271,7 +271,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     public void invalidate(@NonNull StateToken token) {
         MSG_UUID msg = converter.toProto(token.uuid());
         try {
-            blockingStub.invalidate(msg);
+            MSG_Empty msgEmpty = blockingStub.invalidate(msg);
         } catch (StatusRuntimeException e) {
             throw wrapRetryable(e);
         }

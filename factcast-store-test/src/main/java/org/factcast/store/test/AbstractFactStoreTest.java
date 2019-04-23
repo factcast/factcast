@@ -63,10 +63,9 @@ import org.mockito.Mockito;
 import org.springframework.test.annotation.DirtiesContext;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings("ALL")
 public abstract class AbstractFactStoreTest {
 
     static final FactSpec ANY = FactSpec.ns("default");
@@ -85,16 +84,12 @@ public abstract class AbstractFactStoreTest {
 
     @Test
     public void testFetchByIdNullParameter() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            createStoreToTest().fetchById(null);
-        });
+        assertThrows(NullPointerException.class, () -> createStoreToTest().fetchById(null));
     }
 
     @Test
     public void testPublishNullParameter() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            createStoreToTest().publish(null);
-        });
+        assertThrows(NullPointerException.class, () -> createStoreToTest().publish(null));
     }
 
     @DirtiesContext
@@ -605,17 +600,15 @@ public abstract class AbstractFactStoreTest {
 
     @Test
     protected void testChecksMandatoryNamespaceOnPublish() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\"}",
-                    "{}"));
-        });
+        Assertions.assertThrows(IllegalArgumentException.class, () -> uut.publish(Fact.of(
+                "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\"}",
+                "{}")));
     }
 
     @Test
     protected void testChecksMandatoryIdOnPublish() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            uut.publish(Fact.of("{\"ns\":\"default\",\"type\":\"someType\"}", "{}"));
-        });
+        Assertions.assertThrows(IllegalArgumentException.class, () -> uut.publish(Fact.of(
+                "{\"ns\":\"default\",\"type\":\"someType\"}", "{}")));
     }
 
     @Test
@@ -632,36 +625,28 @@ public abstract class AbstractFactStoreTest {
 
     @Test
     protected void testEnumerateTypesNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.enumerateTypes(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.enumerateTypes(null));
     }
 
     @Test
     protected void testInvalidateNullContract() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            store.invalidate(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> store.invalidate(null));
     }
 
     @Test
     protected void testPublishIfUnchangedNullContract() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            store.publishIfUnchanged(Lists.emptyList(), null);
-        });
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            store.publishIfUnchanged(null, Optional.empty());
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> store.publishIfUnchanged(Lists
+                .emptyList(), null));
+        Assertions.assertThrows(NullPointerException.class, () -> store.publishIfUnchanged(null,
+                Optional.empty()));
     }
 
     @Test
     protected void testStateForNullContract() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            store.stateFor(Lists.emptyList(), null);
-        });
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            store.stateFor(null, Optional.empty());
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> store.stateFor(Lists.emptyList(),
+                null));
+        Assertions.assertThrows(NullPointerException.class, () -> store.stateFor(null, Optional
+                .empty()));
     }
 
     @Test
@@ -714,9 +699,7 @@ public abstract class AbstractFactStoreTest {
         // fetch all there is from scratch
         SubscriptionRequest request = SubscriptionRequest.catchup(FactSpec.ns(ns))
                 .fromScratch();
-        FactObserver observer = element -> {
-            last.set(element.id());
-        };
+        FactObserver observer = element -> last.set(element.id());
         uut.subscribeToFacts(request, observer).awaitComplete();
 
         // now we should have the published one in last
@@ -725,13 +708,9 @@ public abstract class AbstractFactStoreTest {
         // catchup from last, should not bring anything new.
         request = SubscriptionRequest.catchup(FactSpec.ns(ns))
                 .from(last.get());
-        observer = new FactObserver() {
-
-            @Override
-            public void onNext(@NonNull Fact element) {
-                System.out.println("unexpected fact recieved");
-                fail();
-            }
+        observer = element -> {
+            System.out.println("unexpected fact recieved");
+            fail();
         };
         uut.subscribeToFacts(request, observer).awaitComplete();
 
@@ -743,17 +722,12 @@ public abstract class AbstractFactStoreTest {
         CountDownLatch expectingTwo = new CountDownLatch(2);
         request = SubscriptionRequest.catchup(FactSpec.ns(ns))
                 .from(last.get());
-        observer = new FactObserver() {
-
-            @Override
-            public void onNext(@NonNull Fact element) {
-                expectingTwo.countDown();
-                if (element.id().equals(last.get())) {
-                    System.out.println("duplicate fact recieved");
-                    fail();
-                }
+        observer = element -> {
+            expectingTwo.countDown();
+            if (element.id().equals(last.get())) {
+                System.out.println("duplicate fact recieved");
+                fail();
             }
-
         };
         uut.subscribeToFacts(request, observer);
         assertTrue(expectingTwo.await(2, TimeUnit.SECONDS));
@@ -791,23 +765,17 @@ public abstract class AbstractFactStoreTest {
     @Test
     public void testSubscribeToIdsParameterContract() throws Exception {
         IdObserver observer = mock(IdObserver.class);
-        assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToIds(null, observer);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToIds(mock(SubscriptionRequestTO.class), null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.subscribeToIds(null, observer));
+        assertThrows(NullPointerException.class, () -> uut.subscribeToIds(mock(
+                SubscriptionRequestTO.class), null));
     }
 
     @Test
     public void testSubscribeToFactsParameterContract() throws Exception {
         FactObserver observer = mock(FactObserver.class);
-        assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToFacts(null, observer);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToFacts(mock(SubscriptionRequestTO.class), null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.subscribeToFacts(null, observer));
+        assertThrows(NullPointerException.class, () -> uut.subscribeToFacts(mock(
+                SubscriptionRequestTO.class), null));
     }
 
     /// optimistic locking
@@ -829,7 +797,7 @@ public abstract class AbstractFactStoreTest {
     private List<Fact> catchup(FactSpec s) {
 
         LinkedList<Fact> l = new LinkedList<>();
-        FactObserver o = f -> l.add(f);
+        FactObserver o = l::add;
         uut.subscribeToFacts(SubscriptionRequest.catchup(s).fromScratch(), o)
                 .awaitCatchup();
         return l;
@@ -842,9 +810,7 @@ public abstract class AbstractFactStoreTest {
         UUID agg1 = UUID.randomUUID();
         uut.publish(fact(agg1));
 
-        UUID ret = uut.lock(NS).on(agg1).attempt(() -> {
-            return Attempt.publish(fact(agg1));
-        });
+        UUID ret = uut.lock(NS).on(agg1).attempt(() -> Attempt.publish(fact(agg1)));
 
         verify(store).publishIfUnchanged(any(), any());
         assertThat(catchup()).hasSize(2);
@@ -858,9 +824,7 @@ public abstract class AbstractFactStoreTest {
         // setup
         UUID agg1 = UUID.randomUUID();
 
-        UUID ret = uut.lock(NS).on(agg1).attempt(() -> {
-            return Attempt.publish(fact(agg1));
-        });
+        UUID ret = uut.lock(NS).on(agg1).attempt(() -> Attempt.publish(fact(agg1)));
 
         verify(store).publishIfUnchanged(any(), any());
         assertThat(catchup()).hasSize(1);
@@ -870,39 +834,31 @@ public abstract class AbstractFactStoreTest {
 
     @Test
     void npeOnNamespaceMissing() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.lock(null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.lock(null));
     }
 
     @Test
     void npeOnNamespaceEmpty() throws Exception {
-        assertThrows(IllegalArgumentException.class, () -> {
-            uut.lock("");
-        });
+        assertThrows(IllegalArgumentException.class, () -> uut.lock(""));
     }
 
     @Test
     void npeOnAggIdMissing() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.lock("foo").on(null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.lock("foo").on(null));
     }
 
     @Test
     void npeOnAttemptIsNull() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.lock("foo").on(UUID.randomUUID()).attempt(null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.lock("foo")
+                .on(UUID.randomUUID())
+                .attempt(null));
     }
 
     @Test
     void npeOnAttemptReturningNull() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.lock("foo").on(UUID.randomUUID()).attempt(() -> {
-                return null;
-            });
-        });
+        assertThrows(NullPointerException.class, () -> uut.lock("foo")
+                .on(UUID.randomUUID())
+                .attempt(() -> null));
     }
 
     @Test
@@ -913,9 +869,7 @@ public abstract class AbstractFactStoreTest {
         UUID agg2 = UUID.randomUUID();
         uut.publish(fact(agg1));
 
-        UUID ret = uut.lockGlobally().on(agg1, agg2).attempt(() -> {
-            return Attempt.publish(fact(agg1));
-        });
+        UUID ret = uut.lockGlobally().on(agg1, agg2).attempt(() -> Attempt.publish(fact(agg1)));
 
         verify(store).publishIfUnchanged(any(), any());
         assertThat(catchup()).hasSize(2);
@@ -931,9 +885,7 @@ public abstract class AbstractFactStoreTest {
         UUID agg2 = UUID.randomUUID();
         uut.publish(fact(agg1));
 
-        UUID ret = uut.lock(NS).on(agg1, agg2).attempt(() -> {
-            return Attempt.publish(fact(agg1));
-        });
+        UUID ret = uut.lock(NS).on(agg1, agg2).attempt(() -> Attempt.publish(fact(agg1)));
 
         verify(store).publishIfUnchanged(any(), any());
         assertThat(catchup()).hasSize(2);
@@ -1013,20 +965,18 @@ public abstract class AbstractFactStoreTest {
 
     @Test
     void shouldThrowAttemptAbortedException() {
-        assertThrows(AttemptAbortedException.class, () -> {
-            uut.lock(NS).on(UUID.randomUUID()).attempt(() -> {
-                return Attempt.abort("don't want to");
-            });
-        });
+        assertThrows(AttemptAbortedException.class, () -> uut.lock(NS)
+                .on(UUID.randomUUID())
+                .attempt(() -> Attempt.abort("don't want to")));
     }
 
     @Test
     void shouldWrapExceptionIntoAttemptAbortedException() {
-        assertThrows(AttemptAbortedException.class, () -> {
-            uut.lock(NS).on(UUID.randomUUID()).attempt(() -> {
-                throw new UnsupportedOperationException();
-            });
-        });
+        assertThrows(AttemptAbortedException.class, () -> uut.lock(NS)
+                .on(UUID.randomUUID())
+                .attempt(() -> {
+                    throw new UnsupportedOperationException();
+                }));
     }
 
     @Test
@@ -1034,11 +984,9 @@ public abstract class AbstractFactStoreTest {
 
         Runnable e = mock(Runnable.class);
 
-        assertThrows(AttemptAbortedException.class, () -> {
-            uut.lock(NS).on(UUID.randomUUID()).attempt(() -> {
-                return Attempt.abort("don't want to").andThen(e);
-            });
-        });
+        assertThrows(AttemptAbortedException.class, () -> uut.lock(NS)
+                .on(UUID.randomUUID())
+                .attempt(() -> Attempt.abort("don't want to").andThen(e)));
 
         verify(e, never()).run();
     }
@@ -1050,9 +998,8 @@ public abstract class AbstractFactStoreTest {
 
         Runnable e = mock(Runnable.class);
 
-        uut.lock(NS).on(UUID.randomUUID()).attempt(() -> {
-            return Attempt.publish(fact(UUID.randomUUID())).andThen(e);
-        });
+        uut.lock(NS).on(UUID.randomUUID()).attempt(() -> Attempt.publish(fact(UUID.randomUUID()))
+                .andThen(e));
 
         verify(e).run();
     }
@@ -1065,11 +1012,8 @@ public abstract class AbstractFactStoreTest {
         Runnable e = mock(Runnable.class);
         Mockito.doThrow(NumberFormatException.class).when(e).run();
 
-        assertThrows(ExceptionAfterPublish.class, () -> {
-            uut.lock(NS).on(UUID.randomUUID()).attempt(() -> {
-                return Attempt.publish(fact(UUID.randomUUID())).andThen(e);
-            });
-        });
+        assertThrows(ExceptionAfterPublish.class, () -> uut.lock(NS).on(UUID.randomUUID()).attempt(
+                () -> Attempt.publish(fact(UUID.randomUUID())).andThen(e)));
         verify(e).run();
     }
 
@@ -1102,9 +1046,7 @@ public abstract class AbstractFactStoreTest {
     @Test
     void shouldThrowAttemptAbortedException_withMessage() {
         try {
-            uut.lock(NS).on(UUID.randomUUID()).attempt(() -> {
-                return Attempt.abort("don't want to");
-            });
+            uut.lock(NS).on(UUID.randomUUID()).attempt(() -> Attempt.abort("don't want to"));
             fail("should not have gotten here");
         } catch (AttemptAbortedException e) {
             assertThat(e.getMessage()).isEqualTo("don't want to");
@@ -1167,15 +1109,14 @@ public abstract class AbstractFactStoreTest {
 
         UUID agg1 = UUID.randomUUID();
 
-        assertThrows(OptimisticRetriesExceededException.class, () -> {
-            uut.lock(NS).on(agg1).attempt(() -> {
+        assertThrows(OptimisticRetriesExceededException.class, () -> uut.lock(NS).on(agg1).attempt(
+                () -> {
 
-                // write conflicting fact first
-                uut.publish(fact(agg1));
+                    // write conflicting fact first
+                    uut.publish(fact(agg1));
 
-                return Attempt.publish(fact(agg1));
-            });
-        });
+                    return Attempt.publish(fact(agg1));
+                }));
     }
 
     @Test
@@ -1205,9 +1146,7 @@ public abstract class AbstractFactStoreTest {
         UUID agg1 = UUID.randomUUID();
 
         try {
-            uut.lock(NS).on(agg1).attempt(() -> {
-                return Attempt.abort("narf");
-            });
+            uut.lock(NS).on(agg1).attempt(() -> Attempt.abort("narf"));
         } catch (AttemptAbortedException expected) {
         }
 
@@ -1220,9 +1159,7 @@ public abstract class AbstractFactStoreTest {
 
         UUID agg1 = UUID.randomUUID();
 
-        uut.lock(NS).on(agg1).attempt(() -> {
-            return Attempt.publish(fact(agg1));
-        });
+        uut.lock(NS).on(agg1).attempt(() -> Attempt.publish(fact(agg1)));
 
         verify(store, times(1)).stateFor(any(), any());
         verify(store, times(1)).invalidate(any());
@@ -1262,42 +1199,29 @@ public abstract class AbstractFactStoreTest {
 
     @Test
     public void nullContracts_publishIfUnchanged() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            store.publishIfUnchanged(Lists.emptyList(), null);
-        });
+        assertThrows(NullPointerException.class, () -> store.publishIfUnchanged(Lists.emptyList(),
+                null));
 
-        assertThrows(NullPointerException.class, () -> {
-            store.publishIfUnchanged(null, null);
-        });
+        assertThrows(NullPointerException.class, () -> store.publishIfUnchanged(null, null));
 
-        assertThrows(NullPointerException.class, () -> {
-            store.publishIfUnchanged(null, Optional.empty());
-        });
+        assertThrows(NullPointerException.class, () -> store.publishIfUnchanged(null, Optional
+                .empty()));
     }
 
     @Test
     public void testSubscribeNullContract() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            store.subscribe(null, mock(FactObserver.class));
-        });
-        assertThrows(NullPointerException.class, () -> {
-            store.subscribe(null, null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            store.subscribe(mock(SubscriptionRequestTO.class), null);
-        });
+        assertThrows(NullPointerException.class, () -> store.subscribe(null, mock(
+                FactObserver.class)));
+        assertThrows(NullPointerException.class, () -> store.subscribe(null, null));
+        assertThrows(NullPointerException.class, () -> store.subscribe(mock(
+                SubscriptionRequestTO.class), null));
     }
 
     @Test
     public void testGetStateForNullContract() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            store.stateFor(null, Optional.ofNullable(""));
-        });
-        assertThrows(NullPointerException.class, () -> {
-            store.stateFor(null, null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            store.stateFor(new LinkedList<>(), null);
-        });
+        assertThrows(NullPointerException.class, () -> store.stateFor(null, Optional.ofNullable(
+                "")));
+        assertThrows(NullPointerException.class, () -> store.stateFor(null, null));
+        assertThrows(NullPointerException.class, () -> store.stateFor(new LinkedList<>(), null));
     }
 }

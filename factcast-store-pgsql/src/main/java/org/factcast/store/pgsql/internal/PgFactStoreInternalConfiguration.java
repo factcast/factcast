@@ -62,6 +62,7 @@ public class PgFactStoreInternalConfiguration {
     @Bean
     public PgCatchupFactory pgCatchupFactory(PgConfigurationProperties props, JdbcTemplate jdbc,
             PgFactIdToSerialMapper serMapper) {
+        // noinspection SwitchStatementWithTooFewBranches
         switch (props.getCatchupStrategy()) {
         case PAGED:
             return new PgPagedCatchUpFactory(jdbc, props, serMapper);

@@ -167,7 +167,7 @@ public class PgFactStream {
         final PgPostQueryMatcher postQueryMatcher;
 
         @Override
-        public void processRow(@NonNull ResultSet rs) throws SQLException {
+        public void processRow(ResultSet rs) throws SQLException {
             if (isConnected()) {
                 if (rs.isClosed()) {
                     throw new IllegalStateException(

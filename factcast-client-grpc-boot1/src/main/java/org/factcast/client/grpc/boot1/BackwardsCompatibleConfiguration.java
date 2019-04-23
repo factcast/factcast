@@ -31,6 +31,7 @@ import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import net.devh.springboot.autoconfigure.grpc.client.GrpcChannelFactory;
 
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Configuration
 @ConditionalOnClass(GrpcChannelFactory.class)
 public class BackwardsCompatibleConfiguration {
