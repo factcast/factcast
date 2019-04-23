@@ -15,21 +15,15 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-
 import org.factcast.store.pgsql.PgFactStoreConfiguration;
-import org.mockito.Mockito;
 import org.postgresql.Driver;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.testcontainers.containers.PostgreSQLContainer;
-
-import com.codahale.metrics.MetricRegistry;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -61,8 +55,4 @@ public class PgEmbeddedConfiguration {
         }
     }
 
-    @Bean
-    public MetricRegistry nopCounterService() {
-        return Mockito.mock(MetricRegistry.class, RETURNS_DEEP_STUBS);
-    }
 }
