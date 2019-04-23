@@ -32,6 +32,7 @@ import org.springframework.stereotype.Component;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+@SuppressWarnings("ALL")
 @RequiredArgsConstructor
 @Component
 public class HelloWorldRunner implements CommandLineRunner {
@@ -59,17 +60,20 @@ public class HelloWorldRunner implements CommandLineRunner {
 
         UUID id = UUID.randomUUID();
         System.out.println("trying to publish with optimistic locking");
-        UUID success = fc.lock("foo").on(id).optimistic().attempt(() -> {
-            return Attempt.publish(Fact.builder().aggId(id).ns("foo").buildWithoutPayload());
-        });
+        UUID success = fc.lock("foo").on(id).optimistic().attempt(() -> Attempt.publish(Fact
+                .builder()
+                .aggId(id)
+                .ns("foo")
+                .buildWithoutPayload()));
         System.out.println("published succeeded: " + (success != null));
         System.out.println("published id: " + success);
         expected.add(success);
 
         System.out.println("trying another with optimistic locking");
-        success = fc.lock("foo").on(id).optimistic().attempt(() -> {
-            return Attempt.publish(Fact.builder().aggId(id).ns("foo").buildWithoutPayload());
-        });
+        success = fc.lock("foo").on(id).optimistic().attempt(() -> Attempt.publish(Fact.builder()
+                .aggId(id)
+                .ns("foo")
+                .buildWithoutPayload()));
         System.out.println("published succeeded: " + (success != null));
         System.out.println("published id: " + success);
         expected.add(success);

@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.stream.*;
 
 import io.grpc.CompressorRegistry;
 
@@ -33,12 +33,10 @@ public class CompressionCodecs {
     private final String orderedListOfAvailableCodecsAsString;
 
     public CompressionCodecs() {
-        orderedListOfAvailableCodecs = Arrays.asList("lz4", "snappy", "gzip")
-                .stream()
+        orderedListOfAvailableCodecs = Stream.of("lz4", "snappy", "gzip")
                 .filter(CompressionCodecs::locallyAvailable)
                 .collect(Collectors.toList());
-        orderedListOfAvailableCodecsAsString = orderedListOfAvailableCodecs.stream()
-                .collect(Collectors.joining(","));
+        orderedListOfAvailableCodecsAsString = String.join(",", orderedListOfAvailableCodecs);
     }
 
     private static boolean locallyAvailable(String codec) {

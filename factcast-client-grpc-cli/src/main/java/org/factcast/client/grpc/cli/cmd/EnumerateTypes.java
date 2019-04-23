@@ -22,6 +22,7 @@ import org.factcast.core.FactCast;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+@SuppressWarnings("ALL")
 @Parameters(
         commandNames = "enumerateTypes",
         commandDescription = "lists all types used with a namespace in no particular order")

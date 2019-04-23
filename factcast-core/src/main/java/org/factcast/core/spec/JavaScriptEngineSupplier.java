@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 class JavaScriptEngineSupplier implements Supplier<ScriptEngine> {
-    static final ScriptEngineManager staticEngineManager = new ScriptEngineManager();
+    private static final ScriptEngineManager staticEngineManager = new ScriptEngineManager();
 
     final ScriptEngineManager manager;
 

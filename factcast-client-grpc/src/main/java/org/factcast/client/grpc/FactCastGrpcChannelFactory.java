@@ -60,6 +60,7 @@ public interface FactCastGrpcChannelFactory extends AutoCloseable {
      *            the channel.
      * @return The newly created channel for the given service.
      */
+    @SuppressWarnings("unused")
     Channel createChannel(String name, List<ClientInterceptor> interceptors);
 
 }
