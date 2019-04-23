@@ -100,7 +100,7 @@ public class WithOptimisticLock {
             throws AttemptAbortedException {
 
         try {
-            return operation.run();
+            return operation.call();
         } catch (Exception e) {
             if (!AttemptAbortedException.class.isAssignableFrom(e.getClass()))
                 throw new AttemptAbortedException(e);
