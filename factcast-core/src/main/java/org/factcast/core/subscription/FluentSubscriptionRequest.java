@@ -47,11 +47,11 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     UUID startingAfter;
 
-    List<FactSpec> specs = new LinkedList<>();
+    final List<FactSpec> specs = new LinkedList<>();
 
     boolean idOnly = false;
 
-    String debugInfo;
+    final String debugInfo;
 
     FluentSubscriptionRequest() {
         debugInfo = createDebugInfo();

@@ -72,7 +72,7 @@ public class FactCastSecurityConfiguration {
         log.info("FactCast Security is enabled.");
         return username -> {
             log.debug("*** username is " + username);
-            log.debug("*** found: " + cc.find(username).get());
+            cc.find(username).ifPresent(ud -> log.debug("*** found: " + ud));
 
             return cc.find(username)
 

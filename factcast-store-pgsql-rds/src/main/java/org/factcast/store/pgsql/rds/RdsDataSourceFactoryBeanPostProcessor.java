@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
  * exchange the given TomcatJdbcDataSourceFactory with a customized factory so
  * we can configure the datasource connection pool
  */
+@SuppressWarnings("NullableProblems")
 @RequiredArgsConstructor
 public class RdsDataSourceFactoryBeanPostProcessor implements BeanPostProcessor {
     @NonNull

@@ -36,7 +36,6 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -102,8 +101,6 @@ public class PgFactStore extends AbstractFactStore {
 
         } catch (DuplicateKeyException dupkey) {
             throw new IllegalArgumentException(dupkey.getMessage());
-        } catch (DataAccessException sql) {
-            throw sql;
         }
     }
 
