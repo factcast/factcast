@@ -13,29 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc;
+package org.factcast.client.grpc.codec;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-import io.grpc.*;
-import net.devh.boot.grpc.common.codec.*;
-import net.jpountz.lz4.*;
+import org.xerial.snappy.SnappyInputStream;
+import org.xerial.snappy.SnappyOutputStream;
+
+import io.grpc.Codec;
+import net.devh.boot.grpc.common.codec.CodecType;
+import net.devh.boot.grpc.common.codec.GrpcCodec;
 
 @GrpcCodec(advertised = true, codecType = CodecType.ALL)
-public class Lz4GrpcServerCodec implements Codec {
+public class SnappyGrpcClientCodec implements Codec {
 
     @Override
     public String getMessageEncoding() {
-        return "lz4";
+        return "snappy";
     }
 
     @Override
-    public InputStream decompress(InputStream inputStream) {
-        return new LZ4BlockInputStream(inputStream);
+    public OutputStream compress(OutputStream os) throws IOException {
+        return new SnappyOutputStream(os);
     }
 
     @Override
-    public OutputStream compress(OutputStream outputStream) {
-        return new LZ4BlockOutputStream(outputStream);
+    public InputStream decompress(InputStream is) throws IOException {
+        return new SnappyInputStream(is);
     }
+
 }
