@@ -39,7 +39,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class ClientStreamObserverTest {
+class ClientStreamObserverTest {
 
     @Mock
     FactObserver factObserver;
@@ -58,9 +58,7 @@ public class ClientStreamObserverTest {
 
     @Test
     void testConstructorNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            new ClientStreamObserver(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> new ClientStreamObserver(null));
     }
 
     @Test

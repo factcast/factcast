@@ -44,10 +44,12 @@ public class PgCatchUpPrepare {
 
     final SubscriptionRequestTO req;
 
+    @SuppressWarnings("ConstantConditions")
     public long prepareCatchup(AtomicLong serial) {
         PgQueryBuilder b = new PgQueryBuilder(req);
         long clientId = jdbc.queryForObject(PgConstants.NEXT_FROM_CATCHUP_SEQ, Long.class);
         String catchupSQL = b.catchupSQL(clientId);
+        // noinspection ConstantConditions
         return jdbc.execute(catchupSQL, (PreparedStatementCallback<Long>) ps -> {
             log.debug("{} preparing paging for matches after {}", req, serial.get());
             try {

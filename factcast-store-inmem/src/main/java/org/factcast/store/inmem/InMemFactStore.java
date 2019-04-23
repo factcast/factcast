@@ -54,16 +54,17 @@ import lombok.NonNull;
  *
  * @author uwe.schaefer@mercateo.com, joerg.adler@mercateo.com
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Deprecated
 public class InMemFactStore extends AbstractFactStore {
 
     final AtomicLong highwaterMark = new AtomicLong(0);
 
     @VisibleForTesting
-    protected final Map<Long, Fact> store = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<Long, Fact> store = Collections.synchronizedMap(new LinkedHashMap<>());
 
     @VisibleForTesting
-    protected final Map<UUID, Long> factid2ser = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<UUID, Long> factid2ser = Collections.synchronizedMap(new LinkedHashMap<>());
 
     final Set<UUID> ids = new HashSet<>();
 
@@ -84,7 +85,7 @@ public class InMemFactStore extends AbstractFactStore {
     class AfterPredicate implements Predicate<Fact> {
         final Long serAfter;
 
-        public AfterPredicate(UUID after) {
+        AfterPredicate(UUID after) {
             serAfter = InMemFactStore.this.factid2ser.getOrDefault(after, -1L);
         }
 
@@ -237,7 +238,7 @@ public class InMemFactStore extends AbstractFactStore {
                 .collect(Collectors.toSet());
     }
 
-    protected Optional<UUID> latestFactFor(Optional<String> ns, UUID aggId) {
+    private Optional<UUID> latestFactFor(Optional<String> ns, UUID aggId) {
         Fact last = store.values()
                 .stream()
                 .filter(f -> ((!ns.isPresent()) || f.ns().equals(ns.get()))

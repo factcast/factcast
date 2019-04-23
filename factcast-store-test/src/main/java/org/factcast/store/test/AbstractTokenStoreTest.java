@@ -27,6 +27,7 @@ import org.factcast.core.store.TokenStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("ALL")
 public abstract class AbstractTokenStoreTest {
 
     TokenStore uut;
@@ -45,7 +46,7 @@ public abstract class AbstractTokenStoreTest {
 
     @Test
     public void invalidateShouldRemoteToken() throws Exception {
-        StateToken token = uut.create(new HashMap<UUID, Optional<UUID>>(), Optional.of("foo"));
+        StateToken token = uut.create(new HashMap<>(), Optional.of("foo"));
         uut.invalidate(token);
         assertThat(uut.getNs(token)).isNotPresent();
         assertThat(uut.getState(token)).isNotPresent();
@@ -54,7 +55,7 @@ public abstract class AbstractTokenStoreTest {
 
     @Test
     public void tokenMustMaintainNamespace() throws Exception {
-        StateToken token = uut.create(new HashMap<UUID, Optional<UUID>>(), Optional.of("123123"));
+        StateToken token = uut.create(new HashMap<>(), Optional.of("123123"));
         assertThat(uut.getNs(token)).isPresent();
         assertThat(uut.getNs(token).get()).isEqualTo("123123");
 
@@ -62,7 +63,7 @@ public abstract class AbstractTokenStoreTest {
 
     @Test
     public void createShouldActuallyCreateARecord() throws Exception {
-        StateToken token = uut.create(new HashMap<UUID, Optional<UUID>>(), Optional.of("foo"));
+        StateToken token = uut.create(new HashMap<>(), Optional.of("foo"));
 
         assertThat(uut.getNs(token)).isPresent();
         assertThat(uut.getNs(token).get()).isEqualTo("foo");
@@ -86,21 +87,15 @@ public abstract class AbstractTokenStoreTest {
 
     @Test
     public void testCreateNullContract() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.create(null, null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.create(null, Optional.of("foo"));
-        });
+        assertThrows(NullPointerException.class, () -> uut.create(null, null));
+        assertThrows(NullPointerException.class, () -> uut.create(null, Optional.of("foo")));
 
         uut.create(new HashMap<>(), Optional.empty());
     }
 
     @Test
     public void testInvalidateNullContract() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.invalidate(null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.invalidate(null));
     }
 
 }

@@ -106,7 +106,7 @@ public class FactStoreGrpcServiceTest {
 
     @Test
     void testSubscribeFacts() {
-        SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.forMark()).fromNowOn();
+        SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
         when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
         uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)),
                 mock(ServerCallStreamObserver.class));
@@ -116,7 +116,7 @@ public class FactStoreGrpcServiceTest {
 
     @Test
     void testSubscribeIds() {
-        SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.forMark()).fromNowOn();
+        SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
         when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
         uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forIds(req)),
                 mock(ServerCallStreamObserver.class));

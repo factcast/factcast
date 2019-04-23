@@ -63,7 +63,7 @@ public class PgPagedCatchup implements PgCatchup {
     @SuppressWarnings("FieldCanBeLocal")
     private long clientId = 0;
 
-    public LinkedList<Fact> doFetch(PgCatchUpFetchPage fetch) {
+    private LinkedList<Fact> doFetch(PgCatchUpFetchPage fetch) {
         if (idsOnly()) {
             return fetch.fetchIdFacts(serial);
         } else {

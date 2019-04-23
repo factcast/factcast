@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.util.Collections;
 import java.util.UUID;
 
-import org.factcast.core.MarkFact;
+import org.factcast.core.*;
 import org.factcast.core.store.FactStore;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.test.IntegrationTest;
@@ -48,7 +48,7 @@ public class PgFactIdToSerMapperTest {
 
     @Test
     void testRetrieve() {
-        MarkFact m = new MarkFact();
+        Fact m = Fact.builder().buildWithoutPayload();
         store.publish(Collections.singletonList(m));
         long retrieve = new PgFactIdToSerialMapper(tpl).retrieve(m.id());
         assertTrue(retrieve > 0);

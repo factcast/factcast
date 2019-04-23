@@ -52,7 +52,7 @@ public interface GenericObserver<I> {
     }
 
     @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
-    static class ObserverBridge<I> implements FactObserver {
+    class ObserverBridge<I> implements FactObserver {
 
         private final GenericObserver<I> delegate;
 
