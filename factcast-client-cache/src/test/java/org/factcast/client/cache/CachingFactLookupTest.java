@@ -35,7 +35,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class CachingFactLookupTest {
+class CachingFactLookupTest {
 
     private CachingFactLookup uut;
 
@@ -68,8 +68,6 @@ public class CachingFactLookupTest {
 
     @Test
     void testConstructorNullParam() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            new CachingFactLookup(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> new CachingFactLookup(null));
     }
 }

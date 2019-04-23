@@ -56,7 +56,7 @@ public class GrpcFactStoreAutoConfiguration {
             }
 
             @Override
-            public void close() throws Exception {
+            public void close() {
                 af.close();
             }
         };

@@ -28,6 +28,7 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+@SuppressWarnings("CanBeFinal")
 @Parameters(
         commandNames = "follow",
         commandDescription = "read all matching facts and keep connected while listening for new ones")

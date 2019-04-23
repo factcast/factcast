@@ -66,7 +66,7 @@ public class PgFactStore extends AbstractFactStore {
     @NonNull
     final PgSubscriptionFactory subscriptionFactory;
 
-    private FactTableWriteLock lock;
+    private final FactTableWriteLock lock;
 
     @Autowired
     public PgFactStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
@@ -135,8 +135,8 @@ public class PgFactStore extends AbstractFactStore {
             Long res = jdbcTemplate.queryForObject(PgConstants.SELECT_SER_BY_ID,
                     new Object[] { "{\"id\":\"" + l + "\"}" }, Long.class);
 
-            if (res != null && res.longValue() > 0) {
-                return OptionalLong.of(res.longValue());
+            if (res != null && res > 0) {
+                return OptionalLong.of(res);
             }
 
         } catch (EmptyResultDataAccessException ignore) {
@@ -165,14 +165,13 @@ public class PgFactStore extends AbstractFactStore {
         // can probably be optimized, suggestions/PRs welcome
         RowMapper<Optional<UUID>> rse = (rs, i) -> Optional.of(UUID.fromString(rs
                 .getString(1)));
-        Map<UUID, Optional<UUID>> ret = new LinkedHashMap<UUID, Optional<UUID>>();
+        Map<UUID, Optional<UUID>> ret = new LinkedHashMap<>();
         for (UUID uuid : forAggIds) {
 
             StringBuilder sb = new StringBuilder();
             sb.append("{");
-            if (ns.isPresent())
-                sb.append("\"ns\":\"" + ns.get() + "\",");
-            sb.append("\"aggIds\":[\"" + uuid + "\"]}");
+            ns.ifPresent(s -> sb.append("\"ns\":\"" + s + "\","));
+            sb.append("\"aggIds\":[\"").append(uuid).append("\"]}");
 
             String json = sb.toString();
 
