@@ -16,6 +16,7 @@
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
 import org.factcast.client.grpc.*;
+import org.factcast.client.grpc.codec.Lz4GrpcClientCodec;
 import org.factcast.spring.boot.autoconfigure.store.inmem.*;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;

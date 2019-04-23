@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.client.grpc;
+package org.factcast.server.grpc.codec;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.*;
+import java.io.IOException;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 
-import net.jpountz.lz4.*;
+class Lz4GrpcServerCodecTest {
 
-class Lz4GrpcClientCodecTest {
-
-    Lz4GrpcClientCodec uut = new Lz4GrpcClientCodec();
+    Lz4GrpcServerCodec uut = new Lz4GrpcServerCodec();
 
     @Test
     void getMessageEncoding() {
@@ -35,12 +32,11 @@ class Lz4GrpcClientCodecTest {
     }
 
     @Test
-    void decompress() {
-        assertThat(uut.decompress(mock(InputStream.class))).isInstanceOf(LZ4BlockInputStream.class);
-    }
+    void compressionIsSymetric() throws IOException {
+        byte[] original = "Some uncompressed String".getBytes();
+        byte[] compressed = CodecTestHelper.toByteArray(uut, original);
+        byte[] uncompressed = CodecTestHelper.fromByteArray(uut, compressed);
 
-    @Test
-    void compress() {
-        assertThat(uut.compress(mock(OutputStream.class))).isInstanceOf(LZ4BlockOutputStream.class);
+        assertThat(uncompressed).isEqualTo(original);
     }
 }
