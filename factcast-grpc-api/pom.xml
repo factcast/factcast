@@ -52,6 +52,7 @@
       <artifactId>lz4</artifactId>
       <optional>true</optional>
     </dependency>
+
   </dependencies>
   <build>
     <extensions>
