@@ -79,6 +79,7 @@ class CondensedQueryExecutor {
         trigger();
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected void runTarget() {
         try {
             target.run(false);

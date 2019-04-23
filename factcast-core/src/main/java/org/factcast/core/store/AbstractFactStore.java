@@ -87,13 +87,15 @@ public abstract class AbstractFactStore implements FactStore {
             return false;
     }
 
+    @SuppressWarnings("OptionalAssignedToNull")
     private boolean sameValue(Map<UUID, Optional<UUID>> currentState,
             Map<UUID, Optional<UUID>> snapshotState, UUID k) {
         Optional<UUID> current = currentState.get(k);
         Optional<UUID> snap = snapshotState.get(k);
         if (current == null && snap == null)
             return true;
-        else if (current == null || snap == null)
+        else // noinspection OptionalAssignedToNull
+        if (current == null || snap == null)
             return false;
         else
             return snap.equals(current);

@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import lombok.NonNull;
 
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public interface TokenStore {
 
     @NonNull

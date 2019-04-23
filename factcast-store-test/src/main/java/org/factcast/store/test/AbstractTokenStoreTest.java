@@ -27,6 +27,7 @@ import org.factcast.core.store.TokenStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("ALL")
 public abstract class AbstractTokenStoreTest {
 
     TokenStore uut;
@@ -86,21 +87,15 @@ public abstract class AbstractTokenStoreTest {
 
     @Test
     public void testCreateNullContract() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.create(null, null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.create(null, Optional.of("foo"));
-        });
+        assertThrows(NullPointerException.class, () -> uut.create(null, null));
+        assertThrows(NullPointerException.class, () -> uut.create(null, Optional.of("foo")));
 
         uut.create(new HashMap<>(), Optional.empty());
     }
 
     @Test
     public void testInvalidateNullContract() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.invalidate(null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.invalidate(null));
     }
 
 }

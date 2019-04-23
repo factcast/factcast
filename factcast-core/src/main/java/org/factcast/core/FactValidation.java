@@ -21,7 +21,7 @@ import lombok.*;
 import lombok.experimental.*;
 
 @UtilityClass
-public class FactValidation {
+class FactValidation {
 
     private boolean lacksRequiredNamespace(Fact f) {
         return f.ns() == null || f.ns().trim().isEmpty();

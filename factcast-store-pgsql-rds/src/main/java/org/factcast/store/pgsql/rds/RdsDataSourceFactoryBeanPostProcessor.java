@@ -44,7 +44,7 @@ public class RdsDataSourceFactoryBeanPostProcessor implements BeanPostProcessor 
         return bean;
     }
 
-    TomcatJdbcDataSourceFactory tomcatJdbcDataSourceFactory() {
+    private TomcatJdbcDataSourceFactory tomcatJdbcDataSourceFactory() {
         TomcatJdbcDataSourceFactory fac = new TomcatJdbcDataSourceFactory();
         fac.setTestOnBorrow(env.getProperty("spring.datasource.tomcat.testOnBorrow", Boolean.class,
                 true));
