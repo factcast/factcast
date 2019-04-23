@@ -21,7 +21,7 @@ If you used the uniqe_identifier feature before, it was removed. It was only a r
 
 #### optimistic locking
 
-There will be a section on optimitic locking as a new api feature.
+There is a [section on optimitic locking](/usage/java/optimistic_locking/) as a new api feature.
 
 #### GRPC Protocol Version
 
