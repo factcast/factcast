@@ -75,6 +75,7 @@ class PgSynchronizedQuery {
         this.sql = sql;
         this.setter = setter;
         this.rowHandler = rowHandler;
+        // noinspection ConstantConditions
         DataSourceTransactionManager transactionManager = new DataSourceTransactionManager(
                 jdbcTemplate.getDataSource());
         transactionTemplate = new TransactionTemplate(transactionManager);

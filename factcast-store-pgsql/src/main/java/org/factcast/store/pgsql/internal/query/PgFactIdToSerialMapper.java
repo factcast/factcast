@@ -44,6 +44,7 @@ public class PgFactIdToSerialMapper {
         if (id != null) {
             try {
                 // throws EmptyResultDataAccessException if is not found!
+                // noinspection ConstantConditions
                 return jdbcTemplate.queryForObject(PgConstants.SELECT_BY_HEADER_JSON, new Object[] {
                         "{\"id\":\"" + id + "\"}" }, Long.class);
             } catch (EmptyResultDataAccessException ignored) {

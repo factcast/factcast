@@ -27,6 +27,7 @@ import com.beust.jcommander.Parameter;
 
 import lombok.Getter;
 
+@SuppressWarnings("ALL")
 public class Parser {
 
     private static final String HOST_SYSPROP_NAME = "grpc.client.factstore.host";

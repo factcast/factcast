@@ -26,6 +26,7 @@ import org.factcast.core.Fact;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @RequiredArgsConstructor
 public abstract class AbstractFactStore implements FactStore {
     @NonNull

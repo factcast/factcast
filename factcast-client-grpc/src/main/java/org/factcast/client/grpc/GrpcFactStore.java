@@ -126,7 +126,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
                         .toList());
         MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
         try {
-            blockingStub.publish(mfs);
+            MSG_Empty msgEmpty = blockingStub.publish(mfs);
         } catch (StatusRuntimeException e) {
             throw wrapRetryable(e);
         }
@@ -271,7 +271,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     public void invalidate(@NonNull StateToken token) {
         MSG_UUID msg = converter.toProto(token.uuid());
         try {
-            blockingStub.invalidate(msg);
+            MSG_Empty msgEmpty = blockingStub.invalidate(msg);
         } catch (StatusRuntimeException e) {
             throw wrapRetryable(e);
         }
