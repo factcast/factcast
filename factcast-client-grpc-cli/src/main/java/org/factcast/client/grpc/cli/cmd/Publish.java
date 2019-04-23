@@ -25,6 +25,7 @@ import org.factcast.core.FactCast;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+@SuppressWarnings("ALL")
 @Parameters(commandDescription = "publish a fact", commandNames = "publish")
 public class Publish implements Command {
 

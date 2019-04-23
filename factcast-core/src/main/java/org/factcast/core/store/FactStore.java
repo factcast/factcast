@@ -40,6 +40,7 @@ import lombok.NonNull;
  *
  * @author uwe.schaefer@mercateo.com
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public interface FactStore {
 
     void publish(List<? extends Fact> factsToPublish);

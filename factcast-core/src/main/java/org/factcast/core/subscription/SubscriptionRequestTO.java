@@ -54,9 +54,6 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     long maxBatchDelayInMs = 0;
 
     @JsonProperty
-    boolean marks;
-
-    @JsonProperty
     boolean continuous;
 
     @JsonProperty
@@ -90,7 +87,6 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
         startingAfter = request.startingAfter().orElse(null);
         debugInfo = request.debugInfo();
         specs.addAll(request.specs());
-        marks = request.marks();
     }
 
     public static SubscriptionRequestTO forFacts(SubscriptionRequest request) {
@@ -118,9 +114,6 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     @Override
     public List<FactSpec> specs() {
         ArrayList<FactSpec> l = new ArrayList<>(specs);
-        if (marks) {
-            l.add(0, FactSpec.forMark());
-        }
         return Collections.unmodifiableList(l);
     }
 

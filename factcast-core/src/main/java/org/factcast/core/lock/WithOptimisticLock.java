@@ -100,7 +100,7 @@ public class WithOptimisticLock {
             throws AttemptAbortedException {
 
         try {
-            return operation.run();
+            return operation.call();
         } catch (Exception e) {
             if (!AttemptAbortedException.class.isAssignableFrom(e.getClass()))
                 throw new AttemptAbortedException(e);
@@ -129,7 +129,7 @@ public class WithOptimisticLock {
 
         private static final long serialVersionUID = 1L;
 
-        private int retries;
+        private final int retries;
 
         public OptimisticRetriesExceededException(int retry) {
             super("Exceeded the maximum number of retrys allowed (" + retry + ")");

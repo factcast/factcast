@@ -49,7 +49,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class CachingFactCastTest {
+class CachingFactCastTest {
 
     @Mock
     CachingFactLookup l;
@@ -88,21 +88,17 @@ public class CachingFactCastTest {
 
     @Test
     void testPublishNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.publish((Fact) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.publish((Fact) null));
     }
 
     @Test
     void testPublishNullArgs() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.publish((List<Fact>) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.publish((List<Fact>) null));
     }
 
     @Test
     void testSubscribeToIds() {
-        SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.forMark()).fromScratch();
+        SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.ns("ns")).fromScratch();
         final IdObserver observer = id -> {
         };
         uut.subscribeToIds(rs, observer);
@@ -111,51 +107,39 @@ public class CachingFactCastTest {
 
     @Test
     void testSubscribeToIdsNullParam() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToIds(null, f -> {
-            });
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.subscribeToIds(null, f -> {
+        }));
     }
 
     @Test
     void testSubscribeToIdsNullParams() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToIds(null, null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.subscribeToIds(null, null));
     }
 
     @Test
     void testSubscribeToIdsNullObserverParam() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToIds(mock(SubscriptionRequest.class), null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.subscribeToIds(mock(SubscriptionRequest.class), null));
     }
 
     @Test
     void testSubscribeToFactsNullParam() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToFacts(null, f -> {
-            });
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.subscribeToFacts(null, f -> {
+        }));
     }
 
     @Test
     void testSubscribeToFactsNullParams() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToFacts(null, null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.subscribeToFacts(null, null));
     }
 
     @Test
     void testSubscribeToFactsNullObserverParam() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToFacts(mock(SubscriptionRequest.class), null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.subscribeToFacts(mock(SubscriptionRequest.class), null));
     }
 
     @Test
     void testSubscribeToFacts() {
-        SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.forMark()).fromScratch();
+        SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.ns("foo")).fromScratch();
         when(l.lookup(any())).thenReturn(Optional.of(f));
         when(fc.subscribeToIds(same(rs), obsCap.capture())).thenReturn(null);
         final FactObserver observer = mock(FactObserver.class);
@@ -188,13 +172,11 @@ public class CachingFactCastTest {
 
     @Test
     void testSerialOfNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.serialOf(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.serialOf(null));
     }
 
     @Test
-    public void testEnumerateNamespaces() throws Exception {
+    void testEnumerateNamespaces() {
         Set<String> set = new HashSet<>();
         when(fc.enumerateNamespaces()).thenReturn(set);
 
@@ -204,7 +186,7 @@ public class CachingFactCastTest {
     }
 
     @Test
-    public void testEnumerateTypes() throws Exception {
+    void testEnumerateTypes() {
         Set<String> set = new HashSet<>();
         when(fc.enumerateTypes("foo")).thenReturn(set);
 
@@ -214,13 +196,13 @@ public class CachingFactCastTest {
     }
 
     @Test
-    public void testLockGlobally() throws Exception {
+    void testLockGlobally() {
         uut.lockGlobally();
         verify(this.fc).lockGlobally();
     }
 
     @Test
-    public void testLock() throws Exception {
+    void testLock() {
         String ns = "foo";
         uut.lock(ns);
         verify(this.fc).lock(ns);
