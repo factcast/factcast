@@ -39,7 +39,6 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import com.codahale.metrics.MetricRegistry;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 
@@ -73,8 +72,8 @@ public class PgFactStoreInternalConfiguration {
 
     @Bean
     public FactStore factStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
-            MetricRegistry registry, PgTokenStore tokenStore, FactTableWriteLock lock) {
-        return new PgFactStore(jdbcTemplate, subscriptionFactory, registry, tokenStore, lock);
+            PgTokenStore tokenStore, FactTableWriteLock lock) {
+        return new PgFactStore(jdbcTemplate, subscriptionFactory, tokenStore, lock);
     }
 
     @Bean
@@ -92,8 +91,8 @@ public class PgFactStoreInternalConfiguration {
     }
 
     @Bean
-    public PgConnectionTester pgConnectionTester(@NonNull MetricRegistry metric) {
-        return new PgConnectionTester(metric);
+    public PgConnectionTester pgConnectionTester() {
+        return new PgConnectionTester();
     }
 
     @Bean
