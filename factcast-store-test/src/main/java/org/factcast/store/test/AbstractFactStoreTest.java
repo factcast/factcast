@@ -42,6 +42,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
@@ -50,6 +51,7 @@ import org.factcast.core.MarkFact;
 import org.factcast.core.lock.Attempt;
 import org.factcast.core.lock.AttemptAbortedException;
 import org.factcast.core.lock.ExceptionAfterPublish;
+import org.factcast.core.lock.PublishingResult;
 import org.factcast.core.lock.WithOptimisticLock.OptimisticRetriesExceededException;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
@@ -900,7 +902,7 @@ public abstract class AbstractFactStoreTest {
         UUID agg1 = UUID.randomUUID();
         uut.publish(fact(agg1));
 
-        UUID ret = uut.lock(NS).on(agg1).attempt(() -> {
+        PublishingResult ret = uut.lock(NS).on(agg1).attempt(() -> {
             return Attempt.publish(fact(agg1));
         });
 
@@ -916,7 +918,7 @@ public abstract class AbstractFactStoreTest {
         // setup
         UUID agg1 = UUID.randomUUID();
 
-        UUID ret = uut.lock(NS).on(agg1).attempt(() -> {
+        PublishingResult ret = uut.lock(NS).on(agg1).attempt(() -> {
             return Attempt.publish(fact(agg1));
         });
 
@@ -971,7 +973,7 @@ public abstract class AbstractFactStoreTest {
         UUID agg2 = UUID.randomUUID();
         uut.publish(fact(agg1));
 
-        UUID ret = uut.lockGlobally().on(agg1, agg2).attempt(() -> {
+        PublishingResult ret = uut.lockGlobally().on(agg1, agg2).attempt(() -> {
             return Attempt.publish(fact(agg1));
         });
 
@@ -989,7 +991,7 @@ public abstract class AbstractFactStoreTest {
         UUID agg2 = UUID.randomUUID();
         uut.publish(fact(agg1));
 
-        UUID ret = uut.lock(NS).on(agg1, agg2).attempt(() -> {
+        PublishingResult ret = uut.lock(NS).on(agg1, agg2).attempt(() -> {
             return Attempt.publish(fact(agg1));
         });
 
@@ -1010,7 +1012,7 @@ public abstract class AbstractFactStoreTest {
 
         CountDownLatch c = new CountDownLatch(8);
 
-        UUID ret = uut.lock(NS).on(agg1, agg2).optimistic().retry(100).attempt(() -> {
+        PublishingResult ret = uut.lock(NS).on(agg1, agg2).optimistic().retry(100).attempt(() -> {
 
             if (c.getCount() > 0) {
                 c.countDown();
@@ -1045,20 +1047,24 @@ public abstract class AbstractFactStoreTest {
 
         CountDownLatch c = new CountDownLatch(8);
 
-        UUID ret = uut.lockGlobally().on(agg1, agg2).optimistic().retry(100).attempt(() -> {
+        PublishingResult ret = uut.lockGlobally()
+                .on(agg1, agg2)
+                .optimistic()
+                .retry(100)
+                .attempt(() -> {
 
-            if (c.getCount() > 0) {
-                c.countDown();
+                    if (c.getCount() > 0) {
+                        c.countDown();
 
-                if (Math.random() < 0.5)
-                    uut.publish(fact(agg1));
-                else
-                    uut.publish(fact(agg2));
+                        if (Math.random() < 0.5)
+                            uut.publish(fact(agg1));
+                        else
+                            uut.publish(fact(agg2));
 
-            }
+                    }
 
-            return Attempt.publish(fact(agg2));
-        });
+                    return Attempt.publish(fact(agg2));
+                });
 
         assertThat(catchup()).hasSize(11); // 8 conflicting, 2 initial and 1
                                            // from Attempt
@@ -1243,7 +1249,7 @@ public abstract class AbstractFactStoreTest {
 
         UUID expected = UUID.randomUUID();
 
-        UUID lastFactId = uut.lock(NS).on(agg1).attempt(() -> {
+        PublishingResult ret = uut.lock(NS).on(agg1).attempt(() -> {
 
             Fact lastFact = Fact.builder().ns(NS).id(expected).build("{}");
             return Attempt.publish(fact(agg1), fact(agg1), fact(agg1), lastFact);
@@ -1253,7 +1259,8 @@ public abstract class AbstractFactStoreTest {
         List<Fact> all = catchup();
         assertThat(all).hasSize(4);
         assertThat(all.get(all.size() - 1).id()).isEqualTo(expected);
-        assertThat(lastFactId).isEqualTo(expected);
+        assertThat(ret.publishedFacts().stream().map(Fact::id).collect(Collectors.toList()))
+                .contains(expected);
 
     }
 

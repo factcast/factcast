@@ -63,7 +63,7 @@ public final class LockedOperationBuilder {
          * @throws ExceptionAfterPublish
          * @throws AttemptAbortedException
          */
-        public @NonNull UUID attempt(@NonNull Attempt operation)
+        public @NonNull PublishingResult attempt(@NonNull Attempt operation)
                 throws OptimisticRetriesExceededException,
                 ExceptionAfterPublish, AttemptAbortedException {
             return optimistic().attempt(operation);
