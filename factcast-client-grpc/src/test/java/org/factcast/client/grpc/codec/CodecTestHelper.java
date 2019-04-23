@@ -25,7 +25,7 @@ import io.grpc.internal.IoUtils;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
-public class CodecTestHelper {
+class CodecTestHelper {
     byte[] fromByteArray(Codec uut, byte[] compressedBytes) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         IoUtils.copy(uut.decompress(new ByteArrayInputStream(

@@ -129,7 +129,7 @@ public class WithOptimisticLock {
 
         private static final long serialVersionUID = 1L;
 
-        private int retries;
+        private final int retries;
 
         public OptimisticRetriesExceededException(int retry) {
             super("Exceeded the maximum number of retrys allowed (" + retry + ")");

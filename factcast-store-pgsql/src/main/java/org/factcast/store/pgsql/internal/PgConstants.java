@@ -34,7 +34,7 @@ public class PgConstants {
 
     public static final String TABLE_FACT = "fact";
 
-    public static final String TABLE_TOKENSTORE = "tokenstore";
+    private static final String TABLE_TOKENSTORE = "tokenstore";
 
     public static final String CHANNEL_NAME = "fact_insert";
 
@@ -46,11 +46,11 @@ public class PgConstants {
 
     public static final String COLUMN_CID = "cid";
 
-    public static final String COLUMN_STATE = "state";
+    private static final String COLUMN_STATE = "state";
 
-    public static final String COLUMN_NAMESPACE = "ns";
+    private static final String COLUMN_NAMESPACE = "ns";
 
-    public static final String COLUMN_TOKEN = "token";
+    private static final String COLUMN_TOKEN = "token";
 
     public static final String ALIAS_ID = "id";
 

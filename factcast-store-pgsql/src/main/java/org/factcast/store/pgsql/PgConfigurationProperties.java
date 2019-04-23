@@ -20,6 +20,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+@SuppressWarnings("DefaultAnnotationParam")
 @ConfigurationProperties(prefix = "factcast.pg")
 @Data
 @Accessors(fluent = false)

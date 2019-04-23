@@ -41,17 +41,13 @@ public class PgTokenStore implements TokenStore {
 
         public static StateJson from(@NonNull Map<UUID, Optional<UUID>> state) {
             StateJson json = new StateJson();
-            state.entrySet().forEach(e -> {
-                json.lastFactIdByAggregate.put(e.getKey(), e.getValue().orElse(null));
-            });
+            state.forEach((key, value) -> json.lastFactIdByAggregate.put(key, value.orElse(null)));
             return json;
         }
 
         public Map<UUID, Optional<UUID>> toMap() {
-            HashMap<UUID, Optional<UUID>> ret = new HashMap<UUID, Optional<UUID>>();
-            lastFactIdByAggregate.entrySet().forEach(e -> {
-                ret.put(e.getKey(), Optional.ofNullable(e.getValue()));
-            });
+            HashMap<UUID, Optional<UUID>> ret = new HashMap<>();
+            lastFactIdByAggregate.forEach((key, value) -> ret.put(key, Optional.ofNullable(value)));
             return ret;
         }
     }

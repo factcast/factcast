@@ -58,6 +58,7 @@ import lombok.RequiredArgsConstructor;
  *
  * @author uwe.schaefer@mercateo.com
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @RequiredArgsConstructor
 public class ProtoConverter {
 

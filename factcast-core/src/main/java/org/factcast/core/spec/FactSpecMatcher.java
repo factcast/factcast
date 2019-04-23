@@ -41,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class FactSpecMatcher implements Predicate<Fact> {
 
-    static final LRUMap<String, ScriptEngine> scriptEngineCache = new LRUMap<>(10, 200);
+    private static final LRUMap<String, ScriptEngine> scriptEngineCache = new LRUMap<>(10, 200);
 
     @NonNull
     final String ns;

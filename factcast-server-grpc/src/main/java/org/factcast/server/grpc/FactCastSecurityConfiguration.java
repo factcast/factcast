@@ -17,8 +17,7 @@ package org.factcast.server.grpc;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import org.factcast.server.grpc.auth.AccessCredential;
 import org.factcast.server.grpc.auth.CredentialConfiguration;
@@ -36,17 +35,12 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
-
-import io.grpc.Metadata;
-import io.grpc.ServerCall;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -64,7 +58,7 @@ public class FactCastSecurityConfiguration {
     @ConditionalOnMissingBean(CredentialConfiguration.class)
     @ConditionalOnResource(resources = "classpath:factcast-security.json")
     public CredentialConfiguration credentialConfigurationFromClasspath() throws IOException {
-        try (InputStream is = new ClassPathResource("/factcast-security.json").getInputStream();) {
+        try (InputStream is = new ClassPathResource("/factcast-security.json").getInputStream()) {
             return CredentialConfiguration.read(is);
         }
     }
@@ -78,7 +72,7 @@ public class FactCastSecurityConfiguration {
         log.info("FactCast Security is enabled.");
         return username -> {
             log.debug("*** username is " + username);
-            log.debug("*** found: " + cc.find(username).get());
+            cc.find(username).ifPresent(ud -> log.debug("*** found: " + ud));
 
             return cc.find(username)
 
@@ -96,7 +90,7 @@ public class FactCastSecurityConfiguration {
 
     @Bean
     AuthenticationManager authenticationManager(DaoAuthenticationProvider p) {
-        return new ProviderManager(Arrays.asList(p));
+        return new ProviderManager(Collections.singletonList(p));
     }
 
     @SuppressWarnings("deprecation")
@@ -126,12 +120,6 @@ public class FactCastSecurityConfiguration {
     GrpcAuthenticationReader noOpAuthenticationReader() {
         UsernamePasswordAuthenticationToken disabled = new UsernamePasswordAuthenticationToken(
                 "security_disabled", "security_disabled");
-        return new GrpcAuthenticationReader() {
-            @Override
-            public Authentication readAuthentication(ServerCall<?, ?> call, Metadata headers)
-                    throws AuthenticationException {
-                return disabled;
-            }
-        };
+        return (call, headers) -> disabled;
     }
 }

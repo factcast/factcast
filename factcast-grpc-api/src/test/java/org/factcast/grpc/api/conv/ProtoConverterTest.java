@@ -252,7 +252,7 @@ public class ProtoConverterTest {
                 .ephemeral(false)
                 .debugInfo("test")
                 .maxBatchDelayInMs(13)
-                .marks(true);
+                ;
         to.addSpecs(Collections.singletonList(FactSpec.ns("foo")));
         SubscriptionRequestTO copy = uut.fromProto(uut.toProto(to));
         assertEquals(to.debugInfo(), copy.debugInfo());
@@ -261,8 +261,6 @@ public class ProtoConverterTest {
         assertEquals(to.maxBatchDelayInMs(), copy.maxBatchDelayInMs());
         assertEquals(to.specs().get(0).type(), copy.specs().get(0).type());
         assertEquals(to.specs().get(0).ns(), copy.specs().get(0).ns());
-        assertEquals(to.specs().get(1).type(), copy.specs().get(1).type());
-        assertEquals(to.specs().get(1).ns(), copy.specs().get(1).ns());
     }
 
     @Test

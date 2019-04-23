@@ -35,9 +35,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
-import org.factcast.store.pgsql.internal.metrics.PgMetricNames;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -45,11 +43,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
-import com.codahale.metrics.Timer.Context;
 import com.google.common.collect.Lists;
 
 import lombok.NonNull;
@@ -72,57 +65,23 @@ public class PgFactStore extends AbstractFactStore {
     @NonNull
     final PgSubscriptionFactory subscriptionFactory;
 
-    @NonNull
-    final MetricRegistry registry;
-
-    @NonNull
-    final Counter publishFailedCounter;
-
-    final Timer publishLatency;
-
-    final PgMetricNames names = new PgMetricNames();
-
-    private final Meter publishMeter;
-
-    private final Timer fetchLatency;
-
-    private final Timer seqLookupLatency;
-
-    private final Timer namespaceLatency;
-
-    private final Timer typeLatency;
-
-    private final Meter subscriptionCatchupMeter;
-
-    private final Meter subscriptionFollowMeter;
-
-    private FactTableWriteLock lock;
+    private final FactTableWriteLock lock;
 
     @Autowired
     public PgFactStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
-            MetricRegistry registry, TokenStore tokenStore, FactTableWriteLock lock) {
+            TokenStore tokenStore,
+            FactTableWriteLock lock) {
         super(tokenStore);
 
         this.jdbcTemplate = jdbcTemplate;
         this.subscriptionFactory = subscriptionFactory;
-        this.registry = registry;
         this.lock = lock;
-        publishFailedCounter = registry.counter(names.factPublishingFailed());
-        publishLatency = registry.timer(names.factPublishingLatency());
-        publishMeter = registry.meter(names.factPublishingMeter());
-        fetchLatency = registry.timer(names.fetchLatency());
-        namespaceLatency = registry.timer(names.namespaceLatency());
-        typeLatency = registry.timer(names.typeLatency());
-        seqLookupLatency = registry.timer(names.seqLookupLatency());
-        subscriptionCatchupMeter = registry.meter(names.subscribeCatchup());
-        subscriptionFollowMeter = registry.meter(names.subscribeFollow());
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
-
-        try (Context time = publishLatency.time()) {
+        try {
             lock.aquireExclusiveTXLock();
 
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
@@ -139,14 +98,9 @@ public class PgFactStore extends AbstractFactStore {
                         final String idMatch = "{\"id\":\"" + fact.id() + "\"}";
                         statement.setString(1, idMatch);
                     });
-            publishMeter.mark(numberOfFactsToPublish);
 
         } catch (DuplicateKeyException dupkey) {
-            publishFailedCounter.inc();
             throw new IllegalArgumentException(dupkey.getMessage());
-        } catch (DataAccessException sql) {
-            publishFailedCounter.inc();
-            throw sql;
         }
     }
 
@@ -162,31 +116,24 @@ public class PgFactStore extends AbstractFactStore {
     @Override
     public Subscription subscribe(@NonNull SubscriptionRequestTO request,
             @NonNull FactObserver observer) {
-        if (request.continuous()) {
-            subscriptionFollowMeter.mark();
-        } else {
-            subscriptionCatchupMeter.mark();
-        }
         return subscriptionFactory.subscribe(request, observer);
     }
 
     @Override
     public Optional<Fact> fetchById(@NonNull UUID id) {
-        try (Context time = fetchLatency.time()) {
-            return jdbcTemplate.query(PgConstants.SELECT_BY_ID, new Object[] { "{\"id\":\"" + id
-                    + "\"}" },
-                    this::extractFactFromResultSet).stream().findFirst();
-        }
+        return jdbcTemplate.query(PgConstants.SELECT_BY_ID, new Object[] { "{\"id\":\"" + id
+                + "\"}" },
+                this::extractFactFromResultSet).stream().findFirst();
     }
 
     @Override
     public OptionalLong serialOf(UUID l) {
-        try (Context time = seqLookupLatency.time()) {
+        try {
             Long res = jdbcTemplate.queryForObject(PgConstants.SELECT_SER_BY_ID,
                     new Object[] { "{\"id\":\"" + l + "\"}" }, Long.class);
 
-            if (res != null && res.longValue() > 0) {
-                return OptionalLong.of(res.longValue());
+            if (res != null && res > 0) {
+                return OptionalLong.of(res);
             }
 
         } catch (EmptyResultDataAccessException ignore) {
@@ -196,20 +143,16 @@ public class PgFactStore extends AbstractFactStore {
 
     @Override
     public Set<String> enumerateNamespaces() {
-        try (Context time = namespaceLatency.time()) {
-            return new HashSet<>(
-                    jdbcTemplate.query(PgConstants.SELECT_DISTINCT_NAMESPACE,
-                            this::extractStringFromResultSet));
-        }
+        return new HashSet<>(
+                jdbcTemplate.query(PgConstants.SELECT_DISTINCT_NAMESPACE,
+                        this::extractStringFromResultSet));
     }
 
     @Override
     public Set<String> enumerateTypes(String ns) {
-        try (Context time = typeLatency.time()) {
-            return new HashSet<>(jdbcTemplate.query(PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
-                    new Object[] { ns },
-                    this::extractStringFromResultSet));
-        }
+        return new HashSet<>(jdbcTemplate.query(PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
+                new Object[] { ns },
+                this::extractStringFromResultSet));
     }
 
     @Override
@@ -219,14 +162,13 @@ public class PgFactStore extends AbstractFactStore {
         // can probably be optimized, suggestions/PRs welcome
         RowMapper<Optional<UUID>> rse = (rs, i) -> Optional.of(UUID.fromString(rs
                 .getString(1)));
-        Map<UUID, Optional<UUID>> ret = new LinkedHashMap<UUID, Optional<UUID>>();
+        Map<UUID, Optional<UUID>> ret = new LinkedHashMap<>();
         for (UUID uuid : forAggIds) {
 
             StringBuilder sb = new StringBuilder();
             sb.append("{");
-            if (ns.isPresent())
-                sb.append("\"ns\":\"" + ns.get() + "\",");
-            sb.append("\"aggIds\":[\"" + uuid + "\"]}");
+            ns.ifPresent(s -> sb.append("\"ns\":\"").append(s).append("\","));
+            sb.append("\"aggIds\":[\"").append(uuid).append("\"]}");
 
             String json = sb.toString();
 

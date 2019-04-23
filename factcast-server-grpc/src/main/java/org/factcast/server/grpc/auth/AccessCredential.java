@@ -30,7 +30,7 @@ public interface AccessCredential {
     List<String> roles();
 
     default UserDetails toUser() {
-        String auth = roles().stream().map(r -> r.toString()).collect(Collectors.joining(","));
+        String auth = roles().stream().map(String::toString).collect(Collectors.joining(","));
         return new User(name(), password(), AuthorityUtils.commaSeparatedStringToAuthorityList(
                 auth));
     }

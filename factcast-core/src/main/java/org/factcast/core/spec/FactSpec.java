@@ -19,8 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.factcast.core.MarkFact;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
@@ -55,10 +53,6 @@ public class FactSpec {
     public FactSpec meta(@NonNull String k, @NonNull String v) {
         meta.put(k, v);
         return this;
-    }
-
-    public static FactSpec forMark() {
-        return FactSpec.ns(MarkFact.MARK_NS).type(MarkFact.MARK_TYPE);
     }
 
     public static FactSpec ns(String ns) {

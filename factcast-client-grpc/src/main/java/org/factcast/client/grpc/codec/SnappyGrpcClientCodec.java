@@ -26,6 +26,7 @@ import io.grpc.Codec;
 import net.devh.boot.grpc.common.codec.CodecType;
 import net.devh.boot.grpc.common.codec.GrpcCodec;
 
+@SuppressWarnings("WeakerAccess")
 @GrpcCodec(advertised = true, codecType = CodecType.ALL)
 public class SnappyGrpcClientCodec implements Codec {
 
@@ -35,7 +36,7 @@ public class SnappyGrpcClientCodec implements Codec {
     }
 
     @Override
-    public OutputStream compress(OutputStream os) throws IOException {
+    public OutputStream compress(OutputStream os) {
         return new SnappyOutputStream(os);
     }
 

@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+@SuppressWarnings("ALL")
 @RequiredArgsConstructor
 @Component
 public class HelloWorldRunner implements CommandLineRunner {
@@ -45,9 +46,7 @@ public class HelloWorldRunner implements CommandLineRunner {
         Optional<Fact> fetchById = fc.fetchById(fact.id());
         System.out.println("fetch by id returns payload:" + fetchById.get().jsonPayload());
 
-        Subscription sub = fc.subscribeToIds(SubscriptionRequest.catchup(FactSpec.ns("smoke"))
-                .fromScratch(),
-                System.out::println).awaitCatchup(5000);
+        Subscription sub = fc.subscribeToIds(SubscriptionRequest.catchup(FactSpec.ns("smoke"));
 
         sub.close();
 

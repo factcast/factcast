@@ -27,6 +27,7 @@ import com.beust.jcommander.Parameter;
 
 import lombok.Getter;
 
+@SuppressWarnings("ALL")
 public class Parser {
 
     private static final String HOST_SYSPROP_NAME = "grpc.client.factstore.host";
@@ -35,7 +36,7 @@ public class Parser {
 
     private static final String NEGOTIATION_SYSPROP_NAME = "grpc.client.factstore.negotiationType";
 
-    final JCommander jc;
+    private final JCommander jc;
 
     @Getter
     final Options options = new Options();

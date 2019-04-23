@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
  * exchange the given TomcatJdbcDataSourceFactory with a customized factory so
  * we can configure the datasource connection pool
  */
+@SuppressWarnings("NullableProblems")
 @RequiredArgsConstructor
 public class RdsDataSourceFactoryBeanPostProcessor implements BeanPostProcessor {
     @NonNull
@@ -44,7 +45,7 @@ public class RdsDataSourceFactoryBeanPostProcessor implements BeanPostProcessor 
         return bean;
     }
 
-    TomcatJdbcDataSourceFactory tomcatJdbcDataSourceFactory() {
+    private TomcatJdbcDataSourceFactory tomcatJdbcDataSourceFactory() {
         TomcatJdbcDataSourceFactory fac = new TomcatJdbcDataSourceFactory();
         fac.setTestOnBorrow(env.getProperty("spring.datasource.tomcat.testOnBorrow", Boolean.class,
                 true));
