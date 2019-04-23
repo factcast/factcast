@@ -37,8 +37,6 @@ public interface SubscriptionRequest {
 
     boolean continuous();
 
-    boolean marks();
-
     boolean ephemeral();
 
     Optional<UUID> startingAfter();

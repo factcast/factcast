@@ -102,7 +102,7 @@ public class CachingFactCastTest {
 
     @Test
     void testSubscribeToIds() {
-        SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.forMark()).fromScratch();
+        SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.ns("ns")).fromScratch();
         final IdObserver observer = id -> {
         };
         uut.subscribeToIds(rs, observer);
@@ -155,7 +155,7 @@ public class CachingFactCastTest {
 
     @Test
     void testSubscribeToFacts() {
-        SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.forMark()).fromScratch();
+        SubscriptionRequest rs = SubscriptionRequest.follow(FactSpec.ns("foo")).fromScratch();
         when(l.lookup(any())).thenReturn(Optional.of(f));
         when(fc.subscribeToIds(same(rs), obsCap.capture())).thenReturn(null);
         final FactObserver observer = mock(FactObserver.class);
