@@ -49,6 +49,7 @@ import lombok.NonNull;
  *
  * @author uwe.schaefer@mercateo.com
  */
+@SuppressWarnings("UnstableApiUsage")
 @Configuration
 @EnableTransactionManagement
 public class PgFactStoreInternalConfiguration {

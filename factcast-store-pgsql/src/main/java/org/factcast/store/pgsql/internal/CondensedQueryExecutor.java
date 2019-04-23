@@ -36,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author uwe.schaefer@mercateo.com
  */
+@SuppressWarnings("UnstableApiUsage")
 @Slf4j
 @RequiredArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__(@VisibleForTesting))
