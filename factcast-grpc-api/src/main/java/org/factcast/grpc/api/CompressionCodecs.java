@@ -33,7 +33,7 @@ public class CompressionCodecs {
     private final String orderedListOfAvailableCodecsAsString;
 
     public CompressionCodecs() {
-        orderedListOfAvailableCodecs = Arrays.asList("snappy", "lz4", "gzip")
+        orderedListOfAvailableCodecs = Arrays.asList("lz4", "snappy", "gzip")
                 .stream()
                 .filter(CompressionCodecs::locallyAvailable)
                 .collect(Collectors.toList());
