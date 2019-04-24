@@ -15,15 +15,14 @@
  */
 package org.factcast.example.tls.client;
 
-import javax.net.ssl.SSLException;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+@SuppressWarnings("ALL")
 @SpringBootApplication
 public class TLSClient {
 
-    public static void main(String[] args) throws SSLException {
+    public static void main(String[] args) {
         SpringApplication.run(TLSClient.class, args);
     }
 }

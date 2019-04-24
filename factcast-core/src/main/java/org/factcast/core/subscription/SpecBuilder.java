@@ -25,8 +25,6 @@ public interface SpecBuilder {
 
     SpecBuilder or(@NonNull FactSpec specification);
 
-    SpecBuilder skipMarks();
-
     SubscriptionRequest from(@NonNull UUID id);
 
     SubscriptionRequest fromScratch();

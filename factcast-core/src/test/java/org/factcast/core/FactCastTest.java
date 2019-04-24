@@ -70,29 +70,6 @@ public class FactCastTest {
         assertTrue(fc instanceof DefaultFactCast);
     }
 
-    @Test
-    void testPublishWithMarkOne() {
-        FactStore store = mock(FactStore.class);
-        doNothing().when(store).publish(facts.capture());
-        final TestFact f = new TestFact();
-        FactCast.from(store).publishWithMark(f);
-        List<Fact> published = facts.getValue();
-        assertEquals(2, published.size());
-        assertSame(f, published.get(0));
-        assertTrue(FactSpecMatcher.matches(FactSpec.forMark()).test(published.get(1)));
-    }
-
-    @Test
-    void testPublishWithMarkMany() {
-        FactStore store = mock(FactStore.class);
-        doNothing().when(store).publish(facts.capture());
-        final TestFact f = new TestFact();
-        FactCast.from(store).publishWithMark(Collections.singletonList(f));
-        List<Fact> published = facts.getValue();
-        assertEquals(2, published.size());
-        assertSame(f, published.get(0));
-        assertTrue(FactSpecMatcher.matches(FactSpec.forMark()).test(published.get(1)));
-    }
 
     @Test
     void testRetryValidatesMaxAttempts() {

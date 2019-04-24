@@ -23,22 +23,10 @@ import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
 
-import org.factcast.store.pgsql.internal.metrics.PgMetricNames;
-
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
-
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class PgConnectionTester implements Predicate<Connection> {
-
-    final Counter connectionFailureMetric;
-
-    public PgConnectionTester(@NonNull MetricRegistry registry) {
-        connectionFailureMetric = registry.counter(new PgMetricNames().connectionFailure());
-    }
 
     @Override
     public boolean test(@Nonnull Connection connection) {
@@ -54,7 +42,6 @@ public class PgConnectionTester implements Predicate<Connection> {
         } catch (SQLException e) {
             log.warn("Connection test failed with exception: {}", e.getMessage());
         }
-        connectionFailureMetric.inc();
         return false;
     }
 }
