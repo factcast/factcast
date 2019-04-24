@@ -16,7 +16,7 @@
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
 import org.factcast.server.grpc.*;
-import org.factcast.server.grpc.codec.Lz4GrpcServerCodec;
+import org.factcast.server.grpc.codec.*;
 import org.factcast.spring.boot.autoconfigure.store.inmem.*;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
@@ -31,7 +31,7 @@ import net.jpountz.lz4.*;
 @AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
 public class LZ4ServerAutoConfiguration {
     @Bean
-    public Lz4GrpcServerCodec lz4Codec() {
+    public Lz4GrpcServerCodec lz4ServerCodec() {
         return new Lz4GrpcServerCodec();
     }
 }

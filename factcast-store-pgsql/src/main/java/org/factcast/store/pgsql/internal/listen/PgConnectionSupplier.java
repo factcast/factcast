@@ -78,6 +78,7 @@ public class PgConnectionSupplier {
             final String connectionProperties = poolProperties.getConnectionProperties();
             if (connectionProperties != null) {
                 try {
+                    @SuppressWarnings("UnstableApiUsage")
                     Map<String, String> singleConnectionProperties = Splitter.on(";")
                             .omitEmptyStrings()
                             .withKeyValueSeparator("=")

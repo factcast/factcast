@@ -13,33 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.client.grpc;
+package org.factcast.spring.boot.autoconfigure.server.grpc;
 
-import org.factcast.client.grpc.*;
-import org.factcast.client.grpc.codec.*;
+import org.factcast.server.grpc.*;
+import org.factcast.server.grpc.codec.*;
 import org.factcast.spring.boot.autoconfigure.store.inmem.*;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.*;
+import org.xerial.snappy.*;
 
-import net.devh.boot.grpc.client.channelfactory.*;
-import net.jpountz.lz4.*;
+import lombok.*;
 
-/**
- * Configures optional LZ4 Codec
- *
- * @author uwe.schaefer@mercateo.com
- */
-
+@Generated
 @Configuration
-@ConditionalOnClass({ LZ4Compressor.class, Lz4GrpcClientCodec.class, GrpcFactStore.class,
-        GrpcChannelFactory.class })
+@ConditionalOnClass({ FactStoreGrpcService.class, SnappyInputStream.class,
+        SnappyOutputStream.class, SnappyGrpcServerCodec.class })
 @AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
-@AutoConfigureBefore(GrpcFactStoreAutoConfiguration.class)
-public class LZ4ClientAutoConfiguration {
-
+@AutoConfigureBefore(FactCastGrpcServerAutoConfiguration.class)
+public class SnappyServerAutoConfiguration {
     @Bean
-    public Lz4GrpcClientCodec snappyCodec() {
-        return new Lz4GrpcClientCodec();
+    public SnappyGrpcServerCodec snappyServerCodec() {
+        return new SnappyGrpcServerCodec();
     }
 }
