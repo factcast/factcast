@@ -15,44 +15,28 @@
  */
 package org.factcast.server.grpc;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
-import org.factcast.server.grpc.auth.AccessCredential;
-import org.factcast.server.grpc.auth.CredentialConfiguration;
-import org.factcast.server.grpc.auth.FactCastRole;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnResource;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.factcast.server.grpc.auth.*;
+import org.springframework.boot.autoconfigure.*;
+import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.context.annotation.*;
+import org.springframework.core.io.*;
+import org.springframework.security.authentication.*;
+import org.springframework.security.authentication.dao.*;
+import org.springframework.security.config.annotation.method.configuration.*;
+import org.springframework.security.core.*;
+import org.springframework.security.core.authority.*;
+import org.springframework.security.core.userdetails.*;
+import org.springframework.security.crypto.password.*;
 
-import io.grpc.Metadata;
-import io.grpc.ServerCall;
+import io.grpc.*;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.*;
 
-import net.devh.boot.grpc.server.autoconfigure.GrpcServerSecurityAutoConfiguration;
-import net.devh.boot.grpc.server.security.authentication.BasicGrpcAuthenticationReader;
-import net.devh.boot.grpc.server.security.authentication.GrpcAuthenticationReader;
+import net.devh.boot.grpc.server.autoconfigure.*;
+import net.devh.boot.grpc.server.security.authentication.*;
 
 @Slf4j
 @Configuration
@@ -64,7 +48,7 @@ public class FactCastSecurityConfiguration {
     @ConditionalOnMissingBean(CredentialConfiguration.class)
     @ConditionalOnResource(resources = "classpath:factcast-security.json")
     public CredentialConfiguration credentialConfigurationFromClasspath() throws IOException {
-        try (InputStream is = new ClassPathResource("/factcast-security.json").getInputStream();) {
+        try (InputStream is = new ClassPathResource("/factcast-security.json").getInputStream()) {
             return CredentialConfiguration.read(is);
         }
     }
@@ -113,7 +97,7 @@ public class FactCastSecurityConfiguration {
     @ConditionalOnMissingBean(CredentialConfiguration.class)
     UserDetailsService godModeUserDetailsService() {
         log.warn(
-                "**** FactCast Security is disabled. This is discouraged for procduction environments. You have been warned. ****");
+                "**** FactCast Security is disabled. This is discouraged for production environments. You have been warned. ****");
         List<GrantedAuthority> fullAccess = AuthorityUtils
                 .commaSeparatedStringToAuthorityList(FactCastRole.READ + ","
                         + FactCastRole.WRITE);
