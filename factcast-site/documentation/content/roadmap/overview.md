@@ -31,6 +31,6 @@ There are situations, where an effect of a Command in one System involves not on
 
 #### Spring MessageListenerContainer
 
-Still in the early conceptual stages, it'd be nice to remove boilerplate from Fact-handling (like switching over types etc) and provide a Spring integration somewhat similar to the Models people are used to (Automatic unmarshalling to Java Types, automatic handling of MarkFacts, etc...)
+Still in the early conceptual stages, it'd be nice to remove boilerplate from Fact-handling (like switching over types etc) and provide a Spring integration somewhat similar to the Models people are used to (Automatic unmarshalling to Java Types, etc...)
 
 **And yes, you can help!**
