@@ -23,10 +23,7 @@ In order to use FactCast most effectively it is necessary to have an overview of
 
 With FactCast, you write Facts into a log by *publishing* Facts. You can publish single Facts, as well as a List of Facts atomically (all-or-none).
 
-In order to coordinate with consumers, you can also add special *MarkFacts* at the end of the List, that you can reference from consumers later on.
-
-[{{%icon circle-arrow-right%}}Fact Specification]({{%relref "/concept/markfact.md"%}})
-
+In order to preserve invariants, you can also use optimistic locking to conditionally publish based on aggregates not being changed during the lifecycle of the lock (see [optimistic locking](/usage/java/optimistic_locking.md))
 
 ### Read (subscribe)
 
