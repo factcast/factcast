@@ -58,10 +58,14 @@ public final class LockedOperationBuilder {
          * you can call optimistic() to get control over the optimistic settings.
          *
          * @param operation
+         *            will be attempted to be executed, maybe many times
          * @return id of the last fact published
          * @throws OptimisticRetriesExceededException
+         *             if max number of retries are reached
          * @throws ExceptionAfterPublish
+         *             if andThen-block throws an exception
          * @throws AttemptAbortedException
+         *             if calling Attempt.abort, operation will not be retried
          */
         public @NonNull UUID attempt(@NonNull Attempt operation)
                 throws OptimisticRetriesExceededException,

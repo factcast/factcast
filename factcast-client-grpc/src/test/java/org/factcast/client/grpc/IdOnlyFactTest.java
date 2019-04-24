@@ -23,55 +23,41 @@ import org.factcast.core.IdOnlyFact;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class IdOnlyFactTest {
+class IdOnlyFactTest {
 
     @Test
     void testIdNonNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            new IdOnlyFact(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> new IdOnlyFact(null));
     }
 
     @Test
     void testNsUnsupported() {
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
-            new IdOnlyFact(UUID.randomUUID()).ns();
-        });
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID.randomUUID()).ns());
     }
 
     @Test
     void testaggIdUnsupported() {
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
-            new IdOnlyFact(UUID.randomUUID()).aggIds();
-        });
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID.randomUUID()).aggIds());
     }
 
     @Test
     void testtypeUnsupported() {
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
-            new IdOnlyFact(UUID.randomUUID()).type();
-        });
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID.randomUUID()).type());
     }
 
     @Test
     void testHeaderUnsupported() {
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
-            new IdOnlyFact(UUID.randomUUID()).jsonHeader();
-        });
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID.randomUUID()).jsonHeader());
     }
 
     @Test
     void testPayloadUnsupported() {
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
-            new IdOnlyFact(UUID.randomUUID()).jsonPayload();
-        });
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID.randomUUID()).jsonPayload());
     }
 
     @Test
     void testMetaUnsupported() {
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
-            new IdOnlyFact(UUID.randomUUID()).meta("foo");
-        });
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID.randomUUID()).meta("foo"));
     }
 
     @Test

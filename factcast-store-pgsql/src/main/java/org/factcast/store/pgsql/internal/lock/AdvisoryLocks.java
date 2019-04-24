@@ -18,12 +18,12 @@ package org.factcast.store.pgsql.internal.lock;
 import lombok.Getter;
 
 public enum AdvisoryLocks {
-    PUBLISH(128);
+    PUBLISH();
     @Getter
-    private int code;
+    private final int code;
 
-    private AdvisoryLocks(int i) {
-        this.code = i;
+    AdvisoryLocks() {
+        this.code = 128;
     }
 
 }

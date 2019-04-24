@@ -33,7 +33,9 @@ public interface Attempt {
      * order to pass additional info out of your lamdba.
      *
      * @param msg
+     *            String messgae to be passed into Exception
      * @throws AttemptAbortedException
+     *             inevitably thrown
      */
     static IntermediatePublishResult abort(@NonNull String msg) throws AttemptAbortedException {
         throw new AttemptAbortedException(msg);

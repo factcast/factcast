@@ -75,12 +75,14 @@ class PgSynchronizedQuery {
         this.sql = sql;
         this.setter = setter;
         this.rowHandler = rowHandler;
+        // noinspection ConstantConditions
         DataSourceTransactionManager transactionManager = new DataSourceTransactionManager(
                 jdbcTemplate.getDataSource());
         transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     // the synchronized here is crucial!
+    @SuppressWarnings("SameReturnValue")
     public synchronized void run(boolean useIndex) {
         // TODO recheck latest handling - looks broken
         long latest = latestFetcher.retrieveLatestSer();

@@ -19,33 +19,29 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
-import org.factcast.client.grpc.cli.util.ConsoleFactObserver;
-import org.factcast.client.grpc.cli.util.Parser.Options;
-import org.factcast.core.FactCast;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.observer.GenericObserver;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.stubbing.Answer;
+import org.factcast.client.grpc.cli.util.*;
+import org.factcast.client.grpc.cli.util.Parser.*;
+import org.factcast.core.*;
+import org.factcast.core.spec.*;
+import org.factcast.core.store.*;
+import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.observer.*;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.*;
+import org.mockito.junit.jupiter.*;
 
 @ExtendWith(MockitoExtension.class)
-public class CatchupTest {
+class CatchupTest {
     @Mock
     FactStore fs;
 
     FactCast fc;
 
     @Test
-    void testCatchup() throws Exception {
+    void testCatchup() {
         String ns = "foo";
         UUID startId = new UUID(0, 1);
         Catchup cmd = new Catchup(ns, startId);
@@ -53,23 +49,20 @@ public class CatchupTest {
         fc = spy(FactCast.from(fs));
         Options opt = new Options();
 
-        when(fs.subscribe(any(), any(ConsoleFactObserver.class))).thenAnswer(new Answer<Object>() {
-            public Object answer(InvocationOnMock invocation) {
-                Object[] args = invocation.getArguments();
-                GenericObserver<?> o = (GenericObserver<?>) args[1];
-                o.onCatchup();
-                o.onComplete();
+        when(fs.subscribe(any(), any(ConsoleFactObserver.class))).thenAnswer(invocation -> {
+            Object[] args = invocation.getArguments();
+            GenericObserver<?> o = (GenericObserver<?>) args[1];
+            o.onCatchup();
+            o.onComplete();
 
-                SubscriptionRequest r = (SubscriptionRequest) args[0];
+            SubscriptionRequest r = (SubscriptionRequest) args[0];
 
-                List<FactSpec> specs = new ArrayList<FactSpec>(r.specs());
-                specs.remove(FactSpec.forMark());
+            List<FactSpec> specs = new ArrayList<>(r.specs());
 
-                assertEquals(startId, r.startingAfter().get());
-                assertEquals(ns, specs.iterator().next().ns());
+            assertEquals(startId, r.startingAfter().get());
+            assertEquals(ns, specs.iterator().next().ns());
 
-                return null;
-            }
+            return null;
         });
         cmd.runWith(fc, opt);
 

@@ -15,25 +15,34 @@
  */
 package org.factcast.server.grpc;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
-import org.factcast.server.grpc.auth.*;
-import org.springframework.boot.autoconfigure.*;
-import org.springframework.boot.autoconfigure.condition.*;
-import org.springframework.context.annotation.*;
-import org.springframework.core.io.*;
-import org.springframework.security.authentication.*;
-import org.springframework.security.authentication.dao.*;
-import org.springframework.security.config.annotation.method.configuration.*;
-import org.springframework.security.core.*;
-import org.springframework.security.core.authority.*;
-import org.springframework.security.core.userdetails.*;
-import org.springframework.security.crypto.password.*;
+import org.factcast.server.grpc.auth.AccessCredential;
+import org.factcast.server.grpc.auth.CredentialConfiguration;
+import org.factcast.server.grpc.auth.FactCastRole;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnResource;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 
-import io.grpc.*;
-
-import lombok.extern.slf4j.*;
+import lombok.extern.slf4j.Slf4j;
 
 import net.devh.boot.grpc.server.autoconfigure.*;
 import net.devh.boot.grpc.server.security.authentication.*;
@@ -62,7 +71,7 @@ public class FactCastSecurityConfiguration {
         log.info("FactCast Security is enabled.");
         return username -> {
             log.debug("*** username is " + username);
-            log.debug("*** found: " + cc.find(username).get());
+            cc.find(username).ifPresent(ud -> log.debug("*** found: " + ud));
 
             return cc.find(username)
 
@@ -80,7 +89,7 @@ public class FactCastSecurityConfiguration {
 
     @Bean
     AuthenticationManager authenticationManager(DaoAuthenticationProvider p) {
-        return new ProviderManager(Arrays.asList(p));
+        return new ProviderManager(Collections.singletonList(p));
     }
 
     @SuppressWarnings("deprecation")
@@ -110,12 +119,6 @@ public class FactCastSecurityConfiguration {
     GrpcAuthenticationReader noOpAuthenticationReader() {
         UsernamePasswordAuthenticationToken disabled = new UsernamePasswordAuthenticationToken(
                 "security_disabled", "security_disabled");
-        return new GrpcAuthenticationReader() {
-            @Override
-            public Authentication readAuthentication(ServerCall<?, ?> call, Metadata headers)
-                    throws AuthenticationException {
-                return disabled;
-            }
-        };
+        return (call, headers) -> disabled;
     }
 }

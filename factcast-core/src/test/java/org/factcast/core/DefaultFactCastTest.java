@@ -54,7 +54,7 @@ public class DefaultFactCastTest {
     void testSubscribeToFacts() {
         when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
         final UUID since = UUID.randomUUID();
-        SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.forMark())
+        SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.ns("foo"))
                 .or(FactSpec.ns("some").type("type"))
                 .from(since);
         uut.subscribeToFacts(r, f -> {
@@ -70,7 +70,7 @@ public class DefaultFactCastTest {
     @Test
     void testSubscribeToIds() {
         when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
-        SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.forMark())
+        SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.ns("foo"))
                 .or(FactSpec.ns("some").type("type"))
                 .fromScratch();
         uut.subscribeToIds(r, f -> {
@@ -179,14 +179,14 @@ public class DefaultFactCastTest {
     @Test
     void testSubscribeIds2ndArgNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToIds(SubscriptionRequest.follow(FactSpec.forMark()).fromScratch(), null);
+            uut.subscribeToIds(SubscriptionRequest.follow(FactSpec.ns("foo")).fromScratch(), null);
         });
     }
 
     @Test
     void testSubscribeFacts2ndArgNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToFacts(SubscriptionRequest.follow(FactSpec.forMark()).fromScratch(),
+            uut.subscribeToFacts(SubscriptionRequest.follow(FactSpec.ns("foo")).fromScratch(),
                     null);
         });
     }
@@ -198,19 +198,6 @@ public class DefaultFactCastTest {
         });
     }
 
-    @Test
-    void testpublishWithMarkOneNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.publishWithMark((Fact) null);
-        });
-    }
-
-    @Test
-    void testpublishWithMarkManyNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.publishWithMark((List<Fact>) null);
-        });
-    }
 
     @Test
     void testSerialOf() {
