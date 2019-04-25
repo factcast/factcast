@@ -15,55 +15,30 @@
  */
 package org.factcast.store.test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-import java.time.Duration;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.time.*;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
-import org.assertj.core.util.Lists;
-import org.factcast.core.Fact;
-import org.factcast.core.FactCast;
-import org.factcast.core.lock.Attempt;
-import org.factcast.core.lock.AttemptAbortedException;
-import org.factcast.core.lock.ExceptionAfterPublish;
-import org.factcast.core.lock.WithOptimisticLock.OptimisticRetriesExceededException;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.observer.IdObserver;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.test.annotation.DirtiesContext;
+import org.assertj.core.util.*;
+import org.factcast.core.*;
+import org.factcast.core.lock.*;
+import org.factcast.core.lock.WithOptimisticLock.*;
+import org.factcast.core.spec.*;
+import org.factcast.core.store.*;
+import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.observer.*;
+import org.junit.jupiter.api.*;
+import org.mockito.*;
+import org.springframework.test.annotation.*;
 
-import lombok.Getter;
-import lombok.SneakyThrows;
+import lombok.*;
 
 @SuppressWarnings("ALL")
 public abstract class AbstractFactStoreTest {
@@ -855,8 +830,8 @@ public abstract class AbstractFactStoreTest {
     }
 
     @Test
-    void npeOnAttemptReturningNull() throws Exception {
-        assertThrows(NullPointerException.class, () -> uut.lock("foo")
+    void abortOnAttemptReturningNull() throws Exception {
+        assertThrows(AttemptAbortedException.class, () -> uut.lock("foo")
                 .on(UUID.randomUUID())
                 .attempt(() -> null));
     }
@@ -920,7 +895,7 @@ public abstract class AbstractFactStoreTest {
         });
 
         assertThat(catchup()).hasSize(11); // 8 conflicting, 2 initial and 1
-                                           // from Attempt
+        // from Attempt
         assertThat(ret).isNotNull();
 
         // publishing was properly blocked
@@ -955,7 +930,7 @@ public abstract class AbstractFactStoreTest {
         });
 
         assertThat(catchup()).hasSize(11); // 8 conflicting, 2 initial and 1
-                                           // from Attempt
+        // from Attempt
         assertThat(ret).isNotNull();
 
         // publishing was properly blocked
