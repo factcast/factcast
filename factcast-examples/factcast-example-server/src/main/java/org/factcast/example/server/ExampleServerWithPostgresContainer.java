@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author uwe.schaefer@mercateo.com
  */
+@SuppressWarnings("ALL")
 @SpringBootApplication
 @Slf4j
 public class ExampleServerWithPostgresContainer {

@@ -45,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author uwe.schaefer@mercateo.com
  */
+@SuppressWarnings("UnstableApiUsage")
 @Slf4j
 @RequiredArgsConstructor
 public class PgListener implements InitializingBean, DisposableBean {
