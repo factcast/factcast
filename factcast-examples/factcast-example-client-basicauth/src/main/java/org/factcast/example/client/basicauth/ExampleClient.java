@@ -18,6 +18,7 @@ package org.factcast.example.client.basicauth;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+@SuppressWarnings("ALL")
 @SpringBootApplication
 public class ExampleClient {
     public static void main(String[] args) {

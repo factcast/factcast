@@ -32,6 +32,7 @@ import com.beust.jcommander.ParameterException;
 
 import lombok.RequiredArgsConstructor;
 
+@SuppressWarnings("ALL")
 @RequiredArgsConstructor
 @SpringBootApplication
 public class CLI {

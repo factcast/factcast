@@ -15,31 +15,28 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import org.factcast.client.grpc.*;
 import org.factcast.client.grpc.codec.*;
 import org.factcast.spring.boot.autoconfigure.store.inmem.*;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.*;
-
-import net.devh.boot.grpc.client.channelfactory.*;
-import net.jpountz.lz4.*;
+import org.xerial.snappy.*;
 
 /**
- * Configures optional LZ4 Codec
+ * Configures optional Snappy Codec
  *
  * @author uwe.schaefer@mercateo.com
  */
 
 @Configuration
-@ConditionalOnClass({ LZ4Compressor.class, Lz4GrpcClientCodec.class, GrpcFactStore.class,
-        GrpcChannelFactory.class })
+@ConditionalOnClass({ SnappyInputStream.class, SnappyOutputStream.class,
+        SnappyGrpcClientCodec.class })
 @AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
 @AutoConfigureBefore(GrpcFactStoreAutoConfiguration.class)
-public class LZ4ClientAutoConfiguration {
+public class SnappyClientAutoConfiguration {
 
     @Bean
-    public Lz4GrpcClientCodec snappyCodec() {
-        return new Lz4GrpcClientCodec();
+    public SnappyGrpcClientCodec snappCodec() {
+        return new SnappyGrpcClientCodec();
     }
 }

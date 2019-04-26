@@ -44,9 +44,8 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 
 import lombok.extern.slf4j.Slf4j;
 
-import net.devh.boot.grpc.server.autoconfigure.GrpcServerSecurityAutoConfiguration;
-import net.devh.boot.grpc.server.security.authentication.BasicGrpcAuthenticationReader;
-import net.devh.boot.grpc.server.security.authentication.GrpcAuthenticationReader;
+import net.devh.boot.grpc.server.autoconfigure.*;
+import net.devh.boot.grpc.server.security.authentication.*;
 
 @Slf4j
 @Configuration
@@ -107,7 +106,7 @@ public class FactCastSecurityConfiguration {
     @ConditionalOnMissingBean(CredentialConfiguration.class)
     UserDetailsService godModeUserDetailsService() {
         log.warn(
-                "**** FactCast Security is disabled. This is discouraged for procduction environments. You have been warned. ****");
+                "**** FactCast Security is disabled. This is discouraged for production environments. You have been warned. ****");
         List<GrantedAuthority> fullAccess = AuthorityUtils
                 .commaSeparatedStringToAuthorityList(FactCastRole.READ + ","
                         + FactCastRole.WRITE);
