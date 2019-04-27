@@ -15,18 +15,27 @@
  */
 package org.factcast.store.pgsql;
 
-import java.util.*;
-import java.util.stream.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.*;
-import org.springframework.boot.context.event.*;
-import org.springframework.boot.context.properties.*;
-import org.springframework.context.*;
-import org.springframework.core.env.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationListener;
+import org.springframework.core.env.AbstractEnvironment;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.MapPropertySource;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.env.PropertySource;
 
-import lombok.*;
-import lombok.experimental.*;
-import lombok.extern.slf4j.*;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("DefaultAnnotationParam")
 @ConfigurationProperties(
@@ -41,6 +50,9 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
 
     @Autowired
     Environment env;
+
+    @Autowired
+    private ApplicationContext appContext;
 
     /**
      * defines the number of Facts being retrieved with one Page Query for
@@ -110,7 +122,7 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
             legacyPrperties.forEach(p -> {
                 log.error("Property {} found in {}", p.getKey(), p.getValue());
             });
-            System.exit(1);
+            SpringApplication.exit(appContext, () -> 1);
         }
 
     }
