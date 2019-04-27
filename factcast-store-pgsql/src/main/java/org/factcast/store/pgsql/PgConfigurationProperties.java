@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
@@ -39,9 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("DefaultAnnotationParam")
 @ConfigurationProperties(
-        prefix = "factcast.store.pgsql",
-        ignoreInvalidFields = false,
-        ignoreUnknownFields = false)
+        prefix = "factcast.store.pgsql")
 @Data
 @Slf4j
 @Accessors(fluent = false)
@@ -99,10 +96,26 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        Map<String, Object> map = new HashMap();
+        List<Map.Entry<String, Object>> legacyProperties = findAllProperties().entrySet()
+                .stream()
+                .filter(e -> e.getKey().startsWith(LEGACY_PREFIX))
+                .collect(Collectors.toList());
+
+        if (!legacyProperties.isEmpty()) {
+            log.error(
+                    "There are legacy properties detected. Property namespace has been renamed from '"
+                            + LEGACY_PREFIX + "' to 'factcast.store.pgsql'");
+            legacyProperties.forEach(p -> {
+                log.error("Property {} found in {}", p.getKey(), p.getValue());
+            });
+        }
+    }
+
+    private Map<String, Object> findAllProperties() {
+        Map<String, Object> map = new HashMap<>();
         MutablePropertySources propertySources = ((AbstractEnvironment) env).getPropertySources();
-        for (Iterator it = propertySources.iterator(); it.hasNext();) {
-            PropertySource propertySource = (PropertySource) it.next();
+        for (Iterator<?> it = propertySources.iterator(); it.hasNext();) {
+            PropertySource<?> propertySource = (PropertySource<?>) it.next();
             if (propertySource instanceof MapPropertySource) {
                 Map<String, Object> source = ((MapPropertySource) propertySource).getSource();
                 source.entrySet().forEach(e -> {
@@ -110,20 +123,6 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
                 });
             }
         }
-
-        List<Map.Entry<String, Object>> legacyPrperties = map.entrySet()
-                .stream()
-                .filter(e -> e.getKey().startsWith(LEGACY_PREFIX))
-                .collect(Collectors.toList());
-        if (!legacyPrperties.isEmpty()) {
-            log.error(
-                    "There are legacy properties detected. Property namespace has been renamed from '"
-                            + LEGACY_PREFIX + "' to 'factcast.store.pgsql'");
-            legacyPrperties.forEach(p -> {
-                log.error("Property {} found in {}", p.getKey(), p.getValue());
-            });
-            SpringApplication.exit(appContext, () -> 1);
-        }
-
+        return map;
     }
 }
