@@ -89,7 +89,7 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
     public void onApplicationEvent(ApplicationReadyEvent event) {
         Map<String, Object> map = new HashMap();
         MutablePropertySources propertySources = ((AbstractEnvironment) env).getPropertySources();
-        for (Iterator it = propertySources.iterator(); it.hasNext(); ) {
+        for (Iterator it = propertySources.iterator(); it.hasNext();) {
             PropertySource propertySource = (PropertySource) it.next();
             if (propertySource instanceof MapPropertySource) {
                 Map<String, Object> source = ((MapPropertySource) propertySource).getSource();
