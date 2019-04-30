@@ -28,7 +28,7 @@ href="https://github.com/uweschaefer/factcast/edit/master/factcast-site/document
 
 #### This is work in progress and neither the Documentation, nor the code is in a "released" state. Please keep that in mind when poking around.
 
-Source Code is available as [{{%icon fa-github%}}github](https://github.com/uweschaefer/factcast) repository.
+Source Code is available as [github](https://github.com/uweschaefer/factcast) repository.
 
 The current project health is
 <a href="https://circleci.com/gh/Mercateo/factcast"><img class="inline"
