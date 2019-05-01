@@ -30,13 +30,13 @@ In order to preserve invariants, you can also use optimistic locking to conditio
 In order to receive Facts, you subscribe to FactCast with a subscription request. This is where FactCast differs significantly from other solutions because the subscription request contains the *full specification* of what events to receive.
 This means, there is no need for Server-Side administration or knowing ahead of time, which Streams to publich the Fact to.
 
-{{%alert danger%}} TODO see SubscriptionRequest {{% /alert%}}
+{{%alert theme="danger"%}} TODO see SubscriptionRequest {{% /alert%}}
 
 Next to the specification of what kinds of events to read, the SubscriptionRequest also contains the information of which Events to skip (due to being already received by the consumer) and how to deal with Facts being published in the Future.
 When subscribing, the Consumer sends a specification of Facts he is interested in and might have received Facts in the past.
 
 
-#### {{% alert theme="info" %}} *Note, that Facts are always guaranteed to be sent in the order published.* {{% /alert %}}
+{{%alert theme="success" %}} *Note, that Facts are always guaranteed to be sent in the order published.* {{% /alert %}}
 
 The three usual subscription Models and their corresponding UseCases are:
 
