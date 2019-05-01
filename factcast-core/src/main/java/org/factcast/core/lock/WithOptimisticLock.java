@@ -15,23 +15,16 @@
  */
 package org.factcast.core.lock;
 
-import java.util.ConcurrentModificationException;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
-import org.factcast.core.Fact;
-import org.factcast.core.store.FactStore;
-import org.factcast.core.store.StateToken;
+import org.factcast.core.*;
+import org.factcast.core.store.*;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.SneakyThrows;
-import lombok.experimental.Accessors;
+import lombok.*;
+import lombok.experimental.*;
+import lombok.extern.slf4j.*;
 
+@Slf4j
 @RequiredArgsConstructor
 @Accessors(fluent = true, chain = true)
 public class WithOptimisticLock {
@@ -100,7 +93,15 @@ public class WithOptimisticLock {
             throws AttemptAbortedException {
 
         try {
-            return operation.call();
+            IntermediatePublishResult ret = operation.call();
+            if (ret == null) {
+                // Attempt should not return null, this is an abuse of the API.
+                log.error(
+                        "Attempt should not return null, this is an abuse of the API. We will however treat it as an abort. Please fix the problem!");
+                throw new AttemptAbortedException(
+                        "Attempt aborted due to null-return. No message given.");
+            }
+            return ret;
         } catch (Exception e) {
             if (!AttemptAbortedException.class.isAssignableFrom(e.getClass()))
                 throw new AttemptAbortedException(e);

@@ -29,5 +29,5 @@ Any Contribution, be it code, issues, docs etc. are more than welcome if they co
 
 and of course all the [Contributors](https://github.com/uweschaefer/factcast/graphs/contributors) 
 
-{{%ghcontributors
-"https://api.github.com/repos/Mercateo/factcast/contributors?per_page=101" %}}
+{{<ghcontributors
+"https://api.github.com/repos/Mercateo/factcast/contributors?per_page=101" >}}
