@@ -23,9 +23,10 @@ If you used the uniqe_identifier feature before, it was removed. It was only a r
 
 There is a [section on optimitic locking](/usage/java/optimistic_locking/) as a new api feature.
 
-#### Postgres module uuid-ossp
+#### Postgres module uuid-ossp and ddl user
 
-The Postgres module *uuid-ossp* is necessary for the new optimistic locking api feature. If you want to upgrade your server version, please take a look into the [{{%icon circle-arrow-right%}}Postgres - uuid-oops ]({{%relref "/setup/server/prerequisites.md#uuid-ossp"%}}) section in the prerequisites guide to ensure that this module will be provided.
+The Postgres module *uuid-ossp* is necessary for the new optimistic locking api feature. In order to provide a user with enough privileges to install modules and also running the application without unnecessary db permission, we split the database responsibility into two different users. 
+If you want to upgrade your server version, please take a look into the [{{%icon circle-arrow-right%}}Postgres]({{%relref "/setup/server/prerequisites.md#postgres"%}}) section in the prerequisites guide to ensure that your migration will succeed.
 
 ##### {{% alert theme="warn" %}} *Note, the server start will most likely fail, if you don't follow the instructions.* {{% /alert %}}
 
