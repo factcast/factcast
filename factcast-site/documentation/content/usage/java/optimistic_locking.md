@@ -18,11 +18,11 @@ weight = 9090
 
 Whatever your particular way of modelling your software, in order to be able to enforce invariants in your aggregates, you'd need to coordinate writes to it. In simple monoliths, you do that by synchronizing write access to the aggregate. When Software-Systems become distributed (or at least replicated), this coordination obviously needs to be externalized.
 
-##### Pessimistic Locking
+#### Pessimistic Locking
 
 While pessimistic locking makes sure every change is strictly serializable, it has obvious drawbacks in terms of throughput and complexity (timeouts) as well as the danger of deadlock, when the scope of the lock expands to more than one aggregate. This is why we chose to implement a means of optimistic locking in Factcast.
 
-##### Optimistic Locking
+#### Optimistic Locking
 
 In general, the idea of optimistic locking is to make a change and before publishing it, make sure there was no potentially contradicting change in between. If there was, the process can safely be retried, as there was nothing published yet.
 
@@ -36,7 +36,7 @@ Transferred to Factcast, this means to express a body of code that:
 
 ### Usage 
 
-##### a simple example
+#### a simple example
 
 This code checks if an account with id *newAccountId* already exists, and if not - creates it by publishing the Fact accordingly.
 
@@ -61,7 +61,7 @@ This code checks if an account with id *newAccountId* already exists, and if not
 
 You may probably guess what happens, remembering the above steps. Let's dive into details with a more complex scenario.
 
-##### a complete example
+#### a complete example
 
 The unavoidable imaginary example, of two BankAccounts and a money transfer between them:
 
@@ -104,7 +104,7 @@ The unavoidable imaginary example, of two BankAccounts and a money transfer betw
 
 ```
 
-##### Explanation
+#### Explanation
 
 First, you tell factcast to record a state according to all events that have either *sourceAccountId* or *targetAccountId* in their list of aggIds and are on namespace *myBankNamespace*. While the namespace is not strictly necessary, it is encouraged to use it - but it depends on your decision on how to use namespaces and group Facts within them.
 
