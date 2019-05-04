@@ -1,6 +1,6 @@
 +++
 draft = false
-title = "Spring Boot & TLS"
+title = "Spring Boot Server (TLS)"
 description = ""
 date = "2017-04-24T18:36:24+02:00"
 
