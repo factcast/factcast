@@ -8,8 +8,8 @@ creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 
 [menu.main]
-parent = "setup_client"
-identifier = "boot_grpc"
+parent = "setup"
+identifier = "grpc_client"
 weight = 20
 
 +++

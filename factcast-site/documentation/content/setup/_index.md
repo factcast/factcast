@@ -1,6 +1,6 @@
 +++
 draft = false
-title = "Client Setup"
+title = "Setup"
 description = ""
 date = "2017-04-24T18:36:24+02:00"
 
@@ -9,11 +9,11 @@ creatoremail = "uwe.schaefer@mercateo.com"
 
 [menu.main]
 parent = ""
-identifier = "setup_client"
-weight = 30
+identifier = "setup"
+weight = 18
 
 +++
 
-This section will walk you through using a remote FactCast Server as a consumer/procuder.
+This section will walk you through the many options of how to setup and operate FactCast.
 
 {{< children nohidden="true" >}}

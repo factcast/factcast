@@ -8,9 +8,9 @@ creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 
 [menu.main]
-parent = "setup_server"
+parent = "setup"
 identifier = "fatjar-tls"
-weight = 10
+weight = 120
 
 +++
 
@@ -35,4 +35,4 @@ In order to run the TLS Server, go to **factcast-examples/factcast-example-tls-s
 mvn spring-boot:run
 ```
 
-[{{%icon circle-arrow-right%}}Read more on Ports]({{%relref "/setup/server/ports.md"%}})
+[{{<icon name="circle-arrow-right" size="small">}}Read more on Ports]({{%relref "/setup/examples/ports.md"%}})
