@@ -24,7 +24,7 @@ mvn install
 ```
 
 
-In order to run a simple example Factcast Server, you could enter the project **factcast-examples/factcast-example-server]** and run
+In order to run a simple example Factcast server, you could enter the project **factcast-examples/factcast-example-server** and run
 
 ```sh
 mvn spring-boot:run
