@@ -20,7 +20,7 @@ In order to talk to a - not in process - factstore (which is the usual setup for
 
 ## Using FactCast client in Spring boot via GRPC
 
-if you do not use Spring or take the easy path in your Spring Boot Application by adding the appropriate dependencies to your application:
+If you do not use Spring or take the easy path in your Spring Boot Application by adding the appropriate dependencies to your application:
 
 
 ```
