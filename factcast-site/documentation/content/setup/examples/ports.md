@@ -8,9 +8,9 @@ creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 
 [menu.main]
-parent = "setup_server"
+parent = "setup"
 identifier = "ports"
-weight = 50
+weight = 500
 
 +++
 

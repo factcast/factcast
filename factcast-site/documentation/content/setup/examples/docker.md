@@ -8,7 +8,7 @@ creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 
 [menu.main]
-parent = "setup_server"
+parent = "setup"
 identifier = "docker"
 weight = 20
 

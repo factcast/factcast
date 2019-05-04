@@ -8,9 +8,9 @@ creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 
 [menu.main]
-parent = "setup_server"
+parent = "setup"
 identifier = "fatjar"
-weight = 10
+weight = 100
 
 +++
 
@@ -43,4 +43,4 @@ mvn package
 
 will create a standard spring boot fat jar ```target/factcast.jar``` that can be run instantly.
 
-[{{<icon name="circle-arrow-right" size="small">}}Read more on Ports]({{%relref "/setup/server/ports.md"%}})
+[{{<icon name="circle-arrow-right" size="small">}}Read more on Ports]({{%relref "/setup/examples/ports.md"%}})
