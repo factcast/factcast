@@ -1,5 +1,5 @@
 +++
-draft = false
+draft = true
 title = "Docker"
 description = ""
 date = "2017-04-24T18:36:24+02:00"
@@ -8,7 +8,7 @@ creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 
 [menu.main]
-parent = "setup_server"
+parent = "setup"
 identifier = "docker"
 weight = 20
 
