@@ -16,22 +16,22 @@ weight = 20
 
 ## GRPC Clients
 
-In order to talk to a - not in process - factstore (which is the usual setup for non-test applications), GRPC is the communicatoin protocol of use.
+In order to talk to a - not in process - factstore (which is the usual setup for non-test applications), GRPC is the communication protocol used.
 
 ## Using FactCast client in Spring boot via GRPC
 
-If you do not use Spring or take the easy path in your Spring Boot Application by adding the appropriate dependencies to your application:
+If you use Spring take the easy path in your Spring Boot Application by adding the appropriate dependencies to your application:
 
 
 ```
-  <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-client-grpc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-spring-boot-autoconfigure</artifactId>
-    </dependency>
+   <dependency>
+     <groupId>org.factcast</groupId>
+     <artifactId>factcast-client-grpc</artifactId>
+   </dependency>
+   <dependency>
+     <groupId>org.factcast</groupId>
+     <artifactId>factcast-spring-boot-autoconfigure</artifactId>
+   </dependency>
 ```
 
 There are example projects: **factcast-examples/factcast-example-client-spring-boot2** and **factcast-examples/factcast-example-client-spring-boot1** respectivly, that you can use as a template.
