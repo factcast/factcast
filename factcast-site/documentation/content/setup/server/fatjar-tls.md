@@ -16,14 +16,14 @@ weight = 10
 
 #### Non-Encrpyted
 
-In order to run a simple example Factcast Server, you could enter the project **factcast-examples/factcast-example-server]**, see [fatjar](../ccodfatjar)
+In order to run a simple example Factcast server, you could enter the project **factcast-examples/factcast-example-server**, see [fatjar](../fatjar)
 
 
 ## TLS Server
 
-There is an extra example project that demonstrated to usage of TLS for your server that can be found **factcast-example-tls-server**
+There is an extra example project that demonstrates the usage of TLS for your server that can be found **factcast-example-tls-server**
 
-We tried to stick as close as possible to what we have in **factcast-examples/factcast-example-server]** to demonstrate the necessary changes and nothing more.
+We tried to stick as close as possible to what we have in **factcast-examples/factcast-example-server** to demonstrate the necessary changes and nothing more.
 
 Obviously, for running a TLS Server, you need a certificate. We packaged a snakeoil localhost certificate for you to test. This cert can be found in **src/etc/certificates/**. In order to create your own selfsigned certificate, there is a shell script you can use as a starting point.
 
