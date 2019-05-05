@@ -30,5 +30,5 @@ databaseChangeLog:
          file: factcast/issue346/dropUniqueConstraintForIdent.sql
          relativeToChangelogFile: true
     - include:
-         file: factcast/issue372/createApplicationUser.sql
+         file: factcast/issue372/createApplicationUser.yaml
          relativeToChangelogFile: true     

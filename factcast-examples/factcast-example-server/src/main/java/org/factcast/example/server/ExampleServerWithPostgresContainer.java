@@ -53,6 +53,8 @@ public class ExampleServerWithPostgresContainer {
         System.setProperty("spring.liquibase.password", postgres.getPassword());
         System.setProperty("spring.datasource.username", "factcast-application-user");
         System.setProperty("spring.datasource.password", "factcast-application-user");
+        System.setProperty("spring.liquibase.parameters.dml-user", "factcast-application-user");
+        System.setProperty("spring.liquibase.parameters.dml-user-pw", "factcast-application-user");
     }
 
 }
