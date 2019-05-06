@@ -234,7 +234,8 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
         Subscription current = currentSubscription.getAndSet(null);
         try {
             current.close();
-        } catch (Exception e) {
+        } catch (Exception ignore) {
+            log.warn("Ignoring Exception while closing a subscription:", ignore);
         }
     }
 
