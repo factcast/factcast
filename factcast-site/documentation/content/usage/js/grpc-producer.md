@@ -16,7 +16,7 @@ weight = 100
 
 ## nodeJS GRPC Producer
 
-Producing Facts via nodeJS is very simple due to the available [gRPC](https://www.npmjs.com/package/grpc) NPM Module. It will generate a stub constructor called ```RemoteFactStore``` from our proto file.
+Producing Facts via nodeJS is very simple due to the available [{{<icon name="circle-arrow-right" size="small">}}gRPC](https://www.npmjs.com/package/grpc) NPM Module. It will generate a stub constructor called ```RemoteFactStore``` from our proto file.
 
 ```javascript
 const uuidV4 = require('uuid/v4');
@@ -41,4 +41,4 @@ store.publish([{
   }
 })
 ```
-See the [Facts]({{%relref "/concept/fact.md"%}}) page for detailed information about all possible and required header fields.
+See the [{{<icon name="circle-arrow-right" size="small">}}Facts]({{%relref "/concept/fact.md"%}}) page for detailed information about all possible and required header fields.

@@ -1,5 +1,7 @@
-{{ partial "header.html" . }}
-
+{{ define "main" }}
+{{if .Content}}
+{{ .Content }}
+{{else }}
 {{ $paginator := .Paginator }}
 
 <div class="extra-pagination inner">
@@ -14,7 +16,5 @@
 
 {{ partial "pagination.html" $paginator }}
 
-
-
-
-{{ partial "footer.html" . }}
+{{end}}
+{{end}}
