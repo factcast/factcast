@@ -16,6 +16,7 @@
 package org.factcast.client.cache;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -118,7 +119,8 @@ class CachingFactCastTest {
 
     @Test
     void testSubscribeToIdsNullObserverParam() {
-        Assertions.assertThrows(NullPointerException.class, () -> uut.subscribeToIds(mock(SubscriptionRequest.class), null));
+        Assertions.assertThrows(NullPointerException.class, () -> uut.subscribeToIds(mock(
+                SubscriptionRequest.class), null));
     }
 
     @Test
@@ -134,7 +136,8 @@ class CachingFactCastTest {
 
     @Test
     void testSubscribeToFactsNullObserverParam() {
-        Assertions.assertThrows(NullPointerException.class, () -> uut.subscribeToFacts(mock(SubscriptionRequest.class), null));
+        Assertions.assertThrows(NullPointerException.class, () -> uut.subscribeToFacts(mock(
+                SubscriptionRequest.class), null));
     }
 
     @Test
@@ -206,5 +209,26 @@ class CachingFactCastTest {
         String ns = "foo";
         uut.lock(ns);
         verify(this.fc).lock(ns);
+    }
+
+    @Test
+    public void testSubscribeNullContracts() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribe(null, mock(FactObserver.class));
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribe(null, null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribe(mock(SubscriptionRequest.class), null);
+        });
+    }
+
+    @Test
+    public void testSubscribeIsPassedToDelegate() throws Exception {
+        SubscriptionRequest request = mock(SubscriptionRequest.class);
+        FactObserver observer = mock(FactObserver.class);
+        uut.subscribe(request, observer);
+        verify(fc).subscribe(request, observer);
     }
 }
