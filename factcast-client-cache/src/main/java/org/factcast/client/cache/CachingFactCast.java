@@ -110,4 +110,10 @@ public class CachingFactCast implements FactCast {
     public LockedOperationBuilder lockGlobally() {
         return delegate.lockGlobally();
     }
+
+    @Override
+    public Subscription subscribe(@NonNull SubscriptionRequest request,
+            @NonNull FactObserver observer) {
+        return delegate.subscribe(request, observer);
+    }
 }
