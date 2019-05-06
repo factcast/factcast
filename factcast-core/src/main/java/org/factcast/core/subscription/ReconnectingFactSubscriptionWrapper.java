@@ -22,6 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.factcast.core.Fact;
@@ -55,10 +56,13 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
     private final ExecutorService es = Executors.newCachedThreadPool(new ThreadFactory() {
 
+        AtomicLong threadCount = new AtomicLong(0);
+
         @Override
         public Thread newThread(Runnable r) {
             Thread thread = new Thread(r);
             thread.setDaemon(true);
+            thread.setName("factcast-recon-sub-wrapper-" + threadCount.incrementAndGet());
             return thread;
         }
     });
