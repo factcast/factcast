@@ -42,10 +42,10 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
     private final FactStore store;
 
     @NonNull
-    private final SubscriptionRequestTO original_req;
+    private final SubscriptionRequestTO originalRequest;
 
     @NonNull
-    private final FactObserver original_observer;
+    private final FactObserver originalObserver;
 
     @NonNull
     private final FactObserver observer;
@@ -72,8 +72,9 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
         closed.set(true);
         Subscription cur = currentSubscription.get();
-        if (cur != null)
+        if (cur != null) {
             cur.close();
+        }
         currentSubscription.set(null);
     }
 
@@ -83,14 +84,15 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
         for (;;) {
             assertSubscriptionStateNotClosed();
             Subscription cur = currentSubscription.get();
-            if (cur != null)
+            if (cur != null) {
                 try {
                     cur.awaitCatchup();
                     return this;
                 } catch (SubscriptionCancelledException ignore) {
                 }
-            else
+            } else {
                 sleep();
+            }
         }
     }
 
@@ -110,16 +112,18 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
             assertSubscriptionStateNotClosed();
             Subscription cur = currentSubscription.get();
 
-            if (cur != null)
+            if (cur != null) {
                 try {
                     cur.awaitCatchup(waitTimeInMillis);
                     return this;
                 } catch (SubscriptionCancelledException | TimeoutException ignore) {
                 }
-            else
+            } else {
                 sleep();
-            if (System.currentTimeMillis() - startTime > waitTimeInMillis)
+            }
+            if ((System.currentTimeMillis() - startTime) > waitTimeInMillis) {
                 throw new TimeoutException();
+            }
         }
     }
 
@@ -130,14 +134,15 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
             assertSubscriptionStateNotClosed();
             Subscription cur = currentSubscription.get();
 
-            if (cur != null)
+            if (cur != null) {
                 try {
                     cur.awaitComplete();
                     return this;
                 } catch (SubscriptionCancelledException ignore) {
                 }
-            else
+            } else {
                 sleep();
+            }
         }
 
     }
@@ -151,48 +156,52 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
             assertSubscriptionStateNotClosed();
             Subscription cur = currentSubscription.get();
 
-            if (cur != null)
+            if (cur != null) {
                 try {
                     cur.awaitComplete(waitTimeInMillis);
                     return this;
                 } catch (SubscriptionCancelledException | TimeoutException ignore) {
                 }
-            else
+            } else {
                 sleep();
-            if (System.currentTimeMillis() - startTime > waitTimeInMillis)
+            }
+
+            if ((System.currentTimeMillis() - startTime) > waitTimeInMillis) {
                 throw new TimeoutException();
+            }
         }
 
     }
 
     private void assertSubscriptionStateNotClosed() {
-        if (closed.get())
+        if (closed.get()) {
             throw new SubscriptionCancelledException("Subscription already cancelled");
+        }
     }
 
     public ReconnectingFactSubscriptionWrapper(@NonNull FactStore store,
             @NonNull SubscriptionRequestTO req,
             @NonNull FactObserver obs) {
         this.store = store;
-        this.original_observer = obs;
-        this.original_req = req;
+        this.originalObserver = obs;
+        this.originalRequest = req;
 
         observer = new FactObserver() {
 
             @Override
             public void onNext(@NonNull Fact element) {
-                original_observer.onNext(element);
+                originalObserver.onNext(element);
                 factIdSeen.set(element.id());
             }
 
             @Override
             public void onCatchup() {
-                original_observer.onCatchup();
+                originalObserver.onCatchup();
             }
 
             @Override
             public void onComplete() {
-                original_observer.onComplete();
+                originalObserver.onComplete();
             }
 
             @Override
@@ -207,7 +216,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
                 // has to be last call, due to older impls. of onError might
                 // decide to throw an exception
-                original_observer.onError(exception);
+                originalObserver.onError(exception);
             }
 
         };
@@ -216,12 +225,13 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
     }
 
     private synchronized void initiateReconnect() {
-        SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(original_req);
+        SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(originalRequest);
         UUID last = factIdSeen.get();
-        if (last != null)
+        if (last != null) {
             to.startingAfter(last);
+        }
 
-        for (;;)
+        for (;;) {
             try {
                 if (currentSubscription.get() == null) {
                     // might throw exceptions
@@ -232,6 +242,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
             } catch (Exception ignore) {
                 sleep();
             }
+        }
     }
 
     private void closeAndDetachSubscription() {
