@@ -8,7 +8,7 @@ themesdir = "."
 editURL ="https://github.com/uweschaefer/factcast/edit/master/factcast-site/documentation/content/"
 noHomeIcon = true
 noSearch = true
-
+themeStyle = "original"
 
 
 [outputs]

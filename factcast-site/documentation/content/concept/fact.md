@@ -20,7 +20,7 @@ We decided to use the term Fact over Domain-Event because we want to highlight t
 
 Obviously, a Fact is history and cannot be changed, after it happened. This is one of the cornerstones of EventSourcing and provides us with Facts being **immutable**, which plays an important role when it comes to caching.
 
-[{{%icon circle-arrow-right%}}Read more on caching]({{%relref "/concept/caching.md"%}})
+[{{<icon name="circle-arrow-right" size="small">}}Read more on caching]({{%relref "/concept/caching.md"%}})
 
 Facts consist of two JSON documents: Header and Payload.
 
