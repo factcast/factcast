@@ -88,6 +88,34 @@ public class ReconnectingFactSubscriptionWrapperTest {
     }
 
     @Test
+    public void testAwaitCatchup() throws Exception {
+
+        observerAC.getValue().onCatchup();
+
+        assertTimeout(Duration.ofMillis(1000), () -> {
+            // needs to return immediately
+            uut.awaitCatchup();
+        });
+    }
+
+    @Test
+    public void testAwaitCatchupLong() throws Exception {
+        when(subscription.awaitCatchup(anyLong())).thenThrow(TimeoutException.class)
+                .then(x -> subscription);
+
+        assertThrows(TimeoutException.class, () -> {
+            uut.awaitCatchup(51);
+        });
+
+        assertTimeout(Duration.ofMillis(1000), () -> {
+            assertThat(uut.awaitCatchup(52)).isSameAs(uut);
+        });
+        // await call was passed
+        verify(subscription).awaitCatchup(52);
+
+    }
+
+    @Test
     public void testAssertSubscriptionStateNotClosed() throws Exception {
         uut.close();
         assertThrows(SubscriptionCancelledException.class, () -> {
