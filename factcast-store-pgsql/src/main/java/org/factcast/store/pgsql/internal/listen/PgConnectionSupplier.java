@@ -24,25 +24,21 @@ import javax.sql.DataSource;
 
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.postgresql.jdbc.PgConnection;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@RequiredArgsConstructor
 public class PgConnectionSupplier {
 
     @NonNull
     @VisibleForTesting
     protected final org.apache.tomcat.jdbc.pool.DataSource ds;
 
-    @Autowired
-    PgConnectionSupplier(DataSource dataSource) {
+    public PgConnectionSupplier(DataSource dataSource) {
         if (org.apache.tomcat.jdbc.pool.DataSource.class.isAssignableFrom(dataSource.getClass())) {
             this.ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
         } else {
