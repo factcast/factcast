@@ -15,9 +15,6 @@
  */
 package org.factcast.store.pgsql.internal.listen;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Map;
@@ -25,11 +22,14 @@ import java.util.Properties;
 
 import javax.sql.DataSource;
 
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.postgresql.jdbc.PgConnection;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class PgConnectionSupplier {
