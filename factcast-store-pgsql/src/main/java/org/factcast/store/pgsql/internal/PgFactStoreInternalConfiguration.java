@@ -19,7 +19,8 @@ import java.sql.Connection;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 
-import org.apache.tomcat.jdbc.pool.DataSource;
+import javax.sql.DataSource;
+
 import org.factcast.core.store.FactStore;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
@@ -124,7 +125,6 @@ public class PgFactStoreInternalConfiguration {
     }
 
     @Bean
-
     public PlatformTransactionManager txManager(DataSource ds) {
         return new DataSourceTransactionManager(ds);
     }
