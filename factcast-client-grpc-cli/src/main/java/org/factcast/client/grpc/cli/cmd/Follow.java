@@ -48,12 +48,12 @@ public class Follow implements Command {
         ConsoleFactObserver obs = new ConsoleFactObserver(opt);
         SpecBuilder catchup = SubscriptionRequest.follow(FactSpec.ns(ns));
         if (fromNow)
-            fc.subscribeToFacts(catchup.fromNowOn(), obs);
+            fc.subscribeEphemeral(catchup.fromNowOn(), obs);
         else {
             if (from == null)
-                fc.subscribeToFacts(catchup.fromScratch(), obs);
+                fc.subscribeEphemeral(catchup.fromScratch(), obs);
             else
-                fc.subscribeToFacts(catchup.from(from), obs);
+                fc.subscribeEphemeral(catchup.from(from), obs);
         }
         obs.awaitTermination();
     }
