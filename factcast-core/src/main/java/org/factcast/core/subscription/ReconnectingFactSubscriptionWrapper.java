@@ -116,8 +116,9 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                 try {
                     cur.awaitCatchup(waitTimeInMillis);
                     return this;
-                } catch (SubscriptionCancelledException | TimeoutException ignore) {
+                } catch (SubscriptionCancelledException ignore) {
                 }
+                // escalate TimeoutException
             } else {
                 sleep();
             }
@@ -160,8 +161,9 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                 try {
                     cur.awaitComplete(waitTimeInMillis);
                     return this;
-                } catch (SubscriptionCancelledException | TimeoutException ignore) {
+                } catch (SubscriptionCancelledException ignore) {
                 }
+                // escalate TimeoutException
             } else {
                 sleep();
             }
