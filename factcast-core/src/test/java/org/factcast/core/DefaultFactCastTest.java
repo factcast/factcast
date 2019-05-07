@@ -75,21 +75,21 @@ public class DefaultFactCastTest {
     private ArgumentCaptor<List<Fact>> cfacts;
 
     @Test
-    void testSubscribeToFacts() {
-        when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
-        final UUID since = UUID.randomUUID();
-        SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.ns("foo"))
-                .or(FactSpec.ns("some").type("type"))
-                .from(since);
-        uut.subscribeEphemeral(r, f -> {
-        });
-        verify(store).subscribe(any(), any());
-        final SubscriptionRequestTO req = csr.getValue();
-        assertTrue(req.continuous());
-        assertFalse(req.idOnly());
-        assertEquals(since, req.startingAfter().get());
-        assertFalse(req.ephemeral());
-    }
+        void testSubscribeEphemeral() {
+            when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
+            final UUID since = UUID.randomUUID();
+            SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.ns("foo"))
+                    .or(FactSpec.ns("some").type("type"))
+                    .from(since);
+            uut.subscribeEphemeral(r, f -> {
+            });
+            verify(store).subscribe(any(), any());
+            final SubscriptionRequestTO req = csr.getValue();
+            assertTrue(req.continuous());
+            assertFalse(req.idOnly());
+            assertEquals(since, req.startingAfter().get());
+            assertFalse(req.ephemeral());
+        }
 
    
 
