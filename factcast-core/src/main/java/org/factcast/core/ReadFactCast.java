@@ -35,6 +35,12 @@ import lombok.NonNull;
  */
 public interface ReadFactCast {
 
+    /**
+     * Same as subscribeToFacts, but adds automatic reconnection.
+     */
+    Subscription subscribe(@NonNull SubscriptionRequest request,
+            @NonNull FactObserver observer);
+
     Subscription subscribeToFacts(@NonNull SubscriptionRequest request,
             @NonNull FactObserver observer);
 
