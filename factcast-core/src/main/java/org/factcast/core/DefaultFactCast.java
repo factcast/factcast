@@ -16,7 +16,6 @@
 package org.factcast.core;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
@@ -28,7 +27,6 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.observer.IdObserver;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -46,22 +44,9 @@ class DefaultFactCast implements FactCast {
 
     @Override
     @NonNull
-    public Subscription subscribeToFacts(@NonNull SubscriptionRequest req,
+    public Subscription subscribeEphemeral(@NonNull SubscriptionRequest req,
             @NonNull FactObserver observer) {
         return store.subscribe(SubscriptionRequestTO.forFacts(req), observer);
-    }
-
-    @Override
-    @NonNull
-    public Subscription subscribeToIds(@NonNull SubscriptionRequest req,
-            @NonNull IdObserver observer) {
-        return store.subscribe(SubscriptionRequestTO.forIds(req), observer.map(Fact::id));
-    }
-
-    @Override
-    @NonNull
-    public Optional<Fact> fetchById(@NonNull UUID id) {
-        return store.fetchById(id);
     }
 
     @Override

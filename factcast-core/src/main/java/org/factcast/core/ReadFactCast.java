@@ -15,7 +15,6 @@
  */
 package org.factcast.core;
 
-import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
@@ -23,7 +22,6 @@ import java.util.UUID;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.observer.IdObserver;
 
 import lombok.NonNull;
 
@@ -41,12 +39,15 @@ public interface ReadFactCast {
     Subscription subscribe(@NonNull SubscriptionRequest request,
             @NonNull FactObserver observer);
 
-    Subscription subscribeToFacts(@NonNull SubscriptionRequest request,
+    Subscription subscribeEphemeral(@NonNull SubscriptionRequest request,
             @NonNull FactObserver observer);
 
-    Subscription subscribeToIds(@NonNull SubscriptionRequest request, @NonNull IdObserver observer);
-
-    Optional<Fact> fetchById(@NonNull UUID id);
+    @Deprecated
+    // will be removed soon.
+    default Subscription subscribeToFacts(@NonNull SubscriptionRequest request,
+            @NonNull FactObserver observer) {
+        return subscribe(request, observer);
+    }
 
     OptionalLong serialOf(@NonNull UUID id);
 
