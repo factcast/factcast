@@ -59,9 +59,9 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     private String createDebugInfo() {
         StackTraceElement stackTraceElement = new Exception().getStackTrace()[3];
-        return UUID.randomUUID() + " (" + stackTraceElement.getClassName().substring(
-                stackTraceElement.getClassName().lastIndexOf(".") + 1) + "." + stackTraceElement
-                        .getMethodName() + ":" + stackTraceElement.getLineNumber() + ")";
+        return UUID.randomUUID() + " (" + stackTraceElement.getClassName()
+                .substring(stackTraceElement.getClassName().lastIndexOf(".") + 1) + "."
+                + stackTraceElement.getMethodName() + ":" + stackTraceElement.getLineNumber() + ")";
     }
 
     @RequiredArgsConstructor

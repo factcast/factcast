@@ -24,7 +24,6 @@ import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 
 import io.grpc.stub.StreamObserver;
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

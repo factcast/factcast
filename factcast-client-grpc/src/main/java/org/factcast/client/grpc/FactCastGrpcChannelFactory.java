@@ -24,8 +24,8 @@ import io.grpc.ManagedChannel;
 public interface FactCastGrpcChannelFactory extends AutoCloseable {
 
     /**
-     * Creates a new channel for the given service name. The returned channel will
-     * use all globally registered {@link ClientInterceptor}s.
+     * Creates a new channel for the given service name. The returned channel
+     * will use all globally registered {@link ClientInterceptor}s.
      *
      * <p>
      * <b>Note:</b> The underlying implementation might reuse existing
@@ -39,8 +39,8 @@ public interface FactCastGrpcChannelFactory extends AutoCloseable {
     Channel createChannel(String name);
 
     /**
-     * Creates a new channel for the given service name. The returned channel will
-     * use all globally registered {@link ClientInterceptor}s.
+     * Creates a new channel for the given service name. The returned channel
+     * will use all globally registered {@link ClientInterceptor}s.
      *
      * <p>
      * <b>Note:</b> The underlying implementation might reuse existing
@@ -56,8 +56,8 @@ public interface FactCastGrpcChannelFactory extends AutoCloseable {
      * @param name
      *            The name of the service.
      * @param interceptors
-     *            A list of additional client interceptors that should be added to
-     *            the channel.
+     *            A list of additional client interceptors that should be added
+     *            to the channel.
      * @return The newly created channel for the given service.
      */
     @SuppressWarnings("unused")

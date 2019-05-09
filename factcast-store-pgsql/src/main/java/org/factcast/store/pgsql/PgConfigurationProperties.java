@@ -63,8 +63,9 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
     int queueSize = 1000;
 
     /**
-     * The factor to apply, when fetching/queuing Ids rather than Facts (assuming,
-     * that needs just a fraction of Heap and is way fater to flush to the client)
+     * The factor to apply, when fetching/queuing Ids rather than Facts
+     * (assuming, that needs just a fraction of Heap and is way fater to flush
+     * to the client)
      */
     int idOnlyFactor = 100;
 
@@ -74,7 +75,8 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
     CatchupStrategy catchupStrategy = CatchupStrategy.getDefault();
 
     /**
-     * Fetch Size used when filling the Queue, defaults to 4 (25% of the queue-size)
+     * Fetch Size used when filling the Queue, defaults to 4 (25% of the
+     * queue-size)
      */
     int queueFetchRatio = 4;
 
