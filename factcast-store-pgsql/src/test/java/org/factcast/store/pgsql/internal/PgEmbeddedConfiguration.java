@@ -15,14 +15,18 @@
  */
 package org.factcast.store.pgsql.internal;
 
+import javax.sql.DataSource;
+
 import org.factcast.store.pgsql.PgFactStoreConfiguration;
 import org.postgresql.Driver;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +57,14 @@ public class PgEmbeddedConfiguration {
             System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
             System.setProperty("spring.datasource.url", url);
         }
+    }
+
+    @Bean
+    @Primary
+    public ConstrainConnectionInitializer constrainConnectionInitializer(DataSource ds) {
+        // removes the ConstrainConnectionInitializer so that in test we do not
+        // mess with 'factcastApplicationUser'
+        return null;
     }
 
 }

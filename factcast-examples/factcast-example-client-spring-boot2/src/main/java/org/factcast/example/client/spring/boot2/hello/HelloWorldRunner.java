@@ -23,6 +23,7 @@ import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.lock.Attempt;
+import org.factcast.core.lock.PublishingResult;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
@@ -32,7 +33,6 @@ import org.springframework.stereotype.Component;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-@SuppressWarnings("ALL")
 @RequiredArgsConstructor
 @Component
 public class HelloWorldRunner implements CommandLineRunner {
@@ -60,23 +60,19 @@ public class HelloWorldRunner implements CommandLineRunner {
 
         UUID id = UUID.randomUUID();
         System.out.println("trying to publish with optimistic locking");
-        UUID success = fc.lock("foo").on(id).optimistic().attempt(() -> Attempt.publish(Fact
-                .builder()
-                .aggId(id)
-                .ns("foo")
-                .buildWithoutPayload()));
-        System.out.println("published succeeded: " + (success != null));
-        System.out.println("published id: " + success);
-        expected.add(success);
+        @NonNull
+        PublishingResult ret = fc.lock("foo").on(id).optimistic().attempt(() -> {
+            return Attempt.publish(Fact.builder().aggId(id).ns("foo").buildWithoutPayload());
+        });
+        System.out.println("published succeeded: " + (ret != null));
+        expected.add(ret.publishedFacts().get(0).id());
 
         System.out.println("trying another with optimistic locking");
-        success = fc.lock("foo").on(id).optimistic().attempt(() -> Attempt.publish(Fact.builder()
-                .aggId(id)
-                .ns("foo")
-                .buildWithoutPayload()));
-        System.out.println("published succeeded: " + (success != null));
-        System.out.println("published id: " + success);
-        expected.add(success);
+        ret = fc.lock("foo").on(id).optimistic().attempt(() -> {
+            return Attempt.publish(Fact.builder().aggId(id).ns("foo").buildWithoutPayload());
+        });
+        System.out.println("published succeeded: " + (ret != null));
+        expected.add(ret.publishedFacts().get(0).id());
 
         System.out.println("Fetching both back " + expected);
         sub = fc.subscribeToIds(SubscriptionRequest.catchup(FactSpec.ns("foo").aggId(id))
