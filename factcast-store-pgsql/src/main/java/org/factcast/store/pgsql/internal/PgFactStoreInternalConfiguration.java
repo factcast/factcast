@@ -128,9 +128,4 @@ public class PgFactStoreInternalConfiguration {
     public PlatformTransactionManager txManager(DataSource ds) {
         return new DataSourceTransactionManager(ds);
     }
-
-    @Bean
-    public ConstrainConnectionInitializer constrainConnectionInitializer(DataSource ds) {
-        return new ConstrainConnectionInitializer(ds);
-    }
 }
