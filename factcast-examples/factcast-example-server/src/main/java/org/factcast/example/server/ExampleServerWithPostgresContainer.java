@@ -51,7 +51,6 @@ public class ExampleServerWithPostgresContainer {
         System.setProperty("spring.datasource.url", url);
         System.setProperty("spring.datasource.username", postgres.getUsername());
         System.setProperty("spring.datasource.password", postgres.getPassword());
-
     }
 
 }

@@ -48,7 +48,7 @@ public class WithOptimisticLock {
     private int count = 0;
 
     @NonNull
-    public PublishingResult attempt(@NonNull Attempt operation) throws AttemptAbortedException,
+    public UUID attempt(@NonNull Attempt operation) throws AttemptAbortedException,
             OptimisticRetriesExceededException,
             ExceptionAfterPublish {
         while (++count <= retry) {
@@ -62,7 +62,7 @@ public class WithOptimisticLock {
                 // through
                 IntermediatePublishResult r = runAndWrapException(operation);
 
-                List<Fact> factsToPublish = r.factsToPublish();
+                UUID lastFactId = lastFactId(r.factsToPublish());
 
                 // try to publish
                 if (store.publishIfUnchanged(r.factsToPublish(), Optional.of(token))) {
@@ -72,11 +72,11 @@ public class WithOptimisticLock {
                     try {
                         r.andThen().ifPresent(Runnable::run);
                     } catch (Throwable e) {
-                        throw new ExceptionAfterPublish(factsToPublish, e);
+                        throw new ExceptionAfterPublish(lastFactId, e);
                     }
 
                     // and return the lastFactId for reference
-                    return new PublishingResult(factsToPublish);
+                    return lastFactId;
 
                 } else {
                     sleep();
