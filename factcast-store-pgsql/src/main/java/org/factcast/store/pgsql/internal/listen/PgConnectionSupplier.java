@@ -50,8 +50,8 @@ public class PgConnectionSupplier {
 
     public PgConnection get() throws SQLException {
         try {
-            return (PgConnection) DriverManager.getDriver(ds.getUrl()).connect(ds.getUrl(),
-                    buildPgConnectionProperties(ds));
+            return (PgConnection) DriverManager.getDriver(ds.getUrl())
+                    .connect(ds.getUrl(), buildPgConnectionProperties(ds));
         } catch (SQLException e) {
             final String msg = "Cannot acquire Connection from DriverManager: " + ds.getUrl();
             log.error(msg, e);
