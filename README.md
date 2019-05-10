@@ -17,6 +17,7 @@ It is not yet released, the API may change, the documentation is incomplete.
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=Mercateo/factcast)](https://dependabot.com)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/Mercateo/factcast.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Mercateo/factcast/alerts/)
 [![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/Mercateo/factcast.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Mercateo/factcast/context:java)
+[![DepShield Badge](https://depshield.sonatype.org/badges/Mercateo/factcast/depshield.svg)](https://depshield.github.io)
 
 
 ... under active development.
