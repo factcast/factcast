@@ -73,15 +73,15 @@ public class ProtoConverter {
     }
 
     public MSG_Notification createNotificationFor(@NonNull Fact t) {
-        MSG_Notification.Builder builder = MSG_Notification.newBuilder().setType(
-                MSG_Notification.Type.Fact);
+        MSG_Notification.Builder builder = MSG_Notification.newBuilder()
+                .setType(MSG_Notification.Type.Fact);
         builder.setFact(toProto(t));
         return builder.build();
     }
 
     public MSG_Notification createNotificationFor(@NonNull UUID id) {
-        MSG_Notification.Builder builder = MSG_Notification.newBuilder().setType(
-                MSG_Notification.Type.Id);
+        MSG_Notification.Builder builder = MSG_Notification.newBuilder()
+                .setType(MSG_Notification.Type.Id);
         builder.setId(toProto(id));
         return builder.build();
     }
@@ -225,8 +225,10 @@ public class ProtoConverter {
     }
 
     public StateForRequest fromProto(MSG_StateForRequest request) {
-        List<UUID> aggIds = request.getAggIdsList().stream().map(this::fromProto).collect(Collectors
-                .toList());
+        List<UUID> aggIds = request.getAggIdsList()
+                .stream()
+                .map(this::fromProto)
+                .collect(Collectors.toList());
         String ns = request.getNsPresent() ? request.getNs() : null;
         return new StateForRequest(aggIds, ns);
     }
@@ -251,8 +253,10 @@ public class ProtoConverter {
         String ns = req.ns();
         MSG_StateForRequest.Builder b = MSG_StateForRequest.newBuilder()
                 .setNsPresent(ns != null)
-                .addAllAggIds(req.aggIds().stream().map(this::toProto).collect(Collectors
-                        .toList()));
+                .addAllAggIds(req.aggIds()
+                        .stream()
+                        .map(this::toProto)
+                        .collect(Collectors.toList()));
 
         if (ns != null)
             b.setNs(ns);

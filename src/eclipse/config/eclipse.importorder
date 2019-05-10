@@ -1,6 +1,5 @@
 #Organize Import Order
-#Tue Apr 09 18:13:09 CEST 2019
-4=lombok
+4=
 3=com
 2=org
 1=javax

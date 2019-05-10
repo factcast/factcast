@@ -165,7 +165,7 @@
             </licenseHeader>
             <eclipse>
               <file>file://${formatter.config}/eclipse_code_formatter.xml</file>
-              <version>4.7.1</version>
+              <version>4.11.0</version>
             </eclipse>
             <trimTrailingWhitespace />
             <removeUnusedImports />
