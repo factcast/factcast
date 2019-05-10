@@ -39,7 +39,8 @@ public class Fetch implements Command {
     @Override
     public void runWith(FactCast fc, Options opt) {
         FactRenderer factRenderer = new FactRenderer(opt);
-        ids.forEach(id -> System.out.println(fc.fetchById(id).map(factRenderer::render).orElse(
-                "not found")));
+        ids.forEach(id -> System.out.println(fc.fetchById(id)
+                .map(factRenderer::render)
+                .orElse("not found")));
     }
 }

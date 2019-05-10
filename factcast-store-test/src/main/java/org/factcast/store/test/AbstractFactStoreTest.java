@@ -986,8 +986,10 @@ public abstract class AbstractFactStoreTest {
 
         Runnable e = mock(Runnable.class);
 
-        uut.lock(NS).on(UUID.randomUUID()).attempt(() -> Attempt.publish(fact(UUID.randomUUID()))
-                .andThen(e));
+        uut.lock(NS)
+                .on(UUID.randomUUID())
+                .attempt(() -> Attempt.publish(fact(UUID.randomUUID()))
+                        .andThen(e));
 
         verify(e).run();
     }
@@ -1000,8 +1002,9 @@ public abstract class AbstractFactStoreTest {
         Runnable e = mock(Runnable.class);
         Mockito.doThrow(NumberFormatException.class).when(e).run();
 
-        assertThrows(ExceptionAfterPublish.class, () -> uut.lock(NS).on(UUID.randomUUID()).attempt(
-                () -> Attempt.publish(fact(UUID.randomUUID())).andThen(e)));
+        assertThrows(ExceptionAfterPublish.class, () -> uut.lock(NS)
+                .on(UUID.randomUUID())
+                .attempt(() -> Attempt.publish(fact(UUID.randomUUID())).andThen(e)));
         verify(e).run();
     }
 
@@ -1097,14 +1100,16 @@ public abstract class AbstractFactStoreTest {
 
         UUID agg1 = UUID.randomUUID();
 
-        assertThrows(OptimisticRetriesExceededException.class, () -> uut.lock(NS).on(agg1).attempt(
-                () -> {
+        assertThrows(OptimisticRetriesExceededException.class, () -> uut.lock(NS)
+                .on(agg1)
+                .attempt(
+                        () -> {
 
-                    // write conflicting fact first
-                    uut.publish(fact(agg1));
+                            // write conflicting fact first
+                            uut.publish(fact(agg1));
 
-                    return Attempt.publish(fact(agg1));
-                }));
+                            return Attempt.publish(fact(agg1));
+                        }));
     }
 
     @Test

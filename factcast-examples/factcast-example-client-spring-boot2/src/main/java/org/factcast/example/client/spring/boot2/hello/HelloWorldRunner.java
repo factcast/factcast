@@ -60,19 +60,30 @@ public class HelloWorldRunner implements CommandLineRunner {
 
         UUID id = UUID.randomUUID();
         System.out.println("trying to publish with optimistic locking");
-        @NonNull
-        PublishingResult ret = fc.lock("foo").on(id).optimistic().attempt(() -> {
-            return Attempt.publish(Fact.builder().aggId(id).ns("foo").buildWithoutPayload());
-        });
-        System.out.println("published succeeded: " + (ret != null));
-        expected.add(ret.publishedFacts().get(0).id());
+
+        UUID success = fc.lock("foo")
+                .on(id)
+                .optimistic()
+                .attempt(() -> Attempt.publish(Fact
+                        .builder()
+                        .aggId(id)
+                        .ns("foo")
+                        .buildWithoutPayload()));
+        System.out.println("published succeeded: " + (success != null));
+        System.out.println("published id: " + success);
+        expected.add(success);
 
         System.out.println("trying another with optimistic locking");
-        ret = fc.lock("foo").on(id).optimistic().attempt(() -> {
-            return Attempt.publish(Fact.builder().aggId(id).ns("foo").buildWithoutPayload());
-        });
-        System.out.println("published succeeded: " + (ret != null));
-        expected.add(ret.publishedFacts().get(0).id());
+        success = fc.lock("foo")
+                .on(id)
+                .optimistic()
+                .attempt(() -> Attempt.publish(Fact.builder()
+                        .aggId(id)
+                        .ns("foo")
+                        .buildWithoutPayload()));
+        System.out.println("published succeeded: " + (success != null));
+        System.out.println("published id: " + success);
+        expected.add(success);
 
         System.out.println("Fetching both back " + expected);
         sub = fc.subscribeToIds(SubscriptionRequest.catchup(FactSpec.ns("foo").aggId(id))

@@ -46,6 +46,7 @@ public class HelloWorldRunner implements CommandLineRunner {
         Subscription sub = fc.subscribeToIds(SubscriptionRequest.catchup(FactSpec.ns("smoke"))
                 .fromScratch(),
                 System.out::println).awaitCatchup(5000);
+
         sub.close();
 
     }
