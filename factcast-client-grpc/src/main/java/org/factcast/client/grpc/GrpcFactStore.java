@@ -40,7 +40,6 @@ import com.google.common.collect.*;
 import io.grpc.*;
 import io.grpc.Status.*;
 import io.grpc.stub.*;
-
 import lombok.*;
 import lombok.extern.slf4j.*;
 import net.devh.boot.grpc.client.security.*;

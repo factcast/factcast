@@ -19,7 +19,6 @@ import org.factcast.grpc.api.*;
 
 import io.grpc.*;
 import io.grpc.ServerCall.*;
-
 import lombok.*;
 import net.devh.boot.grpc.server.interceptor.*;
 

@@ -43,7 +43,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 
 import lombok.extern.slf4j.Slf4j;
-
 import net.devh.boot.grpc.server.autoconfigure.*;
 import net.devh.boot.grpc.server.security.authentication.*;
 
