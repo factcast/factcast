@@ -54,8 +54,9 @@ public final class LockedOperationBuilder {
         // we MIGHT add pessimistic if we REALLY REALLY have to
 
         /**
-         * convenience method that uses optimistic locking with defaults. Alternatively,
-         * you can call optimistic() to get control over the optimistic settings.
+         * convenience method that uses optimistic locking with defaults.
+         * Alternatively, you can call optimistic() to get control over the
+         * optimistic settings.
          *
          * @param operation
          *            will be attempted to be executed, maybe many times

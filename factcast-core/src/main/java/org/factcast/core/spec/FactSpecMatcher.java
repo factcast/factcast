@@ -85,8 +85,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         if ((meta.isEmpty())) {
             return true;
         }
-        return meta.entrySet().stream().allMatch(e -> e.getValue().equals(t.meta(e
-                .getKey())));
+        return meta.entrySet().stream().allMatch(e -> e.getValue().equals(t.meta(e.getKey())));
     }
 
     protected boolean nsMatch(Fact t) {
@@ -135,8 +134,9 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     }
 
     public static Predicate<Fact> matchesAnyOf(@NonNull List<FactSpec> spec) {
-        List<FactSpecMatcher> matchers = spec.stream().map(FactSpecMatcher::new).collect(Collectors
-                .toList());
+        List<FactSpecMatcher> matchers = spec.stream()
+                .map(FactSpecMatcher::new)
+                .collect(Collectors.toList());
         return f -> matchers.stream().anyMatch(p -> p.test(f));
     }
 
