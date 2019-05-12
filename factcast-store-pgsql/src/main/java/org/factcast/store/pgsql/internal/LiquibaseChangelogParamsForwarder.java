@@ -18,14 +18,13 @@ package org.factcast.store.pgsql.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import lombok.NonNull;
-
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 import liquibase.integration.spring.SpringLiquibase;
+import lombok.NonNull;
 
 public class LiquibaseChangelogParamsForwarder implements BeanPostProcessor {
 
