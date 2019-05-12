@@ -45,6 +45,8 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 /**
  * Main @Configuration class for a PGFactStore
  *
@@ -75,8 +77,8 @@ public class PgFactStoreInternalConfiguration {
 
     @Bean
     public FactStore factStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
-            PgTokenStore tokenStore, FactTableWriteLock lock) {
-        return new PgFactStore(jdbcTemplate, subscriptionFactory, tokenStore, lock);
+            PgTokenStore tokenStore, FactTableWriteLock lock, MeterRegistry registry) {
+        return new PgFactStore(jdbcTemplate, subscriptionFactory, tokenStore, lock, registry);
     }
 
     @Bean
@@ -134,4 +136,14 @@ public class PgFactStoreInternalConfiguration {
     public PlatformTransactionManager txManager(DataSource ds) {
         return new DataSourceTransactionManager(ds);
     }
+
+    /**
+     * @return A fallback {@code MeterRegistry} in case none is configured.
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public MeterRegistry meterRegistry() {
+        return new SimpleMeterRegistry();
+    }
+
 }
