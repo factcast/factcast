@@ -15,11 +15,16 @@
  */
 package org.factcast.store.pgsql.internal;
 
+import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
+
 import java.sql.Connection;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 
 import javax.sql.DataSource;
+
+import lombok.NonNull;
 
 import org.factcast.core.store.FactStore;
 import org.factcast.store.pgsql.PgConfigurationProperties;
@@ -39,11 +44,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-
-import com.google.common.eventbus.AsyncEventBus;
-import com.google.common.eventbus.EventBus;
-
-import lombok.NonNull;
 
 /**
  * Main @Configuration class for a PGFactStore
@@ -91,6 +91,12 @@ public class PgFactStoreInternalConfiguration {
     @Bean
     public PgConnectionSupplier pgConnectionSupplier(DataSource ds) {
         return new PgConnectionSupplier(ds);
+    }
+
+    @Bean
+    public LiquibaseChangelogParamsForwarder liquibaseChangelogParamsForwarder(
+            DataSource dataSource) {
+        return new LiquibaseChangelogParamsForwarder(dataSource);
     }
 
     @Bean
