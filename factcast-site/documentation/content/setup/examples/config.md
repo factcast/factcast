@@ -26,7 +26,7 @@ Here are some good settings for an initial configuration of a SpringBoot FactCas
 
 |Property|Description|Proposed value|
 |:--|:--|:--|
-|`grpc.client.factstore.enable-keep-alive`       | Configures whether keepAlive shoud enabled. Defaults to false. | true |
+|`grpc.client.factstore.enable-keep-alive`       | Configures whether keepAlive shoud be enabled. Defaults to false. | true |
 |`grpc.client.factstore.keep-alive-time`         | The default delay before sending keepAlives. Defaults to 60s. Please note that shorter intervals increase the network burden for the server. | 300 |
 |`grpc.client.factstore.keep-alive-without-calls`| Configures whether keepAlive will be performed when there are no outstanding RPCs on a connection. Defaults to false. | true |
 
