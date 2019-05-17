@@ -20,7 +20,7 @@ Here are some good settings for an initial configuration of a SpringBoot FactCas
 
 * Sending keep-alive HTTP/2 PINGs on the connection is useful in case you are running on infrastructure that doesn't support configurable idle timeouts, and threfore closes connections.
 
-* The proposed values are defining a scenario where the client sends keep-alive HTTP/2 PINGs every 300s and the server accepts these behavior without sending `GO_AWAY ENHANCE_YOUR_CALM` to the client. Please adobt to your specific needs.
+* The proposed values are defining a scenario where the client sends keep-alive HTTP/2 PINGs every 300s and the server accepts this behavior without sending `GO_AWAY ENHANCE_YOUR_CALM` to the client. Please adobt to your specific needs.
 
 ### Client side
 
