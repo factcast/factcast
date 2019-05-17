@@ -3,14 +3,14 @@ draft = false
 title = "Spring Boot gRPC Configuration"
 description = ""
 date = "2019-05-17T09:42:24+02:00"
+weight = 140
 
-creatordisplayname = "Nils Lindemann"
+#creatordisplayname = "Nils Lindemann"
 creatoremail = "nils.lindemann@mercateo.com"
 
 [menu.main]
 parent = "setup"
 identifier = "grpc-config"
-weight = 140
 
 +++
 
