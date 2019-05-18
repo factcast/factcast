@@ -3,6 +3,7 @@ draft = true
 title = "Docker"
 description = ""
 date = "2017-04-24T18:36:24+02:00"
+weight = 20
 
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
@@ -10,7 +11,6 @@ creatoremail = "uwe.schaefer@mercateo.com"
 [menu.main]
 parent = "setup"
 identifier = "docker"
-weight = 20
 
 +++
 
