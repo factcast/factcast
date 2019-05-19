@@ -15,7 +15,11 @@
  */
 package org.factcast.core.lock;
 
-import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.factcast.core.Fact;
+import org.factcast.core.util.FactCastJson;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -23,13 +27,21 @@ import lombok.NonNull;
 public final class ExceptionAfterPublish extends IllegalStateException {
     @Getter
     @NonNull
-    private final UUID lastFactId;
+    private List<Fact> publishedFacts;
 
-    public ExceptionAfterPublish(@NonNull UUID lastFactId, @NonNull Throwable e) {
-        super("An exception has happened in the 'andThen' part of your publishing attempt. This is a programming error, as the runnable in andThen is not supposed to throw an Exception. Note that publish actually worked, and the id of your last published fact is "
-                + lastFactId,
+    public ExceptionAfterPublish(@NonNull List<Fact> publishedFacts, @NonNull Throwable e) {
+        super("An exception has happened in the 'andThen' part of your publishing attempt. "
+                + "This is a programming error, as the runnable in andThen is not supposed to throw an Exception. "
+                + "Note that publish actually worked, and the ids of your the published facts are "
+                + render(publishedFacts),
                 e);
-        this.lastFactId = lastFactId;
+        this.publishedFacts = publishedFacts;
+    }
+
+    private static String render(@NonNull List<Fact> publishedFacts) {
+        return FactCastJson.writeValueAsString(publishedFacts.stream()
+                .map(Fact::id)
+                .collect(Collectors.toList()));
     }
 
     private static final long serialVersionUID = 1L;
