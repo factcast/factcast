@@ -63,7 +63,10 @@ public class WithOptimisticLock {
                 IntermediatePublishResult r = runAndWrapException(operation);
 
                 List<Fact> factsToPublish = r.factsToPublish();
-
+                if (factsToPublish == null || factsToPublish.isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Attempt exited without abort, but does not publish any facts.");
+                }
                 // try to publish
                 if (store.publishIfUnchanged(r.factsToPublish(), Optional.of(token))) {
 
@@ -103,23 +106,26 @@ public class WithOptimisticLock {
             }
             return ret;
         } catch (Exception e) {
-            if (!AttemptAbortedException.class.isAssignableFrom(e.getClass()))
+            if (!AttemptAbortedException.class.isAssignableFrom(e.getClass())) {
                 throw new AttemptAbortedException(e);
-            else
+            } else {
                 throw e;
+            }
         }
     }
 
     @SneakyThrows
     private void sleep() {
-        if (interval > 0)
+        if (interval > 0) {
             Thread.sleep(interval);
+        }
     }
 
     private UUID lastFactId(@NonNull List<Fact> factsToPublish) {
 
-        if (factsToPublish.isEmpty())
+        if (factsToPublish.isEmpty()) {
             throw new IllegalArgumentException("Need to actually publish a Fact");
+        }
 
         return factsToPublish.get(factsToPublish.size() - 1).id();
     }

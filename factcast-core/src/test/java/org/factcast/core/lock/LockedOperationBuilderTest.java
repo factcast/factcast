@@ -15,15 +15,17 @@
  */
 package org.factcast.core.lock;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import java.util.UUID;
+import java.util.*;
 
-import org.factcast.core.lock.LockedOperationBuilder.OnBuilderStep;
-import org.factcast.core.store.FactStore;
-import org.junit.jupiter.api.Test;
+import org.factcast.core.lock.LockedOperationBuilder.*;
+import org.factcast.core.store.*;
+import org.junit.jupiter.api.*;
+
+import lombok.*;
 
 public class LockedOperationBuilderTest {
 
@@ -53,6 +55,29 @@ public class LockedOperationBuilderTest {
         assertThat(wol.ns()).isEqualTo("ns");
         assertThat(wol.ids().get(0)).isEqualTo(id);
         assertThat(wol.ids().size()).isEqualTo(1);
+    }
+
+    @Test
+    public void testAttemptNullContracts() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.on(UUID.randomUUID()).attempt(null);
+        });
+    }
+
+    @Test
+    public void testAttemptAbortsOnNull() throws Exception {
+        assertThrows(AttemptAbortedException.class, () -> {
+            uut.on(UUID.randomUUID()).attempt(() -> null);
+        });
+    }
+
+    @Test
+    public void testAttemptWithoutPublishing() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> {
+            @NonNull PublishingResult attempt = uut.on(UUID.randomUUID()).attempt(() ->
+                    mock(IntermediatePublishResult.class)
+            );
+        });
     }
 
 }

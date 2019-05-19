@@ -15,15 +15,16 @@
  */
 package org.factcast.example.client.basicauth;
 
-import java.util.*;
+import org.factcast.core.Fact;
+import org.factcast.core.FactCast;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
 
-import org.factcast.core.*;
-import org.factcast.core.spec.*;
-import org.factcast.core.subscription.*;
-import org.springframework.boot.*;
-import org.springframework.stereotype.*;
-
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @SuppressWarnings("ALL")
 @RequiredArgsConstructor
@@ -40,10 +41,7 @@ public class HelloWorldRunner implements CommandLineRunner {
         fc.publish(fact);
         System.out.println("published " + fact);
 
-        Optional<Fact> fetchById = fc.fetchById(fact.id());
-        System.out.println("fetch by id returns payload:" + fetchById.get().jsonPayload());
-
-        Subscription sub = fc.subscribeToIds(SubscriptionRequest.catchup(FactSpec.ns("smoke"))
+        Subscription sub = fc.subscribe(SubscriptionRequest.catchup(FactSpec.ns("smoke"))
                 .fromScratch(),
                 System.out::println).awaitCatchup(5000);
 

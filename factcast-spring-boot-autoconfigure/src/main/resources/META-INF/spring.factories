@@ -1,6 +1,4 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-org.factcast.spring.boot.autoconfigure.client.cache.CachingFactCastAutoConfiguration,\
-org.factcast.spring.boot.autoconfigure.client.cache.infinispan.FactCastInfinispanAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.core.FactCastAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.store.inmem.InMemFactStoreAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.client.grpc.GrpcFactStoreAutoConfiguration,\

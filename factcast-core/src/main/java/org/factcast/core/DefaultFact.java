@@ -50,6 +50,11 @@ import lombok.SneakyThrows;
 @EqualsAndHashCode(of = { "deserializedHeader" })
 public class DefaultFact implements Fact, Externalizable {
 
+    @Override
+    public String toString() {
+        return "DefaultFact [id=" + deserializedHeader.id + "]";
+    }
+
     @Getter
     String jsonHeader;
 
