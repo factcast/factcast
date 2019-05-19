@@ -44,12 +44,9 @@ public class LiquibaseChangelogParamsForwarder implements BeanPostProcessor {
 
             PoolConfiguration poolProperties = dataSource.getPoolProperties();
 
-            Map<String, String> params = new HashMap<String, String>() {
-                {
-                    put("dml-user", poolProperties.getUsername());
-                    put("dml-user-pw", poolProperties.getPassword());
-                }
-            };
+            Map<String, String> params = new HashMap<String, String>();
+            params.put("dml-user", poolProperties.getUsername());
+            params.put("dml-user-pw", poolProperties.getPassword());
             liquibase.setChangeLogParameters(params);
 
         }
