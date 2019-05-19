@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.test;
+package org.factcast.core.lock;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.List;
 
-import org.junit.jupiter.api.*;
+import org.factcast.core.Fact;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-@Tag("integration")
-public @interface IntegrationTest {
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
+public class PublishingResult {
+    @Getter
+    @NonNull
+    private final List<Fact> publishedFacts;
 
 }

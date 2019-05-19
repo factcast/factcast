@@ -15,13 +15,12 @@
  */
 package org.factcast.example.client.spring.boot2.hello;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.lock.Attempt;
+import org.factcast.core.lock.PublishingResult;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
@@ -31,7 +30,6 @@ import org.springframework.stereotype.Component;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-@SuppressWarnings("ALL")
 @RequiredArgsConstructor
 @Component
 public class HelloWorldRunner implements CommandLineRunner {
@@ -52,11 +50,10 @@ public class HelloWorldRunner implements CommandLineRunner {
 
         sub.close();
 
-        List<UUID> expected = new LinkedList<>();
-
         UUID id = UUID.randomUUID();
         System.out.println("trying to publish with optimistic locking");
-        UUID success = fc.lock("foo")
+
+        PublishingResult success = fc.lock("foo")
                 .on(id)
                 .optimistic()
                 .attempt(() -> Attempt.publish(Fact
@@ -66,7 +63,6 @@ public class HelloWorldRunner implements CommandLineRunner {
                         .buildWithoutPayload()));
         System.out.println("published succeeded: " + (success != null));
         System.out.println("published id: " + success);
-        expected.add(success);
 
         System.out.println("trying another with optimistic locking");
         success = fc.lock("foo")
@@ -78,9 +74,7 @@ public class HelloWorldRunner implements CommandLineRunner {
                         .buildWithoutPayload()));
         System.out.println("published succeeded: " + (success != null));
         System.out.println("published id: " + success);
-        expected.add(success);
 
-        System.out.println("Fetching both back " + expected);
         sub = fc.subscribe(SubscriptionRequest.catchup(FactSpec.ns("foo").aggId(id))
                 .fromScratch(),
                 System.out::println).awaitCatchup(5000);

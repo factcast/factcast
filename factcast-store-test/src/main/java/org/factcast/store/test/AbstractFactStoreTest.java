@@ -15,20 +15,11 @@
  */
 package org.factcast.store.test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.LinkedList;
@@ -40,6 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
@@ -47,6 +39,7 @@ import org.factcast.core.FactCast;
 import org.factcast.core.lock.Attempt;
 import org.factcast.core.lock.AttemptAbortedException;
 import org.factcast.core.lock.ExceptionAfterPublish;
+import org.factcast.core.lock.PublishingResult;
 import org.factcast.core.lock.WithOptimisticLock.OptimisticRetriesExceededException;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
@@ -54,9 +47,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -95,7 +86,7 @@ public abstract class AbstractFactStoreTest {
     protected void testEmptyStore() {
         Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             FactObserver observer = mock(FactObserver.class);
-            Subscription s = uut.subscribeEphemeral(SubscriptionRequest.catchup(ANY)
+            Subscription s = uut.subscribeToFacts(SubscriptionRequest.catchup(ANY)
                     .fromScratch(),
                     observer);
             s.awaitComplete();
@@ -126,7 +117,7 @@ public abstract class AbstractFactStoreTest {
     protected void testEmptyStoreFollowNonMatching() {
         Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             TestFactObserver observer = testObserver();
-            uut.subscribeEphemeral(SubscriptionRequest.follow(ANY).fromScratch(), observer)
+            uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
                     .awaitCatchup();
             verify(observer).onCatchup();
             verify(observer, never()).onComplete();
@@ -153,7 +144,7 @@ public abstract class AbstractFactStoreTest {
     protected void testEmptyStoreFollowMatching() {
         Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             TestFactObserver observer = testObserver();
-            uut.subscribeEphemeral(SubscriptionRequest.follow(ANY).fromScratch(), observer)
+            uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
                     .awaitCatchup();
             verify(observer).onCatchup();
             verify(observer, never()).onComplete();
@@ -180,7 +171,7 @@ public abstract class AbstractFactStoreTest {
                     Fact.of("{\"id\":\"" + UUID.randomUUID()
                             + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
             TestFactObserver observer = testObserver();
-            uut.subscribeEphemeral(SubscriptionRequest.follow(ANY).fromNowOn(), observer)
+            uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromNowOn(), observer)
                     .awaitCatchup();
             // nothing recieved
             verify(observer).onCatchup();
@@ -209,7 +200,7 @@ public abstract class AbstractFactStoreTest {
             uut.publish(
                     Fact.of("{\"id\":\"" + UUID.randomUUID()
                             + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-            Subscription subscription = uut.subscribeEphemeral(SubscriptionRequest.follow(ANY)
+            Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.follow(ANY)
                     .fromNowOn(), observer)
                     .awaitCatchup();
             // nothing recieved
@@ -246,7 +237,7 @@ public abstract class AbstractFactStoreTest {
             uut.publish(
                     Fact.of("{\"id\":\"" + UUID.randomUUID()
                             + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-            Subscription subscription = uut.subscribeEphemeral(SubscriptionRequest.follow(ANY)
+            Subscription subscription = uut.subscribeToFacts(SubscriptionRequest.follow(ANY)
                     .fromScratch(), observer)
                     .awaitCatchup();
             // nothing recieved
@@ -276,7 +267,7 @@ public abstract class AbstractFactStoreTest {
             uut.publish(
                     Fact.of("{\"id\":\"" + UUID.randomUUID()
                             + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-            uut.subscribeEphemeral(SubscriptionRequest.catchup(ANY).fromScratch(), observer)
+            uut.subscribeToFacts(SubscriptionRequest.catchup(ANY).fromScratch(), observer)
                     .awaitComplete();
             verify(observer).onCatchup();
             verify(observer).onComplete();
@@ -293,7 +284,7 @@ public abstract class AbstractFactStoreTest {
             uut.publish(
                     Fact.of("{\"id\":\"" + UUID.randomUUID()
                             + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
-            uut.subscribeEphemeral(SubscriptionRequest.follow(ANY).fromScratch(), observer)
+            uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
                     .awaitCatchup();
             verify(observer).onCatchup();
             verify(observer, never()).onComplete();
@@ -313,7 +304,7 @@ public abstract class AbstractFactStoreTest {
             TestFactObserver observer = testObserver();
             uut.publish(Fact.of("{\"id\":\"" + UUID.randomUUID()
                     + "\",\"ns\":\"default\",\"type\":\"t1\"}", "{}"));
-            uut.subscribeEphemeral(SubscriptionRequest.follow(ANY).fromScratch(), observer)
+            uut.subscribeToFacts(SubscriptionRequest.follow(ANY).fromScratch(), observer)
                     .awaitCatchup();
             verify(observer).onCatchup();
             verify(observer, never()).onComplete();
@@ -337,7 +328,7 @@ public abstract class AbstractFactStoreTest {
                     + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                     "{}"));
             FactSpec REQ_FOO_BAR = FactSpec.ns("default").meta("foo", "bar");
-            uut.subscribeEphemeral(SubscriptionRequest.catchup(REQ_FOO_BAR).fromScratch(),
+            uut.subscribeToFacts(SubscriptionRequest.catchup(REQ_FOO_BAR).fromScratch(),
                     observer)
                     .awaitComplete();
             verify(observer).onNext(any());
@@ -362,7 +353,7 @@ public abstract class AbstractFactStoreTest {
             FactSpec SCRIPTED = FactSpec.ns("default")
                     .jsFilterScript(
                             "function (h,e){ return (h.hit=='me')}");
-            uut.subscribeEphemeral(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
+            uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                     .awaitComplete();
             verify(observer).onNext(any());
             verify(observer).onCatchup();
@@ -386,7 +377,7 @@ public abstract class AbstractFactStoreTest {
             FactSpec SCRIPTED = FactSpec.ns("default")
                     .jsFilterScript(
                             "function (h){ return (h.hit=='me')}");
-            uut.subscribeEphemeral(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
+            uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                     .awaitComplete();
             verify(observer).onNext(any());
             verify(observer).onCatchup();
@@ -410,7 +401,7 @@ public abstract class AbstractFactStoreTest {
             FactSpec SCRIPTED = FactSpec.ns("default")
                     .jsFilterScript(
                             "function (h){ return true }");
-            uut.subscribeEphemeral(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
+            uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                     .awaitComplete();
             verify(observer, times(2)).onNext(any());
             verify(observer).onCatchup();
@@ -434,7 +425,7 @@ public abstract class AbstractFactStoreTest {
             FactSpec SCRIPTED = FactSpec.ns("default")
                     .jsFilterScript(
                             "function (h){ return false }");
-            uut.subscribeEphemeral(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
+            uut.subscribeToFacts(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
                     .awaitComplete();
             verify(observer).onCatchup();
             verify(observer).onComplete();
@@ -454,7 +445,7 @@ public abstract class AbstractFactStoreTest {
                             + aggId1 + "\"]}",
                     "{}"));
             FactObserver observer = mock(FactObserver.class);
-            uut.subscribeEphemeral(
+            uut.subscribeToFacts(
                     SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId1))
                             .fromScratch(),
                     observer).awaitComplete();
@@ -473,13 +464,13 @@ public abstract class AbstractFactStoreTest {
                     + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\""
                     + aggId1 + "\",\"" + aggId2 + "\"]}", "{}"));
             FactObserver observer = mock(FactObserver.class);
-            uut.subscribeEphemeral(
+            uut.subscribeToFacts(
                     SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId1))
                             .fromScratch(),
                     observer).awaitComplete();
             verify(observer, times(1)).onNext(any());
             observer = mock(FactObserver.class);
-            uut.subscribeEphemeral(
+            uut.subscribeToFacts(
                     SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId2))
                             .fromScratch(),
                     observer).awaitComplete();
@@ -498,7 +489,7 @@ public abstract class AbstractFactStoreTest {
                     + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\""
                     + aggId1 + "\",\"" + aggId2 + "\"]}", "{}"));
             FactObserver observer = mock(FactObserver.class);
-            uut.subscribeEphemeral(
+            uut.subscribeToFacts(
                     SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId2))
                             .fromScratch(),
                     observer).awaitComplete();
@@ -512,7 +503,7 @@ public abstract class AbstractFactStoreTest {
         Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
             final UUID id = UUID.randomUUID();
             TestFactObserver obs = new TestFactObserver();
-            try (Subscription s = uut.subscribeEphemeral(
+            try (Subscription s = uut.subscribeToFacts(
                     SubscriptionRequest.follow(500, FactSpec.ns("default").aggId(id))
                             .fromScratch(), obs)) {
                 uut.publish(Fact.of(
@@ -550,30 +541,22 @@ public abstract class AbstractFactStoreTest {
         });
     }
 
-    // @DirtiesContext
-    // @Test
-    // protected void testSerialHeader() {
-    // Assertions.assertTimeout(Duration.ofMillis(30000), () -> {
-    // UUID id = UUID.randomUUID();
-    // uut.publish(Fact.of(
-    // "{\"id\":\"" + id
-    // + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\""
-    // + id + "\"]}",
-    // "{}"));
-    // UUID id2 = UUID.randomUUID();
-    // uut.publish(Fact.of("{\"id\":\"" + id2
-    // +
-    // "\",\"type\":\"someType\",\"meta\":{\"foo\":\"bar\"},\"ns\":\"default\",\"aggIds\":[\""
-    // + id2
-    // + "\"]}", "{}"));
-    // OptionalLong serialOf = uut.serialOf(id);
-    // assertTrue(serialOf.isPresent());
-    // Fact f = uut.fetchById(id).get();
-    // Fact fact2 = uut.fetchById(id2).get();
-    // assertEquals(serialOf.getAsLong(), f.serial());
-    // assertTrue(f.before(fact2));
-    // });
-    // }
+    // TODO: implement alternative
+    /*
+     * @DirtiesContext
+     *
+     * @Test protected void testSerialHeader() {
+     * Assertions.assertTimeout(Duration.ofMillis(30000), () -> { UUID id =
+     * UUID.randomUUID(); uut.publish(Fact.of( "{\"id\":\"" + id +
+     * "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id +
+     * "\"]}", "{}")); UUID id2 = UUID.randomUUID();
+     * uut.publish(Fact.of("{\"id\":\"" + id2 +
+     * "\",\"type\":\"someType\",\"meta\":{\"foo\":\"bar\"},\"ns\":\"default\",\"aggIds\":[\""
+     * + id2 + "\"]}", "{}")); OptionalLong serialOf = uut.serialOf(id);
+     * assertTrue(serialOf.isPresent()); Fact f = uut.fetchById(id).get(); Fact
+     * fact2 = uut.fetchById(id2).get(); assertEquals(serialOf.getAsLong(),
+     * f.serial()); assertTrue(f.before(fact2)); }); }
+     */
 
     @Test
     protected void testChecksMandatoryNamespaceOnPublish() {
@@ -650,7 +633,7 @@ public abstract class AbstractFactStoreTest {
         SubscriptionRequest request = SubscriptionRequest.follow(FactSpec.ns("followtest"))
                 .fromScratch();
         FactObserver observer = element -> l.get().countDown();
-        uut.subscribeEphemeral(request, observer);
+        uut.subscribeToFacts(request, observer);
         // make sure, you got the first one
         assertTrue(l.get().await(1500, TimeUnit.MILLISECONDS));
 
@@ -677,7 +660,7 @@ public abstract class AbstractFactStoreTest {
         SubscriptionRequest request = SubscriptionRequest.catchup(FactSpec.ns(ns))
                 .fromScratch();
         FactObserver observer = element -> last.set(element.id());
-        uut.subscribeEphemeral(request, observer).awaitComplete();
+        uut.subscribeToFacts(request, observer).awaitComplete();
 
         // now we should have the published one in last
         assertNotNull(last.get());
@@ -689,7 +672,7 @@ public abstract class AbstractFactStoreTest {
             System.out.println("unexpected fact recieved");
             fail();
         };
-        uut.subscribeEphemeral(request, observer).awaitComplete();
+        uut.subscribeToFacts(request, observer).awaitComplete();
 
         // now, add two more
         uut.publish(newTestFact(ns));
@@ -706,7 +689,7 @@ public abstract class AbstractFactStoreTest {
                 fail();
             }
         };
-        uut.subscribeEphemeral(request, observer);
+        uut.subscribeToFacts(request, observer);
         assertTrue(expectingTwo.await(2, TimeUnit.SECONDS));
 
         // apparently, all fine
@@ -732,7 +715,7 @@ public abstract class AbstractFactStoreTest {
         SubscriptionRequest request = SubscriptionRequest.catchup(FactSpec.ns("ns1"))
                 .from(new UUID(
                         0L, 7L));
-        Subscription s = uut.subscribeEphemeral(request, toListObserver);
+        Subscription s = uut.subscribeToFacts(request, toListObserver);
         s.awaitComplete();
 
         assertEquals(2, toListObserver.list().size());
@@ -742,8 +725,8 @@ public abstract class AbstractFactStoreTest {
     @Test
     public void testSubscribeToFactsParameterContract() throws Exception {
         FactObserver observer = mock(FactObserver.class);
-        assertThrows(NullPointerException.class, () -> uut.subscribeEphemeral(null, observer));
-        assertThrows(NullPointerException.class, () -> uut.subscribeEphemeral(mock(
+        assertThrows(NullPointerException.class, () -> uut.subscribeToFacts(null, observer));
+        assertThrows(NullPointerException.class, () -> uut.subscribeToFacts(mock(
                 SubscriptionRequestTO.class), null));
     }
 
@@ -767,7 +750,7 @@ public abstract class AbstractFactStoreTest {
 
         LinkedList<Fact> l = new LinkedList<>();
         FactObserver o = l::add;
-        uut.subscribeEphemeral(SubscriptionRequest.catchup(s).fromScratch(), o)
+        uut.subscribeToFacts(SubscriptionRequest.catchup(s).fromScratch(), o)
                 .awaitCatchup();
         return l;
     }
@@ -779,7 +762,9 @@ public abstract class AbstractFactStoreTest {
         UUID agg1 = UUID.randomUUID();
         uut.publish(fact(agg1));
 
-        UUID ret = uut.lock(NS).on(agg1).attempt(() -> Attempt.publish(fact(agg1)));
+        PublishingResult ret = uut.lock(NS).on(agg1).attempt(() -> {
+            return Attempt.publish(fact(agg1));
+        });
 
         verify(store).publishIfUnchanged(any(), any());
         assertThat(catchup()).hasSize(2);
@@ -793,7 +778,9 @@ public abstract class AbstractFactStoreTest {
         // setup
         UUID agg1 = UUID.randomUUID();
 
-        UUID ret = uut.lock(NS).on(agg1).attempt(() -> Attempt.publish(fact(agg1)));
+        PublishingResult ret = uut.lock(NS).on(agg1).attempt(() -> {
+            return Attempt.publish(fact(agg1));
+        });
 
         verify(store).publishIfUnchanged(any(), any());
         assertThat(catchup()).hasSize(1);
@@ -838,7 +825,9 @@ public abstract class AbstractFactStoreTest {
         UUID agg2 = UUID.randomUUID();
         uut.publish(fact(agg1));
 
-        UUID ret = uut.lockGlobally().on(agg1, agg2).attempt(() -> Attempt.publish(fact(agg1)));
+        PublishingResult ret = uut.lockGlobally().on(agg1, agg2).attempt(() -> {
+            return Attempt.publish(fact(agg1));
+        });
 
         verify(store).publishIfUnchanged(any(), any());
         assertThat(catchup()).hasSize(2);
@@ -854,7 +843,9 @@ public abstract class AbstractFactStoreTest {
         UUID agg2 = UUID.randomUUID();
         uut.publish(fact(agg1));
 
-        UUID ret = uut.lock(NS).on(agg1, agg2).attempt(() -> Attempt.publish(fact(agg1)));
+        PublishingResult ret = uut.lock(NS).on(agg1, agg2).attempt(() -> {
+            return Attempt.publish(fact(agg1));
+        });
 
         verify(store).publishIfUnchanged(any(), any());
         assertThat(catchup()).hasSize(2);
@@ -873,7 +864,7 @@ public abstract class AbstractFactStoreTest {
 
         CountDownLatch c = new CountDownLatch(8);
 
-        UUID ret = uut.lock(NS).on(agg1, agg2).optimistic().retry(100).attempt(() -> {
+        PublishingResult ret = uut.lock(NS).on(agg1, agg2).optimistic().retry(100).attempt(() -> {
 
             if (c.getCount() > 0) {
                 c.countDown();
@@ -908,20 +899,24 @@ public abstract class AbstractFactStoreTest {
 
         CountDownLatch c = new CountDownLatch(8);
 
-        UUID ret = uut.lockGlobally().on(agg1, agg2).optimistic().retry(100).attempt(() -> {
+        PublishingResult ret = uut.lockGlobally()
+                .on(agg1, agg2)
+                .optimistic()
+                .retry(100)
+                .attempt(() -> {
 
-            if (c.getCount() > 0) {
-                c.countDown();
+                    if (c.getCount() > 0) {
+                        c.countDown();
 
-                if (Math.random() < 0.5)
-                    uut.publish(fact(agg1));
-                else
-                    uut.publish(fact(agg2));
+                        if (Math.random() < 0.5)
+                            uut.publish(fact(agg1));
+                        else
+                            uut.publish(fact(agg2));
 
-            }
+                    }
 
-            return Attempt.publish(fact(agg2));
-        });
+                    return Attempt.publish(fact(agg2));
+                });
 
         assertThat(catchup()).hasSize(11); // 8 conflicting, 2 initial and 1
         // from Attempt
@@ -1100,7 +1095,7 @@ public abstract class AbstractFactStoreTest {
 
         UUID expected = UUID.randomUUID();
 
-        UUID lastFactId = uut.lock(NS).on(agg1).attempt(() -> {
+        PublishingResult ret = uut.lock(NS).on(agg1).attempt(() -> {
 
             Fact lastFact = Fact.builder().ns(NS).id(expected).build("{}");
             return Attempt.publish(fact(agg1), fact(agg1), fact(agg1), lastFact);
@@ -1110,7 +1105,8 @@ public abstract class AbstractFactStoreTest {
         List<Fact> all = catchup();
         assertThat(all).hasSize(4);
         assertThat(all.get(all.size() - 1).id()).isEqualTo(expected);
-        assertThat(lastFactId).isEqualTo(expected);
+        assertThat(ret.publishedFacts().stream().map(Fact::id).collect(Collectors.toList()))
+                .contains(expected);
 
     }
 

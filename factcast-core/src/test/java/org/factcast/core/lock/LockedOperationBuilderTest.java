@@ -15,15 +15,17 @@
  */
 package org.factcast.core.lock;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import java.util.UUID;
+import java.util.*;
 
-import org.factcast.core.lock.LockedOperationBuilder.OnBuilderStep;
-import org.factcast.core.store.FactStore;
-import org.junit.jupiter.api.Test;
+import org.factcast.core.lock.LockedOperationBuilder.*;
+import org.factcast.core.store.*;
+import org.junit.jupiter.api.*;
+
+import lombok.*;
 
 public class LockedOperationBuilderTest {
 
@@ -72,7 +74,9 @@ public class LockedOperationBuilderTest {
     @Test
     public void testAttemptWithoutPublishing() throws Exception {
         assertThrows(IllegalArgumentException.class, () -> {
-            uut.on(UUID.randomUUID()).attempt(() -> mock(IntermediatePublishResult.class));
+            @NonNull PublishingResult attempt = uut.on(UUID.randomUUID()).attempt(() ->
+                    mock(IntermediatePublishResult.class)
+            );
         });
     }
 

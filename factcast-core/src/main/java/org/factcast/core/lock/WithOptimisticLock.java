@@ -48,7 +48,7 @@ public class WithOptimisticLock {
     private int count = 0;
 
     @NonNull
-    public UUID attempt(@NonNull Attempt operation) throws AttemptAbortedException,
+    public PublishingResult attempt(@NonNull Attempt operation) throws AttemptAbortedException,
             OptimisticRetriesExceededException,
             ExceptionAfterPublish {
         while (++count <= retry) {
@@ -62,8 +62,11 @@ public class WithOptimisticLock {
                 // through
                 IntermediatePublishResult r = runAndWrapException(operation);
 
-                UUID lastFactId = lastFactId(r.factsToPublish());
-
+                List<Fact> factsToPublish = r.factsToPublish();
+                if (factsToPublish == null || factsToPublish.isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Attempt exited without abort, but does not publish any facts.");
+                }
                 // try to publish
                 if (store.publishIfUnchanged(r.factsToPublish(), Optional.of(token))) {
 
@@ -72,11 +75,11 @@ public class WithOptimisticLock {
                     try {
                         r.andThen().ifPresent(Runnable::run);
                     } catch (Throwable e) {
-                        throw new ExceptionAfterPublish(lastFactId, e);
+                        throw new ExceptionAfterPublish(factsToPublish, e);
                     }
 
                     // and return the lastFactId for reference
-                    return lastFactId;
+                    return new PublishingResult(factsToPublish);
 
                 } else {
                     sleep();
@@ -103,23 +106,26 @@ public class WithOptimisticLock {
             }
             return ret;
         } catch (Exception e) {
-            if (!AttemptAbortedException.class.isAssignableFrom(e.getClass()))
+            if (!AttemptAbortedException.class.isAssignableFrom(e.getClass())) {
                 throw new AttemptAbortedException(e);
-            else
+            } else {
                 throw e;
+            }
         }
     }
 
     @SneakyThrows
     private void sleep() {
-        if (interval > 0)
+        if (interval > 0) {
             Thread.sleep(interval);
+        }
     }
 
     private UUID lastFactId(@NonNull List<Fact> factsToPublish) {
 
-        if (factsToPublish.isEmpty())
+        if (factsToPublish.isEmpty()) {
             throw new IllegalArgumentException("Need to actually publish a Fact");
+        }
 
         return factsToPublish.get(factsToPublish.size() - 1).id();
     }

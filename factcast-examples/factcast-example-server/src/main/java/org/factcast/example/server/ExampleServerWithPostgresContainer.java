@@ -49,8 +49,10 @@ public class ExampleServerWithPostgresContainer {
         String url = postgres.getJdbcUrl();
         System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
         System.setProperty("spring.datasource.url", url);
-        System.setProperty("spring.datasource.username", postgres.getUsername());
-        System.setProperty("spring.datasource.password", postgres.getPassword());
+        System.setProperty("spring.liquibase.user", postgres.getUsername());
+        System.setProperty("spring.liquibase.password", postgres.getPassword());
+        System.setProperty("spring.datasource.username", "factcast-application-user");
+        System.setProperty("spring.datasource.password", "factcast-application-user");
     }
 
 }

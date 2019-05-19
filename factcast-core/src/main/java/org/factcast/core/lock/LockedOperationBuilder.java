@@ -68,7 +68,7 @@ public final class LockedOperationBuilder {
          * @throws AttemptAbortedException
          *             if calling Attempt.abort, operation will not be retried
          */
-        public @NonNull UUID attempt(@NonNull Attempt operation)
+        public @NonNull PublishingResult attempt(@NonNull Attempt operation)
                 throws OptimisticRetriesExceededException,
                 ExceptionAfterPublish, AttemptAbortedException {
             return optimistic().attempt(operation);
