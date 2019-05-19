@@ -25,11 +25,7 @@ There is a [section on optimitic locking](/usage/java/optimistic_locking/) as a 
 
 #### Postgres module uuid-ossp and ddl user
 
-The Postgres module *uuid-ossp* is necessary for the new optimistic locking api feature. In order to provide a user with enough privileges to install modules and also running the application without unnecessary db permission, we split the database responsibility into two different users. 
-If you want to upgrade your server version, please take a look into the [{{%icon circle-arrow-right%}}Postgres]({{%relref "/setup/server/prerequisites.md#postgres"%}}) section in the prerequisites guide to ensure that your migration will succeed. 
-One Additional note: If you don't want to provide a superuser as _ddl user_, make sure that you provided user has the permissions to assign privileges for the already existing database objects to the new created _application user_.
-
-##### {{% alert theme="warn" %}} *Note, the server start will most likely fail, if you don't follow the instructions.* {{% /alert %}}
+The Postgres module *uuid-ossp* is necessary for the new optimistic locking api feature. In order to provide a user with enough privileges to install modules and also running the application without unnecessary db permissions, we add the possibility to distinct between _ddl user_ and _dml user_. This distinction is optional and your server will also work with your current database user configuration as long as the user is a superuser. If you don't want to provide a superuser and/or you want to distinct between _ddl_ and _dml user_, please take a look into the [Postgres section] (/setup/server/prerequisites/#postgres) in the prerequisites guide.
 
 #### GRPC Protocol Version
 
