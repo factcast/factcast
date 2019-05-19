@@ -55,4 +55,25 @@ public class LockedOperationBuilderTest {
         assertThat(wol.ids().size()).isEqualTo(1);
     }
 
+    @Test
+    public void testAttemptNullContracts() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.on(UUID.randomUUID()).attempt(null);
+        });
+    }
+
+    @Test
+    public void testAttemptAbortsOnNull() throws Exception {
+        assertThrows(AttemptAbortedException.class, () -> {
+            uut.on(UUID.randomUUID()).attempt(() -> null);
+        });
+    }
+
+    @Test
+    public void testAttemptWithoutPublishing() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> {
+            uut.on(UUID.randomUUID()).attempt(() -> mock(IntermediatePublishResult.class));
+        });
+    }
+
 }
