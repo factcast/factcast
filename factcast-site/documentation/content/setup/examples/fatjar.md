@@ -6,11 +6,11 @@ date = "2017-04-24T18:36:24+02:00"
 
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
+weight = 100
 
 [menu.main]
 parent = "setup"
 identifier = "fatjar"
-weight = 100
 
 +++
 
