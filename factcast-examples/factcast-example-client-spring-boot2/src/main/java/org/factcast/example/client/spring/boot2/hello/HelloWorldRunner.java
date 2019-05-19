@@ -17,7 +17,6 @@ package org.factcast.example.client.spring.boot2.hello;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
@@ -47,10 +46,7 @@ public class HelloWorldRunner implements CommandLineRunner {
         fc.publish(fact);
         System.out.println("published " + fact);
 
-        Optional<Fact> fetchById = fc.fetchById(fact.id());
-        System.out.println("fetch by id returns payload:" + fetchById.get().jsonPayload());
-
-        Subscription sub = fc.subscribeToIds(SubscriptionRequest.catchup(FactSpec.ns("smoke"))
+        Subscription sub = fc.subscribe(SubscriptionRequest.catchup(FactSpec.ns("smoke"))
                 .fromScratch(),
                 System.out::println).awaitCatchup(5000);
 
@@ -85,7 +81,7 @@ public class HelloWorldRunner implements CommandLineRunner {
         expected.add(success);
 
         System.out.println("Fetching both back " + expected);
-        sub = fc.subscribeToIds(SubscriptionRequest.catchup(FactSpec.ns("foo").aggId(id))
+        sub = fc.subscribe(SubscriptionRequest.catchup(FactSpec.ns("foo").aggId(id))
                 .fromScratch(),
                 System.out::println).awaitCatchup(5000);
 

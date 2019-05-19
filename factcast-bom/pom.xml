@@ -15,16 +15,6 @@
     <dependencies>
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-client-cache</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.factcast</groupId>
-        <artifactId>factcast-client-cache-infinispan</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.factcast</groupId>
         <artifactId>factcast-client-grpc</artifactId>
         <version>${project.version}</version>
       </dependency>

@@ -18,7 +18,6 @@ package org.factcast.client.grpc.cli;
 import org.factcast.client.grpc.cli.cmd.Catchup;
 import org.factcast.client.grpc.cli.cmd.EnumerateNamespaces;
 import org.factcast.client.grpc.cli.cmd.EnumerateTypes;
-import org.factcast.client.grpc.cli.cmd.Fetch;
 import org.factcast.client.grpc.cli.cmd.Follow;
 import org.factcast.client.grpc.cli.cmd.Publish;
 import org.factcast.client.grpc.cli.cmd.SerialOf;
@@ -41,7 +40,7 @@ public class CLI {
         String[] arguments = args;
         if (arguments == null || arguments.length == 0)
             arguments = new String[] { "--help" };
-        Parser parser = new Parser(new Catchup(), new Follow(), new Publish(), new Fetch(),
+        Parser parser = new Parser(new Catchup(), new Follow(), new Publish(),
                 new EnumerateNamespaces(),
                 new EnumerateTypes(), new SerialOf());
         try {

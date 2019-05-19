@@ -31,8 +31,6 @@
     <module>factcast-client-grpc</module>
     <module>factcast-client-grpc-boot1</module>
     <module>factcast-client-grpc-cli</module>
-    <module>factcast-client-cache</module>
-    <module>factcast-client-cache-infinispan</module>
     <module>factcast-store-pgsql</module>
     <module>factcast-store-pgsql-rds</module>
     <module>factcast-store-inmem</module>

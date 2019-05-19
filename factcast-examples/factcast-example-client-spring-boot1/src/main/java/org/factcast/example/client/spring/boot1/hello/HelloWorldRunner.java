@@ -15,8 +15,6 @@
  */
 package org.factcast.example.client.spring.boot1.hello;
 
-import java.util.Optional;
-
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -43,10 +41,7 @@ public class HelloWorldRunner implements CommandLineRunner {
         fc.publish(fact);
         System.out.println("published " + fact);
 
-        Optional<Fact> fetchById = fc.fetchById(fact.id());
-        System.out.println("fetch by id returns payload:" + fetchById.get().jsonPayload());
-
-        Subscription sub = fc.subscribeToIds(SubscriptionRequest.follow(FactSpec.ns("smoke"))
+        Subscription sub = fc.subscribe(SubscriptionRequest.follow(FactSpec.ns("smoke"))
                 .fromScratch(),
                 System.out::println).awaitCatchup(5000);
 
