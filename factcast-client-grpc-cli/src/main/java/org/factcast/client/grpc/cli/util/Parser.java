@@ -16,7 +16,6 @@
 package org.factcast.client.grpc.cli.util;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import org.factcast.client.grpc.cli.conv.Converters;
@@ -30,11 +29,11 @@ import lombok.Getter;
 @SuppressWarnings("ALL")
 public class Parser {
 
-    private static final String HOST_SYSPROP_NAME = "grpc.client.factstore.host";
-
-    private static final String PORT_SYSPROP_NAME = "grpc.client.factstore.port";
-
     private static final String NEGOTIATION_SYSPROP_NAME = "grpc.client.factstore.negotiationType";
+
+    private static final String BASICAUTH_SYSPROP_NAME = "grpc.client.factstore.credentials";
+
+    private static final String ADDRESS_SYSPROP_NAME = "grpc.client.factstore.address";
 
     private final JCommander jc;
 
@@ -63,13 +62,16 @@ public class Parser {
     }
 
     private void init() {
-        System.setProperty(HOST_SYSPROP_NAME, options.host);
-        System.setProperty(PORT_SYSPROP_NAME, String.valueOf(options.port));
+        System.setProperty(ADDRESS_SYSPROP_NAME, options.address);
+
         if (options.debug) {
             System.setProperty("debug", Boolean.TRUE.toString());
         }
         if (options.notls) {
             System.setProperty(NEGOTIATION_SYSPROP_NAME, "plaintext");
+        }
+        if (options.basicAuthCredentials != null) {
+            System.setProperty(BASICAUTH_SYSPROP_NAME, options.basicAuthCredentials);
         }
     }
 
@@ -77,6 +79,13 @@ public class Parser {
 
         @Parameter(names = { "--help", "-help", "-?", "--?" }, help = true, hidden = true)
         boolean help;
+
+        @Parameter(
+                names = { "--basic", "-basic", },
+                help = true,
+                hidden = false,
+                description = "Basic-Auth Crendentials in the form \"user:password\"")
+        String basicAuthCredentials;
 
         @Getter
         @Parameter(names = { "--pretty" }, help = true, description = "format JSON output")
@@ -98,26 +107,13 @@ public class Parser {
                 order = 0)
         boolean debug = false;
 
-        @Parameter(names = "--host", description = "the hostname to connect to", order = 1)
-        String host = "localhost";
-
-        @Parameter(names = "--port", description = "the port to connect to", order = 2)
-        int port = 9090;
+        @Parameter(names = "--address", description = "the address to connect to", order = 1)
+        String address = "static://localhost:9090";
 
         public Options() {
             String fc = System.getenv("FACTCAST_SERVER");
             if (fc != null) {
-                Iterator<String> i = Arrays.asList(fc.split(":")).iterator();
-                if (i.hasNext()) {
-                    String h = i.next();
-                    if (h != null && h.trim().length() > 0)
-                        host = h;
-                }
-                if (i.hasNext()) {
-                    String p = i.next();
-                    if (p != null && p.trim().length() > 0)
-                        port = Integer.parseInt(p);
-                }
+                address = fc;
             }
         }
     }
