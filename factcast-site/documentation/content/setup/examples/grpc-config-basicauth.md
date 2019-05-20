@@ -20,7 +20,7 @@ In order control access to a GRPC FactStore and to distinguish the two different
 
 Also the current implementation - while functional - is just a starting point. FactCast uses standard Spring Security, so that you have plenty of options to tailor security to your needs.
 
-#### Using BasicAuth from a client
+### Using BasicAuth from a client
 
 From a client's perspective, all you need to do is to provide credentials. Once the credentials are configured, they are used on every request in a Basic-Auth fashion (added header to request).
 
