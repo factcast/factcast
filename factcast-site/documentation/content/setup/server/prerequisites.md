@@ -1,16 +1,18 @@
 +++
 draft = false
-title = "Server Prerequisites"
+title = "Boot Server Prerequisites"
 description = ""
 date = "2019-04-24018:36:24+02:00"
 
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
 
-[menu.main]
-parent = "setup_server"
-identifier = "prerequisites"
 weight = 50
+
+[menu.main]
+parent = "setup"
+identifier = "prerequisites"
+
 
 +++
 
