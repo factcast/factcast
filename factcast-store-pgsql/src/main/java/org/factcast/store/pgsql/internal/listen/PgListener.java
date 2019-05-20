@@ -73,18 +73,18 @@ public class PgListener implements InitializingBean, DisposableBean {
                 // make sure, we did not miss anything while reconnecting
                 postEvent("scheduled-poll");
                 try (PgConnection pc = pgConnectionSupplier.get()) {
-                    try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_SQL)) {
-                        log.trace("Running LISTEN command");
-                        ps.execute();
-                    }
                     while (running.get()) {
+                        try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_SQL)) {
+                            log.trace("Running LISTEN command");
+                            ps.execute();
+                        }
                         if (pgConnectionTester.test(pc)) {
                             log.trace("Waiting for notifications for {}ms",
                                     blockingWaitTimeInMillis);
                             l.countDown();
                             PGNotification[] notifications = pc.getNotifications(
                                     blockingWaitTimeInMillis);
-                            if (notifications != null && notifications.length > 0) {
+                            if ((notifications != null) && (notifications.length > 0)) {
                                 final String name = notifications[0].getName();
                                 log.trace("notifying consumers for '{}'", name);
                                 postEvent(name);
