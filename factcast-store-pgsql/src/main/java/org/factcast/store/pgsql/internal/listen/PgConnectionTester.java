@@ -71,8 +71,9 @@ public class PgConnectionTester implements Predicate<Connection> {
 
     @VisibleForTesting
     boolean testSelectStatement(Connection connection) {
-        try (PreparedStatement statement = connection.prepareStatement("SELECT 42");
+        try (PreparedStatement statement = prepareStatement(connection, "SELECT 42");
                 ResultSet resultSet = statement.executeQuery()) {
+
             resultSet.next();
             if (resultSet.getInt(1) == 42) {
                 log.trace("Connection test passed (Select)");
@@ -84,5 +85,12 @@ public class PgConnectionTester implements Predicate<Connection> {
             log.warn("Connection test (Select) failed with exception: {}", e.getMessage());
         }
         return false;
+    }
+
+    private PreparedStatement prepareStatement(Connection connection, String string)
+            throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(string);
+        statement.setQueryTimeout(1);
+        return statement;
     }
 }

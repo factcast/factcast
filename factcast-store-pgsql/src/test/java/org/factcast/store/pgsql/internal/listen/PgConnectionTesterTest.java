@@ -117,4 +117,74 @@ public class PgConnectionTesterTest {
         assertFalse(test);
     }
 
+    @Test
+    public void testTestSelectStatement() throws Exception {
+        Connection c = mock(PgConnection.class);
+        PreparedStatement s = mock(PreparedStatement.class);
+        when(s.executeQuery()).thenThrow(new SQLException("BAM"));
+        when(c.prepareStatement(anyString())).thenReturn(s);
+        boolean test = uut.testSelectStatement(c);
+        assertFalse(test);
+
+    }
+
+    @Test
+    public void testTestNotificationRoundTripThrowsException() throws Exception {
+        Connection c = mock(PgConnection.class);
+        CallableStatement s = mock(CallableStatement.class);
+        when(s.execute()).thenThrow(new SQLException("BAM"));
+        when(c.prepareCall(anyString())).thenReturn(s);
+        boolean test = uut.testNotificationRoundTrip(c);
+        assertFalse(test);
+    }
+
+    @Test
+    public void testTestNotificationRoundTripReturnsNull() throws Exception {
+        PgConnection c = mock(PgConnection.class);
+        CallableStatement s = mock(CallableStatement.class);
+        when(c.prepareCall(anyString())).thenReturn(s);
+        when(c.getNotifications(anyInt())).thenReturn(null);
+        boolean test = uut.testNotificationRoundTrip(c);
+        assertFalse(test);
+    }
+
+    @Test
+    public void testTestNotificationRoundTripReturnsEmptyArray() throws Exception {
+        PgConnection c = mock(PgConnection.class);
+        CallableStatement s = mock(CallableStatement.class);
+        when(c.prepareCall(anyString())).thenReturn(s);
+        when(c.getNotifications(anyInt())).thenReturn(new PGNotification[0]);
+        boolean test = uut.testNotificationRoundTrip(c);
+        assertFalse(test);
+    }
+
+    @Test
+    public void testTestNotificationRoundTripReturnsAsExpected() throws Exception {
+        PgConnection c = mock(PgConnection.class);
+        CallableStatement s = mock(CallableStatement.class);
+        when(c.prepareCall(anyString())).thenReturn(s);
+        when(c.getNotifications(anyInt())).thenReturn(new PGNotification[] { new PGNotification() {
+
+            @Override
+            public String getParameter() {
+                // TODO Auto-generated method stub
+                return null;
+            }
+
+            @Override
+            public int getPID() {
+                // TODO Auto-generated method stub
+                return 0;
+            }
+
+            @Override
+            public String getName() {
+                // TODO Auto-generated method stub
+                return null;
+            }
+        } });
+        boolean test = uut.testNotificationRoundTrip(c);
+        assertTrue(test);
+    }
+
 }
