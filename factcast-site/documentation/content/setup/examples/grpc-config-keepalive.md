@@ -1,6 +1,7 @@
 +++
 draft = false
-title = "Spring Boot gRPC Configuration"
+title = "Boot gRPC KeepAlive"
+
 description = ""
 date = "2019-05-17T09:42:24+02:00"
 weight = 140
