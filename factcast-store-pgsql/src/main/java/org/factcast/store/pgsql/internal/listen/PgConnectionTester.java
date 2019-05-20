@@ -26,23 +26,28 @@ import javax.annotation.Nonnull;
 import org.postgresql.PGNotification;
 import org.postgresql.jdbc.PgConnection;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class PgConnectionTester implements Predicate<Connection> {
+    private static int MAX_ALLOWED_NOTIFICATION_LATENCY_IN_MILLIS = 150;
 
     @Override
     public boolean test(@Nonnull Connection connection) {
         return testSelectStatement(connection) && testNotificationRoundTrip(connection);
     }
 
-    private boolean testNotificationRoundTrip(Connection connection) {
+    @VisibleForTesting
+    boolean testNotificationRoundTrip(Connection connection) {
         try {
             connection.prepareCall("LISTEN alive").execute();
             connection.prepareCall("NOTIFY alive").execute();
 
             PgConnection pc = (PgConnection) connection;
-            PGNotification[] notifications = pc.getNotifications(150);
+            PGNotification[] notifications = pc.getNotifications(
+                    MAX_ALLOWED_NOTIFICATION_LATENCY_IN_MILLIS);
             if ((notifications == null) || (notifications.length == 0)) {
                 // missed the notifications from the DB, something is fishy
                 // here....
@@ -64,7 +69,8 @@ public class PgConnectionTester implements Predicate<Connection> {
 
     }
 
-    private boolean testSelectStatement(Connection connection) {
+    @VisibleForTesting
+    boolean testSelectStatement(Connection connection) {
         try (PreparedStatement statement = connection.prepareStatement("SELECT 42");
                 ResultSet resultSet = statement.executeQuery()) {
             resultSet.next();
