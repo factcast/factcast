@@ -1,16 +1,18 @@
 +++
 draft = false
-title = "Server Prerequisites"
+title = "Boot Server Prerequisites"
 description = ""
 date = "2019-04-24018:36:24+02:00"
 
-creatordisplayname = "Uwe Schaefer"
-creatoremail = "uwe.schaefer@mercateo.com"
+creatordisplayname = "Andreas Klipp"
+creatoremail = "andreas.klipp@mercateo.com"
+
+weight = 50
 
 [menu.main]
-parent = "setup_server"
+parent = "setup"
 identifier = "prerequisites"
-weight = 50
+
 
 +++
 
@@ -42,8 +44,7 @@ spring.datasource.password="password"
 
 The _ddl user_ has to be a superuser, as he will also install Postgres modules like [uuid-ossp](https://www.postgresql.org/docs/11/uuid-ossp.html).
 
-<details><summary>Read that, if you don't want to provide a superuser </summary>
-<p>
+### If you don't want to provide a superuser 
 
 If you don't want to provide a superuser as the _ddl user_, you have to consider the following points:
 
@@ -55,5 +56,3 @@ Login into your Postgres console and execute the following command as superuser:
 ```
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ``` 
-</p>
-</details>

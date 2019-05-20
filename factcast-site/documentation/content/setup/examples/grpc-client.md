@@ -1,6 +1,6 @@
 +++
 draft = false
-title = "Spring Boot gRPC Client"
+title = "Boot gRPC Client"
 description = ""
 date = "2017-04-24T18:36:24+02:00"
 weight = 130
