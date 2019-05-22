@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @ImportAutoConfiguration({ DataSourceAutoConfiguration.class, JdbcTemplateAutoConfiguration.class,
         TransactionAutoConfiguration.class })
 @Slf4j
-public class PgEmbeddedConfiguration {
+public class PgTestConfiguration {
 
     static org.apache.tomcat.jdbc.pool.DataSource ds;
 
