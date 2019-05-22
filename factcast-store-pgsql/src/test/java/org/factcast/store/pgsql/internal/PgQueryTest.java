@@ -47,7 +47,7 @@ import com.google.common.eventbus.EventBus;
 
 import lombok.Data;
 
-@ContextConfiguration(classes = { PgEmbeddedConfiguration.class })
+@ContextConfiguration(classes = { PgTestConfiguration.class })
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
