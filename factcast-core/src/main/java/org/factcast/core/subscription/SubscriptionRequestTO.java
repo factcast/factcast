@@ -46,7 +46,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
 @Setter
-@JsonIgnoreProperties
+@JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
 public class SubscriptionRequestTO implements SubscriptionRequest {
 
@@ -75,6 +75,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
         return specs.stream().anyMatch(s -> s.jsFilterScript() != null);
     }
 
+    @Override
     public java.util.Optional<UUID> startingAfter() {
         return java.util.Optional.ofNullable(startingAfter);
     }
@@ -107,8 +108,9 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     }
 
     private void checkArgument(boolean b) {
-        if (!b)
+        if (!b) {
             throw new IllegalArgumentException();
+        }
     }
 
     @Override

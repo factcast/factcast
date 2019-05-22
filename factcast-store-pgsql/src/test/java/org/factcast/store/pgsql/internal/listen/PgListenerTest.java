@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.internal;
+package org.factcast.store.pgsql.internal.listen;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -30,8 +30,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.function.Predicate;
 
-import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
-import org.factcast.store.pgsql.internal.listen.PgListener;
+import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.listen.PgListener.FactInsertionEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +46,7 @@ import org.postgresql.jdbc.PgConnection;
 import com.google.common.eventbus.AsyncEventBus;
 
 @ExtendWith(MockitoExtension.class)
-public class PgSqlListenerTest {
+public class PgListenerTest {
 
     @Mock
     PgConnectionSupplier ds;

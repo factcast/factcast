@@ -21,13 +21,10 @@ jobs:
     working_directory: ~/repo
 
     environment:
-      # Customize the JVM maximum heap limit
-#      MAVEN_OPTS: -Xmx2600m
+      # Customize the JVM memory configuration (https://circleci.com/docs/2.0/java-oom/)
+      JAVA_TOOL_OPTIONS: "-Xmx1024m"
       pg_url: jdbc:postgresql://localhost/test?currentSchema=public&username=circleci&password=test
-      MAVEN_OPTS: "-Xmx1G"
-      JAVA_OPTS: "-Xms1G -Xmx1G"
-      _JAVA_OPTIONS : "-Xms512M -Xmx512M"
-    
+
     steps:
       - checkout
 
@@ -42,12 +39,10 @@ jobs:
           name: Validate formal standards
           command: mvn spotless:check
 
-
       - run:
           name: Wait for DB
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
 
-        
       # run tests!
       - run: 
           name: FullTest
