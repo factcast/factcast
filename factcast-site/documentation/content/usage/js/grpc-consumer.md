@@ -6,11 +6,11 @@ date = "2017-04-24T18:36:24+02:00"
 
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
+weight = 101
 
 [menu.main]
 parent = "usage"
 identifier = "js_grpc_consumer"
-weight = 12
 
 +++
 
