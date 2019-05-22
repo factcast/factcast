@@ -1,15 +1,15 @@
 +++
 draft = false
-title = "Optimistic Locking"
+title = "Java Optimistic Locking"
 description = ""
 
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
+weight = 20
 
 [menu.main]
 parent = "usage"
 identifier = "optlocking"
-weight = 9090
 +++
 
 ## Optimistic Locking
