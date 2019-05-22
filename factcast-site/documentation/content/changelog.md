@@ -1,18 +1,76 @@
 # Change Log
 
-## [upcoming](https://github.com/Mercateo/factcast/tree/upcoming) (2019-04-30)
-[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.1.0-M1...upcoming)
+## [upcoming](https://github.com/Mercateo/factcast/tree/upcoming) (2019-05-22)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.1.0-RC3...upcoming)
+
+**Closed issues:**
+
+- Document CLI [\#428](https://github.com/Mercateo/factcast/issues/428)
+
+**Merged pull requests:**
+
+- PgSQL test setup polish [\#438](https://github.com/Mercateo/factcast/pull/438) ([mweirauch](https://github.com/mweirauch))
+- \#428: cli usage page [\#437](https://github.com/Mercateo/factcast/pull/437) ([uweschaefer](https://github.com/uweschaefer))
+
+## [factcast-0.1.0-RC3](https://github.com/Mercateo/factcast/tree/factcast-0.1.0-RC3) (2019-05-22)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.1.0-RC2...factcast-0.1.0-RC3)
+
+**Implemented enhancements:**
+
+- Add proper javadocs [\#22](https://github.com/Mercateo/factcast/issues/22)
+
+**Fixed bugs:**
+
+- grpc client version 36 incompatible to master [\#432](https://github.com/Mercateo/factcast/issues/432)
+- Unexpected BuildError in circleCI that is not locally repoducable [\#430](https://github.com/Mercateo/factcast/issues/430)
+
+**Closed issues:**
+
+- Update XML formatter version [\#429](https://github.com/Mercateo/factcast/issues/429)
+- Add BasicAuth capablity to CLI [\#424](https://github.com/Mercateo/factcast/issues/424)
+
+**Merged pull requests:**
+
+- Issue432 JSON Deser problem on unknown properties [\#436](https://github.com/Mercateo/factcast/pull/436) ([uweschaefer](https://github.com/uweschaefer))
+- Bump oss-parent-pom from 1.0.7 to 1.0.9 [\#435](https://github.com/Mercateo/factcast/pull/435) ([dependabot[bot]](https://github.com/apps/dependabot))
+- \#430: flaky test [\#434](https://github.com/Mercateo/factcast/pull/434) ([uweschaefer](https://github.com/uweschaefer))
+- Move and rename PgSqlListenerTest.java [\#433](https://github.com/Mercateo/factcast/pull/433) ([mweirauch](https://github.com/mweirauch))
+- \#430: build error - hanging test [\#431](https://github.com/Mercateo/factcast/pull/431) ([uweschaefer](https://github.com/uweschaefer))
+- \#424: fixed host/port -\> address, added --basic [\#427](https://github.com/Mercateo/factcast/pull/427) ([uweschaefer](https://github.com/uweschaefer))
+
+## [factcast-0.1.0-RC2](https://github.com/Mercateo/factcast/tree/factcast-0.1.0-RC2) (2019-05-20)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.1.0-RC1...factcast-0.1.0-RC2)
+
+**Closed issues:**
+
+- Align spotless formatting rules for xml with maven's [\#425](https://github.com/Mercateo/factcast/issues/425)
+
+**Merged pull requests:**
+
+- \#425: added xml formatting config and reformatted accordingly [\#426](https://github.com/Mercateo/factcast/pull/426) ([uweschaefer](https://github.com/uweschaefer))
+
+## [factcast-0.1.0-RC1](https://github.com/Mercateo/factcast/tree/factcast-0.1.0-RC1) (2019-05-20)
+[Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.1.0-M1...factcast-0.1.0-RC1)
 
 **Implemented enhancements:**
 
 - Prepare for Compaction [\#60](https://github.com/Mercateo/factcast/issues/60)
 - Add Channel Authentication [\#55](https://github.com/Mercateo/factcast/issues/55)
 
+**Fixed bugs:**
+
+- dynamic AWS RDS-Settings doesn't work with version 0.1.0-M1 [\#408](https://github.com/Mercateo/factcast/issues/408)
+
 **Closed issues:**
 
+- Remove caching & id-subscription [\#412](https://github.com/Mercateo/factcast/issues/412)
+- Document Basic-Auth setup [\#407](https://github.com/Mercateo/factcast/issues/407)
+- Update site [\#405](https://github.com/Mercateo/factcast/issues/405)
+- Change subscription follow behaviour to reconnecting [\#404](https://github.com/Mercateo/factcast/issues/404)
 - Opt.Locking: Check against null returned from attempt\(\) [\#401](https://github.com/Mercateo/factcast/issues/401)
 - Remove MarkFacts from documentation [\#397](https://github.com/Mercateo/factcast/issues/397)
 - Apply IDEA inspection suggestions [\#395](https://github.com/Mercateo/factcast/issues/395)
+- Add proper Metrics using micrometer.io [\#392](https://github.com/Mercateo/factcast/issues/392)
 - Add Snappy compression Codec [\#390](https://github.com/Mercateo/factcast/issues/390)
 - Cleanup all README.md [\#382](https://github.com/Mercateo/factcast/issues/382)
 - Refactor GrpcFactStore.java [\#380](https://github.com/Mercateo/factcast/issues/380)
@@ -20,6 +78,8 @@
 - Scripts starting Hugo should use a macos version on macos  [\#370](https://github.com/Mercateo/factcast/issues/370)
 - DepShield encountered errors while building your project [\#369](https://github.com/Mercateo/factcast/issues/369)
 - Subtask to \#325: Document optimistic locking [\#332](https://github.com/Mercateo/factcast/issues/332)
+- Update the 'Server Setup' documentation [\#312](https://github.com/Mercateo/factcast/issues/312)
+- Document good settings for keepalive behaviour [\#272](https://github.com/Mercateo/factcast/issues/272)
 - Better validation errors on publishing [\#250](https://github.com/Mercateo/factcast/issues/250)
 - GRPC Client-\>Server communication regression [\#234](https://github.com/Mercateo/factcast/issues/234)
 - Sanitize properties [\#212](https://github.com/Mercateo/factcast/issues/212)
@@ -27,9 +87,25 @@
 - GRPC Response Compression via Interceptor [\#168](https://github.com/Mercateo/factcast/issues/168)
 - Add LZ4 Codecs according to upstream @GrpcCodec Feature [\#140](https://github.com/Mercateo/factcast/issues/140)
 - Add credentials usage on GRPC \(TLS a prereq\) [\#129](https://github.com/Mercateo/factcast/issues/129)
+- Subscriptions can become stale? [\#70](https://github.com/Mercateo/factcast/issues/70)
 
 **Merged pull requests:**
 
+- \#70: repeatedly check listen/notify on pgconnection [\#423](https://github.com/Mercateo/factcast/pull/423) ([uweschaefer](https://github.com/uweschaefer))
+- \#407: added basicauth docs, reorganized menu [\#422](https://github.com/Mercateo/factcast/pull/422) ([uweschaefer](https://github.com/uweschaefer))
+- Issue\#272 document good settings for keepalive [\#421](https://github.com/Mercateo/factcast/pull/421) ([nln42](https://github.com/nln42))
+- Fix Spring Boot 1 example client dependency [\#420](https://github.com/Mercateo/factcast/pull/420) ([mweirauch](https://github.com/mweirauch))
+- Bump spring-boot-maven-plugin from 2.1.4.RELEASE to 2.1.5.RELEASE [\#419](https://github.com/Mercateo/factcast/pull/419) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump spring-boot-starter-security from 2.1.4.RELEASE to 2.1.5.RELEASE [\#418](https://github.com/Mercateo/factcast/pull/418) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump spring-boot-dependencies from 2.1.4.RELEASE to 2.1.5.RELEASE [\#417](https://github.com/Mercateo/factcast/pull/417) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump jacoco-maven-plugin from 0.8.3 to 0.8.4 [\#416](https://github.com/Mercateo/factcast/pull/416) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update Spotless Eclipse Formatter to 4.11 [\#415](https://github.com/Mercateo/factcast/pull/415) ([mweirauch](https://github.com/mweirauch))
+- pgsql: add micrometer metrics [\#414](https://github.com/Mercateo/factcast/pull/414) ([mweirauch](https://github.com/mweirauch))
+- Issue412 remove subscribeToIds etc [\#413](https://github.com/Mercateo/factcast/pull/413) ([uweschaefer](https://github.com/uweschaefer))
+- issue 408: [\#411](https://github.com/Mercateo/factcast/pull/411) ([OOlsen](https://github.com/OOlsen))
+- Bump lombok from 1.18.6 to 1.18.8 [\#410](https://github.com/Mercateo/factcast/pull/410) ([dependabot[bot]](https://github.com/apps/dependabot))
+- \#404: automatic reconnection in daemon thread [\#409](https://github.com/Mercateo/factcast/pull/409) ([uweschaefer](https://github.com/uweschaefer))
+- Issue405 site update [\#406](https://github.com/Mercateo/factcast/pull/406) ([uweschaefer](https://github.com/uweschaefer))
 - \#212: moved property namespace [\#403](https://github.com/Mercateo/factcast/pull/403) ([uweschaefer](https://github.com/uweschaefer))
 - \#401: guard against null returned from attempt\(\) [\#402](https://github.com/Mercateo/factcast/pull/402) ([uweschaefer](https://github.com/uweschaefer))
 - Bump spotless-maven-plugin from 1.22.0 to 1.23.0 [\#400](https://github.com/Mercateo/factcast/pull/400) ([dependabot[bot]](https://github.com/apps/dependabot))
@@ -40,6 +116,7 @@
 - \#210: removed metrics [\#393](https://github.com/Mercateo/factcast/pull/393) ([uweschaefer](https://github.com/uweschaefer))
 - \#390: added snappy [\#391](https://github.com/Mercateo/factcast/pull/391) ([uweschaefer](https://github.com/uweschaefer))
 - Bump spring-boot-starter-security from 2.1.3.RELEASE to 2.1.4.RELEASE [\#389](https://github.com/Mercateo/factcast/pull/389) ([dependabot[bot]](https://github.com/apps/dependabot))
+- postgres module uuid-oosp documentation [\#388](https://github.com/Mercateo/factcast/pull/388) ([OOlsen](https://github.com/OOlsen))
 - Bump spotless-maven-plugin from 1.21.1 to 1.22.0 [\#387](https://github.com/Mercateo/factcast/pull/387) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Bump postgresql from 1.11.1 to 1.11.2 [\#386](https://github.com/Mercateo/factcast/pull/386) ([dependabot[bot]](https://github.com/apps/dependabot))
 - \#140 lz4codec [\#385](https://github.com/Mercateo/factcast/pull/385) ([uweschaefer](https://github.com/uweschaefer))
@@ -53,6 +130,7 @@
 - \#373: hacky way to work with either version 2.1 and 2.3 of grpc-sprin… [\#374](https://github.com/Mercateo/factcast/pull/374) ([uweschaefer](https://github.com/uweschaefer))
 - Spotless polish [\#368](https://github.com/Mercateo/factcast/pull/368) ([mweirauch](https://github.com/mweirauch))
 - Issue332 Optimistic Locking Documentation [\#363](https://github.com/Mercateo/factcast/pull/363) ([uweschaefer](https://github.com/uweschaefer))
+- Issue312 fix documentation regarding project setup & examples [\#324](https://github.com/Mercateo/factcast/pull/324) ([uweschaefer](https://github.com/uweschaefer))
 
 ## [factcast-0.1.0-M1](https://github.com/Mercateo/factcast/tree/factcast-0.1.0-M1) (2019-04-09)
 [Full Changelog](https://github.com/Mercateo/factcast/compare/factcast-0.0.34...factcast-0.1.0-M1)
