@@ -46,5 +46,5 @@ At the time of writing, the most relevant are:
 |:--|:--|:--|
 |grpc.client.factcast.address| static://localhost:9090 | yes |
 |grpc.client.factcast.negotiationType| PLAINTEXT | no |
-|grpc.client.factstore.enable_keep_alive| true | no |
+|grpc.client.factstore.enable-keep-alive| true | no |
 

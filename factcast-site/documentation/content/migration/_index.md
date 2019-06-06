@@ -66,7 +66,7 @@ For an example see **examples/factcast-example-client-spring-boot1/**.
 
 #### Plaintext vs TLS
 
-There was a dependency upgrade of [grpc-spring-boot-starter](https://github.com/yidongnan/grpc-spring-boot-starter) in order to support TLS. Note that the default client configuration is now switched to TLS. That means, if you want to continue communicating in an unencrypted fashion, you need to set an application property of **'grpc.client.factstore.negotiation_type=PLAINTEXT'**. 
+There was a dependency upgrade of [grpc-spring-boot-starter](https://github.com/yidongnan/grpc-spring-boot-starter) in order to support TLS. Note that the default client configuration is now switched to TLS. That means, if you want to continue communicating in an unencrypted fashion, you need to set an application property of **'grpc.client.factstore.negotiation-type=PLAINTEXT'**. 
 
 #### Testcontainers / Building and Testing
 
