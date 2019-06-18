@@ -209,7 +209,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
             @Override
             public void onError(@NonNull Throwable exception) {
 
-                log.error("Closing & Reconnecting subscription due to onError triggered.",
+                log.info("Closing & Reconnecting subscription due to onError triggered.",
                         exception);
 
                 closeAndDetachSubscription();
