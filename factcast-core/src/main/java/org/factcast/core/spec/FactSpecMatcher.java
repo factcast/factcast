@@ -41,7 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class FactSpecMatcher implements Predicate<Fact> {
 
-    private static final LRUMap<String, ScriptEngine> scriptEngineCache = new LRUMap<>(10, 200);
+    private static final LRUMap<FilterScript, ScriptEngine> scriptEngineCache = new LRUMap<>(10,
+            200);
 
     @NonNull
     final String ns;
@@ -52,11 +53,11 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
     final Map<String, String> meta;
 
-    final String script;
+    final FilterScript script;
 
     final ScriptEngine scriptEngine;
 
-    private static final Supplier<ScriptEngine> scriptEngineSupplier = new JavaScriptEngineSupplier();
+    private static final Supplier<ScriptEngine> jsScriptEngineSupplier = new JavaScriptEngineSupplier();
 
     public FactSpecMatcher(@NonNull FactSpec spec) {
         // opt: prevent method calls by prefetching to final fields.
@@ -68,10 +69,11 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         type = spec.type();
         aggId = spec.aggId();
         meta = spec.meta();
-        script = spec.jsFilterScript();
+        script = spec.filterScript();
         scriptEngine = getEngine(script);
     }
 
+    @Override
     public boolean test(Fact t) {
         boolean match = nsMatch(t);
         match = match && typeMatch(t);
@@ -118,18 +120,27 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
     @SneakyThrows
     @Generated
-    private static synchronized ScriptEngine getEngine(String js) {
-        if (js == null) {
+    private static synchronized ScriptEngine getEngine(FilterScript filterScript) {
+        if (filterScript == null) {
             return null;
         }
-        ScriptEngine cachedEngine = scriptEngineCache.get(js);
-        if (cachedEngine != null) {
-            return cachedEngine;
+
+        // TODO: currently only supports language js:
+        if ("js".equals(filterScript.languageIdentifier())) {
+
+            ScriptEngine cachedEngine = scriptEngineCache.get(filterScript);
+            if (cachedEngine != null) {
+                return cachedEngine;
+            } else {
+                ScriptEngine engine = jsScriptEngineSupplier.get();
+                engine.eval("var test=" + filterScript.source());
+                scriptEngineCache.put(filterScript, engine);
+                return engine;
+            }
         } else {
-            ScriptEngine engine = scriptEngineSupplier.get();
-            engine.eval("var test=" + js);
-            scriptEngineCache.put(js, engine);
-            return engine;
+            // TODO really?
+            throw new RuntimeException("Unsupported Script language: " + filterScript
+                    .languageIdentifier());
         }
     }
 
