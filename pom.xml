@@ -66,7 +66,7 @@
     </developer>
   </developers>
   <properties>
-    <spotless.version>1.23.0</spotless.version>
+    <spotless.version>1.23.1</spotless.version>
     <assertj.version>3.12.2</assertj.version>
     <mockito.version>2.28.2</mockito.version>
     <maven.compiler.source>1.8</maven.compiler.source>
@@ -321,7 +321,7 @@
         <plugin>
           <groupId>org.springframework.boot</groupId>
           <artifactId>spring-boot-maven-plugin</artifactId>
-          <version>2.1.5.RELEASE</version>
+          <version>2.1.6.RELEASE</version>
         </plugin>
       </plugins>
     </pluginManagement>
