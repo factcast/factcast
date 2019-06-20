@@ -139,7 +139,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
             }
         } else {
             // TODO really?
-            throw new RuntimeException("Unsupported Script language: " + filterScript
+            throw new IllegalArgumentException("Unsupported Script language: " + filterScript
                     .languageIdentifier());
         }
     }
