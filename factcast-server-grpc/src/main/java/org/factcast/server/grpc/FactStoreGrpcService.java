@@ -15,28 +15,56 @@
  */
 package org.factcast.server.grpc;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.atomic.*;
-import java.util.stream.*;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
-import org.factcast.core.*;
-import org.factcast.core.store.*;
-import org.factcast.core.subscription.*;
-import org.factcast.grpc.api.*;
-import org.factcast.grpc.api.conv.*;
-import org.factcast.grpc.api.gen.FactStoreProto.*;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.*;
-import org.factcast.server.grpc.auth.*;
-import org.springframework.security.access.annotation.*;
+import org.factcast.core.Fact;
+import org.factcast.core.store.FactStore;
+import org.factcast.core.store.StateToken;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.grpc.api.Capabilities;
+import org.factcast.grpc.api.CompressionCodecs;
+import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.StateForRequest;
+import org.factcast.grpc.api.conv.ProtoConverter;
+import org.factcast.grpc.api.conv.ProtocolVersion;
+import org.factcast.grpc.api.conv.ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
+import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
+import org.factcast.server.grpc.auth.FactCastRole;
+import org.springframework.security.access.annotation.Secured;
 
-import com.google.common.annotations.*;
+import com.google.common.annotations.VisibleForTesting;
 
-import io.grpc.stub.*;
-import lombok.*;
-import lombok.extern.slf4j.*;
-import net.devh.boot.grpc.server.service.*;
+import io.grpc.stub.ServerCallStreamObserver;
+import io.grpc.stub.StreamObserver;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.devh.boot.grpc.server.service.GrpcService;
 
 /**
  * Service that provides access to an injected FactStore via GRPC.
@@ -148,20 +176,22 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         String implVersion = "UNKNOWN";
         URL propertiesUrl = getProjectProperties();
         Properties buildProperties = new Properties();
-        if (propertiesUrl != null)
+        if (propertiesUrl != null) {
             try {
                 InputStream is = propertiesUrl.openStream();
                 if (is != null) {
                     buildProperties.load(is);
                     String v = buildProperties.getProperty("version");
-                    if (v != null)
+                    if (v != null) {
                         implVersion = v;
+                    }
                 }
             } catch (Exception ignore) {
                 // whatever fails when reading the version implies, that the
                 // impl Version is
                 // "UNKNOWN"
             }
+        }
         properties.put(Capabilities.FACTCAST_IMPL_VERSION.toString(), implVersion);
     }
 
@@ -251,4 +281,15 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         }
     }
 
+    @Override
+    public void currentTime(MSG_Empty request,
+            StreamObserver<MSG_CurrentDatabaseTime> responseObserver) {
+        try {
+            responseObserver.onNext(converter.toProto(store.currentTime()));
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            responseObserver.onError(e);
+        }
+
+    }
 }

@@ -201,7 +201,7 @@ public class InMemFactStore extends AbstractFactStore {
     private void doCatchUp(InMemFollower s, AtomicLong highwater) {
         new ArrayList<>(store.values())
                 .stream()
-                .filter(f -> f.serial() > highwater.get() && s.test(f))
+                .filter(f -> (f.serial() > highwater.get()) && s.test(f))
                 .forEachOrdered(f -> {
                     highwater.set(f.serial());
                     s.accept(f);
@@ -262,6 +262,11 @@ public class InMemFactStore extends AbstractFactStore {
     public synchronized boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
             @NonNull Optional<StateToken> optionalToken) {
         return super.publishIfUnchanged(factsToPublish, optionalToken);
+    }
+
+    @Override
+    public long currentTime() {
+        return System.currentTimeMillis();
     }
 
 }

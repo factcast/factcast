@@ -139,8 +139,12 @@ public class ProtoConverterTest {
                 .meta(key2, value2)
                 .type(type)
                 .build(payload);
-        Fact probe2 = Fact.builder().ns(ns + "foo").aggId(UUID.randomUUID()).type("narf").build(
-                payload);
+        Fact probe2 = Fact.builder()
+                .ns(ns + "foo")
+                .aggId(UUID.randomUUID())
+                .type("narf")
+                .build(
+                        payload);
 
         MSG_Facts proto = uut.toProto(Arrays.asList(probe, probe2));
 
@@ -251,8 +255,7 @@ public class ProtoConverterTest {
         SubscriptionRequestTO to = new SubscriptionRequestTO().continuous(true)
                 .ephemeral(false)
                 .debugInfo("test")
-                .maxBatchDelayInMs(13)
-                ;
+                .maxBatchDelayInMs(13);
         to.addSpecs(Collections.singletonList(FactSpec.ns("foo")));
         SubscriptionRequestTO copy = uut.fromProto(uut.toProto(to));
         assertEquals(to.debugInfo(), copy.debugInfo());
@@ -583,5 +586,12 @@ public class ProtoConverterTest {
             assertThat(msg.getFacts().getFactList().size()).isEqualTo(2);
         }
 
+    }
+
+    @Test
+    public void testFromProtoMSG_CurrentDatabaseTime() throws Exception {
+        long probe = 123L;
+
+        assertEquals(probe, uut.fromProto(uut.toProto(probe)));
     }
 }

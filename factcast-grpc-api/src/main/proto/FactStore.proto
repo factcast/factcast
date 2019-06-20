@@ -112,6 +112,10 @@ message MSG_StateForRequest {
   repeated MSG_UUID aggIds = 3;
 }
 
+message MSG_CurrentDatabaseTime {
+  int64 millis = 1;
+}
+
 service RemoteFactStore {
 	// 1.0
 	rpc subscribe (MSG_SubscriptionRequest) returns (stream MSG_Notification) {}
@@ -125,5 +129,6 @@ service RemoteFactStore {
 	rpc publishConditional (MSG_ConditionalPublishRequest) returns (MSG_ConditionalPublishResult) {}
 	rpc invalidate (MSG_UUID) returns (MSG_Empty) {}
 	rpc stateFor (MSG_StateForRequest) returns (MSG_UUID) {}
+	rpc currentTime(MSG_Empty) returns (MSG_CurrentDatabaseTime) {}
 	
 }

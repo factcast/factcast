@@ -63,4 +63,6 @@ public interface FactStore {
 
     void invalidate(@NonNull StateToken token);
 
+    long currentTime();
+
 }

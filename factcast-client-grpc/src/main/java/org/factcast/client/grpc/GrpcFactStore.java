@@ -15,34 +15,68 @@
  */
 package org.factcast.client.grpc;
 
-import static io.grpc.stub.ClientCalls.*;
+import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
 
-import java.util.*;
-import java.util.concurrent.atomic.*;
-import java.util.stream.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
-import org.factcast.core.*;
-import org.factcast.core.store.*;
-import org.factcast.core.subscription.*;
-import org.factcast.core.subscription.observer.*;
-import org.factcast.grpc.api.*;
-import org.factcast.grpc.api.conv.*;
-import org.factcast.grpc.api.gen.*;
-import org.factcast.grpc.api.gen.FactStoreProto.*;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.*;
-import org.springframework.beans.factory.*;
-import org.springframework.beans.factory.annotation.*;
+import org.factcast.core.Fact;
+import org.factcast.core.store.FactStore;
+import org.factcast.core.store.RetryableException;
+import org.factcast.core.store.StateToken;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.grpc.api.Capabilities;
+import org.factcast.grpc.api.CompressionCodecs;
+import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.StateForRequest;
+import org.factcast.grpc.api.conv.ProtoConverter;
+import org.factcast.grpc.api.conv.ProtocolVersion;
+import org.factcast.grpc.api.conv.ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
+import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
+import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
+import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
+import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import com.google.common.annotations.*;
-import com.google.common.collect.*;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 
-import io.grpc.*;
-import io.grpc.Status.*;
-import io.grpc.stub.*;
-import lombok.*;
-import lombok.extern.slf4j.*;
-import net.devh.boot.grpc.client.security.*;
+import io.grpc.CallCredentials;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.Status.Code;
+import io.grpc.StatusRuntimeException;
+import io.grpc.stub.StreamObserver;
+import lombok.Generated;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
@@ -90,9 +124,10 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
         if (credentials.isPresent()) {
             String[] sa = credentials.get().split(":");
-            if (sa.length != 2)
+            if (sa.length != 2) {
                 throw new IllegalArgumentException(
                         "Credentials in 'grpc.client.factstore.credentials' have to be defined as 'username:password'");
+            }
             CallCredentials basic = CallCredentialsHelper.basicAuth(sa[0], sa[1]);
             blockingStub = blockingStub.withCallCredentials(basic);
             stub = stub.withCallCredentials(basic);
@@ -190,17 +225,19 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     }
 
     private static void logProtocolVersion(ProtocolVersion serverProtocolVersion) {
-        if (!PROTOCOL_VERSION.isCompatibleTo(serverProtocolVersion))
+        if (!PROTOCOL_VERSION.isCompatibleTo(serverProtocolVersion)) {
             throw new IncompatibleProtocolVersions("Apparently, the local Protocol Version "
                     + PROTOCOL_VERSION
                     + " is not compatible with the Server's " + serverProtocolVersion
                     + ". \nPlease choose a compatible GRPC Client to connect to this Server.");
-        if (!PROTOCOL_VERSION.equals(serverProtocolVersion))
+        }
+        if (!PROTOCOL_VERSION.equals(serverProtocolVersion)) {
             log.info("Compatible protocol version encountered client={}, server={}",
                     PROTOCOL_VERSION,
                     serverProtocolVersion);
-        else
+        } else {
             log.info("Matching protocol version encountered {}", serverProtocolVersion);
+        }
     }
 
     @VisibleForTesting
@@ -286,5 +323,18 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
         } catch (StatusRuntimeException e) {
             throw wrapRetryable(e);
         }
+    }
+
+    @Override
+    public long currentTime() {
+
+        MSG_Empty empty = converter.empty();
+        MSG_CurrentDatabaseTime resp;
+        try {
+            resp = blockingStub.currentTime(empty);
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+        return converter.fromProto(resp);
     }
 }
