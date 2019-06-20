@@ -211,7 +211,7 @@ public class PgFactStore extends AbstractFactStore {
                 Long res = jdbcTemplate.queryForObject(PgConstants.SELECT_SER_BY_ID,
                         new Object[] { "{\"id\":\"" + l + "\"}" }, Long.class);
 
-                if (res != null && res > 0) {
+                if ((res != null) && (res > 0)) {
                     return OptionalLong.of(res);
                 }
 
@@ -331,6 +331,12 @@ public class PgFactStore extends AbstractFactStore {
                 Tag.of(StoreMetrics.TAG_EXCEPTION_KEY, exceptionTagValue));
         // ommitting the meter description here
         return Timer.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
+    }
+
+    @Override
+    public long currentTime() {
+        return jdbcTemplate.queryForObject(PgConstants.CURRENT_TIME_MILLIS,
+                Long.class);
     }
 
 }
