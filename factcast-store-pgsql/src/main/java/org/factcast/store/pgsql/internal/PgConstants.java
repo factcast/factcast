@@ -30,6 +30,8 @@ public class PgConstants {
 
     public static final String NEXT_FROM_CATCHUP_SEQ = "SELECT nextval('catchup_seq')";
 
+    public static final String CURRENT_TIME_MILLIS = "SELECT TRUNC(EXTRACT(EPOCH FROM now()) * 1000)";
+
     public static final String TABLE_CATCHUP = "catchup";
 
     public static final String TABLE_FACT = "fact";

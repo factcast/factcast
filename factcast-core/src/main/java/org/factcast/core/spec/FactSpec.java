@@ -79,22 +79,25 @@ public class FactSpec {
             return null;
     }
 
+    public FactSpec filterScript(FilterScript script) {
+        if (script != null) {
+            this.filterScript = script;
+            if ("js".equals(script.languageIdentifier()))
+                jsFilterScript = script.source();
+        } else {
+            filterScript = null;
+            jsFilterScript = null;
+        }
+
+        return this;
+    }
+
     @Deprecated
     public FactSpec jsFilterScript(String script) {
         if (script != null)
             filterScript(new FilterScript("js", script));
         else
             filterScript(null);
-
-        return this;
-    }
-
-    @Deprecated
-    public FactSpec filterScript(FilterScript script) {
-        if (script != null && "js".equals(script.languageIdentifier()))
-            this.jsFilterScript = script.source();
-
-        this.filterScript = script;
 
         return this;
     }

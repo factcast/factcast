@@ -32,6 +32,7 @@ import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
@@ -195,8 +196,9 @@ public class ProtoConverter {
                     .setPresent(true)
                     .setSerial(serialOf.getAsLong())
                     .build();
-        } else
+        } else {
             return MSG_OptionalSerial.newBuilder().setPresent(false).build();
+        }
     }
 
     public Set<String> fromProto(MSG_StringSet set) {
@@ -235,8 +237,9 @@ public class ProtoConverter {
 
     public ConditionalPublishRequest fromProto(@NonNull MSG_ConditionalPublishRequest request) {
         UUID token = null;
-        if (request.getTokenPresent())
+        if (request.getTokenPresent()) {
             token = fromProto(request.getToken());
+        }
 
         return new ConditionalPublishRequest(fromProto(request.getFacts()), token);
     }
@@ -258,8 +261,9 @@ public class ProtoConverter {
                         .map(this::toProto)
                         .collect(Collectors.toList()));
 
-        if (ns != null)
+        if (ns != null) {
             b.setNs(ns);
+        }
         return b.build();
 
     }
@@ -270,9 +274,18 @@ public class ProtoConverter {
         Optional<StateToken> token = req.token();
         boolean present = token.isPresent();
         b.setTokenPresent(present);
-        if (present)
+        if (present) {
             b.setToken(toProto(token.get().uuid()));
+        }
 
         return b.build();
+    }
+
+    public long fromProto(@NonNull MSG_CurrentDatabaseTime resp) {
+        return resp.getMillis();
+    }
+
+    public MSG_CurrentDatabaseTime toProto(long currentTime) {
+        return MSG_CurrentDatabaseTime.newBuilder().setMillis(currentTime).build();
     }
 }
