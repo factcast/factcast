@@ -15,7 +15,6 @@ It is not yet released, the API may change, the documentation is incomplete.
     <img class="inline" src="https://img.shields.io/badge/license-ASL2-green.svg?style=flat">
 </a>
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=factcast/factcast)](https://dependabot.com)
-[![DepShield Badge](https://depshield.sonatype.org/badges/factcast/factcast/depshield.svg)](https://depshield.github.io)
 
 
 ... under active development.
