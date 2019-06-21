@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.0.35-SNAPSHOT</version>
+    <version>0.1.0-RC5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-spring-boot-autoconfigure</artifactId>
@@ -32,11 +32,6 @@
     <!-- Optional dependencies -->
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-client-cache</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
       <artifactId>factcast-client-grpc</artifactId>
       <optional>true</optional>
     </dependency>
@@ -57,11 +52,6 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-client-cache-infinispan</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
       <artifactId>factcast-core</artifactId>
       <optional>true</optional>
     </dependency>
@@ -70,10 +60,14 @@
       <artifactId>factcast-store-inmem</artifactId>
       <optional>true</optional>
     </dependency>
-    <!-- TODO should be replaced with micrometer -->
     <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
+      <groupId>net.jpountz.lz4</groupId>
+      <artifactId>lz4</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.xerial.snappy</groupId>
+      <artifactId>snappy-java</artifactId>
       <optional>true</optional>
     </dependency>
   </dependencies>

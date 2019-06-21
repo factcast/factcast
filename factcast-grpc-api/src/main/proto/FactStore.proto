@@ -12,6 +12,9 @@ message MSG_UUID {
 	int64 msb = 1;
 	int64 lsb = 2;
 }
+message MSG_UUIDs {
+	repeated MSG_UUID uuids = 1;
+}
 
 message MSG_OptionalSerial {
 	bool present = 1;
@@ -65,6 +68,16 @@ message MSG_Facts {
 	repeated MSG_Fact fact = 1;
 }
 
+message MSG_ConditionalPublishRequest{
+	MSG_Facts facts = 1;
+	bool tokenPresent = 2;
+	MSG_UUID token = 3;
+}
+
+message MSG_ConditionalPublishResult{
+	bool success =1;
+}
+
 /**
 	void
 */
@@ -93,8 +106,18 @@ message MSG_String {
   string embeddedString = 1;
 }
 
+message MSG_StateForRequest {
+  bool nsPresent = 1;
+  string ns = 2;
+  repeated MSG_UUID aggIds = 3;
+}
+
+message MSG_CurrentDatabaseTime {
+  int64 millis = 1;
+}
 
 service RemoteFactStore {
+	// 1.0
 	rpc subscribe (MSG_SubscriptionRequest) returns (stream MSG_Notification) {}
 	rpc fetchById (MSG_UUID) returns (MSG_OptionalFact) {}
 	rpc publish (MSG_Facts) returns (MSG_Empty) {}
@@ -102,4 +125,10 @@ service RemoteFactStore {
 	rpc handshake (MSG_Empty) returns (MSG_ServerConfig) {}
 	rpc enumerateNamespaces (MSG_Empty) returns (MSG_StringSet) {}
 	rpc enumerateTypes (MSG_String) returns (MSG_StringSet) {}
+	// 1.1
+	rpc publishConditional (MSG_ConditionalPublishRequest) returns (MSG_ConditionalPublishResult) {}
+	rpc invalidate (MSG_UUID) returns (MSG_Empty) {}
+	rpc stateFor (MSG_StateForRequest) returns (MSG_UUID) {}
+	rpc currentTime(MSG_Empty) returns (MSG_CurrentDatabaseTime) {}
+	
 }

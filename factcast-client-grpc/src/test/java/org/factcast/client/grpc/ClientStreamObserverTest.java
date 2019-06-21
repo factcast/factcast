@@ -15,7 +15,7 @@
  */
 package org.factcast.client.grpc;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
@@ -39,7 +39,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class ClientStreamObserverTest {
+class ClientStreamObserverTest {
 
     @Mock
     FactObserver factObserver;
@@ -58,9 +58,7 @@ public class ClientStreamObserverTest {
 
     @Test
     void testConstructorNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            new ClientStreamObserver(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> new ClientStreamObserver(null));
     }
 
     @Test
@@ -90,6 +88,12 @@ public class ClientStreamObserverTest {
     void testOnCatchup() {
         uut.onNext(converter.createCatchupNotification());
         verify(factObserver).onCatchup();
+    }
+
+    @Test
+    void testFailOnUnknownType() {
+            uut.onNext(MSG_Notification.newBuilder().setTypeValue(999).build());
+            verify(subscription).notifyError(any(RuntimeException.class));
     }
 
     @Test

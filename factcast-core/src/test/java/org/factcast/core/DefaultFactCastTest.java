@@ -15,18 +15,25 @@
  */
 package org.factcast.core;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
@@ -37,6 +44,7 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,8 +52,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import lombok.NonNull;
 
 @ExtendWith(MockitoExtension.class)
 public class DefaultFactCastTest {
@@ -66,44 +75,24 @@ public class DefaultFactCastTest {
     private ArgumentCaptor<List<Fact>> cfacts;
 
     @Test
-    void testSubscribeToFacts() {
-        when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
-        final UUID since = UUID.randomUUID();
-        SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.forMark())
-                .or(FactSpec.ns("some").type("type"))
-                .from(since);
-        uut.subscribeToFacts(r, f -> {
-        });
-        verify(store).subscribe(any(), any());
-        final SubscriptionRequestTO req = csr.getValue();
-        assertTrue(req.continuous());
-        assertFalse(req.idOnly());
-        assertEquals(since, req.startingAfter().get());
-        assertFalse(req.ephemeral());
-    }
+        void testSubscribeEphemeral() {
+            when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
+            final UUID since = UUID.randomUUID();
+            SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.ns("foo"))
+                    .or(FactSpec.ns("some").type("type"))
+                    .from(since);
+            uut.subscribeEphemeral(r, f -> {
+            });
+            verify(store).subscribe(any(), any());
+            final SubscriptionRequestTO req = csr.getValue();
+            assertTrue(req.continuous());
+            assertFalse(req.idOnly());
+            assertEquals(since, req.startingAfter().get());
+            assertFalse(req.ephemeral());
+        }
 
-    @Test
-    void testSubscribeToIds() {
-        when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
-        SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.forMark())
-                .or(FactSpec.ns("some").type("type"))
-                .fromScratch();
-        uut.subscribeToIds(r, f -> {
-        });
-        verify(store).subscribe(any(), any());
-        final SubscriptionRequestTO req = csr.getValue();
-        assertTrue(req.continuous());
-        assertTrue(req.idOnly());
-        assertFalse(req.ephemeral());
-    }
+   
 
-    @Test
-    void testFetchById() {
-        when(store.fetchById(cuuid.capture())).thenReturn(Optional.empty());
-        final UUID id = UUID.randomUUID();
-        uut.fetchById(id);
-        assertSame(id, cuuid.getValue());
-    }
 
     @Test
     void testPublish() {
@@ -137,60 +126,45 @@ public class DefaultFactCastTest {
     }
 
     @Test
+    void testPublishWithAggregatedException() {
+        try {
+            uut.publish(new NullFact());
+            fail();
+        } catch (FactValidationException e) {
+            assertThat(e.getMessage()).contains("lacks required namespace");
+            assertThat(e.getMessage()).contains("lacks required id");
+        }
+    }
+
+    @Test
     void testPublishManyNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
             uut.publish((List<Fact>) null);
         });
     }
 
-    @Test
-    void testFetchByIdNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.fetchById(null);
-        });
-    }
-
-    @Test
-    void testSubscribeIdsNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToIds(null, null);
-        });
-    }
-
+    
     @Test
     void testSubscribeFactsNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToFacts(null, null);
+            uut.subscribeEphemeral(null, null);
         });
     }
 
-    @Test
-    void testSubscribeIds1stArgNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToIds(null, f -> {
-            });
-        });
-    }
 
     @Test
     void testSubscribeFacts1stArgNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToFacts(null, f -> {
+            uut.subscribeEphemeral(null, f -> {
             });
         });
     }
 
-    @Test
-    void testSubscribeIds2ndArgNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToIds(SubscriptionRequest.follow(FactSpec.forMark()).fromScratch(), null);
-        });
-    }
 
     @Test
     void testSubscribeFacts2ndArgNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeToFacts(SubscriptionRequest.follow(FactSpec.forMark()).fromScratch(),
+            uut.subscribeEphemeral(SubscriptionRequest.follow(FactSpec.ns("foo")).fromScratch(),
                     null);
         });
     }
@@ -199,20 +173,6 @@ public class DefaultFactCastTest {
     void testDefaultFactCast() {
         Assertions.assertThrows(NullPointerException.class, () -> {
             new DefaultFactCast(null);
-        });
-    }
-
-    @Test
-    void testpublishWithMarkOneNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.publishWithMark((Fact) null);
-        });
-    }
-
-    @Test
-    void testpublishWithMarkManyNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.publishWithMark((List<Fact>) null);
         });
     }
 
@@ -255,4 +215,93 @@ public class DefaultFactCastTest {
         assertSame(test, FactCast.from(store).enumerateTypes("test"));
 
     }
+
+    @Test
+    public void testLockNullContract() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.lock(null);
+        });
+    }
+
+    @Test
+    public void testLockNamespaceMustNotBeEmpty() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> {
+            uut.lock(" ");
+        });
+    }
+
+    @Test
+    public void testSubscribeNullContracts() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribe(null, mock(FactObserver.class));
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribe(null, null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            uut.subscribe(mock(SubscriptionRequest.class), null);
+        });
+    }
+
+    @Test
+    public void testSubscribeClosesDelegate() throws Exception {
+
+        Subscription sub = mock(Subscription.class);
+        when(store.subscribe(any(), any())).thenReturn(sub);
+
+        Subscription s = uut.subscribe(SubscriptionRequest.follow(new LinkedList<>()).fromScratch(),
+                new FactObserver() {
+
+                    @Override
+                    public void onNext(@NonNull Fact element) {
+                    }
+                });
+
+        s.close();
+        verify(sub).close();
+
+    }
+
+    @Test
+    public void testSubscribeReconnectsOnError() throws Exception {
+
+        Subscription sub1 = mock(Subscription.class);
+        Subscription sub2 = mock(Subscription.class);
+        ArgumentCaptor<FactObserver> observer = ArgumentCaptor.forClass(FactObserver.class);
+        when(store.subscribe(any(), observer.capture())).thenReturn(sub1).thenReturn(sub2);
+
+        List<Fact> seen = new LinkedList<Fact>();
+
+        Subscription s = uut.subscribe(SubscriptionRequest.follow(new LinkedList<>()).fromScratch(),
+                new FactObserver() {
+
+                    @Override
+                    public void onNext(@NonNull Fact element) {
+                        seen.add(element);
+                    }
+                });
+
+        FactObserver fo = observer.getValue();
+        fo.onNext(new TestFact());
+        fo.onNext(new TestFact());
+
+        verify(store).subscribe(any(), any());
+
+        fo.onError(new RuntimeException());
+
+        Thread.sleep(200);
+        // subscription must be closed by now...
+        verify(sub1).close();
+        // and a reconnect should have happened
+        verify(store, times(2)).subscribe(any(), any());
+
+        fo.onNext(new TestFact());
+        fo.onNext(new TestFact());
+
+        s.close();
+        verify(sub2).close();
+        assertThat(seen).hasSize(4);
+
+    }
+
 }

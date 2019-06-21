@@ -15,7 +15,11 @@
  */
 package org.factcast.core;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 
@@ -66,29 +70,6 @@ public class FactCastTest {
         assertTrue(fc instanceof DefaultFactCast);
     }
 
-    @Test
-    void testPublishWithMarkOne() {
-        FactStore store = mock(FactStore.class);
-        doNothing().when(store).publish(facts.capture());
-        final TestFact f = new TestFact();
-        FactCast.from(store).publishWithMark(f);
-        List<Fact> published = facts.getValue();
-        assertEquals(2, published.size());
-        assertSame(f, published.get(0));
-        assertTrue(FactSpecMatcher.matches(FactSpec.forMark()).test(published.get(1)));
-    }
-
-    @Test
-    void testPublishWithMarkMany() {
-        FactStore store = mock(FactStore.class);
-        doNothing().when(store).publish(facts.capture());
-        final TestFact f = new TestFact();
-        FactCast.from(store).publishWithMark(Collections.singletonList(f));
-        List<Fact> published = facts.getValue();
-        assertEquals(2, published.size());
-        assertSame(f, published.get(0));
-        assertTrue(FactSpecMatcher.matches(FactSpec.forMark()).test(published.get(1)));
-    }
 
     @Test
     void testRetryValidatesMaxAttempts() {
@@ -125,5 +106,17 @@ public class FactCastTest {
         assertNotNull(fc.retry(10, 1));
         assertNotNull(fc.retry(10, 100));
 
+    }
+
+    @Test
+    public void testPublishFactNPE() throws Exception {
+        FactStore store = mock(FactStore.class);
+        FactCast fc = FactCast.from(store);
+        assertThrows(NullPointerException.class, () -> {
+            fc.publish((Fact) null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            fc.publish((List<Fact>) null);
+        });
     }
 }

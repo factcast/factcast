@@ -17,33 +17,27 @@ package org.factcast.store.pgsql.internal.listen;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.factcast.store.pgsql.internal.metrics.PgMetricNames;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
+import org.postgresql.PGNotification;
+import org.postgresql.jdbc.PgConnection;
 
 @ExtendWith(MockitoExtension.class)
 public class PgConnectionTesterTest {
-
-    @Mock
-    private MetricRegistry registry;
 
     private PgConnectionTester uut;
 
@@ -53,26 +47,26 @@ public class PgConnectionTesterTest {
     @Mock
     private ResultSet rs;
 
-    @Mock
-    private Counter counter;
-
     @BeforeEach
     void setUp() {
-        final String fail = new PgMetricNames().connectionFailure();
-        when(registry.counter(fail)).thenReturn(counter);
-        uut = new PgConnectionTester(registry);
+        uut = new PgConnectionTester();
     }
 
     @Test
     void testTestPositive() throws Exception {
-        Connection c = mock(Connection.class);
+        PgConnection c = mock(PgConnection.class);
         when(c.prepareStatement(anyString())).thenReturn(st);
         when(st.executeQuery()).thenReturn(rs);
         when(rs.next()).thenReturn(true, false);
         when(rs.getInt(1)).thenReturn(42);
+
+        // needed for notitfy alive roundtrip which is currently disabled.
+        // when(c.prepareCall(anyString())).thenReturn(mock(CallableStatement.class));
+        // when(c.getNotifications(anyInt())).thenReturn(new PGNotification[] {
+        // new Notification(
+        // "alive", 1) });
         boolean test = uut.test(c);
         assertTrue(test);
-        verifyZeroInteractions(counter);
     }
 
     @Test
@@ -84,7 +78,6 @@ public class PgConnectionTesterTest {
         when(rs.getInt(1)).thenReturn(1);
         boolean test = uut.test(c);
         assertFalse(test);
-        verify(counter).inc();
     }
 
     @Test
@@ -96,7 +89,6 @@ public class PgConnectionTesterTest {
         when(rs.getInt(1)).thenThrow(new SQLException("BAM"));
         boolean test = uut.test(c);
         assertFalse(test);
-        verify(counter).inc();
     }
 
     @Test
@@ -107,7 +99,6 @@ public class PgConnectionTesterTest {
         when(rs.next()).thenThrow(new SQLException("BAM"));
         boolean test = uut.test(c);
         assertFalse(test);
-        verify(counter).inc();
     }
 
     @Test
@@ -117,7 +108,6 @@ public class PgConnectionTesterTest {
         when(st.executeQuery()).thenThrow(new SQLException("BAM"));
         boolean test = uut.test(c);
         assertFalse(test);
-        verify(counter).inc();
     }
 
     @Test
@@ -126,13 +116,76 @@ public class PgConnectionTesterTest {
         when(c.prepareStatement(anyString())).thenThrow(new SQLException("BAM"));
         boolean test = uut.test(c);
         assertFalse(test);
-        verify(counter).inc();
     }
 
     @Test
-    void testPGConnectionTester() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            new PgConnectionTester(null);
-        });
+    public void testTestSelectStatement() throws Exception {
+        Connection c = mock(PgConnection.class);
+        PreparedStatement s = mock(PreparedStatement.class);
+        when(s.executeQuery()).thenThrow(new SQLException("BAM"));
+        when(c.prepareStatement(anyString())).thenReturn(s);
+        boolean test = uut.testSelectStatement(c);
+        assertFalse(test);
+
     }
+
+    @Test
+    public void testTestNotificationRoundTripThrowsException() throws Exception {
+        Connection c = mock(PgConnection.class);
+        CallableStatement s = mock(CallableStatement.class);
+        when(s.execute()).thenThrow(new SQLException("BAM"));
+        when(c.prepareCall(anyString())).thenReturn(s);
+        boolean test = uut.testNotificationRoundTrip(c);
+        assertFalse(test);
+    }
+
+    @Test
+    public void testTestNotificationRoundTripReturnsNull() throws Exception {
+        PgConnection c = mock(PgConnection.class);
+        CallableStatement s = mock(CallableStatement.class);
+        when(c.prepareCall(anyString())).thenReturn(s);
+        when(c.getNotifications(anyInt())).thenReturn(null);
+        boolean test = uut.testNotificationRoundTrip(c);
+        assertFalse(test);
+    }
+
+    @Test
+    public void testTestNotificationRoundTripReturnsEmptyArray() throws Exception {
+        PgConnection c = mock(PgConnection.class);
+        CallableStatement s = mock(CallableStatement.class);
+        when(c.prepareCall(anyString())).thenReturn(s);
+        when(c.getNotifications(anyInt())).thenReturn(new PGNotification[0]);
+        boolean test = uut.testNotificationRoundTrip(c);
+        assertFalse(test);
+    }
+
+    @Test
+    public void testTestNotificationRoundTripReturnsAsExpected() throws Exception {
+        PgConnection c = mock(PgConnection.class);
+        CallableStatement s = mock(CallableStatement.class);
+        when(c.prepareCall(anyString())).thenReturn(s);
+        when(c.getNotifications(anyInt())).thenReturn(new PGNotification[] { new PGNotification() {
+
+            @Override
+            public String getParameter() {
+                // TODO Auto-generated method stub
+                return null;
+            }
+
+            @Override
+            public int getPID() {
+                // TODO Auto-generated method stub
+                return 0;
+            }
+
+            @Override
+            public String getName() {
+                // TODO Auto-generated method stub
+                return null;
+            }
+        } });
+        boolean test = uut.testNotificationRoundTrip(c);
+        assertTrue(test);
+    }
+
 }

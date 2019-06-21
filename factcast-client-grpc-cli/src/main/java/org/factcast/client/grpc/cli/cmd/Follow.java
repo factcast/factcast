@@ -28,6 +28,7 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+@SuppressWarnings("ALL")
 @Parameters(
         commandNames = "follow",
         commandDescription = "read all matching facts and keep connected while listening for new ones")
@@ -47,12 +48,12 @@ public class Follow implements Command {
         ConsoleFactObserver obs = new ConsoleFactObserver(opt);
         SpecBuilder catchup = SubscriptionRequest.follow(FactSpec.ns(ns));
         if (fromNow)
-            fc.subscribeToFacts(catchup.fromNowOn(), obs);
+            fc.subscribeEphemeral(catchup.fromNowOn(), obs);
         else {
             if (from == null)
-                fc.subscribeToFacts(catchup.fromScratch(), obs);
+                fc.subscribeEphemeral(catchup.fromScratch(), obs);
             else
-                fc.subscribeToFacts(catchup.from(from), obs);
+                fc.subscribeEphemeral(catchup.from(from), obs);
         }
         obs.awaitTermination();
     }

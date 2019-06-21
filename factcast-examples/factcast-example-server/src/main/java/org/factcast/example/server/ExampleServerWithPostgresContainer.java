@@ -29,16 +29,17 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author uwe.schaefer@mercateo.com
  */
+@SuppressWarnings("ALL")
 @SpringBootApplication
 @Slf4j
 public class ExampleServerWithPostgresContainer {
 
     public static void main(String[] args) {
-        // you will want to replace this with RDS, a local pgsql database or whatever
-        // your usecase is.
+        // you will want to replace this with RDS, a local pgsql database or
+        // whatever your usecase is.
         startPostgresContainer();
 
-        SpringApplication.run(ExampleServerWithPostgresContainer.class);
+        SpringApplication.run(ExampleServerWithPostgresContainer.class, args);
     }
 
     private static void startPostgresContainer() {
@@ -48,8 +49,10 @@ public class ExampleServerWithPostgresContainer {
         String url = postgres.getJdbcUrl();
         System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
         System.setProperty("spring.datasource.url", url);
-        System.setProperty("spring.datasource.username", postgres.getUsername());
-        System.setProperty("spring.datasource.password", postgres.getPassword());
+        System.setProperty("spring.liquibase.user", postgres.getUsername());
+        System.setProperty("spring.liquibase.password", postgres.getPassword());
+        System.setProperty("spring.datasource.username", "factcast-application-user");
+        System.setProperty("spring.datasource.password", "factcast-application-user");
     }
 
 }

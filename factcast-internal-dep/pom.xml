@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.0.35-SNAPSHOT</version>
+    <version>0.1.0-RC5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-internal-dep</artifactId>
@@ -40,7 +40,7 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>27.1-jre</version>
+        <version>28.0-jre</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>

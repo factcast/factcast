@@ -44,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author <uwe.schaefer@mercateo.com>
  */
+@SuppressWarnings("UnstableApiUsage")
 @Slf4j
 @RequiredArgsConstructor
 public class PgFactStream {
@@ -166,8 +167,9 @@ public class PgFactStream {
 
         final PgPostQueryMatcher postQueryMatcher;
 
+        @SuppressWarnings("NullableProblems")
         @Override
-        public void processRow(@NonNull ResultSet rs) throws SQLException {
+        public void processRow(ResultSet rs) throws SQLException {
             if (isConnected()) {
                 if (rs.isClosed()) {
                     throw new IllegalStateException(

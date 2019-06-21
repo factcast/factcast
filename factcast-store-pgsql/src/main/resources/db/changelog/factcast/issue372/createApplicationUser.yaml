@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: issue372
+      author: akp
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 0
+            sql: SELECT count(1) FROM pg_roles WHERE rolname='${dml-user}';
+      changes:
+        - sql:
+          endDelimiter: \nGO
+          splitStatements: true
+          sql: CREATE USER "${dml-user}" WITH PASSWORD '${dml-user-pw}';
+               GRANT SELECT, INSERT, DELETE, UPDATE ON TABLE fact, tokenstore, catchup TO "${dml-user}";
+               GRANT EXECUTE ON  FUNCTION notifyFactInsert() TO "${dml-user}";
+               GRANT USAGE,SELECT ON SEQUENCE catchup_seq, fact_ser_seq TO "${dml-user}";
+               

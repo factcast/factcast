@@ -25,8 +25,9 @@ public interface Subscription extends AutoCloseable {
     /**
      * blocks until Catchup or Cancelled event received
      *
-     * @return this
+     * @return this for fluency
      * @throws SubscriptionCancelledException
+     *             if Subscription was cancelled before or during the wait
      */
     Subscription awaitCatchup() throws SubscriptionCancelledException;
 
@@ -34,7 +35,7 @@ public interface Subscription extends AutoCloseable {
      * blocks until Catchup or Cancelled event received
      *
      * @param waitTimeInMillis
-     * @return this
+     * @return this for fluency
      * @throws SubscriptionCancelledException
      * @throws TimeoutException
      *             if no relevant event was received in time

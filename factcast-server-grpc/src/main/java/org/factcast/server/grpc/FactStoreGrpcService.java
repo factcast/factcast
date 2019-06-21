@@ -30,35 +30,41 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.Capabilities;
+import org.factcast.grpc.api.CompressionCodecs;
+import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
+import org.factcast.server.grpc.auth.FactCastRole;
+import org.springframework.security.access.annotation.Secured;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
-import lombok.Generated;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.springboot.autoconfigure.grpc.server.GrpcService;
+import net.devh.boot.grpc.server.service.GrpcService;
 
 /**
  * Service that provides access to an injected FactStore via GRPC.
@@ -69,27 +75,33 @@ import net.devh.springboot.autoconfigure.grpc.server.GrpcService;
  */
 @Slf4j
 @RequiredArgsConstructor
-@GrpcService(RemoteFactStoreGrpc.class)
+@GrpcService
 @SuppressWarnings("all")
+@Secured(FactCastRole.READ)
 public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
-    static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 0, 0);
+    static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
 
     final FactStore store;
+
+    private final CompressionCodecs codecs = new CompressionCodecs();
 
     final ProtoConverter converter = new ProtoConverter();
 
     static final AtomicLong subscriptionIdStore = new AtomicLong();
 
     @Override
-    public void fetchById(@NonNull MSG_UUID request,
+    public void fetchById(MSG_UUID request,
             StreamObserver<MSG_OptionalFact> responseObserver) {
         try {
+            enableResponseCompression(responseObserver);
+
             UUID fromProto = converter.fromProto(request);
             log.trace("fetchById {}", fromProto);
             Optional<Fact> fetchById = store.fetchById(fromProto);
-            log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "").orElse(
-                    "NOT "));
+            log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "")
+                    .orElse(
+                            "NOT "));
             responseObserver.onNext(converter.toProto(fetchById));
             responseObserver.onCompleted();
         } catch (Throwable e) {
@@ -98,10 +110,14 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
+    @Secured(FactCastRole.WRITE)
     public void publish(@NonNull MSG_Facts request,
             StreamObserver<MSG_Empty> responseObserver) {
-        List<Fact> facts = request.getFactList().stream().map(converter::fromProto).collect(
-                Collectors.toList());
+        List<Fact> facts = request.getFactList()
+                .stream()
+                .map(converter::fromProto)
+                .collect(
+                        Collectors.toList());
         final int size = facts.size();
         log.debug("publish {} fact{}", size, size > 1 ? "s" : "");
         log.trace("publish {}", facts);
@@ -118,8 +134,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void subscribe(@NonNull MSG_SubscriptionRequest request,
+    public void subscribe(MSG_SubscriptionRequest request,
             StreamObserver<MSG_Notification> responseObserver) {
+        enableResponseCompression(responseObserver);
+
         SubscriptionRequestTO req = converter.fromProto(request);
         resetDebugInfo(req);
         BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(req.toString(),
@@ -129,8 +147,16 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                 .createNotificationFor(f.id()) : converter.createNotificationFor(f)));
     }
 
+    private void enableResponseCompression(StreamObserver<?> responseObserver) {
+        // need to be defensive not to break tests passing mocks here.
+        if (responseObserver instanceof ServerCallStreamObserver) {
+            ServerCallStreamObserver obs = (ServerCallStreamObserver) responseObserver;
+            obs.setMessageCompression(true);
+        }
+    }
+
     @Override
-    public void handshake(@NonNull MSG_Empty request,
+    public void handshake(MSG_Empty request,
             StreamObserver<MSG_ServerConfig> responseObserver) {
         ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
         responseObserver.onNext(converter.toProto(cfg));
@@ -139,8 +165,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     private Map<String, String> collectProperties() {
         HashMap<String, String> properties = new HashMap<>();
-        evaluateLZ4Availability(properties);
         retrieveImplementationVersion(properties);
+        properties.put(Capabilities.CODECS.toString(), codecs.available());
         log.info("Handshake properties: {} ", properties);
         return properties;
     }
@@ -150,19 +176,22 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         String implVersion = "UNKNOWN";
         URL propertiesUrl = getProjectProperties();
         Properties buildProperties = new Properties();
-        if (propertiesUrl != null)
+        if (propertiesUrl != null) {
             try {
                 InputStream is = propertiesUrl.openStream();
                 if (is != null) {
                     buildProperties.load(is);
                     String v = buildProperties.getProperty("version");
-                    if (v != null)
+                    if (v != null) {
                         implVersion = v;
+                    }
                 }
             } catch (Exception ignore) {
-                // whatever fails when reading the version implies, that the impl Version is
+                // whatever fails when reading the version implies, that the
+                // impl Version is
                 // "UNKNOWN"
             }
+        }
         properties.put(Capabilities.FACTCAST_IMPL_VERSION.toString(), implVersion);
     }
 
@@ -170,23 +199,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     URL getProjectProperties() {
         return FactStoreGrpcService.class.getResource(
                 "/META-INF/maven/org.factcast/factcast-server-grpc/pom.properties");
-    }
-
-    private void evaluateLZ4Availability(HashMap<String, String> properties) {
-        String lz4_available = String.valueOf(isClassAvailable("net.jpountz.lz4.LZ4Constants"));
-        properties.put(Capabilities.CODEC_LZ4.toString(), lz4_available);
-    }
-
-    @Generated
-    private boolean isClassAvailable(String string) {
-        try {
-            Class<?> forName = Class.forName(string);
-            return forName != null;
-        } catch (ClassNotFoundException ignore) {
-            // unfortunately, this is expected bahavior, when the class is not in the
-            // classpath
-        }
-        return false;
     }
 
     private void resetDebugInfo(SubscriptionRequestTO req) {
@@ -214,12 +226,66 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void enumerateTypes(@NonNull MSG_String request,
+    public void enumerateTypes(MSG_String request,
             StreamObserver<MSG_StringSet> responseObserver) {
+
+        enableResponseCompression(responseObserver);
+
         try {
             Set<String> types = store.enumerateTypes(converter.fromProto(
                     request));
             responseObserver.onNext(converter.toProto(types));
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            responseObserver.onError(e);
+        }
+    }
+
+    @Override
+    @Secured(FactCastRole.WRITE)
+    public void publishConditional(MSG_ConditionalPublishRequest request,
+            StreamObserver<MSG_ConditionalPublishResult> responseObserver) {
+        try {
+            ConditionalPublishRequest req = converter.fromProto(request);
+            boolean result = store.publishIfUnchanged(req.facts(), req.token());
+            responseObserver.onNext(converter.toProto(result));
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            responseObserver.onError(e);
+        }
+    }
+
+    @Override
+    @Secured(FactCastRole.WRITE)
+    public void stateFor(MSG_StateForRequest request, StreamObserver<MSG_UUID> responseObserver) {
+        try {
+            StateForRequest req = converter.fromProto(request);
+            StateToken token = store.stateFor(req.aggIds(), Optional.ofNullable(req.ns()));
+            responseObserver.onNext(converter.toProto(token.uuid()));
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            responseObserver.onError(e);
+        }
+    }
+
+    @Override
+    @Secured(FactCastRole.WRITE)
+    public void invalidate(MSG_UUID request, StreamObserver<MSG_Empty> responseObserver) {
+        try {
+            UUID tokenId = converter.fromProto(request);
+            store.invalidate(new StateToken(tokenId));
+            responseObserver.onNext(MSG_Empty.getDefaultInstance());
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            responseObserver.onError(e);
+        }
+    }
+
+    @Override
+    public void currentTime(MSG_Empty request,
+            StreamObserver<MSG_CurrentDatabaseTime> responseObserver) {
+        try {
+            responseObserver.onNext(converter.toProto(store.currentTime()));
             responseObserver.onCompleted();
         } catch (Throwable e) {
             responseObserver.onError(e);

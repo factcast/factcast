@@ -22,7 +22,6 @@ import java.util.function.Supplier;
 
 import org.factcast.store.pgsql.internal.listen.PgListener.FactInsertionEvent;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 
 import lombok.AccessLevel;
@@ -36,9 +35,10 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author uwe.schaefer@mercateo.com
  */
+@SuppressWarnings("UnstableApiUsage")
 @Slf4j
 @RequiredArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__(@VisibleForTesting))
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
 class CondensedQueryExecutor {
 
     final long maxDelayInMillis;
@@ -64,7 +64,7 @@ class CondensedQueryExecutor {
                         try {
                             CondensedQueryExecutor.this.runTarget();
                         } catch (Throwable e) {
-                            log.debug("Scheduled query failed, closing: ", e.getMessage());
+                            log.debug("Scheduled query failed, closing: {}", e.getMessage());
                             // TODO needed?
                         }
                     }
@@ -79,6 +79,7 @@ class CondensedQueryExecutor {
         trigger();
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected void runTarget() {
         try {
             target.run(false);

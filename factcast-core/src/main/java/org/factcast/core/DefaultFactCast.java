@@ -16,18 +16,17 @@
 package org.factcast.core;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.lock.LockedOperationBuilder;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.ReconnectingFactSubscriptionWrapper;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.observer.IdObserver;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -45,43 +44,15 @@ class DefaultFactCast implements FactCast {
 
     @Override
     @NonNull
-    public Subscription subscribeToFacts(@NonNull SubscriptionRequest req,
+    public Subscription subscribeEphemeral(@NonNull SubscriptionRequest req,
             @NonNull FactObserver observer) {
         return store.subscribe(SubscriptionRequestTO.forFacts(req), observer);
     }
 
     @Override
-    @NonNull
-    public Subscription subscribeToIds(@NonNull SubscriptionRequest req,
-            @NonNull IdObserver observer) {
-        return store.subscribe(SubscriptionRequestTO.forIds(req), observer.map(Fact::id));
-    }
-
-    @Override
-    @NonNull
-    public Optional<Fact> fetchById(@NonNull UUID id) {
-        return store.fetchById(id);
-    }
-
-    @Override
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
-        // TODO maybe we should test all and just throw one exception
-        factsToPublish.forEach(f -> {
-            if (lacksRequiredNamespace(f))
-                throw new IllegalArgumentException("Fact " + f.id() + " lacks required namespace.");
-            if (lacksRequiredId(f))
-                throw new IllegalArgumentException("Fact " + f.jsonHeader()
-                        + " lacks required id.");
-        });
+        FactValidation.validate(factsToPublish);
         store.publish(factsToPublish);
-    }
-
-    private boolean lacksRequiredNamespace(Fact f) {
-        return f.ns() == null || f.ns().trim().isEmpty();
-    }
-
-    private boolean lacksRequiredId(Fact f) {
-        return f.id() == null;
     }
 
     @Override
@@ -101,7 +72,22 @@ class DefaultFactCast implements FactCast {
     }
 
     @Override
-    public LockedOperationBuilder lock(String ns) {
+    public LockedOperationBuilder lock(@NonNull String ns) {
+        if (ns.trim().isEmpty())
+            throw new IllegalArgumentException("Namespace must not be empty");
         return new LockedOperationBuilder(this.store, ns);
+    }
+
+    @Override
+    public LockedOperationBuilder lockGlobally() {
+        return new LockedOperationBuilder(this.store, null);
+    }
+
+    @Override
+    public Subscription subscribe(@NonNull SubscriptionRequest request,
+            @NonNull FactObserver observer) {
+        return new ReconnectingFactSubscriptionWrapper(store, SubscriptionRequestTO.forFacts(
+                request),
+                observer);
     }
 }

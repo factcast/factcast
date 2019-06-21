@@ -41,7 +41,7 @@ public class Converters {
 
         private final Class<T> clazz;
 
-        public SimpleConverter(String optionName, Class<T> clazz, Function<String, T> l) {
+        SimpleConverter(String optionName, Class<T> clazz, Function<String, T> l) {
             super(optionName);
             this.clazz = clazz;
             this.l = l;

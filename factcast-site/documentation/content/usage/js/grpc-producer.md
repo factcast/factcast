@@ -6,17 +6,17 @@ date = "2017-04-24T18:36:24+02:00"
 
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe.schaefer@mercateo.com"
+weight = 100
 
 [menu.main]
 parent = "usage"
 identifier = "js_grpc_producer"
-weight = 100
 
 +++
 
 ## nodeJS GRPC Producer
 
-Producing Facts via nodeJS is very simple due to the available [gRPC](https://www.npmjs.com/package/grpc) NPM Module. It will generate a stub constructor called ```RemoteFactStore``` from our proto file.
+Producing Facts via nodeJS is very simple due to the available [{{<icon name="circle-arrow-right" size="small">}}gRPC](https://www.npmjs.com/package/grpc) NPM Module. It will generate a stub constructor called ```RemoteFactStore``` from our proto file.
 
 ```javascript
 const uuidV4 = require('uuid/v4');
@@ -41,4 +41,4 @@ store.publish([{
   }
 })
 ```
-See the [Facts]({{%relref "/concept/fact.md"%}}) page for detailed information about all possible and required header fields.
+See the [{{<icon name="circle-arrow-right" size="small">}}Facts]({{%relref "/concept/fact.md"%}}) page for detailed information about all possible and required header fields.

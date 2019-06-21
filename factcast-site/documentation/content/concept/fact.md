@@ -20,7 +20,7 @@ We decided to use the term Fact over Domain-Event because we want to highlight t
 
 Obviously, a Fact is history and cannot be changed, after it happened. This is one of the cornerstones of EventSourcing and provides us with Facts being **immutable**, which plays an important role when it comes to caching.
 
-[{{%icon circle-arrow-right%}}Read more on caching]({{%relref "/concept/caching.md"%}})
+[{{<icon name="circle-arrow-right" size="small">}}Read more on caching]({{%relref "/concept/caching.md"%}})
 
 Facts consist of two JSON documents: Header and Payload.
 
@@ -86,10 +86,10 @@ JSON-Schema:
 ### The Metadata Object
 
 The Meta-Data Object is optional and consist of key:value pairs. The reason for it is that implementations can filter facts on certain attributes efficiently (without indexing the whole Fact payload).
-One special attribute is the optional '**unique_identifier**' attribute of type String, which - if set - will make FactCast roll back a transaction, if not unique.  
+  
 
 ### The Payload
 
-has no constraints other than being a valid JSON document.
+The payload has no constraints other than being a valid JSON document.
 
 please, see GRPC docs for further details.

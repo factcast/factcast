@@ -15,23 +15,19 @@
  */
 package org.factcast.server.grpc;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.*;
+import org.mockito.junit.jupiter.*;
 
-import io.grpc.stub.ServerCallStreamObserver;
+import io.grpc.stub.*;
 
 @ExtendWith(MockitoExtension.class)
 public class BlockingStreamObserverTest {
@@ -51,6 +47,19 @@ public class BlockingStreamObserverTest {
         verify(delegate, never()).onCompleted();
         uut.onCompleted();
         verify(delegate).onCompleted();
+    }
+
+    @Test
+    void testNullContract() {
+        assertThrows(NullPointerException.class, () -> {
+            new BlockingStreamObserver(null, mock(ServerCallStreamObserver.class));
+        });
+        assertThrows(NullPointerException.class, () -> {
+            new BlockingStreamObserver(null, null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            new BlockingStreamObserver("oink", null);
+        });
     }
 
     @Test

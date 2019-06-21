@@ -15,11 +15,8 @@
  */
 package org.factcast.core;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 import org.factcast.core.lock.LockedOperationBuilder;
 import org.factcast.core.store.FactStore;
@@ -43,20 +40,6 @@ public interface FactCast extends ReadFactCast {
         publish(Collections.singletonList(factToPublish));
     }
 
-    default UUID publishWithMark(@NonNull Fact factToPublish) {
-        MarkFact mark = new MarkFact();
-        publish(Arrays.asList(factToPublish, mark));
-        return mark.id();
-    }
-
-    default UUID publishWithMark(@NonNull List<Fact> factsToPublish) {
-        MarkFact mark = new MarkFact();
-        List<Fact> factsWithMarkAdded = new ArrayList<>(factsToPublish);
-        factsWithMarkAdded.add(mark);
-        publish(factsWithMarkAdded);
-        return mark.id();
-    }
-
     static FactCast from(@NonNull FactStore store) {
         return new DefaultFactCast(store);
     }
@@ -73,5 +56,7 @@ public interface FactCast extends ReadFactCast {
         return Retry.wrap(this, maxAttempts, minimumWaitIntervalMillis);
     }
 
-    LockedOperationBuilder lock(String ns);
+    LockedOperationBuilder lock(@NonNull String ns);
+
+    LockedOperationBuilder lockGlobally();
 }

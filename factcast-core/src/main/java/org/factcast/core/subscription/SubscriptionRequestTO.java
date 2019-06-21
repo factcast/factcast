@@ -46,15 +46,12 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
 @Setter
-@JsonIgnoreProperties
+@JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
 public class SubscriptionRequestTO implements SubscriptionRequest {
 
     @JsonProperty
     long maxBatchDelayInMs = 0;
-
-    @JsonProperty
-    boolean marks;
 
     @JsonProperty
     boolean continuous;
@@ -78,6 +75,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
         return specs.stream().anyMatch(s -> s.jsFilterScript() != null);
     }
 
+    @Override
     public java.util.Optional<UUID> startingAfter() {
         return java.util.Optional.ofNullable(startingAfter);
     }
@@ -90,7 +88,6 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
         startingAfter = request.startingAfter().orElse(null);
         debugInfo = request.debugInfo();
         specs.addAll(request.specs());
-        marks = request.marks();
     }
 
     public static SubscriptionRequestTO forFacts(SubscriptionRequest request) {
@@ -111,16 +108,14 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     }
 
     private void checkArgument(boolean b) {
-        if (!b)
+        if (!b) {
             throw new IllegalArgumentException();
+        }
     }
 
     @Override
     public List<FactSpec> specs() {
         ArrayList<FactSpec> l = new ArrayList<>(specs);
-        if (marks) {
-            l.add(0, FactSpec.forMark());
-        }
         return Collections.unmodifiableList(l);
     }
 

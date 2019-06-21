@@ -15,38 +15,47 @@
  */
 package org.factcast.store.inmem;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.factcast.core.store.StateToken;
+import org.factcast.core.store.TokenStore;
+
+import lombok.NonNull;
 
 class InMemTokenStore implements TokenStore {
 
-    final Map<StateToken, Map<UUID, Optional<UUID>>> tokens = new HashMap<>();
+    private final Map<StateToken, Map<UUID, Optional<UUID>>> tokens = Collections.synchronizedMap(
+            new HashMap<>());
 
-    final Map<StateToken, String> namespaces = new HashMap<>();
+    private final Map<StateToken, String> namespaces = Collections.synchronizedMap(new HashMap<>());
 
-    public StateToken create(String ns, Map<UUID, Optional<UUID>> state) {
+    @NonNull
+    public StateToken create(@NonNull Map<UUID, Optional<UUID>> state,
+            @NonNull Optional<String> ns) {
         StateToken token = new StateToken();
         tokens.put(token, state);
-        namespaces.put(token, ns);
+        namespaces.put(token, ns.orElse(null));
         return token;
     }
 
-    public void invalidate(StateToken token) {
+    public void invalidate(@NonNull StateToken token) {
         tokens.remove(token);
         namespaces.remove(token);
     }
 
     @Override
-    public Map<UUID, Optional<UUID>> getState(StateToken token) {
-        return tokens.get(token);
+    @NonNull
+    public Optional<Map<UUID, Optional<UUID>>> getState(@NonNull StateToken token) {
+        return Optional.ofNullable(tokens.get(token));
     }
 
     @Override
-    public String getNs(StateToken token) {
-        return namespaces.get(token);
+    @NonNull
+    public Optional<String> getNs(@NonNull StateToken token) {
+        return Optional.ofNullable(namespaces.get(token));
     }
 }

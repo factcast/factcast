@@ -15,16 +15,18 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import org.factcast.client.grpc.GrpcFactStore;
-import org.factcast.core.store.FactStore;
-import org.factcast.spring.boot.autoconfigure.store.inmem.InMemFactStoreAutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import java.util.*;
 
-import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
+import org.factcast.client.grpc.*;
+import org.factcast.core.store.*;
+import org.factcast.spring.boot.autoconfigure.store.inmem.*;
+import org.springframework.beans.factory.annotation.*;
+import org.springframework.boot.autoconfigure.*;
+import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.context.annotation.*;
+
+import io.grpc.*;
+import net.devh.boot.grpc.client.channelfactory.*;
 
 /**
  * Provides a GrpcFactStore as a FactStore implementation.
@@ -32,14 +34,33 @@ import net.devh.springboot.autoconfigure.grpc.client.AddressChannelFactory;
  * @author uwe.schaefer@mercateo.com
  */
 
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Configuration
-@ConditionalOnClass(GrpcFactStore.class)
+@ConditionalOnClass({ GrpcFactStore.class, GrpcChannelFactory.class })
 @AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
 public class GrpcFactStoreAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(FactStore.class)
-    public FactStore factStore(AddressChannelFactory af) {
-        return new GrpcFactStore(af);
+    public FactStore factStore(GrpcChannelFactory af,
+            @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials) {
+        org.factcast.client.grpc.FactCastGrpcChannelFactory f = new org.factcast.client.grpc.FactCastGrpcChannelFactory() {
+
+            @Override
+            public Channel createChannel(String name, List<ClientInterceptor> interceptors) {
+                return af.createChannel(name, interceptors);
+            }
+
+            @Override
+            public Channel createChannel(String name) {
+                return af.createChannel(name);
+            }
+
+            @Override
+            public void close() {
+                af.close();
+            }
+        };
+        return new GrpcFactStore(f, credentials);
     }
 }
