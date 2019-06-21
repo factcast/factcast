@@ -76,9 +76,9 @@ public final class FactCastJson {
         return reader.forType(class1).readValue(json);
     }
 
-    public static ObjectNode toObjectNode(String jsonHeader) {
+    public static ObjectNode toObjectNode(String json) {
         try {
-            return (ObjectNode) objectMapper.readTree(jsonHeader);
+            return (ObjectNode) objectMapper.readTree(json);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

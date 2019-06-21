@@ -15,11 +15,21 @@
  */
 package org.factcast.store.test;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.time.Duration;
 import java.util.LinkedList;
@@ -47,7 +57,9 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -869,10 +881,11 @@ public abstract class AbstractFactStoreTest {
             if (c.getCount() > 0) {
                 c.countDown();
 
-                if (Math.random() < 0.5)
+                if (Math.random() < 0.5) {
                     uut.publish(fact(agg1));
-                else
+                } else {
                     uut.publish(fact(agg2));
+                }
 
             }
 
@@ -908,10 +921,11 @@ public abstract class AbstractFactStoreTest {
                     if (c.getCount() > 0) {
                         c.countDown();
 
-                        if (Math.random() < 0.5)
+                        if (Math.random() < 0.5) {
                             uut.publish(fact(agg1));
-                        else
+                        } else {
                             uut.publish(fact(agg2));
+                        }
 
                     }
 
@@ -1193,5 +1207,19 @@ public abstract class AbstractFactStoreTest {
                 "")));
         assertThrows(NullPointerException.class, () -> store.stateFor(null, null));
         assertThrows(NullPointerException.class, () -> store.stateFor(new LinkedList<>(), null));
+    }
+
+    @Test
+    public void testCurrentTimeProgresses() throws Exception {
+
+        long t1 = store.currentTime();
+        Thread.sleep(50);
+        long t2 = store.currentTime();
+
+        assertNotEquals(t1, t2);
+
+        assertTrue(Math.abs(t1 - t2) < 200);
+        assertTrue(Math.abs(t1 - t2) > 40);
+
     }
 }

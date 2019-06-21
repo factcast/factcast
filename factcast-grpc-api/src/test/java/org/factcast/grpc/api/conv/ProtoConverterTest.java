@@ -44,6 +44,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
@@ -139,8 +140,12 @@ public class ProtoConverterTest {
                 .meta(key2, value2)
                 .type(type)
                 .build(payload);
-        Fact probe2 = Fact.builder().ns(ns + "foo").aggId(UUID.randomUUID()).type("narf").build(
-                payload);
+        Fact probe2 = Fact.builder()
+                .ns(ns + "foo")
+                .aggId(UUID.randomUUID())
+                .type("narf")
+                .build(
+                        payload);
 
         MSG_Facts proto = uut.toProto(Arrays.asList(probe, probe2));
 
@@ -251,8 +256,7 @@ public class ProtoConverterTest {
         SubscriptionRequestTO to = new SubscriptionRequestTO().continuous(true)
                 .ephemeral(false)
                 .debugInfo("test")
-                .maxBatchDelayInMs(13)
-                ;
+                .maxBatchDelayInMs(13);
         to.addSpecs(Collections.singletonList(FactSpec.ns("foo")));
         SubscriptionRequestTO copy = uut.fromProto(uut.toProto(to));
         assertEquals(to.debugInfo(), copy.debugInfo());
@@ -584,4 +588,21 @@ public class ProtoConverterTest {
         }
 
     }
+
+    @Test
+    public void testFromProtoMSG_CurrentDatabaseTime() throws Exception {
+        long probe = 123L;
+
+        assertEquals(probe, uut.fromProto(uut.toProto(probe)));
+    }
+
+    @Test
+    public void testFromProtoMSG_CurrentDatabaseTimeNull() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+
+            MSG_CurrentDatabaseTime t = null;
+            uut.fromProto(t);
+        });
+    }
+
 }
