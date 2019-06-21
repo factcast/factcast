@@ -5,6 +5,9 @@ import java.util.UUID;
 import lombok.Getter;
 
 public final class ExceptionAfterPublish extends IllegalStateException {
+
+    private static final long serialVersionUID = 1L;
+
     @Getter
     private UUID lastFactId;
 
@@ -14,7 +17,5 @@ public final class ExceptionAfterPublish extends IllegalStateException {
                 e);
         this.lastFactId = lastFactId;
     }
-
-    private static final long serialVersionUID = 1L;
 
 }
