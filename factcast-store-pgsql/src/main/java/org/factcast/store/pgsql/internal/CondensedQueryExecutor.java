@@ -22,7 +22,6 @@ import java.util.function.Supplier;
 
 import org.factcast.store.pgsql.internal.listen.PgListener.FactInsertionEvent;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 
 import lombok.AccessLevel;
@@ -39,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 @SuppressWarnings("UnstableApiUsage")
 @Slf4j
 @RequiredArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__(@VisibleForTesting))
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
 class CondensedQueryExecutor {
 
     final long maxDelayInMillis;

@@ -44,6 +44,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
@@ -594,4 +595,14 @@ public class ProtoConverterTest {
 
         assertEquals(probe, uut.fromProto(uut.toProto(probe)));
     }
+
+    @Test
+    public void testFromProtoMSG_CurrentDatabaseTimeNull() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+
+            MSG_CurrentDatabaseTime t = null;
+            uut.fromProto(t);
+        });
+    }
+
 }
