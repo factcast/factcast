@@ -17,17 +17,22 @@ package org.factcast.core.spec;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import lombok.Value;
 
-@Value
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FilterScript {
-    @NonNull
-    final String languageIdentifier;
 
     @NonNull
-    final String source;
+    String languageIdentifier;
+
+    @NonNull
+    String source;
 
     public static FilterScript js(@NonNull String source) {
         return new FilterScript("js", source);

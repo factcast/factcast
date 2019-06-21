@@ -17,6 +17,7 @@ package org.factcast.core.spec;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.UUID;
 
@@ -97,6 +98,32 @@ public class FactSpecTest {
         FactSpec spec = FactCastJson.readValue(FactSpec.class, json);
 
         assertEquals(new FilterScript("js", script), spec.filterScript());
+    }
+
+    @Test
+    public void testJsFilterScriptDeserRemoved() throws Exception {
+        String script = "foo";
+        String json = "{\"ns\":\"x\",\"jsFilterScript\":\"" + script + "\"}";
+
+        FactSpec spec = FactCastJson.readValue(FactSpec.class, json);
+        spec.filterScript(null);
+        assertNull(spec.jsFilterScript());
+        assertNull(spec.filterScript());
+    }
+
+    @Test
+    public void testFilterScriptDeser() throws Exception {
+        String script = "foo";
+        String json = "{\"ns\":\"x\",\"filterScript\":{\"languageIdentifier\":\"js\",\"source\":\""
+                + script + "\"}}";
+
+        FactSpec spec = FactCastJson.readValue(FactSpec.class, json);
+        assertEquals(script, spec.jsFilterScript());
+        assertEquals(FilterScript.js(script), spec.filterScript());
+
+        spec.filterScript(null);
+        assertNull(spec.jsFilterScript());
+        assertNull(spec.filterScript());
     }
 
     @Test
