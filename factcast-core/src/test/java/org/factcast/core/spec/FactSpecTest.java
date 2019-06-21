@@ -15,16 +15,15 @@
  */
 package org.factcast.core.spec;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
-import java.util.*;
+import java.util.UUID;
 
-import org.factcast.core.*;
-import org.junit.jupiter.api.*;
-
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class FactSpecTest {
-
 
     @Test
     void testMetaBothNull() {
@@ -73,7 +72,10 @@ public class FactSpecTest {
 
     @Test
     void testFactSpecJsFilter() {
-        assertEquals("foo", FactSpec.ns("x").jsFilterScript("foo").jsFilterScript());
+        FactSpec ns = FactSpec.ns("x");
+        ns = ns.jsFilterScript("foo");
+        String script = ns.jsFilterScript();
+        assertEquals("foo", script);
     }
 
     @Test
