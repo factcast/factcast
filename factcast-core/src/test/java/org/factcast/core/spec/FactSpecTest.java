@@ -20,8 +20,11 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import java.util.UUID;
 
+import org.factcast.core.util.FactCastJson;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class FactSpecTest {
 
@@ -85,4 +88,24 @@ public class FactSpecTest {
         assertEquals(f1, f2);
         assertNotSame(f1, f2);
     }
+
+    @Test
+    public void testJsFilterScriptDeserDownwardCompatibility() throws Exception {
+        String script = "foo";
+        String json = "{\"ns\":\"x\",\"jsFilterScript\":\"" + script + "\"}";
+
+        FactSpec spec = FactCastJson.readValue(FactSpec.class, json);
+
+        assertEquals(new FilterScript("js", script), spec.filterScript());
+    }
+
+    @Test
+    public void testJsFilterScriptSerDownwardCompatibility() throws Exception {
+        String expected = "foo";
+        FactSpec fs = FactSpec.ns("x").filterScript(FilterScript.js("foo"));
+        ObjectNode node = FactCastJson.toObjectNode(FactCastJson.writeValueAsString(fs));
+
+        assertEquals(expected, node.get("jsFilterScript").asText());
+    }
+
 }
