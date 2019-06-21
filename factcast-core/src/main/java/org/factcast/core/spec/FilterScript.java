@@ -28,4 +28,8 @@ public class FilterScript {
 
     @NonNull
     final String source;
+
+    public static FilterScript js(@NonNull String source) {
+        return new FilterScript("js", source);
+    }
 }

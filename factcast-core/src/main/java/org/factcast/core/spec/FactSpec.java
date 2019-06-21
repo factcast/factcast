@@ -79,6 +79,19 @@ public class FactSpec {
             return null;
     }
 
+    public FactSpec filterScript(FilterScript script) {
+        if (script != null) {
+            this.filterScript = script;
+            if ("js".equals(script.languageIdentifier()))
+                jsFilterScript = script.source();
+        } else {
+            filterScript = null;
+            jsFilterScript = null;
+        }
+
+        return this;
+    }
+
     @Deprecated
     public FactSpec jsFilterScript(String script) {
         if (script != null)
