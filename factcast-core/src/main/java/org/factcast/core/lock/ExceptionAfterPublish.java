@@ -25,6 +25,9 @@ import lombok.Getter;
 import lombok.NonNull;
 
 public final class ExceptionAfterPublish extends IllegalStateException {
+
+    private static final long serialVersionUID = 1L;
+
     @Getter
     @NonNull
     private List<Fact> publishedFacts;
@@ -43,7 +46,5 @@ public final class ExceptionAfterPublish extends IllegalStateException {
                 .map(Fact::id)
                 .collect(Collectors.toList()));
     }
-
-    private static final long serialVersionUID = 1L;
 
 }
