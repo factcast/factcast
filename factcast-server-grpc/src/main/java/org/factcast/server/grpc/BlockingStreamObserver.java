@@ -34,11 +34,11 @@ import lombok.extern.slf4j.Slf4j;
  * @author <uwe.schaefer@mercateo.com>
  */
 @Slf4j
-class BlockingStreamObserver<T> implements StreamObserver<T> {
+public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
-    static final int RETRY_COUNT = 60;
+    private static final int RETRY_COUNT = 60;
 
-    static final int WAIT_TIME = 1000;
+    private static final int WAIT_TIME = 1000;
 
     final ServerCallStreamObserver<T> delegate;
 

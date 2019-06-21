@@ -52,8 +52,10 @@ public class PgPostQueryMatcher implements Predicate<Fact> {
         if (canBeSkipped) {
             log.trace("{} post query filtering has been disabled", req);
         } else {
-            this.matchers.addAll(req.specs().stream().map(FactSpecMatcher::new).collect(Collectors
-                    .toList()));
+            this.matchers.addAll(req.specs()
+                    .stream()
+                    .map(FactSpecMatcher::new)
+                    .collect(Collectors.toList()));
         }
     }
 

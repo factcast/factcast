@@ -19,8 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.factcast.core.MarkFact;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
@@ -32,6 +31,7 @@ import lombok.NonNull;
  * @author uwe.schaefer@mercateo.com
  */
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FactSpec {
 
     @NonNull
@@ -46,7 +46,11 @@ public class FactSpec {
     UUID aggId = null;
 
     @JsonProperty
+    @Deprecated
     String jsFilterScript = null;
+
+    @JsonProperty
+    FilterScript filterScript = null;
 
     @NonNull
     @JsonProperty
@@ -57,10 +61,6 @@ public class FactSpec {
         return this;
     }
 
-    public static FactSpec forMark() {
-        return FactSpec.ns(MarkFact.MARK_NS).type(MarkFact.MARK_TYPE);
-    }
-
     public static FactSpec ns(String ns) {
         return new FactSpec(ns);
     }
@@ -69,4 +69,47 @@ public class FactSpec {
         super();
         this.ns = ns;
     }
+
+    public FilterScript filterScript() {
+        if (filterScript != null)
+            return filterScript;
+        else if (jsFilterScript != null)
+            return new FilterScript("js", jsFilterScript);
+        else
+            return null;
+    }
+
+    public FactSpec filterScript(FilterScript script) {
+        if (script != null) {
+            this.filterScript = script;
+            if ("js".equals(script.languageIdentifier()))
+                jsFilterScript = script.source();
+        } else {
+            filterScript = null;
+            jsFilterScript = null;
+        }
+
+        return this;
+    }
+
+    @Deprecated
+    public FactSpec jsFilterScript(String script) {
+        if (script != null)
+            filterScript(new FilterScript("js", script));
+        else
+            filterScript(null);
+
+        return this;
+    }
+
+    @Deprecated
+    public String jsFilterScript() {
+        if (filterScript != null && "js".equals(filterScript.languageIdentifier()))
+            return filterScript.source();
+        else if (filterScript == null && jsFilterScript != null)
+            return jsFilterScript;
+        else
+            return null;
+    }
+
 }

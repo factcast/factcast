@@ -29,16 +29,17 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author uwe.schaefer@mercateo.com
  */
+@SuppressWarnings("ALL")
 @SpringBootApplication
 @Slf4j
 public class TLSServerWithPostgresContainer {
 
     public static void main(String[] args) {
-        // you will want to replace this with RDS, a local pgsql database or whatever
-        // your usecase is.
+        // you will want to replace this with RDS, a local pgsql database or
+        // whatever your usecase is.
         startPostgresContainer();
 
-        SpringApplication.run(TLSServerWithPostgresContainer.class);
+        SpringApplication.run(TLSServerWithPostgresContainer.class, args);
     }
 
     private static void startPostgresContainer() {

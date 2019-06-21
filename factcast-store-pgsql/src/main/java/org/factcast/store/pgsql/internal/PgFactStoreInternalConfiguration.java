@@ -19,7 +19,8 @@ import java.sql.Connection;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 
-import org.apache.tomcat.jdbc.pool.DataSource;
+import javax.sql.DataSource;
+
 import org.factcast.core.store.FactStore;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
@@ -27,17 +28,23 @@ import org.factcast.store.pgsql.internal.catchup.paged.PgPagedCatchUpFactory;
 import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
 import org.factcast.store.pgsql.internal.listen.PgConnectionTester;
 import org.factcast.store.pgsql.internal.listen.PgListener;
+import org.factcast.store.pgsql.internal.lock.AdvisoryWriteLock;
+import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import com.codahale.metrics.MetricRegistry;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.NonNull;
 
 /**
@@ -45,7 +52,9 @@ import lombok.NonNull;
  *
  * @author uwe.schaefer@mercateo.com
  */
+@SuppressWarnings("UnstableApiUsage")
 @Configuration
+@EnableTransactionManagement
 public class PgFactStoreInternalConfiguration {
 
     @Bean
@@ -57,6 +66,7 @@ public class PgFactStoreInternalConfiguration {
     @Bean
     public PgCatchupFactory pgCatchupFactory(PgConfigurationProperties props, JdbcTemplate jdbc,
             PgFactIdToSerialMapper serMapper) {
+        // noinspection SwitchStatementWithTooFewBranches
         switch (props.getCatchupStrategy()) {
         case PAGED:
             return new PgPagedCatchUpFactory(jdbc, props, serMapper);
@@ -67,8 +77,8 @@ public class PgFactStoreInternalConfiguration {
 
     @Bean
     public FactStore factStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
-            MetricRegistry registry) {
-        return new PgFactStore(jdbcTemplate, subscriptionFactory, registry);
+            PgTokenStore tokenStore, FactTableWriteLock lock, MeterRegistry registry) {
+        return new PgFactStore(jdbcTemplate, subscriptionFactory, tokenStore, lock, registry);
     }
 
     @Bean
@@ -86,8 +96,14 @@ public class PgFactStoreInternalConfiguration {
     }
 
     @Bean
-    public PgConnectionTester pgConnectionTester(@NonNull MetricRegistry metric) {
-        return new PgConnectionTester(metric);
+    public LiquibaseChangelogParamsForwarder liquibaseChangelogParamsForwarder(
+            DataSource dataSource) {
+        return new LiquibaseChangelogParamsForwarder(dataSource);
+    }
+
+    @Bean
+    public PgConnectionTester pgConnectionTester() {
+        return new PgConnectionTester();
     }
 
     @Bean
@@ -105,4 +121,29 @@ public class PgFactStoreInternalConfiguration {
     public PgLatestSerialFetcher pgLatestSerialFetcher(JdbcTemplate jdbcTemplate) {
         return new PgLatestSerialFetcher(jdbcTemplate);
     }
+
+    @Bean
+    public PgTokenStore pgTokenStore(JdbcTemplate jdbcTemplate) {
+        return new PgTokenStore(jdbcTemplate);
+    }
+
+    @Bean
+    public FactTableWriteLock factTableWriteLock(JdbcTemplate tpl) {
+        return new AdvisoryWriteLock(tpl);
+    }
+
+    @Bean
+    public PlatformTransactionManager txManager(DataSource ds) {
+        return new DataSourceTransactionManager(ds);
+    }
+
+    /**
+     * @return A fallback {@code MeterRegistry} in case none is configured.
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public MeterRegistry meterRegistry() {
+        return new SimpleMeterRegistry();
+    }
+
 }

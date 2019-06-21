@@ -15,12 +15,17 @@
  */
 package org.factcast.store.inmem;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
+import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
+import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.junit.jupiter.api.Nested;
@@ -36,10 +41,10 @@ public class InMemFactStoreTest extends AbstractFactStoreTest {
         this.store = new InMemFactStore();
         return store;
     }
-    
+
     @Nested
-    class InMemSpecific{
-        
+    class InMemSpecific {
+
         @Test
         void testDestroy() throws Exception {
             ExecutorService es = mock(ExecutorService.class);
@@ -47,7 +52,7 @@ public class InMemFactStoreTest extends AbstractFactStoreTest {
             inMemFactStore.shutdown();
             verify(es).shutdown();
         }
-        
+
         @Test
         public void testInMemFactStoreExecutorServiceNullConstructor() throws Exception {
             assertThrows(NullPointerException.class, () -> {
@@ -56,5 +61,13 @@ public class InMemFactStoreTest extends AbstractFactStoreTest {
         }
     }
 
+    @Test
+    void shouldPublishUnconditionallyIfNoTokenProvided() {
+        ArrayList<Fact> list = new ArrayList<>();
+        InMemFactStore uut = spy(store);
+        boolean publishIfUnchanged = uut.publishIfUnchanged(list, Optional.empty());
+        assertThat(publishIfUnchanged).isTrue();
+        verify(uut).publish(list);
+    }
 
 }

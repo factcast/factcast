@@ -24,28 +24,25 @@ import javax.sql.DataSource;
 
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.postgresql.jdbc.PgConnection;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@RequiredArgsConstructor
 public class PgConnectionSupplier {
 
     @NonNull
-    private final org.apache.tomcat.jdbc.pool.DataSource ds;
+    @VisibleForTesting
+    protected final org.apache.tomcat.jdbc.pool.DataSource ds;
 
-    @Autowired
-    PgConnectionSupplier(DataSource dataSource) {
-        if (dataSource instanceof org.apache.tomcat.jdbc.pool.DataSource) {
+    public PgConnectionSupplier(DataSource dataSource) {
+        if (org.apache.tomcat.jdbc.pool.DataSource.class.isAssignableFrom(dataSource.getClass())) {
             this.ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
         } else {
-            throw new IllegalStateException("expected "
+            throw new IllegalArgumentException("expected "
                     + org.apache.tomcat.jdbc.pool.DataSource.class.getName()
                     + " , but got " + dataSource.getClass().getName());
         }
@@ -53,8 +50,8 @@ public class PgConnectionSupplier {
 
     public PgConnection get() throws SQLException {
         try {
-            return (PgConnection) DriverManager.getDriver(ds.getUrl()).connect(ds.getUrl(),
-                    buildPgConnectionProperties(ds));
+            return (PgConnection) DriverManager.getDriver(ds.getUrl())
+                    .connect(ds.getUrl(), buildPgConnectionProperties(ds));
         } catch (SQLException e) {
             final String msg = "Cannot acquire Connection from DriverManager: " + ds.getUrl();
             log.error(msg, e);
@@ -77,6 +74,7 @@ public class PgConnectionSupplier {
             final String connectionProperties = poolProperties.getConnectionProperties();
             if (connectionProperties != null) {
                 try {
+                    @SuppressWarnings("UnstableApiUsage")
                     Map<String, String> singleConnectionProperties = Splitter.on(";")
                             .omitEmptyStrings()
                             .withKeyValueSeparator("=")

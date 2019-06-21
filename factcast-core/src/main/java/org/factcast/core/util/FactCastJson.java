@@ -16,6 +16,7 @@
 package org.factcast.core.util;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -70,9 +71,14 @@ public final class FactCastJson {
         return reader.forType(class1).readValue(json);
     }
 
-    public static ObjectNode toObjectNode(String jsonHeader) {
+    @SneakyThrows
+    public static <T> T readValue(@NonNull Class<T> class1, @NonNull InputStream json) {
+        return reader.forType(class1).readValue(json);
+    }
+
+    public static ObjectNode toObjectNode(String json) {
         try {
-            return (ObjectNode) objectMapper.readTree(jsonHeader);
+            return (ObjectNode) objectMapper.readTree(json);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -84,7 +90,8 @@ public final class FactCastJson {
 
     @SneakyThrows
     @Generated
-    public static String writeValueAsPrettyString(ObjectNode objectNode) {
-        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(objectNode);
+    public static String writeValueAsPrettyString(Object o) {
+        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
     }
+
 }

@@ -22,7 +22,6 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.factcast.core.lock.opt.MaxRetryAttemptsExceededException;
 import org.factcast.core.store.RetryableException;
 
 import lombok.Generated;
@@ -38,7 +37,6 @@ class Retry {
 
     static final long DEFAULT_WAIT_TIME_MILLIS = 10;
 
-    @SuppressWarnings("unchecked")
     public static FactCast wrap(FactCast toWrap, int maxRetryAttempts,
             long minimumWaitIntervalMillis) {
         if (!(maxRetryAttempts > 0)) {
@@ -96,7 +94,7 @@ class Retry {
 
         private String toString(Method method) {
             String args = Arrays.stream(method.getParameterTypes())
-                    .map(t -> t.getSimpleName())
+                    .map(Class::getSimpleName)
                     .collect(Collectors.joining(", "));
             return method.getDeclaringClass().getSimpleName() + "::" + method.getName() + "(" + args
                     + ")";

@@ -17,7 +17,6 @@ package org.factcast.grpc.api.conv;
 
 import java.util.StringJoiner;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Wither;

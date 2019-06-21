@@ -19,39 +19,26 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.OptionalLong;
-import java.util.UUID;
+import java.net.*;
+import java.util.*;
 
-import org.factcast.core.Fact;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.grpc.api.Capabilities;
-import org.factcast.grpc.api.conv.ProtoConverter;
-import org.factcast.grpc.api.conv.ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.factcast.core.*;
+import org.factcast.core.spec.*;
+import org.factcast.core.store.*;
+import org.factcast.core.subscription.*;
+import org.factcast.grpc.api.*;
+import org.factcast.grpc.api.conv.*;
+import org.factcast.grpc.api.gen.FactStoreProto.*;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.*;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.*;
+import org.mockito.junit.jupiter.*;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 
-import io.grpc.stub.ServerCallStreamObserver;
-import io.grpc.stub.StreamObserver;
+import io.grpc.*;
+import io.grpc.stub.*;
 
 @SuppressWarnings("unchecked")
 @ExtendWith(MockitoExtension.class)
@@ -111,13 +98,6 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    void testFetchByIdNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.fetchById(null, mock(StreamObserver.class));
-        });
-    }
-
-    @Test
     void testFetchById() {
         UUID id = UUID.randomUUID();
         uut.fetchById(conv.toProto(id), mock(ServerCallStreamObserver.class));
@@ -126,7 +106,7 @@ public class FactStoreGrpcServiceTest {
 
     @Test
     void testSubscribeFacts() {
-        SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.forMark()).fromNowOn();
+        SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
         when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
         uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)),
                 mock(ServerCallStreamObserver.class));
@@ -136,7 +116,7 @@ public class FactStoreGrpcServiceTest {
 
     @Test
     void testSubscribeIds() {
-        SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.forMark()).fromNowOn();
+        SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
         when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
         uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forIds(req)),
                 mock(ServerCallStreamObserver.class));
@@ -205,10 +185,6 @@ public class FactStoreGrpcServiceTest {
         uut = new FactStoreGrpcService(backend);
         StreamObserver so = mock(StreamObserver.class);
 
-        assertThrows(NullPointerException.class, () -> {
-            uut.enumerateTypes(null, so);
-        });
-
         when(backend.enumerateTypes(eq("ns"))).thenReturn(Sets.newHashSet("foo", "bar"));
 
         uut.enumerateTypes(conv.toProto("ns"), so);
@@ -262,8 +238,9 @@ public class FactStoreGrpcServiceTest {
     @Test
     public void testRetrieveImplementationVersion() throws Exception {
         uut = spy(uut);
-        when(uut.getProjectProperties()).thenReturn(this.getClass().getResource(
-                "/test.properties"));
+        when(uut.getProjectProperties()).thenReturn(this.getClass()
+                .getResource(
+                        "/test.properties"));
         HashMap<String, String> map = new HashMap<>();
         uut.retrieveImplementationVersion(map);
 
@@ -274,8 +251,9 @@ public class FactStoreGrpcServiceTest {
     @Test
     public void testRetrieveImplementationVersionEmptyPropertyFile() throws Exception {
         uut = spy(uut);
-        when(uut.getProjectProperties()).thenReturn(this.getClass().getResource(
-                "/no-version.properties"));
+        when(uut.getProjectProperties()).thenReturn(this.getClass()
+                .getResource(
+                        "/no-version.properties"));
         HashMap<String, String> map = new HashMap<>();
         uut.retrieveImplementationVersion(map);
 
@@ -295,4 +273,105 @@ public class FactStoreGrpcServiceTest {
         assertEquals("UNKNOWN", map.get(Capabilities.FACTCAST_IMPL_VERSION.toString()));
 
     }
+
+    @Test
+    public void testInvalidate() throws Exception {
+
+        {
+            UUID id = UUID.randomUUID();
+            MSG_UUID req = conv.toProto(id);
+            StreamObserver o = mock(StreamObserver.class);
+            uut.invalidate(req, o);
+
+            verify(backend).invalidate(eq(new StateToken(id)));
+            verify(o).onNext(any());
+            verify(o).onCompleted();
+        }
+
+        {
+            doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend).invalidate(any());
+
+            UUID id = UUID.randomUUID();
+            MSG_UUID req = conv.toProto(id);
+            StreamObserver o = mock(StreamObserver.class);
+            uut.invalidate(req, o);
+
+            verify(backend).invalidate(eq(new StateToken(id)));
+            verify(o).onError(any());
+            verifyNoMoreInteractions(o);
+        }
+
+    }
+
+    @Test
+    public void testStateFor() throws Exception {
+
+        {
+            UUID id = UUID.randomUUID();
+
+            StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
+            MSG_StateForRequest req = conv.toProto(sfr);
+            StreamObserver o = mock(StreamObserver.class);
+            UUID token = UUID.randomUUID();
+            when(backend.stateFor(any(), any())).thenReturn(new StateToken(token));
+            uut.stateFor(req, o);
+
+            verify(backend).stateFor(eq(Lists.newArrayList(id)), eq(Optional.of("foo")));
+            verify(o).onNext(eq(conv.toProto(token)));
+            verify(o).onCompleted();
+        }
+
+        {
+            doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend)
+                    .stateFor(any(),
+                            any());
+
+            UUID id = UUID.randomUUID();
+            StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
+            MSG_StateForRequest req = conv.toProto(sfr);
+            StreamObserver o = mock(StreamObserver.class);
+
+            uut.stateFor(req, o);
+
+            verify(o).onError(any());
+            verifyNoMoreInteractions(o);
+        }
+
+    }
+
+    @Test
+    public void testPublishConditional() throws Exception {
+        {
+            UUID id = UUID.randomUUID();
+
+            ConditionalPublishRequest sfr = new ConditionalPublishRequest(Lists.newArrayList(), id);
+            MSG_ConditionalPublishRequest req = conv.toProto(sfr);
+            StreamObserver o = mock(StreamObserver.class);
+            when(backend.publishIfUnchanged(any(), any())).thenReturn(true);
+
+            uut.publishConditional(req, o);
+
+            verify(backend).publishIfUnchanged(eq(Lists.newArrayList()), eq(Optional.of(
+                    new StateToken(id))));
+            verify(o).onNext(eq(conv.toProto(true)));
+            verify(o).onCompleted();
+        }
+
+        {
+            doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend)
+                    .publishIfUnchanged(any(), any());
+
+            UUID id = UUID.randomUUID();
+
+            ConditionalPublishRequest sfr = new ConditionalPublishRequest(Lists.newArrayList(), id);
+            MSG_ConditionalPublishRequest req = conv.toProto(sfr);
+            StreamObserver o = mock(StreamObserver.class);
+
+            uut.publishConditional(req, o);
+
+            verify(o).onError(any());
+            verifyNoMoreInteractions(o);
+        }
+    }
+
 }

@@ -18,9 +18,10 @@ package org.factcast.example.client.spring.boot1;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+@SuppressWarnings("ALL")
 @SpringBootApplication
 public class ExampleBoot1Client {
     public static void main(String[] args) {
-        SpringApplication.run(ExampleBoot1Client.class);
+        SpringApplication.run(ExampleBoot1Client.class, args);
     }
 }

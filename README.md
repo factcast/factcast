@@ -1,21 +1,22 @@
 # FactCast 
 
-#### is a 'good enough' event store using PostgreSQL for persistence, and offers REST and GRPC interfaces.
+#### is a 'good enough' event store using PostgreSQL for persistence, and offers remoting via GRPC.
 
 **This project is not yet ready for primetime**
 
 It is not yet released, the API may change, the documentation is incomplete.
 
-[![CircleCI](https://circleci.com/gh/Mercateo/factcast.svg?style=shield)](https://circleci.com/gh/Mercateo/factcast)
-[![codecov](https://codecov.io/gh/Mercateo/factcast/branch/master/graph/badge.svg)](https://codecov.io/gh/Mercateo/factcast)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/dd5921cfeb81482db72fa8d9df68048f)](https://www.codacy.com/app/uwe/factcast?utm_source=github.com&utm_medium=referral&utm_content=uweschaefer/factcast&utm_campaign=badger)
-[![CodeFactor](https://www.codefactor.io/repository/github/mercateo/factcast/badge)](https://www.codefactor.io/repository/github/mercateo/factcast)
+[![CircleCI](https://circleci.com/gh/factcast/factcast.svg?style=shield)](https://circleci.com/gh/factcast/factcast)
+[![codecov](https://codecov.io/gh/factcast/factcast/branch/master/graph/badge.svg)](https://codecov.io/gh/factcast/factcast)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/5409811a42d542e7ba3546307b70cc10)](https://www.codacy.com/app/uwe/factcast_2?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=factcast/factcast&amp;utm_campaign=Badge_Grade)
+[![CodeFactor](https://www.codefactor.io/repository/github/factcast/factcast/badge)](https://www.codefactor.io/repository/github/factcast/factcast)
 [![MavenCentral](https://img.shields.io/maven-central/v/org.factcast/factcast.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast%22)
 <a href="https://www.apache.org/licenses/LICENSE-2.0">
     <img class="inline" src="https://img.shields.io/badge/license-ASL2-green.svg?style=flat">
 </a>
-[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=Mercateo/factcast)](https://dependabot.com)
-[![DepShield Badge](https://depshield.sonatype.org/badges/Mercateo/factcast/depshield.svg)](https://depshield.github.io)
+[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=factcast/factcast)](https://dependabot.com)
+
+
 ... under active development.
 
 # The Problem at hand
@@ -23,7 +24,7 @@ It is not yet released, the API may change, the documentation is incomplete.
 In a micro-service world, teams choose their own tools of trade. This is a very important benefit of using Microservices in the first place, and you do not want to mess with this principle. However, where Subsystems communicate with each other (most likely crossing those team borders) you need some common ground. Event Sourcing is a great pattern here (as well as within those subsystems) because of the decoupling effect of its use.
 
 So, what is needed is some technical solution, that everyone can easily agree on, because it forces as little technical dependencies on the clients as possible.
-REST and similar technological choices provide this solution, and if spiced with streaming, we have all we need. Oh and one thing: Whatever solution we choose to store and stream forward needs to be failure tolerant, somewhat scalable and should pose minimal operational complexity and overhead to an existing system.
+GRPC and similar technological choices provide this solution as well as streaming, so we have all we need. Oh and one thing: Whatever solution we choose to store and stream forward needs to be failure tolerant, somewhat scalable and should pose minimal operational complexity and overhead to an existing system.
 
 This is where some of the above solutions pose a possible problem:
 

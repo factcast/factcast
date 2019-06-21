@@ -47,11 +47,11 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     UUID startingAfter;
 
-    List<FactSpec> specs = new LinkedList<>();
+    final List<FactSpec> specs = new LinkedList<>();
 
     boolean idOnly = false;
 
-    String debugInfo;
+    final String debugInfo;
 
     FluentSubscriptionRequest() {
         debugInfo = createDebugInfo();
@@ -59,9 +59,9 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     private String createDebugInfo() {
         StackTraceElement stackTraceElement = new Exception().getStackTrace()[3];
-        return UUID.randomUUID() + " (" + stackTraceElement.getClassName().substring(
-                stackTraceElement.getClassName().lastIndexOf(".") + 1) + "." + stackTraceElement
-                        .getMethodName() + ":" + stackTraceElement.getLineNumber() + ")";
+        return UUID.randomUUID() + " (" + stackTraceElement.getClassName()
+                .substring(stackTraceElement.getClassName().lastIndexOf(".") + 1) + "."
+                + stackTraceElement.getMethodName() + ":" + stackTraceElement.getLineNumber() + ")";
     }
 
     @RequiredArgsConstructor
@@ -101,12 +101,6 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
         public SpecBuilder catchup(FactSpec specification) {
             or(specification);
             toBuild.continuous = false;
-            return this;
-        }
-
-        @Override
-        public SpecBuilder skipMarks() {
-            toBuild.marks = false;
             return this;
         }
 

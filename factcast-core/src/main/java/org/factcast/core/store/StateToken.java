@@ -27,6 +27,7 @@ import lombok.Value;
 @Value
 @RequiredArgsConstructor
 public class StateToken {
+
     UUID uuid;
 
     public StateToken() {

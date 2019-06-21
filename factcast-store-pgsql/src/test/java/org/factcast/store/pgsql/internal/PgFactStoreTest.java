@@ -25,18 +25,21 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ContextConfiguration(classes = { PgEmbeddedConfiguration.class })
+@ContextConfiguration(classes = { PgTestConfiguration.class })
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
-public class PgFactStoreTest extends AbstractFactStoreTest {
+public class PgFactStoreTest
+        extends AbstractFactStoreTest {
 
     @Autowired
-    FactStore store;
+    FactStore fs;
 
     @Override
     protected FactStore createStoreToTest() {
-        return store;
+        return fs;
     }
+
+
 
 }

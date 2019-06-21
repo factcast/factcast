@@ -15,6 +15,7 @@
  */
 package org.factcast.core.store;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -35,10 +36,11 @@ import lombok.NonNull;
  * something that FactCast impls use to actually store and retrieve Facts.
  *
  * In a sense it is an internal interface, or SPI implemented by for instance
- * InMemFactStore or PGFactStore.
+ * InMemFactStore or PgFactStore.
  *
  * @author uwe.schaefer@mercateo.com
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public interface FactStore {
 
     void publish(List<? extends Fact> factsToPublish);
@@ -54,12 +56,13 @@ public interface FactStore {
 
     Set<String> enumerateTypes(@NonNull String ns);
 
-    // playing with api - this is experimental!
+    boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
+            @NonNull Optional<StateToken> token);
 
-    boolean publishIfUnchanged(StateToken token, List<? extends Fact> factsToPublish);
-
-    StateToken stateFor(@NonNull String ns, @NonNull List<UUID> forAggIds);
+    StateToken stateFor(@NonNull Collection<UUID> forAggIds, @NonNull Optional<String> ns);
 
     void invalidate(@NonNull StateToken token);
+
+    long currentTime();
 
 }

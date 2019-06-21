@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.0.35-SNAPSHOT</version>
+    <version>0.1.0-RC5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-grpc-api</artifactId>
@@ -43,13 +43,13 @@
       <scope>test</scope>
       <type>test-jar</type>
     </dependency>
-    <!-- <dependency> <groupId>com.google.guava</groupId> <artifactId>guava</artifactId> 
-			</dependency> -->
+    <!-- <dependency> <groupId>com.google.guava</groupId> <artifactId>guava</artifactId> </dependency> -->
     <dependency>
       <groupId>net.jpountz.lz4</groupId>
       <artifactId>lz4</artifactId>
       <optional>true</optional>
     </dependency>
+
   </dependencies>
   <build>
     <extensions>
