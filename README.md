@@ -6,18 +6,18 @@
 
 It is not yet released, the API may change, the documentation is incomplete.
 
-[![CircleCI](https://circleci.com/gh/Mercateo/factcast.svg?style=shield)](https://circleci.com/gh/Mercateo/factcast)
-[![codecov](https://codecov.io/gh/Mercateo/factcast/branch/master/graph/badge.svg)](https://codecov.io/gh/Mercateo/factcast)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/dd5921cfeb81482db72fa8d9df68048f)](https://www.codacy.com/app/uwe/factcast?utm_source=github.com&utm_medium=referral&utm_content=uweschaefer/factcast&utm_campaign=badger)
-[![CodeFactor](https://www.codefactor.io/repository/github/mercateo/factcast/badge)](https://www.codefactor.io/repository/github/mercateo/factcast)
+[![CircleCI](https://circleci.com/gh/factcast/factcast.svg?style=shield)](https://circleci.com/gh/factcast/factcast)
+[![codecov](https://codecov.io/gh/factcast/factcast/branch/master/graph/badge.svg)](https://codecov.io/gh/factcast/factcast)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/5409811a42d542e7ba3546307b70cc10)](https://www.codacy.com/app/uwe/factcast_2?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=factcast/factcast&amp;utm_campaign=Badge_Grade)
+[![CodeFactor](https://www.codefactor.io/repository/github/factcast/factcast/badge)](https://www.codefactor.io/repository/github/factcast/factcast)
 [![MavenCentral](https://img.shields.io/maven-central/v/org.factcast/factcast.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast%22)
 <a href="https://www.apache.org/licenses/LICENSE-2.0">
     <img class="inline" src="https://img.shields.io/badge/license-ASL2-green.svg?style=flat">
 </a>
-[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=Mercateo/factcast)](https://dependabot.com)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/Mercateo/factcast.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Mercateo/factcast/alerts/)
-[![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/Mercateo/factcast.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Mercateo/factcast/context:java)
-[![DepShield Badge](https://depshield.sonatype.org/badges/Mercateo/factcast/depshield.svg)](https://depshield.github.io)
+[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=factcast/factcast)](https://dependabot.com)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/factcast/factcast.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/factcast/factcast/alerts/)
+[![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/factcast/factcast.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/factcast/factcast/context:java)
+[![DepShield Badge](https://depshield.sonatype.org/badges/factcast/factcast/depshield.svg)](https://depshield.github.io)
 
 
 ... under active development.
