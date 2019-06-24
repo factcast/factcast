@@ -46,6 +46,12 @@ Source Code is available as [github](https://github.com/uweschaefer/factcast) re
 
 ## Latest Noteworthy Releases
 
+#### 2019-06-24 0.1.0 (release)
+  * Optimistic locking
+  * GRPC dynamic compression
+  * BASIC_AUTH based secret exchange
+  * Spring Security (Reader role)
+
 #### 2018-12-08 0.0.34 (milestone)
   * Automatic retries via (Read)FactCast::retry (thx <a
     href="https://github.com/henningwendt">@henningwendt</a>)
