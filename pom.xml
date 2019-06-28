@@ -36,13 +36,7 @@
     <module>factcast-core</module>
     <module>factcast-server-grpc</module>
     <module>factcast-grpc-api</module>
-    <module>factcast-examples/factcast-example-client-spring-boot1</module>
-    <module>factcast-examples/factcast-example-client-spring-boot2</module>
-    <module>factcast-examples/factcast-example-client-basicauth</module>
-    <module>factcast-examples/factcast-example-server-basicauth</module>
-    <module>factcast-examples/factcast-example-server</module>
-    <module>factcast-examples/factcast-example-tls-client</module>
-    <module>factcast-examples/factcast-example-tls-server</module>
+    <module>factcast-examples</module>
   </modules>
   <url>https://github.com/uweschaefer/factcast/tree/master/</url>
   <licenses>
