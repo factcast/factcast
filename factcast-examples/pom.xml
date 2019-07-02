@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -7,8 +7,18 @@
     <version>0.1.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>factcast-site</artifactId>
+  <artifactId>factcast-examples</artifactId>
+  <packaging>pom</packaging>
   <properties>
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
+  <modules>
+    <module>factcast-example-client-basicauth</module>
+    <module>factcast-example-client-spring-boot1</module>
+    <module>factcast-example-client-spring-boot2</module>
+    <module>factcast-example-server</module>
+    <module>factcast-example-server-basicauth</module>
+    <module>factcast-example-tls-client</module>
+    <module>factcast-example-tls-server</module>
+  </modules>
 </project>
