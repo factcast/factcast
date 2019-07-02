@@ -320,25 +320,4 @@
       </plugins>
     </pluginManagement>
   </build>
-  <profiles>
-    <profile>
-      <id>internal-deployment</id>
-      <activation>
-        <property>
-          <name>internal</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <distributionManagement>
-        <repository>
-          <id>platform</id>
-          <url>http://nexus.mercateo.lan/nexus/content/repositories/platform/</url>
-        </repository>
-        <snapshotRepository>
-          <id>platform_snapshot</id>
-          <url>http://nexus.mercateo.lan/nexus/content/repositories/platform_snapshot/</url>
-        </snapshotRepository>
-      </distributionManagement>
-    </profile>
-  </profiles>
 </project>
