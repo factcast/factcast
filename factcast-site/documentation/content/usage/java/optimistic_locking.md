@@ -4,7 +4,7 @@ title = "Java Optimistic Locking"
 description = ""
 
 creatordisplayname = "Uwe Schaefer"
-creatoremail = "uwe.schaefer@mercateo.com"
+creatoremail = "uwe@codesmell.de"
 weight = 20
 
 [menu.main]

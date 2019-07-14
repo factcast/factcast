@@ -5,7 +5,7 @@ theme = "hugo-theme-docdock-master"
 themesdir = "."
 
 [params]
-editURL ="https://github.com/uweschaefer/factcast/edit/master/factcast-site/documentation/content/"
+editURL ="https://github.com/factcast/factcast/edit/master/factcast-site/documentation/content/"
 noHomeIcon = true
 noSearch = true
 themeStyle = "original"
@@ -18,7 +18,7 @@ home = [ "HTML", "RSS", "JSON"]
 pre = "<h3>More</h3>"
 name = "Github repo <i class='fa fa-github'></i>"
 identifier = "github"
-url = "https://github.com/uweschaefer/factcast/"
+url = "https://github.com/factcast/factcast/"
 weight = 1
 
 

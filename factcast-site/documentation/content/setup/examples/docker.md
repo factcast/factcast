@@ -6,7 +6,7 @@ date = "2017-04-24T18:36:24+02:00"
 weight = 20
 
 creatordisplayname = "Uwe Schaefer"
-creatoremail = "uwe.schaefer@mercateo.com"
+creatoremail = "uwe@codesmell.de"
 
 [menu.main]
 parent = "setup"
@@ -14,7 +14,7 @@ identifier = "docker"
 
 +++
 
-### DEPRECATED Documentation. Will be updated https://github.com/Mercateo/factcast/issues/312
+### DEPRECATED Documentation. Will be updated https://github.com/factcast/factcast/issues/312
 
 ## Building
 

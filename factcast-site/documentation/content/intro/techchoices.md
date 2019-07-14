@@ -4,7 +4,7 @@ title = "Technical Design"
 description = ""
 
 creatordisplayname = "Uwe Schaefer"
-creatoremail = "uwe.schaefer@mercateo.com"
+creatoremail = "uwe@codesmell.de"
 
 [menu.main]
 parent = "intro"

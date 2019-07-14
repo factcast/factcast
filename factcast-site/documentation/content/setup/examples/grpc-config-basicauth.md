@@ -6,7 +6,7 @@ date = "2019-05-17T09:42:24+02:00"
 weight = 170
 
 creatordisplayname = "Uwe Schäfer"
-creatoremail = "uwe.schaefer@mercateo.com"
+creatoremail = "uwe@codesmell.de"
 
 [menu.main]
 parent = "setup"
@@ -33,7 +33,7 @@ grpc.client.factstore.credentials=myUserName:mySecretPassword
 
 You can always use environment variables or a `-D` switch in order to inject the credentials.
 
-see module [examples/factcast-example-client-basicauth](https://github.com/Mercateo/factcast/tree/master/factcast-examples/factcast-example-client-basicauth) for an example
+see module [examples/factcast-example-client-basicauth](https://github.com/factcast/factcast/tree/master/factcast-examples/factcast-example-client-basicauth) for an example
 
  
 ### Using BasicAuth on the Server
@@ -76,4 +76,4 @@ The contents of this file might look like:
 
 Where `pinky` & `brain` are authorized to use the full FactStore's functionality whereas `snowball` can only read, but not change anything.
 
-see module [examples/factcast-example-server-basicauth](https://github.com/Mercateo/factcast/tree/master/factcast-examples/factcast-example-server-basicauth) for an example
+see module [examples/factcast-example-server-basicauth](https://github.com/factcast/factcast/tree/master/factcast-examples/factcast-example-server-basicauth) for an example

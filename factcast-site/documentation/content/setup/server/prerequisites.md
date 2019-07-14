@@ -24,7 +24,7 @@ In Order to run the Factcast server, you have to provide a Postgres database at 
 The suggested configuration is to provide a _ddl user_ which will take care of creating all the necessary database objects. These objects will be used by the _dml user_ during application runtime. You have to provide the credentials for the _dml user_. If he doesn't exist on the initial server startup, the Factcast will create the user with the minimum number of necessary privileges. If the _dml user_ already exists, the creation and privileges assignment will be skipped and you have take care of the privileges yourself.
 
 
-The following example shows the suggested configuration. The [factcast-example project](https://github.com/Mercateo/factcast/tree/master/factcast-examples/factcast-example-server) also contains that properties.
+The following example shows the suggested configuration. The [factcast-example project](https://github.com/factcast/factcast/tree/master/factcast-examples/factcast-example-server) also contains that properties.
 
 ```
 spring.liquibase.user="ddl-user" //that user has to be provided
