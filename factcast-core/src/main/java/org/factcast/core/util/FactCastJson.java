@@ -15,11 +15,13 @@
  */
 package org.factcast.core.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -109,6 +111,10 @@ public final class FactCastJson {
 
     public static String toPrettyString(String jsonString) {
         return writeValueAsPrettyString(toObjectNode(jsonString));
+    }
+
+    public static String readJSON(File file) throws JsonProcessingException, IOException {
+        return objectMapper.readTree(file).asText();
     }
 
 }

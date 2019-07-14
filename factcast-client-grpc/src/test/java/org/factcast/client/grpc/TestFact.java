@@ -25,8 +25,6 @@ import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.core.util.FactCastJson;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -42,21 +40,16 @@ import lombok.SneakyThrows;
 @EqualsAndHashCode(of = "id")
 public class TestFact implements Fact {
 
-    @JsonProperty
     UUID id = UUID.randomUUID();
 
-    @JsonProperty
     Set<UUID> aggIds = new LinkedHashSet<>();
 
-    @JsonProperty
     String type;
 
-    @JsonProperty
     String ns = "default";
 
     String jsonPayload = "{}";
 
-    @JsonProperty
     Map<String, String> meta = new HashMap<>();
 
     @Override
@@ -76,9 +69,9 @@ public class TestFact implements Fact {
     }
 
     public TestFact aggId(@NonNull UUID aggId, UUID... otherAggIds) {
-        this.aggIds.add(aggId);
+        aggIds.add(aggId);
         if (otherAggIds != null) {
-            this.aggIds.addAll(Arrays.asList(otherAggIds));
+            aggIds.addAll(Arrays.asList(otherAggIds));
         }
         return this;
     }
