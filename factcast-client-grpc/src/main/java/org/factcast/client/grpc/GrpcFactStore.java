@@ -307,7 +307,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     public void invalidate(@NonNull StateToken token) {
         MSG_UUID msg = converter.toProto(token.uuid());
         try {
-            MSG_Empty msgEmpty = blockingStub.invalidate(msg);
+            blockingStub.invalidate(msg);
         } catch (StatusRuntimeException e) {
             throw wrapRetryable(e);
         }
