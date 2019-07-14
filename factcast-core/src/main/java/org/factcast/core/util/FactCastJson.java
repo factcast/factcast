@@ -15,11 +15,14 @@
  */
 package org.factcast.core.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -50,7 +53,8 @@ public final class FactCastJson {
     private static final ObjectWriter writer;
 
     static {
-        objectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
+        objectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         writer = objectMapper.writer();
         reader = objectMapper.reader();
     }
@@ -92,6 +96,27 @@ public final class FactCastJson {
     @Generated
     public static String writeValueAsPrettyString(Object o) {
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
+    }
+
+    public static String addSerToHeader(long ser, String jsonHeader) {
+        ObjectNode json = toObjectNode(jsonHeader);
+        ObjectNode meta = (ObjectNode) json.get("meta");
+        if (meta == null) {
+            // create a new node
+            meta = newObjectNode();
+            json.set("meta", meta);
+        }
+        // set ser as attribute _ser
+        meta.put("_ser", ser);
+        return json.toString();
+    }
+
+    public static String toPrettyString(String jsonString) {
+        return writeValueAsPrettyString(toObjectNode(jsonString));
+    }
+
+    public static String readJSON(File file) throws JsonProcessingException, IOException {
+        return objectMapper.readTree(file).asText();
     }
 
 }

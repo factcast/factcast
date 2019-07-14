@@ -17,8 +17,7 @@ package org.factcast.client.grpc.cli.conv;
 
 import java.io.File;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.factcast.core.util.FactCastJson;
 
 import lombok.SneakyThrows;
 
@@ -26,20 +25,21 @@ public class ExistingJsonFile extends File {
 
     private static final long serialVersionUID = 1L;
 
-    private static final ObjectMapper om = new ObjectMapper();
-
     public ExistingJsonFile(String pathname) {
         super(pathname);
-        if (!exists())
+        if (!exists()) {
             throw new IllegalArgumentException(getAbsolutePath() + " does not exist");
-        if (isDirectory())
+        }
+        if (isDirectory()) {
             throw new IllegalArgumentException(getAbsolutePath() + " is a directory");
-        if (!canRead())
+        }
+        if (!canRead()) {
             throw new IllegalArgumentException(getAbsolutePath() + " cannot be read");
+        }
     }
 
     @SneakyThrows
-    public JsonNode read() {
-        return om.readTree(this);
+    public String read() {
+        return FactCastJson.readJSON(this);
     }
 }
