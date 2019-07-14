@@ -83,32 +83,34 @@ public interface Fact {
         final Header header = new Header().id(UUID.randomUUID()).ns("default");
 
         public Builder aggId(@NonNull UUID aggId) {
-            this.header.aggIds().add(aggId);
+            header.aggIds().add(aggId);
             return this;
         }
 
         public Builder ns(@NonNull String ns) {
-            if (ns.trim().isEmpty())
+            if (ns.trim().isEmpty()) {
                 throw new IllegalArgumentException("Namespace must not be empty");
-            this.header.ns(ns);
+            }
+            header.ns(ns);
             return this;
         }
 
         public Builder id(@NonNull UUID id) {
-            this.header.id(id);
+            header.id(id);
             return this;
         }
 
         public Builder type(@NonNull String type) {
-            if (type.trim().isEmpty())
+            if (type.trim().isEmpty()) {
                 throw new IllegalArgumentException("type must not be empty");
+            }
 
-            this.header.type(type);
+            header.type(type);
             return this;
         }
 
         public Builder meta(@NonNull String key, String value) {
-            this.header.meta().put(key, value);
+            header.meta().put(key, value);
             return this;
         }
 
@@ -117,11 +119,13 @@ public interface Fact {
         }
 
         public Fact build(String payload) {
+            String pl = payload;
             if (payload == null || payload
                     .trim()
-                    .isEmpty())
-                payload = "{}";
-            return new DefaultFact(header, payload);
+                    .isEmpty()) {
+                pl = "{}";
+            }
+            return new DefaultFact(header, pl);
         }
     }
 }
