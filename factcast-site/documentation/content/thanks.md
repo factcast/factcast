@@ -5,14 +5,15 @@ description = ""
 date = "2017-04-24T18:36:24+02:00"
 
 creatordisplayname = "Uwe Schaefer"
-creatoremail = "uwe.schaefer@mercateo.com"
+creatoremail = "uwe@codesmell.de"
 
 
 +++
 
 #### Contribution
 
-Any Contribution, be it code, issues, docs etc. are more than welcome if they comply with ASL2. Please head over to [github](https://github.com/uweschaefer/factcast) and help! 
+Any Contribution, be it code, issues, docs etc. are more than welcome if they comply with ASL2. Please head over to
+[github](https://github.com/factcast/factcast) and help! 
 
 #### Thank you
 
@@ -27,7 +28,7 @@ Any Contribution, be it code, issues, docs etc. are more than welcome if they co
 * [@joerg_adler](https://twitter.com/joerg_adler) for providing the REST adapter
 
 
-and of course all the [Contributors](https://github.com/uweschaefer/factcast/graphs/contributors) 
+and of course all the [Contributors](https://github.com/factcast/factcast/graphs/contributors) 
 
 {{<ghcontributors
-"https://api.github.com/repos/Mercateo/factcast/contributors?per_page=101" >}}
+"https://api.github.com/repos/factcast/factcast/contributors?per_page=101" >}}

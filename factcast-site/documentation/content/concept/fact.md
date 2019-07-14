@@ -4,7 +4,7 @@ title = "Anatomy of a Fact"
 description = ""
 
 creatordisplayname = "Uwe Schaefer"
-creatoremail = "uwe.schaefer@mercateo.com"
+creatoremail = "uwe@codesmell.de"
 
 [menu.main]
 parent = "concept"
