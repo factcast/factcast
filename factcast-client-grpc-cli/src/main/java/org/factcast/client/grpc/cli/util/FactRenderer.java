@@ -19,8 +19,6 @@ import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.Fact;
 import org.factcast.core.util.FactCastJson;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -41,9 +39,9 @@ public class FactRenderer {
 
     private String renderJson(String jsonString) {
         if (options.pretty()) {
-            ObjectNode objectNode = FactCastJson.toObjectNode(jsonString);
-            return FactCastJson.writeValueAsPrettyString(objectNode);
-        } else
+            return FactCastJson.toPrettyString(jsonString);
+        } else {
             return jsonString;
+        }
     }
 }

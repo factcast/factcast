@@ -94,4 +94,21 @@ public final class FactCastJson {
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
     }
 
+    public static String addSerToHeader(long ser, String jsonHeader) {
+        ObjectNode json = toObjectNode(jsonHeader);
+        ObjectNode meta = (ObjectNode) json.get("meta");
+        if (meta == null) {
+            // create a new node
+            meta = newObjectNode();
+            json.set("meta", meta);
+        }
+        // set ser as attribute _ser
+        meta.put("_ser", ser);
+        return json.toString();
+    }
+
+    public static String toPrettyString(String jsonString) {
+        return writeValueAsPrettyString(toObjectNode(jsonString));
+    }
+
 }
