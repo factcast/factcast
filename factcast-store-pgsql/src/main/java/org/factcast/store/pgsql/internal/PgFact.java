@@ -26,6 +26,8 @@ import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.core.util.FactCastJson;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 
 import lombok.AccessLevel;
@@ -70,6 +72,7 @@ public class PgFact implements Fact {
     @NonNull
     final String jsonPayload;
 
+    @JsonProperty
     Map<String, String> meta = null;
 
     @Override
@@ -88,8 +91,10 @@ public class PgFact implements Fact {
     }
 
     // just picks the MetaData from the Header (as we know the rest already
+    @JsonIgnoreProperties(ignoreUnknown = true)
     private static class Meta {
 
+        @JsonProperty
         final Map<String, String> meta = new HashMap<>();
     }
 
