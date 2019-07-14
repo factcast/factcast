@@ -16,7 +16,7 @@ creatoremail = "uwe@codesmell.de"
 
 <div id="top-github-link">
   <a class="github-link"
-href="https://github.com/uweschaefer/factcast/edit/master/factcast-site/documentation/content/_index.md" target="blank">
+href="https://github.com/factcast/factcast/edit/master/factcast-site/documentation/content/_index.md" target="blank">
     <i class="fa fa-code-fork"></i> Edit this page</a>
 </div>
 
@@ -28,7 +28,7 @@ href="https://github.com/uweschaefer/factcast/edit/master/factcast-site/document
 
 #### This is work in progress and neither the Documentation, nor the code is in a "released" state. Please keep that in mind when poking around.
 
-Source Code is available as [github](https://github.com/uweschaefer/factcast) repository.
+Source Code is available as [github](https://github.com/factcast/factcast) repository.
 
 
 <p class="inline">
