@@ -119,8 +119,8 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private GrpcFactStore(RemoteFactStoreBlockingStub newBlockingStub, RemoteFactStoreStub newStub,
             Optional<String> credentials) {
-        this.blockingStub = newBlockingStub;
-        this.stub = newStub;
+        blockingStub = newBlockingStub;
+        stub = newStub;
 
         if (credentials.isPresent()) {
             String[] sa = credentials.get().split(":");
@@ -244,8 +244,8 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     void configureCompression(String codecListFromServer) {
         codecs.selectFrom(codecListFromServer).ifPresent(c -> {
             log.info("configuring Codec " + c);
-            this.blockingStub = blockingStub.withCompression(c);
-            this.stub = stub.withCompression(c);
+            blockingStub = blockingStub.withCompression(c);
+            stub = stub.withCompression(c);
         });
     }
 
@@ -307,7 +307,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     public void invalidate(@NonNull StateToken token) {
         MSG_UUID msg = converter.toProto(token.uuid());
         try {
-            MSG_Empty msgEmpty = blockingStub.invalidate(msg);
+            blockingStub.invalidate(msg);
         } catch (StatusRuntimeException e) {
             throw wrapRetryable(e);
         }
