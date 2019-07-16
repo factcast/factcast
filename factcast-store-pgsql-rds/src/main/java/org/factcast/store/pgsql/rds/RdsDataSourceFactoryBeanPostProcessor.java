@@ -19,6 +19,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.cloud.aws.jdbc.datasource.TomcatJdbcDataSourceFactory;
 import org.springframework.cloud.aws.jdbc.rds.AmazonRdsDataSourceFactoryBean;
+import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 
 import lombok.NonNull;
@@ -30,9 +31,14 @@ import lombok.RequiredArgsConstructor;
  */
 @SuppressWarnings("NullableProblems")
 @RequiredArgsConstructor
-public class RdsDataSourceFactoryBeanPostProcessor implements BeanPostProcessor {
+public class RdsDataSourceFactoryBeanPostProcessor implements BeanPostProcessor, Ordered {
     @NonNull
     private final Environment env;
+
+    @Override
+    public int getOrder() {
+        return Ordered.HIGHEST_PRECEDENCE;
+    }
 
     @Override
     @NonNull

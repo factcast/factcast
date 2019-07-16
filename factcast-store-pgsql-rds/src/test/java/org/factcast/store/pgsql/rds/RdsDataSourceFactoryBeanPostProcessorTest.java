@@ -31,6 +31,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cloud.aws.jdbc.rds.AmazonRdsDataSourceFactoryBean;
+import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 
 @ExtendWith(MockitoExtension.class)
@@ -94,4 +95,12 @@ public class RdsDataSourceFactoryBeanPostProcessorTest {
         });
     }
 
+    @Test
+    void hasHigherPrecedenceThanDataSourceInitializerPostProcessor() {
+        // uut needs higher precedence than
+        // org.springframework.boot.autoconfigure.jdbc.DataSourceInitializerPostProcessor,
+        // which triggers creation of the AmazonRdsDataSourceFactoryBean
+        int dataSourceInitializerPostProcessorOrder = Ordered.HIGHEST_PRECEDENCE + 1;
+        assertThat(uut.getOrder()).isLessThan(dataSourceInitializerPostProcessorOrder);
+    }
 }
