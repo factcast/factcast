@@ -1,10 +1,12 @@
 # Change Log
 
-## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2019-07-14)
-[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.1.0...upcoming)
+## [factcast-0.1.2](https://github.com/factcast/factcast/tree/factcast-0.1.2) (2019-07-20)
+[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.1.0...factcast-0.1.2)
 
 **Closed issues:**
 
+- Jackson Databind Security fix [\#489](https://github.com/factcast/factcast/issues/489)
+- pgsql-rds: TomcatJdbcDataSourceFactory properties \(spring.datasource.tomcat.\*\) are not regarded [\#485](https://github.com/factcast/factcast/issues/485)
 - Shade jackson [\#470](https://github.com/factcast/factcast/issues/470)
 - Avoid reassigning parameters such as 'payload' [\#468](https://github.com/factcast/factcast/issues/468)
 - Avoid unused local variables such as 'msgEmpty'. [\#467](https://github.com/factcast/factcast/issues/467)
@@ -12,6 +14,10 @@
 
 **Merged pull requests:**
 
+- jackson databind CVE -\> 2.9.9.1 [\#490](https://github.com/factcast/factcast/pull/490) ([uweschaefer](https://github.com/uweschaefer))
+- Bump liquibase-core from 3.6.3 to 3.7.0 [\#488](https://github.com/factcast/factcast/pull/488) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
+- Issue485 [\#487](https://github.com/factcast/factcast/pull/487) ([uweschaefer](https://github.com/uweschaefer))
+- Set higher priority for RdsDataSourceFactoryBeanPostProcessor [\#486](https://github.com/factcast/factcast/pull/486) ([C-Otto](https://github.com/C-Otto))
 - codacy improvement [\#484](https://github.com/factcast/factcast/pull/484) ([uweschaefer](https://github.com/uweschaefer))
 - codacy improvement [\#483](https://github.com/factcast/factcast/pull/483) ([uweschaefer](https://github.com/uweschaefer))
 - codacy improvement [\#482](https://github.com/factcast/factcast/pull/482) ([uweschaefer](https://github.com/uweschaefer))
