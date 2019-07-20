@@ -8,11 +8,11 @@
   </parent>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
-    <name>Mercateo AG</name>
-    <url>http://www.mercateo.com</url>
+    <name>factcast</name>
+    <url>http://factcast.org</url>
   </organization>
   <name>factcast</name>
   <description>factcast is a 'good enough' event store using PostgreSQL
@@ -46,17 +46,16 @@
     </license>
   </licenses>
   <scm>
-    <connection>scm:git:git@github.com:Mercateo/factcast.git</connection>
-    <developerConnection>scm:git:git@github.com:Mercateo/factcast.git</developerConnection>
-    <url>https://github.com/Mercateo/factcast.git</url>
+    <connection>scm:git:git@github.com:factcast/factcast.git</connection>
+    <developerConnection>scm:git:git@github.com:factcast/factcast.git</developerConnection>
+    <url>https://github.com/factcast/factcast.git</url>
     <tag>factcast-0.1.1</tag>
   </scm>
   <developers>
     <developer>
       <name>Uwe Schaefer</name>
-      <email>uwe.schaefer@mercateo.com</email>
-      <organization>Mercateo AG</organization>
-      <organizationUrl>http://www.mercateo.com</organizationUrl>
+      <organization>factcast</organization>
+      <organizationUrl>http://factcast.org</organizationUrl>
     </developer>
   </developers>
   <properties>
