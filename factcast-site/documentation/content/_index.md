@@ -46,6 +46,9 @@ Source Code is available as [github](https://github.com/factcast/factcast) repos
 
 ## Latest Noteworthy Releases
 
+#### 2019-07-20 0.1.2 (release)
+  * housekeeping
+
 #### 2019-06-24 0.1.0 (release)
   * Optimistic locking
   * GRPC dynamic compression
