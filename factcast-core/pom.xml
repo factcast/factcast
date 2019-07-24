@@ -38,6 +38,12 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <artifactSet>
+                <includes>
+                  <include>com.fasterxml.**:*</include>
+                </includes>
+              </artifactSet>
+
               <relocations>
                 <relocation>
                   <pattern>com.fasterxml</pattern>
