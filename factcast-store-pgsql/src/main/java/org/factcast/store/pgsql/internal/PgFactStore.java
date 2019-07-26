@@ -64,6 +64,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PgFactStore extends AbstractFactStore {
 
+    // is that interesting to configure?
+    private static final int BATCH_SIZE = 500;
+
+    @NonNull
+    private final JdbcTemplate jdbcTemplate;
+
+    @NonNull
+    private final PgSubscriptionFactory subscriptionFactory;
+
+    @NonNull
+    private final FactTableWriteLock lock;
+
+    @NonNull
+    private final MeterRegistry registry;
+
     static class StoreMetrics {
 
         static final String METRIC_NAME = "factcast.store.operations";
@@ -78,7 +93,7 @@ public class PgFactStore extends AbstractFactStore {
 
         static final String TAG_EXCEPTION_VALUE_NONE = "None";
 
-        static enum OP {
+        enum OP {
 
             PUBLISH("publish"),
 
@@ -109,21 +124,6 @@ public class PgFactStore extends AbstractFactStore {
         }
 
     }
-
-    // is that interesting to configure?
-    private static final int BATCH_SIZE = 500;
-
-    @NonNull
-    private final JdbcTemplate jdbcTemplate;
-
-    @NonNull
-    private final PgSubscriptionFactory subscriptionFactory;
-
-    @NonNull
-    private final FactTableWriteLock lock;
-
-    @NonNull
-    private final MeterRegistry registry;
 
     @Autowired
     public PgFactStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
@@ -211,7 +211,7 @@ public class PgFactStore extends AbstractFactStore {
                 Long res = jdbcTemplate.queryForObject(PgConstants.SELECT_SER_BY_ID,
                         new Object[] { "{\"id\":\"" + l + "\"}" }, Long.class);
 
-                if ((res != null) && (res > 0)) {
+                if (res != null && res > 0) {
                     return OptionalLong.of(res);
                 }
 
