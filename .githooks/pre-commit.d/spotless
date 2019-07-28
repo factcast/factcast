@@ -20,7 +20,7 @@ function gitDiff()
 function fallback()
 {
  echo -e  "$PREFIX checking using spotless"
- mvn -o -T 1C -q spotless:check || ( echo -e "$PREFIX Please format your java files according to the format definition in src/eclipse" && echo -e "$PREFIX You can do that by typing 'mvn spotless:apply' if your IDE does not help with that." && exit 1)
+ mvn -o -T 1.5C -q spotless:check || ( echo -e "$PREFIX Please format your java files according to the format definition in src/eclipse" && echo -e "$PREFIX You can do that by typing 'mvn spotless:apply' if your IDE does not help with that." && exit 1)
 }
 
 
