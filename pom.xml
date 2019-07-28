@@ -353,10 +353,7 @@
           <artifactId>maven-release-plugin</artifactId>
           <version>${maven-release-plugin.version}</version>
           <configuration>
-            <skip>true</skip>
-            <skipTests>true</skipTests>
-            <arguments>-Dossrh=true -Dmaven.javadoc.skip=true
-              -Dmaven.test.skipTests=true -Dmaven.test.skip=true</arguments>
+            <arguments>-Dossrh=true</arguments>
             <preparationGoals>clean validate</preparationGoals>
           </configuration>
         </plugin>
