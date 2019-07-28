@@ -3,7 +3,7 @@
 set -e
 
 PREFIX="> pre-commit [$(basename $0)]\t\t"
-MAVEN_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Xms768M"
+#MAVEN_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Xms768M"
 GREP_OPTIONS=
 
 function gitDiff()
