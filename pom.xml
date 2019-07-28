@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>com.mercateo.oss</groupId>
-    <artifactId>oss-parent-pom</artifactId>
-    <version>1.0.9</version>
-  </parent>
+
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
   <version>0.1.5-SNAPSHOT</version>
@@ -20,6 +16,10 @@
     interfaces.
   </description>
   <inceptionYear>2018</inceptionYear>
+  <issueManagement>
+    <system>github</system>
+    <url>https://github.com/factcast/factcast/issues</url>
+  </issueManagement>
   <modules>
     <module>factcast-bom</module>
     <module>factcast-site</module>
@@ -49,7 +49,6 @@
     <connection>scm:git:git@github.com:factcast/factcast.git</connection>
     <developerConnection>scm:git:git@github.com:factcast/factcast.git</developerConnection>
     <url>https://github.com/factcast/factcast.git</url>
-    <tag>factcast-0.1.1</tag>
   </scm>
   <developers>
     <developer>
@@ -59,14 +58,33 @@
     </developer>
   </developers>
   <properties>
-    <spotless.version>1.23.1</spotless.version>
-    <assertj.version>3.12.2</assertj.version>
-    <mockito.version>3.0.0</mockito.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
+    <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
+    <maven-javadoc-plugin.version>3.1.0</maven-javadoc-plugin.version>
+    <maven-source-plugin.version>3.1.0</maven-source-plugin.version>
+    <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+    <maven-jar-plugin.version>3.1.2</maven-jar-plugin.version>
+    <maven-surefire-plugin.version>3.0.0-M3</maven-surefire-plugin.version>
+    <maven-failsafe-plugin.version>3.0.0-M3</maven-failsafe-plugin.version>
+
+    <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
+    <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
+    <spotless-maven-plugin.version>1.23.1</spotless-maven-plugin.version>
+    <jacoco-maven-plugin.version>0.8.4</jacoco-maven-plugin.version>
+    <spring-boot-maven-plugin.version>2.1.6.RELEASE</spring-boot-maven-plugin.version>
+
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+
+    <assertj.version>3.12.2</assertj.version>
+    <mockito.version>3.0.0</mockito.version>
+    <lombok.version>1.18.8</lombok.version>
+
     <formatter.config>${session.executionRootDirectory}/src/eclipse/config</formatter.config>
     <etc>${session.executionRootDirectory}/src/etc</etc>
-    <lombok.version>1.18.8</lombok.version>
+
   </properties>
   <dependencies>
     <dependency>
@@ -137,18 +155,11 @@
   </dependencies>
   <build>
     <plugins>
-      <plugin>
-        <groupId>net.revelc.code</groupId>
-        <artifactId>impsort-maven-plugin</artifactId>
-        <configuration>
-          <!-- disable impsort from parent (using spotless here) -->
-          <skip>true</skip>
-        </configuration>
-      </plugin>
+
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
-        <version>${spotless.version}</version>
+        <version>${spotless-maven-plugin.version}</version>
         <configuration>
           <java>
             <licenseHeader>
@@ -204,10 +215,11 @@
           </xml>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.4</version>
+        <version>${jacoco-maven-plugin.version}</version>
         <configuration>
           <excludes>
             <exclude>**/*Configuration.*</exclude>
@@ -217,6 +229,10 @@
             <exclude>**/org/factcast/grpc/api/gen/**</exclude>
             <exclude>**/org/factcast/client/grpc/cli/**</exclude>
             <exclude>**/org/factcast/store/test/**</exclude>
+            <exclude>**/*Application.*</exclude>
+            <exclude>**/*Exception.*</exclude>
+            <exclude>**/gen/*</exclude>
+            <exclude>**/generated/*</exclude>
           </excludes>
         </configuration>
         <executions>
@@ -237,7 +253,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.0.0-M3</version>
+        <version>${maven-surefire-plugin.version}</version>
         <configuration>
           <includes>
             <include>*</include>
@@ -248,7 +264,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.0.0-M3</version>
+        <version>${maven-failsafe-plugin.version}</version>
         <configuration>
           <groups>integration</groups>
           <includes>
@@ -314,9 +330,161 @@
         <plugin>
           <groupId>org.springframework.boot</groupId>
           <artifactId>spring-boot-maven-plugin</artifactId>
-          <version>2.1.6.RELEASE</version>
+          <version>${spring-boot-maven-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>${maven-clean-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>${maven-release-plugin.version}</version>
+          <configuration>
+            <arguments>-Dossrh=true</arguments>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.commonjava.maven.plugins</groupId>
+          <artifactId>directory-maven-plugin</artifactId>
+          <version>${directory-maven-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>directories</id>
+              <goals>
+                <goal>highest-basedir</goal>
+              </goals>
+              <phase>initialize</phase>
+              <configuration>
+                <property>repository.root</property>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${maven-jar-plugin.version}</version>
+          <configuration>
+            <archive>
+              <manifest>
+                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                <addDefaultSpecificationEntries>false</addDefaultSpecificationEntries>
+              </manifest>
+              <manifestEntries>
+                <Implementation-Branch>${scmBranch}</Implementation-Branch>
+              </manifestEntries>
+            </archive>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>${maven-source-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>${maven-javadoc-plugin.version}</version>
         </plugin>
       </plugins>
     </pluginManagement>
+
   </build>
+  <profiles>
+    <profile>
+      <id>oss.release-sign-artifacts</id>
+
+      <activation>
+        <property>
+          <name>ossrh</name>
+        </property>
+      </activation>
+
+      <distributionManagement>
+        <snapshotRepository>
+          <id>ossrh</id>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+          <id>ossrh</id>
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+      </distributionManagement>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>${maven-gpg-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <version>${nexus-staging-maven-plugin.version}</version>
+            <extensions>true</extensions>
+            <configuration>
+              <serverId>ossrh</serverId>
+              <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+              <autoReleaseAfterClose>true</autoReleaseAfterClose>
+            </configuration>
+            <!-- <dependencies> <dependency> <groupId>com.sun.jersey</groupId> <artifactId>jersey-client</artifactId> <version>${jersey-client.version}</version> </dependency> </dependencies> -->
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+                <phase>package</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>test-jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+                <configuration>
+                  <additionalOptions>
+                    <additionalOption>-Xdoclint:none</additionalOption>
+                  </additionalOptions>
+                </configuration>
+                <phase>package</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
