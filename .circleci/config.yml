@@ -49,7 +49,7 @@ jobs:
           command: |
             mvn --version
             mvn -T 1C -B clean install jacoco:report-aggregate -Dpg_url=$pg_url
-            bash <(curl -s https://codecov.io/bash)
+            curl -s https://codecov.io/bash | bash -s "-x gcov"
 
       - run: 
           name: Remove factcast artifacts from local repo
