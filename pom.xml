@@ -168,66 +168,6 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>com.diffplug.spotless</groupId>
-        <artifactId>spotless-maven-plugin</artifactId>
-        <version>${spotless-maven-plugin.version}</version>
-        <configuration>
-          <java>
-            <licenseHeader>
-              <file>file://${etc}/header.txt</file>
-            </licenseHeader>
-            <eclipse>
-              <file>file://${formatter.config}/eclipse_code_formatter.xml</file>
-              <version>4.11.0</version>
-            </eclipse>
-            <trimTrailingWhitespace />
-            <removeUnusedImports />
-            <importOrder>
-              <file>file://${formatter.config}/eclipse.importorder</file>
-            </importOrder>
-            <includes>
-              <include>
-                src/main/java/**/*.java
-              </include>
-            </includes>
-          </java>
-          <kotlin>
-            <licenseHeader>
-              <file>file://${etc}/header.txt</file>
-            </licenseHeader>
-            <trimTrailingWhitespace />
-            <ktlint>
-              <!-- Optional, available versions: https://github.com/shyiko/ktlint/releases -->
-              <version>0.31.0</version>
-            </ktlint>
-            <includes>
-              <include>
-                src/main/kotlin/**/*.kt
-              </include>
-            </includes>
-          </kotlin>
-          <xml>
-            <trimTrailingWhitespace />
-            <includes>
-              <include>src/**/*.xml</include>
-              <include>pom.xml</include>
-            </includes>
-            <eclipseWtp>
-              <type>XML</type>
-              <version>4.7.3a</version>
-              <files>
-                <file>${formatter.config}/eclipse_xml_formatter.properties</file>
-              </files>
-            </eclipseWtp>
-            <indent>
-              <spaces>true</spaces>
-              <spacesPerTab>2</spacesPerTab>
-            </indent>
-          </xml>
-        </configuration>
-      </plugin>
-
-      <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>${jacoco-maven-plugin.version}</version>
@@ -466,7 +406,6 @@
               </execution>
             </executions>
           </plugin>
-
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
@@ -484,6 +423,100 @@
                 <phase>package</phase>
               </execution>
             </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>disable-stopless-in-modules</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+        <file>
+          <missing>LICENSE</missing>
+        </file>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>${spotless-maven-plugin.version}</version>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>enable-spotless-in-root</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+        <file>
+          <exists>LICENSE</exists>
+        </file>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>${spotless-maven-plugin.version}</version>
+            <configuration>
+              <inherited>false</inherited>
+              <java>
+                <licenseHeader>
+                  <file>file://${etc}/header.txt</file>
+                </licenseHeader>
+                <eclipse>
+                  <file>file://${formatter.config}/eclipse_code_formatter.xml</file>
+                  <version>4.11.0</version>
+                </eclipse>
+                <trimTrailingWhitespace />
+                <removeUnusedImports />
+                <importOrder>
+                  <file>file://${formatter.config}/eclipse.importorder</file>
+                </importOrder>
+                <includes>
+                  <include>
+                    **/src/main/java/**/*.java
+                  </include>
+                </includes>
+              </java>
+              <kotlin>
+                <licenseHeader>
+                  <file>file://${etc}/header.txt</file>
+                </licenseHeader>
+                <trimTrailingWhitespace />
+                <ktlint>
+                  <!-- Optional, available versions: https://github.com/shyiko/ktlint/releases -->
+                  <version>0.31.0</version>
+                </ktlint>
+                <includes>
+                  <include>
+                    **/src/main/kotlin/**/*.kt
+                  </include>
+                </includes>
+              </kotlin>
+              <xml>
+                <trimTrailingWhitespace />
+                <includes>
+                  <include>**/src/**/*.xml</include>
+                  <include>**/pom.xml</include>
+                </includes>
+                <eclipseWtp>
+                  <type>XML</type>
+                  <version>4.7.3a</version>
+                  <files>
+                    <file>${formatter.config}/eclipse_xml_formatter.properties</file>
+                  </files>
+                </eclipseWtp>
+                <indent>
+                  <spaces>true</spaces>
+                  <spacesPerTab>2</spacesPerTab>
+                </indent>
+              </xml>
+            </configuration>
           </plugin>
         </plugins>
       </build>
