@@ -153,6 +153,19 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>kr.motd.maven</groupId>
+        <artifactId>os-maven-plugin</artifactId>
+        <version>1.6.2</version>
+        <executions>
+          <execution>
+            <phase>initialize</phase>
+            <goals>
+              <goal>detect</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
@@ -262,13 +275,13 @@
                   <pluginExecutionFilter>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
-                    <versionRange>[1.0,)</versionRange>
+                    <versionRange>3.0.0-M2</versionRange>
                     <goals>
                       <goal>enforce</goal>
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore />
+                    <execute></execute>
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -281,7 +294,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore />
+                    <execute></execute>
                   </action>
                 </pluginExecution>
               </pluginExecutions>
@@ -397,7 +410,6 @@
               <nexusUrl>https://oss.sonatype.org/</nexusUrl>
               <autoReleaseAfterClose>true</autoReleaseAfterClose>
             </configuration>
-            <!-- <dependencies> <dependency> <groupId>com.sun.jersey</groupId> <artifactId>jersey-client</artifactId> <version>${jersey-client.version}</version> </dependency> </dependencies> -->
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
