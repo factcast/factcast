@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
   <version>0.1.5-SNAPSHOT</version>
@@ -71,23 +70,18 @@
     <maven-surefire-plugin.version>3.0.0-M3</maven-surefire-plugin.version>
     <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
     <maven-failsafe-plugin.version>3.0.0-M3</maven-failsafe-plugin.version>
-
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
     <spotless-maven-plugin.version>1.23.1</spotless-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.4</jacoco-maven-plugin.version>
     <spring-boot-maven-plugin.version>2.1.6.RELEASE</spring-boot-maven-plugin.version>
-
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-
     <assertj.version>3.12.2</assertj.version>
     <mockito.version>3.0.0</mockito.version>
     <lombok.version>1.18.8</lombok.version>
-
     <formatter.config>${session.executionRootDirectory}/src/eclipse/config</formatter.config>
     <etc>${session.executionRootDirectory}/src/etc</etc>
-
   </properties>
   <dependencies>
     <dependency>
@@ -358,18 +352,15 @@
         </plugin>
       </plugins>
     </pluginManagement>
-
   </build>
   <profiles>
     <profile>
       <id>oss.release-sign-artifacts</id>
-
       <activation>
         <property>
           <name>ossrh</name>
         </property>
       </activation>
-
       <distributionManagement>
         <snapshotRepository>
           <id>ossrh</id>
@@ -380,7 +371,6 @@
           <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
       </distributionManagement>
-
       <build>
         <plugins>
           <plugin>
@@ -444,7 +434,7 @@
       </build>
     </profile>
     <profile>
-      <id>disable-stopless-in-modules</id>
+      <id>disable-spotpless-in-modules</id>
       <activation>
         <activeByDefault>false</activeByDefault>
         <file>
@@ -463,6 +453,9 @@
           </plugin>
         </plugins>
       </build>
+      <properties>
+        <spotless.check.skip>true</spotless.check.skip>
+      </properties>
     </profile>
     <profile>
       <id>enable-spotless-in-root</id>
@@ -494,8 +487,7 @@
                   <file>file://${formatter.config}/eclipse.importorder</file>
                 </importOrder>
                 <includes>
-                  <include>
-                    **/src/main/java/**/*.java
+                  <include> **/src/main/java/**/*.java
                   </include>
                 </includes>
               </java>
@@ -509,8 +501,7 @@
                   <version>0.31.0</version>
                 </ktlint>
                 <includes>
-                  <include>
-                    **/src/main/kotlin/**/*.kt
+                  <include> **/src/main/kotlin/**/*.kt
                   </include>
                 </includes>
               </kotlin>
