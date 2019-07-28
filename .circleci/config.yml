@@ -48,7 +48,7 @@ jobs:
           name: FullTest
           command: |
             mvn --version
-            mvn -B clean install jacoco:report-aggregate -Dpg_url=$pg_url
+            mvn -T 1C -B clean install jacoco:report-aggregate -Dpg_url=$pg_url
             bash <(curl -s https://codecov.io/bash)
 
       - run: 
