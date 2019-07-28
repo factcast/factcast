@@ -432,7 +432,7 @@
       <activation>
         <activeByDefault>false</activeByDefault>
         <file>
-          <missing>LICENSE</missing>
+          <missing>.factcast-root</missing>
         </file>
       </activation>
       <build>
@@ -453,7 +453,7 @@
       <activation>
         <activeByDefault>false</activeByDefault>
         <file>
-          <exists>LICENSE</exists>
+          <exists>.factcast-root</exists>
         </file>
       </activation>
       <build>
