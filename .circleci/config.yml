@@ -49,7 +49,7 @@ jobs:
           command: |
             mvn --version
             mvn -B clean install jacoco:report-aggregate -Dpg_url=$pg_url
-            curl -s https://codecov.io/bash | bash /dev/sdtin "-X gcov -X fix -X xcode"
+            curl -s https://codecov.io/bash | bash /dev/stdin "-X gcov -X fix -X xcode"
 
       - run: 
           name: Remove factcast artifacts from local repo
