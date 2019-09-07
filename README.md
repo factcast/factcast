@@ -26,7 +26,7 @@ In a micro-service world, teams choose their own tools of trade. This is a very 
 So, what is needed is some technical solution, that everyone can easily agree on, because it forces as little technical dependencies on the clients as possible.
 GRPC and similar technological choices provide this solution as well as streaming, so we have all we need. Oh and one thing: Whatever solution we choose to store and stream forward needs to be failure tolerant, somewhat scalable and should pose minimal operational complexity and overhead to an existing system.
 
-This is where some of the above solutions pose a possible problem:
+This is where some of the existing solutions pose a possible problem:
 
 While all of them are most probably great, when it comes to clustering, backup, data-/application-management and fail-over, none of these are trivial problems and most of them bring their own (certainly great) solution.
 
