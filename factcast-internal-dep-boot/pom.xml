@@ -12,7 +12,7 @@
   <properties>
     <spring-boot.version>2.1.8.RELEASE</spring-boot.version>
     <spring-cloud.version>Greenwich.SR3</spring-cloud.version>
-    <spring-grpc.version>2.3.0.RELEASE</spring-grpc.version>
+    <spring-grpc.version>2.5.1.RELEASE</spring-grpc.version>
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
   <dependencyManagement>
