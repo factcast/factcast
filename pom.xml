@@ -78,7 +78,7 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <assertj.version>3.13.2</assertj.version>
-    <mockito.version>3.0.0</mockito.version>
+    <mockito.version>3.1.0</mockito.version>
     <lombok.version>1.18.10</lombok.version>
     <formatter.config>${session.executionRootDirectory}/src/eclipse/config</formatter.config>
     <etc>${session.executionRootDirectory}/src/etc</etc>
