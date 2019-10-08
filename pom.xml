@@ -72,7 +72,7 @@
     <maven-failsafe-plugin.version>3.0.0-M3</maven-failsafe-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
-    <spotless-maven-plugin.version>1.24.3</spotless-maven-plugin.version>
+    <spotless-maven-plugin.version>1.25.1</spotless-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.4</jacoco-maven-plugin.version>
     <spring-boot-maven-plugin.version>2.1.9.RELEASE</spring-boot-maven-plugin.version>
     <maven.compiler.source>1.8</maven.compiler.source>
