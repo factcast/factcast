@@ -77,7 +77,7 @@
     <spring-boot-maven-plugin.version>2.2.0.RELEASE</spring-boot-maven-plugin.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <assertj.version>3.13.2</assertj.version>
+    <assertj.version>3.14.0</assertj.version>
     <mockito.version>3.1.0</mockito.version>
     <lombok.version>1.18.10</lombok.version>
     <formatter.config>${session.executionRootDirectory}/src/eclipse/config</formatter.config>
