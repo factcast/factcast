@@ -10,7 +10,7 @@
   <artifactId>factcast-example-server-basicauth</artifactId>
   <properties>
     <!-- Pin your own Spring Boot version. -->
-    <spring-boot.version>2.1.9.RELEASE</spring-boot.version>
+    <spring-boot.version>2.2.1.RELEASE</spring-boot.version>
     <docker.image.prefix>factcast</docker.image.prefix>
   </properties>
   <dependencyManagement>
