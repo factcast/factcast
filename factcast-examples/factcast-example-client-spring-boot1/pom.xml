@@ -9,7 +9,7 @@
   </parent>
   <artifactId>factcast-example-client-spring-boot1</artifactId>
   <properties>
-    <spring-boot.version>2.1.9.RELEASE</spring-boot.version>
+    <spring-boot.version>2.2.1.RELEASE</spring-boot.version>
   </properties>
   <dependencyManagement>
     <dependencies>
