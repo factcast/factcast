@@ -22,7 +22,7 @@ In order to use `FactCast` effectively it is necessary to have an overview of th
 
 With `FactCast` you can *publish* `Facts` which will be written into a log. You can publish a single `Fact` as well as a list of `Facts` atomically (all-or-none).
 
-With optimistic locking you can use conditional publishing, which is based upon aggregates that do not change during the lifecycle of the lock (see [optimistic locking](/usage/java/optimistic_locking.md)).
+With optimistic locking you can use conditional publishing, which is based upon aggregates that do not change during the lifecycle of the lock (see [optimistic locking](/usage/java/optimistic_locking/)).
 
 ### Read (subscribe)
 
@@ -42,7 +42,7 @@ The three usual subscription models and their corresponding use cases are:
 | Catchup | <p>This subscription catches up with past events but does not receive any new `Facts` in the future.</p> <p>A usual use case for this subscription is a write model that needs to collect all kinds of information about a specific aggregate in order to validate or to reject an incoming command.</p>|
 | Ephemeral | The consumer does not catch up with past events, but receives matching `Facts` in the future. <p>A possible use case is e.g. cache invalidation. Not suitable for read models.</p> |
 
-All these subscription typs rely on a streaming transport which uses (at the time of writing) GRPC.
+All these subscription types rely on a streaming transport which uses (at the time of writing) GRPC.
 
 ### Read (fetchById)
 
