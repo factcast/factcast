@@ -16,40 +16,34 @@ weight = 15
 
 ## Concept
 
-In order to use FactCast most effectively it is necessary to have an overview of the concepts within and where they might differ to a solution already familiar to you. So let us look at the basics:
-
+In order to use `FactCast` effectively it is necessary to have an overview of the concepts and to understand how `FactCast` might differ from other solutions you are already familiar with. So let's take a look at the basics:
 
 ### Write (publish)
 
-With FactCast, you write Facts into a log by *publishing* Facts. You can publish single Facts, as well as a List of Facts atomically (all-or-none).
+With `FactCast` you can *publish* `Facts` which will be written into a log. You can publish a single `Fact` as well as a list of `Facts` atomically (all-or-none).
 
-In order to preserve invariants, you can also use optimistic locking to conditionally publish based on aggregates not being changed during the lifecycle of the lock (see [optimistic locking](/usage/java/optimistic_locking.md))
+With optimistic locking you can use conditional publishing, which is based upon aggregates that do not change during the lifecycle of the lock (see [optimistic locking](/usage/java/optimistic_locking.md)).
 
 ### Read (subscribe)
 
-In order to receive Facts, you subscribe to FactCast with a subscription request. This is where FactCast differs significantly from other solutions because the subscription request contains the *full specification* of what events to receive.
-This means, there is no need for Server-Side administration or knowing ahead of time, which Streams to publich the Fact to.
+In order to receive `Facts` you have to subscribe to `FactCast` with a subscription request. This is where `FactCast` significantly differs from other solutions because the subscription request contains the *full specification* of what events to receive. This means that no server-side administration is needed, nor any prior knowledge about the streams where to publich the `Facts` into.
 
-{{%alert theme="danger"%}} TODO see SubscriptionRequest {{% /alert%}}
+{{%alert theme="danger"%}} TODO see `SubscriptionRequest` {{% /alert%}}
 
-Next to the specification of what kinds of events to read, the SubscriptionRequest also contains the information of which Events to skip (due to being already received by the consumer) and how to deal with Facts being published in the Future.
-When subscribing, the Consumer sends a specification of Facts he is interested in and might have received Facts in the past.
+In addition to the specification of events to read, the `SubscriptionRequest` also specifies the events to skip (e.g. due to previous consumption). The request also defines how to deal with `Facts` being published in the future.
 
+{{%alert theme="success" %}} *Note that `Facts` are always guaranteed to be sent in the order they were published.* {{% /alert %}}
 
-{{%alert theme="success" %}} *Note, that Facts are always guaranteed to be sent in the order published.* {{% /alert %}}
-
-The three usual subscription Models and their corresponding UseCases are:
+The three usual subscription models and their corresponding use cases are:
 
 | Subscription Type | Description |
 |:--|:--|
-| Follow | This is the 80% Use-Case for consumers. Here the Consumer does catch-up with Facts from the past and (after that) receives future Facts *as they are published*. <p>On subscribing, the consumer sends the 'id' of the last event processed and gets every Fact that matches his specification, that has been published *after* this last known Fact.</p>|
-| Catchup | <p>This subscription differs from Follow by completing, once the consumer has read the last of the currently published Facts.</p> <p>A usual Use-case for this kind of subscription is a write model, that needs to aggregate all information about a specific aggregate, in order to validate or reject an incoming command.</p>|
-| Ephemeral | The consumer *does not catch up* with Events that happened in the past, but only receives matching Facts *from now on*. <p>A good Use-Case is cache invalidation, but certainly not building Read Models.</p> |
+| Follow | This covers the 80% of the use cases. Here the consumer catches up with `Facts` from the past and also receives `Facts` in the future *as they are published*. <p>On subscription the consumer sends the `id` of the last event processed and gets every `Fact` that matches the specification and has been published *after* this last known `Fact`.</p>|
+| Catchup | <p>This subscription catches up with past events but does not receive any new `Facts` in the future.</p> <p>A usual use case for this subscription is a write model that needs to collect all kinds of information about a specific aggregate in order to validate or to reject an incoming command.</p>|
+| Ephemeral | The consumer does not catch up with past events, but receives matching `Facts` in the future. <p>A possible use case is e.g. cache invalidation. Not suitable for read models.</p> |
 
-Obviously all these subscription types rely on streaming transport which is implemented (at the time of writing) by GRPC.
+All these subscription typs rely on a streaming transport which uses (at the time of writing) GRPC.
 
 ### Read (fetchById)
 
-There are situation, where either the bandwidth consumption has to be minimized between the consumers and FactCast, and there are either many consumers interested in the same Fact, or consumers repeatedly receiving the same Fact (Catchup-Subscriptions without snapshotting for example).
-
-What could help here, is not actually pushing Facts to the client, but **just 'ids' (or URLs)** to identify Facts and provide a way to fetch the Facts by that 'id' lateron. This way, we can make use of HTTP-Proxies, 'local' caches etc, depending on the protocol used.
+In some situations the bandwidth of the consumption has to be reduced. This can happen if either there are too many consumers interested in the same `Fact` or consumers keep receiving the same `Facts` (e.g. catchup subscriptions without snapshotting). Pushing **only 'ids' (or URLs)** instead of complete `Facts` can improve the performance. Depending on the protocol being used HTTP-Proxies or local caches can also be applied for further performance enhancement.
