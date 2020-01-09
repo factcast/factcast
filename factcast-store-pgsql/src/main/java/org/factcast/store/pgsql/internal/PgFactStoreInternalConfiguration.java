@@ -96,12 +96,6 @@ public class PgFactStoreInternalConfiguration {
     }
 
     @Bean
-    public LiquibaseChangelogParamsForwarder liquibaseChangelogParamsForwarder(
-            DataSource dataSource) {
-        return new LiquibaseChangelogParamsForwarder(dataSource);
-    }
-
-    @Bean
     public PgConnectionTester pgConnectionTester() {
         return new PgConnectionTester();
     }
