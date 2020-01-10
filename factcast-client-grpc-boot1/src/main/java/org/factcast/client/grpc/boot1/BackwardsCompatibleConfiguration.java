@@ -54,7 +54,6 @@ public class BackwardsCompatibleConfiguration {
 
             @Override
             public void close() throws Exception {
-                af.close();
             }
         };
         return new GrpcFactStore(f, credentials);
