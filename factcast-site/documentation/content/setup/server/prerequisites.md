@@ -35,7 +35,7 @@ The user has to be a superuser, as he will also install Postgres modules like [u
 
 If you don't want to provide a superuser, you have to consider the following points:
 
-1.) The _ddl user_ needs at least the permission to query the pg_roles view. According to the [documentation](https://www.postgresql.org/docs/10/view-pg-roles.html) it's publicly accessible, so that shouldn't be a problem. If you want the Factcast to take care of the _dml user_ creation, than he needs also the permission to create other users and assign privileges for objects in the public scheme.
+1.) The database user needs at least the permission to query the pg_roles view. According to the [documentation](https://www.postgresql.org/docs/10/view-pg-roles.html) it's publicly accessible, so that shouldn't be a problem. 
 
 2.) The Factcast needs the Postgres module [uuid-ossp](https://www.postgresql.org/docs/11/uuid-ossp.html). You have to install that module manually. The server will recognize the already installed module and it won't throw an error caused by missing privileges.
 Login into your Postgres console and execute the following command as superuser:
