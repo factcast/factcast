@@ -60,9 +60,8 @@ see https://github.com/yidongnan/grpc-spring-boot-starter for details
 
 #### Spring Boot 2
 
-If you use Spring boot, please note, that all projects now depend on Spring Boot 2.1 artifacts. You can still use the FactCast-client in your Spring Boot 1.5 application. 
-
-For an example see **examples/factcast-example-client-spring-boot1/**.
+If you use Spring boot, please note, that all projects now depend on Spring Boot 2 artifacts. 
+Support for Sring Boot 1.x was removed. 
 
 #### Plaintext vs TLS
 
