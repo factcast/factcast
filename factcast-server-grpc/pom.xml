@@ -54,5 +54,11 @@
       <artifactId>snappy-java</artifactId>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <version>1.19</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>
