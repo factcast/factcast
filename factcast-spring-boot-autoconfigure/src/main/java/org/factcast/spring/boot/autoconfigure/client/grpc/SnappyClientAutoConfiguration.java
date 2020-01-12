@@ -15,12 +15,13 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import org.factcast.client.grpc.codec.*;
-import org.factcast.spring.boot.autoconfigure.store.inmem.*;
-import org.springframework.boot.autoconfigure.*;
-import org.springframework.boot.autoconfigure.condition.*;
-import org.springframework.context.annotation.*;
-import org.xerial.snappy.*;
+import org.factcast.client.grpc.codec.SnappyGrpcClientCodec;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.xerial.snappy.SnappyInputStream;
+import org.xerial.snappy.SnappyOutputStream;
 
 /**
  * Configures optional Snappy Codec
@@ -31,7 +32,6 @@ import org.xerial.snappy.*;
 @Configuration
 @ConditionalOnClass({ SnappyInputStream.class, SnappyOutputStream.class,
         SnappyGrpcClientCodec.class })
-@AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
 @AutoConfigureBefore(GrpcFactStoreAutoConfiguration.class)
 public class SnappyClientAutoConfiguration {
 
