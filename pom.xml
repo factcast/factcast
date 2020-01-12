@@ -30,7 +30,6 @@
     <module>factcast-client-grpc-cli</module>
     <module>factcast-store-pgsql</module>
     <module>factcast-store-pgsql-rds</module>
-    <module>factcast-store-inmem</module>
     <module>factcast-store-test</module>
     <module>factcast-core</module>
     <module>factcast-server-grpc</module>

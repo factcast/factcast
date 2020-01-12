@@ -15,18 +15,20 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
-import org.factcast.client.grpc.*;
-import org.factcast.core.store.*;
-import org.factcast.spring.boot.autoconfigure.store.inmem.*;
-import org.springframework.beans.factory.annotation.*;
-import org.springframework.boot.autoconfigure.*;
-import org.springframework.boot.autoconfigure.condition.*;
-import org.springframework.context.annotation.*;
+import org.factcast.client.grpc.GrpcFactStore;
+import org.factcast.core.store.FactStore;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-import io.grpc.*;
-import net.devh.boot.grpc.client.channelfactory.*;
+import io.grpc.Channel;
+import io.grpc.ClientInterceptor;
+import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 
 /**
  * Provides a GrpcFactStore as a FactStore implementation.
@@ -37,7 +39,6 @@ import net.devh.boot.grpc.client.channelfactory.*;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Configuration
 @ConditionalOnClass({ GrpcFactStore.class, GrpcChannelFactory.class })
-@AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
 public class GrpcFactStoreAutoConfiguration {
 
     @Bean

@@ -56,11 +56,6 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-store-inmem</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
       <groupId>net.jpountz.lz4</groupId>
       <artifactId>lz4</artifactId>
       <optional>true</optional>

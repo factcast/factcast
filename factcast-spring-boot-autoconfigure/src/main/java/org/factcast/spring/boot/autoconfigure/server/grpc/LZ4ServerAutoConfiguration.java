@@ -15,20 +15,18 @@
  */
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
-import org.factcast.server.grpc.*;
-import org.factcast.server.grpc.codec.*;
-import org.factcast.spring.boot.autoconfigure.store.inmem.*;
-import org.springframework.boot.autoconfigure.*;
-import org.springframework.boot.autoconfigure.condition.*;
-import org.springframework.context.annotation.*;
+import org.factcast.server.grpc.FactStoreGrpcService;
+import org.factcast.server.grpc.codec.Lz4GrpcServerCodec;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-import lombok.*;
-import net.jpountz.lz4.*;
+import lombok.Generated;
+import net.jpountz.lz4.LZ4Compressor;
 
 @Generated
 @Configuration
 @ConditionalOnClass({ FactStoreGrpcService.class, LZ4Compressor.class, Lz4GrpcServerCodec.class })
-@AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
 public class LZ4ServerAutoConfiguration {
     @Bean
     public Lz4GrpcServerCodec lz4ServerCodec() {
