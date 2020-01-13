@@ -60,11 +60,6 @@
       <!-- for testing only! -->
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-store-inmem</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.factcast</groupId>
         <artifactId>factcast-store-test</artifactId>
         <version>${project.version}</version>
       </dependency>
