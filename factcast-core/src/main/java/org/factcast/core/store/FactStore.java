@@ -36,7 +36,7 @@ import lombok.NonNull;
  * something that FactCast impls use to actually store and retrieve Facts.
  *
  * In a sense it is an internal interface, or SPI implemented by for instance
- * InMemFactStore or PgFactStore.
+ * PgFactStore.
  *
  * @author uwe.schaefer@mercateo.com
  */

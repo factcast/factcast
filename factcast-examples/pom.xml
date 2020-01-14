@@ -19,5 +19,6 @@
     <module>factcast-example-server-basicauth</module>
     <module>factcast-example-tls-client</module>
     <module>factcast-example-tls-server</module>
+    <module>factcast-example-integration-inproc</module>
   </modules>
 </project>
