@@ -17,13 +17,14 @@ package org.factcast.server.grpc;
 
 import org.factcast.core.store.*;
 import org.factcast.grpc.api.*;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.*;
 
 @Configuration
 public class FactCastGrpcServerConfiguration {
 
     @Bean
-    public FactStoreGrpcService factStoreGrpcService(FactStore store) {
+    public FactStoreGrpcService factStoreGrpcService(@Qualifier("server") FactStore store) {
         return new FactStoreGrpcService(store);
     }
 

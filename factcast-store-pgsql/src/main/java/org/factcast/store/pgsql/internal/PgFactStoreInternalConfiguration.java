@@ -32,6 +32,7 @@ import org.factcast.store.pgsql.internal.lock.AdvisoryWriteLock;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -76,6 +77,7 @@ public class PgFactStoreInternalConfiguration {
     }
 
     @Bean
+    @Qualifier("server")
     public FactStore factStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
             PgTokenStore tokenStore, FactTableWriteLock lock, MeterRegistry registry) {
         return new PgFactStore(jdbcTemplate, subscriptionFactory, tokenStore, lock, registry);
