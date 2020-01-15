@@ -42,15 +42,29 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-store-pgsql</artifactId>
+      <artifactId>factcast-core</artifactId>
     </dependency>
-    <!-- you want to remove this -->
     <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>1.12.4</version>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
     </dependency>
-    <!-- /you want to remove this -->
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-store-pgsql</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.playtika.testcontainers</groupId>
+      <artifactId>embedded-postgresql</artifactId>
+      <version>1.35</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter</artifactId>
+      <version>2.2.1.RELEASE</version>
+    </dependency>
   </dependencies>
   <build>
     <finalName>factcast</finalName>
