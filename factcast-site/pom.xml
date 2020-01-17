@@ -11,4 +11,43 @@
   <properties>
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
+  
+  
+  
+  
+  
+    <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.6.0</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <phase>compile</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <executable>docker</executable>
+          <!-- optional -->
+          <workingDirectory>documentation</workingDirectory>
+          <arguments>
+            <argument>run</argument>
+            <argument>--rm</argument>
+<!--            <argument>-user=${user.name}</argument> -->
+            <argument>-v</argument>
+            <argument>${project.basedir}/documentation:/srv/hugo</argument>
+            <argument>yanqd0/hugo</argument>
+            <argument>hugo</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  
+  
+  
 </project>
