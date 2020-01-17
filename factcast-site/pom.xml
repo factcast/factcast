@@ -11,12 +11,12 @@
   <properties>
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
-  
-  
-  
-  
-  
-    <build>
+
+
+
+
+
+  <build>
     <plugins>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -37,7 +37,7 @@
           <arguments>
             <argument>run</argument>
             <argument>--rm</argument>
-<!--            <argument>-user=${user.name}</argument> -->
+            <!-- <argument>-user=${user.name}</argument> -->
             <argument>-v</argument>
             <argument>${project.basedir}/documentation:/srv/hugo</argument>
             <argument>yanqd0/hugo</argument>
@@ -47,7 +47,7 @@
       </plugin>
     </plugins>
   </build>
-  
-  
-  
+
+
+
 </project>
