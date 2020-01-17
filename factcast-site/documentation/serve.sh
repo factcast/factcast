@@ -8,7 +8,7 @@ int_trap() {
 trap int_trap INT
 
 rm -rf stage
-sudo rm -rf public
+rm -rf public
 rm -rf themes
 
 #(
@@ -16,7 +16,7 @@ rm -rf themes
 #)
 
 (
-docker run --rm -v $PWD:/srv/hugo yanqd0/hugo hugo
+docker run --rm -u `id -u` -v $PWD:/srv/hugo yanqd0/hugo hugo
 cd public
 python -m SimpleHTTPServer 8080
 )
