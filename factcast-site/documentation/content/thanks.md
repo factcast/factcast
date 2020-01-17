@@ -32,3 +32,5 @@ and of course all the [Contributors](https://github.com/factcast/factcast/graphs
 
 {{<ghcontributors
 "https://api.github.com/repos/factcast/factcast/contributors?per_page=101" >}}
+
+Thanks.
