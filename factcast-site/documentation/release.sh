@@ -3,10 +3,10 @@ set -e
 rm -rf stage
 rm -rf public
 
-./hugo
+docker run --rm -u `id -u` -v $PWD:/srv/hugo yanqd0/hugo hugo
 
 mkdir stage -p
-mv public/* stage
+cp -r public/* stage
 cp favicon.png stage/images/
 rsync --delete -rcv stage/* con:/www/docs.factcast.org
 rm -rf stage

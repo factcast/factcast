@@ -20,15 +20,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.apache.commons.compress.utils.IOUtils;
+
 import io.grpc.Codec;
-import io.grpc.internal.IoUtils;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 class CodecTestHelper {
     byte[] fromByteArray(Codec uut, byte[] compressedBytes) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        IoUtils.copy(uut.decompress(new ByteArrayInputStream(
+        IOUtils.copy(uut.decompress(new ByteArrayInputStream(
                 compressedBytes)), os);
         os.close();
         return os.toByteArray();
@@ -37,7 +38,7 @@ class CodecTestHelper {
     byte[] toByteArray(Codec uut, byte[] uncompressed) throws IOException {
         ByteArrayOutputStream target = new ByteArrayOutputStream();
         OutputStream compressedStream = uut.compress(target);
-        IoUtils.copy(new ByteArrayInputStream(uncompressed), compressedStream);
+        IOUtils.copy(new ByteArrayInputStream(uncompressed), compressedStream);
         compressedStream.close();
         return target.toByteArray();
     }

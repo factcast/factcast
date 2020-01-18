@@ -15,15 +15,15 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import org.factcast.client.grpc.*;
-import org.factcast.client.grpc.codec.*;
-import org.factcast.spring.boot.autoconfigure.store.inmem.*;
-import org.springframework.boot.autoconfigure.*;
-import org.springframework.boot.autoconfigure.condition.*;
-import org.springframework.context.annotation.*;
+import org.factcast.client.grpc.GrpcFactStore;
+import org.factcast.client.grpc.codec.Lz4GrpcClientCodec;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-import net.devh.boot.grpc.client.channelfactory.*;
-import net.jpountz.lz4.*;
+import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
+import net.jpountz.lz4.LZ4Compressor;
 
 /**
  * Configures optional LZ4 Codec
@@ -34,7 +34,6 @@ import net.jpountz.lz4.*;
 @Configuration
 @ConditionalOnClass({ LZ4Compressor.class, Lz4GrpcClientCodec.class, GrpcFactStore.class,
         GrpcChannelFactory.class })
-@AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
 @AutoConfigureBefore(GrpcFactStoreAutoConfiguration.class)
 public class LZ4ClientAutoConfiguration {
 
