@@ -24,6 +24,7 @@ jobs:
       # Customize the JVM memory configuration (https://circleci.com/docs/2.0/java-oom/)
       JAVA_TOOL_OPTIONS: "-Xmx1024m"
       pg_url: jdbc:postgresql://localhost/test?currentSchema=public&username=circleci&password=test
+      circleci: "true"
 
     steps:
       - checkout
