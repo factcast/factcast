@@ -15,21 +15,21 @@
  */
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
-import org.factcast.server.grpc.*;
-import org.factcast.server.grpc.codec.*;
-import org.factcast.spring.boot.autoconfigure.store.inmem.*;
-import org.springframework.boot.autoconfigure.*;
-import org.springframework.boot.autoconfigure.condition.*;
-import org.springframework.context.annotation.*;
-import org.xerial.snappy.*;
+import org.factcast.server.grpc.FactStoreGrpcService;
+import org.factcast.server.grpc.codec.SnappyGrpcServerCodec;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.xerial.snappy.SnappyInputStream;
+import org.xerial.snappy.SnappyOutputStream;
 
-import lombok.*;
+import lombok.Generated;
 
 @Generated
 @Configuration
 @ConditionalOnClass({ FactStoreGrpcService.class, SnappyInputStream.class,
         SnappyOutputStream.class, SnappyGrpcServerCodec.class })
-@AutoConfigureAfter(InMemFactStoreAutoConfiguration.class)
 @AutoConfigureBefore(FactCastGrpcServerAutoConfiguration.class)
 public class SnappyServerAutoConfiguration {
     @Bean
