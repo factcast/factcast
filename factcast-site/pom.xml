@@ -15,9 +15,8 @@
     <profile>
       <id>hugo</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
         <property>
-          <name>!circleci</name>
+          <name>!skipHugo</name>
         </property>
       </activation>
       <build>
