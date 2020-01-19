@@ -57,6 +57,11 @@
         <artifactId>factcast-store-pgsql-rds</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-docker</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <!-- for testing only! -->
       <dependency>
         <groupId>org.factcast</groupId>
