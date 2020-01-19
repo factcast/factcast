@@ -48,8 +48,8 @@
     <!-- This is important for java <11 to not run into problems with using TLS1.3 -->
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>docker-compose</artifactId>
-      <version>0.9.9</version>
+      <artifactId>testcontainers</artifactId>
+      <version>1.12.4</version>
       <!-- <scope>test</scope> -->
     </dependency>
     <dependency>
