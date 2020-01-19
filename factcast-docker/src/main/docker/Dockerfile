@@ -1,5 +1,4 @@
-FROM oracle/graalvm-ce:latest
-MAINTAINER uwe.schaefer <factcast-auth-7234@codesmell.de>
+FROM oracle/graalvm-ce:19.3.1-java8
 EXPOSE 9090
 EXPOSE 9443
 
