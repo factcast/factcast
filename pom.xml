@@ -34,6 +34,7 @@
     <module>factcast-core</module>
     <module>factcast-server-grpc</module>
     <module>factcast-grpc-api</module>
+    <module>factcast-docker</module>
     <module>factcast-examples</module>
   </modules>
   <url>https://github.com/uweschaefer/factcast/tree/master/</url>
