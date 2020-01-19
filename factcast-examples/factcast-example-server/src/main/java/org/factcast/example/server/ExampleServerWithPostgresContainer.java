@@ -44,14 +44,11 @@ public class ExampleServerWithPostgresContainer {
 
     private static void startPostgresContainer() {
         log.info("Trying to start postgres testcontainer");
-        PostgreSQLContainer postgres = new PostgreSQLContainer();
+        PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:11.4");
         postgres.start();
         String url = postgres.getJdbcUrl();
         System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
         System.setProperty("spring.datasource.url", url);
-        // System.setProperty("spring.liquibase.user", postgres.getUsername());
-        // System.setProperty("spring.liquibase.password",
-        // postgres.getPassword());
         System.setProperty("spring.datasource.username", postgres.getUsername());
         System.setProperty("spring.datasource.password", postgres.getPassword());
     }

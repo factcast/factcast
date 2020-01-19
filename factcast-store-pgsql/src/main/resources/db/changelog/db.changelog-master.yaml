@@ -29,3 +29,7 @@ databaseChangeLog:
     - include:
          file: factcast/issue346/dropUniqueConstraintForIdent.sql
          relativeToChangelogFile: true
+    - include:
+         file: factcast/issue601/addSerialForPG11Compatibility.sql
+         relativeToChangelogFile: true
+
