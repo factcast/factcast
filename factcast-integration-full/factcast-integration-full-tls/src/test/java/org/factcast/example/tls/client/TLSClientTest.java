@@ -43,6 +43,7 @@ public class TLSClientTest {
                     assertEquals(fact.type(), f.type());
                     assertEquals(fact.id(), f.id());
                 }).awaitCatchup(1000);) {
+            // empty block
         }
     }
 }
