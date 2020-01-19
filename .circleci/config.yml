@@ -26,7 +26,7 @@ jobs:
           name: FullTest
           command: |
             mvn --version
-            mvn -B clean install jacoco:report-aggregate -Dpg_url=jdbc:tc:postgresql://localhost/test?currentSchema=public
+            mvn -B clean install jacoco:report-aggregate 
             bash <(curl -s https://codecov.io/bash)
 
       - run: 
