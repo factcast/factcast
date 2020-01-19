@@ -10,6 +10,6 @@ Volumes that can be mounted:
 
 Usage:
 
-```
+```bash
 docker run -v $PWD:/config -v $PWD/log:/log factcast/factcast
 ```
