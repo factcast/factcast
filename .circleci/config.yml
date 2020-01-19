@@ -3,28 +3,9 @@
 # Check https://circleci.com/docs/2.0/language-java/ for more details
 #
 version: 2
+executorType: machine
 jobs:
   build:
-    docker:
-      # specify the version you desire here
-      - image: circleci/openjdk:8-jdk
-#      - image: maven/3.6.0-jdk-8
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      - image: circleci/postgres:9.6-ram
-        environment:
-          POSTGRES_USER: circleci
-          POSTGRES_DB: test
-          POSTGRES_PASSWORD: "test"
-
-    working_directory: ~/repo
-
-    environment:
-      # Customize the JVM memory configuration (https://circleci.com/docs/2.0/java-oom/)
-      JAVA_TOOL_OPTIONS: "-Xmx1024m"
-      pg_url: jdbc:postgresql://localhost/test?currentSchema=public&username=circleci&password=test
-
     steps:
       - checkout
 
@@ -39,16 +20,13 @@ jobs:
           name: Validate formal standards
           command: mvn spotless:check
 
-      - run:
-          name: Wait for DB
-          command: dockerize -wait tcp://localhost:5432 -timeout 1m
 
       # run tests!
       - run: 
           name: FullTest
           command: |
-            mvn --version
-            mvn -B clean install jacoco:report-aggregate -Dpg_url=$pg_url
+            ./mvnw --version
+            ./mvnw -B clean install jacoco:report-aggregate 
             bash <(curl -s https://codecov.io/bash)
 
       - run: 
