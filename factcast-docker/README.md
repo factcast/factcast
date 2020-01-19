@@ -6,6 +6,7 @@ deploy a factcast server to a target environment.
 Volumes that can be mounted:
 
 /log (you should provide a logback.xml that uses this directory)
+
 /config (optionally provide application.properties etc)
 
 Usage:
