@@ -23,9 +23,10 @@ If you used the uniqe_identifier feature before, it was removed. It was only a r
 
 There is a [section on optimitic locking](/usage/java/optimistic_locking/) as a new api feature.
 
-#### Postgres module uuid-ossp and ddl user
+#### Postgres module uuid-ossp 
 
-The Postgres module *uuid-ossp* is necessary for the new optimistic locking api feature. In order to provide a user with enough privileges to install modules and also running the application without unnecessary db permissions, we add the possibility to distinct between _ddl user_ and _dml user_. This distinction is optional and your server will also work with your current database user configuration as long as the user is a superuser. If you don't want to provide a superuser and/or you want to distinct between _ddl_ and _dml user_, please take a look into the [Postgres section] (/setup/server/prerequisites/#postgres) in the prerequisites guide.
+The Postgres module *uuid-ossp* is necessary for the new optimistic locking api feature. In order to install this
+extension, the user performing the Liquibase operations requires Postgres superuser permissions. 
 
 #### GRPC Protocol Version
 
@@ -87,8 +88,6 @@ The result is, that you have to use > 0.0.14 on Client and Server consistently.
 * Note that the jersey impl of the REST interface has its own <a href="https://github.com/Mercateo/factcast-rest-jersey">place on github now.</a> and got new coordinates: **org.factcast:factcast-server-rest-jersey:0.0.12.** If you use the REST Server, you'll need to change your dependencies accordingly
 
 * There is a BOM within factcast at org.factcast:factcast-bom:0.0.12 you can use to conveniently pin versions - remember that factcast-server-rest-jersey might not be available for every milestone and is not part of the BOM
-
-
 
 
 

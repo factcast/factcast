@@ -3,11 +3,11 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.factcast</groupId>
-    <artifactId>factcast-examples</artifactId>
+    <artifactId>factcast</artifactId>
     <version>0.1.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>factcast-example-tls-server</artifactId>
+  <artifactId>factcast-docker</artifactId>
   <properties>
     <!-- Pin your own Spring Boot version. -->
     <spring-boot.version>2.2.3.RELEASE</spring-boot.version>
@@ -48,17 +48,6 @@
       <groupId>org.factcast</groupId>
       <artifactId>factcast-store-pgsql</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-tcnative-boringssl-static</artifactId>
-    </dependency>
-    <!-- you want to remove this -->
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>1.12.4</version>
-    </dependency>
-    <!-- /you want to remove this -->
   </dependencies>
   <build>
     <finalName>factcast</finalName>
@@ -82,7 +71,7 @@
         <artifactId>docker-maven-plugin</artifactId>
         <version>1.2.2</version>
         <configuration>
-          <imageName>${docker.image.prefix}/${project.artifactId}</imageName>
+          <imageName>${docker.image.prefix}/factcast</imageName>
           <dockerDirectory>src/main/docker</dockerDirectory>
           <resources>
             <resource>
