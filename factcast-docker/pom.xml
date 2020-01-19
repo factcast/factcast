@@ -70,6 +70,15 @@
         <groupId>com.spotify</groupId>
         <artifactId>docker-maven-plugin</artifactId>
         <version>1.2.2</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>build</goal>
+            </goals>
+          </execution>
+        </executions>
+
         <configuration>
           <imageName>${docker.image.prefix}/factcast</imageName>
           <dockerDirectory>src/main/docker</dockerDirectory>
