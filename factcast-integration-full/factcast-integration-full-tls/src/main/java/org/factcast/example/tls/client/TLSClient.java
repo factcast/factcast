@@ -15,26 +15,15 @@
  */
 package org.factcast.example.tls.client;
 
-import java.io.File;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.testcontainers.containers.DockerComposeContainer;
-import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 
-@SuppressWarnings("ALL")
 @SpringBootApplication
 public class TLSClient {
 
     public static void main(String[] args) {
-        try (
-                DockerComposeContainer<?> compose = new DockerComposeContainer(
-                        new File("docker-compose.yml"))
-                                .withExposedService("db", 5432, new HostPortWaitStrategy())
-                                .withExposedService("factcast", 9443,
-                                        new HostPortWaitStrategy());) {
-            compose.start();
-            SpringApplication.run(TLSClient.class, args);
-        }
+
+        SpringApplication.run(TLSClient.class, args);
+
     }
 }
