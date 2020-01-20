@@ -23,6 +23,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -143,8 +144,12 @@ public class PgQueryTest {
         SubscriptionRequestTO req = SubscriptionRequestTO
                 .forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).fromScratch());
         FactObserver c = mock(FactObserver.class);
+        AtomicBoolean first = new AtomicBoolean(true);
         doAnswer(i -> {
-            sleep(250);
+            if (first.get()) {
+                first.set(false);
+                sleep(1000);
+            }
             return null;
         }).when(c).onNext(any());
         insertTestFact(TestHeader.create());
