@@ -164,7 +164,7 @@ public class PgQueryTest {
         verify(c, times(8)).onNext(any(Fact.class));
         // insert one more
         insertTestFact(TestHeader.create());
-        sleep(200);
+        sleep(1000);
         // and make sure it came back
         verify(c, times(9)).onNext(any(Fact.class));
     }
