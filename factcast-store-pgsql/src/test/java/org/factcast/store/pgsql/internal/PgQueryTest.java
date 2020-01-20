@@ -144,7 +144,7 @@ public class PgQueryTest {
                 .forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).fromScratch());
         FactObserver c = mock(FactObserver.class);
         doAnswer(i -> {
-            sleep(50);
+            sleep(250);
             return null;
         }).when(c).onNext(any());
         insertTestFact(TestHeader.create());
