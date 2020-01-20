@@ -144,12 +144,7 @@ public class PgQueryTest {
         SubscriptionRequestTO req = SubscriptionRequestTO
                 .forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).fromScratch());
         FactObserver c = mock(FactObserver.class);
-        AtomicBoolean first = new AtomicBoolean(true);
         doAnswer(i -> {
-            if (first.get()) {
-                first.set(false);
-                sleep(1000);
-            }
             return null;
         }).when(c).onNext(any());
         insertTestFact(TestHeader.create());
@@ -163,9 +158,14 @@ public class PgQueryTest {
         insertTestFact(TestHeader.create());
         s.awaitCatchup();
         verify(c).onCatchup();
+        // no idea how many facts were recieved by now
+        sleep(1000);
+        // now all of them should have arrived
         verify(c, times(8)).onNext(any(Fact.class));
+        // insert one more
         insertTestFact(TestHeader.create());
         sleep(200);
+        // and make sure it came back
         verify(c, times(9)).onNext(any(Fact.class));
     }
 
