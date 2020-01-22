@@ -88,3 +88,9 @@ Source Code is available as [github](https://github.com/factcast/factcast) repos
 * <a href="https://github.com/factcast/factcast/projects/4">
     0.2.0 (milestone)
 </a>
+
+<div align="right">
+Sponsored by <a href="https://www.prisma-capacity.eu/careers#job-offers"><img
+align="bottom" alt="PRISMA European Capacity Platform GmbH" class="inline" src="/prisma.jpg"
+/></a><br />   If you like to work with/on FactCast consider to
+contact.</div>
