@@ -122,7 +122,6 @@ public class HttpSchemaRegistry implements SchemaRegistry {
                 try {
                     store.register(source, schemaFetcher.fetch(source));
                 } catch (IOException e) {
-                    // TODO check expectations
                     throw new SchemaRegistryUnavailableException(e);
                 }
             });
