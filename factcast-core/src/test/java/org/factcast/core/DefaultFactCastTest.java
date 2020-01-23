@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,24 +75,21 @@ public class DefaultFactCastTest {
     private ArgumentCaptor<List<Fact>> cfacts;
 
     @Test
-        void testSubscribeEphemeral() {
-            when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
-            final UUID since = UUID.randomUUID();
-            SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.ns("foo"))
-                    .or(FactSpec.ns("some").type("type"))
-                    .from(since);
-            uut.subscribeEphemeral(r, f -> {
-            });
-            verify(store).subscribe(any(), any());
-            final SubscriptionRequestTO req = csr.getValue();
-            assertTrue(req.continuous());
-            assertFalse(req.idOnly());
-            assertEquals(since, req.startingAfter().get());
-            assertFalse(req.ephemeral());
-        }
-
-   
-
+    void testSubscribeEphemeral() {
+        when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
+        final UUID since = UUID.randomUUID();
+        SubscriptionRequest r = SubscriptionRequest.follow(FactSpec.ns("foo"))
+                .or(FactSpec.ns("some").type("type"))
+                .from(since);
+        uut.subscribeEphemeral(r, f -> {
+        });
+        verify(store).subscribe(any(), any());
+        final SubscriptionRequestTO req = csr.getValue();
+        assertTrue(req.continuous());
+        assertFalse(req.idOnly());
+        assertEquals(since, req.startingAfter().get());
+        assertFalse(req.ephemeral());
+    }
 
     @Test
     void testPublish() {
@@ -143,14 +140,12 @@ public class DefaultFactCastTest {
         });
     }
 
-    
     @Test
     void testSubscribeFactsNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
             uut.subscribeEphemeral(null, null);
         });
     }
-
 
     @Test
     void testSubscribeFacts1stArgNull() {
@@ -159,7 +154,6 @@ public class DefaultFactCastTest {
             });
         });
     }
-
 
     @Test
     void testSubscribeFacts2ndArgNull() {
