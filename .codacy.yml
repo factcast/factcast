@@ -1,5 +1,8 @@
 exclude_paths:
   - '**/src/test/**'
   - '**/*.js'
-  - '.mvn/*'
+  - '**/*.json'
+  - '.mvn/**'
+  - '**/*.md'
+  
   
