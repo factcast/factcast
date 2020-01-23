@@ -1,7 +1,6 @@
 package org.factcast.store.pgsql.validation.http;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.net.URL;
 
@@ -11,6 +10,7 @@ public class IndexFetcherTest {
 
 	private IndexFetcher uut;
 
+	// FIXME replace be selfcontained test
 	@Test
 	void testFetch() throws Exception {
 		uut = new IndexFetcher(
