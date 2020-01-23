@@ -95,9 +95,8 @@ public class IndexFetcher {
 
     }
 
-    private URL createIndexUrl(URL schemaRegistryUrl2) throws MalformedURLException {
-        String spec = schemaRegistryUrl + "/index.json";
-
+    private URL createIndexUrl(URL url) throws MalformedURLException {
+        String spec = url + "/index.json";
         return new URL(spec.replaceAll("//", "/"));
     }
 }

@@ -37,6 +37,7 @@ public class NOPSchemaRegistry implements SchemaRegistry {
 
     @Override
     public void refresh() {
+        // NOP
     }
 
 }

@@ -59,9 +59,8 @@ public class FactValidatorConfiguration {
     @Bean
     public SchemaStore schemaStore(@NonNull JdbcTemplate jdbcTemplate,
             @NonNull PgConfigurationProperties props) {
-        if (props.isValidationEnanbled())
-            if (props.isPersistentSchemaStore())
-                return new PgSchemaStoreImpl(jdbcTemplate);
+        if (props.isValidationEnanbled() && props.isPersistentSchemaStore())
+            return new PgSchemaStoreImpl(jdbcTemplate);
 
         // otherwise
         return new InMemSchemaStoreImpl();
