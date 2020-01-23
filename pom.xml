@@ -291,6 +291,8 @@
             <includes>
               <include> **/src/main/java/**/*.java
               </include>
+              <include> **/src/main/test/**/*.java
+              </include>
             </includes>
           </java>
           <kotlin>
