@@ -46,27 +46,28 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 
 public class HttpSchemaRegistry implements SchemaRegistry {
-
+    @NonNull
     private IndexFetcher indexFetcher;
 
+    @NonNull
     private SchemaFetcher schemaFetcher;
 
-    public HttpSchemaRegistry(URL baseUrl, SchemaStore store) {
+    @NonNull
+    private final SchemaStore store;
+
+    public HttpSchemaRegistry(@NonNull URL baseUrl, @NonNull SchemaStore store) {
         this.store = store;
         this.indexFetcher = new IndexFetcher(baseUrl);
         this.schemaFetcher = new SchemaFetcher(baseUrl);
     }
 
     @VisibleForTesting
-    protected HttpSchemaRegistry(SchemaStore store, IndexFetcher indexFetcher,
-            SchemaFetcher schemaFetcher) {
+    protected HttpSchemaRegistry(@NonNull SchemaStore store, @NonNull IndexFetcher indexFetcher,
+            @NonNull SchemaFetcher schemaFetcher) {
         this.store = store;
         this.indexFetcher = indexFetcher;
         this.schemaFetcher = schemaFetcher;
     }
-
-    @NonNull
-    private final SchemaStore store;
 
     private LoadingCache<SchemaKey, JsonSchema> cache = new AbstractLoadingCache<SchemaKey, JsonSchema>() {
 

@@ -15,20 +15,21 @@
  */
 package org.factcast.store.pgsql.validation;
 
+import lombok.NonNull;
 import lombok.Value;
 
 @Value
 public class FactValidationError {
-    public FactValidationError(String string) {
+    public FactValidationError(@NonNull String string) {
         this("error", string);
     }
 
-    public FactValidationError(String level, String string) {
+    public FactValidationError(@NonNull String level, @NonNull String string) {
         this.level = level;
         this.message = string;
     }
 
-    String level;
+    private String level;
 
-    String message;
+    private String message;
 }
