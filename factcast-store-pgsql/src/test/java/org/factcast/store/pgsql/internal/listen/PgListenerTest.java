@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,115 +40,115 @@ import com.google.common.eventbus.AsyncEventBus;
 @ExtendWith(MockitoExtension.class)
 public class PgListenerTest {
 
-	@Mock
-	PgConnectionSupplier ds;
+    @Mock
+    PgConnectionSupplier ds;
 
-	@Mock
-	AsyncEventBus bus;
+    @Mock
+    AsyncEventBus bus;
 
-	@Mock
-	PgConnection conn;
+    @Mock
+    PgConnection conn;
 
-	@Mock
-	PreparedStatement ps;
+    @Mock
+    PreparedStatement ps;
 
-	Predicate<Connection> tester = c -> true;
+    Predicate<Connection> tester = c -> true;
 
-	@Captor
-	ArgumentCaptor<PgListener> captor;
+    @Captor
+    ArgumentCaptor<PgListener> captor;
 
-	@SuppressWarnings("unchecked")
-	@Test
-	void testCheckFails() throws SQLException {
+    @SuppressWarnings("unchecked")
+    @Test
+    void testCheckFails() throws SQLException {
 
-		when(ds.get()).thenReturn(conn);
-		when(conn.prepareStatement(anyString())).thenReturn(ps);
+        when(ds.get()).thenReturn(conn);
+        when(conn.prepareStatement(anyString())).thenReturn(ps);
 
-		tester = mock(Predicate.class);
-		when(tester.test(any())).thenReturn(false, false, true, false);
-		PgListener l = new PgListener(ds, bus, tester);
-		l.afterPropertiesSet();
-		verify(bus, times(3)).post(any(FactInsertionEvent.class));
-		verifyNoMoreInteractions(bus);
+        tester = mock(Predicate.class);
+        when(tester.test(any())).thenReturn(false, false, true, false);
+        PgListener l = new PgListener(ds, bus, tester);
+        l.afterPropertiesSet();
+        verify(bus, times(3)).post(any(FactInsertionEvent.class));
+        verifyNoMoreInteractions(bus);
 
-		l.destroy();
-	}
+        l.destroy();
+    }
 
-	@Test
-	void testListen() throws Exception {
-		when(ds.get()).thenReturn(conn);
-		when(conn.prepareStatement(anyString())).thenReturn(ps);
+    @Test
+    void testListen() throws Exception {
+        when(ds.get()).thenReturn(conn);
+        when(conn.prepareStatement(anyString())).thenReturn(ps);
 
-		PgListener l = new PgListener(ds, bus, tester);
-		l.afterPropertiesSet();
-		sleep(100);
-		verify(bus).post(any(FactInsertionEvent.class));
-		verifyNoMoreInteractions(bus);
-		verify(conn, atLeastOnce()).prepareStatement(PgConstants.LISTEN_SQL);
-		verify(ps, atLeastOnce()).execute();
+        PgListener l = new PgListener(ds, bus, tester);
+        l.afterPropertiesSet();
+        sleep(100);
+        verify(bus).post(any(FactInsertionEvent.class));
+        verifyNoMoreInteractions(bus);
+        verify(conn, atLeastOnce()).prepareStatement(PgConstants.LISTEN_SQL);
+        verify(ps, atLeastOnce()).execute();
 
-		l.destroy();
-	}
+        l.destroy();
+    }
 
-	@Test
-	void testNotify() throws Exception {
+    @Test
+    void testNotify() throws Exception {
 
-		when(ds.get()).thenReturn(conn);
-		when(conn.prepareStatement(anyString())).thenReturn(ps);
+        when(ds.get()).thenReturn(conn);
+        when(conn.prepareStatement(anyString())).thenReturn(ps);
 
-		PgListener l = new PgListener(ds, bus, tester);
-		when(conn.getNotifications(anyInt())).thenReturn(new PGNotification[] { //
-				new Notification(PgConstants.CHANNEL_NAME, 1), //
-				new Notification(PgConstants.CHANNEL_NAME, 1), //
-				new Notification(PgConstants.CHANNEL_NAME, 1) },
-				new PGNotification[] { new Notification(PgConstants.CHANNEL_NAME, 2) }, //
-				new PGNotification[] { new Notification(PgConstants.CHANNEL_NAME, 3) }, null);
-		l.afterPropertiesSet();
-		sleep(400);
-		// 4 posts: one scheduled, 3 from notifications
-		verify(bus, times(4)).post(any(FactInsertionEvent.class));
+        PgListener l = new PgListener(ds, bus, tester);
+        when(conn.getNotifications(anyInt())).thenReturn(new PGNotification[] { //
+                new Notification(PgConstants.CHANNEL_NAME, 1), //
+                new Notification(PgConstants.CHANNEL_NAME, 1), //
+                new Notification(PgConstants.CHANNEL_NAME, 1) },
+                new PGNotification[] { new Notification(PgConstants.CHANNEL_NAME, 2) }, //
+                new PGNotification[] { new Notification(PgConstants.CHANNEL_NAME, 3) }, null);
+        l.afterPropertiesSet();
+        sleep(400);
+        // 4 posts: one scheduled, 3 from notifications
+        verify(bus, times(4)).post(any(FactInsertionEvent.class));
 
-		l.destroy();
-	}
+        l.destroy();
+    }
 
-	@Test
-	void testNotifyScheduled() throws Exception {
+    @Test
+    void testNotifyScheduled() throws Exception {
 
-		when(ds.get()).thenReturn(conn);
-		when(conn.prepareStatement(anyString())).thenReturn(ps);
+        when(ds.get()).thenReturn(conn);
+        when(conn.prepareStatement(anyString())).thenReturn(ps);
 
-		PgListener l = new PgListener(ds, bus, tester);
-		when(conn.getNotifications(anyInt())).thenReturn(null);
-		l.afterPropertiesSet();
-		sleep(200);
-		// one scheduled
-		verify(bus, times(1)).post(any(FactInsertionEvent.class));
+        PgListener l = new PgListener(ds, bus, tester);
+        when(conn.getNotifications(anyInt())).thenReturn(null);
+        l.afterPropertiesSet();
+        sleep(200);
+        // one scheduled
+        verify(bus, times(1)).post(any(FactInsertionEvent.class));
 
-		l.destroy();
-	}
+        l.destroy();
+    }
 
-	@Test
-	void testStop() throws Exception {
-		when(ds.get()).thenReturn(conn);
-		when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
-		PgListener l = new PgListener(ds, bus, tester);
-		l.afterPropertiesSet();
-		l.destroy();
-		sleep(150);// TODO flaky
-		verify(conn).close();
-	}
+    @Test
+    void testStop() throws Exception {
+        when(ds.get()).thenReturn(conn);
+        when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
+        PgListener l = new PgListener(ds, bus, tester);
+        l.afterPropertiesSet();
+        l.destroy();
+        sleep(150);// TODO flaky
+        verify(conn).close();
+    }
 
-	private void sleep(int i) {
-		try {
-			Thread.sleep(i);
-		} catch (InterruptedException ignored) {
-		}
-	}
+    private void sleep(int i) {
+        try {
+            Thread.sleep(i);
+        } catch (InterruptedException ignored) {
+        }
+    }
 
-	@Test
-	void testStopWithoutStarting() {
-		PgListener l = new PgListener(ds, bus, tester);
-		l.destroy();
-		verifyNoMoreInteractions(conn);
-	}
+    @Test
+    void testStopWithoutStarting() {
+        PgListener l = new PgListener(ds, bus, tester);
+        l.destroy();
+        verifyNoMoreInteractions(conn);
+    }
 }

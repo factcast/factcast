@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,32 +32,38 @@ class IdOnlyFactTest {
 
     @Test
     void testNsUnsupported() {
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID.randomUUID()).ns());
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID
+                .randomUUID()).ns());
     }
 
     @Test
     void testaggIdUnsupported() {
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID.randomUUID()).aggIds());
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID
+                .randomUUID()).aggIds());
     }
 
     @Test
     void testtypeUnsupported() {
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID.randomUUID()).type());
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID
+                .randomUUID()).type());
     }
 
     @Test
     void testHeaderUnsupported() {
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID.randomUUID()).jsonHeader());
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID
+                .randomUUID()).jsonHeader());
     }
 
     @Test
     void testPayloadUnsupported() {
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID.randomUUID()).jsonPayload());
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID
+                .randomUUID()).jsonPayload());
     }
 
     @Test
     void testMetaUnsupported() {
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID.randomUUID()).meta("foo"));
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> new IdOnlyFact(UUID
+                .randomUUID()).meta("foo"));
     }
 
     @Test

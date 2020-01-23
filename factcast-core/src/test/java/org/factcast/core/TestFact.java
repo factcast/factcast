@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,42 +39,42 @@ import lombok.SneakyThrows;
 @EqualsAndHashCode(of = "id")
 public class TestFact implements Fact {
 
-	UUID id = UUID.randomUUID();
+    UUID id = UUID.randomUUID();
 
-	Set<UUID> aggIds = new LinkedHashSet<>();
+    Set<UUID> aggIds = new LinkedHashSet<>();
 
-	String type = "test";
+    String type = "test";
 
-	int version = 1;
+    int version = 1;
 
-	String ns = "default";
+    String ns = "default";
 
-	String jsonPayload = "{}";
+    String jsonPayload = "{}";
 
-	Map<String, String> meta = new HashMap<>();
+    Map<String, String> meta = new HashMap<>();
 
-	@Override
-	public String meta(String key) {
-		return meta.get(key);
-	}
+    @Override
+    public String meta(String key) {
+        return meta.get(key);
+    }
 
-	public TestFact meta(String key, String value) {
-		meta.put(key, value);
-		return this;
-	}
+    public TestFact meta(String key, String value) {
+        meta.put(key, value);
+        return this;
+    }
 
-	@Override
-	@SneakyThrows
-	public String jsonHeader() {
-		return FactCastJson.writeValueAsString(this);
-	}
+    @Override
+    @SneakyThrows
+    public String jsonHeader() {
+        return FactCastJson.writeValueAsString(this);
+    }
 
-	public TestFact aggId(@NonNull UUID aggId, UUID... otherAggIds) {
-		aggIds.add(aggId);
-		if (otherAggIds != null) {
-			aggIds.addAll(Arrays.asList(otherAggIds));
-		}
-		return this;
-	}
+    public TestFact aggId(@NonNull UUID aggId, UUID... otherAggIds) {
+        aggIds.add(aggId);
+        if (otherAggIds != null) {
+            aggIds.addAll(Arrays.asList(otherAggIds));
+        }
+        return this;
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,9 @@ public class SubscriptionRequestTOTest {
         SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
         SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
         assertFalse(uut.hasAnyScriptFilters());
-        uut.addSpecs(Collections.singletonList(FactSpec.ns("buh").jsFilterScript(
-                "function (h,e){ return true }")));
+        uut.addSpecs(Collections.singletonList(FactSpec.ns("buh")
+                .jsFilterScript(
+                        "function (h,e){ return true }")));
         assertTrue(uut.hasAnyScriptFilters());
     }
 

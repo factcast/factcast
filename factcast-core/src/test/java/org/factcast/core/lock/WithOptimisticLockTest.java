@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,19 +23,16 @@ import org.mockito.*;
 
 class WithOptimisticLockTest {
 
-
     @Test
     void attemptReturnsNullShouldBeAnAbort() {
 
-        WithOptimisticLock uut
-                = new WithOptimisticLock(Mockito.mock(FactStore.class), null, Collections.singletonList(UUID.randomUUID()));
-
+        WithOptimisticLock uut = new WithOptimisticLock(Mockito.mock(FactStore.class), null,
+                Collections.singletonList(UUID.randomUUID()));
 
         Assertions.assertThrows(AttemptAbortedException.class,
                 () -> {
                     uut.attempt(() -> null);
-                }
-        );
+                });
 
     }
 }
