@@ -46,8 +46,10 @@ public class PgFactExtractorTest {
                 + "\"}");
         when(rs.getString(PgConstants.COLUMN_PAYLOAD)).thenReturn("{}");
         when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(27L);
+        when(rs.getInt(PgConstants.COLUMN_VERSION)).thenReturn(110);
         Fact mapRow = uut.mapRow(rs, 1);
         assertEquals(27, serial.get());
+        assertEquals(110, mapRow.version());
         assertEquals(id, mapRow.id());
     }
 

@@ -19,6 +19,7 @@ import java.util.*;
 
 import lombok.*;
 
+// this type should be removed
 class NullFact implements Fact {
     @Override
     public @NonNull UUID id() {
@@ -61,4 +62,9 @@ class NullFact implements Fact {
 
         return null;
     }
+
+	@Override
+	public int version() {
+		return 0;
+	}
 }

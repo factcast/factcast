@@ -39,39 +39,42 @@ import lombok.SneakyThrows;
 @EqualsAndHashCode(of = "id")
 public class TestFact implements Fact {
 
-    UUID id = UUID.randomUUID();
+	UUID id = UUID.randomUUID();
 
-    Set<UUID> aggIds = new LinkedHashSet<>();
+	Set<UUID> aggIds = new LinkedHashSet<>();
 
-    String type;
+	String type = "test";
 
-    String ns = "default";
+	int version = 1;
 
-    String jsonPayload = "{}";
+	String ns = "default";
 
-    Map<String, String> meta = new HashMap<>();
+	String jsonPayload = "{}";
 
-    @Override
-    public String meta(String key) {
-        return meta.get(key);
-    }
+	Map<String, String> meta = new HashMap<>();
 
-    public TestFact meta(String key, String value) {
-        meta.put(key, value);
-        return this;
-    }
+	@Override
+	public String meta(String key) {
+		return meta.get(key);
+	}
 
-    @Override
-    @SneakyThrows
-    public String jsonHeader() {
-        return FactCastJson.writeValueAsString(this);
-    }
+	public TestFact meta(String key, String value) {
+		meta.put(key, value);
+		return this;
+	}
 
-    public TestFact aggId(@NonNull UUID aggId, UUID... otherAggIds) {
-        aggIds.add(aggId);
-        if (otherAggIds != null) {
-            aggIds.addAll(Arrays.asList(otherAggIds));
-        }
-        return this;
-    }
+	@Override
+	@SneakyThrows
+	public String jsonHeader() {
+		return FactCastJson.writeValueAsString(this);
+	}
+
+	public TestFact aggId(@NonNull UUID aggId, UUID... otherAggIds) {
+		aggIds.add(aggId);
+		if (otherAggIds != null) {
+			aggIds.addAll(Arrays.asList(otherAggIds));
+		}
+		return this;
+	}
+
 }

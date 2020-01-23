@@ -15,6 +15,7 @@
  */
 package org.factcast.store.pgsql;
 
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -37,8 +38,7 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("DefaultAnnotationParam")
-@ConfigurationProperties(
-        prefix = "factcast.store.pgsql")
+@ConfigurationProperties(prefix = "factcast.store.pgsql")
 @Data
 @Slf4j
 @Accessors(fluent = false)
@@ -80,6 +80,12 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
      */
     int queueFetchRatio = 4;
 
+    URL schemaRegistryUrl;
+
+    boolean persistentSchemaStore = true;
+
+    boolean allowUnvalidatedPublish = false;
+
     public int getPageSizeForIds() {
         return pageSize * idOnlyFactor;
     }
@@ -106,7 +112,8 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
         if (!legacyProperties.isEmpty()) {
             log.error(
                     "There are legacy properties detected. Property namespace has been renamed from '"
-                            + LEGACY_PREFIX + "' to 'factcast.store.pgsql'");
+                            + LEGACY_PREFIX
+                            + "' to 'factcast.store.pgsql'");
             legacyProperties.forEach(p -> {
                 log.error("Property {} found in {}", p.getKey(), p.getValue());
             });
@@ -127,4 +134,9 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
         }
         return map;
     }
+
+    public boolean isValidationEnanbled() {
+        return schemaRegistryUrl != null;
+    }
+
 }

@@ -15,14 +15,9 @@
  */
 package org.factcast.core.util;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.core.TestHelper.expectNPE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.factcast.core.TestHelper.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -41,102 +36,100 @@ import lombok.NoArgsConstructor;
 
 public class FactCastJsonTest {
 
-    @Test
-    void testCopyNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            FactCastJson.copy(null);
-        });
-    }
+	@Test
+	void testCopyNull() {
+		Assertions.assertThrows(NullPointerException.class, () -> {
+			FactCastJson.copy(null);
+		});
+	}
 
-    @Test
-    void testCopy() {
-        final Foo foo = new Foo("bar", "baz");
-        Foo copy = FactCastJson.copy(foo);
-        assertNotSame(foo, copy);
-        assertNotEquals(foo, copy);
-        assertEquals(foo.bar(), copy.bar());
-        assertNull(copy.baz());
-    }
+	@Test
+	void testCopy() {
+		final Foo foo = new Foo("bar", "baz");
+		Foo copy = FactCastJson.copy(foo);
+		assertNotSame(foo, copy);
+		assertNotEquals(foo, copy);
+		assertEquals(foo.bar(), copy.bar());
+		assertNull(copy.baz());
+	}
 
-    @AllArgsConstructor
-    @Data
-    @NoArgsConstructor
-    static class Foo {
+	@AllArgsConstructor
+	@Data
+	@NoArgsConstructor
+	static class Foo {
 
-        @JsonProperty
-        String bar;
+		@JsonProperty
+		String bar;
 
-        @JsonIgnore
-        String baz;
-    }
+		@JsonIgnore
+		String baz;
+	}
 
-    @Test
-    void testReadValueNull() {
-        expectNPE(() -> FactCastJson.readValue(null, ""));
-        expectNPE(() -> FactCastJson.readValue(null, (String) null));
-        expectNPE(() -> FactCastJson.readValue(FactCastJson.class, (String) null));
-        expectNPE(() -> FactCastJson.readValue(null, (InputStream) null));
-        expectNPE(() -> FactCastJson.readValue(FactCastJson.class, (InputStream) null));
-    }
+	@Test
+	void testReadValueNull() {
+		expectNPE(() -> FactCastJson.readValue(null, ""));
+		expectNPE(() -> FactCastJson.readValue(null, (String) null));
+		expectNPE(() -> FactCastJson.readValue(FactCastJson.class, (String) null));
+		expectNPE(() -> FactCastJson.readValue(null, (InputStream) null));
+		expectNPE(() -> FactCastJson.readValue(FactCastJson.class, (InputStream) null));
+	}
 
-    public static class X {
-        String foo;
+	public static class X {
+		String foo;
 
-        int bar;
-    }
+		int bar;
+	}
 
-    @Test
-    void testReadValueFromInputStream() {
+	@Test
+	void testReadValueFromInputStream() {
 
-        X x = FactCastJson.readValue(X.class, new ByteArrayInputStream("{\"foo\":\"baz\",\"bar\":7}"
-                .getBytes()));
-        assertThat(x.foo).isEqualTo("baz");
-        assertThat(x.bar).isEqualTo(7);
-    }
+		X x = FactCastJson.readValue(X.class, new ByteArrayInputStream("{\"foo\":\"baz\",\"bar\":7}".getBytes()));
+		assertThat(x.foo).isEqualTo("baz");
+		assertThat(x.bar).isEqualTo(7);
+	}
 
-    @Test
-    void testWriteValueNull() {
-        expectNPE(() -> FactCastJson.writeValueAsString(null));
-    }
+	@Test
+	void testWriteValueNull() {
+		expectNPE(() -> FactCastJson.writeValueAsString(null));
+	}
 
-    @Test
-    void testNewObjectNode() {
-        assertNotNull(FactCastJson.newObjectNode());
-        assertTrue(FactCastJson.newObjectNode() instanceof ObjectNode);
-    }
+	@Test
+	void testNewObjectNode() {
+		assertNotNull(FactCastJson.newObjectNode());
+		assertTrue(FactCastJson.newObjectNode() instanceof ObjectNode);
+	}
 
-    @Test
-    void testToObjectNodeNonJson() {
-        Assertions.assertThrows(RuntimeException.class, () -> {
-            FactCastJson.toObjectNode("no-json");
-        });
-    }
+	@Test
+	void testToObjectNodeNonJson() {
+		Assertions.assertThrows(RuntimeException.class, () -> {
+			FactCastJson.toObjectNode("no-json");
+		});
+	}
 
-    @Test
-    void testToObjectNode() {
-        ObjectNode objectNode = FactCastJson.toObjectNode("{\"x\":1}");
-        JsonNode jsonNode = objectNode.get("x");
-        assertEquals(1, jsonNode.asInt());
-        assertNull(objectNode.get("y"));
-    }
+	@Test
+	void testToObjectNode() {
+		ObjectNode objectNode = FactCastJson.toObjectNode("{\"x\":1}");
+		JsonNode jsonNode = objectNode.get("x");
+		assertEquals(1, jsonNode.asInt());
+		assertNull(objectNode.get("y"));
+	}
 
-    @Test
-    void testWriteValueAsPrettyString() {
-        String json = "{\"a\":1}";
-        String pretty = FactCastJson.writeValueAsPrettyString(FactCastJson.toObjectNode(json));
-        assertTrue(pretty.contains("\n"));
-        assertTrue(pretty.contains(" "));
-    }
+	@Test
+	void testWriteValueAsPrettyString() {
+		String json = "{\"a\":1}";
+		String pretty = FactCastJson.writeValueAsPrettyString(FactCastJson.toObjectNode(json));
+		assertTrue(pretty.contains("\n"));
+		assertTrue(pretty.contains(" "));
+	}
 
-    @Test
-    void testWriteValueAsPrettyFromObject() {
-        @Data
-        class TestObject {
-            String foo = "bar";
-        }
+	@Test
+	void testWriteValueAsPrettyFromObject() {
+		@Data
+		class TestObject {
+			String foo = "bar";
+		}
 
-        String pretty = FactCastJson.writeValueAsPrettyString(new TestObject());
-        System.out.println(pretty);
-        assertTrue(pretty.contains("\"foo\" : \"bar\""));
-    }
+		String pretty = FactCastJson.writeValueAsPrettyString(new TestObject());
+		assertTrue(pretty.contains("\"foo\" : \"bar\""));
+	}
 }
