@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ public class AttemptTest {
         IntermediatePublishResult r = Attempt.publish(f1, f2, f3);
         assertThat(r.factsToPublish().size()).isEqualTo(3);
     }
+
     @Test
     public void testPublishFact() throws Exception {
         Fact f1 = new TestFact();

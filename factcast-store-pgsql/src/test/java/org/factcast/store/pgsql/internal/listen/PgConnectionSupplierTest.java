@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,6 +153,7 @@ public class PgConnectionSupplierTest {
         PgConnectionSupplier uut = new PgConnectionSupplier(ds);
         assertThatThrownBy(uut::get).isInstanceOf(SQLException.class);
     }
+
     @Test
     void testTomcatDataSourceIsUsed() {
         org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();

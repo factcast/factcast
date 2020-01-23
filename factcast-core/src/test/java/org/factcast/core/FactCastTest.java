@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,13 @@
  */
 package org.factcast.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 
-import java.util.Collections;
 import java.util.List;
 
-import org.factcast.core.spec.FactSpec;
-import org.factcast.core.spec.FactSpecMatcher;
 import org.factcast.core.store.FactStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -69,7 +63,6 @@ public class FactCastTest {
         ReadFactCast fc = FactCast.fromReadOnly(store);
         assertTrue(fc instanceof DefaultFactCast);
     }
-
 
     @Test
     void testRetryValidatesMaxAttempts() {
