@@ -50,9 +50,9 @@ public class SchemaFetcher {
     }
 
     @VisibleForTesting
-    SchemaFetcher(URL baseUrl, OkHttpClient client) {
+    SchemaFetcher(@NonNull URL baseUrl, @NonNull OkHttpClient client) {
         this.client = client;
-        this.baseUrl = null;
+        this.baseUrl = baseUrl;
     }
 
     public String fetch(SchemaSource key) throws IOException {
