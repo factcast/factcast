@@ -21,12 +21,12 @@ import java.net.URL;
 import java.util.Optional;
 
 import org.factcast.store.pgsql.validation.schema.SchemaRegistryUnavailableException;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
-import lombok.RequiredArgsConstructor;
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Request.Builder;
 import okhttp3.Response;
@@ -38,10 +38,19 @@ import okhttp3.Response;
  *
  */
 @Slf4j
-@Component
-@Scope(scopeName = ConfigurableBeanFactory.SCOPE_SINGLETON)
-@RequiredArgsConstructor
 public class IndexFetcher {
+
+    private final OkHttpClient client;
+
+    public IndexFetcher(@NonNull URL baseUrl) {
+        this(baseUrl, ValidationConstants.client);
+    }
+
+    @VisibleForTesting
+    protected IndexFetcher(@NonNull URL baseUrl, @NonNull OkHttpClient client) {
+        this.client = client;
+        this.schemaRegistryUrl = baseUrl;
+    }
 
     private final URL schemaRegistryUrl;
 
@@ -68,7 +77,7 @@ public class IndexFetcher {
 
             Request request = req.build();
             log.debug("Fetching index from {}", request.url());
-            try (Response response = ValidationConstants.client.newCall(request).execute()) {
+            try (Response response = client.newCall(request).execute()) {
 
                 String responseBodyAsText = response.body().string();
 

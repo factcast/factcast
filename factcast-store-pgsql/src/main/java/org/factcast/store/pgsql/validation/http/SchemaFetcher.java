@@ -21,8 +21,9 @@ import java.net.URL;
 
 import org.factcast.store.pgsql.validation.schema.SchemaSource;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -34,13 +35,25 @@ import okhttp3.Response;
  * @author uwe
  *
  */
-@RequiredArgsConstructor
+
 @Slf4j
 public class SchemaFetcher {
-    private static final OkHttpClient client = new OkHttpClient();
 
     @NonNull
     private final URL baseUrl;
+
+    @NonNull
+    private final OkHttpClient client;
+
+    public SchemaFetcher(@NonNull URL baseUrl) {
+        this(baseUrl, ValidationConstants.client);
+    }
+
+    @VisibleForTesting
+    SchemaFetcher(URL baseUrl, OkHttpClient client) {
+        this.client = client;
+        this.baseUrl = null;
+    }
 
     public String fetch(SchemaSource key) throws IOException {
 
