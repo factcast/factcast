@@ -24,9 +24,9 @@ import java.util.Optional;
  *
  */
 public interface SchemaStore {
-    void register(SchemaSource key, String schema) throws SchemaConflictException;
+    void register(SchemaSource source, String schema) throws SchemaConflictException;
 
-    boolean contains(SchemaSource key) throws SchemaConflictException;
+    boolean contains(SchemaSource source) throws SchemaConflictException;
 
     Optional<String> get(SchemaKey key);
 

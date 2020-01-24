@@ -36,7 +36,7 @@ public class FactValidatorTest {
     public void testValidateIfDisabled() throws Exception {
 
         PgConfigurationProperties props = mock(PgConfigurationProperties.class);
-        when(props.isValidationEnanbled()).thenReturn(false);
+        when(props.isValidationEnabled()).thenReturn(false);
 
         FactValidator uut = new FactValidator(props, mock(SchemaRegistry.class));
         Fact probeFact = Fact.builder().ns("foo").type("bar").version(1).buildWithoutPayload();
@@ -48,7 +48,7 @@ public class FactValidatorTest {
     public void testFailsToValidateIfNotValidatable() throws Exception {
 
         PgConfigurationProperties props = mock(PgConfigurationProperties.class);
-        when(props.isValidationEnanbled()).thenReturn(true);
+        when(props.isValidationEnabled()).thenReturn(true);
         when(props.isAllowUnvalidatedPublish()).thenReturn(false);
 
         FactValidator uut = new FactValidator(props, mock(SchemaRegistry.class));
@@ -61,7 +61,7 @@ public class FactValidatorTest {
     public void testValidateIfNotValidatableButAllowed() throws Exception {
 
         PgConfigurationProperties props = mock(PgConfigurationProperties.class);
-        when(props.isValidationEnanbled()).thenReturn(true);
+        when(props.isValidationEnabled()).thenReturn(true);
         when(props.isAllowUnvalidatedPublish()).thenReturn(true);
 
         FactValidator uut = new FactValidator(props, mock(SchemaRegistry.class));
@@ -74,7 +74,7 @@ public class FactValidatorTest {
     public void testFailsToValidateIfValidatableButMissingSchema() throws Exception {
 
         PgConfigurationProperties props = mock(PgConfigurationProperties.class);
-        when(props.isValidationEnanbled()).thenReturn(true);
+        when(props.isValidationEnabled()).thenReturn(true);
         when(props.isAllowUnvalidatedPublish()).thenReturn(false);
         SchemaRegistry sr = mock(SchemaRegistry.class);
         when(sr.get(Mockito.any())).thenReturn(Optional.empty());
@@ -89,7 +89,7 @@ public class FactValidatorTest {
     public void testValidateWithMatchingSchema() throws Exception {
 
         PgConfigurationProperties props = mock(PgConfigurationProperties.class);
-        when(props.isValidationEnanbled()).thenReturn(true);
+        when(props.isValidationEnabled()).thenReturn(true);
         when(props.isAllowUnvalidatedPublish()).thenReturn(false);
 
         SchemaRegistry sr = mock(SchemaRegistry.class);
@@ -116,7 +116,7 @@ public class FactValidatorTest {
     public void testValidateWithoutMatchingSchema() throws Exception {
 
         PgConfigurationProperties props = mock(PgConfigurationProperties.class);
-        when(props.isValidationEnanbled()).thenReturn(true);
+        when(props.isValidationEnabled()).thenReturn(true);
         when(props.isAllowUnvalidatedPublish()).thenReturn(true);
 
         SchemaRegistry sr = mock(SchemaRegistry.class);
@@ -136,7 +136,7 @@ public class FactValidatorTest {
     public void testFailsToValidateWithMatchingSchemaButNonMatchingFact() throws Exception {
 
         PgConfigurationProperties props = mock(PgConfigurationProperties.class);
-        when(props.isValidationEnanbled()).thenReturn(true);
+        when(props.isValidationEnabled()).thenReturn(true);
         when(props.isAllowUnvalidatedPublish()).thenReturn(false);
 
         SchemaRegistry sr = mock(SchemaRegistry.class);

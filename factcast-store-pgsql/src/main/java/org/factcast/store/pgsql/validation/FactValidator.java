@@ -45,7 +45,7 @@ public class FactValidator {
     private final SchemaRegistry registry;
 
     public List<FactValidationError> validate(Fact fact) {
-        if (props.isValidationEnanbled())
+        if (props.isValidationEnabled())
             if (isValidateable(fact)) {
                 return doValidate(fact);
             } else {
@@ -94,7 +94,7 @@ public class FactValidator {
     }
 
     private boolean isValidateable(Fact fact) {
-        return fact.type() != null && fact.version() > 0;
+        return fact.ns() != null && fact.type() != null && fact.version() > 0;
     }
 
 }

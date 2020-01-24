@@ -135,7 +135,7 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
         return map;
     }
 
-    public boolean isValidationEnanbled() {
+    public boolean isValidationEnabled() {
         return schemaRegistryUrl != null;
     }
 

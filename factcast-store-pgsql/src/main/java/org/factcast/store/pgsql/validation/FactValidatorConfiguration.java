@@ -34,11 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 public class FactValidatorConfiguration {
 
     @Bean
-    public SchemaRegistry schemaRegistry(PgConfigurationProperties p,
+    public SchemaRegistry schemaRegistry(PgConfigurationProperties p, @NonNull SchemaStore store) {
 
-            @NonNull SchemaStore store) {
-
-        if (p.isValidationEnanbled()) {
+        if (p.isValidationEnabled()) {
             HttpSchemaRegistry httpSchemaRegistry = new HttpSchemaRegistry(p.getSchemaRegistryUrl(),
                     store);
             httpSchemaRegistry.refresh();
@@ -59,7 +57,7 @@ public class FactValidatorConfiguration {
     @Bean
     public SchemaStore schemaStore(@NonNull JdbcTemplate jdbcTemplate,
             @NonNull PgConfigurationProperties props) {
-        if (props.isValidationEnanbled() && props.isPersistentSchemaStore())
+        if (props.isValidationEnabled() && props.isPersistentSchemaStore())
             return new PgSchemaStoreImpl(jdbcTemplate);
 
         // otherwise
@@ -67,14 +65,14 @@ public class FactValidatorConfiguration {
     }
 
     @Bean
-    public FactValidator factValidation(PgConfigurationProperties props, SchemaRegistry registry) {
+    public FactValidator factValidator(PgConfigurationProperties props, SchemaRegistry registry) {
         return new FactValidator(props, registry);
     }
 
     @Bean
     public FactValidationAspect factValidationAspect(PgConfigurationProperties props,
             FactValidator v) {
-        if (props.isValidationEnanbled()) {
+        if (props.isValidationEnabled()) {
             return new FactValidationAspect(v);
         } else
             return null;
