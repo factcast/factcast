@@ -15,6 +15,49 @@
  */
 package org.factcast.store.pgsql.validation.http;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.net.URL;
+
+import org.factcast.store.pgsql.validation.schema.SchemaSource;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import okhttp3.OkHttpClient;
+
+@ExtendWith(MockitoExtension.class)
 public class SchemaFetcherTest {
+    @Mock
+    private URL baseUrl;
+
+    @Mock
+    private OkHttpClient client;
+
+    @InjectMocks
+    private SchemaFetcher uut;
+
+    @Test
+    public void testCreateSchemaUrl() throws Exception {
+        SchemaSource key = new SchemaSource("foo/bar/baz.json", "", "ns", "type", 7);
+        URL base = new URL("https://www.ibm.com/registry");
+        URL createSchemaUrl = uut.createSchemaUrl(base, key);
+
+        assertEquals("https://www.ibm.com/registry/foo/bar/baz.json",
+                createSchemaUrl.toString());
+    }
+
+    @Test
+    public void testCreateSchemaUrlWithTrailingSlash() throws Exception {
+        SchemaSource key = new SchemaSource("foo/bar/baz.json", "", "ns", "type", 7);
+        URL base = new URL("https://www.ibm.com/registry/");
+        URL createSchemaUrl = uut.createSchemaUrl(base, key);
+
+        assertEquals("https://www.ibm.com/registry/foo/bar/baz.json",
+                createSchemaUrl.toString());
+    }
 
 }

@@ -73,9 +73,14 @@ public class SchemaFetcher {
 
     }
 
-    private URL createSchemaUrl(@NonNull URL base, SchemaSource key) throws MalformedURLException {
-        String spec = base + "/" + key.id();
-        return new URL(spec.replaceAll("//", "/"));
+    protected URL createSchemaUrl(@NonNull URL base, @NonNull SchemaSource key)
+            throws MalformedURLException {
 
+        String externalForm = base.toExternalForm();
+        StringBuilder sb = new StringBuilder(externalForm);
+        if (!externalForm.endsWith("/"))
+            sb.append("/");
+        sb.append(key.id());
+        return new URL(sb.toString());
     }
 }
