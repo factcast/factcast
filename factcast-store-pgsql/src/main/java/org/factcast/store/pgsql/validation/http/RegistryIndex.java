@@ -31,7 +31,7 @@ import lombok.Data;
  *
  */
 @Data
-public class RegistryIndex { // will be renamed to schemas
+public class RegistryIndex {
     @JsonProperty
     private List<SchemaSource> schemes = new LinkedList<>();
 }
