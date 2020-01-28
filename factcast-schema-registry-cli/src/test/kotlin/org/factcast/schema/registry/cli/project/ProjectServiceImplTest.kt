@@ -24,15 +24,9 @@ import java.nio.file.Paths
 class ProjectServiceImplTest : StringSpec() {
     val fs = mockk<FileSystemService>()
     val dummyPath = Paths.get(".")
-    val examplesPath = Paths.get(dummyPath.toString(),
-        EXAMPLES_FOLDER
-    )
-    val versionsPath = Paths.get(dummyPath.toString(),
-        VERSIONS_FOLDER
-    )
-    val transfromationsPath = Paths.get(dummyPath.toString(),
-        TRANSFORMATIONS_FOLDER
-    )
+    val examplesPath = dummyPath.resolve(EXAMPLES_FOLDER)
+    val versionsPath = dummyPath.resolve(VERSIONS_FOLDER)
+    val transfromationsPath = dummyPath.resolve(TRANSFORMATIONS_FOLDER)
 
     val uut = ProjectServiceImpl(fs)
 
@@ -45,7 +39,7 @@ class ProjectServiceImplTest : StringSpec() {
             every { fs.exists(any()) } returns true
 
             val result = uut.fileExists(dummyPath, "foo")
-            result shouldBe Paths.get(dummyPath.toString(), "foo")
+            result shouldBe dummyPath.resolve( "foo")
 
             verify { fs.exists(any()) }
             confirmVerified(fs)

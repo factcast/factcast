@@ -31,7 +31,7 @@ class DistributionCreatorServiceImpl(
     override fun createDistributable(outputPath: Path, project: Project) {
         hugoPageCreator.creteHugoPage(outputPath, project)
 
-        val indexPath = Paths.get(outputPath.toString(), "static", "registry")
+        val indexPath = outputPath.resolve(Paths.get("static", "registry"))
         factcastIndexCreator.creteFactcastIndex(indexPath, project)
     }
 }

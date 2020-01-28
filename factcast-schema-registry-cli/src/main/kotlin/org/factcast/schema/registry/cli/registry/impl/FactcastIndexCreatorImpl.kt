@@ -26,7 +26,6 @@ import org.factcast.schema.registry.cli.registry.getTransformationId
 import org.factcast.schema.registry.cli.utils.mapEventTransformations
 import org.factcast.schema.registry.cli.utils.mapEventVersions
 import java.nio.file.Path
-import java.nio.file.Paths
 import javax.inject.Singleton
 
 @Singleton
@@ -44,8 +43,7 @@ class FactcastIndexCreatorImpl(
     @VisibleForTesting
     fun copyTransformations(registryPath: Path, project: Project) {
         project.mapEventTransformations { namespace, event, transformation ->
-            val transformationPath = Paths.get(
-                registryPath.toString(),
+            val transformationPath = registryPath.resolve(
                 getTransformationId(namespace, event, transformation.from, transformation.to)
             )
 
@@ -59,10 +57,7 @@ class FactcastIndexCreatorImpl(
     @VisibleForTesting
     fun copySchemes(registryPath: Path, project: Project) {
         project.mapEventVersions { namespace, event, version ->
-            val outputPath = Paths.get(
-                registryPath.toString(),
-                getEventId(namespace, event, version)
-            )
+            val outputPath = registryPath.resolve(getEventId(namespace, event, version))
 
             fileSystemService.copyFile(version.schemaPath.toFile(), outputPath.toFile())
         }
@@ -71,8 +66,9 @@ class FactcastIndexCreatorImpl(
     @VisibleForTesting
     fun createIndexFile(contentBase: Path, project: Project) {
         val index = indexFileCalculator.calculateIndex(project)
+        val path = contentBase.resolve("index.json")
 
         fileSystemService.ensureDirectories(contentBase)
-        om.writeValue(Paths.get(contentBase.toString(), "index.json").toFile(), index)
+        om.writeValue(path.toFile(), index)
     }
 }

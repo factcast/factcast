@@ -34,13 +34,13 @@ class HugoPageCreatorImpl(
     override fun creteHugoPage(outputPath: Path, project: Project) {
         copySite(outputPath)
 
-        val contentBase = Paths.get(outputPath.toString(), "content")
+        val contentBase = outputPath.resolve("content")
         createLandingPage(contentBase, project)
         createDynamicPages(contentBase, project.namespaces)
     }
 
     private fun createLandingPage(contentBase: Path, project: Project) {
-        val descriptionPath = Paths.get(contentBase.toString(), "_index.md")
+        val descriptionPath = contentBase.resolve("_index.md")
 
         val homeTemplate = templateService.loadHomeTemplate(project)
         fileSystemService.writeToFile(descriptionPath.toFile(), homeTemplate)
@@ -53,8 +53,8 @@ class HugoPageCreatorImpl(
     }
 
     private fun createNamespace(outputPath: Path, namespace: Namespace) {
-        val nsPath = Paths.get(outputPath.toString(), namespace.name)
-        val descriptionPath = Paths.get(nsPath.toString(), "_index.md")
+        val nsPath = outputPath.resolve(namespace.name)
+        val descriptionPath = nsPath.resolve("_index.md")
 
         val namespacePage = templateService.loadNamespaceTemplate(namespace)
         fileSystemService.writeToFile(descriptionPath.toFile(), namespacePage)
@@ -65,8 +65,8 @@ class HugoPageCreatorImpl(
     }
 
     private fun createEvent(nsPath: Path, namespace: Namespace, event: Event) {
-        val eventPath = Paths.get(nsPath.toString(), event.type)
-        val descriptionPath = Paths.get(eventPath.toString(), "_index.md")
+        val eventPath = nsPath.resolve(event.type)
+        val descriptionPath = eventPath.resolve("_index.md")
 
         val eventTemplate = templateService.loadEventTemplate(namespace, event)
         fileSystemService.writeToFile(descriptionPath.toFile(), eventTemplate)
@@ -83,15 +83,15 @@ class HugoPageCreatorImpl(
             return
         }
 
-        val filePath = Paths.get(eventPath.toString(), "transformations", "_index.md")
+        val filePath = eventPath.resolve(Paths.get("transformations", "_index.md"))
         val template = templateService.loadTransformationsTemplate(namespace, event)
 
         fileSystemService.writeToFile(filePath.toFile(), template)
     }
 
     private fun createVersion(eventPath: Path, namespace: Namespace, event: Event, version: Version) {
-        val versionPath = Paths.get(eventPath.toString(), version.version.toString())
-        val descriptionPath = Paths.get(versionPath.toString(), "_index.md")
+        val versionPath = eventPath.resolve(version.version.toString())
+        val descriptionPath = versionPath.resolve("_index.md")
 
         val versionTemplate = templateService.loadVersionTemplate(namespace, event, version)
         fileSystemService.writeToFile(

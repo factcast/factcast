@@ -25,7 +25,6 @@ import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.project.structure.TransformationFolder
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.nio.file.Paths
 import javax.inject.Singleton
 
 const val VERSIONS_FOLDER = "versions"
@@ -48,7 +47,8 @@ class ProjectServiceImpl(private val fileSystem: FileSystemService) :
                     NamespaceFolder(
                         path,
                         loadEvents(path),
-                        fileExists(path,
+                        fileExists(
+                            path,
                             DESCRIPTION_FILE
                         )
                     )
@@ -76,16 +76,14 @@ class ProjectServiceImpl(private val fileSystem: FileSystemService) :
     @VisibleForTesting
     fun loadTransformations(eventBasePath: Path): List<TransformationFolder> =
         try {
-            val transformationsFolder = Paths.get(
-                eventBasePath.toString(),
-                TRANSFORMATIONS_FOLDER
-            )
+            val transformationsFolder = eventBasePath.resolve(TRANSFORMATIONS_FOLDER)
 
             fileSystem.listDirectories(transformationsFolder)
                 .map {
                     TransformationFolder(
                         it,
-                        fileExists(it,
+                        fileExists(
+                            it,
                             TRANSFORMATION_FILE
                         )
                     )
@@ -97,10 +95,7 @@ class ProjectServiceImpl(private val fileSystem: FileSystemService) :
     @VisibleForTesting
     fun loadVersions(eventBasePath: Path) =
         try {
-            val versionFolderPath = Paths.get(
-                eventBasePath.toString(),
-                VERSIONS_FOLDER
-            )
+            val versionFolderPath = eventBasePath.resolve(VERSIONS_FOLDER)
 
             fileSystem
                 .listDirectories(versionFolderPath)
@@ -108,7 +103,8 @@ class ProjectServiceImpl(private val fileSystem: FileSystemService) :
                     EventVersionFolder(
                         it,
                         fileExists(it, SCHEMA_FILE),
-                        fileExists(it,
+                        fileExists(
+                            it,
                             DESCRIPTION_FILE
                         ),
                         loadExamples(it)
@@ -121,22 +117,16 @@ class ProjectServiceImpl(private val fileSystem: FileSystemService) :
     @VisibleForTesting
     fun loadExamples(eventBasePath: Path) =
         try {
-            fileSystem.listFiles(
-                Paths.get(
-                    eventBasePath.toString(),
-                    EXAMPLES_FOLDER
-                )
-            )
+            val examplePath = eventBasePath.resolve(EXAMPLES_FOLDER)
+
+            fileSystem.listFiles(examplePath)
         } catch (e: NoSuchFileException) {
             emptyList<Path>()
         }
 
     @VisibleForTesting
     fun fileExists(folder: Path, fileName: String): Path? {
-        val filePath = Paths.get(
-            folder.toString(),
-            fileName
-        )
+        val filePath = folder.resolve(fileName)
 
         return if (fileSystem.exists(filePath)) {
             filePath
