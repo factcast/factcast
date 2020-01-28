@@ -16,6 +16,7 @@
 package org.factcast.schema.registry.cli
 
 import io.micronaut.configuration.picocli.PicocliRunner
+import io.micronaut.core.annotation.Introspected
 import org.factcast.schema.registry.cli.commands.Build
 import org.factcast.schema.registry.cli.commands.Validate
 import picocli.CommandLine.Command
@@ -35,6 +36,7 @@ import kotlin.system.exitProcess
     subcommands = [Validate::class, Build::class],
     mixinStandardHelpOptions = true
 )
+@Introspected
 class Application : Runnable {
     override fun run() = Unit
 

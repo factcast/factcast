@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.schema.registry.cli.registry
+package org.factcast.schema.registry.cli.registry.impl
 
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.fs.FileSystemService
+import org.factcast.schema.registry.cli.registry.TemplateService
 import org.factcast.schema.registry.cli.registry.templates.data.ChangelogEntry
 import org.factcast.schema.registry.cli.registry.templates.data.EventTemplateData
 import org.factcast.schema.registry.cli.registry.templates.data.ExampleTemplateData
@@ -35,10 +36,9 @@ import org.factcast.schema.registry.cli.registry.templates.transformationTemplat
 import org.factcast.schema.registry.cli.registry.templates.versionTemplate
 import javax.inject.Singleton
 
-// import org.springframework.stereotype.Component
-
 @Singleton
-class TemplateServiceImpl(private val fileSystemService: FileSystemService) : TemplateService {
+class TemplateServiceImpl(private val fileSystemService: FileSystemService) :
+    TemplateService {
     override fun loadHomeTemplate(project: Project): String {
         val description =
             if (project.description != null) fileSystemService.readToString(project.description.toFile()) else null

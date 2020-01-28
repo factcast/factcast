@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.schema.registry.cli.project
+package org.factcast.schema.registry.cli.project.impl
 
+import com.google.common.annotations.VisibleForTesting
 import org.factcast.schema.registry.cli.fs.FileSystemService
+import org.factcast.schema.registry.cli.project.ProjectService
 import org.factcast.schema.registry.cli.project.structure.EventFolder
 import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
 import org.factcast.schema.registry.cli.project.structure.NamespaceFolder
@@ -34,7 +36,8 @@ const val TRANSFORMATION_FILE = "transform.js"
 const val SCHEMA_FILE = "schema.json"
 
 @Singleton
-class ProjectServiceImpl(private val fileSystem: FileSystemService) : ProjectService {
+class ProjectServiceImpl(private val fileSystem: FileSystemService) :
+    ProjectService {
     override fun detectProject(basePath: Path): ProjectFolder {
         return ProjectFolder(
             basePath,
@@ -45,14 +48,17 @@ class ProjectServiceImpl(private val fileSystem: FileSystemService) : ProjectSer
                     NamespaceFolder(
                         path,
                         loadEvents(path),
-                        fileExists(path, DESCRIPTION_FILE)
+                        fileExists(path,
+                            DESCRIPTION_FILE
+                        )
                     )
                 }
 
         )
     }
 
-    private fun loadEvents(namespaceBasePath: Path) =
+    @VisibleForTesting
+    fun loadEvents(namespaceBasePath: Path) =
         try {
             fileSystem.listDirectories(namespaceBasePath)
                 .map { x ->
@@ -67,7 +73,8 @@ class ProjectServiceImpl(private val fileSystem: FileSystemService) : ProjectSer
             emptyList<EventFolder>()
         }
 
-    private fun loadTransformations(eventBasePath: Path): List<TransformationFolder> =
+    @VisibleForTesting
+    fun loadTransformations(eventBasePath: Path): List<TransformationFolder> =
         try {
             val transformationsFolder = Paths.get(
                 eventBasePath.toString(),
@@ -78,14 +85,17 @@ class ProjectServiceImpl(private val fileSystem: FileSystemService) : ProjectSer
                 .map {
                     TransformationFolder(
                         it,
-                        fileExists(it, TRANSFORMATION_FILE)
+                        fileExists(it,
+                            TRANSFORMATION_FILE
+                        )
                     )
                 }
         } catch (e: NoSuchFileException) {
             emptyList()
         }
 
-    private fun loadVersions(eventBasePath: Path) =
+    @VisibleForTesting
+    fun loadVersions(eventBasePath: Path) =
         try {
             val versionFolderPath = Paths.get(
                 eventBasePath.toString(),
@@ -98,7 +108,9 @@ class ProjectServiceImpl(private val fileSystem: FileSystemService) : ProjectSer
                     EventVersionFolder(
                         it,
                         fileExists(it, SCHEMA_FILE),
-                        fileExists(it, DESCRIPTION_FILE),
+                        fileExists(it,
+                            DESCRIPTION_FILE
+                        ),
                         loadExamples(it)
                     )
                 }
@@ -106,7 +118,8 @@ class ProjectServiceImpl(private val fileSystem: FileSystemService) : ProjectSer
             emptyList<EventVersionFolder>()
         }
 
-    private fun loadExamples(eventBasePath: Path) =
+    @VisibleForTesting
+    fun loadExamples(eventBasePath: Path) =
         try {
             fileSystem.listFiles(
                 Paths.get(
@@ -118,7 +131,8 @@ class ProjectServiceImpl(private val fileSystem: FileSystemService) : ProjectSer
             emptyList<Path>()
         }
 
-    private fun fileExists(folder: Path, fileName: String): Path? {
+    @VisibleForTesting
+    fun fileExists(folder: Path, fileName: String): Path? {
         val filePath = Paths.get(
             folder.toString(),
             fileName

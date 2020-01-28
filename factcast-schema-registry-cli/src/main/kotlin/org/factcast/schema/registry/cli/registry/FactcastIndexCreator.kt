@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.schema.registry.cli.registry.index
+package org.factcast.schema.registry.cli.registry
 
-data class IndexFile(
-    val schemes: List<Schema>,
-    val transformations: List<Transformation>
-)
+import org.factcast.schema.registry.cli.domain.Project
+import java.nio.file.Path
+
+interface FactcastIndexCreator {
+    fun creteFactcastIndex(contentBase: Path, project: Project)
+}

@@ -5,13 +5,12 @@ import arrow.core.Right
 import com.fasterxml.jackson.databind.JsonNode
 import com.github.fge.jsonschema.core.report.ProcessingReport
 import com.github.fge.jsonschema.main.JsonSchema
-import io.kotlintest.Description
 import io.kotlintest.TestCase
 import io.kotlintest.TestResult
 import io.kotlintest.matchers.collections.shouldHaveSingleElement
 import io.kotlintest.matchers.collections.shouldHaveSize
-import io.kotlintest.specs.StringSpec
 import io.kotlintest.shouldBe
+import io.kotlintest.specs.StringSpec
 import io.mockk.clearAllMocks
 import io.mockk.confirmVerified
 import io.mockk.every
@@ -25,7 +24,6 @@ import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.utils.SchemaService
 import org.factcast.schema.registry.cli.validation.ProjectError
-import java.nio.file.Path
 import java.nio.file.Paths
 
 class ExampleValidationServiceImplTest : StringSpec() {

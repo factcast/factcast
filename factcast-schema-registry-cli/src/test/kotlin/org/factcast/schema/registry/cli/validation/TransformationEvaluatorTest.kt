@@ -2,9 +2,8 @@ package org.factcast.schema.registry.cli.validation
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.kotlintest.specs.StringSpec
 import io.kotlintest.shouldBe
-import io.mockk.confirmVerified
+import io.kotlintest.specs.StringSpec
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifyAll

@@ -18,7 +18,7 @@ package org.factcast.schema.registry.cli.commands
 import mu.KotlinLogging
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.ProjectService
-import org.factcast.schema.registry.cli.registry.RegistryService
+import org.factcast.schema.registry.cli.registry.DistributionCreatorService
 import org.factcast.schema.registry.cli.validation.ValidationService
 import org.factcast.schema.registry.cli.validation.formatErrors
 import picocli.CommandLine.Command
@@ -45,7 +45,7 @@ class Build : Runnable {
     lateinit var validationService: ValidationService
 
     @Inject
-    lateinit var registryService: RegistryService
+    lateinit var distributionCreatorService: DistributionCreatorService
 
     @Inject
     lateinit var fileSystemService: FileSystemService
@@ -71,7 +71,7 @@ class Build : Runnable {
                 exitProcess(1)
             }, {
                 try {
-                    registryService.createRegistry(tmp, it)
+                    distributionCreatorService.createDistributable(tmp, it)
 
                     Files.move(tmp, outputRoot)
                     logger.info("Build finished!")

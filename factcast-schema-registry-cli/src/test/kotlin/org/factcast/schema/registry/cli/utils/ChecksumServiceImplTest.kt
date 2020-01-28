@@ -1,8 +1,7 @@
 package org.factcast.schema.registry.cli.utils
 
-import io.kotlintest.specs.StringSpec
 import io.kotlintest.shouldBe
-import io.mockk.confirmVerified
+import io.kotlintest.specs.StringSpec
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifyAll

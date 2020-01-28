@@ -1,7 +1,6 @@
 package org.factcast.schema.registry.cli.utils
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.fge.jsonschema.main.JsonSchema
 import com.github.fge.jsonschema.main.JsonSchemaFactory
 import io.kotlintest.TestCase
@@ -9,10 +8,9 @@ import io.kotlintest.TestResult
 import io.kotlintest.assertions.arrow.either.shouldBeLeft
 import io.kotlintest.assertions.arrow.either.shouldBeRight
 import io.kotlintest.matchers.types.shouldBeInstanceOf
-import io.kotlintest.specs.StringSpec
 import io.kotlintest.shouldBe
+import io.kotlintest.specs.StringSpec
 import io.mockk.clearAllMocks
-import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifyAll

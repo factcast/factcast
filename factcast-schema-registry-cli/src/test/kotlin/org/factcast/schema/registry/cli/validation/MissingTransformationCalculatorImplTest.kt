@@ -6,7 +6,6 @@ import io.kotlintest.specs.StringSpec
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.domain.Version
-import org.factcast.schema.registry.cli.validation.MissingTransformationCalculatorImpl
 import java.nio.file.Paths
 
 class MissingTransformationCalculatorImplTest : StringSpec() {

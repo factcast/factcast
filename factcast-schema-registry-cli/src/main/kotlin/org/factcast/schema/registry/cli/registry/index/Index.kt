@@ -13,14 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.schema.registry.cli.config
+package org.factcast.schema.registry.cli.registry.index
 
-import com.github.fge.jsonschema.main.JsonSchemaFactory
-import io.micronaut.context.annotation.Bean
-import io.micronaut.context.annotation.Factory
-
-@Factory
-class JsonSchemaFactoryConfiguration {
-    @Bean
-    fun factory() = JsonSchemaFactory.byDefault()
-}
+data class Index(
+    val schemes: List<Schema>,
+    val transformations: List<Transformation>
+)

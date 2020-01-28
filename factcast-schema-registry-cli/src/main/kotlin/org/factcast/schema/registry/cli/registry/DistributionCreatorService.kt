@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.schema.registry.cli.config
+package org.factcast.schema.registry.cli.registry
 
-import com.github.fge.jsonschema.main.JsonSchemaFactory
-import io.micronaut.context.annotation.Bean
-import io.micronaut.context.annotation.Factory
+import org.factcast.schema.registry.cli.domain.Project
+import java.nio.file.Path
 
-@Factory
-class JsonSchemaFactoryConfiguration {
-    @Bean
-    fun factory() = JsonSchemaFactory.byDefault()
+interface DistributionCreatorService {
+    fun createDistributable(outputPath: Path, project: Project)
 }
