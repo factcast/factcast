@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.validation.http;
+package org.factcast.store.pgsql.validation.schema;
 
-import java.io.IOException;
-import java.net.URL;
+import static org.assertj.core.api.Assertions.*;
 
-import lombok.NonNull;
+import org.junit.jupiter.api.Test;
 
-/**
- * something went wrong fetching a particular schema
- *
- * @author uwe
- *
- */
-public class SchemaFetchException extends IOException {
+public class SchemaSourceTest {
 
-    private static final long serialVersionUID = 1L;
+    @Test
+    public void testToKey() throws Exception {
+        String ns = "ns";
+        String type = "type";
+        int version = 7;
+        SchemaSource uut = new SchemaSource("id", "hash", ns, type, version);
+        SchemaKey actual = uut.toKey();
 
-    public SchemaFetchException(@NonNull URL url, int code, @NonNull String message) {
-        super("Status code " + code + ": " + message + " while fetching " + url);
+        assertThat(actual.ns()).isEqualTo(ns);
+        assertThat(actual.type()).isEqualTo(type);
+        assertThat(actual.version()).isEqualTo(version);
     }
 
 }

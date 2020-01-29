@@ -33,7 +33,8 @@ public class SchemaRegistryUnavailableExceptionTest {
                 .addPathSegment("search")
                 .addQueryParameter("q", "polar bears")
                 .build();
-        SchemaRegistryUnavailableException uut = new SchemaRegistryUnavailableException(url, 403,
+        SchemaRegistryUnavailableException uut = new SchemaRegistryUnavailableException(url
+                .toString(), 403,
                 "damnit");
 
         assertThat(uut.getMessage()).contains("403").contains("damnit").contains("bears");

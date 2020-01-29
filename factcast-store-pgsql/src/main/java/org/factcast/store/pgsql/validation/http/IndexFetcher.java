@@ -95,7 +95,8 @@ public class IndexFetcher {
                     return Optional.of(readValue);
 
                 } else
-                    throw new SchemaRegistryUnavailableException(request.url(), response.code(),
+                    throw new SchemaRegistryUnavailableException(request.url().toString(), response
+                            .code(),
                             response.message());
             }
         } catch (IOException e) {

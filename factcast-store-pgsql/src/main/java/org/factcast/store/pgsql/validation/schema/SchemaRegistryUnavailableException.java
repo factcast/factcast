@@ -18,7 +18,6 @@ package org.factcast.store.pgsql.validation.schema;
 import java.io.IOException;
 
 import lombok.NonNull;
-import okhttp3.HttpUrl;
 
 public class SchemaRegistryUnavailableException extends RuntimeException {
 
@@ -28,9 +27,9 @@ public class SchemaRegistryUnavailableException extends RuntimeException {
         super(e);
     }
 
-    public SchemaRegistryUnavailableException(@NonNull HttpUrl httpUrl, int code,
+    public SchemaRegistryUnavailableException(@NonNull String httpUrlAsString, int code,
             @NonNull String message) {
-        super("Status code " + code + ": " + message + " while requesting " + httpUrl);
+        super("Status code " + code + ": " + message + " while requesting " + httpUrlAsString);
     }
 
 }

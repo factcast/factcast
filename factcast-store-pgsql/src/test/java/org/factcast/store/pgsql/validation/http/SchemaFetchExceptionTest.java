@@ -15,23 +15,23 @@
  */
 package org.factcast.store.pgsql.validation.http;
 
-import java.io.IOException;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.net.URL;
 
-import lombok.NonNull;
+import org.junit.jupiter.api.Test;
 
-/**
- * something went wrong fetching a particular schema
- *
- * @author uwe
- *
- */
-public class SchemaFetchException extends IOException {
+public class SchemaFetchExceptionTest {
+    @Test
+    void testNullContracts() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            new SchemaFetchException(null, 7, "");
+        });
+        assertThrows(NullPointerException.class, () -> {
+            new SchemaFetchException(new URL("http://ibm.com"), 7, null);
+        });
 
-    private static final long serialVersionUID = 1L;
+        new SchemaFetchException(new URL("http://ibm.com"), 7, "must not thorw exception");
 
-    public SchemaFetchException(@NonNull URL url, int code, @NonNull String message) {
-        super("Status code " + code + ": " + message + " while fetching " + url);
     }
-
 }

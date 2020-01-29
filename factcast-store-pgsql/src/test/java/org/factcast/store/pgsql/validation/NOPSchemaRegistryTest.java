@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.validation.http;
+package org.factcast.store.pgsql.validation;
 
-import java.io.IOException;
-import java.net.URL;
+import static org.junit.jupiter.api.Assertions.*;
 
-import lombok.NonNull;
+import java.util.Optional;
 
-/**
- * something went wrong fetching a particular schema
- *
- * @author uwe
- *
- */
-public class SchemaFetchException extends IOException {
+import org.factcast.store.pgsql.validation.schema.SchemaKey;
+import org.junit.jupiter.api.Test;
 
-    private static final long serialVersionUID = 1L;
+public class NOPSchemaRegistryTest {
 
-    public SchemaFetchException(@NonNull URL url, int code, @NonNull String message) {
-        super("Status code " + code + ": " + message + " while fetching " + url);
+    @Test
+    public void testGet() throws Exception {
+        NOPSchemaRegistry uut = new NOPSchemaRegistry();
+        assertEquals(Optional.empty(), uut.get(SchemaKey.builder().build()));
     }
 
 }

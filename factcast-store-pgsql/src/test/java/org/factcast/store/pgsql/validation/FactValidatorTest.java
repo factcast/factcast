@@ -15,9 +15,8 @@
  */
 package org.factcast.store.pgsql.validation;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 
@@ -153,5 +152,23 @@ public class FactValidatorTest {
         Fact probeFact = Fact.builder().ns("foo").type("bar").version(1).build("{}");
         assertThat(uut.validate(probeFact)).isNotEmpty();
 
+    }
+
+    @Test
+    public void testIsValidateable() throws Exception {
+        Fact validFact = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
+        assertThat(FactValidator.isValidateable(validFact)).isTrue();
+    }
+
+    @Test
+    public void testIsValidateableWithoutType() throws Exception {
+        Fact invalidFact = Fact.builder().ns("ns").version(1).buildWithoutPayload();
+        assertThat(FactValidator.isValidateable(invalidFact)).isFalse();
+    }
+
+    @Test
+    public void testIsValidateableWithoutVersion() throws Exception {
+        Fact invalidFact = Fact.builder().ns("ns").type("type").buildWithoutPayload();
+        assertThat(FactValidator.isValidateable(invalidFact)).isFalse();
     }
 }
