@@ -25,8 +25,8 @@ jobs:
       - run: 
           name: FullTest
           command: |
-            ./mvnw --version
-            ./mvnw -B clean install jacoco:report-aggregate 
+            # ./mvnw --version
+            mvn -B clean install jacoco:report-aggregate 
             bash <(curl -s https://codecov.io/bash)
 
       - run: 
