@@ -24,9 +24,11 @@ jobs:
       # run tests!
       - run: 
           name: FullTest
-          command: |
-            # ./mvnw --version
-            ./mvnw -B clean install jacoco:report-aggregate && bash <(curl -s https://codecov.io/bash)
+          command: ./mvnw -B clean install jacoco:report-aggregate 
+
+      - run: 
+          name: push codecov data
+          command: bash <(curl -s https://codecov.io/bash)
 
       - run: 
           name: Remove factcast artifacts from local repo
