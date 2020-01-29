@@ -20,10 +20,14 @@ import static org.factcast.core.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -35,7 +39,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 public class FactCastJsonTest {
-
     @Test
     void testCopyNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
@@ -132,5 +135,17 @@ public class FactCastJsonTest {
 
         String pretty = FactCastJson.writeValueAsPrettyString(new TestObject());
         assertTrue(pretty.contains("\"foo\" : \"bar\""));
+    }
+
+    @Test
+    void testReadJsonFileAsText(@TempDir Path tempDir) throws IOException {
+        Path testFilePath = tempDir.resolve("test.json");
+
+        String content = "{\"foo\":\"bar\"}";
+
+        Files.write(testFilePath, content.getBytes());
+
+        String val = FactCastJson.readJSON(testFilePath.toFile());
+        assertTrue(val.contentEquals(content));
     }
 }

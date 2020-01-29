@@ -116,7 +116,7 @@ public final class FactCastJson {
     }
 
     public static String readJSON(File file) throws JsonProcessingException, IOException {
-        return objectMapper.readTree(file).asText();
+        return objectMapper.readTree(file).toString();
     }
 
 }
