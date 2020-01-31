@@ -16,7 +16,6 @@
 package org.factcast.store.pgsql.validation.http;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.net.URL;
 
@@ -46,8 +45,7 @@ public class SchemaFetcherTest {
         URL base = new URL("https://www.ibm.com/registry");
         URL createSchemaUrl = uut.createSchemaUrl(base, key);
 
-        assertEquals("https://www.ibm.com/registry/foo/bar/baz.json",
-                createSchemaUrl.toString());
+        assertEquals("https://www.ibm.com/registry/foo/bar/baz.json", createSchemaUrl.toString());
     }
 
     @Test
@@ -56,8 +54,20 @@ public class SchemaFetcherTest {
         URL base = new URL("https://www.ibm.com/registry/");
         URL createSchemaUrl = uut.createSchemaUrl(base, key);
 
-        assertEquals("https://www.ibm.com/registry/foo/bar/baz.json",
-                createSchemaUrl.toString());
+        assertEquals("https://www.ibm.com/registry/foo/bar/baz.json", createSchemaUrl.toString());
+    }
+
+    @Test
+    public void testNullContracts() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            new SchemaFetcher(null);
+        });
+        assertThrows(NullPointerException.class, () -> {
+            new SchemaFetcher(null, new OkHttpClient());
+        });
+        assertThrows(NullPointerException.class, () -> {
+            new SchemaFetcher(new URL("http://ibm.com"), null);
+        });
     }
 
 }

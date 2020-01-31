@@ -30,4 +30,9 @@ public class NOPSchemaRegistryTest {
         assertEquals(Optional.empty(), uut.get(SchemaKey.builder().build()));
     }
 
+    public void testRefreshDoesNotThrow() {
+        NOPSchemaRegistry uut = new NOPSchemaRegistry();
+        uut.refreshVerbose();
+    }
+
 }

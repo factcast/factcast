@@ -21,6 +21,8 @@ import java.net.URL;
 
 import org.junit.jupiter.api.Test;
 
+import okhttp3.OkHttpClient;
+
 public class IndexFetcherTest {
 
     private IndexFetcher uut;
@@ -34,6 +36,21 @@ public class IndexFetcherTest {
         assertFalse(uut.fetchIndex().isPresent());
         assertFalse(uut.fetchIndex().isPresent());
 
+    }
+
+    @Test
+    public void testNullContracts() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            new IndexFetcher(null);
+        });
+
+        assertThrows(NullPointerException.class, () -> {
+            new IndexFetcher(new URL("http://ibm.com"), null);
+        });
+
+        assertThrows(NullPointerException.class, () -> {
+            new IndexFetcher(null, new OkHttpClient());
+        });
     }
 
 }

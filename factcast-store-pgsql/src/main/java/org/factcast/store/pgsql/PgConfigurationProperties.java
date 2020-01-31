@@ -38,12 +38,14 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("DefaultAnnotationParam")
-@ConfigurationProperties(prefix = "factcast.store.pgsql")
+@ConfigurationProperties(prefix = PgConfigurationProperties.PROPERTIES_PREFIX)
 @Data
 @Slf4j
 @Accessors(fluent = false)
 public class PgConfigurationProperties implements ApplicationListener<ApplicationReadyEvent> {
     private static final String LEGACY_PREFIX = "factcast.pg";
+
+    public static final String PROPERTIES_PREFIX = "factcast.store.pgsql";
 
     @Autowired
     Environment env;
@@ -85,6 +87,8 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
     boolean persistentSchemaStore = true;
 
     boolean allowUnvalidatedPublish = false;
+
+    long schemaStoreRefreshRateInMilliseconds = 2000;
 
     public int getPageSizeForIds() {
         return pageSize * idOnlyFactor;

@@ -25,12 +25,14 @@ import org.factcast.store.pgsql.validation.schema.store.PgSchemaStoreImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
+@EnableScheduling
 public class FactValidatorConfiguration {
 
     @Bean
@@ -39,7 +41,7 @@ public class FactValidatorConfiguration {
         if (p.isValidationEnabled()) {
             HttpSchemaRegistry httpSchemaRegistry = new HttpSchemaRegistry(p.getSchemaRegistryUrl(),
                     store);
-            httpSchemaRegistry.refresh();
+            httpSchemaRegistry.refreshVerbose();
             return httpSchemaRegistry;
         } else {
             log.warn(
@@ -76,5 +78,10 @@ public class FactValidatorConfiguration {
             return new FactValidationAspect(v);
         } else
             return null;
+    }
+
+    @Bean
+    public ScheduledRegistryFresher scheduledRegistryFresher(SchemaRegistry registry) {
+        return new ScheduledRegistryFresher(registry);
     }
 }

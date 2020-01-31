@@ -31,7 +31,7 @@ public class SchemaFetchExceptionTest {
             new SchemaFetchException(new URL("http://ibm.com"), 7, null);
         });
 
-        new SchemaFetchException(new URL("http://ibm.com"), 7, "must not thorw exception");
+        new SchemaFetchException(new URL("http://ibm.com"), 7, "must not throw exception");
 
     }
 }

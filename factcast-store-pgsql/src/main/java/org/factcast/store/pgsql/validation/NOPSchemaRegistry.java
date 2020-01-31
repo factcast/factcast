@@ -36,8 +36,12 @@ public class NOPSchemaRegistry implements SchemaRegistry {
     }
 
     @Override
-    public void refresh() {
+    public void refreshSilent() {
         // NOP
     }
 
+    @Override
+    public void refreshVerbose() {
+        // NOP
+    }
 }

@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.validation.schema;
+package org.factcast.store.pgsql.validation;
 
-import java.util.Optional;
+import org.factcast.store.pgsql.validation.schema.SchemaRegistry;
+import org.springframework.scheduling.annotation.Scheduled;
 
-import com.github.fge.jsonschema.main.JsonSchema;
+import lombok.Value;
 
-public interface SchemaRegistry {
+@Value
+public class ScheduledRegistryFresher {
 
-    Optional<JsonSchema> get(SchemaKey key);
+    final SchemaRegistry registry;
 
-    void refreshVerbose();
-
-    void refreshSilent();
-
+    @Scheduled(fixedRateString = "${factcast.store.pgsql.schemaStoreRefreshRateInMilliseconds}")
+    public void triggerRefresh() {
+        registry.refreshSilent();
+    }
 }

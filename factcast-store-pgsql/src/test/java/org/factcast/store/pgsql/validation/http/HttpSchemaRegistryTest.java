@@ -53,7 +53,7 @@ public class HttpSchemaRegistryTest {
 
         SchemaStore store = spy(new InMemSchemaStoreImpl());
         HttpSchemaRegistry uut = new HttpSchemaRegistry(store, indexFetcher, schemafetcher);
-        uut.refresh();
+        uut.refreshVerbose();
 
         verify(store, times(2)).register(Mockito.any(), Mockito.any());
 
@@ -64,5 +64,16 @@ public class HttpSchemaRegistryTest {
         assertFalse(store.get(SchemaKey.builder().ns("ns").type("type").version(3).build())
                 .isPresent());
 
+    }
+
+    @Test
+    void testNullContracts() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            new HttpSchemaRegistry(null, mock(SchemaStore.class));
+        });
+
+        assertThrows(NullPointerException.class, () -> {
+            new HttpSchemaRegistry(new URL("http://ibm.com"), null);
+        });
     }
 }
