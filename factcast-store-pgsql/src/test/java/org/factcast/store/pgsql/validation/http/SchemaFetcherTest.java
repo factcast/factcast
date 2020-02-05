@@ -16,9 +16,11 @@
 package org.factcast.store.pgsql.validation.http;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.net.URL;
 
+import org.factcast.core.TestHelper;
 import org.factcast.store.pgsql.validation.schema.SchemaSource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,15 +61,14 @@ public class SchemaFetcherTest {
 
     @Test
     public void testNullContracts() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new SchemaFetcher(null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            new SchemaFetcher(null, new OkHttpClient());
-        });
-        assertThrows(NullPointerException.class, () -> {
-            new SchemaFetcher(new URL("http://ibm.com"), null);
-        });
+        TestHelper.expectNPE(() -> new SchemaFetcher(null));
+        TestHelper.expectNPE(() -> new SchemaFetcher(null, new OkHttpClient()));
+        TestHelper.expectNPE(() -> new SchemaFetcher(new URL("http://ibm.com"), null));
+        TestHelper.expectNPE(() -> uut.fetch(null));
+        TestHelper.expectNPE(() -> uut.createSchemaUrl(null, mock(SchemaSource.class)));
+        TestHelper.expectNPE(() -> uut.createSchemaUrl(null, null));
+        TestHelper.expectNPE(() -> uut.createSchemaUrl(new URL("https://www.ibm.com/registry/"),
+                null));
     }
 
     @Test
