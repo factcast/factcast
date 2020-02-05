@@ -15,18 +15,40 @@
  */
 package org.factcast.store.pgsql.validation;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import org.factcast.store.pgsql.validation.schema.SchemaRegistry;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 
 import lombok.Value;
 
 @Value
-public class ScheduledRegistryFresher {
+public class ScheduledRegistryFresher implements SmartInitializingSingleton, DisposableBean {
 
     final SchemaRegistry registry;
 
-    @Scheduled(fixedRateString = "${factcast.store.pgsql.schemaStoreRefreshRateInMilliseconds}")
-    public void triggerRefresh() {
-        registry.refreshSilent();
+    final long rate;
+
+    final Timer timer = new Timer(true);
+
+    @Override
+    public void afterSingletonsInstantiated() {
+        TimerTask t = new TimerTask() {
+
+            @Override
+            public void run() {
+                registry.refreshSilent();
+            }
+        };
+
+        long delay = rate / 2;
+        timer.scheduleAtFixedRate(t, delay, rate);
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        timer.cancel();
     }
 }

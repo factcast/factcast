@@ -82,13 +82,32 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
      */
     int queueFetchRatio = 4;
 
+    /**
+     * Optional URL to a Schema Registry. If this is null, validation will be
+     * disabled and a warning will be issued. (Defaults to null)
+     */
     URL schemaRegistryUrl;
 
+    /**
+     * If validation is enabled, this controls if the local snapshot of the
+     * schemaregistry is persisted to psql or just kept in mem. (Defaults to
+     * true)
+     */
     boolean persistentSchemaStore = true;
 
+    /**
+     * If validation is enabled, this controls if publishing facts, that are not
+     * validatable (due to missing meta-data or due to missing schema in the
+     * registry) are allowed to be published or should be rejected. (Defaults to
+     * false)
+     */
     boolean allowUnvalidatedPublish = false;
 
-    long schemaStoreRefreshRateInMilliseconds = 2000;
+    /**
+     * if validation is enabled, this defines the rate (in milliseconds) in
+     * which the local store is refreshed. (Defaults to 5000)
+     */
+    long schemaStoreRefreshRateInMilliseconds = 5000;
 
     public int getPageSizeForIds() {
         return pageSize * idOnlyFactor;
@@ -142,5 +161,4 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
     public boolean isValidationEnabled() {
         return schemaRegistryUrl != null;
     }
-
 }

@@ -15,6 +15,8 @@
  */
 package org.factcast.store.pgsql.validation;
 
+import java.net.URL;
+
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.validation.http.HttpSchemaRegistry;
 import org.factcast.store.pgsql.validation.http.IndexFetcher;
@@ -53,7 +55,11 @@ public class FactValidatorConfiguration {
 
     @Bean
     public IndexFetcher indexFetcher(PgConfigurationProperties p) {
-        return new IndexFetcher(p.getSchemaRegistryUrl());
+        URL schemaRegistryUrl = p.getSchemaRegistryUrl();
+        if (schemaRegistryUrl != null)
+            return new IndexFetcher(schemaRegistryUrl);
+        else
+            return null;
     }
 
     @Bean
@@ -68,7 +74,10 @@ public class FactValidatorConfiguration {
 
     @Bean
     public FactValidator factValidator(PgConfigurationProperties props, SchemaRegistry registry) {
-        return new FactValidator(props, registry);
+        if (props.isValidationEnabled())
+            return new FactValidator(props, registry);
+        else
+            return null;
     }
 
     @Bean
@@ -81,7 +90,13 @@ public class FactValidatorConfiguration {
     }
 
     @Bean
-    public ScheduledRegistryFresher scheduledRegistryFresher(SchemaRegistry registry) {
-        return new ScheduledRegistryFresher(registry);
+    public ScheduledRegistryFresher scheduledRegistryFresher(SchemaRegistry registry,
+            PgConfigurationProperties properties) {
+        if (properties.isValidationEnabled()) {
+            long schemaStoreRefreshRateInMilliseconds = properties
+                    .getSchemaStoreRefreshRateInMilliseconds();
+            return new ScheduledRegistryFresher(registry, schemaStoreRefreshRateInMilliseconds);
+        } else
+            return null;
     }
 }

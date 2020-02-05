@@ -94,21 +94,31 @@ public class HttpSchemaRegistry implements SchemaRegistry {
         }
     };
 
+    private final Object mutex = new Object();
+
     @Override
     public void refreshVerbose() {
-        Stopwatch sw = Stopwatch.createStarted();
-        log.info("SchemaStore update started");
-        refreshSilent();
-        log.info("SchemaStore update finished in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
 
-        // otherwise just return
+        synchronized (mutex) {
+
+            Stopwatch sw = Stopwatch.createStarted();
+            log.info("SchemaStore update started");
+            refreshSilent();
+            log.info("SchemaStore update finished in {}ms", sw.stop()
+                    .elapsed(TimeUnit.MILLISECONDS));
+
+            // otherwise just return
+        }
     }
 
     @Override
     public void refreshSilent() {
-        Optional<RegistryIndex> fetchIndex = indexFetcher.fetchIndex();
-        if (fetchIndex.isPresent()) {
-            process(fetchIndex.get());
+        synchronized (mutex) {
+
+            Optional<RegistryIndex> fetchIndex = indexFetcher.fetchIndex();
+            if (fetchIndex.isPresent()) {
+                process(fetchIndex.get());
+            }
         }
     }
 
