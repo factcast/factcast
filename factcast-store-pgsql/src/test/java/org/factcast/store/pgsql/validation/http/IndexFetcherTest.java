@@ -18,7 +18,12 @@ package org.factcast.store.pgsql.validation.http;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.net.URL;
+import java.util.Date;
+import java.util.Map;
 
+import javax.servlet.http.HttpServletResponse;
+
+import org.factcast.store.pgsql.validation.schema.SchemaRegistryUnavailableException;
 import org.junit.jupiter.api.Test;
 
 import okhttp3.OkHttpClient;
@@ -27,15 +32,57 @@ public class IndexFetcherTest {
 
     private IndexFetcher uut;
 
-    // FIXME replace be selfcontained test
     @Test
-    void testFetch() throws Exception {
-        uut = new IndexFetcher(
-                new URL("http://factcast-schema-registry-test.s3-website.eu-central-1.amazonaws.com/registry"));
-        assertTrue(uut.fetchIndex().isPresent());
-        assertFalse(uut.fetchIndex().isPresent());
-        assertFalse(uut.fetchIndex().isPresent());
+    void testFetchUsesIfModifiedSince() throws Exception {
 
+        try (TestHttpServer s = new TestHttpServer()) {
+            String etag = "123";
+            String since = new Date().toString();
+
+            s.get("/registry/index.json", ctx -> {
+
+                Map<String, String> headers = ctx.headerMap();
+                String etagHeader = headers.get(ValidationConstants.HTTPHEADER_E_TAG);
+                String sinceHeader = headers.get(ValidationConstants.HTTPHEADER_IF_MODIFIED_SINCE);
+
+                if (etag.equals(etagHeader) && since.equals(sinceHeader)) {
+                    ctx.res.setStatus(304);
+                } else {
+                    HttpServletResponse res = ctx.res;
+                    res.setStatus(200);
+                    res.getWriter()
+                            .write("\n"
+                                    + "{\"schemes\":[{\"id\":\"namespaceA/eventA/1/schema.json\",\"ns\":\"namespaceA\",\"type\":\"eventA\",\"version\":1,\"hash\":\"84e69a2d3e3d195abb986aad22b95ffd\"},{\"id\":\"namespaceA/eventA/2/schema.json\",\"ns\":\"namespaceA\",\"type\":\"eventA\",\"version\":2,\"hash\":\"24d48268356e3cb7ac2f148850e4aac1\"}]}");
+                    res.addHeader(ValidationConstants.HTTPHEADER_E_TAG, etag);
+                    res.addHeader(ValidationConstants.HTTPHEADER_LAST_MODIFIED, since);
+                }
+            });
+
+            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
+            uut = new IndexFetcher(baseUrl);
+            assertTrue(uut.fetchIndex().isPresent());
+            assertFalse(uut.fetchIndex().isPresent());
+            assertFalse(uut.fetchIndex().isPresent());
+        }
+
+    }
+
+    @Test
+    void testThrowsExceptionOn404() throws Exception {
+        try (TestHttpServer s = new TestHttpServer()) {
+            String etag = "123";
+            String since = new Date().toString();
+
+            s.get("/registry/index.json", ctx -> {
+                ctx.res.setStatus(404);
+            });
+
+            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
+            uut = new IndexFetcher(baseUrl);
+            assertThrows(SchemaRegistryUnavailableException.class, () -> {
+                uut.fetchIndex();
+            });
+        }
     }
 
     @Test

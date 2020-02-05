@@ -70,4 +70,35 @@ public class SchemaFetcherTest {
         });
     }
 
+    @Test
+    public void testFetchThrowsOn404() throws Exception {
+        try (TestHttpServer s = new TestHttpServer()) {
+            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
+            uut = new SchemaFetcher(baseUrl);
+            assertThrows(SchemaFetchException.class, () -> {
+                uut.fetch(new SchemaSource("unknown", "123", "ns", "type", 8));
+            });
+        }
+    }
+
+    @Test
+    public void testFetchSucceedsOnExampleSchema() throws Exception {
+        try (TestHttpServer s = new TestHttpServer()) {
+
+            String json = "{\"foo\":\"bar\"}";
+
+            s.get("/registry/someId", ctx -> {
+                ctx.res.setStatus(200);
+                ctx.res.getWriter().write(json);
+            });
+
+            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
+            uut = new SchemaFetcher(baseUrl);
+            String fetch = uut.fetch(new SchemaSource("someId", "123", "ns", "type", 8));
+
+            assertEquals(json, fetch);
+
+        }
+    }
+
 }

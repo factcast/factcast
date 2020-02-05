@@ -59,7 +59,7 @@ public class SchemaFetcher {
 
         URL url = createSchemaUrl(baseUrl, key);
         Request req = new Request.Builder().url(url).build();
-        log.info("Fetching {}", key.id());
+        log.debug("Fetching {}", key.id());
         try (Response response = client.newCall(req).execute()) {
 
             String responseBodyAsText = response.body().string();
