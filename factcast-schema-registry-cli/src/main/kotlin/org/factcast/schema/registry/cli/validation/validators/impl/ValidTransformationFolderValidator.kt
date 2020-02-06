@@ -32,7 +32,7 @@ class ValidTransformationFolderValidator : ConstraintValidator<ValidTransformati
     ) = value != null && try {
         val splitted = value.fileName.toString().split("-")
 
-        if (splitted.size > 2) {
+        if (splitted.size != 2) {
             false
         } else {
             val (from, to) = splitted

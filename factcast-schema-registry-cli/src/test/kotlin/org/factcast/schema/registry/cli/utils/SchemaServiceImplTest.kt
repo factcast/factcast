@@ -1,6 +1,7 @@
 package org.factcast.schema.registry.cli.utils
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.github.fge.jsonschema.core.exceptions.ProcessingException
 import com.github.fge.jsonschema.main.JsonSchema
 import com.github.fge.jsonschema.main.JsonSchemaFactory
 import io.kotlintest.TestCase
@@ -46,7 +47,7 @@ class SchemaServiceImplTest : StringSpec() {
 
         "loadSchema for corrupted schema" {
             every { fs.readToJsonNode(dummyPath) } returns jsonNodeMock
-            every { jsonSchemaFactory.getJsonSchema(any<JsonNode>()) } throws Exception("")
+            every { jsonSchemaFactory.getJsonSchema(any<JsonNode>()) } throws ProcessingException("")
 
             uut.loadSchema(dummyPath).shouldBeLeft {
                 it.shouldBeInstanceOf<ProjectError.CorruptedSchema>()
