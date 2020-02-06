@@ -23,7 +23,7 @@ function getScrollBarWidth() {
     document.body.removeChild(outer);
 
     return (w1 - w2);
-};
+}
 
 // for the window resize
 $(window).resize(function() {});
@@ -42,7 +42,7 @@ $(window).resize(function() {});
                 if (!execAsap)
                     func.apply(obj, args);
                 timeout = null;
-            };
+            }
 
             if (timeout)
                 clearTimeout(timeout);

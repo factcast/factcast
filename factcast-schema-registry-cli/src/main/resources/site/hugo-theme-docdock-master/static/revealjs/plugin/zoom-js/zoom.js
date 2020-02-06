@@ -213,7 +213,7 @@ var zoom = (function(){
 				options.y = options.y || 0;
 
 				// If an element is set, that takes precedence
-				if( !!options.element ) {
+				if( options.element ) {
 					// Space around the zoomed in element to leave on screen
 					var padding = 20;
 					var bounds = options.element.getBoundingClientRect();
