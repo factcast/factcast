@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
+import org.factcast.core.FactValidationException;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -91,8 +92,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     static final AtomicLong subscriptionIdStore = new AtomicLong();
 
     @Override
-    public void fetchById(MSG_UUID request,
-            StreamObserver<MSG_OptionalFact> responseObserver) {
+    public void fetchById(MSG_UUID request, StreamObserver<MSG_OptionalFact> responseObserver) {
         try {
             enableResponseCompression(responseObserver);
 
@@ -100,8 +100,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             log.trace("fetchById {}", fromProto);
             Optional<Fact> fetchById = store.fetchById(fromProto);
             log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "")
-                    .orElse(
-                            "NOT "));
+                    .orElse("NOT "));
             responseObserver.onNext(converter.toProto(fetchById));
             responseObserver.onCompleted();
         } catch (Throwable e) {
@@ -111,13 +110,11 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     @Override
     @Secured(FactCastRole.WRITE)
-    public void publish(@NonNull MSG_Facts request,
-            StreamObserver<MSG_Empty> responseObserver) {
+    public void publish(@NonNull MSG_Facts request, StreamObserver<MSG_Empty> responseObserver) {
         List<Fact> facts = request.getFactList()
                 .stream()
                 .map(converter::fromProto)
-                .collect(
-                        Collectors.toList());
+                .collect(Collectors.toList());
         final int size = facts.size();
         log.debug("publish {} fact{}", size, size > 1 ? "s" : "");
         log.trace("publish {}", facts);
@@ -127,6 +124,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             log.trace("store publish done");
             responseObserver.onNext(MSG_Empty.getDefaultInstance());
             responseObserver.onCompleted();
+        } catch (FactValidationException e) {
+            // no logging here. maybe metrics?
+            responseObserver.onError(FactcastRemoteException.of(e));
         } catch (Throwable e) {
             log.error("Problem while publishing: ", e);
             responseObserver.onError(e);
@@ -143,8 +143,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(req.toString(),
                 (ServerCallStreamObserver) responseObserver);
         final boolean idOnly = req.idOnly();
-        store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp, f -> idOnly ? converter
-                .createNotificationFor(f.id()) : converter.createNotificationFor(f)));
+        store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp,
+                f -> idOnly ? converter.createNotificationFor(f.id())
+                        : converter.createNotificationFor(f)));
     }
 
     private void enableResponseCompression(StreamObserver<?> responseObserver) {
@@ -156,8 +157,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void handshake(MSG_Empty request,
-            StreamObserver<MSG_ServerConfig> responseObserver) {
+    public void handshake(MSG_Empty request, StreamObserver<MSG_ServerConfig> responseObserver) {
         ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
         responseObserver.onNext(converter.toProto(cfg));
         responseObserver.onCompleted();
@@ -197,8 +197,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     @VisibleForTesting
     URL getProjectProperties() {
-        return FactStoreGrpcService.class.getResource(
-                "/META-INF/maven/org.factcast/factcast-server-grpc/pom.properties");
+        return FactStoreGrpcService.class
+                .getResource("/META-INF/maven/org.factcast/factcast-server-grpc/pom.properties");
     }
 
     private void resetDebugInfo(SubscriptionRequestTO req) {
@@ -226,14 +226,12 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void enumerateTypes(MSG_String request,
-            StreamObserver<MSG_StringSet> responseObserver) {
+    public void enumerateTypes(MSG_String request, StreamObserver<MSG_StringSet> responseObserver) {
 
         enableResponseCompression(responseObserver);
 
         try {
-            Set<String> types = store.enumerateTypes(converter.fromProto(
-                    request));
+            Set<String> types = store.enumerateTypes(converter.fromProto(request));
             responseObserver.onNext(converter.toProto(types));
             responseObserver.onCompleted();
         } catch (Throwable e) {

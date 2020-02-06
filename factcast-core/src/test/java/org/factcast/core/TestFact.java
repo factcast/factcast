@@ -43,7 +43,9 @@ public class TestFact implements Fact {
 
     Set<UUID> aggIds = new LinkedHashSet<>();
 
-    String type;
+    String type = "test";
+
+    int version = 1;
 
     String ns = "default";
 
@@ -74,4 +76,5 @@ public class TestFact implements Fact {
         }
         return this;
     }
+
 }

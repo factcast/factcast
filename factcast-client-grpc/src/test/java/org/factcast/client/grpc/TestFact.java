@@ -54,6 +54,9 @@ public class TestFact implements Fact {
     @JsonProperty
     String ns = "default";
 
+    @JsonProperty
+    int version = 0;
+
     String jsonPayload = "{}";
 
     @JsonProperty

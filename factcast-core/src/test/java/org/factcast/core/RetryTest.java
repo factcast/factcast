@@ -55,7 +55,7 @@ public class RetryTest {
         FactCast uut = FactCast.from(fs).retry(5);
 
         // act
-        uut.publish(Fact.builder().build("{}"));
+        uut.publish(Fact.builder().ns("ns").type("type").buildWithoutPayload());
         verify(fs, times(3)).publish(anyListOf(Fact.class));
         verifyNoMoreInteractions(fs);
     }
@@ -75,12 +75,11 @@ public class RetryTest {
         // maxRetries:
         int expectedPublishAttempts = maxRetries + 1;
         doThrow(new RetryableException(new RuntimeException(""))).when(fs)
-                .publish(anyListOf(
-                        Fact.class));
+                .publish(anyListOf(Fact.class));
         FactCast uut = FactCast.from(fs).retry(maxRetries);
 
         assertThrows(MaxRetryAttemptsExceededException.class, () -> {
-            uut.publish(Fact.builder().ns("foo").build("{}"));
+            uut.publish(Fact.builder().ns("foo").type("type").build("{}"));
         });
 
         verify(fs, times(expectedPublishAttempts)).publish(anyListOf(Fact.class));
@@ -107,12 +106,11 @@ public class RetryTest {
     void testThrowNonRetryableException() throws Exception {
         int maxRetries = 3;
         doThrow(new UnsupportedOperationException("not retryable")).when(fs)
-                .publish(anyListOf(
-                        Fact.class));
+                .publish(anyListOf(Fact.class));
         FactCast uut = FactCast.from(fs).retry(maxRetries);
 
         assertThrows(UnsupportedOperationException.class, () -> {
-            uut.publish(Fact.builder().ns("foo").build("{}"));
+            uut.publish(Fact.builder().ns("foo").type("type").build("{}"));
         });
 
         verify(fs, times(1)).publish(anyListOf(Fact.class));

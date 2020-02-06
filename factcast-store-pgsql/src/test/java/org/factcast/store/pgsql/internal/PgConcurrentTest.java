@@ -42,8 +42,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ContextConfiguration(
-        classes = { PgTestConfiguration.class })
+@ContextConfiguration(classes = { PgTestConfiguration.class })
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
@@ -60,7 +59,7 @@ public class PgConcurrentTest {
     }
 
     private Fact newConcurrentTestFact() {
-        return Fact.builder().ns("concurrenttest").id(UUID.randomUUID()).build("{}");
+        return Fact.builder().ns("concurrenttest").id(UUID.randomUUID()).type("lonely").build("{}");
     }
 
     @Test

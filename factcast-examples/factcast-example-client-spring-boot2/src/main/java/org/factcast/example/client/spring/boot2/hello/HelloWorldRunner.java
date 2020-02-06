@@ -40,27 +40,33 @@ public class HelloWorldRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        Fact fact = Fact.builder().ns("smoke").type("foo").build("{\"bla\":\"fasel\"}");
+        Fact fact = Fact.builder()
+                .ns("namespaceA")
+                .type("eventA")
+                .version(1)
+                .build("{ \"firstGame\":\"Jean-Luc\"}");
         fc.publish(fact);
         System.out.println("published " + fact);
 
-        Subscription sub = fc.subscribe(SubscriptionRequest.catchup(FactSpec.ns("smoke"))
-                .fromScratch(),
-                System.out::println).awaitCatchup(5000);
+        Subscription sub = fc
+                .subscribe(SubscriptionRequest.catchup(FactSpec.ns("namespaceA")).fromScratch(),
+                        System.out::println)
+                .awaitCatchup(5000);
 
         sub.close();
 
         UUID id = UUID.randomUUID();
         System.out.println("trying to publish with optimistic locking");
 
-        PublishingResult success = fc.lock("foo")
+        PublishingResult success = fc.lock("namespaceA")
                 .on(id)
                 .optimistic()
-                .attempt(() -> Attempt.publish(Fact
-                        .builder()
+                .attempt(() -> Attempt.publish(Fact.builder()
                         .aggId(id)
-                        .ns("foo")
-                        .buildWithoutPayload()));
+                        .ns("namespaceA")
+                        .type("eventA")
+                        .version(1)
+                        .build("{ \"firstName\":\"Jean-Luc\"}")));
         System.out.println("published succeeded: " + (success != null));
         System.out.println("published id: " + success);
 
@@ -70,14 +76,16 @@ public class HelloWorldRunner implements CommandLineRunner {
                 .optimistic()
                 .attempt(() -> Attempt.publish(Fact.builder()
                         .aggId(id)
-                        .ns("foo")
-                        .buildWithoutPayload()));
+                        .ns("namespaceA")
+                        .type("eventA")
+                        .version(2)
+                        .build("{ \"firstName\":\"Jean-Luc\", \"lastName\":\"Picard\"}")));
         System.out.println("published succeeded: " + (success != null));
         System.out.println("published id: " + success);
 
-        sub = fc.subscribe(SubscriptionRequest.catchup(FactSpec.ns("foo").aggId(id))
-                .fromScratch(),
-                System.out::println).awaitCatchup(5000);
+        sub = fc.subscribe(SubscriptionRequest.catchup(FactSpec.ns("foo").aggId(id)).fromScratch(),
+                System.out::println)
+                .awaitCatchup(5000);
 
         sub.close();
 

@@ -15,14 +15,9 @@
  */
 package org.factcast.core.util;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.core.TestHelper.expectNPE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.factcast.core.TestHelper.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -139,7 +134,6 @@ public class FactCastJsonTest {
         }
 
         String pretty = FactCastJson.writeValueAsPrettyString(new TestObject());
-        System.out.println(pretty);
         assertTrue(pretty.contains("\"foo\" : \"bar\""));
     }
 

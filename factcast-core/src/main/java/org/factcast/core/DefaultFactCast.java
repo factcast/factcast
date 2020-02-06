@@ -51,7 +51,7 @@ class DefaultFactCast implements FactCast {
 
     @Override
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
-        FactValidation.validate(factsToPublish);
+        FactValidation.validateOnPublish(factsToPublish);
         store.publish(factsToPublish);
     }
 

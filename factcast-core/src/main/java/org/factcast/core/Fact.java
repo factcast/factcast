@@ -41,6 +41,8 @@ public interface Fact {
 
     String type();
 
+    int version();
+
     @NonNull
     Set<UUID> aggIds();
 
@@ -109,6 +111,15 @@ public interface Fact {
             return this;
         }
 
+        public Builder version(int version) {
+            if (version < 1) {
+                throw new IllegalArgumentException("version must be >=1");
+            }
+
+            header.version(version);
+            return this;
+        }
+
         public Builder meta(@NonNull String key, String value) {
             header.meta().put(key, value);
             return this;
@@ -120,12 +131,11 @@ public interface Fact {
 
         public Fact build(String payload) {
             String pl = payload;
-            if (payload == null || payload
-                    .trim()
-                    .isEmpty()) {
+            if (payload == null || payload.trim().isEmpty()) {
                 pl = "{}";
             }
             return new DefaultFact(header, pl);
         }
     }
+
 }

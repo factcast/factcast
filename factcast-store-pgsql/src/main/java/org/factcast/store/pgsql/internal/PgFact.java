@@ -62,6 +62,9 @@ public class PgFact implements Fact {
     final String type;
 
     @Getter
+    final int version;
+
+    @Getter
     final Set<UUID> aggIds;
 
     @Getter
@@ -107,7 +110,8 @@ public class PgFact implements Fact {
         String ns = resultSet.getString(PgConstants.ALIAS_NS);
         String jsonHeader = resultSet.getString(PgConstants.COLUMN_HEADER);
         String jsonPayload = resultSet.getString(PgConstants.COLUMN_PAYLOAD);
-        return new PgFact(UUID.fromString(id), ns, type, toUUIDArray(aggId), jsonHeader,
+        int version = resultSet.getInt(PgConstants.COLUMN_VERSION);
+        return new PgFact(UUID.fromString(id), ns, type, version, toUUIDArray(aggId), jsonHeader,
                 jsonPayload);
     }
 
