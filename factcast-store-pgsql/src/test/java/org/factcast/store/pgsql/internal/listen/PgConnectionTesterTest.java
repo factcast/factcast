@@ -161,26 +161,8 @@ public class PgConnectionTesterTest {
         PgConnection c = mock(PgConnection.class);
         CallableStatement s = mock(CallableStatement.class);
         when(c.prepareCall(anyString())).thenReturn(s);
-        when(c.getNotifications(anyInt())).thenReturn(new PGNotification[] { new PGNotification() {
-
-            @Override
-            public String getParameter() {
-                // Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public int getPID() {
-                // Auto-generated method stub
-                return 0;
-            }
-
-            @Override
-            public String getName() {
-                // Auto-generated method stub
-                return null;
-            }
-        } });
+        when(c.getNotifications(anyInt())).thenReturn(new PGNotification[] { mock(
+                PGNotification.class) });
         boolean test = uut.testNotificationRoundTrip(c);
         assertTrue(test);
     }

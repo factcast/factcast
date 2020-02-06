@@ -81,10 +81,10 @@ public class IndexFetcher {
 
                 String responseBodyAsText = response.body().string();
 
-                if (response.code() == 304) {
+                if (response.code() == ValidationConstants.HTTP_NOT_MODIFIED) {
                     // we're done here.
                     return Optional.empty();
-                } else if (response.code() == 200) {
+                } else if (response.code() == ValidationConstants.HTTP_OK) {
 
                     this.etag = response.header(ValidationConstants.HTTPHEADER_E_TAG);
                     this.since = response.header(ValidationConstants.HTTPHEADER_LAST_MODIFIED);

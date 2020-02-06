@@ -15,11 +15,12 @@
  */
 package org.factcast.core;
 
-import java.util.*;
+import java.util.Set;
+import java.util.UUID;
 
-import lombok.*;
+import lombok.NonNull;
 
-// this type should be removed
+// TODO this type should be removed
 class NullFact implements Fact {
     @Override
     public @NonNull UUID id() {

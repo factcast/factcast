@@ -23,6 +23,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.factcast.core.TestHelper;
 import org.factcast.store.pgsql.validation.schema.SchemaRegistryUnavailableException;
 import org.junit.jupiter.api.Test;
 
@@ -70,8 +71,6 @@ public class IndexFetcherTest {
     @Test
     void testThrowsExceptionOn404() throws Exception {
         try (TestHttpServer s = new TestHttpServer()) {
-            String etag = "123";
-            String since = new Date().toString();
 
             s.get("/registry/index.json", ctx -> {
                 ctx.res.setStatus(404);
@@ -87,17 +86,9 @@ public class IndexFetcherTest {
 
     @Test
     public void testNullContracts() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new IndexFetcher(null);
-        });
-
-        assertThrows(NullPointerException.class, () -> {
-            new IndexFetcher(new URL("http://ibm.com"), null);
-        });
-
-        assertThrows(NullPointerException.class, () -> {
-            new IndexFetcher(null, new OkHttpClient());
-        });
+        TestHelper.expectNPE(() -> new IndexFetcher(null));
+        TestHelper.expectNPE(() -> new IndexFetcher(new URL("http://ibm.com"), null));
+        TestHelper.expectNPE(() -> new IndexFetcher(null, new OkHttpClient()));
     }
 
 }

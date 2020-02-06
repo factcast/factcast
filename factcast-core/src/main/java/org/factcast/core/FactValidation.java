@@ -36,7 +36,7 @@ public class FactValidation {
         return f.type() == null;
     }
 
-    public void validate(@NonNull List<? extends Fact> facts) {
+    public void validateOnPublish(@NonNull List<? extends Fact> facts) {
         List<String> errors = new LinkedList<>();
         facts.forEach(f -> {
             if (lacksRequiredNamespace(f))

@@ -64,7 +64,7 @@ public class SchemaFetcher {
 
             String responseBodyAsText = response.body().string();
 
-            if (response.code() != 200) {
+            if (response.code() != ValidationConstants.HTTP_OK) {
                 throw new SchemaFetchException(url, response.code(), response.message());
             } else {
                 return responseBodyAsText;

@@ -107,7 +107,6 @@ public class HttpSchemaRegistry implements SchemaRegistry {
             log.info("SchemaStore update finished in {}ms", sw.stop()
                     .elapsed(TimeUnit.MILLISECONDS));
 
-            // otherwise just return
         }
     }
 
@@ -118,6 +117,8 @@ public class HttpSchemaRegistry implements SchemaRegistry {
             Optional<RegistryIndex> fetchIndex = indexFetcher.fetchIndex();
             if (fetchIndex.isPresent()) {
                 process(fetchIndex.get());
+            } else {
+                // otherwise just return
             }
         }
     }

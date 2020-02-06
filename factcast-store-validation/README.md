@@ -1,2 +1,0 @@
-### factcast-store-validation
-
