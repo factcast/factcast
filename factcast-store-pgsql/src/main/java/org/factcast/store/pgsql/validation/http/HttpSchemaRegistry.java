@@ -117,9 +117,8 @@ public class HttpSchemaRegistry implements SchemaRegistry {
             Optional<RegistryIndex> fetchIndex = indexFetcher.fetchIndex();
             if (fetchIndex.isPresent()) {
                 process(fetchIndex.get());
-            } else {
-                // otherwise just return
             }
+            // otherwise just return
         }
     }
 
