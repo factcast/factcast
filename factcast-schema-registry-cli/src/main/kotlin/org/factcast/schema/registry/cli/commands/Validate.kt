@@ -61,9 +61,6 @@ class Validate : Runnable {
         } catch (e: IllegalArgumentException) {
             logger.error(e) { "Invalid paths" }
             exitProcess(1)
-        } catch (e: Exception) {
-            logger.error(e) { "Unknown error" }
-            exitProcess(1)
         }
     }
 }
