@@ -25,7 +25,7 @@
     }
 
     article > section.page {
-    	margin: 0 0;
+    	margin: 0;
         padding: 1rem;
     }
 article > section.page #navigation label{
@@ -59,16 +59,16 @@ article > section.page #navigation label{
     
 
     .nav-select {
-        display: block; 
+        display: block;
         margin-left: -10px;
         margin-right: -10px;
     }
     .nav-select select {
-        display: block; 
+        display: block;
     }
 
     article img{
         margin-left: -1rem;
-        margin-right: -1rem;   
+        margin-right: -1rem;
     }
 }

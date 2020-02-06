@@ -8,7 +8,7 @@ function endsWith(str, suffix) {
 function initLunr() {
     if (!endsWith(baseurl,"/")){
         baseurl = baseurl+'/'
-    };
+    }
 
     // First retrieve the index file
     $.getJSON(baseurl +"index.json")

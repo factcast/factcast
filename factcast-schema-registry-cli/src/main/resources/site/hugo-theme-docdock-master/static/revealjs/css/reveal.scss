@@ -529,7 +529,7 @@ $controlsArrowAngleActive: 36deg;
 	.reveal .progress span {
 		display: block;
 		height: 100%;
-		width: 0px;
+		width: 0;
 
 		background-color: currentColor;
 		transition: width 800ms cubic-bezier(0.260, 0.860, 0.440, 0.985);
@@ -606,7 +606,7 @@ $controlsArrowAngleActive: 36deg;
 	display: none;
 	position: absolute;
 	width: 100%;
-	padding: 20px 0px;
+	padding: 20px 0;
 	pointer-events: auto;
 
 	z-index: 10;
@@ -863,7 +863,7 @@ $controlsArrowAngleActive: 36deg;
 		z-index: 1;
 
 		border-radius: 4px;
-		box-shadow: 0px 95px 25px rgba(0,0,0,0.2);
+		box-shadow: 0 95px 25px rgba(0,0,0,0.2);
 		transform: translateZ(-90px) rotateX( 65deg );
 	}
 
@@ -938,7 +938,7 @@ $controlsArrowAngleActive: 36deg;
 		z-index: 1;
 
 		border-radius: 4px;
-		box-shadow: 0px 95px 25px rgba(0,0,0,0.2);
+		box-shadow: 0 95px 25px rgba(0,0,0,0.2);
 
 		-webkit-transform: translateZ(-90px) rotateX( 65deg );
 	}
@@ -1501,7 +1501,7 @@ $controlsArrowAngleActive: 36deg;
 	.reveal .overlay.overlay-help .viewport .viewport-inner {
 		width: 600px;
 		margin: auto;
-		padding: 20px 20px 80px 20px;
+		padding: 20px 20px 80px;
 		text-align: center;
 		letter-spacing: normal;
 	}
@@ -1581,7 +1581,7 @@ $controlsArrowAngleActive: 36deg;
 }
 	.reveal .roll:hover span {
 	    background: rgba(0,0,0,0.5);
-	    transform: translate3d( 0px, 0px, -45px ) rotateX( 90deg );
+	    transform: translate3d( 0, 0, -45px ) rotateX( 90deg );
 	}
 .reveal .roll span:after {
 	content: attr(data-title);
@@ -1593,7 +1593,7 @@ $controlsArrowAngleActive: 36deg;
 	padding: 0 2px;
 	backface-visibility: hidden;
 	transform-origin: 50% 0%;
-	transform: translate3d( 0px, 110%, 0px ) rotateX( -90deg );
+	transform: translate3d( 0, 110%, 0 ) rotateX( -90deg );
 }
 
 
@@ -1615,7 +1615,7 @@ $controlsArrowAngleActive: 36deg;
 	height: 100%;
 	top: 0;
 	left: 100%;
-	padding: 14px 18px 14px 18px;
+	padding: 14px 18px;
 	z-index: 1;
 	font-size: 18px;
 	line-height: 1.4;

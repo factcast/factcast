@@ -17,7 +17,7 @@
 
 		socket.emit( 'multiplex-statechanged', messageData );
 
-	};
+	}
 
 	// post once the page is loaded, so the client follows also on "open URL".
 	window.addEventListener( 'load', post );

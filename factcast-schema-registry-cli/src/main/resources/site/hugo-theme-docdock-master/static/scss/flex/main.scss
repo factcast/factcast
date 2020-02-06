@@ -76,8 +76,8 @@ section strong {
 }
 
 .searchbox {
-    margin: 0rem 0rem 0rem 0rem;
-    padding: 0rem 0rem;
+    margin: 0;
+    padding: 0;
     padding-top: 1rem;
     color: #012a3c;
     text-align: center;
@@ -113,7 +113,7 @@ section strong {
     margin-top: 3rem;
     border-top: 1px solid #e6e6e6;
     border-bottom: 1px solid #e6e6e6;
-    padding: 1rem 0rem;
+    padding: 1rem 0;
     display: flex;
     flex-direction: row;
     align-items: stretch;
@@ -123,7 +123,7 @@ section strong {
         display: flex;
         flex-direction: row;
         justify-content: flex-start;
-        padding-right: 0px;
+        padding-right: 0;
         align-items: baseline;
         color: #e5e5e5;
 

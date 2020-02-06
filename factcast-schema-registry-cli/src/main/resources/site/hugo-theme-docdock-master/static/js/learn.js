@@ -23,7 +23,7 @@ function getScrollBarWidth() {
     document.body.removeChild(outer);
 
     return (w1 - w2);
-};
+}
 
 function setMenuHeight() {
     $('#sidebar .highlightable').height($('#sidebar').innerHeight() - $('#header-wrapper').height() - 40);
@@ -66,7 +66,7 @@ $(window).resize(function() {
                 if (!execAsap)
                     func.apply(obj, args);
                 timeout = null;
-            };
+            }
 
             if (timeout)
                 clearTimeout(timeout);
@@ -322,7 +322,7 @@ jQuery.fn.highlight = function(words, options) {
         return word.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
     });
     if (words.length == 0) { return this; }
-    ;
+    
 
     var flag = settings.caseSensitive ? "" : "i";
     var pattern = "(" + words.join("|") + ")";

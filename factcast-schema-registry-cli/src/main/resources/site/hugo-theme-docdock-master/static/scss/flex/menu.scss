@@ -10,7 +10,7 @@ article>aside {
     -ms-flex-direction: column;
     flex-direction: column;
     left: 0;
-    padding: 2rem 0rem 1rem 0rem;
+    padding: 2rem 0 1rem;
     position: fixed;
     top: 3.5rem;
     width: 20rem;
@@ -32,7 +32,7 @@ article>aside {
             display: none;
         } // first menu level
         >.dd-item {
-            margin: 0.5rem 0px 0.5rem 20px;
+            margin: 0.5rem 0 0.5rem 20px;
         } // menu items
         .dd-item {
             padding-left: 1rem;
@@ -93,7 +93,7 @@ article>aside {
                     display: flex;
                     flex: 1;
                     order: 2;
-                    padding: 0 0rem;
+                    padding: 0;
                     text-decoration: none;
 
                     &:hover,
@@ -101,7 +101,7 @@ article>aside {
                     &:active {
                         background-color: #eee;
                         border-radius: .2rem;
-                        padding: 0 0rem;
+                        padding: 0;
                     }
                 }
 
@@ -110,7 +110,7 @@ article>aside {
                 i.category-icon:hover {
                     background-color: #eee;
                     border-radius: .2rem;
-                    padding: 0 0rem;
+                    padding: 0;
                 }
             }
 
@@ -121,6 +121,6 @@ article>aside {
     }
 
     section {
-        margin: 2rem 0rem;
+        margin: 2rem 0;
     }
 }
