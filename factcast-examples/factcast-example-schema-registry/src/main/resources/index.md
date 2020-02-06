@@ -1,1 +1,1 @@
-# PRISMA Event Schema Registry
+# Schema Registry
