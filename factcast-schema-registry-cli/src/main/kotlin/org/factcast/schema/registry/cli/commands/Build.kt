@@ -29,7 +29,11 @@ import kotlin.system.exitProcess
 
 private val logger = KotlinLogging.logger {}
 
-@Command(name = "build", helpCommand = true, description = ["Validates and builds your registry"])
+@Command(
+    name = "build",
+    mixinStandardHelpOptions = true,
+    description = ["Validates and builds your registry"]
+)
 class Build : Runnable {
     @Option(names = ["-p", "--base-path"], description = ["The directory where your source files live"])
     var basePath: String = Paths.get(".").toString()

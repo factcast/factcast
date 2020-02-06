@@ -27,7 +27,11 @@ import kotlin.system.exitProcess
 
 private val logger = KotlinLogging.logger {}
 
-@Command(name = "validate", helpCommand = true, description = ["Validate your current events"])
+@Command(
+    name = "validate",
+    mixinStandardHelpOptions = true,
+    description = ["Validate your current events"]
+)
 class Validate : Runnable {
     @Option(names = ["-p", "--base-path"], description = ["The directory where your source files live"])
     var basePath: String = Paths.get(".").toString()

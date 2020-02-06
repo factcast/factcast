@@ -19,26 +19,23 @@ import io.micronaut.configuration.picocli.PicocliRunner
 import io.micronaut.core.annotation.Introspected
 import org.factcast.schema.registry.cli.commands.Build
 import org.factcast.schema.registry.cli.commands.Validate
+import org.factcast.schema.registry.cli.utils.BANNER
+import picocli.CommandLine
 import picocli.CommandLine.Command
 import kotlin.system.exitProcess
 
 @Command(
     name = "fc-schema",
-    header = ["""
-███████╗ █████╗  ██████╗████████╗ ██████╗ █████╗ ███████╗████████╗
-██╔════╝██╔══██╗██╔════╝╚══██╔══╝██╔════╝██╔══██╗██╔════╝╚══██╔══╝
-█████╗  ███████║██║        ██║   ██║     ███████║███████╗   ██║
-██╔══╝  ██╔══██║██║        ██║   ██║     ██╔══██║╚════██║   ██║
-██║     ██║  ██║╚██████╗   ██║   ╚██████╗██║  ██║███████║   ██║
-╚═╝     ╚═╝  ╚═╝ ╚═════╝   ╚═╝    ╚═════╝╚═╝  ╚═╝╚══════╝   ╚═╝
-    """],
+    header = [BANNER],
     description = ["Tool for working with the Factcast Schema Registry spec"],
     subcommands = [Validate::class, Build::class],
     mixinStandardHelpOptions = true
 )
 @Introspected
 class Application : Runnable {
-    override fun run() = Unit
+    override fun run() {
+        CommandLine.usage(this, System.out)
+    }
 
     companion object {
         @JvmStatic
