@@ -15,12 +15,9 @@
  */
 package org.factcast.store.pgsql.internal.listen;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -164,26 +161,8 @@ public class PgConnectionTesterTest {
         PgConnection c = mock(PgConnection.class);
         CallableStatement s = mock(CallableStatement.class);
         when(c.prepareCall(anyString())).thenReturn(s);
-        when(c.getNotifications(anyInt())).thenReturn(new PGNotification[] { new PGNotification() {
-
-            @Override
-            public String getParameter() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public int getPID() {
-                // TODO Auto-generated method stub
-                return 0;
-            }
-
-            @Override
-            public String getName() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-        } });
+        when(c.getNotifications(anyInt())).thenReturn(new PGNotification[] { mock(
+                PGNotification.class) });
         boolean test = uut.testNotificationRoundTrip(c);
         assertTrue(test);
     }
