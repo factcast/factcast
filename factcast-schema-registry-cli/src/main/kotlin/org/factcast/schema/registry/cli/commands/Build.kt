@@ -23,7 +23,6 @@ import org.factcast.schema.registry.cli.validation.ValidationService
 import org.factcast.schema.registry.cli.validation.formatErrors
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
-import java.nio.file.Files
 import java.nio.file.Paths
 import javax.inject.Inject
 import kotlin.system.exitProcess
@@ -51,35 +50,39 @@ class Build : Runnable {
     lateinit var fileSystemService: FileSystemService
 
     override fun run() {
-        val tmp = fileSystemService.createTempDirectory("fc-schema")
-
-        val outputRoot = Paths.get(outputPath).toAbsolutePath().normalize()
-        val sourceRoot = Paths.get(basePath).toAbsolutePath().normalize()
-
-        fileSystemService.deleteDirectory(outputRoot)
-
-        logger.info("Starting building Factcast Schema Registry")
-        logger.info("Input: $sourceRoot")
-        logger.info("Output: $outputRoot")
-        logger.info("")
-
         try {
+            val outputRoot = Paths.get(outputPath).toAbsolutePath().normalize()
+            val sourceRoot = Paths.get(basePath).toAbsolutePath().normalize()
+
+            fileSystemService.deleteDirectory(outputRoot)
+
+            logger.info("Starting building Factcast Schema Registry")
+            logger.info("Input: $sourceRoot")
+            logger.info("Output: $outputRoot")
+            logger.info("")
+
             val project = projectService.detectProject(sourceRoot)
 
-            validationService.validateProject(project).fold<Unit>({ errors ->
-                formatErrors(errors).forEach { logger.error(it) }
-                exitProcess(1)
-            }, {
-                try {
-                    distributionCreatorService.createDistributable(tmp, it)
+            validationService
+                .validateProject(project)
+                .fold<Unit>({ errors ->
+                    formatErrors(errors).forEach { logger.error(it) }
+                    exitProcess(1)
+                }, {
+                    try {
+                        distributionCreatorService.createDistributable(outputRoot, it)
 
-                    Files.move(tmp, outputRoot)
-                    logger.info("Build finished!")
-                } catch (e: Exception) {
-                    logger.error(e) { "Something went wrong" }
-                }
-            })
+                        logger.info("Build finished!")
+                    } catch (e: Exception) {
+                        logger.error(e) { "Something went wrong" }
+                    }
+                })
+        } catch (e: IllegalArgumentException) {
+            logger.error(e) { "Unknown error" }
+            exitProcess(1)
         } catch (e: Exception) {
+            logger.error(e) { "Unknown error" }
+            exitProcess(1)
         }
     }
 }

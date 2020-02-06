@@ -29,7 +29,6 @@ interface FileSystemService {
     fun copyDirectory(from: Path, to: Path)
     fun copyFile(from: File, to: File)
     fun readToJsonNode(path: Path): JsonNode?
-    fun createTempDirectory(prefix: String): Path
     fun deleteDirectory(path: Path)
     fun readToBytes(file: Path): ByteArray
 }

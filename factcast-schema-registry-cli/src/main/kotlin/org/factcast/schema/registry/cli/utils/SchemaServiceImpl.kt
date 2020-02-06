@@ -18,6 +18,7 @@ package org.factcast.schema.registry.cli.utils
 import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
+import com.github.fge.jsonschema.core.exceptions.ProcessingException
 import com.github.fge.jsonschema.main.JsonSchema
 import com.github.fge.jsonschema.main.JsonSchemaFactory
 import org.factcast.schema.registry.cli.fs.FileSystemService
@@ -35,7 +36,7 @@ class SchemaServiceImpl(
 
         return try {
             Right(jsonSchemaFactory.getJsonSchema(jsonNode))
-        } catch (e: Exception) {
+        } catch (e: ProcessingException) {
             Left(ProjectError.CorruptedSchema(path))
         }
     }

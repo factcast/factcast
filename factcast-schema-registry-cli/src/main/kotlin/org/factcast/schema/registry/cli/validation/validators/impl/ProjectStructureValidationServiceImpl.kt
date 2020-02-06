@@ -39,30 +39,32 @@ import javax.validation.Validator
 @Singleton
 class ProjectStructureValidationServiceImpl(private val validator: Validator) : ProjectStructureValidationService {
     override fun validateProjectStructure(projectFolder: ProjectFolder): Either<List<ProjectError>, Project> {
-        val errors = validator.validate(projectFolder).map {
-            when (it.messageTemplate) {
-                NO_DESCRIPTION ->
-                    ProjectError.NoDescription(it.leafBean.toFolder().path)
-                NO_EVENT_VERSIONS ->
-                    ProjectError.NoEventVersions(it.leafBean.toFolder().path)
-                NO_SCHEMA ->
-                    ProjectError.NoSchema(it.leafBean.toFolder().path)
-                NO_EXAMPLES ->
-                    ProjectError.NoExamples(it.leafBean.toFolder().path)
-                NO_EVENTS ->
-                    ProjectError.NoEvents(it.leafBean.toFolder().path)
-                NO_NAMESPACES ->
-                    ProjectError.NoNamespaces(it.leafBean.toFolder().path)
-                NO_TRANSFORMATION_FILE ->
-                    ProjectError.NoSuchFile(it.leafBean.toFolder().path)
-                TRANSFORMATION_VERSION_INVALID, VERSION_INVALID -> {
-                    val folder = it.leafBean.toFolder()
-                    ProjectError.WrongVersionFormat(folder.path.fileName.toString(), folder.path)
+        val errors = validator
+            .validate(projectFolder)
+            .map {
+                when (it.messageTemplate) {
+                    NO_DESCRIPTION ->
+                        ProjectError.NoDescription(it.leafBean.toFolder().path)
+                    NO_EVENT_VERSIONS ->
+                        ProjectError.NoEventVersions(it.leafBean.toFolder().path)
+                    NO_SCHEMA ->
+                        ProjectError.NoSchema(it.leafBean.toFolder().path)
+                    NO_EXAMPLES ->
+                        ProjectError.NoExamples(it.leafBean.toFolder().path)
+                    NO_EVENTS ->
+                        ProjectError.NoEvents(it.leafBean.toFolder().path)
+                    NO_NAMESPACES ->
+                        ProjectError.NoNamespaces(it.leafBean.toFolder().path)
+                    NO_TRANSFORMATION_FILE ->
+                        ProjectError.NoSuchFile(it.leafBean.toFolder().path)
+                    TRANSFORMATION_VERSION_INVALID, VERSION_INVALID -> {
+                        val folder = it.leafBean.toFolder()
+                        ProjectError.WrongVersionFormat(folder.path.fileName.toString(), folder.path)
+                    }
+                    else ->
+                        throw IllegalArgumentException("Unknown error type: ${it.messageTemplate}")
                 }
-                else ->
-                    throw IllegalArgumentException("Unknown error type: ${it.messageTemplate}")
             }
-        }
 
         return if (errors.isNotEmpty())
             Left(errors)

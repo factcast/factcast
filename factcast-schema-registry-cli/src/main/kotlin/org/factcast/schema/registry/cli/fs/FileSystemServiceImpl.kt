@@ -18,6 +18,7 @@ package org.factcast.schema.registry.cli.fs
 import com.github.fge.jackson.JsonLoader
 import org.apache.commons.io.FileUtils
 import java.io.File
+import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
@@ -54,12 +55,9 @@ class FileSystemServiceImpl : FileSystemService {
 
     override fun readToJsonNode(path: Path) = try {
         JsonLoader.fromFile(path.toFile())
-    } catch (e: Exception) {
+    } catch (e: IOException) {
         null
     }
-
-    override fun createTempDirectory(prefix: String) =
-        Files.createTempDirectory("fc-schema")
 
     override fun deleteDirectory(path: Path) =
         FileUtils.deleteDirectory(path.toFile())
