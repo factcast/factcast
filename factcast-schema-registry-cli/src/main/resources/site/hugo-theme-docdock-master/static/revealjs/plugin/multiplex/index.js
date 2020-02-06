@@ -21,7 +21,7 @@ io.on( 'connection', function( socket ) {
 		if (createHash(data.secret) === data.socketId) {
 			data.secret = null;
 			socket.broadcast.emit(data.socketId, data);
-		};
+		}
 	});
 });
 

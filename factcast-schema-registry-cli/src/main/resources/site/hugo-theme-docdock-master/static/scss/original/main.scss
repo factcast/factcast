@@ -229,32 +229,32 @@ h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
 h2 {
     font-size: 2.5rem;
     line-height: 110% !important;
-    margin: 2.5rem 0 1.5rem 0;
+    margin: 2.5rem 0 1.5rem;
     text-transform: capitalize;
 }
 
 h3 {
     font-size: 2rem;
     line-height: 110% !important;
-    margin: 2rem 0 1rem 0;
+    margin: 2rem 0 1rem;
 }
 
 h4 {
     font-size: 1.5rem;
     line-height: 110% !important;
-    margin: 1.5rem 0 0.75rem 0;
+    margin: 1.5rem 0 0.75rem;
 }
 
 h5 {
     font-size: 1rem;
     line-height: 110% !important;
-    margin: 1rem 0 0.2rem 0;
+    margin: 1rem 0 0.2rem;
 }
 
 h6 {
     font-size: 0.5rem;
     line-height: 110% !important;
-    margin: 0.5rem 0 0.2rem 0;
+    margin: 0.5rem 0 0.2rem;
 }
 
 p {
@@ -270,7 +270,7 @@ figcaption h4 {
 }
 
 .is_stuck{
-    position: fixed; top: 0px; width: 1165px;
+    position: fixed; top: 0; width: 1165px;
 }
 
 #tags{
@@ -301,7 +301,7 @@ figcaption h4 {
 }
 
 .button:active, .button-secondary:active {
-    margin: 2px 0 -2px 0;
+    margin: 2px 0 -2px;
 }
 
 // fonts
@@ -456,7 +456,7 @@ textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[typ
 
 #main {
     background: #f7f7f7;
-    margin: 0 0 1.563rem 0;
+    margin: 0 0 1.563rem;
 }
 
 #body {
@@ -637,8 +637,8 @@ div.notices p {
     padding: 15px;
     display: block;
     font-size: 1rem;
-    margin-top: 0rem;
-    margin-bottom: 0rem;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 div.notices p:first-child:before {
@@ -698,7 +698,7 @@ code {
     // color: $main_code_inline_text_color;
     background: $main_code_inline_back_color;
     border: 1px solid $main_code_inline_border_color;
-    padding: 0px 2px;
+    padding: 0 2px;
 }
 
 .hljs {
@@ -1017,7 +1017,7 @@ td {
 }
 
 .highlightable {
-    padding: 0rem 0 0rem;
+    padding: 0;
     overflow: auto;
     position: relative;
     height: 100%;
@@ -1047,7 +1047,7 @@ td {
 }
 
 .lifecycle #body-inner ol {
-    margin: 1rem 0 1rem 0;
+    margin: 1rem 0;
     padding: 2rem;
     position: relative;
 }
@@ -1123,7 +1123,7 @@ td {
 #top-bar {
     background: $topbar_back_color;
     border-radius: 2px;
-    margin: 0rem -1rem 2rem;
+    margin: 0 -1rem 2rem;
     padding: 0 1rem;
     height: 0;
     min-height: 3rem;

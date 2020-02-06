@@ -237,7 +237,7 @@ jQuery.fn.highlight = function(words, options) {
         return word.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
     });
     if (words.length == 0) { return this; }
-    ;
+    
 
     var flag = settings.caseSensitive ? "" : "i";
     var pattern = "(" + words.join("|") + ")";
