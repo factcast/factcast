@@ -56,4 +56,16 @@ CREATE TABLE IF NOT EXISTS tokenstore (
 );
 CREATE INDEX IF NOT EXISTS idx_tokenstore_ts ON tokenstore(ts);
 
+ CREATE TABLE IF NOT EXISTS schemastore(
+	id 				varchar(2048)  PRIMARY KEY, 
+	hash 			varchar(32),
+	ns 				varchar(255),
+	type 			varchar(255),
+	version 		int,
+	jsonschema 		text,
+	UNIQUE(id),
+	UNIQUE(ns,type,version)	
+);
+
+CREATE INDEX IF NOT EXISTS idx_schemastore on schemastore(ns,type,version);
  

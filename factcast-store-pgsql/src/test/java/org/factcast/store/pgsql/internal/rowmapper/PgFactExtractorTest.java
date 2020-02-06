@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,10 @@ public class PgFactExtractorTest {
                 + "\"}");
         when(rs.getString(PgConstants.COLUMN_PAYLOAD)).thenReturn("{}");
         when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(27L);
+        when(rs.getInt(PgConstants.COLUMN_VERSION)).thenReturn(110);
         Fact mapRow = uut.mapRow(rs, 1);
         assertEquals(27, serial.get());
+        assertEquals(110, mapRow.version());
         assertEquals(id, mapRow.id());
     }
 

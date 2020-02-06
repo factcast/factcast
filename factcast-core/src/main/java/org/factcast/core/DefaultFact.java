@@ -98,6 +98,8 @@ public class DefaultFact implements Fact, Externalizable {
         if (deserializedHeader.ns == null || deserializedHeader.ns.trim().isEmpty()) {
             throw new IllegalArgumentException("ns attribute missing from " + jsonHeader);
         }
+        if (deserializedHeader.version < 0)
+            throw new IllegalArgumentException("version attribute is not valid " + jsonHeader);
     }
 
     @Getter
@@ -116,6 +118,9 @@ public class DefaultFact implements Fact, Externalizable {
 
         @JsonProperty
         String type;
+
+        @JsonProperty
+        int version;
 
         @JsonProperty
         Set<UUID> aggIds = new HashSet<>();
@@ -148,6 +153,11 @@ public class DefaultFact implements Fact, Externalizable {
     @Override
     public UUID id() {
         return deserializedHeader.id();
+    }
+
+    @Override
+    public int version() {
+        return deserializedHeader.version();
     }
 
     @Override

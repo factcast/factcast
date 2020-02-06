@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,8 @@
  */
 package org.factcast.store.pgsql.internal.listen;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,7 +30,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.PGNotification;
 import org.postgresql.core.Notification;
@@ -69,11 +61,11 @@ public class PgListenerTest {
     @Test
     void testCheckFails() throws SQLException {
 
-        Mockito.when(ds.get()).thenReturn(conn);
-        Mockito.when(conn.prepareStatement(anyString())).thenReturn(ps);
+        when(ds.get()).thenReturn(conn);
+        when(conn.prepareStatement(anyString())).thenReturn(ps);
 
         tester = mock(Predicate.class);
-        Mockito.when(tester.test(any())).thenReturn(false, false, true, false);
+        when(tester.test(any())).thenReturn(false, false, true, false);
         PgListener l = new PgListener(ds, bus, tester);
         l.afterPropertiesSet();
         verify(bus, times(3)).post(any(FactInsertionEvent.class));
@@ -84,8 +76,8 @@ public class PgListenerTest {
 
     @Test
     void testListen() throws Exception {
-        Mockito.when(ds.get()).thenReturn(conn);
-        Mockito.when(conn.prepareStatement(anyString())).thenReturn(ps);
+        when(ds.get()).thenReturn(conn);
+        when(conn.prepareStatement(anyString())).thenReturn(ps);
 
         PgListener l = new PgListener(ds, bus, tester);
         l.afterPropertiesSet();
@@ -101,15 +93,15 @@ public class PgListenerTest {
     @Test
     void testNotify() throws Exception {
 
-        Mockito.when(ds.get()).thenReturn(conn);
-        Mockito.when(conn.prepareStatement(anyString())).thenReturn(ps);
+        when(ds.get()).thenReturn(conn);
+        when(conn.prepareStatement(anyString())).thenReturn(ps);
 
         PgListener l = new PgListener(ds, bus, tester);
         when(conn.getNotifications(anyInt())).thenReturn(new PGNotification[] { //
                 new Notification(PgConstants.CHANNEL_NAME, 1), //
                 new Notification(PgConstants.CHANNEL_NAME, 1), //
-                new Notification(PgConstants.CHANNEL_NAME, 1) }, new PGNotification[] {
-                        new Notification(PgConstants.CHANNEL_NAME, 2) }, //
+                new Notification(PgConstants.CHANNEL_NAME, 1) },
+                new PGNotification[] { new Notification(PgConstants.CHANNEL_NAME, 2) }, //
                 new PGNotification[] { new Notification(PgConstants.CHANNEL_NAME, 3) }, null);
         l.afterPropertiesSet();
         sleep(400);
@@ -122,8 +114,8 @@ public class PgListenerTest {
     @Test
     void testNotifyScheduled() throws Exception {
 
-        Mockito.when(ds.get()).thenReturn(conn);
-        Mockito.when(conn.prepareStatement(anyString())).thenReturn(ps);
+        when(ds.get()).thenReturn(conn);
+        when(conn.prepareStatement(anyString())).thenReturn(ps);
 
         PgListener l = new PgListener(ds, bus, tester);
         when(conn.getNotifications(anyInt())).thenReturn(null);
@@ -137,8 +129,8 @@ public class PgListenerTest {
 
     @Test
     void testStop() throws Exception {
-        Mockito.when(ds.get()).thenReturn(conn);
-        Mockito.when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
+        when(ds.get()).thenReturn(conn);
+        when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
         PgListener l = new PgListener(ds, bus, tester);
         l.afterPropertiesSet();
         l.destroy();

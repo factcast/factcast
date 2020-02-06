@@ -22,6 +22,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+// TODO this type should be removed
 @RequiredArgsConstructor
 public final class IdOnlyFact implements Fact {
 
@@ -56,6 +57,11 @@ public final class IdOnlyFact implements Fact {
 
     @Override
     public String meta(String key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int version() {
         throw new UnsupportedOperationException();
     }
 }

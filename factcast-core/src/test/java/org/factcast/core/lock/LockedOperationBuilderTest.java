@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,9 +74,9 @@ public class LockedOperationBuilderTest {
     @Test
     public void testAttemptWithoutPublishing() throws Exception {
         assertThrows(IllegalArgumentException.class, () -> {
-            @NonNull PublishingResult attempt = uut.on(UUID.randomUUID()).attempt(() ->
-                    mock(IntermediatePublishResult.class)
-            );
+            @NonNull
+            PublishingResult attempt = uut.on(UUID.randomUUID())
+                    .attempt(() -> mock(IntermediatePublishResult.class));
         });
     }
 

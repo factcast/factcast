@@ -15,13 +15,14 @@
  */
 package org.factcast.core;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 
-import lombok.*;
-import lombok.experimental.*;
+import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
-class FactValidation {
+public class FactValidation {
 
     private boolean lacksRequiredNamespace(Fact f) {
         return f.ns() == null || f.ns().trim().isEmpty();
@@ -31,29 +32,22 @@ class FactValidation {
         return f.id() == null;
     }
 
-    public void validate(@NonNull List<? extends Fact> facts) {
+    private boolean lacksRequiredType(Fact f) {
+        return f.type() == null;
+    }
+
+    public void validateOnPublish(@NonNull List<? extends Fact> facts) {
         List<String> errors = new LinkedList<>();
         facts.forEach(f -> {
             if (lacksRequiredNamespace(f))
                 errors.add("Fact " + f.id() + " lacks required namespace.");
             if (lacksRequiredId(f))
                 errors.add("Fact " + f.jsonHeader() + " lacks required id.");
+            if (lacksRequiredType(f))
+                errors.add("Fact " + f.jsonHeader() + " lacks required type.");
+
         });
         if (!errors.isEmpty())
             throw new FactValidationException(errors);
     }
-}
-
-class FactValidationException extends IllegalArgumentException {
-
-    private static final long serialVersionUID = 1L;
-
-    public FactValidationException(List<String> errors) {
-        super(render(errors));
-    }
-
-    private static String render(List<String> errors) {
-        return String.join("\n", errors);
-    }
-
 }

@@ -59,6 +59,7 @@ public class PgQueryBuilder {
                 if (type != null) {
                     p.setString(++count, "{\"type\": \"" + type + "\" }");
                 }
+                // version is intentionally not used here
                 UUID agg = spec.aggId();
                 if (agg != null) {
                     p.setString(++count, "{\"aggIds\": [\"" + agg + "\"]}");
@@ -90,8 +91,7 @@ public class PgQueryBuilder {
             Map<String, String> meta = spec.meta();
             meta.forEach((key, value) -> sb.append("AND ")
                     .append(PgConstants.COLUMN_HEADER)
-                    .append(
-                            " @> ?::jsonb "));
+                    .append(" @> ?::jsonb "));
             sb.append(") ");
             predicates.add(sb.toString());
         });
@@ -101,8 +101,9 @@ public class PgQueryBuilder {
 
     public String createSQL() {
         final String sql = "SELECT " + (selectIdOnly ? PgConstants.PROJECTION_ID
-                : PgConstants.PROJECTION_FACT) + " FROM " + PgConstants.TABLE_FACT + " WHERE "
-                + createWhereClause() + " ORDER BY " + PgConstants.COLUMN_SER + " ASC";
+                : PgConstants.PROJECTION_FACT)
+                + " FROM " + PgConstants.TABLE_FACT + " WHERE " + createWhereClause() + " ORDER BY "
+                + PgConstants.COLUMN_SER + " ASC";
         log.trace("{} createSQL={}", req, sql);
         return sql;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,9 @@ public class FactSpecMatcherTest {
         assertTrue(
                 metaMatch(FactSpec.ns("default").meta("foo", "bar"), new TestFact().meta("x", "y")
                         .meta("foo", "bar")));
-        assertTrue(metaMatch(FactSpec.ns("default"), new TestFact().meta("x", "y").meta("foo",
-                "bar")));
+        assertTrue(metaMatch(FactSpec.ns("default"), new TestFact().meta("x", "y")
+                .meta("foo",
+                        "bar")));
         assertFalse(metaMatch(FactSpec.ns("default").meta("foo", "bar"), new TestFact().meta("foo",
                 "baz")));
         assertFalse(metaMatch(FactSpec.ns("default").meta("foo", "bar"), new TestFact()));
@@ -73,8 +74,9 @@ public class FactSpecMatcherTest {
         assertFalse(
                 scriptMatch(FactSpec.ns("default").jsFilterScript("function (h,e){ return false }"),
                         new TestFact()));
-        assertTrue(scriptMatch(FactSpec.ns("default").jsFilterScript(
-                "function (h,e){ return h.meta.x=='y' }"),
+        assertTrue(scriptMatch(FactSpec.ns("default")
+                .jsFilterScript(
+                        "function (h,e){ return h.meta.x=='y' }"),
                 new TestFact().meta("x", "y")));
     }
 
@@ -147,10 +149,15 @@ public class FactSpecMatcherTest {
 
     @Test
     void testMatchesByMetaAllMatch() {
-        Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").meta("foo", "bar").meta("poit",
-                "zort"));
-        assertTrue(p.test(new TestFact().ns("1").meta("some", "other").meta("poit", "zort").meta(
-                "foo", "bar")));
+        Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1")
+                .meta("foo", "bar")
+                .meta("poit",
+                        "zort"));
+        assertTrue(p.test(new TestFact().ns("1")
+                .meta("some", "other")
+                .meta("poit", "zort")
+                .meta(
+                        "foo", "bar")));
 
         assertFalse(p.test(new TestFact().ns("1").meta("foo", "bar")));
         assertFalse(p.test(new TestFact().ns("1").meta("poit", "zort")));
