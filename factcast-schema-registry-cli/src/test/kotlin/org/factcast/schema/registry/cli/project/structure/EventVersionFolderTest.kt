@@ -1,8 +1,8 @@
 package org.factcast.schema.registry.cli.project.structure
 
 import io.kotlintest.matchers.collections.shouldHaveSize
-import io.kotlintest.specs.StringSpec
 import io.kotlintest.shouldBe
+import io.kotlintest.specs.StringSpec
 import java.nio.file.Paths
 
 class EventVersionFolderTest : StringSpec() {

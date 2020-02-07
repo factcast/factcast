@@ -7,11 +7,7 @@ import io.kotlintest.matchers.collections.shouldHaveSize
 import io.kotlintest.matchers.types.shouldBeInstanceOf
 import io.kotlintest.specs.StringSpec
 import io.micronaut.context.ApplicationContext
-import io.micronaut.validation.validator.DefaultValidator
-import io.micronaut.validation.validator.DefaultValidatorConfiguration
 import io.micronaut.validation.validator.Validator
-import io.micronaut.validation.validator.constraints.ConstraintValidator
-import io.micronaut.validation.validator.constraints.DefaultConstraintValidators
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.project.structure.EventFolder
 import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
@@ -20,10 +16,7 @@ import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.project.structure.TransformationFolder
 import org.factcast.schema.registry.cli.validation.ProjectError
 import org.factcast.schema.registry.cli.validation.validators.ProjectStructureValidationService
-import org.factcast.schema.registry.cli.validation.validators.ValidTransformationFolder
-import org.factcast.schema.registry.cli.validation.validators.ValidVersionFolder
 import java.nio.file.Paths
-import java.util.*
 
 class ProjectStructureValidationServiceImplTest : StringSpec() {
     val dummyPath = Paths.get(".")
