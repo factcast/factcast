@@ -15,17 +15,11 @@
  */
 package org.factcast.schema.registry.cli.commands
 
-import mu.KotlinLogging
-import org.factcast.schema.registry.cli.project.ProjectService
-import org.factcast.schema.registry.cli.validation.ValidationService
-import org.factcast.schema.registry.cli.validation.formatErrors
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
 import java.nio.file.Paths
 import javax.inject.Inject
 import kotlin.system.exitProcess
-
-private val logger = KotlinLogging.logger {}
 
 @Command(
     name = "validate",
@@ -37,34 +31,13 @@ class Validate : Runnable {
     var basePath: String = Paths.get(".").toString()
 
     @Inject
-    lateinit var projectService: ProjectService
-
-    @Inject
-    lateinit var validationService: ValidationService
+    lateinit var commandService: CommandService
 
     override fun run() {
-        try {
-            val sourceRoot = Paths.get(basePath).toAbsolutePath().normalize()
+        val sourceRoot = Paths.get(basePath).toAbsolutePath().normalize()
 
-            logger.info("Starting validating Factcast Schema Registry")
-            logger.info("Input: $sourceRoot")
-            logger.info("")
+        val exitCode = commandService.validate(sourceRoot)
 
-            val project = projectService.detectProject(sourceRoot)
-
-            validationService
-                .validateProject(project)
-                .fold({ errors ->
-                    formatErrors(errors).forEach { logger.error(it) }
-                    logger.info("")
-                    logger.error("Validation failed!")
-                    exitProcess(1)
-                }, {
-                    logger.info("Project seems to be valid!")
-                })
-        } catch (e: IllegalArgumentException) {
-            logger.error(e) { "Invalid paths" }
-            exitProcess(1)
-        }
+        exitProcess(exitCode)
     }
 }

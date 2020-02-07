@@ -34,7 +34,7 @@ class FactcastIndexCreatorImpl(
     private val om: ObjectMapper,
     private val indexFileCalculator: IndexFileCalculator
 ) : FactcastIndexCreator {
-    override fun creteFactcastIndex(contentBase: Path, project: Project) {
+    override fun createFactcastIndex(contentBase: Path, project: Project) {
         createIndexFile(contentBase, project)
         copySchemes(contentBase, project)
         copyTransformations(contentBase, project)

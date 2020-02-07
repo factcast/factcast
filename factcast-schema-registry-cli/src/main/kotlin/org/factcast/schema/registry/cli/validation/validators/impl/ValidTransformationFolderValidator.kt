@@ -19,7 +19,6 @@ import io.micronaut.core.annotation.AnnotationValue
 import io.micronaut.validation.validator.constraints.ConstraintValidator
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext
 import org.factcast.schema.registry.cli.validation.validators.ValidTransformationFolder
-import java.lang.NumberFormatException
 import java.nio.file.Path
 import javax.inject.Singleton
 

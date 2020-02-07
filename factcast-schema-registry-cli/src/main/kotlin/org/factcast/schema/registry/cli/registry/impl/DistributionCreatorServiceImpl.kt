@@ -32,6 +32,6 @@ class DistributionCreatorServiceImpl(
         hugoPageCreator.creteHugoPage(outputPath, project)
 
         val indexPath = outputPath.resolve(Paths.get("static", "registry"))
-        factcastIndexCreator.creteFactcastIndex(indexPath, project)
+        factcastIndexCreator.createFactcastIndex(indexPath, project)
     }
 }

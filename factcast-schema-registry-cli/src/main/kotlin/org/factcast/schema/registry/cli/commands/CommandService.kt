@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.schema.registry.cli.registry
+package org.factcast.schema.registry.cli.commands
 
-import org.factcast.schema.registry.cli.domain.Project
 import java.nio.file.Path
 
-interface FactcastIndexCreator {
-    fun createFactcastIndex(contentBase: Path, project: Project)
+interface CommandService {
+    fun build(sourceRoot: Path, outputRoot: Path): Int
+    fun validate(sourceRoot: Path): Int
 }
