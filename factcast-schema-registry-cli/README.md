@@ -1,0 +1,65 @@
+# factcast-schema-registry-cli
+
+
+
+This CLI provides a convenient way to create a suitable Schema Registry for your Factcast installation.
+It will give you the ability to validate events against examples and to make sure that there's always a upcast and if 
+necessary a downcast transformation.
+
+It produces a human and a machine readable output. You will have to use [hugo](https://gohugo.io/) in order to get a 
+proper static website.
+
+## Build the example
+
+After building the project run 
+
+`$  java -jar target/fc-schema-cli.jar build -p ../factcast-examples/factcast-example-schema-registry/src/main/resources`
+
+This command will validate and build the example and also produce a `output` directory which contains the static website.  
+Inside `output` run 
+
+`$ hugo server`
+
+to get quick feedback about the static page or run
+
+`$ hugo`
+
+in order to create the deployable schema registry (located at `output/public`).
+
+## About CI Pipelines and Artifacts
+
+We propose to the following pipeline
+
+Build -> Package -> Upload
+
+Build:  
+- runs the fc-schema-cli to build the registry
+- fails on wrong input/broken schema
+
+Package:
+- runs `$ hugo` in order to produce the artifact
+
+Upload:
+-  uploads `output/public` to static file server (like S3)
+
+## Available commands and options
+
+```
+$ java -jar target/fc-schema-cli.jar -h
+
+███████╗ █████╗  ██████╗████████╗ ██████╗ █████╗ ███████╗████████╗
+██╔════╝██╔══██╗██╔════╝╚══██╔══╝██╔════╝██╔══██╗██╔════╝╚══██╔══╝
+█████╗  ███████║██║        ██║   ██║     ███████║███████╗   ██║
+██╔══╝  ██╔══██║██║        ██║   ██║     ██╔══██║╚════██║   ██║
+██║     ██║  ██║╚██████╗   ██║   ╚██████╗██║  ██║███████║   ██║
+╚═╝     ╚═╝  ╚═╝ ╚═════╝   ╚═╝    ╚═════╝╚═╝  ╚═╝╚══════╝   ╚═╝
+
+Usage: fc-schema [-hV] [COMMAND]
+Tool for working with the Factcast Schema Registry spec
+  -h, --help      Show this help message and exit.
+  -V, --version   Print version information and exit.
+Commands:
+  validate  Validate your current events
+  build     Validates and builds your registry
+```
+
