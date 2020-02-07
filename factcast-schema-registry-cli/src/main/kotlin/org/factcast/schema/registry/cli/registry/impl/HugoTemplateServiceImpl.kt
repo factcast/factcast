@@ -37,8 +37,7 @@ import org.factcast.schema.registry.cli.registry.templates.versionTemplate
 import javax.inject.Singleton
 
 @Singleton
-class TemplateServiceImpl(private val fileSystemService: FileSystemService) :
-    TemplateService {
+class HugoTemplateServiceImpl(private val fileSystemService: FileSystemService) : TemplateService {
     override fun loadHomeTemplate(project: Project): String {
         val description =
             if (project.description != null) fileSystemService.readToString(project.description.toFile()) else null

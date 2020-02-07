@@ -20,18 +20,18 @@ import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.fs.FileSystemService
-import org.factcast.schema.registry.cli.registry.HugoPageCreator
+import org.factcast.schema.registry.cli.registry.StaticPageCreator
 import org.factcast.schema.registry.cli.registry.TemplateService
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.inject.Singleton
 
 @Singleton
-class HugoPageCreatorImpl(
+class StaticPageCreatorImpl(
     private val fileSystemService: FileSystemService,
     private val templateService: TemplateService
-) : HugoPageCreator {
-    override fun creteHugoPage(outputPath: Path, project: Project) {
+) : StaticPageCreator {
+    override fun createPage(outputPath: Path, project: Project) {
         copySite(outputPath)
 
         val contentBase = outputPath.resolve("content")

@@ -18,6 +18,6 @@ package org.factcast.schema.registry.cli.registry
 import org.factcast.schema.registry.cli.domain.Project
 import java.nio.file.Path
 
-interface HugoPageCreator {
-    fun creteHugoPage(outputPath: Path, project: Project)
+interface StaticPageCreator {
+    fun createPage(outputPath: Path, project: Project)
 }
