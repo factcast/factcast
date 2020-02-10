@@ -35,8 +35,6 @@
         <scope>import</scope>
       </dependency>
 
-
-
       <dependency>
         <groupId>io.micronaut</groupId>
         <artifactId>micronaut-bom</artifactId>
@@ -44,8 +42,6 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-
-
     </dependencies>
   </dependencyManagement>
 
@@ -139,6 +135,12 @@
       <groupId>io.mockk</groupId>
       <artifactId>mockk</artifactId>
       <version>1.9.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.karumi.kotlinsnapshot</groupId>
+      <artifactId>core</artifactId>
+      <version>2.2.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

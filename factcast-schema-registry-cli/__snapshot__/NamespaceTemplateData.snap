@@ -1,0 +1,10 @@
++++
+draft = false
+title = "NamespaceA"
+
+[menu.main]
+parent = ""
+identifier = "NamespaceA"
++++
+
+Namespace Description

@@ -27,7 +27,7 @@ import java.nio.file.Paths
 import javax.inject.Singleton
 
 @Singleton
-class StaticPageCreatorImpl(
+class HugoPageCreatorImpl(
     private val fileSystemService: FileSystemService,
     private val templateService: TemplateService
 ) : StaticPageCreator {

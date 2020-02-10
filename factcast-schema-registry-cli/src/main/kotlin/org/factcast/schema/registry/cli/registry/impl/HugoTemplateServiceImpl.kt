@@ -60,9 +60,13 @@ class HugoTemplateServiceImpl(private val fileSystemService: FileSystemService) 
 
         val latestVersionData =
             getVersionTemplateData(namespace, event, latestVersion)
-        val changelog = event.versions.sortedByDescending { it.version }.map {
-            ChangelogEntry(it.version, fileSystemService.readToString(it.descriptionPath.toFile()))
-        }
+
+        val changelog = event.versions
+            .sortedByDescending { it.version }
+            .map {
+                ChangelogEntry(it.version, fileSystemService.readToString(it.descriptionPath.toFile()))
+            }
+
         val data = EventTemplateData(event.type, namespace.name, description, latestVersionData, changelog)
 
         return eventTemplate(data)
