@@ -16,38 +16,42 @@
 package org.factcast.schema.registry.cli.validation
 
 import org.factcast.schema.registry.cli.domain.Event
+import org.factcast.schema.registry.cli.domain.Transformation
+import org.factcast.schema.registry.cli.domain.Version
 import javax.inject.Singleton
 
 @Singleton
 class MissingTransformationCalculatorImpl : MissingTransformationCalculator {
     override fun calculateDowncastTransformations(event: Event): List<MissingTransformation> {
-        return event.versions
-            .filter { version ->
-                version.version != 1 && !event.transformations.any {
-                    it.from == version.version && it.to == (version.version.minus(
-                        1
-                    ))
-                }
-            }
-            .map { version ->
-                val toVersion = event.versions.find { it.version == version.version.minus(1) }!!
-                Pair(version, toVersion)
-            }
+        val sortedByVersion = event.versions
+            .sortedByDescending { it.version }
+
+        return calculateMissingTransformations(sortedByVersion, event.transformations)
     }
 
     override fun calculateUpcastTransformations(event: Event): List<MissingTransformation> {
-        val maxVersion = event.versions.maxBy { it.version }!!.version
-        return event.versions
-            .filter { version ->
-                version.version != maxVersion && !event.transformations.any {
-                    it.from == version.version && it.to == (version.version.plus(
-                        1
-                    ))
-                }
+        val sortedByVersion = event.versions
+            .sortedBy { it.version }
+
+        return calculateMissingTransformations(sortedByVersion, event.transformations)
+    }
+
+    private fun calculateMissingTransformations(
+        sortedByVersion: List<Version>,
+        transformations: List<Transformation>
+    ): List<Pair<Version, Version>> {
+        val neededDowncastTransformations = sortedByVersion.mapIndexedNotNull { index, version ->
+            if (sortedByVersion.last() == version) {
+                null
+            } else {
+                Pair(version, sortedByVersion[index.plus(1)])
             }
-            .map { version ->
-                val toVersion = event.versions.find { it.version == version.version.plus(1) }!!
-                Pair(version, toVersion)
+        }
+
+        return neededDowncastTransformations.filter { (fromVersion, toVersion) ->
+            transformations.none {
+                it.from == fromVersion.version && it.to == toVersion.version
             }
+        }
     }
 }
