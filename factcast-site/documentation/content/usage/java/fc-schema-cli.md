@@ -25,11 +25,11 @@ A working example can be found [here](/example-registry/).
 
 ## Build the example
 
-After building the project run 
+The example will be build during `mvn install`, but you can reach the same via 
 
 `$  java -jar target/fc-schema-cli.jar build -p ../factcast-examples/factcast-example-schema-registry/src/main/resources`
 
-This command will validate and build the example and also produce a `output` directory that contains the static website. Inside this folder run 
+`build` validates and builds the example and also produces a `output` directory that contains the static website. Inside this folder run 
 
 `$ hugo server`
 

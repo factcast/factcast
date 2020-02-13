@@ -170,6 +170,65 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>eu.prismacapacity</groupId>
+        <artifactId>unixuid-maven-plugin</artifactId>
+        <version>1.0.8</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>unixuid</goal>
+            </goals>
+            <phase>initialize</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.6.0</version>
+        <executions>
+          <execution>
+            <id>build</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <phase>integration-test</phase>
+            <configuration>
+              <executable>java</executable>
+              <arguments>
+                <argument>-jar</argument>
+                <argument>target/fc-schema-cli.jar</argument>
+                <argument>build</argument>
+                <argument>--base-path</argument>
+                <argument>../factcast-examples/factcast-example-schema-registry/src/main/resources</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>hugo</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <phase>post-integration-test</phase>
+            <configuration>
+              <executable>docker</executable>
+              <!-- optional -->
+              <workingDirectory>output</workingDirectory>
+              <arguments>
+                <argument>run</argument>
+                <argument>--rm</argument>
+                <argument>-u</argument>
+                <argument>${os.detected.userid}</argument>
+                <argument>-v</argument>
+                <argument>${project.basedir}/output:/srv/hugo</argument>
+                <argument>yanqd0/hugo</argument>
+                <argument>hugo</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <artifactId>kotlin-maven-plugin</artifactId>
         <groupId>org.jetbrains.kotlin</groupId>
         <version>${kotlin.version}</version>
