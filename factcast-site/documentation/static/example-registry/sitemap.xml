@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <url>
+    <loc>/example-registry/users/usercreated/transformations/</loc>
+  </url>
+  
+  <url>
+    <loc>/example-registry/users/usercreated/3/</loc>
+  </url>
+  
+  <url>
+    <loc>/example-registry/users/usercreated/2/</loc>
+  </url>
+  
+  <url>
+    <loc>/example-registry/users/usercreated/1/</loc>
+  </url>
+  
+  <url>
+    <loc>/example-registry/categories/</loc>
+  </url>
+  
+  <url>
+    <loc>/example-registry/_header/</loc>
+  </url>
+  
+  <url>
+    <loc>/example-registry/</loc>
+  </url>
+  
+  <url>
+    <loc>/example-registry/tags/</loc>
+  </url>
+  
+  <url>
+    <loc>/example-registry/users/usercreated/</loc>
+  </url>
+  
+  <url>
+    <loc>/example-registry/users/</loc>
+  </url>
+  
+</urlset>

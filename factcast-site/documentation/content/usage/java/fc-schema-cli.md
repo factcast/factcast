@@ -21,6 +21,8 @@ necessary a downcast transformation.
 It produces a human and a machine readable output. You will have to use [hugo](https://gohugo.io/) in order to get a 
 proper static website.
 
+A working example can be found [here](/example-registry/). 
+
 ## Build the example
 
 After building the project run 
