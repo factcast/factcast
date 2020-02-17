@@ -34,7 +34,7 @@ if [ "1" == "$SPOTLESS_AUTO_APPLY" ]; then
  echo -e  "$PREFIX auto-applying spotless changes"
  
  SPOTLESS_BEFORE=$(gitDiff)
- mvn -o -T 1C -q spotless:apply 
+ mvn  -T 1C -q spotless:apply 
  SPOTLESS_AFTER=$(gitDiff)
  
  if [ "$SPOTLESS_BEFORE" != "$SPOTLESS_AFTER" ]; then
