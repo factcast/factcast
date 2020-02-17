@@ -1,0 +1,30 @@
++++
+draft = false
+title = "eventA"
+
+[menu.main]
+parent = "NamespaceA"
+identifier = "NamespaceA/eventA"
+
++++
+EventDescription
+
+## Latest version (2)
+
+### Schema
+```json
+VersionDescription
+```
+
+### Examples
+
+
+## Changelog
+
+### Version 2
+
+VersionDescription
+### Version 1
+
+VersionDescription
+
