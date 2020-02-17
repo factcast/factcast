@@ -1,0 +1,19 @@
+languageCode = "en-us"
+title = "FactCast"
+theme = "hugo-theme-docdock-master"
+themesdir = "."
+
+[params]
+noHomeIcon = true
+themeStyle = "original"
+
+
+[outputs]
+home = [ "HTML", "RSS", "JSON"]
+
+[[menu.shortcuts]]
+pre = "<h3>More</h3>"
+name = "Github repo <i class='fa fa-github'></i>"
+identifier = "github"
+url = "https://github.com/factcast/factcast/"
+weight = 1
