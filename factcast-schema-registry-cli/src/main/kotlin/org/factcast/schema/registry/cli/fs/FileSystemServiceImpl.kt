@@ -70,12 +70,13 @@ class FileSystemServiceImpl : FileSystemService {
     }
 
     override fun copyFromClasspath(source: String, target: Path) {
-        val url = javaClass.classLoader.getResource(source) ?: throw Exception("didnt found '$source' on classpath")
+        val url = javaClass.classLoader.getResource(source)
+            ?: throw IllegalArgumentException("didnt found '$source' on classpath")
 
         return when (val urlConnection: URLConnection = url.openConnection()) {
             is JarURLConnection -> copyJarResourcesRecursively(target.toFile(), urlConnection)
             is FileURLConnection -> FileUtils.copyDirectory(File(url.path), target.toFile())
-            else -> throw Exception("not supported")
+            else -> throw IllegalStateException("not supported")
         }
     }
 
