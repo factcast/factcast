@@ -26,19 +26,26 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-store-test</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.12.4</version>
+      <version>1.12.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.liquibase</groupId>
       <artifactId>liquibase-core</artifactId>
-      <version>3.8.5</version><!--$NO-MVN-MAN-VER$ -->
+      <version>3.8.6</version><!--$NO-MVN-MAN-VER$ -->
       <exclusions>
         <exclusion>
           <groupId>ch.qos.logback</groupId>
@@ -49,7 +56,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.2.9</version><!--$NO-MVN-MAN-VER$ -->
+      <version>42.2.10</version><!--$NO-MVN-MAN-VER$ -->
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -94,6 +101,16 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-configuration-processor</artifactId>
       <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-aspects</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.javalin</groupId>
+      <artifactId>javalin</artifactId>
+      <version>3.7.0</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

@@ -36,7 +36,7 @@
     <module>factcast-docker</module>
     <module>factcast-examples</module>
     <module>factcast-integration-full/factcast-integration-full-tls</module>
-
+    <module>factcast-schema-registry-cli</module>
   </modules>
   <url>https://github.com/uweschaefer/factcast/tree/master/</url>
   <licenses>
@@ -78,9 +78,9 @@
     <spring-boot-maven-plugin.version>2.2.4.RELEASE</spring-boot-maven-plugin.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <assertj.version>3.14.0</assertj.version>
+    <assertj.version>3.15.0</assertj.version>
     <mockito.version>3.2.4</mockito.version>
-    <lombok.version>1.18.10</lombok.version>
+    <lombok.version>1.18.12</lombok.version>
     <formatter.config>${basedir}/src/eclipse/config</formatter.config>
     <etc>${basedir}/src/etc</etc>
   </properties>
@@ -109,6 +109,12 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>${assertj.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
       <version>5.6.0</version>
@@ -130,12 +136,6 @@
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-commons</artifactId>
       <version>1.6.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-      <version>${assertj.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -284,6 +284,8 @@
             </importOrder>
             <includes>
               <include> **/src/main/java/**/*.java
+              </include>
+              <include> **/src/test/java/**/*.java
               </include>
             </includes>
           </java>

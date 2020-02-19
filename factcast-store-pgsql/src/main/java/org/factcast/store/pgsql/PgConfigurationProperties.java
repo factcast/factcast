@@ -15,6 +15,7 @@
  */
 package org.factcast.store.pgsql;
 
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -37,13 +38,14 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("DefaultAnnotationParam")
-@ConfigurationProperties(
-        prefix = "factcast.store.pgsql")
+@ConfigurationProperties(prefix = PgConfigurationProperties.PROPERTIES_PREFIX)
 @Data
 @Slf4j
 @Accessors(fluent = false)
 public class PgConfigurationProperties implements ApplicationListener<ApplicationReadyEvent> {
     private static final String LEGACY_PREFIX = "factcast.pg";
+
+    public static final String PROPERTIES_PREFIX = "factcast.store.pgsql";
 
     @Autowired
     Environment env;
@@ -80,6 +82,33 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
      */
     int queueFetchRatio = 4;
 
+    /**
+     * Optional URL to a Schema Registry. If this is null, validation will be
+     * disabled and a warning will be issued. (Defaults to null)
+     */
+    URL schemaRegistryUrl;
+
+    /**
+     * If validation is enabled, this controls if the local snapshot of the
+     * schemaregistry is persisted to psql or just kept in mem. (Defaults to
+     * true)
+     */
+    boolean persistentSchemaStore = true;
+
+    /**
+     * If validation is enabled, this controls if publishing facts, that are not
+     * validatable (due to missing meta-data or due to missing schema in the
+     * registry) are allowed to be published or should be rejected. (Defaults to
+     * false)
+     */
+    boolean allowUnvalidatedPublish = false;
+
+    /**
+     * if validation is enabled, this defines the rate (in milliseconds) in
+     * which the local store is refreshed. (Defaults to 5000)
+     */
+    long schemaStoreRefreshRateInMilliseconds = 5000;
+
     public int getPageSizeForIds() {
         return pageSize * idOnlyFactor;
     }
@@ -106,7 +135,8 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
         if (!legacyProperties.isEmpty()) {
             log.error(
                     "There are legacy properties detected. Property namespace has been renamed from '"
-                            + LEGACY_PREFIX + "' to 'factcast.store.pgsql'");
+                            + LEGACY_PREFIX
+                            + "' to 'factcast.store.pgsql'");
             legacyProperties.forEach(p -> {
                 log.error("Property {} found in {}", p.getKey(), p.getValue());
             });
@@ -126,5 +156,9 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
             }
         }
         return map;
+    }
+
+    public boolean isValidationEnabled() {
+        return schemaRegistryUrl != null;
     }
 }

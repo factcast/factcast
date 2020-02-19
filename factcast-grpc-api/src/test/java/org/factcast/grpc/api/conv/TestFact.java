@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,9 @@ public class TestFact implements Fact {
 
     @JsonProperty
     String ns = "default";
+
+    @JsonProperty
+    int version = 0;
 
     String jsonPayload = "{}";
 

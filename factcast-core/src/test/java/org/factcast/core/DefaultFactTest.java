@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,11 +158,11 @@ public class DefaultFactTest {
     void testEqualityMustBeBasedOnIDOnly() {
         UUID id = UUID.randomUUID();
         Fact f1 = DefaultFact.of("{\"id\":\"" + id
-                + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggIds\":[\"" + UUID.randomUUID()
-                + "\"],\"meta\":{\"foo\":7}}", "{}");
+                + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggIds\":[\""
+                + UUID.randomUUID() + "\"],\"meta\":{\"foo\":7}}", "{}");
         Fact f2 = DefaultFact.of("{\"id\":\"" + id
-                + "\",\"ns\":\"poit\",\"type\":\"bar\",\"aggIds\":[\"" + UUID.randomUUID()
-                + "\"],\"meta\":{\"foo\":7}}", "{}");
+                + "\",\"ns\":\"poit\",\"type\":\"bar\",\"aggIds\":[\""
+                + UUID.randomUUID() + "\"],\"meta\":{\"foo\":7}}", "{}");
         assertEquals(f1, f2);
     }
 
@@ -185,5 +185,21 @@ public class DefaultFactTest {
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
             Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"\"}", "{}");
         });
+    }
+
+    @Test
+    void testOfInvalidVersion() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"version\":\"" + -1
+                    + "\",\"ns\":\"ns\"}", "{}");
+        });
+    }
+
+    @Test
+    void testVersionPrevails() {
+        assertEquals(7, Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"version\":\"" + 7
+                + "\",\"ns\":\"ns\"}", "{}")
+                .version());
+
     }
 }

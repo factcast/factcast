@@ -1,0 +1,47 @@
+/*
+ * Copyright © 2017-2020 factcast.org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.factcast.schema.registry.cli.commands
+
+import picocli.CommandLine.Command
+import picocli.CommandLine.Option
+import java.nio.file.Paths
+import javax.inject.Inject
+import kotlin.system.exitProcess
+
+@Command(
+    name = "build",
+    mixinStandardHelpOptions = true,
+    description = ["Validates and builds your registry"]
+)
+class Build : Runnable {
+    @Option(names = ["-p", "--base-path"], description = ["The directory where your source files live"])
+    var basePath: String = Paths.get(".").toString()
+
+    @Option(names = ["-o", "--output"], description = ["Output directory of the registry"])
+    var outputPath: String = Paths.get(".", "output").toString()
+
+    @Inject
+    lateinit var commandService: CommandService
+
+    override fun run() {
+        val outputRoot = Paths.get(outputPath).toAbsolutePath().normalize()
+        val sourceRoot = Paths.get(basePath).toAbsolutePath().normalize()
+
+        val exitCode = commandService.build(sourceRoot, outputRoot)
+
+        exitProcess(exitCode)
+    }
+}

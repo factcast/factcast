@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,9 @@ public class TestFact implements Fact {
 
     Set<UUID> aggIds = new LinkedHashSet<>();
 
-    String type;
+    String type = "test";
+
+    int version = 1;
 
     String ns = "default";
 
@@ -74,4 +76,5 @@ public class TestFact implements Fact {
         }
         return this;
     }
+
 }

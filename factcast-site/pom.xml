@@ -11,6 +11,13 @@
   <properties>
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-schema-registry-cli</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
   <build>
     <plugins>
       <plugin>

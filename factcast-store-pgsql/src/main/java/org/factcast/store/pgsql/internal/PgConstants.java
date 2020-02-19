@@ -44,6 +44,8 @@ public class PgConstants {
 
     public static final String COLUMN_HEADER = "header";
 
+    public static final String COLUMN_VERSION = "version";
+
     public static final String COLUMN_SER = "ser";
 
     public static final String COLUMN_CID = "cid";
@@ -62,10 +64,12 @@ public class PgConstants {
 
     public static final String ALIAS_AGGID = "aggIds";
 
+    private static final String ALIAS_VERSION = "version";
+
     public static final String PROJECTION_FACT = String.join(", ", COLUMN_SER, COLUMN_HEADER,
             COLUMN_PAYLOAD,
             fromHeader(ALIAS_ID), fromHeader(ALIAS_AGGID), fromHeader(ALIAS_NS), fromHeader(
-                    ALIAS_TYPE));
+                    ALIAS_TYPE), fromHeader(ALIAS_VERSION));
 
     public static final String PROJECTION_ID = String.join(", ", COLUMN_SER, empty(COLUMN_HEADER),
             empty(COLUMN_PAYLOAD), fromHeader(ALIAS_ID), fromHeader(ALIAS_AGGID), fromHeader(
@@ -147,6 +151,8 @@ public class PgConstants {
 
     public static final String SELECT_NS_FROM_TOKEN = "SELECT " + COLUMN_NAMESPACE + " FROM "
             + TABLE_TOKENSTORE + " WHERE " + COLUMN_TOKEN + "=?";
+
+    ;
 
     private static String fromHeader(String attributeName) {
         return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;

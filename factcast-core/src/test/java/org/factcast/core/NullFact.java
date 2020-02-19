@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 factcast (http://factcast.org)
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package org.factcast.core;
 
-import java.util.*;
+import java.util.Set;
+import java.util.UUID;
 
-import lombok.*;
+import lombok.NonNull;
 
+// TODO this type should be removed
 class NullFact implements Fact {
     @Override
     public @NonNull UUID id() {
@@ -60,5 +62,10 @@ class NullFact implements Fact {
     public String meta(String key) {
 
         return null;
+    }
+
+    @Override
+    public int version() {
+        return 0;
     }
 }

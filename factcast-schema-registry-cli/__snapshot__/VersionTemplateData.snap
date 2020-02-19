@@ -1,0 +1,23 @@
++++
+draft = false
+title = "1"
+weight = -1
+
+[menu.main]
+parent = "NamespaceA/eventA"
+identifier = "NamespaceA/eventA/1"
++++
+
+VersionDescription
+
+## Schema
+```json
+VersionDescription
+```
+
+## Examples
+
+### example1
+```json
+VersionDescription
+```

@@ -1,0 +1,11 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "firstName": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "firstName"
+  ]
+}

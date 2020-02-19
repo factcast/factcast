@@ -70,6 +70,7 @@ import com.google.common.collect.Lists;
 import io.grpc.CallCredentials;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
+import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -111,8 +112,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     @Generated
     @VisibleForTesting
-    GrpcFactStore(Channel channel,
-            Optional<String> credentials) {
+    GrpcFactStore(Channel channel, Optional<String> credentials) {
         this(RemoteFactStoreGrpc.newBlockingStub(channel), RemoteFactStoreGrpc.newStub(channel),
                 credentials);
     }
@@ -156,13 +156,15 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
         log.trace("publishing {} facts to remote store", factsToPublish.size());
         List<MSG_Fact> mf = factsToPublish.stream()
                 .map(converter::toProto)
-                .collect(Collectors
-                        .toList());
+                .collect(Collectors.toList());
         MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
         try {
             blockingStub.publish(mfs);
         } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
+            if (e.getStatus().equals(Status.UNKNOWN)) {
+                throw FactcastRemoteException.from(e);
+            } else
+                throw wrapRetryable(e);
         }
     }
 
@@ -291,8 +293,8 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     public boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
             @NonNull Optional<StateToken> token) {
 
-        ConditionalPublishRequest req = new ConditionalPublishRequest(factsToPublish, token.map(
-                StateToken::uuid).orElse(null));
+        ConditionalPublishRequest req = new ConditionalPublishRequest(factsToPublish,
+                token.map(StateToken::uuid).orElse(null));
         MSG_ConditionalPublishRequest msg = converter.toProto(req);
         try {
 
