@@ -31,4 +31,5 @@ interface FileSystemService {
     fun readToJsonNode(path: Path): JsonNode?
     fun deleteDirectory(path: Path)
     fun readToBytes(file: Path): ByteArray
+    fun copyFromClasspath(source: String, target: Path)
 }

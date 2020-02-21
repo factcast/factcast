@@ -17,8 +17,11 @@ package org.factcast.schema.registry.cli.fs
 
 import com.github.fge.jackson.JsonLoader
 import org.apache.commons.io.FileUtils
+import sun.net.www.protocol.file.FileURLConnection
 import java.io.File
 import java.io.IOException
+import java.net.JarURLConnection
+import java.net.URLConnection
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
@@ -66,10 +69,39 @@ class FileSystemServiceImpl : FileSystemService {
         return Files.readAllBytes(file)
     }
 
+    override fun copyFromClasspath(source: String, target: Path) {
+        val url = javaClass.classLoader.getResource(source)
+            ?: throw IllegalArgumentException("didnt found '$source' on classpath")
+
+        return when (val urlConnection: URLConnection = url.openConnection()) {
+            is JarURLConnection -> copyJarResourcesRecursively(target.toFile(), urlConnection)
+            is FileURLConnection -> FileUtils.copyDirectory(File(url.path), target.toFile())
+            else -> throw IllegalStateException("not supported")
+        }
+    }
+
     override fun copyDirectory(from: Path, to: Path) {
         FileUtils.copyDirectory(from.toFile(), to.toFile())
     }
 
     private fun list(path: Path) =
         Files.list(path).toList()
+
+    private fun copyJarResourcesRecursively(destination: File, jarConnection: JarURLConnection) {
+        val jarFile = jarConnection.jarFile
+
+        for (entry in jarFile.entries()) {
+            if (entry.name.startsWith(jarConnection.entryName)) {
+
+                val fileName: String = entry.name.replace(jarConnection.entryName, "")
+                val file = File(destination, fileName)
+
+                if (!entry.isDirectory) {
+                    jarFile.getInputStream(entry).use {
+                        FileUtils.copyToFile(it, file)
+                    }
+                }
+            }
+        }
+    }
 }
