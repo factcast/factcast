@@ -101,7 +101,6 @@ class HugoPageCreatorImpl(
     }
 
     private fun copySite(basePath: Path) {
-        val sitePath = Paths.get("src", "main", "resources", "site")
-        fileSystemService.copyDirectory(sitePath, basePath)
+        fileSystemService.copyFromClasspath("site", basePath)
     }
 }
