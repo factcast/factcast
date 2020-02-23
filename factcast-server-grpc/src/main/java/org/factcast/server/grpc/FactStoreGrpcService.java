@@ -347,7 +347,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     //
 
-    private void assertCanRead(@NonNull String ns) throws StatusException {
+    @VisibleForTesting
+    protected void assertCanRead(@NonNull String ns) throws StatusException {
         FactCastUser user = getFactcastUser();
         if (!user.canRead(ns)) {
 
@@ -357,7 +358,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         }
     }
 
-    private void assertCanRead(List<@NonNull String> namespaces) throws StatusException {
+    @VisibleForTesting
+    protected void assertCanRead(List<@NonNull String> namespaces) throws StatusException {
         FactCastUser user = getFactcastUser();
         for (String ns : namespaces) {
             if (!user.canRead(ns)) {
@@ -367,7 +369,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         }
     }
 
-    private void assertCanWrite(List<@NonNull String> namespaces) throws StatusException {
+    @VisibleForTesting
+    protected void assertCanWrite(List<@NonNull String> namespaces) throws StatusException {
         FactCastUser user = getFactcastUser();
         for (String ns : namespaces) {
             if (!user.canWrite(ns)) {

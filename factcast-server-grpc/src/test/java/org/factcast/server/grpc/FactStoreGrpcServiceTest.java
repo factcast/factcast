@@ -65,6 +65,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import io.grpc.Status;
+import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -86,17 +87,20 @@ public class FactStoreGrpcServiceTest {
     @Captor
     private ArgumentCaptor<SubscriptionRequestTO> reqCaptor;
 
+    private FactCastUser PRINCIPAL = new FactCastUser(FactCastAccount.GOD);
+
     @BeforeEach
     void setUp() {
         uut = new FactStoreGrpcService(backend);
 
         SecurityContextHolder.setContext(new SecurityContext() {
-            TestToken testToken = new TestToken();
+            Authentication testToken = new TestToken(new FactCastUser(FactCastAccount.GOD));
 
             private static final long serialVersionUID = 1L;
 
             @Override
             public void setAuthentication(Authentication authentication) {
+                this.testToken = authentication;
             }
 
             @Override
@@ -108,8 +112,8 @@ public class FactStoreGrpcServiceTest {
 
     static class TestToken extends RunAsUserToken {
 
-        public TestToken() {
-            super("GOD", new FactCastUser(FactCastAccount.GOD), "", AuthorityUtils
+        public TestToken(FactCastUser principal) {
+            super("GOD", principal, "", AuthorityUtils
                     .createAuthorityList(FactCastAuthority.AUTHENTICATED), null);
         }
 
@@ -429,4 +433,72 @@ public class FactStoreGrpcServiceTest {
         }
     }
 
+    @Test
+    public void testAssertCanReadString() throws Exception {
+
+        FactCastAccount account = mock(FactCastAccount.class);
+
+        when(account.id()).thenReturn("mock");
+        when(account.secret()).thenReturn("s3cr3t");
+        when(account.canRead(anyString())).thenReturn(false);
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(new TestToken(new FactCastUser(account)));
+
+        try {
+            uut.assertCanRead("foo");
+            fail();
+        } catch (StatusException s) {
+            assertEquals(s.getStatus(), Status.PERMISSION_DENIED);
+        } catch (Throwable s) {
+            fail(s);
+        }
+
+    }
+
+    @Test
+    public void testAssertCanReadStrings() throws Exception {
+
+        FactCastAccount account = mock(FactCastAccount.class);
+
+        when(account.id()).thenReturn("mock");
+        when(account.secret()).thenReturn("s3cr3t");
+        when(account.canRead(anyString())).thenReturn(false);
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(new TestToken(new FactCastUser(account)));
+
+        try {
+            uut.assertCanRead(Lists.newArrayList("foo", "bar"));
+            fail();
+        } catch (StatusException s) {
+            assertEquals(s.getStatus(), Status.PERMISSION_DENIED);
+        } catch (Throwable s) {
+            fail(s);
+        }
+
+    }
+
+    @Test
+    public void testAssertCanWriteStrings() throws Exception {
+
+        FactCastAccount account = mock(FactCastAccount.class);
+
+        when(account.id()).thenReturn("mock");
+        when(account.secret()).thenReturn("s3cr3t");
+        when(account.canWrite(anyString())).thenReturn(false);
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(new TestToken(new FactCastUser(account)));
+
+        try {
+            uut.assertCanWrite(Lists.newArrayList("foo", "bar"));
+            fail();
+        } catch (StatusException s) {
+            assertEquals(s.getStatus(), Status.PERMISSION_DENIED);
+        } catch (Throwable s) {
+            fail(s);
+        }
+
+    }
 }
