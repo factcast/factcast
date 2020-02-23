@@ -55,8 +55,14 @@ public class AccessRulesTest {
     }
 
     @Test
-    public void testIncludesPositiveWildcard() throws Exception {
+    public void testIncludesPositiveWildcardStar() throws Exception {
         uut.include().add("*");
+        assertTrue(uut.includes("foo"));
+    }
+
+    @Test
+    public void testIncludesPositiveWildcard() throws Exception {
+        uut.include().add("fo*");
         assertTrue(uut.includes("foo"));
     }
 }

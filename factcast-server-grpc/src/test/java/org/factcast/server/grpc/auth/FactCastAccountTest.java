@@ -16,6 +16,7 @@
 package org.factcast.server.grpc.auth;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +26,7 @@ public class FactCastAccountTest {
 
     @Test
     public void testDefaultsToFalse() throws Exception {
+        uut.initialize(mock(FactCastAccessConfiguration.class));
         assertFalse(uut.canRead("foo"));
         assertFalse(uut.canWrite("foo"));
     }
@@ -34,7 +36,7 @@ public class FactCastAccountTest {
 
         FactCastRole readOnlyRole = new FactCastRole();
         readOnlyRole.read().include().add("*");
-        uut.roles().add(readOnlyRole);
+        uut.role(readOnlyRole);
 
         assertTrue(uut.canRead("foo"));
         assertFalse(uut.canWrite("foo"));
@@ -48,8 +50,8 @@ public class FactCastAccountTest {
 
         FactCastRole readOnlyRole = new FactCastRole();
         readOnlyRole.read().include().add("*");
-        uut.roles().add(other);
-        uut.roles().add(readOnlyRole);
+        uut.role(other);
+        uut.role(readOnlyRole);
 
         assertTrue(uut.canRead("foo"));
         assertFalse(uut.canWrite("foo"));
@@ -64,12 +66,35 @@ public class FactCastAccountTest {
         FactCastRole role2 = new FactCastRole();
         role2.read().exclude().add("foo");
 
-        uut.roles().add(role1);
-        uut.roles().add(role2);
+        uut.role(role1, role2);
 
         // exclusion wins
         assertFalse(uut.canRead("foo"));
         assertFalse(uut.canWrite("foo"));
+    }
+
+    @Test
+    public void testInilializationRuns() throws Exception {
+
+        FactCastRole role1 = new FactCastRole("r1");
+        role1.read().include().add("foo");
+
+        FactCastRole role2 = new FactCastRole("r2");
+        role2.read().exclude().add("foo");
+
+        uut.roleNames().add(role1.id());
+        uut.roleNames().add(role2.id());
+
+        FactCastAccessConfiguration cfg = new FactCastAccessConfiguration();
+        cfg.roles().add(role1);
+        cfg.roles().add(role2);
+        cfg.accounts().add(uut);
+
+        cfg.initialize();
+
+        // exclusion wins
+        assertTrue(uut.roles().contains(role1));
+        assertTrue(uut.roles().contains(role2));
     }
 
 }

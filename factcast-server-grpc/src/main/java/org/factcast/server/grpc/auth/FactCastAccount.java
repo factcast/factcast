@@ -15,20 +15,23 @@
  */
 package org.factcast.server.grpc.auth;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicates;
 
-import lombok.Data;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
-@Data
 @NoArgsConstructor
 @RequiredArgsConstructor
 public class FactCastAccount {
@@ -45,16 +48,24 @@ public class FactCastAccount {
     };
 
     @NonNull
+    @Setter
+    @Getter
     String id;
 
     @NonNull
+    @Setter
+    @Getter
     String secret;
 
     @NonNull
+    @Setter
+    @Getter
     @JsonProperty("roles")
     List<String> roleNames = new LinkedList<String>();
 
-    List<FactCastRole> roles = new LinkedList<FactCastRole>();
+    @VisibleForTesting
+    @Getter(value = AccessLevel.PROTECTED)
+    List<FactCastRole> roles;
 
     public void initialize(FactCastAccessConfiguration config) {
         if (id == null)
@@ -65,6 +76,7 @@ public class FactCastAccount {
             new IllegalArgumentException(
                     "Account '" + id + "' misses hash.");
 
+        roles = new LinkedList<FactCastRole>();
         roleNames.forEach(n -> {
             Optional<FactCastRole> r = config.findRoleByName(n);
             roles.add(r.orElseThrow(() -> new IllegalArgumentException(
@@ -73,6 +85,9 @@ public class FactCastAccount {
     }
 
     public boolean canWrite(String ns) {
+        if (roles == null)
+            throw new IllegalStateException("Not yet initialized");
+
         List<Boolean> results = roles.stream()
                 .map(r -> r.canWrite(ns))
                 .filter(Predicates.notNull())
@@ -84,6 +99,9 @@ public class FactCastAccount {
     };
 
     public boolean canRead(String ns) {
+        if (roles == null)
+            throw new IllegalStateException("Not yet initialized");
+
         List<Boolean> results = roles.stream()
                 .map(r -> r.canRead(ns))
                 .filter(Predicates.notNull())
@@ -94,4 +112,13 @@ public class FactCastAccount {
         return results.contains(true);
 
     };
+
+    @VisibleForTesting
+    protected FactCastAccount role(@NonNull FactCastRole... other) {
+        if (roles == null)
+            roles = new LinkedList<>();
+
+        roles.addAll(Arrays.asList(other));
+        return this;
+    }
 }

@@ -15,9 +15,13 @@
  */
 package org.factcast.server.grpc.auth;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class FactCastRole {
     private String id;
 
@@ -31,5 +35,10 @@ public class FactCastRole {
 
     public Boolean canRead(String ns) {
         return read.includes(ns);
+    }
+
+    @VisibleForTesting
+    protected FactCastRole(String id) {
+        this.id = id;
     };
 }
