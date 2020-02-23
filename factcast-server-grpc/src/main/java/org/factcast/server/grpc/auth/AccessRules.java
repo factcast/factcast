@@ -44,7 +44,7 @@ public class AccessRules {
     }
 
     private boolean matches(@NonNull String pattern, @NonNull String ns) {
-        if (pattern.equals(ns) || pattern.equals("*"))
+        if (pattern.equals(ns) || "*".equals(pattern))
             return true;
 
         if (pattern.endsWith("*") && ns.startsWith(pattern.substring(0, pattern.length() - 1)))
