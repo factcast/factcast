@@ -30,10 +30,18 @@ import org.factcast.grpc.api.*;
 import org.factcast.grpc.api.conv.*;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.*;
+import org.factcast.server.grpc.auth.FactCastAccount;
+import org.factcast.server.grpc.auth.FactCastAuthority;
+import org.factcast.server.grpc.auth.FactCastUser;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.*;
 import org.mockito.junit.jupiter.*;
+import org.springframework.security.access.intercept.RunAsUserToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.google.common.collect.*;
 
@@ -60,6 +68,32 @@ public class FactStoreGrpcServiceTest {
     @BeforeEach
     void setUp() {
         uut = new FactStoreGrpcService(backend);
+
+        SecurityContextHolder.setContext(new SecurityContext() {
+            TestToken testToken = new TestToken();
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void setAuthentication(Authentication authentication) {
+            }
+
+            @Override
+            public Authentication getAuthentication() {
+                return testToken;
+            }
+        });
+    }
+
+    static class TestToken extends RunAsUserToken {
+
+        public TestToken() {
+            super("GOD", new FactCastUser(FactCastAccount.GOD), "", AuthorityUtils
+                    .createAuthorityList(FactCastAuthority.AUTHENTICATED), null);
+        }
+
+        private static final long serialVersionUID = 1L;
+
     }
 
     @Test

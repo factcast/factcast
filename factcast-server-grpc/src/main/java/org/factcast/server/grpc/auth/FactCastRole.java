@@ -15,11 +15,21 @@
  */
 package org.factcast.server.grpc.auth;
 
-import lombok.experimental.UtilityClass;
+import lombok.Data;
 
-@UtilityClass
+@Data
 public class FactCastRole {
-    public final String READ = "ROLE_READ";
+    private String id;
 
-    public final String WRITE = "ROLE_WRITE";
+    private AccessRules write = new AccessRules();
+
+    private AccessRules read = new AccessRules();
+
+    public Boolean canWrite(String ns) {
+        return write.includes(ns);
+    };
+
+    public Boolean canRead(String ns) {
+        return read.includes(ns);
+    };
 }

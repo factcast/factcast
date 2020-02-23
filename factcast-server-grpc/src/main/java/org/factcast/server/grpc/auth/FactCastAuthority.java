@@ -15,28 +15,6 @@
  */
 package org.factcast.server.grpc.auth;
 
-import java.util.*;
-
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.experimental.Wither;
-
-@Getter
-@Wither
-@NoArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class ReadOnlyAccessCredential implements AccessCredential {
-    String name;
-
-    String password;
-
-    private final static List<String> roles = Collections.singletonList(FactCastRole.READ);
-
-    @NonNull
-    public List<String> roles() {
-        return roles;
-    }
+public final class FactCastAuthority {
+    public static final String AUTHENTICATED = "ROLE_AUTHENTICATED";
 }

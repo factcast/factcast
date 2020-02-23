@@ -40,40 +40,69 @@ see module [examples/factcast-example-client-basicauth](https://github.com/factc
 
 On the server, in order to provide downward compatibility, security is disabled by default (this will change in the future, mongoDB taught us well). Once security is enabled, non-authenticated users will not be allowed to work with the grpc factstore anymore.
 
-There are three roles a client can take:
-
-* not authenticated (will be rejected)
-* authenticated and authorized to read only access
-* authenticated and authorized for full access (same as with security disabled)
-
-The distinction of fullAccess vs readOnly comes in handy for instance in System Integration, where a downstream subsystem consumes published facts from upstream, but is not allowed to write into the upstream's FactCast by any means.
- 
-In order to enable security, a Bean of type `CredentialConfiguration` must be defined. This is done either by providing one in your FactCast Server's context, or by using the dead-simple approach to put a `factcast-security.json` on the root of your classpath to deserialize it from there. The catch with this simple approach of course is, *that credentials are stored in plain* in the server's classpath, but remember it is just a dead-simple approach to get you started.
+In order to enable security, a Bean of type `AuthenticationConfig` must be defined. This is done either by providing one in your FactCast Server's context, or by using the dead-simple approach to put a `factcast-access.json` on the root of your classpath to deserialize it from there. The catch with this simple approach of course is, *that credentials are stored in plaintext* in the server's classpath, but remember it is just a dead-simple approach to get you started.
 
 The contents of this file might look like:
 
 ```
 {
-	"fullAccess": [
+	"accounts": [
 		{
-			"name": "pinky",
-			"password": "narf"
+			"id": "brain",
+			"secret": "world",
+			"roles": [
+				"anything"
+			]
 		},
 		{
-			"name": "brain",
-			"password": "zort"
+			"id": "pinky",
+			"secret": "narf",
+			"roles": [
+				"anything","limited"
+			]
 		},
-	],
-	"readOnlyAccess": [
-	 	{
-			"name": "snowball",
-			"password": "BillGrates"
+		{
+			"id": "snowball",
+			"secret": "grim",
+			"roles": [
+				"readOnlyWithoutAudit"
+			]
 		}
+	],
+	"roles": [
+		{
+			"id": "anything",
+			"read": {
+				"include":["*"]
+			},
+			"write": {
+				"include":["*"]
+			}
+		},
+		{
+			"id": "limited",
+			"read": {
+				"include":["*"],
+				"exclude":["secret"]
+			},
+			"write": {
+				"exclude":["audit*"]
+			}
+		},
+		{
+			"id": "readOnlyWithoutAudit",
+			"read": {
+				"include":["*"],
+				"exclude":["audit*","secret"]
+			}
+		}		
 	]
 }
 
 ```
 
-Where `pinky` & `brain` are authorized to use the full FactStore's functionality whereas `snowball` can only read, but not change anything.
+Where `pinky` & `brain` are authorized to use the full FactStore's functionality (with 'pinky' not being able to write to namespaces that start with 'audit') whereas `snowball` can only read everything but 'audit'-namespaces, but not write anything.
+
+Note, there is no fancy wildcard handling other than a trailing '*'.
 
 see module [examples/factcast-example-server-basicauth](https://github.com/factcast/factcast/tree/master/factcast-examples/factcast-example-server-basicauth) for an example
