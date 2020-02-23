@@ -94,6 +94,9 @@ The contents of this file might look like:
 			"read": {
 				"include":["*"],
 				"exclude":["audit*","secret"]
+			},
+			"write": {
+				"exclude":["*"]
 			}
 		}		
 	]
