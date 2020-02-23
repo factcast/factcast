@@ -106,6 +106,11 @@ The contents of this file might look like:
 
 Where `pinky` & `brain` are authorized to use the full FactStore's functionality (with 'pinky' not being able to write to namespaces that start with 'audit') whereas `snowball` can only read everything but 'audit'-namespaces, but not write anything.
 
+In case of conflicting information:
+
+* explicit wins over implicit
+* exclude wins over include
+
 Note, there is no fancy wildcard handling other than a trailing '*'.
 
 see module [examples/factcast-example-server-basicauth](https://github.com/factcast/factcast/tree/master/factcast-examples/factcast-example-server-basicauth) for an example
