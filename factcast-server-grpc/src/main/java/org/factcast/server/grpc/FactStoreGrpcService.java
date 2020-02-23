@@ -365,7 +365,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                 throw new StatusException(Status.PERMISSION_DENIED, new Metadata());
             }
         }
-        ;
     }
 
     private void assertCanWrite(List<@NonNull String> namespaces) throws StatusException {
@@ -376,7 +375,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                 throw new StatusException(Status.PERMISSION_DENIED, new Metadata());
             }
         }
-        ;
     }
 
     protected FactCastUser getFactcastUser() throws StatusException {
