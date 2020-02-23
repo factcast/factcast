@@ -12,6 +12,17 @@ identifier = "migration"
 weight = 1000
 +++
 
+## Upgrading to 0.2.0
+
+#### basic-auth setup has changed
+
+If you used a 'factcast-security.json' before, you will be please to learn that factcast was extended to support role/namespace based autorisation. Also the filename changed to 'factcast-access.json'.
+
+see [basicauth usage](/setup/examples/grpc-config-basicauth)
+
+#### basic-auth setup is enforced
+
+By default, when executing without security enabled, you need to supply a property 'insecure=true' via commandline or propertyfile to get away with just a warning. If you don't, factcast will exit with errorcode 1.
 
 ## Upgrading to 0.1.0
 

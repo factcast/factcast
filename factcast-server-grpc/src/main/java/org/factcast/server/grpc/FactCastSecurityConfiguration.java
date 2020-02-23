@@ -112,10 +112,22 @@ public class FactCastSecurityConfiguration {
     // security off
     @Bean
     @ConditionalOnMissingBean(FactCastAccessConfiguration.class)
-    UserDetailsService godModeUserDetailsService() {
-        log.warn(
-                "**** FactCast Security is disabled. This is discouraged for production environments. You have been warned. ****");
-        return username -> new FactCastUser(FactCastAccount.GOD);
+    UserDetailsService godModeUserDetailsService(
+            @org.springframework.beans.factory.annotation.Value("${insecure:#{false}}") Boolean insecureIsOk) {
+        if (insecureIsOk) {
+            log.warn(
+                    "**** FactCast Security is disabled. This is discouraged for production environments. You have been warned. ****");
+            return username -> new FactCastUser(FactCastAccount.GOD);
+        }
+
+        log.error("**** FactCast Security is disabled. ****");
+        log.error("* If you really want to, you can run Factcast in such a configuration ");
+        log.error("* by adding a property '-Dinsecure' to your setup. However, it is");
+        log.error("* highly encouraged to provide a factcast-access.json instead.");
+        log.error("**** -> see https://docs.factcast.org/setup/examples/grpc-config-basicauth/");
+        System.exit(1);
+        // dead code
+        return null;
     }
 
     @Bean
