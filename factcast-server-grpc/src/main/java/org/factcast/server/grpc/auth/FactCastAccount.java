@@ -29,11 +29,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 
 @NoArgsConstructor
-@RequiredArgsConstructor
 public class FactCastAccount {
     public static final FactCastAccount GOD = new FactCastAccount("GODMODE", "NO_SECRET") {
         @Override
@@ -47,25 +44,20 @@ public class FactCastAccount {
         }
     };
 
-    @NonNull
-    @Setter
     @Getter
-    String id;
+    private String id;
 
-    @NonNull
-    @Setter
     @Getter
-    String secret;
+    private String secret;
 
-    @NonNull
-    @Setter
-    @Getter
     @JsonProperty("roles")
-    List<String> roleNames = new LinkedList<String>();
+    @VisibleForTesting
+    @Getter(value = AccessLevel.PROTECTED)
+    private List<String> roleNames = new LinkedList<String>();
 
     @VisibleForTesting
     @Getter(value = AccessLevel.PROTECTED)
-    List<FactCastRole> roles;
+    private List<FactCastRole> roles;
 
     public void initialize(FactCastAccessConfiguration config) {
         if (id == null)
@@ -120,5 +112,10 @@ public class FactCastAccount {
 
         roles.addAll(Arrays.asList(other));
         return this;
+    }
+
+    FactCastAccount(String id, String secret) {
+        this.id = id;
+        this.secret = secret;
     }
 }

@@ -17,16 +17,21 @@ package org.factcast.server.grpc.auth;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import lombok.Data;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Data
 @NoArgsConstructor
 public class FactCastRole {
+    @Getter(value = AccessLevel.PROTECTED)
     private String id;
 
+    @VisibleForTesting
+    @Getter(value = AccessLevel.PROTECTED)
     private AccessRules write = new AccessRules();
 
+    @VisibleForTesting
+    @Getter(value = AccessLevel.PROTECTED)
     private AccessRules read = new AccessRules();
 
     public Boolean canWrite(String ns) {

@@ -18,18 +18,22 @@ package org.factcast.server.grpc.auth;
 import java.util.LinkedList;
 import java.util.List;
 
-import lombok.Data;
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
-@Data
 @NoArgsConstructor
 // exclusion has precedents
 public class AccessRules {
-    @NonNull
+    @VisibleForTesting
+    @Getter(value = AccessLevel.PROTECTED)
     private List<String> include = new LinkedList<>();
 
-    @NonNull
+    @VisibleForTesting
+    @Getter(value = AccessLevel.PROTECTED)
     private List<String> exclude = new LinkedList<>();
 
     Boolean includes(@NonNull String ns) {

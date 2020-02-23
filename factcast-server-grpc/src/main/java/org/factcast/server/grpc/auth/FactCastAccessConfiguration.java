@@ -24,14 +24,20 @@ import java.util.Optional;
 
 import org.factcast.core.util.FactCastJson;
 
-import lombok.Data;
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Data
 @NoArgsConstructor
 public class FactCastAccessConfiguration {
+    @VisibleForTesting
+    @Getter(value = AccessLevel.PROTECTED)
     private List<FactCastRole> roles = new LinkedList<>();
 
+    @VisibleForTesting
+    @Getter(value = AccessLevel.PROTECTED)
     private List<FactCastAccount> accounts = new LinkedList<>();
 
     private final Map<String, FactCastRole> roleIndex = new HashMap<String, FactCastRole>();

@@ -17,10 +17,12 @@ package org.factcast.server.grpc;
 
 import static org.mockito.Mockito.*;
 
-import org.factcast.grpc.api.*;
-import org.junit.jupiter.api.*;
+import org.factcast.grpc.api.CompressionCodecs;
+import org.junit.jupiter.api.Test;
 
-import io.grpc.*;
+import io.grpc.Metadata;
+import io.grpc.ServerCall;
+import io.grpc.ServerCallHandler;
 
 class GrpcCompressionInterceptorTest {
 
