@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 
 public class FactCastAccountTest {
 
-    private FactCastAccount uut = new FactCastAccount("foo", "bar");
+    private FactCastAccount uut = new FactCastAccount("foo");
 
     @Test
     public void testDefaultsToFalse() throws Exception {

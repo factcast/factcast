@@ -33,10 +33,10 @@ public class FactCastUser implements UserDetails, CredentialsContainer {
 
     private FactCastAccount account;
 
-    public FactCastUser(FactCastAccount account) {
+    public FactCastUser(FactCastAccount account, String secret) {
         this.account = account;
-        this.user = new User(account.id(), account.secret(),
-                AuthorityUtils.createAuthorityList(FactCastAuthority.AUTHENTICATED));
+        this.user = new User(account.id(), secret, AuthorityUtils.createAuthorityList(
+                FactCastAuthority.AUTHENTICATED));
     }
 
     private final Map<String, Boolean> readAccess = new HashMap<>();

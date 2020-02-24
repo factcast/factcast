@@ -40,30 +40,33 @@ see module [examples/factcast-example-client-basicauth](https://github.com/factc
 
 On the server, in order to provide downward compatibility, security is disabled by default (this will change in the future, mongoDB taught us well). Once security is enabled, non-authenticated users will not be allowed to work with the grpc factstore anymore.
 
-In order to enable security, a Bean of type `AuthenticationConfig` must be defined. This is done either by providing one in your FactCast Server's context, or by using the dead-simple approach to put a `factcast-access.json` on the root of your classpath to deserialize it from there. The catch with this simple approach of course is, *that credentials are stored in plaintext* in the server's classpath, but remember it is just a dead-simple approach to get you started.
+In order to enable security, a Bean of type `FacCastAccessConfig` must be defined. This is done either by providing one in your FactCast Server's context, or by using the dead-simple approach to put a `factcast-access.json` on the root of your classpath to deserialize it from there. 
 
-The contents of this file might look like:
+Example below.
+
+Now, that you've defined the access configuration, you also need to define the secrets. Again, you can do that programmatically by providing a FactCastSecretsConfiguration, of by dropping a 'factcast-secrets.json' to your classpath.
+
+The catch with this simple approach of course is, *that credentials are stored in plaintext* in the server's classpath, but remember it is just a dead-simple approach to get you started. Nobody says, that you cannot provide this file with a layer of your docker container, pull it from the AWS Parameter Store etc...
+
+The contents of factcast-access.json might look like:
 
 ```
 {
 	"accounts": [
 		{
 			"id": "brain",
-			"secret": "world",
 			"roles": [
 				"anything"
 			]
 		},
 		{
 			"id": "pinky",
-			"secret": "narf",
 			"roles": [
 				"anything","limited"
 			]
 		},
 		{
 			"id": "snowball",
-			"secret": "grim",
 			"roles": [
 				"readOnlyWithoutAudit"
 			]
@@ -112,5 +115,28 @@ In case of conflicting information:
 * exclude wins over include
 
 Note, there is no fancy wildcard handling other than a trailing '*'.
+
+The contents of factcast-secrets.json might look like:
+
+```
+{
+	"secrets": [
+		{
+			"id": "brain",
+			"secret": "world"
+		},
+		{
+			"id": "pinky",
+			"secret": "narf"
+		},
+		{
+			"id": "snowball",
+			"secret": "grim"
+		}
+	]
+}
+```
+
+If FactCast misses a secret for a configured account on startup, it will stop immediately. On the other hand, if there is a secret defined for a non-existing account, this is just logged (WARNING-Level).
 
 see module [examples/factcast-example-server-basicauth](https://github.com/factcast/factcast/tree/master/factcast-examples/factcast-example-server-basicauth) for an example

@@ -22,6 +22,8 @@ import java.util.Optional;
 
 import org.factcast.server.grpc.auth.FactCastAccessConfiguration;
 import org.factcast.server.grpc.auth.FactCastAccount;
+import org.factcast.server.grpc.auth.FactCastSecret;
+import org.factcast.server.grpc.auth.FactCastSecretsConfiguration;
 import org.factcast.server.grpc.auth.FactCastUser;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -52,6 +54,10 @@ import net.devh.boot.grpc.server.security.authentication.GrpcAuthenticationReade
 @AutoConfigureBefore(GrpcServerSecurityAutoConfiguration.class)
 public class FactCastSecurityConfiguration {
 
+    private static final String CLASSPATH_FACTCAST_ACCESS_JSON = "/factcast-access.json";
+
+    private static final String CLASSPATH_FACTCAST_SECRETS_JSON = "/factcast-secrets.json";
+
     @Bean(name = "no_longer_used")
     @ConditionalOnResource(resources = "classpath:factcast-security.json")
     public Object credentialConfigurationFromClasspath() throws IOException {
@@ -62,11 +68,52 @@ public class FactCastSecurityConfiguration {
     @Bean
     @Primary
     @ConditionalOnMissingBean(FactCastAccessConfiguration.class)
-    @ConditionalOnResource(resources = "classpath:factcast-access.json")
+    @ConditionalOnResource(
+            resources = "classpath:" + FactCastSecurityConfiguration.CLASSPATH_FACTCAST_ACCESS_JSON)
     public FactCastAccessConfiguration authenticationConfig() throws IOException {
-        try (InputStream is = new ClassPathResource("/factcast-access.json").getInputStream()) {
+        ClassPathResource access = new ClassPathResource(CLASSPATH_FACTCAST_ACCESS_JSON);
+        ClassPathResource secrets = new ClassPathResource(CLASSPATH_FACTCAST_SECRETS_JSON);
+
+        if (!secrets.exists())
+            throw new IllegalStateException("Cannot find secrets, looking for " + secrets);
+
+        try (InputStream is = access.getInputStream()) {
             return FactCastAccessConfiguration.read(is);
         }
+
+    }
+
+    @Bean
+    @Primary
+    @ConditionalOnMissingBean(FactCastSecretsConfiguration.class)
+    @ConditionalOnResource(
+            resources = { "classpath:"
+                    + FactCastSecurityConfiguration.CLASSPATH_FACTCAST_ACCESS_JSON,
+                    "classpath:" + FactCastSecurityConfiguration.CLASSPATH_FACTCAST_SECRETS_JSON })
+    public FactCastSecretsConfiguration factCastSecretsConfiguration(
+            FactCastAccessConfiguration access)
+            throws IOException {
+        ClassPathResource secretsResource = new ClassPathResource(CLASSPATH_FACTCAST_SECRETS_JSON);
+        FactCastSecretsConfiguration secrets;
+        try (InputStream is = secretsResource.getInputStream()) {
+            secrets = FactCastSecretsConfiguration.read(is);
+        }
+
+        // make sure we have secrets for everyone
+        access.accounts().stream().forEach(a -> {
+            if (!secrets.findSecretForAccountName(a.id()).isPresent())
+                throw new IllegalStateException("No secret found for account '" + a.id() + "'");
+        });
+
+        // and we have no extra secrets
+        secrets.secrets().stream().map(FactCastSecret::id).forEach(id -> {
+            if (!access.findAccountById(id).isPresent()) {
+                log.warn("Unused secret found for account: '" + id
+                        + "'. This might indicate a misconfiguration.");
+            }
+        });
+
+        return secrets;
     }
 
     // security on
@@ -74,19 +121,24 @@ public class FactCastSecurityConfiguration {
     @Bean
     @Primary
     @ConditionalOnBean(FactCastAccessConfiguration.class)
-    UserDetailsService userDetailsService(FactCastAccessConfiguration cc) {
+    UserDetailsService userDetailsService(FactCastAccessConfiguration cc,
+            FactCastSecretsConfiguration secrets) {
         log.info("FactCast Security is enabled.");
         return username -> {
             log.debug("*** username is " + username);
-            Optional<FactCastAccount> account = cc.findAccountByName(username);
+            Optional<FactCastAccount> account = cc.findAccountById(username);
             return account
-                    .map(this::toUser)
+                    .map(a -> toUser(a,
+                            secrets.findSecretForAccountName(a.id())
+                                    .orElseThrow(
+                                            () -> new IllegalStateException(
+                                                    "Secret not found for user :" + a.id()))))
                     .orElseThrow(() -> new UsernameNotFoundException(username));
         };
     }
 
-    private FactCastUser toUser(FactCastAccount a) {
-        return new FactCastUser(a);
+    private FactCastUser toUser(FactCastAccount a, String secret) {
+        return new FactCastUser(a, secret);
     }
 
     @Bean
@@ -117,7 +169,7 @@ public class FactCastSecurityConfiguration {
         if (insecureIsOk) {
             log.warn(
                     "**** FactCast Security is disabled. This is discouraged for production environments. You have been warned. ****");
-            return username -> new FactCastUser(FactCastAccount.GOD);
+            return username -> new FactCastUser(FactCastAccount.GOD, "DISABLED");
         }
 
         log.error("**** FactCast Security is disabled. ****");
@@ -134,7 +186,8 @@ public class FactCastSecurityConfiguration {
     @ConditionalOnMissingBean(FactCastAccessConfiguration.class)
     GrpcAuthenticationReader noOpAuthenticationReader() {
         UsernamePasswordAuthenticationToken disabled = new UsernamePasswordAuthenticationToken(
-                "security_disabled", "security_disabled");
+                "security_disabled",
+                "security_disabled");
         return (call, headers) -> disabled;
     }
 }

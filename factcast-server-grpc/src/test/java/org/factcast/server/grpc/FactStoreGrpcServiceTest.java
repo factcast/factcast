@@ -87,14 +87,15 @@ public class FactStoreGrpcServiceTest {
     @Captor
     private ArgumentCaptor<SubscriptionRequestTO> reqCaptor;
 
-    private FactCastUser PRINCIPAL = new FactCastUser(FactCastAccount.GOD);
+    private FactCastUser PRINCIPAL = new FactCastUser(FactCastAccount.GOD, "DISABLED");
 
     @BeforeEach
     void setUp() {
         uut = new FactStoreGrpcService(backend);
 
         SecurityContextHolder.setContext(new SecurityContext() {
-            Authentication testToken = new TestToken(new FactCastUser(FactCastAccount.GOD));
+            Authentication testToken = new TestToken(new FactCastUser(FactCastAccount.GOD,
+                    "DISABLED"));
 
             private static final long serialVersionUID = 1L;
 
@@ -113,8 +114,8 @@ public class FactStoreGrpcServiceTest {
     static class TestToken extends RunAsUserToken {
 
         public TestToken(FactCastUser principal) {
-            super("GOD", principal, "", AuthorityUtils
-                    .createAuthorityList(FactCastAuthority.AUTHENTICATED), null);
+            super("GOD", principal, "", AuthorityUtils.createAuthorityList(
+                    FactCastAuthority.AUTHENTICATED), null);
         }
 
         private static final long serialVersionUID = 1L;
@@ -298,8 +299,7 @@ public class FactStoreGrpcServiceTest {
     public void testRetrieveImplementationVersion() throws Exception {
         uut = spy(uut);
         when(uut.getProjectProperties()).thenReturn(this.getClass()
-                .getResource(
-                        "/test.properties"));
+                .getResource("/test.properties"));
         HashMap<String, String> map = new HashMap<>();
         uut.retrieveImplementationVersion(map);
 
@@ -311,8 +311,7 @@ public class FactStoreGrpcServiceTest {
     public void testRetrieveImplementationVersionEmptyPropertyFile() throws Exception {
         uut = spy(uut);
         when(uut.getProjectProperties()).thenReturn(this.getClass()
-                .getResource(
-                        "/no-version.properties"));
+                .getResource("/no-version.properties"));
         HashMap<String, String> map = new HashMap<>();
         uut.retrieveImplementationVersion(map);
 
@@ -382,8 +381,7 @@ public class FactStoreGrpcServiceTest {
 
         {
             doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend)
-                    .stateFor(any(),
-                            any());
+                    .stateFor(any(), any());
 
             UUID id = UUID.randomUUID();
             StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
@@ -439,11 +437,10 @@ public class FactStoreGrpcServiceTest {
         FactCastAccount account = mock(FactCastAccount.class);
 
         when(account.id()).thenReturn("mock");
-        when(account.secret()).thenReturn("s3cr3t");
         when(account.canRead(anyString())).thenReturn(false);
 
         SecurityContextHolder.getContext()
-                .setAuthentication(new TestToken(new FactCastUser(account)));
+                .setAuthentication(new TestToken(new FactCastUser(account, "s3cr3t")));
 
         try {
             uut.assertCanRead("foo");
@@ -462,11 +459,10 @@ public class FactStoreGrpcServiceTest {
         FactCastAccount account = mock(FactCastAccount.class);
 
         when(account.id()).thenReturn("mock");
-        when(account.secret()).thenReturn("s3cr3t");
         when(account.canRead(anyString())).thenReturn(false);
 
         SecurityContextHolder.getContext()
-                .setAuthentication(new TestToken(new FactCastUser(account)));
+                .setAuthentication(new TestToken(new FactCastUser(account, "s3cr3t")));
 
         try {
             uut.assertCanRead(Lists.newArrayList("foo", "bar"));
@@ -485,11 +481,10 @@ public class FactStoreGrpcServiceTest {
         FactCastAccount account = mock(FactCastAccount.class);
 
         when(account.id()).thenReturn("mock");
-        when(account.secret()).thenReturn("s3cr3t");
         when(account.canWrite(anyString())).thenReturn(false);
 
         SecurityContextHolder.getContext()
-                .setAuthentication(new TestToken(new FactCastUser(account)));
+                .setAuthentication(new TestToken(new FactCastUser(account, "s3cr3t")));
 
         try {
             uut.assertCanWrite(Lists.newArrayList("foo", "bar"));

@@ -36,8 +36,7 @@ public class FactCastAccessConfiguration {
     @Getter(value = AccessLevel.PROTECTED)
     private List<FactCastRole> roles = new LinkedList<>();
 
-    @VisibleForTesting
-    @Getter(value = AccessLevel.PROTECTED)
+    @Getter
     private List<FactCastAccount> accounts = new LinkedList<>();
 
     private final Map<String, FactCastRole> roleIndex = new HashMap<String, FactCastRole>();
@@ -55,11 +54,11 @@ public class FactCastAccessConfiguration {
         });
     }
 
-    public Optional<FactCastRole> findRoleByName(String name) {
+    public Optional<FactCastRole> findRoleById(String name) {
         return Optional.ofNullable(roleIndex.get(name));
     }
 
-    public Optional<FactCastAccount> findAccountByName(String name) {
+    public Optional<FactCastAccount> findAccountById(String name) {
         return Optional.ofNullable(accountIndex.get(name));
     }
 

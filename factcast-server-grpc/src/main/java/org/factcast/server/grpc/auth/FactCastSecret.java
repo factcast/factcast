@@ -15,30 +15,15 @@
  */
 package org.factcast.server.grpc.auth;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @Data
-public class FactCastRole {
+@EqualsAndHashCode(of = "id")
+public class FactCastSecret {
     private String id;
 
-    private AccessRules write = new AccessRules();
-
-    private AccessRules read = new AccessRules();
-
-    public Boolean canWrite(String ns) {
-        return write.includes(ns);
-    };
-
-    public Boolean canRead(String ns) {
-        return read.includes(ns);
-    }
-
-    @VisibleForTesting
-    protected FactCastRole(String id) {
-        this.id = id;
-    };
+    private String secret;
 }

@@ -26,13 +26,15 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicates;
 
 import lombok.AccessLevel;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 @NoArgsConstructor
+@Data
 public class FactCastAccount {
-    public static final FactCastAccount GOD = new FactCastAccount("GODMODE", "NO_SECRET") {
+    public static final FactCastAccount GOD = new FactCastAccount("GODMODE") {
         @Override
         public boolean canRead(String ns) {
             return true;
@@ -47,13 +49,8 @@ public class FactCastAccount {
     @Getter
     private String id;
 
-    @Getter
-    private String secret;
-
     @JsonProperty("roles")
-    @VisibleForTesting
-    @Getter(value = AccessLevel.PROTECTED)
-    private List<String> roleNames = new LinkedList<String>();
+    private final List<String> roleNames = new LinkedList<String>();
 
     @VisibleForTesting
     @Getter(value = AccessLevel.PROTECTED)
@@ -61,18 +58,14 @@ public class FactCastAccount {
 
     public void initialize(FactCastAccessConfiguration config) {
         if (id == null)
-            new IllegalArgumentException(
-                    "Account without 'id' found.");
-
-        if (secret == null)
-            new IllegalArgumentException(
-                    "Account '" + id + "' misses hash.");
+            new IllegalArgumentException("Account without 'id' found.");
 
         roles = new LinkedList<FactCastRole>();
         roleNames.forEach(n -> {
-            Optional<FactCastRole> r = config.findRoleByName(n);
-            roles.add(r.orElseThrow(() -> new IllegalArgumentException(
-                    "Unknown role '" + n + "'. Definition not found.")));
+            Optional<FactCastRole> r = config.findRoleById(n);
+            roles.add(r.orElseThrow(
+                    () -> new IllegalArgumentException("Unknown role '" + n
+                            + "'. Definition not found.")));
         });
     }
 
@@ -114,8 +107,7 @@ public class FactCastAccount {
         return this;
     }
 
-    FactCastAccount(String id, String secret) {
+    public FactCastAccount(@NonNull String id) {
         this.id = id;
-        this.secret = secret;
     }
 }
