@@ -419,67 +419,66 @@ class GrpcFactStoreTest {
     }
 
     @Test
-    void testStateFor() throws Exception {
+    void testStateForPositive() throws Exception {
         assertThrows(NullPointerException.class, () -> uut.stateFor(Lists.emptyList(), null));
         assertThrows(NullPointerException.class, () -> uut.stateFor(null, null));
         assertThrows(NullPointerException.class, () -> uut.stateFor(null, Optional.of("foo")));
 
-        {
-            UUID id = new UUID(0, 1);
-            StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
-            when(blockingStub.stateFor(any())).thenReturn(conv.toProto(id));
+        UUID id = new UUID(0, 1);
+        StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
+        when(blockingStub.stateFor(any())).thenReturn(conv.toProto(id));
 
-            StateToken stateFor = uut.stateFor(Lists.emptyList(), Optional.of("foo"));
-            verify(blockingStub).stateFor(conv.toProto(req));
-        }
+        StateToken stateFor = uut.stateFor(Lists.emptyList(), Optional.of("foo"));
+        verify(blockingStub).stateFor(conv.toProto(req));
+    }
 
-        {
-            StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
-            when(blockingStub.stateFor(any())).thenThrow(
-                    new StatusRuntimeException(
-                            Status.UNAVAILABLE));
-            try {
-                uut.stateFor(Lists.emptyList(), Optional.of("foo"));
-                fail();
-            } catch (RetryableException expected) {
-            }
+    @Test
+    void testStateForNegative() throws Exception {
+        StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
+        when(blockingStub.stateFor(any())).thenThrow(
+                new StatusRuntimeException(
+                        Status.UNAVAILABLE));
+        try {
+            uut.stateFor(Lists.emptyList(), Optional.of("foo"));
+            fail();
+        } catch (RetryableException expected) {
         }
     }
 
     @Test
-    void testPublishIfUnchanged() throws Exception {
+    void testPublishIfUnchangedPositive() throws Exception {
         assertThrows(NullPointerException.class, () -> uut.publishIfUnchanged(Lists.emptyList(),
                 null));
         assertThrows(NullPointerException.class, () -> uut.publishIfUnchanged(null, null));
         assertThrows(NullPointerException.class, () -> uut.publishIfUnchanged(null, Optional
                 .empty()));
 
-        {
-            UUID id = new UUID(0, 1);
-            ConditionalPublishRequest req = new ConditionalPublishRequest(Lists.emptyList(), id);
-            when(blockingStub.publishConditional(any())).thenReturn(conv.toProto(true));
+        UUID id = new UUID(0, 1);
+        ConditionalPublishRequest req = new ConditionalPublishRequest(Lists.emptyList(), id);
+        when(blockingStub.publishConditional(any())).thenReturn(conv.toProto(true));
 
-            boolean publishIfUnchanged = uut.publishIfUnchanged(Lists.emptyList(), Optional.of(
+        boolean publishIfUnchanged = uut.publishIfUnchanged(Lists.emptyList(), Optional.of(
+                new StateToken(id)));
+        assertThat(publishIfUnchanged).isTrue();
+
+        verify(blockingStub).publishConditional(conv.toProto(req));
+
+    }
+
+    @Test
+    void testPublishIfUnchangedNegative() throws Exception {
+
+        UUID id = new UUID(0, 1);
+        ConditionalPublishRequest req = new ConditionalPublishRequest(Lists.emptyList(), id);
+        when(blockingStub.publishConditional(any())).thenThrow(
+                new StatusRuntimeException(
+                        Status.UNAVAILABLE));
+        try {
+            uut.publishIfUnchanged(Lists.emptyList(), Optional.of(
                     new StateToken(id)));
-            assertThat(publishIfUnchanged).isTrue();
-
-            verify(blockingStub).publishConditional(conv.toProto(req));
+            fail();
+        } catch (RetryableException expected) {
         }
-
-        {
-            UUID id = new UUID(0, 1);
-            ConditionalPublishRequest req = new ConditionalPublishRequest(Lists.emptyList(), id);
-            when(blockingStub.publishConditional(any())).thenThrow(
-                    new StatusRuntimeException(
-                            Status.UNAVAILABLE));
-            try {
-                uut.publishIfUnchanged(Lists.emptyList(), Optional.of(
-                        new StateToken(id)));
-                fail();
-            } catch (RetryableException expected) {
-            }
-        }
-
     }
 
     @Test
