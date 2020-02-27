@@ -15,7 +15,7 @@ identifier = "schema-registry"
 +++
 
 
-Since version 0.2.0, FactCast can be configured to validate Facts before publishing them. In order to do that, FactCast needs to have a Schema for the Namespace/type/Version of a Fact, that is expected to live in a Schema-Registry. 
+Since version 0.2.0, FactCast can be configured to validate Facts before publishing them. In order to do that, FactCast needs to have a Schema for the Namespace/Type/Version of a Fact, that is expected to live in a Schema-Registry. 
 The Schema Registry is a static webiste, that is referenced by the property 'factcast.store.pgsql.schemaRegistryUrl'.
 If no 'schemaRegistryUrl' is provided, validation is skipped and FactCast behaves just like before.
 
