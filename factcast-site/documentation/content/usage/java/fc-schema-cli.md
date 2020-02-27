@@ -10,7 +10,7 @@ creatoremail = "uwe@codesmell.de"
 
 [menu.main]
 parent = "usage"
-identifier = "schema-registry"
+identifier = "schema-registry-cli"
 
 +++
 
