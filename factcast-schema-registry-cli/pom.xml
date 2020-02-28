@@ -233,28 +233,6 @@
               </arguments>
             </configuration>
           </execution>
-          <execution>
-            <id>hugo</id>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <phase>post-integration-test</phase>
-            <configuration>
-              <executable>docker</executable>
-              <!-- optional -->
-              <workingDirectory>output</workingDirectory>
-              <arguments>
-                <argument>run</argument>
-                <argument>--rm</argument>
-                <argument>-u</argument>
-                <argument>${os.detected.userid}</argument>
-                <argument>-v</argument>
-                <argument>${project.basedir}/target/output:/srv/hugo</argument>
-                <argument>yanqd0/hugo</argument>
-                <argument>hugo</argument>
-              </arguments>
-            </configuration>
-          </execution>
         </executions>
       </plugin>
       <plugin>
