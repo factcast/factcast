@@ -22,25 +22,35 @@ import javax.inject.Inject
 import kotlin.system.exitProcess
 
 @Command(
-    name = "build",
-    mixinStandardHelpOptions = true,
-    description = ["Validates and builds your registry"]
+        name = "build",
+        mixinStandardHelpOptions = true,
+        description = ["Validates and builds your registry"]
 )
 class Build : Runnable {
     @Option(names = ["-p", "--base-path"], description = ["The directory where your source files live"])
     var basePath: String = Paths.get(".").toString()
 
     @Option(names = ["-o", "--output"], description = ["Output directory of the registry"])
-    var outputPath: String = Paths.get(".", "output").toString()
+    var outputPath: String = Paths.get(".", "target/output").toString()
+
+    @Option(names = ["-s", "--skipHugo"], description = ["Skips creating a deployable hugo website"])
+    var skipHugo: Boolean = false
 
     @Inject
     lateinit var commandService: CommandService
 
+    @Inject
+    lateinit var hugoService: HugoService
+
     override fun run() {
-        val outputRoot = Paths.get(outputPath).toAbsolutePath().normalize()
-        val sourceRoot = Paths.get(basePath).toAbsolutePath().normalize()
+        val outputRoot = Paths.get(outputPath).toAbsolutePath().normalize()!!
+        val sourceRoot = Paths.get(basePath).toAbsolutePath().normalize()!!
 
         val exitCode = commandService.build(sourceRoot, outputRoot)
+
+        if (exitCode == 0 && !skipHugo) {
+            hugoService.execute(outputRoot)
+        }
 
         exitProcess(exitCode)
     }
