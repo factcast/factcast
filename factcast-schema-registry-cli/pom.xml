@@ -249,7 +249,7 @@
                 <argument>-u</argument>
                 <argument>${os.detected.userid}</argument>
                 <argument>-v</argument>
-                <argument>${project.basedir}/output:/srv/hugo</argument>
+                <argument>${project.basedir}/target/output:/srv/hugo</argument>
                 <argument>yanqd0/hugo</argument>
                 <argument>hugo</argument>
               </arguments>
