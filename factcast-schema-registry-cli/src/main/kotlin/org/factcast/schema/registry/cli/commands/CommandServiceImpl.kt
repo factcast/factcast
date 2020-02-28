@@ -38,31 +38,31 @@ class CommandServiceImpl(
         fileSystemService.deleteDirectory(outputRoot)
 
         logger.info("Starting building Factcast Schema Registry")
-        logger.info("Input: $sourceRoot")
+        logger.info("Input : $sourceRoot")
         logger.info("Output: $outputRoot")
         logger.info("")
 
         val project = projectService.detectProject(sourceRoot)
 
         validationService
-            .validateProject(project)
-            .fold({ errors ->
-                formatErrors(errors).forEach { logger.error(it) }
-
-                1
-            }, {
-                try {
-                    distributionCreatorService.createDistributable(outputRoot, it)
-
-                    logger.info("Build finished!")
-
-                    0
-                } catch (e: IOException) {
-                    logger.error(e) { "Something went wrong" }
+                .validateProject(project)
+                .fold({ errors ->
+                    formatErrors(errors).forEach { logger.error(it) }
 
                     1
-                }
-            })
+                }, {
+                    try {
+                        distributionCreatorService.createDistributable(outputRoot, it)
+
+                        logger.info("Build finished!")
+
+                        0
+                    } catch (e: IOException) {
+                        logger.error(e) { "Something went wrong" }
+
+                        1
+                    }
+                })
     } catch (e: IllegalArgumentException) {
         logger.error(e) { "Invalid paths." }
 
@@ -77,18 +77,18 @@ class CommandServiceImpl(
         val project = projectService.detectProject(sourceRoot)
 
         validationService
-            .validateProject(project)
-            .fold({ errors ->
-                formatErrors(errors).forEach { logger.error(it) }
-                logger.info("")
-                logger.error("Validation failed!")
+                .validateProject(project)
+                .fold({ errors ->
+                    formatErrors(errors).forEach { logger.error(it) }
+                    logger.info("")
+                    logger.error("Validation failed!")
 
-                1
-            }, {
-                logger.info("Project seems to be valid!")
+                    1
+                }, {
+                    logger.info("Project seems to be valid!")
 
-                0
-            })
+                    0
+                })
     } catch (e: IllegalArgumentException) {
         logger.error(e) { "Invalid paths" }
 
