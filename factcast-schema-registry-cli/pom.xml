@@ -382,7 +382,9 @@
                       [1.3.61,)
                     </versionRange>
                     <goals>
+                      <goal>compile</goal>
                       <goal>kapt</goal>
+                      <goal>test-compile</goal>
                       <goal>test-kapt</goal>
                     </goals>
                   </pluginExecutionFilter>
