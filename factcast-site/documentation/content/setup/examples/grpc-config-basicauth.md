@@ -40,7 +40,7 @@ see module [examples/factcast-example-client-basicauth](https://github.com/factc
 
 On the server, in order to provide downward compatibility, security is disabled by default (this will change in the future, mongoDB taught us well). Once security is enabled, non-authenticated users will not be allowed to work with the grpc factstore anymore.
 
-In order to enable security, a Bean of type `FacCastAccessConfig` must be defined. This is done either by providing one in your FactCast Server's context, or by using the dead-simple approach to put a `factcast-access.json` on the root of your classpath to deserialize it from there. 
+In order to enable security, a Bean of type `FactCastAccessConfig` must be defined. This is done either by providing one in your FactCast Server's context, or by using the dead-simple approach to put a `factcast-access.json` on the root of your classpath to deserialize it from there. 
 
 Example below.
 
