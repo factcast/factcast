@@ -21,10 +21,10 @@ import arrow.core.Right
 import com.github.fge.jsonschema.core.exceptions.ProcessingException
 import com.github.fge.jsonschema.main.JsonSchema
 import com.github.fge.jsonschema.main.JsonSchemaFactory
-import org.factcast.schema.registry.cli.fs.FileSystemService
-import org.factcast.schema.registry.cli.validation.ProjectError
 import java.nio.file.Path
 import javax.inject.Singleton
+import org.factcast.schema.registry.cli.fs.FileSystemService
+import org.factcast.schema.registry.cli.validation.ProjectError
 
 @Singleton
 class SchemaServiceImpl(

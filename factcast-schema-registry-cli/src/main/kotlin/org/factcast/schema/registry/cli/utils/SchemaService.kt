@@ -17,8 +17,8 @@ package org.factcast.schema.registry.cli.utils
 
 import arrow.core.Either
 import com.github.fge.jsonschema.main.JsonSchema
-import org.factcast.schema.registry.cli.validation.ProjectError
 import java.nio.file.Path
+import org.factcast.schema.registry.cli.validation.ProjectError
 
 interface SchemaService {
     fun loadSchema(path: Path): Either<ProjectError, JsonSchema>
