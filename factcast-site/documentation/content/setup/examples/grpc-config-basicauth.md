@@ -44,9 +44,19 @@ In order to enable security, a Bean of type `FactCastAccessConfig` must be defin
 
 Example below.
 
-Now, that you've defined the access configuration, you also need to define the secrets. Again, you can do that programmatically by providing a FactCastSecretsConfiguration, of by dropping a 'factcast-secrets.json' to your classpath.
+Now, that you've defined the access configuration, you also need to define the secrets for each account. Again, you can do that programmatically by providing a FactCastSecretsProperties, or by defining a property for each account like this:
 
-The catch with this simple approach of course is, *that credentials are stored in plaintext* in the server's classpath, but remember it is just a dead-simple approach to get you started. Nobody says, that you cannot provide this file with a layer of your docker container, pull it from the AWS Parameter Store etc...
+```
+factcast.access.secrets.brain=world
+factcast.access.secrets.pinky=narf
+factcast.access.secrets.snowball=grim
+```
+
+The catch with this simple approach of course is, *that credentials are stored in plaintext* in the server's classpath, but remember it is just a dead-simple approach to get you started. Nobody says, that you cannot provide this information with a layer of your docker container, pull it from the AWS Parameter Store etc...
+
+If FactCast misses a secret for a configured account on startup, it will stop immediately. On the other hand, if there is a secret defined for a non-existing account, this is just logged (WARNING-Level).
+
+
 
 The contents of factcast-access.json might look like:
 
@@ -115,28 +125,5 @@ In case of conflicting information:
 * exclude wins over include
 
 Note, there is no fancy wildcard handling other than a trailing '*'.
-
-The contents of factcast-secrets.json might look like:
-
-```
-{
-	"secrets": [
-		{
-			"id": "brain",
-			"secret": "world"
-		},
-		{
-			"id": "pinky",
-			"secret": "narf"
-		},
-		{
-			"id": "snowball",
-			"secret": "grim"
-		}
-	]
-}
-```
-
-If FactCast misses a secret for a configured account on startup, it will stop immediately. On the other hand, if there is a secret defined for a non-existing account, this is just logged (WARNING-Level).
 
 see module [examples/factcast-example-server-basicauth](https://github.com/factcast/factcast/tree/master/factcast-examples/factcast-example-server-basicauth) for an example
