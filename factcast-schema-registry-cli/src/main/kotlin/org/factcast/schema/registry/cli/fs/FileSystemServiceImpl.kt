@@ -16,7 +16,6 @@
 package org.factcast.schema.registry.cli.fs
 
 import com.github.fge.jackson.JsonLoader
-import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.IOException
 import java.net.JarURLConnection
@@ -26,6 +25,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.inject.Singleton
 import kotlin.streams.toList
+import org.apache.commons.io.FileUtils
 
 @Singleton
 class FileSystemServiceImpl : FileSystemService {

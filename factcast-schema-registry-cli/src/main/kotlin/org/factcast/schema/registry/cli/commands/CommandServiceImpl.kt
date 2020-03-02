@@ -15,15 +15,15 @@
  */
 package org.factcast.schema.registry.cli.commands
 
+import java.io.IOException
+import java.nio.file.Path
+import javax.inject.Singleton
 import mu.KotlinLogging
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.ProjectService
 import org.factcast.schema.registry.cli.registry.DistributionCreatorService
 import org.factcast.schema.registry.cli.validation.ValidationService
 import org.factcast.schema.registry.cli.validation.formatErrors
-import java.io.IOException
-import java.nio.file.Path
-import javax.inject.Singleton
 
 private val logger = KotlinLogging.logger {}
 
