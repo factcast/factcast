@@ -151,6 +151,11 @@
       <artifactId>jackson-core</artifactId>
       <version>2.10.2</version>
     </dependency>
+    <dependency>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
+      <version>1.3.2</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -223,7 +228,8 @@
                 <argument>target/fc-schema-cli.jar</argument>
                 <argument>build</argument>
                 <argument>--base-path</argument>
-                <argument>../factcast-examples/factcast-example-schema-registry/src/main/resources</argument>
+                <argument>../factcast-examples/factcast-example-schema-registry/src/main/resources
+                </argument>
               </arguments>
             </configuration>
           </execution>
