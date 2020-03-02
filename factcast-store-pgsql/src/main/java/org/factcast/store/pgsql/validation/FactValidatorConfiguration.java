@@ -90,12 +90,12 @@ public class FactValidatorConfiguration {
     }
 
     @Bean
-    public ScheduledRegistryFresher scheduledRegistryFresher(SchemaRegistry registry,
+    public ScheduledRegistryRefresher scheduledRegistryFresher(SchemaRegistry registry,
             PgConfigurationProperties properties) {
         if (properties.isValidationEnabled()) {
             long schemaStoreRefreshRateInMilliseconds = properties
                     .getSchemaStoreRefreshRateInMilliseconds();
-            return new ScheduledRegistryFresher(registry, schemaStoreRefreshRateInMilliseconds);
+            return new ScheduledRegistryRefresher(registry, schemaStoreRefreshRateInMilliseconds);
         } else
             return null;
     }
