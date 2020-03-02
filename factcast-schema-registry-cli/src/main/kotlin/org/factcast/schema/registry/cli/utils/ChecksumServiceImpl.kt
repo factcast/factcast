@@ -15,10 +15,10 @@
  */
 package org.factcast.schema.registry.cli.utils
 
-import org.apache.commons.codec.digest.DigestUtils
-import org.factcast.schema.registry.cli.fs.FileSystemService
 import java.nio.file.Path
 import javax.inject.Singleton
+import org.apache.commons.codec.digest.DigestUtils
+import org.factcast.schema.registry.cli.fs.FileSystemService
 
 @Singleton
 class ChecksumServiceImpl(private val fileSystemService: FileSystemService) : ChecksumService {

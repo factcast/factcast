@@ -18,6 +18,8 @@ package org.factcast.schema.registry.cli.validation.validators.impl
 import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
+import javax.inject.Singleton
+import javax.validation.Validator
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.project.structure.Folder
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
@@ -33,8 +35,6 @@ import org.factcast.schema.registry.cli.validation.ProjectError
 import org.factcast.schema.registry.cli.validation.TRANSFORMATION_VERSION_INVALID
 import org.factcast.schema.registry.cli.validation.VERSION_INVALID
 import org.factcast.schema.registry.cli.validation.validators.ProjectStructureValidationService
-import javax.inject.Singleton
-import javax.validation.Validator
 
 @Singleton
 class ProjectStructureValidationServiceImpl(private val validator: Validator) : ProjectStructureValidationService {

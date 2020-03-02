@@ -15,6 +15,7 @@
  */
 package org.factcast.schema.registry.cli.registry.impl
 
+import javax.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.registry.IndexFileCalculator
 import org.factcast.schema.registry.cli.registry.getEventId
@@ -28,7 +29,6 @@ import org.factcast.schema.registry.cli.utils.mapEventTransformations
 import org.factcast.schema.registry.cli.utils.mapEventVersions
 import org.factcast.schema.registry.cli.utils.mapEvents
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
-import javax.inject.Singleton
 
 @Singleton
 class IndexFileCalculatorImpl(
