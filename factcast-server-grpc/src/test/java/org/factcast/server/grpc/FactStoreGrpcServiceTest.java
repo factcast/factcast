@@ -19,26 +19,56 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.net.*;
-import java.util.*;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.UUID;
 
-import org.factcast.core.*;
-import org.factcast.core.spec.*;
-import org.factcast.core.store.*;
-import org.factcast.core.subscription.*;
-import org.factcast.grpc.api.*;
-import org.factcast.grpc.api.conv.*;
-import org.factcast.grpc.api.gen.FactStoreProto.*;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.*;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
-import org.mockito.*;
-import org.mockito.junit.jupiter.*;
+import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.core.store.FactStore;
+import org.factcast.core.store.StateToken;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.grpc.api.Capabilities;
+import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.StateForRequest;
+import org.factcast.grpc.api.conv.ProtoConverter;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
+import org.factcast.server.grpc.auth.FactCastAccount;
+import org.factcast.server.grpc.auth.FactCastAuthority;
+import org.factcast.server.grpc.auth.FactCastUser;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.intercept.RunAsUserToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.google.common.collect.*;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
-import io.grpc.*;
-import io.grpc.stub.*;
+import io.grpc.Status;
+import io.grpc.StatusException;
+import io.grpc.StatusRuntimeException;
+import io.grpc.stub.ServerCallStreamObserver;
+import io.grpc.stub.StreamObserver;
 
 @SuppressWarnings("unchecked")
 @ExtendWith(MockitoExtension.class)
@@ -57,9 +87,39 @@ public class FactStoreGrpcServiceTest {
     @Captor
     private ArgumentCaptor<SubscriptionRequestTO> reqCaptor;
 
+    private FactCastUser PRINCIPAL = new FactCastUser(FactCastAccount.GOD, "DISABLED");
+
     @BeforeEach
     void setUp() {
         uut = new FactStoreGrpcService(backend);
+
+        SecurityContextHolder.setContext(new SecurityContext() {
+            Authentication testToken = new TestToken(new FactCastUser(FactCastAccount.GOD,
+                    "DISABLED"));
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void setAuthentication(Authentication authentication) {
+                this.testToken = authentication;
+            }
+
+            @Override
+            public Authentication getAuthentication() {
+                return testToken;
+            }
+        });
+    }
+
+    static class TestToken extends RunAsUserToken {
+
+        public TestToken(FactCastUser principal) {
+            super("GOD", principal, "", AuthorityUtils.createAuthorityList(
+                    FactCastAuthority.AUTHENTICATED), null);
+        }
+
+        private static final long serialVersionUID = 1L;
+
     }
 
     @Test
@@ -239,8 +299,7 @@ public class FactStoreGrpcServiceTest {
     public void testRetrieveImplementationVersion() throws Exception {
         uut = spy(uut);
         when(uut.getProjectProperties()).thenReturn(this.getClass()
-                .getResource(
-                        "/test.properties"));
+                .getResource("/test.properties"));
         HashMap<String, String> map = new HashMap<>();
         uut.retrieveImplementationVersion(map);
 
@@ -252,8 +311,7 @@ public class FactStoreGrpcServiceTest {
     public void testRetrieveImplementationVersionEmptyPropertyFile() throws Exception {
         uut = spy(uut);
         when(uut.getProjectProperties()).thenReturn(this.getClass()
-                .getResource(
-                        "/no-version.properties"));
+                .getResource("/no-version.properties"));
         HashMap<String, String> map = new HashMap<>();
         uut.retrieveImplementationVersion(map);
 
@@ -323,8 +381,7 @@ public class FactStoreGrpcServiceTest {
 
         {
             doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend)
-                    .stateFor(any(),
-                            any());
+                    .stateFor(any(), any());
 
             UUID id = UUID.randomUUID();
             StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
@@ -374,4 +431,69 @@ public class FactStoreGrpcServiceTest {
         }
     }
 
+    @Test
+    public void testAssertCanReadString() throws Exception {
+
+        FactCastAccount account = mock(FactCastAccount.class);
+
+        when(account.id()).thenReturn("mock");
+        when(account.canRead(anyString())).thenReturn(false);
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(new TestToken(new FactCastUser(account, "s3cr3t")));
+
+        try {
+            uut.assertCanRead("foo");
+            fail();
+        } catch (StatusException s) {
+            assertEquals(s.getStatus(), Status.PERMISSION_DENIED);
+        } catch (Throwable s) {
+            fail(s);
+        }
+
+    }
+
+    @Test
+    public void testAssertCanReadStrings() throws Exception {
+
+        FactCastAccount account = mock(FactCastAccount.class);
+
+        when(account.id()).thenReturn("mock");
+        when(account.canRead(anyString())).thenReturn(false);
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(new TestToken(new FactCastUser(account, "s3cr3t")));
+
+        try {
+            uut.assertCanRead(Lists.newArrayList("foo", "bar"));
+            fail();
+        } catch (StatusException s) {
+            assertEquals(s.getStatus(), Status.PERMISSION_DENIED);
+        } catch (Throwable s) {
+            fail(s);
+        }
+
+    }
+
+    @Test
+    public void testAssertCanWriteStrings() throws Exception {
+
+        FactCastAccount account = mock(FactCastAccount.class);
+
+        when(account.id()).thenReturn("mock");
+        when(account.canWrite(anyString())).thenReturn(false);
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(new TestToken(new FactCastUser(account, "s3cr3t")));
+
+        try {
+            uut.assertCanWrite(Lists.newArrayList("foo", "bar"));
+            fail();
+        } catch (StatusException s) {
+            assertEquals(s.getStatus(), Status.PERMISSION_DENIED);
+        } catch (Throwable s) {
+            fail(s);
+        }
+
+    }
 }

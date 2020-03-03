@@ -17,15 +17,20 @@ package org.factcast.server.grpc;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-import org.factcast.server.grpc.auth.AccessCredential;
-import org.factcast.server.grpc.auth.CredentialConfiguration;
-import org.factcast.server.grpc.auth.FactCastRole;
+import org.factcast.server.grpc.auth.FactCastAccessConfiguration;
+import org.factcast.server.grpc.auth.FactCastAccount;
+import org.factcast.server.grpc.auth.FactCastUser;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnResource;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -35,53 +40,97 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.autoconfigure.*;
-import net.devh.boot.grpc.server.security.authentication.*;
+import net.devh.boot.grpc.server.autoconfigure.GrpcServerSecurityAutoConfiguration;
+import net.devh.boot.grpc.server.security.authentication.BasicGrpcAuthenticationReader;
+import net.devh.boot.grpc.server.security.authentication.GrpcAuthenticationReader;
 
+@SuppressWarnings("deprecation")
 @Slf4j
 @Configuration
 @EnableGlobalMethodSecurity(securedEnabled = true, proxyTargetClass = true)
 @AutoConfigureBefore(GrpcServerSecurityAutoConfiguration.class)
+@EnableConfigurationProperties
 public class FactCastSecurityConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean(CredentialConfiguration.class)
+    private static final String CLASSPATH_FACTCAST_ACCESS_JSON = "/factcast-access.json";
+
+    @Bean(name = "no_longer_used")
     @ConditionalOnResource(resources = "classpath:factcast-security.json")
-    public CredentialConfiguration credentialConfigurationFromClasspath() throws IOException {
-        try (InputStream is = new ClassPathResource("/factcast-security.json").getInputStream()) {
-            return CredentialConfiguration.read(is);
+    public Object credentialConfigurationFromClasspath() throws IOException {
+        throw new IllegalArgumentException(
+                "classpath:factcast-security.json was removed in this release. Please read the migration guide.");
+    }
+
+    @Bean
+    @ConfigurationProperties(
+            prefix = "factcast.access",
+            ignoreInvalidFields = false,
+            ignoreUnknownFields = false)
+    public FactCastSecretProperties factCastSecretProperties() {
+        return new FactCastSecretProperties();
+    }
+
+    @Bean
+    @Primary
+    @ConditionalOnMissingBean(FactCastAccessConfiguration.class)
+    @ConditionalOnResource(
+            resources = "classpath:" + FactCastSecurityConfiguration.CLASSPATH_FACTCAST_ACCESS_JSON)
+    public FactCastAccessConfiguration authenticationConfig(FactCastSecretProperties accessSecrets)
+            throws IOException {
+        ClassPathResource access = new ClassPathResource(CLASSPATH_FACTCAST_ACCESS_JSON);
+
+        try (InputStream is = access.getInputStream()) {
+            FactCastAccessConfiguration cfg = FactCastAccessConfiguration.read(is);
+
+            // look for secrets in properties
+            List<String> ids = cfg.accounts()
+                    .stream()
+                    .map(FactCastAccount::id)
+                    .collect(Collectors.toList());
+            for (String id : ids) {
+                if (!accessSecrets.getSecrets().containsKey(id))
+                    throw new IllegalArgumentException("Missing secret for account: '" + id + "'");
+            }
+
+            for (String k : accessSecrets.getSecrets().keySet()) {
+                if (!ids.contains(k))
+                    log.warn("Secret found for account '" + k
+                            + "' but the account is not defined in FactCastAccessConfiguration");
+            }
+
+            return cfg;
         }
+
     }
 
     // security on
 
     @Bean
     @Primary
-    @ConditionalOnBean(CredentialConfiguration.class)
-    UserDetailsService userDetailsService(CredentialConfiguration cc) {
+    @ConditionalOnBean(FactCastAccessConfiguration.class)
+    UserDetailsService userDetailsService(FactCastAccessConfiguration cc,
+            FactCastSecretProperties secrets) {
         log.info("FactCast Security is enabled.");
         return username -> {
             log.debug("*** username is " + username);
-            cc.find(username).ifPresent(ud -> log.debug("*** found: " + ud));
-
-            return cc.find(username)
-
-                    .map(AccessCredential::toUser)
+            Optional<FactCastAccount> account = cc.findAccountById(username);
+            return account.map(a -> toUser(a, secrets.getSecrets().get(a.id())))
                     .orElseThrow(() -> new UsernameNotFoundException(username));
         };
     }
 
+    private FactCastUser toUser(FactCastAccount a, String secret) {
+        return new FactCastUser(a, secret);
+    }
+
     @Bean
     @Primary
-    @ConditionalOnBean(CredentialConfiguration.class)
+    @ConditionalOnBean(FactCastAccessConfiguration.class)
     GrpcAuthenticationReader authenticationReader() {
         return new BasicGrpcAuthenticationReader();
     }
@@ -91,7 +140,6 @@ public class FactCastSecurityConfiguration {
         return new ProviderManager(Collections.singletonList(p));
     }
 
-    @SuppressWarnings("deprecation")
     @Bean
     DaoAuthenticationProvider daoAuthenticationProvider(UserDetailsService uds) {
         final DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -102,22 +150,33 @@ public class FactCastSecurityConfiguration {
 
     // security off
     @Bean
-    @ConditionalOnMissingBean(CredentialConfiguration.class)
-    UserDetailsService godModeUserDetailsService() {
-        log.warn(
-                "**** FactCast Security is disabled. This is discouraged for production environments. You have been warned. ****");
-        List<GrantedAuthority> fullAccess = AuthorityUtils
-                .commaSeparatedStringToAuthorityList(FactCastRole.READ + ","
-                        + FactCastRole.WRITE);
-        String DISABLED = "security_disabled";
-        return username -> new User(DISABLED, DISABLED, fullAccess);
+    @ConditionalOnMissingBean(FactCastAccessConfiguration.class)
+    UserDetailsService godModeUserDetailsService(
+            @org.springframework.beans.factory.annotation.Value("${factcast.security.enabled:#{true}}") boolean securityEnabled) {
+
+        if (!securityEnabled) {
+            log.warn(
+                    "**** FactCast Security is disabled. This is discouraged for production environments. You have been warned. ****");
+            return username -> new FactCastUser(FactCastAccount.GOD, "DISABLED");
+        }
+
+        log.error("**** FactCast Security is disabled. ****");
+        log.error("* If you really want to, you can run Factcast in such a configuration ");
+        log.error(
+                "* by adding a property 'factcast.security.enabled=false' to your setup. However, it is");
+        log.error("* highly encouraged to provide a factcast-access.json instead.");
+        log.error("**** -> see https://docs.factcast.org/setup/examples/grpc-config-basicauth/");
+        System.exit(1);
+        // dead code
+        return null;
     }
 
     @Bean
-    @ConditionalOnMissingBean(CredentialConfiguration.class)
+    @ConditionalOnMissingBean(FactCastAccessConfiguration.class)
     GrpcAuthenticationReader noOpAuthenticationReader() {
         UsernamePasswordAuthenticationToken disabled = new UsernamePasswordAuthenticationToken(
-                "security_disabled", "security_disabled");
+                "security_disabled",
+                "security_disabled");
         return (call, headers) -> disabled;
     }
 }

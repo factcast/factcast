@@ -15,30 +15,15 @@
  */
 package org.factcast.server.grpc.auth;
 
-import java.util.Arrays;
-import java.util.List;
-
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.experimental.Wither;
 
-@Getter
-@Wither
 @NoArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class FullAccessCredential implements AccessCredential {
-    String name;
+@Data
+@EqualsAndHashCode(of = "id")
+public class FactCastSecret {
+    private String id;
 
-    String password;
-
-    private final static List<String> roles = Arrays.asList(FactCastRole.READ, FactCastRole.WRITE);
-
-    @NonNull
-    public List<String> roles() {
-        return roles;
-    }
-
+    private String secret;
 }

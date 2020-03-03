@@ -40,40 +40,90 @@ see module [examples/factcast-example-client-basicauth](https://github.com/factc
 
 On the server, in order to provide downward compatibility, security is disabled by default (this will change in the future, mongoDB taught us well). Once security is enabled, non-authenticated users will not be allowed to work with the grpc factstore anymore.
 
-There are three roles a client can take:
+In order to enable security, a Bean of type `FactCastAccessConfig` must be defined. This is done either by providing one in your FactCast Server's context, or by using the dead-simple approach to put a `factcast-access.json` on the root of your classpath to deserialize it from there. 
 
-* not authenticated (will be rejected)
-* authenticated and authorized to read only access
-* authenticated and authorized for full access (same as with security disabled)
+Example below.
 
-The distinction of fullAccess vs readOnly comes in handy for instance in System Integration, where a downstream subsystem consumes published facts from upstream, but is not allowed to write into the upstream's FactCast by any means.
- 
-In order to enable security, a Bean of type `CredentialConfiguration` must be defined. This is done either by providing one in your FactCast Server's context, or by using the dead-simple approach to put a `factcast-security.json` on the root of your classpath to deserialize it from there. The catch with this simple approach of course is, *that credentials are stored in plain* in the server's classpath, but remember it is just a dead-simple approach to get you started.
+Now, that you've defined the access configuration, you also need to define the secrets for each account. Again, you can do that programmatically by providing a FactCastSecretsProperties, or by defining a property for each account like this:
 
-The contents of this file might look like:
+```
+factcast.access.secrets.brain=world
+factcast.access.secrets.pinky=narf
+factcast.access.secrets.snowball=grim
+```
+
+The catch with this simple approach of course is, *that credentials are stored in plaintext* in the server's classpath, but remember it is just a dead-simple approach to get you started. Nobody says, that you cannot provide this information with a layer of your docker container, pull it from the AWS Parameter Store etc...
+
+If FactCast misses a secret for a configured account on startup, it will stop immediately. On the other hand, if there is a secret defined for a non-existing account, this is just logged (WARNING-Level).
+
+
+
+The contents of factcast-access.json might look like:
 
 ```
 {
-	"fullAccess": [
+	"accounts": [
 		{
-			"name": "pinky",
-			"password": "narf"
+			"id": "brain",
+			"roles": [
+				"anything"
+			]
 		},
 		{
-			"name": "brain",
-			"password": "zort"
+			"id": "pinky",
+			"roles": [
+				"anything","limited"
+			]
 		},
-	],
-	"readOnlyAccess": [
-	 	{
-			"name": "snowball",
-			"password": "BillGrates"
+		{
+			"id": "snowball",
+			"roles": [
+				"readOnlyWithoutAudit"
+			]
 		}
+	],
+	"roles": [
+		{
+			"id": "anything",
+			"read": {
+				"include":["*"]
+			},
+			"write": {
+				"include":["*"]
+			}
+		},
+		{
+			"id": "limited",
+			"read": {
+				"include":["*"],
+				"exclude":["secret"]
+			},
+			"write": {
+				"exclude":["audit*"]
+			}
+		},
+		{
+			"id": "readOnlyWithoutAudit",
+			"read": {
+				"include":["*"],
+				"exclude":["audit*","secret"]
+			},
+			"write": {
+				"exclude":["*"]
+			}
+		}		
 	]
 }
 
 ```
 
-Where `pinky` & `brain` are authorized to use the full FactStore's functionality whereas `snowball` can only read, but not change anything.
+Where `pinky` & `brain` are authorized to use the full FactStore's functionality (with 'pinky' not being able to write to namespaces that start with 'audit') whereas `snowball` can only read everything but 'audit'-namespaces, but not write anything.
+
+In case of conflicting information:
+
+* explicit wins over implicit
+* exclude wins over include
+
+Note, there is no fancy wildcard handling other than a trailing '*'.
 
 see module [examples/factcast-example-server-basicauth](https://github.com/factcast/factcast/tree/master/factcast-examples/factcast-example-server-basicauth) for an example
