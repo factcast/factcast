@@ -22,7 +22,8 @@ see [basicauth usage](/setup/examples/grpc-config-basicauth)
 
 #### basic-auth setup is enforced
 
-By default, when executing without security enabled, you need to supply a property 'insecure=true' via commandline or propertyfile to get away with just a warning. If you don't, factcast will exit with errorcode 1.
+By default, when executing without security enabled, you need to supply a property
+'factcast.insecure=true' via commandline or propertyfile to get away with just a warning. If you don't, factcast will exit with errorcode 1.
 
 ## Upgrading to 0.1.0
 

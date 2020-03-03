@@ -152,7 +152,7 @@ public class FactCastSecurityConfiguration {
     @Bean
     @ConditionalOnMissingBean(FactCastAccessConfiguration.class)
     UserDetailsService godModeUserDetailsService(
-            @org.springframework.beans.factory.annotation.Value("${insecure:#{false}}") boolean insecureIsOk) {
+            @org.springframework.beans.factory.annotation.Value("${factcast.insecure:#{false}}") boolean insecureIsOk) {
 
         if (insecureIsOk) {
             log.warn(
@@ -162,7 +162,7 @@ public class FactCastSecurityConfiguration {
 
         log.error("**** FactCast Security is disabled. ****");
         log.error("* If you really want to, you can run Factcast in such a configuration ");
-        log.error("* by adding a property 'insecure=true' to your setup. However, it is");
+        log.error("* by adding a property 'factcast.insecure=true' to your setup. However, it is");
         log.error("* highly encouraged to provide a factcast-access.json instead.");
         log.error("**** -> see https://docs.factcast.org/setup/examples/grpc-config-basicauth/");
         System.exit(1);
