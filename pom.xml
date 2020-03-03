@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.1.5-SNAPSHOT</version>
+  <version>0.2.0-M1</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -49,7 +49,7 @@
     <connection>scm:git:git@github.com:factcast/factcast.git</connection>
     <developerConnection>scm:git:git@github.com:factcast/factcast.git</developerConnection>
     <url>https://github.com/factcast/factcast.git</url>
-    <tag>HEAD</tag>
+    <tag>0.2.0-M1</tag>
   </scm>
   <developers>
     <developer>
@@ -350,7 +350,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute></execute>
+                    <execute />
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -363,7 +363,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute></execute>
+                    <execute />
                   </action>
                 </pluginExecution>
               </pluginExecutions>
