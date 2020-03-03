@@ -15,6 +15,9 @@
  */
 package org.factcast.schema.registry.cli.registry.impl
 
+import java.nio.file.Path
+import java.nio.file.Paths
+import javax.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Project
@@ -22,9 +25,6 @@ import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.registry.StaticPageCreator
 import org.factcast.schema.registry.cli.registry.TemplateService
-import java.nio.file.Path
-import java.nio.file.Paths
-import javax.inject.Singleton
 
 @Singleton
 class HugoPageCreatorImpl(

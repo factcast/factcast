@@ -15,11 +15,11 @@
  */
 package org.factcast.schema.registry.cli.js
 
-import org.factcast.schema.registry.cli.fs.FileSystemService
 import java.nio.file.Path
 import javax.inject.Singleton
 import javax.script.Invocable
 import javax.script.ScriptEngineManager
+import org.factcast.schema.registry.cli.fs.FileSystemService
 
 @Singleton
 class JsFunctionNashornExecutor(

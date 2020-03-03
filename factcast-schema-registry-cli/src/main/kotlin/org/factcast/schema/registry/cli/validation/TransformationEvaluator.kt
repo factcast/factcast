@@ -17,9 +17,9 @@ package org.factcast.schema.registry.cli.validation
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.factcast.schema.registry.cli.js.JsFunctionExecutor
 import java.nio.file.Path
 import javax.inject.Singleton
+import org.factcast.schema.registry.cli.js.JsFunctionExecutor
 
 @Singleton
 class TransformationEvaluator(
