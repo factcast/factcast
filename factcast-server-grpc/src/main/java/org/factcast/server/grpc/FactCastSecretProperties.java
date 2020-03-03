@@ -13,32 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc.auth;
+package org.factcast.server.grpc;
 
-import com.google.common.annotations.VisibleForTesting;
+import java.util.HashMap;
+import java.util.Map;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+public class FactCastSecretProperties {
 
-@NoArgsConstructor
-@Data
-public class FactCastRole {
-    private String id;
-
-    private AccessRules write = new AccessRules();
-
-    private AccessRules read = new AccessRules();
-
-    public Boolean canWrite(String ns) {
-        return write.includes(ns);
-    };
-
-    public Boolean canRead(String ns) {
-        return read.includes(ns);
+    public Map<String, String> getSecrets() {
+        return secrets;
     }
 
-    @VisibleForTesting
-    protected FactCastRole(String id) {
-        this.id = id;
-    };
+    private final Map<String, String> secrets = new HashMap<String, String>();
 }

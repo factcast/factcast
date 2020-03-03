@@ -66,7 +66,7 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
 
     /**
      * The factor to apply, when fetching/queuing Ids rather than Facts
-     * (assuming, that needs just a fraction of Heap and is way fater to flush
+     * (assuming, that needs just a fraction of Heap and is way faster to flush
      * to the client)
      */
     int idOnlyFactor = 100;
@@ -105,9 +105,9 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
 
     /**
      * if validation is enabled, this defines the rate (in milliseconds) in
-     * which the local store is refreshed. (Defaults to 5000)
+     * which the local store is refreshed. (Defaults to 15000)
      */
-    long schemaStoreRefreshRateInMilliseconds = 5000;
+    long schemaStoreRefreshRateInMilliseconds = 15000;
 
     public int getPageSizeForIds() {
         return pageSize * idOnlyFactor;
