@@ -157,7 +157,7 @@ public class FactCastSecurityConfiguration {
         if (!securityEnabled) {
             log.warn(
                     "**** FactCast Security is disabled. This is discouraged for production environments. You have been warned. ****");
-            return username -> new FactCastUser(FactCastAccount.GOD, "DISABLED");
+            return username -> new FactCastUser(FactCastAccount.GOD, "security_disabled");
         }
 
         log.error("**** FactCast Security is disabled. ****");
