@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import liquibase.integration.spring.SpringLiquibase;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -64,9 +65,9 @@ public class FactValidatorConfiguration {
 
     @Bean
     public SchemaStore schemaStore(@NonNull JdbcTemplate jdbcTemplate,
-            @NonNull PgConfigurationProperties props) {
+            @NonNull PgConfigurationProperties props, @NonNull SpringLiquibase unused) {
         if (props.isValidationEnabled() && props.isPersistentSchemaStore())
-            return new PgSchemaStoreImpl(jdbcTemplate);
+            return new PgSchemaStoreImpl(jdbcTemplate, unused);
 
         // otherwise
         return new InMemSchemaStoreImpl();

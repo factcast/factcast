@@ -15,6 +15,8 @@
  */
 package org.factcast.store.pgsql.validation.schema.store;
 
+import static org.mockito.Mockito.*;
+
 import org.factcast.store.pgsql.internal.PgTestConfiguration;
 import org.factcast.store.pgsql.validation.schema.SchemaStore;
 import org.factcast.store.test.IntegrationTest;
