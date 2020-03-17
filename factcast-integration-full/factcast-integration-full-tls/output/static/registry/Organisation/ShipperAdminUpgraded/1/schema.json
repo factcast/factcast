@@ -1,0 +1,88 @@
+{
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "userId": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string"
+    },
+    "actorUserId": {
+      "type": "string"
+    },
+    "organisationId": {
+      "type": "string"
+    },
+    "powerOfAttorney": {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "type": "string"
+        },
+        "s3Location": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "bucket": {
+              "type": "string"
+            },
+            "region": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "key",
+            "bucket",
+            "region"
+          ]
+        }
+      },
+      "required": [
+        "documentId",
+        "s3Location"
+      ]
+    },
+    "companyRegisterExtract": {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "type": "string"
+        },
+        "s3Location": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "bucket": {
+              "type": "string"
+            },
+            "region": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "key",
+            "bucket",
+            "region"
+          ]
+        }
+      },
+      "required": [
+        "documentId",
+        "s3Location"
+      ]
+    }
+  },
+  "required": [
+    "userId",
+    "timestamp",
+    "actorUserId",
+    "organisationId",
+    "powerOfAttorney",
+    "companyRegisterExtract"
+  ]
+}
