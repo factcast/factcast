@@ -25,7 +25,7 @@ font-size:smaller;
     padding: 7px 12px;
 }
 .button:active, .button-secondary:active {
-    margin: 2px 0 -2px 0;
+    margin: 2px 0 -2px;
 }
 @font-face {
     font-family: 'Novacento Sans Wide';
@@ -329,7 +329,7 @@ textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[typ
 }
 #main {
     background: #f7f7f7;
-    margin: 0 0 1.563rem 0;
+    margin: 0 0 1.563rem;
 }
 #body {
     position: relative;
@@ -498,8 +498,8 @@ div.notices p {
     padding: 15px;
     display: block;
     font-size: 1rem;
-    margin-top: 0rem;
-    margin-bottom: 0rem;
+    margin-top: 0;
+    margin-bottom: 0;
     color: #666;
 }
 div.notices p:first-child:before {
@@ -554,7 +554,7 @@ code {
     color: #5e5e5e;
     background: #FFF7DD;
     border: 1px solid #fbf0cb;
-    padding: 0px 2px;
+    padding: 0 2px;
 }
 code + .copy-to-clipboard {
     margin-left: -1px;
@@ -823,7 +823,7 @@ td {
     border-right-color: rgba(0, 0, 0, 0.8);
 }
 .highlightable {
-    padding: 1rem 0 1rem;
+    padding: 1rem 0;
     overflow: auto;
     position: relative;
 }
@@ -846,7 +846,7 @@ td {
     position: relative;
 }
 .lifecycle #body-inner ol {
-    margin: 1rem 0 1rem 0;
+    margin: 1rem 0;
     padding: 2rem;
     position: relative;
 }
@@ -908,7 +908,7 @@ td {
 #top-bar {
     background: #F6F6F6;
     border-radius: 2px;
-    margin: 0rem -1rem 2rem;
+    margin: 0 -1rem 2rem;
     padding: 0 1rem;
     height: 0;
     min-height: 3rem;
@@ -1019,7 +1019,7 @@ pre .copy-to-clipboard:hover {
     float: right;
     font-size: 13px;
     min-width: 16px;
-    margin: 4px 0 0 0;
+    margin: 4px 0 0;
     text-align: right;
 }
 #sidebar ul li.visited > a .read-icon {
@@ -1029,7 +1029,7 @@ pre .copy-to-clipboard:hover {
 
 #sidebar #shortcuts h3 {
     font-family: 'Novacento Sans Wide', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;
-    color: white ;   
+    color: white ;
 }
 
 
@@ -1037,15 +1037,13 @@ pre .copy-to-clipboard:hover {
     text-align: left;
 }
 
-/*# sourceMappingURL=theme.css.map */
-
 /* Children shortcode */
 .children p {
     font-size: small;
-    margin-top: 0px;
-    padding-top: 0px;
-    margin-bottom:  0px;
-    padding-bottom: 0px;
+    margin-top: 0;
+    padding-top: 0;
+    margin-bottom:  0;
+    padding-bottom: 0;
 }
 .children-li li {
         
@@ -1057,13 +1055,13 @@ pre .copy-to-clipboard:hover {
 }
 .children-h2 p, .children-h3 p {
     font-size: small;
-    margin-top: 0px;
-    padding-top: 0px;
-    margin-bottom:  0px;
-    padding-bottom: 0px;
+    margin-top: 0;
+    padding-top: 0;
+    margin-bottom:  0;
+    padding-bottom: 0;
 }
 .children h3,.children h2 {
-    margin-bottom: 0px;
+    margin-bottom: 0;
     margin-top: 5px;
 }
 

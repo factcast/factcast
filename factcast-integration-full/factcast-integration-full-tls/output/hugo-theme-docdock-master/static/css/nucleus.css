@@ -506,7 +506,7 @@ body {
   line-height: 1.7; }
 
 h1, h2, h3, h4, h5, h6 {
-  margin: 0.85rem 0 1.7rem 0;
+  margin: 0.85rem 0 1.7rem;
   text-rendering: optimizeLegibility; }
 
 h1 {
@@ -566,7 +566,7 @@ hr {
 fieldset {
   border: 0;
   padding: 0.938rem;
-  margin: 0 0 1.7rem 0; }
+  margin: 0 0 1.7rem; }
 
 input,
 label,
@@ -586,7 +586,7 @@ textarea, input[type="email"], input[type="number"], input[type="password"], inp
   transition: border-color;
   border-radius: 0.1875rem;
   margin-bottom: 0.85rem;
-  padding: 0.425rem 0.425rem;
+  padding: 0.425rem;
   width: 100%; }
   textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[type="password"]:focus, input[type="search"]:focus, input[type="tel"]:focus, input[type="text"]:focus, input[type="url"]:focus, input[type="color"]:focus, input[type="date"]:focus, input[type="datetime"]:focus, input[type="datetime-local"]:focus, input[type="month"]:focus, input[type="time"]:focus, input[type="week"]:focus, select[multiple=multiple]:focus {
     outline: none; }
@@ -613,5 +613,3 @@ input[type="submit"] {
   vertical-align: middle;
   white-space: nowrap;
   border: inherit; }
-
-/*# sourceMappingURL=nucleus.css.map */

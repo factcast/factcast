@@ -273,28 +273,28 @@ h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
 h2 {
   font-size: 2.5rem;
   line-height: 110% !important;
-  margin: 2.5rem 0 1.5rem 0;
+  margin: 2.5rem 0 1.5rem;
   text-transform: capitalize; }
 
 h3 {
   font-size: 2rem;
   line-height: 110% !important;
-  margin: 2rem 0 1rem 0; }
+  margin: 2rem 0 1rem; }
 
 h4 {
   font-size: 1.5rem;
   line-height: 110% !important;
-  margin: 1.5rem 0 0.75rem 0; }
+  margin: 1.5rem 0 0.75rem; }
 
 h5 {
   font-size: 1rem;
   line-height: 110% !important;
-  margin: 1rem 0 0.2rem 0; }
+  margin: 1rem 0 0.2rem; }
 
 h6 {
   font-size: 0.5rem;
   line-height: 110% !important;
-  margin: 0.5rem 0 0.2rem 0; }
+  margin: 0.5rem 0 0.2rem; }
 
 p {
   margin: 1rem 0; }
@@ -308,7 +308,7 @@ figcaption h4 {
 
 .is_stuck {
   position: fixed;
-  top: 0px;
+  top: 0;
   width: 1165px; }
 
 #tags {
@@ -335,7 +335,7 @@ figcaption h4 {
   padding: 7px 12px; }
 
 .button:active, .button-secondary:active {
-  margin: 2px 0 -2px 0; }
+  margin: 2px 0 -2px; }
 
 body {
   background: #fff;
@@ -468,7 +468,7 @@ textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[typ
 
 #main {
   background: #f7f7f7;
-  margin: 0 0 1.563rem 0; }
+  margin: 0 0 1.563rem; }
 
 #body {
   position: relative;
@@ -609,8 +609,8 @@ div.notices p {
   padding: 15px;
   display: block;
   font-size: 1rem;
-  margin-top: 0rem;
-  margin-bottom: 0rem; }
+  margin-top: 0;
+  margin-bottom: 0; }
 
 div.notices p:first-child:before {
   position: absolute;
@@ -667,7 +667,7 @@ code {
   white-space: nowrap;
   background: #FFF7DD;
   border: 1px solid #ffeeb8;
-  padding: 0px 2px; }
+  padding: 0 2px; }
 
 .hljs {
   background: #1d1f21; }
@@ -927,7 +927,7 @@ td {
   min-height: 3s0px; }
 
 .highlightable {
-  padding: 0rem 0 0rem;
+  padding: 0;
   overflow: auto;
   position: relative;
   height: 100%; }
@@ -951,7 +951,7 @@ td {
   position: relative; }
 
 .lifecycle #body-inner ol {
-  margin: 1rem 0 1rem 0;
+  margin: 1rem 0;
   padding: 2rem;
   position: relative; }
 
@@ -1013,7 +1013,7 @@ td {
 #top-bar {
   background: #f7f7f7;
   border-radius: 2px;
-  margin: 0rem -1rem 2rem;
+  margin: 0 -1rem 2rem;
   padding: 0 1rem;
   height: 0;
   min-height: 3rem; }
@@ -1146,7 +1146,7 @@ pre .copy-to-clipboard:hover {
     margin-left: 0;
     margin-right: 0;
     padding-left: 1rem;
-    padding-right: 0rem; }
+    padding-right: 0; }
   #sidebar h5 i {
     color: rgba(204, 204, 204, 0.6);
     position: absolute;
@@ -1215,14 +1215,14 @@ pre .copy-to-clipboard:hover {
     #sidebar ul.topics > li.parent, #sidebar ul.topics > li.active {
       background: #183f81;
       margin-left: -1rem;
-      margin-right: 0rem;
+      margin-right: 0;
       padding-left: 1rem;
-      padding-right: 0rem; }
+      padding-right: 0; }
     #sidebar ul li.active > div > a {
       background: white;
       color: gray !important;
       padding-left: 1rem;
-      padding-right: 0rem; }
+      padding-right: 0; }
     #sidebar ul li.active > div > a:hover {
       color: #b5b5b5 !important;
       -webkit-transition: color 0.15s ease;
@@ -1260,13 +1260,13 @@ pre .copy-to-clipboard:hover {
     #sidebar ul li.visited > div > .read-icon {
       display: block; }
     #sidebar ul li.visited.active > div > .read-icon {
-      margin-left: 0px; }
+      margin-left: 0; }
     #sidebar ul li .category-icon {
       display: block;
       float: right;
       position: absolute;
       right: 15px;
-      margin: 0px;
+      margin: 0;
       margin-top: -20px; }
     #sidebar ul li.active > div .category-icon {
       right: 15px; }
@@ -1284,10 +1284,10 @@ pre .copy-to-clipboard:hover {
 */
 .children p {
   font-size: small;
-  margin-top: 0px;
-  padding-top: 0px;
-  margin-bottom: 0px;
-  padding-bottom: 0px; }
+  margin-top: 0;
+  padding-top: 0;
+  margin-bottom: 0;
+  padding-bottom: 0; }
 
 .children-li p {
   font-size: small;
@@ -1295,13 +1295,13 @@ pre .copy-to-clipboard:hover {
 
 .children-h2 p, .children-h3 p {
   font-size: small;
-  margin-top: 0px;
-  padding-top: 0px;
-  margin-bottom: 0px;
-  padding-bottom: 0px; }
+  margin-top: 0;
+  padding-top: 0;
+  margin-bottom: 0;
+  padding-bottom: 0; }
 
 .children h3, .children h2 {
-  margin-bottom: 0px;
+  margin-bottom: 0;
   margin-top: 5px; }
 
 @media only all and (min-width: 48em) and (max-width: 59.938em) {
@@ -1391,7 +1391,7 @@ pre .copy-to-clipboard:hover {
     visibility: hidden; }
 
   #body-inner {
-    margin-bottom: 0px; }
+    margin-bottom: 0; }
 
   #footer, .footline {
     margin-top: 1px; }
@@ -1406,6 +1406,4 @@ pre .copy-to-clipboard:hover {
     background: white !important; }
 
   #body {
-    margin-left: 0px; } }
-
-/*# sourceMappingURL=style.css.map */
+    margin-left: 0; } }
