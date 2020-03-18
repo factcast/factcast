@@ -15,6 +15,8 @@
  */
 package org.factcast.store.pgsql.validation.schema.store;
 
+import static org.mockito.Mockito.*;
+
 import org.factcast.store.pgsql.internal.PgTestConfiguration;
 import org.factcast.store.pgsql.validation.schema.SchemaStore;
 import org.factcast.store.test.IntegrationTest;
@@ -25,6 +27,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import liquibase.integration.spring.SpringLiquibase;
 
 @ContextConfiguration(classes = { PgTestConfiguration.class })
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
@@ -37,6 +41,6 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
 
     @Override
     protected SchemaStore createUUT() {
-        return new PgSchemaStoreImpl(tpl);
+        return new PgSchemaStoreImpl(tpl, mock(SpringLiquibase.class));
     }
 }
