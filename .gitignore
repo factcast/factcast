@@ -17,4 +17,5 @@ test_local.sh
 **/*.releaseBackup
 release.properties
 .attach_pid*
+**/output/**/*
 
