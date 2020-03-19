@@ -13,28 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.transformation;
+package org.factcast.store.pgsql.transformation.chain;
 
-import lombok.NonNull;
 import lombok.Value;
 
-@Value
-public class SingleTransformation implements Transformation {
-    @NonNull
-    TransformationKey key;
+@Value(staticConstructor = "of")
+public class TransformationChainId {
+    String id;
 
-    boolean isSynthetic;
-
-    int fromVersion;
-
-    int toVersion;
-
-    // can be null?
-    String transformationCode;
-
-    public static Transformation of(@NonNull TransformationSource source, String transformation) {
-        return new SingleTransformation(source.toKey(), source.isSynthetic(), source.from(), source
-                .to(),
-                transformation);
-    }
+    int score;
 }

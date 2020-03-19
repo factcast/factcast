@@ -13,15 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.transformation;
+package org.factcast.store.pgsql.transformation.chain;
 
+import java.util.LinkedList;
 import java.util.List;
 
-public interface TransformationStore {
-    void register(TransformationSource source, String transformation)
-            throws TransformationConflictException;
+import org.factcast.store.pgsql.transformation.Transformation;
+import org.factcast.store.pgsql.transformation.TransformationKey;
+import org.factcast.store.pgsql.validation.schema.SchemaRegistry;
 
-    boolean contains(TransformationSource source) throws TransformationConflictException;
+import lombok.RequiredArgsConstructor;
 
-    List<Transformation> get(TransformationKey key);
+@RequiredArgsConstructor
+public class TransformationChains {
+
+    final SchemaRegistry r;
+
+    public TransformationChain build(TransformationKey key, int from, int to) {
+        List<Transformation> list = new LinkedList<>();
+
+        // r.get transformations
+
+        return null;// FIXME
+    }
+
 }

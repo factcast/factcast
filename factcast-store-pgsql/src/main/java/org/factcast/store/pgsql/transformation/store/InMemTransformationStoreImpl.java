@@ -15,14 +15,22 @@
  */
 package org.factcast.store.pgsql.transformation.store;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
-import org.factcast.store.pgsql.transformation.*;
+import org.factcast.store.pgsql.transformation.SingleTransformation;
+import org.factcast.store.pgsql.transformation.Transformation;
+import org.factcast.store.pgsql.transformation.TransformationConflictException;
+import org.factcast.store.pgsql.transformation.TransformationKey;
+import org.factcast.store.pgsql.transformation.TransformationSource;
+import org.factcast.store.pgsql.transformation.TransformationStore;
 
 public class InMemTransformationStoreImpl implements TransformationStore {
     private final Map<String, String> id2hashMap = new HashMap<>();
 
-    private final Map<TransformationKey, List<SingleTransformation>> transformationCache = new HashMap<>();
+    private final Map<TransformationKey, List<Transformation>> transformationCache = new HashMap<>();
 
     @Override
     public void register(TransformationSource source, String transformation)
@@ -30,10 +38,9 @@ public class InMemTransformationStoreImpl implements TransformationStore {
         String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
         if (oldHash != null && !oldHash.contentEquals(source.hash()))
             throw new TransformationConflictException("Key " + source
-                    + " does not match the stored hash "
-                    + oldHash);
+                    + " does not match the stored hash " + oldHash);
 
-        List<SingleTransformation> transformations = get(source.toKey());
+        List<Transformation> transformations = get(source.toKey());
 
         transformations.add(SingleTransformation.of(source, transformation));
     }
@@ -53,7 +60,7 @@ public class InMemTransformationStoreImpl implements TransformationStore {
     }
 
     @Override
-    public List<SingleTransformation> get(TransformationKey key) {
+    public List<Transformation> get(TransformationKey key) {
         return transformationCache.computeIfAbsent(key, (k) -> new LinkedList<>());
     }
 }
