@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.store.pgsql;
+package org.factcast.store.pgsql.registry.transformation;
 
-import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import static org.junit.jupiter.api.Assertions.*;
 
-@Configuration
-@ConditionalOnClass(FactValidatorConfiguration.class)
-@Import(FactValidatorConfiguration.class)
-public class FactValidatorAutoConfiguration {
+import org.factcast.core.Fact;
+import org.junit.jupiter.api.Test;
 
+class TransformationKeyTest {
+
+    @Test
+    void testOf() {
+        Fact fact = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
+
+        TransformationKey key = TransformationKey.of(fact);
+
+        assertEquals(key.ns(), "ns");
+        assertEquals(key.type(), "type");
+    }
 }

@@ -15,7 +15,7 @@
  */
 package org.factcast.example.server;
 
-import org.factcast.store.pgsql.validation.FactValidatorConfiguration;
+import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
 import org.postgresql.Driver;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

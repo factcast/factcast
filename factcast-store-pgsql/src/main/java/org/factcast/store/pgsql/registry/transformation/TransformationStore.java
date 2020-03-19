@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.store.pgsql;
+package org.factcast.store.pgsql.registry.transformation;
 
-import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import java.util.List;
 
-@Configuration
-@ConditionalOnClass(FactValidatorConfiguration.class)
-@Import(FactValidatorConfiguration.class)
-public class FactValidatorAutoConfiguration {
+public interface TransformationStore {
+    void register(TransformationSource source, String transformation)
+            throws TransformationConflictException;
 
+    boolean contains(TransformationSource source) throws TransformationConflictException;
+
+    List<Transformation> get(TransformationKey key);
 }

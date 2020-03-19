@@ -13,16 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.store.pgsql;
+package org.factcast.store.pgsql.registry.http;
 
-import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import java.io.IOException;
+import java.net.URL;
 
-@Configuration
-@ConditionalOnClass(FactValidatorConfiguration.class)
-@Import(FactValidatorConfiguration.class)
-public class FactValidatorAutoConfiguration {
+import lombok.NonNull;
+
+/**
+ * something went wrong fetching a particular schema
+ *
+ * @author uwe
+ *
+ */
+public class RegistryFileFetchException extends IOException {
+
+    private static final long serialVersionUID = 1L;
+
+    public RegistryFileFetchException(@NonNull URL url, int code, @NonNull String message) {
+        super("Status code " + code + ": " + message + " while fetching " + url);
+    }
 
 }

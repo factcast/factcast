@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.store.pgsql;
+package org.factcast.store.pgsql.registry.validation.schema.store;
 
-import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 
-@Configuration
-@ConditionalOnClass(FactValidatorConfiguration.class)
-@Import(FactValidatorConfiguration.class)
-public class FactValidatorAutoConfiguration {
+public class InMemSchemaStoreImplTest extends AbstractSchemaStoreTest {
 
+    @Override
+    protected SchemaStore createUUT() {
+        return new InMemSchemaStoreImpl();
+    }
 }

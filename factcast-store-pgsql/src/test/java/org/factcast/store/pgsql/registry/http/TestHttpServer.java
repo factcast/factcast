@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.store.pgsql;
+package org.factcast.store.pgsql.registry.http;
 
-import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import io.javalin.Javalin;
 
-@Configuration
-@ConditionalOnClass(FactValidatorConfiguration.class)
-@Import(FactValidatorConfiguration.class)
-public class FactValidatorAutoConfiguration {
+public class TestHttpServer implements AutoCloseable {
+    @lombok.experimental.Delegate
+    final Javalin instance = Javalin.create();
+
+    public TestHttpServer() {
+        instance.start(0);
+    }
+
+    @Override
+    public void close() throws Exception {
+        try {
+            instance.stop();
+        } catch (Exception dontCare) {
+        }
+    }
 
 }

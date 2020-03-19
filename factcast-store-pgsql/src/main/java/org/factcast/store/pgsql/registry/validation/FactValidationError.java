@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.store.pgsql;
+package org.factcast.store.pgsql.registry.validation;
 
-import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import lombok.NonNull;
+import lombok.Value;
 
-@Configuration
-@ConditionalOnClass(FactValidatorConfiguration.class)
-@Import(FactValidatorConfiguration.class)
-public class FactValidatorAutoConfiguration {
+@Value
+public class FactValidationError {
+    public FactValidationError(@NonNull String string) {
+        this("error", string);
+    }
 
+    public FactValidationError(@NonNull String level, @NonNull String string) {
+        this.level = level;
+        this.message = string;
+    }
+
+    private String level;
+
+    private String message;
 }

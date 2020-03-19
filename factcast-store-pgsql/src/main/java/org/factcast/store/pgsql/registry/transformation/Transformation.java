@@ -13,16 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.store.pgsql;
+package org.factcast.store.pgsql.registry.transformation;
 
-import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import lombok.NonNull;
+import lombok.Value;
 
-@Configuration
-@ConditionalOnClass(FactValidatorConfiguration.class)
-@Import(FactValidatorConfiguration.class)
-public class FactValidatorAutoConfiguration {
+@Value
+public class Transformation {
+    @NonNull
+    TransformationKey key;
 
+    boolean isSynthetic;
+
+    int fromVersion;
+
+    int toVersion;
+
+    String transformationCode;
+
+    public static Transformation of(@NonNull TransformationSource source, String transformation) {
+        return new Transformation(source.toKey(), source.isSynthetic(), source.from(), source.to(),
+                transformation);
+    }
 }

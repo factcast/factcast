@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.store.pgsql;
+package org.factcast.store.pgsql.registry.validation.schema;
 
-import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import java.io.IOException;
 
-@Configuration
-@ConditionalOnClass(FactValidatorConfiguration.class)
-@Import(FactValidatorConfiguration.class)
-public class FactValidatorAutoConfiguration {
+import lombok.NonNull;
+
+public class SchemaRegistryUnavailableException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
+    public SchemaRegistryUnavailableException(IOException e) {
+        super(e);
+    }
+
+    public SchemaRegistryUnavailableException(@NonNull String httpUrlAsString, int code,
+            @NonNull String message) {
+        super("Status code " + code + ": " + message + " while requesting " + httpUrlAsString);
+    }
 
 }
