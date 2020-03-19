@@ -33,7 +33,16 @@ public class SingleTransformation implements Transformation {
     Optional<String> transformationCode;
 
     public static Transformation of(@NonNull TransformationSource source, String transformation) {
-        return new SingleTransformation(source.toKey(), source.from(), source
-                .to(), Optional.ofNullable(transformation));
+        return new SingleTransformation(source.toKey(), source.from(), source.to(),
+                Optional.ofNullable(transformation));
     }
+
+    public static Transformation of(@NonNull TransformationKey key, int from, int to, String code) {
+        return new SingleTransformation(key, from, to, Optional.ofNullable(code));
+    }
+
+    public static Transformation empty(@NonNull TransformationKey key, int from, int to) {
+        return new SingleTransformation(key, from, to, Optional.empty());
+    }
+
 }

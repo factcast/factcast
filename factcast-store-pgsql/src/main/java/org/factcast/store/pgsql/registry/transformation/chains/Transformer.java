@@ -15,11 +15,10 @@
  */
 package org.factcast.store.pgsql.registry.transformation.chains;
 
-import lombok.Value;
+import org.factcast.store.pgsql.registry.transformation.Transformation;
 
-@Value(staticConstructor = "of")
-public class TransformationChainMetaData {
-    String id;
+import com.fasterxml.jackson.databind.JsonNode;
 
-    int score;
+public interface Transformer {
+    JsonNode transform(Transformation t, JsonNode input) throws TransformationException;
 }

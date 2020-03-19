@@ -16,6 +16,7 @@
 package org.factcast.store.pgsql.registry.transformation.chains;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
@@ -28,46 +29,43 @@ import lombok.Value;
 @Value
 public class TransformationChain implements Transformation {
 
-	@NonNull
-	TransformationChainId chainId;
+    @NonNull
+    TransformationChainMetaData meta;
 
-	@NonNull
-	TransformationKey key;
+    @NonNull
+    TransformationKey key;
 
-	int fromVersion;
+    int fromVersion;
 
-	int toVersion;
+    int toVersion;
 
-	@NonNull
-	String transformationCode;
+    @NonNull
+    Optional<String> transformationCode;
 
-	@Override
-	public boolean isSynthetic() {
-		return true;
-	}
+    public static TransformationChain of(@NonNull TransformationKey key,
+            @NonNull List<Transformation> orderedListOfSteps, TransformationChainMetaData id) {
 
-	public static TransformationChain of(@NonNull TransformationKey key, List<Transformation> orderedListOfSteps,
-			TransformationChainId id) {
+        Preconditions.checkArgument(!orderedListOfSteps.isEmpty());
+        Preconditions.checkArgument(orderedListOfSteps.stream().allMatch(t -> key.equals(t.key())));
 
-		Preconditions.checkArgument(!orderedListOfSteps.isEmpty());
-		Preconditions.checkArgument(orderedListOfSteps.stream().allMatch(t -> key.equals(t.key())));
+        int from = orderedListOfSteps.get(0).fromVersion();
+        int to = orderedListOfSteps.get(orderedListOfSteps.size() - 1).toVersion();
+        String compositeJson = createCompositeJson(orderedListOfSteps);
 
-		int from = orderedListOfSteps.get(0).fromVersion();
-		int to = orderedListOfSteps.get(orderedListOfSteps.size() - 1).toVersion();
-		String compositeJson = createCompositeJson(orderedListOfSteps);
+        return new TransformationChain(id, key, from, to, Optional.of(compositeJson));
+    }
 
-		return new TransformationChain(id, key, from, to, compositeJson);
-	}
-
-	private static String createCompositeJson(List<Transformation> orderedListOfSteps) {
-		StringBuilder sb = new StringBuilder();
-		sb.append("var functions = [];");
-		orderedListOfSteps.forEach(f -> {
-			sb.append("functions.push( ");
-			sb.append(f.transformationCode());
-			sb.append(" );");
-		});
-		sb.append("function transform(event) { functions.forEach( f => f(event) ); }");
-		return sb.toString();
-	}
+    private static String createCompositeJson(List<Transformation> list) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("fns = [];");
+        list.forEach(f -> {
+            f.transformationCode().ifPresent(c -> {
+                sb.append("fns.push( ");
+                sb.append(c);
+                sb.append(" );");
+            });
+        });
+        sb.append("function transform(event) { fns.forEach( function(f){f(event)} ); }");
+        return sb.toString();
+    }
 }

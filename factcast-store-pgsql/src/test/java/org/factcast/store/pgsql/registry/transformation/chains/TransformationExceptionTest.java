@@ -15,11 +15,6 @@
  */
 package org.factcast.store.pgsql.registry.transformation.chains;
 
-import lombok.Value;
+public class TransformationExceptionTest {
 
-@Value(staticConstructor = "of")
-public class TransformationChainMetaData {
-    String id;
-
-    int score;
 }

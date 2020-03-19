@@ -23,12 +23,15 @@ import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 
+import com.google.common.collect.Iterables;
+
 import es.usc.citius.hipster.algorithm.AStar;
 import es.usc.citius.hipster.algorithm.Algorithm.SearchResult;
 import es.usc.citius.hipster.algorithm.Hipster;
 import es.usc.citius.hipster.graph.GraphBuilder;
 import es.usc.citius.hipster.graph.GraphSearchProblem;
 import es.usc.citius.hipster.graph.HipsterDirectedGraph;
+import es.usc.citius.hipster.model.HeuristicNode;
 import es.usc.citius.hipster.model.impl.WeightedNode;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
@@ -36,44 +39,65 @@ import lombok.Value;
 @RequiredArgsConstructor
 public class TransformationChains {
 
-	final SchemaRegistry r;
+    private static final double BASE_COST = 10000d;
 
-	@Value(staticConstructor = "of")
-	private static class Edge {
-		int fromVersion;
-		int toVersion;
-		Transformation transformation;
+    final SchemaRegistry r;
 
-		public static Edge from(Transformation t) {
-			return of(t.fromVersion(), t.toVersion(), t);
-		}
-	}
+    @Value(staticConstructor = "of")
+    private static class Edge {
+        int fromVersion;
 
-	public TransformationChain build(TransformationKey key, int from, int to) throws MissingTransformationInformation {
+        int toVersion;
 
-		GraphBuilder<Integer, Edge> builder = GraphBuilder.create();
+        Transformation transformation;
 
-		for (Transformation t : r.get(key)) {
-			builder.connect(t.fromVersion()).to(t.toVersion()).withEdge(Edge.from(t));
-		}
+        public static Edge from(Transformation t) {
+            return of(t.fromVersion(), t.toVersion(), t);
+        }
+    }
 
-		HipsterDirectedGraph<Integer, Edge> g = builder.createDirectedGraph();
+    public TransformationChain build(TransformationKey key, int from, int to)
+            throws MissingTransformationInformation {
 
-		AStar<Edge, Integer, Double, WeightedNode<Edge, Integer, Double>> problem = Hipster
-				.createDijkstra(GraphSearchProblem.startingFrom(from).in(g)
-						.extractCostFromEdges(e -> e.fromVersion() + 10000d).build());
-		SearchResult r = problem.search(to);
+        GraphBuilder<Integer, Edge> builder = GraphBuilder.create();
+        List<Transformation> all = r.get(key);
+        if (all.isEmpty())
+            throw new MissingTransformationInformation("No Transformations for " + key);
 
-		List<Edge> recoverActionPath = problem.recoverActionPath(r.getGoalNode());
-		List<Transformation> steps = map(recoverActionPath, Edge::transformation);
+        // populate graph
+        for (Transformation t : all) {
+            builder.connect(t.fromVersion()).to(t.toVersion()).withEdge(Edge.from(t));
+        }
+        HipsterDirectedGraph<Integer, Edge> g = builder.createDirectedGraph();
 
-		return TransformationChain.of(key, steps, TransformationChainId.of(r.getOptimalPaths().get(0).toString(), 1// TODO
-		));
+        // create problem
+        AStar<Edge, Integer, Double, WeightedNode<Edge, Integer, Double>> problem = Hipster
+                .createDijkstra(GraphSearchProblem.startingFrom(from)
+                        .in(g)
+                        .extractCostFromEdges(e -> e.fromVersion() + BASE_COST)
+                        .build());
 
-	}
+        // run search
+        SearchResult r = problem.search(to);
 
-	public static <N, E> List<E> map(List<N> list, Function<N, E> f) {
-		return list.stream().map(f).collect(Collectors.toList());
-	}
+        List<Edge> path = problem.recoverActionPath(r.getGoalNode());
+
+        if (path.isEmpty() || Iterables.getLast(path).toVersion() != to
+                || Iterables.getFirst(path, null).fromVersion() != from) {
+            throw new MissingTransformationInformation(
+                    "Cannot reach version " + to + " from version " + from + " for " + key);
+        }
+        List<Transformation> steps = map(path, Edge::transformation);
+
+        int cost = ((Double) ((HeuristicNode) r.getGoalNode()).getCost()).intValue();
+
+        return TransformationChain.of(key, steps,
+                TransformationChainMetaData.of(r.getOptimalPaths().get(0).toString(), cost));
+
+    }
+
+    private static <N, E> List<E> map(List<N> list, Function<N, E> f) {
+        return list.stream().map(f).collect(Collectors.toList());
+    }
 
 }

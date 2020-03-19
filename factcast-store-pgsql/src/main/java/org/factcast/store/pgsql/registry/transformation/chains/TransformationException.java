@@ -15,11 +15,14 @@
  */
 package org.factcast.store.pgsql.registry.transformation.chains;
 
-import lombok.Value;
+import lombok.NonNull;
 
-@Value(staticConstructor = "of")
-public class TransformationChainMetaData {
-    String id;
+public class TransformationException extends Exception {
 
-    int score;
+    private static final long serialVersionUID = 1L;
+
+    public TransformationException(@NonNull Exception e) {
+        super(e);
+    }
+
 }

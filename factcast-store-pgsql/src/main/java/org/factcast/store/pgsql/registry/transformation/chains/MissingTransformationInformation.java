@@ -15,11 +15,14 @@
  */
 package org.factcast.store.pgsql.registry.transformation.chains;
 
-import lombok.Value;
+/**
+ * TODO RT or not RT ?
+ */
+public class MissingTransformationInformation extends Exception {
+    private static final long serialVersionUID = 1L;
 
-@Value(staticConstructor = "of")
-public class TransformationChainMetaData {
-    String id;
+    public MissingTransformationInformation(String string) {
+        super(string);
+    }
 
-    int score;
 }
