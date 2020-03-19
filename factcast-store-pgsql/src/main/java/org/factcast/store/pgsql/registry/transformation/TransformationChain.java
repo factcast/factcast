@@ -16,6 +16,7 @@
 package org.factcast.store.pgsql.registry.transformation;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.base.Preconditions;
 
@@ -36,12 +37,7 @@ public class TransformationChain implements Transformation {
     int toVersion;
 
     @NonNull
-    String transformationCode;
-
-    @Override
-    public boolean isSynthetic() {
-        return true;
-    }
+    Optional<String> transformationCode;
 
     public static TransformationChain of(@NonNull TransformationKey key,
             List<Transformation> orderedListOfSteps,
@@ -54,7 +50,7 @@ public class TransformationChain implements Transformation {
         int to = orderedListOfSteps.get(orderedListOfSteps.size() - 1).toVersion();
         String compositeJson = createCompositeJson(orderedListOfSteps);
 
-        return new TransformationChain(id, key, from, to, compositeJson);
+        return new TransformationChain(id, key, from, to, Optional.of(compositeJson));
     }
 
     private static String createCompositeJson(List<Transformation> orderedListOfSteps) {

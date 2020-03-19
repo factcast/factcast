@@ -42,7 +42,7 @@ public class HttpSchemaRegistryTest {
     @Test
     public void testRoundtrip() throws InterruptedException, ExecutionException, IOException {
         IndexFetcher indexFetcher = mock(IndexFetcher.class);
-        RegistryFileFetcher schemafetcher = mock(RegistryFileFetcher.class);
+        RegistryFileFetcher fileFetcher = mock(RegistryFileFetcher.class);
 
         RegistryIndex index = new RegistryIndex();
 
@@ -51,10 +51,11 @@ public class HttpSchemaRegistryTest {
 
         TransformationSource transformationSource1 = new TransformationSource("http://foo/1", "ns",
                 "type", "hash", 1, 2);
-        TransformationSource transformationSource2 = new TransformationSource("http://foo/2", "ns",
-                "type", "hash", 2, 1);
+        TransformationSource transformationSource2 = new TransformationSource(
+                "synthetic/http://foo/2", "ns",
+                "type", null, 2, 1);
         TransformationSource transformationSource3 = new TransformationSource("http://foo/3", "ns",
-                "type2", "hash", 2, 1);
+                "type2", "hash", 1, 2);
 
         index.schemes(Lists.newArrayList(source1, source2));
         index.transformations(Lists.newArrayList(transformationSource1, transformationSource2,
@@ -62,18 +63,21 @@ public class HttpSchemaRegistryTest {
 
         when(indexFetcher.fetchIndex()).thenReturn(Optional.of(index));
 
-        when(schemafetcher.fetchSchema(any())).thenReturn("{}");
-        when(schemafetcher.fetchTransformation(any())).thenReturn("");
+        when(fileFetcher.fetchSchema(any())).thenReturn("{}");
+        when(fileFetcher.fetchTransformation(any())).thenReturn("");
 
         SchemaStore schemaStore = spy(new InMemSchemaStoreImpl());
         TransformationStore transformationStore = spy(new InMemTransformationStoreImpl());
 
         HttpSchemaRegistry uut = new HttpSchemaRegistry(schemaStore, transformationStore,
-                indexFetcher, schemafetcher);
+                indexFetcher, fileFetcher);
         uut.refreshVerbose();
 
         verify(schemaStore, times(2)).register(Mockito.any(), Mockito.any());
         verify(transformationStore, times(3)).register(Mockito.any(), Mockito.any());
+
+        verify(fileFetcher, times(2)).fetchSchema(Mockito.any());
+        verify(fileFetcher, times(2)).fetchTransformation(Mockito.any());
 
         assertTrue(schemaStore.get(SchemaKey.builder().ns("ns").type("type").version(1).build())
                 .isPresent());

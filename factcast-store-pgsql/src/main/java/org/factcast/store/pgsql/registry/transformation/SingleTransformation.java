@@ -15,6 +15,8 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
+import java.util.Optional;
+
 import lombok.NonNull;
 import lombok.Value;
 
@@ -23,16 +25,15 @@ public class SingleTransformation implements Transformation {
     @NonNull
     TransformationKey key;
 
-    boolean isSynthetic;
-
     int fromVersion;
 
     int toVersion;
 
-    String transformationCode;
+    @NonNull
+    Optional<String> transformationCode;
 
     public static Transformation of(@NonNull TransformationSource source, String transformation) {
-        return new SingleTransformation(source.toKey(), source.isSynthetic(), source.from(), source
-                .to(), transformation);
+        return new SingleTransformation(source.toKey(), source.from(), source
+                .to(), Optional.ofNullable(transformation));
     }
 }

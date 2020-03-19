@@ -15,12 +15,12 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
+import java.util.Optional;
+
 public interface Transformation {
     TransformationKey key();
 
-    String transformationCode();
-
-    boolean isSynthetic();
+    Optional<String> transformationCode();
 
     int fromVersion();
 

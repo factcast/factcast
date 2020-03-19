@@ -172,8 +172,12 @@ public class HttpSchemaRegistry implements SchemaRegistry {
                     : "transformations");
             toFetch.parallelStream().forEach(source -> {
                 try {
-                    transformationStore.register(source, registryFileFetcher.fetchTransformation(
-                            source));
+                    String transformationCode = null;
+                    if (!source.isSynthetic()) {
+                        transformationCode = registryFileFetcher.fetchTransformation(source);
+                    }
+
+                    transformationStore.register(source, transformationCode);
                 } catch (IOException e) {
                     throw new SchemaRegistryUnavailableException(e);
                 }
