@@ -23,5 +23,5 @@ public interface TransformationStore {
 
     boolean contains(TransformationSource source) throws TransformationConflictException;
 
-    List<Transformation> get(TransformationKey key);
+    List<SingleTransformation> get(TransformationKey key);
 }

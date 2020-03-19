@@ -15,10 +15,27 @@
  */
 package org.factcast.store.pgsql.transformation;
 
-public interface Transformation {
-    TransformationKey key();
+import lombok.NonNull;
+import lombok.Value;
 
-    boolean isSynthetic();
+@Value
+public class SingleTransformation implements Transformation {
+    @NonNull
+    TransformationKey key;
 
-    String transformationCode();
+    boolean isSynthetic;
+
+    int fromVersion;
+
+    int toVersion;
+
+    // can be null?
+    String transformationCode;
+
+    public static SingleTransformation of(@NonNull TransformationSource source,
+            String transformation) {
+        return new SingleTransformation(source.toKey(), source.isSynthetic(), source.from(), source
+                .to(),
+                transformation);
+    }
 }

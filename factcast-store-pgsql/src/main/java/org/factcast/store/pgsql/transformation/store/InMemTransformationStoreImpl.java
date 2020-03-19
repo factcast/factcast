@@ -22,7 +22,7 @@ import org.factcast.store.pgsql.transformation.*;
 public class InMemTransformationStoreImpl implements TransformationStore {
     private final Map<String, String> id2hashMap = new HashMap<>();
 
-    private final Map<TransformationKey, List<Transformation>> transformationCache = new HashMap<>();
+    private final Map<TransformationKey, List<SingleTransformation>> transformationCache = new HashMap<>();
 
     @Override
     public void register(TransformationSource source, String transformation)
@@ -33,9 +33,9 @@ public class InMemTransformationStoreImpl implements TransformationStore {
                     + " does not match the stored hash "
                     + oldHash);
 
-        List<Transformation> transformations = get(source.toKey());
+        List<SingleTransformation> transformations = get(source.toKey());
 
-        transformations.add(Transformation.of(source, transformation));
+        transformations.add(SingleTransformation.of(source, transformation));
     }
 
     @Override
@@ -53,7 +53,7 @@ public class InMemTransformationStoreImpl implements TransformationStore {
     }
 
     @Override
-    public List<Transformation> get(TransformationKey key) {
+    public List<SingleTransformation> get(TransformationKey key) {
         return transformationCache.computeIfAbsent(key, (k) -> new LinkedList<>());
     }
 }
