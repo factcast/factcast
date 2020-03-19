@@ -111,6 +111,10 @@
       <artifactId>javalin</artifactId>
       <version>3.7.0</version>
       <scope>test</scope>
-    </dependency>
+    </dependency>  <dependency>
+    <groupId>es.usc.citius.hipster</groupId>
+    <artifactId>hipster-all</artifactId>
+    <version>1.0.0</version>
+  </dependency>
   </dependencies>
 </project>
