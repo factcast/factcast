@@ -15,14 +15,24 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
-public interface Transformation {
-    TransformationKey key();
+import java.util.LinkedList;
+import java.util.List;
 
-    String transformationCode();
+import org.factcast.store.pgsql.registry.SchemaRegistry;
 
-    boolean isSynthetic();
+import lombok.RequiredArgsConstructor;
 
-    int fromVersion();
+@RequiredArgsConstructor
+public class TransformationChains {
 
-    int toVersion();
+    final SchemaRegistry r;
+
+    public TransformationChain build(TransformationKey key, int from, int to) {
+        List<Transformation> list = new LinkedList<>();
+
+        // r.get transformations
+
+        return null;// FIXME
+    }
+
 }

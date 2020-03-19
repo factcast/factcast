@@ -15,14 +15,11 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
-public interface Transformation {
-    TransformationKey key();
+import lombok.Value;
 
-    String transformationCode();
+@Value(staticConstructor = "of")
+public class TransformationChainId {
+    String id;
 
-    boolean isSynthetic();
-
-    int fromVersion();
-
-    int toVersion();
+    int score;
 }

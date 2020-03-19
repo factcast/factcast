@@ -15,7 +15,9 @@
  */
 package org.factcast.store.pgsql.registry.transformation.store;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.factcast.store.pgsql.registry.transformation.*;
@@ -33,12 +35,11 @@ public class InMemTransformationStoreImpl implements TransformationStore {
         String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
         if (oldHash != null && !oldHash.contentEquals(source.hash()))
             throw new TransformationConflictException("Key " + source
-                    + " does not match the stored hash "
-                    + oldHash);
+                    + " does not match the stored hash " + oldHash);
 
         List<Transformation> transformations = get(source.toKey());
 
-        transformations.add(Transformation.of(source, transformation));
+        transformations.add(SingleTransformation.of(source, transformation));
     }
 
     @Override
