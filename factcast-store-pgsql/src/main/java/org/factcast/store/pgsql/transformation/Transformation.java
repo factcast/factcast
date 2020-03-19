@@ -21,4 +21,8 @@ public interface Transformation {
     boolean isSynthetic();
 
     String transformationCode();
+
+    int fromVersion();
+
+    int toVersion();
 }
