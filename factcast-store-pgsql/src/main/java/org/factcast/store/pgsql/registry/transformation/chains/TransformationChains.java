@@ -94,6 +94,9 @@ public class TransformationChains {
         return TransformationChain.of(key, steps,
                 TransformationChainMetaData.of(r.getOptimalPaths().get(0).toString(), cost));
 
+        // sad: in retrospective, Hipster might not have been the greatest
+        // choice due to
+        // lack of proper Generics.
     }
 
     private static <N, E> List<E> map(List<N> list, Function<N, E> f) {
