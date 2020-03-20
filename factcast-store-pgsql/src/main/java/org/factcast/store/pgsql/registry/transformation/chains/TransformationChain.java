@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.registry.transformation.chains;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
@@ -50,22 +51,24 @@ public class TransformationChain implements Transformation {
 
         int from = orderedListOfSteps.get(0).fromVersion();
         int to = orderedListOfSteps.get(orderedListOfSteps.size() - 1).toVersion();
-        String compositeJson = createCompositeJson(orderedListOfSteps);
+        String compositeJson = createCompositeJS(orderedListOfSteps);
 
         return new TransformationChain(id, key, from, to, Optional.of(compositeJson));
     }
 
-    private static String createCompositeJson(List<Transformation> list) {
+    private static String createCompositeJS(List<Transformation> list) {
         StringBuilder sb = new StringBuilder();
-        sb.append("fns = [];");
-        list.forEach(f -> {
-            f.transformationCode().ifPresent(c -> {
-                sb.append("fns.push( ");
-                sb.append(c);
-                sb.append(" );");
-            });
-        });
-        sb.append("function transform(event) { fns.forEach( function(f){f(event)} ); }");
+        sb.append("var steps = [");
+
+        List<String> code = list.stream()
+                .map(Transformation::transformationCode)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
+        sb.append(String.join(",", code));
+        sb.append("]; ");
+        sb.append("function transform(event) { steps.forEach( function(f){f(event)} ); }");
         return sb.toString();
     }
 }
