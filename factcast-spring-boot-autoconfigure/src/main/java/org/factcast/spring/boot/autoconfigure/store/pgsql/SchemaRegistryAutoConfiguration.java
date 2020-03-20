@@ -15,14 +15,14 @@
  */
 package org.factcast.spring.boot.autoconfigure.store.pgsql;
 
-import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
+import org.factcast.store.pgsql.registry.SchemaRegistryConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
-@ConditionalOnClass(FactValidatorConfiguration.class)
-@Import(FactValidatorConfiguration.class)
-public class FactValidatorAutoConfiguration {
+@ConditionalOnClass(SchemaRegistryConfiguration.class)
+@Import(SchemaRegistryConfiguration.class)
+public class SchemaRegistryAutoConfiguration {
 
 }

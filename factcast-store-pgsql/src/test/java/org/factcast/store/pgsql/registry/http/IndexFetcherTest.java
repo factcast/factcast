@@ -24,7 +24,6 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
 import org.factcast.core.TestHelper;
-import org.factcast.store.pgsql.registry.validation.schema.SchemaRegistryUnavailableException;
 import org.junit.jupiter.api.Test;
 
 import okhttp3.OkHttpClient;

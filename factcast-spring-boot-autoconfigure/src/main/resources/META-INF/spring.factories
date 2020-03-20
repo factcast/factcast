@@ -8,5 +8,5 @@ org.factcast.spring.boot.autoconfigure.server.grpc.LZ4ServerAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.server.grpc.SnappyServerAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.store.pgsql.rds.RdsAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.store.pgsql.PgFactStoreAutoConfiguration,\
-org.factcast.spring.boot.autoconfigure.store.pgsql.FactValidatorAutoConfiguration\
+org.factcast.spring.boot.autoconfigure.store.pgsql.SchemaRegistryAutoConfiguration\
   

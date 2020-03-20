@@ -18,13 +18,16 @@ package org.factcast.store.pgsql.registry.transformation;
 import org.factcast.core.Fact;
 
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.Value;
 
 @Value
 @Builder
 public class TransformationKey {
+    @NonNull
     String ns;
 
+    @NonNull
     String type;
 
     static TransformationKey of(Fact fact) {

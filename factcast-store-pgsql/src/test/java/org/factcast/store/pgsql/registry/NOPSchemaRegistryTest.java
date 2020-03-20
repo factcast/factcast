@@ -28,13 +28,17 @@ public class NOPSchemaRegistryTest {
     @Test
     public void testSchemaGet() throws Exception {
         NOPSchemaRegistry uut = new NOPSchemaRegistry();
-        assertEquals(Optional.empty(), uut.get(SchemaKey.builder().build()));
+        assertEquals(Optional.empty(), uut.get(SchemaKey.builder()
+                .ns("ns")
+                .type("type")
+                .version(1)
+                .build()));
     }
 
     @Test
     public void testTransformationGet() throws Exception {
         NOPSchemaRegistry uut = new NOPSchemaRegistry();
-        assertTrue(uut.get(TransformationKey.builder().build()).isEmpty());
+        assertTrue(uut.get(TransformationKey.builder().ns("ns").type("type").build()).isEmpty());
     }
 
     @Test

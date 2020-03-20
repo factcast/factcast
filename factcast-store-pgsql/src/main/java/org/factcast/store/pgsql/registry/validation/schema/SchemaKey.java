@@ -18,16 +18,20 @@ package org.factcast.store.pgsql.registry.validation.schema;
 import org.factcast.core.Fact;
 
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.Value;
 
 @Value
 @Builder
 public class SchemaKey {
-    private String ns;
+    @NonNull
+    String ns;
 
-    private String type;
+    @NonNull
+    String type;
 
-    private int version;
+    @NonNull
+    int version;
 
     public static SchemaKey from(Fact fact) {
         return new SchemaKey(fact.ns(), fact.type(), fact.version());

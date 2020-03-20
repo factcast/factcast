@@ -51,7 +51,7 @@ public class InMemTransformationStoreImpl implements TransformationStore {
                 return true;
             else
                 throw new TransformationConflictException(
-                        "TransformationSource at " + source + " does not match the stored hash "
+                        "Source at " + source + " does not match the stored hash "
                                 + hash);
         else
             return false;

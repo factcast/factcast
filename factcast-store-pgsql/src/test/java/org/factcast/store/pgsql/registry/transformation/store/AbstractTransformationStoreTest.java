@@ -91,14 +91,18 @@ public abstract class AbstractTransformationStoreTest {
 
     @Test
     void testNullContracts() throws Exception {
+        s.id("http://testContainsSensesConflict");
+        s.hash("123");
+        s.ns("ns");
+        s.type("testContainsSensesConflict");
+        s.from(1);
+        s.to(2);
+
         assertNpe(() -> {
             uut.contains(null);
         });
         assertNpe(() -> {
             uut.register(null, "{}");
-        });
-        assertNpe(() -> {
-            uut.register(s, null);
         });
         assertNpe(() -> {
             uut.get(null);

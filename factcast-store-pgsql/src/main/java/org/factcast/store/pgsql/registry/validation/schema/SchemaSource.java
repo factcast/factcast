@@ -32,19 +32,19 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SchemaSource {
-    @JsonProperty
+    @JsonProperty(required = true)
     private String id;
 
-    @JsonProperty
+    @JsonProperty(required = true)
     private String hash;
 
-    @JsonProperty
+    @JsonProperty(required = true)
     private String ns;
 
-    @JsonProperty
+    @JsonProperty(required = true)
     private String type;
 
-    @JsonProperty
+    @JsonProperty(required = true)
     private int version;
 
     public SchemaKey toKey() {

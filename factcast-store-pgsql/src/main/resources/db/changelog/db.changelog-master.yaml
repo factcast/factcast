@@ -35,4 +35,7 @@ databaseChangeLog:
     - include:
          file: factcast/issue627/schemaStore.sql
          relativeToChangelogFile: true
+    - include:
+        file: factcast/issue715/transformationStore.sql
+        relativeToChangelogFile: true
 

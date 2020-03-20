@@ -20,8 +20,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
 
-import org.factcast.store.pgsql.registry.validation.schema.SchemaRegistryUnavailableException;
-
 import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;

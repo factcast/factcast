@@ -36,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @Configuration
 @EnableScheduling
 @Import({ FactValidatorConfiguration.class, TransformationConfiguration.class })
-public class RegistryConfiguration {
+public class SchemaRegistryConfiguration {
 
     @Bean
     public SchemaRegistry schemaRegistry(PgConfigurationProperties p,

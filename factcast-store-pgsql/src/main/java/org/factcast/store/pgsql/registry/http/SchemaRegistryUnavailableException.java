@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.validation.schema;
+package org.factcast.store.pgsql.registry.http;
 
 import java.io.IOException;
 

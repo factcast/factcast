@@ -28,7 +28,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.transformation.*;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
-import org.factcast.store.pgsql.registry.validation.schema.SchemaRegistryUnavailableException;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 import org.springframework.stereotype.Component;

@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.registry.transformation;
 
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.transformation.store.InMemTransformationStoreImpl;
+import org.factcast.store.pgsql.registry.transformation.store.PgTransformationStoreImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -30,7 +31,7 @@ public class TransformationConfiguration {
     public TransformationStore transformationStore(@NonNull JdbcTemplate jdbcTemplate,
             @NonNull PgConfigurationProperties props, @NonNull SpringLiquibase unused) {
         if (props.isValidationEnabled() && props.isPersistentSchemaStore())
-            return null;
+            return new PgTransformationStoreImpl(jdbcTemplate, unused);
 
         // otherwise
         return new InMemTransformationStoreImpl();

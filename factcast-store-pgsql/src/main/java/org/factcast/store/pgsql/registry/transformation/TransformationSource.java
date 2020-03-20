@@ -27,22 +27,22 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TransformationSource {
-    @JsonProperty
+    @JsonProperty(required = true)
     private String id;
 
-    @JsonProperty
+    @JsonProperty(required = true)
     private String ns;
 
-    @JsonProperty
+    @JsonProperty(required = true)
     private String type;
 
     @JsonProperty
     private String hash;
 
-    @JsonProperty
+    @JsonProperty(required = true)
     private Integer from;
 
-    @JsonProperty
+    @JsonProperty(required = true)
     private Integer to;
 
     public TransformationKey toKey() {
