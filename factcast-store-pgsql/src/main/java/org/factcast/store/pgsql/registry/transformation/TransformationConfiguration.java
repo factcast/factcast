@@ -16,6 +16,10 @@
 package org.factcast.store.pgsql.registry.transformation;
 
 import org.factcast.store.pgsql.PgConfigurationProperties;
+import org.factcast.store.pgsql.registry.SchemaRegistry;
+import org.factcast.store.pgsql.registry.transformation.chains.NashornTransformer;
+import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
+import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
 import org.factcast.store.pgsql.registry.transformation.store.InMemTransformationStoreImpl;
 import org.factcast.store.pgsql.registry.transformation.store.PgTransformationStoreImpl;
 import org.springframework.context.annotation.Bean;
@@ -35,5 +39,16 @@ public class TransformationConfiguration {
 
         // otherwise
         return new InMemTransformationStoreImpl();
+    }
+
+    @Bean
+    public TransformationChains transformationChains(SchemaRegistry r) {
+        return new TransformationChains(r);
+    }
+
+    @Bean
+    public Transformer transformer() {
+        // TODO should test for Graal here, as nashorn is deprecated
+        return new NashornTransformer();
     }
 }

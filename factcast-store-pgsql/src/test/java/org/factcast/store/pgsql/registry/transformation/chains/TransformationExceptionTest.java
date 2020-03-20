@@ -13,26 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.transformation;
+package org.factcast.store.pgsql.registry.transformation.chains;
 
-import java.util.LinkedList;
-import java.util.List;
-
-import org.factcast.store.pgsql.registry.SchemaRegistry;
-
-import lombok.RequiredArgsConstructor;
-
-@RequiredArgsConstructor
-public class TransformationChains {
-
-    final SchemaRegistry r;
-
-    public TransformationChain build(TransformationKey key, int from, int to) {
-        List<Transformation> list = new LinkedList<>();
-
-        // r.get transformations
-
-        return null;// FIXME
-    }
+public class TransformationExceptionTest {
 
 }

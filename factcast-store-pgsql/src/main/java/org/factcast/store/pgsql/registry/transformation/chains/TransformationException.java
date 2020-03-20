@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.transformation;
+package org.factcast.store.pgsql.registry.transformation.chains;
 
-import lombok.Value;
+import lombok.NonNull;
 
-@Value(staticConstructor = "of")
-public class TransformationChainId {
-    String id;
+public class TransformationException extends Exception {
 
-    int score;
+    private static final long serialVersionUID = 1L;
+
+    public TransformationException(@NonNull Exception e) {
+        super(e);
+    }
+
 }

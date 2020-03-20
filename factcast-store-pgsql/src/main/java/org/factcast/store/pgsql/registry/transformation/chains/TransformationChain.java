@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.transformation;
+package org.factcast.store.pgsql.registry.transformation.chains;
 
 import java.util.List;
 import java.util.Optional;
+
+import org.factcast.store.pgsql.registry.transformation.Transformation;
+import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 
 import com.google.common.base.Preconditions;
 
@@ -27,7 +30,7 @@ import lombok.Value;
 public class TransformationChain implements Transformation {
 
     @NonNull
-    TransformationChainId chainId;
+    TransformationChainMetaData meta;
 
     @NonNull
     TransformationKey key;
@@ -40,8 +43,7 @@ public class TransformationChain implements Transformation {
     Optional<String> transformationCode;
 
     public static TransformationChain of(@NonNull TransformationKey key,
-            List<Transformation> orderedListOfSteps,
-            TransformationChainId id) {
+            @NonNull List<Transformation> orderedListOfSteps, TransformationChainMetaData id) {
 
         Preconditions.checkArgument(!orderedListOfSteps.isEmpty());
         Preconditions.checkArgument(orderedListOfSteps.stream().allMatch(t -> key.equals(t.key())));
@@ -53,8 +55,17 @@ public class TransformationChain implements Transformation {
         return new TransformationChain(id, key, from, to, Optional.of(compositeJson));
     }
 
-    private static String createCompositeJson(List<Transformation> orderedListOfSteps) {
-        // TODO Auto-generated method stub
-        return "alert(\"you forgot something\");";
+    private static String createCompositeJson(List<Transformation> list) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("fns = [];");
+        list.forEach(f -> {
+            f.transformationCode().ifPresent(c -> {
+                sb.append("fns.push( ");
+                sb.append(c);
+                sb.append(" );");
+            });
+        });
+        sb.append("function transform(event) { fns.forEach( function(f){f(event)} ); }");
+        return sb.toString();
     }
 }
