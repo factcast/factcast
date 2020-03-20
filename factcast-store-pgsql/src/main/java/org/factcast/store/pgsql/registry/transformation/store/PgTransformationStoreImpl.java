@@ -40,7 +40,7 @@ public class PgTransformationStoreImpl extends AbstractTransformationStore {
     private final SpringLiquibase unused;
 
     @Override
-    protected void doRegister(@NonNull TransformationSource source, String transformation)
+    protected void doStore(@NonNull TransformationSource source, String transformation)
             throws TransformationConflictException {
         jdbcTemplate.update(
                 "INSERT INTO transformationstore (id, hash, ns, type, from_version, to_version, transformation) VALUES (?,?,?,?,?,?,?)",

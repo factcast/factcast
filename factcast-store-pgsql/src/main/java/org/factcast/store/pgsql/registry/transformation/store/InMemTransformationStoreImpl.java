@@ -34,7 +34,7 @@ public class InMemTransformationStoreImpl extends AbstractTransformationStore {
     private final Map<TransformationKey, List<Transformation>> transformationCache = new HashMap<>();
 
     @Override
-    protected void doRegister(@NonNull TransformationSource source, String transformation)
+    protected void doStore(@NonNull TransformationSource source, String transformation)
             throws TransformationConflictException {
         String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
         if (oldHash != null && !oldHash.contentEquals(source.hash()))

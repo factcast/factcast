@@ -38,7 +38,7 @@ public abstract class AbstractTransformationStore implements TransformationStore
     @Override
     public final void store(TransformationSource source, String transformation)
             throws TransformationConflictException {
-        doRegister(source, transformation);
+        doStore(source, transformation);
         // uses task per listener to avoid a listener throwing an exception
         // spoil the whole thing
         listeners.forEach(t -> es.submit(() -> {
@@ -47,7 +47,7 @@ public abstract class AbstractTransformationStore implements TransformationStore
 
     }
 
-    protected abstract void doRegister(TransformationSource source, String transformation);
+    protected abstract void doStore(TransformationSource source, String transformation);
 
     @Override
     public void register(TransformationStoreListener listener) {
