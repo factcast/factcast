@@ -163,6 +163,24 @@ public class TransformationChainsTest {
     }
 
     @Test
+    void testSyntheticTransformation() throws Exception {
+
+        ArrayList<Transformation> all = Lists.newArrayList();
+        all.add(SingleTransformation.of(key, 2, 1, js(1)));
+        all.add(SingleTransformation.of(key, 3, 2, null));
+
+        when(r.get(key)).thenReturn(all);
+
+        TransformationChain chain = uut.build(key, 3, 1);
+
+        JsonNode input = FactCastJson.readTree("{}");
+        JsonNode actual = new NashornTransformer().transform(chain, input);
+        assertThat(actual.toString()).isEqualTo(
+                "{\"stage1\":true}");
+
+    }
+
+    @Test
     void testNoTransformationForKey() throws Exception {
         ArrayList<Transformation> all = Lists.newArrayList();
         when(r.get(key)).thenReturn(all);
