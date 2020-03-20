@@ -18,7 +18,11 @@ package org.factcast.store.pgsql.registry.transformation.store;
 import java.util.List;
 import java.util.Optional;
 
-import org.factcast.store.pgsql.registry.transformation.*;
+import org.factcast.store.pgsql.registry.transformation.SingleTransformation;
+import org.factcast.store.pgsql.registry.transformation.Transformation;
+import org.factcast.store.pgsql.registry.transformation.TransformationConflictException;
+import org.factcast.store.pgsql.registry.transformation.TransformationKey;
+import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import liquibase.integration.spring.SpringLiquibase;
@@ -26,7 +30,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class PgTransformationStoreImpl implements TransformationStore {
+public class PgTransformationStoreImpl extends AbstractTransformationStore {
     @NonNull
     private final JdbcTemplate jdbcTemplate;
 
@@ -36,7 +40,7 @@ public class PgTransformationStoreImpl implements TransformationStore {
     private final SpringLiquibase unused;
 
     @Override
-    public void register(@NonNull TransformationSource source, String transformation)
+    protected void doStore(@NonNull TransformationSource source, String transformation)
             throws TransformationConflictException {
         jdbcTemplate.update(
                 "INSERT INTO transformationstore (id, hash, ns, type, from_version, to_version, transformation) VALUES (?,?,?,?,?,?,?)",
@@ -48,8 +52,7 @@ public class PgTransformationStoreImpl implements TransformationStore {
     public boolean contains(@NonNull TransformationSource source)
             throws TransformationConflictException {
         List<String> hashes = jdbcTemplate.queryForList(
-                "SELECT hash FROM transformationstore WHERE id=?",
-                String.class,
+                "SELECT hash FROM transformationstore WHERE id=?", String.class,
                 source.id());
 
         if (!hashes.isEmpty()) {
@@ -57,9 +60,8 @@ public class PgTransformationStoreImpl implements TransformationStore {
             if (hash.equals(source.hash())) {
                 return true;
             } else {
-                throw new TransformationConflictException("Source at " + source
-                        + " does not match the stored hash "
-                        + hash);
+                throw new TransformationConflictException(
+                        "Source at " + source + " does not match the stored hash " + hash);
             }
         } else {
             return false;
@@ -70,8 +72,7 @@ public class PgTransformationStoreImpl implements TransformationStore {
     public List<Transformation> get(@NonNull TransformationKey key) {
         return jdbcTemplate.query(
                 "SELECT from_version, to_version, transformation FROM transformationstore WHERE ns=? AND type=?",
-                new Object[] { key.ns(), key.type() },
-                (rs, rowNum) -> {
+                new Object[] { key.ns(), key.type() }, (rs, rowNum) -> {
                     int from = rs.getInt("from_version");
                     int to = rs.getInt("to_version");
                     String code = rs.getString("transformation");

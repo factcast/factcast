@@ -74,7 +74,7 @@ public class HttpSchemaRegistryTest {
         uut.refreshVerbose();
 
         verify(schemaStore, times(2)).register(Mockito.any(), Mockito.any());
-        verify(transformationStore, times(3)).register(Mockito.any(), Mockito.any());
+        verify(transformationStore, times(3)).store(Mockito.any(), Mockito.any());
 
         verify(fileFetcher, times(2)).fetchSchema(Mockito.any());
         verify(fileFetcher, times(2)).fetchTransformation(Mockito.any());

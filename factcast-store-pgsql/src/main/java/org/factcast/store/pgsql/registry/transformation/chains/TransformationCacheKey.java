@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.transformation;
+package org.factcast.store.pgsql.registry.transformation.chains;
 
-import java.util.List;
+import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 
-public interface TransformationStore {
-    void store(TransformationSource source, String transformation)
-            throws TransformationConflictException;
+import lombok.Value;
 
-    void register(TransformationStoreListener listener);
+@Value
+public class TransformationCacheKey {
+    TransformationKey key;
 
-    void unregister(TransformationStoreListener listener);
+    int fromVersion;
 
-    boolean contains(TransformationSource source) throws TransformationConflictException;
-
-    List<Transformation> get(TransformationKey key);
+    int toVersion;
 }

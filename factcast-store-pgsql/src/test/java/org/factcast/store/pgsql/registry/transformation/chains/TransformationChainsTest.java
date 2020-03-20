@@ -51,7 +51,7 @@ public class TransformationChainsTest {
 
         when(r.get(key)).thenReturn(all);
 
-        TransformationChain chain = uut.build(key, 2, 5);
+        TransformationChain chain = uut.get(key, 2, 5);
 
         assertEquals(2, chain.fromVersion());
         assertEquals(5, chain.toVersion());
@@ -79,7 +79,7 @@ public class TransformationChainsTest {
         when(r.get(key)).thenReturn(all);
 
         assertThrows(MissingTransformationInformation.class, () -> {
-            uut.build(key, 1, 7);
+            uut.get(key, 1, 7);
         });
     }
 
@@ -96,7 +96,7 @@ public class TransformationChainsTest {
 
         when(r.get(key)).thenReturn(all);
 
-        TransformationChain chain = uut.build(key, 1, 7);
+        TransformationChain chain = uut.get(key, 1, 7);
 
         assertEquals(1, chain.fromVersion());
         assertEquals(7, chain.toVersion());
@@ -127,7 +127,7 @@ public class TransformationChainsTest {
 
         when(r.get(key)).thenReturn(all);
 
-        TransformationChain chain = uut.build(key, 1, 7);
+        TransformationChain chain = uut.get(key, 1, 7);
 
         assertEquals(1, chain.fromVersion());
         assertEquals(7, chain.toVersion());
@@ -157,7 +157,7 @@ public class TransformationChainsTest {
         when(r.get(key)).thenReturn(all);
 
         assertThrows(MissingTransformationInformation.class, () -> {
-            uut.build(key, 2, 99);
+            uut.get(key, 2, 99);
         });
 
     }
@@ -171,12 +171,11 @@ public class TransformationChainsTest {
 
         when(r.get(key)).thenReturn(all);
 
-        TransformationChain chain = uut.build(key, 3, 1);
+        TransformationChain chain = uut.get(key, 3, 1);
 
         JsonNode input = FactCastJson.readTree("{}");
         JsonNode actual = new NashornTransformer().transform(chain, input);
-        assertThat(actual.toString()).isEqualTo(
-                "{\"stage1\":true}");
+        assertThat(actual.toString()).isEqualTo("{\"stage1\":true}");
 
     }
 
@@ -186,7 +185,7 @@ public class TransformationChainsTest {
         when(r.get(key)).thenReturn(all);
 
         assertThrows(MissingTransformationInformation.class, () -> {
-            uut.build(key, 2, 99);
+            uut.get(key, 2, 99);
         });
 
     }

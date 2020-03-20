@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
+import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 
 import com.github.fge.jsonschema.main.JsonSchema;
@@ -51,6 +52,11 @@ public class NOPSchemaRegistry implements SchemaRegistry {
 
     @Override
     public void refreshVerbose() {
+        // NOP
+    }
+
+    @Override
+    public void register(TransformationStoreListener transformationChains) {
         // NOP
     }
 }

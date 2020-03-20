@@ -20,17 +20,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.factcast.store.pgsql.registry.transformation.*;
+import org.factcast.store.pgsql.registry.transformation.SingleTransformation;
+import org.factcast.store.pgsql.registry.transformation.Transformation;
+import org.factcast.store.pgsql.registry.transformation.TransformationConflictException;
+import org.factcast.store.pgsql.registry.transformation.TransformationKey;
+import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 
 import lombok.NonNull;
 
-public class InMemTransformationStoreImpl implements TransformationStore {
+public class InMemTransformationStoreImpl extends AbstractTransformationStore {
     private final Map<String, String> id2hashMap = new HashMap<>();
 
     private final Map<TransformationKey, List<Transformation>> transformationCache = new HashMap<>();
 
     @Override
-    public void register(@NonNull TransformationSource source, String transformation)
+    protected void doStore(@NonNull TransformationSource source, String transformation)
             throws TransformationConflictException {
         String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
         if (oldHash != null && !oldHash.contentEquals(source.hash()))
@@ -51,7 +55,7 @@ public class InMemTransformationStoreImpl implements TransformationStore {
                 return true;
             else
                 throw new TransformationConflictException(
-                        "Source at " + source + " does not match the stored hash "
+                        "TransformationSource at " + source + " does not match the stored hash "
                                 + hash);
         else
             return false;

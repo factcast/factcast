@@ -64,7 +64,7 @@ public abstract class AbstractTransformationStoreTest {
         s.type("type");
         s.from(1);
         s.to(2);
-        uut.register(s, "");
+        uut.store(s, "");
 
         List<Transformation> actual = uut.get(s.toKey());
         assertThat(actual).isNotEmpty();
@@ -79,7 +79,7 @@ public abstract class AbstractTransformationStoreTest {
         s.type("testContainsSensesConflict");
         s.from(1);
         s.to(2);
-        uut.register(s, "");
+        uut.store(s, "");
 
         assertThrows(TransformationConflictException.class, () -> {
             TransformationSource conflicting = new TransformationSource();
@@ -102,7 +102,7 @@ public abstract class AbstractTransformationStoreTest {
             uut.contains(null);
         });
         assertNpe(() -> {
-            uut.register(null, "{}");
+            uut.store(null, "{}");
         });
         assertNpe(() -> {
             uut.get(null);
@@ -123,7 +123,7 @@ public abstract class AbstractTransformationStoreTest {
         s.type("testMatchingContains");
         s.from(1);
         s.to(2);
-        uut.register(s, "{}");
+        uut.store(s, "{}");
 
         assertThat(uut.contains(s)).isTrue();
     }
