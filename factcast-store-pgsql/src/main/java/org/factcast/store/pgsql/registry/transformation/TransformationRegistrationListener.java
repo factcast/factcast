@@ -15,17 +15,6 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
-import java.util.List;
-
-public interface TransformationStore {
-    void register(TransformationSource source, String transformation)
-            throws TransformationConflictException;
-
-    void register(TransformationRegistrationListener listener);
-
-    void unregister(TransformationRegistrationListener listener);
-
-    boolean contains(TransformationSource source) throws TransformationConflictException;
-
-    List<Transformation> get(TransformationKey key);
+public interface TransformationRegistrationListener {
+    void notifyRegistrationFor(TransformationKey key);
 }
