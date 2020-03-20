@@ -75,10 +75,23 @@ public class TransformationChains implements TransformationStoreListener {
             throws MissingTransformationInformation {
 
         Map<VersionPath, TransformationChain> chainsPerKey;
+
         synchronized (cache) {
+            // sync is necessary, because we don't want to end up with tho
+            // different maps
+            // we're locking the whole cache, but creating a hashmap should not
+            // take too
+            // much time
             chainsPerKey = cache.computeIfAbsent(key, k -> new HashMap<>());
         }
-        return chainsPerKey.computeIfAbsent(new VersionPath(from, to), p -> build(key, from, to));
+        synchronized (chainsPerKey) {
+            // we're locking the map for this particular key. contention should
+            // be limited
+            // and the gain of not creating unnecessary chains should be on the
+            // plus side.
+            return chainsPerKey.computeIfAbsent(new VersionPath(from, to), p -> build(key, from,
+                    to));
+        }
     }
 
     private TransformationChain build(TransformationKey key, int from, int to)
