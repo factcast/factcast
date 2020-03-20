@@ -73,8 +73,11 @@ public class TransformationChains implements TransformationStoreListener {
 
     public TransformationChain get(TransformationKey key, int from, int to)
             throws MissingTransformationInformation {
-        Map<VersionPath, TransformationChain> chainsPerKey = cache.computeIfAbsent(key,
-                k -> new HashMap<>());
+
+        Map<VersionPath, TransformationChain> chainsPerKey;
+        synchronized (cache) {
+            chainsPerKey = cache.computeIfAbsent(key, k -> new HashMap<>());
+        }
         return chainsPerKey.computeIfAbsent(new VersionPath(from, to), p -> build(key, from, to));
     }
 
