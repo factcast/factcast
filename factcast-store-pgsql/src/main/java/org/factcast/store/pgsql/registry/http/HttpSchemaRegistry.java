@@ -26,7 +26,11 @@ import java.util.stream.Collectors;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
-import org.factcast.store.pgsql.registry.transformation.*;
+import org.factcast.store.pgsql.registry.transformation.Transformation;
+import org.factcast.store.pgsql.registry.transformation.TransformationKey;
+import org.factcast.store.pgsql.registry.transformation.TransformationRegistrationListener;
+import org.factcast.store.pgsql.registry.transformation.TransformationSource;
+import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
@@ -69,8 +73,7 @@ public class HttpSchemaRegistry implements SchemaRegistry {
     @VisibleForTesting
     protected HttpSchemaRegistry(@NonNull SchemaStore schemaStore,
             @NonNull TransformationStore transformationStore,
-            @NonNull IndexFetcher indexFetcher,
-            @NonNull RegistryFileFetcher registryFileFetcher) {
+            @NonNull IndexFetcher indexFetcher, @NonNull RegistryFileFetcher registryFileFetcher) {
         this.schemaStore = schemaStore;
         this.transformationStore = transformationStore;
         this.indexFetcher = indexFetcher;
@@ -112,8 +115,7 @@ public class HttpSchemaRegistry implements SchemaRegistry {
             Stopwatch sw = Stopwatch.createStarted();
             log.info("Registry update started");
             refreshSilent();
-            log.info("Registry update finished in {}ms", sw.stop()
-                    .elapsed(TimeUnit.MILLISECONDS));
+            log.info("Registry update finished in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
 
         }
     }
@@ -166,9 +168,8 @@ public class HttpSchemaRegistry implements SchemaRegistry {
             log.info("Transformationregistry is up to date.");
         } else {
             int count = toFetch.size();
-            log.info("TransformationStore will be updated, {} {} to fetch.", count, count == 1
-                    ? "transformation"
-                    : "transformations");
+            log.info("TransformationStore will be updated, {} {} to fetch.", count,
+                    count == 1 ? "transformation" : "transformations");
             toFetch.parallelStream().forEach(source -> {
                 try {
                     String transformationCode = null;
@@ -192,6 +193,11 @@ public class HttpSchemaRegistry implements SchemaRegistry {
     @Override
     public List<Transformation> get(TransformationKey key) {
         return transformationStore.get(key);
+    }
+
+    @Override
+    public void register(TransformationRegistrationListener listener) {
+        transformationStore.register(listener);
     }
 
 }

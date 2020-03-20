@@ -15,14 +15,15 @@
  */
 package org.factcast.store.pgsql.registry.transformation.chains;
 
-/**
- * TODO RT or not RT ?
- */
-public class MissingTransformationInformation extends RuntimeException {
-    private static final long serialVersionUID = 1L;
+import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 
-    public MissingTransformationInformation(String string) {
-        super(string);
-    }
+import lombok.Value;
 
+@Value
+public class TransformationCacheKey {
+    TransformationKey key;
+
+    int fromVersion;
+
+    int toVersion;
 }

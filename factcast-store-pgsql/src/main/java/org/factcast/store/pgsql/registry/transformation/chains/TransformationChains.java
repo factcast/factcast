@@ -15,13 +15,16 @@
  */
 package org.factcast.store.pgsql.registry.transformation.chains;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
+import org.factcast.store.pgsql.registry.transformation.TransformationRegistrationListener;
 
 import com.google.common.collect.Iterables;
 
@@ -33,15 +36,27 @@ import es.usc.citius.hipster.graph.GraphSearchProblem;
 import es.usc.citius.hipster.graph.HipsterDirectedGraph;
 import es.usc.citius.hipster.model.HeuristicNode;
 import es.usc.citius.hipster.model.impl.WeightedNode;
-import lombok.RequiredArgsConstructor;
 import lombok.Value;
 
-@RequiredArgsConstructor
-public class TransformationChains {
+public class TransformationChains implements TransformationRegistrationListener {
 
     private static final double BASE_COST = 1_000_000d;
 
-    final SchemaRegistry r;
+    private final SchemaRegistry r;
+
+    private final Map<TransformationKey, Map<VersionPath, TransformationChain>> cache = new HashMap<>();
+
+    @Value
+    static class VersionPath {
+        int fromVersion;
+
+        int toVersion;
+    }
+
+    public TransformationChains(SchemaRegistry r) {
+        this.r = r;
+        r.register(this);
+    }
 
     @Value(staticConstructor = "of")
     private static class Edge {
@@ -56,7 +71,14 @@ public class TransformationChains {
         }
     }
 
-    public TransformationChain build(TransformationKey key, int from, int to)
+    public TransformationChain get(TransformationKey key, int from, int to)
+            throws MissingTransformationInformation {
+        Map<VersionPath, TransformationChain> chainsPerKey = cache.computeIfAbsent(key,
+                k -> new HashMap<>());
+        return chainsPerKey.computeIfAbsent(new VersionPath(from, to), p -> build(key, from, to));
+    }
+
+    private TransformationChain build(TransformationKey key, int from, int to)
             throws MissingTransformationInformation {
 
         GraphBuilder<Integer, Edge> builder = GraphBuilder.create();
@@ -96,12 +118,17 @@ public class TransformationChains {
                 TransformationChainMetaData.of(r.getOptimalPaths().get(0).toString(), cost));
 
         // sad: in retrospective, Hipster might not have been the greatest
-        // choice due to
-        // lack of proper Generics.
+        // choice due to lack of proper Generics.
     }
 
     private static <N, E> List<E> map(List<N> list, Function<N, E> f) {
         return list.stream().map(f).collect(Collectors.toList());
+    }
+
+    @Override
+    public void notifyRegistrationFor(TransformationKey key) {
+        // invalidate cache for key
+        cache.remove(key);
     }
 
 }
