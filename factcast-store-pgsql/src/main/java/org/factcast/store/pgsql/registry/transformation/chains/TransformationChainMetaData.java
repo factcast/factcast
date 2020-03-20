@@ -21,5 +21,5 @@ import lombok.Value;
 public class TransformationChainMetaData {
     String id;
 
-    int score;
+    long score;
 }

@@ -39,7 +39,7 @@ import lombok.Value;
 @RequiredArgsConstructor
 public class TransformationChains {
 
-    private static final double BASE_COST = 10000d;
+    private static final double BASE_COST = 1_000_000d;
 
     final SchemaRegistry r;
 
@@ -74,7 +74,8 @@ public class TransformationChains {
         AStar<Edge, Integer, Double, WeightedNode<Edge, Integer, Double>> problem = Hipster
                 .createDijkstra(GraphSearchProblem.startingFrom(from)
                         .in(g)
-                        .extractCostFromEdges(e -> e.fromVersion() + BASE_COST)
+                        .extractCostFromEdges(e -> e.fromVersion() * (e.toVersion() - e
+                                .fromVersion()) + BASE_COST)
                         .build());
 
         // run search

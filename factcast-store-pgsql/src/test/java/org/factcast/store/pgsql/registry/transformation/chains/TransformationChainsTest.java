@@ -58,7 +58,7 @@ public class TransformationChainsTest {
         assertEquals(key, chain.key());
         assertEquals("[2, 3, 4, 5]", chain.meta().id());
         assertThat(chain.transformationCode()).isPresent();
-        assertEquals(30009, chain.meta().score());
+        assertEquals(3000009, chain.meta().score());
 
         JsonNode input = FactCastJson.readTree("{}");
         JsonNode actual = new NashornTransformer().transform(chain, input);
@@ -103,7 +103,7 @@ public class TransformationChainsTest {
         assertEquals(key, chain.key());
         assertEquals("[1, 2, 6, 7]", chain.meta().id());
         assertThat(chain.transformationCode()).isPresent();
-        assertEquals(30009, chain.meta().score());
+        assertEquals(3000015, chain.meta().score());
 
         JsonNode input = FactCastJson.readTree("{}");
         JsonNode actual = new NashornTransformer().transform(chain, input);
@@ -134,7 +134,7 @@ public class TransformationChainsTest {
         assertEquals(key, chain.key());
         assertEquals("[1, 2, 5, 6, 7]", chain.meta().id());
         assertThat(chain.transformationCode()).isPresent();
-        assertEquals(40014, chain.meta().score());
+        assertEquals(4000018, chain.meta().score());
 
         JsonNode input = FactCastJson.readTree("{}");
         JsonNode actual = new NashornTransformer().transform(chain, input);
