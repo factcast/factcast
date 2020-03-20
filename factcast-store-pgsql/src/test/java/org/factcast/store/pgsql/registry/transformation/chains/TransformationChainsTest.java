@@ -171,12 +171,11 @@ public class TransformationChainsTest {
 
         when(r.get(key)).thenReturn(all);
 
-        TransformationChain chain = uut.build(key, 3, 1);
+        TransformationChain chain = uut.get(key, 3, 1);
 
         JsonNode input = FactCastJson.readTree("{}");
         JsonNode actual = new NashornTransformer().transform(chain, input);
-        assertThat(actual.toString()).isEqualTo(
-                "{\"stage1\":true}");
+        assertThat(actual.toString()).isEqualTo("{\"stage1\":true}");
 
     }
 
