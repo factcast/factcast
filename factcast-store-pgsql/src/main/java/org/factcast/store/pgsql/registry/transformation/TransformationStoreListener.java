@@ -15,6 +15,6 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
-public interface TransformationRegistrationListener {
-    void notifyRegistrationFor(TransformationKey key);
+public interface TransformationStoreListener {
+    void notifyFor(TransformationKey key);
 }

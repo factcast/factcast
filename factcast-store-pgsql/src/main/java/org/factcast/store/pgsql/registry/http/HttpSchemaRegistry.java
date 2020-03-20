@@ -28,9 +28,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
-import org.factcast.store.pgsql.registry.transformation.TransformationRegistrationListener;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
+import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
@@ -177,7 +177,7 @@ public class HttpSchemaRegistry implements SchemaRegistry {
                         transformationCode = registryFileFetcher.fetchTransformation(source);
                     }
 
-                    transformationStore.register(source, transformationCode);
+                    transformationStore.store(source, transformationCode);
                 } catch (IOException e) {
                     throw new SchemaRegistryUnavailableException(e);
                 }
@@ -196,7 +196,7 @@ public class HttpSchemaRegistry implements SchemaRegistry {
     }
 
     @Override
-    public void register(TransformationRegistrationListener listener) {
+    public void register(TransformationStoreListener listener) {
         transformationStore.register(listener);
     }
 

@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
-import org.factcast.store.pgsql.registry.transformation.TransformationRegistrationListener;
+import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
 
 import com.google.common.collect.Iterables;
 
@@ -38,7 +38,7 @@ import es.usc.citius.hipster.model.HeuristicNode;
 import es.usc.citius.hipster.model.impl.WeightedNode;
 import lombok.Value;
 
-public class TransformationChains implements TransformationRegistrationListener {
+public class TransformationChains implements TransformationStoreListener {
 
     private static final double BASE_COST = 1_000_000d;
 
@@ -126,7 +126,7 @@ public class TransformationChains implements TransformationRegistrationListener 
     }
 
     @Override
-    public void notifyRegistrationFor(TransformationKey key) {
+    public void notifyFor(TransformationKey key) {
         // invalidate cache for key
         cache.remove(key);
     }

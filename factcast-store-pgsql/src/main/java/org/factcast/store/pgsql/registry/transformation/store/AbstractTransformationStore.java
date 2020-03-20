@@ -21,13 +21,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.factcast.store.pgsql.registry.transformation.TransformationConflictException;
-import org.factcast.store.pgsql.registry.transformation.TransformationRegistrationListener;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
+import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
 
 public abstract class AbstractTransformationStore implements TransformationStore {
 
-    private final List<TransformationRegistrationListener> listeners = new CopyOnWriteArrayList<>();
+    private final List<TransformationStoreListener> listeners = new CopyOnWriteArrayList<>();
 
     private final ExecutorService es = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r);
@@ -36,14 +36,13 @@ public abstract class AbstractTransformationStore implements TransformationStore
     });
 
     @Override
-    public final void register(TransformationSource source, String transformation)
+    public final void store(TransformationSource source, String transformation)
             throws TransformationConflictException {
         doRegister(source, transformation);
         // uses task per listener to avoid a listener throwing an exception
-        // spoil the
-        // whole thing
+        // spoil the whole thing
         listeners.forEach(t -> es.submit(() -> {
-            t.notifyRegistrationFor(source.toKey());
+            t.notifyFor(source.toKey());
         }));
 
     }
@@ -51,12 +50,12 @@ public abstract class AbstractTransformationStore implements TransformationStore
     protected abstract void doRegister(TransformationSource source, String transformation);
 
     @Override
-    public void register(TransformationRegistrationListener listener) {
+    public void register(TransformationStoreListener listener) {
         listeners.add(listener);
     }
 
     @Override
-    public void unregister(TransformationRegistrationListener listener) {
+    public void unregister(TransformationStoreListener listener) {
         listeners.remove(listener);
     }
 
