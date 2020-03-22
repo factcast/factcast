@@ -69,6 +69,11 @@ public class FactSpecTest {
     }
 
     @Test
+    void testFactSpecVersion() {
+        assertEquals(1, FactSpec.ns("x").type("y").version(1).version());
+    }
+
+    @Test
     void testFactSpecAggId() {
         UUID id = UUID.randomUUID();
         assertEquals(id, FactSpec.ns("x").aggId(id).aggId());
@@ -133,6 +138,54 @@ public class FactSpecTest {
         ObjectNode node = FactCastJson.toObjectNode(FactCastJson.writeValueAsString(fs));
 
         assertEquals(expected, node.get("jsFilterScript").asText());
+    }
+
+    @RenameMe(ns = "ns")
+    static class TestFact {
+    }
+
+    @Test
+    public void testFactSpecFromAnnotation1() {
+        FactSpec factSpec = FactSpec.from(TestFact.class);
+
+        assertEquals(factSpec.ns(), "ns");
+        assertNull(factSpec.type());
+        assertNull(factSpec.version());
+
+    }
+
+    @RenameMe(ns = "ns", type = "type")
+    static class TestFactWithType {
+    }
+
+    @Test
+    public void testFactSpecFromAnnotation2() {
+        FactSpec factSpec = FactSpec.from(TestFactWithType.class);
+
+        assertEquals(factSpec.ns(), "ns");
+        assertEquals(factSpec.type(), "type");
+        assertNull(factSpec.version());
+
+    }
+
+    @RenameMe(ns = "ns", type = "type", version = 2)
+    static class TestFactWithTypeAndVersion {
+    }
+
+    @Test
+    public void testFactSpecFromAnnotation3() {
+        FactSpec factSpec = FactSpec.from(TestFactWithTypeAndVersion.class);
+
+        assertEquals(factSpec.ns(), "ns");
+        assertEquals(factSpec.type(), "type");
+        assertEquals(factSpec.version(), 2);
+
+    }
+
+    @Test
+    public void testThrowIfNoAnnotationSpecPresent() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> FactSpec.from(RenameMe.class));
     }
 
 }
