@@ -119,7 +119,8 @@ public class FactSpec {
         Specification annotationSpec = clazz.getAnnotation(Specification.class);
 
         if (annotationSpec == null) {
-            throw new IllegalArgumentException("You must annotate your Fact with @Specification");
+            throw new IllegalArgumentException("You must annotate your Fact with @"
+                    + Specification.class.getSimpleName());
         }
 
         FactSpec factSpec = new FactSpec(annotationSpec.ns());
