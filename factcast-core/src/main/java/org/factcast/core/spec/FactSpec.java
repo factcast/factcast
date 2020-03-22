@@ -116,10 +116,10 @@ public class FactSpec {
     }
 
     public static <T> FactSpec from(Class<T> clazz) {
-        RenameMe annotationSpec = clazz.getAnnotation(RenameMe.class);
+        Specification annotationSpec = clazz.getAnnotation(Specification.class);
 
         if (annotationSpec == null) {
-            throw new IllegalArgumentException("You must annotate your Fact with @RenameMe");
+            throw new IllegalArgumentException("You must annotate your Fact with @Specification");
         }
 
         FactSpec factSpec = new FactSpec(annotationSpec.ns());

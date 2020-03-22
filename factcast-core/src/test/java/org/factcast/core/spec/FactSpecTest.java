@@ -140,7 +140,7 @@ public class FactSpecTest {
         assertEquals(expected, node.get("jsFilterScript").asText());
     }
 
-    @RenameMe(ns = "ns")
+    @Specification(ns = "ns")
     static class TestFact {
     }
 
@@ -154,7 +154,7 @@ public class FactSpecTest {
 
     }
 
-    @RenameMe(ns = "ns", type = "type")
+    @Specification(ns = "ns", type = "type")
     static class TestFactWithType {
     }
 
@@ -168,7 +168,7 @@ public class FactSpecTest {
 
     }
 
-    @RenameMe(ns = "ns", type = "type", version = 2)
+    @Specification(ns = "ns", type = "type", version = 2)
     static class TestFactWithTypeAndVersion {
     }
 
@@ -185,7 +185,7 @@ public class FactSpecTest {
     @Test
     public void testThrowIfNoAnnotationSpecPresent() {
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> FactSpec.from(RenameMe.class));
+                () -> FactSpec.from(Specification.class));
     }
 
 }
