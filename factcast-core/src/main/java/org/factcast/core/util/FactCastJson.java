@@ -18,8 +18,7 @@ package org.factcast.core.util;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-
-import org.factcast.core.Fact;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -136,8 +135,9 @@ public final class FactCastJson {
         return objectMapper.convertValue(fromValue, toValueType);
     }
 
-    public static @NonNull Fact treeToFact(JsonNode transformed) throws JsonProcessingException {
-        return objectMapper.treeToValue(transformed, Fact.class);
+    public static JsonNode toJsonNode(Map<String, Object> jsonAsMap) {
+        return objectMapper.convertValue(jsonAsMap, JsonNode.class);
+
     }
 
 }

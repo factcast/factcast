@@ -79,9 +79,12 @@ public class FactTransformersImpl implements FactTransformers {
         if (cached.isPresent())
             return cached.get();
         else {
-            JsonNode input = FactCastJson.valueToTree(e);
+            JsonNode input;
             try {
-                Fact transformed = FactCastJson.treeToFact(trans.transform(chain, input));
+                // TODO can be optimized by working around toString
+                input = FactCastJson.readTree(e.jsonPayload());
+                Fact transformed = Fact.of(e.jsonHeader(), trans.transform(chain, input)
+                        .toString());
                 cache.put(transformed, chainId);
                 return transformed;
             } catch (JsonProcessingException e1) {

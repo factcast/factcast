@@ -20,7 +20,6 @@ import java.util.Optional;
 
 import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.FactTransformersFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -45,8 +44,7 @@ public class GrpcFactStoreAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(FactStore.class)
     public FactStore factStore(GrpcChannelFactory af,
-            @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
-            FactTransformersFactory transFactory) {
+            @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials) {
         org.factcast.client.grpc.FactCastGrpcChannelFactory f = new org.factcast.client.grpc.FactCastGrpcChannelFactory() {
 
             @Override
@@ -64,6 +62,6 @@ public class GrpcFactStoreAutoConfiguration {
                 af.close();
             }
         };
-        return new GrpcFactStore(f, credentials, transFactory);
+        return new GrpcFactStore(f, credentials);
     }
 }

@@ -31,7 +31,6 @@ import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
-import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -102,28 +101,23 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-    private final FactTransformersFactory transformersFactory;
-
     @Autowired
     @Generated
     public GrpcFactStore(FactCastGrpcChannelFactory channelFactory,
-            @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
-            @NonNull FactTransformersFactory transformersFactory) {
-        this(channelFactory.createChannel(CHANNEL_NAME), credentials, transformersFactory);
+            @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials) {
+        this(channelFactory.createChannel(CHANNEL_NAME), credentials);
 
     }
 
     @Generated
     @VisibleForTesting
-    GrpcFactStore(Channel channel, Optional<String> credentials,
-            @NonNull FactTransformersFactory transformersFactory) {
+    GrpcFactStore(Channel channel, Optional<String> credentials) {
         this(RemoteFactStoreGrpc.newBlockingStub(channel), RemoteFactStoreGrpc.newStub(channel),
-                credentials, transformersFactory);
+                credentials);
     }
 
     private GrpcFactStore(RemoteFactStoreBlockingStub newBlockingStub, RemoteFactStoreStub newStub,
-            Optional<String> credentials, @NonNull FactTransformersFactory transformersFactory) {
-        this.transformersFactory = transformersFactory;
+            Optional<String> credentials) {
         blockingStub = newBlockingStub;
         stub = newStub;
 
@@ -159,8 +153,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @Override
     public Subscription subscribe(@NonNull SubscriptionRequestTO req,
             @NonNull FactObserver observer) {
-        SubscriptionImpl subscription = SubscriptionImpl.on(observer, transformersFactory
-                .createFor(req));
+        SubscriptionImpl subscription = SubscriptionImpl.on(observer);
         StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new ClientStreamObserver(
                 subscription);
         ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()

@@ -70,7 +70,7 @@ public class NashornTransformer implements Transformer {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
                 invocable.invokeFunction("transform", jsonAsMap);
-                return FactCastJson.convertValue(jsonAsMap, JsonNode.class);
+                return FactCastJson.toJsonNode(jsonAsMap);
             } catch (NoSuchMethodException | ScriptException e) {
                 throw new TransformationException(e);
             }

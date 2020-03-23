@@ -22,6 +22,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.GenericObserver;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -174,5 +175,17 @@ public class SubscriptionImpl implements Subscription {
             @NonNull GenericObserver<org.factcast.core.Fact> o,
             FactTransformers transformers) {
         return new SubscriptionImpl(o, transformers);
+    }
+
+    // for client side
+    public static SubscriptionImpl on(@NonNull FactObserver observer2) {
+        return new SubscriptionImpl(observer2, new FactTransformers() {
+
+            @Override
+            public @NonNull Fact transformIfNecessary(@NonNull Fact e)
+                    throws TransformationException {
+                return e;
+            }
+        });
     }
 }

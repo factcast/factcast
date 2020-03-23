@@ -34,7 +34,6 @@ import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
-import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.ConditionalPublishRequest;
@@ -74,9 +73,6 @@ class GrpcFactStoreTest {
 
     @Mock
     private RemoteFactStoreBlockingStub blockingStub;
-
-    @Mock
-    private FactTransformersFactory transFactory;
 
     @Mock
     private RemoteFactStoreStub stub;
@@ -461,22 +457,20 @@ class GrpcFactStoreTest {
     @Test
     void testCredentialsWrongFormat() throws Exception {
         assertThrows(IllegalArgumentException.class, () -> new GrpcFactStore(mock(Channel.class),
-                Optional.ofNullable("xyz"), transFactory));
+                Optional.ofNullable("xyz")));
 
         assertThrows(IllegalArgumentException.class, () -> new GrpcFactStore(mock(Channel.class),
-                Optional.ofNullable("x:y:z"), transFactory));
+                Optional.ofNullable("x:y:z")));
 
-        assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc"),
-                transFactory))
-                        .isNotNull();
+        assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
+                .isNotNull();
 
     }
 
     @Test
     void testCredentialsRightFormat() throws Exception {
-        assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc"),
-                transFactory))
-                        .isNotNull();
+        assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
+                .isNotNull();
     }
 
     @Test
