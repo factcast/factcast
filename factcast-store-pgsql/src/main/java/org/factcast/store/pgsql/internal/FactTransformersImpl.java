@@ -69,10 +69,7 @@ public class FactTransformersImpl implements FactTransformers {
                 "No reqested Version !? This must not happen"));
         int sourceVersion = e.version();
 
-        TransformationKey key = TransformationKey.builder()
-                .ns(e.ns())
-                .type(e.type())
-                .build();
+        TransformationKey key = TransformationKey.of(e.ns(), e.type());
         TransformationChain chain = chains.get(key, sourceVersion,
                 targetVersion);
 

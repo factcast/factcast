@@ -15,8 +15,8 @@
  */
 package org.factcast.store.pgsql.registry.validation.schema.store;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Optional;
 
@@ -51,11 +51,7 @@ public abstract class AbstractSchemaStoreTest {
 
     @Test
     void testEmptyGet() throws Exception {
-        Optional<String> actual = uut.get(SchemaKey.builder()
-                .ns("ns")
-                .type("testEmptyGet")
-                .version(5)
-                .build());
+        Optional<String> actual = uut.get(SchemaKey.of("ns", "testEmptyGet", 5));
         assertThat(actual).isEmpty();
     }
 

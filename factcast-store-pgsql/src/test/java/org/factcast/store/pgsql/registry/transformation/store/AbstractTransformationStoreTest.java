@@ -15,12 +15,16 @@
  */
 package org.factcast.store.pgsql.registry.transformation.store;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
-import org.factcast.store.pgsql.registry.transformation.*;
+import org.factcast.store.pgsql.registry.transformation.Transformation;
+import org.factcast.store.pgsql.registry.transformation.TransformationConflictException;
+import org.factcast.store.pgsql.registry.transformation.TransformationKey;
+import org.factcast.store.pgsql.registry.transformation.TransformationSource;
+import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -48,10 +52,7 @@ public abstract class AbstractTransformationStoreTest {
 
     @Test
     void testEmptyGet() throws Exception {
-        List<Transformation> actual = uut.get(TransformationKey.builder()
-                .ns("ns")
-                .type("testEmptyGet")
-                .build());
+        List<Transformation> actual = uut.get(TransformationKey.of("ns", "testEmptyGet"));
         assertThat(actual).isEmpty();
     }
 

@@ -79,21 +79,15 @@ public class HttpSchemaRegistryTest {
         verify(fileFetcher, times(2)).fetchSchema(Mockito.any());
         verify(fileFetcher, times(2)).fetchTransformation(Mockito.any());
 
-        assertTrue(schemaStore.get(SchemaKey.builder().ns("ns").type("type").version(1).build())
+        assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 1))
                 .isPresent());
-        assertTrue(schemaStore.get(SchemaKey.builder().ns("ns").type("type").version(2).build())
+        assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 2))
                 .isPresent());
-        assertFalse(schemaStore.get(SchemaKey.builder().ns("ns").type("type").version(3).build())
+        assertFalse(schemaStore.get(SchemaKey.of("ns", "type", 3))
                 .isPresent());
 
-        assertEquals(2, transformationStore.get(TransformationKey.builder()
-                .ns("ns")
-                .type("type")
-                .build()).size());
-        assertEquals(1, transformationStore.get(TransformationKey.builder()
-                .ns("ns")
-                .type("type2")
-                .build()).size());
+        assertEquals(2, transformationStore.get(TransformationKey.of("ns", "type")).size());
+        assertEquals(1, transformationStore.get(TransformationKey.of("ns", "type2")).size());
 
     }
 

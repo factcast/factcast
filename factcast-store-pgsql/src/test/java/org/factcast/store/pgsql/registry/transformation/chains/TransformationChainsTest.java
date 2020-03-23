@@ -36,7 +36,7 @@ public class TransformationChainsTest {
 
     TransformationChains uut = new TransformationChains(r);
 
-    TransformationKey key = TransformationKey.builder().ns("ns").type("UserCreated").build();
+    TransformationKey key = TransformationKey.of("ns", "UserCreated");
 
     @Test
     void testStraightLine() throws Exception {

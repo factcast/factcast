@@ -46,7 +46,7 @@ public class TransformationSource {
     private Integer to;
 
     public TransformationKey toKey() {
-        return TransformationKey.builder().ns(ns).type(type).build();
+        return TransformationKey.of(ns, type);
     }
 
     public boolean isSynthetic() {
