@@ -35,8 +35,6 @@ import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.pgsql.registry.SchemaRegistryConfiguration;
 import org.factcast.store.pgsql.registry.transformation.TransformationConfiguration;
-import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
-import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
 import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -150,9 +148,4 @@ public class PgFactStoreInternalConfiguration {
         return new SimpleMeterRegistry();
     }
 
-    @Bean
-    public FactTransformersFactory factTransformersFactory(TransformationChains chains,
-            Transformer trans) {
-        return new FactTransformersFactoryImpl(chains, trans);
-    }
 }

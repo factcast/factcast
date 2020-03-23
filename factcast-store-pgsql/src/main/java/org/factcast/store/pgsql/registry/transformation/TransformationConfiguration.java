@@ -15,8 +15,12 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
+import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
+import org.factcast.store.pgsql.internal.FactTransformersFactoryImpl;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
+import org.factcast.store.pgsql.registry.transformation.cache.InMemTransformationCache;
+import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
 import org.factcast.store.pgsql.registry.transformation.chains.NashornTransformer;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
 import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
@@ -52,5 +56,18 @@ public class TransformationConfiguration {
     public Transformer transformer() {
         // TODO should test for Graal here, as nashorn is deprecated
         return new NashornTransformer();
+    }
+
+    @Bean
+    public TransformationCache transformationCache() {
+        // TODO should check for parameter and maybe give a warning on usage of
+        // inmem? Probably, inmem should not even exist once pg impl is done
+        return new InMemTransformationCache();
+    }
+
+    @Bean
+    public FactTransformersFactory factTransformersFactory(TransformationChains chains,
+            Transformer trans, TransformationCache cache) {
+        return new FactTransformersFactoryImpl(chains, trans, cache);
     }
 }

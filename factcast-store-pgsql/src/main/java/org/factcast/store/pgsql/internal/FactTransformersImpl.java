@@ -15,6 +15,7 @@
  */
 package org.factcast.store.pgsql.internal;
 
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 
@@ -23,6 +24,7 @@ import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
+import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChain;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
 import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
@@ -45,13 +47,16 @@ public class FactTransformersImpl implements FactTransformers {
     @NonNull
     private final Transformer trans;
 
+    @NonNull
+    private final TransformationCache cache;
+
     @Override
     public @NonNull Fact transformIfNecessary(@NonNull Fact e) throws TransformationException {
 
         int originalVersion = e.version();
         Set<Integer> requested = requestedVersions.get(e.ns(), e.type());
 
-        if (clientDoesNotCare(requested) || clientExpectesVersion(requested, e)) {
+        if (clientDoesNotCare(requested) || clientExpectsVersion(requested, e)) {
             return e;
         } else
             return transform(requested, e);
@@ -72,18 +77,25 @@ public class FactTransformersImpl implements FactTransformers {
         TransformationChain chain = chains.get(key, sourceVersion,
                 targetVersion);
 
-        JsonNode input = FactCastJson.valueToTree(e);
-        JsonNode transformed;
-        try {
-            transformed = trans.transform(chain, input);
-            return FactCastJson.treeToFact(transformed);
-        } catch (JsonProcessingException e1) {
-            throw new TransformationException(e1);
+        String chainId = chain.meta().id();
+
+        Optional<Fact> cached = cache.find(e.id(), targetVersion, chainId);
+        if (cached.isPresent())
+            return cached.get();
+        else {
+            JsonNode input = FactCastJson.valueToTree(e);
+            try {
+                Fact transformed = FactCastJson.treeToFact(trans.transform(chain, input));
+                cache.put(transformed, chainId);
+                return transformed;
+            } catch (JsonProcessingException e1) {
+                throw new TransformationException(e1);
+            }
         }
     }
 
-    private boolean clientExpectesVersion(Set<Integer> requested, Fact e) {
-        return requested.contains(e.version());
+    private boolean clientExpectsVersion(Set<Integer> requested, Fact e) {
+        return requested.contains(e.version()) || requested.contains(0);
     }
 
     private boolean clientDoesNotCare(Set<Integer> requested) {

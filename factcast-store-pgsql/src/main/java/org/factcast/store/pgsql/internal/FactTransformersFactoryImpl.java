@@ -18,6 +18,7 @@ package org.factcast.store.pgsql.internal;
 import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
 import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
 
@@ -30,20 +31,18 @@ public class FactTransformersFactoryImpl implements FactTransformersFactory {
 
     private final Transformer trans;
 
+    private final TransformationCache cache;
+
     @Override
     public FactTransformers createFor(SubscriptionRequestTO sr) {
 
         RequestedVersions rv = new RequestedVersions();
 
         sr.specs().forEach(s -> {
-            if (s.version() != null) {
-                rv.add(s.ns(), s.type(), s.version());
-            } else {
-                rv.add(s.ns(), s.type(), 0); // means - don't care? TODO
-            }
+            rv.add(s.ns(), s.type(), s.version());
         });
 
-        return new FactTransformersImpl(rv, chains, trans);
+        return new FactTransformersImpl(rv, chains, trans, cache);
 
     }
 
