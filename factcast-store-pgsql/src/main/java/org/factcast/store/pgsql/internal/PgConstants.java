@@ -145,7 +145,4 @@ public class PgConstants {
         return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
     }
 
-    private static String empty(String attributeName) {
-        return "'{}' AS " + attributeName;
-    }
 }
