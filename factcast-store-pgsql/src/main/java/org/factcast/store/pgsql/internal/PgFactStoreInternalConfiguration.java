@@ -22,6 +22,7 @@ import java.util.function.Predicate;
 import javax.sql.DataSource;
 
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.catchup.paged.PgPagedCatchUpFactory;
@@ -84,9 +85,10 @@ public class PgFactStoreInternalConfiguration {
     @Bean
     public PgSubscriptionFactory pgSubscriptionFactory(JdbcTemplate jdbcTemplate, EventBus eventBus,
             PgFactIdToSerialMapper pgFactIdToSerialMapper,
-            PgLatestSerialFetcher pgLatestSerialFetcher, PgCatchupFactory pgCatchupFactory) {
+            PgLatestSerialFetcher pgLatestSerialFetcher, PgCatchupFactory pgCatchupFactory,
+            FactTransformersFactory transformerFactory) {
         return new PgSubscriptionFactory(jdbcTemplate, eventBus, pgFactIdToSerialMapper,
-                pgLatestSerialFetcher, pgCatchupFactory);
+                pgLatestSerialFetcher, pgCatchupFactory, transformerFactory);
 
     }
 

@@ -18,6 +18,7 @@ package org.factcast.store.pgsql.internal;
 import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -46,8 +47,11 @@ class PgSubscriptionFactory {
 
     final PgCatchupFactory catchupFactory;
 
+    final FactTransformersFactory transformersFactory;
+
     public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
-        final SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
+        final SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer,
+                transformersFactory.createFor(req));
         PgFactStream pgsub = new PgFactStream(jdbcTemplate, eventBus, idToSerialMapper,
                 subscription, fetcher, catchupFactory);
         CompletableFuture.runAsync(() -> pgsub.connect(req));

@@ -15,7 +15,7 @@
  */
 package org.factcast.client.grpc;
 
-import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
+import static io.grpc.stub.ClientCalls.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,6 +31,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
+import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -84,7 +85,7 @@ import net.devh.boot.grpc.client.security.CallCredentialsHelper;
  *
  * @author uwe.schaefer@mercateo.com
  */
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+
 @Slf4j
 public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
@@ -102,12 +103,15 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private FactTransformersFactory transformersFactory;
+
     @Autowired
     @Generated
     public GrpcFactStore(FactCastGrpcChannelFactory channelFactory,
-            @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials) {
+            @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
+            @NonNull FactTransformersFactory transformersFactory) {
         this(channelFactory.createChannel(CHANNEL_NAME), credentials);
+        this.transformersFactory = transformersFactory;
     }
 
     @Generated
@@ -171,7 +175,8 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @Override
     public Subscription subscribe(@NonNull SubscriptionRequestTO req,
             @NonNull FactObserver observer) {
-        SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
+        SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer, transformersFactory
+                .createFor(req));
         StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new ClientStreamObserver(
                 subscription);
         ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()

@@ -17,8 +17,12 @@ package org.factcast.core.subscription;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.spec.FactSpec;
@@ -116,5 +120,29 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     @Override
     public String toString() {
         return debugInfo;
+    }
+
+    // valid for the lifetime of the subscription on the server side
+    private transient Map<String, Set<Integer>> versionCache;
+
+    public Set<Integer> requestedVersions(@NonNull String ns, @NonNull String type) {
+        synchronized (specs) {
+            if (versionCache == null)
+                versionCache = initializeVersionCache();
+        }
+        return versionCache.computeIfAbsent(ns + "/" + type, k -> new HashSet<Integer>());
+    }
+
+    private Map<String, Set<Integer>> initializeVersionCache() {
+        Map<String, Set<Integer>> c = new HashMap<>();
+        specs.forEach(s -> {
+            if (s.version() != null) {
+                String key = s.ns() + "/" + s.type();
+                Set<Integer> set = c.computeIfAbsent(key, k -> new HashSet<>());
+                Integer version = s.version();
+                set.add(version);
+            }
+        });
+        return c;
     }
 }

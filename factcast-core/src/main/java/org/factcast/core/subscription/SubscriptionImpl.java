@@ -38,10 +38,13 @@ import lombok.extern.slf4j.Slf4j;
  */
 @RequiredArgsConstructor
 @Slf4j
-public class SubscriptionImpl<T> implements Subscription {
+public class SubscriptionImpl<Fact> implements Subscription {
 
     @NonNull
-    final GenericObserver<T> observer;
+    final GenericObserver<Fact> observer;
+
+    @NonNull
+    final FactTransformer transformers;
 
     @NonNull
     Runnable onClose = () -> {
@@ -74,6 +77,7 @@ public class SubscriptionImpl<T> implements Subscription {
         return this;
     }
 
+    @Override
     public Subscription awaitCatchup(long waitTimeInMillis) throws SubscriptionCancelledException,
             TimeoutException {
         try {
@@ -94,6 +98,7 @@ public class SubscriptionImpl<T> implements Subscription {
         return this;
     }
 
+    @Override
     public Subscription awaitComplete(long waitTimeInMillis) throws SubscriptionCancelledException,
             TimeoutException {
         try {
@@ -151,16 +156,18 @@ public class SubscriptionImpl<T> implements Subscription {
 
     public void notifyElement(@NonNull T e) {
         if (!closed.get()) {
-            observer.onNext(e);
+            observer.onNext(transformers.transformIfNecessary(e));
         }
     }
 
-    public SubscriptionImpl<T> onClose(Runnable e) {
+    public SubscriptionImpl<Fact> onClose(Runnable e) {
         onClose = e;
         return this;
     }
 
-    public static <T> SubscriptionImpl<T> on(@NonNull GenericObserver<T> o) {
-        return new SubscriptionImpl<>(o);
+    public static SubscriptionImpl<org.factcast.core.Fact> on(
+            @NonNull GenericObserver<org.factcast.core.Fact> o,
+            FactTransformer transformers) {
+        return new SubscriptionImpl<>(o, transformers);
     }
 }
