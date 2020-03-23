@@ -16,6 +16,7 @@
 package org.factcast.store.pgsql.registry.transformation.cache;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.joda.time.DateTime;
@@ -24,7 +25,7 @@ public interface TransformationCache {
 
     void put(Fact f, String transformationChainId);
 
-    Optional<Fact> find(String ns, String type, int version, String transformationChainId);
+    Optional<Fact> find(UUID eventId, int version, String transformationChainId);
 
     void compact(DateTime thresholdDate);
 }
