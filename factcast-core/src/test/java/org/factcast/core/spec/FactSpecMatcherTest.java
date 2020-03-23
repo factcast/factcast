@@ -42,6 +42,7 @@ public class FactSpecMatcherTest {
         assertFalse(metaMatch(FactSpec.ns("default").meta("foo", "bar"), new TestFact().meta("foo",
                 "baz")));
         assertFalse(metaMatch(FactSpec.ns("default").meta("foo", "bar"), new TestFact()));
+
     }
 
     @Test
@@ -56,6 +57,13 @@ public class FactSpecMatcherTest {
         assertTrue(typeMatch(FactSpec.ns("default"), new TestFact().type("a")));
         assertFalse(typeMatch(FactSpec.ns("default").type("a"), new TestFact().type("x")));
         assertFalse(typeMatch(FactSpec.ns("default").type("a"), new TestFact()));
+    }
+
+    @Test
+    void testVersionMatch() {
+        assertTrue(versionMatch(FactSpec.ns("default").version(1), new TestFact().version(1)));
+        assertTrue(versionMatch(FactSpec.ns("default"), new TestFact().version(3)));
+        assertFalse(versionMatch(FactSpec.ns("default").version(2), new TestFact()));
     }
 
     @Test
@@ -87,6 +95,10 @@ public class FactSpecMatcherTest {
 
     private boolean typeMatch(FactSpec s, TestFact f) {
         return new FactSpecMatcher(s).typeMatch(f);
+    }
+
+    private boolean versionMatch(FactSpec s, TestFact f) {
+        return new FactSpecMatcher(s).versionMatch(f);
     }
 
     private boolean aggIdMatch(FactSpec s, TestFact f) {
@@ -129,6 +141,13 @@ public class FactSpecMatcherTest {
         Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").type("t1"));
         assertTrue(p.test(new TestFact().ns("1").type("t1")));
         assertFalse(p.test(new TestFact().ns("1")));
+    }
+
+    @Test
+    void testMatchesByVersion() {
+        Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").version(1));
+        assertTrue(p.test(new TestFact().ns("1").version(1)));
+        assertFalse(p.test(new TestFact().ns("1").version(2)));
     }
 
     @Test
