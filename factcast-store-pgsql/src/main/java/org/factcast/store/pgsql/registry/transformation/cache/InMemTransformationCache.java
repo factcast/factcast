@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.registry.transformation.cache;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.apache.commons.collections15.map.LRUMap;
 import org.factcast.core.Fact;
@@ -37,8 +38,8 @@ public class InMemTransformationCache implements TransformationCache {
     }
 
     @Override
-    public Optional<Fact> find(String ns, String type, int version, String transformationChainId) {
-        String key = String.join(",", ns, type, String.valueOf(version),
+    public Optional<Fact> find(UUID eventId, int version, String transformationChainId) {
+        String key = String.join(",", eventId.toString(), String.valueOf(version),
                 transformationChainId);
         return Optional.ofNullable(cache.get(key));
     }
