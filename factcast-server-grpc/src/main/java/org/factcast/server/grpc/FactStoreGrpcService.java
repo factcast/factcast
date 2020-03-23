@@ -173,10 +173,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(
                     req.toString(),
                     (ServerCallStreamObserver) responseObserver);
-            final boolean idOnly = req.idOnly();
+
             store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp,
-                    f -> idOnly ? converter.createNotificationFor(f.id())
-                            : converter.createNotificationFor(f)));
+                    f -> converter.createNotificationFor(f)));
 
         } catch (StatusException e) {
             responseObserver.onError(e);
