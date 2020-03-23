@@ -157,7 +157,11 @@ public class SubscriptionImpl implements Subscription {
 
     public void notifyElement(@NonNull Fact e) {
         if (!closed.get()) {
-            observer.onNext(transformers.transformIfNecessary(e));
+            try {
+                observer.onNext(transformers.transformIfNecessary(e));
+            } catch (TransformationException e1) {
+                observer.onError(e1);
+            }
         }
     }
 

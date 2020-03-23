@@ -13,16 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.transformation.chains;
+package org.factcast.store.pgsql.internal;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import lombok.NonNull;
 
-public class TransformationException extends Exception {
+public class RequestedVersions {
+    private final Map<String, Set<Integer>> c = new HashMap<>();
 
-    private static final long serialVersionUID = 1L;
+    public void add(@NonNull String ns, String type, Integer version) {
+        get(ns, type).add(version);
+    }
 
-    public TransformationException(@NonNull Exception e) {
-        super(e);
+    public Set<Integer> get(@NonNull String ns, String type) {
+        return c.computeIfAbsent(ns + ":" + type, k -> new HashSet<>());
+
     }
 
 }

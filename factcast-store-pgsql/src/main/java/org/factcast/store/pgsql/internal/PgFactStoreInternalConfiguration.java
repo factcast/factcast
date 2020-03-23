@@ -22,7 +22,6 @@ import java.util.function.Predicate;
 import javax.sql.DataSource;
 
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
@@ -34,6 +33,8 @@ import org.factcast.store.pgsql.internal.lock.AdvisoryWriteLock;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
+import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -144,14 +145,8 @@ public class PgFactStoreInternalConfiguration {
     }
 
     @Bean
-    public FactTransformersFactory factTransformersFactory() {
-        return s -> new FactTransformers() {
-            // TODO
-            @Override
-            public <T> @NonNull T transformIfNecessary(@NonNull T e) {
-                return e;
-            }
-
-        };
+    public FactTransformersFactory factTransformersFactory(TransformationChains chains,
+            Transformer trans) {
+        return new FactTransformersFactoryImpl(chains, trans);
     }
 }

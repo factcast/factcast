@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.client.grpc;
-
-import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactTransformers;
-import org.factcast.core.subscription.TransformationException;
+package org.factcast.core.subscription;
 
 import lombok.NonNull;
 
-public class NullFactTransformer implements FactTransformers {
+public class TransformationException extends Exception {
 
-    @Override
-    public @NonNull Fact transformIfNecessary(@NonNull Fact e) throws TransformationException {
-        return e;
+    private static final long serialVersionUID = 1L;
+
+    public TransformationException(@NonNull Exception e) {
+        super(e);
     }
 
 }

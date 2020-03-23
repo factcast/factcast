@@ -114,7 +114,7 @@ public class SubscriptionImplTest {
     private FactTransformers ft = new FactTransformers() {
 
         @Override
-        public <T> @NonNull T transformIfNecessary(@NonNull T e) {
+        public @NonNull Fact transformIfNecessary(@NonNull Fact e) throws TransformationException {
             return e;
         }
     };
