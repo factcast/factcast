@@ -15,7 +15,7 @@
  */
 package org.factcast.store.pgsql.internal.catchup;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.junit.jupiter.api.Test;
@@ -45,9 +45,7 @@ public class PgCatchUpFetchPageTest {
         assertThrows(NullPointerException.class, () -> {
             uut.fetchFacts(null);
         });
-        assertThrows(NullPointerException.class, () -> {
-            uut.fetchIdFacts(null);
-        });
+
     }
 
 }

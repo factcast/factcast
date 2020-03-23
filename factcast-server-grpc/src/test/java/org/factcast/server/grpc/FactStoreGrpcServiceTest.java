@@ -70,7 +70,7 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "rawtypes" })
 @ExtendWith(MockitoExtension.class)
 public class FactStoreGrpcServiceTest {
 
@@ -171,17 +171,6 @@ public class FactStoreGrpcServiceTest {
         uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)),
                 mock(ServerCallStreamObserver.class));
         verify(backend).subscribe(any(), any());
-        assertFalse(reqCaptor.getValue().idOnly());
-    }
-
-    @Test
-    void testSubscribeIds() {
-        SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
-        when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
-        uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forIds(req)),
-                mock(ServerCallStreamObserver.class));
-        verify(backend).subscribe(any(), any());
-        assertTrue(reqCaptor.getValue().idOnly());
     }
 
     @Test
