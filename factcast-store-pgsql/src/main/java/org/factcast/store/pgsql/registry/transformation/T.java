@@ -13,26 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.validation.schema;
+package org.factcast.store.pgsql.registry.transformation;
 
-import org.factcast.core.Fact;
+public class T {
 
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Value;
-
-@Value
-@Builder
-public class SchemaKey {
-    @NonNull
-    String ns;
-
-    @NonNull
-    String type;
-
-    int version;
-
-    public static SchemaKey from(Fact fact) {
-        return new SchemaKey(fact.ns(), fact.type(), fact.version());
+    public static void main(String[] args) {
+        TransformationKey.builder().build();
     }
 }

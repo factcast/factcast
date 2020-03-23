@@ -20,13 +20,10 @@ import java.net.URL;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.http.HttpSchemaRegistry;
 import org.factcast.store.pgsql.registry.http.IndexFetcher;
-import org.factcast.store.pgsql.registry.transformation.TransformationConfiguration;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
-import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import lombok.NonNull;
@@ -35,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 @EnableScheduling
-@Import({ FactValidatorConfiguration.class, TransformationConfiguration.class })
 public class SchemaRegistryConfiguration {
 
     @Bean
