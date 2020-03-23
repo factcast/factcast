@@ -55,7 +55,7 @@ public class PgFactStream {
 
     final PgFactIdToSerialMapper idToSerMapper;
 
-    final SubscriptionImpl<Fact> subscription;
+    final SubscriptionImpl subscription;
 
     final AtomicLong serial = new AtomicLong(0);
 
@@ -91,7 +91,7 @@ public class PgFactStream {
         log.trace("{} setting starting point to SER={}", request, startingSerial);
     }
 
-    private void catchupAndFollow(SubscriptionRequest request, SubscriptionImpl<Fact> subscription,
+    private void catchupAndFollow(SubscriptionRequest request, SubscriptionImpl subscription,
             PgSynchronizedQuery query) {
         if (request.ephemeral()) {
             // just fast forward to the latest event publish by now
@@ -163,7 +163,7 @@ public class PgFactStream {
     @RequiredArgsConstructor
     private class FactRowCallbackHandler implements RowCallbackHandler {
 
-        final SubscriptionImpl<Fact> subscription;
+        final SubscriptionImpl subscription;
 
         final PgPostQueryMatcher postQueryMatcher;
 

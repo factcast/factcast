@@ -18,7 +18,7 @@ package org.factcast.core.subscription;
 import lombok.NonNull;
 
 @FunctionalInterface
-public interface FactTransformer {
+public interface FactTransformers {
 
     @NonNull
     <T> T transformIfNecessary(@NonNull T e);

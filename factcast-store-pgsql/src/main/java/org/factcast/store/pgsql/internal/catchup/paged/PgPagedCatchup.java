@@ -55,7 +55,7 @@ public class PgPagedCatchup implements PgCatchup {
     final PgPostQueryMatcher postQueryMatcher;
 
     @NonNull
-    final SubscriptionImpl<Fact> subscription;
+    final SubscriptionImpl subscription;
 
     @NonNull
     final AtomicLong serial;

@@ -15,24 +15,12 @@
  */
 package org.factcast.client.grpc;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.core.TestHelper.expectNPE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.factcast.core.TestHelper.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,6 +34,7 @@ import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
+import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.ConditionalPublishRequest;
@@ -85,6 +74,9 @@ class GrpcFactStoreTest {
 
     @Mock
     private RemoteFactStoreBlockingStub blockingStub;
+
+    @Mock
+    private FactTransformersFactory transFactory;
 
     @Mock
     private RemoteFactStoreStub stub;
@@ -494,20 +486,22 @@ class GrpcFactStoreTest {
     @Test
     void testCredentialsWrongFormat() throws Exception {
         assertThrows(IllegalArgumentException.class, () -> new GrpcFactStore(mock(Channel.class),
-                Optional.ofNullable("xyz")));
+                Optional.ofNullable("xyz"), transFactory));
 
         assertThrows(IllegalArgumentException.class, () -> new GrpcFactStore(mock(Channel.class),
-                Optional.ofNullable("x:y:z")));
+                Optional.ofNullable("x:y:z"), transFactory));
 
-        assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
-                .isNotNull();
+        assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc"),
+                transFactory))
+                        .isNotNull();
 
     }
 
     @Test
     void testCredentialsRightFormat() throws Exception {
-        assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
-                .isNotNull();
+        assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc"),
+                transFactory))
+                        .isNotNull();
     }
 
     @Test

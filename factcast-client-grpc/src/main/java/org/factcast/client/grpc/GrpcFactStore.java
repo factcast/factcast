@@ -103,26 +103,28 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-    private FactTransformersFactory transformersFactory;
+    private final FactTransformersFactory transformersFactory;
 
     @Autowired
     @Generated
     public GrpcFactStore(FactCastGrpcChannelFactory channelFactory,
             @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
             @NonNull FactTransformersFactory transformersFactory) {
-        this(channelFactory.createChannel(CHANNEL_NAME), credentials);
-        this.transformersFactory = transformersFactory;
+        this(channelFactory.createChannel(CHANNEL_NAME), credentials, transformersFactory);
+
     }
 
     @Generated
     @VisibleForTesting
-    GrpcFactStore(Channel channel, Optional<String> credentials) {
+    GrpcFactStore(Channel channel, Optional<String> credentials,
+            @NonNull FactTransformersFactory transformersFactory) {
         this(RemoteFactStoreGrpc.newBlockingStub(channel), RemoteFactStoreGrpc.newStub(channel),
-                credentials);
+                credentials, transformersFactory);
     }
 
     private GrpcFactStore(RemoteFactStoreBlockingStub newBlockingStub, RemoteFactStoreStub newStub,
-            Optional<String> credentials) {
+            Optional<String> credentials, @NonNull FactTransformersFactory transformersFactory) {
+        this.transformersFactory = transformersFactory;
         blockingStub = newBlockingStub;
         stub = newStub;
 
@@ -175,7 +177,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @Override
     public Subscription subscribe(@NonNull SubscriptionRequestTO req,
             @NonNull FactObserver observer) {
-        SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer, transformersFactory
+        SubscriptionImpl subscription = SubscriptionImpl.on(observer, transformersFactory
                 .createFor(req));
         StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new ClientStreamObserver(
                 subscription);

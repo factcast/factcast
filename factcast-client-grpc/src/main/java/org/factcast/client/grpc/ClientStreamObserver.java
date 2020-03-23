@@ -15,7 +15,6 @@
  */
 package org.factcast.client.grpc;
 
-import org.factcast.core.Fact;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.grpc.api.conv.ProtoConverter;
@@ -43,7 +42,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
     final ProtoConverter converter = new ProtoConverter();
 
     @NonNull
-    final SubscriptionImpl<Fact> subscription;
+    final SubscriptionImpl subscription;
 
     @Override
     public void onNext(MSG_Notification f) {

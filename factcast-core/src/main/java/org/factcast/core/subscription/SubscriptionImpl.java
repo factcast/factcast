@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.GenericObserver;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -38,13 +39,13 @@ import lombok.extern.slf4j.Slf4j;
  */
 @RequiredArgsConstructor
 @Slf4j
-public class SubscriptionImpl<Fact> implements Subscription {
+public class SubscriptionImpl implements Subscription {
 
     @NonNull
     final GenericObserver<Fact> observer;
 
     @NonNull
-    final FactTransformer transformers;
+    final FactTransformers transformers;
 
     @NonNull
     Runnable onClose = () -> {
@@ -154,20 +155,20 @@ public class SubscriptionImpl<Fact> implements Subscription {
         }
     }
 
-    public void notifyElement(@NonNull T e) {
+    public void notifyElement(@NonNull Fact e) {
         if (!closed.get()) {
             observer.onNext(transformers.transformIfNecessary(e));
         }
     }
 
-    public SubscriptionImpl<Fact> onClose(Runnable e) {
+    public SubscriptionImpl onClose(Runnable e) {
         onClose = e;
         return this;
     }
 
-    public static SubscriptionImpl<org.factcast.core.Fact> on(
+    public static SubscriptionImpl on(
             @NonNull GenericObserver<org.factcast.core.Fact> o,
-            FactTransformer transformers) {
-        return new SubscriptionImpl<>(o, transformers);
+            FactTransformers transformers) {
+        return new SubscriptionImpl(o, transformers);
     }
 }

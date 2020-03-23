@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactTransformer;
+import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
@@ -46,13 +46,12 @@ class ClientStreamObserverTest {
 
     ProtoConverter converter = new ProtoConverter();
 
-    private SubscriptionImpl<? extends Fact> subscription;
+    private SubscriptionImpl subscription;
 
     @BeforeEach
     void setUp() {
-        FactTransformer trans = new NullFactTransformer();
-
-        SubscriptionImpl<Fact> subscriptionImpl = new SubscriptionImpl<Fact>(factObserver, trans);
+        FactTransformers trans = new NullFactTransformer();
+        SubscriptionImpl subscriptionImpl = new SubscriptionImpl(factObserver, trans);
         subscription = spy(subscriptionImpl);
         uut = new ClientStreamObserver(subscription);
     }

@@ -24,6 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
 
 import org.factcast.core.Fact;
+import org.factcast.core.TestFact;
 import org.factcast.core.subscription.observer.GenericObserver;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,14 +34,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import lombok.NonNull;
+
 @ExtendWith(MockitoExtension.class)
 public class SubscriptionImplTest {
 
     @Mock
     private GenericObserver<Fact> observer;
 
+    @Mock
+    private FactTransformers factTransformers;
+
     @InjectMocks
-    private SubscriptionImpl<Fact> uut;
+    private SubscriptionImpl uut;
 
     @SuppressWarnings("unchecked")
     @BeforeEach
@@ -75,11 +81,9 @@ public class SubscriptionImplTest {
         uut.awaitComplete();
     }
 
-    @SuppressWarnings("resource")
-    @Test
     void testNullConst() {
         Assertions.assertThrows(NullPointerException.class, () -> {
-            new SubscriptionImpl<>(null);
+            new SubscriptionImpl(null, null);
         });
     }
 
@@ -105,21 +109,31 @@ public class SubscriptionImplTest {
         l.await();
     }
 
-    private GenericObserver<Integer> obs;
+    private GenericObserver<Fact> obs;
+
+    private FactTransformers ft = new FactTransformers() {
+
+        @Override
+        public <T> @NonNull T transformIfNecessary(@NonNull T e) {
+            return e;
+        }
+    };
 
     @Test
     void testOnNull() {
         Assertions.assertThrows(NullPointerException.class, () -> {
-            SubscriptionImpl.on(null);
+            SubscriptionImpl.on(null, null);
         });
     }
 
+    Fact testFact = new TestFact();
+
     @Test
     void testOn() {
-        SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
+        SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
         verify(obs, never()).onNext(any());
-        on.notifyElement(1);
-        verify(obs).onNext(1);
+        on.notifyElement(testFact);
+        verify(obs).onNext(testFact);
         verify(obs, never()).onCatchup();
         on.notifyCatchup();
         verify(obs).onCatchup();
@@ -132,7 +146,7 @@ public class SubscriptionImplTest {
 
     @Test
     void testOnError() {
-        SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
+        SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
         verify(obs, never()).onError(any());
         on.notifyError(new Throwable("ignore me"));
         verify(obs).onError(any());
@@ -140,43 +154,43 @@ public class SubscriptionImplTest {
 
     @Test
     void testOnErrorCloses() {
-        SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
+        SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
         on.notifyError(new Throwable("ignore me"));
-        on.notifyElement(1);
+        on.notifyElement(testFact);
         on.notifyCatchup();
         on.notifyComplete();
         verify(obs, never()).onComplete();
         verify(obs, never()).onCatchup();
-        verify(obs, never()).onNext(anyInt());
+        verify(obs, never()).onNext(any());
     }
 
     @Test
     void testOnCompleteCloses() {
-        SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
+        SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
         on.notifyComplete();
-        on.notifyElement(1);
+        on.notifyElement(testFact);
         on.notifyCatchup();
         on.notifyError(new Throwable("ignore me"));
         verify(obs, never()).onError(any());
         verify(obs, never()).onCatchup();
-        verify(obs, never()).onNext(anyInt());
+        verify(obs, never()).onNext(any());
     }
 
     @Test
     void testOnCatchupDoesNotClose() {
-        SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
+        SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
         on.notifyCatchup();
-        on.notifyElement(1);
+        on.notifyElement(testFact);
         on.notifyError(new Throwable("ignore me"));
         verify(obs).onError(any());
         verify(obs).onCatchup();
-        verify(obs).onNext(anyInt());
+        verify(obs).onNext(testFact);
     }
 
     @Test
     void testOnErrorCompletesFutureCatchup() {
         Assertions.assertThrows(SubscriptionCancelledException.class, () -> {
-            SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
+            SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
             verify(obs, never()).onError(any());
             on.notifyError(new Throwable("ignore me"));
             verify(obs).onError(any());
@@ -187,7 +201,7 @@ public class SubscriptionImplTest {
     @Test
     void testOnErrorCompletesFutureComplete() {
         Assertions.assertThrows(SubscriptionCancelledException.class, () -> {
-            SubscriptionImpl<Integer> on = SubscriptionImpl.on(obs);
+            SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
             verify(obs, never()).onError(any());
             on.notifyError(new Throwable("ignore me"));
             verify(obs).onError(any());

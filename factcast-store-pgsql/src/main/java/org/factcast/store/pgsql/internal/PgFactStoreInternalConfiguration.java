@@ -22,6 +22,7 @@ import java.util.function.Predicate;
 import javax.sql.DataSource;
 
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
@@ -142,4 +143,15 @@ public class PgFactStoreInternalConfiguration {
         return new SimpleMeterRegistry();
     }
 
+    @Bean
+    public FactTransformersFactory factTransformersFactory() {
+        return s -> new FactTransformers() {
+            // TODO
+            @Override
+            public <T> @NonNull T transformIfNecessary(@NonNull T e) {
+                return e;
+            }
+
+        };
+    }
 }
