@@ -17,14 +17,18 @@ package org.factcast.store.pgsql.registry.transformation.store;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationConflictException;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
+import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -127,6 +131,37 @@ public abstract class AbstractTransformationStoreTest {
         uut.store(s, "{}");
 
         assertThat(uut.contains(s)).isTrue();
+    }
+
+    @Test
+    public void testRegister() throws Exception {
+        TransformationStoreListener l = mock(TransformationStoreListener.class);
+        uut.register(l);
+
+        TransformationSource source = new TransformationSource("xx", "ns", "type", "abcdef", 1, 2);
+        uut.store(source, "");
+
+        ((AbstractTransformationStore) uut).executorService()
+                .awaitTermination(200, TimeUnit.MILLISECONDS);
+
+        TransformationKey key = source.toKey();
+        verify(l).notifyFor(eq(key));
+    }
+
+    @Test
+    public void testUnregister() throws Exception {
+        TransformationStoreListener l = mock(TransformationStoreListener.class);
+        uut.register(l);
+        uut.unregister(l);
+
+        TransformationSource source = new TransformationSource("xx", "ns", "type", "abcdef", 1, 2);
+        uut.store(source, "");
+
+        ((AbstractTransformationStore) uut).executorService()
+                .awaitTermination(200, TimeUnit.MILLISECONDS);
+
+        TransformationKey key = source.toKey();
+        verify(l, never()).notifyFor(any());
     }
 
 }

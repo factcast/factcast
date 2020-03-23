@@ -17,7 +17,6 @@ package org.factcast.store.pgsql.registry.transformation;
 
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
-import org.factcast.store.pgsql.internal.FactTransformersFactoryImpl;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.transformation.cache.InMemTransformationCache;
 import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;

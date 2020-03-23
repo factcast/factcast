@@ -96,24 +96,6 @@ class GrpcFactStoreTest {
     public Optional<String> credentials;
 
     @Test
-    void testFetchByIdNotFound() {
-        UUID id = UUID.randomUUID();
-        when(blockingStub.fetchById(eq(conv.toProto(id)))).thenReturn(conv.toProto(Optional
-                .empty()));
-        Optional<Fact> fetchById = uut.fetchById(id);
-        assertFalse(fetchById.isPresent());
-    }
-
-    @Test
-    void testFetchByIdFound() {
-        UUID id = UUID.randomUUID();
-        when(blockingStub.fetchById(eq(conv.toProto(id))))
-                .thenReturn(conv.toProto(Optional.of(Fact.builder().ns("test").build("{}"))));
-        Optional<Fact> fetchById = uut.fetchById(id);
-        assertTrue(fetchById.isPresent());
-    }
-
-    @Test
     void testPublish() {
         when(blockingStub.publish(factsCap.capture())).thenReturn(MSG_Empty.newBuilder().build());
         final TestFact fact = new TestFact();
@@ -151,13 +133,6 @@ class GrpcFactStoreTest {
         when(blockingStub.publish(any())).thenThrow(new SomeException());
         assertThrows(SomeException.class, () -> uut.publish(Collections.singletonList(Fact.builder()
                 .build("{}"))));
-    }
-
-    @Test
-    void testFetchByIdPropagatesRetryableExceptionOnUnavailableStatus() {
-        when(blockingStub.fetchById(any())).thenThrow(new StatusRuntimeException(
-                Status.UNAVAILABLE));
-        assertThrows(RetryableException.class, () -> uut.fetchById(UUID.randomUUID()));
     }
 
     @Test

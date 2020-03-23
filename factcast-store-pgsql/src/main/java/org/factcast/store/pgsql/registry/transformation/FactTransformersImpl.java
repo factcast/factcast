@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.internal;
+package org.factcast.store.pgsql.registry.transformation;
 
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -23,7 +23,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.store.pgsql.registry.transformation.TransformationKey;
+import org.factcast.store.pgsql.internal.RequestedVersions;
 import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChain;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;

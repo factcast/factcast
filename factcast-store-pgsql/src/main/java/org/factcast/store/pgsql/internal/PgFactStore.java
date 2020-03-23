@@ -195,16 +195,6 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Override
-    public Optional<Fact> fetchById(@NonNull UUID id) {
-        return time(OP.FETCH_BY_ID, () -> {
-            return jdbcTemplate.query(PgConstants.SELECT_BY_ID,
-                    new Object[] { "{\"id\":\"" + id + "\"}" }, this::extractFactFromResultSet)
-                    .stream()
-                    .findFirst();
-        });
-    }
-
-    @Override
     public OptionalLong serialOf(UUID l) {
         return time(OP.SERIAL_OF, () -> {
             try {

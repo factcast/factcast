@@ -64,10 +64,8 @@ public class HttpSchemaRegistry implements SchemaRegistry {
 
     public HttpSchemaRegistry(@NonNull URL baseUrl, @NonNull SchemaStore schemaStore,
             @NonNull TransformationStore transformationStore) {
-        this.schemaStore = schemaStore;
-        this.transformationStore = transformationStore;
-        this.indexFetcher = new IndexFetcher(baseUrl);
-        this.registryFileFetcher = new RegistryFileFetcher(baseUrl);
+        this(schemaStore, transformationStore, new IndexFetcher(baseUrl), new RegistryFileFetcher(
+                baseUrl));
     }
 
     @VisibleForTesting

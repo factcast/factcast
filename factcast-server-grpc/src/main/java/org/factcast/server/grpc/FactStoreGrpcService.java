@@ -47,7 +47,6 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
@@ -97,28 +96,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     final ProtoConverter converter = new ProtoConverter();
 
     static final AtomicLong subscriptionIdStore = new AtomicLong();
-
-    @Override
-    @Secured(FactCastAuthority.AUTHENTICATED)
-    public void fetchById(MSG_UUID request, StreamObserver<MSG_OptionalFact> responseObserver) {
-        try {
-            enableResponseCompression(responseObserver);
-
-            UUID fromProto = converter.fromProto(request);
-            log.trace("fetchById {}", fromProto);
-            Optional<Fact> fetchById = store.fetchById(fromProto);
-            log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "")
-                    .orElse("NOT "));
-
-            if (fetchById.isPresent())
-                assertCanRead(fetchById.get().ns());
-
-            responseObserver.onNext(converter.toProto(fetchById));
-            responseObserver.onCompleted();
-        } catch (Throwable e) {
-            responseObserver.onError(e);
-        }
-    }
 
     @Override
     @Secured(FactCastAuthority.AUTHENTICATED)

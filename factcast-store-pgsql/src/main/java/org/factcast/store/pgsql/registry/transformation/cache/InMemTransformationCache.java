@@ -32,14 +32,14 @@ public class InMemTransformationCache implements TransformationCache {
 
     @Override
     public void put(Fact f, String transformationChainId) {
-        String key = String.join(",", f.ns(), f.type(), String.valueOf(f.version()),
+        String key = String.join("|", f.id().toString(), String.valueOf(f.version()),
                 transformationChainId);
         cache.put(key, f);
     }
 
     @Override
     public Optional<Fact> find(UUID eventId, int version, String transformationChainId) {
-        String key = String.join(",", eventId.toString(), String.valueOf(version),
+        String key = String.join("|", eventId.toString(), String.valueOf(version),
                 transformationChainId);
         return Optional.ofNullable(cache.get(key));
     }

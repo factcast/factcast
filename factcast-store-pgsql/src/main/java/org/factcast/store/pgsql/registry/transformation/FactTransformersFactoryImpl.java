@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.internal;
+package org.factcast.store.pgsql.registry.transformation;
 
 import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.pgsql.internal.RequestedVersions;
 import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
 import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
