@@ -16,7 +16,6 @@
 package org.factcast.client.grpc;
 
 import org.factcast.core.Fact;
-import org.factcast.core.IdOnlyFact;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.grpc.api.conv.ProtoConverter;
@@ -61,10 +60,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
         case Fact:
             subscription.notifyElement(converter.fromProto(f.getFact()));
             break;
-        case Id:
-            // wrap id in a fact
-            subscription.notifyElement(new IdOnlyFact(converter.fromProto(f.getId())));
-            break;
+
         default:
             subscription.notifyError(new RuntimeException(
                     "Unrecognized notification type. THIS IS A BUG!"));

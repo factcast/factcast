@@ -23,7 +23,6 @@ import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.rowmapper.PgFactExtractor;
-import org.factcast.store.pgsql.internal.rowmapper.PgIdFactExtractor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
@@ -69,17 +68,4 @@ public class PgCatchUpFetchPage {
         };
     }
 
-    // use LinkedLists so that we can use remove() rather than iteration, in
-    // order to release Facts for GC asap.
-    public LinkedList<Fact> fetchIdFacts(@NonNull AtomicLong serial) {
-        Stopwatch sw = Stopwatch.createStarted();
-        final LinkedList<Fact> list = new LinkedList<>(jdbc.query(
-                PgConstants.SELECT_ID_FROM_CATCHUP, createSetter(serial, pageSize),
-                new PgIdFactExtractor(serial)));
-        sw.stop();
-        log.debug("{}  fetched next page of Ids for cid={}, limit={}, ser>{} in {}ms", req,
-                clientId, pageSize,
-                serial.get(), sw.elapsed(TimeUnit.MILLISECONDS));
-        return list;
-    }
 }
