@@ -16,7 +16,6 @@
 package org.factcast.store.pgsql.registry.http;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.net.URL;
 

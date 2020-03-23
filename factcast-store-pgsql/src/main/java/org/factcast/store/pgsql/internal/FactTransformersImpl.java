@@ -53,7 +53,6 @@ public class FactTransformersImpl implements FactTransformers {
     @Override
     public @NonNull Fact transformIfNecessary(@NonNull Fact e) throws TransformationException {
 
-        int originalVersion = e.version();
         Set<Integer> requested = requestedVersions.get(e.ns(), e.type());
 
         if (clientDoesNotCare(requested) || clientExpectsVersion(requested, e)) {

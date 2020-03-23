@@ -15,8 +15,7 @@
  */
 package org.factcast.store.pgsql.registry.transformation.store;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 import org.factcast.store.pgsql.internal.PgTestConfiguration;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;

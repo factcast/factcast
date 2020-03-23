@@ -15,8 +15,6 @@
  */
 package org.factcast.store.pgsql.registry.transformation.store;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 
 class InMemTransformationStoreImplTest extends AbstractTransformationStoreTest {

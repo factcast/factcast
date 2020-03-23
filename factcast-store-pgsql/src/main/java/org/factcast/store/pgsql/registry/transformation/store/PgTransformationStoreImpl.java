@@ -37,6 +37,7 @@ public class PgTransformationStoreImpl extends AbstractTransformationStore {
     // note that SpringLiquibase needs to be injected in order to make sure it
     // is initialized before we're intentionally not using @DependsOn here,
     // as a change of the beanname within liquibase would break our code
+    @SuppressWarnings("unused")
     private final SpringLiquibase unused;
 
     @Override
