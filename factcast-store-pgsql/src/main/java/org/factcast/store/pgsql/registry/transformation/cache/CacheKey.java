@@ -21,7 +21,7 @@ import org.factcast.core.Fact;
 
 import lombok.NonNull;
 
-public class CacheKey {
+class CacheKey {
     static String of(@NonNull Fact fact, @NonNull String transformationChainId) {
         return CacheKey.of(fact.id(), fact.version(), transformationChainId);
     }
