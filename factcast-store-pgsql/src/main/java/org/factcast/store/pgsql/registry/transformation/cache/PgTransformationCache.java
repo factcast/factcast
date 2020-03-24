@@ -23,18 +23,12 @@ import org.factcast.core.Fact;
 import org.joda.time.DateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import liquibase.integration.spring.SpringLiquibase;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class PgTransformationCache implements TransformationCache {
     private final JdbcTemplate jdbcTemplate;
-
-    // note that SpringLiquibase needs to be injected in order to make sure it
-    // is initialized before we're intentionally not using @DependsOn here,
-    // as a change of the beanname within liquibase would break our code
-    private final SpringLiquibase liquibase;
 
     @Override
     public void put(@NonNull Fact fact, @NonNull String transformationChainId) {
