@@ -31,7 +31,7 @@ import lombok.Value;
 public class TransformationChain implements Transformation {
 
     @NonNull
-    TransformationChainMetaData meta;
+    String id;
 
     @NonNull
     TransformationKey key;
@@ -44,7 +44,7 @@ public class TransformationChain implements Transformation {
     Optional<String> transformationCode;
 
     public static TransformationChain of(@NonNull TransformationKey key,
-            @NonNull List<Transformation> orderedListOfSteps, TransformationChainMetaData id) {
+            @NonNull List<Transformation> orderedListOfSteps, String id) {
 
         Preconditions.checkArgument(!orderedListOfSteps.isEmpty());
         Preconditions.checkArgument(orderedListOfSteps.stream().allMatch(t -> key.equals(t.key())));

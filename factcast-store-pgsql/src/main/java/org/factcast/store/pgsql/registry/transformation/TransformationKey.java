@@ -28,7 +28,7 @@ public class TransformationKey {
     @NonNull
     String type;
 
-    static TransformationKey of(Fact fact) {
+    static TransformationKey from(Fact fact) {
         return TransformationKey.of(fact.ns(), fact.type());
     }
 }

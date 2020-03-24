@@ -84,7 +84,6 @@ import net.devh.boot.grpc.server.service.GrpcService;
 @RequiredArgsConstructor
 @GrpcService
 @SuppressWarnings("all")
-
 public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);

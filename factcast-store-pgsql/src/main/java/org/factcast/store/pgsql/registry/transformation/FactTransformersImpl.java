@@ -17,7 +17,6 @@ package org.factcast.store.pgsql.registry.transformation;
 
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.Set;
 
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactTransformers;
@@ -31,6 +30,7 @@ import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +39,7 @@ import lombok.RequiredArgsConstructor;
 public class FactTransformersImpl implements FactTransformers {
 
     @NonNull
-    private final RequestedVersions requestedVersions;
+    private final RequestedVersions requested;
 
     @NonNull
     private final TransformationChains chains;
@@ -53,27 +53,33 @@ public class FactTransformersImpl implements FactTransformers {
     @Override
     public @NonNull Fact transformIfNecessary(@NonNull Fact e) throws TransformationException {
 
-        Set<Integer> requested = requestedVersions.get(e.ns(), e.type());
+        String ns = e.ns();
+        String type = e.type();
 
-        if (clientDoesNotCare(requested) || clientExpectsVersion(requested, e)) {
+        if (type == null || requested.dontCare(ns, type) || requested.exactVersion(ns, type, e
+                .version())) {
             return e;
-        } else
-            return transform(requested, e);
+        } else {
+            OptionalInt max = requested.get(ns, type).stream().mapToInt(v -> v).max();
+            int targetVersion = max.orElseThrow(() -> new IllegalArgumentException(
+                    "No reqested Version !? This must not happen"));
+            return transform(targetVersion, e);
+        }
+
     }
 
-    private @NonNull Fact transform(Set<Integer> requested, @NonNull Fact e)
+    @VisibleForTesting
+    protected @NonNull Fact transform(int targetVersion, @NonNull Fact e)
             throws TransformationException {
         // find the "best" version if there are more than one requested
-        OptionalInt max = requested.stream().mapToInt(v -> v).max();
-        int targetVersion = max.orElseThrow(() -> new IllegalArgumentException(
-                "No reqested Version !? This must not happen"));
+
         int sourceVersion = e.version();
 
         TransformationKey key = TransformationKey.of(e.ns(), e.type());
         TransformationChain chain = chains.get(key, sourceVersion,
                 targetVersion);
 
-        String chainId = chain.meta().id();
+        String chainId = chain.id();
 
         Optional<Fact> cached = cache.find(e.id(), targetVersion, chainId);
         if (cached.isPresent())
@@ -81,24 +87,17 @@ public class FactTransformersImpl implements FactTransformers {
         else {
             JsonNode input;
             try {
-                // TODO can be optimized by working around toString
                 input = FactCastJson.readTree(e.jsonPayload());
-                Fact transformed = Fact.of(e.jsonHeader(), trans.transform(chain, input)
+                JsonNode transform = trans.transform(chain, input);
+                Fact transformed = Fact.of(e.jsonHeader(), transform
                         .toString());
+                // can be optimized by passing jsonnode?
                 cache.put(transformed, chainId);
                 return transformed;
             } catch (JsonProcessingException e1) {
                 throw new TransformationException(e1);
             }
         }
-    }
-
-    private boolean clientExpectsVersion(Set<Integer> requested, Fact e) {
-        return requested.contains(e.version()) || requested.contains(0);
-    }
-
-    private boolean clientDoesNotCare(Set<Integer> requested) {
-        return requested.isEmpty();
     }
 
 }

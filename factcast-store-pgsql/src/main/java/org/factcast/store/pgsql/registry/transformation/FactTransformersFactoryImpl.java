@@ -40,7 +40,9 @@ public class FactTransformersFactoryImpl implements FactTransformersFactory {
         RequestedVersions rv = new RequestedVersions();
 
         sr.specs().forEach(s -> {
-            rv.add(s.ns(), s.type(), s.version());
+            if (s.type() != null) {
+                rv.add(s.ns(), s.type(), s.version());
+            }
         });
 
         return new FactTransformersImpl(rv, chains, trans, cache);

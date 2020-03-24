@@ -130,8 +130,7 @@ public class TransformationChains implements TransformationStoreListener {
 
         int cost = ((Double) ((HeuristicNode<?, ?, ?, ?>) r.getGoalNode()).getCost()).intValue();
 
-        return TransformationChain.of(key, steps,
-                TransformationChainMetaData.of(r.getOptimalPaths().get(0).toString(), cost));
+        return TransformationChain.of(key, steps, r.getOptimalPaths().get(0).toString());
 
         // sad: in retrospective, Hipster might not have been the greatest
         // choice due to lack of proper Generics.
