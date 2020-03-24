@@ -29,11 +29,11 @@ public class RequestedVersions {
         get(ns, type).add(version);
     }
 
-    public Set<Integer> get(@NonNull String ns, @NonNull String type) {
+    public Set<Integer> get(@NonNull String ns, String type) {
         return c.computeIfAbsent(ns + ":" + type, k -> new HashSet<>());
     }
 
-    public boolean dontCare(@NonNull String ns, @NonNull String type) {
+    public boolean dontCare(@NonNull String ns, String type) {
         Set<Integer> set = get(ns, type);
         return set.isEmpty() || set.contains(0);
     }
