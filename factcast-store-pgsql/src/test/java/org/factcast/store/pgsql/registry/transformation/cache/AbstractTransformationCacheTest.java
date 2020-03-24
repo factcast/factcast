@@ -16,16 +16,98 @@
 package org.factcast.store.pgsql.registry.transformation.cache;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
+import org.joda.time.DateTime;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 public abstract class AbstractTransformationCacheTest {
-    protected abstract TransformationCache create();
+    protected TransformationCache uut;
 
-    TransformationCache uut = create();
+    @BeforeEach
+    public void init() {
+        this.uut = createUUT();
+    }
+
+    protected abstract TransformationCache createUUT();
+
+    @Test
+    void testEmptyFind() {
+        Optional<Fact> fact = uut.find(UUID.randomUUID(), 1, "1");
+        assertThat(fact.isPresent()).isFalse();
+    }
+
+    @Test
+    void testFindAfterPut() {
+        Fact fact = Fact.builder()
+                .ns("ns")
+                .type("type")
+                .id(UUID.randomUUID())
+                .version(1)
+                .build("{}");
+        String chainId = "1-2-3";
+
+        uut.put(fact, chainId);
+
+        Optional<Fact> found = uut.find(fact.id(), fact.version(), chainId);
+
+        assertThat(found.isPresent()).isTrue();
+        assertEquals(fact, found.get());
+    }
+
+    @Test
+    void testCompact() {
+        Fact fact = Fact.builder()
+                .ns("ns")
+                .type("type")
+                .id(UUID.randomUUID())
+                .version(1)
+                .build("{}");
+        String chainId = "1-2-3";
+
+        uut.put(fact, chainId);
+
+        // clocks aren't synchronized so Im gonna add an hour here :)
+        uut.compact(DateTime.now().plusHours(1));
+
+        Optional<Fact> found = uut.find(fact.id(), fact.version(), chainId);
+
+        assertThat(found.isPresent()).isFalse();
+    }
+
+    @Test
+    void testNullContracts() throws Exception {
+        assertNpe(() -> {
+            uut.find(null, 1, "1");
+        });
+        assertNpe(() -> {
+            uut.find(UUID.randomUUID(), 1, null);
+        });
+        assertNpe(() -> {
+            uut.put(null, "");
+        });
+        assertNpe(() -> {
+            uut.put(Fact.builder().buildWithoutPayload(), null);
+        });
+
+    }
+
+    private void assertNpe(Executable r) {
+        assertThrows(NullPointerException.class, r);
+    }
+
+    void testRespectsChainId() throws Exception {
+        Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
+
+        uut.put(f, "foo");
+        assertThat(uut.find(f.id(), 1, "xoo")).isEmpty();
+    }
 
     @Test
     void testDoesNotFindUnknown() throws Exception {
@@ -46,13 +128,5 @@ public abstract class AbstractTransformationCacheTest {
 
         uut.put(f, "foo");
         assertThat(uut.find(f.id(), 2, "foo")).isEmpty();
-    }
-
-    @Test
-    void testRespectsChainId() throws Exception {
-        Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
-
-        uut.put(f, "foo");
-        assertThat(uut.find(f.id(), 1, "xoo")).isEmpty();
     }
 }

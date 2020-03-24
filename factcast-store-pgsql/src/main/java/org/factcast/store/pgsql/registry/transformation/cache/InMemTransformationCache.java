@@ -23,6 +23,8 @@ import org.apache.commons.collections15.map.LRUMap;
 import org.factcast.core.Fact;
 import org.joda.time.DateTime;
 
+import lombok.NonNull;
+
 public class InMemTransformationCache implements TransformationCache {
 
     private static final int CAPACITY = 1_000_000;
@@ -31,22 +33,21 @@ public class InMemTransformationCache implements TransformationCache {
             InMemTransformationCache.CAPACITY);
 
     @Override
-    public void put(Fact f, String transformationChainId) {
-        String key = String.join("|", f.id().toString(), String.valueOf(f.version()),
-                transformationChainId);
+    public void put(@NonNull Fact f, @NonNull String transformationChainId) {
+        String key = CacheKey.of(f, transformationChainId);
         cache.put(key, f);
     }
 
     @Override
-    public Optional<Fact> find(UUID eventId, int version, String transformationChainId) {
-        String key = String.join("|", eventId.toString(), String.valueOf(version),
-                transformationChainId);
+    public Optional<Fact> find(@NonNull UUID eventId, int version,
+            @NonNull String transformationChainId) {
+        String key = CacheKey.of(eventId, version, transformationChainId);
         return Optional.ofNullable(cache.get(key));
     }
 
     @Override
-    public void compact(DateTime thresholdDate) {
-        // TODO Auto-generated method stub
+    public void compact(@NonNull DateTime thresholdDate) {
+        cache.clear();
     }
 
 }
