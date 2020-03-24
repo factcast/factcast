@@ -40,7 +40,7 @@ public class TransformationConfiguration {
             @NonNull PgConfigurationProperties props, @Autowired(
                     required = false) @NonNull SpringLiquibase unused) {
         if (props.isValidationEnabled() && props.isPersistentSchemaStore())
-            return new PgTransformationStoreImpl(jdbcTemplate, unused);
+            return new PgTransformationStoreImpl(jdbcTemplate);
 
         // otherwise
         return new InMemTransformationStoreImpl();
@@ -51,7 +51,7 @@ public class TransformationConfiguration {
             @NonNull PgConfigurationProperties props, @Autowired(
                     required = false) @NonNull SpringLiquibase unused) {
         if (props.isValidationEnabled() && props.isPersistentSchemaStore())
-            return new PgTransformationCache(jdbcTemplate, unused);
+            return new PgTransformationCache(jdbcTemplate);
 
         // otherwise
         return new InMemTransformationCache();

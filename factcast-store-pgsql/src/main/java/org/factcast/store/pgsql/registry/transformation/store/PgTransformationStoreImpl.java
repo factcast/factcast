@@ -25,7 +25,6 @@ import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import liquibase.integration.spring.SpringLiquibase;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -33,11 +32,6 @@ import lombok.RequiredArgsConstructor;
 public class PgTransformationStoreImpl extends AbstractTransformationStore {
     @NonNull
     private final JdbcTemplate jdbcTemplate;
-
-    // note that SpringLiquibase needs to be injected in order to make sure it
-    // is initialized before we're intentionally not using @DependsOn here,
-    // as a change of the beanname within liquibase would break our code
-    private final SpringLiquibase unused;
 
     @Override
     protected void doStore(@NonNull TransformationSource source, String transformation)
