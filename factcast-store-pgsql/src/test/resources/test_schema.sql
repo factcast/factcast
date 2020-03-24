@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS catchup CASCADE;
 
 DROP TABLE IF EXISTS schemastore cascade;
 DROP TABLE IF EXISTS transformationstore cascade;
+DROP TABLE IF EXISTS transformationcache cascade;
 
 #
 
@@ -79,10 +80,15 @@ CREATE TABLE transformationstore(
     type 			varchar(255) NOT NULL,
     from_version 	int NOT NULL,
     to_version       int NOT NULL,
-    transformation 	text,
-    UNIQUE(id)
+    transformation 	text
 );
 
 CREATE INDEX IF NOT EXISTS idx_transformationstore on transformationstore(ns,type);
 
- 
+ CREATE TABLE IF NOT EXISTS transformationcache(
+	cache_key 		varchar(2048) PRIMARY KEY,
+	header 			text NOT NULL,
+	payload 		text NOT NULL,
+	last_access 		TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+);
+

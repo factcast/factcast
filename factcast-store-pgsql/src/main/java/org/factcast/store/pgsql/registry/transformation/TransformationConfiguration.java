@@ -17,6 +17,9 @@ package org.factcast.store.pgsql.registry.transformation;
 
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
+import org.factcast.store.pgsql.registry.transformation.cache.InMemTransformationCache;
+import org.factcast.store.pgsql.registry.transformation.cache.PgTransformationCache;
+import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
 import org.factcast.store.pgsql.registry.transformation.chains.NashornTransformer;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
 import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
@@ -39,6 +42,16 @@ public class TransformationConfiguration {
 
         // otherwise
         return new InMemTransformationStoreImpl();
+    }
+
+    @Bean
+    public TransformationCache transformationCache(@NonNull JdbcTemplate jdbcTemplate,
+            @NonNull PgConfigurationProperties props, @NonNull SpringLiquibase unused) {
+        if (props.isValidationEnabled() && props.isPersistentSchemaStore())
+            return new PgTransformationCache(jdbcTemplate, unused);
+
+        // otherwise
+        return new InMemTransformationCache();
     }
 
     @Bean
