@@ -40,7 +40,7 @@ public class TransformationConfiguration {
     public TransformationStore transformationStore(@NonNull JdbcTemplate jdbcTemplate,
             @NonNull PgConfigurationProperties props, @Autowired(
                     required = false) SpringLiquibase unused) {
-        if (props.isValidationEnabled() && props.isPersistentSchemaStore())
+        if (props.isValidationEnabled() && props.isPersistentRegistry())
             return new PgTransformationStoreImpl(jdbcTemplate);
 
         // otherwise
@@ -51,7 +51,7 @@ public class TransformationConfiguration {
     public TransformationCache transformationCache(@NonNull JdbcTemplate jdbcTemplate,
             @NonNull PgConfigurationProperties props, @Autowired(
                     required = false) SpringLiquibase unused) {
-        if (props.isValidationEnabled() && props.isPersistentSchemaStore())
+        if (props.isValidationEnabled() && props.isPersistentTransformationCache())
             return new PgTransformationCache(jdbcTemplate);
 
         // otherwise
@@ -67,13 +67,6 @@ public class TransformationConfiguration {
     public Transformer transformer() {
         // TODO should test for Graal here, as nashorn is deprecated
         return new NashornTransformer();
-    }
-
-    @Bean
-    public TransformationCache transformationCache() {
-        // TODO should check for parameter and maybe give a warning on usage of
-        // inmem? Probably, inmem should not even exist once pg impl is done
-        return new InMemTransformationCache();
     }
 
     @Bean

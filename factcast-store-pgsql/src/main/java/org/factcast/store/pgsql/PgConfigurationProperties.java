@@ -90,10 +90,16 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
 
     /**
      * If validation is enabled, this controls if the local snapshot of the
-     * schemaregistry is persisted to psql or just kept in mem. (Defaults to
-     * true)
+     * registry is persisted to psql or just kept in mem. (Defaults to true)
      */
-    boolean persistentSchemaStore = true;
+    boolean persistentRegistry = true;
+
+    /**
+     * If validation is enabled, this controls if transformed facts are
+     * persistently cached in postgres, rather than in memory. (Defaults to
+     * false)
+     */
+    boolean persistentTransformationCache = false;
 
     /**
      * If validation is enabled, this controls if publishing facts, that are not
