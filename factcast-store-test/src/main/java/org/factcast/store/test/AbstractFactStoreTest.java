@@ -56,7 +56,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
-@SuppressWarnings("ALL")
+@SuppressWarnings("all")
 public abstract class AbstractFactStoreTest {
 
     static final FactSpec ANY = FactSpec.ns("default");
