@@ -45,7 +45,7 @@ public class HttpRegistryFileFetcherTest {
     @Test
     public void testCreateSchemaUrl() throws Exception {
         String id = "foo.json";
-        URL base = new URL("https://www.ibm.com/registry");
+        URL base = new URL("https://www.ibm.com/registry/");
         /*
          * Copyright © 2017-2020 factcast.org
          *
@@ -77,7 +77,7 @@ public class HttpRegistryFileFetcherTest {
     @Test
     public void testFetchThrowsOn404() throws Exception {
         try (TestHttpServer s = new TestHttpServer()) {
-            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
+            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
             uut = new HttpRegistryFileFetcher(baseUrl);
             assertThrows(RegistryFileFetchException.class, () -> {
                 uut.fetchSchema(new SchemaSource("unknown", "123", "ns", "type", 8));
@@ -96,7 +96,7 @@ public class HttpRegistryFileFetcherTest {
                 ctx.res.getWriter().write(json);
             });
 
-            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
+            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
             uut = new HttpRegistryFileFetcher(baseUrl);
             String fetch = uut.fetchSchema(new SchemaSource("someId", "123", "ns", "type", 8));
 
@@ -116,7 +116,7 @@ public class HttpRegistryFileFetcherTest {
                 ctx.res.getWriter().write(json);
             });
 
-            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
+            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
             uut = new HttpRegistryFileFetcher(baseUrl);
             String fetch = uut.fetchTransformation(new TransformationSource("someId", "ns", "type",
                     "hash", 8, 2));
