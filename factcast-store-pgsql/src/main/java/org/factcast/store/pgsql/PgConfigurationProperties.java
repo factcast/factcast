@@ -15,7 +15,6 @@
  */
 package org.factcast.store.pgsql;
 
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -84,9 +83,10 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
 
     /**
      * Optional URL to a Schema Registry. If this is null, validation will be
-     * disabled and a warning will be issued. (Defaults to null)
+     * disabled and a warning will be issued. (Defaults to null) Currently a
+     * String type due to the fact that "classpath:" is a spring-only protocol
      */
-    URL schemaRegistryUrl;
+    String schemaRegistryUrl;
 
     /**
      * If validation is enabled, this controls if the local snapshot of the

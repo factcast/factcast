@@ -36,8 +36,9 @@ public class TransformationSource {
     @JsonProperty(required = true)
     private String type;
 
+    // needs a default
     @JsonProperty
-    private String hash;
+    private String hash = "none";
 
     @JsonProperty(required = true)
     private Integer from;

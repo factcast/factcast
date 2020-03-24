@@ -40,8 +40,8 @@ public class NOPSchemaRegistryTest {
     @Test
     public void testRefreshDoesNotThrow() {
         NOPSchemaRegistry uut = new NOPSchemaRegistry();
-        uut.refreshVerbose();
-        uut.refreshSilent();
+        uut.fetchInitial();
+        uut.refresh();
     }
 
 }

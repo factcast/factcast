@@ -16,9 +16,15 @@
 package org.factcast.example.client.spring.boot2.hello;
 
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.util.FactCastJson;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -44,18 +50,38 @@ public class HelloWorldRunner implements CommandLineRunner {
         fc.publish(fact);
         System.out.println("published " + fact);
 
-        // // read it back and let factcast transform it to version 3
-        // Subscription sub = fc
-        // .subscribe(SubscriptionRequest.catchup(FactSpec.from(UserCreated.class)).fromScratch(),
-        // e -> {
-        // UserCreated p = FactCastJson.readValue(UserCreated.class,
-        // e.jsonPayload());
-        // System.out.println(p);
-        // })
-        // .awaitCatchup(5000);
-        //
-        // sub.close();
+        fact = Fact.builder()
+                .ns("Users")
+                .type("UserCreated")
+                .version(3)
+                .id(UUID.randomUUID())
+                .build("{\"firstName\":\"Horst\",\"lastName\":\"Lichter\",\"displayName\":\"Horsti\",\"salutation\":\"Mr\"}");
+        fc.publish(fact);
+        System.out.println("published " + fact);
 
+        // read it back and let factcast transform it to version 3
+        fetch(UserCreated.class, p -> {
+            System.err.println(p);
+        });
+
+        // read it back and let factcast transform it to version 1
+        fetch(UserCreatedV1.class, p -> {
+            System.err.println(p);
+        });
+
+    }
+
+    private <T> void fetch(Class<T> class1, Consumer<T> c) throws TimeoutException, Exception {
+
+        Subscription sub;
+        sub = fc
+                .subscribe(SubscriptionRequest.catchup(FactSpec.from(class1))
+                        .fromScratch(),
+                        e -> c.accept(FactCastJson.readValue(class1,
+                                e.jsonPayload())))
+                .awaitCatchup(5000);
+
+        sub.close();
     }
 
 }

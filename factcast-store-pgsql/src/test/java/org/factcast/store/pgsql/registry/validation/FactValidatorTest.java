@@ -98,8 +98,8 @@ public class FactValidatorTest {
                 + "    \"firstName\" : {\n" + "      \"type\": \"string\"\n" + "    }\n" + "  },\n"
                 + "  \"required\": [\"firstName\"]\n" + "}";
 
-        JsonSchema schema = ValidationConstants.factory
-                .getJsonSchema(ValidationConstants.objectMapper.readTree(schemaJson));
+        JsonSchema schema = ValidationConstants.JSON_SCHEMA_FACTORY
+                .getJsonSchema(ValidationConstants.JACKSON.readTree(schemaJson));
         when(sr.get(Mockito.any(SchemaKey.class))).thenReturn(Optional.of(schema));
 
         FactValidator uut = new FactValidator(props, sr);
@@ -145,8 +145,8 @@ public class FactValidatorTest {
                 + "    \"firstName\" : {\n" + "      \"type\": \"string\"\n" + "    }\n" + "  },\n"
                 + "  \"required\": [\"firstName\"]\n" + "}";
 
-        JsonSchema schema = ValidationConstants.factory
-                .getJsonSchema(ValidationConstants.objectMapper.readTree(schemaJson));
+        JsonSchema schema = ValidationConstants.JSON_SCHEMA_FACTORY
+                .getJsonSchema(ValidationConstants.JACKSON.readTree(schemaJson));
         when(sr.get(Mockito.any(SchemaKey.class))).thenReturn(Optional.of(schema));
 
         FactValidator uut = new FactValidator(props, sr);

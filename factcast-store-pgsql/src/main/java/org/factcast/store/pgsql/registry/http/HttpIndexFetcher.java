@@ -20,6 +20,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
 
+import org.factcast.store.pgsql.registry.IndexFetcher;
+import org.factcast.store.pgsql.registry.RegistryIndex;
+import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
+
 import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
@@ -36,16 +40,16 @@ import okhttp3.Response;
  *
  */
 @Slf4j
-public class IndexFetcher {
+public class HttpIndexFetcher implements IndexFetcher {
 
     private final OkHttpClient client;
 
-    public IndexFetcher(@NonNull URL baseUrl) {
-        this(baseUrl, ValidationConstants.client);
+    public HttpIndexFetcher(@NonNull URL baseUrl) {
+        this(baseUrl, ValidationConstants.OK_HTTP);
     }
 
     @VisibleForTesting
-    protected IndexFetcher(@NonNull URL baseUrl, @NonNull OkHttpClient client) {
+    protected HttpIndexFetcher(@NonNull URL baseUrl, @NonNull OkHttpClient client) {
         this.client = client;
         this.schemaRegistryUrl = baseUrl;
     }
@@ -60,7 +64,8 @@ public class IndexFetcher {
      * @return future for empty, if index is unchanged, otherwise the updated
      *         index.
      */
-    Optional<RegistryIndex> fetchIndex() {
+    @Override
+    public Optional<RegistryIndex> fetchIndex() {
 
         try {
             URL indexUrl = createIndexUrl(schemaRegistryUrl);
@@ -87,7 +92,7 @@ public class IndexFetcher {
                     this.etag = response.header(ValidationConstants.HTTPHEADER_E_TAG);
                     this.since = response.header(ValidationConstants.HTTPHEADER_LAST_MODIFIED);
 
-                    RegistryIndex readValue = ValidationConstants.objectMapper.readValue(
+                    RegistryIndex readValue = ValidationConstants.JACKSON.readValue(
                             responseBodyAsText,
                             RegistryIndex.class);
                     return Optional.of(readValue);

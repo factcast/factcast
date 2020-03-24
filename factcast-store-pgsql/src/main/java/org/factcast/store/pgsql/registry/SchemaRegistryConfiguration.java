@@ -15,11 +15,12 @@
  */
 package org.factcast.store.pgsql.registry;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.factcast.store.pgsql.PgConfigurationProperties;
+import org.factcast.store.pgsql.registry.classpath.ClasspathSchemaRegistry;
 import org.factcast.store.pgsql.registry.http.HttpSchemaRegistry;
-import org.factcast.store.pgsql.registry.http.IndexFetcher;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 import org.springframework.context.annotation.Bean;
@@ -38,26 +39,45 @@ public class SchemaRegistryConfiguration {
     public SchemaRegistry schemaRegistry(PgConfigurationProperties p,
             @NonNull SchemaStore schemaStore, @NonNull TransformationStore transformationStore) {
 
-        if (p.isValidationEnabled()) {
-            HttpSchemaRegistry httpSchemaRegistry = new HttpSchemaRegistry(p.getSchemaRegistryUrl(),
-                    schemaStore, transformationStore);
-            httpSchemaRegistry.refreshVerbose();
-            return httpSchemaRegistry;
-        } else {
-            log.warn(
-                    "**** SchemaRegistry-mode is disabled. Fact validation will not happen. This is discouraged for production environments. You have been warned. ****");
-            return new NOPSchemaRegistry();
+        try {
+
+            if (p.isValidationEnabled()) {
+                String fullUrl = p.getSchemaRegistryUrl();
+                if (!fullUrl.contains(":"))
+                    fullUrl = "classpath:" + fullUrl;
+
+                String protocol = fullUrl.substring(0, fullUrl.indexOf(":"));
+
+                if ("http".equals(protocol) || "https".equals(protocol)) {
+                    HttpSchemaRegistry httpSchemaRegistry;
+                    httpSchemaRegistry = new HttpSchemaRegistry(new URL(fullUrl + "/"),
+                            schemaStore, transformationStore);
+                    httpSchemaRegistry.fetchInitial();
+                    return httpSchemaRegistry;
+                }
+
+                if ("classpath".equals(protocol)) {
+                    ClasspathSchemaRegistry registry = new ClasspathSchemaRegistry(fullUrl
+                            .substring("classpath:".length()),
+                            schemaStore, transformationStore);
+                    registry.fetchInitial();
+                    return registry;
+                }
+
+                throw new IllegalArgumentException(
+                        "schemaRegistryUrl has an unknown protocol: '" + protocol
+                                + "'. Just 'http', 'https' and 'classpath' are allowed");
+
+            } else {
+                log.warn(
+                        "**** SchemaRegistry-mode is disabled. Fact validation will not happen. This is discouraged for production environments. You have been warned. ****");
+                return new NOPSchemaRegistry();
+            }
+
+        } catch (MalformedURLException e) {
+            throw new SchemaRegistryUnavailableException(e);
         }
 
-    }
-
-    @Bean
-    public IndexFetcher indexFetcher(PgConfigurationProperties p) {
-        URL schemaRegistryUrl = p.getSchemaRegistryUrl();
-        if (schemaRegistryUrl != null)
-            return new IndexFetcher(schemaRegistryUrl);
-        else
-            return null;
     }
 
     @Bean

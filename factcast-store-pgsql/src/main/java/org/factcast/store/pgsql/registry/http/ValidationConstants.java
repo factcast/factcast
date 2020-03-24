@@ -22,11 +22,11 @@ import okhttp3.OkHttpClient;
 
 public class ValidationConstants {
 
-    public static final JsonSchemaFactory factory = JsonSchemaFactory.byDefault();
+    public static final JsonSchemaFactory JSON_SCHEMA_FACTORY = JsonSchemaFactory.byDefault();
 
-    public static final ObjectMapper objectMapper = new ObjectMapper();
+    public static final ObjectMapper JACKSON = new ObjectMapper();
 
-    public static final OkHttpClient client = new OkHttpClient();
+    public static final OkHttpClient OK_HTTP = new OkHttpClient();
 
     public static final String HTTPHEADER_IF_MODIFIED_SINCE = "If-Modified-Since";
 

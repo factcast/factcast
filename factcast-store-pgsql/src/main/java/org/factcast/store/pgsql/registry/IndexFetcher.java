@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.http;
+package org.factcast.store.pgsql.registry;
 
-import java.io.IOException;
+import java.util.Optional;
 
-import lombok.NonNull;
-
-public class SchemaRegistryUnavailableException extends RuntimeException {
-
-    private static final long serialVersionUID = 1L;
-
-    public SchemaRegistryUnavailableException(IOException e) {
-        super(e);
-    }
-
-    public SchemaRegistryUnavailableException(@NonNull String httpUrlAsString, int code,
-            @NonNull String message) {
-        super("Status code " + code + ": " + message + " while requesting " + httpUrlAsString);
-    }
-
+public interface IndexFetcher {
+    Optional<RegistryIndex> fetchIndex();
 }

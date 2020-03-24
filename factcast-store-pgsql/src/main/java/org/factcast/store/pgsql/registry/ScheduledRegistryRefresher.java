@@ -38,7 +38,7 @@ public class ScheduledRegistryRefresher implements SmartInitializingSingleton, D
 
             @Override
             public void run() {
-                registry.refreshSilent();
+                registry.refresh();
             }
         };
 

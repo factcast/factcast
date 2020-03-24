@@ -15,26 +15,21 @@
  */
 package org.factcast.store.pgsql.registry;
 
-import java.util.List;
-import java.util.Optional;
+import java.io.IOException;
 
-import org.factcast.store.pgsql.registry.transformation.Transformation;
-import org.factcast.store.pgsql.registry.transformation.TransformationKey;
-import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
-import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
+import lombok.NonNull;
 
-import com.github.fge.jsonschema.main.JsonSchema;
+public class SchemaRegistryUnavailableException extends RuntimeException {
 
-public interface SchemaRegistry {
+    private static final long serialVersionUID = 1L;
 
-    Optional<JsonSchema> get(SchemaKey key);
+    public SchemaRegistryUnavailableException(IOException e) {
+        super(e);
+    }
 
-    List<Transformation> get(TransformationKey key);
-
-    void fetchInitial();
-
-    void refresh();
-
-    void register(TransformationStoreListener listener);
+    public SchemaRegistryUnavailableException(@NonNull String httpUrlAsString, int code,
+            @NonNull String message) {
+        super("Status code " + code + ": " + message + " while requesting " + httpUrlAsString);
+    }
 
 }

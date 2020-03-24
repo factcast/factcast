@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.http;
+package org.factcast.store.pgsql.registry;
 
-import java.io.IOException;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.net.URL;
 
-import lombok.NonNull;
+import org.junit.jupiter.api.Test;
 
-/**
- * something went wrong fetching a particular schema
- *
- * @author uwe
- *
- */
-public class RegistryFileFetchException extends IOException {
+public class RegistryFileFetchExceptionTest {
+    @Test
+    void testNullContracts() throws Exception {
+        assertThrows(NullPointerException.class, () -> {
+            new RegistryFileFetchException(null, 7, "");
+        });
+        assertThrows(NullPointerException.class, () -> {
+            new RegistryFileFetchException(new URL("http://ibm.com"), 7, null);
+        });
 
-    private static final long serialVersionUID = 1L;
+        new RegistryFileFetchException(new URL("http://ibm.com"), 7, "must not throw exception");
 
-    public RegistryFileFetchException(@NonNull URL url, int code, @NonNull String message) {
-        super("Status code " + code + ": " + message + " while fetching " + url);
     }
-
 }

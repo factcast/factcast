@@ -93,6 +93,7 @@ public class FactTransformersImpl implements FactTransformers {
                 ((ObjectNode) header).put("version", targetVersion);
                 JsonNode transformedPayload = trans.transform(chain, input);
                 Fact transformed = Fact.of(header, transformedPayload);
+                // can be optimized by passing jsonnode?
                 cache.put(transformed, chainId);
                 return transformed;
             } catch (JsonProcessingException e1) {

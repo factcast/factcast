@@ -24,6 +24,7 @@ import java.net.URL;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
+import org.factcast.store.pgsql.registry.RegistryIndex;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
@@ -41,8 +42,8 @@ public class HttpSchemaRegistryTest {
 
     @Test
     public void testRoundtrip() throws InterruptedException, ExecutionException, IOException {
-        IndexFetcher indexFetcher = mock(IndexFetcher.class);
-        RegistryFileFetcher fileFetcher = mock(RegistryFileFetcher.class);
+        HttpIndexFetcher indexFetcher = mock(HttpIndexFetcher.class);
+        HttpRegistryFileFetcher fileFetcher = mock(HttpRegistryFileFetcher.class);
 
         RegistryIndex index = new RegistryIndex();
 
@@ -71,7 +72,7 @@ public class HttpSchemaRegistryTest {
 
         HttpSchemaRegistry uut = new HttpSchemaRegistry(schemaStore, transformationStore,
                 indexFetcher, fileFetcher);
-        uut.refreshVerbose();
+        uut.fetchInitial();
 
         verify(schemaStore, times(2)).register(Mockito.any(), Mockito.any());
         verify(transformationStore, times(3)).store(Mockito.any(), Mockito.any());

@@ -16,9 +16,10 @@
 package org.factcast.store.pgsql.registry.http;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.factcast.store.pgsql.registry.RegistryFileFetchException;
+import org.factcast.store.pgsql.registry.RegistryFileFetcher;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 
@@ -37,7 +38,7 @@ import okhttp3.Response;
  */
 
 @Slf4j
-public class RegistryFileFetcher {
+public class HttpRegistryFileFetcher implements RegistryFileFetcher {
 
     @NonNull
     private final URL baseUrl;
@@ -45,25 +46,30 @@ public class RegistryFileFetcher {
     @NonNull
     private final OkHttpClient client;
 
-    public RegistryFileFetcher(@NonNull URL baseUrl) {
-        this(baseUrl, ValidationConstants.client);
+    public HttpRegistryFileFetcher(@NonNull URL baseUrl) {
+        this(baseUrl, ValidationConstants.OK_HTTP);
     }
 
     @VisibleForTesting
-    RegistryFileFetcher(@NonNull URL baseUrl, @NonNull OkHttpClient client) {
+    HttpRegistryFileFetcher(@NonNull URL baseUrl, @NonNull OkHttpClient client) {
         this.client = client;
         this.baseUrl = baseUrl;
     }
 
+    @Override
     public String fetchTransformation(TransformationSource key) throws IOException {
-        URL url = createFileUrl(baseUrl, key.id());
+        String id = key.id();
+        URL url = new URL(baseUrl, id);
         log.debug("Fetching Transformation {}", key.id());
 
         return fetch(url);
     }
 
+    @Override
     public String fetchSchema(SchemaSource key) throws IOException {
-        URL url = createFileUrl(baseUrl, key.id());
+        String id = key.id();
+
+        URL url = new URL(baseUrl, id);
         log.debug("Fetching Schema {}", key.id());
 
         return fetch(url);
@@ -83,16 +89,5 @@ public class RegistryFileFetcher {
             }
         }
 
-    }
-
-    protected URL createFileUrl(@NonNull URL base, @NonNull String id)
-            throws MalformedURLException {
-
-        String externalForm = base.toExternalForm();
-        StringBuilder sb = new StringBuilder(externalForm);
-        if (!externalForm.endsWith("/"))
-            sb.append("/");
-        sb.append(id);
-        return new URL(sb.toString());
     }
 }

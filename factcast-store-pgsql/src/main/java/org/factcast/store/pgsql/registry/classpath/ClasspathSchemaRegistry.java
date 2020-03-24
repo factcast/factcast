@@ -13,38 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.http;
-
-import java.net.URL;
+package org.factcast.store.pgsql.registry.classpath;
 
 import org.factcast.store.pgsql.registry.AbstractSchemaRegistry;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
-import org.springframework.stereotype.Component;
-
-import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
-@Component
+public class ClasspathSchemaRegistry extends AbstractSchemaRegistry {
 
-public class HttpSchemaRegistry extends AbstractSchemaRegistry {
-
-    public HttpSchemaRegistry(@NonNull URL baseUrl, @NonNull SchemaStore schemaStore,
+    public ClasspathSchemaRegistry(@NonNull String base, @NonNull SchemaStore schemaStore,
             @NonNull TransformationStore transformationStore) {
-        this(schemaStore, transformationStore, new HttpIndexFetcher(baseUrl),
-                new HttpRegistryFileFetcher(
-                        baseUrl));
-    }
-
-    @VisibleForTesting
-    protected HttpSchemaRegistry(@NonNull SchemaStore schemaStore,
-            @NonNull TransformationStore transformationStore,
-            @NonNull HttpIndexFetcher indexFetcher,
-            @NonNull HttpRegistryFileFetcher registryFileFetcher) {
-        super(indexFetcher, registryFileFetcher, schemaStore, transformationStore);
+        super(new ClasspathIndexFetcher(base), new ClasspathRegistryFileFetcher(base),
+                schemaStore,
+                transformationStore);
     }
 
 }
