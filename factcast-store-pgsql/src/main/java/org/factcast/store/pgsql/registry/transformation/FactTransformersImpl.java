@@ -30,6 +30,7 @@ import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
@@ -88,9 +89,10 @@ public class FactTransformersImpl implements FactTransformers {
             JsonNode input;
             try {
                 input = FactCastJson.readTree(e.jsonPayload());
-                JsonNode transform = trans.transform(chain, input);
-                Fact transformed = Fact.of(e.jsonHeader(), transform
-                        .toString());
+                JsonNode header = FactCastJson.readTree(e.jsonHeader());
+                ((ObjectNode) header).put("version", targetVersion);
+                JsonNode transformedPayload = trans.transform(chain, input);
+                Fact transformed = Fact.of(header, transformedPayload);
                 // can be optimized by passing jsonnode?
                 cache.put(transformed, chainId);
                 return transformed;
