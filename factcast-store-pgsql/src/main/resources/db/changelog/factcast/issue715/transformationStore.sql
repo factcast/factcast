@@ -5,8 +5,7 @@ CREATE TABLE transformationstore(
 	type 			varchar(255) NOT NULL,
 	from_version 	int NOT NULL,
     to_version       int NOT NULL,
-	transformation 	text,
-	UNIQUE(id)
+	transformation 	text
 );
 
 CREATE INDEX idx_transformationstore on transformationstore(ns,type);

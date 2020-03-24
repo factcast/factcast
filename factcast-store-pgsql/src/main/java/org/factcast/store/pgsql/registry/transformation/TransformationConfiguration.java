@@ -17,11 +17,15 @@ package org.factcast.store.pgsql.registry.transformation;
 
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
+import org.factcast.store.pgsql.registry.transformation.cache.InMemTransformationCache;
+import org.factcast.store.pgsql.registry.transformation.cache.PgTransformationCache;
+import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
 import org.factcast.store.pgsql.registry.transformation.chains.NashornTransformer;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
 import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
 import org.factcast.store.pgsql.registry.transformation.store.InMemTransformationStoreImpl;
 import org.factcast.store.pgsql.registry.transformation.store.PgTransformationStoreImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -33,12 +37,24 @@ import lombok.NonNull;
 public class TransformationConfiguration {
     @Bean
     public TransformationStore transformationStore(@NonNull JdbcTemplate jdbcTemplate,
-            @NonNull PgConfigurationProperties props, @NonNull SpringLiquibase unused) {
+            @NonNull PgConfigurationProperties props, @Autowired(
+                    required = false) @NonNull SpringLiquibase unused) {
         if (props.isValidationEnabled() && props.isPersistentSchemaStore())
-            return new PgTransformationStoreImpl(jdbcTemplate, unused);
+            return new PgTransformationStoreImpl(jdbcTemplate);
 
         // otherwise
         return new InMemTransformationStoreImpl();
+    }
+
+    @Bean
+    public TransformationCache transformationCache(@NonNull JdbcTemplate jdbcTemplate,
+            @NonNull PgConfigurationProperties props, @Autowired(
+                    required = false) @NonNull SpringLiquibase unused) {
+        if (props.isValidationEnabled() && props.isPersistentSchemaStore())
+            return new PgTransformationCache(jdbcTemplate);
+
+        // otherwise
+        return new InMemTransformationCache();
     }
 
     @Bean
