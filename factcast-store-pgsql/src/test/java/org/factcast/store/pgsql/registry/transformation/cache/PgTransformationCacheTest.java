@@ -15,8 +15,7 @@
  */
 package org.factcast.store.pgsql.registry.transformation.cache;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Date;
 import java.util.UUID;
@@ -33,8 +32,6 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import liquibase.integration.spring.SpringLiquibase;
-
 @ContextConfiguration(classes = { PgTestConfiguration.class })
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
@@ -45,7 +42,7 @@ class PgTransformationCacheTest extends AbstractTransformationCacheTest {
 
     @Override
     protected TransformationCache createUUT() {
-        return new PgTransformationCache(tpl, mock(SpringLiquibase.class));
+        return new PgTransformationCache(tpl);
     }
 
     @Test

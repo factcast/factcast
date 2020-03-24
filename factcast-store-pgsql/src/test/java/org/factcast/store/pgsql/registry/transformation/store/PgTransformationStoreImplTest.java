@@ -15,9 +15,6 @@
  */
 package org.factcast.store.pgsql.registry.transformation.store;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-
 import org.factcast.store.pgsql.internal.PgTestConfiguration;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.test.IntegrationTest;
@@ -29,8 +26,6 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import liquibase.integration.spring.SpringLiquibase;
-
 @ContextConfiguration(classes = { PgTestConfiguration.class })
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
@@ -41,7 +36,7 @@ class PgTransformationStoreImplTest extends AbstractTransformationStoreTest {
 
     @Override
     protected TransformationStore createUUT() {
-        return new PgTransformationStoreImpl(tpl, mock(SpringLiquibase.class));
+        return new PgTransformationStoreImpl(tpl);
     }
 
 }
