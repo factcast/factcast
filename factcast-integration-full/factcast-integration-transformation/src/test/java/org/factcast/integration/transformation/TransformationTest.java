@@ -77,7 +77,7 @@ public class TransformationTest {
                 f -> {
                     if (ret.get() == null)
                         ret.set(f);
-                }).awaitCatchup(1000);) {
+                }).awaitCatchup(5000);) {
         }
         return ret.get();
     }
