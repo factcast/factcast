@@ -62,8 +62,7 @@ public class PgTransformationStoreImpl extends AbstractTransformationStore {
                 return true;
             } else {
                 registryMetrics.count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
-                        RegistryMetrics.TAG_IDENTITY_KEY, source.toString()), Tag.of("hash",
-                                hash)));
+                        RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
 
                 throw new TransformationConflictException(
                         "Source at " + source + " does not match the stored hash " + hash);

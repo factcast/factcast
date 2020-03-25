@@ -45,9 +45,13 @@ public class InMemTransformationStoreImpl extends AbstractTransformationStore {
     protected void doStore(@NonNull TransformationSource source, String transformation)
             throws TransformationConflictException {
         String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
-        if (oldHash != null && !oldHash.contentEquals(source.hash()))
+        if (oldHash != null && !oldHash.contentEquals(source.hash())) {
+            registryMetrics.count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
+                    RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
+
             throw new TransformationConflictException("Key " + source
                     + " does not match the stored hash " + oldHash);
+        }
 
         List<Transformation> transformations = get(source.toKey());
 
@@ -63,8 +67,7 @@ public class InMemTransformationStoreImpl extends AbstractTransformationStore {
                 return true;
             else {
                 registryMetrics.count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
-                        RegistryMetrics.TAG_IDENTITY_KEY, source.toString()), Tag.of("hash",
-                                hash)));
+                        RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
 
                 throw new TransformationConflictException(
                         "TransformationSource at " + source + " does not match the stored hash "

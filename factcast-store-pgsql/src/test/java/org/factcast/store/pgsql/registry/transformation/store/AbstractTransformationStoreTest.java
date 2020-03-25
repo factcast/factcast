@@ -104,8 +104,7 @@ public abstract class AbstractTransformationStoreTest {
         });
 
         verify(registryMetrics).count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
-                RegistryMetrics.TAG_IDENTITY_KEY, conflicting.toString()), Tag.of("hash", s
-                        .hash())));
+                RegistryMetrics.TAG_IDENTITY_KEY, conflicting.id())));
     }
 
     @Test

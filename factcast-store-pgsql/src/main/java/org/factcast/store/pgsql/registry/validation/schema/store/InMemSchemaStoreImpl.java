@@ -45,9 +45,13 @@ public class InMemSchemaStoreImpl implements SchemaStore {
     public synchronized void register(@NonNull SchemaSource source, @NonNull String schema)
             throws SchemaConflictException {
         String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
-        if (oldHash != null && !oldHash.contentEquals(source.hash()))
+        if (oldHash != null && !oldHash.contentEquals(source.hash())) {
+            registryMetrics.count(MetricEvent.SCHEMA_CONFLICT, Tags.of(
+                    RegistryMetrics.TAG_IDENTITY_KEY, source.id()));
+
             throw new SchemaConflictException("Key " + source + " does not match the stored hash "
                     + oldHash);
+        }
 
         schemaMap.put(source.toKey(), schema);
     }
@@ -61,7 +65,7 @@ public class InMemSchemaStoreImpl implements SchemaStore {
                 return true;
             else {
                 registryMetrics.count(MetricEvent.SCHEMA_CONFLICT, Tags.of(
-                        RegistryMetrics.TAG_IDENTITY_KEY, source.toString()));
+                        RegistryMetrics.TAG_IDENTITY_KEY, source.id()));
 
                 throw new SchemaConflictException(
                         "SchemaSource at " + source + " does not match the stored hash " + hash);
