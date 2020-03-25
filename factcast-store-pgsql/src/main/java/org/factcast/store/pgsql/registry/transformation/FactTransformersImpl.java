@@ -63,7 +63,7 @@ public class FactTransformersImpl implements FactTransformers {
         } else {
             OptionalInt max = requested.get(ns, type).stream().mapToInt(v -> v).max();
             int targetVersion = max.orElseThrow(() -> new IllegalArgumentException(
-                    "No reqested Version !? This must not happen"));
+                    "No requested Version !? This must not happen"));
             return transform(targetVersion, e);
         }
 
