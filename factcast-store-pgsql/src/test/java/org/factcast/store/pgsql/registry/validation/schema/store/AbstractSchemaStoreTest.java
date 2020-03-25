@@ -98,7 +98,7 @@ public abstract class AbstractSchemaStoreTest {
             uut.contains(conflicting);
         });
 
-        verify(registryMetrics).increment(eq(MetricEvent.SCHEMA_CONFLICT), any(Tags.class));
+        verify(registryMetrics).count(eq(MetricEvent.SCHEMA_CONFLICT), any(Tags.class));
     }
 
     @Test

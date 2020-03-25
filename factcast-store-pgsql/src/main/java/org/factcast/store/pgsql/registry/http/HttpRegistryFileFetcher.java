@@ -95,7 +95,7 @@ public class HttpRegistryFileFetcher implements RegistryFileFetcher {
             String responseBodyAsText = response.body().string();
 
             if (response.code() != ValidationConstants.HTTP_OK) {
-                registryMetrics.increment(MetricEvent.REGISTRY_FILE_FETCH_FAILED, Tags.of(
+                registryMetrics.count(MetricEvent.REGISTRY_FILE_FETCH_FAILED, Tags.of(
                         RegistryMetrics.TAG_STATUS_CODE_KEY, String.valueOf(response.code())));
 
                 throw new RegistryFileFetchException(url, response.code(), response.message());

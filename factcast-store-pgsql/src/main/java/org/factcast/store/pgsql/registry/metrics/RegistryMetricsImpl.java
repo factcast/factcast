@@ -107,12 +107,12 @@ public class RegistryMetricsImpl implements RegistryMetrics {
     }
 
     @Override
-    public void increment(MetricEvent event, Tags tags) {
+    public void count(MetricEvent event, Tags tags) {
         counter(event, tags).increment();
     }
 
     @Override
-    public void increment(MetricEvent event) {
-        increment(event, null);
+    public void count(MetricEvent event) {
+        count(event, null);
     }
 }

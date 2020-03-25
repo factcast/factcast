@@ -60,7 +60,7 @@ public class PgTransformationCache implements TransformationCache {
                         }));
 
         if (facts.isEmpty()) {
-            registryMetrics.increment(MetricEvent.TRANSFORMATION_CACHE_MISS);
+            registryMetrics.count(MetricEvent.TRANSFORMATION_CACHE_MISS);
 
             return Optional.empty();
         }
@@ -68,7 +68,7 @@ public class PgTransformationCache implements TransformationCache {
         jdbcTemplate.update("UPDATE transformationcache SET last_access=now() WHERE cache_key = ?",
                 cacheKey);
 
-        registryMetrics.increment(MetricEvent.TRANSFORMATION_CACHE_HIT);
+        registryMetrics.count(MetricEvent.TRANSFORMATION_CACHE_HIT);
 
         return Optional.of(facts.get(0));
     }

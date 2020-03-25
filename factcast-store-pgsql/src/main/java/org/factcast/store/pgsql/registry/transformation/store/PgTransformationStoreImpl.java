@@ -61,7 +61,7 @@ public class PgTransformationStoreImpl extends AbstractTransformationStore {
             if (hash.equals(source.hash())) {
                 return true;
             } else {
-                registryMetrics.increment(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
+                registryMetrics.count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
                         RegistryMetrics.TAG_IDENTITY_KEY, source.toString()), Tag.of("hash",
                                 hash)));
 

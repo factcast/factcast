@@ -108,7 +108,7 @@ public class FactTransformersImpl implements FactTransformers {
                 cache.put(transformed, chainId);
                 return transformed;
             } catch (JsonProcessingException e1) {
-                registryMetrics.increment(MetricEvent.TRANSFORMATION_FAILED, Tags.of(
+                registryMetrics.count(MetricEvent.TRANSFORMATION_FAILED, Tags.of(
                         Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
                         Tag.of("version", String.valueOf(targetVersion))));
 

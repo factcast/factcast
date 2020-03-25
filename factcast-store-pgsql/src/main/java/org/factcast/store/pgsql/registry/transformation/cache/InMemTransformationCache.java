@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class InMemTransformationCache implements TransformationCache {
-    private final RegistryMetrics registryMetrics2;
+    private final RegistryMetrics registryMetrics;
 
     private static final int CAPACITY = 1_000_000;
 
@@ -51,9 +51,9 @@ public class InMemTransformationCache implements TransformationCache {
         Optional<Fact> result = Optional.ofNullable(cache.get(key));
 
         if (result.isPresent()) {
-            registryMetrics2.increment(MetricEvent.TRANSFORMATION_CACHE_HIT);
+            registryMetrics.count(MetricEvent.TRANSFORMATION_CACHE_HIT);
         } else {
-            registryMetrics2.increment(MetricEvent.TRANSFORMATION_CACHE_MISS);
+            registryMetrics.count(MetricEvent.TRANSFORMATION_CACHE_MISS);
         }
 
         return result;

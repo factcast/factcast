@@ -60,7 +60,7 @@ public class PgSchemaStoreImpl implements SchemaStore {
             if (hash.equals(key.hash())) {
                 return true;
             } else {
-                registryMetrics.increment(MetricEvent.SCHEMA_CONFLICT, Tags.of(
+                registryMetrics.count(MetricEvent.SCHEMA_CONFLICT, Tags.of(
                         RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
 
                 throw new SchemaConflictException("Key " + key + " does not match the stored hash "

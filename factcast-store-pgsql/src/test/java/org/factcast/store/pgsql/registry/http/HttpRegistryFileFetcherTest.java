@@ -85,7 +85,7 @@ public class HttpRegistryFileFetcherTest {
 
             verify(registryMetrics).timed(eq(TimedOperation.FETCH_REGISTRY_FILE), eq(
                     RegistryFileFetchException.class), any(SupplierWithException.class));
-            verify(registryMetrics).increment(MetricEvent.REGISTRY_FILE_FETCH_FAILED, Tags.of(
+            verify(registryMetrics).count(MetricEvent.REGISTRY_FILE_FETCH_FAILED, Tags.of(
                     RegistryMetrics.TAG_STATUS_CODE_KEY, "404"));
         }
     }

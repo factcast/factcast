@@ -105,7 +105,7 @@ public class TransformationChains implements TransformationStoreListener {
         GraphBuilder<Integer, Edge> builder = GraphBuilder.create();
         List<Transformation> all = r.get(key);
         if (all.isEmpty()) {
-            registryMetrics.increment(MetricEvent.MISSING_TRANSFORMATION_INFO, Tags.of(
+            registryMetrics.count(MetricEvent.MISSING_TRANSFORMATION_INFO, Tags.of(
                     Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", String
                             .valueOf(from)), Tag.of("to", String.valueOf(to))));
 
@@ -134,7 +134,7 @@ public class TransformationChains implements TransformationStoreListener {
 
         if (path.isEmpty() || Iterables.getLast(path).toVersion() != to
                 || Iterables.getFirst(path, null).fromVersion() != from) {
-            registryMetrics.increment(MetricEvent.MISSING_TRANSFORMATION_INFO, Tags.of(
+            registryMetrics.count(MetricEvent.MISSING_TRANSFORMATION_INFO, Tags.of(
                     Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", String
                             .valueOf(from)), Tag.of("to", String.valueOf(to))));
 

@@ -68,12 +68,12 @@ public class NOPRegistryMetrics implements RegistryMetrics {
     }
 
     @Override
-    public void increment(MetricEvent event) {
+    public void count(MetricEvent event) {
 
     }
 
     @Override
-    public void increment(MetricEvent event, Tags tags) {
+    public void count(MetricEvent event, Tags tags) {
 
     }
 }

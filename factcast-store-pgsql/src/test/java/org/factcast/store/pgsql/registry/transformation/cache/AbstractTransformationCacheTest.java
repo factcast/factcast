@@ -51,7 +51,7 @@ public abstract class AbstractTransformationCacheTest {
 
         assertThat(fact.isPresent()).isFalse();
 
-        verify(registryMetrics).increment(MetricEvent.TRANSFORMATION_CACHE_MISS);
+        verify(registryMetrics).count(MetricEvent.TRANSFORMATION_CACHE_MISS);
     }
 
     @Test
@@ -70,7 +70,7 @@ public abstract class AbstractTransformationCacheTest {
 
         assertThat(found.isPresent()).isTrue();
         assertEquals(fact, found.get());
-        verify(registryMetrics).increment(MetricEvent.TRANSFORMATION_CACHE_HIT);
+        verify(registryMetrics).count(MetricEvent.TRANSFORMATION_CACHE_HIT);
     }
 
     @Test

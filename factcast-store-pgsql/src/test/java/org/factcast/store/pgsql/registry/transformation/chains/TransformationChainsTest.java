@@ -87,7 +87,7 @@ public class TransformationChainsTest {
         assertThrows(MissingTransformationInformation.class, () -> {
             uut.get(key, 1, 7);
         });
-        verify(registryMetrics).increment(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
+        verify(registryMetrics).count(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
                 Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", "1"), Tag
                         .of("to", "7"))));
     }
@@ -166,7 +166,7 @@ public class TransformationChainsTest {
         assertThrows(MissingTransformationInformation.class, () -> {
             uut.get(key, 2, 99);
         });
-        verify(registryMetrics).increment(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
+        verify(registryMetrics).count(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
                 Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", "2"), Tag
                         .of("to", "99"))));
 
@@ -197,7 +197,7 @@ public class TransformationChainsTest {
         assertThrows(MissingTransformationInformation.class, () -> {
             uut.get(key, 2, 99);
         });
-        verify(registryMetrics).increment(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
+        verify(registryMetrics).count(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
                 Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", "2"), Tag
                         .of("to", "99"))));
 

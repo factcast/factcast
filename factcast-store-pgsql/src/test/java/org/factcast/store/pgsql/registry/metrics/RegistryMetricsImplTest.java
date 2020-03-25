@@ -66,7 +66,7 @@ class RegistryMetricsImplTest {
 
     @Test
     void testCounterCreation() {
-        uut.increment(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE);
+        uut.count(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE);
 
         verify(meterRegistry).counter(RegistryMetricsImpl.METRIC_NAME_EVENTS, Tags.of(Tag.of(
                 RegistryMetricsImpl.TAG_NAME_KEY, MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE
@@ -162,7 +162,7 @@ class RegistryMetricsImplTest {
 
     @Test
     void testCounter() {
-        uut.increment(MetricEvent.MISSING_TRANSFORMATION_INFO);
+        uut.count(MetricEvent.MISSING_TRANSFORMATION_INFO);
 
         verify(counter).increment();
 
@@ -172,7 +172,7 @@ class RegistryMetricsImplTest {
     void testCounterWithTags() {
         val customTag = Tag.of("foo", "bar");
 
-        uut.increment(MetricEvent.MISSING_TRANSFORMATION_INFO, Tags.of(customTag));
+        uut.count(MetricEvent.MISSING_TRANSFORMATION_INFO, Tags.of(customTag));
 
         verify(counter).increment();
         verify(meterRegistry).counter(RegistryMetricsImpl.METRIC_NAME_EVENTS, Tags.of(

@@ -62,7 +62,7 @@ public class FactValidatorTest {
         Fact probeFact = Fact.builder().ns("foo").type("bar").buildWithoutPayload();
         assertThat(uut.validate(probeFact)).isNotEmpty();
 
-        verify(registryMetrics).increment(eq(MetricEvent.FACT_VALIDATION_FAILED), any(Tags.class));
+        verify(registryMetrics).count(eq(MetricEvent.FACT_VALIDATION_FAILED), any(Tags.class));
 
     }
 
@@ -94,7 +94,7 @@ public class FactValidatorTest {
         Fact probeFact = Fact.builder().ns("foo").type("bar").version(8).buildWithoutPayload();
         assertThat(uut.validate(probeFact)).isNotEmpty();
 
-        verify(registryMetrics).increment(eq(MetricEvent.SCHEMA_MISSING), any(Tags.class));
+        verify(registryMetrics).count(eq(MetricEvent.SCHEMA_MISSING), any(Tags.class));
 
     }
 
@@ -167,7 +167,7 @@ public class FactValidatorTest {
         Fact probeFact = Fact.builder().ns("foo").type("bar").version(1).build("{}");
         assertThat(uut.validate(probeFact)).isNotEmpty();
 
-        verify(registryMetrics).increment(eq(MetricEvent.FACT_VALIDATION_FAILED), any(Tags.class));
+        verify(registryMetrics).count(eq(MetricEvent.FACT_VALIDATION_FAILED), any(Tags.class));
 
     }
 

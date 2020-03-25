@@ -103,7 +103,7 @@ public abstract class AbstractTransformationStoreTest {
             uut.contains(conflicting);
         });
 
-        verify(registryMetrics).increment(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
+        verify(registryMetrics).count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
                 RegistryMetrics.TAG_IDENTITY_KEY, conflicting.toString()), Tag.of("hash", s
                         .hash())));
     }

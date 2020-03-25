@@ -47,8 +47,8 @@ public class HttpIndexFetcher implements IndexFetcher {
 
     private final RegistryMetrics registryMetrics;
 
-    public HttpIndexFetcher(@NonNull URL baseUrl, @NonNull RegistryMetrics registryMetrics2) {
-        this(baseUrl, ValidationConstants.OK_HTTP, registryMetrics2);
+    public HttpIndexFetcher(@NonNull URL baseUrl, @NonNull RegistryMetrics registryMetrics) {
+        this(baseUrl, ValidationConstants.OK_HTTP, registryMetrics);
     }
 
     @VisibleForTesting
@@ -103,7 +103,7 @@ public class HttpIndexFetcher implements IndexFetcher {
                     return Optional.of(readValue);
 
                 } else {
-                    registryMetrics.increment(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE, Tags.of(
+                    registryMetrics.count(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE, Tags.of(
                             RegistryMetrics.TAG_STATUS_CODE_KEY, String.valueOf(response.code())));
 
                     throw new SchemaRegistryUnavailableException(request.url().toString(), response
@@ -112,7 +112,7 @@ public class HttpIndexFetcher implements IndexFetcher {
                 }
             }
         } catch (IOException e) {
-            registryMetrics.increment(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE);
+            registryMetrics.count(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE);
 
             throw new SchemaRegistryUnavailableException(e);
         }

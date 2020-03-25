@@ -90,7 +90,7 @@ public class HttpIndexFetcherTest {
                 uut.fetchIndex();
             });
 
-            verify(registryMetrics).increment(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE, Tags.of(
+            verify(registryMetrics).count(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE, Tags.of(
                     RegistryMetrics.TAG_STATUS_CODE_KEY, "404"));
         }
     }

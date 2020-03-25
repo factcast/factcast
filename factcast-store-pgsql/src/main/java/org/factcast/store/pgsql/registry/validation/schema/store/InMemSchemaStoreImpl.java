@@ -60,7 +60,7 @@ public class InMemSchemaStoreImpl implements SchemaStore {
             if (hash.equals(source.hash()))
                 return true;
             else {
-                registryMetrics.increment(MetricEvent.SCHEMA_CONFLICT, Tags.of(
+                registryMetrics.count(MetricEvent.SCHEMA_CONFLICT, Tags.of(
                         RegistryMetrics.TAG_IDENTITY_KEY, source.toString()));
 
                 throw new SchemaConflictException(

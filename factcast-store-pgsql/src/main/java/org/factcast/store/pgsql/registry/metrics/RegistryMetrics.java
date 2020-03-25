@@ -44,7 +44,7 @@ public interface RegistryMetrics {
     <R, E extends Exception> R timed(TimedOperation operation, Class<E> exceptionClass, Tags tags,
             SupplierWithException<R, E> fn) throws E;
 
-    void increment(MetricEvent event);
+    void count(MetricEvent event);
 
-    void increment(MetricEvent event, Tags tags);
+    void count(MetricEvent event, Tags tags);
 }

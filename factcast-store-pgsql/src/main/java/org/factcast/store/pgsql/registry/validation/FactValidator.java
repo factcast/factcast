@@ -56,7 +56,7 @@ public class FactValidator {
                 return doValidate(fact);
             } else {
                 if (!props.isAllowUnvalidatedPublish()) {
-                    registryMetrics.increment(MetricEvent.FACT_VALIDATION_FAILED, Tags.of(
+                    registryMetrics.count(MetricEvent.FACT_VALIDATION_FAILED, Tags.of(
                             RegistryMetrics.TAG_IDENTITY_KEY, SchemaKey.from(fact).toString()));
 
                     return Lists.newArrayList(new FactValidationError(
@@ -87,7 +87,7 @@ public class FactValidator {
                                 .getMessage()));
                     });
 
-                    registryMetrics.increment(MetricEvent.FACT_VALIDATION_FAILED, Tags.of(
+                    registryMetrics.count(MetricEvent.FACT_VALIDATION_FAILED, Tags.of(
                             RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
 
                     return ret;
@@ -98,7 +98,7 @@ public class FactValidator {
             }
         } else {
             if (!props.isAllowUnvalidatedPublish()) {
-                registryMetrics.increment(MetricEvent.SCHEMA_MISSING, Tags.of(
+                registryMetrics.count(MetricEvent.SCHEMA_MISSING, Tags.of(
                         RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
 
                 return Lists.newArrayList(
