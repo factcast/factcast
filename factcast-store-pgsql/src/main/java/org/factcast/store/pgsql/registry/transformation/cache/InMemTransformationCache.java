@@ -15,7 +15,9 @@
  */
 package org.factcast.store.pgsql.registry.transformation.cache;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,6 +25,8 @@ import org.apache.commons.collections15.map.LRUMap;
 import org.factcast.core.Fact;
 import org.joda.time.DateTime;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NonNull;
 
 public class InMemTransformationCache implements TransformationCache {
@@ -30,32 +34,56 @@ public class InMemTransformationCache implements TransformationCache {
     // very low, but ok for tests
     private static final int DEFAULT_CAPACITY = 1000;
 
-    private Map<String, Fact> cache;
+    private Map<String, FactAndAccessTime> cache;
 
     public InMemTransformationCache() {
         this(DEFAULT_CAPACITY);
     }
 
     public InMemTransformationCache(int capacity) {
-        cache = new LRUMap<String, Fact>(Math.max(capacity, DEFAULT_CAPACITY));
+        cache = new LRUMap<String, FactAndAccessTime>(Math.max(capacity, DEFAULT_CAPACITY));
     }
 
     @Override
     public void put(@NonNull Fact f, @NonNull String transformationChainId) {
         String key = CacheKey.of(f, transformationChainId);
-        cache.put(key, f);
+        synchronized (cache) {
+            cache.put(key, new FactAndAccessTime(f, System.currentTimeMillis()));
+        }
     }
 
     @Override
     public Optional<Fact> find(@NonNull UUID eventId, int version,
             @NonNull String transformationChainId) {
         String key = CacheKey.of(eventId, version, transformationChainId);
-        return Optional.ofNullable(cache.get(key));
+        Optional<FactAndAccessTime> cached;
+        synchronized (cache) {
+            cached = Optional.ofNullable(cache.get(key));
+        }
+        cached.ifPresent(faat -> faat.accessTime(System.currentTimeMillis()));
+        return cached.map(FactAndAccessTime::fact);
     }
 
     @Override
     public void compact(@NonNull DateTime thresholdDate) {
-        // we must not clear here
+        HashSet<Entry<String, FactAndAccessTime>> copyOfEntries;
+        synchronized (cache) {
+            copyOfEntries = new HashSet<>(cache.entrySet());
+        }
+
+        copyOfEntries.forEach(e -> {
+            FactAndAccessTime faat = e.getValue();
+            if (thresholdDate.isAfter(faat.accessTime))
+                cache.remove(e.getKey());
+        });
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class FactAndAccessTime {
+        Fact fact;
+
+        long accessTime;
     }
 
 }

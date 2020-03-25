@@ -88,9 +88,7 @@ public class SchemaRegistryConfiguration {
     public ScheduledRegistryRefresher scheduledRegistryFresher(SchemaRegistry registry,
             PgConfigurationProperties properties) {
         if (properties.isValidationEnabled()) {
-            long schemaStoreRefreshRateInMilliseconds = properties
-                    .getSchemaStoreRefreshRateInMilliseconds();
-            return new ScheduledRegistryRefresher(registry, schemaStoreRefreshRateInMilliseconds);
+            return new ScheduledRegistryRefresher(registry);
         } else
             return null;
     }
