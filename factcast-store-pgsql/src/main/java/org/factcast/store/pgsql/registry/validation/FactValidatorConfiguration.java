@@ -35,7 +35,7 @@ public class FactValidatorConfiguration {
             @NonNull PgConfigurationProperties props, @Autowired(
                     required = false) SpringLiquibase unused) {
         if (props.isValidationEnabled() && props.isPersistentRegistry())
-            return new PgSchemaStoreImpl(jdbcTemplate, unused);
+            return new PgSchemaStoreImpl(jdbcTemplate);
 
         // otherwise
         return new InMemSchemaStoreImpl();

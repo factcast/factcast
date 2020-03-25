@@ -86,9 +86,8 @@ public class FactTransformersImpl implements FactTransformers {
         if (cached.isPresent())
             return cached.get();
         else {
-            JsonNode input;
             try {
-                input = FactCastJson.readTree(e.jsonPayload());
+                JsonNode input = FactCastJson.readTree(e.jsonPayload());
                 JsonNode header = FactCastJson.readTree(e.jsonHeader());
                 ((ObjectNode) header).put("version", targetVersion);
                 JsonNode transformedPayload = trans.transform(chain, input);
