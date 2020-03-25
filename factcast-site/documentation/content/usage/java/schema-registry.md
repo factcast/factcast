@@ -21,7 +21,7 @@ If no 'schemaRegistryUrl' is provided, validation is skipped and FactCast behave
 
 Given, there is a SchemaRegistry configured, FactCast will (on startup, and regularly) fetch an index and crawl updated information.
 
-For that to work, the schema-registry must follow a certain structure and naming convention. To make validating and building this static website easier and convenient, there is a tool [factcast-schema-cli](../fc-schema-cli) you can use. It turns raw data files (Json-Schema, markdown, example json payloads) into a nice, browsable website as well as generating the files needed for FactCast to discover new schema on the fly.
+For that to work, the schema-registry must follow a certain structure and naming convention. To make validating and building this static website easier and convenient, there is a tool [factcast-schema-cli](../fc-schema-cli) you can use. It turns raw data files (Json-Schema, markdown, example json payloads) into a nice, browseable website as well as generating the files needed for FactCast to discover new schema on the fly.
 
 
 
@@ -30,7 +30,9 @@ Properties you can use to configure this features' behavior:
 | Tables        | Semantics           | Default  |
 | ------------- |:-------------|:-----|
 | factcast.store.pgsql.schemaRegistryUrl      | if a schemaRegistryUrl is defined, FactCast goes into validating mode. | none |
-| factcast.store.pgsql.allowUnvalidatedPublish      | If validation is enabled, this controls if publishing facts, that are not validatable (due to missing meta-data or due to missing schema in the registry) are allowed to be published or should be rejected.  |  false |
+| factcast.store.pgsql.persistentRegistry      | if fetched Schema and Transformation Documents are persisted into Postgres | false |
+| factcast.store.pgsql.persistentTransformationCache      | if Transformed Fact payloads are persistently cached into Postgres| false |
+| factcast.store.pgsql.allowUnvalidatedPublish      | If validation is enabled, this controls if publishing facts, that are **not validatable** (due to missing meta-data or due to missing schema in the registry) are allowed to be published or should be rejected.  |  false |
 | factcast.store.pgsql.persistentSchemaStore |   If validation is enabled, this controls if a local snapshot of the schemaregistry is persisted to psql or just kept in mem.   |    true |
 | factcast.store.pgsql.schemaStoreRefreshRateInMilliseconds | defines the time in milliseconds that FactCast pauses between checking for a change in the SchemaRegistry      |    15000 |
 
