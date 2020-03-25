@@ -35,7 +35,6 @@ import es.usc.citius.hipster.algorithm.Hipster;
 import es.usc.citius.hipster.graph.GraphBuilder;
 import es.usc.citius.hipster.graph.GraphSearchProblem;
 import es.usc.citius.hipster.graph.HipsterDirectedGraph;
-import es.usc.citius.hipster.model.HeuristicNode;
 import es.usc.citius.hipster.model.impl.WeightedNode;
 import lombok.Value;
 
@@ -127,9 +126,6 @@ public class TransformationChains implements TransformationStoreListener {
                     "Cannot reach version " + to + " from version " + from + " for " + key);
         }
         List<Transformation> steps = map(path, Edge::transformation);
-
-        int cost = ((Double) ((HeuristicNode<?, ?, ?, ?>) r.getGoalNode()).getCost()).intValue();
-
         return TransformationChain.of(key, steps, r.getOptimalPaths().get(0).toString());
 
         // sad: in retrospective, Hipster might not have been the greatest
