@@ -50,11 +50,8 @@ public class InMemTransformationCache implements TransformationCache {
 
         Optional<Fact> result = Optional.ofNullable(cache.get(key));
 
-        if (result.isPresent()) {
-            registryMetrics.count(MetricEvent.TRANSFORMATION_CACHE_HIT);
-        } else {
-            registryMetrics.count(MetricEvent.TRANSFORMATION_CACHE_MISS);
-        }
+        registryMetrics.count(result.isPresent() ? MetricEvent.TRANSFORMATION_CACHE_HIT
+                : MetricEvent.TRANSFORMATION_CACHE_MISS);
 
         return result;
     }
