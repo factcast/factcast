@@ -73,3 +73,9 @@ See the [Properties](/setup/properties)-Section on how to configure this.
 
 **Note:** Whenever a transformation is not possible, factcast will just throw an appropriate exception. 
  
+For an example, see [the example registry](https://github.com/factcast/factcast/tree/master/factcast-examples/factcast-example-server/src/main/resources) 
+
+##### please consider using the schema registry cli tool, rather than trying to manually fiddle withh the registry
+
+Remember that problems in the registry can cause errors at runtime in factcast, so that you should validate the syntactical correctness of it. This is where the cli tool will help.
+ 
