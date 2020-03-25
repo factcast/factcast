@@ -102,6 +102,12 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
     boolean persistentTransformationCache = false;
 
     /**
+     * when using the inmem impl of the transformation cache, this is the max
+     * number of entries cached.
+     */
+    int inMemTransformationCacheCapacity = 1_000_000;
+
+    /**
      * If validation is enabled, this controls if publishing facts, that are not
      * validatable (due to missing meta-data or due to missing schema in the
      * registry) are allowed to be published or should be rejected. (Defaults to

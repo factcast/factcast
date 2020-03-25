@@ -27,10 +27,18 @@ import lombok.NonNull;
 
 public class InMemTransformationCache implements TransformationCache {
 
-    private static final int CAPACITY = 1_000_000;
+    // very low, but ok for tests
+    private static final int DEFAULT_CAPACITY = 1000;
 
-    private Map<String, Fact> cache = new LRUMap<>(
-            InMemTransformationCache.CAPACITY);
+    private Map<String, Fact> cache;
+
+    public InMemTransformationCache() {
+        this(DEFAULT_CAPACITY);
+    }
+
+    public InMemTransformationCache(int capacity) {
+        cache = new LRUMap<String, Fact>(Math.max(capacity, DEFAULT_CAPACITY));
+    }
 
     @Override
     public void put(@NonNull Fact f, @NonNull String transformationChainId) {
