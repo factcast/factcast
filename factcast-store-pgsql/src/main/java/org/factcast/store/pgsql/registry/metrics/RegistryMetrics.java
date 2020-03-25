@@ -24,24 +24,24 @@ public interface RegistryMetrics {
 
     String TAG_IDENTITY_KEY = "id";
 
-    void time(TimedOperation operation, Runnable fn);
+    void timed(TimedOperation operation, Runnable fn);
 
-    void time(TimedOperation operation, Tags tags, Runnable fn);
+    void timed(TimedOperation operation, Tags tags, Runnable fn);
 
-    <E extends Exception> void time(TimedOperation operation, Class<E> exceptionClass,
+    <E extends Exception> void timed(TimedOperation operation, Class<E> exceptionClass,
             RunnableWithException<E> fn) throws E;
 
-    <E extends Exception> void time(TimedOperation operation, Class<E> exceptionClass, Tags tags,
+    <E extends Exception> void timed(TimedOperation operation, Class<E> exceptionClass, Tags tags,
             RunnableWithException<E> fn) throws E;
 
-    <T> T time(TimedOperation operation, Supplier<T> fn);
+    <T> T timed(TimedOperation operation, Supplier<T> fn);
 
-    <T> T time(TimedOperation operation, Tags tags, Supplier<T> fn);
+    <T> T timed(TimedOperation operation, Tags tags, Supplier<T> fn);
 
-    <R, E extends Exception> R time(TimedOperation operation, Class<E> exceptionClass,
+    <R, E extends Exception> R timed(TimedOperation operation, Class<E> exceptionClass,
             SupplierWithException<R, E> fn) throws E;
 
-    <R, E extends Exception> R time(TimedOperation operation, Class<E> exceptionClass, Tags tags,
+    <R, E extends Exception> R timed(TimedOperation operation, Class<E> exceptionClass, Tags tags,
             SupplierWithException<R, E> fn) throws E;
 
     void increment(MetricEvent event);

@@ -26,20 +26,20 @@ import lombok.val;
 
 @RequiredArgsConstructor
 public class RegistryMetricsImpl implements RegistryMetrics {
-    public static final String METRIC_NAME = "factcast.registry.operations";
+    public static final String METRIC_NAME_OPERATIONS = "factcast.registry.operations";
 
-    public static final String TAG_NAME_KEY = "operation";
+    public static final String METRIC_NAME_EVENTS = "factcast.registry.events";
 
-    public static final String TAG_EVENT_KEY = "event";
+    public static final String TAG_NAME_KEY = "name";
 
     private final MeterRegistry meterRegistry;
 
     private Counter counter(@NonNull MetricEvent op, Tags tags) {
         val t = Tags
-                .of(Tag.of(TAG_EVENT_KEY, op.event()))
+                .of(Tag.of(TAG_NAME_KEY, op.event()))
                 .and(tags);
 
-        return meterRegistry.counter(METRIC_NAME, t);
+        return meterRegistry.counter(METRIC_NAME_EVENTS, t);
     }
 
     private Timer timer(@NonNull TimedOperation op, Tags tags) {
@@ -47,29 +47,29 @@ public class RegistryMetricsImpl implements RegistryMetrics {
                 .of(Tag.of(TAG_NAME_KEY, op.op()))
                 .and(tags);
 
-        return meterRegistry.timer(METRIC_NAME, t);
+        return meterRegistry.timer(METRIC_NAME_OPERATIONS, t);
     }
 
     @Override
-    public void time(TimedOperation operation, Runnable fn) {
+    public void timed(TimedOperation operation, Runnable fn) {
         timer(operation, null).record(fn);
     }
 
     @Override
-    public void time(TimedOperation operation, Tags tags, Runnable fn) {
+    public void timed(TimedOperation operation, Tags tags, Runnable fn) {
         timer(operation, tags).record(fn);
     }
 
     @Override
-    public <E extends Exception> void time(TimedOperation operation, Class<E> exceptionClass,
+    public <E extends Exception> void timed(TimedOperation operation, Class<E> exceptionClass,
             RunnableWithException<E> fn) throws E {
-        time(operation, exceptionClass, null, fn);
+        timed(operation, exceptionClass, null, fn);
     }
 
     @Override
-    public <E extends Exception> void time(TimedOperation operation, Class<E> exceptionClass,
+    public <E extends Exception> void timed(TimedOperation operation, Class<E> exceptionClass,
             Tags tags, RunnableWithException<E> fn) throws E {
-        time(operation, exceptionClass, tags, () -> {
+        timed(operation, exceptionClass, tags, () -> {
             fn.run();
 
             return null;
@@ -77,17 +77,17 @@ public class RegistryMetricsImpl implements RegistryMetrics {
     }
 
     @Override
-    public <T> T time(TimedOperation operation, Supplier<T> fn) {
+    public <T> T timed(TimedOperation operation, Supplier<T> fn) {
         return timer(operation, null).record(fn);
     }
 
     @Override
-    public <T> T time(TimedOperation operation, Tags tags, Supplier<T> fn) {
+    public <T> T timed(TimedOperation operation, Tags tags, Supplier<T> fn) {
         return timer(operation, tags).record(fn);
     }
 
     @Override
-    public <R, E extends Exception> R time(TimedOperation operation, Class<E> exceptionClass,
+    public <R, E extends Exception> R timed(TimedOperation operation, Class<E> exceptionClass,
             Tags tags, SupplierWithException<R, E> fn) throws E {
         val timer = timer(operation, tags);
         val sw = Stopwatch.createStarted();
@@ -101,9 +101,9 @@ public class RegistryMetricsImpl implements RegistryMetrics {
     }
 
     @Override
-    public <R, E extends Exception> R time(TimedOperation operation, Class<E> exceptionClass,
+    public <R, E extends Exception> R timed(TimedOperation operation, Class<E> exceptionClass,
             SupplierWithException<R, E> fn) throws E {
-        return time(operation, exceptionClass, null, fn);
+        return timed(operation, exceptionClass, null, fn);
     }
 
     @Override

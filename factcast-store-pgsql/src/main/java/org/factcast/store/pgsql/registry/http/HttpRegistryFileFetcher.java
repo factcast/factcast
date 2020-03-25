@@ -70,7 +70,7 @@ public class HttpRegistryFileFetcher implements RegistryFileFetcher {
         URL url = new URL(baseUrl, id);
         log.debug("Fetching Transformation {}", key.id());
 
-        return registryMetrics.time(TimedOperation.FETCH_REGISTRY_FILE,
+        return registryMetrics.timed(TimedOperation.FETCH_REGISTRY_FILE,
                 RegistryFileFetchException.class,
                 () -> fetch(url));
     }
@@ -82,7 +82,7 @@ public class HttpRegistryFileFetcher implements RegistryFileFetcher {
         URL url = new URL(baseUrl, id);
         log.debug("Fetching Schema {}", key.id());
 
-        return registryMetrics.time(TimedOperation.FETCH_REGISTRY_FILE,
+        return registryMetrics.timed(TimedOperation.FETCH_REGISTRY_FILE,
                 RegistryFileFetchException.class,
                 () -> fetch(url));
     }

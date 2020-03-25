@@ -89,7 +89,7 @@ public class HttpSchemaRegistryTest {
 
         verify(fileFetcher, times(2)).fetchSchema(Mockito.any());
         verify(fileFetcher, times(2)).fetchTransformation(Mockito.any());
-        verify(registryMetrics).time(eq(TimedOperation.REFRESH_REGISTRY), any(Runnable.class));
+        verify(registryMetrics).timed(eq(TimedOperation.REFRESH_REGISTRY), any(Runnable.class));
 
         assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 1))
                 .isPresent());

@@ -73,7 +73,7 @@ public class FactTransformersImpl implements FactTransformers {
             int targetVersion = max.orElseThrow(() -> new IllegalArgumentException(
                     "No requested Version !? This must not happen."));
 
-            return registryMetrics.time(TimedOperation.TRANSFORMATION,
+            return registryMetrics.timed(TimedOperation.TRANSFORMATION,
                     TransformationException.class,
                     () -> transform(targetVersion, e));
 

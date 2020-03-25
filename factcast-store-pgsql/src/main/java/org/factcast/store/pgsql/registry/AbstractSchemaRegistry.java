@@ -108,7 +108,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
     public void refresh() {
         synchronized (mutex) {
 
-            registryMetrics.time(TimedOperation.REFRESH_REGISTRY, () -> {
+            registryMetrics.timed(TimedOperation.REFRESH_REGISTRY, () -> {
                 Optional<RegistryIndex> fetchIndex = indexFetcher.fetchIndex();
 
                 fetchIndex.ifPresent(this::process);

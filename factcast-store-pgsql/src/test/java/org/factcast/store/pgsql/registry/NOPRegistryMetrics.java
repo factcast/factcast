@@ -24,45 +24,45 @@ import io.micrometer.core.instrument.Tags;
 public class NOPRegistryMetrics implements RegistryMetrics {
 
     @Override
-    public void time(TimedOperation operation, Runnable fn) {
+    public void timed(TimedOperation operation, Runnable fn) {
         fn.run();
     }
 
     @Override
-    public void time(TimedOperation operation, Tags tags, Runnable fn) {
+    public void timed(TimedOperation operation, Tags tags, Runnable fn) {
         fn.run();
     }
 
     @Override
-    public <E extends Exception> void time(TimedOperation operation, Class<E> exceptionClass,
+    public <E extends Exception> void timed(TimedOperation operation, Class<E> exceptionClass,
             RunnableWithException<E> fn) throws E {
         fn.run();
     }
 
     @Override
-    public <E extends Exception> void time(TimedOperation operation, Class<E> exceptionClass,
+    public <E extends Exception> void timed(TimedOperation operation, Class<E> exceptionClass,
             Tags tags, RunnableWithException<E> fn) throws E {
         fn.run();
     }
 
     @Override
-    public <T> T time(TimedOperation operation, Supplier<T> fn) {
+    public <T> T timed(TimedOperation operation, Supplier<T> fn) {
         return fn.get();
     }
 
     @Override
-    public <T> T time(TimedOperation operation, Tags tags, Supplier<T> fn) {
+    public <T> T timed(TimedOperation operation, Tags tags, Supplier<T> fn) {
         return fn.get();
     }
 
     @Override
-    public <R, E extends Exception> R time(TimedOperation operation, Class<E> exceptionClass,
+    public <R, E extends Exception> R timed(TimedOperation operation, Class<E> exceptionClass,
             SupplierWithException<R, E> fn) throws E {
         return fn.get();
     }
 
     @Override
-    public <R, E extends Exception> R time(TimedOperation operation, Class<E> exceptionClass,
+    public <R, E extends Exception> R timed(TimedOperation operation, Class<E> exceptionClass,
             Tags tags, SupplierWithException<R, E> fn) throws E {
         return fn.get();
     }

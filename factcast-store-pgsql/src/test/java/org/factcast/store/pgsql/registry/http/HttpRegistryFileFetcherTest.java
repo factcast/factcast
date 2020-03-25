@@ -83,7 +83,7 @@ public class HttpRegistryFileFetcherTest {
                 uut.fetchSchema(new SchemaSource("unknown", "123", "ns", "type", 8));
             });
 
-            verify(registryMetrics).time(eq(TimedOperation.FETCH_REGISTRY_FILE), eq(
+            verify(registryMetrics).timed(eq(TimedOperation.FETCH_REGISTRY_FILE), eq(
                     RegistryFileFetchException.class), any(SupplierWithException.class));
             verify(registryMetrics).increment(MetricEvent.REGISTRY_FILE_FETCH_FAILED, Tags.of(
                     RegistryMetrics.TAG_STATUS_CODE_KEY, "404"));
@@ -129,7 +129,7 @@ public class HttpRegistryFileFetcherTest {
 
             assertEquals(json, fetch);
 
-            verify(registryMetrics).time(eq(TimedOperation.FETCH_REGISTRY_FILE), eq(
+            verify(registryMetrics).timed(eq(TimedOperation.FETCH_REGISTRY_FILE), eq(
                     RegistryFileFetchException.class), any(SupplierWithException.class));
         }
     }

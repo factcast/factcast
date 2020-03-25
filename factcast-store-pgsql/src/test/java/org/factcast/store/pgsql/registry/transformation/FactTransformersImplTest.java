@@ -134,7 +134,7 @@ public class FactTransformersImplTest {
 
         verify(cache).find(eq(probe.id()), eq(33), eq(chainId));
 
-        verify(registryMetrics).time(eq(TimedOperation.TRANSFORMATION), any(), any(
+        verify(registryMetrics).timed(eq(TimedOperation.TRANSFORMATION), any(), any(
                 SupplierWithException.class));
 
     }

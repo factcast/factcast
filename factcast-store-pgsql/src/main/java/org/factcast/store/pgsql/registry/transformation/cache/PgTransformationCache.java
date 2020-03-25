@@ -75,7 +75,7 @@ public class PgTransformationCache implements TransformationCache {
 
     @Override
     public void compact(@NonNull DateTime thresholdDate) {
-        registryMetrics.time(TimedOperation.COMPACT_TRANSFORMATION_CACHE, () -> {
+        registryMetrics.timed(TimedOperation.COMPACT_TRANSFORMATION_CACHE, () -> {
             jdbcTemplate.update("DELETE FROM transformationcache WHERE last_access < ?",
                     thresholdDate
                             .toDate());
