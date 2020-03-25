@@ -55,7 +55,7 @@ public class InMemTransformationCache implements TransformationCache {
 
     @Override
     public void compact(@NonNull DateTime thresholdDate) {
-        cache.clear();
+        // we must not clear here
     }
 
 }

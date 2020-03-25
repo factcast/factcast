@@ -28,6 +28,7 @@ Properties you can use to configure Factcast:
 | factcast.store.pgsql.persistentSchemaStore |   If validation is enabled, this controls if a local snapshot of the schemaregistry is persisted to psql or just kept in mem.   |    true |
 | factcast.store.pgsql.schemaStoreRefreshRateInMilliseconds | defines the time in milliseconds that FactCast pauses between checking for a change in the SchemaRegistry      |    15000 |
 | factcast.store.pgsql.inMemTransformationCacheCapacity |  when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum values here is 1000. | 1_000_000 | 1000 |
+| factcast.store.pgsql.deleteTransformationsStaleForDays |  when using the persistent impl of the transformation cache, this is the min number of days a transformation result is not read in order to be considered stale. This should free some space in a regular cleanup job | 14 | 30 |
 
 
 

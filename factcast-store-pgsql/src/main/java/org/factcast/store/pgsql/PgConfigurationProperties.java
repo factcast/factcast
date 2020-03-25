@@ -95,6 +95,13 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
     boolean persistentRegistry = true;
 
     /**
+     * when using the persistent impl of the transformation cache, this is the
+     * min number of days a transformation result is not read in order to be
+     * considered stale. This should free some space in a regular cleanup job
+     */
+    int deleteTransformationsStaleForDays = 14;
+
+    /**
      * If validation is enabled, this controls if transformed facts are
      * persistently cached in postgres, rather than in memory. (Defaults to
      * false)
