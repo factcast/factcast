@@ -34,8 +34,6 @@ import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.pgsql.registry.SchemaRegistryConfiguration;
-import org.factcast.store.pgsql.registry.transformation.TransformationConfiguration;
-import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -60,8 +58,7 @@ import lombok.NonNull;
 @SuppressWarnings("UnstableApiUsage")
 @Configuration
 @EnableTransactionManagement
-@Import({ FactValidatorConfiguration.class, TransformationConfiguration.class,
-        SchemaRegistryConfiguration.class })
+@Import(SchemaRegistryConfiguration.class)
 public class PgFactStoreInternalConfiguration {
 
     @Bean
