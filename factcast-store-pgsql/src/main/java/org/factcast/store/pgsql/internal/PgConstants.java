@@ -71,11 +71,6 @@ public class PgConstants {
             fromHeader(ALIAS_ID), fromHeader(ALIAS_AGGID), fromHeader(ALIAS_NS), fromHeader(
                     ALIAS_TYPE), fromHeader(ALIAS_VERSION));
 
-    public static final String PROJECTION_ID = String.join(", ", COLUMN_SER, empty(COLUMN_HEADER),
-            empty(COLUMN_PAYLOAD), fromHeader(ALIAS_ID), fromHeader(ALIAS_AGGID), fromHeader(
-                    ALIAS_NS),
-            fromHeader(ALIAS_TYPE));
-
     public static final String INSERT_FACT = "INSERT INTO " + TABLE_FACT + "(" + COLUMN_HEADER + ","
             + COLUMN_PAYLOAD
             + ") VALUES (cast(? as jsonb),cast (? as jsonb))";
@@ -92,14 +87,6 @@ public class PgConstants {
 
     public static final String SELECT_LATEST_SER = "SELECT max(" + COLUMN_SER + ") FROM "
             + TABLE_FACT;
-
-    public static final //
-    String SELECT_ID_FROM_CATCHUP = //
-            "SELECT " + PROJECTION_ID + " FROM " + //
-                    TABLE_FACT + " WHERE " + COLUMN_SER + //
-                    " IN ( " + "   SELECT " + COLUMN_SER + " FROM " + //
-                    TABLE_CATCHUP + "   WHERE ( " + COLUMN_CID + "=? AND " + COLUMN_SER + //
-                    ">? ) LIMIT ? " + ") ORDER BY " + COLUMN_SER + " ASC";
 
     public static final //
     String SELECT_FACT_FROM_CATCHUP = //
@@ -158,7 +145,4 @@ public class PgConstants {
         return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
     }
 
-    private static String empty(String attributeName) {
-        return "'{}' AS " + attributeName;
-    }
 }

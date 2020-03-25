@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.http;
+package org.factcast.example.client.spring.boot2.hello;
 
-import java.io.IOException;
+import org.factcast.core.spec.Specification;
 
-import lombok.NonNull;
+import lombok.ToString;
 
-public class SchemaRegistryUnavailableException extends RuntimeException {
+@Specification(ns = "Users", version = 3)
+@ToString
+public class UserCreated {
+    String lastName;
 
-    private static final long serialVersionUID = 1L;
+    String firstName;
 
-    public SchemaRegistryUnavailableException(IOException e) {
-        super(e);
-    }
+    String salutation;
 
-    public SchemaRegistryUnavailableException(@NonNull String httpUrlAsString, int code,
-            @NonNull String message) {
-        super("Status code " + code + ": " + message + " while requesting " + httpUrlAsString);
-    }
-
+    String displayName;
 }

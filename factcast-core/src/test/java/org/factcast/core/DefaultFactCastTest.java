@@ -15,20 +15,11 @@
  */
 package org.factcast.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.same;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -86,7 +77,6 @@ public class DefaultFactCastTest {
         verify(store).subscribe(any(), any());
         final SubscriptionRequestTO req = csr.getValue();
         assertTrue(req.continuous());
-        assertFalse(req.idOnly());
         assertEquals(since, req.startingAfter().get());
         assertFalse(req.ephemeral());
     }

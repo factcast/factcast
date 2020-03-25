@@ -27,6 +27,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 import lombok.extern.slf4j.Slf4j;
 
+@SuppressWarnings("resource")
 @Configuration
 @Import(PgFactStoreConfiguration.class)
 @ImportAutoConfiguration({ DataSourceAutoConfiguration.class, JdbcTemplateAutoConfiguration.class,

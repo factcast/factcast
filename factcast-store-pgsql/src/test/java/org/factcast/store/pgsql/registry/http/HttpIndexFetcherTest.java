@@ -24,13 +24,14 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
 import org.factcast.core.TestHelper;
+import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
 import org.junit.jupiter.api.Test;
 
 import okhttp3.OkHttpClient;
 
-public class IndexFetcherTest {
+public class HttpIndexFetcherTest {
 
-    private IndexFetcher uut;
+    private HttpIndexFetcher uut;
 
     @Test
     void testFetchUsesIfModifiedSince() throws Exception {
@@ -59,7 +60,7 @@ public class IndexFetcherTest {
             });
 
             URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
-            uut = new IndexFetcher(baseUrl);
+            uut = new HttpIndexFetcher(baseUrl);
             assertTrue(uut.fetchIndex().isPresent());
             assertFalse(uut.fetchIndex().isPresent());
             assertFalse(uut.fetchIndex().isPresent());
@@ -76,7 +77,7 @@ public class IndexFetcherTest {
             });
 
             URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
-            uut = new IndexFetcher(baseUrl);
+            uut = new HttpIndexFetcher(baseUrl);
             assertThrows(SchemaRegistryUnavailableException.class, () -> {
                 uut.fetchIndex();
             });
@@ -85,9 +86,9 @@ public class IndexFetcherTest {
 
     @Test
     public void testNullContracts() throws Exception {
-        TestHelper.expectNPE(() -> new IndexFetcher(null));
-        TestHelper.expectNPE(() -> new IndexFetcher(new URL("http://ibm.com"), null));
-        TestHelper.expectNPE(() -> new IndexFetcher(null, new OkHttpClient()));
+        TestHelper.expectNPE(() -> new HttpIndexFetcher(null));
+        TestHelper.expectNPE(() -> new HttpIndexFetcher(new URL("http://ibm.com"), null));
+        TestHelper.expectNPE(() -> new HttpIndexFetcher(null, new OkHttpClient()));
     }
 
 }

@@ -22,6 +22,7 @@ import java.util.function.Predicate;
 import javax.sql.DataSource;
 
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.catchup.paged.PgPagedCatchUpFactory;
@@ -32,9 +33,13 @@ import org.factcast.store.pgsql.internal.lock.AdvisoryWriteLock;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.pgsql.registry.SchemaRegistryConfiguration;
+import org.factcast.store.pgsql.registry.transformation.TransformationConfiguration;
+import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -55,6 +60,8 @@ import lombok.NonNull;
 @SuppressWarnings("UnstableApiUsage")
 @Configuration
 @EnableTransactionManagement
+@Import({ FactValidatorConfiguration.class, TransformationConfiguration.class,
+        SchemaRegistryConfiguration.class })
 public class PgFactStoreInternalConfiguration {
 
     @Bean
@@ -84,9 +91,10 @@ public class PgFactStoreInternalConfiguration {
     @Bean
     public PgSubscriptionFactory pgSubscriptionFactory(JdbcTemplate jdbcTemplate, EventBus eventBus,
             PgFactIdToSerialMapper pgFactIdToSerialMapper,
-            PgLatestSerialFetcher pgLatestSerialFetcher, PgCatchupFactory pgCatchupFactory) {
+            PgLatestSerialFetcher pgLatestSerialFetcher, PgCatchupFactory pgCatchupFactory,
+            FactTransformersFactory transformerFactory) {
         return new PgSubscriptionFactory(jdbcTemplate, eventBus, pgFactIdToSerialMapper,
-                pgLatestSerialFetcher, pgCatchupFactory);
+                pgLatestSerialFetcher, pgCatchupFactory, transformerFactory);
 
     }
 

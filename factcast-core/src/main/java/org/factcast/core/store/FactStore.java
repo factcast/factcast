@@ -47,8 +47,6 @@ public interface FactStore {
 
     Subscription subscribe(SubscriptionRequestTO request, FactObserver observer);
 
-    Optional<Fact> fetchById(UUID id);
-
     OptionalLong serialOf(UUID l);
 
     // see #153

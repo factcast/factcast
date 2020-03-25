@@ -31,9 +31,9 @@ public interface SchemaRegistry {
 
     List<Transformation> get(TransformationKey key);
 
-    void refreshVerbose();
+    void fetchInitial();
 
-    void refreshSilent();
+    void refresh();
 
     void register(TransformationStoreListener listener);
 

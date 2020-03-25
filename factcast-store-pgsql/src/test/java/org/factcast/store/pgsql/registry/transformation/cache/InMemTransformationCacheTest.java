@@ -15,8 +15,6 @@
  */
 package org.factcast.store.pgsql.registry.transformation.cache;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class InMemTransformationCacheTest extends AbstractTransformationCacheTest {
 
     @Override

@@ -25,11 +25,15 @@ import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+
 public abstract class AbstractTransformationStore implements TransformationStore {
 
     private final List<TransformationStoreListener> listeners = new CopyOnWriteArrayList<>();
 
-    private final ExecutorService es = Executors.newCachedThreadPool(r -> {
+    @Getter(value = AccessLevel.PROTECTED)
+    private final ExecutorService executorService = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r);
         t.setDaemon(true);
         return t;
@@ -41,7 +45,7 @@ public abstract class AbstractTransformationStore implements TransformationStore
         doStore(source, transformation);
         // uses task per listener to avoid a listener throwing an exception
         // spoil the whole thing
-        listeners.forEach(t -> es.submit(() -> {
+        listeners.forEach(t -> executorService.submit(() -> {
             t.notifyFor(source.toKey());
         }));
 

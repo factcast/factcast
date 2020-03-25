@@ -43,7 +43,7 @@ public class FactSpec {
     String type = null;
 
     @JsonProperty
-    Integer version = null;
+    int version = 0; // 0 means i don't care
 
     @JsonProperty
     UUID aggId = null;
@@ -119,7 +119,7 @@ public class FactSpec {
         Specification annotationSpec = clazz.getAnnotation(Specification.class);
 
         if (annotationSpec == null) {
-            throw new IllegalArgumentException("You must annotate your Fact with @"
+            throw new IllegalArgumentException("You must annotate your Payload class with @"
                     + Specification.class.getSimpleName());
         }
 
@@ -127,11 +127,10 @@ public class FactSpec {
 
         if (!annotationSpec.type().isEmpty()) {
             factSpec.type(annotationSpec.type());
-        }
+        } else
+            factSpec.type(clazz.getSimpleName());
 
-        if (annotationSpec.version() != 0) {
-            factSpec.version(annotationSpec.version());
-        }
+        factSpec.version(annotationSpec.version());
 
         return factSpec;
     }

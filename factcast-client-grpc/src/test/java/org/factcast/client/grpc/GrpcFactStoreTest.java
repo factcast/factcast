@@ -15,24 +15,12 @@
  */
 package org.factcast.client.grpc;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.core.TestHelper.expectNPE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.factcast.core.TestHelper.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -104,24 +92,6 @@ class GrpcFactStoreTest {
     public Optional<String> credentials;
 
     @Test
-    void testFetchByIdNotFound() {
-        UUID id = UUID.randomUUID();
-        when(blockingStub.fetchById(eq(conv.toProto(id)))).thenReturn(conv.toProto(Optional
-                .empty()));
-        Optional<Fact> fetchById = uut.fetchById(id);
-        assertFalse(fetchById.isPresent());
-    }
-
-    @Test
-    void testFetchByIdFound() {
-        UUID id = UUID.randomUUID();
-        when(blockingStub.fetchById(eq(conv.toProto(id))))
-                .thenReturn(conv.toProto(Optional.of(Fact.builder().ns("test").build("{}"))));
-        Optional<Fact> fetchById = uut.fetchById(id);
-        assertTrue(fetchById.isPresent());
-    }
-
-    @Test
     void testPublish() {
         when(blockingStub.publish(factsCap.capture())).thenReturn(MSG_Empty.newBuilder().build());
         final TestFact fact = new TestFact();
@@ -159,13 +129,6 @@ class GrpcFactStoreTest {
         when(blockingStub.publish(any())).thenThrow(new SomeException());
         assertThrows(SomeException.class, () -> uut.publish(Collections.singletonList(Fact.builder()
                 .build("{}"))));
-    }
-
-    @Test
-    void testFetchByIdPropagatesRetryableExceptionOnUnavailableStatus() {
-        when(blockingStub.fetchById(any())).thenThrow(new StatusRuntimeException(
-                Status.UNAVAILABLE));
-        assertThrows(RetryableException.class, () -> uut.fetchById(UUID.randomUUID()));
     }
 
     @Test

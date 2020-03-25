@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.transformation.chains;
+package org.factcast.store.pgsql.registry.transformation;
 
-import lombok.NonNull;
+import static org.assertj.core.api.Assertions.*;
 
-public class TransformationException extends Exception {
+import org.junit.jupiter.api.Test;
 
-    private static final long serialVersionUID = 1L;
+public class SingleTransformationTest {
 
-    public TransformationException(@NonNull Exception e) {
-        super(e);
+    @Test
+    public void testEmpty() throws Exception {
+        Transformation t = SingleTransformation.empty(TransformationKey.of("n", "t"), 1, 2);
+
+        assertThat(t.transformationCode()).isEmpty();
     }
 
 }

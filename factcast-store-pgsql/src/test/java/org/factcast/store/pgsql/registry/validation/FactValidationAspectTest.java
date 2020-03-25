@@ -15,11 +15,8 @@
  */
 package org.factcast.store.pgsql.registry.validation;
 
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -43,9 +40,9 @@ public class FactValidationAspectTest {
     void testInterceptPublish() throws Throwable {
 
         when(jp.getArgs()).thenReturn(new Object[] { Collections.singletonList(f) });
-        when(v.validate(f)).thenReturn(new LinkedList());
+        when(v.validate(f)).thenReturn(new LinkedList<>());
 
-        Object interceptPublish = uut.interceptPublish(jp);
+        uut.interceptPublish(jp);
 
         verify(jp).proceed();
     }
@@ -54,9 +51,9 @@ public class FactValidationAspectTest {
     void testInterceptPublishConditional() throws Throwable {
 
         when(jp.getArgs()).thenReturn(new Object[] { Collections.singletonList(f) });
-        when(v.validate(f)).thenReturn(new LinkedList());
+        when(v.validate(f)).thenReturn(new LinkedList<>());
 
-        Object interceptPublish = uut.interceptPublishIfUnchanged(jp);
+        uut.interceptPublishIfUnchanged(jp);
 
         verify(jp).proceed();
     }
@@ -68,7 +65,7 @@ public class FactValidationAspectTest {
         when(v.validate(f)).thenReturn(Collections.singletonList(new FactValidationError("doing")));
 
         try {
-            Object interceptPublish = uut.interceptPublish(jp);
+            uut.interceptPublish(jp);
             fail();
         } catch (FactValidationException e) {
             // expected

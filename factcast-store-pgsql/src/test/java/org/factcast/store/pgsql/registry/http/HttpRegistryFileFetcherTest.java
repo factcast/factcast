@@ -16,11 +16,11 @@
 package org.factcast.store.pgsql.registry.http;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.net.URL;
 
 import org.factcast.core.TestHelper;
+import org.factcast.store.pgsql.registry.RegistryFileFetchException;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import okhttp3.OkHttpClient;
 
 @ExtendWith(MockitoExtension.class)
-public class RegistryFileFetcherTest {
+public class HttpRegistryFileFetcherTest {
     @Mock
     private URL baseUrl;
 
@@ -40,43 +40,30 @@ public class RegistryFileFetcherTest {
     private OkHttpClient client;
 
     @InjectMocks
-    private RegistryFileFetcher uut;
+    private HttpRegistryFileFetcher uut;
 
     @Test
     public void testCreateSchemaUrl() throws Exception {
         String id = "foo.json";
-        URL base = new URL("https://www.ibm.com/registry");
-        URL createSchemaUrl = uut.createFileUrl(base, id);
-
-        assertEquals("https://www.ibm.com/registry/foo.json", createSchemaUrl.toString());
-    }
-
-    @Test
-    public void testCreateSchemaUrlWithTrailingSlash() throws Exception {
-        String id = "foo.json";
         URL base = new URL("https://www.ibm.com/registry/");
-        URL createSchemaUrl = uut.createFileUrl(base, id);
+        URL createSchemaUrl = new URL(base, id);
 
         assertEquals("https://www.ibm.com/registry/foo.json", createSchemaUrl.toString());
     }
 
     @Test
     public void testNullContracts() throws Exception {
-        TestHelper.expectNPE(() -> new RegistryFileFetcher(null));
-        TestHelper.expectNPE(() -> new RegistryFileFetcher(null, new OkHttpClient()));
-        TestHelper.expectNPE(() -> new RegistryFileFetcher(new URL("http://ibm.com"), null));
+        TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null));
+        TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null, new OkHttpClient()));
+        TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(new URL("http://ibm.com"), null));
         TestHelper.expectNPE(() -> uut.fetchSchema(null));
-        TestHelper.expectNPE(() -> uut.createFileUrl(null, "foo"));
-        TestHelper.expectNPE(() -> uut.createFileUrl(null, null));
-        TestHelper.expectNPE(() -> uut.createFileUrl(new URL("https://www.ibm.com/registry/"),
-                null));
     }
 
     @Test
     public void testFetchThrowsOn404() throws Exception {
         try (TestHttpServer s = new TestHttpServer()) {
-            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
-            uut = new RegistryFileFetcher(baseUrl);
+            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
+            uut = new HttpRegistryFileFetcher(baseUrl);
             assertThrows(RegistryFileFetchException.class, () -> {
                 uut.fetchSchema(new SchemaSource("unknown", "123", "ns", "type", 8));
             });
@@ -94,8 +81,8 @@ public class RegistryFileFetcherTest {
                 ctx.res.getWriter().write(json);
             });
 
-            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
-            uut = new RegistryFileFetcher(baseUrl);
+            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
+            uut = new HttpRegistryFileFetcher(baseUrl);
             String fetch = uut.fetchSchema(new SchemaSource("someId", "123", "ns", "type", 8));
 
             assertEquals(json, fetch);
@@ -114,8 +101,8 @@ public class RegistryFileFetcherTest {
                 ctx.res.getWriter().write(json);
             });
 
-            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
-            uut = new RegistryFileFetcher(baseUrl);
+            URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
+            uut = new HttpRegistryFileFetcher(baseUrl);
             String fetch = uut.fetchTransformation(new TransformationSource("someId", "ns", "type",
                     "hash", 8, 2));
 

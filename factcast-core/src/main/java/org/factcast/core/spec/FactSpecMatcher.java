@@ -31,14 +31,12 @@ import com.fasterxml.jackson.databind.util.LRUMap;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Matches facts against specifications.
  *
  * @author uwe.schaefer@mercateo.com
  */
-@Slf4j
 public final class FactSpecMatcher implements Predicate<Fact> {
 
     private static final LRUMap<FilterScript, ScriptEngine> scriptEngineCache = new LRUMap<>(10,
@@ -107,7 +105,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     }
 
     protected boolean versionMatch(Fact t) {
-        if (version == null) {
+        if (version == 0) {
             return true;
         }
         Integer otherVersion = t.version();

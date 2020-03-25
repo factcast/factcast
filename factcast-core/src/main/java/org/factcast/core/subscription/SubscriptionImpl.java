@@ -21,6 +21,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.GenericObserver;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -38,10 +40,13 @@ import lombok.extern.slf4j.Slf4j;
  */
 @RequiredArgsConstructor
 @Slf4j
-public class SubscriptionImpl<T> implements Subscription {
+public class SubscriptionImpl implements Subscription {
 
     @NonNull
-    final GenericObserver<T> observer;
+    final GenericObserver<Fact> observer;
+
+    @NonNull
+    final FactTransformers transformers;
 
     @NonNull
     Runnable onClose = () -> {
@@ -74,6 +79,7 @@ public class SubscriptionImpl<T> implements Subscription {
         return this;
     }
 
+    @Override
     public Subscription awaitCatchup(long waitTimeInMillis) throws SubscriptionCancelledException,
             TimeoutException {
         try {
@@ -94,6 +100,7 @@ public class SubscriptionImpl<T> implements Subscription {
         return this;
     }
 
+    @Override
     public Subscription awaitComplete(long waitTimeInMillis) throws SubscriptionCancelledException,
             TimeoutException {
         try {
@@ -149,18 +156,36 @@ public class SubscriptionImpl<T> implements Subscription {
         }
     }
 
-    public void notifyElement(@NonNull T e) {
+    public void notifyElement(@NonNull Fact e) {
         if (!closed.get()) {
-            observer.onNext(e);
+            try {
+                observer.onNext(transformers.transformIfNecessary(e));
+            } catch (TransformationException e1) {
+                observer.onError(e1);
+            }
         }
     }
 
-    public SubscriptionImpl<T> onClose(Runnable e) {
+    public SubscriptionImpl onClose(Runnable e) {
         onClose = e;
         return this;
     }
 
-    public static <T> SubscriptionImpl<T> on(@NonNull GenericObserver<T> o) {
-        return new SubscriptionImpl<>(o);
+    public static SubscriptionImpl on(
+            @NonNull GenericObserver<org.factcast.core.Fact> o,
+            FactTransformers transformers) {
+        return new SubscriptionImpl(o, transformers);
+    }
+
+    // for client side
+    public static SubscriptionImpl on(@NonNull FactObserver observer2) {
+        return new SubscriptionImpl(observer2, new FactTransformers() {
+
+            @Override
+            public @NonNull Fact transformIfNecessary(@NonNull Fact e)
+                    throws TransformationException {
+                return e;
+            }
+        });
     }
 }

@@ -55,7 +55,7 @@ public class PgPagedCatchup implements PgCatchup {
     final PgPostQueryMatcher postQueryMatcher;
 
     @NonNull
-    final SubscriptionImpl<Fact> subscription;
+    final SubscriptionImpl subscription;
 
     @NonNull
     final AtomicLong serial;
@@ -64,15 +64,7 @@ public class PgPagedCatchup implements PgCatchup {
     private long clientId = 0;
 
     private LinkedList<Fact> doFetch(PgCatchUpFetchPage fetch) {
-        if (idsOnly()) {
-            return fetch.fetchIdFacts(serial);
-        } else {
-            return fetch.fetchFacts(serial);
-        }
-    }
-
-    private boolean idsOnly() {
-        return request.idOnly() && postQueryMatcher.canBeSkipped();
+        return fetch.fetchFacts(serial);
     }
 
     @Override
@@ -81,8 +73,8 @@ public class PgPagedCatchup implements PgCatchup {
         clientId = prep.prepareCatchup(serial);
         if (clientId > 0) {
             try {
-                PgCatchUpFetchPage fetch = new PgCatchUpFetchPage(jdbc, idsOnly() ? props
-                        .getPageSizeForIds() : props.getPageSize(), request, clientId);
+                PgCatchUpFetchPage fetch = new PgCatchUpFetchPage(jdbc, props.getPageSize(),
+                        request, clientId);
                 while (true) {
                     LinkedList<Fact> facts = doFetch(fetch);
                     if (facts.isEmpty()) {

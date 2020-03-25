@@ -17,12 +17,11 @@ package org.factcast.store.pgsql.registry.validation.schema;
 
 import org.factcast.core.Fact;
 
-import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
-@Value
-@Builder
+@Value(staticConstructor = "of")
+
 public class SchemaKey {
     @NonNull
     String ns;
@@ -30,7 +29,6 @@ public class SchemaKey {
     @NonNull
     String type;
 
-    @NonNull
     int version;
 
     public static SchemaKey from(Fact fact) {

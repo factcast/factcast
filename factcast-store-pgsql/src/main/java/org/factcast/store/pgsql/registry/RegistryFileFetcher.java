@@ -13,28 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.http;
+package org.factcast.store.pgsql.registry;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.io.IOException;
 
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+public interface RegistryFileFetcher {
+    public String fetchTransformation(TransformationSource key) throws IOException;
 
-import lombok.Data;
+    public String fetchSchema(SchemaSource key) throws IOException;
 
-/**
- * Object representation for an index.json
- *
- * @author uwe
- */
-@Data
-public class RegistryIndex {
-    @JsonProperty
-    private List<SchemaSource> schemes = new LinkedList<>();
-
-    @JsonProperty
-    private List<TransformationSource> transformations = new LinkedList<>();
 }

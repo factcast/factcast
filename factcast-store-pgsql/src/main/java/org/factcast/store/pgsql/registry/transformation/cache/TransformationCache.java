@@ -23,6 +23,8 @@ import org.joda.time.DateTime;
 
 public interface TransformationCache {
 
+    // maybe optimize by passing header and payload separately as
+    // string/jsonnode?
     void put(Fact f, String transformationChainId);
 
     Optional<Fact> find(UUID eventId, int version, String transformationChainId);

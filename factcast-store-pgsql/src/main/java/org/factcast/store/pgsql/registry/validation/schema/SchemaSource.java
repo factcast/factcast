@@ -48,7 +48,7 @@ public class SchemaSource {
     private int version;
 
     public SchemaKey toKey() {
-        return SchemaKey.builder().ns(ns).type(type).version(version).build();
+        return SchemaKey.of(ns, type, version);
     }
 
     @VisibleForTesting

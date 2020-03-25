@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.transformation.chains;
+package org.factcast.store.pgsql.registry;
 
-import lombok.Value;
+import java.util.Optional;
 
-@Value(staticConstructor = "of")
-public class TransformationChainMetaData {
-    String id;
-
-    long score;
+public interface IndexFetcher {
+    Optional<RegistryIndex> fetchIndex();
 }

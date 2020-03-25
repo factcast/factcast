@@ -67,7 +67,7 @@ public class FactValidator {
             JsonSchema jsonSchema = optSchema.get();
             ProcessingReport report;
             try {
-                JsonNode toValidate = ValidationConstants.objectMapper.readTree(fact.jsonPayload());
+                JsonNode toValidate = ValidationConstants.JACKSON.readTree(fact.jsonPayload());
                 report = jsonSchema.validate(toValidate);
                 if (report.isSuccess())
                     return VALIDATION_OK;

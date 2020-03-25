@@ -17,7 +17,6 @@ package org.factcast.store.pgsql.internal.catchup.paged;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.pgsql.PgConfigurationProperties;
@@ -44,9 +43,10 @@ public class PgPagedCatchUpFactory implements PgCatchupFactory {
     @NonNull
     final PgFactIdToSerialMapper serMapper;
 
+    @Override
     public PgPagedCatchup create(@NonNull SubscriptionRequestTO request,
             @NonNull PgPostQueryMatcher postQueryMatcher,
-            @NonNull SubscriptionImpl<Fact> subscription, @NonNull AtomicLong serial) {
+            @NonNull SubscriptionImpl subscription, @NonNull AtomicLong serial) {
         return new PgPagedCatchup(jdbc, props, serMapper, request, postQueryMatcher, subscription,
                 serial);
     }

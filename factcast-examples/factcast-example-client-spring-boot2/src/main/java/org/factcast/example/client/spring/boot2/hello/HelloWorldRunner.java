@@ -16,14 +16,15 @@
 package org.factcast.example.client.spring.boot2.hello;
 
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.core.lock.Attempt;
-import org.factcast.core.lock.PublishingResult;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.util.FactCastJson;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -41,54 +42,46 @@ public class HelloWorldRunner implements CommandLineRunner {
     public void run(String... args) throws Exception {
 
         Fact fact = Fact.builder()
-                .ns("namespaceA")
-                .type("eventA")
+                .ns("Users")
+                .type("UserCreated")
                 .version(1)
-                .build("{ \"firstGame\":\"Jean-Luc\"}");
+                .id(UUID.randomUUID())
+                .build("{ \"firstName\":\"Horst\",\"lastName\":\"Lichter\"}");
         fc.publish(fact);
         System.out.println("published " + fact);
 
-        Subscription sub = fc
-                .subscribe(SubscriptionRequest.catchup(FactSpec.ns("namespaceA")).fromScratch(),
-                        System.out::println)
+        fact = Fact.builder()
+                .ns("Users")
+                .type("UserCreated")
+                .version(3)
+                .id(UUID.randomUUID())
+                .build("{\"firstName\":\"Horst\",\"lastName\":\"Lichter\",\"displayName\":\"Horsti\",\"salutation\":\"Mr\"}");
+        fc.publish(fact);
+        System.out.println("published " + fact);
+
+        // read it back and let factcast transform it to version 3
+        fetch(UserCreated.class, p -> {
+            System.err.println(p);
+        });
+
+        // read it back and let factcast transform it to version 1
+        fetch(UserCreatedV1.class, p -> {
+            System.err.println(p);
+        });
+
+    }
+
+    private <T> void fetch(Class<T> class1, Consumer<T> c) throws TimeoutException, Exception {
+
+        Subscription sub;
+        sub = fc
+                .subscribe(SubscriptionRequest.catchup(FactSpec.from(class1))
+                        .fromScratch(),
+                        e -> c.accept(FactCastJson.readValue(class1,
+                                e.jsonPayload())))
                 .awaitCatchup(5000);
 
         sub.close();
-
-        UUID id = UUID.randomUUID();
-        System.out.println("trying to publish with optimistic locking");
-
-        PublishingResult success = fc.lock("namespaceA")
-                .on(id)
-                .optimistic()
-                .attempt(() -> Attempt.publish(Fact.builder()
-                        .aggId(id)
-                        .ns("namespaceA")
-                        .type("eventA")
-                        .version(1)
-                        .build("{ \"firstName\":\"Jean-Luc\"}")));
-        System.out.println("published succeeded: " + (success != null));
-        System.out.println("published id: " + success);
-
-        System.out.println("trying another with optimistic locking");
-        success = fc.lock("foo")
-                .on(id)
-                .optimistic()
-                .attempt(() -> Attempt.publish(Fact.builder()
-                        .aggId(id)
-                        .ns("namespaceA")
-                        .type("eventA")
-                        .version(2)
-                        .build("{ \"firstName\":\"Jean-Luc\", \"lastName\":\"Picard\"}")));
-        System.out.println("published succeeded: " + (success != null));
-        System.out.println("published id: " + success);
-
-        sub = fc.subscribe(SubscriptionRequest.catchup(FactSpec.ns("foo").aggId(id)).fromScratch(),
-                System.out::println)
-                .awaitCatchup(5000);
-
-        sub.close();
-
     }
 
 }

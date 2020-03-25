@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.http;
+package org.factcast.client.grpc;
 
-import java.io.IOException;
-import java.net.URL;
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.FactTransformers;
+import org.factcast.core.subscription.TransformationException;
 
 import lombok.NonNull;
 
-/**
- * something went wrong fetching a particular schema
- *
- * @author uwe
- *
- */
-public class RegistryFileFetchException extends IOException {
+public class NullFactTransformer implements FactTransformers {
 
-    private static final long serialVersionUID = 1L;
-
-    public RegistryFileFetchException(@NonNull URL url, int code, @NonNull String message) {
-        super("Status code " + code + ": " + message + " while fetching " + url);
+    @Override
+    public @NonNull Fact transformIfNecessary(@NonNull Fact e) throws TransformationException {
+        return e;
     }
 
 }

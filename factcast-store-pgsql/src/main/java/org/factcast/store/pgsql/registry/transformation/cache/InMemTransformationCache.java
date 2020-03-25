@@ -35,7 +35,6 @@ public class InMemTransformationCache implements TransformationCache {
     @Override
     public void put(@NonNull Fact f, @NonNull String transformationChainId) {
         String key = CacheKey.of(f, transformationChainId);
-
         cache.put(key, f);
     }
 
@@ -43,7 +42,6 @@ public class InMemTransformationCache implements TransformationCache {
     public Optional<Fact> find(@NonNull UUID eventId, int version,
             @NonNull String transformationChainId) {
         String key = CacheKey.of(eventId, version, transformationChainId);
-
         return Optional.ofNullable(cache.get(key));
     }
 

@@ -15,9 +15,8 @@
  */
 package org.factcast.store.pgsql.registry.transformation.cache;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -101,5 +100,33 @@ public abstract class AbstractTransformationCacheTest {
 
     private void assertNpe(Executable r) {
         assertThrows(NullPointerException.class, r);
+    }
+
+    void testRespectsChainId() throws Exception {
+        Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
+
+        uut.put(f, "foo");
+        assertThat(uut.find(f.id(), 1, "xoo")).isEmpty();
+    }
+
+    @Test
+    void testDoesNotFindUnknown() throws Exception {
+        uut.find(UUID.randomUUID(), 1, "foo");
+    }
+
+    @Test
+    void testHappyPath() throws Exception {
+        Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
+
+        uut.put(f, "foo");
+        assertThat(uut.find(f.id(), 1, "foo")).contains(f);
+    }
+
+    @Test
+    void testRespectsVersion() throws Exception {
+        Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
+
+        uut.put(f, "foo");
+        assertThat(uut.find(f.id(), 2, "foo")).isEmpty();
     }
 }

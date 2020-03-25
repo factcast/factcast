@@ -29,12 +29,12 @@ import org.factcast.store.pgsql.registry.transformation.TransformationStoreListe
 import com.google.common.collect.Iterables;
 
 import es.usc.citius.hipster.algorithm.AStar;
+import es.usc.citius.hipster.algorithm.Algorithm;
 import es.usc.citius.hipster.algorithm.Algorithm.SearchResult;
 import es.usc.citius.hipster.algorithm.Hipster;
 import es.usc.citius.hipster.graph.GraphBuilder;
 import es.usc.citius.hipster.graph.GraphSearchProblem;
 import es.usc.citius.hipster.graph.HipsterDirectedGraph;
-import es.usc.citius.hipster.model.HeuristicNode;
 import es.usc.citius.hipster.model.impl.WeightedNode;
 import lombok.Value;
 
@@ -77,23 +77,21 @@ public class TransformationChains implements TransformationStoreListener {
         Map<VersionPath, TransformationChain> chainsPerKey;
 
         synchronized (cache) {
-            // sync is necessary, because we don't want to end up with tho
-            // different maps
-            // we're locking the whole cache, but creating a hashmap should not
-            // take too
-            // much time
+            // sync is necessary, because we don't want to end up with two
+            // different maps we're locking the whole cache, but creating a
+            // hashmap should not take too much time
             chainsPerKey = cache.computeIfAbsent(key, k -> new HashMap<>());
         }
         synchronized (chainsPerKey) {
             // we're locking the map for this particular key. contention should
-            // be limited
-            // and the gain of not creating unnecessary chains should be on the
-            // plus side.
+            // be limited and the gain of not creating unnecessary chains should
+            // be on the plus side.
             return chainsPerKey.computeIfAbsent(new VersionPath(from, to), p -> build(key, from,
                     to));
         }
     }
 
+    @SuppressWarnings("unchecked")
     private TransformationChain build(TransformationKey key, int from, int to)
             throws MissingTransformationInformation {
 
@@ -117,9 +115,10 @@ public class TransformationChains implements TransformationStoreListener {
                         .build());
 
         // run search
+        @SuppressWarnings("rawtypes")
         SearchResult r = problem.search(to);
 
-        List<Edge> path = problem.recoverActionPath(r.getGoalNode());
+        List<Edge> path = Algorithm.recoverActionPath(r.getGoalNode());
 
         if (path.isEmpty() || Iterables.getLast(path).toVersion() != to
                 || Iterables.getFirst(path, null).fromVersion() != from) {
@@ -127,11 +126,7 @@ public class TransformationChains implements TransformationStoreListener {
                     "Cannot reach version " + to + " from version " + from + " for " + key);
         }
         List<Transformation> steps = map(path, Edge::transformation);
-
-        int cost = ((Double) ((HeuristicNode) r.getGoalNode()).getCost()).intValue();
-
-        return TransformationChain.of(key, steps,
-                TransformationChainMetaData.of(r.getOptimalPaths().get(0).toString(), cost));
+        return TransformationChain.of(key, steps, r.getOptimalPaths().get(0).toString());
 
         // sad: in retrospective, Hipster might not have been the greatest
         // choice due to lack of proper Generics.

@@ -15,6 +15,7 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
+import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.transformation.cache.InMemTransformationCache;
@@ -38,8 +39,8 @@ public class TransformationConfiguration {
     @Bean
     public TransformationStore transformationStore(@NonNull JdbcTemplate jdbcTemplate,
             @NonNull PgConfigurationProperties props, @Autowired(
-                    required = false) @NonNull SpringLiquibase unused) {
-        if (props.isValidationEnabled() && props.isPersistentSchemaStore())
+                    required = false) SpringLiquibase unused) {
+        if (props.isValidationEnabled() && props.isPersistentRegistry())
             return new PgTransformationStoreImpl(jdbcTemplate);
 
         // otherwise
@@ -49,8 +50,8 @@ public class TransformationConfiguration {
     @Bean
     public TransformationCache transformationCache(@NonNull JdbcTemplate jdbcTemplate,
             @NonNull PgConfigurationProperties props, @Autowired(
-                    required = false) @NonNull SpringLiquibase unused) {
-        if (props.isValidationEnabled() && props.isPersistentSchemaStore())
+                    required = false) SpringLiquibase unused) {
+        if (props.isValidationEnabled() && props.isPersistentTransformationCache())
             return new PgTransformationCache(jdbcTemplate);
 
         // otherwise
@@ -66,5 +67,11 @@ public class TransformationConfiguration {
     public Transformer transformer() {
         // TODO should test for Graal here, as nashorn is deprecated
         return new NashornTransformer();
+    }
+
+    @Bean
+    public FactTransformersFactory factTransformersFactory(TransformationChains chains,
+            Transformer trans, TransformationCache cache) {
+        return new FactTransformersFactoryImpl(chains, trans, cache);
     }
 }

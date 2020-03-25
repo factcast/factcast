@@ -119,7 +119,6 @@ message MSG_CurrentDatabaseTime {
 service RemoteFactStore {
 	// 1.0
 	rpc subscribe (MSG_SubscriptionRequest) returns (stream MSG_Notification) {}
-	rpc fetchById (MSG_UUID) returns (MSG_OptionalFact) {}
 	rpc publish (MSG_Facts) returns (MSG_Empty) {}
 	rpc serialOf (MSG_UUID) returns (MSG_OptionalSerial) {}
 	rpc handshake (MSG_Empty) returns (MSG_ServerConfig) {}

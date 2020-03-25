@@ -15,6 +15,7 @@
  */
 package org.factcast.store.pgsql.registry.transformation.chains;
 
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 
 import com.fasterxml.jackson.databind.JsonNode;

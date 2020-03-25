@@ -23,10 +23,10 @@ import org.junit.jupiter.api.Test;
 class TransformationKeyTest {
 
     @Test
-    void testOf() {
+    void testFrom() {
         Fact fact = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
 
-        TransformationKey key = TransformationKey.of(fact);
+        TransformationKey key = TransformationKey.from(fact);
 
         assertEquals(key.ns(), "ns");
         assertEquals(key.type(), "type");

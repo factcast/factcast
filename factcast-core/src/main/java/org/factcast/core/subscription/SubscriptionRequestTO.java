@@ -60,9 +60,6 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     boolean ephemeral;
 
     @JsonProperty
-    boolean idOnly = false;
-
-    @JsonProperty
     UUID startingAfter;
 
     @JsonProperty
@@ -90,16 +87,9 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
         specs.addAll(request.specs());
     }
 
+    // TODO now that forIDs is gone, maybe rename?
     public static SubscriptionRequestTO forFacts(SubscriptionRequest request) {
-        SubscriptionRequestTO t = new SubscriptionRequestTO(request);
-        t.idOnly(false);
-        return t;
-    }
-
-    public static SubscriptionRequestTO forIds(SubscriptionRequest request) {
-        SubscriptionRequestTO t = new SubscriptionRequestTO(request);
-        t.idOnly(true);
-        return t;
+        return new SubscriptionRequestTO(request);
     }
 
     public void addSpecs(@NonNull List<FactSpec> factSpecs) {
@@ -127,4 +117,5 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     public String toString() {
         return debugInfo;
     }
+
 }

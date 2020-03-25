@@ -91,7 +91,7 @@
     <dependency>
       <groupId>io.github.microutils</groupId>
       <artifactId>kotlin-logging</artifactId>
-      <version>1.7.8</version>
+      <version>1.7.9</version>
     </dependency>
     <dependency>
       <groupId>io.arrow-kt</groupId>
@@ -398,6 +398,8 @@
                     <goals>
                       <goal>kapt</goal>
                       <goal>test-kapt</goal>
+                      <goal>compile</goal>
+                      <goal>test-compile</goal>
                     </goals>
                   </pluginExecutionFilter>
                   <action>

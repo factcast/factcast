@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.http;
+package org.factcast.store.pgsql.registry;
 
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -16,10 +16,11 @@
 package org.factcast.store.pgsql.registry.validation;
 
 import org.factcast.store.pgsql.PgConfigurationProperties;
-import org.factcast.store.pgsql.registry.*;
+import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 import org.factcast.store.pgsql.registry.validation.schema.store.InMemSchemaStoreImpl;
 import org.factcast.store.pgsql.registry.validation.schema.store.PgSchemaStoreImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -31,9 +32,10 @@ import lombok.NonNull;
 public class FactValidatorConfiguration {
     @Bean
     public SchemaStore schemaStore(@NonNull JdbcTemplate jdbcTemplate,
-            @NonNull PgConfigurationProperties props, @NonNull SpringLiquibase unused) {
-        if (props.isValidationEnabled() && props.isPersistentSchemaStore())
-            return new PgSchemaStoreImpl(jdbcTemplate, unused);
+            @NonNull PgConfigurationProperties props, @Autowired(
+                    required = false) SpringLiquibase unused) {
+        if (props.isValidationEnabled() && props.isPersistentRegistry())
+            return new PgSchemaStoreImpl(jdbcTemplate);
 
         // otherwise
         return new InMemSchemaStoreImpl();

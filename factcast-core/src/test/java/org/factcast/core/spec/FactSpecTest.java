@@ -15,9 +15,7 @@
  */
 package org.factcast.core.spec;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.UUID;
 
@@ -141,16 +139,16 @@ public class FactSpecTest {
     }
 
     @Specification(ns = "ns")
-    static class TestFact {
+    static class TestFactPayload {
     }
 
     @Test
     public void testFactSpecFromAnnotation1() {
-        FactSpec factSpec = FactSpec.from(TestFact.class);
+        FactSpec factSpec = FactSpec.from(TestFactPayload.class);
 
-        assertEquals(factSpec.ns(), "ns");
-        assertNull(factSpec.type());
-        assertNull(factSpec.version());
+        assertEquals("ns", factSpec.ns());
+        assertEquals("TestFactPayload", factSpec.type());
+        assertEquals(0, factSpec.version());
 
     }
 
@@ -162,9 +160,9 @@ public class FactSpecTest {
     public void testFactSpecFromAnnotation2() {
         FactSpec factSpec = FactSpec.from(TestFactWithType.class);
 
-        assertEquals(factSpec.ns(), "ns");
-        assertEquals(factSpec.type(), "type");
-        assertNull(factSpec.version());
+        assertEquals("ns", factSpec.ns());
+        assertEquals("type", factSpec.type());
+        assertEquals(0, factSpec.version());
 
     }
 
@@ -176,9 +174,9 @@ public class FactSpecTest {
     public void testFactSpecFromAnnotation3() {
         FactSpec factSpec = FactSpec.from(TestFactWithTypeAndVersion.class);
 
-        assertEquals(factSpec.ns(), "ns");
-        assertEquals(factSpec.type(), "type");
-        assertEquals(factSpec.version(), 2);
+        assertEquals("ns", factSpec.ns());
+        assertEquals("type", factSpec.type());
+        assertEquals(2, factSpec.version());
 
     }
 
