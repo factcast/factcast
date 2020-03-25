@@ -74,4 +74,11 @@ public class TransformationConfiguration {
             Transformer trans, TransformationCache cache) {
         return new FactTransformersFactoryImpl(chains, trans, cache);
     }
+
+    @Bean
+    public TransformationCacheCompactor TransformationCachePurger(TransformationCache cache,
+            PgConfigurationProperties props) {
+        return new TransformationCacheCompactor(cache, props
+                .getDeleteTransformationsStaleForDays());
+    }
 }

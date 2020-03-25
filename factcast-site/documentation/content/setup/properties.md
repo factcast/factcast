@@ -19,16 +19,17 @@ Properties you can use to configure Factcast:
 
 ### Schema/Transformation-Registry
 
-| Property-Name        | Semantics           | Default  | Example |
-| ------------- |:-------------|:-----|:-----|
-| factcast.store.pgsql.schemaRegistryUrl      | if a schemaRegistryUrl is defined, FactCast goes into validating mode. The only protocols allowed here are *'http', 'https' and 'classpath'*| none | classpath:my-registry|
-| factcast.store.pgsql.persistentRegistry      | if fetched Schema and Transformation Documents are persisted into Postgres | false |
-| factcast.store.pgsql.persistentTransformationCache      | if Transformed Fact payloads are persistently cached into Postgres| false |
-| factcast.store.pgsql.allowUnvalidatedPublish      | If validation is enabled, this controls if publishing facts, that are **not validatable** (due to missing meta-data or due to missing schema in the registry) are allowed to be published or should be rejected.  |  false |
-| factcast.store.pgsql.persistentSchemaStore |   If validation is enabled, this controls if a local snapshot of the schemaregistry is persisted to psql or just kept in mem.   |    true |
-| factcast.store.pgsql.schemaStoreRefreshRateInMilliseconds | defines the time in milliseconds that FactCast pauses between checking for a change in the SchemaRegistry      |    15000 |
-| factcast.store.pgsql.inMemTransformationCacheCapacity |  when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum values here is 1000. | 1_000_000 | 1000 |
-| factcast.store.pgsql.deleteTransformationsStaleForDays |  when using the persistent impl of the transformation cache, this is the min number of days a transformation result is not read in order to be considered stale. This should free some space in a regular cleanup job | 14 | 30 |
+| Property-Name        | Semantics           | Default   
+| ------------- |:-------------|:-----|
+| factcast.store.pgsql.schemaRegistryUrl      | if a schemaRegistryUrl is defined, FactCast goes into validating mode. The only protocols allowed here are *'http', 'https' and 'classpath'*|  
+| factcast.store.pgsql.persistentRegistry      | if fetched Schema and Transformation Documents are persisted into Postgres | false 
+| factcast.store.pgsql.persistentTransformationCache      | if Transformed Fact payloads are persistently cached into Postgres| false 
+| factcast.store.pgsql.allowUnvalidatedPublish      | If validation is enabled, this controls if publishing facts, that are **not validatable** (due to missing meta-data or due to missing schema in the registry) are allowed to be published or should be rejected.  |  false 
+| factcast.store.pgsql.persistentSchemaStore |   If validation is enabled, this controls if a local snapshot of the schemaregistry is persisted to psql or just kept in mem.   |    true 
+| factcast.store.pgsql.schemaStoreRefreshCron | defines the cron schedule for refreshing the SchemaRegistry by querying for the latest remote changes | `*/60 * * * * *` (once a minute) |
+| factcast.store.pgsql.inMemTransformationCacheCapacity |  when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum value here is 1000. | 1_000_000 
+| factcast.store.pgsql.deleteTransformationsStaleForDays |  when using the persistent impl of the transformation cache, this is the min number of days a transformation result is not read in order to be considered stale. This should free some space in a regular cleanup job | 14  
+|factcast.store.pgsql.transformationCacheCompactCron|defines the cron schedule for compacting the transformation result cache | `0 0 0 * * *` (at midnight)
 
 
 

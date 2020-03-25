@@ -13,29 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry;
+package org.factcast.store.pgsql.registry.transformation;
 
+import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
+import org.joda.time.DateTime;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 
-@Value
+@RequiredArgsConstructor
 @Slf4j
-public class ScheduledRegistryRefresher {
+@Value
+public class TransformationCacheCompactor {
+    @NonNull
+    final TransformationCache cache;
 
-    final SchemaRegistry registry;
+    final int days;
 
     @Scheduled(
-            cron = "${factcast.store.pgsql.schemaStoreRefreshCron:*/60 * * * * *}")
-    @SchedulerLock(name = "registryRefresh", lockAtMostFor = 1000 * 60 * 3)
-    public void refresh() {
+            cron = "${factcast.store.pgsql.transformationCacheCompactCron:0 0 0 * * *}")
+    @SchedulerLock(name = "transformationCacheCompact", lockAtMostFor = 1000 * 60 * 60)
+    public void compact() {
 
         // TODO at timing metrics
 
-        log.debug("Triggering refresh on " + registry.getClass().getSimpleName());
-        registry.refresh();
+        log.debug("Triggering compact on " + cache.getClass().getSimpleName());
+        cache.compact(DateTime.now().minusDays(days));
     }
 
 }

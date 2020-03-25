@@ -30,4 +30,8 @@ public class ClasspathSchemaRegistry extends AbstractSchemaRegistry {
                 transformationStore);
     }
 
+    @Override
+    public void refresh() {
+        // does not need to be refreshed.
+    }
 }
