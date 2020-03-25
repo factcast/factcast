@@ -18,24 +18,29 @@ package org.factcast.store.pgsql.registry.validation.schema.store;
 import java.util.List;
 import java.util.Optional;
 
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import io.micrometer.core.instrument.Tags;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 /**
  * @author uwe
- *
  */
 @RequiredArgsConstructor
 public class PgSchemaStoreImpl implements SchemaStore {
 
     @NonNull
     private final JdbcTemplate jdbcTemplate;
+
+    @NonNull
+    private final RegistryMetrics registryMetrics;
 
     @Override
     public void register(@NonNull SchemaSource key, @NonNull String schema)
@@ -52,11 +57,15 @@ public class PgSchemaStoreImpl implements SchemaStore {
                 key.id());
         if (!hashes.isEmpty()) {
             String hash = hashes.get(0);
-            if (hash.equals(key.hash()))
+            if (hash.equals(key.hash())) {
                 return true;
-            else
+            } else {
+                registryMetrics.increment(MetricEvent.SCHEMA_CONFLICT, Tags.of(
+                        RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
+
                 throw new SchemaConflictException("Key " + key + " does not match the stored hash "
                         + hash);
+            }
         } else
             return false;
     }

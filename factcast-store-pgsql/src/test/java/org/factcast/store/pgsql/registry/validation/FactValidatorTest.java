@@ -22,38 +22,47 @@ import java.util.Optional;
 
 import org.factcast.core.Fact;
 import org.factcast.store.pgsql.PgConfigurationProperties;
+import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.http.ValidationConstants;
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.github.fge.jsonschema.main.JsonSchema;
 
-public class FactValidatorTest {
+import io.micrometer.core.instrument.Tags;
+import lombok.val;
 
+public class FactValidatorTest {
     @Test
     public void testValidateIfDisabled() throws Exception {
 
         PgConfigurationProperties props = mock(PgConfigurationProperties.class);
         when(props.isValidationEnabled()).thenReturn(false);
 
-        FactValidator uut = new FactValidator(props, mock(SchemaRegistry.class));
+        FactValidator uut = new FactValidator(props, mock(SchemaRegistry.class), mock(
+                RegistryMetrics.class));
         Fact probeFact = Fact.builder().ns("foo").type("bar").version(1).buildWithoutPayload();
         assertThat(uut.validate(probeFact)).isEmpty();
 
     }
 
     @Test
-    public void testFailsToValidateIfNotValidatable() throws Exception {
+    public void testFailsToValidateIfNotValidatable() {
+        val registryMetrics = spy(new NOPRegistryMetrics());
 
         PgConfigurationProperties props = mock(PgConfigurationProperties.class);
         when(props.isValidationEnabled()).thenReturn(true);
         when(props.isAllowUnvalidatedPublish()).thenReturn(false);
 
-        FactValidator uut = new FactValidator(props, mock(SchemaRegistry.class));
+        FactValidator uut = new FactValidator(props, mock(SchemaRegistry.class), registryMetrics);
         Fact probeFact = Fact.builder().ns("foo").type("bar").buildWithoutPayload();
         assertThat(uut.validate(probeFact)).isNotEmpty();
+
+        verify(registryMetrics).increment(eq(MetricEvent.FACT_VALIDATION_FAILED), any(Tags.class));
 
     }
 
@@ -64,7 +73,8 @@ public class FactValidatorTest {
         when(props.isValidationEnabled()).thenReturn(true);
         when(props.isAllowUnvalidatedPublish()).thenReturn(true);
 
-        FactValidator uut = new FactValidator(props, mock(SchemaRegistry.class));
+        FactValidator uut = new FactValidator(props, mock(SchemaRegistry.class), mock(
+                RegistryMetrics.class));
         Fact probeFact = Fact.builder().ns("foo").type("bar").buildWithoutPayload();
         assertThat(uut.validate(probeFact)).isEmpty();
 
@@ -72,6 +82,7 @@ public class FactValidatorTest {
 
     @Test
     public void testFailsToValidateIfValidatableButMissingSchema() throws Exception {
+        val registryMetrics = spy(new NOPRegistryMetrics());
 
         PgConfigurationProperties props = mock(PgConfigurationProperties.class);
         when(props.isValidationEnabled()).thenReturn(true);
@@ -79,9 +90,11 @@ public class FactValidatorTest {
         SchemaRegistry sr = mock(SchemaRegistry.class);
         when(sr.get(Mockito.any(SchemaKey.class))).thenReturn(Optional.empty());
 
-        FactValidator uut = new FactValidator(props, sr);
+        FactValidator uut = new FactValidator(props, sr, registryMetrics);
         Fact probeFact = Fact.builder().ns("foo").type("bar").version(8).buildWithoutPayload();
         assertThat(uut.validate(probeFact)).isNotEmpty();
+
+        verify(registryMetrics).increment(eq(MetricEvent.SCHEMA_MISSING), any(Tags.class));
 
     }
 
@@ -102,7 +115,7 @@ public class FactValidatorTest {
                 .getJsonSchema(ValidationConstants.JACKSON.readTree(schemaJson));
         when(sr.get(Mockito.any(SchemaKey.class))).thenReturn(Optional.of(schema));
 
-        FactValidator uut = new FactValidator(props, sr);
+        FactValidator uut = new FactValidator(props, sr, mock(RegistryMetrics.class));
         Fact probeFact = Fact.builder()
                 .ns("foo")
                 .type("bar")
@@ -122,7 +135,7 @@ public class FactValidatorTest {
         SchemaRegistry sr = mock(SchemaRegistry.class);
         when(sr.get(Mockito.any(SchemaKey.class))).thenReturn(Optional.empty());
 
-        FactValidator uut = new FactValidator(props, sr);
+        FactValidator uut = new FactValidator(props, sr, mock(RegistryMetrics.class));
         Fact probeFact = Fact.builder()
                 .ns("foo")
                 .type("bar")
@@ -134,6 +147,7 @@ public class FactValidatorTest {
 
     @Test
     public void testFailsToValidateWithMatchingSchemaButNonMatchingFact() throws Exception {
+        val registryMetrics = spy(new NOPRegistryMetrics());
 
         PgConfigurationProperties props = mock(PgConfigurationProperties.class);
         when(props.isValidationEnabled()).thenReturn(true);
@@ -149,9 +163,11 @@ public class FactValidatorTest {
                 .getJsonSchema(ValidationConstants.JACKSON.readTree(schemaJson));
         when(sr.get(Mockito.any(SchemaKey.class))).thenReturn(Optional.of(schema));
 
-        FactValidator uut = new FactValidator(props, sr);
+        FactValidator uut = new FactValidator(props, sr, registryMetrics);
         Fact probeFact = Fact.builder().ns("foo").type("bar").version(1).build("{}");
         assertThat(uut.validate(probeFact)).isNotEmpty();
+
+        verify(registryMetrics).increment(eq(MetricEvent.FACT_VALIDATION_FAILED), any(Tags.class));
 
     }
 

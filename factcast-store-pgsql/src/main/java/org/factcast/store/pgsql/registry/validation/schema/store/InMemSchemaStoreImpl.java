@@ -19,18 +19,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 
+import io.micrometer.core.instrument.Tags;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 /**
  * @author uwe
- *
  */
+@RequiredArgsConstructor
 public class InMemSchemaStoreImpl implements SchemaStore {
+    private final RegistryMetrics registryMetrics;
 
     private final Map<String, String> id2hashMap = new HashMap<>();
 
@@ -54,9 +59,13 @@ public class InMemSchemaStoreImpl implements SchemaStore {
         if (hash != null)
             if (hash.equals(source.hash()))
                 return true;
-            else
+            else {
+                registryMetrics.increment(MetricEvent.SCHEMA_CONFLICT, Tags.of(
+                        RegistryMetrics.TAG_IDENTITY_KEY, source.toString()));
+
                 throw new SchemaConflictException(
                         "SchemaSource at " + source + " does not match the stored hash " + hash);
+            }
         else
             return false;
 

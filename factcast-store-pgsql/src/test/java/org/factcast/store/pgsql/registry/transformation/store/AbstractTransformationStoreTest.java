@@ -23,6 +23,9 @@ import static org.mockito.Mockito.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationConflictException;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
@@ -32,8 +35,14 @@ import org.factcast.store.pgsql.registry.transformation.TransformationStoreListe
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import org.mockito.Spy;
+
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 
 public abstract class AbstractTransformationStoreTest {
+    @Spy
+    protected RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 
     private TransformationStore uut;
 
@@ -86,12 +95,17 @@ public abstract class AbstractTransformationStoreTest {
         s.to(2);
         uut.store(s, "");
 
+        TransformationSource conflicting = new TransformationSource();
+        conflicting.id("http://testContainsSensesConflict");
+        conflicting.hash("1234");
+
         assertThrows(TransformationConflictException.class, () -> {
-            TransformationSource conflicting = new TransformationSource();
-            conflicting.id("http://testContainsSensesConflict");
-            conflicting.hash("1234");
             uut.contains(conflicting);
         });
+
+        verify(registryMetrics).increment(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
+                RegistryMetrics.TAG_IDENTITY_KEY, conflicting.toString()), Tag.of("hash", s
+                        .hash())));
     }
 
     @Test

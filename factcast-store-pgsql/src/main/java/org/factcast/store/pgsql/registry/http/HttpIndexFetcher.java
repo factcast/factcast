@@ -20,12 +20,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
 
-import org.factcast.store.pgsql.registry.IndexFetcher;
-import org.factcast.store.pgsql.registry.RegistryIndex;
-import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
+import org.factcast.store.pgsql.registry.*;
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import io.micrometer.core.instrument.Tags;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
@@ -44,14 +45,18 @@ public class HttpIndexFetcher implements IndexFetcher {
 
     private final OkHttpClient client;
 
-    public HttpIndexFetcher(@NonNull URL baseUrl) {
-        this(baseUrl, ValidationConstants.OK_HTTP);
+    private final RegistryMetrics registryMetrics;
+
+    public HttpIndexFetcher(@NonNull URL baseUrl, @NonNull RegistryMetrics registryMetrics2) {
+        this(baseUrl, ValidationConstants.OK_HTTP, registryMetrics2);
     }
 
     @VisibleForTesting
-    protected HttpIndexFetcher(@NonNull URL baseUrl, @NonNull OkHttpClient client) {
+    protected HttpIndexFetcher(@NonNull URL baseUrl, @NonNull OkHttpClient client,
+            @NonNull RegistryMetrics registryMetrics) {
         this.client = client;
         this.schemaRegistryUrl = baseUrl;
+        this.registryMetrics = registryMetrics;
     }
 
     private final URL schemaRegistryUrl;
@@ -97,12 +102,18 @@ public class HttpIndexFetcher implements IndexFetcher {
                             RegistryIndex.class);
                     return Optional.of(readValue);
 
-                } else
+                } else {
+                    registryMetrics.increment(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE, Tags.of(
+                            RegistryMetrics.TAG_STATUS_CODE_KEY, String.valueOf(response.code())));
+
                     throw new SchemaRegistryUnavailableException(request.url().toString(), response
                             .code(),
                             response.message());
+                }
             }
         } catch (IOException e) {
+            registryMetrics.increment(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE);
+
             throw new SchemaRegistryUnavailableException(e);
         }
 

@@ -20,15 +20,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.SingleTransformation;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationConflictException;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class InMemTransformationStoreImpl extends AbstractTransformationStore {
+    private final RegistryMetrics registryMetrics;
+
     private final Map<String, String> id2hashMap = new HashMap<>();
 
     private final Map<TransformationKey, List<Transformation>> transformationCache = new HashMap<>();
@@ -53,10 +61,15 @@ public class InMemTransformationStoreImpl extends AbstractTransformationStore {
         if (hash != null)
             if (hash.equals(source.hash()))
                 return true;
-            else
+            else {
+                registryMetrics.increment(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
+                        RegistryMetrics.TAG_IDENTITY_KEY, source.toString()), Tag.of("hash",
+                                hash)));
+
                 throw new TransformationConflictException(
                         "TransformationSource at " + source + " does not match the stored hash "
                                 + hash);
+            }
         else
             return false;
     }

@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.factcast.store.pgsql.registry.http.ValidationConstants;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.TimedOperation;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
@@ -58,6 +60,9 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
 
     @NonNull
     protected final TransformationStore transformationStore;
+
+    @NonNull
+    protected final RegistryMetrics registryMetrics;
 
     protected final Object mutex = new Object();
 
@@ -103,10 +108,12 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
     public void refresh() {
         synchronized (mutex) {
 
-            Optional<RegistryIndex> fetchIndex = indexFetcher.fetchIndex();
-            if (fetchIndex.isPresent()) {
-                process(fetchIndex.get());
-            }
+            registryMetrics.time(TimedOperation.REFRESH_REGISTRY, () -> {
+                Optional<RegistryIndex> fetchIndex = indexFetcher.fetchIndex();
+
+                fetchIndex.ifPresent(this::process);
+            });
+
             // otherwise just return
         }
     }

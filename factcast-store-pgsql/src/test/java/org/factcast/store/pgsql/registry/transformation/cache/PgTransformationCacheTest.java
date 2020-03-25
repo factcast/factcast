@@ -25,6 +25,7 @@ import org.factcast.store.pgsql.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -35,6 +36,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = { PgTestConfiguration.class })
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
 @IntegrationTest
 class PgTransformationCacheTest extends AbstractTransformationCacheTest {
     @Autowired
@@ -42,7 +44,7 @@ class PgTransformationCacheTest extends AbstractTransformationCacheTest {
 
     @Override
     protected TransformationCache createUUT() {
-        return new PgTransformationCache(tpl);
+        return new PgTransformationCache(tpl, registryMetrics);
     }
 
     @Test

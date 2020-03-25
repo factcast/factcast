@@ -18,13 +18,16 @@ package org.factcast.store.pgsql.registry.http;
 import java.io.IOException;
 import java.net.URL;
 
-import org.factcast.store.pgsql.registry.RegistryFileFetchException;
-import org.factcast.store.pgsql.registry.RegistryFileFetcher;
+import org.factcast.store.pgsql.registry.*;
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.TimedOperation;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import io.micrometer.core.instrument.Tags;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
@@ -46,14 +49,19 @@ public class HttpRegistryFileFetcher implements RegistryFileFetcher {
     @NonNull
     private final OkHttpClient client;
 
-    public HttpRegistryFileFetcher(@NonNull URL baseUrl) {
-        this(baseUrl, ValidationConstants.OK_HTTP);
+    @NonNull
+    private final RegistryMetrics registryMetrics;
+
+    public HttpRegistryFileFetcher(@NonNull URL baseUrl, @NonNull RegistryMetrics registryMetrics) {
+        this(baseUrl, ValidationConstants.OK_HTTP, registryMetrics);
     }
 
     @VisibleForTesting
-    HttpRegistryFileFetcher(@NonNull URL baseUrl, @NonNull OkHttpClient client) {
+    HttpRegistryFileFetcher(@NonNull URL baseUrl, @NonNull OkHttpClient client,
+            @NonNull RegistryMetrics registryMetrics) {
         this.client = client;
         this.baseUrl = baseUrl;
+        this.registryMetrics = registryMetrics;
     }
 
     @Override
@@ -62,7 +70,9 @@ public class HttpRegistryFileFetcher implements RegistryFileFetcher {
         URL url = new URL(baseUrl, id);
         log.debug("Fetching Transformation {}", key.id());
 
-        return fetch(url);
+        return registryMetrics.time(TimedOperation.FETCH_REGISTRY_FILE,
+                RegistryFileFetchException.class,
+                () -> fetch(url));
     }
 
     @Override
@@ -72,10 +82,12 @@ public class HttpRegistryFileFetcher implements RegistryFileFetcher {
         URL url = new URL(baseUrl, id);
         log.debug("Fetching Schema {}", key.id());
 
-        return fetch(url);
+        return registryMetrics.time(TimedOperation.FETCH_REGISTRY_FILE,
+                RegistryFileFetchException.class,
+                () -> fetch(url));
     }
 
-    private String fetch(URL url) throws IOException {
+    private String fetch(URL url) throws RegistryFileFetchException {
         Request req = new Request.Builder().url(url).build();
 
         try (Response response = client.newCall(req).execute()) {
@@ -83,10 +95,15 @@ public class HttpRegistryFileFetcher implements RegistryFileFetcher {
             String responseBodyAsText = response.body().string();
 
             if (response.code() != ValidationConstants.HTTP_OK) {
+                registryMetrics.increment(MetricEvent.REGISTRY_FILE_FETCH_FAILED, Tags.of(
+                        RegistryMetrics.TAG_STATUS_CODE_KEY, String.valueOf(response.code())));
+
                 throw new RegistryFileFetchException(url, response.code(), response.message());
             } else {
                 return responseBodyAsText;
             }
+        } catch (IOException e) {
+            throw new RegistryFileFetchException(url, 0, e.getMessage());
         }
 
     }

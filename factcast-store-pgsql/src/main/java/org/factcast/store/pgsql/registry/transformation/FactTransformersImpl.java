@@ -23,6 +23,9 @@ import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.internal.RequestedVersions;
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.TimedOperation;
 import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChain;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
@@ -33,6 +36,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -51,6 +56,9 @@ public class FactTransformersImpl implements FactTransformers {
     @NonNull
     private final TransformationCache cache;
 
+    @NonNull
+    private final RegistryMetrics registryMetrics;
+
     @Override
     public @NonNull Fact transformIfNecessary(@NonNull Fact e) throws TransformationException {
 
@@ -64,7 +72,11 @@ public class FactTransformersImpl implements FactTransformers {
             OptionalInt max = requested.get(ns, type).stream().mapToInt(v -> v).max();
             int targetVersion = max.orElseThrow(() -> new IllegalArgumentException(
                     "No requested Version !? This must not happen."));
-            return transform(targetVersion, e);
+
+            return registryMetrics.time(TimedOperation.TRANSFORMATION,
+                    TransformationException.class,
+                    () -> transform(targetVersion, e));
+
         }
 
     }
@@ -96,6 +108,10 @@ public class FactTransformersImpl implements FactTransformers {
                 cache.put(transformed, chainId);
                 return transformed;
             } catch (JsonProcessingException e1) {
+                registryMetrics.increment(MetricEvent.TRANSFORMATION_FAILED, Tags.of(
+                        Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
+                        Tag.of("version", String.valueOf(targetVersion))));
+
                 throw new TransformationException(e1);
             }
         }

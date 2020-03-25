@@ -18,6 +18,8 @@ package org.factcast.store.pgsql.registry.transformation.store;
 import java.util.List;
 import java.util.Optional;
 
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.SingleTransformation;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationConflictException;
@@ -25,6 +27,8 @@ import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -32,6 +36,9 @@ import lombok.RequiredArgsConstructor;
 public class PgTransformationStoreImpl extends AbstractTransformationStore {
     @NonNull
     private final JdbcTemplate jdbcTemplate;
+
+    @NonNull
+    private final RegistryMetrics registryMetrics;
 
     @Override
     protected void doStore(@NonNull TransformationSource source, String transformation)
@@ -54,6 +61,10 @@ public class PgTransformationStoreImpl extends AbstractTransformationStore {
             if (hash.equals(source.hash())) {
                 return true;
             } else {
+                registryMetrics.increment(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
+                        RegistryMetrics.TAG_IDENTITY_KEY, source.toString()), Tag.of("hash",
+                                hash)));
+
                 throw new TransformationConflictException(
                         "Source at " + source + " does not match the stored hash " + hash);
             }
