@@ -51,13 +51,13 @@ public class RegistryMetricsImpl implements RegistryMetrics {
     }
 
     @Override
-    public void timed(@NonNull TimedOperation operation, @NonNull Runnable fn) {
-        timer(operation, null).record(fn);
+    public void timed(@NonNull TimedOperation operation, Tags tags, @NonNull Runnable fn) {
+        timer(operation, tags).record(fn);
     }
 
     @Override
-    public void timed(@NonNull TimedOperation operation, Tags tags, @NonNull Runnable fn) {
-        timer(operation, tags).record(fn);
+    public void timed(@NonNull TimedOperation operation, @NonNull Runnable fn) {
+        timed(operation, null, fn);
     }
 
     @Override
@@ -79,13 +79,13 @@ public class RegistryMetricsImpl implements RegistryMetrics {
     }
 
     @Override
-    public <T> T timed(@NonNull TimedOperation operation, @NonNull Supplier<T> fn) {
-        return timer(operation, null).record(fn);
+    public <T> T timed(@NonNull TimedOperation operation, Tags tags, @NonNull Supplier<T> fn) {
+        return timer(operation, tags).record(fn);
     }
 
     @Override
-    public <T> T timed(@NonNull TimedOperation operation, Tags tags, @NonNull Supplier<T> fn) {
-        return timer(operation, tags).record(fn);
+    public <T> T timed(@NonNull TimedOperation operation, @NonNull Supplier<T> fn) {
+        return timed(operation, null, fn);
     }
 
     @Override
