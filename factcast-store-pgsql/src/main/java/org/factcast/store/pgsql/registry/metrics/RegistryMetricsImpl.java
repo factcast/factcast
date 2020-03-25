@@ -26,9 +26,9 @@ import lombok.val;
 
 @RequiredArgsConstructor
 public class RegistryMetricsImpl implements RegistryMetrics {
-    public static final String METRIC_NAME_OPERATIONS = "factcast.registry.operations";
+    public static final String METRIC_NAME_TIMINGS = "factcast.registry.timings";
 
-    public static final String METRIC_NAME_EVENTS = "factcast.registry.events";
+    public static final String METRIC_NAME_COUNTS = "factcast.registry.counts";
 
     public static final String TAG_NAME_KEY = "name";
 
@@ -39,7 +39,7 @@ public class RegistryMetricsImpl implements RegistryMetrics {
                 .of(Tag.of(TAG_NAME_KEY, op.event()))
                 .and(tags);
 
-        return meterRegistry.counter(METRIC_NAME_EVENTS, t);
+        return meterRegistry.counter(METRIC_NAME_COUNTS, t);
     }
 
     private Timer timer(@NonNull TimedOperation op, Tags tags) {
@@ -47,7 +47,7 @@ public class RegistryMetricsImpl implements RegistryMetrics {
                 .of(Tag.of(TAG_NAME_KEY, op.op()))
                 .and(tags);
 
-        return meterRegistry.timer(METRIC_NAME_OPERATIONS, t);
+        return meterRegistry.timer(METRIC_NAME_TIMINGS, t);
     }
 
     @Override

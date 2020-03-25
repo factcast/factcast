@@ -47,10 +47,10 @@ class RegistryMetricsImplTest {
 
     @BeforeEach
     void setUp() {
-        when(meterRegistry.timer(eq(RegistryMetricsImpl.METRIC_NAME_OPERATIONS), any(Tags.class)))
+        when(meterRegistry.timer(eq(RegistryMetricsImpl.METRIC_NAME_TIMINGS), any(Tags.class)))
                 .thenReturn(
                         timer);
-        when(meterRegistry.counter(eq(RegistryMetricsImpl.METRIC_NAME_EVENTS), any(Tags.class)))
+        when(meterRegistry.counter(eq(RegistryMetricsImpl.METRIC_NAME_COUNTS), any(Tags.class)))
                 .thenReturn(counter);
     }
 
@@ -59,7 +59,7 @@ class RegistryMetricsImplTest {
         uut.timed(TimedOperation.COMPACT_TRANSFORMATION_CACHE, () -> {
         });
 
-        verify(meterRegistry).timer(RegistryMetricsImpl.METRIC_NAME_OPERATIONS, Tags.of(Tag.of(
+        verify(meterRegistry).timer(RegistryMetricsImpl.METRIC_NAME_TIMINGS, Tags.of(Tag.of(
                 RegistryMetricsImpl.TAG_NAME_KEY, TimedOperation.COMPACT_TRANSFORMATION_CACHE
                         .op())));
     }
@@ -68,7 +68,7 @@ class RegistryMetricsImplTest {
     void testCounterCreation() {
         uut.count(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE);
 
-        verify(meterRegistry).counter(RegistryMetricsImpl.METRIC_NAME_EVENTS, Tags.of(Tag.of(
+        verify(meterRegistry).counter(RegistryMetricsImpl.METRIC_NAME_COUNTS, Tags.of(Tag.of(
                 RegistryMetricsImpl.TAG_NAME_KEY, MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE
                         .event())));
     }
@@ -88,7 +88,7 @@ class RegistryMetricsImplTest {
         });
 
         verify(timer).record(any(Runnable.class));
-        verify(meterRegistry).timer(RegistryMetricsImpl.METRIC_NAME_OPERATIONS, Tags.of(
+        verify(meterRegistry).timer(RegistryMetricsImpl.METRIC_NAME_TIMINGS, Tags.of(
                 customTag,
                 Tag.of(RegistryMetricsImpl.TAG_NAME_KEY,
                         TimedOperation.COMPACT_TRANSFORMATION_CACHE.op())));
@@ -112,7 +112,7 @@ class RegistryMetricsImplTest {
                 });
 
         verify(timer).record(any(Duration.class));
-        verify(meterRegistry).timer(RegistryMetricsImpl.METRIC_NAME_OPERATIONS, Tags.of(
+        verify(meterRegistry).timer(RegistryMetricsImpl.METRIC_NAME_TIMINGS, Tags.of(
                 customTag,
                 Tag.of(RegistryMetricsImpl.TAG_NAME_KEY,
                         TimedOperation.COMPACT_TRANSFORMATION_CACHE.op())));
@@ -131,7 +131,7 @@ class RegistryMetricsImplTest {
         assertEquals(5, result);
 
         verify(timer).record(any(Supplier.class));
-        verify(meterRegistry).timer(RegistryMetricsImpl.METRIC_NAME_OPERATIONS, Tags.of(
+        verify(meterRegistry).timer(RegistryMetricsImpl.METRIC_NAME_TIMINGS, Tags.of(
                 customTag,
                 Tag.of(RegistryMetricsImpl.TAG_NAME_KEY,
                         TimedOperation.COMPACT_TRANSFORMATION_CACHE.op())));
@@ -175,7 +175,7 @@ class RegistryMetricsImplTest {
         uut.count(MetricEvent.MISSING_TRANSFORMATION_INFO, Tags.of(customTag));
 
         verify(counter).increment();
-        verify(meterRegistry).counter(RegistryMetricsImpl.METRIC_NAME_EVENTS, Tags.of(
+        verify(meterRegistry).counter(RegistryMetricsImpl.METRIC_NAME_COUNTS, Tags.of(
                 customTag,
                 Tag.of(RegistryMetricsImpl.TAG_NAME_KEY,
                         MetricEvent.MISSING_TRANSFORMATION_INFO.event())));
