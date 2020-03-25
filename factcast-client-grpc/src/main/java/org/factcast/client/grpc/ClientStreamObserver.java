@@ -15,6 +15,8 @@
  */
 package org.factcast.client.grpc;
 
+
+import org.factcast.core.Fact;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.grpc.api.conv.ProtoConverter;
