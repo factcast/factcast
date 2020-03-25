@@ -143,6 +143,32 @@ public class TransformationTest {
     }
 
     @Test
+    public void returnsOriginalIfNoVersionSet() throws Exception, TimeoutException {
+
+        UUID id = UUID.randomUUID();
+        Fact f = createTestFact(id, 3,
+                "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER PETERSON\"}");
+        fc.publish(f);
+
+        Fact found = findFirst(id, null);
+        assertNotNull(f);
+        assertEquals(3, found.version());
+    }
+
+    @Test
+    public void returnsOriginalIfVersionSetTo0() throws Exception, TimeoutException {
+
+        UUID id = UUID.randomUUID();
+        Fact f = createTestFact(id, 3,
+                "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER PETERSON\"}");
+        fc.publish(f);
+
+        Fact found = findFirst(id, 0);
+        assertNotNull(f);
+        assertEquals(3, found.version());
+    }
+
+    @Test
     public void publishV1AndFetchBackAsV3() throws Exception, TimeoutException {
 
         UUID id = UUID.randomUUID();
