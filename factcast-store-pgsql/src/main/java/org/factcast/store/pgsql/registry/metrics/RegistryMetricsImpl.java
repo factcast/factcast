@@ -51,24 +51,26 @@ public class RegistryMetricsImpl implements RegistryMetrics {
     }
 
     @Override
-    public void timed(TimedOperation operation, Runnable fn) {
+    public void timed(@NonNull TimedOperation operation, @NonNull Runnable fn) {
         timer(operation, null).record(fn);
     }
 
     @Override
-    public void timed(TimedOperation operation, Tags tags, Runnable fn) {
+    public void timed(@NonNull TimedOperation operation, Tags tags, @NonNull Runnable fn) {
         timer(operation, tags).record(fn);
     }
 
     @Override
-    public <E extends Exception> void timed(TimedOperation operation, Class<E> exceptionClass,
-            RunnableWithException<E> fn) throws E {
+    public <E extends Exception> void timed(@NonNull TimedOperation operation,
+            @NonNull Class<E> exceptionClass,
+            @NonNull RunnableWithException<E> fn) throws E {
         timed(operation, exceptionClass, null, fn);
     }
 
     @Override
-    public <E extends Exception> void timed(TimedOperation operation, Class<E> exceptionClass,
-            Tags tags, RunnableWithException<E> fn) throws E {
+    public <E extends Exception> void timed(@NonNull TimedOperation operation,
+            @NonNull Class<E> exceptionClass,
+            Tags tags, @NonNull RunnableWithException<E> fn) throws E {
         timed(operation, exceptionClass, tags, () -> {
             fn.run();
 
@@ -77,18 +79,19 @@ public class RegistryMetricsImpl implements RegistryMetrics {
     }
 
     @Override
-    public <T> T timed(TimedOperation operation, Supplier<T> fn) {
+    public <T> T timed(@NonNull TimedOperation operation, @NonNull Supplier<T> fn) {
         return timer(operation, null).record(fn);
     }
 
     @Override
-    public <T> T timed(TimedOperation operation, Tags tags, Supplier<T> fn) {
+    public <T> T timed(@NonNull TimedOperation operation, Tags tags, @NonNull Supplier<T> fn) {
         return timer(operation, tags).record(fn);
     }
 
     @Override
-    public <R, E extends Exception> R timed(TimedOperation operation, Class<E> exceptionClass,
-            Tags tags, SupplierWithException<R, E> fn) throws E {
+    public <R, E extends Exception> R timed(@NonNull TimedOperation operation,
+            @NonNull Class<E> exceptionClass,
+            Tags tags, @NonNull SupplierWithException<R, E> fn) throws E {
         val timer = timer(operation, tags);
         val sw = Stopwatch.createStarted();
 
@@ -101,18 +104,19 @@ public class RegistryMetricsImpl implements RegistryMetrics {
     }
 
     @Override
-    public <R, E extends Exception> R timed(TimedOperation operation, Class<E> exceptionClass,
-            SupplierWithException<R, E> fn) throws E {
+    public <R, E extends Exception> R timed(@NonNull TimedOperation operation,
+            @NonNull Class<E> exceptionClass,
+            @NonNull SupplierWithException<R, E> fn) throws E {
         return timed(operation, exceptionClass, null, fn);
     }
 
     @Override
-    public void count(MetricEvent event, Tags tags) {
+    public void count(@NonNull MetricEvent event, Tags tags) {
         counter(event, tags).increment();
     }
 
     @Override
-    public void count(MetricEvent event) {
+    public void count(@NonNull MetricEvent event) {
         count(event, null);
     }
 }
