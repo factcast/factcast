@@ -37,6 +37,7 @@
     <module>factcast-examples</module>
     <module>factcast-integration-full/factcast-integration-full-tls</module>
     <module>factcast-schema-registry-cli</module>
+    <module>factcast-integration-full/factcast-integration-transformation</module>
   </modules>
   <url>https://github.com/uweschaefer/factcast/tree/master/</url>
   <licenses>

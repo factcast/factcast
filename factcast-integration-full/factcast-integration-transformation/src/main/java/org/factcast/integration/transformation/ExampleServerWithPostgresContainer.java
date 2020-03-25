@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.example.server;
+package org.factcast.integration.transformation;
 
-import org.postgresql.Driver;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,22 +36,13 @@ import lombok.extern.slf4j.Slf4j;
 public class ExampleServerWithPostgresContainer {
 
     public static void main(String[] args) {
-        // you will want to replace this with RDS, a local pgsql database or
-        // whatever your usecase is.
-        startPostgresContainer();
-
         SpringApplication.run(ExampleServerWithPostgresContainer.class, args);
     }
 
-    private static void startPostgresContainer() {
-        log.info("Trying to start postgres testcontainer");
-        PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:11.4");
-        postgres.start();
-        String url = postgres.getJdbcUrl();
-        System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
-        System.setProperty("spring.datasource.url", url);
-        System.setProperty("spring.datasource.username", postgres.getUsername());
-        System.setProperty("spring.datasource.password", postgres.getPassword());
+    @Bean
+    @Order(Ordered.LOWEST_PRECEDENCE)
+    public IntegrationTestContext integrationTestContext() {
+        return new IntegrationTestContext();
     }
 
 }
