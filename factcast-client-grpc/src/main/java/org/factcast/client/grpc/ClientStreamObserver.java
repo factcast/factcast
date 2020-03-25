@@ -17,6 +17,7 @@ package org.factcast.client.grpc;
 
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
@@ -57,7 +58,12 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
             subscription.notifyComplete();
             break;
         case Fact:
-            subscription.notifyElement(converter.fromProto(f.getFact()));
+            try {
+                subscription.notifyElement(converter.fromProto(f.getFact()));
+            } catch (TransformationException e) {
+                // cannot happen on client side...
+                onError(e);
+            }
             break;
 
         default:

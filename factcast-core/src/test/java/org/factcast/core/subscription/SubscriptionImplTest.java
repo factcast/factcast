@@ -129,7 +129,7 @@ public class SubscriptionImplTest {
     Fact testFact = new TestFact();
 
     @Test
-    void testOn() {
+    void testOn() throws TransformationException {
         SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
         verify(obs, never()).onNext(any());
         on.notifyElement(testFact);
@@ -153,7 +153,7 @@ public class SubscriptionImplTest {
     }
 
     @Test
-    void testOnErrorCloses() {
+    void testOnErrorCloses() throws TransformationException {
         SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
         on.notifyError(new Throwable("ignore me"));
         on.notifyElement(testFact);
@@ -165,7 +165,7 @@ public class SubscriptionImplTest {
     }
 
     @Test
-    void testOnCompleteCloses() {
+    void testOnCompleteCloses() throws TransformationException {
         SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
         on.notifyComplete();
         on.notifyElement(testFact);
@@ -177,7 +177,7 @@ public class SubscriptionImplTest {
     }
 
     @Test
-    void testOnCatchupDoesNotClose() {
+    void testOnCatchupDoesNotClose() throws TransformationException {
         SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
         on.notifyCatchup();
         on.notifyElement(testFact);

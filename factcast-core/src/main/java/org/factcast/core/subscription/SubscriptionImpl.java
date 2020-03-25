@@ -73,8 +73,10 @@ public class SubscriptionImpl implements Subscription {
     public Subscription awaitCatchup() throws SubscriptionCancelledException {
         try {
             catchup.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
             throw new SubscriptionCancelledException(e);
+        } catch (ExecutionException e) {
+            throw new SubscriptionCancelledException(e.getCause());
         }
         return this;
     }
@@ -84,8 +86,10 @@ public class SubscriptionImpl implements Subscription {
             TimeoutException {
         try {
             catchup.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
             throw new SubscriptionCancelledException(e);
+        } catch (ExecutionException e) {
+            throw new SubscriptionCancelledException(e.getCause());
         }
         return this;
     }
@@ -94,8 +98,10 @@ public class SubscriptionImpl implements Subscription {
     public Subscription awaitComplete() throws SubscriptionCancelledException {
         try {
             complete.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
             throw new SubscriptionCancelledException(e);
+        } catch (ExecutionException e) {
+            throw new SubscriptionCancelledException(e.getCause());
         }
         return this;
     }
@@ -105,8 +111,10 @@ public class SubscriptionImpl implements Subscription {
             TimeoutException {
         try {
             complete.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
             throw new SubscriptionCancelledException(e);
+        } catch (ExecutionException e) {
+            throw new SubscriptionCancelledException(e.getCause());
         }
         return this;
     }
@@ -137,13 +145,14 @@ public class SubscriptionImpl implements Subscription {
 
     public void notifyError(Throwable e) {
         if (!closed.get()) {
-            observer.onError(e);
             if (!catchup.isDone()) {
                 catchup.completeExceptionally(e);
             }
             if (!complete.isDone()) {
                 complete.completeExceptionally(e);
             }
+            observer.onError(e);
+
             tryClose();
         }
     }
@@ -156,13 +165,9 @@ public class SubscriptionImpl implements Subscription {
         }
     }
 
-    public void notifyElement(@NonNull Fact e) {
+    public void notifyElement(@NonNull Fact e) throws TransformationException {
         if (!closed.get()) {
-            try {
-                observer.onNext(transformers.transformIfNecessary(e));
-            } catch (TransformationException e1) {
-                observer.onError(e1);
-            }
+            observer.onNext(transformers.transformIfNecessary(e));
         }
     }
 
