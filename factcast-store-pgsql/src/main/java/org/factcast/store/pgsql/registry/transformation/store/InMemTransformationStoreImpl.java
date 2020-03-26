@@ -15,9 +15,9 @@
  */
 package org.factcast.store.pgsql.registry.transformation.store;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
@@ -37,44 +37,48 @@ import lombok.RequiredArgsConstructor;
 public class InMemTransformationStoreImpl extends AbstractTransformationStore {
     private final RegistryMetrics registryMetrics;
 
-    private final Map<String, String> id2hashMap = new ConcurrentHashMap<>();
+    private final Map<String, String> id2hashMap = new HashMap<>();
 
-    private final Map<TransformationKey, List<Transformation>> transformationCache = new ConcurrentHashMap<>();
+    private final Map<TransformationKey, List<Transformation>> transformationCache = new HashMap<>();
 
     @Override
     protected void doStore(@NonNull TransformationSource source, String transformation)
             throws TransformationConflictException {
-        String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
-        if (oldHash != null && !oldHash.contentEquals(source.hash())) {
-            registryMetrics.count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
-                    RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
+        synchronized (mutex) {
+            String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
+            if (oldHash != null && !oldHash.contentEquals(source.hash())) {
+                registryMetrics.count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
+                        RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
 
-            throw new TransformationConflictException("Key " + source
-                    + " does not match the stored hash " + oldHash);
+                throw new TransformationConflictException("Key " + source
+                        + " does not match the stored hash " + oldHash);
+            }
+
+            List<Transformation> transformations = get(source.toKey());
+
+            transformations.add(SingleTransformation.of(source, transformation));
         }
-
-        List<Transformation> transformations = get(source.toKey());
-
-        transformations.add(SingleTransformation.of(source, transformation));
     }
 
     @Override
     public boolean contains(@NonNull TransformationSource source)
             throws TransformationConflictException {
-        String hash = id2hashMap.get(source.id());
-        if (hash != null)
-            if (hash.equals(source.hash()))
-                return true;
-            else {
-                registryMetrics.count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
-                        RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
+        synchronized (mutex) {
+            String hash = id2hashMap.get(source.id());
+            if (hash != null)
+                if (hash.equals(source.hash()))
+                    return true;
+                else {
+                    registryMetrics.count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
+                            RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
 
-                throw new TransformationConflictException(
-                        "TransformationSource at " + source + " does not match the stored hash "
-                                + hash);
-            }
-        else
-            return false;
+                    throw new TransformationConflictException(
+                            "TransformationSource at " + source + " does not match the stored hash "
+                                    + hash);
+                }
+            else
+                return false;
+        }
     }
 
     private final Object mutex = new Object();
