@@ -51,7 +51,7 @@ The Registry takes little javascript snippets, that can convert for instance a v
 
 Factcast will build transformation chains if necessary (from 4-3, 3-2 and 2-1, in order to transform from version 4 to version 1). Every non-existent transformation is assumed compatible (so no transformation is necessary).
 
-When necessary, you also can add a 4-1 transformation to the registry to do the transformation in one step, if needed. Beware though, you will not benefit in terms of performance form this.
+When necessary, you also can add a 4-1 transformation to the registry to do the transformation in one step, if needed. Beware though, you will not benefit in terms of performance from this.
 
 If there are many possible paths to transform from an origin version to the target version, the shortest always wins. If there are two equally long paths, the one that uses the bigger shortcut sooner wins.
 
