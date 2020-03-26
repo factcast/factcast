@@ -64,13 +64,6 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
     int queueSize = 1000;
 
     /**
-     * The factor to apply, when fetching/queuing Ids rather than Facts
-     * (assuming, that needs just a fraction of Heap and is way faster to flush
-     * to the client)
-     */
-    int idOnlyFactor = 100;
-
-    /**
      * Defines the Strategy used for Paging in the Catchup Phase.
      */
     CatchupStrategy catchupStrategy = CatchupStrategy.getDefault();
@@ -121,24 +114,6 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
      * false)
      */
     boolean allowUnvalidatedPublish = false;
-
-    /**
-     * if validation is enabled, this defines the rate (in milliseconds) in
-     * which the local store is refreshed. (Defaults to 15000)
-     */
-    long schemaStoreRefreshRateInMilliseconds = 15000;
-
-    public int getPageSizeForIds() {
-        return pageSize * idOnlyFactor;
-    }
-
-    public int getQueueSizeForIds() {
-        return queueSize * idOnlyFactor;
-    }
-
-    public int getFetchSizeForIds() {
-        return getQueueSizeForIds() / queueFetchRatio;
-    }
 
     public int getFetchSize() {
         return getQueueSize() / queueFetchRatio;
