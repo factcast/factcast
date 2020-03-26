@@ -15,9 +15,9 @@
  */
 package org.factcast.store.pgsql.registry.transformation.store;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
@@ -37,9 +37,9 @@ import lombok.RequiredArgsConstructor;
 public class InMemTransformationStoreImpl extends AbstractTransformationStore {
     private final RegistryMetrics registryMetrics;
 
-    private final Map<String, String> id2hashMap = new HashMap<>();
+    private final Map<String, String> id2hashMap = new ConcurrentHashMap<>();
 
-    private final Map<TransformationKey, List<Transformation>> transformationCache = new HashMap<>();
+    private final Map<TransformationKey, List<Transformation>> transformationCache = new ConcurrentHashMap<>();
 
     @Override
     protected void doStore(@NonNull TransformationSource source, String transformation)

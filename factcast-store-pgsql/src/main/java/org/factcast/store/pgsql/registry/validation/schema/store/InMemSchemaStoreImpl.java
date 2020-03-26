@@ -15,9 +15,9 @@
  */
 package org.factcast.store.pgsql.registry.validation.schema.store;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
@@ -37,9 +37,9 @@ import lombok.RequiredArgsConstructor;
 public class InMemSchemaStoreImpl implements SchemaStore {
     private final RegistryMetrics registryMetrics;
 
-    private final Map<String, String> id2hashMap = new HashMap<>();
+    private final Map<String, String> id2hashMap = new ConcurrentHashMap<>();
 
-    private final Map<SchemaKey, String> schemaMap = new HashMap<>();
+    private final Map<SchemaKey, String> schemaMap = new ConcurrentHashMap<>();
 
     @Override
     public synchronized void register(@NonNull SchemaSource source, @NonNull String schema)
