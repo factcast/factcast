@@ -18,6 +18,7 @@ package org.factcast.store.pgsql.registry.transformation;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.cache.InMemTransformationCache;
 import org.factcast.store.pgsql.registry.transformation.cache.PgTransformationCache;
 import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
@@ -38,29 +39,32 @@ import lombok.NonNull;
 public class TransformationConfiguration {
     @Bean
     public TransformationStore transformationStore(@NonNull JdbcTemplate jdbcTemplate,
-            @NonNull PgConfigurationProperties props, @Autowired(
+            @NonNull PgConfigurationProperties props, @NonNull RegistryMetrics registryMetrics,
+            @Autowired(
                     required = false) SpringLiquibase unused) {
         if (props.isValidationEnabled() && props.isPersistentRegistry())
-            return new PgTransformationStoreImpl(jdbcTemplate);
+            return new PgTransformationStoreImpl(jdbcTemplate, registryMetrics);
 
         // otherwise
-        return new InMemTransformationStoreImpl();
+        return new InMemTransformationStoreImpl(registryMetrics);
     }
 
     @Bean
     public TransformationCache transformationCache(@NonNull JdbcTemplate jdbcTemplate,
-            @NonNull PgConfigurationProperties props, @Autowired(
+            @NonNull PgConfigurationProperties props, @NonNull RegistryMetrics registryMetrics,
+            @Autowired(
                     required = false) SpringLiquibase unused) {
         if (props.isValidationEnabled() && props.isPersistentTransformationCache())
-            return new PgTransformationCache(jdbcTemplate);
+            return new PgTransformationCache(jdbcTemplate, registryMetrics);
 
         // otherwise
         return new InMemTransformationCache(props.getInMemTransformationCacheCapacity());
     }
 
     @Bean
-    public TransformationChains transformationChains(SchemaRegistry r) {
-        return new TransformationChains(r);
+    public TransformationChains transformationChains(@NonNull SchemaRegistry r,
+            @NonNull RegistryMetrics registryMetrics) {
+        return new TransformationChains(r, registryMetrics);
     }
 
     @Bean
@@ -71,8 +75,8 @@ public class TransformationConfiguration {
 
     @Bean
     public FactTransformersFactory factTransformersFactory(TransformationChains chains,
-            Transformer trans, TransformationCache cache) {
-        return new FactTransformersFactoryImpl(chains, trans, cache);
+            Transformer trans, TransformationCache cache, RegistryMetrics registryMetrics) {
+        return new FactTransformersFactoryImpl(chains, trans, cache, registryMetrics);
     }
 
     @Bean

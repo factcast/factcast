@@ -23,25 +23,31 @@ import java.util.UUID;
 
 import org.apache.commons.collections15.map.LRUMap;
 import org.factcast.core.Fact;
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.joda.time.DateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class InMemTransformationCache implements TransformationCache {
+    private final RegistryMetrics registryMetrics;
 
     // very low, but ok for tests
     private static final int DEFAULT_CAPACITY = 1000;
 
     private Map<String, FactAndAccessTime> cache;
 
-    public InMemTransformationCache() {
-        this(DEFAULT_CAPACITY);
+    public InMemTransformationCache(RegistryMetrics registryMetrics) {
+        this(DEFAULT_CAPACITY, registryMetrics);
     }
 
-    public InMemTransformationCache(int capacity) {
+    public InMemTransformationCache(int capacity,RegistryMetrics registryMetrics) {
         cache = new LRUMap<String, FactAndAccessTime>(Math.max(capacity, DEFAULT_CAPACITY));
+        this.registryMetrics=registryMetrics;
     }
 
     @Override
@@ -61,6 +67,8 @@ public class InMemTransformationCache implements TransformationCache {
             cached = Optional.ofNullable(cache.get(key));
         }
         cached.ifPresent(faat -> faat.accessTime(System.currentTimeMillis()));
+        registryMetrics.count(result.isPresent() ? MetricEvent.TRANSFORMATION_CACHE_HIT
+                : MetricEvent.TRANSFORMATION_CACHE_MISS);  
         return cached.map(FactAndAccessTime::fact);
     }
 

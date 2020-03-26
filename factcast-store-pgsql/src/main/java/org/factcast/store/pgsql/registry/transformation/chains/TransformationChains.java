@@ -22,6 +22,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.factcast.store.pgsql.registry.SchemaRegistry;
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
@@ -36,6 +38,8 @@ import es.usc.citius.hipster.graph.GraphBuilder;
 import es.usc.citius.hipster.graph.GraphSearchProblem;
 import es.usc.citius.hipster.graph.HipsterDirectedGraph;
 import es.usc.citius.hipster.model.impl.WeightedNode;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import lombok.Value;
 
 public class TransformationChains implements TransformationStoreListener {
@@ -43,6 +47,8 @@ public class TransformationChains implements TransformationStoreListener {
     private static final double BASE_COST = 1_000_000d;
 
     private final SchemaRegistry r;
+
+    private final RegistryMetrics registryMetrics;
 
     private final Map<TransformationKey, Map<VersionPath, TransformationChain>> cache = new HashMap<>();
 
@@ -53,8 +59,9 @@ public class TransformationChains implements TransformationStoreListener {
         int toVersion;
     }
 
-    public TransformationChains(SchemaRegistry r) {
+    public TransformationChains(SchemaRegistry r, RegistryMetrics registryMetrics) {
         this.r = r;
+        this.registryMetrics = registryMetrics;
         r.register(this);
     }
 
@@ -97,8 +104,13 @@ public class TransformationChains implements TransformationStoreListener {
 
         GraphBuilder<Integer, Edge> builder = GraphBuilder.create();
         List<Transformation> all = r.get(key);
-        if (all.isEmpty())
+        if (all.isEmpty()) {
+            registryMetrics.count(MetricEvent.MISSING_TRANSFORMATION_INFO, Tags.of(
+                    Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", String
+                            .valueOf(from)), Tag.of("to", String.valueOf(to))));
+
             throw new MissingTransformationInformation("No Transformations for " + key);
+        }
 
         // populate graph
         for (Transformation t : all) {
@@ -122,6 +134,10 @@ public class TransformationChains implements TransformationStoreListener {
 
         if (path.isEmpty() || Iterables.getLast(path).toVersion() != to
                 || Iterables.getFirst(path, null).fromVersion() != from) {
+            registryMetrics.count(MetricEvent.MISSING_TRANSFORMATION_INFO, Tags.of(
+                    Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", String
+                            .valueOf(from)), Tag.of("to", String.valueOf(to))));
+
             throw new MissingTransformationInformation(
                     "Cannot reach version " + to + " from version " + from + " for " + key);
         }

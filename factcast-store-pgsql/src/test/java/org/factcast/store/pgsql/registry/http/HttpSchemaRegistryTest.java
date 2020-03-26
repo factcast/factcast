@@ -24,7 +24,10 @@ import java.net.URL;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
+import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.RegistryIndex;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.TimedOperation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
@@ -34,11 +37,17 @@ import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 import org.factcast.store.pgsql.registry.validation.schema.store.InMemSchemaStoreImpl;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.google.common.collect.Lists;
 
+@ExtendWith(MockitoExtension.class)
 public class HttpSchemaRegistryTest {
+    @Spy
+    RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 
     @Test
     public void testRoundtrip() throws InterruptedException, ExecutionException, IOException {
@@ -67,11 +76,12 @@ public class HttpSchemaRegistryTest {
         when(fileFetcher.fetchSchema(any())).thenReturn("{}");
         when(fileFetcher.fetchTransformation(any())).thenReturn("");
 
-        SchemaStore schemaStore = spy(new InMemSchemaStoreImpl());
-        TransformationStore transformationStore = spy(new InMemTransformationStoreImpl());
+        SchemaStore schemaStore = spy(new InMemSchemaStoreImpl(registryMetrics));
+        TransformationStore transformationStore = spy(new InMemTransformationStoreImpl(
+                registryMetrics));
 
         HttpSchemaRegistry uut = new HttpSchemaRegistry(schemaStore, transformationStore,
-                indexFetcher, fileFetcher);
+                indexFetcher, fileFetcher, registryMetrics);
         uut.fetchInitial();
 
         verify(schemaStore, times(2)).register(Mockito.any(), Mockito.any());
@@ -79,6 +89,7 @@ public class HttpSchemaRegistryTest {
 
         verify(fileFetcher, times(2)).fetchSchema(Mockito.any());
         verify(fileFetcher, times(2)).fetchTransformation(Mockito.any());
+        verify(registryMetrics).timed(eq(TimedOperation.REFRESH_REGISTRY), any(Runnable.class));
 
         assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 1))
                 .isPresent());
@@ -95,16 +106,23 @@ public class HttpSchemaRegistryTest {
     @Test
     void testNullContracts() throws Exception {
         assertThrows(NullPointerException.class, () -> {
-            new HttpSchemaRegistry(null, mock(SchemaStore.class), mock(TransformationStore.class));
+            new HttpSchemaRegistry(null, mock(SchemaStore.class), mock(TransformationStore.class),
+                    registryMetrics);
         });
 
         assertThrows(NullPointerException.class, () -> {
             new HttpSchemaRegistry(new URL("http://ibm.com"), null, mock(
-                    TransformationStore.class));
+                    TransformationStore.class), registryMetrics);
         });
 
         assertThrows(NullPointerException.class, () -> {
-            new HttpSchemaRegistry(new URL("http://ibm.com"), mock(SchemaStore.class), null);
+            new HttpSchemaRegistry(new URL("http://ibm.com"), mock(SchemaStore.class), null,
+                    registryMetrics);
+        });
+
+        assertThrows(NullPointerException.class, () -> {
+            new HttpSchemaRegistry(new URL("http://ibm.com"), mock(SchemaStore.class), mock(
+                    TransformationStore.class), null);
         });
     }
 }

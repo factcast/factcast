@@ -19,18 +19,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 
+import io.micrometer.core.instrument.Tags;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 /**
  * @author uwe
- *
  */
+@RequiredArgsConstructor
 public class InMemSchemaStoreImpl implements SchemaStore {
+    private final RegistryMetrics registryMetrics;
 
     private final Map<String, String> id2hashMap = new HashMap<>();
 
@@ -40,9 +45,13 @@ public class InMemSchemaStoreImpl implements SchemaStore {
     public synchronized void register(@NonNull SchemaSource source, @NonNull String schema)
             throws SchemaConflictException {
         String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
-        if (oldHash != null && !oldHash.contentEquals(source.hash()))
+        if (oldHash != null && !oldHash.contentEquals(source.hash())) {
+            registryMetrics.count(MetricEvent.SCHEMA_CONFLICT, Tags.of(
+                    RegistryMetrics.TAG_IDENTITY_KEY, source.id()));
+
             throw new SchemaConflictException("Key " + source + " does not match the stored hash "
                     + oldHash);
+        }
 
         schemaMap.put(source.toKey(), schema);
     }
@@ -54,9 +63,13 @@ public class InMemSchemaStoreImpl implements SchemaStore {
         if (hash != null)
             if (hash.equals(source.hash()))
                 return true;
-            else
+            else {
+                registryMetrics.count(MetricEvent.SCHEMA_CONFLICT, Tags.of(
+                        RegistryMetrics.TAG_IDENTITY_KEY, source.id()));
+
                 throw new SchemaConflictException(
                         "SchemaSource at " + source + " does not match the stored hash " + hash);
+            }
         else
             return false;
 

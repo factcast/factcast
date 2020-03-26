@@ -22,7 +22,10 @@ import static org.mockito.Mockito.*;
 import java.util.ArrayList;
 
 import org.factcast.core.util.FactCastJson;
+import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.SingleTransformation;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
@@ -31,10 +34,15 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
 
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+
 public class TransformationChainsTest {
     SchemaRegistry r = mock(SchemaRegistry.class);
 
-    TransformationChains uut = new TransformationChains(r);
+    RegistryMetrics registryMetrics = spy(new NOPRegistryMetrics());
+
+    TransformationChains uut = new TransformationChains(r, registryMetrics);
 
     TransformationKey key = TransformationKey.of("ns", "UserCreated");
 
@@ -63,7 +71,6 @@ public class TransformationChainsTest {
         JsonNode actual = new NashornTransformer().transform(chain, input);
         assertThat(actual.toString()).isEqualTo(
                 "{\"stage2\":true,\"stage3\":true,\"stage4\":true}");
-
     }
 
     @Test
@@ -80,6 +87,9 @@ public class TransformationChainsTest {
         assertThrows(MissingTransformationInformation.class, () -> {
             uut.get(key, 1, 7);
         });
+        verify(registryMetrics).count(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
+                Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", "1"), Tag
+                        .of("to", "7"))));
     }
 
     @Test
@@ -156,6 +166,9 @@ public class TransformationChainsTest {
         assertThrows(MissingTransformationInformation.class, () -> {
             uut.get(key, 2, 99);
         });
+        verify(registryMetrics).count(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
+                Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", "2"), Tag
+                        .of("to", "99"))));
 
     }
 
@@ -184,6 +197,9 @@ public class TransformationChainsTest {
         assertThrows(MissingTransformationInformation.class, () -> {
             uut.get(key, 2, 99);
         });
+        verify(registryMetrics).count(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
+                Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", "2"), Tag
+                        .of("to", "99"))));
 
     }
 

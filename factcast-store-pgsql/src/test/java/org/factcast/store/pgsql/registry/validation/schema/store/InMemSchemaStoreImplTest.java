@@ -16,11 +16,14 @@
 package org.factcast.store.pgsql.registry.validation.schema.store;
 
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class InMemSchemaStoreImplTest extends AbstractSchemaStoreTest {
 
     @Override
     protected SchemaStore createUUT() {
-        return new InMemSchemaStoreImpl();
+        return new InMemSchemaStoreImpl(registryMetrics);
     }
 }

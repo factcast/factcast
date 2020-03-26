@@ -16,19 +16,29 @@
 package org.factcast.store.pgsql.registry.http;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 import java.net.URL;
 
 import org.factcast.core.TestHelper;
+import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.RegistryFileFetchException;
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.SupplierWithException;
+import org.factcast.store.pgsql.registry.metrics.TimedOperation;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.micrometer.core.instrument.Tags;
+import lombok.val;
 import okhttp3.OkHttpClient;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,8 +49,8 @@ public class HttpRegistryFileFetcherTest {
     @Mock
     private OkHttpClient client;
 
-    @InjectMocks
-    private HttpRegistryFileFetcher uut;
+    @Spy
+    private RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 
     @Test
     public void testCreateSchemaUrl() throws Exception {
@@ -53,8 +63,12 @@ public class HttpRegistryFileFetcherTest {
 
     @Test
     public void testNullContracts() throws Exception {
-        TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null));
-        TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null, new OkHttpClient()));
+        val uut = new HttpRegistryFileFetcher(baseUrl, client, registryMetrics);
+        TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null, registryMetrics));
+        TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(baseUrl, null));
+        TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null, new OkHttpClient(),
+                registryMetrics));
+        TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null, null, registryMetrics));
         TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(new URL("http://ibm.com"), null));
         TestHelper.expectNPE(() -> uut.fetchSchema(null));
     }
@@ -63,10 +77,16 @@ public class HttpRegistryFileFetcherTest {
     public void testFetchThrowsOn404() throws Exception {
         try (TestHttpServer s = new TestHttpServer()) {
             URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
-            uut = new HttpRegistryFileFetcher(baseUrl);
+            val uut = new HttpRegistryFileFetcher(baseUrl, registryMetrics);
+
             assertThrows(RegistryFileFetchException.class, () -> {
                 uut.fetchSchema(new SchemaSource("unknown", "123", "ns", "type", 8));
             });
+
+            verify(registryMetrics).timed(eq(TimedOperation.FETCH_REGISTRY_FILE), eq(
+                    RegistryFileFetchException.class), any(SupplierWithException.class));
+            verify(registryMetrics).count(MetricEvent.REGISTRY_FILE_FETCH_FAILED, Tags.of(
+                    RegistryMetrics.TAG_STATUS_CODE_KEY, "404"));
         }
     }
 
@@ -82,7 +102,7 @@ public class HttpRegistryFileFetcherTest {
             });
 
             URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
-            uut = new HttpRegistryFileFetcher(baseUrl);
+            val uut = new HttpRegistryFileFetcher(baseUrl, new NOPRegistryMetrics());
             String fetch = uut.fetchSchema(new SchemaSource("someId", "123", "ns", "type", 8));
 
             assertEquals(json, fetch);
@@ -102,12 +122,15 @@ public class HttpRegistryFileFetcherTest {
             });
 
             URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
-            uut = new HttpRegistryFileFetcher(baseUrl);
+            val uut = new HttpRegistryFileFetcher(baseUrl, registryMetrics);
+
             String fetch = uut.fetchTransformation(new TransformationSource("someId", "ns", "type",
                     "hash", 8, 2));
 
             assertEquals(json, fetch);
 
+            verify(registryMetrics).timed(eq(TimedOperation.FETCH_REGISTRY_FILE), eq(
+                    RegistryFileFetchException.class), any(SupplierWithException.class));
         }
     }
 

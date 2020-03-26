@@ -17,18 +17,26 @@ package org.factcast.store.pgsql.registry.transformation.cache;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
 
 import java.util.Optional;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
+import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import org.mockito.Spy;
 
 public abstract class AbstractTransformationCacheTest {
     protected TransformationCache uut;
+
+    @Spy
+    protected RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 
     @BeforeEach
     public void init() {
@@ -40,7 +48,10 @@ public abstract class AbstractTransformationCacheTest {
     @Test
     void testEmptyFind() {
         Optional<Fact> fact = uut.find(UUID.randomUUID(), 1, "1");
+
         assertThat(fact.isPresent()).isFalse();
+
+        verify(registryMetrics).count(MetricEvent.TRANSFORMATION_CACHE_MISS);
     }
 
     @Test
@@ -59,6 +70,7 @@ public abstract class AbstractTransformationCacheTest {
 
         assertThat(found.isPresent()).isTrue();
         assertEquals(fact, found.get());
+        verify(registryMetrics).count(MetricEvent.TRANSFORMATION_CACHE_HIT);
     }
 
     @Test

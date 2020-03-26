@@ -13,15 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.transformation.cache;
+package org.factcast.store.pgsql.registry.metrics;
 
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import lombok.Getter;
+import lombok.NonNull;
 
-@ExtendWith(MockitoExtension.class)
-class InMemTransformationCacheTest extends AbstractTransformationCacheTest {
-    @Override
-    protected TransformationCache createUUT() {
-        return new InMemTransformationCache(registryMetrics);
+public enum TimedOperation {
+
+    REFRESH_REGISTRY("refresh_registry"),
+    COMPACT_TRANSFORMATION_CACHE("compact_transformation_cache"),
+    TRANSFORMATION("transform_event"),
+    FETCH_REGISTRY_FILE("fetch_registry_file");
+
+    @NonNull
+    @Getter
+    final String op;
+
+    TimedOperation(String op) {
+        this.op = op;
     }
+
 }

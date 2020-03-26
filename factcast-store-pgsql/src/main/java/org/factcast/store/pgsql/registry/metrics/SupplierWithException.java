@@ -13,15 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.transformation.cache;
+package org.factcast.store.pgsql.registry.metrics;
 
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-@ExtendWith(MockitoExtension.class)
-class InMemTransformationCacheTest extends AbstractTransformationCacheTest {
-    @Override
-    protected TransformationCache createUUT() {
-        return new InMemTransformationCache(registryMetrics);
-    }
+@FunctionalInterface
+public interface SupplierWithException<R, E extends Exception> {
+    R get() throws E;
 }

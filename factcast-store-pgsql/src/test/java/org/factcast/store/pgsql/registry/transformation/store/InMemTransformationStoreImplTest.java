@@ -16,11 +16,13 @@
 package org.factcast.store.pgsql.registry.transformation.store;
 
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class InMemTransformationStoreImplTest extends AbstractTransformationStoreTest {
-
     @Override
     protected TransformationStore createUUT() {
-        return new InMemTransformationStoreImpl();
+        return new InMemTransformationStoreImpl(registryMetrics);
     }
 }

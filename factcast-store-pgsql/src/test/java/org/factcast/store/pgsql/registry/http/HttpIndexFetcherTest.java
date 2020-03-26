@@ -16,6 +16,7 @@
 package org.factcast.store.pgsql.registry.http;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.net.URL;
 import java.util.Date;
@@ -24,13 +25,17 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
 import org.factcast.core.TestHelper;
+import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.junit.jupiter.api.Test;
 
+import io.micrometer.core.instrument.Tags;
+import lombok.val;
 import okhttp3.OkHttpClient;
 
 public class HttpIndexFetcherTest {
-
     private HttpIndexFetcher uut;
 
     @Test
@@ -60,7 +65,7 @@ public class HttpIndexFetcherTest {
             });
 
             URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
-            uut = new HttpIndexFetcher(baseUrl);
+            uut = new HttpIndexFetcher(baseUrl, new NOPRegistryMetrics());
             assertTrue(uut.fetchIndex().isPresent());
             assertFalse(uut.fetchIndex().isPresent());
             assertFalse(uut.fetchIndex().isPresent());
@@ -76,19 +81,26 @@ public class HttpIndexFetcherTest {
                 ctx.res.setStatus(404);
             });
 
+            val registryMetrics = mock(RegistryMetrics.class);
+
             URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
-            uut = new HttpIndexFetcher(baseUrl);
+            uut = new HttpIndexFetcher(baseUrl, registryMetrics);
+
             assertThrows(SchemaRegistryUnavailableException.class, () -> {
                 uut.fetchIndex();
             });
+
+            verify(registryMetrics).count(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE, Tags.of(
+                    RegistryMetrics.TAG_STATUS_CODE_KEY, "404"));
         }
     }
 
     @Test
     public void testNullContracts() throws Exception {
-        TestHelper.expectNPE(() -> new HttpIndexFetcher(null));
+        TestHelper.expectNPE(() -> new HttpIndexFetcher(null, mock(RegistryMetrics.class)));
         TestHelper.expectNPE(() -> new HttpIndexFetcher(new URL("http://ibm.com"), null));
-        TestHelper.expectNPE(() -> new HttpIndexFetcher(null, new OkHttpClient()));
+        TestHelper.expectNPE(() -> new HttpIndexFetcher(null, new OkHttpClient(), mock(
+                RegistryMetrics.class)));
     }
 
 }
