@@ -30,9 +30,7 @@ import org.joda.time.DateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
 public class InMemTransformationCache implements TransformationCache {
     private final RegistryMetrics registryMetrics;
 
@@ -45,9 +43,9 @@ public class InMemTransformationCache implements TransformationCache {
         this(DEFAULT_CAPACITY, registryMetrics);
     }
 
-    public InMemTransformationCache(int capacity,RegistryMetrics registryMetrics) {
+    public InMemTransformationCache(int capacity, RegistryMetrics registryMetrics) {
         cache = new LRUMap<String, FactAndAccessTime>(Math.max(capacity, DEFAULT_CAPACITY));
-        this.registryMetrics=registryMetrics;
+        this.registryMetrics = registryMetrics;
     }
 
     @Override
@@ -68,7 +66,7 @@ public class InMemTransformationCache implements TransformationCache {
         }
         cached.ifPresent(faat -> faat.accessTime(System.currentTimeMillis()));
         registryMetrics.count(result.isPresent() ? MetricEvent.TRANSFORMATION_CACHE_HIT
-                : MetricEvent.TRANSFORMATION_CACHE_MISS);  
+                : MetricEvent.TRANSFORMATION_CACHE_MISS);
         return cached.map(FactAndAccessTime::fact);
     }
 

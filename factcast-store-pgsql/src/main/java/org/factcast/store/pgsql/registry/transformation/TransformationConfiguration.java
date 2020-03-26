@@ -58,7 +58,8 @@ public class TransformationConfiguration {
             return new PgTransformationCache(jdbcTemplate, registryMetrics);
 
         // otherwise
-        return new InMemTransformationCache(props.getInMemTransformationCacheCapacity());
+        return new InMemTransformationCache(props.getInMemTransformationCacheCapacity(),
+                registryMetrics);
     }
 
     @Bean
