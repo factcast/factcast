@@ -25,6 +25,7 @@ import org.apache.commons.collections15.map.LRUMap;
 import org.factcast.core.Fact;
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.TimedOperation;
 import org.joda.time.DateTime;
 
 import lombok.AllArgsConstructor;
@@ -72,15 +73,18 @@ public class InMemTransformationCache implements TransformationCache {
 
     @Override
     public void compact(@NonNull DateTime thresholdDate) {
-        HashSet<Entry<String, FactAndAccessTime>> copyOfEntries;
-        synchronized (cache) {
-            copyOfEntries = new HashSet<>(cache.entrySet());
-        }
+        registryMetrics.timed(TimedOperation.COMPACT_TRANSFORMATION_CACHE, () -> {
 
-        copyOfEntries.forEach(e -> {
-            FactAndAccessTime faat = e.getValue();
-            if (thresholdDate.isAfter(faat.accessTime))
-                cache.remove(e.getKey());
+            HashSet<Entry<String, FactAndAccessTime>> copyOfEntries;
+            synchronized (cache) {
+                copyOfEntries = new HashSet<>(cache.entrySet());
+            }
+
+            copyOfEntries.forEach(e -> {
+                FactAndAccessTime faat = e.getValue();
+                if (thresholdDate.isAfter(faat.accessTime))
+                    cache.remove(e.getKey());
+            });
         });
     }
 

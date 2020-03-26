@@ -19,6 +19,8 @@ import org.factcast.store.pgsql.registry.transformation.cache.TransformationCach
 import org.joda.time.DateTime;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import com.google.common.base.Stopwatch;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
@@ -39,10 +41,18 @@ public class TransformationCacheCompactor {
     @SchedulerLock(name = "transformationCacheCompact", lockAtMostFor = 1000 * 60 * 60)
     public void compact() {
 
-        // TODO at timing metrics
+        // yes, i know the time is recorded via micrometer already, but
+        // as a user, i'd like to see the overall time in the logs as well.
 
-        log.debug("Triggering compact on " + cache.getClass().getSimpleName());
-        cache.compact(DateTime.now().minusDays(days));
+        log.debug("Triggering compact on {}", cache.getClass().getSimpleName());
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
+            cache.compact(DateTime.now().minusDays(days));
+        } finally {
+            stopwatch.stop();
+            log.debug("Compaction on {} took {}ms", cache.getClass().getSimpleName(),
+                    stopwatch.elapsed().toMillis());
+        }
     }
 
 }

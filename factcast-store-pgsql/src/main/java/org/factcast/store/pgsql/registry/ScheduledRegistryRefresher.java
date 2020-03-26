@@ -17,6 +17,8 @@ package org.factcast.store.pgsql.registry;
 
 import org.springframework.scheduling.annotation.Scheduled;
 
+import com.google.common.base.Stopwatch;
+
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.SchedulerLock;
@@ -32,10 +34,17 @@ public class ScheduledRegistryRefresher {
     @SchedulerLock(name = "registryRefresh", lockAtMostFor = 1000 * 60 * 3)
     public void refresh() {
 
-        // TODO at timing metrics
+        // yes, i know the time is recorded via micrometer already, but
+        // as a user, i'd like to see the overall time in the logs as well.
 
         log.debug("Triggering refresh on " + registry.getClass().getSimpleName());
-        registry.refresh();
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
+            registry.refresh();
+        } finally {
+            stopwatch.stop();
+            log.debug("Refresh on {} took {}ms", registry.getClass().getSimpleName(),
+                    stopwatch.elapsed().toMillis());
+        }
     }
-
 }
