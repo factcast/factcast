@@ -32,4 +32,8 @@ public class ClasspathSchemaRegistry extends AbstractSchemaRegistry {
                 transformationStore, registryMetrics);
     }
 
+    @Override
+    public void refresh() {
+        // does not need to be refreshed.
+    }
 }

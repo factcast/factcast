@@ -41,43 +41,53 @@ public class InMemSchemaStoreImpl implements SchemaStore {
 
     private final Map<SchemaKey, String> schemaMap = new HashMap<>();
 
-    @Override
-    public synchronized void register(@NonNull SchemaSource source, @NonNull String schema)
-            throws SchemaConflictException {
-        String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
-        if (oldHash != null && !oldHash.contentEquals(source.hash())) {
-            registryMetrics.count(MetricEvent.SCHEMA_CONFLICT, Tags.of(
-                    RegistryMetrics.TAG_IDENTITY_KEY, source.id()));
-
-            throw new SchemaConflictException("Key " + source + " does not match the stored hash "
-                    + oldHash);
-        }
-
-        schemaMap.put(source.toKey(), schema);
-    }
+    private Object mutex = new Object();
 
     @Override
-    public synchronized boolean contains(@NonNull SchemaSource source)
+    public void register(@NonNull SchemaSource source, @NonNull String schema)
             throws SchemaConflictException {
-        String hash = id2hashMap.get(source.id());
-        if (hash != null)
-            if (hash.equals(source.hash()))
-                return true;
-            else {
+        synchronized (mutex) {
+            String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
+            if (oldHash != null && !oldHash.contentEquals(source.hash())) {
                 registryMetrics.count(MetricEvent.SCHEMA_CONFLICT, Tags.of(
                         RegistryMetrics.TAG_IDENTITY_KEY, source.id()));
 
-                throw new SchemaConflictException(
-                        "SchemaSource at " + source + " does not match the stored hash " + hash);
+                throw new SchemaConflictException("Key " + source
+                        + " does not match the stored hash "
+                        + oldHash);
             }
-        else
-            return false;
+
+            schemaMap.put(source.toKey(), schema);
+        }
+    }
+
+    @Override
+    public boolean contains(@NonNull SchemaSource source)
+            throws SchemaConflictException {
+        synchronized (mutex) {
+            String hash = id2hashMap.get(source.id());
+            if (hash != null)
+                if (hash.equals(source.hash()))
+                    return true;
+                else {
+                    registryMetrics.count(MetricEvent.SCHEMA_CONFLICT, Tags.of(
+                            RegistryMetrics.TAG_IDENTITY_KEY, source.id()));
+
+                    throw new SchemaConflictException(
+                            "SchemaSource at " + source + " does not match the stored hash "
+                                    + hash);
+                }
+            else
+                return false;
+        }
 
     }
 
     @Override
-    public synchronized Optional<String> get(@NonNull SchemaKey key) {
-        return Optional.ofNullable(schemaMap.get(key));
+    public Optional<String> get(@NonNull SchemaKey key) {
+        synchronized (mutex) {
+            return Optional.ofNullable(schemaMap.get(key));
+        }
     }
 
 }

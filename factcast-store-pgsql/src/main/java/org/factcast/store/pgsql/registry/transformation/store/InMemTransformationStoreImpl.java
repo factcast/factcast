@@ -44,37 +44,41 @@ public class InMemTransformationStoreImpl extends AbstractTransformationStore {
     @Override
     protected void doStore(@NonNull TransformationSource source, String transformation)
             throws TransformationConflictException {
-        String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
-        if (oldHash != null && !oldHash.contentEquals(source.hash())) {
-            registryMetrics.count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
-                    RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
+        synchronized (mutex) {
+            String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
+            if (oldHash != null && !oldHash.contentEquals(source.hash())) {
+                registryMetrics.count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
+                        RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
 
-            throw new TransformationConflictException("Key " + source
-                    + " does not match the stored hash " + oldHash);
+                throw new TransformationConflictException("Key " + source
+                        + " does not match the stored hash " + oldHash);
+            }
+
+            List<Transformation> transformations = get(source.toKey());
+
+            transformations.add(SingleTransformation.of(source, transformation));
         }
-
-        List<Transformation> transformations = get(source.toKey());
-
-        transformations.add(SingleTransformation.of(source, transformation));
     }
 
     @Override
     public boolean contains(@NonNull TransformationSource source)
             throws TransformationConflictException {
-        String hash = id2hashMap.get(source.id());
-        if (hash != null)
-            if (hash.equals(source.hash()))
-                return true;
-            else {
-                registryMetrics.count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
-                        RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
+        synchronized (mutex) {
+            String hash = id2hashMap.get(source.id());
+            if (hash != null)
+                if (hash.equals(source.hash()))
+                    return true;
+                else {
+                    registryMetrics.count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
+                            RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
 
-                throw new TransformationConflictException(
-                        "TransformationSource at " + source + " does not match the stored hash "
-                                + hash);
-            }
-        else
-            return false;
+                    throw new TransformationConflictException(
+                            "TransformationSource at " + source + " does not match the stored hash "
+                                    + hash);
+                }
+            else
+                return false;
+        }
     }
 
     private final Object mutex = new Object();

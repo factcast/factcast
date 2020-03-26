@@ -58,7 +58,8 @@ public class TransformationConfiguration {
             return new PgTransformationCache(jdbcTemplate, registryMetrics);
 
         // otherwise
-        return new InMemTransformationCache(registryMetrics);
+        return new InMemTransformationCache(props.getInMemTransformationCacheCapacity(),
+                registryMetrics);
     }
 
     @Bean
@@ -77,5 +78,12 @@ public class TransformationConfiguration {
     public FactTransformersFactory factTransformersFactory(TransformationChains chains,
             Transformer trans, TransformationCache cache, RegistryMetrics registryMetrics) {
         return new FactTransformersFactoryImpl(chains, trans, cache, registryMetrics);
+    }
+
+    @Bean
+    public TransformationCacheCompactor TransformationCachePurger(TransformationCache cache,
+            PgConfigurationProperties props) {
+        return new TransformationCacheCompactor(cache, props
+                .getDeleteTransformationsStaleForDays());
     }
 }

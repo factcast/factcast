@@ -36,6 +36,7 @@ import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 import org.factcast.store.pgsql.registry.validation.schema.store.InMemSchemaStoreImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -49,24 +50,33 @@ public class HttpSchemaRegistryTest {
     @Spy
     RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 
-    @Test
-    public void testRoundtrip() throws InterruptedException, ExecutionException, IOException {
-        HttpIndexFetcher indexFetcher = mock(HttpIndexFetcher.class);
-        HttpRegistryFileFetcher fileFetcher = mock(HttpRegistryFileFetcher.class);
+    HttpIndexFetcher indexFetcher = mock(HttpIndexFetcher.class);
 
-        RegistryIndex index = new RegistryIndex();
+    HttpRegistryFileFetcher fileFetcher = mock(HttpRegistryFileFetcher.class);
 
-        SchemaSource source1 = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
-        SchemaSource source2 = new SchemaSource("http://foo/2", "123", "ns", "type", 2);
+    RegistryIndex index = new RegistryIndex();
 
-        TransformationSource transformationSource1 = new TransformationSource("http://foo/1", "ns",
-                "type", "hash", 1, 2);
-        TransformationSource transformationSource2 = new TransformationSource(
-                "synthetic/http://foo/2", "ns",
-                "type", null, 2, 1);
-        TransformationSource transformationSource3 = new TransformationSource("http://foo/3", "ns",
-                "type2", "hash", 1, 2);
+    SchemaSource source1 = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
 
+    SchemaSource source2 = new SchemaSource("http://foo/2", "123", "ns", "type", 2);
+
+    TransformationSource transformationSource1 = new TransformationSource("http://foo/1", "ns",
+            "type", "hash", 1, 2);
+
+    TransformationSource transformationSource2 = new TransformationSource(
+            "synthetic/http://foo/2", "ns",
+            "type", null, 2, 1);
+
+    TransformationSource transformationSource3 = new TransformationSource("http://foo/3", "ns",
+            "type2", "hash", 1, 2);
+
+    SchemaStore schemaStore = spy(new InMemSchemaStoreImpl(registryMetrics));
+
+    TransformationStore transformationStore = spy(new InMemTransformationStoreImpl(
+            registryMetrics));
+
+    @BeforeEach
+    public void setup() throws IOException {
         index.schemes(Lists.newArrayList(source1, source2));
         index.transformations(Lists.newArrayList(transformationSource1, transformationSource2,
                 transformationSource3));
@@ -76,10 +86,10 @@ public class HttpSchemaRegistryTest {
         when(fileFetcher.fetchSchema(any())).thenReturn("{}");
         when(fileFetcher.fetchTransformation(any())).thenReturn("");
 
-        SchemaStore schemaStore = spy(new InMemSchemaStoreImpl(registryMetrics));
-        TransformationStore transformationStore = spy(new InMemTransformationStoreImpl(
-                registryMetrics));
+    }
 
+    @Test
+    public void testInitial() throws InterruptedException, ExecutionException, IOException {
         HttpSchemaRegistry uut = new HttpSchemaRegistry(schemaStore, transformationStore,
                 indexFetcher, fileFetcher, registryMetrics);
         uut.fetchInitial();
@@ -89,7 +99,6 @@ public class HttpSchemaRegistryTest {
 
         verify(fileFetcher, times(2)).fetchSchema(Mockito.any());
         verify(fileFetcher, times(2)).fetchTransformation(Mockito.any());
-        verify(registryMetrics).timed(eq(TimedOperation.REFRESH_REGISTRY), any(Runnable.class));
 
         assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 1))
                 .isPresent());
@@ -101,6 +110,31 @@ public class HttpSchemaRegistryTest {
         assertEquals(2, transformationStore.get(TransformationKey.of("ns", "type")).size());
         assertEquals(1, transformationStore.get(TransformationKey.of("ns", "type2")).size());
 
+    }
+
+    @Test
+    public void testRefresh() throws InterruptedException, ExecutionException, IOException {
+        HttpSchemaRegistry uut = new HttpSchemaRegistry(schemaStore, transformationStore,
+                indexFetcher, fileFetcher, registryMetrics);
+        uut.refresh();
+
+        verify(schemaStore, times(2)).register(Mockito.any(), Mockito.any());
+        verify(transformationStore, times(3)).store(Mockito.any(), Mockito.any());
+
+        verify(fileFetcher, times(2)).fetchSchema(Mockito.any());
+        verify(fileFetcher, times(2)).fetchTransformation(Mockito.any());
+
+        assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 1))
+                .isPresent());
+        assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 2))
+                .isPresent());
+        assertFalse(schemaStore.get(SchemaKey.of("ns", "type", 3))
+                .isPresent());
+
+        assertEquals(2, transformationStore.get(TransformationKey.of("ns", "type")).size());
+        assertEquals(1, transformationStore.get(TransformationKey.of("ns", "type2")).size());
+
+        verify(registryMetrics).timed(eq(TimedOperation.REFRESH_REGISTRY), any(Runnable.class));
     }
 
     @Test

@@ -98,7 +98,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
 
             Stopwatch sw = Stopwatch.createStarted();
             log.info("Registry update started");
-            refresh();
+            indexFetcher.fetchIndex().ifPresent(this::process);
             log.info("Registry update finished in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
 
         }
@@ -110,11 +110,9 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
 
             registryMetrics.timed(TimedOperation.REFRESH_REGISTRY, () -> {
                 Optional<RegistryIndex> fetchIndex = indexFetcher.fetchIndex();
-
                 fetchIndex.ifPresent(this::process);
             });
 
-            // otherwise just return
         }
     }
 
