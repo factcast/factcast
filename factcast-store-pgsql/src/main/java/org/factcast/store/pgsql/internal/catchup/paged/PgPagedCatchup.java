@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
@@ -29,6 +30,7 @@ import org.factcast.store.pgsql.internal.catchup.PgCatchUpFetchPage;
 import org.factcast.store.pgsql.internal.catchup.PgCatchUpPrepare;
 import org.factcast.store.pgsql.internal.catchup.PgCatchup;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
+import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import lombok.NonNull;
@@ -88,6 +90,10 @@ public class PgPagedCatchup implements PgCatchup {
                             try {
                                 subscription.notifyElement(f);
                                 log.trace("{} notifyElement called with id={}", request, factId);
+                            } catch (MissingTransformationInformation | TransformationException e) {
+                                log.warn("{} transformation error: {}", request, e.getMessage());
+                                subscription.notifyError(e);
+                                throw e;
                             } catch (Throwable e) {
                                 // debug level, because it happens regularly
                                 // on

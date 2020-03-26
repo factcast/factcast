@@ -26,8 +26,10 @@ import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.core.subscription.SubscriptionCancelledException;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,7 +79,7 @@ public class TransformationTest {
                 f -> {
                     if (ret.get() == null)
                         ret.set(f);
-                }).awaitCatchup(5000);) {
+                }).awaitCatchup(10000);) {
         }
         return ret.get();
     }
@@ -183,6 +185,22 @@ public class TransformationTest {
         assertEquals(3, found.version());
         assertEquals("Peter Peterson", getString(found, "displayName"));
         assertEquals(id, f.aggIds().iterator().next());
+    }
+
+    @Test
+    public void publishV1AndFetchBackAsUnknownVersionMustFail() throws Exception, TimeoutException {
+
+        UUID id = UUID.randomUUID();
+        Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
+        fc.publish(f);
+
+        try {
+            Fact found = findFirst(id, 999);
+            fail("should have thrown");
+        } catch (SubscriptionCancelledException e) {
+            if (!(e.getCause() instanceof MissingTransformationInformation))
+                fail("unexpected Exception", e);
+        }
     }
 
     @Test
