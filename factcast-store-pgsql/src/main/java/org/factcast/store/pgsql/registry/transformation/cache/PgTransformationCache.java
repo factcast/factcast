@@ -20,6 +20,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.TimedOperation;
 import org.joda.time.DateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -29,6 +32,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PgTransformationCache implements TransformationCache {
     private final JdbcTemplate jdbcTemplate;
+
+    private final RegistryMetrics registryMetrics;
 
     @Override
     public void put(@NonNull Fact fact, @NonNull String transformationChainId) {
@@ -55,18 +60,26 @@ public class PgTransformationCache implements TransformationCache {
                         }));
 
         if (facts.isEmpty()) {
+            registryMetrics.count(MetricEvent.TRANSFORMATION_CACHE_MISS);
+
             return Optional.empty();
         }
 
         jdbcTemplate.update("UPDATE transformationcache SET last_access=now() WHERE cache_key = ?",
                 cacheKey);
 
+        registryMetrics.count(MetricEvent.TRANSFORMATION_CACHE_HIT);
+
         return Optional.of(facts.get(0));
     }
 
     @Override
     public void compact(@NonNull DateTime thresholdDate) {
-        jdbcTemplate.update("DELETE FROM transformationcache WHERE last_access < ?", thresholdDate
-                .toDate());
+        registryMetrics.timed(TimedOperation.COMPACT_TRANSFORMATION_CACHE, () -> {
+            jdbcTemplate.update("DELETE FROM transformationcache WHERE last_access < ?",
+                    thresholdDate
+                            .toDate());
+        });
+
     }
 }

@@ -17,9 +17,15 @@ package org.factcast.store.pgsql.registry.validation.schema.store;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 
 import java.util.Optional;
 
+import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
@@ -27,8 +33,14 @@ import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import org.mockito.Spy;
+
+import io.micrometer.core.instrument.Tags;
 
 public abstract class AbstractSchemaStoreTest {
+
+    @Spy
+    protected RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 
     private SchemaStore uut;
 
@@ -85,6 +97,8 @@ public abstract class AbstractSchemaStoreTest {
             conflicting.hash("1234");
             uut.contains(conflicting);
         });
+
+        verify(registryMetrics).count(eq(MetricEvent.SCHEMA_CONFLICT), any(Tags.class));
     }
 
     @Test

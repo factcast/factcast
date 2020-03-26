@@ -26,6 +26,10 @@ import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.internal.RequestedVersions;
+import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.SupplierWithException;
+import org.factcast.store.pgsql.registry.metrics.TimedOperation;
 import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChain;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
@@ -33,6 +37,7 @@ import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -52,16 +57,20 @@ public class FactTransformersImplTest {
     @Mock
     TransformationChain chain;
 
+    @Spy
+    RegistryMetrics registryMetrics = new NOPRegistryMetrics();
+
     @Test
     public void testTransformNotNecessaryEmpty() throws Exception {
 
         RequestedVersions requestedVersions = new RequestedVersions();
         Fact probe = new TestFact().version(33);
         FactTransformersImpl uut = new FactTransformersImpl(requestedVersions, chains, trans,
-                cache);
+                cache, registryMetrics);
 
         assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
 
+        verifyNoInteractions(registryMetrics);
     }
 
     @Test
@@ -74,9 +83,11 @@ public class FactTransformersImplTest {
         requestedVersions.add(ns, type, 0);
 
         FactTransformersImpl uut = new FactTransformersImpl(requestedVersions, chains, trans,
-                cache);
+                cache, registryMetrics);
 
         assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
+
+        verifyNoInteractions(registryMetrics);
 
     }
 
@@ -90,9 +101,11 @@ public class FactTransformersImplTest {
         requestedVersions.add(ns, type, 33);
 
         FactTransformersImpl uut = new FactTransformersImpl(requestedVersions, chains, trans,
-                cache);
+                cache, registryMetrics);
 
         assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
+
+        verifyNoInteractions(registryMetrics);
 
     }
 
@@ -114,12 +127,15 @@ public class FactTransformersImplTest {
                 transformedJsonNode);
 
         FactTransformersImpl uut = new FactTransformersImpl(requestedVersions, chains, trans,
-                cache);
+                cache, registryMetrics);
 
         Fact transformed = uut.transformIfNecessary(probe);
         assertThat(transformed.jsonPayload()).isEqualTo(transformedJsonNode.toString());
 
         verify(cache).find(eq(probe.id()), eq(33), eq(chainId));
+
+        verify(registryMetrics).timed(eq(TimedOperation.TRANSFORMATION), any(), any(
+                SupplierWithException.class));
 
     }
 

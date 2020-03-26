@@ -21,6 +21,8 @@ import java.net.URL;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.classpath.ClasspathSchemaRegistry;
 import org.factcast.store.pgsql.registry.http.HttpSchemaRegistry;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetricsImpl;
 import org.factcast.store.pgsql.registry.transformation.TransformationConfiguration;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
@@ -30,6 +32,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,10 +41,15 @@ import lombok.extern.slf4j.Slf4j;
 @EnableScheduling
 @Import({ FactValidatorConfiguration.class, TransformationConfiguration.class })
 public class SchemaRegistryConfiguration {
+    @Bean
+    public RegistryMetrics registryMetrics(MeterRegistry meterRegistry) {
+        return new RegistryMetricsImpl(meterRegistry);
+    }
 
     @Bean
     public SchemaRegistry schemaRegistry(PgConfigurationProperties p,
-            @NonNull SchemaStore schemaStore, @NonNull TransformationStore transformationStore) {
+            @NonNull SchemaStore schemaStore, @NonNull TransformationStore transformationStore,
+            @NonNull RegistryMetrics registryMetrics) {
 
         try {
 
@@ -55,7 +63,7 @@ public class SchemaRegistryConfiguration {
                 if ("http".equals(protocol) || "https".equals(protocol)) {
                     HttpSchemaRegistry httpSchemaRegistry;
                     httpSchemaRegistry = new HttpSchemaRegistry(new URL(fullUrl + "/"),
-                            schemaStore, transformationStore);
+                            schemaStore, transformationStore, registryMetrics);
                     httpSchemaRegistry.fetchInitial();
                     return httpSchemaRegistry;
                 }
@@ -63,7 +71,7 @@ public class SchemaRegistryConfiguration {
                 if ("classpath".equals(protocol)) {
                     ClasspathSchemaRegistry registry = new ClasspathSchemaRegistry(fullUrl
                             .substring("classpath:".length()),
-                            schemaStore, transformationStore);
+                            schemaStore, transformationStore, registryMetrics);
                     registry.fetchInitial();
                     return registry;
                 }

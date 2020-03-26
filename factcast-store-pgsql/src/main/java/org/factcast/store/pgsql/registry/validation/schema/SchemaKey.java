@@ -21,7 +21,6 @@ import lombok.NonNull;
 import lombok.Value;
 
 @Value(staticConstructor = "of")
-
 public class SchemaKey {
     @NonNull
     String ns;

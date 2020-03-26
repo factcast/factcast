@@ -21,11 +21,16 @@ import java.util.UUID;
 
 import org.apache.commons.collections15.map.LRUMap;
 import org.factcast.core.Fact;
+import org.factcast.store.pgsql.registry.metrics.MetricEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.joda.time.DateTime;
 
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class InMemTransformationCache implements TransformationCache {
+    private final RegistryMetrics registryMetrics;
 
     private static final int CAPACITY = 1_000_000;
 
@@ -42,7 +47,13 @@ public class InMemTransformationCache implements TransformationCache {
     public Optional<Fact> find(@NonNull UUID eventId, int version,
             @NonNull String transformationChainId) {
         String key = CacheKey.of(eventId, version, transformationChainId);
-        return Optional.ofNullable(cache.get(key));
+
+        Optional<Fact> result = Optional.ofNullable(cache.get(key));
+
+        registryMetrics.count(result.isPresent() ? MetricEvent.TRANSFORMATION_CACHE_HIT
+                : MetricEvent.TRANSFORMATION_CACHE_MISS);
+
+        return result;
     }
 
     @Override
