@@ -47,9 +47,7 @@ public class ClasspathIndexFetcher implements IndexFetcher {
                             RegistryIndex.class));
                 } else {
                     throw new SchemaRegistryUnavailableException(new FileNotFoundException(
-                            "Resource "
-                                    + index
-                                    + " does not exist."));
+                            "Resource " + index + " does not exist."));
                 }
             } catch (IOException e) {
                 throw new SchemaRegistryUnavailableException(e);

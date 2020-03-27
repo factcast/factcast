@@ -18,16 +18,12 @@ package org.factcast.store.pgsql.registry.classpath;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.List;
 
 import org.factcast.store.pgsql.registry.RegistryFileFetcher;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.springframework.core.io.ClassPathResource;
-
-import com.google.common.io.Files;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -51,9 +47,10 @@ public class ClasspathRegistryFileFetcher implements RegistryFileFetcher {
             if (file.exists()) {
                 return readFile(file);
             } else {
-                throw new SchemaRegistryUnavailableException(new FileNotFoundException("Resource "
-                        + path
-                        + " does not exist."));
+                throw new SchemaRegistryUnavailableException(
+                        new FileNotFoundException("Resource "
+                                + path
+                                + " does not exist."));
             }
         } catch (IOException e) {
             throw new SchemaRegistryUnavailableException(e);
@@ -62,9 +59,14 @@ public class ClasspathRegistryFileFetcher implements RegistryFileFetcher {
 
     static String readFile(File file)
             throws IOException {
-        // ok, this is dirty
-        List<String> readLines = Files.readLines(file, Charset.defaultCharset());
-        return String.join("\n", readLines);
+        StringBuilder sb = new StringBuilder();
+        java.nio.file.Files.lines(file.toPath()).forEachOrdered(l -> {
+            if (sb.length() > 0) {
+                sb.append("\n");
+            }
+            sb.append(l);
+        });
+        return sb.toString();
     }
 
     @Override

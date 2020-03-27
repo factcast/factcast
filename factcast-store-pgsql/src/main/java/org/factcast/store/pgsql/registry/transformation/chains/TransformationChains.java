@@ -46,7 +46,7 @@ public class TransformationChains implements TransformationStoreListener {
 
     private static final double BASE_COST = 1_000_000d;
 
-    private final SchemaRegistry r;
+    private final SchemaRegistry registry;
 
     private final RegistryMetrics registryMetrics;
 
@@ -60,7 +60,7 @@ public class TransformationChains implements TransformationStoreListener {
     }
 
     public TransformationChains(SchemaRegistry r, RegistryMetrics registryMetrics) {
-        this.r = r;
+        this.registry = r;
         this.registryMetrics = registryMetrics;
         r.register(this);
     }
@@ -103,7 +103,7 @@ public class TransformationChains implements TransformationStoreListener {
             throws MissingTransformationInformation {
 
         GraphBuilder<Integer, Edge> builder = GraphBuilder.create();
-        List<Transformation> all = r.get(key);
+        List<Transformation> all = registry.get(key);
         if (all.isEmpty()) {
             registryMetrics.count(MetricEvent.MISSING_TRANSFORMATION_INFO, Tags.of(
                     Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", String
