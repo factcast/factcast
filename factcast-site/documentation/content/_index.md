@@ -43,10 +43,29 @@ Source Code is available as [github](https://github.com/factcast/factcast) repos
 <a href="https://dependabot.com" rel="nofollow"><img class="inline" src="https://camo.githubusercontent.com/9067c86d33741a2fa11586e87089c65cdda10ec3/68747470733a2f2f6170692e646570656e6461626f742e636f6d2f6261646765732f7374617475733f686f73743d676974687562267265706f3d66616374636173742f6661637463617374" alt="Dependabot Status" data-canonical-src="https://api.dependabot.com/badges/status?host=github&amp;repo=factcast/factcast" style="max-width:100%;"></a>
 </p>
 
+## Noteworthy Releases 
 
-## Latest Noteworthy Releases
+### Upcoming 0.2.0
+* <a href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.2.0+">
+    0.2.0 (milestone)
+</a>
 
-#### 2019-07-20 0.1.2 (release)
+##### Features 
+
+  * Security improvements, added Roles see [Boot gRPC BasicAuth](/setup/examples/grpc-config-basicauth/)
+  * Schema Registry tool [Schema Registry CLI](/usage/java/fc-schema-cli/)
+  * Validation of Fact payloads against JSON Schema [Schema validation and Registry](/usage/java/schema-registry/)
+  * Transformation between Versions (Up-/Downcasting) of Fact payloads [Transformation and Registry](/usage/java/transformation/)
+
+##### minor 
+
+  * Factcast-core does not include shaded jackson anymore
+  * dropped Spring Boot1 support
+  * dropped InMem impl of FactCast
+
+## Past Releases
+
+#### 2019-07-20 0.2.0 (upcoming)
   * housekeeping
 
 #### 2019-06-24 0.1.0 (release)
@@ -84,10 +103,6 @@ Source Code is available as [github](https://github.com/factcast/factcast) repos
   * There is a BOM within factcast at org.factcast:factcast-bom:0.0.12 you can use to conveniently pin versions - remember that factcast-server-rest-jersey might not be available for every milestone and is not part of the BOM
 
 
-### Upcoming 
-* <a href="https://github.com/factcast/factcast/projects/4">
-    0.2.0 (milestone)
-</a>
 
 <div align="right">This project is sponsored by
 <a href="https://www.prisma-capacity.eu/careers#job-offers"><img

@@ -12,7 +12,7 @@ identifier = "migration"
 weight = 1000
 +++
 
-## Upgrading to 0.2.0
+## Upgrading to 0.2.0 (quite a lot)
 
 #### basic-auth setup has changed
 
@@ -24,6 +24,16 @@ see [basicauth usage](/setup/examples/grpc-config-basicauth)
 
 By default, when executing without security enabled, you need to supply a property
 'factcast.security.enabled=false' via commandline or propertyfile to get away with just a warning. If you don't, factcast will exit with errorcode 1.
+
+#### fetching facts by ID has been removed
+
+Even though it is a breaking change, this feature was removed from the API. First of all it interfered with transformation (so it would have needed to be extended), second it added unnecessary complexity to the subscription handling for no good reason.
+The idea of that feature was to enable "local" caching in a HTTP Scenario, that we currently do not support any longer.
+Also, the feature has never proven to deliver in terms of local caching, as nobody ever used it (or at least did not provide any feedback).
+
+This also means, that subscribe for Ids is gone.
+
+If you have severe problems with that change, please provide feedback, so that we can learn about the usecase and maybe provide an alternative.
 
 ## Upgrading to 0.1.0
 

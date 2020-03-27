@@ -158,13 +158,6 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    void testFetchById() {
-        UUID id = UUID.randomUUID();
-        uut.fetchById(conv.toProto(id), mock(ServerCallStreamObserver.class));
-        verify(backend).fetchById(eq(id));
-    }
-
-    @Test
     void testSubscribeFacts() {
         SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
         when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
@@ -251,16 +244,6 @@ public class FactStoreGrpcServiceTest {
 
         uut.enumerateTypes(conv.toProto("ns"), so);
         verify(so).onError(any(UnsupportedOperationException.class));
-    }
-
-    @Test
-    void testFetchByIdThrows() {
-        UUID id = UUID.randomUUID();
-        when(backend.fetchById(any(UUID.class))).thenThrow(UnsupportedOperationException.class);
-        StreamObserver so = mock(StreamObserver.class);
-        uut.fetchById(conv.toProto(id), so);
-        verify(so).onError(any(UnsupportedOperationException.class));
-
     }
 
     @Test

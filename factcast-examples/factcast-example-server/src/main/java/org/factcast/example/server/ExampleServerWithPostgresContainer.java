@@ -15,11 +15,9 @@
  */
 package org.factcast.example.server;
 
-import org.factcast.store.pgsql.validation.FactValidatorConfiguration;
 import org.postgresql.Driver;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Import;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +31,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @SuppressWarnings("ALL")
 @SpringBootApplication
-@Import(FactValidatorConfiguration.class)
 @Slf4j
 public class ExampleServerWithPostgresContainer {
 
