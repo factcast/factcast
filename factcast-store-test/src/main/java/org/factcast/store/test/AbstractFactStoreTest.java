@@ -15,21 +15,11 @@
  */
 package org.factcast.store.test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.LinkedList;
@@ -66,7 +56,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
-@SuppressWarnings("ALL")
+@SuppressWarnings("all")
 public abstract class AbstractFactStoreTest {
 
     static final FactSpec ANY = FactSpec.ns("default");
@@ -82,11 +72,6 @@ public abstract class AbstractFactStoreTest {
     }
 
     protected abstract FactStore createStoreToTest();
-
-    @Test
-    public void testFetchByIdNullParameter() throws Exception {
-        assertThrows(NullPointerException.class, () -> createStoreToTest().fetchById(null));
-    }
 
     @Test
     public void testPublishNullParameter() throws Exception {

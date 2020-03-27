@@ -25,10 +25,12 @@ import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.pgsql.internal.query.PgQueryBuilder;
+import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -55,7 +57,7 @@ public class PgFactStream {
 
     final PgFactIdToSerialMapper idToSerMapper;
 
-    final SubscriptionImpl<Fact> subscription;
+    final SubscriptionImpl subscription;
 
     final AtomicLong serial = new AtomicLong(0);
 
@@ -91,7 +93,7 @@ public class PgFactStream {
         log.trace("{} setting starting point to SER={}", request, startingSerial);
     }
 
-    private void catchupAndFollow(SubscriptionRequest request, SubscriptionImpl<Fact> subscription,
+    private void catchupAndFollow(SubscriptionRequest request, SubscriptionImpl subscription,
             PgSynchronizedQuery query) {
         if (request.ephemeral()) {
             // just fast forward to the latest event publish by now
@@ -104,33 +106,35 @@ public class PgFactStream {
             log.trace("{} signaling catchup", request);
             subscription.notifyCatchup();
         }
-        if (isConnected() && request.continuous()) {
-            log.info("{} entering follow mode", request);
-            long delayInMs;
-            if (request.maxBatchDelayInMs() < 1) {
-                // ok, instant query after NOTIFY
-                delayInMs = 0;
+        if (isConnected())
+            if (request.continuous()) {
+                log.info("{} entering follow mode", request);
+                long delayInMs;
+                if (request.maxBatchDelayInMs() < 1) {
+                    // ok, instant query after NOTIFY
+                    delayInMs = 0;
+                } else {
+                    // spread consumers, so that they query at different points
+                    // in time, even if they get triggered at the same PIT, and
+                    // share the same latency requirements
+                    //
+                    // ok, that is unlikely to be necessary, but easy to do,
+                    // so...
+                    delayInMs = ((request.maxBatchDelayInMs() / 4L) * 3L)
+                            + (long) (Math.abs(Math.random() * (request.maxBatchDelayInMs()
+                                    / 4.0)));
+                    log.info("{} setting delay to {}, maxDelay was {}", request, delayInMs, request
+                            .maxBatchDelayInMs());
+                }
+                condensedExecutor = new CondensedQueryExecutor(delayInMs, query, this::isConnected);
+                eventBus.register(condensedExecutor);
+                // catchup phase 3 – make sure, we did not miss any fact due to
+                // slow registration
+                condensedExecutor.trigger();
             } else {
-                // spread consumers, so that they query at different points in
-                // time, even if they get triggered at the same PIT, and share
-                // the same latency requirements
-                //
-                // ok, that is unlikely to be necessary, but easy to do, so...
-                delayInMs = ((request.maxBatchDelayInMs() / 4L) * 3L)
-                        + (long) (Math.abs(Math.random() * (request.maxBatchDelayInMs() / 4.0)));
-                log.info("{} setting delay to {}, maxDelay was {}", request, delayInMs, request
-                        .maxBatchDelayInMs());
+                subscription.notifyComplete();
+                log.debug("Completed {}", request);
             }
-            condensedExecutor = new CondensedQueryExecutor(delayInMs, query, this::isConnected);
-            eventBus.register(condensedExecutor);
-            // catchup phase 3 – make sure, we did not miss any fact due to
-            // slow registration
-            condensedExecutor.trigger();
-        } else {
-            subscription.notifyComplete();
-            log.debug("Completed {}", request);
-            // FIXME disc.?
-        }
     }
 
     private void catchup(PgPostQueryMatcher postQueryMatcher) {
@@ -163,7 +167,7 @@ public class PgFactStream {
     @RequiredArgsConstructor
     private class FactRowCallbackHandler implements RowCallbackHandler {
 
-        final SubscriptionImpl<Fact> subscription;
+        final SubscriptionImpl subscription;
 
         final PgPostQueryMatcher postQueryMatcher;
 
@@ -180,7 +184,11 @@ public class PgFactStream {
                 if (postQueryMatcher.test(f)) {
                     try {
                         subscription.notifyElement(f);
-                        log.trace("{} onNext called with id={}", request, factId);
+                        log.trace("{} notifyElement called with id={}", request, factId);
+                    } catch (MissingTransformationInformation | TransformationException e) {
+                        log.warn("{} transformation error: {}", request, e.getMessage());
+                        subscription.notifyError(e);
+                        throw new RuntimeException(e);
                     } catch (Throwable e) {
                         // debug level, because it happens regularly on
                         // disconnecting clients.

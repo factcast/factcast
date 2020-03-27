@@ -26,7 +26,6 @@ import org.factcast.core.Fact;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @RequiredArgsConstructor
 public abstract class AbstractFactStore implements FactStore {
     @NonNull
@@ -88,7 +87,6 @@ public abstract class AbstractFactStore implements FactStore {
             return false;
     }
 
-    @SuppressWarnings("OptionalAssignedToNull")
     private boolean sameValue(Map<UUID, Optional<UUID>> currentState,
             Map<UUID, Optional<UUID>> snapshotState, UUID k) {
         Optional<UUID> current = currentState.get(k);

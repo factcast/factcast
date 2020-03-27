@@ -15,9 +15,7 @@
  */
 package org.factcast.core.spec;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.UUID;
 
@@ -66,6 +64,11 @@ public class FactSpecTest {
     @Test
     void testFactSpecType() {
         assertEquals("y", FactSpec.ns("x").type("y").type());
+    }
+
+    @Test
+    void testFactSpecVersion() {
+        assertEquals(1, FactSpec.ns("x").type("y").version(1).version());
     }
 
     @Test
@@ -133,6 +136,54 @@ public class FactSpecTest {
         ObjectNode node = FactCastJson.toObjectNode(FactCastJson.writeValueAsString(fs));
 
         assertEquals(expected, node.get("jsFilterScript").asText());
+    }
+
+    @Specification(ns = "ns")
+    static class TestFactPayload {
+    }
+
+    @Test
+    public void testFactSpecFromAnnotation1() {
+        FactSpec factSpec = FactSpec.from(TestFactPayload.class);
+
+        assertEquals("ns", factSpec.ns());
+        assertEquals("TestFactPayload", factSpec.type());
+        assertEquals(0, factSpec.version());
+
+    }
+
+    @Specification(ns = "ns", type = "type")
+    static class TestFactWithType {
+    }
+
+    @Test
+    public void testFactSpecFromAnnotation2() {
+        FactSpec factSpec = FactSpec.from(TestFactWithType.class);
+
+        assertEquals("ns", factSpec.ns());
+        assertEquals("type", factSpec.type());
+        assertEquals(0, factSpec.version());
+
+    }
+
+    @Specification(ns = "ns", type = "type", version = 2)
+    static class TestFactWithTypeAndVersion {
+    }
+
+    @Test
+    public void testFactSpecFromAnnotation3() {
+        FactSpec factSpec = FactSpec.from(TestFactWithTypeAndVersion.class);
+
+        assertEquals("ns", factSpec.ns());
+        assertEquals("type", factSpec.type());
+        assertEquals(2, factSpec.version());
+
+    }
+
+    @Test
+    public void testThrowIfNoAnnotationSpecPresent() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> FactSpec.from(Specification.class));
     }
 
 }

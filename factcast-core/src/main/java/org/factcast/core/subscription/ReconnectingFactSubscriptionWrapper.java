@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.util.ExceptionHelper;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -85,11 +86,10 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
             assertSubscriptionStateNotClosed();
             Subscription cur = currentSubscription.get();
             if (cur != null) {
-                try {
-                    cur.awaitCatchup();
-                    return this;
-                } catch (SubscriptionCancelledException ignore) {
-                }
+
+                cur.awaitCatchup();
+                return this;
+
             } else {
                 sleep();
             }
@@ -113,11 +113,10 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
             Subscription cur = currentSubscription.get();
 
             if (cur != null) {
-                try {
-                    cur.awaitCatchup(waitTimeInMillis);
-                    return this;
-                } catch (SubscriptionCancelledException ignore) {
-                }
+
+                cur.awaitCatchup(waitTimeInMillis);
+                return this;
+
                 // escalate TimeoutException
             } else {
                 sleep();
@@ -136,11 +135,10 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
             Subscription cur = currentSubscription.get();
 
             if (cur != null) {
-                try {
-                    cur.awaitComplete();
-                    return this;
-                } catch (SubscriptionCancelledException ignore) {
-                }
+
+                cur.awaitComplete();
+                return this;
+
             } else {
                 sleep();
             }
@@ -158,11 +156,10 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
             Subscription cur = currentSubscription.get();
 
             if (cur != null) {
-                try {
-                    cur.awaitComplete(waitTimeInMillis);
-                    return this;
-                } catch (SubscriptionCancelledException ignore) {
-                }
+
+                cur.awaitComplete(waitTimeInMillis);
+                return this;
+
                 // escalate TimeoutException
             } else {
                 sleep();
@@ -209,18 +206,23 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
             @Override
             public void onError(@NonNull Throwable exception) {
 
-                log.info("Closing & Reconnecting subscription due to onError triggered.",
-                        exception);
+                if (exception.getClass().getCanonicalName().startsWith("org.factcast")) {
+                    // give up
+                    originalObserver.onError(exception);
+                    throw ExceptionHelper.toRuntime(exception);
+                } else {
+                    log.info("Closing & Reconnecting subscription due to onError triggered.",
+                            exception);
 
-                closeAndDetachSubscription();
-                CompletableFuture.runAsync(
-                        ReconnectingFactSubscriptionWrapper.this::initiateReconnect, es);
+                    closeAndDetachSubscription();
+                    CompletableFuture.runAsync(
+                            ReconnectingFactSubscriptionWrapper.this::initiateReconnect, es);
 
-                // has to be last call, due to older impls. of onError might
-                // decide to throw an exception
-                originalObserver.onError(exception);
+                    // has to be last call, due to older impls. of onError might
+                    // decide to throw an exception
+                    originalObserver.onError(exception);
+                }
             }
-
         };
         initiateReconnect();
 

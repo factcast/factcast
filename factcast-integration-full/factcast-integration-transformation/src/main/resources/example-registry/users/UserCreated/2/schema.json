@@ -1,0 +1,16 @@
+{
+  "additionalProperties" : true,
+  "properties" : {
+    "firstName" : {
+      "type": "string"
+    },
+    "lastName" : {
+      "type": "string"
+    },
+    "salutation": {
+      "type": "string",
+      "enum": ["Mr", "Mrs", "NA"]
+    }
+  },
+  "required": ["firstName", "lastName", "salutation"]
+}

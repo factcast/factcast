@@ -22,6 +22,7 @@ import java.util.function.Predicate;
 import javax.sql.DataSource;
 
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.catchup.paged.PgPagedCatchUpFactory;
@@ -32,11 +33,14 @@ import org.factcast.store.pgsql.internal.lock.AdvisoryWriteLock;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.pgsql.registry.SchemaRegistryConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -46,6 +50,9 @@ import com.google.common.eventbus.EventBus;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.NonNull;
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
+import net.javacrumbs.shedlock.spring.SpringLockableTaskSchedulerFactory;
 
 /**
  * Main @Configuration class for a PGFactStore
@@ -55,6 +62,7 @@ import lombok.NonNull;
 @SuppressWarnings("UnstableApiUsage")
 @Configuration
 @EnableTransactionManagement
+@Import(SchemaRegistryConfiguration.class)
 public class PgFactStoreInternalConfiguration {
 
     @Bean
@@ -84,9 +92,10 @@ public class PgFactStoreInternalConfiguration {
     @Bean
     public PgSubscriptionFactory pgSubscriptionFactory(JdbcTemplate jdbcTemplate, EventBus eventBus,
             PgFactIdToSerialMapper pgFactIdToSerialMapper,
-            PgLatestSerialFetcher pgLatestSerialFetcher, PgCatchupFactory pgCatchupFactory) {
+            PgLatestSerialFetcher pgLatestSerialFetcher, PgCatchupFactory pgCatchupFactory,
+            FactTransformersFactory transformerFactory) {
         return new PgSubscriptionFactory(jdbcTemplate, eventBus, pgFactIdToSerialMapper,
-                pgLatestSerialFetcher, pgCatchupFactory);
+                pgLatestSerialFetcher, pgCatchupFactory, transformerFactory);
 
     }
 
@@ -138,6 +147,17 @@ public class PgFactStoreInternalConfiguration {
     @ConditionalOnMissingBean
     public MeterRegistry meterRegistry() {
         return new SimpleMeterRegistry();
+    }
+
+    @Bean
+    public LockProvider lockProvider(DataSource dataSource) {
+        return new JdbcTemplateLockProvider(dataSource, "shedlock");
+    }
+
+    @Bean
+    public TaskScheduler taskScheduler(LockProvider lockProvider) {
+        int poolSize = 10;
+        return SpringLockableTaskSchedulerFactory.newLockableTaskScheduler(poolSize, lockProvider);
     }
 
 }
