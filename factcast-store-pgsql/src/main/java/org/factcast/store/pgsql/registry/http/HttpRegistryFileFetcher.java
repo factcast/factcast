@@ -18,7 +18,8 @@ package org.factcast.store.pgsql.registry.http;
 import java.io.IOException;
 import java.net.URL;
 
-import org.factcast.store.pgsql.registry.*;
+import org.factcast.store.pgsql.registry.RegistryFileFetchException;
+import org.factcast.store.pgsql.registry.RegistryFileFetcher;
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.TimedOperation;
@@ -92,15 +93,13 @@ public class HttpRegistryFileFetcher implements RegistryFileFetcher {
 
         try (Response response = client.newCall(req).execute()) {
 
-            String responseBodyAsText = response.body().string();
-
             if (response.code() != ValidationConstants.HTTP_OK) {
                 registryMetrics.count(MetricEvent.REGISTRY_FILE_FETCH_FAILED, Tags.of(
                         RegistryMetrics.TAG_STATUS_CODE_KEY, String.valueOf(response.code())));
 
                 throw new RegistryFileFetchException(url, response.code(), response.message());
             } else {
-                return responseBodyAsText;
+                return response.body().string();
             }
         } catch (IOException e) {
             throw new RegistryFileFetchException(url, 0, e.getMessage());

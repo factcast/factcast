@@ -43,7 +43,7 @@ public class FactSpec {
     String type = null;
 
     @JsonProperty
-    int version = 0; // 0 means i don't care
+    int version = 0; // 0 means I don't care
 
     @JsonProperty
     UUID aggId = null;

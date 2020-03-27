@@ -115,10 +115,8 @@ public class PgFactStream {
                     delayInMs = 0;
                 } else {
                     // spread consumers, so that they query at different points
-                    // in
-                    // time, even if they get triggered at the same PIT, and
-                    // share
-                    // the same latency requirements
+                    // in time, even if they get triggered at the same PIT, and
+                    // share the same latency requirements
                     //
                     // ok, that is unlikely to be necessary, but easy to do,
                     // so...
