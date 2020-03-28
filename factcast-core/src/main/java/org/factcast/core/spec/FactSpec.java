@@ -28,7 +28,7 @@ import lombok.NonNull;
 /**
  * Defines a Specification of facts to match for a subscription.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)

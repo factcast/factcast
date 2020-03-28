@@ -36,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
  * that match the queryable criteria. The only untested thing is the
  * script-match which can be skipped, if no FactSpec has a scripted filter.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
 public class PgPostQueryMatcher implements Predicate<Fact> {

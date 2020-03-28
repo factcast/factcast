@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
  * after WAIT_TIME (default 1000) millis
  *
  * @param <T>
- * @author <uwe.schaefer@mercateo.com>
+ * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @Slf4j
 public class BlockingStreamObserver<T> implements StreamObserver<T> {

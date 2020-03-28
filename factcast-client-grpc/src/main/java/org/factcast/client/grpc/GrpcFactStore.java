@@ -81,7 +81,7 @@ import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 
 @Slf4j

@@ -18,7 +18,7 @@ package org.factcast.core.subscription;
 /**
  * Signals, that a Subscription.wait* method cannot terminate normally.
  *
- * @author <uwe.schaefer@mercateo.com>
+ * @author <uwe.schaefer@prisma-capacity.eu>
  */
 public class SubscriptionCancelledException extends RuntimeException {
 

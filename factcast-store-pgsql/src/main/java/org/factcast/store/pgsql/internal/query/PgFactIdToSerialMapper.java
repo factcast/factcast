@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * Fetches a SER from a Fact-Id.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @RequiredArgsConstructor
 public class PgFactIdToSerialMapper {

@@ -124,8 +124,13 @@
     </dependency>
     <dependency>
       <groupId>es.usc.citius.hipster</groupId>
-      <artifactId>hipster-all</artifactId>
+      <artifactId>hipster-core</artifactId>
       <version>1.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
+      <version>4.4</version>
     </dependency>
   </dependencies>
 </project>

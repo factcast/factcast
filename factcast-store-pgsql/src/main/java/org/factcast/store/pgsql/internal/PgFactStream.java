@@ -44,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Creates and maintains a subscription.
  *
- * @author <uwe.schaefer@mercateo.com>
+ * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @SuppressWarnings("UnstableApiUsage")
 @Slf4j

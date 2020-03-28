@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
  * Executes a given runnable if triggered, but ignores all subsequent triggers
  * for maxDelayInMillis.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @SuppressWarnings("UnstableApiUsage")
 @Slf4j

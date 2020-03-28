@@ -44,7 +44,7 @@ import lombok.SneakyThrows;
  * <p>
  * For caching purposes, this thing should be Externalizable.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  * @see Fact
  */
 @EqualsAndHashCode(of = { "deserializedHeader" })

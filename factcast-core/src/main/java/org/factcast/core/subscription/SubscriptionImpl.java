@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  * Implements a subscription and offers notifyX methods for the Fact Supplier to
  * write to.
  *
- * @author <uwe.schaefer@mercateo.com>
+ * @author <uwe.schaefer@prisma-capacity.eu>
  *
  * @param <T>
  */
