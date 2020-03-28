@@ -33,7 +33,7 @@ import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 /**
  * Provides a GrpcFactStore as a FactStore implementation.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")

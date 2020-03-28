@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * This should contain a pgsql backend and grpc API frontend.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @SuppressWarnings("ALL")
 @SpringBootApplication

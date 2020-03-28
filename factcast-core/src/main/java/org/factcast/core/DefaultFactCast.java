@@ -34,7 +34,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * Default impl for FactCast used by FactCast.from* methods.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @RequiredArgsConstructor
 class DefaultFactCast implements FactCast {

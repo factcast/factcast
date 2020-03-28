@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  * Provides {@link PreparedStatementSetter} and the corresponding SQL from a
  * list of {@link FactSpec}s.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
 public class PgQueryBuilder {

@@ -40,7 +40,7 @@ import lombok.RequiredArgsConstructor;
  * DO NOT use an instance as a singleton/Spring bean. This class is meant be
  * instantiated by each subscription.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @RequiredArgsConstructor
 class PgSynchronizedQuery {

@@ -29,7 +29,7 @@ import lombok.NonNull;
  *
  * see {@link FluentSubscriptionRequest}, {@link SubscriptionRequestTO}
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 public interface SubscriptionRequest {
 

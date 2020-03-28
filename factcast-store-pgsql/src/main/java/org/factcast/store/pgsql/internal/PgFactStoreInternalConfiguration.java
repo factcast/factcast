@@ -57,7 +57,7 @@ import net.javacrumbs.shedlock.spring.SpringLockableTaskSchedulerFactory;
 /**
  * Main @Configuration class for a PGFactStore
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @SuppressWarnings("UnstableApiUsage")
 @Configuration

@@ -59,7 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * A PostgreSQL based FactStore implementation
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
 public class PgFactStore extends AbstractFactStore {

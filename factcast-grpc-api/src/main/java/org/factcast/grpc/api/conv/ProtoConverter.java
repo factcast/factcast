@@ -57,7 +57,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * Converts Protobuf messages to Java Objects and back.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @RequiredArgsConstructor

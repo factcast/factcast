@@ -78,7 +78,7 @@ import net.devh.boot.grpc.server.service.GrpcService;
  * <p>
  * Configure port using {@link GRpcServerProperties}
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
 @RequiredArgsConstructor

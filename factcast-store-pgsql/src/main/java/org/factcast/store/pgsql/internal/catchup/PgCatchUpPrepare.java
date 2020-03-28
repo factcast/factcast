@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  * Copies all matching SERs from fact to the catchup table, in order to be able
  * to page effectively, without repeatingly doing the index scan.
  *
- * @author <uwe.schaefer@mercateo.com>
+ * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @RequiredArgsConstructor
 @Slf4j
