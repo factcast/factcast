@@ -21,6 +21,12 @@
   </dependencyManagement>
   <dependencies>
     <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+      <version>${lombok.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-core</artifactId>
     </dependency>
