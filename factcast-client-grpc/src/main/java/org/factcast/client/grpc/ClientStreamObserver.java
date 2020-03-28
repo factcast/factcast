@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  * @see StreamObserver
  * @see Subscription
  *
- * @author <uwe.schaefer@mercateo.com>
+ * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @RequiredArgsConstructor
 @Slf4j

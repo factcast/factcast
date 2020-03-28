@@ -38,7 +38,7 @@ import lombok.NonNull;
  * In a sense it is an internal interface, or SPI implemented by for instance
  * InMemFactStore or PgFactStore.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public interface FactStore {

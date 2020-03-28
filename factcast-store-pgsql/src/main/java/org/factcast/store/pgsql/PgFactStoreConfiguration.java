@@ -27,7 +27,7 @@ import org.springframework.context.annotation.Import;
  * just forwards to {@link PgFactStoreInternalConfiguration}, so that IDEs can
  * still complain about internal references.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @Configuration
 @EnableConfigurationProperties

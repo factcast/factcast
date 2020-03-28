@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Fetches the latest SERIAL from the fact table.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @RequiredArgsConstructor
 @Slf4j

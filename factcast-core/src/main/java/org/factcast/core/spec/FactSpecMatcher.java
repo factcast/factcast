@@ -35,7 +35,7 @@ import lombok.SneakyThrows;
 /**
  * Matches facts against specifications.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 public final class FactSpecMatcher implements Predicate<Fact> {
 

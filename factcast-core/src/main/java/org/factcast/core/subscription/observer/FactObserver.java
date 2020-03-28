@@ -22,7 +22,7 @@ import org.factcast.core.Fact;
  *
  * see {@link GenericObserver}.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 public interface FactObserver extends GenericObserver<Fact> {
 }

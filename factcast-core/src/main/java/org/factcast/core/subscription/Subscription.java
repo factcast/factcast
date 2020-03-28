@@ -18,7 +18,7 @@ package org.factcast.core.subscription;
 import java.util.concurrent.TimeoutException;
 
 /**
- * @author <uwe.schaefer@mercateo.com>
+ * @author <uwe.schaefer@prisma-capacity.eu>
  */
 public interface Subscription extends AutoCloseable {
 

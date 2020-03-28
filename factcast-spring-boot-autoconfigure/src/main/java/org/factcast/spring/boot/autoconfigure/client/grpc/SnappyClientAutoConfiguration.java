@@ -26,7 +26,7 @@ import org.xerial.snappy.SnappyOutputStream;
 /**
  * Configures optional Snappy Codec
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 
 @Configuration

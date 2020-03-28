@@ -21,7 +21,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.apache.commons.collections15.map.LRUMap;
+import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.Fact;
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;

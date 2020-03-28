@@ -19,7 +19,7 @@ package org.factcast.server.grpc;
  * Signals an uncatched Exception in the Transport layer, normally leading to a
  * subscription being cancelled.
  *
- * @author <uwe.schaefer@mercateo.com>
+ * @author <uwe.schaefer@prisma-capacity.eu>
  */
 class TransportLayerException extends RuntimeException {
 

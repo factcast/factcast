@@ -22,7 +22,7 @@ import lombok.experimental.FieldDefaults;
 /**
  * String constants mainly used in SQL-Statement creation
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @FieldDefaults(level = AccessLevel.PUBLIC, makeFinal = true)
 @Generated
