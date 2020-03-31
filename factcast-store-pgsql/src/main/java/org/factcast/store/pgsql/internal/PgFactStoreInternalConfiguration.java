@@ -40,7 +40,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -52,7 +51,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.NonNull;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
-import net.javacrumbs.shedlock.spring.SpringLockableTaskSchedulerFactory;
 
 /**
  * Main @Configuration class for a PGFactStore
@@ -152,12 +150,6 @@ public class PgFactStoreInternalConfiguration {
     @Bean
     public LockProvider lockProvider(DataSource dataSource) {
         return new JdbcTemplateLockProvider(dataSource, "shedlock");
-    }
-
-    @Bean
-    public TaskScheduler taskScheduler(LockProvider lockProvider) {
-        int poolSize = 10;
-        return SpringLockableTaskSchedulerFactory.newLockableTaskScheduler(poolSize, lockProvider);
     }
 
 }
