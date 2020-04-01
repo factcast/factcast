@@ -23,13 +23,8 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-@Mojo(name = "build", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
-public class BuildMojo extends AbstractMojo {
-    @Parameter(
-            defaultValue = "${project.build.directory}/registry",
-            property = "outputDir",
-            required = true)
-    private File outputDirectory;
+@Mojo(name = "validate", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
+public class ValidateMojo extends AbstractMojo {
 
     @Parameter(
             defaultValue = "${project.basedir}/src/main/resources",
@@ -44,13 +39,8 @@ public class BuildMojo extends AbstractMojo {
                     "Source directory (property 'sourceDir') does not exist: "
                             + sourceDirectory.getPath());
 
-        if (!outputDirectory.exists()) {
-            outputDirectory.mkdirs();
-        }
-
         org.factcast.schema.registry.cli.Application
-                .main(new String[] { "build", "-p", sourceDirectory.getAbsolutePath(), "-o",
-                        outputDirectory.getAbsolutePath() });
+                .main(new String[] { "build", "-p", sourceDirectory.getAbsolutePath() });
     }
 
 }
