@@ -42,6 +42,7 @@ class Build : Runnable {
 
         val exitCode = commandService.build(sourceRoot, outputRoot)
 
+        if (exitCode != null)
         exitProcess(exitCode)
     }
 }
