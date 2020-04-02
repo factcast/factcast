@@ -41,7 +41,7 @@ class Application : Runnable {
         @JvmStatic
         fun main(args: Array<String>) {
             val exitCode = PicocliRunner.execute(Application::class.java, *args)
-            exitProcess(exitCode)
+            if (exitCode != 0)exitProcess(exitCode)
         }
     }
 }
