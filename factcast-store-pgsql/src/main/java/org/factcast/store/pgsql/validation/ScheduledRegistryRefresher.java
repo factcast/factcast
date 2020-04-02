@@ -25,7 +25,7 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import lombok.Value;
 
 @Value
-public class ScheduledRegistryFresher implements SmartInitializingSingleton, DisposableBean {
+public class ScheduledRegistryRefresher implements SmartInitializingSingleton, DisposableBean {
 
     final SchemaRegistry registry;
 

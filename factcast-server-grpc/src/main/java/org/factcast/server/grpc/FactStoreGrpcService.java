@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -55,11 +56,17 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
-import org.factcast.server.grpc.auth.FactCastRole;
+import org.factcast.server.grpc.auth.FactCastAuthority;
+import org.factcast.server.grpc.auth.FactCastUser;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import io.grpc.Metadata;
+import io.grpc.Status;
+import io.grpc.StatusException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
@@ -78,7 +85,7 @@ import net.devh.boot.grpc.server.service.GrpcService;
 @RequiredArgsConstructor
 @GrpcService
 @SuppressWarnings("all")
-@Secured(FactCastRole.READ)
+
 public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
@@ -92,6 +99,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     static final AtomicLong subscriptionIdStore = new AtomicLong();
 
     @Override
+    @Secured(FactCastAuthority.AUTHENTICATED)
     public void fetchById(MSG_UUID request, StreamObserver<MSG_OptionalFact> responseObserver) {
         try {
             enableResponseCompression(responseObserver);
@@ -101,6 +109,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             Optional<Fact> fetchById = store.fetchById(fromProto);
             log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "")
                     .orElse("NOT "));
+
+            if (fetchById.isPresent())
+                assertCanRead(fetchById.get().ns());
+
             responseObserver.onNext(converter.toProto(fetchById));
             responseObserver.onCompleted();
         } catch (Throwable e) {
@@ -109,16 +121,24 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    @Secured(FactCastRole.WRITE)
+    @Secured(FactCastAuthority.AUTHENTICATED)
     public void publish(@NonNull MSG_Facts request, StreamObserver<MSG_Empty> responseObserver) {
         List<Fact> facts = request.getFactList()
                 .stream()
                 .map(converter::fromProto)
                 .collect(Collectors.toList());
-        final int size = facts.size();
-        log.debug("publish {} fact{}", size, size > 1 ? "s" : "");
-        log.trace("publish {}", facts);
+
+        List<@NonNull String> namespaces = facts.stream()
+                .map(Fact::ns)
+                .distinct()
+                .collect(Collectors.toList());
+
         try {
+            assertCanWrite(namespaces);
+
+            final int size = facts.size();
+            log.debug("publish {} fact{}", size, size > 1 ? "s" : "");
+            log.trace("publish {}", facts);
             log.trace("store publish {}", facts);
             store.publish(facts);
             log.trace("store publish done");
@@ -134,18 +154,34 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
+    @Secured(FactCastAuthority.AUTHENTICATED)
     public void subscribe(MSG_SubscriptionRequest request,
             StreamObserver<MSG_Notification> responseObserver) {
         enableResponseCompression(responseObserver);
 
         SubscriptionRequestTO req = converter.fromProto(request);
-        resetDebugInfo(req);
-        BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(req.toString(),
-                (ServerCallStreamObserver) responseObserver);
-        final boolean idOnly = req.idOnly();
-        store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp,
-                f -> idOnly ? converter.createNotificationFor(f.id())
-                        : converter.createNotificationFor(f)));
+
+        List<@NonNull String> namespaces = req.specs()
+                .stream()
+                .map(FactSpec::ns)
+                .distinct()
+                .collect(Collectors.toList());
+        try {
+            assertCanRead(namespaces);
+
+            resetDebugInfo(req);
+            BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(
+                    req.toString(),
+                    (ServerCallStreamObserver) responseObserver);
+            final boolean idOnly = req.idOnly();
+            store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp,
+                    f -> idOnly ? converter.createNotificationFor(f.id())
+                            : converter.createNotificationFor(f)));
+
+        } catch (StatusException e) {
+            responseObserver.onError(e);
+        }
+
     }
 
     private void enableResponseCompression(StreamObserver<?> responseObserver) {
@@ -208,6 +244,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
+    @Secured(FactCastAuthority.AUTHENTICATED)
     public void serialOf(MSG_UUID request, StreamObserver<MSG_OptionalSerial> responseObserver) {
         OptionalLong serialOf = store.serialOf(converter.fromProto(request));
         responseObserver.onNext(converter.toProto(serialOf));
@@ -215,10 +252,16 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
+    @Secured(FactCastAuthority.AUTHENTICATED)
     public void enumerateNamespaces(MSG_Empty request,
             StreamObserver<MSG_StringSet> responseObserver) {
         try {
-            responseObserver.onNext(converter.toProto(store.enumerateNamespaces()));
+            Set<String> allNamespaces = store.enumerateNamespaces()
+                    .stream()
+                    .filter(getFactcastUser()::canRead)
+                    .collect(Collectors.toSet());
+
+            responseObserver.onNext(converter.toProto(allNamespaces));
             responseObserver.onCompleted();
         } catch (Throwable e) {
             responseObserver.onError(e);
@@ -226,12 +269,15 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
+    @Secured(FactCastAuthority.AUTHENTICATED)
     public void enumerateTypes(MSG_String request, StreamObserver<MSG_StringSet> responseObserver) {
 
         enableResponseCompression(responseObserver);
+        String ns = converter.fromProto(request);
 
         try {
-            Set<String> types = store.enumerateTypes(converter.fromProto(request));
+            assertCanRead(ns);
+            Set<String> types = store.enumerateTypes(ns);
             responseObserver.onNext(converter.toProto(types));
             responseObserver.onCompleted();
         } catch (Throwable e) {
@@ -240,11 +286,19 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    @Secured(FactCastRole.WRITE)
+    @Secured(FactCastAuthority.AUTHENTICATED)
     public void publishConditional(MSG_ConditionalPublishRequest request,
             StreamObserver<MSG_ConditionalPublishResult> responseObserver) {
         try {
             ConditionalPublishRequest req = converter.fromProto(request);
+
+            List<@NonNull String> namespaces = req.facts()
+                    .stream()
+                    .map(Fact::ns)
+                    .distinct()
+                    .collect(Collectors.toList());
+            assertCanWrite(namespaces);
+
             boolean result = store.publishIfUnchanged(req.facts(), req.token());
             responseObserver.onNext(converter.toProto(result));
             responseObserver.onCompleted();
@@ -254,7 +308,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    @Secured(FactCastRole.WRITE)
+    @Secured(FactCastAuthority.AUTHENTICATED)
     public void stateFor(MSG_StateForRequest request, StreamObserver<MSG_UUID> responseObserver) {
         try {
             StateForRequest req = converter.fromProto(request);
@@ -267,7 +321,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    @Secured(FactCastRole.WRITE)
+    @Secured(FactCastAuthority.AUTHENTICATED)
     public void invalidate(MSG_UUID request, StreamObserver<MSG_Empty> responseObserver) {
         try {
             UUID tokenId = converter.fromProto(request);
@@ -290,4 +344,50 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         }
 
     }
+
+    //
+
+    @VisibleForTesting
+    protected void assertCanRead(@NonNull String ns) throws StatusException {
+        FactCastUser user = getFactcastUser();
+        if (!user.canRead(ns)) {
+
+            log.error("Not allowed to read from namespace '" + ns + "'");
+            throw new StatusException(Status.PERMISSION_DENIED, new Metadata());
+
+        }
+    }
+
+    @VisibleForTesting
+    protected void assertCanRead(List<@NonNull String> namespaces) throws StatusException {
+        FactCastUser user = getFactcastUser();
+        for (String ns : namespaces) {
+            if (!user.canRead(ns)) {
+                log.error("Not allowed to read from namespace '" + ns + "'");
+                throw new StatusException(Status.PERMISSION_DENIED, new Metadata());
+            }
+        }
+    }
+
+    @VisibleForTesting
+    protected void assertCanWrite(List<@NonNull String> namespaces) throws StatusException {
+        FactCastUser user = getFactcastUser();
+        for (String ns : namespaces) {
+            if (!user.canWrite(ns)) {
+                log.error("Not allowed to write to namespace '" + ns + "'");
+                throw new StatusException(Status.PERMISSION_DENIED, new Metadata());
+            }
+        }
+    }
+
+    protected FactCastUser getFactcastUser() throws StatusException {
+        SecurityContext ctx = SecurityContextHolder.getContext();
+        Object authentication = ctx.getAuthentication().getPrincipal();
+        if (authentication == null) {
+            log.error("Authentication is unavailable");
+            throw new StatusException(Status.PERMISSION_DENIED, new Metadata());
+        }
+        return (FactCastUser) authentication;
+    }
+
 }

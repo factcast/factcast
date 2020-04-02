@@ -1,0 +1,72 @@
+{
+	"accounts": [
+		{
+			"id": "brain",
+			"secret": "world",
+			"roles": [
+				"anything"
+			]
+		},
+		{
+			"id": "pinky",
+			"secret": "narf",
+			"roles": [
+				"anything",
+				"limited"
+			]
+		},
+		{
+			"id": "snowball",
+			"secret": "grim",
+			"roles": [
+				"readOnlyWithoutAudit"
+			]
+		}
+	],
+	"roles": [
+		{
+			"id": "anything",
+			"read": {
+				"include": [
+					"*"
+				]
+			},
+			"write": {
+				"include": [
+					"*"
+				]
+			}
+		},
+		{
+			"id": "limited",
+			"read": {
+				"include": [
+					"*"
+				],
+				"exclude": [
+					"secret"
+				]
+			},
+			"write": {
+				"exclude": [
+					"audit*"
+				]
+			}
+		},
+		{
+			"id": "readOnlyWithoutAudit",
+			"read": {
+				"include": [
+					"*"
+				],
+				"exclude": [
+					"audit*",
+					"secret"
+				]
+			},
+			"write": {
+				"exclude":["*"]
+			}
+		}
+	]
+}

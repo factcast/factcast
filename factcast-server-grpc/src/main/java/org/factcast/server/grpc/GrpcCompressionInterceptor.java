@@ -15,12 +15,15 @@
  */
 package org.factcast.server.grpc;
 
-import org.factcast.grpc.api.*;
+import org.factcast.grpc.api.CompressionCodecs;
 
-import io.grpc.*;
-import io.grpc.ServerCall.*;
-import lombok.*;
-import net.devh.boot.grpc.server.interceptor.*;
+import io.grpc.Metadata;
+import io.grpc.ServerCall;
+import io.grpc.ServerCall.Listener;
+import io.grpc.ServerCallHandler;
+import io.grpc.ServerInterceptor;
+import lombok.RequiredArgsConstructor;
+import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 
 @GrpcGlobalServerInterceptor
 @RequiredArgsConstructor

@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.1.5-SNAPSHOT</version>
+    <version>0.2.0-M10-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-store-pgsql</artifactId>
@@ -39,13 +39,13 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.12.5</version>
+      <version>1.13.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.liquibase</groupId>
       <artifactId>liquibase-core</artifactId>
-      <version>3.8.6</version><!--$NO-MVN-MAN-VER$ -->
+      <version>3.8.8</version><!--$NO-MVN-MAN-VER$ -->
       <exclusions>
         <exclusion>
           <groupId>ch.qos.logback</groupId>
@@ -56,7 +56,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.2.10</version><!--$NO-MVN-MAN-VER$ -->
+      <version>42.2.11</version><!--$NO-MVN-MAN-VER$ -->
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>

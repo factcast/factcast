@@ -4,13 +4,13 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.1.5-SNAPSHOT</version>
+    <version>0.2.0-M10-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-docker</artifactId>
   <properties>
     <!-- Pin your own Spring Boot version. -->
-    <spring-boot.version>2.2.4.RELEASE</spring-boot.version>
+    <spring-boot.version>2.2.5.RELEASE</spring-boot.version>
     <docker.image.prefix>factcast</docker.image.prefix>
   </properties>
   <dependencyManagement>

@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.1.5-SNAPSHOT</version>
+  <version>0.2.0-M10-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -63,7 +63,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
     <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
-    <maven-javadoc-plugin.version>3.1.1</maven-javadoc-plugin.version>
+    <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
     <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
     <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
@@ -75,11 +75,11 @@
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
     <spotless-maven-plugin.version>1.27.0</spotless-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
-    <spring-boot-maven-plugin.version>2.2.4.RELEASE</spring-boot-maven-plugin.version>
+    <spring-boot-maven-plugin.version>2.2.5.RELEASE</spring-boot-maven-plugin.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <assertj.version>3.15.0</assertj.version>
-    <mockito.version>3.2.4</mockito.version>
+    <mockito.version>3.3.3</mockito.version>
     <lombok.version>1.18.12</lombok.version>
     <formatter.config>${basedir}/src/eclipse/config</formatter.config>
     <etc>${basedir}/src/etc</etc>
@@ -123,7 +123,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.6.0</version>
+      <version>5.6.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -296,7 +296,7 @@
             <trimTrailingWhitespace />
             <ktlint>
               <!-- Optional, available versions: https://github.com/shyiko/ktlint/releases -->
-              <version>0.31.0</version>
+              <version>0.36.0</version>
             </ktlint>
             <includes>
               <include> **/src/main/kotlin/**/*.kt
@@ -350,7 +350,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute></execute>
+                    <execute />
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -363,7 +363,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute></execute>
+                    <execute />
                   </action>
                 </pluginExecution>
               </pluginExecutions>
