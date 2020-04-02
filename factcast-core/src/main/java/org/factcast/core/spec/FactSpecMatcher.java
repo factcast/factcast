@@ -31,14 +31,12 @@ import com.fasterxml.jackson.databind.util.LRUMap;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Matches facts against specifications.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
-@Slf4j
 public final class FactSpecMatcher implements Predicate<Fact> {
 
     private static final LRUMap<FilterScript, ScriptEngine> scriptEngineCache = new LRUMap<>(10,
@@ -46,6 +44,8 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
     @NonNull
     final String ns;
+
+    final Integer version;
 
     final String type;
 
@@ -67,6 +67,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         // this Predicate is pretty performance critical
         ns = spec.ns();
         type = spec.type();
+        version = spec.version();
         aggId = spec.aggId();
         meta = spec.meta();
         script = spec.filterScript();
@@ -77,6 +78,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     public boolean test(Fact t) {
         boolean match = nsMatch(t);
         match = match && typeMatch(t);
+        match = match && versionMatch(t);
         match = match && aggIdMatch(t);
         match = match && metaMatch(t);
         match = match && scriptMatch(t);
@@ -100,6 +102,14 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         }
         String otherType = t.type();
         return type.equals(otherType);
+    }
+
+    protected boolean versionMatch(Fact t) {
+        if (version == 0) {
+            return true;
+        }
+        Integer otherVersion = t.version();
+        return version.equals(otherVersion);
     }
 
     protected boolean aggIdMatch(Fact t) {

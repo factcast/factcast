@@ -31,7 +31,7 @@ import lombok.experimental.FieldDefaults;
 /**
  * SubscriptionRequest intended to be used by clients for convenience.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter

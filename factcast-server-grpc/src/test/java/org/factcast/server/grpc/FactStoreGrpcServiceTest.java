@@ -70,7 +70,7 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "rawtypes" })
 @ExtendWith(MockitoExtension.class)
 public class FactStoreGrpcServiceTest {
 
@@ -158,30 +158,12 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    void testFetchById() {
-        UUID id = UUID.randomUUID();
-        uut.fetchById(conv.toProto(id), mock(ServerCallStreamObserver.class));
-        verify(backend).fetchById(eq(id));
-    }
-
-    @Test
     void testSubscribeFacts() {
         SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
         when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
         uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)),
                 mock(ServerCallStreamObserver.class));
         verify(backend).subscribe(any(), any());
-        assertFalse(reqCaptor.getValue().idOnly());
-    }
-
-    @Test
-    void testSubscribeIds() {
-        SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
-        when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
-        uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forIds(req)),
-                mock(ServerCallStreamObserver.class));
-        verify(backend).subscribe(any(), any());
-        assertTrue(reqCaptor.getValue().idOnly());
     }
 
     @Test
@@ -262,16 +244,6 @@ public class FactStoreGrpcServiceTest {
 
         uut.enumerateTypes(conv.toProto("ns"), so);
         verify(so).onError(any(UnsupportedOperationException.class));
-    }
-
-    @Test
-    void testFetchByIdThrows() {
-        UUID id = UUID.randomUUID();
-        when(backend.fetchById(any(UUID.class))).thenThrow(UnsupportedOperationException.class);
-        StreamObserver so = mock(StreamObserver.class);
-        uut.fetchById(conv.toProto(id), so);
-        verify(so).onError(any(UnsupportedOperationException.class));
-
     }
 
     @Test

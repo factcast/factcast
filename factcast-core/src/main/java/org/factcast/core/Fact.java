@@ -29,7 +29,7 @@ import lombok.NonNull;
  * Strings: jsonHeader and jsonPayload. Also provides convenience getters for
  * id,ns,type and aggId.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 public interface Fact {
 

@@ -34,19 +34,16 @@ import lombok.extern.slf4j.Slf4j;
  * Provides {@link PreparedStatementSetter} and the corresponding SQL from a
  * list of {@link FactSpec}s.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
 public class PgQueryBuilder {
-
-    final boolean selectIdOnly;
 
     @NonNull
     final SubscriptionRequestTO req;
 
     public PgQueryBuilder(@NonNull SubscriptionRequestTO request) {
         this.req = request;
-        selectIdOnly = request.idOnly() && !request.hasAnyScriptFilters();
     }
 
     public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
@@ -100,8 +97,8 @@ public class PgQueryBuilder {
     }
 
     public String createSQL() {
-        final String sql = "SELECT " + (selectIdOnly ? PgConstants.PROJECTION_ID
-                : PgConstants.PROJECTION_FACT)
+        final String sql = "SELECT " +
+                PgConstants.PROJECTION_FACT
                 + " FROM " + PgConstants.TABLE_FACT + " WHERE " + createWhereClause() + " ORDER BY "
                 + PgConstants.COLUMN_SER + " ASC";
         log.trace("{} createSQL={}", req, sql);

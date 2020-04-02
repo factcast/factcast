@@ -15,7 +15,6 @@
  */
 package org.factcast.store.pgsql;
 
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -65,13 +64,6 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
     int queueSize = 1000;
 
     /**
-     * The factor to apply, when fetching/queuing Ids rather than Facts
-     * (assuming, that needs just a fraction of Heap and is way faster to flush
-     * to the client)
-     */
-    int idOnlyFactor = 100;
-
-    /**
      * Defines the Strategy used for Paging in the Catchup Phase.
      */
     CatchupStrategy catchupStrategy = CatchupStrategy.getDefault();
@@ -84,16 +76,36 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
 
     /**
      * Optional URL to a Schema Registry. If this is null, validation will be
-     * disabled and a warning will be issued. (Defaults to null)
+     * disabled and a warning will be issued. (Defaults to null) Currently a
+     * String type due to the fact that "classpath:" is a spring-only protocol
      */
-    URL schemaRegistryUrl;
+    String schemaRegistryUrl;
 
     /**
      * If validation is enabled, this controls if the local snapshot of the
-     * schemaregistry is persisted to psql or just kept in mem. (Defaults to
-     * true)
+     * registry is persisted to psql or just kept in mem. (Defaults to true)
      */
-    boolean persistentSchemaStore = true;
+    boolean persistentRegistry = true;
+
+    /**
+     * when using the persistent impl of the transformation cache, this is the
+     * min number of days a transformation result is not read in order to be
+     * considered stale. This should free some space in a regular cleanup job
+     */
+    int deleteTransformationsStaleForDays = 14;
+
+    /**
+     * If validation is enabled, this controls if transformed facts are
+     * persistently cached in postgres, rather than in memory. (Defaults to
+     * false)
+     */
+    boolean persistentTransformationCache = false;
+
+    /**
+     * when using the inmem impl of the transformation cache, this is the max
+     * number of entries cached.
+     */
+    int inMemTransformationCacheCapacity = 1_000_000;
 
     /**
      * If validation is enabled, this controls if publishing facts, that are not
@@ -102,24 +114,6 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
      * false)
      */
     boolean allowUnvalidatedPublish = false;
-
-    /**
-     * if validation is enabled, this defines the rate (in milliseconds) in
-     * which the local store is refreshed. (Defaults to 15000)
-     */
-    long schemaStoreRefreshRateInMilliseconds = 15000;
-
-    public int getPageSizeForIds() {
-        return pageSize * idOnlyFactor;
-    }
-
-    public int getQueueSizeForIds() {
-        return queueSize * idOnlyFactor;
-    }
-
-    public int getFetchSizeForIds() {
-        return getQueueSizeForIds() / queueFetchRatio;
-    }
 
     public int getFetchSize() {
         return getQueueSize() / queueFetchRatio;

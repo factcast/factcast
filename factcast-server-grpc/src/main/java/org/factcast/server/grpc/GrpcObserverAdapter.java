@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
  * FactObserver implementation, that translates observer Events to transport
  * layer messages.
  *
- * @author <uwe.schaefer@mercateo.com>
+ * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @Slf4j
 @RequiredArgsConstructor

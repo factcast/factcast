@@ -28,7 +28,7 @@ import lombok.NonNull;
 /**
  * Defines a Specification of facts to match for a subscription.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -41,6 +41,9 @@ public class FactSpec {
     // type & aggId should probably be sets?
     @JsonProperty
     String type = null;
+
+    @JsonProperty
+    int version = 0; // 0 means I don't care
 
     @JsonProperty
     UUID aggId = null;
@@ -112,4 +115,23 @@ public class FactSpec {
             return null;
     }
 
+    public static <T> FactSpec from(Class<T> clazz) {
+        Specification annotationSpec = clazz.getAnnotation(Specification.class);
+
+        if (annotationSpec == null) {
+            throw new IllegalArgumentException("You must annotate your Payload class with @"
+                    + Specification.class.getSimpleName());
+        }
+
+        FactSpec factSpec = new FactSpec(annotationSpec.ns());
+
+        if (!annotationSpec.type().isEmpty()) {
+            factSpec.type(annotationSpec.type());
+        } else
+            factSpec.type(clazz.getSimpleName());
+
+        factSpec.version(annotationSpec.version());
+
+        return factSpec;
+    }
 }

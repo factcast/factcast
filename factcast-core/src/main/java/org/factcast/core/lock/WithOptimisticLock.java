@@ -15,14 +15,23 @@
  */
 package org.factcast.core.lock;
 
-import java.util.*;
+import java.util.ConcurrentModificationException;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-import org.factcast.core.*;
-import org.factcast.core.store.*;
+import org.factcast.core.Fact;
+import org.factcast.core.store.FactStore;
+import org.factcast.core.store.StateToken;
 
-import lombok.*;
-import lombok.experimental.*;
-import lombok.extern.slf4j.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.SneakyThrows;
+import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -119,15 +128,6 @@ public class WithOptimisticLock {
         if (interval > 0) {
             Thread.sleep(interval);
         }
-    }
-
-    private UUID lastFactId(@NonNull List<Fact> factsToPublish) {
-
-        if (factsToPublish.isEmpty()) {
-            throw new IllegalArgumentException("Need to actually publish a Fact");
-        }
-
-        return factsToPublish.get(factsToPublish.size() - 1).id();
     }
 
     @Getter

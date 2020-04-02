@@ -28,7 +28,7 @@ import net.jpountz.lz4.LZ4Compressor;
 /**
  * Configures optional LZ4 Codec
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 
 @Configuration

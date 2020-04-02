@@ -59,7 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * A PostgreSQL based FactStore implementation
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
 public class PgFactStore extends AbstractFactStore {
@@ -191,16 +191,6 @@ public class PgFactStore extends AbstractFactStore {
         OP operation = request.continuous() ? OP.SUBSCRIBE_FOLLOW : OP.SUBSCRIBE_CATCHUP;
         return time(operation, () -> {
             return subscriptionFactory.subscribe(request, observer);
-        });
-    }
-
-    @Override
-    public Optional<Fact> fetchById(@NonNull UUID id) {
-        return time(OP.FETCH_BY_ID, () -> {
-            return jdbcTemplate.query(PgConstants.SELECT_BY_ID,
-                    new Object[] { "{\"id\":\"" + id + "\"}" }, this::extractFactFromResultSet)
-                    .stream()
-                    .findFirst();
         });
     }
 

@@ -41,7 +41,7 @@ import lombok.experimental.FieldDefaults;
  * Note that FactSpec.forMark() is silently added to the list of specifications,
  * if marks is true.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
@@ -58,9 +58,6 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 
     @JsonProperty
     boolean ephemeral;
-
-    @JsonProperty
-    boolean idOnly = false;
 
     @JsonProperty
     UUID startingAfter;
@@ -90,16 +87,9 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
         specs.addAll(request.specs());
     }
 
+    // TODO now that forIDs is gone, maybe rename?
     public static SubscriptionRequestTO forFacts(SubscriptionRequest request) {
-        SubscriptionRequestTO t = new SubscriptionRequestTO(request);
-        t.idOnly(false);
-        return t;
-    }
-
-    public static SubscriptionRequestTO forIds(SubscriptionRequest request) {
-        SubscriptionRequestTO t = new SubscriptionRequestTO(request);
-        t.idOnly(true);
-        return t;
+        return new SubscriptionRequestTO(request);
     }
 
     public void addSpecs(@NonNull List<FactSpec> factSpecs) {

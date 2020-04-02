@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
  *
  * see {@link IdObserver}, {@link FactObserver}
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 public interface GenericObserver<I> {
 

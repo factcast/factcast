@@ -38,7 +38,7 @@ import lombok.NonNull;
  * In a sense it is an internal interface, or SPI implemented by for instance
  * InMemFactStore or PgFactStore.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public interface FactStore {
@@ -46,8 +46,6 @@ public interface FactStore {
     void publish(List<? extends Fact> factsToPublish);
 
     Subscription subscribe(SubscriptionRequestTO request, FactObserver observer);
-
-    Optional<Fact> fetchById(UUID id);
 
     OptionalLong serialOf(UUID l);
 

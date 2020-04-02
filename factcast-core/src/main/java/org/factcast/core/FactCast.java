@@ -29,7 +29,7 @@ import lombok.NonNull;
  * FactCast provides methods to publish Facts in a sync/async fashion, as well
  * as a subscription mechanism to listen for changes and catching up.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 public interface FactCast extends ReadFactCast {
 

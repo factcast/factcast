@@ -15,7 +15,7 @@
  */
 package org.factcast.client.grpc;
 
-import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
+import static io.grpc.stub.ClientCalls.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -50,7 +50,6 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
@@ -82,9 +81,9 @@ import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+
 @Slf4j
 public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
@@ -102,12 +101,12 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     @Autowired
     @Generated
     public GrpcFactStore(FactCastGrpcChannelFactory channelFactory,
             @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials) {
         this(channelFactory.createChannel(CHANNEL_NAME), credentials);
+
     }
 
     @Generated
@@ -135,23 +134,6 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     }
 
     @Override
-    public Optional<Fact> fetchById(UUID id) {
-        log.trace("fetching {} from remote store", id);
-
-        MSG_OptionalFact fetchById;
-        try {
-            fetchById = blockingStub.fetchById(converter.toProto(id));
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
-        if (!fetchById.getPresent()) {
-            return Optional.empty();
-        } else {
-            return converter.fromProto(fetchById);
-        }
-    }
-
-    @Override
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
         log.trace("publishing {} facts to remote store", factsToPublish.size());
         List<MSG_Fact> mf = factsToPublish.stream()
@@ -171,7 +153,7 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     @Override
     public Subscription subscribe(@NonNull SubscriptionRequestTO req,
             @NonNull FactObserver observer) {
-        SubscriptionImpl<Fact> subscription = SubscriptionImpl.on(observer);
+        SubscriptionImpl subscription = SubscriptionImpl.on(observer);
         StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new ClientStreamObserver(
                 subscription);
         ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()

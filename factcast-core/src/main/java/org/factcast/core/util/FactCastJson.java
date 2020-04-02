@@ -18,11 +18,14 @@ package org.factcast.core.util;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -41,7 +44,7 @@ import lombok.SneakyThrows;
  * You must not change the configuration of this mapper, and it should not be
  * used outside of FactCast.
  *
- * @author uwe.schaefer@mercateo.com
+ * @author uwe.schaefer@prisma-capacity.eu
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FactCastJson {
@@ -117,6 +120,24 @@ public final class FactCastJson {
 
     public static String readJSON(File file) throws JsonProcessingException, IOException {
         return objectMapper.readTree(file).toString();
+    }
+
+    public static <T> JsonNode valueToTree(T object) {
+        return objectMapper.valueToTree(object);
+    }
+
+    public static JsonNode readTree(String json) throws JsonMappingException,
+            JsonProcessingException {
+        return objectMapper.readTree(json);
+    }
+
+    public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
+        return objectMapper.convertValue(fromValue, toValueType);
+    }
+
+    public static JsonNode toJsonNode(Map<String, Object> jsonAsMap) {
+        return objectMapper.convertValue(jsonAsMap, JsonNode.class);
+
     }
 
 }
