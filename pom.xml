@@ -86,18 +86,6 @@
     <formatter.config>${basedir}/src/eclipse/config</formatter.config>
     <etc>${basedir}/src/etc</etc>
   </properties>
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.junit</groupId>
-        <artifactId>junit-bom</artifactId>
-        <version>5.6.1</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -162,6 +150,13 @@
         <artifactId>lombok</artifactId>
         <scope>provided</scope>
         <version>${lombok.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>5.6.1</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
