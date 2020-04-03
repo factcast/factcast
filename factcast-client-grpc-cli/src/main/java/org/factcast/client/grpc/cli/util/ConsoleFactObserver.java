@@ -17,7 +17,6 @@ package org.factcast.client.grpc.cli.util;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.FactObserver;
 
