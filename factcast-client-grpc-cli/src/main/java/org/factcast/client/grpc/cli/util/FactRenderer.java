@@ -15,7 +15,6 @@
  */
 package org.factcast.client.grpc.cli.util;
 
-import org.factcast.client.grpc.cli.util.Parser.Options;
 import org.factcast.core.Fact;
 import org.factcast.core.util.FactCastJson;
 
@@ -38,7 +37,7 @@ public class FactRenderer {
     }
 
     private String renderJson(String jsonString) {
-        if (options.pretty()) {
+        if (options.pretty) {
             return FactCastJson.toPrettyString(jsonString);
         } else {
             return jsonString;

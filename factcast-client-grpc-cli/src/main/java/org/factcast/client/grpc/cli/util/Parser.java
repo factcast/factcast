@@ -22,7 +22,6 @@ import org.factcast.client.grpc.cli.conv.Converters;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.JCommander.Builder;
-import com.beust.jcommander.Parameter;
 
 import lombok.Getter;
 
@@ -72,49 +71,6 @@ public class Parser {
         }
         if (options.basicAuthCredentials != null) {
             System.setProperty(BASICAUTH_SYSPROP_NAME, options.basicAuthCredentials);
-        }
-    }
-
-    public static class Options {
-
-        @Parameter(names = { "--help", "-help", "-?", "--?" }, help = true, hidden = true)
-        boolean help;
-
-        @Parameter(
-                names = { "--basic", "-basic", },
-                help = true,
-                hidden = false,
-                description = "Basic-Auth Crendentials in the form \"user:password\"")
-        String basicAuthCredentials;
-
-        @Getter
-        @Parameter(names = { "--pretty" }, help = true, description = "format JSON output")
-        boolean pretty = false;
-
-        @Getter
-        @Parameter(
-                names = {
-                        "--no-tls" },
-                help = true,
-                description = "do NOT use TLS to connect (plaintext-communication)")
-        boolean notls = false;
-
-        @Getter
-        @Parameter(
-                names = { "--debug" },
-                help = true,
-                description = "show debug-level debug messages",
-                order = 0)
-        boolean debug = false;
-
-        @Parameter(names = "--address", description = "the address to connect to", order = 1)
-        String address = "static://localhost:9090";
-
-        public Options() {
-            String fc = System.getenv("FACTCAST_SERVER");
-            if (fc != null) {
-                address = fc;
-            }
         }
     }
 
