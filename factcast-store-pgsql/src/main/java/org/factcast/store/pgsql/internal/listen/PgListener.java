@@ -111,7 +111,9 @@ public class PgListener implements InitializingBean, DisposableBean {
                 (t, e) -> log.error("thread " + t + " encountered an unhandled exception", e));
         listenerThread.start();
         try {
-            l.await(15, TimeUnit.SECONDS);
+            log.info("Waiting to establish postgres listener (max 15sec.)");
+            boolean await = l.await(15, TimeUnit.SECONDS);
+            log.info("postgres listener " + (await ? "" : "not ") + "established");
         } catch (InterruptedException ignored) {
         }
     }
