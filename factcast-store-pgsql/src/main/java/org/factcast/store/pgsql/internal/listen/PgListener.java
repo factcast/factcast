@@ -70,13 +70,18 @@ public class PgListener implements InitializingBean, DisposableBean {
         CountDownLatch l = new CountDownLatch(1);
         listenerThread = new Thread(() -> {
             while (running.get()) {
-                // make sure, we did not miss anything while reconnecting
-                postEvent("scheduled-poll");
                 try (PgConnection pc = pgConnectionSupplier.get()) {
+                    boolean poll = true;
                     while (running.get()) {
                         try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_SQL)) {
                             log.trace("Running LISTEN command");
                             ps.execute();
+                        }
+                        if (poll) {
+                            // make sure, we did not miss anything while
+                            // reconnecting,
+                            postEvent("scheduled-poll");
+                            poll = false;
                         }
                         if (pgConnectionTester.test(pc)) {
                             log.trace("Waiting for notifications for {}ms",
@@ -106,7 +111,9 @@ public class PgListener implements InitializingBean, DisposableBean {
                 (t, e) -> log.error("thread " + t + " encountered an unhandled exception", e));
         listenerThread.start();
         try {
-            l.await(15, TimeUnit.SECONDS);
+            log.info("Waiting to establish postgres listener (max 15sec.)");
+            boolean await = l.await(15, TimeUnit.SECONDS);
+            log.info("postgres listener " + (await ? "" : "not ") + "established");
         } catch (InterruptedException ignored) {
         }
     }
