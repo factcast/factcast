@@ -14,6 +14,15 @@ weight = 1000
 
 ## Upgrading to 0.2.0 (quite a lot)
 
+
+#### header field 'aggId' replaced by 'aggIds'
+
+This change was actually two years ago, but it was not documented well, and if you used certain factory methods of DefaultFact, a field 'aggId' was created/read.
+So, to make it perfectly clear, a Fact can have an 'aggIds' header field, which is an array of uuids.
+
+A FactSpec, however has an optional 'aggId' (without the 's'), as it is not an array, but a single one.
+We encourage you to update any header in your postgres, that contains 'aggId', rather than 'aggIds' in the course of migration to 0.2.0
+
 #### basic-auth setup has changed
 
 If you used a 'factcast-security.json' before, you will be please to learn that factcast was extended to support role/namespace based autorisation. Also the filename changed to 'factcast-access.json'.
