@@ -50,6 +50,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
@@ -320,5 +321,40 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
             throw wrapRetryable(e);
         }
         return converter.fromProto(resp);
+    }
+
+    @Override
+    public Optional<Fact> fetchById(UUID id) {
+        log.trace("fetching {} from remote store", id);
+
+        MSG_OptionalFact fetchById;
+        try {
+            fetchById = blockingStub.fetchById(converter.toProto(id));
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+        if (!fetchById.getPresent()) {
+            return Optional.empty();
+        } else {
+            return converter.fromProto(fetchById);
+        }
+    }
+
+    @Override
+    public Optional<Fact> fetchByIdAndVersion(UUID id, int versionExpected) {
+        log.trace("fetching {} from remote store as version {}", id, versionExpected);
+
+        MSG_OptionalFact fetchById;
+        try {
+            fetchById = blockingStub.fetchByIdAndVersion(converter.toProto(id, versionExpected));
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+        if (!fetchById.getPresent()) {
+            return Optional.empty();
+        } else {
+            return converter.fromProto(fetchById);
+        }
+
     }
 }

@@ -15,14 +15,8 @@
  */
 package org.factcast.grpc.api.conv;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,12 +50,13 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProtocolVersion;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID_AND_VERSION;
+import org.junit.jupiter.api.*;
 
 import com.google.common.collect.Sets;
 
 import lombok.NonNull;
+import lombok.val;
 
 public class ProtoConverterTest {
 
@@ -605,4 +600,21 @@ public class ProtoConverterTest {
         });
     }
 
+    @Test
+    public void testFromProtoMSG_UUID_AND_VERSION() throws Exception {
+        val msg = MSG_UUID_AND_VERSION.newBuilder().setLsb(1).setMsb(2).setVer(99).build();
+        val actual = uut.fromProto(msg);
+        assertNotNull(actual);
+        assertThat(actual.uuid()).isEqualTo(new UUID(2, 1));
+        assertThat(actual.version()).isEqualTo(99);
+    }
+
+    @Test
+    public void testToProtoMSG_UUID_AND_VERSION() throws Exception {
+        val actual = uut.toProto(new UUID(2, 1), 99);
+        assertNotNull(actual);
+        assertThat(actual.getLsb()).isEqualTo(1);
+        assertThat(actual.getMsb()).isEqualTo(2);
+        assertThat(actual.getVer()).isEqualTo(99);
+    }
 }

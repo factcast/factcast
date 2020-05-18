@@ -22,6 +22,7 @@ import java.util.function.Predicate;
 import javax.sql.DataSource;
 
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
@@ -83,8 +84,10 @@ public class PgFactStoreInternalConfiguration {
 
     @Bean
     public FactStore factStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
-            PgTokenStore tokenStore, FactTableWriteLock lock, MeterRegistry registry) {
-        return new PgFactStore(jdbcTemplate, subscriptionFactory, tokenStore, lock, registry);
+            PgTokenStore tokenStore, FactTableWriteLock lock,
+            FactTransformerService factTransformerService, MeterRegistry registry) {
+        return new PgFactStore(jdbcTemplate, subscriptionFactory, tokenStore, lock,
+                factTransformerService, registry);
     }
 
     @Bean

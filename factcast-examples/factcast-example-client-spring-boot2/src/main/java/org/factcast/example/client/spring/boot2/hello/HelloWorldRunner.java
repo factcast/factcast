@@ -30,6 +30,7 @@ import org.springframework.stereotype.Component;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 
 @RequiredArgsConstructor
 @Component
@@ -41,33 +42,27 @@ public class HelloWorldRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
+        val id = UUID.randomUUID();
         Fact fact = Fact.builder()
-                .ns("Users")
+                .ns("users")
                 .type("UserCreated")
                 .version(1)
-                .id(UUID.randomUUID())
-                .build("{ \"firstName\":\"Horst\",\"lastName\":\"Lichter\"}");
+                .id(id)
+                .build("{\"firstName\":\"Horst\",\"lastName\":\"Lichter\"}");
         fc.publish(fact);
         System.out.println("published " + fact);
 
-        fact = Fact.builder()
-                .ns("Users")
-                .type("UserCreated")
-                .version(3)
-                .id(UUID.randomUUID())
-                .build("{\"firstName\":\"Horst\",\"lastName\":\"Lichter\",\"displayName\":\"Horsti\",\"salutation\":\"Mr\"}");
-        fc.publish(fact);
-        System.out.println("published " + fact);
+        val uc = fc.fetchById(id);
+        System.out.println(uc.get().jsonPayload());
 
-        // read it back and let factcast transform it to version 3
-        fetch(UserCreated.class, p -> {
-            System.err.println(p);
-        });
+        val uc1 = fc.fetchByIdAndVersion(id, 1);
+        System.out.println(uc1.get().jsonPayload());
 
-        // read it back and let factcast transform it to version 1
-        fetch(UserCreatedV1.class, p -> {
-            System.err.println(p);
-        });
+        val uc2 = fc.fetchByIdAndVersion(id, 2);
+        System.out.println(uc2.get().jsonPayload());
+
+        val uc3 = fc.fetchByIdAndVersion(id, 3);
+        System.out.println(uc3.get().jsonPayload());
 
     }
 
