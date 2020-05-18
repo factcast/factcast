@@ -77,7 +77,7 @@
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
     <spotless-maven-plugin.version>1.31.0</spotless-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
-    <spring-boot-maven-plugin.version>2.2.7.RELEASE</spring-boot-maven-plugin.version>
+    <spring-boot-maven-plugin.version>2.3.0.RELEASE</spring-boot-maven-plugin.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <assertj.version>3.16.1</assertj.version>
