@@ -21,24 +21,26 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.With;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
+@With
 public class TransformationSource {
     @JsonProperty(required = true)
     private String id;
+
+    // needs a default
+    @JsonProperty
+    private String hash = "none";
 
     @JsonProperty(required = true)
     private String ns;
 
     @JsonProperty(required = true)
     private String type;
-
-    // needs a default
-    @JsonProperty
-    private String hash = "none";
 
     @JsonProperty(required = true)
     private Integer from;

@@ -151,7 +151,7 @@ public abstract class AbstractTransformationStoreTest {
         TransformationStoreListener l = mock(TransformationStoreListener.class);
         uut.register(l);
 
-        TransformationSource source = new TransformationSource("xx", "ns", "type", "abcdef", 1, 2);
+        TransformationSource source = new TransformationSource("xx", "hash", "ns", "type", 1, 2);
         uut.store(source, "");
 
         ((AbstractTransformationStore) uut).executorService()
@@ -167,7 +167,7 @@ public abstract class AbstractTransformationStoreTest {
         uut.register(l);
         uut.unregister(l);
 
-        TransformationSource source = new TransformationSource("xx", "ns", "type", "abcdef", 1, 2);
+        TransformationSource source = new TransformationSource("xx", "hash", "ns", "type", 1, 2);
         uut.store(source, "");
 
         ((AbstractTransformationStore) uut).executorService()

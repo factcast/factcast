@@ -17,18 +17,12 @@ package org.factcast.store.pgsql.registry.transformation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
-class TransformationSourceTest {
+class TransformationCacheCompactorTest {
+
     @Test
-    public void testToKey() {
-
-        TransformationSource uut = new TransformationSource("id", "hash", "ns", "type", 2, 1);
-
-        TransformationKey key = uut.toKey();
-
-        assertEquals(key.ns(), "ns");
-        assertEquals(key.type(), "type");
+    void compact() {
+        // TODO
     }
-
 }
