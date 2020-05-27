@@ -19,10 +19,10 @@ import java.util.StringJoiner;
 
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 
+@With
 @RequiredArgsConstructor(staticName = "of")
-@Wither
 @Value
 public class ProtocolVersion {
 

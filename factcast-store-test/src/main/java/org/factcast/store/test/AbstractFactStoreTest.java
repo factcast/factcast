@@ -74,6 +74,20 @@ public abstract class AbstractFactStoreTest {
     protected abstract FactStore createStoreToTest();
 
     @Test
+    public void testFetchById() throws Exception {
+        UUID id = UUID.randomUUID();
+        uut.fetchById(id);
+        verify(store).fetchById(id);
+    }
+
+    @Test
+    public void testFetchByIdAndVersion() throws Exception {
+        UUID id = UUID.randomUUID();
+        uut.fetchByIdAndVersion(id, 77);
+        verify(store).fetchByIdAndVersion(id, 77);
+    }
+
+    @Test
     public void testPublishNullParameter() throws Exception {
         assertThrows(NullPointerException.class, () -> createStoreToTest().publish(null));
     }
