@@ -15,25 +15,19 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
+import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.pgsql.internal.RequestedVersions;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
-import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
-import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
 
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class FactTransformersFactoryImpl implements FactTransformersFactory {
 
-    private final TransformationChains chains;
-
-    private final Transformer trans;
-
-    private final TransformationCache cache;
+    private final FactTransformerService trans;
 
     private final RegistryMetrics registryMetrics;
 
@@ -48,7 +42,7 @@ public class FactTransformersFactoryImpl implements FactTransformersFactory {
             }
         });
 
-        return new FactTransformersImpl(rv, chains, trans, cache, registryMetrics);
+        return new FactTransformersImpl(rv, trans, registryMetrics);
 
     }
 

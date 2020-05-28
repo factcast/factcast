@@ -12,6 +12,11 @@ message MSG_UUID {
 	int64 msb = 1;
 	int64 lsb = 2;
 }
+message MSG_UUID_AND_VERSION {
+	int64 msb = 1;
+	int64 lsb = 2;
+	int32 ver = 3;
+}
 message MSG_UUIDs {
 	repeated MSG_UUID uuids = 1;
 }
@@ -117,17 +122,18 @@ message MSG_CurrentDatabaseTime {
 }
 
 service RemoteFactStore {
-	// 1.0
 	rpc subscribe (MSG_SubscriptionRequest) returns (stream MSG_Notification) {}
+	rpc fetchById (MSG_UUID) returns (MSG_OptionalFact) {}
 	rpc publish (MSG_Facts) returns (MSG_Empty) {}
 	rpc serialOf (MSG_UUID) returns (MSG_OptionalSerial) {}
 	rpc handshake (MSG_Empty) returns (MSG_ServerConfig) {}
 	rpc enumerateNamespaces (MSG_Empty) returns (MSG_StringSet) {}
 	rpc enumerateTypes (MSG_String) returns (MSG_StringSet) {}
-	// 1.1
+
 	rpc publishConditional (MSG_ConditionalPublishRequest) returns (MSG_ConditionalPublishResult) {}
 	rpc invalidate (MSG_UUID) returns (MSG_Empty) {}
 	rpc stateFor (MSG_StateForRequest) returns (MSG_UUID) {}
 	rpc currentTime(MSG_Empty) returns (MSG_CurrentDatabaseTime) {}
-	
+	// 1.2
+	rpc fetchByIdAndVersion (MSG_UUID_AND_VERSION) returns (MSG_OptionalFact) {}
 }

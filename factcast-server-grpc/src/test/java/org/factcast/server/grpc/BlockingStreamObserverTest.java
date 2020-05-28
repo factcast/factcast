@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -29,6 +30,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.grpc.stub.ServerCallStreamObserver;
+import lombok.val;
 
 @ExtendWith(MockitoExtension.class)
 public class BlockingStreamObserverTest {
@@ -52,13 +54,13 @@ public class BlockingStreamObserverTest {
 
     @Test
     void testNullContract() {
-        assertThrows(NullPointerException.class, () -> {
+        expectNPE(() -> {
             new BlockingStreamObserver(null, mock(ServerCallStreamObserver.class));
         });
-        assertThrows(NullPointerException.class, () -> {
+        expectNPE(() -> {
             new BlockingStreamObserver(null, null);
         });
-        assertThrows(NullPointerException.class, () -> {
+        expectNPE(() -> {
             new BlockingStreamObserver("oink", null);
         });
     }
@@ -107,5 +109,22 @@ public class BlockingStreamObserverTest {
         Thread.sleep(100);
         assertTrue(onNextCall.isDone());
         verify(delegate, never()).onNext(any());
+    }
+
+    public static void expectNPE(Runnable r) {
+        expect(r, NullPointerException.class, IllegalArgumentException.class);
+    }
+
+    public static void expect(Runnable r, Class<? extends Throwable>... ex) {
+        try {
+            r.run();
+            fail("expected " + ex);
+        } catch (Throwable actual) {
+
+            val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
+            if (!matches) {
+                fail("Wrong exception, expected " + ex + " but got " + actual);
+            }
+        }
     }
 }

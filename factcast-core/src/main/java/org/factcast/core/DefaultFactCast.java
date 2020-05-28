@@ -16,6 +16,7 @@
 package org.factcast.core;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
@@ -26,6 +27,7 @@ import org.factcast.core.subscription.ReconnectingFactSubscriptionWrapper;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 
 import lombok.NonNull;
@@ -90,4 +92,18 @@ class DefaultFactCast implements FactCast {
                 request),
                 observer);
     }
+
+    @Override
+    @NonNull
+    public Optional<Fact> fetchById(@NonNull UUID id) {
+        return store.fetchById(id);
+    }
+
+    @Override
+    public Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected)
+            // TODO is transport of this exception reasonable?
+            throws TransformationException {
+        return store.fetchByIdAndVersion(id, versionExpected);
+    }
+
 }

@@ -1,0 +1,13 @@
+{
+  "additionalProperties" : true,
+  "properties" : {
+    "firstName" : {
+      "type": "string"
+    },
+    "lastName" : {
+      "type": "string"
+    }
+  },
+  "required": ["firstName", "lastName"]
+}
+

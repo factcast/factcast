@@ -15,6 +15,7 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
+import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
@@ -75,9 +76,15 @@ public class TransformationConfiguration {
     }
 
     @Bean
-    public FactTransformersFactory factTransformersFactory(TransformationChains chains,
+    public FactTransformersFactory factTransformersFactory(FactTransformerService trans,
+            RegistryMetrics registryMetrics) {
+        return new FactTransformersFactoryImpl(trans, registryMetrics);
+    }
+
+    @Bean
+    public FactTransformerService factTransformerService(TransformationChains chains,
             Transformer trans, TransformationCache cache, RegistryMetrics registryMetrics) {
-        return new FactTransformersFactoryImpl(chains, trans, cache, registryMetrics);
+        return new FactTransformerServiceImpl(chains, trans, cache, registryMetrics);
     }
 
     @Bean

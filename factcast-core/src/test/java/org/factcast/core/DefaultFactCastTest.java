@@ -36,9 +36,8 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -115,7 +114,7 @@ public class DefaultFactCastTest {
     @Test
     void testPublishWithAggregatedException() {
         try {
-            uut.publish(new NullFact());
+            uut.publish(mock(Fact.class));
             fail();
         } catch (FactValidationException e) {
             assertThat(e.getMessage()).contains("lacks required namespace");

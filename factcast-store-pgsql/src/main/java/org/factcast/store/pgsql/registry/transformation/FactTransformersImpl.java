@@ -15,29 +15,16 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
-import java.util.Optional;
 import java.util.OptionalInt;
 
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.internal.RequestedVersions;
-import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.TimedOperation;
-import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
-import org.factcast.store.pgsql.registry.transformation.chains.TransformationChain;
-import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
-import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.annotations.VisibleForTesting;
-
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -48,13 +35,7 @@ public class FactTransformersImpl implements FactTransformers {
     private final RequestedVersions requested;
 
     @NonNull
-    private final TransformationChains chains;
-
-    @NonNull
-    private final Transformer trans;
-
-    @NonNull
-    private final TransformationCache cache;
+    private final FactTransformerService trans;
 
     @NonNull
     private final RegistryMetrics registryMetrics;
@@ -75,45 +56,8 @@ public class FactTransformersImpl implements FactTransformers {
 
             return registryMetrics.timed(TimedOperation.TRANSFORMATION,
                     TransformationException.class,
-                    () -> transform(targetVersion, e));
+                    () -> trans.transformIfNecessary(e, targetVersion));
 
-        }
-
-    }
-
-    @VisibleForTesting
-    protected @NonNull Fact transform(int targetVersion, @NonNull Fact e)
-            throws TransformationException {
-        // find the "best" version if there are more than one requested
-
-        int sourceVersion = e.version();
-
-        TransformationKey key = TransformationKey.of(e.ns(), e.type());
-        TransformationChain chain = chains.get(key, sourceVersion,
-                targetVersion);
-
-        String chainId = chain.id();
-
-        Optional<Fact> cached = cache.find(e.id(), targetVersion, chainId);
-        if (cached.isPresent())
-            return cached.get();
-        else {
-            try {
-                JsonNode input = FactCastJson.readTree(e.jsonPayload());
-                JsonNode header = FactCastJson.readTree(e.jsonHeader());
-                ((ObjectNode) header).put("version", targetVersion);
-                JsonNode transformedPayload = trans.transform(chain, input);
-                Fact transformed = Fact.of(header, transformedPayload);
-                // can be optimized by passing jsonnode?
-                cache.put(transformed, chainId);
-                return transformed;
-            } catch (JsonProcessingException e1) {
-                registryMetrics.count(MetricEvent.TRANSFORMATION_FAILED, Tags.of(
-                        Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
-                        Tag.of("version", String.valueOf(targetVersion))));
-
-                throw new TransformationException(e1);
-            }
         }
     }
 
