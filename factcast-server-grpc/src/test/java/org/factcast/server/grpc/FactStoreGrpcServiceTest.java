@@ -71,6 +71,7 @@ import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+import lombok.NonNull;
 import lombok.val;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -149,6 +150,23 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
+    void fetchByIEmpty() {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+
+        Optional<Fact> expected = Optional.empty();
+        UUID id = UUID.randomUUID();
+        when(store.fetchById(id)).thenReturn(expected);
+        StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+
+        uut.fetchById(new ProtoConverter().toProto(id), stream);
+
+        verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.empty())));
+        verify(stream).onCompleted();
+        verifyNoMoreInteractions(stream);
+    }
+
+    @Test
     void fetchByIdThrowingException() {
         val store = mock(FactStore.class);
         val uut = new FactStoreGrpcService(store);
@@ -185,6 +203,23 @@ public class FactStoreGrpcServiceTest {
         uut.fetchByIdAndVersion(new ProtoConverter().toProto(fact.id(), 1), stream);
 
         verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.of(fact))));
+        verify(stream).onCompleted();
+        verifyNoMoreInteractions(stream);
+    }
+
+    @Test
+    void fetchByIdAndVersionEmpty() throws TransformationException {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+        Optional<Fact> expected = Optional.empty();
+        @NonNull
+        UUID id = UUID.randomUUID();
+        when(store.fetchByIdAndVersion(id, 1)).thenReturn(expected);
+        StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+
+        uut.fetchByIdAndVersion(new ProtoConverter().toProto(id, 1), stream);
+
+        verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.empty())));
         verify(stream).onCompleted();
         verifyNoMoreInteractions(stream);
     }
