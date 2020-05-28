@@ -25,6 +25,7 @@ import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 
 import lombok.NonNull;
@@ -43,24 +44,35 @@ import lombok.NonNull;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public interface FactStore {
 
-    void publish(List<? extends Fact> factsToPublish);
+    void publish(@NonNull List<? extends Fact> factsToPublish);
 
-    Subscription subscribe(SubscriptionRequestTO request, FactObserver observer);
+    @NonNull
+    Subscription subscribe(@NonNull SubscriptionRequestTO request, @NonNull FactObserver observer);
 
-    OptionalLong serialOf(UUID l);
+    @NonNull
+    OptionalLong serialOf(@NonNull UUID l);
 
     // see #153
+    @NonNull
     Set<String> enumerateNamespaces();
 
+    @NonNull
     Set<String> enumerateTypes(@NonNull String ns);
 
     boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
             @NonNull Optional<StateToken> token);
 
+    @NonNull
     StateToken stateFor(@NonNull Collection<UUID> forAggIds, @NonNull Optional<String> ns);
 
     void invalidate(@NonNull StateToken token);
 
     long currentTime();
 
+    @NonNull
+    Optional<Fact> fetchById(@NonNull UUID id);
+
+    @NonNull
+    Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected)
+            throws TransformationException;
 }

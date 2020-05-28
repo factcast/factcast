@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.transformation;
+package org.factcast.core.subscription;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.factcast.core.Fact;
 
-import org.junit.jupiter.api.Test;
+import lombok.NonNull;
 
-class TransformationSourceTest {
-    @Test
-    public void testToKey() {
-
-        TransformationSource uut = new TransformationSource("id", "hash", "ns", "type", 2, 1);
-
-        TransformationKey key = uut.toKey();
-
-        assertEquals(key.ns(), "ns");
-        assertEquals(key.type(), "type");
-    }
-
+public interface FactTransformerService {
+    public Fact transformIfNecessary(@NonNull Fact original, int targetVersion)
+            throws TransformationException;
 }

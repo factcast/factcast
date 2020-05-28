@@ -124,8 +124,9 @@ public class HttpRegistryFileFetcherTest {
             URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
             val uut = new HttpRegistryFileFetcher(baseUrl, registryMetrics);
 
-            String fetch = uut.fetchTransformation(new TransformationSource("someId", "ns", "type",
-                    "hash", 8, 2));
+            String fetch = uut.fetchTransformation(new TransformationSource("someId", "hash", "ns",
+                    "type",
+                    8, 2));
 
             assertEquals(json, fetch);
 

@@ -33,24 +33,26 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.server.grpc.auth.FactCastAccount;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -69,6 +71,8 @@ import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+import lombok.NonNull;
+import lombok.val;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 @ExtendWith(MockitoExtension.class)
@@ -111,6 +115,115 @@ public class FactStoreGrpcServiceTest {
         });
     }
 
+    @Test
+    void currentTime() {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+        when(store.currentTime()).thenReturn(101L);
+        StreamObserver<MSG_CurrentDatabaseTime> stream = mock(StreamObserver.class);
+
+        uut.currentTime(MSG_Empty.getDefaultInstance(), stream);
+
+        verify(stream).onNext(eq(new ProtoConverter().toProto(101L)));
+        verify(stream).onCompleted();
+        verifyNoMoreInteractions(stream);
+    }
+
+    @Test
+    void fetchById() {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+        Fact fact = Fact.builder()
+                .ns("ns")
+                .type("type")
+                .id(UUID.randomUUID())
+                .buildWithoutPayload();
+        val expected = Optional.of(fact);
+        when(store.fetchById(fact.id())).thenReturn(expected);
+        StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+
+        uut.fetchById(new ProtoConverter().toProto(fact.id()), stream);
+
+        verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.of(fact))));
+        verify(stream).onCompleted();
+        verifyNoMoreInteractions(stream);
+    }
+
+    @Test
+    void fetchByIEmpty() {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+
+        Optional<Fact> expected = Optional.empty();
+        UUID id = UUID.randomUUID();
+        when(store.fetchById(id)).thenReturn(expected);
+        StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+
+        uut.fetchById(new ProtoConverter().toProto(id), stream);
+
+        verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.empty())));
+        verify(stream).onCompleted();
+        verifyNoMoreInteractions(stream);
+    }
+
+    @Test
+    void fetchByIdThrowingException() {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+        Fact fact = Fact.builder()
+                .ns("ns")
+                .type("type")
+                .id(UUID.randomUUID())
+                .buildWithoutPayload();
+        val expected = Optional.of(fact);
+        when(store.fetchById(fact.id())).thenThrow(IllegalMonitorStateException.class);
+        StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+
+        uut.fetchById(new ProtoConverter().toProto(fact.id()), stream);
+
+        verify(stream, never()).onNext(any());
+        verify(stream, never()).onCompleted();
+        verify(stream).onError(any(IllegalMonitorStateException.class));
+        verifyNoMoreInteractions(stream);
+    }
+
+    @Test
+    void fetchByIdAndVersion() throws TransformationException {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+        Fact fact = Fact.builder()
+                .ns("ns")
+                .type("type")
+                .id(UUID.randomUUID())
+                .buildWithoutPayload();
+        val expected = Optional.of(fact);
+        when(store.fetchByIdAndVersion(fact.id(), 1)).thenReturn(expected);
+        StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+
+        uut.fetchByIdAndVersion(new ProtoConverter().toProto(fact.id(), 1), stream);
+
+        verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.of(fact))));
+        verify(stream).onCompleted();
+        verifyNoMoreInteractions(stream);
+    }
+
+    @Test
+    void fetchByIdAndVersionEmpty() throws TransformationException {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+        Optional<Fact> expected = Optional.empty();
+        @NonNull
+        UUID id = UUID.randomUUID();
+        when(store.fetchByIdAndVersion(id, 1)).thenReturn(expected);
+        StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+
+        uut.fetchByIdAndVersion(new ProtoConverter().toProto(id, 1), stream);
+
+        verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.empty())));
+        verify(stream).onCompleted();
+        verifyNoMoreInteractions(stream);
+    }
+
     static class TestToken extends RunAsUserToken {
 
         public TestToken(FactCastUser principal) {
@@ -124,7 +237,7 @@ public class FactStoreGrpcServiceTest {
 
     @Test
     void testPublishNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
+        expectNPE(() -> {
             uut.publish(null, mock(StreamObserver.class));
         });
     }
@@ -467,5 +580,22 @@ public class FactStoreGrpcServiceTest {
             fail(s);
         }
 
+    }
+
+    public static void expectNPE(Runnable r) {
+        expect(r, NullPointerException.class, IllegalArgumentException.class);
+    }
+
+    public static void expect(Runnable r, Class<? extends Throwable>... ex) {
+        try {
+            r.run();
+            fail("expected " + ex);
+        } catch (Throwable actual) {
+
+            val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
+            if (!matches) {
+                fail("Wrong exception, expected " + ex + " but got " + actual);
+            }
+        }
     }
 }

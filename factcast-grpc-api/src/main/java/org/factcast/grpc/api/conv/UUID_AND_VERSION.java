@@ -15,32 +15,13 @@
  */
 package org.factcast.grpc.api.conv;
 
-import java.util.StringJoiner;
+import java.util.UUID;
 
-import lombok.RequiredArgsConstructor;
 import lombok.Value;
-import lombok.With;
 
-@With
-@RequiredArgsConstructor(staticName = "of")
 @Value
-public class ProtocolVersion {
+public class UUID_AND_VERSION {
+    UUID uuid;
 
-    final int major;
-
-    final int minor;
-
-    final int patch;
-
-    public boolean isCompatibleTo(ProtocolVersion other) {
-        // patch level must be irrelevant
-        return (major == other.major) && (minor <= other.minor);
-    }
-
-    @Override
-    public String toString() {
-        StringJoiner joiner = new StringJoiner(".");
-        joiner.add(String.valueOf(major)).add(String.valueOf(minor)).add(String.valueOf(patch));
-        return joiner.toString();
-    }
+    int version;
 }

@@ -32,8 +32,10 @@ import org.factcast.core.Fact;
 import org.factcast.core.store.AbstractFactStore;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
+import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.pgsql.internal.PgFactStore.StoreMetrics.OP;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
@@ -55,6 +57,7 @@ import io.micrometer.core.instrument.Timer.Sample;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 /**
  * A PostgreSQL based FactStore implementation
@@ -75,6 +78,9 @@ public class PgFactStore extends AbstractFactStore {
 
     @NonNull
     private final FactTableWriteLock lock;
+
+    @NonNull
+    private final FactTransformerService factTransformerService;
 
     @NonNull
     private final MeterRegistry registry;
@@ -127,13 +133,15 @@ public class PgFactStore extends AbstractFactStore {
 
     @Autowired
     public PgFactStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
-            TokenStore tokenStore, FactTableWriteLock lock, MeterRegistry registry) {
+            TokenStore tokenStore, FactTableWriteLock lock,
+            FactTransformerService factTransformerService, MeterRegistry registry) {
         super(tokenStore);
 
         this.jdbcTemplate = jdbcTemplate;
         this.subscriptionFactory = subscriptionFactory;
         this.lock = lock;
         this.registry = registry;
+        this.factTransformerService = factTransformerService;
 
         /*
          * Register all non-exceptional meters, so that an operational dashboard
@@ -142,6 +150,29 @@ public class PgFactStore extends AbstractFactStore {
          */
         for (OP op : OP.values()) {
             timer(op, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+        }
+    }
+
+    @Override
+    public Optional<Fact> fetchById(@NonNull UUID id) {
+        return time(OP.FETCH_BY_ID, () -> {
+            return jdbcTemplate.query(PgConstants.SELECT_BY_ID,
+                    new Object[] { "{\"id\":\"" + id + "\"}" }, this::extractFactFromResultSet)
+                    .stream()
+                    .findFirst();
+        });
+    }
+
+    @Override
+    public Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int version)
+            throws TransformationException {
+
+        val fact = fetchById(id);
+        // map does not work here due to checked exception
+        if (fact.isPresent()) {
+            return Optional.of(factTransformerService.transformIfNecessary(fact.get(), version));
+        } else {
+            return fact;
         }
     }
 
