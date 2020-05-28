@@ -51,9 +51,8 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.server.grpc.auth.FactCastAccount;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -146,6 +145,27 @@ public class FactStoreGrpcServiceTest {
 
         verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.of(fact))));
         verify(stream).onCompleted();
+        verifyNoMoreInteractions(stream);
+    }
+
+    @Test
+    void fetchByIdThrowingException() {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+        Fact fact = Fact.builder()
+                .ns("ns")
+                .type("type")
+                .id(UUID.randomUUID())
+                .buildWithoutPayload();
+        val expected = Optional.of(fact);
+        when(store.fetchById(fact.id())).thenThrow(IllegalMonitorStateException.class);
+        StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+
+        uut.fetchById(new ProtoConverter().toProto(fact.id()), stream);
+
+        verify(stream, never()).onNext(any());
+        verify(stream, never()).onCompleted();
+        verify(stream).onError(any(IllegalMonitorStateException.class));
         verifyNoMoreInteractions(stream);
     }
 
