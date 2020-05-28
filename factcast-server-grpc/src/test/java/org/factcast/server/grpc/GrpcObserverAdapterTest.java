@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.util.concurrent.Callable;
+import java.util.Arrays;
 import java.util.function.Function;
 
 import org.factcast.core.Fact;
@@ -33,6 +33,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.grpc.stub.StreamObserver;
+import lombok.val;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
 @ExtendWith(MockitoExtension.class)
@@ -107,16 +108,18 @@ public class GrpcObserverAdapterTest {
         assertEquals(f.id(), conv.fromProto(msg.getValue().getFact()).id());
     }
 
-    public static void expectNPE(Callable<?> e) {
-        expect(NullPointerException.class, e);
+    public static void expectNPE(Runnable r) {
+        expect(r, NullPointerException.class, IllegalArgumentException.class);
     }
 
-    public static void expect(Class<? extends Throwable> ex, Callable<?> e) {
+    public static void expect(Runnable r, Class<? extends Throwable>... ex) {
         try {
-            e.call();
+            r.run();
             fail("expected " + ex);
         } catch (Throwable actual) {
-            if (!ex.isInstance(actual)) {
+
+            val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
+            if (!matches) {
                 fail("Wrong exception, expected " + ex + " but got " + actual);
             }
         }
