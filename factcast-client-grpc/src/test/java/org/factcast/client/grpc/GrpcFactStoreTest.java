@@ -44,12 +44,12 @@ import org.factcast.grpc.api.conv.ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -63,6 +63,7 @@ import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import lombok.val;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @ExtendWith(MockitoExtension.class)
@@ -83,7 +84,7 @@ class GrpcFactStoreTest {
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private SubscriptionRequestTO req;
 
-    private ProtoConverter conv = new ProtoConverter();
+    private final ProtoConverter conv = new ProtoConverter();
 
     @Captor
     private ArgumentCaptor<MSG_Facts> factsCap;
@@ -117,6 +118,37 @@ class GrpcFactStoreTest {
     void configureCompressionSkipCompression() {
         uut.configureCompression("zip,lz3,lz4, lz99");
         verifyNoMoreInteractions(stub);
+    }
+
+    @Test
+    void fetchById() {
+        final TestFact fact = new TestFact();
+        val uuid = fact.id();
+        val conv = new ProtoConverter();
+        val id = conv.toProto(uuid);
+        when(blockingStub.fetchById(eq(id))).thenReturn(MSG_OptionalFact.newBuilder()
+                .setFact(conv.toProto(fact))
+                .setPresent(true)
+                .build());
+
+        val result = uut.fetchById(fact.id());
+        assertThat(result.get().id()).isEqualTo(uuid);
+    }
+
+    @Test
+    void fetchByIdAndVersion() {
+        final TestFact fact = new TestFact();
+        val uuid = fact.id();
+        val conv = new ProtoConverter();
+        val id = conv.toProto(uuid, 100);
+        when(blockingStub.fetchByIdAndVersion(eq(id))).thenReturn(MSG_OptionalFact.newBuilder()
+                .setFact(conv.toProto(fact))
+                .setPresent(true)
+                .build());
+
+        val result = uut.fetchByIdAndVersion(fact.id(), 100);
+        assertThat(result.get().id()).isEqualTo(uuid);
+
     }
 
     static class SomeException extends RuntimeException {
@@ -206,16 +238,6 @@ class GrpcFactStoreTest {
         assertNotSame(types, enumerateTypes);
 
     }
-
-    // @Test
-    // void testConstruction() {
-    // expectNPE(() -> new GrpcFactStore((Channel) null));
-    // expectNPE(() -> new
-    // GrpcFactStore(mock(RemoteFactStoreBlockingStub.class), null));
-    // expectNPE(() -> new GrpcFactStore(null,
-    // mock(RemoteFactStoreStub.class)));
-    // expectNPE(() -> new GrpcFactStore(null, null));
-    // }
 
     @Test
     void testSubscribeNull() {
@@ -455,7 +477,7 @@ class GrpcFactStoreTest {
     }
 
     @Test
-    void testCredentialsWrongFormat() throws Exception {
+    void testCredentialsWrongFormat() {
         assertThrows(IllegalArgumentException.class, () -> new GrpcFactStore(mock(Channel.class),
                 Optional.ofNullable("xyz")));
 

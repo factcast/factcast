@@ -107,7 +107,6 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     public GrpcFactStore(FactCastGrpcChannelFactory channelFactory,
             @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials) {
         this(channelFactory.createChannel(CHANNEL_NAME), credentials);
-
     }
 
     @Generated
