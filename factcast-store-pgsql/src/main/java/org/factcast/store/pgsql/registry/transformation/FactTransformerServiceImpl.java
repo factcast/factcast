@@ -56,7 +56,7 @@ public class FactTransformerServiceImpl implements FactTransformerService {
     public Fact transformIfNecessary(Fact e, int targetVersion) throws TransformationException {
 
         int sourceVersion = e.version();
-        if (sourceVersion == targetVersion)
+        if (sourceVersion == targetVersion || targetVersion == 0)
             return e;
 
         TransformationKey key = TransformationKey.of(e.ns(), e.type());
