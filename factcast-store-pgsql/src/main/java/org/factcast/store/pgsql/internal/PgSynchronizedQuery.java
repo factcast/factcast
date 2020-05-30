@@ -68,7 +68,7 @@ class PgSynchronizedQuery {
 
     PgSynchronizedQuery(@NonNull JdbcTemplate jdbcTemplate, @NonNull String sql,
             @NonNull PreparedStatementSetter setter, @NonNull RowCallbackHandler rowHandler,
-            AtomicLong serialToContinueFrom, PgLatestSerialFetcher fetcher) {
+            @NonNull AtomicLong serialToContinueFrom, @NonNull PgLatestSerialFetcher fetcher) {
         this.serialToContinueFrom = serialToContinueFrom;
         latestFetcher = fetcher;
         this.jdbcTemplate = jdbcTemplate;

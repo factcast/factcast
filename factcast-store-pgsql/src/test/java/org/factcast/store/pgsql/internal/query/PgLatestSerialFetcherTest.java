@@ -15,12 +15,12 @@
  */
 package org.factcast.store.pgsql.internal.query;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -39,13 +39,13 @@ public class PgLatestSerialFetcherTest {
     SqlRowSet rs;
 
     @Test
-    public void testRetrieveLatestSerRetuns0WhenExceptionThrown() throws Exception {
+    public void testRetrieveLatestSerRetuns0WhenExceptionThrown() {
         when(jdbc.queryForRowSet(anyString())).thenThrow(UnsupportedOperationException.class);
         assertEquals(0, uut.retrieveLatestSer());
     }
 
     @Test
-    public void shouldReturn0IfNotFound() throws Exception {
+    public void shouldReturn0IfNotFound() {
         when(jdbc.queryForRowSet(anyString())).thenReturn(rs);
         when(rs.next()).thenReturn(false);
 

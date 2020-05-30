@@ -47,7 +47,8 @@ class CondensedQueryExecutor {
 
     final Supplier<Boolean> connectionStateSupplier;
 
-    Timer timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer", true);
+    // must not be final
+    final Timer timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer", true);
 
     final AtomicBoolean currentlyScheduled = new AtomicBoolean(false);
 

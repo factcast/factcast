@@ -29,7 +29,7 @@ public class FactValidationError {
         this.message = string;
     }
 
-    private String level;
+    String level;
 
-    private String message;
+    String message;
 }

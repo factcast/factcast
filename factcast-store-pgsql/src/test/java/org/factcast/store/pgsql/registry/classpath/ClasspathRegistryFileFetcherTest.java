@@ -17,8 +17,6 @@ package org.factcast.store.pgsql.registry.classpath;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.IOException;
-
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.junit.jupiter.api.*;
@@ -28,7 +26,7 @@ import lombok.val;
 class ClasspathRegistryFileFetcherTest {
 
     @Test
-    void fetchTransformation() throws IOException {
+    void fetchTransformation() {
         val uut = new ClasspathRegistryFileFetcher("/example-registry");
         String transformation = uut.fetchTransformation(new TransformationSource("1-2", "xxx", "ns",
                 "type", 1, 2));
@@ -38,7 +36,7 @@ class ClasspathRegistryFileFetcherTest {
     }
 
     @Test
-    void fetchSchema() throws IOException {
+    void fetchSchema() {
         val uut = new ClasspathRegistryFileFetcher("/example-registry");
         val s = uut.fetchSchema(new SchemaSource("x", "xxx", "ns", "type", 1));
         assertEquals("{\n" +
