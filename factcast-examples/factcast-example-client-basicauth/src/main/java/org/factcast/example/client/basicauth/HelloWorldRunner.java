@@ -26,7 +26,6 @@ import org.springframework.stereotype.Component;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-@SuppressWarnings("ALL")
 @RequiredArgsConstructor
 @Component
 public class HelloWorldRunner implements CommandLineRunner {
