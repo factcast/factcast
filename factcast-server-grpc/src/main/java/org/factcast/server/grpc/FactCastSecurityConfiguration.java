@@ -61,7 +61,7 @@ public class FactCastSecurityConfiguration {
 
     @Bean(name = "no_longer_used")
     @ConditionalOnResource(resources = "classpath:factcast-security.json")
-    public Object credentialConfigurationFromClasspath() throws IOException {
+    public Object credentialConfigurationFromClasspath() {
         throw new IllegalArgumentException(
                 "classpath:factcast-security.json was removed in this release. Please read the migration guide.");
     }
@@ -69,7 +69,6 @@ public class FactCastSecurityConfiguration {
     @Bean
     @ConfigurationProperties(
             prefix = "factcast.access",
-            ignoreInvalidFields = false,
             ignoreUnknownFields = false)
     public FactCastSecretProperties factCastSecretProperties() {
         return new FactCastSecretProperties();

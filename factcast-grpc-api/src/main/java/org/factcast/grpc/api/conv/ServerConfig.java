@@ -17,7 +17,9 @@ package org.factcast.grpc.api.conv;
 
 import java.util.Map;
 
-@lombok.Value(staticConstructor = "of")
+import lombok.Value;
+
+@Value(staticConstructor = "of")
 public class ServerConfig {
 
     ProtocolVersion version;

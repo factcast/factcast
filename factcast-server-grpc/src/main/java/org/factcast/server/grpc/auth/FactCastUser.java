@@ -24,14 +24,15 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import lombok.NonNull;
+import lombok.experimental.Delegate;
 
 public class FactCastUser implements UserDetails, CredentialsContainer {
     private static final long serialVersionUID = 1L;
 
-    @lombok.experimental.Delegate
-    private User user;
+    @Delegate
+    private final User user;
 
-    private FactCastAccount account;
+    private final FactCastAccount account;
 
     public FactCastUser(FactCastAccount account, String secret) {
         this.account = account;
