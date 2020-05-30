@@ -22,11 +22,16 @@ import org.factcast.core.TestFact;
 import org.factcast.core.TestHelper;
 import org.junit.jupiter.api.*;
 
+import lombok.NonNull;
+
 public class GenericObserverTest {
 
     @Test
     void testMap() {
-        GenericObserver<Integer> i = spy(element -> {
+        GenericObserver<Integer> i = spy(new GenericObserver<Integer>() {
+            @Override
+            public void onNext(@NonNull Integer element) {
+            }
         });
         FactObserver mapped = i.map(f -> 4);
         verify(i, never()).onCatchup();
@@ -62,9 +67,11 @@ public class GenericObserverTest {
 
     @Test
     public void testOnErrorNullParameter() {
-        GenericObserver<Integer> uut = element -> {
+        GenericObserver<Integer> uut = e -> {
         };
-        TestHelper.expectNPE(() -> uut.onError(null));
+        TestHelper.expectNPE(() -> {
+            uut.onError(null);
+        });
     }
 
 }
