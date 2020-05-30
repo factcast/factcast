@@ -33,11 +33,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @UtilityClass
 class Retry {
-    private static final ClassLoader classLoader = Retry.class.getClassLoader();
+    private final ClassLoader classLoader = Retry.class.getClassLoader();
 
-    static final long DEFAULT_WAIT_TIME_MILLIS = 10;
+    final long DEFAULT_WAIT_TIME_MILLIS = 10;
 
-    public static FactCast wrap(FactCast toWrap, int maxRetryAttempts,
+    public FactCast wrap(FactCast toWrap, int maxRetryAttempts,
             long minimumWaitIntervalMillis) {
         if (!(maxRetryAttempts > 0)) {
             throw new IllegalArgumentException("maxRetryAttempts must be > 0");
@@ -52,7 +52,7 @@ class Retry {
     }
 
     @RequiredArgsConstructor
-    private static class RetryProxyInvocationHandler implements InvocationHandler {
+    private class RetryProxyInvocationHandler implements InvocationHandler {
         @NonNull
         final Object delegateObject;
 

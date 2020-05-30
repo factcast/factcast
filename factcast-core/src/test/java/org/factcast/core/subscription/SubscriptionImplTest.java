@@ -26,15 +26,11 @@ import java.util.concurrent.TimeoutException;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.subscription.observer.GenericObserver;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import lombok.NonNull;
 
 @ExtendWith(MockitoExtension.class)
 public class SubscriptionImplTest {
@@ -48,14 +44,13 @@ public class SubscriptionImplTest {
     @InjectMocks
     private SubscriptionImpl uut;
 
-    @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
         obs = mock(GenericObserver.class);
     }
 
     @Test
-    void testClose() throws Exception {
+    void testClose() {
         expect(TimeoutException.class, () -> uut.awaitCatchup(10));
         expect(TimeoutException.class, () -> uut.awaitComplete(10));
         uut.close();
@@ -81,24 +76,19 @@ public class SubscriptionImplTest {
         uut.awaitComplete();
     }
 
+    @Test
     void testNullConst() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            new SubscriptionImpl(null, null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> new SubscriptionImpl(null, null));
     }
 
     @Test
     void testNotifyElementNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.notifyElement(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.notifyElement(null));
     }
 
     @Test
     void testNotifyErrorNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.notifyError(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.notifyError(null));
     }
 
     @Test
@@ -111,22 +101,14 @@ public class SubscriptionImplTest {
 
     private GenericObserver<Fact> obs;
 
-    private FactTransformers ft = new FactTransformers() {
-
-        @Override
-        public @NonNull Fact transformIfNecessary(@NonNull Fact e) throws TransformationException {
-            return e;
-        }
-    };
+    private final FactTransformers ft = e -> e;
 
     @Test
     void testOnNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            SubscriptionImpl.on(null, null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> SubscriptionImpl.on(null, null));
     }
 
-    Fact testFact = new TestFact();
+    final Fact testFact = new TestFact();
 
     @Test
     void testOn() throws TransformationException {
@@ -210,7 +192,7 @@ public class SubscriptionImplTest {
     }
 
     @Test
-    void testAwaitCatchupLong() throws Exception {
+    void testAwaitCatchupLong() {
         Assertions.assertTimeout(Duration.ofMillis(100), () -> {
             uut.notifyCatchup();
             uut.awaitCatchup(100000);
@@ -218,7 +200,7 @@ public class SubscriptionImplTest {
     }
 
     @Test
-    void testAwaitCompleteLong() throws Exception {
+    void testAwaitCompleteLong() {
         Assertions.assertTimeout(Duration.ofMillis(100), () -> {
             uut.notifyComplete();
             uut.awaitComplete(100000);
@@ -226,7 +208,7 @@ public class SubscriptionImplTest {
     }
 
     @Test
-    public void testCloseThrowsException() throws Exception {
+    public void testCloseThrowsException() {
         uut = spy(uut);
         doThrow(RuntimeException.class).when(uut).close();
 

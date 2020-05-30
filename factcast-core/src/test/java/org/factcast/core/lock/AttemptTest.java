@@ -15,47 +15,36 @@
  */
 package org.factcast.core.lock;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.LinkedList;
-import java.util.List;
 
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class AttemptTest {
 
     @Test
-    public void testAbort() throws Exception {
-        assertThrows(AttemptAbortedException.class, () -> {
-            Attempt.abort("foo");
-        });
-        assertThrows(NullPointerException.class, () -> {
-            Attempt.abort(null);
-        });
+    public void testAbort() {
+        assertThrows(AttemptAbortedException.class, () -> Attempt.abort("foo"));
+        assertThrows(NullPointerException.class, () -> Attempt.abort(null));
     }
 
     @Test
-    public void testPublishNPE() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            Attempt.publish((List<Fact>) null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            Attempt.publish((Fact) null);
-        });
+    public void testPublishNPE() {
+        assertThrows(NullPointerException.class, () -> Attempt.publish(null));
+        assertThrows(NullPointerException.class, () -> Attempt.publish((Fact) null));
     }
 
     @Test
-    public void testPublish() throws Exception {
-        assertThrows(IllegalArgumentException.class, () -> {
-            Attempt.publish(new LinkedList<>());
-        });
+    public void testPublish() {
+        assertThrows(IllegalArgumentException.class, () -> Attempt.publish(new LinkedList<>()));
     }
 
     @Test
-    public void testPublishFactFactArray() throws Exception {
+    public void testPublishFactFactArray() {
         Fact f1 = new TestFact();
         Fact f2 = new TestFact();
         Fact f3 = new TestFact();
@@ -64,7 +53,7 @@ public class AttemptTest {
     }
 
     @Test
-    public void testPublishFact() throws Exception {
+    public void testPublishFact() {
         Fact f1 = new TestFact();
         IntermediatePublishResult r = Attempt.publish(f1);
         assertThat(r.factsToPublish().size()).isEqualTo(1);
