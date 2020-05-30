@@ -19,19 +19,21 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
-import org.factcast.client.grpc.cli.util.*;
-import org.factcast.client.grpc.cli.util.Parser.*;
-import org.factcast.core.*;
-import org.factcast.core.spec.*;
-import org.factcast.core.store.*;
-import org.factcast.core.subscription.*;
-import org.factcast.core.subscription.observer.*;
+import org.factcast.client.grpc.cli.util.ConsoleFactObserver;
+import org.factcast.client.grpc.cli.util.Options;
+import org.factcast.core.FactCast;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.observer.GenericObserver;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
-import org.mockito.*;
-import org.mockito.junit.jupiter.*;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class CatchupTest {
@@ -59,7 +61,7 @@ class CatchupTest {
 
             List<FactSpec> specs = new ArrayList<>(r.specs());
 
-            assertEquals(startId, r.startingAfter().get());
+            assertEquals(startId, r.startingAfter().orElse(null));
             assertEquals(ns, specs.iterator().next().ns());
 
             return null;
