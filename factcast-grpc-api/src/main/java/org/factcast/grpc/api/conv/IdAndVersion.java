@@ -20,7 +20,7 @@ import java.util.UUID;
 import lombok.Value;
 
 @Value
-public class UUID_AND_VERSION {
+public class IdAndVersion {
     UUID uuid;
 
     int version;

@@ -29,6 +29,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
+import org.jetbrains.annotations.NotNull;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -57,10 +58,10 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
     private final ExecutorService es = Executors.newCachedThreadPool(new ThreadFactory() {
 
-        AtomicLong threadCount = new AtomicLong(0);
+        final AtomicLong threadCount = new AtomicLong(0);
 
         @Override
-        public Thread newThread(Runnable r) {
+        public Thread newThread(@NotNull @NonNull Runnable r) {
             Thread thread = new Thread(r);
             thread.setDaemon(true);
             thread.setName("factcast-recon-sub-wrapper-" + threadCount.incrementAndGet());
@@ -253,8 +254,8 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
         Subscription current = currentSubscription.getAndSet(null);
         try {
             current.close();
-        } catch (Exception ignore) {
-            log.warn("Ignoring Exception while closing a subscription:", ignore);
+        } catch (Exception justLog) {
+            log.warn("Ignoring Exception while closing a subscription:", justLog);
         }
     }
 

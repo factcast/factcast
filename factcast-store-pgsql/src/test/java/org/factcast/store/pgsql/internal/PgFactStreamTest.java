@@ -15,9 +15,9 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.InjectMocks;
 
 public class PgFactStreamTest {
@@ -26,10 +26,8 @@ public class PgFactStreamTest {
     PgFactStream uut;
 
     @Test
-    public void testConnectNullParameter() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.connect(null);
-        });
+    public void testConnectNullParameter() {
+        assertThrows(NullPointerException.class, () -> uut.connect(null));
     }
 
 }

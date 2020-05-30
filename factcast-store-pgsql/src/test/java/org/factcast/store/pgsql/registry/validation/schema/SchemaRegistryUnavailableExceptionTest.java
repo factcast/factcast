@@ -21,8 +21,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.IOException;
 
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import okhttp3.HttpUrl;
@@ -31,7 +31,7 @@ import okhttp3.HttpUrl;
 public class SchemaRegistryUnavailableExceptionTest {
 
     @Test
-    public void testSchemaRegistryUnavailableExceptionHttpUrlIntString() throws Exception {
+    public void testSchemaRegistryUnavailableExceptionHttpUrlIntString() {
         HttpUrl url = new HttpUrl.Builder().scheme("https")
                 .host("www.google.com")
                 .addPathSegment("search")
@@ -44,7 +44,7 @@ public class SchemaRegistryUnavailableExceptionTest {
     }
 
     @Test
-    public void testWrapsException() throws Exception {
+    public void testWrapsException() {
         IOException probe = new IOException("probe");
         SchemaRegistryUnavailableException uut = new SchemaRegistryUnavailableException(probe);
 
@@ -52,15 +52,12 @@ public class SchemaRegistryUnavailableExceptionTest {
     }
 
     @Test
-    public void testNullContracts() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new SchemaRegistryUnavailableException("url", 7, null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            new SchemaRegistryUnavailableException(null, 7, "");
-        });
-        assertThrows(NullPointerException.class, () -> {
-            new SchemaRegistryUnavailableException(null, 7, null);
-        });
+    public void testNullContracts() {
+        assertThrows(NullPointerException.class, () -> new SchemaRegistryUnavailableException("url",
+                7, null));
+        assertThrows(NullPointerException.class, () -> new SchemaRegistryUnavailableException(null,
+                7, ""));
+        assertThrows(NullPointerException.class, () -> new SchemaRegistryUnavailableException(null,
+                7, null));
     }
 }

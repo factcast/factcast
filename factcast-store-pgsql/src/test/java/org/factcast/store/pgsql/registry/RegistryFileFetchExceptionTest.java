@@ -19,17 +19,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.net.URL;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class RegistryFileFetchExceptionTest {
     @Test
     void testNullContracts() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new RegistryFileFetchException(null, 7, "");
-        });
-        assertThrows(NullPointerException.class, () -> {
-            new RegistryFileFetchException(new URL("http://ibm.com"), 7, null);
-        });
+        assertThrows(NullPointerException.class, () -> new RegistryFileFetchException(null, 7, ""));
+        assertThrows(NullPointerException.class, () -> new RegistryFileFetchException(new URL(
+                "http://ibm.com"), 7, null));
 
         new RegistryFileFetchException(new URL("http://ibm.com"), 7, "must not throw exception");
 

@@ -29,7 +29,7 @@ public enum TimedOperation {
     @Getter
     final String op;
 
-    TimedOperation(String op) {
+    TimedOperation(@NonNull String op) {
         this.op = op;
     }
 

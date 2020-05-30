@@ -47,7 +47,7 @@ public class PgPagedCatchUpFactory implements PgCatchupFactory {
     public PgPagedCatchup create(@NonNull SubscriptionRequestTO request,
             @NonNull PgPostQueryMatcher postQueryMatcher,
             @NonNull SubscriptionImpl subscription, @NonNull AtomicLong serial) {
-        return new PgPagedCatchup(jdbc, props, serMapper, request, postQueryMatcher, subscription,
+        return new PgPagedCatchup(jdbc, props, request, postQueryMatcher, subscription,
                 serial);
     }
 }

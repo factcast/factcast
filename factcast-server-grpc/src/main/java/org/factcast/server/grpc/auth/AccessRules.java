@@ -30,18 +30,18 @@ import lombok.NonNull;
 public class AccessRules {
     @VisibleForTesting
     @Getter(value = AccessLevel.PROTECTED)
-    private List<String> include = new LinkedList<>();
+    private final List<String> include = new LinkedList<>();
 
     @VisibleForTesting
     @Getter(value = AccessLevel.PROTECTED)
-    private List<String> exclude = new LinkedList<>();
+    private final List<String> exclude = new LinkedList<>();
 
     Boolean includes(@NonNull String ns) {
-        boolean excluded = exclude.stream().filter(s -> matches(s, ns)).findAny().isPresent();
+        boolean excluded = exclude.stream().anyMatch(s -> matches(s, ns));
         if (excluded)
             return false;
 
-        if (include.stream().filter(s -> matches(s, ns)).findAny().isPresent())
+        if (include.stream().anyMatch(s -> matches(s, ns)))
             return true;
 
         return null;
@@ -51,11 +51,6 @@ public class AccessRules {
         if (pattern.equals(ns) || "*".equals(pattern))
             return true;
 
-        if (pattern.endsWith("*") && ns.startsWith(pattern.substring(0, pattern.length() - 1)))
-            return true;
-
-        // else
-
-        return false;
+        return pattern.endsWith("*") && ns.startsWith(pattern.substring(0, pattern.length() - 1));
     }
 }

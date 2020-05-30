@@ -17,51 +17,51 @@ package org.factcast.server.grpc.auth;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class AccessRulesTest {
 
-    private AccessRules uut = new AccessRules();
+    private final AccessRules uut = new AccessRules();
 
     @Test
-    public void testIncludesDefaultsToNull() throws Exception {
+    public void testIncludesDefaultsToNull() {
         assertNull(uut.includes("foo"));
     }
 
     @Test
-    public void testIncludesNegative() throws Exception {
+    public void testIncludesNegative() {
         uut.exclude().add("foo");
         assertFalse(uut.includes("foo"));
     }
 
     @Test
-    public void testIncludesNegativeExcludeWins() throws Exception {
+    public void testIncludesNegativeExcludeWins() {
         uut.exclude().add("foo");
         uut.include().add("foo");
         assertFalse(uut.includes("foo"));
     }
 
     @Test
-    public void testIncludesNegativeExcludeWildcardWins() throws Exception {
+    public void testIncludesNegativeExcludeWildcardWins() {
         uut.exclude().add("*");
         uut.include().add("foo");
         assertFalse(uut.includes("foo"));
     }
 
     @Test
-    public void testIncludesPositive() throws Exception {
+    public void testIncludesPositive() {
         uut.include().add("foo");
         assertTrue(uut.includes("foo"));
     }
 
     @Test
-    public void testIncludesPositiveWildcardStar() throws Exception {
+    public void testIncludesPositiveWildcardStar() {
         uut.include().add("*");
         assertTrue(uut.includes("foo"));
     }
 
     @Test
-    public void testIncludesPositiveWildcard() throws Exception {
+    public void testIncludesPositiveWildcard() {
         uut.include().add("fo*");
         assertTrue(uut.includes("foo"));
     }

@@ -18,7 +18,7 @@ package org.factcast.server.grpc;
 import static org.mockito.Mockito.*;
 
 import org.factcast.grpc.api.CompressionCodecs;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
@@ -26,7 +26,7 @@ import io.grpc.ServerCallHandler;
 
 class GrpcCompressionInterceptorTest {
 
-    GrpcCompressionInterceptor uut = new GrpcCompressionInterceptor(new CompressionCodecs());
+    final GrpcCompressionInterceptor uut = new GrpcCompressionInterceptor(new CompressionCodecs());
 
     @Test
     void interceptCallWithoutCompression() {

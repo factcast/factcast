@@ -18,12 +18,12 @@ package org.factcast.server.grpc.auth;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicates;
 
 import lombok.AccessLevel;
 import lombok.Data;
@@ -50,7 +50,7 @@ public class FactCastAccount {
     private String id;
 
     @JsonProperty("roles")
-    private final List<String> roleNames = new LinkedList<String>();
+    private final List<String> roleNames = new LinkedList<>();
 
     @VisibleForTesting
     @Getter(value = AccessLevel.PROTECTED)
@@ -58,9 +58,9 @@ public class FactCastAccount {
 
     public void initialize(FactCastAccessConfiguration config) {
         if (id == null)
-            new IllegalArgumentException("Account without 'id' found.");
+            throw new IllegalArgumentException("Account without 'id' found.");
 
-        roles = new LinkedList<FactCastRole>();
+        roles = new LinkedList<>();
         roleNames.forEach(n -> {
             Optional<FactCastRole> r = config.findRoleById(n);
             roles.add(r.orElseThrow(
@@ -75,13 +75,13 @@ public class FactCastAccount {
 
         List<Boolean> results = roles.stream()
                 .map(r -> r.canWrite(ns))
-                .filter(Predicates.notNull())
+                .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
         if (results.contains(false))
             return false;
         return results.contains(true);
-    };
+    }
 
     public boolean canRead(String ns) {
         if (roles == null)
@@ -89,14 +89,14 @@ public class FactCastAccount {
 
         List<Boolean> results = roles.stream()
                 .map(r -> r.canRead(ns))
-                .filter(Predicates.notNull())
+                .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
         if (results.contains(false))
             return false;
         return results.contains(true);
 
-    };
+    }
 
     @VisibleForTesting
     protected FactCastAccount role(@NonNull FactCastRole... other) {

@@ -38,10 +38,10 @@ import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
+import org.factcast.grpc.api.conv.IdAndVersion;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
-import org.factcast.grpc.api.conv.UUID_AND_VERSION;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
@@ -364,7 +364,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     public void fetchByIdAndVersion(MSG_UUID_AND_VERSION request,
             StreamObserver<MSG_OptionalFact> responseObserver) {
 
-        UUID_AND_VERSION fromProto = converter.fromProto(request);
+        IdAndVersion fromProto = converter.fromProto(request);
         log.trace("fetchById {} in version {}", fromProto.uuid(), fromProto.version());
 
         doFetchById(responseObserver, () -> {

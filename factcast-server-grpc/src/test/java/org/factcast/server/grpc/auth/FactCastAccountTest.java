@@ -18,21 +18,21 @@ package org.factcast.server.grpc.auth;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class FactCastAccountTest {
 
-    private FactCastAccount uut = new FactCastAccount("foo");
+    private final FactCastAccount uut = new FactCastAccount("foo");
 
     @Test
-    public void testDefaultsToFalse() throws Exception {
+    public void testDefaultsToFalse() {
         uut.initialize(mock(FactCastAccessConfiguration.class));
         assertFalse(uut.canRead("foo"));
         assertFalse(uut.canWrite("foo"));
     }
 
     @Test
-    public void testReadOnly() throws Exception {
+    public void testReadOnly() {
 
         FactCastRole readOnlyRole = new FactCastRole();
         readOnlyRole.read().include().add("*");
@@ -43,7 +43,7 @@ public class FactCastAccountTest {
     }
 
     @Test
-    public void testReadOnlyMultiRole() throws Exception {
+    public void testReadOnlyMultiRole() {
 
         FactCastRole other = new FactCastRole();
         other.read().exclude().add("toBeExcluded");
@@ -58,7 +58,7 @@ public class FactCastAccountTest {
     }
 
     @Test
-    public void testReadOnlyMultiRoleWithConflict() throws Exception {
+    public void testReadOnlyMultiRoleWithConflict() {
 
         FactCastRole role1 = new FactCastRole();
         role1.read().include().add("foo");
@@ -74,7 +74,7 @@ public class FactCastAccountTest {
     }
 
     @Test
-    public void testInilializationRuns() throws Exception {
+    public void testInilializationRuns() {
 
         FactCastRole role1 = new FactCastRole("r1");
         role1.read().include().add("foo");

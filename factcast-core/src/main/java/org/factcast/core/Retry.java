@@ -35,9 +35,9 @@ import lombok.extern.slf4j.Slf4j;
 class Retry {
     private static final ClassLoader classLoader = Retry.class.getClassLoader();
 
-    static final long DEFAULT_WAIT_TIME_MILLIS = 10;
+    final long DEFAULT_WAIT_TIME_MILLIS = 10;
 
-    public static FactCast wrap(FactCast toWrap, int maxRetryAttempts,
+    public FactCast wrap(FactCast toWrap, int maxRetryAttempts,
             long minimumWaitIntervalMillis) {
         if (!(maxRetryAttempts > 0)) {
             throw new IllegalArgumentException("maxRetryAttempts must be > 0");

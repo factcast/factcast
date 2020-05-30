@@ -29,7 +29,7 @@ import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.SingleTransformation;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
@@ -38,13 +38,13 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 
 public class TransformationChainsTest {
-    SchemaRegistry r = mock(SchemaRegistry.class);
+    final SchemaRegistry r = mock(SchemaRegistry.class);
 
-    RegistryMetrics registryMetrics = spy(new NOPRegistryMetrics());
+    final RegistryMetrics registryMetrics = spy(new NOPRegistryMetrics());
 
-    TransformationChains uut = new TransformationChains(r, registryMetrics);
+    final TransformationChains uut = new TransformationChains(r, registryMetrics);
 
-    TransformationKey key = TransformationKey.of("ns", "UserCreated");
+    final TransformationKey key = TransformationKey.of("ns", "UserCreated");
 
     @Test
     void testStraightLine() throws Exception {
@@ -74,7 +74,7 @@ public class TransformationChainsTest {
     }
 
     @Test
-    void testUnreachable() throws Exception {
+    void testUnreachable() {
 
         ArrayList<Transformation> all = Lists.newArrayList();
         all.add(SingleTransformation.of(key, 1, 2, js(1)));
@@ -84,9 +84,7 @@ public class TransformationChainsTest {
 
         when(r.get(key)).thenReturn(all);
 
-        assertThrows(MissingTransformationInformation.class, () -> {
-            uut.get(key, 1, 7);
-        });
+        assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 1, 7));
         verify(registryMetrics).count(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
                 Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", "1"), Tag
                         .of("to", "7"))));
@@ -151,7 +149,7 @@ public class TransformationChainsTest {
     }
 
     @Test
-    void testTargetNotFound() throws Exception {
+    void testTargetNotFound() {
         ArrayList<Transformation> all = Lists.newArrayList();
         all.add(SingleTransformation.of(key, 1, 2, js(1)));
         all.add(SingleTransformation.of(key, 2, 3, js(2)));
@@ -163,9 +161,7 @@ public class TransformationChainsTest {
 
         when(r.get(key)).thenReturn(all);
 
-        assertThrows(MissingTransformationInformation.class, () -> {
-            uut.get(key, 2, 99);
-        });
+        assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 2, 99));
         verify(registryMetrics).count(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
                 Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", "2"), Tag
                         .of("to", "99"))));
@@ -190,13 +186,11 @@ public class TransformationChainsTest {
     }
 
     @Test
-    void testNoTransformationForKey() throws Exception {
+    void testNoTransformationForKey() {
         ArrayList<Transformation> all = Lists.newArrayList();
         when(r.get(key)).thenReturn(all);
 
-        assertThrows(MissingTransformationInformation.class, () -> {
-            uut.get(key, 2, 99);
-        });
+        assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 2, 99));
         verify(registryMetrics).count(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
                 Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", "2"), Tag
                         .of("to", "99"))));

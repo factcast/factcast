@@ -82,7 +82,7 @@ public class PgTokenStore implements TokenStore {
     }
 
     @Override
-    public Optional<String> getNs(@NonNull StateToken token) {
+    public @NonNull Optional<String> getNs(@NonNull StateToken token) {
         try {
             String ns = tpl.queryForObject(PgConstants.SELECT_NS_FROM_TOKEN,
                     new Object[] { token.uuid() },

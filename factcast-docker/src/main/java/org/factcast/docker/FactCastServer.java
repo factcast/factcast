@@ -20,7 +20,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import lombok.extern.slf4j.Slf4j;
 
-@SuppressWarnings("ALL")
 @SpringBootApplication
 @Slf4j
 public class FactCastServer {

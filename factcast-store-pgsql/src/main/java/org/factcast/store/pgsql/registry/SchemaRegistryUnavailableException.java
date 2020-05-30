@@ -15,15 +15,13 @@
  */
 package org.factcast.store.pgsql.registry;
 
-import java.io.IOException;
-
 import lombok.NonNull;
 
 public class SchemaRegistryUnavailableException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public SchemaRegistryUnavailableException(IOException e) {
+    public SchemaRegistryUnavailableException(Exception e) {
         super(e);
     }
 

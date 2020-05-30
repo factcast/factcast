@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class PgConnectionTester implements Predicate<Connection> {
-    private static int MAX_ALLOWED_NOTIFICATION_LATENCY_IN_MILLIS = 150;
+    private static final int MAX_ALLOWED_NOTIFICATION_LATENCY_IN_MILLIS = 150;
 
     @Override
     public boolean test(@Nonnull Connection connection) {
@@ -74,7 +74,7 @@ public class PgConnectionTester implements Predicate<Connection> {
 
     @VisibleForTesting
     boolean testSelectStatement(Connection connection) {
-        try (PreparedStatement statement = prepareStatement(connection, "SELECT 42");
+        try (PreparedStatement statement = prepareStatement(connection);
                 ResultSet resultSet = statement.executeQuery()) {
 
             resultSet.next();
@@ -90,9 +90,9 @@ public class PgConnectionTester implements Predicate<Connection> {
         return false;
     }
 
-    private PreparedStatement prepareStatement(Connection connection, String string)
+    private PreparedStatement prepareStatement(Connection connection)
             throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(string);
+        PreparedStatement statement = connection.prepareStatement("SELECT 42");
         statement.setQueryTimeout(1);
         return statement;
     }

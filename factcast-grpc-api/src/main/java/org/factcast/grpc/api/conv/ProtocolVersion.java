@@ -26,11 +26,11 @@ import lombok.With;
 @Value
 public class ProtocolVersion {
 
-    final int major;
+    int major;
 
-    final int minor;
+    int minor;
 
-    final int patch;
+    int patch;
 
     public boolean isCompatibleTo(ProtocolVersion other) {
         // patch level must be irrelevant

@@ -15,14 +15,14 @@
  */
 package org.factcast.core.store;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class StateTokenTest {
 
     @Test
-    public void testStateToken() throws Exception {
+    public void testStateToken() {
         assertThat(new StateToken().uuid()).isNotNull();
     }
 

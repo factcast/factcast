@@ -15,13 +15,10 @@
  */
 package org.factcast.core.subscription;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.factcast.core.spec.FactSpec;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class FluentSubscriptionRequestTest {
 
@@ -33,30 +30,26 @@ public class FluentSubscriptionRequestTest {
 
     @Test
     void testFromNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            SubscriptionRequest.catchup(FactSpec.ns("foo")).from(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> SubscriptionRequest.catchup(
+                FactSpec.ns("foo")).from(null));
     }
 
     @Test
     void testFollowNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            SubscriptionRequest.follow((FactSpec) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> SubscriptionRequest.follow(
+                (FactSpec) null));
     }
 
     @Test
     void testCatchupNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            SubscriptionRequest.catchup((FactSpec) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> SubscriptionRequest.catchup(
+                (FactSpec) null));
     }
 
     @Test
     void testOrNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            SubscriptionRequest.catchup(FactSpec.ns("foo")).or(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> SubscriptionRequest.catchup(
+                FactSpec.ns("foo")).or(null));
     }
 
     @Test

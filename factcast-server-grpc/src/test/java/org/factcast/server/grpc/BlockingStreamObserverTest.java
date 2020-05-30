@@ -23,9 +23,8 @@ import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -54,15 +53,9 @@ public class BlockingStreamObserverTest {
 
     @Test
     void testNullContract() {
-        expectNPE(() -> {
-            new BlockingStreamObserver(null, mock(ServerCallStreamObserver.class));
-        });
-        expectNPE(() -> {
-            new BlockingStreamObserver(null, null);
-        });
-        expectNPE(() -> {
-            new BlockingStreamObserver("oink", null);
-        });
+        expectNPE(() -> new BlockingStreamObserver(null, mock(ServerCallStreamObserver.class)));
+        expectNPE(() -> new BlockingStreamObserver(null, null));
+        expectNPE(() -> new BlockingStreamObserver("oink", null));
     }
 
     @Test
@@ -115,15 +108,16 @@ public class BlockingStreamObserverTest {
         expect(r, NullPointerException.class, IllegalArgumentException.class);
     }
 
+    @SafeVarargs
     public static void expect(Runnable r, Class<? extends Throwable>... ex) {
         try {
             r.run();
-            fail("expected " + ex);
+            fail("expected " + Arrays.toString(ex));
         } catch (Throwable actual) {
 
             val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
             if (!matches) {
-                fail("Wrong exception, expected " + ex + " but got " + actual);
+                fail("Wrong exception, expected " + Arrays.toString(ex) + " but got " + actual);
             }
         }
     }

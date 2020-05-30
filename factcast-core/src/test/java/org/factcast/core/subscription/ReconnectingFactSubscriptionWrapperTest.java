@@ -15,22 +15,18 @@
  */
 package org.factcast.core.subscription;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,7 +44,8 @@ public class ReconnectingFactSubscriptionWrapperTest {
 
     ReconnectingFactSubscriptionWrapper uut;
 
-    private ArgumentCaptor<FactObserver> observerAC = ArgumentCaptor.forClass(FactObserver.class);
+    private final ArgumentCaptor<FactObserver> observerAC = ArgumentCaptor.forClass(
+            FactObserver.class);
 
     @Mock
     private Subscription subscription;
@@ -60,7 +57,7 @@ public class ReconnectingFactSubscriptionWrapperTest {
     }
 
     @Test
-    public void testAwaitComplete() throws Exception {
+    public void testAwaitComplete() {
 
         observerAC.getValue().onComplete();
 
@@ -75,9 +72,7 @@ public class ReconnectingFactSubscriptionWrapperTest {
         when(subscription.awaitComplete(anyLong())).thenThrow(TimeoutException.class)
                 .then(x -> subscription);
 
-        assertThrows(TimeoutException.class, () -> {
-            uut.awaitComplete(51);
-        });
+        assertThrows(TimeoutException.class, () -> uut.awaitComplete(51));
 
         assertTimeout(Duration.ofMillis(1000), () -> {
             assertThat(uut.awaitComplete(52)).isSameAs(uut);
@@ -88,7 +83,7 @@ public class ReconnectingFactSubscriptionWrapperTest {
     }
 
     @Test
-    public void testAwaitCatchup() throws Exception {
+    public void testAwaitCatchup() {
 
         observerAC.getValue().onCatchup();
 
@@ -103,9 +98,7 @@ public class ReconnectingFactSubscriptionWrapperTest {
         when(subscription.awaitCatchup(anyLong())).thenThrow(TimeoutException.class)
                 .then(x -> subscription);
 
-        assertThrows(TimeoutException.class, () -> {
-            uut.awaitCatchup(51);
-        });
+        assertThrows(TimeoutException.class, () -> uut.awaitCatchup(51));
 
         assertTimeout(Duration.ofMillis(1000), () -> {
             assertThat(uut.awaitCatchup(52)).isSameAs(uut);
@@ -118,18 +111,10 @@ public class ReconnectingFactSubscriptionWrapperTest {
     @Test
     public void testAssertSubscriptionStateNotClosed() throws Exception {
         uut.close();
-        assertThrows(SubscriptionCancelledException.class, () -> {
-            uut.awaitCatchup();
-        });
-        assertThrows(SubscriptionCancelledException.class, () -> {
-            uut.awaitCatchup(1L);
-        });
-        assertThrows(SubscriptionCancelledException.class, () -> {
-            uut.awaitComplete();
-        });
-        assertThrows(SubscriptionCancelledException.class, () -> {
-            uut.awaitComplete(1L);
-        });
+        assertThrows(SubscriptionCancelledException.class, () -> uut.awaitCatchup());
+        assertThrows(SubscriptionCancelledException.class, () -> uut.awaitCatchup(1L));
+        assertThrows(SubscriptionCancelledException.class, () -> uut.awaitComplete());
+        assertThrows(SubscriptionCancelledException.class, () -> uut.awaitComplete(1L));
     }
 
 }

@@ -16,10 +16,11 @@
 package org.factcast.store.pgsql;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import javax.annotation.Nonnull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -120,7 +121,7 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
     }
 
     @Override
-    public void onApplicationEvent(ApplicationReadyEvent event) {
+    public void onApplicationEvent(@Nonnull ApplicationReadyEvent event) {
         List<Map.Entry<String, Object>> legacyProperties = findAllProperties().entrySet()
                 .stream()
                 .filter(e -> e.getKey().startsWith(LEGACY_PREFIX))
@@ -131,22 +132,18 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
                     "There are legacy properties detected. Property namespace has been renamed from '"
                             + LEGACY_PREFIX
                             + "' to 'factcast.store.pgsql'");
-            legacyProperties.forEach(p -> {
-                log.error("Property {} found in {}", p.getKey(), p.getValue());
-            });
+            legacyProperties.forEach(p -> log.error("Property {} found in {}", p.getKey(), p
+                    .getValue()));
         }
     }
 
     private Map<String, Object> findAllProperties() {
         Map<String, Object> map = new HashMap<>();
         MutablePropertySources propertySources = ((AbstractEnvironment) env).getPropertySources();
-        for (Iterator<?> it = propertySources.iterator(); it.hasNext();) {
-            PropertySource<?> propertySource = (PropertySource<?>) it.next();
+        for (PropertySource<?> propertySource : propertySources) {
             if (propertySource instanceof MapPropertySource) {
                 Map<String, Object> source = ((MapPropertySource) propertySource).getSource();
-                source.entrySet().forEach(e -> {
-                    map.put(e.getKey(), propertySource.toString());
-                });
+                source.forEach((key, value) -> map.put(key, propertySource.toString()));
             }
         }
         return map;

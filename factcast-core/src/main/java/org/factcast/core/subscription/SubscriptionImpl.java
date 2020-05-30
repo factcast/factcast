@@ -36,7 +36,6 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author <uwe.schaefer@prisma-capacity.eu>
  *
- * @param <T>
  */
 @RequiredArgsConstructor
 @Slf4j
@@ -184,13 +183,6 @@ public class SubscriptionImpl implements Subscription {
 
     // for client side
     public static SubscriptionImpl on(@NonNull FactObserver observer2) {
-        return new SubscriptionImpl(observer2, new FactTransformers() {
-
-            @Override
-            public @NonNull Fact transformIfNecessary(@NonNull Fact e)
-                    throws TransformationException {
-                return e;
-            }
-        });
+        return new SubscriptionImpl(observer2, e -> e);
     }
 }

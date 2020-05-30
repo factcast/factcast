@@ -15,24 +15,20 @@
  */
 package org.factcast.store.pgsql.internal.query;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class PgQueryBuilderTest {
 
     @Test
-    public void testPGQueryBuilder() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new PgQueryBuilder(null);
-        });
+    public void testPGQueryBuilder() {
+        assertThrows(NullPointerException.class, () -> new PgQueryBuilder(null));
 
         PgQueryBuilder uut = new PgQueryBuilder(mock(SubscriptionRequestTO.class));
-        assertThrows(NullPointerException.class, () -> {
-            uut.createStatementSetter(null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.createStatementSetter(null));
     }
 
 }

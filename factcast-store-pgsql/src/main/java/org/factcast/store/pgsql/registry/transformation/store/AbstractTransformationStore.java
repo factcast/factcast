@@ -45,9 +45,7 @@ public abstract class AbstractTransformationStore implements TransformationStore
         doStore(source, transformation);
         // uses task per listener to avoid a listener throwing an exception
         // spoil the whole thing
-        listeners.forEach(t -> executorService.submit(() -> {
-            t.notifyFor(source.toKey());
-        }));
+        listeners.forEach(t -> executorService.submit(() -> t.notifyFor(source.toKey())));
 
     }
 

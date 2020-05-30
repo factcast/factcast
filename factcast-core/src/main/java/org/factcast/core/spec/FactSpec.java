@@ -49,7 +49,6 @@ public class FactSpec {
     UUID aggId = null;
 
     @JsonProperty
-    @Deprecated
     String jsFilterScript = null;
 
     @JsonProperty
@@ -95,7 +94,6 @@ public class FactSpec {
         return this;
     }
 
-    @Deprecated
     public FactSpec jsFilterScript(String script) {
         if (script != null)
             filterScript(new FilterScript("js", script));
@@ -105,7 +103,6 @@ public class FactSpec {
         return this;
     }
 
-    @Deprecated
     public String jsFilterScript() {
         if (filterScript != null && "js".equals(filterScript.languageIdentifier()))
             return filterScript.source();

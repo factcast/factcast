@@ -29,7 +29,6 @@ import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
 import org.factcast.store.pgsql.internal.catchup.PgCatchUpFetchPage;
 import org.factcast.store.pgsql.internal.catchup.PgCatchUpPrepare;
 import org.factcast.store.pgsql.internal.catchup.PgCatchup;
-import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -46,9 +45,6 @@ public class PgPagedCatchup implements PgCatchup {
 
     @NonNull
     final PgConfigurationProperties props;
-
-    @NonNull
-    final PgFactIdToSerialMapper serMapper;
 
     @NonNull
     final SubscriptionRequestTO request;

@@ -17,23 +17,17 @@ package org.factcast.store.pgsql.registry.validation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class FactValidationErrorTest {
 
     @Test
-    void testNullContracts() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new FactValidationError(null);
-        });
+    void testNullContracts() {
+        assertThrows(NullPointerException.class, () -> new FactValidationError(null));
 
-        assertThrows(NullPointerException.class, () -> {
-            new FactValidationError("foo", null);
-        });
+        assertThrows(NullPointerException.class, () -> new FactValidationError("foo", null));
 
-        assertThrows(NullPointerException.class, () -> {
-            new FactValidationError(null, "foo");
-        });
+        assertThrows(NullPointerException.class, () -> new FactValidationError(null, "foo"));
 
         new FactValidationError("must not throw");
 

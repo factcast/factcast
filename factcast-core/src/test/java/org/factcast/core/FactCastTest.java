@@ -15,17 +15,14 @@
  */
 package org.factcast.core;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 
 import org.factcast.core.store.FactStore;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -45,16 +42,12 @@ public class FactCastTest {
 
     @Test
     void testFromNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            FactCast.from(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> FactCast.from(null));
     }
 
     @Test
     void testFromReadOnlyNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            FactCast.fromReadOnly(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> FactCast.fromReadOnly(null));
     }
 
     @Test
@@ -71,29 +64,23 @@ public class FactCastTest {
     }
 
     @Test
-    public void testRetryChecksNumberOfAttempts() throws Exception {
+    public void testRetryChecksNumberOfAttempts() {
         FactStore store = mock(FactStore.class);
         FactCast fc = FactCast.from(store);
-        assertThrows(IllegalArgumentException.class, () -> {
-            fc.retry(0);
-        });
-        assertThrows(IllegalArgumentException.class, () -> {
-            fc.retry(0, 100);
-        });
+        assertThrows(IllegalArgumentException.class, () -> fc.retry(0));
+        assertThrows(IllegalArgumentException.class, () -> fc.retry(0, 100));
 
         assertNotNull(fc.retry(10));
 
     }
 
     @Test
-    public void testRetryChecksWaitInterval() throws Exception {
+    public void testRetryChecksWaitInterval() {
 
         FactStore store = mock(FactStore.class);
         FactCast fc = FactCast.from(store);
 
-        assertThrows(IllegalArgumentException.class, () -> {
-            fc.retry(10, -100);
-        });
+        assertThrows(IllegalArgumentException.class, () -> fc.retry(10, -100));
 
         assertNotNull(fc.retry(10, 0));
         assertNotNull(fc.retry(10, 1));
@@ -102,14 +89,10 @@ public class FactCastTest {
     }
 
     @Test
-    public void testPublishFactNPE() throws Exception {
+    public void testPublishFactNPE() {
         FactStore store = mock(FactStore.class);
         FactCast fc = FactCast.from(store);
-        assertThrows(NullPointerException.class, () -> {
-            fc.publish((Fact) null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            fc.publish((List<Fact>) null);
-        });
+        assertThrows(NullPointerException.class, () -> fc.publish((Fact) null));
+        assertThrows(NullPointerException.class, () -> fc.publish((List<Fact>) null));
     }
 }
