@@ -20,6 +20,6 @@ import org.factcast.core.Fact;
 import lombok.NonNull;
 
 public interface FactTransformerService {
-    public Fact transformIfNecessary(@NonNull Fact original, int targetVersion)
+    Fact transformIfNecessary(@NonNull Fact original, int targetVersion)
             throws TransformationException;
 }

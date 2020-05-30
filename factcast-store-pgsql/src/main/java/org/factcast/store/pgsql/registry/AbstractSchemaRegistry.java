@@ -18,7 +18,6 @@ package org.factcast.store.pgsql.registry;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -66,11 +65,11 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
 
     protected final Object mutex = new Object();
 
-    private LoadingCache<SchemaKey, JsonSchema> cache = new AbstractLoadingCache<SchemaKey, JsonSchema>() {
+    private final LoadingCache<SchemaKey, JsonSchema> cache = new AbstractLoadingCache<SchemaKey, JsonSchema>() {
 
         @Override
-        public JsonSchema get(SchemaKey key) throws ExecutionException {
-            return schemaStore.get(key).map(createSchema()).get();
+        public JsonSchema get(@NonNull SchemaKey key) {
+            return schemaStore.get(key).map(createSchema()).orElse(null);
         }
 
         private Function<? super String, ? extends JsonSchema> createSchema() {
@@ -85,7 +84,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
         }
 
         @Override
-        public @Nullable JsonSchema getIfPresent(Object k) {
+        public @Nullable JsonSchema getIfPresent(@NonNull Object k) {
             SchemaKey key = (SchemaKey) k;
             return schemaStore.get(key).map(createSchema()).orElse(null);
         }

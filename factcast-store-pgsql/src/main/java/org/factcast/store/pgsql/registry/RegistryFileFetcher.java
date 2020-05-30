@@ -21,8 +21,8 @@ import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 
 public interface RegistryFileFetcher {
-    public String fetchTransformation(TransformationSource key) throws IOException;
+    String fetchTransformation(TransformationSource key) throws IOException;
 
-    public String fetchSchema(SchemaSource key) throws IOException;
+    String fetchSchema(SchemaSource key) throws IOException;
 
 }

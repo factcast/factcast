@@ -15,27 +15,24 @@
  */
 package org.factcast.core.lock;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.LinkedList;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class IntermediatePublishResultTest {
     @Test
-    public void testNullContracts() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new IntermediatePublishResult(null);
-        });
+    public void testNullContracts() {
+        assertThrows(NullPointerException.class, () -> new IntermediatePublishResult(null));
 
-        assertThrows(NullPointerException.class, () -> {
-            new IntermediatePublishResult(new LinkedList<>()).andThen(null);
-        });
+        assertThrows(NullPointerException.class, () -> new IntermediatePublishResult(
+                new LinkedList<>()).andThen(null));
     }
 
     @Test
-    public void testAndThen() throws Exception {
+    public void testAndThen() {
         IntermediatePublishResult uut = new IntermediatePublishResult(new LinkedList<>()).andThen(
                 () -> {
                 });

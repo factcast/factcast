@@ -15,19 +15,14 @@
  */
 package org.factcast.core;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyListOf;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.RetryableException;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -38,7 +33,7 @@ public class RetryTest {
     FactStore fs;
 
     @Test
-    void testHappyPath() throws Exception {
+    void testHappyPath() {
         // arrange
 
         // Note: we intended the retryableException to be passed from store to
@@ -49,19 +44,19 @@ public class RetryTest {
                 .doThrow(new RetryableException(new IllegalArgumentException()))//
                 .doNothing()//
                 .when(fs)
-                .publish(anyListOf(Fact.class));
+                .publish(anyList());
 
         // retry(5) wraps the factcast instance
         FactCast uut = FactCast.from(fs).retry(5);
 
         // act
         uut.publish(Fact.builder().ns("ns").type("type").buildWithoutPayload());
-        verify(fs, times(3)).publish(anyListOf(Fact.class));
+        verify(fs, times(3)).publish(anyList());
         verifyNoMoreInteractions(fs);
     }
 
     @Test
-    void testWrapsOnlyOnce() throws Exception {
+    void testWrapsOnlyOnce() {
         FactCast uut = FactCast.from(fs).retry(3);
         FactCast doubleWrapped = uut.retry(5);
 
@@ -69,51 +64,47 @@ public class RetryTest {
     }
 
     @Test
-    void testMaxRetries() throws Exception {
+    void testMaxRetries() {
         int maxRetries = 3;
         // as we literally "re"-try, we expect the original attempt plus
         // maxRetries:
         int expectedPublishAttempts = maxRetries + 1;
         doThrow(new RetryableException(new RuntimeException(""))).when(fs)
-                .publish(anyListOf(Fact.class));
+                .publish(anyList());
         FactCast uut = FactCast.from(fs).retry(maxRetries);
 
-        assertThrows(MaxRetryAttemptsExceededException.class, () -> {
-            uut.publish(Fact.builder().ns("foo").type("type").build("{}"));
-        });
+        assertThrows(MaxRetryAttemptsExceededException.class, () -> uut.publish(Fact.builder()
+                .ns("foo")
+                .type("type")
+                .build("{}")));
 
-        verify(fs, times(expectedPublishAttempts)).publish(anyListOf(Fact.class));
+        verify(fs, times(expectedPublishAttempts)).publish(anyList());
         verifyNoMoreInteractions(fs);
     }
 
     @Test
-    public void testWrapIllegalArguments() throws Exception {
-        assertThrows(IllegalArgumentException.class, () -> {
-            FactCast.from(fs).retry(3, -1);
-        });
+    public void testWrapIllegalArguments() {
+        assertThrows(IllegalArgumentException.class, () -> FactCast.from(fs).retry(3, -1));
 
-        assertThrows(IllegalArgumentException.class, () -> {
-            FactCast.from(fs).retry(0, 10);
-        });
+        assertThrows(IllegalArgumentException.class, () -> FactCast.from(fs).retry(0, 10));
 
-        assertThrows(IllegalArgumentException.class, () -> {
-            FactCast.from(fs).retry(-2, 10);
-        });
+        assertThrows(IllegalArgumentException.class, () -> FactCast.from(fs).retry(-2, 10));
         assertNotNull(FactCast.from(fs).retry(1, 0));
     }
 
     @Test
-    void testThrowNonRetryableException() throws Exception {
+    void testThrowNonRetryableException() {
         int maxRetries = 3;
         doThrow(new UnsupportedOperationException("not retryable")).when(fs)
-                .publish(anyListOf(Fact.class));
+                .publish(anyList());
         FactCast uut = FactCast.from(fs).retry(maxRetries);
 
-        assertThrows(UnsupportedOperationException.class, () -> {
-            uut.publish(Fact.builder().ns("foo").type("type").build("{}"));
-        });
+        assertThrows(UnsupportedOperationException.class, () -> uut.publish(Fact.builder()
+                .ns("foo")
+                .type("type")
+                .build("{}")));
 
-        verify(fs, times(1)).publish(anyListOf(Fact.class));
+        verify(fs, times(1)).publish(anyList());
         verifyNoMoreInteractions(fs);
     }
 

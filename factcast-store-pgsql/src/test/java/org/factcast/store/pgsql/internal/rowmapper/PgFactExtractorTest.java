@@ -15,10 +15,8 @@
  */
 package org.factcast.store.pgsql.internal.rowmapper;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.sql.ResultSet;
 import java.util.UUID;
@@ -26,13 +24,13 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
 import org.factcast.store.pgsql.internal.PgConstants;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class PgFactExtractorTest {
 
-    private AtomicLong serial = new AtomicLong(5);
+    final AtomicLong serial = new AtomicLong(5);
 
-    private PgFactExtractor uut = new PgFactExtractor(serial);
+    final PgFactExtractor uut = new PgFactExtractor(serial);
 
     @Test
     void testMapRow() throws Exception {
@@ -54,10 +52,8 @@ public class PgFactExtractorTest {
     }
 
     @Test
-    void testMapRowNullContracts() throws Exception {
+    void testMapRowNullContracts() {
 
-        assertThrows(NullPointerException.class, () -> {
-            uut.mapRow(null, 1);
-        });
+        assertThrows(NullPointerException.class, () -> uut.mapRow(null, 1));
     }
 }

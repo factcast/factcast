@@ -29,7 +29,7 @@ import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import io.micrometer.core.instrument.Tags;
 import lombok.val;
@@ -77,18 +77,14 @@ public class HttpIndexFetcherTest {
     void testThrowsExceptionOn404() throws Exception {
         try (TestHttpServer s = new TestHttpServer()) {
 
-            s.get("/registry/index.json", ctx -> {
-                ctx.res.setStatus(404);
-            });
+            s.get("/registry/index.json", ctx -> ctx.res.setStatus(404));
 
             val registryMetrics = mock(RegistryMetrics.class);
 
             URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
             uut = new HttpIndexFetcher(baseUrl, registryMetrics);
 
-            assertThrows(SchemaRegistryUnavailableException.class, () -> {
-                uut.fetchIndex();
-            });
+            assertThrows(SchemaRegistryUnavailableException.class, () -> uut.fetchIndex());
 
             verify(registryMetrics).count(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE, Tags.of(
                     RegistryMetrics.TAG_STATUS_CODE_KEY, "404"));
@@ -96,7 +92,7 @@ public class HttpIndexFetcherTest {
     }
 
     @Test
-    public void testNullContracts() throws Exception {
+    public void testNullContracts() {
         TestHelper.expectNPE(() -> new HttpIndexFetcher(null, mock(RegistryMetrics.class)));
         TestHelper.expectNPE(() -> new HttpIndexFetcher(new URL("http://ibm.com"), null));
         TestHelper.expectNPE(() -> new HttpIndexFetcher(null, new OkHttpClient(), mock(

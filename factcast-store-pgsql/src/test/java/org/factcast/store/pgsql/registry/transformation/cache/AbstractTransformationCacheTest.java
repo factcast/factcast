@@ -17,7 +17,7 @@ package org.factcast.store.pgsql.registry.transformation.cache;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -27,9 +27,8 @@ import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.joda.time.DateTime;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.function.*;
 import org.mockito.Spy;
 
 public abstract class AbstractTransformationCacheTest {
@@ -94,19 +93,11 @@ public abstract class AbstractTransformationCacheTest {
     }
 
     @Test
-    void testNullContracts() throws Exception {
-        assertNpe(() -> {
-            uut.find(null, 1, "1");
-        });
-        assertNpe(() -> {
-            uut.find(UUID.randomUUID(), 1, null);
-        });
-        assertNpe(() -> {
-            uut.put(null, "");
-        });
-        assertNpe(() -> {
-            uut.put(Fact.builder().buildWithoutPayload(), null);
-        });
+    void testNullContracts() {
+        assertNpe(() -> uut.find(null, 1, "1"));
+        assertNpe(() -> uut.find(UUID.randomUUID(), 1, null));
+        assertNpe(() -> uut.put(null, ""));
+        assertNpe(() -> uut.put(Fact.builder().buildWithoutPayload(), null));
 
     }
 
@@ -114,7 +105,8 @@ public abstract class AbstractTransformationCacheTest {
         assertThrows(NullPointerException.class, r);
     }
 
-    void testRespectsChainId() throws Exception {
+    @Test
+    void testRespectsChainId() {
         Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
 
         uut.put(f, "foo");
@@ -122,12 +114,12 @@ public abstract class AbstractTransformationCacheTest {
     }
 
     @Test
-    void testDoesNotFindUnknown() throws Exception {
+    void testDoesNotFindUnknown() {
         uut.find(UUID.randomUUID(), 1, "foo");
     }
 
     @Test
-    void testHappyPath() throws Exception {
+    void testHappyPath() {
         Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
 
         uut.put(f, "foo");
@@ -135,7 +127,7 @@ public abstract class AbstractTransformationCacheTest {
     }
 
     @Test
-    void testRespectsVersion() throws Exception {
+    void testRespectsVersion() {
         Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
 
         uut.put(f, "foo");

@@ -24,17 +24,17 @@ import java.util.LinkedList;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class FactValidationAspectTest {
 
-    ProceedingJoinPoint jp = mock(ProceedingJoinPoint.class);
+    final ProceedingJoinPoint jp = mock(ProceedingJoinPoint.class);
 
-    FactValidator v = mock(FactValidator.class);
+    final FactValidator v = mock(FactValidator.class);
 
-    FactValidationAspect uut = new FactValidationAspect(v);
+    final FactValidationAspect uut = new FactValidationAspect(v);
 
-    Fact f = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
+    final Fact f = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
 
     @Test
     void testInterceptPublish() throws Throwable {

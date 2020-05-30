@@ -126,11 +126,11 @@ public class ProtoConverter {
     }
 
     @NonNull
-    public UUID_AND_VERSION fromProto(MSG_UUID_AND_VERSION request) {
+    public IdAndVersion fromProto(MSG_UUID_AND_VERSION request) {
         long lsb = request.getLsb();
         long msb = request.getMsb();
         int version = request.getVer();
-        return new UUID_AND_VERSION(new UUID(msb, lsb), version);
+        return new IdAndVersion(new UUID(msb, lsb), version);
     }
 
     public Fact fromProto(MSG_Fact protoFact) {

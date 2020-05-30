@@ -15,10 +15,7 @@
  */
 package org.factcast.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -27,8 +24,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.UUID;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import com.fasterxml.jackson.core.JsonParseException;
 
@@ -36,44 +32,35 @@ public class DefaultFactTest {
 
     @Test
     void testNullHeader() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            DefaultFact.of("{}", null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> DefaultFact.of("{}", null));
     }
 
     @Test
     void testNullPayload() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            DefaultFact.of(null, "{}");
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> DefaultFact.of(null, "{}"));
     }
 
     @Test
     void testNullContracts() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            DefaultFact.of(null, null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> DefaultFact.of(null, null));
     }
 
     @Test
-    void testUnparsableHeader() {
-        Assertions.assertThrows(JsonParseException.class, () -> {
-            DefaultFact.of("not json at all", "{}");
-        });
+    void testUnparseableHeader() {
+        Assertions.assertThrows(JsonParseException.class, () -> DefaultFact.of("not json at all",
+                "{}"));
     }
 
     @Test
     void testNoId() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            DefaultFact.of("{\"ns\":\"default\"}", "{}");
-        });
+        Assertions.assertThrows(IllegalArgumentException.class, () -> DefaultFact.of(
+                "{\"ns\":\"default\"}", "{}"));
     }
 
     @Test
     void testIdNotUUID() {
-        Assertions.assertThrows(IOException.class, () -> {
-            DefaultFact.of("{\"id\":\"buh\",\"ns\":\"default\"}", "{}");
-        });
+        Assertions.assertThrows(IOException.class, () -> DefaultFact.of(
+                "{\"id\":\"buh\",\"ns\":\"default\"}", "{}"));
     }
 
     @Test
@@ -96,7 +83,6 @@ public class DefaultFactTest {
         assertEquals(f, copy);
     }
 
-    @SuppressWarnings("unchecked")
     private <T> T copyBySerialization(T f) throws IOException, ClassNotFoundException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(os);
@@ -168,31 +154,27 @@ public class DefaultFactTest {
 
     @Test
     void testOfNoId() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            Fact.of("{\"ns\":\"narf\"}", "{}");
-        });
+        Assertions.assertThrows(IllegalArgumentException.class, () -> Fact.of("{\"ns\":\"narf\"}",
+                "{}"));
     }
 
     @Test
     void testOfNoNs() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            Fact.of("{\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
-        });
+        Assertions.assertThrows(IllegalArgumentException.class, () -> Fact.of("{\"id\":\"" + UUID
+                .randomUUID() + "\"}", "{}"));
     }
 
     @Test
     void testOfEmptyNs() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"\"}", "{}");
-        });
+        Assertions.assertThrows(IllegalArgumentException.class, () -> Fact.of("{\"id\":\"" + UUID
+                .randomUUID() + "\",\"ns\":\"\"}", "{}"));
     }
 
     @Test
     void testOfInvalidVersion() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"version\":\"" + -1
-                    + "\",\"ns\":\"ns\"}", "{}");
-        });
+        Assertions.assertThrows(IllegalArgumentException.class, () -> Fact.of("{\"id\":\"" + UUID
+                .randomUUID() + "\",\"version\":\"" + -1
+                + "\",\"ns\":\"ns\"}", "{}"));
     }
 
     @Test

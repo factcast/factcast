@@ -25,8 +25,8 @@ import java.util.function.Function;
 import org.factcast.core.Fact;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -115,12 +115,12 @@ public class GrpcObserverAdapterTest {
     public static void expect(Runnable r, Class<? extends Throwable>... ex) {
         try {
             r.run();
-            fail("expected " + ex);
+            fail("expected " + Arrays.toString(ex));
         } catch (Throwable actual) {
 
             val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
             if (!matches) {
-                fail("Wrong exception, expected " + ex + " but got " + actual);
+                fail("Wrong exception, expected " + Arrays.toString(ex) + " but got " + actual);
             }
         }
     }

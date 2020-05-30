@@ -34,7 +34,7 @@ public class ClasspathRegistryFileFetcher implements RegistryFileFetcher {
     private final @NonNull String base;
 
     @Override
-    public String fetchTransformation(@NonNull TransformationSource key) throws IOException {
+    public String fetchTransformation(@NonNull TransformationSource key) {
         String path = base + "/" + key.ns() + "/" + key.type() + "/" + key.from() + "-" + key.to()
                 + "/transform.js";
         return fetch(path);
@@ -70,7 +70,7 @@ public class ClasspathRegistryFileFetcher implements RegistryFileFetcher {
     }
 
     @Override
-    public String fetchSchema(@NonNull SchemaSource key) throws IOException {
+    public String fetchSchema(@NonNull SchemaSource key) {
         String path = base + "/" + key.ns() + "/" + key.type() + "/" + key.version()
                 + "/schema.json";
         return fetch(path);

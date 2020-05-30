@@ -18,7 +18,6 @@ package org.factcast.integration.transformation;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.UUID;
-import java.util.concurrent.TimeoutException;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
@@ -32,7 +31,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 import lombok.val;
 
@@ -44,7 +42,7 @@ public class TransformationTest {
     FactCast fc;
 
     @Test
-    public void publishAndFetchBack() throws Exception, TimeoutException {
+    public void publishAndFetchBack() {
         UUID id = UUID.randomUUID();
         Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
         fc.publish(f);
@@ -56,36 +54,8 @@ public class TransformationTest {
         assertEquals(f.id(), found.id());
     }
 
-    // private Fact findFirst(UUID id, Integer version) throws
-    // TransformationException {
-    // if (version == null)
-    // return fc.fetchById(id).orElse(null);
-    // else
-    // return fc.fetchByIdAndVersion(id, version).orElse(null);
-    //
-    // // @NonNull
-    // // AtomicReference<Fact> ret = new AtomicReference<Fact>(null);
-    // //
-    // // FactSpec spec = FactSpec.ns("users")
-    // // .type("UserCreated")
-    // // .aggId(id);
-    // //
-    // // if (version != null)
-    // // spec.version(version);
-    // //
-    // // try (Subscription sub =
-    // // fc.subscribe(SubscriptionRequest.catchup(spec)
-    // // .fromScratch(),
-    // // f -> {
-    // // if (ret.get() == null)
-    // // ret.set(f);
-    // // }).awaitCatchup(10000);) {
-    // // }
-    // // return ret.get();
-    // }
-
     @Test
-    public void publishV1AndFetchBackAsV2() throws Exception, TimeoutException {
+    public void publishV1AndFetchBackAsV2() throws Exception {
 
         UUID id = UUID.randomUUID();
         Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
@@ -110,7 +80,7 @@ public class TransformationTest {
     }
 
     @Test
-    public void publishV2AndFetchBackAsV1() throws Exception, TimeoutException {
+    public void publishV2AndFetchBackAsV1() throws Exception {
 
         UUID id = UUID.randomUUID();
         Fact f = createTestFact(id, 2,
@@ -126,7 +96,7 @@ public class TransformationTest {
     }
 
     @Test
-    public void downcastUsesNonSyntheticTransformation() throws Exception, TimeoutException {
+    public void downcastUsesNonSyntheticTransformation() throws Exception {
 
         UUID id = UUID.randomUUID();
         Fact f = createTestFact(id, 3,
@@ -143,7 +113,7 @@ public class TransformationTest {
     }
 
     @Test
-    public void returnsOriginalIfNoVersionSet() throws Exception, TimeoutException {
+    public void returnsOriginalIfNoVersionSet() {
 
         UUID id = UUID.randomUUID();
         Fact f = createTestFact(id, 3,
@@ -155,7 +125,7 @@ public class TransformationTest {
     }
 
     @Test
-    public void returnsOriginalIfVersionSetTo0() throws Exception, TimeoutException {
+    public void returnsOriginalIfVersionSetTo0() throws Exception {
 
         UUID id = UUID.randomUUID();
         Fact f = createTestFact(id, 3,
@@ -168,14 +138,14 @@ public class TransformationTest {
     }
 
     @Test
-    public void publishV1AndFetchBackAsV3() throws Exception, TimeoutException {
+    public void publishV1AndFetchBackAsV3() throws Exception {
 
         UUID id = UUID.randomUUID();
         Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
         fc.publish(f);
 
         val found = fc.fetchByIdAndVersion(id, 3).orElse(null);
-        assertNotNull(f);
+        assertNotNull(found);
         assertEquals(f.ns(), found.ns());
         assertEquals(f.type(), found.type());
         assertEquals(f.id(), found.id());
@@ -184,14 +154,14 @@ public class TransformationTest {
     }
 
     @Test
-    public void publishV1AndFetchBackAsUnknownVersionMustFail() throws Exception, TimeoutException {
+    public void publishV1AndFetchBackAsUnknownVersionMustFail() {
 
         UUID id = UUID.randomUUID();
         Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
         fc.publish(f);
 
         try {
-            val found = fc.fetchByIdAndVersion(id, 999).orElse(null);
+            fc.fetchByIdAndVersion(id, 999).orElse(null);
             fail("should have thrown");
         } catch (MissingTransformationInformation expected) {
         } catch (Exception anyOther) {
@@ -202,20 +172,16 @@ public class TransformationTest {
     @Test
     public void validationFailsOnSchemaViolation() {
         Fact brokenFact = createTestFact(UUID.randomUUID(), 1, "{}");
-        assertThrows(FactValidationException.class, () -> {
-            fc.publish(brokenFact);
-        });
+        assertThrows(FactValidationException.class, () -> fc.publish(brokenFact));
     }
 
-    private String getString(Fact f, String name) throws JsonMappingException,
-            JsonProcessingException {
+    private String getString(Fact f, String name) throws JsonProcessingException {
         return FactCastJson.readTree(f.jsonPayload())
                 .path(name)
                 .asText();
     }
 
-    private boolean getBoolean(Fact f, String name) throws JsonMappingException,
-            JsonProcessingException {
+    private boolean getBoolean(Fact f, String name) throws JsonProcessingException {
         return FactCastJson.readTree(f.jsonPayload())
                 .path(name)
                 .asBoolean();

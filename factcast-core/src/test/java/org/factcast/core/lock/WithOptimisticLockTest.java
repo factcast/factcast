@@ -15,11 +15,12 @@
  */
 package org.factcast.core.lock;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.UUID;
 
-import org.factcast.core.store.*;
+import org.factcast.core.store.FactStore;
 import org.junit.jupiter.api.*;
-import org.mockito.*;
+import org.mockito.Mockito;
 
 class WithOptimisticLockTest {
 
@@ -30,9 +31,7 @@ class WithOptimisticLockTest {
                 Collections.singletonList(UUID.randomUUID()));
 
         Assertions.assertThrows(AttemptAbortedException.class,
-                () -> {
-                    uut.attempt(() -> null);
-                });
+                () -> uut.attempt(() -> null));
 
     }
 }

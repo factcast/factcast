@@ -57,7 +57,7 @@ public interface Fact {
     default long serial() {
         String s = meta("_ser");
         if (s != null) {
-            return Long.valueOf(s);
+            return Long.parseLong(s);
         } else {
             throw new IllegalStateException("'_ser' Meta attribute not found");
         }

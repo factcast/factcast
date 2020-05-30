@@ -51,9 +51,7 @@ public class FactValidationAspect {
 
         List<FactValidationError> errors = new LinkedList<>();
 
-        facts.forEach(f -> {
-            errors.addAll(validator.validate(f));
-        });
+        facts.forEach(f -> errors.addAll(validator.validate(f)));
 
         if (!errors.isEmpty())
             throw new FactValidationException(

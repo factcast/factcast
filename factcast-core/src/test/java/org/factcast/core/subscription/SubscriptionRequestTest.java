@@ -22,30 +22,26 @@ import java.util.Collection;
 
 import org.factcast.core.TestHelper;
 import org.factcast.core.spec.FactSpec;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class SubscriptionRequestTest {
 
     @Test
     void testCatchupNullSpec() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            SubscriptionRequest.catchup((FactSpec) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> SubscriptionRequest.catchup(
+                (FactSpec) null));
     }
 
     @Test
     void testFollowNullSpec() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            SubscriptionRequest.follow((FactSpec) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> SubscriptionRequest.follow(
+                (FactSpec) null));
     }
 
     @Test
     void testFollowDelayNullSpec() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            SubscriptionRequest.follow(1, null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> SubscriptionRequest.follow(1,
+                null));
     }
 
     @Test
@@ -82,16 +78,12 @@ public class SubscriptionRequestTest {
 
     @Test
     void testCatchupCollectionNullParameters() {
-        TestHelper.expectNPE(() -> {
-            SubscriptionRequest.catchup((Collection<FactSpec>) null);
-        });
+        TestHelper.expectNPE(() -> SubscriptionRequest.catchup((Collection<FactSpec>) null));
     }
 
     @Test
     void testFollowCollectionNullParameters() {
-        TestHelper.expectNPE(() -> {
-            SubscriptionRequest.follow((Collection<FactSpec>) null);
-        });
+        TestHelper.expectNPE(() -> SubscriptionRequest.follow((Collection<FactSpec>) null));
     }
 
     @Test

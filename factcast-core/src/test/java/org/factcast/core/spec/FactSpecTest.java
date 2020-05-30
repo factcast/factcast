@@ -20,8 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.UUID;
 
 import org.factcast.core.util.FactCastJson;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -29,30 +28,25 @@ public class FactSpecTest {
 
     @Test
     void testMetaBothNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            FactSpec.ns("foo").meta(null, null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> FactSpec.ns("foo")
+                .meta(null, null));
     }
 
     @Test
     void testMetaKeyNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            FactSpec.ns("foo").meta(null, "");
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> FactSpec.ns("foo")
+                .meta(null, ""));
     }
 
     @Test
     void testMetaValueNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            FactSpec.ns("foo").meta("", null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> FactSpec.ns("foo")
+                .meta("", null));
     }
 
     @Test
     void testFactSpecConstructorNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            new FactSpec(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> new FactSpec(null));
     }
 
     @SuppressWarnings("static-access")
@@ -94,7 +88,7 @@ public class FactSpecTest {
     }
 
     @Test
-    public void testJsFilterScriptDeserDownwardCompatibility() throws Exception {
+    public void testJsFilterScriptDeserDownwardCompatibility() {
         String script = "foo";
         String json = "{\"ns\":\"x\",\"jsFilterScript\":\"" + script + "\"}";
 
@@ -104,7 +98,7 @@ public class FactSpecTest {
     }
 
     @Test
-    public void testJsFilterScriptDeserRemoved() throws Exception {
+    public void testJsFilterScriptDeserRemoved() {
         String script = "foo";
         String json = "{\"ns\":\"x\",\"jsFilterScript\":\"" + script + "\"}";
 
@@ -115,7 +109,7 @@ public class FactSpecTest {
     }
 
     @Test
-    public void testFilterScriptDeser() throws Exception {
+    public void testFilterScriptDeser() {
         String script = "foo";
         String json = "{\"ns\":\"x\",\"filterScript\":{\"languageIdentifier\":\"js\",\"source\":\""
                 + script + "\"}}";
@@ -130,7 +124,7 @@ public class FactSpecTest {
     }
 
     @Test
-    public void testJsFilterScriptSerDownwardCompatibility() throws Exception {
+    public void testJsFilterScriptSerDownwardCompatibility() {
         String expected = "foo";
         FactSpec fs = FactSpec.ns("x").filterScript(FilterScript.js("foo"));
         ObjectNode node = FactCastJson.toObjectNode(FactCastJson.writeValueAsString(fs));

@@ -34,19 +34,17 @@ import lombok.NoArgsConstructor;
 public class FactCastAccessConfiguration {
     @VisibleForTesting
     @Getter(value = AccessLevel.PROTECTED)
-    private List<FactCastRole> roles = new LinkedList<>();
+    private final List<FactCastRole> roles = new LinkedList<>();
 
     @Getter
-    private List<FactCastAccount> accounts = new LinkedList<>();
+    private final List<FactCastAccount> accounts = new LinkedList<>();
 
-    private final Map<String, FactCastRole> roleIndex = new HashMap<String, FactCastRole>();
+    private final Map<String, FactCastRole> roleIndex = new HashMap<>();
 
-    private final Map<String, FactCastAccount> accountIndex = new HashMap<String, FactCastAccount>();
+    private final Map<String, FactCastAccount> accountIndex = new HashMap<>();
 
     void initialize() {
-        roles.forEach(r -> {
-            roleIndex.put(r.id(), r);
-        });
+        roles.forEach(r -> roleIndex.put(r.id(), r));
 
         accounts.forEach(r -> {
             accountIndex.put(r.id(), r);

@@ -33,7 +33,7 @@ import com.github.fge.jsonschema.main.JsonSchema;
  *
  */
 public class NOPSchemaRegistry implements SchemaRegistry {
-    private static List<Transformation> EMPTY = new LinkedList<>();
+    private static final List<Transformation> EMPTY = new LinkedList<>();
 
     @Override
     public Optional<JsonSchema> get(SchemaKey key) {

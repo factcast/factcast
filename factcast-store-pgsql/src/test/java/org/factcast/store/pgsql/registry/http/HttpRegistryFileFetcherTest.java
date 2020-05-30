@@ -16,8 +16,7 @@
 package org.factcast.store.pgsql.registry.http;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.net.URL;
@@ -31,8 +30,8 @@ import org.factcast.store.pgsql.registry.metrics.SupplierWithException;
 import org.factcast.store.pgsql.registry.metrics.TimedOperation;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -50,7 +49,7 @@ public class HttpRegistryFileFetcherTest {
     private OkHttpClient client;
 
     @Spy
-    private RegistryMetrics registryMetrics = new NOPRegistryMetrics();
+    private final RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 
     @Test
     public void testCreateSchemaUrl() throws Exception {
@@ -62,7 +61,7 @@ public class HttpRegistryFileFetcherTest {
     }
 
     @Test
-    public void testNullContracts() throws Exception {
+    public void testNullContracts() {
         val uut = new HttpRegistryFileFetcher(baseUrl, client, registryMetrics);
         TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null, registryMetrics));
         TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(baseUrl, null));
@@ -79,9 +78,8 @@ public class HttpRegistryFileFetcherTest {
             URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
             val uut = new HttpRegistryFileFetcher(baseUrl, registryMetrics);
 
-            assertThrows(RegistryFileFetchException.class, () -> {
-                uut.fetchSchema(new SchemaSource("unknown", "123", "ns", "type", 8));
-            });
+            assertThrows(RegistryFileFetchException.class, () -> uut.fetchSchema(new SchemaSource(
+                    "unknown", "123", "ns", "type", 8)));
 
             verify(registryMetrics).timed(eq(TimedOperation.FETCH_REGISTRY_FILE), eq(
                     RegistryFileFetchException.class), any(SupplierWithException.class));

@@ -91,7 +91,7 @@ public class FactStoreGrpcServiceTest {
     @Captor
     private ArgumentCaptor<SubscriptionRequestTO> reqCaptor;
 
-    private FactCastUser PRINCIPAL = new FactCastUser(FactCastAccount.GOD, "DISABLED");
+    private final FactCastUser PRINCIPAL = new FactCastUser(FactCastAccount.GOD, "DISABLED");
 
     @BeforeEach
     void setUp() {
@@ -175,7 +175,6 @@ public class FactStoreGrpcServiceTest {
                 .type("type")
                 .id(UUID.randomUUID())
                 .buildWithoutPayload();
-        val expected = Optional.of(fact);
         when(store.fetchById(fact.id())).thenThrow(IllegalMonitorStateException.class);
         StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
 
@@ -237,9 +236,7 @@ public class FactStoreGrpcServiceTest {
 
     @Test
     void testPublishNull() {
-        expectNPE(() -> {
-            uut.publish(null, mock(StreamObserver.class));
-        });
+        expectNPE(() -> uut.publish(null, mock(StreamObserver.class)));
     }
 
     @Test
@@ -280,13 +277,11 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testSerialOf() throws Exception {
+    public void testSerialOf() {
         uut = new FactStoreGrpcService(backend);
 
         StreamObserver so = mock(StreamObserver.class);
-        assertThrows(NullPointerException.class, () -> {
-            uut.serialOf(null, so);
-        });
+        assertThrows(NullPointerException.class, () -> uut.serialOf(null, so));
 
         UUID id = new UUID(0, 1);
         OptionalLong twenty_two = OptionalLong.of(22);
@@ -300,19 +295,18 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testSerialOfThrows() throws Exception {
+    public void testSerialOfThrows() {
         uut = new FactStoreGrpcService(backend);
 
         StreamObserver so = mock(StreamObserver.class);
         when(backend.serialOf(any(UUID.class))).thenThrow(UnsupportedOperationException.class);
 
-        assertThrows(UnsupportedOperationException.class, () -> {
-            uut.serialOf(conv.toProto(UUID.randomUUID()), so);
-        });
+        assertThrows(UnsupportedOperationException.class, () -> uut.serialOf(conv.toProto(UUID
+                .randomUUID()), so));
     }
 
     @Test
-    public void testEnumerateNamespaces() throws Exception {
+    public void testEnumerateNamespaces() {
         uut = new FactStoreGrpcService(backend);
         StreamObserver so = mock(StreamObserver.class);
         when(backend.enumerateNamespaces()).thenReturn(Sets.newHashSet("foo", "bar"));
@@ -325,7 +319,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testEnumerateNamespacesThrows() throws Exception {
+    public void testEnumerateNamespacesThrows() {
         uut = new FactStoreGrpcService(backend);
         StreamObserver so = mock(StreamObserver.class);
         when(backend.enumerateNamespaces()).thenThrow(UnsupportedOperationException.class);
@@ -336,7 +330,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testEnumerateTypes() throws Exception {
+    public void testEnumerateTypes() {
         uut = new FactStoreGrpcService(backend);
         StreamObserver so = mock(StreamObserver.class);
 
@@ -350,7 +344,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testEnumerateTypesThrows() throws Exception {
+    public void testEnumerateTypesThrows() {
         uut = new FactStoreGrpcService(backend);
         StreamObserver so = mock(StreamObserver.class);
         when(backend.enumerateTypes(eq("ns"))).thenThrow(UnsupportedOperationException.class);
@@ -360,8 +354,8 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testPublishThrows() throws Exception {
-        doThrow(UnsupportedOperationException.class).when(backend).publish(anyListOf(Fact.class));
+    public void testPublishThrows() {
+        doThrow(UnsupportedOperationException.class).when(backend).publish(anyList());
         List<Fact> toPublish = Lists.newArrayList(Fact.builder().build("{}"));
         StreamObserver so = mock(StreamObserver.class);
 
@@ -370,7 +364,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testHandshake() throws Exception {
+    public void testHandshake() {
 
         StreamObserver so = mock(StreamObserver.class);
         uut.handshake(conv.empty(), so);
@@ -381,7 +375,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testRetrieveImplementationVersion() throws Exception {
+    public void testRetrieveImplementationVersion() {
         uut = spy(uut);
         when(uut.getProjectProperties()).thenReturn(this.getClass()
                 .getResource("/test.properties"));
@@ -393,7 +387,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testRetrieveImplementationVersionEmptyPropertyFile() throws Exception {
+    public void testRetrieveImplementationVersionEmptyPropertyFile() {
         uut = spy(uut);
         when(uut.getProjectProperties()).thenReturn(this.getClass()
                 .getResource("/no-version.properties"));
@@ -418,7 +412,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testInvalidate() throws Exception {
+    public void testInvalidate() {
 
         {
             UUID id = UUID.randomUUID();
@@ -447,7 +441,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testStateFor() throws Exception {
+    public void testStateFor() {
 
         {
             UUID id = UUID.randomUUID();
@@ -482,7 +476,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testPublishConditional() throws Exception {
+    public void testPublishConditional() {
         {
             UUID id = UUID.randomUUID();
 
@@ -517,7 +511,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testAssertCanReadString() throws Exception {
+    public void testAssertCanReadString() {
 
         FactCastAccount account = mock(FactCastAccount.class);
 
@@ -539,7 +533,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testAssertCanReadStrings() throws Exception {
+    public void testAssertCanReadStrings() {
 
         FactCastAccount account = mock(FactCastAccount.class);
 
@@ -561,7 +555,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testAssertCanWriteStrings() throws Exception {
+    public void testAssertCanWriteStrings() {
 
         FactCastAccount account = mock(FactCastAccount.class);
 
@@ -589,12 +583,12 @@ public class FactStoreGrpcServiceTest {
     public static void expect(Runnable r, Class<? extends Throwable>... ex) {
         try {
             r.run();
-            fail("expected " + ex);
+            fail("expected " + Arrays.toString(ex));
         } catch (Throwable actual) {
 
             val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
             if (!matches) {
-                fail("Wrong exception, expected " + ex + " but got " + actual);
+                fail("Wrong exception, expected " + Arrays.toString(ex) + " but got " + actual);
             }
         }
     }

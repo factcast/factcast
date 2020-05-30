@@ -18,8 +18,8 @@ package org.factcast.store.pgsql.internal.catchup;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -34,17 +34,11 @@ public class PgCatchUpFetchPageTest {
     JdbcTemplate jdbc;
 
     @Test
-    public void testNullParameterContracts() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new PgCatchUpFetchPage(null, 10, req, 1);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            new PgCatchUpFetchPage(jdbc, 10, null, 1);
-        });
+    public void testNullParameterContracts() {
+        assertThrows(NullPointerException.class, () -> new PgCatchUpFetchPage(null, 10, req, 1));
+        assertThrows(NullPointerException.class, () -> new PgCatchUpFetchPage(jdbc, 10, null, 1));
         PgCatchUpFetchPage uut = new PgCatchUpFetchPage(jdbc, 10, req, 1);
-        assertThrows(NullPointerException.class, () -> {
-            uut.fetchFacts(null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.fetchFacts(null));
 
     }
 

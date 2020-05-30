@@ -38,14 +38,14 @@ public class InMemTransformationCache implements TransformationCache {
     // very low, but ok for tests
     private static final int DEFAULT_CAPACITY = 1000;
 
-    private Map<String, FactAndAccessTime> cache;
+    private final Map<String, FactAndAccessTime> cache;
 
     public InMemTransformationCache(RegistryMetrics registryMetrics) {
         this(DEFAULT_CAPACITY, registryMetrics);
     }
 
     public InMemTransformationCache(int capacity, RegistryMetrics registryMetrics) {
-        cache = new LRUMap<String, FactAndAccessTime>(Math.max(capacity, DEFAULT_CAPACITY));
+        cache = new LRUMap<>(Math.max(capacity, DEFAULT_CAPACITY));
         this.registryMetrics = registryMetrics;
     }
 

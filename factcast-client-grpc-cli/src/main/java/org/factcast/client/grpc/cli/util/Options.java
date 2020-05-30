@@ -25,8 +25,7 @@ public class Options {
     @Parameter(
             names = { "--basic", "-basic", },
             help = true,
-            hidden = false,
-            description = "Basic-Auth Crendentials in the form \"user:password\"")
+            description = "Basic-Auth crendentials in the form \"user:password\"")
     String basicAuthCredentials;
 
     @Parameter(names = { "--pretty" }, help = true, description = "format JSON output")

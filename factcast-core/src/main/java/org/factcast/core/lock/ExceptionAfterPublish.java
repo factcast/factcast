@@ -30,7 +30,7 @@ public final class ExceptionAfterPublish extends IllegalStateException {
 
     @Getter
     @NonNull
-    private List<Fact> publishedFacts;
+    private final List<Fact> publishedFacts;
 
     public ExceptionAfterPublish(@NonNull List<Fact> publishedFacts, @NonNull Throwable e) {
         super("An exception has happened in the 'andThen' part of your publishing attempt. "

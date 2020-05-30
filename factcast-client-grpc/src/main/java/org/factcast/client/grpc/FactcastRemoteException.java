@@ -16,6 +16,7 @@
 package org.factcast.client.grpc;
 
 import java.lang.reflect.Constructor;
+import java.util.Objects;
 
 import io.grpc.Metadata;
 import io.grpc.StatusRuntimeException;
@@ -28,6 +29,7 @@ public class FactcastRemoteException {
 
         try {
             Metadata md = e.getTrailers();
+            assert md != null;
 
             byte[] msgBytes = md.get(Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER));
             byte[] excBytes = md.get(Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER));
@@ -35,7 +37,7 @@ public class FactcastRemoteException {
             if (excBytes != null) {
                 Class<?> exc = Class.forName(new String(excBytes));
                 Constructor<?> constructor = exc.getConstructor(String.class);
-                String msg = new String(msgBytes);
+                String msg = new String(Objects.requireNonNull(msgBytes));
                 return (RuntimeException) constructor.newInstance(msg);
             }
 

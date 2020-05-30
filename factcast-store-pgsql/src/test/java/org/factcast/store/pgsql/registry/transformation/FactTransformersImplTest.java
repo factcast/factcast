@@ -59,7 +59,7 @@ public class FactTransformersImplTest {
     TransformationChain chain;
 
     @Spy
-    RegistryMetrics registryMetrics = new NOPRegistryMetrics();
+    final RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 
     @Test
     public void testTransformNotNecessaryEmpty() throws Exception {
@@ -128,7 +128,7 @@ public class FactTransformersImplTest {
         when(chains.get(eq(TransformationKey.from(probe)), eq(probe.version()), eq(33))).thenReturn(
                 chain);
         when(chain.id()).thenReturn(chainId);
-        Map<String, Object> propertyMap = new HashMap<String, Object>();
+        Map<String, Object> propertyMap = new HashMap<>();
         JsonNode transformedJsonNode = FactCastJson.toJsonNode(propertyMap);
         when(trans.transform(any(), eq(FactCastJson.readTree(probe.jsonPayload())))).thenReturn(
                 transformedJsonNode);

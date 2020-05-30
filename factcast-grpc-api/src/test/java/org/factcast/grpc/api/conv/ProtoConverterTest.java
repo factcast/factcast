@@ -60,7 +60,7 @@ import lombok.val;
 
 public class ProtoConverterTest {
 
-    ProtoConverter uut = new ProtoConverter();
+    final ProtoConverter uut = new ProtoConverter();
 
     @Test
     void testToProtoUUID() {
@@ -71,23 +71,18 @@ public class ProtoConverterTest {
 
     @Test
     void testToProtoUUIDNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.toProto((UUID) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.toProto((UUID) null));
     }
 
     @Test
     void testToProtoFactNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.toProto((Fact) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.toProto((Fact) null));
     }
 
     @Test
     void testFromProtoOptionalNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.fromProto((MSG_OptionalFact) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.fromProto(
+                (MSG_OptionalFact) null));
     }
 
     @Test
@@ -150,16 +145,14 @@ public class ProtoConverterTest {
 
     @Test
     void testToProtoFacts_empty() {
-        MSG_Facts proto = uut.toProto(new ArrayList<Fact>());
+        MSG_Facts proto = uut.toProto(new ArrayList<>());
 
         assertTrue(proto.getFactList().isEmpty());
     }
 
     @Test
     void testToProtoFacts_nullArg() {
-        assertThrows(NullPointerException.class, () -> {
-            uut.toProto((List<Fact>) null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.toProto((List<Fact>) null));
     }
 
     private void assertFactEqualTo(Fact probe, Fact copy) {
@@ -202,16 +195,14 @@ public class ProtoConverterTest {
 
     @Test
     void testCreateNotificationForFactNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.createNotificationFor((Fact) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.createNotificationFor(
+                (Fact) null));
     }
 
     @Test
     void testCreateNotificationForIdNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.createNotificationFor((UUID) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.createNotificationFor(
+                (UUID) null));
     }
 
     @Test
@@ -234,16 +225,14 @@ public class ProtoConverterTest {
 
     @Test
     void testFromProtoMSG_SubscriptionRequestNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.fromProto((MSG_SubscriptionRequest) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.fromProto(
+                (MSG_SubscriptionRequest) null));
     }
 
     @Test
     void testToProtoSubscriptionRequestNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.toProto((SubscriptionRequestTO) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.toProto(
+                (SubscriptionRequestTO) null));
     }
 
     @Test
@@ -281,10 +270,8 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testFromProtoMSG_OptionalSerial() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.fromProto((MSG_OptionalSerial) null);
-        });
+    public void testFromProtoMSG_OptionalSerial() {
+        assertThrows(NullPointerException.class, () -> uut.fromProto((MSG_OptionalSerial) null));
 
         assertFalse(uut.fromProto(MSG_OptionalSerial.newBuilder()
                 .setPresent(false)
@@ -304,10 +291,9 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testFromProtoMSG_ServerProtocolVersion() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.fromProto((MSG_ServerProtocolVersion) null);
-        });
+    public void testFromProtoMSG_ServerProtocolVersion() {
+        assertThrows(NullPointerException.class, () -> uut.fromProto(
+                (MSG_ServerProtocolVersion) null));
 
         assertEquals(ProtocolVersion.of(1, 2, 3),
                 uut.fromProto(MSG_ServerProtocolVersion.newBuilder()
@@ -319,20 +305,16 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testFromProtoMSG_ServerProperties() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.fromProto((MSG_ServerProperties) null);
-        });
+    public void testFromProtoMSG_ServerProperties() {
+        assertThrows(NullPointerException.class, () -> uut.fromProto((MSG_ServerProperties) null));
 
         assertEquals(Maps.newHashMap("foo", "bar"),
                 uut.fromProto(MSG_ServerProperties.newBuilder().putProperty("foo", "bar").build()));
     }
 
     @Test
-    public void testFromProtoMSG_ServerConfig() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.fromProto((MSG_ServerConfig) null);
-        });
+    public void testFromProtoMSG_ServerConfig() {
+        assertThrows(NullPointerException.class, () -> uut.fromProto((MSG_ServerConfig) null));
 
         MSG_ServerProperties props = MSG_ServerProperties.newBuilder()
                 .putProperty("foo", "bar")
@@ -352,10 +334,8 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testToProtoProtocolVersion() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.toProto((ProtocolVersion) null);
-        });
+    public void testToProtoProtocolVersion() {
+        assertThrows(NullPointerException.class, () -> uut.toProto((ProtocolVersion) null));
 
         ProtocolVersion v1 = ProtocolVersion.of(1, 2, 3);
         ProtocolVersion v2 = uut.fromProto(uut.toProto(v1));
@@ -366,10 +346,8 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testToProtoServerConfig() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.toProto((ServerConfig) null);
-        });
+    public void testToProtoServerConfig() {
+        assertThrows(NullPointerException.class, () -> uut.toProto((ServerConfig) null));
 
         ProtocolVersion v = ProtocolVersion.of(1, 2, 3);
         ServerConfig cfg1 = ServerConfig.of(v, Maps.newHashMap("foo", "bar"));
@@ -381,10 +359,8 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testToProtoServerProperties() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.toProto((HashMap<String, String>) null);
-        });
+    public void testToProtoServerProperties() {
+        assertThrows(NullPointerException.class, () -> uut.toProto((HashMap<String, String>) null));
 
         Map<String, String> map1 = Maps.newHashMap("poit", "narf");
         Map<String, String> map2 = uut.fromProto(uut.toProto(map1));
@@ -395,10 +371,8 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testFromProtoMSG_StringSet() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.toProto((Set<String>) null);
-        });
+    public void testFromProtoMSG_StringSet() {
+        assertThrows(NullPointerException.class, () -> uut.toProto((Set<String>) null));
 
         HashSet<String> set1 = Sets.newHashSet("foo", "bar");
         Set<String> set2 = uut.fromProto(uut.toProto(set1));
@@ -409,11 +383,9 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testToProtoString() throws Exception {
+    public void testToProtoString() {
 
-        assertThrows(NullPointerException.class, () -> {
-            uut.toProto((String) null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.toProto((String) null));
 
         String s1 = UUID.randomUUID().toString();
         String s2 = uut.fromProto(uut.toProto(s1));
@@ -423,7 +395,7 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testFromProtoMSG_StateForRequest_nsSet() throws Exception {
+    public void testFromProtoMSG_StateForRequest_nsSet() {
 
         MSG_StateForRequest request = MSG_StateForRequest.newBuilder()
                 .setNs("foo")
@@ -439,7 +411,7 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testFromProtoMSG_StateForRequest_nsNotSet() throws Exception {
+    public void testFromProtoMSG_StateForRequest_nsNotSet() {
 
         MSG_StateForRequest request = MSG_StateForRequest.newBuilder()
                 .setNs("foo")
@@ -455,7 +427,7 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testFromProtoMSG_StateForRequest_emptyAggIds() throws Exception {
+    public void testFromProtoMSG_StateForRequest_emptyAggIds() {
 
         MSG_StateForRequest request = MSG_StateForRequest.newBuilder().setNsPresent(false).build();
         StateForRequest req = uut.fromProto(request);
@@ -465,17 +437,16 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testToProtoBoolean() throws Exception {
+    public void testToProtoBoolean() {
         assertFalse(uut.toProto(false).getSuccess());
         assertTrue(uut.toProto(true).getSuccess());
     }
 
     @Test
-    public void testFromProtoMSG_ConditionalPublishRequest() throws Exception {
+    public void testFromProtoMSG_ConditionalPublishRequest() {
 
-        assertThrows(NullPointerException.class, () -> {
-            uut.fromProto((MSG_ConditionalPublishRequest) null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.fromProto(
+                (MSG_ConditionalPublishRequest) null));
 
         MSG_ConditionalPublishRequest req = MSG_ConditionalPublishRequest.newBuilder().build();
         ConditionalPublishRequest r = uut.fromProto(req);
@@ -509,18 +480,14 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testFromProtoMSG_Facts() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.fromProto((MSG_Facts) null);
-        });
+    public void testFromProtoMSG_Facts() {
+        assertThrows(NullPointerException.class, () -> uut.fromProto((MSG_Facts) null));
     }
 
     @Test
-    public void testToProtoStateForRequest() throws Exception {
+    public void testToProtoStateForRequest() {
 
-        assertThrows(NullPointerException.class, () -> {
-            uut.toProto((StateForRequest) null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.toProto((StateForRequest) null));
 
         StateForRequest req = new StateForRequest(Lists.emptyList(), null);
         MSG_StateForRequest msg = uut.toProto(req);
@@ -548,11 +515,10 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testToProtoConditionalPublishRequest() throws Exception {
+    public void testToProtoConditionalPublishRequest() {
 
-        assertThrows(NullPointerException.class, () -> {
-            uut.toProto((ConditionalPublishRequest) null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.toProto(
+                (ConditionalPublishRequest) null));
 
         {
             UUID id = UUID.randomUUID();
@@ -585,14 +551,14 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testFromProtoMSG_CurrentDatabaseTime() throws Exception {
+    public void testFromProtoMSG_CurrentDatabaseTime() {
         long probe = 123L;
 
         assertEquals(probe, uut.fromProto(uut.toProto(probe)));
     }
 
     @Test
-    public void testFromProtoMSG_CurrentDatabaseTimeNull() throws Exception {
+    public void testFromProtoMSG_CurrentDatabaseTimeNull() {
         assertThrows(NullPointerException.class, () -> {
 
             MSG_CurrentDatabaseTime t = null;
@@ -601,7 +567,7 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testFromProtoMSG_UUID_AND_VERSION() throws Exception {
+    public void testFromProtoMSG_UUID_AND_VERSION() {
         val msg = MSG_UUID_AND_VERSION.newBuilder().setLsb(1).setMsb(2).setVer(99).build();
         val actual = uut.fromProto(msg);
         assertNotNull(actual);
@@ -610,7 +576,7 @@ public class ProtoConverterTest {
     }
 
     @Test
-    public void testToProtoMSG_UUID_AND_VERSION() throws Exception {
+    public void testToProtoMSG_UUID_AND_VERSION() {
         val actual = uut.toProto(new UUID(2, 1), 99);
         assertNotNull(actual);
         assertThat(actual.getLsb()).isEqualTo(1);
