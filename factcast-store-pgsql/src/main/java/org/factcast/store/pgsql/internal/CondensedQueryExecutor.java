@@ -24,9 +24,6 @@ import org.factcast.store.pgsql.internal.listen.PgListener.FactInsertionEvent;
 
 import com.google.common.eventbus.Subscribe;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -37,20 +34,33 @@ import lombok.extern.slf4j.Slf4j;
  */
 @SuppressWarnings("UnstableApiUsage")
 @Slf4j
-@RequiredArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PACKAGE)
 class CondensedQueryExecutor {
 
-    final long maxDelayInMillis;
+    private final long maxDelayInMillis;
 
-    final PgSynchronizedQuery target;
+    private final PgSynchronizedQuery target;
 
-    final Supplier<Boolean> connectionStateSupplier;
+    private final Supplier<Boolean> connectionStateSupplier;
 
-    // must not be final
-    final Timer timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer", true);
+    private Timer timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer",
+            true);
 
-    final AtomicBoolean currentlyScheduled = new AtomicBoolean(false);
+    private final AtomicBoolean currentlyScheduled = new AtomicBoolean(false);
+
+    CondensedQueryExecutor(long maxDelayInMillis, PgSynchronizedQuery target,
+            Supplier<Boolean> connectionStateSupplier, Timer timer) {
+        this.maxDelayInMillis = maxDelayInMillis;
+        this.target = target;
+        this.connectionStateSupplier = connectionStateSupplier;
+        this.timer = timer;
+    }
+
+    public CondensedQueryExecutor(long maxDelayInMillis, PgSynchronizedQuery target,
+            Supplier<Boolean> connectionStateSupplier) {
+        this.maxDelayInMillis = maxDelayInMillis;
+        this.target = target;
+        this.connectionStateSupplier = connectionStateSupplier;
+    }
 
     public void trigger() {
         if (connectionStateSupplier.get()) {
