@@ -256,7 +256,7 @@
                 <argument>${os.detected.userid}</argument>
                 <argument>-v</argument>
                 <argument>${project.basedir}/output:/srv/hugo</argument>
-                <argument>yanqd0/hugo</argument>
+                <argument>yanqd0/hugo:0.61.0</argument>
                 <argument>hugo</argument>
               </arguments>
             </configuration>
