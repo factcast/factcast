@@ -15,12 +15,13 @@
  */
 package org.factcast.store.pgsql.registry.http;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
 
-import org.factcast.store.pgsql.registry.*;
+import org.factcast.store.pgsql.registry.IndexFetcher;
+import org.factcast.store.pgsql.registry.RegistryIndex;
+import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 
@@ -111,7 +112,7 @@ public class HttpIndexFetcher implements IndexFetcher {
                             response.message());
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             registryMetrics.count(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE);
 
             throw new SchemaRegistryUnavailableException(e);

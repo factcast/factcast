@@ -20,11 +20,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 class SnappyGrpcServerCodecTest {
 
-    SnappyGrpcServerCodec uut = new SnappyGrpcServerCodec();
+    final SnappyGrpcServerCodec uut = new SnappyGrpcServerCodec();
 
     @Test
     void getMessageEncoding() {

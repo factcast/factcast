@@ -27,8 +27,6 @@ import lombok.RequiredArgsConstructor;
 /**
  * Callback interface to use when subscribing to Facts or Ids from a FactCast.
  *
- * see {@link IdObserver}, {@link FactObserver}
- *
  * @author uwe.schaefer@prisma-capacity.eu
  */
 public interface GenericObserver<I> {

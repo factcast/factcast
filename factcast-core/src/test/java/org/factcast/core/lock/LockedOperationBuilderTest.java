@@ -19,17 +19,15 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.*;
+import java.util.UUID;
 
-import org.factcast.core.lock.LockedOperationBuilder.*;
-import org.factcast.core.store.*;
+import org.factcast.core.lock.LockedOperationBuilder.OnBuilderStep;
+import org.factcast.core.store.FactStore;
 import org.junit.jupiter.api.*;
-
-import lombok.*;
 
 public class LockedOperationBuilderTest {
 
-    LockedOperationBuilder uut = new LockedOperationBuilder(mock(FactStore.class), "ns");
+    final LockedOperationBuilder uut = new LockedOperationBuilder(mock(FactStore.class), "ns");
 
     @Test
     public void testOn() {
@@ -42,13 +40,11 @@ public class LockedOperationBuilderTest {
         on = uut.on(id, id2);
         assertThat(on.ids()).hasSize(2).contains(id).contains(id2);
 
-        assertThrows(NullPointerException.class, () -> {
-            uut.on(null);
-        });
+        assertThrows(NullPointerException.class, () -> uut.on(null));
     }
 
     @Test
-    public void testOptimistic() throws Exception {
+    public void testOptimistic() {
         UUID id = new UUID(1, 2);
         WithOptimisticLock wol = uut.on(id).optimistic();
         assertThat(wol).isNotNull();
@@ -58,26 +54,20 @@ public class LockedOperationBuilderTest {
     }
 
     @Test
-    public void testAttemptNullContracts() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.on(UUID.randomUUID()).attempt(null);
-        });
+    public void testAttemptNullContracts() {
+        assertThrows(NullPointerException.class, () -> uut.on(UUID.randomUUID()).attempt(null));
     }
 
     @Test
-    public void testAttemptAbortsOnNull() throws Exception {
-        assertThrows(AttemptAbortedException.class, () -> {
-            uut.on(UUID.randomUUID()).attempt(() -> null);
-        });
+    public void testAttemptAbortsOnNull() {
+        assertThrows(AttemptAbortedException.class, () -> uut.on(UUID.randomUUID())
+                .attempt(() -> null));
     }
 
     @Test
-    public void testAttemptWithoutPublishing() throws Exception {
-        assertThrows(IllegalArgumentException.class, () -> {
-            @NonNull
-            PublishingResult attempt = uut.on(UUID.randomUUID())
-                    .attempt(() -> mock(IntermediatePublishResult.class));
-        });
+    public void testAttemptWithoutPublishing() {
+        assertThrows(IllegalArgumentException.class, () -> uut.on(UUID.randomUUID())
+                .attempt(() -> mock(IntermediatePublishResult.class)));
     }
 
 }

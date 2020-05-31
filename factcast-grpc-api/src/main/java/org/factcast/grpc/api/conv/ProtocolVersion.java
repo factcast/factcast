@@ -19,18 +19,18 @@ import java.util.StringJoiner;
 
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 
+@With
 @RequiredArgsConstructor(staticName = "of")
-@Wither
 @Value
 public class ProtocolVersion {
 
-    final int major;
+    int major;
 
-    final int minor;
+    int minor;
 
-    final int patch;
+    int patch;
 
     public boolean isCompatibleTo(ProtocolVersion other) {
         // patch level must be irrelevant

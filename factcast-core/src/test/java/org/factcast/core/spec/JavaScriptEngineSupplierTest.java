@@ -20,19 +20,19 @@ import static org.mockito.Mockito.*;
 
 import javax.script.ScriptEngineManager;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class JavaScriptEngineSupplierTest {
 
     @Test
-    void testGet() throws Exception {
+    void testGet() {
         JavaScriptEngineSupplier uut = spy(new JavaScriptEngineSupplier());
         uut.get();
-        verify(uut).getEngineByName(new String[] { "nashorn", "javascript", "js" });
+        verify(uut).getEngineByName("nashorn", "javascript", "js");
     }
 
     @Test
-    void testGetJs() throws Exception {
+    void testGetJs() {
         ScriptEngineManager m = spy(new ScriptEngineManager());
         when(m.getEngineByName("nashorn")).thenReturn(null);
         when(m.getEngineByName("javascript")).thenReturn(null);
@@ -43,7 +43,7 @@ public class JavaScriptEngineSupplierTest {
     }
 
     @Test
-    void testGetJavascript() throws Exception {
+    void testGetJavascript() {
         ScriptEngineManager m = spy(new ScriptEngineManager());
         when(m.getEngineByName("nashorn")).thenReturn(null);
         when(m.getEngineByName("js")).thenReturn(null);
@@ -54,7 +54,7 @@ public class JavaScriptEngineSupplierTest {
     }
 
     @Test
-    void testGetNashorn() throws Exception {
+    void testGetNashorn() {
         ScriptEngineManager m = spy(new ScriptEngineManager());
         when(m.getEngineByName("js")).thenReturn(null);
         when(m.getEngineByName("javascript")).thenReturn(null);
@@ -65,12 +65,10 @@ public class JavaScriptEngineSupplierTest {
     }
 
     @Test
-    void testUnavailable() throws Exception {
+    void testUnavailable() {
         ScriptEngineManager m = spy(new ScriptEngineManager());
         when(m.getEngineByName(anyString())).thenReturn(null);
         JavaScriptEngineSupplier uut = spy(new JavaScriptEngineSupplier(m));
-        assertThrows(IllegalStateException.class, () -> {
-            uut.get();
-        });
+        assertThrows(IllegalStateException.class, uut::get);
     }
 }

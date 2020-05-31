@@ -31,7 +31,7 @@ public class FactCastRole {
 
     public Boolean canWrite(String ns) {
         return write.includes(ns);
-    };
+    }
 
     public Boolean canRead(String ns) {
         return read.includes(ns);
@@ -40,5 +40,5 @@ public class FactCastRole {
     @VisibleForTesting
     protected FactCastRole(String id) {
         this.id = id;
-    };
+    }
 }

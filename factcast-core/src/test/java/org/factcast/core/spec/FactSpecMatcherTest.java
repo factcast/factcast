@@ -24,8 +24,7 @@ import java.util.function.Predicate;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.TestHelper;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class FactSpecMatcherTest {
 
@@ -115,9 +114,8 @@ public class FactSpecMatcherTest {
 
     @Test
     void testMatchesAnyOfNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            FactSpecMatcher.matchesAnyOf(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> FactSpecMatcher.matchesAnyOf(
+                null));
     }
 
     @Test
@@ -194,16 +192,12 @@ public class FactSpecMatcherTest {
 
     @Test
     void testFactSpecMatcherNullConstructor() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            new FactSpecMatcher(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> new FactSpecMatcher(null));
     }
 
     @Test
-    public void testMatchesNull() throws Exception {
-        TestHelper.expectNPE(() -> {
-            FactSpecMatcher.matches(null);
-        });
+    public void testMatchesNull() {
+        TestHelper.expectNPE(() -> FactSpecMatcher.matches(null));
     }
 
 }

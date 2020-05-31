@@ -41,7 +41,7 @@ public class InMemSchemaStoreImpl implements SchemaStore {
 
     private final Map<SchemaKey, String> schemaMap = new HashMap<>();
 
-    private Object mutex = new Object();
+    private final Object mutex = new Object();
 
     @Override
     public void register(@NonNull SchemaSource source, @NonNull String schema)

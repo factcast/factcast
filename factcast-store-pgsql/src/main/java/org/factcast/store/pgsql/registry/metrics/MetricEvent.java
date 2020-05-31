@@ -34,7 +34,7 @@ public enum MetricEvent {
     @Getter
     final String event;
 
-    MetricEvent(String event) {
+    MetricEvent(@NonNull String event) {
         this.event = event;
     }
 }

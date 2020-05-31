@@ -35,8 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PgTestConfiguration {
 
-    static org.apache.tomcat.jdbc.pool.DataSource ds;
-
     static {
         String url = System.getenv("pg_url");
         if (url == null) {

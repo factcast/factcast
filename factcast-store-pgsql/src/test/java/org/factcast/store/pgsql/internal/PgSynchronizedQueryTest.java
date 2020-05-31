@@ -15,15 +15,14 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import static org.mockito.ArgumentMatchers.startsWith;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -39,7 +38,7 @@ public class PgSynchronizedQueryTest {
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     JdbcTemplate jdbcTemplate;
 
-    String sql = "SELECT 42";
+    final String sql = "SELECT 42";
 
     @Mock
     PreparedStatementSetter setter;
@@ -54,7 +53,7 @@ public class PgSynchronizedQueryTest {
     PgLatestSerialFetcher fetcher;
 
     @Test
-    public void testRunWithIndex() throws Exception {
+    public void testRunWithIndex() {
         uut = new PgSynchronizedQuery(jdbcTemplate, sql, setter, rowHandler, serialToContinueFrom,
                 fetcher);
         uut.run(true);
@@ -62,7 +61,7 @@ public class PgSynchronizedQueryTest {
     }
 
     @Test
-    public void testRunWithoutIndex() throws Exception {
+    public void testRunWithoutIndex() {
         uut = new PgSynchronizedQuery(jdbcTemplate, sql, setter, rowHandler, serialToContinueFrom,
                 fetcher);
         uut.run(false);

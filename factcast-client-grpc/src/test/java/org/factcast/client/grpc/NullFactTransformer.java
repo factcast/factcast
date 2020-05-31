@@ -17,14 +17,13 @@ package org.factcast.client.grpc;
 
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactTransformers;
-import org.factcast.core.subscription.TransformationException;
 
 import lombok.NonNull;
 
 public class NullFactTransformer implements FactTransformers {
 
     @Override
-    public @NonNull Fact transformIfNecessary(@NonNull Fact e) throws TransformationException {
+    public @NonNull Fact transformIfNecessary(@NonNull Fact e) {
         return e;
     }
 

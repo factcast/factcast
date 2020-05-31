@@ -15,18 +15,15 @@
  */
 package org.factcast.store.pgsql.rds;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.UUID;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -43,7 +40,7 @@ public class RdsDataSourceFactoryBeanPostProcessorTest {
     RdsDataSourceFactoryBeanPostProcessor uut;
 
     @Test
-    public void shouldReturnFromAfterInitSameBeanAsPassed() throws Exception {
+    public void shouldReturnFromAfterInitSameBeanAsPassed() {
         UUID instance = UUID.randomUUID();
 
         Object afterInit = uut.postProcessAfterInitialization(instance, "foo");
@@ -52,7 +49,7 @@ public class RdsDataSourceFactoryBeanPostProcessorTest {
     }
 
     @Test
-    public void shouldReturnFromBeforeSameBeanAsPassed() throws Exception {
+    public void shouldReturnFromBeforeSameBeanAsPassed() {
         UUID instance = UUID.randomUUID();
 
         Object beforeInit = uut.postProcessBeforeInitialization(instance, "foo");
@@ -61,7 +58,7 @@ public class RdsDataSourceFactoryBeanPostProcessorTest {
     }
 
     @Test
-    public void shouldReplaceJdbcCP() throws Exception {
+    public void shouldReplaceJdbcCP() {
         AmazonRdsDataSourceFactoryBean instance = mock(AmazonRdsDataSourceFactoryBean.class);
         when(env.getProperty(any(), any(), anyBoolean())).thenReturn(true);
 
@@ -73,26 +70,20 @@ public class RdsDataSourceFactoryBeanPostProcessorTest {
     }
 
     @Test
-    public void testNullContracts() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new RdsDataSourceFactoryBeanPostProcessor(null);
-        });
+    public void testNullContracts() {
+        assertThrows(NullPointerException.class, () -> new RdsDataSourceFactoryBeanPostProcessor(
+                null));
 
         RdsDataSourceFactoryBeanPostProcessor uut = new RdsDataSourceFactoryBeanPostProcessor(mock(
                 Environment.class));
-        assertThrows(NullPointerException.class, () -> {
-            uut
-                    .postProcessBeforeInitialization(null, "foo");
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.postProcessBeforeInitialization(new Object(), null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.postProcessAfterInitialization(null, "foo");
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.postProcessAfterInitialization(new Object(), null);
-        });
+        assertThrows(NullPointerException.class, () -> uut
+                .postProcessBeforeInitialization(null, "foo"));
+        assertThrows(NullPointerException.class, () -> uut.postProcessBeforeInitialization(
+                new Object(), null));
+        assertThrows(NullPointerException.class, () -> uut.postProcessAfterInitialization(null,
+                "foo"));
+        assertThrows(NullPointerException.class, () -> uut.postProcessAfterInitialization(
+                new Object(), null));
     }
 
     @Test

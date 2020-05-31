@@ -38,6 +38,7 @@ import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
+import org.factcast.grpc.api.conv.IdAndVersion;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
@@ -47,6 +48,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
@@ -54,6 +56,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID_AND_VERSION;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
@@ -71,6 +74,7 @@ import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import net.devh.boot.grpc.server.service.GrpcService;
 
 /**
@@ -88,13 +92,13 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
 
+    static final AtomicLong subscriptionIdStore = new AtomicLong();
+
     final FactStore store;
 
-    private final CompressionCodecs codecs = new CompressionCodecs();
+    final CompressionCodecs codecs = new CompressionCodecs();
 
     final ProtoConverter converter = new ProtoConverter();
-
-    static final AtomicLong subscriptionIdStore = new AtomicLong();
 
     @Override
     @Secured(FactCastAuthority.AUTHENTICATED)
@@ -318,6 +322,59 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             responseObserver.onError(e);
         }
 
+    }
+
+    @Override
+    @Secured(FactCastAuthority.AUTHENTICATED)
+    public void fetchById(MSG_UUID request, StreamObserver<MSG_OptionalFact> responseObserver) {
+        UUID fromProto = converter.fromProto(request);
+        log.trace("fetchById {}", fromProto);
+
+        doFetchById(responseObserver, () -> {
+            Optional<Fact> fetchById = store.fetchById(fromProto);
+            log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "")
+                    .orElse("NOT "));
+            return fetchById;
+        });
+
+    }
+
+    interface ThrowingSupplier<T> {
+        T get() throws Exception;
+    }
+
+    private void doFetchById(StreamObserver<MSG_OptionalFact> responseObserver,
+            ThrowingSupplier<Optional<Fact>> o) {
+        try {
+            enableResponseCompression(responseObserver);
+
+            val fetchById = o.get();
+            if (fetchById.isPresent())
+                assertCanRead(fetchById.get().ns());
+
+            responseObserver.onNext(converter.toProto(fetchById));
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            responseObserver.onError(e);
+        }
+
+    }
+
+    @Override
+    public void fetchByIdAndVersion(MSG_UUID_AND_VERSION request,
+            StreamObserver<MSG_OptionalFact> responseObserver) {
+
+        IdAndVersion fromProto = converter.fromProto(request);
+        log.trace("fetchById {} in version {}", fromProto.uuid(), fromProto.version());
+
+        doFetchById(responseObserver, () -> {
+            Optional<Fact> fetchById = store.fetchByIdAndVersion(fromProto.uuid(), fromProto
+                    .version());
+            log.debug("fetchById({}) was found", fromProto, fetchById.map(f -> "")
+                    .orElse("NOT "));
+
+            return fetchById;
+        });
     }
 
     //

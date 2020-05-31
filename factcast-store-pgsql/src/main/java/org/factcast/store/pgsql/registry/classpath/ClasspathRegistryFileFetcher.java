@@ -34,14 +34,14 @@ public class ClasspathRegistryFileFetcher implements RegistryFileFetcher {
     private final @NonNull String base;
 
     @Override
-    public String fetchTransformation(TransformationSource key) throws IOException {
+    public String fetchTransformation(@NonNull TransformationSource key) {
         String path = base + "/" + key.ns() + "/" + key.type() + "/" + key.from() + "-" + key.to()
                 + "/transform.js";
         return fetch(path);
 
     }
 
-    private String fetch(String path) {
+    private @NonNull String fetch(String path) {
         try {
             File file = new ClassPathResource(path).getFile();
             if (file.exists()) {
@@ -57,7 +57,7 @@ public class ClasspathRegistryFileFetcher implements RegistryFileFetcher {
         }
     }
 
-    static String readFile(File file)
+    private static @NonNull String readFile(@NonNull File file)
             throws IOException {
         StringBuilder sb = new StringBuilder();
         java.nio.file.Files.lines(file.toPath()).forEachOrdered(l -> {
@@ -70,7 +70,7 @@ public class ClasspathRegistryFileFetcher implements RegistryFileFetcher {
     }
 
     @Override
-    public String fetchSchema(SchemaSource key) throws IOException {
+    public String fetchSchema(@NonNull SchemaSource key) {
         String path = base + "/" + key.ns() + "/" + key.type() + "/" + key.version()
                 + "/schema.json";
         return fetch(path);

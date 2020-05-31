@@ -37,13 +37,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.val;
 
 public class FactCastJsonTest {
     @Test
     void testCopyNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            FactCastJson.copy(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> FactCastJson.copy(null));
     }
 
     @Test
@@ -99,15 +98,14 @@ public class FactCastJsonTest {
 
     @Test
     void testNewObjectNode() {
-        assertNotNull(FactCastJson.newObjectNode());
-        assertTrue(FactCastJson.newObjectNode() instanceof ObjectNode);
+        ObjectNode actual = FactCastJson.newObjectNode();
+        assertNotNull(actual);
+        assertTrue(actual instanceof ObjectNode);
     }
 
     @Test
     void testToObjectNodeNonJson() {
-        Assertions.assertThrows(RuntimeException.class, () -> {
-            FactCastJson.toObjectNode("no-json");
-        });
+        Assertions.assertThrows(RuntimeException.class, () -> FactCastJson.toObjectNode("no-json"));
     }
 
     @Test
@@ -148,4 +146,29 @@ public class FactCastJsonTest {
         String val = FactCastJson.readJSON(testFilePath.toFile());
         assertTrue(val.contentEquals(content));
     }
+
+    @Test
+    void testAddSerToHeader() {
+        val newHeader = FactCastJson.addSerToHeader(33, "{}");
+        assertEquals("{\"meta\":{\"_ser\":33}}", newHeader);
+        val updatedHeader = FactCastJson.addSerToHeader(77, newHeader);
+        assertEquals("{\"meta\":{\"_ser\":77}}", updatedHeader);
+
+        val updatedHeaderWithoutSerAttribute = FactCastJson.addSerToHeader(78,
+                "{\"meta\":{\"foo\":\"bar\"}}");
+        assertEquals("{\"meta\":{\"foo\":\"bar\",\"_ser\":78}}", updatedHeaderWithoutSerAttribute);
+    }
+
+    @Test
+    void testToPrettyString() {
+        val someJson = "{\"meta\":{\"foo\":\"bar\",\"_ser\":78}}";
+        val pretty = FactCastJson.toPrettyString(someJson);
+        assertEquals("{\n" +
+                "  \"meta\" : {\n" +
+                "    \"foo\" : \"bar\",\n" +
+                "    \"_ser\" : 78\n" +
+                "  }\n" +
+                "}", pretty);
+    }
+
 }

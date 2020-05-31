@@ -19,6 +19,7 @@ import lombok.Getter;
 
 public enum AdvisoryLocks {
     PUBLISH();
+
     @Getter
     private final int code;
 

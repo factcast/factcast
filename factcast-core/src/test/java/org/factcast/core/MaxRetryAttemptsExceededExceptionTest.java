@@ -15,17 +15,15 @@
  */
 package org.factcast.core;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class MaxRetryAttemptsExceededExceptionTest {
 
     @Test
-    public void testMaxRetryAttemptsExceededExceptionNullContracts() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new MaxRetryAttemptsExceededException(null);
-        });
+    public void testMaxRetryAttemptsExceededExceptionNullContracts() {
+        assertThrows(NullPointerException.class, () -> new MaxRetryAttemptsExceededException(null));
     }
 
 }

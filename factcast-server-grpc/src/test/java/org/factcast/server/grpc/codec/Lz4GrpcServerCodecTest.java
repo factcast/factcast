@@ -20,11 +20,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 class Lz4GrpcServerCodecTest {
 
-    Lz4GrpcServerCodec uut = new Lz4GrpcServerCodec();
+    final Lz4GrpcServerCodec uut = new Lz4GrpcServerCodec();
 
     @Test
     void getMessageEncoding() {

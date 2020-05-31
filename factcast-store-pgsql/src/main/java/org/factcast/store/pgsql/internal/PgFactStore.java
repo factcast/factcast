@@ -32,8 +32,10 @@ import org.factcast.core.Fact;
 import org.factcast.core.store.AbstractFactStore;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
+import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.pgsql.internal.PgFactStore.StoreMetrics.OP;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
@@ -55,6 +57,7 @@ import io.micrometer.core.instrument.Timer.Sample;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 /**
  * A PostgreSQL based FactStore implementation
@@ -75,6 +78,9 @@ public class PgFactStore extends AbstractFactStore {
 
     @NonNull
     private final FactTableWriteLock lock;
+
+    @NonNull
+    private final FactTransformerService factTransformerService;
 
     @NonNull
     private final MeterRegistry registry;
@@ -117,7 +123,7 @@ public class PgFactStore extends AbstractFactStore {
             @Getter
             final String op;
 
-            OP(String op) {
+            OP(@NonNull String op) {
                 this.op = op;
             }
 
@@ -126,14 +132,18 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Autowired
-    public PgFactStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
-            TokenStore tokenStore, FactTableWriteLock lock, MeterRegistry registry) {
+    public PgFactStore(@NonNull JdbcTemplate jdbcTemplate,
+            @NonNull PgSubscriptionFactory subscriptionFactory,
+            TokenStore tokenStore, @NonNull FactTableWriteLock lock,
+            @NonNull FactTransformerService factTransformerService,
+            @NonNull MeterRegistry registry) {
         super(tokenStore);
 
         this.jdbcTemplate = jdbcTemplate;
         this.subscriptionFactory = subscriptionFactory;
         this.lock = lock;
         this.registry = registry;
+        this.factTransformerService = factTransformerService;
 
         /*
          * Register all non-exceptional meters, so that an operational dashboard
@@ -146,9 +156,30 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Override
+    public @NonNull Optional<Fact> fetchById(@NonNull UUID id) {
+        return time(OP.FETCH_BY_ID, () -> jdbcTemplate.query(PgConstants.SELECT_BY_ID,
+                new Object[] { "{\"id\":\"" + id + "\"}" }, this::extractFactFromResultSet)
+                .stream()
+                .findFirst());
+    }
+
+    @Override
+    public @NonNull Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int version)
+            throws TransformationException {
+
+        val fact = fetchById(id);
+        // map does not work here due to checked exception
+        if (fact.isPresent()) {
+            return Optional.of(factTransformerService.transformIfNecessary(fact.get(), version));
+        } else {
+            return fact;
+        }
+    }
+
+    @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
-        time(OP.PUBLISH, () -> {
+        time(() -> {
             try {
                 lock.aquireExclusiveTXLock();
 
@@ -186,16 +217,14 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Override
-    public Subscription subscribe(@NonNull SubscriptionRequestTO request,
+    public @NonNull Subscription subscribe(@NonNull SubscriptionRequestTO request,
             @NonNull FactObserver observer) {
         OP operation = request.continuous() ? OP.SUBSCRIBE_FOLLOW : OP.SUBSCRIBE_CATCHUP;
-        return time(operation, () -> {
-            return subscriptionFactory.subscribe(request, observer);
-        });
+        return time(operation, () -> subscriptionFactory.subscribe(request, observer));
     }
 
     @Override
-    public OptionalLong serialOf(UUID l) {
+    public @NonNull OptionalLong serialOf(@NonNull UUID l) {
         return time(OP.SERIAL_OF, () -> {
             try {
                 Long res = jdbcTemplate.queryForObject(PgConstants.SELECT_SER_BY_ID,
@@ -213,19 +242,17 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Override
-    public Set<String> enumerateNamespaces() {
-        return time(OP.ENUMERATE_NAMESPACES, () -> {
-            return new HashSet<>(jdbcTemplate.query(PgConstants.SELECT_DISTINCT_NAMESPACE,
-                    this::extractStringFromResultSet));
-        });
+    public @NonNull Set<String> enumerateNamespaces() {
+        return time(OP.ENUMERATE_NAMESPACES, () -> new HashSet<>(jdbcTemplate.query(
+                PgConstants.SELECT_DISTINCT_NAMESPACE,
+                this::extractStringFromResultSet)));
     }
 
     @Override
-    public Set<String> enumerateTypes(String ns) {
-        return time(OP.ENUMERATE_TYPES, () -> {
-            return new HashSet<>(jdbcTemplate.query(PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
-                    new Object[] { ns }, this::extractStringFromResultSet));
-        });
+    public @NonNull Set<String> enumerateTypes(@NonNull String ns) {
+        return time(OP.ENUMERATE_TYPES, () -> new HashSet<>(jdbcTemplate.query(
+                PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
+                new Object[] { ns }, this::extractStringFromResultSet)));
     }
 
     @Override
@@ -269,7 +296,7 @@ public class PgFactStore extends AbstractFactStore {
         });
     }
 
-    private void time(@NonNull OP operation, @NonNull Runnable r) {
+    private void time(@NonNull Runnable r) {
         Sample sample = Timer.start();
         Exception exception = null;
         try {
@@ -278,7 +305,7 @@ public class PgFactStore extends AbstractFactStore {
             exception = e;
             throw e;
         } finally {
-            time(operation, sample, exception);
+            time(OP.PUBLISH, sample, exception);
         }
     }
 
@@ -309,8 +336,7 @@ public class PgFactStore extends AbstractFactStore {
         if (e == null) {
             return StoreMetrics.TAG_EXCEPTION_VALUE_NONE;
         }
-        String simpleName = e.getClass().getSimpleName();
-        return simpleName != null ? simpleName : e.getClass().getName();
+        return e.getClass().getSimpleName();
     }
 
     @NonNull

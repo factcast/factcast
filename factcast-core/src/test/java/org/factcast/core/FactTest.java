@@ -15,18 +15,13 @@
  */
 package org.factcast.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.UUID;
 
 import org.factcast.core.util.FactCastJson;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -36,23 +31,17 @@ public class FactTest {
 
     @Test
     void testOfNull1() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            Fact.of(null, "");
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> Fact.of(null, ""));
     }
 
     @Test
     void testOfNull2() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            Fact.of("", null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> Fact.of("", null));
     }
 
     @Test
     void testOfNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            Fact.of((String) null, null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> Fact.of((String) null, null));
     }
 
     @Test
@@ -87,12 +76,12 @@ public class FactTest {
 
     @Test
     void testSerialUnset() {
-        Assertions.assertThrows(IllegalStateException.class, () -> {
-            Fact.of("{" + "\"ns\":\"ns\"," + "\"id\":\"" + UUID.randomUUID() + "\"" + "}", "{}")
-                    .serial();
-        });
+        Assertions.assertThrows(IllegalStateException.class, () -> Fact.of("{" + "\"ns\":\"ns\","
+                + "\"id\":\"" + UUID.randomUUID() + "\"" + "}", "{}")
+                .serial());
     }
 
+    @Test
     void testBuilderDefaults() {
         Fact f = Fact.builder().build("{\"a\":1}");
         assertEquals("default", f.ns());
@@ -130,22 +119,12 @@ public class FactTest {
     @Test
     void testBuilderNullContracts() {
 
-        assertThrows(NullPointerException.class, () -> {
-            Fact.builder().ns(null);
-        });
+        assertThrows(NullPointerException.class, () -> Fact.builder().ns(null));
 
-        assertThrows(NullPointerException.class, () -> {
-            Fact.builder().type(null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            Fact.builder().aggId(null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            Fact.builder().meta(null, "x");
-        });
-        assertThrows(NullPointerException.class, () -> {
-            Fact.builder().id(null);
-        });
+        assertThrows(NullPointerException.class, () -> Fact.builder().type(null));
+        assertThrows(NullPointerException.class, () -> Fact.builder().aggId(null));
+        assertThrows(NullPointerException.class, () -> Fact.builder().meta(null, "x"));
+        assertThrows(NullPointerException.class, () -> Fact.builder().id(null));
 
         Fact.builder().meta("x", null).build("{}");
 
@@ -153,23 +132,19 @@ public class FactTest {
 
     @Test
     void testOfJsonNodeJsonNodeNull1() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            Fact.of(null, Mockito.mock(JsonNode.class));
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> Fact.of(null, Mockito.mock(
+                JsonNode.class)));
     }
 
     @Test
     void testOfJsonNodeJsonNodeNull2() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            Fact.of(Mockito.mock(JsonNode.class), null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> Fact.of(Mockito.mock(
+                JsonNode.class), null));
     }
 
     @Test
     void testOfJsonNodeJsonNodeNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            Fact.of((JsonNode) null, null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> Fact.of((JsonNode) null, null));
     }
 
     @Test
@@ -181,34 +156,30 @@ public class FactTest {
     }
 
     @Test
-    public void testBuildWithoutPayload() throws Exception {
+    public void testBuildWithoutPayload() {
         Fact f = Fact.builder().ns("foo").buildWithoutPayload();
         assertThat(f.ns()).isEqualTo("foo");
         assertThat(f.jsonPayload()).isEqualTo("{}");
     }
 
     @Test
-    public void testMeta() throws Exception {
+    public void testMeta() {
         Fact f = Fact.builder().ns("foo").meta("a", "1").buildWithoutPayload();
         assertThat(f.meta("a")).isEqualTo("1");
     }
 
     @Test
-    public void testTypeEmpty() throws Exception {
-        assertThrows(IllegalArgumentException.class, () -> {
-            Fact.builder().type("");
-        });
+    public void testTypeEmpty() {
+        assertThrows(IllegalArgumentException.class, () -> Fact.builder().type(""));
     }
 
     @Test
-    public void testNsEmpty() throws Exception {
-        assertThrows(IllegalArgumentException.class, () -> {
-            Fact.builder().ns("");
-        });
+    public void testNsEmpty() {
+        assertThrows(IllegalArgumentException.class, () -> Fact.builder().ns(""));
     }
 
     @Test
-    public void testSerialMustExistInMeta() throws Exception {
+    public void testSerialMustExistInMeta() {
         assertThrows(IllegalStateException.class, () -> {
             Fact f = Fact.builder().ns("a").buildWithoutPayload();
             f.serial();
@@ -216,7 +187,7 @@ public class FactTest {
     }
 
     @Test
-    public void testOfJsonNodeJsonNode() throws Exception {
+    public void testOfJsonNodeJsonNode() {
         ObjectNode h = FactCastJson.toObjectNode("{\"id\":\"" + new UUID(0, 1)
                 + "\",\"ns\":\"foo\"}");
         ObjectNode p = FactCastJson.toObjectNode("{}");
@@ -226,7 +197,7 @@ public class FactTest {
     }
 
     @Test
-    public void testEmptyPayload() throws Exception {
+    public void testEmptyPayload() {
         assertThat(Fact.builder().build("").jsonPayload()).isEqualTo("{}");
         assertThat(Fact.builder().build("   ").jsonPayload()).isEqualTo("{}");
     }

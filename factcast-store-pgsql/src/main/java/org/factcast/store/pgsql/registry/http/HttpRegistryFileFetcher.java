@@ -101,7 +101,7 @@ public class HttpRegistryFileFetcher implements RegistryFileFetcher {
             } else {
                 return response.body().string();
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RegistryFileFetchException(url, 0, e.getMessage());
         }
 

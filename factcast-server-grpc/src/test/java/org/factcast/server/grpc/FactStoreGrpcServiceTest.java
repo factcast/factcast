@@ -33,24 +33,26 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.server.grpc.auth.FactCastAccount;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -69,6 +71,8 @@ import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+import lombok.NonNull;
+import lombok.val;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 @ExtendWith(MockitoExtension.class)
@@ -87,7 +91,7 @@ public class FactStoreGrpcServiceTest {
     @Captor
     private ArgumentCaptor<SubscriptionRequestTO> reqCaptor;
 
-    private FactCastUser PRINCIPAL = new FactCastUser(FactCastAccount.GOD, "DISABLED");
+    private final FactCastUser PRINCIPAL = new FactCastUser(FactCastAccount.GOD, "DISABLED");
 
     @BeforeEach
     void setUp() {
@@ -111,6 +115,114 @@ public class FactStoreGrpcServiceTest {
         });
     }
 
+    @Test
+    void currentTime() {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+        when(store.currentTime()).thenReturn(101L);
+        StreamObserver<MSG_CurrentDatabaseTime> stream = mock(StreamObserver.class);
+
+        uut.currentTime(MSG_Empty.getDefaultInstance(), stream);
+
+        verify(stream).onNext(eq(new ProtoConverter().toProto(101L)));
+        verify(stream).onCompleted();
+        verifyNoMoreInteractions(stream);
+    }
+
+    @Test
+    void fetchById() {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+        Fact fact = Fact.builder()
+                .ns("ns")
+                .type("type")
+                .id(UUID.randomUUID())
+                .buildWithoutPayload();
+        val expected = Optional.of(fact);
+        when(store.fetchById(fact.id())).thenReturn(expected);
+        StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+
+        uut.fetchById(new ProtoConverter().toProto(fact.id()), stream);
+
+        verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.of(fact))));
+        verify(stream).onCompleted();
+        verifyNoMoreInteractions(stream);
+    }
+
+    @Test
+    void fetchByIEmpty() {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+
+        Optional<Fact> expected = Optional.empty();
+        UUID id = UUID.randomUUID();
+        when(store.fetchById(id)).thenReturn(expected);
+        StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+
+        uut.fetchById(new ProtoConverter().toProto(id), stream);
+
+        verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.empty())));
+        verify(stream).onCompleted();
+        verifyNoMoreInteractions(stream);
+    }
+
+    @Test
+    void fetchByIdThrowingException() {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+        Fact fact = Fact.builder()
+                .ns("ns")
+                .type("type")
+                .id(UUID.randomUUID())
+                .buildWithoutPayload();
+        when(store.fetchById(fact.id())).thenThrow(IllegalMonitorStateException.class);
+        StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+
+        uut.fetchById(new ProtoConverter().toProto(fact.id()), stream);
+
+        verify(stream, never()).onNext(any());
+        verify(stream, never()).onCompleted();
+        verify(stream).onError(any(IllegalMonitorStateException.class));
+        verifyNoMoreInteractions(stream);
+    }
+
+    @Test
+    void fetchByIdAndVersion() throws TransformationException {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+        Fact fact = Fact.builder()
+                .ns("ns")
+                .type("type")
+                .id(UUID.randomUUID())
+                .buildWithoutPayload();
+        val expected = Optional.of(fact);
+        when(store.fetchByIdAndVersion(fact.id(), 1)).thenReturn(expected);
+        StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+
+        uut.fetchByIdAndVersion(new ProtoConverter().toProto(fact.id(), 1), stream);
+
+        verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.of(fact))));
+        verify(stream).onCompleted();
+        verifyNoMoreInteractions(stream);
+    }
+
+    @Test
+    void fetchByIdAndVersionEmpty() throws TransformationException {
+        val store = mock(FactStore.class);
+        val uut = new FactStoreGrpcService(store);
+        Optional<Fact> expected = Optional.empty();
+        @NonNull
+        UUID id = UUID.randomUUID();
+        when(store.fetchByIdAndVersion(id, 1)).thenReturn(expected);
+        StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+
+        uut.fetchByIdAndVersion(new ProtoConverter().toProto(id, 1), stream);
+
+        verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.empty())));
+        verify(stream).onCompleted();
+        verifyNoMoreInteractions(stream);
+    }
+
     static class TestToken extends RunAsUserToken {
 
         public TestToken(FactCastUser principal) {
@@ -124,9 +236,7 @@ public class FactStoreGrpcServiceTest {
 
     @Test
     void testPublishNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.publish(null, mock(StreamObserver.class));
-        });
+        expectNPE(() -> uut.publish(null, mock(StreamObserver.class)));
     }
 
     @Test
@@ -167,13 +277,11 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testSerialOf() throws Exception {
+    public void testSerialOf() {
         uut = new FactStoreGrpcService(backend);
 
         StreamObserver so = mock(StreamObserver.class);
-        assertThrows(NullPointerException.class, () -> {
-            uut.serialOf(null, so);
-        });
+        assertThrows(NullPointerException.class, () -> uut.serialOf(null, so));
 
         UUID id = new UUID(0, 1);
         OptionalLong twenty_two = OptionalLong.of(22);
@@ -187,19 +295,18 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testSerialOfThrows() throws Exception {
+    public void testSerialOfThrows() {
         uut = new FactStoreGrpcService(backend);
 
         StreamObserver so = mock(StreamObserver.class);
         when(backend.serialOf(any(UUID.class))).thenThrow(UnsupportedOperationException.class);
 
-        assertThrows(UnsupportedOperationException.class, () -> {
-            uut.serialOf(conv.toProto(UUID.randomUUID()), so);
-        });
+        assertThrows(UnsupportedOperationException.class, () -> uut.serialOf(conv.toProto(UUID
+                .randomUUID()), so));
     }
 
     @Test
-    public void testEnumerateNamespaces() throws Exception {
+    public void testEnumerateNamespaces() {
         uut = new FactStoreGrpcService(backend);
         StreamObserver so = mock(StreamObserver.class);
         when(backend.enumerateNamespaces()).thenReturn(Sets.newHashSet("foo", "bar"));
@@ -212,7 +319,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testEnumerateNamespacesThrows() throws Exception {
+    public void testEnumerateNamespacesThrows() {
         uut = new FactStoreGrpcService(backend);
         StreamObserver so = mock(StreamObserver.class);
         when(backend.enumerateNamespaces()).thenThrow(UnsupportedOperationException.class);
@@ -223,7 +330,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testEnumerateTypes() throws Exception {
+    public void testEnumerateTypes() {
         uut = new FactStoreGrpcService(backend);
         StreamObserver so = mock(StreamObserver.class);
 
@@ -237,7 +344,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testEnumerateTypesThrows() throws Exception {
+    public void testEnumerateTypesThrows() {
         uut = new FactStoreGrpcService(backend);
         StreamObserver so = mock(StreamObserver.class);
         when(backend.enumerateTypes(eq("ns"))).thenThrow(UnsupportedOperationException.class);
@@ -247,8 +354,8 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testPublishThrows() throws Exception {
-        doThrow(UnsupportedOperationException.class).when(backend).publish(anyListOf(Fact.class));
+    public void testPublishThrows() {
+        doThrow(UnsupportedOperationException.class).when(backend).publish(anyList());
         List<Fact> toPublish = Lists.newArrayList(Fact.builder().build("{}"));
         StreamObserver so = mock(StreamObserver.class);
 
@@ -257,7 +364,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testHandshake() throws Exception {
+    public void testHandshake() {
 
         StreamObserver so = mock(StreamObserver.class);
         uut.handshake(conv.empty(), so);
@@ -268,7 +375,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testRetrieveImplementationVersion() throws Exception {
+    public void testRetrieveImplementationVersion() {
         uut = spy(uut);
         when(uut.getProjectProperties()).thenReturn(this.getClass()
                 .getResource("/test.properties"));
@@ -280,7 +387,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testRetrieveImplementationVersionEmptyPropertyFile() throws Exception {
+    public void testRetrieveImplementationVersionEmptyPropertyFile() {
         uut = spy(uut);
         when(uut.getProjectProperties()).thenReturn(this.getClass()
                 .getResource("/no-version.properties"));
@@ -305,7 +412,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testInvalidate() throws Exception {
+    public void testInvalidate() {
 
         {
             UUID id = UUID.randomUUID();
@@ -334,7 +441,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testStateFor() throws Exception {
+    public void testStateFor() {
 
         {
             UUID id = UUID.randomUUID();
@@ -369,7 +476,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testPublishConditional() throws Exception {
+    public void testPublishConditional() {
         {
             UUID id = UUID.randomUUID();
 
@@ -404,7 +511,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testAssertCanReadString() throws Exception {
+    public void testAssertCanReadString() {
 
         FactCastAccount account = mock(FactCastAccount.class);
 
@@ -426,7 +533,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testAssertCanReadStrings() throws Exception {
+    public void testAssertCanReadStrings() {
 
         FactCastAccount account = mock(FactCastAccount.class);
 
@@ -448,7 +555,7 @@ public class FactStoreGrpcServiceTest {
     }
 
     @Test
-    public void testAssertCanWriteStrings() throws Exception {
+    public void testAssertCanWriteStrings() {
 
         FactCastAccount account = mock(FactCastAccount.class);
 
@@ -467,5 +574,22 @@ public class FactStoreGrpcServiceTest {
             fail(s);
         }
 
+    }
+
+    public static void expectNPE(Runnable r) {
+        expect(r, NullPointerException.class, IllegalArgumentException.class);
+    }
+
+    public static void expect(Runnable r, Class<? extends Throwable>... ex) {
+        try {
+            r.run();
+            fail("expected " + Arrays.toString(ex));
+        } catch (Throwable actual) {
+
+            val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
+            if (!matches) {
+                fail("Wrong exception, expected " + Arrays.toString(ex) + " but got " + actual);
+            }
+        }
     }
 }

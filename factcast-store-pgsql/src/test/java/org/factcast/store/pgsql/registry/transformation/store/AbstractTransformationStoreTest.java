@@ -32,9 +32,8 @@ import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.function.*;
 import org.mockito.Spy;
 
 import io.micrometer.core.instrument.Tag;
@@ -53,10 +52,10 @@ public abstract class AbstractTransformationStoreTest {
 
     protected abstract TransformationStore createUUT();
 
-    TransformationSource s = new TransformationSource();
+    final TransformationSource s = new TransformationSource();
 
     @Test
-    void testEmptyContains() throws Exception {
+    void testEmptyContains() {
         s.id("http://testEmptyContains");
         s.hash("123");
 
@@ -64,13 +63,13 @@ public abstract class AbstractTransformationStoreTest {
     }
 
     @Test
-    void testEmptyGet() throws Exception {
+    void testEmptyGet() {
         List<Transformation> actual = uut.get(TransformationKey.of("ns", "testEmptyGet"));
         assertThat(actual).isEmpty();
     }
 
     @Test
-    void testGetAfterRegister() throws Exception {
+    void testGetAfterRegister() {
 
         s.id("http://testGetAfterRegister");
         s.hash("123");
@@ -85,7 +84,7 @@ public abstract class AbstractTransformationStoreTest {
     }
 
     @Test
-    void testContainsSensesConflict() throws Exception {
+    void testContainsSensesConflict() {
 
         s.id("http://testContainsSensesConflict");
         s.hash("123");
@@ -99,16 +98,14 @@ public abstract class AbstractTransformationStoreTest {
         conflicting.id("http://testContainsSensesConflict");
         conflicting.hash("1234");
 
-        assertThrows(TransformationConflictException.class, () -> {
-            uut.contains(conflicting);
-        });
+        assertThrows(TransformationConflictException.class, () -> uut.contains(conflicting));
 
         verify(registryMetrics).count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
                 RegistryMetrics.TAG_IDENTITY_KEY, conflicting.id())));
     }
 
     @Test
-    void testNullContracts() throws Exception {
+    void testNullContracts() {
         s.id("http://testContainsSensesConflict");
         s.hash("123");
         s.ns("ns");
@@ -116,15 +113,9 @@ public abstract class AbstractTransformationStoreTest {
         s.from(1);
         s.to(2);
 
-        assertNpe(() -> {
-            uut.contains(null);
-        });
-        assertNpe(() -> {
-            uut.store(null, "{}");
-        });
-        assertNpe(() -> {
-            uut.get(null);
-        });
+        assertNpe(() -> uut.contains(null));
+        assertNpe(() -> uut.store(null, "{}"));
+        assertNpe(() -> uut.get(null));
 
     }
 
@@ -133,7 +124,7 @@ public abstract class AbstractTransformationStoreTest {
     }
 
     @Test
-    public void testMatchingContains() throws Exception {
+    public void testMatchingContains() {
 
         s.id("http://testMatchingContains");
         s.hash("123");
@@ -151,7 +142,7 @@ public abstract class AbstractTransformationStoreTest {
         TransformationStoreListener l = mock(TransformationStoreListener.class);
         uut.register(l);
 
-        TransformationSource source = new TransformationSource("xx", "ns", "type", "abcdef", 1, 2);
+        TransformationSource source = new TransformationSource("xx", "hash", "ns", "type", 1, 2);
         uut.store(source, "");
 
         ((AbstractTransformationStore) uut).executorService()
@@ -167,13 +158,12 @@ public abstract class AbstractTransformationStoreTest {
         uut.register(l);
         uut.unregister(l);
 
-        TransformationSource source = new TransformationSource("xx", "ns", "type", "abcdef", 1, 2);
+        TransformationSource source = new TransformationSource("xx", "hash", "ns", "type", 1, 2);
         uut.store(source, "");
 
         ((AbstractTransformationStore) uut).executorService()
                 .awaitTermination(200, TimeUnit.MILLISECONDS);
 
-        TransformationKey key = source.toKey();
         verify(l, never()).notifyFor(any());
     }
 

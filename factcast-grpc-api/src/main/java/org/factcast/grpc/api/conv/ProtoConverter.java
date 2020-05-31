@@ -48,6 +48,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID_AND_VERSION;
 
 import com.google.protobuf.ProtocolStringList;
 
@@ -65,14 +66,17 @@ public class ProtoConverter {
 
     private static final MSG_Empty EMPTY = MSG_Empty.newBuilder().build();
 
+    @NonNull
     public MSG_Notification createCatchupNotification() {
         return MSG_Notification.newBuilder().setType(MSG_Notification.Type.Catchup).build();
     }
 
+    @NonNull
     public MSG_Notification createCompleteNotification() {
         return MSG_Notification.newBuilder().setType(MSG_Notification.Type.Complete).build();
     }
 
+    @NonNull
     public MSG_Notification createNotificationFor(@NonNull Fact t) {
         MSG_Notification.Builder builder = MSG_Notification.newBuilder()
                 .setType(MSG_Notification.Type.Fact);
@@ -80,6 +84,7 @@ public class ProtoConverter {
         return builder.build();
     }
 
+    @NonNull
     public MSG_Notification createNotificationFor(@NonNull UUID id) {
         MSG_Notification.Builder builder = MSG_Notification.newBuilder()
                 .setType(MSG_Notification.Type.Id);
@@ -92,6 +97,15 @@ public class ProtoConverter {
         return MSG_UUID.newBuilder()
                 .setLsb(id.getLeastSignificantBits())
                 .setMsb(id.getMostSignificantBits())
+                .build();
+    }
+
+    @NonNull
+    public MSG_UUID_AND_VERSION toProto(@NonNull UUID id, int version) {
+        return MSG_UUID_AND_VERSION.newBuilder()
+                .setLsb(id.getLeastSignificantBits())
+                .setMsb(id.getMostSignificantBits())
+                .setVer(version)
                 .build();
     }
 
@@ -111,18 +125,28 @@ public class ProtoConverter {
         return new UUID(msb, lsb);
     }
 
+    @NonNull
+    public IdAndVersion fromProto(MSG_UUID_AND_VERSION request) {
+        long lsb = request.getLsb();
+        long msb = request.getMsb();
+        int version = request.getVer();
+        return new IdAndVersion(new UUID(msb, lsb), version);
+    }
+
     public Fact fromProto(MSG_Fact protoFact) {
         return Fact.of(protoFact.getHeader(), protoFact.getPayload());
     }
 
-    public MSG_Fact toProto(Fact factMark) {
+    @NonNull
+    public MSG_Fact toProto(@NonNull Fact factMark) {
         MSG_Fact.Builder proto = MSG_Fact.newBuilder();
         proto.setHeader(factMark.jsonHeader());
         proto.setPayload(factMark.jsonPayload());
         return proto.build();
     }
 
-    public MSG_OptionalFact toProto(Optional<Fact> optFact) {
+    @NonNull
+    public MSG_OptionalFact toProto(@NonNull Optional<Fact> optFact) {
         Builder proto = MSG_OptionalFact.newBuilder();
         boolean present = optFact.isPresent();
         proto.setPresent(present);
@@ -132,6 +156,7 @@ public class ProtoConverter {
         return proto.build();
     }
 
+    @NonNull
     public Optional<Fact> fromProto(@NonNull MSG_OptionalFact message) {
         if (!message.getPresent()) {
             return Optional.empty();
@@ -186,10 +211,12 @@ public class ProtoConverter {
         return MSG_ServerProperties.newBuilder().putAllProperty(property).build();
     }
 
+    @NonNull
     public MSG_Empty empty() {
         return EMPTY;
     }
 
+    @NonNull
     public MSG_OptionalSerial toProto(OptionalLong serialOf) {
         if (serialOf.isPresent()) {
             return MSG_OptionalSerial.newBuilder()
@@ -201,20 +228,24 @@ public class ProtoConverter {
         }
     }
 
-    public Set<String> fromProto(MSG_StringSet set) {
+    @NonNull
+    public Set<String> fromProto(@NonNull MSG_StringSet set) {
         ProtocolStringList sList = set.getEmbeddedStringList();
         return new HashSet<>(sList);
     }
 
-    public MSG_StringSet toProto(Set<String> set) {
+    @NonNull
+    public MSG_StringSet toProto(@NonNull Set<String> set) {
         return MSG_StringSet.newBuilder().addAllEmbeddedString(set).build();
     }
 
-    public MSG_String toProto(String ns) {
+    @NonNull
+    public MSG_String toProto(@NonNull String ns) {
         return MSG_String.newBuilder().setEmbeddedString(ns).build();
     }
 
-    public String fromProto(MSG_String request) {
+    @NonNull
+    public String fromProto(@NonNull MSG_String request) {
         return request.getEmbeddedString();
     }
 
@@ -226,7 +257,8 @@ public class ProtoConverter {
         return ret.build();
     }
 
-    public StateForRequest fromProto(MSG_StateForRequest request) {
+    @NonNull
+    public StateForRequest fromProto(@NonNull MSG_StateForRequest request) {
         List<UUID> aggIds = request.getAggIdsList()
                 .stream()
                 .map(this::fromProto)
@@ -235,6 +267,7 @@ public class ProtoConverter {
         return new StateForRequest(aggIds, ns);
     }
 
+    @NonNull
     public ConditionalPublishRequest fromProto(@NonNull MSG_ConditionalPublishRequest request) {
         UUID token = null;
         if (request.getTokenPresent()) {
@@ -248,10 +281,12 @@ public class ProtoConverter {
         return facts.getFactList().stream().map(this::fromProto).collect(Collectors.toList());
     }
 
+    @NonNull
     public MSG_ConditionalPublishResult toProto(boolean result) {
         return MSG_ConditionalPublishResult.newBuilder().setSuccess(result).build();
     }
 
+    @NonNull
     public MSG_StateForRequest toProto(@NonNull StateForRequest req) {
         String ns = req.ns();
         MSG_StateForRequest.Builder b = MSG_StateForRequest.newBuilder()
@@ -268,6 +303,7 @@ public class ProtoConverter {
 
     }
 
+    @NonNull
     public MSG_ConditionalPublishRequest toProto(@NonNull ConditionalPublishRequest req) {
         MSG_ConditionalPublishRequest.Builder b = MSG_ConditionalPublishRequest.newBuilder();
         b.setFacts(toProto(req.facts()));
@@ -281,10 +317,12 @@ public class ProtoConverter {
         return b.build();
     }
 
+    @NonNull
     public long fromProto(@NonNull MSG_CurrentDatabaseTime resp) {
         return resp.getMillis();
     }
 
+    @NonNull
     public MSG_CurrentDatabaseTime toProto(long currentTime) {
         return MSG_CurrentDatabaseTime.newBuilder().setMillis(currentTime).build();
     }

@@ -18,19 +18,19 @@ package org.factcast.core.subscription.observer;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import org.factcast.core.*;
+import org.factcast.core.TestFact;
+import org.factcast.core.TestHelper;
 import org.junit.jupiter.api.*;
 
-import lombok.*;
+import lombok.NonNull;
 
 public class GenericObserverTest {
 
     @Test
     void testMap() {
         GenericObserver<Integer> i = spy(new GenericObserver<Integer>() {
-
             @Override
-            public void onNext(Integer element) {
+            public void onNext(@NonNull Integer element) {
             }
         });
         FactObserver mapped = i.map(f -> 4);
@@ -66,13 +66,8 @@ public class GenericObserverTest {
     }
 
     @Test
-    public void testOnErrorNullParameter() throws Exception {
-        GenericObserver<Integer> uut = new GenericObserver<Integer>() {
-
-            @Override
-            public void onNext(@NonNull Integer element) {
-
-            }
+    public void testOnErrorNullParameter() {
+        GenericObserver<Integer> uut = e -> {
         };
         TestHelper.expectNPE(() -> {
             uut.onError(null);

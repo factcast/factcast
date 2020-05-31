@@ -22,30 +22,25 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 
-import org.assertj.core.util.Sets;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import lombok.NonNull;
 
 @ExtendWith(MockitoExtension.class)
 public class DefaultFactCastTest {
@@ -77,7 +72,7 @@ public class DefaultFactCastTest {
         verify(store).subscribe(any(), any());
         final SubscriptionRequestTO req = csr.getValue();
         assertTrue(req.continuous());
-        assertEquals(since, req.startingAfter().get());
+        assertEquals(since, req.startingAfter().orElse(null));
         assertFalse(req.ephemeral());
     }
 
@@ -93,29 +88,25 @@ public class DefaultFactCastTest {
 
     @Test
     void testNoId() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            uut.publish(new TestFact().id(null));
-        });
+        Assertions.assertThrows(IllegalArgumentException.class, () -> uut.publish(new TestFact().id(
+                null)));
     }
 
     @Test
     void testNoNamespace() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            uut.publish(new TestFact().ns(null));
-        });
+        Assertions.assertThrows(IllegalArgumentException.class, () -> uut.publish(new TestFact().ns(
+                null)));
     }
 
     @Test
     void testPublishOneNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.publish((Fact) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.publish((Fact) null));
     }
 
     @Test
     void testPublishWithAggregatedException() {
         try {
-            uut.publish(new NullFact());
+            uut.publish(mock(Fact.class));
             fail();
         } catch (FactValidationException e) {
             assertThat(e.getMessage()).contains("lacks required namespace");
@@ -125,39 +116,32 @@ public class DefaultFactCastTest {
 
     @Test
     void testPublishManyNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.publish((List<Fact>) null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.publish((List<Fact>) null));
     }
 
     @Test
     void testSubscribeFactsNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeEphemeral(null, null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.subscribeEphemeral(null,
+                null));
     }
 
     @Test
     void testSubscribeFacts1stArgNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeEphemeral(null, f -> {
-            });
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.subscribeEphemeral(null,
+                f -> {
+                }));
     }
 
     @Test
     void testSubscribeFacts2ndArgNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.subscribeEphemeral(SubscriptionRequest.follow(FactSpec.ns("foo")).fromScratch(),
-                    null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.subscribeEphemeral(
+                SubscriptionRequest.follow(FactSpec.ns("foo")).fromScratch(),
+                null));
     }
 
     @Test
     void testDefaultFactCast() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            new DefaultFactCast(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> new DefaultFactCast(null));
     }
 
     @Test
@@ -170,13 +154,11 @@ public class DefaultFactCastTest {
 
     @Test
     void testSerialOfNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            uut.serialOf(null);
-        });
+        Assertions.assertThrows(NullPointerException.class, () -> uut.serialOf(null));
     }
 
     @Test
-    public void testEnumerateNamespaces() throws Exception {
+    public void testEnumerateNamespaces() {
         Set<String> set = new HashSet<>();
         when(store.enumerateNamespaces()).thenReturn(set);
 
@@ -184,47 +166,34 @@ public class DefaultFactCastTest {
     }
 
     @Test
-    public void testEnumerateTypesNullContract() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            FactCast.from(store).enumerateTypes(null);
-        });
+    public void testEnumerateTypesNullContract() {
+        assertThrows(NullPointerException.class, () -> FactCast.from(store).enumerateTypes(null));
     }
 
     @Test
-    public void testEnumerateTypes() throws Exception {
+    public void testEnumerateTypes() {
         Set<String> test = new HashSet<>();
-        LinkedHashSet<String> other = Sets.newLinkedHashSet("foo");
-
         when(store.enumerateTypes("test")).thenReturn(test);
         assertSame(test, FactCast.from(store).enumerateTypes("test"));
-
     }
 
     @Test
-    public void testLockNullContract() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.lock(null);
-        });
+    public void testLockNullContract() {
+        assertThrows(NullPointerException.class, () -> uut.lock(null));
     }
 
     @Test
-    public void testLockNamespaceMustNotBeEmpty() throws Exception {
-        assertThrows(IllegalArgumentException.class, () -> {
-            uut.lock(" ");
-        });
+    public void testLockNamespaceMustNotBeEmpty() {
+        assertThrows(IllegalArgumentException.class, () -> uut.lock(" "));
     }
 
     @Test
-    public void testSubscribeNullContracts() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            uut.subscribe(null, mock(FactObserver.class));
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.subscribe(null, null);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            uut.subscribe(mock(SubscriptionRequest.class), null);
-        });
+    public void testSubscribeNullContracts() {
+        assertThrows(NullPointerException.class, () -> uut.subscribe(null, mock(
+                FactObserver.class)));
+        assertThrows(NullPointerException.class, () -> uut.subscribe(null, null));
+        assertThrows(NullPointerException.class, () -> uut.subscribe(mock(
+                SubscriptionRequest.class), null));
     }
 
     @Test
@@ -234,13 +203,8 @@ public class DefaultFactCastTest {
         when(store.subscribe(any(), any())).thenReturn(sub);
 
         Subscription s = uut.subscribe(SubscriptionRequest.follow(new LinkedList<>()).fromScratch(),
-                new FactObserver() {
-
-                    @Override
-                    public void onNext(@NonNull Fact element) {
-                    }
+                element -> {
                 });
-
         s.close();
         verify(sub).close();
 
@@ -254,16 +218,10 @@ public class DefaultFactCastTest {
         ArgumentCaptor<FactObserver> observer = ArgumentCaptor.forClass(FactObserver.class);
         when(store.subscribe(any(), observer.capture())).thenReturn(sub1).thenReturn(sub2);
 
-        List<Fact> seen = new LinkedList<Fact>();
+        List<Fact> seen = new LinkedList<>();
 
         Subscription s = uut.subscribe(SubscriptionRequest.follow(new LinkedList<>()).fromScratch(),
-                new FactObserver() {
-
-                    @Override
-                    public void onNext(@NonNull Fact element) {
-                        seen.add(element);
-                    }
-                });
+                seen::add);
 
         FactObserver fo = observer.getValue();
         fo.onNext(new TestFact());

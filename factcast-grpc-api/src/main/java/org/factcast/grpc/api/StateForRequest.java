@@ -25,8 +25,8 @@ import lombok.Value;
 public class StateForRequest {
 
     @NonNull
-    final List<UUID> aggIds;
+    List<UUID> aggIds;
 
-    final String ns;
+    String ns;
 
 }

@@ -27,7 +27,7 @@ import net.javacrumbs.shedlock.core.SchedulerLock;
 @Slf4j
 public class ScheduledRegistryRefresher {
 
-    final SchemaRegistry registry;
+    SchemaRegistry registry;
 
     @Scheduled(
             cron = "${factcast.store.pgsql.schemaStoreRefreshCron:*/60 * * * * *}")

@@ -25,8 +25,8 @@ import java.util.function.Predicate;
 
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.listen.PgListener.FactInsertionEvent;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -57,7 +57,6 @@ public class PgListenerTest {
     @Captor
     ArgumentCaptor<PgListener> captor;
 
-    @SuppressWarnings("unchecked")
     @Test
     void testCheckFails() throws SQLException {
 

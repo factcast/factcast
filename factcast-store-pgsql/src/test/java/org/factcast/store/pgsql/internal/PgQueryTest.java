@@ -15,12 +15,8 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.UUID;
 
@@ -31,8 +27,8 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.test.IntegrationTest;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -143,9 +139,7 @@ public class PgQueryTest {
         SubscriptionRequestTO req = SubscriptionRequestTO
                 .forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).fromScratch());
         FactObserver c = mock(FactObserver.class);
-        doAnswer(i -> {
-            return null;
-        }).when(c).onNext(any());
+        doAnswer(i -> null).when(c).onNext(any());
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());
         insertTestFact(TestHeader.create());

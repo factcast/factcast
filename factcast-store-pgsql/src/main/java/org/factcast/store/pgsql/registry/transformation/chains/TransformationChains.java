@@ -81,7 +81,7 @@ public class TransformationChains implements TransformationStoreListener {
     public TransformationChain get(TransformationKey key, int from, int to)
             throws MissingTransformationInformation {
 
-        Map<VersionPath, TransformationChain> chainsPerKey;
+        final Map<VersionPath, TransformationChain> chainsPerKey;
 
         synchronized (cache) {
             // sync is necessary, because we don't want to end up with two
@@ -127,7 +127,6 @@ public class TransformationChains implements TransformationStoreListener {
                         .build());
 
         // run search
-        @SuppressWarnings("rawtypes")
         SearchResult r = problem.search(to);
 
         List<Edge> path = Algorithm.recoverActionPath(r.getGoalNode());

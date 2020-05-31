@@ -13,8 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.transformation.chains;
+package org.factcast.grpc.api.conv;
 
-public class TransformationExceptionTest {
+import java.util.UUID;
 
+import lombok.Value;
+
+@Value
+public class IdAndVersion {
+    UUID uuid;
+
+    int version;
 }

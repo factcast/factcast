@@ -17,9 +17,8 @@ package org.factcast.store.pgsql.registry.validation.schema.store;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 
@@ -30,9 +29,8 @@ import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictExcepti
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.function.*;
 import org.mockito.Spy;
 
 import io.micrometer.core.instrument.Tags;
@@ -51,10 +49,10 @@ public abstract class AbstractSchemaStoreTest {
 
     protected abstract SchemaStore createUUT();
 
-    SchemaSource s = new SchemaSource();
+    final SchemaSource s = new SchemaSource();
 
     @Test
-    void testEmptyContains() throws Exception {
+    void testEmptyContains() {
         s.id("http://testEmptyContains");
         s.hash("123");
 
@@ -62,13 +60,13 @@ public abstract class AbstractSchemaStoreTest {
     }
 
     @Test
-    void testEmptyGet() throws Exception {
+    void testEmptyGet() {
         Optional<String> actual = uut.get(SchemaKey.of("ns", "testEmptyGet", 5));
         assertThat(actual).isEmpty();
     }
 
     @Test
-    void testGetAfterRegister() throws Exception {
+    void testGetAfterRegister() {
 
         s.id("http://testGetAfterRegister");
         s.hash("123");
@@ -82,7 +80,7 @@ public abstract class AbstractSchemaStoreTest {
     }
 
     @Test
-    void testContainsSensesConflict() throws Exception {
+    void testContainsSensesConflict() {
 
         s.id("http://testContainsSensesConflict");
         s.hash("123");
@@ -102,19 +100,11 @@ public abstract class AbstractSchemaStoreTest {
     }
 
     @Test
-    void testNullContracts() throws Exception {
-        assertNpe(() -> {
-            uut.contains(null);
-        });
-        assertNpe(() -> {
-            uut.register(null, "{}");
-        });
-        assertNpe(() -> {
-            uut.register(s, null);
-        });
-        assertNpe(() -> {
-            uut.get(null);
-        });
+    void testNullContracts() {
+        assertNpe(() -> uut.contains(null));
+        assertNpe(() -> uut.register(null, "{}"));
+        assertNpe(() -> uut.register(s, null));
+        assertNpe(() -> uut.get(null));
 
     }
 
@@ -123,7 +113,7 @@ public abstract class AbstractSchemaStoreTest {
     }
 
     @Test
-    public void testMatchingContains() throws Exception {
+    public void testMatchingContains() {
 
         s.id("http://testMatchingContains");
         s.hash("123");

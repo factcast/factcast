@@ -23,7 +23,7 @@ class TransformationSourceTest {
     @Test
     public void testToKey() {
 
-        TransformationSource uut = new TransformationSource("id", "ns", "type", "hash", 2, 1);
+        TransformationSource uut = new TransformationSource("id", "hash", "ns", "type", 2, 1);
 
         TransformationKey key = uut.toKey();
 

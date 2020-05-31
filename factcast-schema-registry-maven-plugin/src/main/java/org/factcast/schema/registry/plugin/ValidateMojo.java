@@ -18,7 +18,6 @@ package org.factcast.schema.registry.plugin;
 import java.io.File;
 
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -32,8 +31,8 @@ public class ValidateMojo extends AbstractMojo {
             required = true)
     private File sourceDirectory;
 
-    public void execute()
-            throws MojoExecutionException {
+    @Override
+    public void execute() {
         if (!sourceDirectory.exists())
             throw new IllegalArgumentException(
                     "Source directory (property 'sourceDir') does not exist: "
