@@ -4,9 +4,8 @@ exclude_paths:
   - '**/*.json'
   - '**/*.md'
   - '**/*.css'
-x - '**/*.scss'
+  - '**/*.scss'
   - '.mvn/**/*'
   - '**/*.md'
   - '.github/**/*'
-  
-  
+  - 'History.md'

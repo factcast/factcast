@@ -43,6 +43,11 @@
     </dependency>
     <!-- only needed, if you want to use TLS -->
     <!-- <dependency> <groupId>io.netty</groupId> <artifactId>netty-tcnative-boringssl-static</artifactId> <version>2.0.20.Final</version> </dependency> -->
+    <!-- while lz4 is optional, it'll help with communication throughput -->
+    <dependency>
+      <groupId>net.jpountz.lz4</groupId>
+      <artifactId>lz4</artifactId>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

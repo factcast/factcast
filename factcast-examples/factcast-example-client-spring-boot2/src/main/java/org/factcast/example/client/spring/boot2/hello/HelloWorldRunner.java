@@ -16,15 +16,9 @@
 package org.factcast.example.client.spring.boot2.hello;
 
 import java.util.UUID;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.util.FactCastJson;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -65,18 +59,4 @@ public class HelloWorldRunner implements CommandLineRunner {
         System.out.println(uc3.get().jsonPayload());
 
     }
-
-    private <T> void fetch(Class<T> class1, Consumer<T> c) throws TimeoutException, Exception {
-
-        Subscription sub;
-        sub = fc
-                .subscribe(SubscriptionRequest.catchup(FactSpec.from(class1))
-                        .fromScratch(),
-                        e -> c.accept(FactCastJson.readValue(class1,
-                                e.jsonPayload())))
-                .awaitCatchup(5000);
-
-        sub.close();
-    }
-
 }
