@@ -30,6 +30,8 @@ import org.factcast.store.pgsql.registry.transformation.Transformation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
+
 public class NashornTransformer implements Transformer {
 
     private static final int ENGINE_CACHE_CAPACITY = 128;
@@ -54,7 +56,8 @@ public class NashornTransformer implements Transformer {
                     // no guarantee is found anywhere, that creating a
                     // scriptEngine was
                     // supposed to be threadsafe, so...
-                    engine = scriptEngineManager.getEngineByName("nashorn");
+                    engine = new NashornScriptEngineFactory().getScriptEngine(ClassLoader
+                            .getSystemClassLoader());
                 }
                 try {
                     Compilable compilable = (Compilable) engine;
