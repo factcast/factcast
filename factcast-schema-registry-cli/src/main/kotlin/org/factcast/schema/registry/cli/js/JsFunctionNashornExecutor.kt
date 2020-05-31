@@ -18,7 +18,7 @@ package org.factcast.schema.registry.cli.js
 import java.nio.file.Path
 import javax.inject.Singleton
 import javax.script.Invocable
-import javax.script.ScriptEngineManager
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory
 import org.factcast.schema.registry.cli.fs.FileSystemService
 
 @Singleton
@@ -31,7 +31,8 @@ class JsFunctionNashornExecutor(
     }
 
     override fun <T> execute(functionName: String, code: String, data: T): T {
-        val engine = ScriptEngineManager().getEngineByName("nashorn")
+        val engine = NashornScriptEngineFactory().getScriptEngine(ClassLoader.getSystemClassLoader())
+        // val engine = ScriptEngineManager().getEngineByName("javascript")
         engine.eval(code)
         val invocable = engine as Invocable
 
