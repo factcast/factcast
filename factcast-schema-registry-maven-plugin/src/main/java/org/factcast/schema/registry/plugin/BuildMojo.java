@@ -36,9 +36,6 @@ public class BuildMojo extends AbstractMojo {
             required = true)
     private File sourceDirectory;
 
-    public BuildMojo() {
-    }
-
     @Override
     public void execute() {
         if (!sourceDirectory.exists())

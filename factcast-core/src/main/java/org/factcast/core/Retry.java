@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.store.RetryableException;
 
+import com.google.common.base.Preconditions;
+
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -33,18 +35,15 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @UtilityClass
 class Retry {
-    private static final ClassLoader classLoader = Retry.class.getClassLoader();
+    private final ClassLoader classLoader = Retry.class.getClassLoader();
 
     final long DEFAULT_WAIT_TIME_MILLIS = 10;
 
     public FactCast wrap(FactCast toWrap, int maxRetryAttempts,
             long minimumWaitIntervalMillis) {
-        if (!(maxRetryAttempts > 0)) {
-            throw new IllegalArgumentException("maxRetryAttempts must be > 0");
-        }
-        if (!(minimumWaitIntervalMillis >= 0)) {
-            throw new IllegalArgumentException("minimumWaitIntervalMillis must be >= 0");
-        }
+        Preconditions.checkArgument(maxRetryAttempts > 0, "maxRetryAttempts must be > 0");
+        Preconditions.checkArgument(minimumWaitIntervalMillis > 0,
+                "minimumWaitIntervalMillis must be >= 0");
 
         return (FactCast) Proxy.newProxyInstance(classLoader, new Class[] { FactCast.class },
                 new RetryProxyInvocationHandler(toWrap, maxRetryAttempts,
@@ -52,7 +51,7 @@ class Retry {
     }
 
     @RequiredArgsConstructor
-    private static class RetryProxyInvocationHandler implements InvocationHandler {
+    private class RetryProxyInvocationHandler implements InvocationHandler {
         @NonNull
         final Object delegateObject;
 
