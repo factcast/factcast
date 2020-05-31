@@ -2,6 +2,8 @@ exclude_paths:
   - '**/src/test/**/*'
   - '**/*.js'
   - '**/*.json'
+  - '**/*.md'
+  - '**/*.css'
   - '.mvn/**/*'
   - '**/*.md'
   - '.github/**/*'
