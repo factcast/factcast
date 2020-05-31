@@ -35,7 +35,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @UtilityClass
 class Retry {
-    private final ClassLoader classLoader = Retry.class.getClassLoader();
+    @SuppressWarnings("RedundantModifiersUtilityClassLombok")
+    private static final ClassLoader classLoader = Retry.class.getClassLoader();
 
     final long DEFAULT_WAIT_TIME_MILLIS = 10;
 
@@ -50,8 +51,9 @@ class Retry {
                         minimumWaitIntervalMillis));
     }
 
+    @SuppressWarnings("RedundantModifiersUtilityClassLombok")
     @RequiredArgsConstructor
-    private class RetryProxyInvocationHandler implements InvocationHandler {
+    private static class RetryProxyInvocationHandler implements InvocationHandler {
         @NonNull
         final Object delegateObject;
 
