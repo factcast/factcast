@@ -42,7 +42,7 @@ class Retry {
     public FactCast wrap(FactCast toWrap, int maxRetryAttempts,
             long minimumWaitIntervalMillis) {
         Preconditions.checkArgument(maxRetryAttempts > 0, "maxRetryAttempts must be > 0");
-        Preconditions.checkArgument(minimumWaitIntervalMillis > 0,
+        Preconditions.checkArgument(minimumWaitIntervalMillis >= 0,
                 "minimumWaitIntervalMillis must be >= 0");
 
         return (FactCast) Proxy.newProxyInstance(classLoader, new Class[] { FactCast.class },
