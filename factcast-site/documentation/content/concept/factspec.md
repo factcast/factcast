@@ -6,10 +6,10 @@ description = ""
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe@codesmell.de"
 
-[menu.main]
+
 parent = "concept"
 identifier = "factspec"
-weight = 90
+weight = 2
 +++
 
 ## Fact Specification

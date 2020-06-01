@@ -5,11 +5,9 @@ description = ""
 
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe@codesmell.de"
-
-[menu.main]
 parent = "concept"
 identifier = "anatomy"
-weight = 29
+weight = 1
 +++
 
 ## Facts
@@ -19,8 +17,6 @@ FactCast is centered around *Facts*. We say Facts instead of Events, because Eve
 We decided to use the term Fact over Domain-Event because we want to highlight the notion of an Event being an immutable thing that, once it is published, became an observable Fact. 
 
 Obviously, a Fact is history and cannot be changed, after it happened. This is one of the cornerstones of EventSourcing and provides us with Facts being **immutable**, which plays an important role when it comes to caching.
-
-[{{<icon name="circle-arrow-right" size="small">}}Read more on caching]({{%relref "/concept/caching.md"%}})
 
 Facts consist of two JSON documents: Header and Payload.
 
@@ -70,8 +66,8 @@ JSON-Schema:
             "id": "/properties/meta",
             "type": "object",
             "additionalProperties": {
-		"type": "string",
-		"description": "Some string values"
+		        "type": "string",
+		        "description": "Some string values"
             },
         }
     },

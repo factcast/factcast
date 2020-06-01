@@ -5,11 +5,11 @@ description = ""
 
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe@codesmell.de"
-weight = 20
 
-[menu.main]
-parent = "usage"
+parent = "concept"
 identifier = "optlocking"
+weight = 15
+
 +++
 
 ## Optimistic Locking

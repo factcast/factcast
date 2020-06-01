@@ -7,10 +7,10 @@ date = "2017-04-24T18:36:24+02:00"
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe@codesmell.de"
 
-[menu.main]
+
 parent = ""
 identifier = "usage"
-weight = 32
+weight = 30
 
 +++
 

@@ -6,10 +6,10 @@ description = ""
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe@codesmell.de"
 
-[menu.main]
+
 parent = "migration"
 identifier = "migration"
-weight = 1000
+weight = 99
 +++
 
 ## Upgrading to 0.2.0 (quite a lot)
