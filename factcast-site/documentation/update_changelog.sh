@@ -12,7 +12,7 @@ git tag -l | xargs git tag -d && git fetch -t
   grep -v "DepShield" \
   > changelog1.md
   mv changelog.md unfiltered-changelog.md
-  echo "This changelog is filtered. All automaticly created PRs regarding dependency upgrades are hidden for readabilities sake. If you are interested, please look at 'full-changelog'">changelog.md
+  echo "This changelog is filtered. All automatically created PRs regarding dependency upgrades are hidden for readabilities sake. If you are interested, please look at '[unfiltered-changelog](/unfiltered-changelog)'">changelog.md
   echo "">>changelog.md
   echo "">>changelog.md
   
