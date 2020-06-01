@@ -1,5 +1,5 @@
-This changelog is filtered. All automaticly created PRs regarding dependency upgrades are hidden for readabilities sake. If you are interested, please look at 'full-changelog'
-
+This changelog is filtered. All automatically created PRs regarding dependency upgrades are hidden for readabilities sake. If you are interested, please look at
+'[unfiltered-changelog](/unfiltered-changelog)'
 
 # Changelog
 
