@@ -34,15 +34,9 @@ see [basicauth usage](/setup/examples/grpc-config-basicauth)
 By default, when executing without security enabled, you need to supply a property
 'factcast.security.enabled=false' via commandline or propertyfile to get away with just a warning. If you don't, factcast will exit with errorcode 1.
 
-#### fetching facts by ID has been removed
+#### fetching facts by ID has been extended
 
-Even though it is a breaking change, this feature was removed from the API. First of all it interfered with transformation (so it would have needed to be extended), second it added unnecessary complexity to the subscription handling for no good reason.
-The idea of that feature was to enable "local" caching in a HTTP Scenario, that we currently do not support any longer.
-Also, the feature has never proven to deliver in terms of local caching, as nobody ever used it (or at least did not provide any feedback).
-
-This also means, that subscribe for Ids is gone.
-
-If you have severe problems with that change, please provide feedback, so that we can learn about the usecase and maybe provide an alternative.
+Next to fetchById(UUID) (asking for the event exactly the way it was published), there is a new fetchByIdAndVersion(UUID,int), that makes FactCast try to transform the event up/down to the requested version. Of course, the usage of a schema-registry is a precondition, as it provides the code to do that transformation. 
 
 ## Upgrading to 0.1.0
 

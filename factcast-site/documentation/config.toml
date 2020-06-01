@@ -31,10 +31,17 @@ weight = 2
 
 [[menu.shortcuts]]
 
+name = "Changelog (unfiltered)"
+identifier = "unfiltered-changelog"
+url = "/unfiltered-changelog"
+weight = 3
+
+[[menu.shortcuts]]
+
 name = "Migration"
 identifier = "migration"
 url = "/migration"
-weight = 3
+weight = 4
 
 
 [[menu.shortcuts]]
