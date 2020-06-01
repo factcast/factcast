@@ -1,16 +1,15 @@
 +++
 draft = false
-title = "Concept"
+title = "Concepts"
 description = ""
 date = "2017-04-24T18:36:24+02:00"
 
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe@codesmell.de"
-
-[menu.main]
+weight = 15
 parent = ""
 identifier = "concept"
-weight = 15
+
 
 +++
 
@@ -44,6 +43,6 @@ The three usual subscription models and their corresponding use cases are:
 
 All these subscription types rely on a streaming transport which uses (at the time of writing) GRPC.
 
-### Read (fetchById)
+### Read (fetch)
 
 In some situations the bandwidth of the consumption has to be reduced. This can happen if either there are too many consumers interested in the same `Fact` or consumers keep receiving the same `Facts` (e.g. catchup subscriptions without snapshotting). Pushing **only 'ids' (or URLs)** instead of complete `Facts` can improve the performance. Depending on the protocol being used HTTP-Proxies or local caches can also be applied for further performance enhancement.

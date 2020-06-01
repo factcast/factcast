@@ -6,10 +6,10 @@ description = ""
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe@codesmell.de"
 
-[menu.main]
 parent = "concept"
 identifier = "factsteam"
-weight = 60
+
+weight = 3
 +++
 
 ## Fact Stream design
