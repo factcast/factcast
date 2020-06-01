@@ -1,8 +1,8 @@
 # Changelog
 
-## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2020-06-01)
+## [factcast-0.2.0-RC](https://github.com/factcast/factcast/tree/factcast-0.2.0-RC) (2020-06-01)
 
-[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0-M10...upcoming)
+[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0-M10...factcast-0.2.0-RC)
 
 **Fixed bugs:**
 
@@ -11,6 +11,7 @@
 
 **Closed issues:**
 
+- Fix usage of Nashorn \(for now\) in postQueryMatching [\#848](https://github.com/factcast/factcast/issues/848)
 - Prepare for building with JDK\>8 [\#841](https://github.com/factcast/factcast/issues/841)
 - reduce codacy violations to 0 [\#834](https://github.com/factcast/factcast/issues/834)
 - ship lz4 codec with factcast server [\#832](https://github.com/factcast/factcast/issues/832)
