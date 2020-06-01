@@ -60,8 +60,8 @@ Source Code is available as [github](https://github.com/factcast/factcast) repos
 
   * Security improvements, added Roles see [Boot gRPC BasicAuth](/setup/examples/grpc-config-basicauth/)
   * Schema Registry tool [Schema Registry CLI](/usage/java/fc-schema-cli/)
-  * Validation of Fact payloads against JSON Schema [Schema validation and Registry](/usage/java/schema-registry/)
-  * Transformation between Versions (Up-/Downcasting) of Fact payloads [Transformation and Registry](/usage/java/transformation/)
+  * Validation of Fact payloads against JSON Schema [Schema validation and Registry](/concept/schema-registry/)
+  * Transformation between Versions (Up-/Downcasting) of Fact payloads [Transformation and Registry](/concept/transformation/)
 
 #### minor 
 
