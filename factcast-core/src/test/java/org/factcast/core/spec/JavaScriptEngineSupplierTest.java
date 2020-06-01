@@ -18,56 +18,16 @@ package org.factcast.core.spec;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import javax.script.ScriptEngineManager;
-
 import org.junit.jupiter.api.*;
+
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
 public class JavaScriptEngineSupplierTest {
 
     @Test
-    void testGet() {
-        JavaScriptEngineSupplier uut = spy(new JavaScriptEngineSupplier());
-        uut.get();
-        verify(uut).getEngineByName("nashorn", "javascript", "js");
-    }
-
-    @Test
-    void testGetJs() {
-        ScriptEngineManager m = spy(new ScriptEngineManager());
-        when(m.getEngineByName("nashorn")).thenReturn(null);
-        when(m.getEngineByName("javascript")).thenReturn(null);
-        when(m.getEngineByName("js")).thenCallRealMethod();
-
-        JavaScriptEngineSupplier uut = spy(new JavaScriptEngineSupplier(m));
-        assertNotNull(uut.get());
-    }
-
-    @Test
-    void testGetJavascript() {
-        ScriptEngineManager m = spy(new ScriptEngineManager());
-        when(m.getEngineByName("nashorn")).thenReturn(null);
-        when(m.getEngineByName("js")).thenReturn(null);
-        when(m.getEngineByName("javascript")).thenCallRealMethod();
-
-        JavaScriptEngineSupplier uut = spy(new JavaScriptEngineSupplier(m));
-        assertNotNull(uut.get());
-    }
-
-    @Test
-    void testGetNashorn() {
-        ScriptEngineManager m = spy(new ScriptEngineManager());
-        when(m.getEngineByName("js")).thenReturn(null);
-        when(m.getEngineByName("javascript")).thenReturn(null);
-        when(m.getEngineByName("nashorn")).thenCallRealMethod();
-
-        JavaScriptEngineSupplier uut = spy(new JavaScriptEngineSupplier(m));
-        assertNotNull(uut.get());
-    }
-
-    @Test
     void testUnavailable() {
-        ScriptEngineManager m = spy(new ScriptEngineManager());
-        when(m.getEngineByName(anyString())).thenReturn(null);
+        NashornScriptEngineFactory m = spy(new NashornScriptEngineFactory());
+        when(m.getScriptEngine()).thenReturn(null);
         JavaScriptEngineSupplier uut = spy(new JavaScriptEngineSupplier(m));
         assertThrows(IllegalStateException.class, uut::get);
     }
