@@ -1,5 +1,16 @@
 {
   "extends": [
-    "config:base"
+    "config:base",
+    ":rebaseStalePrs",
+    ":automergeMinor",
+    ":label(ready)"
+  ],
+  "stabilityDays": 1,
+  "prCreation": "not-pending",
+  "packageRules": [
+    {
+      "updateTypes": ["major"],
+      "masterIssueApproval": true
+    }
   ]
 }
