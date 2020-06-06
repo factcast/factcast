@@ -13,5 +13,11 @@
       "masterIssueApproval": true
     }
   ],
-  "labels": ["dependencies"]
+  "labels": ["dependencies"],
+    "packageRules": [
+    {
+      "languages": ["javascript"],
+      "enabled": false
+    }
+  ]
 }
