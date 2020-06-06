@@ -12,5 +12,6 @@
       "updateTypes": ["major"],
       "masterIssueApproval": true
     }
-  ]
+  ],
+  "labels": ["dependencies"]
 }
