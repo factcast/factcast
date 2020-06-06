@@ -11,13 +11,10 @@
     {
       "updateTypes": ["major"],
       "masterIssueApproval": true
-    }
-  ],
-  "labels": ["dependencies"],
-    "packageRules": [
-    {
+    },{
       "languages": ["javascript"],
       "enabled": false
     }
-  ]
+  ],
+  "labels": ["dependencies"]
 }
