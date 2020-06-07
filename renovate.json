@@ -6,7 +6,7 @@
     ":label(ready)"
   ],
   "stabilityDays": 1,
-  "prCreation": "not-pending",
+  "prCreation": "immediate",
   "packageRules": [
     {
       "updateTypes": ["major"],
