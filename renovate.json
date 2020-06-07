@@ -9,17 +9,26 @@
   "prCreation": "immediate",
   "packageRules": [
     {
-      "packagePatterns": ["^org\.factcast"],
+      "packagePatterns": [
+        "^org\\.factcast"
+      ],
       "allowedVersions": "/^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$/"
     },
     {
-      "updateTypes": ["major"],
+      "updateTypes": [
+        "major"
+      ],
       "masterIssueApproval": true
-    },{
-      "languages": ["js"],
+    },
+    {
+      "languages": [
+        "js"
+      ],
       "enabled": false,
       "recreateClosed": false
     }
   ],
-  "labels": ["dependencies"]
+  "labels": [
+    "dependencies"
+  ]
 }
