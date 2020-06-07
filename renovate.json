@@ -12,10 +12,8 @@
     {
   "packageRules": [
     {
-      "packageNames": ["org.factcast:.*"],
+      "packagePatterns": ["^org.factcast"],
       "allowedVersions": "/^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$/"
-    }
-  ]
     },
     {
       "updateTypes": ["major"],
