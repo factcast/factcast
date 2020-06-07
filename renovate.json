@@ -12,7 +12,7 @@
       "updateTypes": ["major"],
       "masterIssueApproval": true
     },{
-      "languages": ["javascript"],
+      "languages": ["js"],
       "enabled": false,
       "recreateClosed": false
     }
