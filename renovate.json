@@ -8,6 +8,15 @@
   "stabilityDays": 1,
   "prCreation": "immediate",
   "packageRules": [
+
+    {
+  "packageRules": [
+    {
+      "packageNames": ["org.factcast:.*"],
+      "allowedVersions": "/^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$/"
+    }
+  ]
+    },
     {
       "updateTypes": ["major"],
       "masterIssueApproval": true
