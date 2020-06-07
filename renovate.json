@@ -13,7 +13,8 @@
       "masterIssueApproval": true
     },{
       "languages": ["javascript"],
-      "enabled": false
+      "enabled": false,
+      "recreateClosed": false
     }
   ],
   "labels": ["dependencies"]
