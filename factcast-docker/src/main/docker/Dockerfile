@@ -1,4 +1,4 @@
-FROM oracle/graalvm-ce:19.3.1-java8
+FROM oracle/graalvm-ce:19.3.2-java8
 EXPOSE 9090
 EXPOSE 9443
 
