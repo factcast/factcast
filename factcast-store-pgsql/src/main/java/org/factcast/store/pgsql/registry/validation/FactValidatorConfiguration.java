@@ -22,6 +22,7 @@ import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 import org.factcast.store.pgsql.registry.validation.schema.store.InMemSchemaStoreImpl;
 import org.factcast.store.pgsql.registry.validation.schema.store.PgSchemaStoreImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -53,11 +54,9 @@ public class FactValidatorConfiguration {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "factcast.store.pgsql.schemaRegistryUrl")
     public FactValidationAspect factValidationAspect(PgConfigurationProperties props,
             FactValidator v) {
-        if (props.isValidationEnabled()) {
-            return new FactValidationAspect(v);
-        } else
-            return null;
+        return new FactValidationAspect(v);
     }
 }
