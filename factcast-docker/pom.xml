@@ -104,4 +104,32 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>oss.push-docker-image</id>
+      <activation>
+        <property>
+          <name>ossrh</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.spotify</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <configuration>
+              <pushImage>true</pushImage>
+              <imageTags>
+                <imageTag>${project.version}</imageTag>
+              </imageTags>
+              <pushImageTag>true</pushImageTag>
+              <serverId>docker-hub</serverId>
+              <registryUrl>https://index.docker.io/v1/</registryUrl>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
