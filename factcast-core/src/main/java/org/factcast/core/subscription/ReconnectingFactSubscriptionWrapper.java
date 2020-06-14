@@ -16,11 +16,7 @@
 package org.factcast.core.subscription;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -55,6 +51,8 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
     private final AtomicReference<UUID> factIdSeen = new AtomicReference<>();
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
+
+    private static final int ALLOWED_TIME_BETWEEN_RECONNECTS = 2000;
 
     private final ExecutorService es = Executors.newCachedThreadPool(new ThreadFactory() {
 
@@ -187,6 +185,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
         this.originalRequest = req;
 
         observer = new FactObserver() {
+            private AtomicLong lastReconnect = new AtomicLong(0);
 
             @Override
             public void onNext(@NonNull Fact element) {
@@ -206,16 +205,19 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
             @Override
             public void onError(@NonNull Throwable exception) {
+                closeAndDetachSubscription();
 
-                if (exception.getClass().getCanonicalName().startsWith("org.factcast")) {
+                log.info("Closing subscription due to onError triggered.",
+                        exception);
+
+                if (isServerException(exception) || reconnectedJustRecently()) {
                     // give up
                     originalObserver.onError(exception);
                     throw ExceptionHelper.toRuntime(exception);
                 } else {
-                    log.info("Closing & Reconnecting subscription due to onError triggered.",
-                            exception);
+                    log.info("Trying to reconnect.");
+                    lastReconnect.set(System.currentTimeMillis());
 
-                    closeAndDetachSubscription();
                     CompletableFuture.runAsync(
                             ReconnectingFactSubscriptionWrapper.this::initiateReconnect, es);
 
@@ -223,10 +225,21 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                     // decide to throw an exception
                     originalObserver.onError(exception);
                 }
+
+            }
+
+            private boolean reconnectedJustRecently() {
+
+                return System.currentTimeMillis() - lastReconnect
+                        .get() < ALLOWED_TIME_BETWEEN_RECONNECTS;
             }
         };
         initiateReconnect();
 
+    }
+
+    private boolean isServerException(@NonNull Throwable exception) {
+        return exception.getClass().getCanonicalName().startsWith("org.factcast");
     }
 
     private synchronized void initiateReconnect() {
