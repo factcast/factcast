@@ -15,6 +15,7 @@
  */
 package org.factcast.core.subscription;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -187,9 +188,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
         observer = new FactObserver() {
 
-            private List<Long> reconnects;
-
-            private AtomicLong lastReconnect = new AtomicLong(0);
+            private final List<Long> reconnects = new LinkedList<>();
 
             @Override
             public void onNext(@NonNull Fact element) {
@@ -220,7 +219,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                     throw ExceptionHelper.toRuntime(exception);
                 } else {
                     log.debug("Pausing 100ms before reconnect");
-                    sleep(500);
+                    sleep(100);
                     log.info("Trying to reconnect.");
 
                     CompletableFuture.runAsync(
@@ -229,7 +228,6 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                     // has to be last call, due to older impls. of onError might
                     // decide to throw an exception
                     originalObserver.onError(exception);
-                    throw ExceptionHelper.toRuntime(exception);
                 }
 
             }
