@@ -16,7 +16,7 @@ weight = 99
 
 #### Reconnection behavior
 
-Reconnecting due to connection/unknown errors has changed from an inifinite loop to just try once every two seconds and escalate after.
+Reconnecting due to connection/unknown errors has changed from an inifinite loop to just try five times (in a window of three seconds) and escalate if they failed.
 Details can be found [here](https://github.com/factcast/factcast/issues/889).
 
 

@@ -15,6 +15,7 @@
  */
 package org.factcast.core.subscription;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,7 +53,9 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
-    private static final int ALLOWED_TIME_BETWEEN_RECONNECTS = 2000;
+    private static final int ALLOWED_TIME_BETWEEN_RECONNECTS = 3000;
+
+    private static final int ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION = 5;
 
     private final ExecutorService es = Executors.newCachedThreadPool(new ThreadFactory() {
 
@@ -90,14 +93,14 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                 return this;
 
             } else {
-                sleep();
+                sleep(100);
             }
         }
     }
 
-    private void sleep() {
+    private void sleep(long millis) {
         try {
-            Thread.sleep(500);
+            Thread.sleep(millis);
         } catch (InterruptedException ignore) {
         }
     }
@@ -115,10 +118,8 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
                 cur.awaitCatchup(waitTimeInMillis);
                 return this;
-
-                // escalate TimeoutException
             } else {
-                sleep();
+                sleep(100);
             }
             if ((System.currentTimeMillis() - startTime) > waitTimeInMillis) {
                 throw new TimeoutException();
@@ -139,7 +140,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                 return this;
 
             } else {
-                sleep();
+                sleep(100);
             }
         }
 
@@ -161,7 +162,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
                 // escalate TimeoutException
             } else {
-                sleep();
+                sleep(100);
             }
 
             if ((System.currentTimeMillis() - startTime) > waitTimeInMillis) {
@@ -179,12 +180,15 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
     public ReconnectingFactSubscriptionWrapper(@NonNull FactStore store,
             @NonNull SubscriptionRequestTO req,
-            @NonNull FactObserver obs) {
+            @NonNull FactObserver obs, int autoReconnectAttempts, int autoReconnectWindowMillis) {
         this.store = store;
         this.originalObserver = obs;
         this.originalRequest = req;
 
         observer = new FactObserver() {
+
+            private List<Long> reconnects;
+
             private AtomicLong lastReconnect = new AtomicLong(0);
 
             @Override
@@ -210,13 +214,14 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                 log.info("Closing subscription due to onError triggered.",
                         exception);
 
-                if (isServerException(exception) || reconnectedJustRecently()) {
+                if (isServerException(exception) || reconnectedTooOften()) {
                     // give up
                     originalObserver.onError(exception);
                     throw ExceptionHelper.toRuntime(exception);
                 } else {
+                    log.debug("Pausing 100ms before reconnect");
+                    sleep(500);
                     log.info("Trying to reconnect.");
-                    lastReconnect.set(System.currentTimeMillis());
 
                     CompletableFuture.runAsync(
                             ReconnectingFactSubscriptionWrapper.this::initiateReconnect, es);
@@ -224,15 +229,19 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                     // has to be last call, due to older impls. of onError might
                     // decide to throw an exception
                     originalObserver.onError(exception);
+                    throw ExceptionHelper.toRuntime(exception);
                 }
 
             }
 
-            private boolean reconnectedJustRecently() {
-
-                return System.currentTimeMillis() - lastReconnect
-                        .get() < ALLOWED_TIME_BETWEEN_RECONNECTS;
+            private boolean reconnectedTooOften() {
+                long now = System.currentTimeMillis();
+                // remove all older reconnection attempts
+                reconnects.removeIf(t -> now - t > ALLOWED_TIME_BETWEEN_RECONNECTS);
+                reconnects.add(now);
+                return reconnects.size() > ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION;
             }
+
         };
         initiateReconnect();
 
@@ -258,7 +267,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                 }
                 return;
             } catch (Exception ignore) {
-                sleep();
+                sleep(500);
             }
         }
     }
