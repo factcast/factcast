@@ -180,7 +180,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
     public ReconnectingFactSubscriptionWrapper(@NonNull FactStore store,
             @NonNull SubscriptionRequestTO req,
-            @NonNull FactObserver obs, int autoReconnectAttempts, int autoReconnectWindowMillis) {
+            @NonNull FactObserver obs) {
         this.store = store;
         this.originalObserver = obs;
         this.originalRequest = req;
