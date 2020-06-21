@@ -1,5 +1,61 @@
 # Changelog
 
+## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2020-06-21)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0...upcoming)
+
+**Closed issues:**
+
+- Limit Auto-Reconnection behavior and escalate to application layer early. [\#889](https://github.com/factcast/factcast/issues/889)
+
+**Merged pull requests:**
+
+- Update dependency io.javalin:javalin to v3.9.1 [\#895](https://github.com/factcast/factcast/pull/895) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v1.31.3 [\#891](https://github.com/factcast/factcast/pull/891) ([renovate[bot]](https://github.com/apps/renovate))
+- Issue \#889: limit reconnection attempts \(reset after a while\) [\#890](https://github.com/factcast/factcast/pull/890) ([uweschaefer](https://github.com/uweschaefer))
+- Update dependency org.liquibase:liquibase-core to v3.10.0 [\#887](https://github.com/factcast/factcast/pull/887) ([renovate[bot]](https://github.com/apps/renovate))
+- Update spring boot to v2.3.1.RELEASE [\#886](https://github.com/factcast/factcast/pull/886) ([renovate[bot]](https://github.com/apps/renovate))
+- \#884: Publish docker image during release [\#885](https://github.com/factcast/factcast/pull/885) ([otbe](https://github.com/otbe))
+- Update dependency io.github.microutils:kotlin-logging to v1.7.10 [\#883](https://github.com/factcast/factcast/pull/883) ([renovate[bot]](https://github.com/apps/renovate))
+- Added ConditionalOnProperty for validation aspect [\#882](https://github.com/factcast/factcast/pull/882) ([otbe](https://github.com/otbe))
+- Update dependency org.postgresql:postgresql to v42.2.14 [\#879](https://github.com/factcast/factcast/pull/879) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency io.javalin:javalin to v3.9.0 [\#878](https://github.com/factcast/factcast/pull/878) ([renovate[bot]](https://github.com/apps/renovate))
+- Update oracle/graalvm-ce Docker tag to v19.3.2 [\#873](https://github.com/factcast/factcast/pull/873) ([renovate[bot]](https://github.com/apps/renovate))
+- Update maven.version to v3.6.3 [\#872](https://github.com/factcast/factcast/pull/872) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.apache.maven.plugins:maven-surefire-plugin to v2.22.2 [\#869](https://github.com/factcast/factcast/pull/869) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.apache.maven.plugins:maven-resources-plugin to v3.1.0 [\#860](https://github.com/factcast/factcast/pull/860) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.apache.maven.plugins:maven-jar-plugin to v3.2.0 [\#859](https://github.com/factcast/factcast/pull/859) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.apache.maven.plugins:maven-compiler-plugin to v3.8.1 [\#858](https://github.com/factcast/factcast/pull/858) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.apache.commons:commons-compress to v1.20 [\#857](https://github.com/factcast/factcast/pull/857) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson.core:jackson-databind to v2.11.0 [\#855](https://github.com/factcast/factcast/pull/855) ([renovate[bot]](https://github.com/apps/renovate))
+- build\(deps\): Bump postgresql from 42.2.12 to 42.2.13 [\#853](https://github.com/factcast/factcast/pull/853) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
+- Configure Renovate [\#819](https://github.com/factcast/factcast/pull/819) ([renovate[bot]](https://github.com/apps/renovate))
+
+## [factcast-0.2.0](https://github.com/factcast/factcast/tree/factcast-0.2.0) (2020-06-21)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0-RC2...factcast-0.2.0)
+
+**Closed issues:**
+
+- Publish Docker Image during release [\#884](https://github.com/factcast/factcast/issues/884)
+
+## [factcast-0.2.0-RC2](https://github.com/factcast/factcast/tree/factcast-0.2.0-RC2) (2020-06-10)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0-RC...factcast-0.2.0-RC2)
+
+**Closed issues:**
+
+- Factcast throws Exception \(on publish\) if validation is disabled [\#880](https://github.com/factcast/factcast/issues/880)
+- Action Required: Fix Renovate Configuration [\#871](https://github.com/factcast/factcast/issues/871)
+- replace LZ4 impl with commons-compress  [\#861](https://github.com/factcast/factcast/issues/861)
+- Update Dependencies \(Renovate Bot\) [\#856](https://github.com/factcast/factcast/issues/856)
+
+**Merged pull requests:**
+
+- build\(deps\): Bump maven-shade-plugin from 3.2.3 to 3.2.4 [\#852](https://github.com/factcast/factcast/pull/852) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
+- build\(deps\): Bump exec-maven-plugin from 1.6.0 to 3.0.0 [\#851](https://github.com/factcast/factcast/pull/851) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
+- build\(deps\): Bump spotless-maven-plugin from 1.31.1 to 1.31.2 [\#850](https://github.com/factcast/factcast/pull/850) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
+
 ## [factcast-0.2.0-RC](https://github.com/factcast/factcast/tree/factcast-0.2.0-RC) (2020-06-01)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0-M10...factcast-0.2.0-RC)

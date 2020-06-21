@@ -8,6 +8,7 @@ git tag -l | xargs git tag -d && git fetch -t
  cat changelog.md | \
   grep -v "Snyk" | \
   grep -v "dependabot-" | \
+  grep -v "renovate" | \
   grep -v "Dependabot" | \
   grep -v "DepShield" \
   > changelog1.md

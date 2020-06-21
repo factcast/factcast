@@ -1,7 +1,43 @@
-This changelog is filtered. All automatically created PRs regarding dependency upgrades are hidden for readabilities sake. If you are interested, please look at
-'[unfiltered-changelog](/unfiltered-changelog)'
+This changelog is filtered. All automatically created PRs regarding dependency upgrades are hidden for readabilities sake. If you are interested, please look at '[unfiltered-changelog](/unfiltered-changelog)'
+
 
 # Changelog
+
+## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2020-06-21)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0...upcoming)
+
+**Closed issues:**
+
+- Limit Auto-Reconnection behavior and escalate to application layer early. [\#889](https://github.com/factcast/factcast/issues/889)
+
+**Merged pull requests:**
+
+- Issue \#889: limit reconnection attempts \(reset after a while\) [\#890](https://github.com/factcast/factcast/pull/890) ([uweschaefer](https://github.com/uweschaefer))
+- \#884: Publish docker image during release [\#885](https://github.com/factcast/factcast/pull/885) ([otbe](https://github.com/otbe))
+- Added ConditionalOnProperty for validation aspect [\#882](https://github.com/factcast/factcast/pull/882) ([otbe](https://github.com/otbe))
+
+## [factcast-0.2.0](https://github.com/factcast/factcast/tree/factcast-0.2.0) (2020-06-21)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0-RC2...factcast-0.2.0)
+
+**Closed issues:**
+
+- Publish Docker Image during release [\#884](https://github.com/factcast/factcast/issues/884)
+
+## [factcast-0.2.0-RC2](https://github.com/factcast/factcast/tree/factcast-0.2.0-RC2) (2020-06-10)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0-RC...factcast-0.2.0-RC2)
+
+**Closed issues:**
+
+- Factcast throws Exception \(on publish\) if validation is disabled [\#880](https://github.com/factcast/factcast/issues/880)
+- Action Required: Fix Renovate Configuration [\#871](https://github.com/factcast/factcast/issues/871)
+- replace LZ4 impl with commons-compress  [\#861](https://github.com/factcast/factcast/issues/861)
+- Update Dependencies \(Renovate Bot\) [\#856](https://github.com/factcast/factcast/issues/856)
+
+**Merged pull requests:**
+
 
 ## [factcast-0.2.0-RC](https://github.com/factcast/factcast/tree/factcast-0.2.0-RC) (2020-06-01)
 
