@@ -15,12 +15,10 @@
  */
 package org.factcast.core.subscription;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -55,6 +53,10 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
     private final AtomicReference<UUID> factIdSeen = new AtomicReference<>();
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
+
+    private static final int ALLOWED_TIME_BETWEEN_RECONNECTS = 3000;
+
+    private static final int ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION = 5;
 
     private final ExecutorService es = Executors.newCachedThreadPool(new ThreadFactory() {
 
@@ -92,14 +94,14 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                 return this;
 
             } else {
-                sleep();
+                sleep(100);
             }
         }
     }
 
-    private void sleep() {
+    private void sleep(long millis) {
         try {
-            Thread.sleep(500);
+            Thread.sleep(millis);
         } catch (InterruptedException ignore) {
         }
     }
@@ -117,10 +119,8 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
                 cur.awaitCatchup(waitTimeInMillis);
                 return this;
-
-                // escalate TimeoutException
             } else {
-                sleep();
+                sleep(100);
             }
             if ((System.currentTimeMillis() - startTime) > waitTimeInMillis) {
                 throw new TimeoutException();
@@ -141,7 +141,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                 return this;
 
             } else {
-                sleep();
+                sleep(100);
             }
         }
 
@@ -163,7 +163,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
                 // escalate TimeoutException
             } else {
-                sleep();
+                sleep(100);
             }
 
             if ((System.currentTimeMillis() - startTime) > waitTimeInMillis) {
@@ -188,6 +188,8 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
         observer = new FactObserver() {
 
+            private final List<Long> reconnects = new LinkedList<>();
+
             @Override
             public void onNext(@NonNull Fact element) {
                 originalObserver.onNext(element);
@@ -206,16 +208,20 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
             @Override
             public void onError(@NonNull Throwable exception) {
+                closeAndDetachSubscription();
 
-                if (exception.getClass().getCanonicalName().startsWith("org.factcast")) {
+                log.info("Closing subscription due to onError triggered.",
+                        exception);
+
+                if (isServerException(exception) || reconnectedTooOften()) {
                     // give up
                     originalObserver.onError(exception);
                     throw ExceptionHelper.toRuntime(exception);
                 } else {
-                    log.info("Closing & Reconnecting subscription due to onError triggered.",
-                            exception);
+                    log.debug("Pausing 100ms before reconnect");
+                    sleep(100);
+                    log.info("Trying to reconnect.");
 
-                    closeAndDetachSubscription();
                     CompletableFuture.runAsync(
                             ReconnectingFactSubscriptionWrapper.this::initiateReconnect, es);
 
@@ -223,10 +229,24 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                     // decide to throw an exception
                     originalObserver.onError(exception);
                 }
+
             }
+
+            private boolean reconnectedTooOften() {
+                long now = System.currentTimeMillis();
+                // remove all older reconnection attempts
+                reconnects.removeIf(t -> now - t > ALLOWED_TIME_BETWEEN_RECONNECTS);
+                reconnects.add(now);
+                return reconnects.size() > ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION;
+            }
+
         };
         initiateReconnect();
 
+    }
+
+    private boolean isServerException(@NonNull Throwable exception) {
+        return exception.getClass().getCanonicalName().startsWith("org.factcast");
     }
 
     private synchronized void initiateReconnect() {
@@ -245,7 +265,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                 }
                 return;
             } catch (Exception ignore) {
-                sleep();
+                sleep(500);
             }
         }
     }

@@ -12,6 +12,14 @@ identifier = "migration"
 weight = 99
 +++
 
+## Upgrading to 0.2.1 
+
+#### Reconnection behavior
+
+Reconnecting due to connection/unknown errors has changed from an inifinite loop to just try five times (in a window of three seconds) and escalate if they failed.
+Details can be found [here](https://github.com/factcast/factcast/issues/889).
+
+
 ## Upgrading to 0.2.0 (quite a lot)
 
 
