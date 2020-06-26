@@ -17,14 +17,7 @@ package org.factcast.server.grpc;
 
 import java.io.InputStream;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -42,21 +35,7 @@ import org.factcast.grpc.api.conv.IdAndVersion;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID_AND_VERSION;
+import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
@@ -69,6 +48,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusException;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
@@ -137,30 +117,42 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     @Secured(FactCastAuthority.AUTHENTICATED)
     public void subscribe(MSG_SubscriptionRequest request,
             StreamObserver<MSG_Notification> responseObserver) {
-        enableResponseCompression(responseObserver);
-
         SubscriptionRequestTO req = converter.fromProto(request);
+        if (subscriptionRequestMustBeRejected(req)) {
+            throw new StatusRuntimeException(Status.RESOURCE_EXHAUSTED);
+        } else {
 
-        List<@NonNull String> namespaces = req.specs()
-                .stream()
-                .map(FactSpec::ns)
-                .distinct()
-                .collect(Collectors.toList());
-        try {
-            assertCanRead(namespaces);
+            enableResponseCompression(responseObserver);
 
-            resetDebugInfo(req);
-            BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(
-                    req.toString(),
-                    (ServerCallStreamObserver) responseObserver);
+            List<@NonNull String> namespaces = req.specs()
+                    .stream()
+                    .map(FactSpec::ns)
+                    .distinct()
+                    .collect(Collectors.toList());
+            try {
+                assertCanRead(namespaces);
 
-            store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp,
-                    f -> converter.createNotificationFor(f)));
+                resetDebugInfo(req);
+                BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(
+                        req.toString(),
+                        (ServerCallStreamObserver) responseObserver);
 
-        } catch (StatusException e) {
-            responseObserver.onError(e);
+                store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp,
+                        f -> converter.createNotificationFor(f)));
+
+            } catch (StatusException e) {
+                responseObserver.onError(e);
+            }
+
         }
 
+    }
+
+    private final Map<String, Map<String, Long>> subscriptionTrail = new HashMap<>();
+
+    private boolean subscriptionRequestMustBeRejected(SubscriptionRequestTO request) {
+        // TODO
+        return false;
     }
 
     private void enableResponseCompression(StreamObserver<?> responseObserver) {
