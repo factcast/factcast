@@ -115,7 +115,8 @@ public class PgConstants {
             + COLUMN_HEADER + "= jsonb_set( "
             + COLUMN_HEADER + " , '{meta}' , COALESCE(" + COLUMN_HEADER
             + "->'meta','{}') || concat('{\"_ser\":', "
-            + COLUMN_SER + " ,'}' )::jsonb , true) WHERE header @> ?::jsonb";
+            + COLUMN_SER
+            + " ,', \"_ts\":', EXTRACT(EPOCH FROM now()::timestamptz(3))*1000, '}' )::jsonb , true) WHERE header @> ?::jsonb";
 
     public static final String SELECT_DISTINCT_NAMESPACE = "SELECT DISTINCT(" + COLUMN_HEADER
             + "->>'" + ALIAS_NS
@@ -138,8 +139,6 @@ public class PgConstants {
 
     public static final String SELECT_NS_FROM_TOKEN = "SELECT " + COLUMN_NAMESPACE + " FROM "
             + TABLE_TOKENSTORE + " WHERE " + COLUMN_TOKEN + "=?";
-
-    ;
 
     private static String fromHeader(String attributeName) {
         return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
