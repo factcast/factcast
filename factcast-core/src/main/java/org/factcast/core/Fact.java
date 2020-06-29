@@ -64,14 +64,17 @@ public interface Fact {
         }
     }
 
-    default long timestamp() {
+    /**
+     * beware, might return null
+     *
+     * @return timestamp in milliseconds of publishing, or null if this
+     *         information is not there (historic events)
+     */
+    default Long timestamp() {
         String s = meta("_ts");
-        if (s != null) {
+        if (s != null)
             return Long.parseLong(s);
-        } else {
-            throw new IllegalStateException(
-                    "'_ts' Meta attribute not found. Fact not yet published?");
-        }
+        return null;
     }
 
     // hint to where to get the default from
