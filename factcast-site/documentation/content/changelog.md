@@ -3,9 +3,9 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 
 # Changelog
 
-## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2020-06-21)
+## [factcast-0.2.1](https://github.com/factcast/factcast/tree/factcast-0.2.1) (2020-06-29)
 
-[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0...upcoming)
+[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0...factcast-0.2.1)
 
 **Closed issues:**
 
@@ -13,6 +13,7 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 
 **Merged pull requests:**
 
+- Issue910 add Timestamp to server generated fields in metadata of a fact [\#911](https://github.com/factcast/factcast/pull/911) ([uweschaefer](https://github.com/uweschaefer))
 - Issue \#889: limit reconnection attempts \(reset after a while\) [\#890](https://github.com/factcast/factcast/pull/890) ([uweschaefer](https://github.com/uweschaefer))
 - \#884: Publish docker image during release [\#885](https://github.com/factcast/factcast/pull/885) ([otbe](https://github.com/otbe))
 - Added ConditionalOnProperty for validation aspect [\#882](https://github.com/factcast/factcast/pull/882) ([otbe](https://github.com/otbe))
@@ -34,7 +35,6 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 - Factcast throws Exception \(on publish\) if validation is disabled [\#880](https://github.com/factcast/factcast/issues/880)
 - Action Required: Fix Renovate Configuration [\#871](https://github.com/factcast/factcast/issues/871)
 - replace LZ4 impl with commons-compress  [\#861](https://github.com/factcast/factcast/issues/861)
-- Update Dependencies \(Renovate Bot\) [\#856](https://github.com/factcast/factcast/issues/856)
 
 **Merged pull requests:**
 

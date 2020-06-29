@@ -1,8 +1,8 @@
 # Changelog
 
-## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2020-06-21)
+## [factcast-0.2.1](https://github.com/factcast/factcast/tree/factcast-0.2.1) (2020-06-29)
 
-[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0...upcoming)
+[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0...factcast-0.2.1)
 
 **Closed issues:**
 
@@ -10,6 +10,14 @@
 
 **Merged pull requests:**
 
+- Issue910 add Timestamp to server generated fields in metadata of a fact [\#911](https://github.com/factcast/factcast/pull/911) ([uweschaefer](https://github.com/uweschaefer))
+- Update dependency org.xerial.snappy:snappy-java to v1.1.7.6 [\#906](https://github.com/factcast/factcast/pull/906) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson.core:jackson-databind to v2.11.1 [\#904](https://github.com/factcast/factcast/pull/904) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson.core:jackson-core to v2.11.1 [\#900](https://github.com/factcast/factcast/pull/900) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson.core:jackson-annotations to v2.11.1 [\#899](https://github.com/factcast/factcast/pull/899) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency io.github.microutils:kotlin-logging to v1.8.0.1 [\#898](https://github.com/factcast/factcast/pull/898) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.springframework.cloud:spring-cloud-dependencies to vHoxton.SR6 [\#897](https://github.com/factcast/factcast/pull/897) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.codehaus.mojo:build-helper-maven-plugin to v3.2.0 [\#896](https://github.com/factcast/factcast/pull/896) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency io.javalin:javalin to v3.9.1 [\#895](https://github.com/factcast/factcast/pull/895) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency com.diffplug.spotless:spotless-maven-plugin to v1.31.3 [\#891](https://github.com/factcast/factcast/pull/891) ([renovate[bot]](https://github.com/apps/renovate))
 - Issue \#889: limit reconnection attempts \(reset after a while\) [\#890](https://github.com/factcast/factcast/pull/890) ([uweschaefer](https://github.com/uweschaefer))
@@ -48,7 +56,6 @@
 - Factcast throws Exception \(on publish\) if validation is disabled [\#880](https://github.com/factcast/factcast/issues/880)
 - Action Required: Fix Renovate Configuration [\#871](https://github.com/factcast/factcast/issues/871)
 - replace LZ4 impl with commons-compress  [\#861](https://github.com/factcast/factcast/issues/861)
-- Update Dependencies \(Renovate Bot\) [\#856](https://github.com/factcast/factcast/issues/856)
 
 **Merged pull requests:**
 
