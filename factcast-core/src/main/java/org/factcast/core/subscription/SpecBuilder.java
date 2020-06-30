@@ -27,6 +27,8 @@ public interface SpecBuilder {
 
     SubscriptionRequest from(@NonNull UUID id);
 
+    SubscriptionRequest fromNullable(UUID id);
+
     SubscriptionRequest fromScratch();
 
     SubscriptionRequest fromNowOn();

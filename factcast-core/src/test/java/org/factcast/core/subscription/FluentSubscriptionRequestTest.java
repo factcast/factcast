@@ -41,6 +41,12 @@ public class FluentSubscriptionRequestTest {
     }
 
     @Test
+    void testFollowNullable() {
+        SubscriptionRequest req = SubscriptionRequest.follow(FactSpec.ns("foo")).fromNullable(null);
+        assertFalse(req.startingAfter().isPresent());
+    }
+
+    @Test
     void testCatchupNull() {
         Assertions.assertThrows(NullPointerException.class, () -> SubscriptionRequest.catchup(
                 (FactSpec) null));
