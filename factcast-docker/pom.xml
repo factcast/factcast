@@ -37,7 +37,6 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
-
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -74,37 +73,11 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>com.spotify</groupId>
-        <artifactId>docker-maven-plugin</artifactId>
-        <version>1.2.2</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>build</goal>
-            </goals>
-          </execution>
-        </executions>
-
-        <configuration>
-          <imageName>${docker.image.prefix}/factcast</imageName>
-          <dockerDirectory>src/main/docker</dockerDirectory>
-          <resources>
-            <resource>
-              <targetPath>/</targetPath>
-              <directory>${project.build.directory}</directory>
-              <include>${project.build.finalName}.jar</include>
-            </resource>
-          </resources>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
-
   <profiles>
     <profile>
       <id>oss.push-docker-image</id>
@@ -117,15 +90,23 @@
         <plugins>
           <plugin>
             <groupId>com.spotify</groupId>
-            <artifactId>docker-maven-plugin</artifactId>
+            <artifactId>dockerfile-maven-plugin</artifactId>
+            <version>1.4.12</version>
+            <executions>
+              <execution>
+                <id>default</id>
+                <goals>
+                  <goal>build</goal>
+                  <goal>push</goal>
+                </goals>
+              </execution>
+            </executions>
             <configuration>
-              <pushImage>true</pushImage>
-              <imageTags>
-                <imageTag>${project.version}</imageTag>
-              </imageTags>
-              <pushImageTag>true</pushImageTag>
-              <serverId>docker-hub</serverId>
-              <registryUrl>https://index.docker.io/v1/</registryUrl>
+              <repository>factcast/factcast</repository>
+              <tag>${project.version}</tag>
+              <buildArgs>
+                <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
+              </buildArgs>
             </configuration>
           </plugin>
         </plugins>
