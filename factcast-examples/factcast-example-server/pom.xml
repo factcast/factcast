@@ -12,7 +12,6 @@
     <!-- Pin your own Spring Boot version. -->
     <spring-boot.version>2.3.1.RELEASE</spring-boot.version>
     <docker.image.prefix>factcast</docker.image.prefix>
-    <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -60,6 +59,13 @@
   <build>
     <finalName>factcast</finalName>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
