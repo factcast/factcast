@@ -10,6 +10,7 @@
   <artifactId>factcast-integration-full-tls</artifactId>
   <properties>
     <maven.test.skip>true</maven.test.skip>
+    <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
 
   <dependencyManagement>
