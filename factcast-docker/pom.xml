@@ -91,7 +91,7 @@
       <id>oss.push-docker-image</id>
       <activation>
         <property>
-          <name>ossrh</name>
+          <name>docker</name>
         </property>
       </activation>
       <build>
@@ -107,11 +107,14 @@
                   <goal>build</goal>
                   <goal>push</goal>
                 </goals>
+              <configuration>
+              <tag>${project.version}</tag>
+              </configuration>
               </execution>
             </executions>
             <configuration>
               <repository>factcast/factcast</repository>
-              <tag>${project.version}</tag>
+              <tag>latest</tag>
               <buildArgs>
                 <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
               </buildArgs>
