@@ -1,4 +1,5 @@
-FROM oracle/graalvm-ce:19.3.2-java8
+FROM openjdk:8u252-jdk
+#FROM oracle/graalvm-ce:19.3.2-java8
 EXPOSE 9090
 EXPOSE 9443
 
@@ -8,6 +9,7 @@ RUN mkdir /log
  
 VOLUME /log
 VOLUME /config
+
 
 COPY /target/factcast.jar /factcast.jar
 ENTRYPOINT exec java $JAVA_OPTS -cp /config -jar /factcast.jar $0 $@
