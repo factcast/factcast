@@ -8,6 +8,10 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-integration-full-tls</artifactId>
+  <properties>
+    <maven.test.skip>true</maven.test.skip>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <!-- note: the order is important here! -->
