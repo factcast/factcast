@@ -63,7 +63,6 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
     <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
     <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
@@ -177,6 +176,16 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>com.amashchenko.maven.plugin</groupId>
+        <artifactId>gitflow-maven-plugin</artifactId>
+        <version>1.14.0</version>
+        <configuration>
+          <gitFlowConfig>
+            <developmentBranch>master</developmentBranch>
+          </gitFlowConfig>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
@@ -287,15 +296,15 @@
               <file>file://${formatter.config}/eclipse_code_formatter.xml</file>
               <version>4.11.0</version>
             </eclipse>
-            <trimTrailingWhitespace />
-            <removeUnusedImports />
+            <trimTrailingWhitespace/>
+            <removeUnusedImports/>
             <importOrder>
               <file>file://${formatter.config}/eclipse.importorder</file>
             </importOrder>
             <includes>
-              <include> **/src/main/java/**/*.java
+              <include>**/src/main/java/**/*.java
               </include>
-              <include> **/src/test/java/**/*.java
+              <include>**/src/test/java/**/*.java
               </include>
             </includes>
           </java>
@@ -303,18 +312,18 @@
             <licenseHeader>
               <file>file://${etc}/header.txt</file>
             </licenseHeader>
-            <trimTrailingWhitespace />
+            <trimTrailingWhitespace/>
             <ktlint>
               <!-- Optional, available versions: https://github.com/shyiko/ktlint/releases -->
               <version>0.36.0</version>
             </ktlint>
             <includes>
-              <include> **/src/main/kotlin/**/*.kt
+              <include>**/src/main/kotlin/**/*.kt
               </include>
             </includes>
           </kotlin>
           <xml>
-            <trimTrailingWhitespace />
+            <trimTrailingWhitespace/>
             <includes>
               <include>**/src/**/*.xml</include>
               <include>**/pom.xml</include>
@@ -360,7 +369,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute />
+                    <execute/>
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -373,7 +382,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute />
+                    <execute/>
                   </action>
                 </pluginExecution>
               </pluginExecutions>
