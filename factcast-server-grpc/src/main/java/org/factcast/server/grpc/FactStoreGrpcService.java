@@ -17,6 +17,7 @@ package org.factcast.server.grpc;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -45,6 +46,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.Bucket4j;
+import io.github.bucket4j.Refill;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusException;
@@ -73,6 +78,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
 
     static final AtomicLong subscriptionIdStore = new AtomicLong();
+
+    public static final int NUMBER_OF_ALLOWED_FOLLOW_SUBSCRIPTIONS_PER_CLIENT_PER_30SEC = 3;
+
+    public static final int NUMBER_OF_ALLOWED_INITIAL_FOLLOW_SUBSCRIPTIONS_PER_CLIENT = 30;
 
     final FactStore store;
 
@@ -115,7 +124,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     @Override
     @Secured(FactCastAuthority.AUTHENTICATED)
-    public void subscribe(MSG_SubscriptionRequest request,
+    public void subscribe(
+            MSG_SubscriptionRequest request,
             StreamObserver<MSG_Notification> responseObserver) {
         SubscriptionRequestTO req = converter.fromProto(request);
         if (subscriptionRequestMustBeRejected(req)) {
@@ -148,11 +158,49 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     }
 
-    private final Map<String, Map<String, Long>> subscriptionTrail = new HashMap<>();
+    private final Map<String, Bucket> subscriptionTrail = new HashMap<>();
 
     private boolean subscriptionRequestMustBeRejected(SubscriptionRequestTO request) {
-        // TODO
-        return false;
+        if (request.continuous()) {
+            String requestFingerprint = "con" + request.pid() + "|" + (request.startingAfter()
+                    .orElse(null));
+            Bucket bucket = subscriptionTrail.computeIfAbsent(requestFingerprint,
+                    k -> createContinousBucket());
+            return !bucket.tryConsume(1);
+        } else {
+            String requestFingerprint = "cat" + request.pid();
+            Bucket bucket = subscriptionTrail.computeIfAbsent(requestFingerprint,
+                    k -> createCatchupBucket());
+            return !bucket.tryConsume(1);
+        }
+    }
+
+    private Bucket createContinousBucket() {
+        Refill refill = Refill.intervally(
+                NUMBER_OF_ALLOWED_FOLLOW_SUBSCRIPTIONS_PER_CLIENT_PER_30SEC, Duration.ofSeconds(
+                        30));
+        Bandwidth limit = Bandwidth.classic(
+                NUMBER_OF_ALLOWED_INITIAL_FOLLOW_SUBSCRIPTIONS_PER_CLIENT, refill); // initially,
+                                                                                    // were
+                                                                                    // open
+                                                                                    // to
+                                                                                    // many
+                                                                                    // concurrent
+                                                                                    // requests
+        Bucket bucket = Bucket4j.builder()
+                .addLimit(limit)
+                .build();
+
+        return bucket;
+    }
+
+    private Bucket createCatchupBucket() {
+        Refill refill = Refill.intervally(100, Duration.ofSeconds(1));
+        Bandwidth limit = Bandwidth.classic(100, refill);
+        Bucket bucket = Bucket4j.builder()
+                .addLimit(limit)
+                .build();
+        return bucket;
     }
 
     private void enableResponseCompression(StreamObserver<?> responseObserver) {
@@ -224,7 +272,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     @Override
     @Secured(FactCastAuthority.AUTHENTICATED)
-    public void enumerateNamespaces(MSG_Empty request,
+    public void enumerateNamespaces(
+            MSG_Empty request,
             StreamObserver<MSG_StringSet> responseObserver) {
         try {
             Set<String> allNamespaces = store.enumerateNamespaces()
@@ -258,7 +307,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     @Override
     @Secured(FactCastAuthority.AUTHENTICATED)
-    public void publishConditional(MSG_ConditionalPublishRequest request,
+    public void publishConditional(
+            MSG_ConditionalPublishRequest request,
             StreamObserver<MSG_ConditionalPublishResult> responseObserver) {
         try {
             ConditionalPublishRequest req = converter.fromProto(request);
@@ -305,7 +355,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void currentTime(MSG_Empty request,
+    public void currentTime(
+            MSG_Empty request,
             StreamObserver<MSG_CurrentDatabaseTime> responseObserver) {
         try {
             responseObserver.onNext(converter.toProto(store.currentTime()));
@@ -335,14 +386,16 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         T get() throws Exception;
     }
 
-    private void doFetchById(StreamObserver<MSG_OptionalFact> responseObserver,
+    private void doFetchById(
+            StreamObserver<MSG_OptionalFact> responseObserver,
             ThrowingSupplier<Optional<Fact>> o) {
         try {
             enableResponseCompression(responseObserver);
 
             val fetchById = o.get();
-            if (fetchById.isPresent())
+            if (fetchById.isPresent()) {
                 assertCanRead(fetchById.get().ns());
+            }
 
             responseObserver.onNext(converter.toProto(fetchById));
             responseObserver.onCompleted();
@@ -353,7 +406,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void fetchByIdAndVersion(MSG_UUID_AND_VERSION request,
+    public void fetchByIdAndVersion(
+            MSG_UUID_AND_VERSION request,
             StreamObserver<MSG_OptionalFact> responseObserver) {
 
         IdAndVersion fromProto = converter.fromProto(request);
