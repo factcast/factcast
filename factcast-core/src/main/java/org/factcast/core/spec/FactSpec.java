@@ -15,9 +15,8 @@
  */
 package org.factcast.core.spec;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -63,7 +62,7 @@ public class FactSpec {
         return this;
     }
 
-    public static FactSpec ns(String ns) {
+    public static FactSpec ns(@NonNull String ns) {
         return new FactSpec(ns);
     }
 
@@ -81,6 +80,7 @@ public class FactSpec {
             return null;
     }
 
+    @NonNull
     public FactSpec filterScript(FilterScript script) {
         if (script != null) {
             this.filterScript = script;
@@ -94,6 +94,7 @@ public class FactSpec {
         return this;
     }
 
+    @NonNull
     public FactSpec jsFilterScript(String script) {
         if (script != null)
             filterScript(new FilterScript("js", script));
@@ -112,7 +113,8 @@ public class FactSpec {
             return null;
     }
 
-    public static <T> FactSpec from(Class<T> clazz) {
+    @NonNull
+    public static <T> FactSpec from(@NonNull Class<T> clazz) {
         Specification annotationSpec = clazz.getAnnotation(Specification.class);
 
         if (annotationSpec == null) {
@@ -131,4 +133,22 @@ public class FactSpec {
 
         return factSpec;
     }
+
+    /**
+     * convenience method
+     */
+    public static List<FactSpec> from(@NonNull List<Class<?>> clazz) {
+        return clazz.stream()
+                .filter(Objects::nonNull)
+                .map(FactSpec::from)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * convenience method
+     */
+    public static List<FactSpec> from(Class<?>... clazz) {
+        return from(Arrays.asList(clazz));
+    }
+
 }
