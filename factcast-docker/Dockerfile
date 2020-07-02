@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk
+FROM openjdk:8-alpine
 #FROM oracle/graalvm-ce:19.3.2-java8
 EXPOSE 9090
 EXPOSE 9443
