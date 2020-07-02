@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.2.1-SNAPSHOT</version>
+    <version>0.2.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-docker</artifactId>
@@ -12,6 +12,7 @@
     <!-- Pin your own Spring Boot version. -->
     <spring-boot.version>2.3.1.RELEASE</spring-boot.version>
     <docker.image.prefix>factcast</docker.image.prefix>
+
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -37,7 +38,6 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
-
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -74,37 +74,18 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>com.spotify</groupId>
-        <artifactId>docker-maven-plugin</artifactId>
-        <version>1.2.2</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>build</goal>
-            </goals>
-          </execution>
-        </executions>
-
-        <configuration>
-          <imageName>${docker.image.prefix}/factcast</imageName>
-          <dockerDirectory>src/main/docker</dockerDirectory>
-          <resources>
-            <resource>
-              <targetPath>/</targetPath>
-              <directory>${project.build.directory}</directory>
-              <include>${project.build.finalName}.jar</include>
-            </resource>
-          </resources>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
-
   <profiles>
     <profile>
       <id>oss.push-docker-image</id>
@@ -117,15 +98,23 @@
         <plugins>
           <plugin>
             <groupId>com.spotify</groupId>
-            <artifactId>docker-maven-plugin</artifactId>
+            <artifactId>dockerfile-maven-plugin</artifactId>
+            <version>1.4.13</version>
+            <executions>
+              <execution>
+                <id>default</id>
+                <goals>
+                  <goal>build</goal>
+                  <goal>push</goal>
+                </goals>
+              </execution>
+            </executions>
             <configuration>
-              <pushImage>true</pushImage>
-              <imageTags>
-                <imageTag>${project.version}</imageTag>
-              </imageTags>
-              <pushImageTag>true</pushImageTag>
-              <serverId>docker-hub</serverId>
-              <registryUrl>https://index.docker.io/v1/</registryUrl>
+              <repository>factcast/factcast</repository>
+              <tag>${project.version}</tag>
+              <buildArgs>
+                <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
+              </buildArgs>
             </configuration>
           </plugin>
         </plugins>

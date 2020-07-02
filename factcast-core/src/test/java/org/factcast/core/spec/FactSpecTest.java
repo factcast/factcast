@@ -15,14 +15,18 @@
  */
 package org.factcast.core.spec;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 import org.factcast.core.util.FactCastJson;
 import org.junit.jupiter.api.*;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import lombok.val;
 
 public class FactSpecTest {
 
@@ -147,7 +151,7 @@ public class FactSpecTest {
     }
 
     @Specification(ns = "ns", type = "type")
-    static class TestFactWithType {
+    public static class TestFactWithType {
     }
 
     @Test
@@ -161,7 +165,7 @@ public class FactSpecTest {
     }
 
     @Specification(ns = "ns", type = "type", version = 2)
-    static class TestFactWithTypeAndVersion {
+    public static class TestFactWithTypeAndVersion {
     }
 
     @Test
@@ -178,6 +182,23 @@ public class FactSpecTest {
     public void testThrowIfNoAnnotationSpecPresent() {
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> FactSpec.from(Specification.class));
+    }
+
+    @Test
+    public void testFromVarArgs() {
+        val spec = FactSpec.from(TestFactWithType.class, TestFactWithTypeAndVersion.class);
+        assertThat(spec).hasSize(2)
+                .contains(FactSpec.ns("ns").type("type").version(2))
+                .contains(FactSpec.ns("ns").type("type"));
+    }
+
+    @Test
+    public void testFromList() {
+        val spec = FactSpec.from(Arrays.asList(TestFactWithType.class,
+                TestFactWithTypeAndVersion.class));
+        assertThat(spec).hasSize(2)
+                .contains(FactSpec.ns("ns").type("type").version(2))
+                .contains(FactSpec.ns("ns").type("type"));
     }
 
 }

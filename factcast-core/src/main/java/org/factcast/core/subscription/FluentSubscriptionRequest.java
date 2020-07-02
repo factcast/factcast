@@ -94,6 +94,11 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
             return toBuild;
         }
 
+        public SubscriptionRequest fromNullable(UUID id) {
+            toBuild.startingAfter = id;
+            return toBuild;
+        }
+
         public SpecBuilder follow(FactSpec specification) {
             or(specification);
             toBuild.continuous = true;

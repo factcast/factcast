@@ -59,8 +59,22 @@ public interface Fact {
         if (s != null) {
             return Long.parseLong(s);
         } else {
-            throw new IllegalStateException("'_ser' Meta attribute not found");
+            throw new IllegalStateException(
+                    "'_ser' Meta attribute not found. Fact not yet published?");
         }
+    }
+
+    /**
+     * beware, might return null
+     *
+     * @return timestamp in milliseconds of publishing, or null if this
+     *         information is not there (historic events)
+     */
+    default Long timestamp() {
+        String s = meta("_ts");
+        if (s != null)
+            return Long.parseLong(s);
+        return null;
     }
 
     // hint to where to get the default from
