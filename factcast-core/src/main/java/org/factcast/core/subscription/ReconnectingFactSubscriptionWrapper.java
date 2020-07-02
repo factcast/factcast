@@ -179,7 +179,8 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
         }
     }
 
-    public ReconnectingFactSubscriptionWrapper(@NonNull FactStore store,
+    public ReconnectingFactSubscriptionWrapper(
+            @NonNull FactStore store,
             @NonNull SubscriptionRequestTO req,
             @NonNull FactObserver obs) {
         this.store = store;
@@ -192,8 +193,10 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
             @Override
             public void onNext(@NonNull Fact element) {
-                originalObserver.onNext(element);
-                factIdSeen.set(element.id());
+                if (!closed.get()) {
+                    originalObserver.onNext(element);
+                    factIdSeen.set(element.id());
+                }
             }
 
             @Override
