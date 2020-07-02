@@ -17,15 +17,17 @@ package org.factcast.server.grpc;
 
 import org.factcast.core.store.FactStore;
 import org.factcast.grpc.api.CompressionCodecs;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@EnableConfigurationProperties()
 public class FactCastGrpcServerConfiguration {
 
     @Bean
-    public FactStoreGrpcService factStoreGrpcService(FactStore store) {
-        return new FactStoreGrpcService(store);
+    public FactStoreGrpcService factStoreGrpcService(FactStore store, GrpcLimitProperties props) {
+        return new FactStoreGrpcService(store, props);
     }
 
     @Bean
@@ -36,5 +38,10 @@ public class FactCastGrpcServerConfiguration {
     @Bean
     public GrpcExceptionInterceptor grpcExceptionInterceptor() {
         return new GrpcExceptionInterceptor();
+    }
+
+    @Bean
+    public GrpcLimitProperties grpcLimitProperties() {
+        return new GrpcLimitProperties();
     }
 }

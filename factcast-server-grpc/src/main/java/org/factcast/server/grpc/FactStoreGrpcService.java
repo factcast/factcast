@@ -19,6 +19,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -45,6 +47,9 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
@@ -79,15 +84,18 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     static final AtomicLong subscriptionIdStore = new AtomicLong();
 
-    public static final int NUMBER_OF_ALLOWED_FOLLOW_SUBSCRIPTIONS_PER_CLIENT_PER_30SEC = 3;
-
-    public static final int NUMBER_OF_ALLOWED_INITIAL_FOLLOW_SUBSCRIPTIONS_PER_CLIENT = 30;
-
     final FactStore store;
+
+    final GrpcLimitProperties grpcLimitProperties;
 
     final CompressionCodecs codecs = new CompressionCodecs();
 
     final ProtoConverter converter = new ProtoConverter();
+
+    @VisibleForTesting
+    protected FactStoreGrpcService(FactStore store) {
+        this(store, new GrpcLimitProperties());
+    }
 
     @Override
     @Secured(FactCastAuthority.AUTHENTICATED)
@@ -158,49 +166,58 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     }
 
-    private final Map<String, Bucket> subscriptionTrail = new HashMap<>();
+    private final LoadingCache<String, Bucket> subscriptionTrail = CacheBuilder.newBuilder()
+            .maximumSize(1000000)
+            .expireAfterWrite(3, TimeUnit.MINUTES)
+            .build(new CacheLoader<String, Bucket>() {
+                @Override
+                public Bucket load(String key) throws Exception {
+                    if (key.endsWith("con")) {
+                        Refill refill = Refill.intervally(
+                                grpcLimitProperties
+                                        .numberOfFollowRequestsAllowedPerClientPerMinute(),
+                                Duration
+                                        .ofMinutes(1));
+                        Bandwidth limit = Bandwidth.classic(
+                                grpcLimitProperties.initialNumberOfFollowRequestsAllowedPerClient(),
+                                refill);
+                        return Bucket4j.builder()
+                                .addLimit(limit)
+                                .build();
+                    } else {
+                        Refill refill = Refill.intervally(
+                                grpcLimitProperties
+                                        .numberOfCatchupRequestsAllowedPerClientPerMinute(),
+                                Duration
+                                        .ofMinutes(1));
+                        Bandwidth limit = Bandwidth.classic(
+                                grpcLimitProperties
+                                        .initialNumberOfCatchupRequestsAllowedPerClient(),
+                                refill);
+                        return Bucket4j.builder()
+                                .addLimit(limit)
+                                .build();
+                    }
+
+                }
+            });
 
     private boolean subscriptionRequestMustBeRejected(SubscriptionRequestTO request) {
-        if (request.continuous()) {
-            String requestFingerprint = "con" + request.pid() + "|" + (request.startingAfter()
-                    .orElse(null));
-            Bucket bucket = subscriptionTrail.computeIfAbsent(requestFingerprint,
-                    k -> createContinousBucket());
-            return !bucket.tryConsume(1);
-        } else {
-            String requestFingerprint = "cat" + request.pid();
-            Bucket bucket = subscriptionTrail.computeIfAbsent(requestFingerprint,
-                    k -> createCatchupBucket());
-            return !bucket.tryConsume(1);
+        // if the client progresses, it is considered a different request
+        String requestFingerprint = request.pid() + "|" + (request.startingAfter()
+                .orElse(null));
+        try {
+            if (request.continuous()) {
+                requestFingerprint = requestFingerprint + "|con";
+            } else {
+                requestFingerprint = requestFingerprint + "|cat";
+            }
+            return !subscriptionTrail.get(requestFingerprint).tryConsume(1);
+        } catch (ExecutionException e) {
+            log.error("While finding or creating bucket: ", e);
+            // default to be permissive - for now...
+            return false;
         }
-    }
-
-    private Bucket createContinousBucket() {
-        Refill refill = Refill.intervally(
-                NUMBER_OF_ALLOWED_FOLLOW_SUBSCRIPTIONS_PER_CLIENT_PER_30SEC, Duration.ofSeconds(
-                        30));
-        Bandwidth limit = Bandwidth.classic(
-                NUMBER_OF_ALLOWED_INITIAL_FOLLOW_SUBSCRIPTIONS_PER_CLIENT, refill); // initially,
-                                                                                    // were
-                                                                                    // open
-                                                                                    // to
-                                                                                    // many
-                                                                                    // concurrent
-                                                                                    // requests
-        Bucket bucket = Bucket4j.builder()
-                .addLimit(limit)
-                .build();
-
-        return bucket;
-    }
-
-    private Bucket createCatchupBucket() {
-        Refill refill = Refill.intervally(100, Duration.ofSeconds(1));
-        Bandwidth limit = Bandwidth.classic(100, refill);
-        Bucket bucket = Bucket4j.builder()
-                .addLimit(limit)
-                .build();
-        return bucket;
     }
 
     private void enableResponseCompression(StreamObserver<?> responseObserver) {
@@ -384,6 +401,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     interface ThrowingSupplier<T> {
         T get() throws Exception;
+
     }
 
     private void doFetchById(
