@@ -64,6 +64,8 @@ message MSG_OptionalFact{
 message MSG_Fact {
 	string header = 1;
 	string payload = 2;
+	bytes msgpack_header = 3;
+	bytes msgpack_payload = 4;
 }
 
 /**
