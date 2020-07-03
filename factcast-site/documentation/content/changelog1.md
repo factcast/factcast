@@ -1,5 +1,60 @@
 # Changelog
 
+## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2020-07-02)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.2.4...upcoming)
+
+**Closed issues:**
+
+- Extract examples to extra project [\#923](https://github.com/factcast/factcast/issues/923)
+- add Coordinated subscription [\#450](https://github.com/factcast/factcast/issues/450)
+
+## [0.2.4](https://github.com/factcast/factcast/tree/0.2.4) (2020-07-02)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.2.3...0.2.4)
+
+**Closed issues:**
+
+- Prevent integration test artifacts from being deployed to central [\#924](https://github.com/factcast/factcast/issues/924)
+
+**Merged pull requests:**
+
+- Issue924 [\#925](https://github.com/factcast/factcast/pull/925) ([uweschaefer](https://github.com/uweschaefer))
+
+## [0.2.3](https://github.com/factcast/factcast/tree/0.2.3) (2020-07-02)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.2.2...0.2.3)
+
+## [0.2.2](https://github.com/factcast/factcast/tree/0.2.2) (2020-07-02)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.1...0.2.2)
+
+**Implemented enhancements:**
+
+- Simplify FactSpec generation from a list of classes. [\#888](https://github.com/factcast/factcast/issues/888)
+
+**Fixed bugs:**
+
+- Fix VM base for docker image [\#917](https://github.com/factcast/factcast/issues/917)
+
+**Closed issues:**
+
+- add database generated timestamp to metadata [\#910](https://github.com/factcast/factcast/issues/910)
+- Add retryer for IO actions [\#894](https://github.com/factcast/factcast/issues/894)
+- Switch CI from circleci to gh actions [\#877](https://github.com/factcast/factcast/issues/877)
+- Switch to gitflow maven plugin for release prep [\#921](https://github.com/factcast/factcast/issues/921)
+- Move to dockerfile-maven plugin for docker building and releasing [\#912](https://github.com/factcast/factcast/issues/912)
+- add fromNullable\(UUID orNull\) to the SubscriptionRequest api [\#908](https://github.com/factcast/factcast/issues/908)
+
+**Merged pull requests:**
+
+- \#921: use gitflow maven plugin [\#922](https://github.com/factcast/factcast/pull/922) ([uweschaefer](https://github.com/uweschaefer))
+- \#877: added gh action workflow [\#916](https://github.com/factcast/factcast/pull/916) ([uweschaefer](https://github.com/uweschaefer))
+- \#888: FactSpec.from for multiple classes [\#915](https://github.com/factcast/factcast/pull/915) ([uweschaefer](https://github.com/uweschaefer))
+- \#917: moved to openjdk8 as a base for the docker image [\#918](https://github.com/factcast/factcast/pull/918) ([uweschaefer](https://github.com/uweschaefer))
+- \#912: build and push docker image [\#913](https://github.com/factcast/factcast/pull/913) ([uweschaefer](https://github.com/uweschaefer))
+- Issue \#908: added fromNullable to SpecBuilder [\#909](https://github.com/factcast/factcast/pull/909) ([uweschaefer](https://github.com/uweschaefer))
+
 ## [factcast-0.2.1](https://github.com/factcast/factcast/tree/factcast-0.2.1) (2020-06-29)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0...factcast-0.2.1)
