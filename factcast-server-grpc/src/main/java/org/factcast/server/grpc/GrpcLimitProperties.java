@@ -19,7 +19,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import lombok.Data;
 
-@ConfigurationProperties(prefix = "factcast.store.grpc.bandwith")
+@ConfigurationProperties(prefix = "factcast.grpc.bandwith")
 @Data
 public class GrpcLimitProperties {
     private int initialNumberOfFollowRequestsAllowedPerClient = 50;
