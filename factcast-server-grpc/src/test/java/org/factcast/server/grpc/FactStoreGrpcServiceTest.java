@@ -20,12 +20,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.UUID;
+import java.util.*;
 
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -38,16 +33,8 @@ import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
+import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.server.grpc.auth.FactCastAccount;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
@@ -55,6 +42,7 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.intercept.RunAsUserToken;
@@ -81,6 +69,7 @@ public class FactStoreGrpcServiceTest {
     @Mock
     FactStore backend;
 
+    @InjectMocks
     FactStoreGrpcService uut;
 
     @Captor
@@ -274,6 +263,46 @@ public class FactStoreGrpcServiceTest {
         uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)),
                 mock(ServerCallStreamObserver.class));
         verify(backend).subscribe(any(), any());
+    }
+
+    @Test
+    void testSubscribeExhaustContinous() {
+        uut = new FactStoreGrpcService(backend, new GrpcLimitProperties()
+                .initialNumberOfFollowRequestsAllowedPerClient(3)
+                .numberOfFollowRequestsAllowedPerClientPerMinute(1));
+        SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
+        when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
+
+        val sre = assertThrows(StatusRuntimeException.class, () -> {
+            for (int i = 0; i < 10; i++) {
+                uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)
+                        .continuous(true)),
+                        mock(ServerCallStreamObserver.class));
+
+            }
+        });
+
+        assertEquals(Status.RESOURCE_EXHAUSTED, sre.getStatus());
+    }
+
+    @Test
+    void testSubscribeExhaustCatchup() {
+        uut = new FactStoreGrpcService(backend, new GrpcLimitProperties()
+                .initialNumberOfCatchupRequestsAllowedPerClient(3)
+                .numberOfCatchupRequestsAllowedPerClientPerMinute(1));
+        SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
+        when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
+
+        val sre = assertThrows(StatusRuntimeException.class, () -> {
+            for (int i = 0; i < 10; i++) {
+                uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)
+                        .continuous(false)),
+                        mock(ServerCallStreamObserver.class));
+
+            }
+        });
+
+        assertEquals(Status.RESOURCE_EXHAUSTED, sre.getStatus());
     }
 
     @Test

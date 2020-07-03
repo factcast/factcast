@@ -136,9 +136,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             MSG_SubscriptionRequest request,
             StreamObserver<MSG_Notification> responseObserver) {
         SubscriptionRequestTO req = converter.fromProto(request);
-        if (subscriptionRequestMustBeRejected(req)) {
-            throw new StatusRuntimeException(Status.RESOURCE_EXHAUSTED);
-        } else {
+        if (subscriptionRequestAccepted(req)) {
 
             enableResponseCompression(responseObserver);
 
@@ -162,6 +160,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                 responseObserver.onError(e);
             }
 
+        } else {
+            log.warn("Client exhausts resources by excessivly (re-)subscribing: {}, ID: {}", req
+                    .pid(), req.debugInfo());
+            throw new StatusRuntimeException(Status.RESOURCE_EXHAUSTED);
         }
 
     }
@@ -202,7 +204,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                 }
             });
 
-    private boolean subscriptionRequestMustBeRejected(SubscriptionRequestTO request) {
+    private boolean subscriptionRequestAccepted(SubscriptionRequestTO request) {
         // if the client progresses, it is considered a different request
         String requestFingerprint = request.pid() + "|" + (request.startingAfter()
                 .orElse(null));
@@ -212,7 +214,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             } else {
                 requestFingerprint = requestFingerprint + "|cat";
             }
-            return !subscriptionTrail.get(requestFingerprint).tryConsume(1);
+            return subscriptionTrail.get(requestFingerprint).tryConsume(1);
         } catch (ExecutionException e) {
             log.error("While finding or creating bucket: ", e);
             // default to be permissive - for now...
