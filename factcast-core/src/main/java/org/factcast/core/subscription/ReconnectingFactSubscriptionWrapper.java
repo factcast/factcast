@@ -29,6 +29,8 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
 import org.jetbrains.annotations.NotNull;
 
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,6 +50,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
     private final FactObserver originalObserver;
 
     @NonNull
+    @Getter(AccessLevel.PACKAGE)
     private final FactObserver observer;
 
     private final AtomicReference<UUID> factIdSeen = new AtomicReference<>();
@@ -196,6 +199,8 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
                 if (!closed.get()) {
                     originalObserver.onNext(element);
                     factIdSeen.set(element.id());
+                } else {
+                    log.warn("Fact arrived after call to .close() [a few of them is ok...]");
                 }
             }
 
