@@ -3,7 +3,7 @@ FROM openjdk:8u252-slim
 EXPOSE 9090
 EXPOSE 9443
 
-ENV JAVA_OPTS=""
+ENV JAVA_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -noverify -Xms1G -Dspring.jmx.enabled=false"
 RUN mkdir /config
 RUN mkdir /log
  

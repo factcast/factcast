@@ -6,5 +6,5 @@
   ██╔══╝  ██╔══██║██║        ██║   ██║     ██╔══██║╚════██║   ██║   
   ██║     ██║  ██║╚██████╗   ██║   ╚██████╗██║  ██║███████║   ██║   
   ╚═╝     ╚═╝  ╚═╝ ╚═════╝   ╚═╝    ╚═════╝╚═╝  ╚═╝╚══════╝   ╚═╝   
-  from factcast-docker
+ optimized for quick startup in tests, ** DO NOT USE IN PRODUCTION **
 
