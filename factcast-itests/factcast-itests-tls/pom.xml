@@ -3,15 +3,13 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.factcast</groupId>
-    <artifactId>factcast</artifactId>
+    <artifactId>factcast-itests</artifactId>
     <version>0.2.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-itests-tls</artifactId>
   <dependencyManagement>
     <dependencies>
-      <!-- note: the order is important here! -->
-      <!-- first, get all the factcast artifact's versions pinned -->
       <dependency>
         <groupId>org.factcast</groupId>
         <artifactId>factcast-bom</artifactId>
@@ -30,12 +28,14 @@
   </dependencyManagement>
   <dependencies>
     <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-client-grpc</artifactId>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-docker</artifactId>
+      <artifactId>factcast-client-grpc</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -49,12 +49,40 @@
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
       <version>1.14.3</version>
+      <exclusions>
+        <exclusion>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+        </exclusion>
+
+      </exclusions>
       <!-- <scope>test</scope> -->
     </dependency>
+
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>1.14.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>1.14.3</version>
+      <!-- sadly no idea how to keep it in local execution, but exclude it from fat-jar -->
+    </dependency>
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
-      <version>2.3.1.RELEASE</version>
+      <exclusions>
+
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <build>
@@ -76,6 +104,14 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.0.0-M5</version>
+        <configuration>
+          <skipITs>true</skipITs>
+        </configuration>
       </plugin>
     </plugins>
   </build>
