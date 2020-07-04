@@ -63,9 +63,9 @@
     <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
     <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
     <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-    <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
+    <maven-surefire-plugin.version>3.0.0-M4</maven-surefire-plugin.version>
     <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
-    <maven-failsafe-plugin.version>3.0.0-M5</maven-failsafe-plugin.version>
+    <maven-failsafe-plugin.version>3.0.0-M4</maven-failsafe-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
     <spotless-maven-plugin.version>2.0.0</spotless-maven-plugin.version>
@@ -316,24 +316,6 @@
               </include>
             </includes>
           </kotlin>
-          <xml>
-            <trimTrailingWhitespace/>
-            <includes>
-              <include>**/src/**/*.xml</include>
-              <include>**/pom.xml</include>
-            </includes>
-            <eclipseWtp>
-              <type>XML</type>
-              <version>4.7.3a</version>
-              <files>
-                <file>${formatter.config}/eclipse_xml_formatter.properties</file>
-              </files>
-            </eclipseWtp>
-            <indent>
-              <spaces>true</spaces>
-              <spacesPerTab>2</spacesPerTab>
-            </indent>
-          </xml>
         </configuration>
       </plugin>
     </plugins>
@@ -345,6 +327,11 @@
     </resources>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>2.8.2</version>
+        </plugin>
         <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself. -->
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
@@ -461,8 +448,7 @@
         <module>factcast-docker</module>
         <module>factcast-examples</module>
         <module>factcast-schema-registry-maven-plugin</module>
-        <module>factcast-integration-full/factcast-integration-full-tls</module>
-        <module>factcast-integration-full/factcast-integration-transformation</module>
+        <module>factcast-itests</module>
       </modules>
     </profile>
     <profile>
