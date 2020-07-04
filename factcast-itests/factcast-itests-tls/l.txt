@@ -1,0 +1,93 @@
+Attaching to factcast-itests-tls_factcast_1, factcast-itests-tls_db_1
+[36mdb_1        |[0m The files belonging to this database system will be owned by user "postgres".
+[36mdb_1        |[0m This user must also own the server process.
+[36mdb_1        |[0m 
+[36mdb_1        |[0m The database cluster will be initialized with locale "en_US.utf8".
+[36mdb_1        |[0m The default database encoding has accordingly been set to "UTF8".
+[36mdb_1        |[0m The default text search configuration will be set to "english".
+[36mdb_1        |[0m 
+[36mdb_1        |[0m Data page checksums are disabled.
+[36mdb_1        |[0m 
+[36mdb_1        |[0m fixing permissions on existing directory /var/lib/postgresql/data ... ok
+[36mdb_1        |[0m creating subdirectories ... ok
+[36mdb_1        |[0m selecting dynamic shared memory implementation ... posix
+[36mdb_1        |[0m selecting default max_connections ... 100
+[36mdb_1        |[0m selecting default shared_buffers ... 128MB
+[36mdb_1        |[0m selecting default time zone ... Etc/UTC
+[36mdb_1        |[0m creating configuration files ... ok
+[36mdb_1        |[0m running bootstrap script ... ok
+[36mdb_1        |[0m performing post-bootstrap initialization ... ok
+[33mfactcast_1  |[0m 
+[33mfactcast_1  |[0m 
+[33mfactcast_1  |[0m   ███████╗ █████╗  ██████╗████████╗ ██████╗ █████╗ ███████╗████████╗
+[33mfactcast_1  |[0m   ██╔════╝██╔══██╗██╔════╝╚══██╔══╝██╔════╝██╔══██╗██╔════╝╚══██╔══╝
+[33mfactcast_1  |[0m    █████╗  ███████║██║        ██║   ██║     ███████║███████╗   ██║   
+[33mfactcast_1  |[0m   ██╔══╝  ██╔══██║██║        ██║   ██║     ██╔══██║╚════██║   ██║   
+[33mfactcast_1  |[0m   ██║     ██║  ██║╚██████╗   ██║   ╚██████╗██║  ██║███████║   ██║   
+[33mfactcast_1  |[0m   ╚═╝     ╚═╝  ╚═╝ ╚═════╝   ╚═╝    ╚═════╝╚═╝  ╚═╝╚══════╝   ╚═╝   
+[33mfactcast_1  |[0m                                                                     
+[33mfactcast_1  |[0m 
+[33mfactcast_1  |[0m 2020-07-04 15:26:01.456  INFO 1 --- [           main] org.factcast.docker.FactCastServer       : Starting FactCastServer v0.2.5-SNAPSHOT on 84b829271591 with PID 1 (/factcast.jar started by root in /)
+[33mfactcast_1  |[0m 2020-07-04 15:26:01.461  INFO 1 --- [           main] org.factcast.docker.FactCastServer       : No active profile set, falling back to default profiles: default
+[36mdb_1        |[0m syncing data to disk ... initdb: warning: enabling "trust" authentication for local connections
+[36mdb_1        |[0m You can change this by editing pg_hba.conf or using the option -A, or
+[36mdb_1        |[0m --auth-local and --auth-host, the next time you run initdb.
+[36mdb_1        |[0m ok
+[36mdb_1        |[0m 
+[36mdb_1        |[0m 
+[36mdb_1        |[0m Success. You can now start the database server using:
+[36mdb_1        |[0m 
+[36mdb_1        |[0m     pg_ctl -D /var/lib/postgresql/data -l logfile start
+[36mdb_1        |[0m 
+[36mdb_1        |[0m waiting for server to start....2020-07-04 15:26:01.776 UTC [46] LOG:  starting PostgreSQL 12.3 (Debian 12.3-1.pgdg100+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 8.3.0-6) 8.3.0, 64-bit
+[36mdb_1        |[0m 2020-07-04 15:26:01.777 UTC [46] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+[36mdb_1        |[0m 2020-07-04 15:26:01.793 UTC [47] LOG:  database system was shut down at 2020-07-04 15:26:01 UTC
+[36mdb_1        |[0m 2020-07-04 15:26:01.797 UTC [46] LOG:  database system is ready to accept connections
+[36mdb_1        |[0m  done
+[36mdb_1        |[0m server started
+[36mdb_1        |[0m CREATE DATABASE
+[36mdb_1        |[0m 
+[36mdb_1        |[0m 
+[36mdb_1        |[0m /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+[36mdb_1        |[0m 
+[36mdb_1        |[0m 2020-07-04 15:26:02.173 UTC [46] LOG:  received fast shutdown request
+[36mdb_1        |[0m waiting for server to shut down....2020-07-04 15:26:02.174 UTC [46] LOG:  aborting any active transactions
+[36mdb_1        |[0m 2020-07-04 15:26:02.175 UTC [46] LOG:  background worker "logical replication launcher" (PID 53) exited with exit code 1
+[36mdb_1        |[0m 2020-07-04 15:26:02.176 UTC [48] LOG:  shutting down
+[36mdb_1        |[0m 2020-07-04 15:26:02.187 UTC [46] LOG:  database system is shut down
+[36mdb_1        |[0m  done
+[36mdb_1        |[0m server stopped
+[36mdb_1        |[0m 
+[36mdb_1        |[0m PostgreSQL init process complete; ready for start up.
+[36mdb_1        |[0m 
+[36mdb_1        |[0m 2020-07-04 15:26:02.289 UTC [1] LOG:  starting PostgreSQL 12.3 (Debian 12.3-1.pgdg100+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 8.3.0-6) 8.3.0, 64-bit
+[36mdb_1        |[0m 2020-07-04 15:26:02.289 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+[36mdb_1        |[0m 2020-07-04 15:26:02.289 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+[36mdb_1        |[0m 2020-07-04 15:26:02.292 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+[36mdb_1        |[0m 2020-07-04 15:26:02.306 UTC [64] LOG:  database system was shut down at 2020-07-04 15:26:02 UTC
+[36mdb_1        |[0m 2020-07-04 15:26:02.311 UTC [1] LOG:  database system is ready to accept connections
+[33mfactcast_1  |[0m 2020-07-04 15:26:03.337  WARN 1 --- [           main] s.c.a.AnnotationConfigApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'factStoreGrpcService' defined in class path resource [org/factcast/server/grpc/FactCastGrpcServerConfiguration.class]: Unsatisfied dependency expressed through method 'factStoreGrpcService' parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'factStore' defined in class path resource [org/factcast/store/pgsql/internal/PgFactStoreInternalConfiguration.class]: Unsatisfied dependency expressed through method 'factStore' parameter 0; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'liquibase' defined in class path resource [org/springframework/boot/autoconfigure/liquibase/LiquibaseAutoConfiguration$LiquibaseConfiguration.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [liquibase.integration.spring.SpringLiquibase]: Factory method 'liquibase' threw exception; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'dataSource' defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Tomcat.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [org.apache.tomcat.jdbc.pool.DataSource]: Factory method 'dataSource' threw exception; nested exception is org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$DataSourceBeanCreationException: Failed to determine a suitable driver class
+[33mfactcast_1  |[0m 2020-07-04 15:26:03.350  INFO 1 --- [           main] ConditionEvaluationReportLoggingListener : 
+[33mfactcast_1  |[0m 
+[33mfactcast_1  |[0m Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+[33mfactcast_1  |[0m 2020-07-04 15:26:03.352 ERROR 1 --- [           main] o.s.b.d.LoggingFailureAnalysisReporter   : 
+[33mfactcast_1  |[0m 
+[33mfactcast_1  |[0m ***************************
+[33mfactcast_1  |[0m APPLICATION FAILED TO START
+[33mfactcast_1  |[0m ***************************
+[33mfactcast_1  |[0m 
+[33mfactcast_1  |[0m Description:
+[33mfactcast_1  |[0m 
+[33mfactcast_1  |[0m Failed to configure a DataSource: 'url' attribute is not specified and no embedded datasource could be configured.
+[33mfactcast_1  |[0m 
+[33mfactcast_1  |[0m Reason: Failed to determine a suitable driver class
+[33mfactcast_1  |[0m 
+[33mfactcast_1  |[0m 
+[33mfactcast_1  |[0m Action:
+[33mfactcast_1  |[0m 
+[33mfactcast_1  |[0m Consider the following:
+[33mfactcast_1  |[0m 	If you want an embedded database (H2, HSQL or Derby), please put it on the classpath.
+[33mfactcast_1  |[0m 	If you have database settings to be loaded from a particular profile you may need to activate it (no profiles are currently active).
+[33mfactcast_1  |[0m 
+[33mfactcast-itests-tls_factcast_1 exited with code 1
+[0mGracefully stopping... (press Ctrl+C again to force)

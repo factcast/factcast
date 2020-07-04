@@ -461,8 +461,7 @@
         <module>factcast-docker</module>
         <module>factcast-examples</module>
         <module>factcast-schema-registry-maven-plugin</module>
-        <module>factcast-integration-full/factcast-integration-full-tls</module>
-        <module>factcast-integration-full/factcast-integration-transformation</module>
+        <module>factcast-itests</module>
       </modules>
     </profile>
     <profile>
