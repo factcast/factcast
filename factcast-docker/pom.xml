@@ -93,7 +93,7 @@
               <goal>build</goal>
             </goals>
             <configuration>
-              <tag>${project.version}</tag>
+              <tag>latest</tag>
             </configuration>
           </execution>
         </executions>

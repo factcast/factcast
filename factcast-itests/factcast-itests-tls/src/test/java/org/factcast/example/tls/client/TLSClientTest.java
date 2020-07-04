@@ -17,31 +17,72 @@ package org.factcast.example.tls.client;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.File;
+import java.time.Duration;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.testcontainers.containers.DockerComposeContainer;
+import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
-@RunWith(SpringRunner.class)
+import lombok.extern.slf4j.Slf4j;
+
 @SpringBootTest
+@ContextConfiguration(classes = TLSClient.class)
+@Testcontainers
+@Slf4j
 public class TLSClientTest {
-    @ClassRule
-    public static DockerComposeContainer<?> compose = new DockerComposeContainer<>(
-            new File("docker-compose.yml"))
-                    .withExposedService("db", 5432, new HostPortWaitStrategy())
-                    .withExposedService("factcast", 9443,
-                            new HostPortWaitStrategy());
+
+    static final Network _docker_network = Network.newNetwork();
+
+    @Container
+    static final PostgreSQLContainer _database_container = new PostgreSQLContainer<>(
+            "postgres:11.5")
+                    .withDatabaseName("fc")
+                    .withUsername("fc")
+                    .withPassword("fc")
+                    .withNetworkAliases("db")
+                    .withNetwork(_docker_network);
+
+    @Container
+    static final GenericContainer _factcast_container = new GenericContainer<>(
+            "factcast/factcast:latest")
+                    .withExposedPorts(9443)
+                    .withFileSystemBind("./config", "/config/")
+                    .withEnv("spring.datasource.tomcat.max-wait", "20000")
+                    .withEnv("spring.datasource.tomcat.remove-abandoned-timeout", "360000")
+                    .withEnv("spring.datasource.tomcat.test-on-borrow", "true")
+                    .withEnv("spring.datasource.tomcat.connectionProperties",
+                            "socketTimeout=20;connectTimeout=10;loginTimeout=10;")
+                    .withEnv("grpc.server.port", "9443")
+                    .withEnv("grpc.server.security.enabled", "true")
+                    .withEnv("grpc.server.security.certificateChain", "file:./config/localhost.crt")
+                    .withEnv("grpc.server.security.privateKey", "file:./config/localhost.key")
+                    .withEnv("factcast.security.enabled", "false")
+                    .withEnv("spring.datasource.url", "jdbc:postgresql://db/fc?user=fc&password=fc")
+                    .withNetwork(_docker_network)
+                    .dependsOn(_database_container)
+                    .withLogConsumer(new Slf4jLogConsumer(log))
+                    .waitingFor(new HostPortWaitStrategy()
+                            .withStartupTimeout(Duration.ofSeconds(180)));
+
+    @BeforeAll
+    public static void startContainers() throws InterruptedException {
+        System.setProperty("grpc.client.factstore.address", "static://" +
+                _factcast_container.getHost() + ":" +
+                _factcast_container.getMappedPort(9443));
+    }
 
     @Autowired
     FactCast fc;
@@ -51,7 +92,7 @@ public class TLSClientTest {
         Fact fact = Fact.builder().ns("smoke").type("foo").build("{\"bla\":\"fasel\"}");
         fc.publish(fact);
 
-        try (Subscription sub = fc.subscribe(SubscriptionRequest.follow(FactSpec.ns("smoke"))
+        try (Subscription sub = fc.subscribe(SubscriptionRequest.catchup(FactSpec.ns("smoke"))
                 .fromScratch(),
                 f -> {
                     assertEquals(fact.ns(), f.ns());
