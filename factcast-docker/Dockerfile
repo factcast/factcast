@@ -1,5 +1,5 @@
-FROM openjdk:8-alpine
-#FROM oracle/graalvm-ce:19.3.2-java8
+FROM openjdk:8u252-slim
+
 EXPOSE 9090
 EXPOSE 9443
 
@@ -12,4 +12,4 @@ VOLUME /config
 
 
 COPY /target/factcast.jar /factcast.jar
-ENTRYPOINT exec java $JAVA_OPTS -cp /config -jar /factcast.jar $0 $@
+ENTRYPOINT exec java $JAVA_OPTS -jar /factcast.jar $0 $@

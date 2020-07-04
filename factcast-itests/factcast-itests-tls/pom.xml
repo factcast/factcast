@@ -5,13 +5,9 @@
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
     <version>0.2.5-SNAPSHOT</version>
-    <relativePath>../../pom.xml</relativePath>
+    <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>factcast-integration-full-tls</artifactId>
-  <properties>
-    <maven.test.skip>true</maven.test.skip>
-  </properties>
-
+  <artifactId>factcast-itests-tls</artifactId>
   <dependencyManagement>
     <dependencies>
       <!-- note: the order is important here! -->
@@ -49,11 +45,6 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-tcnative-boringssl-static</artifactId>
-    </dependency>
-    <!-- This is important for java <11 to not run into problems with using TLS1.3 -->
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>

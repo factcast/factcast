@@ -5,10 +5,9 @@
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
     <version>0.2.5-SNAPSHOT</version>
-    <relativePath>../../pom.xml</relativePath>
+    <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>factcast-integration-transformation</artifactId>
-
+  <artifactId>factcast-itests-transformation</artifactId>
   <dependencyManagement>
     <dependencies>
       <!-- note: the order is important here! -->

@@ -1,12 +1,12 @@
-version: '3.2'
+version: '2.0'
 services:
 
   factcast:
-    image: factcast/factcast
+    image: factcast/factcast:0.2.5-SNAPSHOT
     ports:
       - "9443:9443"
     environment:
-      spring.datasource.url: 'jdbc:postgresql://db/fc?user=fc&password=fc'
+      - SPRING_CONFIG_LOCATION=/config/
     volumes:
       - ./config:/config
   db:
@@ -16,7 +16,7 @@ services:
       POSTGRES_USER: fc
       POSTGRES_DB: fc
     ports:
-      - "5432:5432"
+      - "15432:5432"
 
 
       
