@@ -32,15 +32,14 @@ public class FactCastServer {
         SpringApplication.run(FactCastServer.class, args);
     }
 
-}
-
-@Configuration
-class LazyInitBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
-    @Override
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
-            throws BeansException {
-        for (String beanName : beanFactory.getBeanDefinitionNames()) {
-            beanFactory.getBeanDefinition(beanName).setLazyInit(true);
+    @Configuration
+    static class LazyInitBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
+        @Override
+        public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
+                throws BeansException {
+            for (String beanName : beanFactory.getBeanDefinitionNames()) {
+                beanFactory.getBeanDefinition(beanName).setLazyInit(true);
+            }
         }
     }
 }
