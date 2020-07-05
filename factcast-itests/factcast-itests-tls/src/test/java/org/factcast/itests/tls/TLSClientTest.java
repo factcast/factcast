@@ -31,7 +31,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -73,7 +72,7 @@ public class TLSClientTest {
                     .withEnv("spring.datasource.url", "jdbc:postgresql://db/fc?user=fc&password=fc")
                     .withNetwork(_docker_network)
                     .dependsOn(_database_container)
-                    .withLogConsumer(new Slf4jLogConsumer(log))
+                    .withLogConsumer(new SysoutConsumer())
                     .waitingFor(new HostPortWaitStrategy()
                             .withStartupTimeout(Duration.ofSeconds(180)));
 
