@@ -1,13 +1,30 @@
 # Changelog
 
-## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2020-07-02)
+## [0.2.5](https://github.com/factcast/factcast/tree/0.2.5) (2020-07-05)
 
-[Full Changelog](https://github.com/factcast/factcast/compare/0.2.4...upcoming)
+[Full Changelog](https://github.com/factcast/factcast/compare/0.2.4...0.2.5)
+
+**Fixed bugs:**
+
+- Facts in recieve buffer may still be delivered after subscription.close\(\) is called during onNext\(\) [\#907](https://github.com/factcast/factcast/issues/907)
 
 **Closed issues:**
 
+- Dangeling subscriptions [\#937](https://github.com/factcast/factcast/issues/937)
 - Extract examples to extra project [\#923](https://github.com/factcast/factcast/issues/923)
 - add Coordinated subscription [\#450](https://github.com/factcast/factcast/issues/450)
+- Optimize startup time of factcast-docker [\#934](https://github.com/factcast/factcast/issues/934)
+- restructure modules \(integration tests\) [\#930](https://github.com/factcast/factcast/issues/930)
+- Create integration test for validation disabled mode [\#881](https://github.com/factcast/factcast/issues/881)
+
+**Merged pull requests:**
+
+- Issue930  [\#932](https://github.com/factcast/factcast/pull/932) ([uweschaefer](https://github.com/uweschaefer))
+- Issue905 [\#929](https://github.com/factcast/factcast/pull/929) ([uweschaefer](https://github.com/uweschaefer))
+- Issue907 [\#926](https://github.com/factcast/factcast/pull/926) ([uweschaefer](https://github.com/uweschaefer))
+- Issue937 [\#938](https://github.com/factcast/factcast/pull/938) ([uweschaefer](https://github.com/uweschaefer))
+- Issue934 optimize startup time of factcast-docker [\#935](https://github.com/factcast/factcast/pull/935) ([uweschaefer](https://github.com/uweschaefer))
+- \#881: added no validation test [\#933](https://github.com/factcast/factcast/pull/933) ([uweschaefer](https://github.com/uweschaefer))
 
 ## [0.2.4](https://github.com/factcast/factcast/tree/0.2.4) (2020-07-02)
 
