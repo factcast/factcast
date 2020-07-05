@@ -154,7 +154,7 @@ public class PgFactStream {
     }
 
     public synchronized void close() {
-        log.debug("{} disconnecting ", request);
+        log.trace("{} disconnecting ", request);
         disconnected.set(true);
         if (condensedExecutor != null) {
             eventBus.unregister(condensedExecutor);
