@@ -19,9 +19,6 @@ import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.observer.FactObserver;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -38,23 +35,6 @@ public class HelloWorldRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-
-        new Thread(() -> {
-
-            SubscriptionRequest req = SubscriptionRequest.follow(FactSpec.ns("users")
-                    .type("UserCreated")
-                    .version(1)).fromScratch();
-
-            @NonNull
-            FactObserver obs = new FactObserver() {
-                @Override
-                public void onNext(@NonNull Fact element) {
-                    System.out.println(element.id());
-                }
-            };
-            fc.subscribe(req, obs);
-
-        }).start();
 
         val id = UUID.randomUUID();
         Fact fact = Fact.builder()
