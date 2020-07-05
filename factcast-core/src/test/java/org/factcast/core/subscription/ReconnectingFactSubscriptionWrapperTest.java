@@ -23,6 +23,7 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 
+import org.factcast.core.TestFact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.junit.jupiter.api.*;
@@ -30,6 +31,8 @@ import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import lombok.val;
 
 @ExtendWith(MockitoExtension.class)
 public class ReconnectingFactSubscriptionWrapperTest {
@@ -115,6 +118,27 @@ public class ReconnectingFactSubscriptionWrapperTest {
         assertThrows(SubscriptionCancelledException.class, () -> uut.awaitCatchup(1L));
         assertThrows(SubscriptionCancelledException.class, () -> uut.awaitComplete());
         assertThrows(SubscriptionCancelledException.class, () -> uut.awaitComplete(1L));
+    }
+
+    @Test
+    public void noOnNextAfterClose() throws Exception {
+
+        val observerFromGrpc = uut.observer();
+        observerFromGrpc.onNext(new TestFact());
+        // will be passed to the actual one
+        verify(obs).onNext(any());
+
+        uut.close();
+
+        observerFromGrpc.onNext(new TestFact());
+        observerFromGrpc.onNext(new TestFact());
+        observerFromGrpc.onNext(new TestFact());
+        observerFromGrpc.onNext(new TestFact());
+        observerFromGrpc.onNext(new TestFact());
+
+        // non of them reach the original observer
+        verify(obs, times(1)).onNext(any());
+
     }
 
 }

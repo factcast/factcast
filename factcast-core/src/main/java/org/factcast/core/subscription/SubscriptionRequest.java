@@ -45,6 +45,8 @@ public interface SubscriptionRequest {
 
     String debugInfo();
 
+    String pid();
+
     // ------------
     static SpecBuilder follow(@NonNull FactSpec specification) {
         return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).follow(

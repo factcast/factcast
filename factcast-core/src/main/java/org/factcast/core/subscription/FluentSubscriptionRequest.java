@@ -53,6 +53,8 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     final String debugInfo;
 
+    String pid;
+
     FluentSubscriptionRequest() {
         debugInfo = createDebugInfo();
     }
