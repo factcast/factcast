@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.example.tls.client;
+package org.factcast.itests.novalidation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -39,10 +39,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import lombok.extern.slf4j.Slf4j;
 
 @SpringBootTest
-@ContextConfiguration(classes = TLSClient.class)
+@ContextConfiguration(classes = NoValidationClient.class)
 @Testcontainers
 @Slf4j
-public class TLSClientTest {
+public class NoValidationClientTest {
 
     static final Network _docker_network = Network.newNetwork();
 
@@ -58,17 +58,9 @@ public class TLSClientTest {
     @Container
     static final GenericContainer _factcast_container = new GenericContainer<>(
             "factcast/factcast:latest")
-                    .withExposedPorts(9443)
+                    .withExposedPorts(9090)
                     .withFileSystemBind("./config", "/config/")
-                    .withEnv("spring.datasource.tomcat.max-wait", "20000")
-                    .withEnv("spring.datasource.tomcat.remove-abandoned-timeout", "360000")
-                    .withEnv("spring.datasource.tomcat.test-on-borrow", "true")
-                    .withEnv("spring.datasource.tomcat.connectionProperties",
-                            "socketTimeout=20;connectTimeout=10;loginTimeout=10;")
-                    .withEnv("grpc.server.port", "9443")
-                    .withEnv("grpc.server.security.enabled", "true")
-                    .withEnv("grpc.server.security.certificateChain", "file:./config/localhost.crt")
-                    .withEnv("grpc.server.security.privateKey", "file:./config/localhost.key")
+                    .withEnv("grpc.server.port", "9090")
                     .withEnv("factcast.security.enabled", "false")
                     .withEnv("spring.datasource.url", "jdbc:postgresql://db/fc?user=fc&password=fc")
                     .withNetwork(_docker_network)
@@ -81,7 +73,7 @@ public class TLSClientTest {
     public static void startContainers() throws InterruptedException {
         System.setProperty("grpc.client.factstore.address", "static://" +
                 _factcast_container.getHost() + ":" +
-                _factcast_container.getMappedPort(9443));
+                _factcast_container.getMappedPort(9090));
     }
 
     @Autowired
