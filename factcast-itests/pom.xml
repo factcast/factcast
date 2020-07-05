@@ -15,6 +15,7 @@
   <modules>
     <module>factcast-itests-tls</module>
     <module>factcast-itests-transformation</module>
+    <module>factcast-itests-novalidation</module>
   </modules>
   <dependencies>
     <dependency>
