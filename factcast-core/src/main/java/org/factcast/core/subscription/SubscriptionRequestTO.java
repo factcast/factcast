@@ -15,11 +15,8 @@
  */
 package org.factcast.core.subscription;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
+import java.lang.management.ManagementFactory;
+import java.util.*;
 
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.util.FactCastJson;
@@ -27,11 +24,7 @@ import org.factcast.core.util.FactCastJson;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 /**
@@ -49,6 +42,8 @@ import lombok.experimental.FieldDefaults;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
 public class SubscriptionRequestTO implements SubscriptionRequest {
+
+    private static final String PID = ManagementFactory.getRuntimeMXBean().getName();
 
     @JsonProperty
     long maxBatchDelayInMs = 0;
@@ -68,6 +63,9 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     @JsonProperty
     final List<FactSpec> specs = new LinkedList<>();
 
+    @JsonProperty
+    String pid;
+
     public boolean hasAnyScriptFilters() {
         return specs.stream().anyMatch(s -> s.jsFilterScript() != null);
     }
@@ -85,6 +83,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
         startingAfter = request.startingAfter().orElse(null);
         debugInfo = request.debugInfo();
         specs.addAll(request.specs());
+        pid = PID;
     }
 
     // TODO now that forIDs is gone, maybe rename?
