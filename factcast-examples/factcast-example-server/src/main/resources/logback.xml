@@ -7,12 +7,7 @@
       </pattern>
     </encoder>
   </appender>
-  <logger name="org.testcontainers" level="warn">
-    <appender-ref ref="STDOUT" />
-  </logger>
-  <root level="warn">
+  <root level="trace">
     <appender-ref ref="STDOUT" />
   </root>
-  <logger name="org.factcast" level="debug">
-  </logger>
 </configuration>

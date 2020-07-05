@@ -29,6 +29,7 @@ import org.factcast.core.FactValidationException;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
@@ -153,8 +154,20 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                         req.toString(),
                         (ServerCallStreamObserver) responseObserver);
 
-                store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp,
+                Subscription sub = store.subscribe(req, new GrpcObserverAdapter(req.toString(),
+                        resp,
                         f -> converter.createNotificationFor(f)));
+
+                ((ServerCallStreamObserver<MSG_Notification>) responseObserver).setOnCancelHandler(
+                        () -> {
+                            try {
+                                log.trace("got onCancel from stream, closing subscription {}", req
+                                        .debugInfo());
+                                sub.close();
+                            } catch (Exception e) {
+                                log.debug("While closing connection after canel", e);
+                            }
+                        });
 
             } catch (StatusException e) {
                 responseObserver.onError(e);
