@@ -161,8 +161,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             }
 
         } else {
-            log.warn("Client exhausts resources by excessivly (re-)subscribing: {}, ID: {}", req
-                    .pid(), req.debugInfo());
             throw new StatusRuntimeException(Status.RESOURCE_EXHAUSTED);
         }
 
@@ -175,6 +173,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                 @Override
                 public Bucket load(String key) throws Exception {
                     if (key.endsWith("con")) {
+
+                        log.trace("Creating new bucket4j for continous subscription: {}", key);
+
                         Refill refill = Refill.intervally(
                                 grpcLimitProperties
                                         .numberOfFollowRequestsAllowedPerClientPerMinute(),
@@ -187,6 +188,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                                 .addLimit(limit)
                                 .build();
                     } else {
+
+                        log.trace("Creating new bucket4j for catchup subscription: {}", key);
+
                         Refill refill = Refill.intervally(
                                 grpcLimitProperties
                                         .numberOfCatchupRequestsAllowedPerClientPerMinute(),
@@ -214,7 +218,14 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             } else {
                 requestFingerprint = requestFingerprint + "|cat";
             }
-            return subscriptionTrail.get(requestFingerprint).tryConsume(1);
+            if (subscriptionTrail.get(requestFingerprint).tryConsume(1)) {
+                return true;
+            } else {
+                log.warn(
+                        "Client exhausts resources by excessivly (re-)subscribing: fingerprint: {}",
+                        requestFingerprint);
+                return false;
+            }
         } catch (ExecutionException e) {
             log.error("While finding or creating bucket: ", e);
             // default to be permissive - for now...
