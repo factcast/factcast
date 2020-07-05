@@ -41,11 +41,6 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-tcnative-boringssl-static</artifactId>
-    </dependency>
-    <!-- This is important for java <11 to not run into problems with using TLS1.3 -->
   </dependencies>
   <build>
     <plugins>
