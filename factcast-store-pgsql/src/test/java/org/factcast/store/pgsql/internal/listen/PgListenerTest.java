@@ -15,6 +15,7 @@
  */
 package org.factcast.store.pgsql.internal.listen;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -25,8 +26,9 @@ import java.util.function.Predicate;
 
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.listen.PgListener.FactInsertionEvent;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -38,6 +40,8 @@ import org.postgresql.jdbc.PgConnection;
 
 import com.google.common.eventbus.AsyncEventBus;
 
+import lombok.val;
+
 @ExtendWith(MockitoExtension.class)
 public class PgListenerTest {
 
@@ -47,7 +51,7 @@ public class PgListenerTest {
     @Mock
     AsyncEventBus bus;
 
-    @Mock(answer = Answers.RETURNS_MOCKS)
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     PgConnection conn;
 
     @Mock
@@ -55,85 +59,111 @@ public class PgListenerTest {
 
     Predicate<Connection> tester = c -> true;
 
+    PGNotification[] someNotification = new PGNotification[] { //
+            new Notification(PgConstants.CHANNEL_NAME, 1) };
+
     @Captor
-    ArgumentCaptor<PgListener> captor;
+    ArgumentCaptor<FactInsertionEvent> factCaptor;
 
     @Test
-    void testCheckFails() throws SQLException {
-
+    void testRegisterPostgresListeners() throws Exception {
         when(ds.get()).thenReturn(conn);
         when(conn.prepareStatement(anyString())).thenReturn(ps);
-
-        tester = mock(Predicate.class);
-        when(tester.test(any())).thenReturn(false, false, true, false);
-        PgListener l = new PgListener(ds, bus, tester);
-        l.afterPropertiesSet();
-        verify(bus, times(3)).post(any(FactInsertionEvent.class));
-        verifyNoMoreInteractions(bus);
-
-        l.destroy();
-    }
-
-    @Test
-    void testListen() throws Exception {
-        when(ds.get()).thenReturn(conn);
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
+        when(conn.getNotifications(anyInt())).thenReturn(null);
+        when(conn.prepareCall(anyString()).execute()).thenReturn(true);
 
         PgListener l = new PgListener(ds, bus, tester);
         l.afterPropertiesSet();
         sleep(100);
+        l.destroy();
+
         verify(bus).post(any(FactInsertionEvent.class));
         verifyNoMoreInteractions(bus);
         verify(conn, atLeastOnce()).prepareStatement(PgConstants.LISTEN_SQL);
+        verify(conn, atLeastOnce()).prepareStatement(PgConstants.LISTEN_ROUNDTRIP_CHANNEL_SQL);
         verify(ps, atLeastOnce()).execute();
-
-        l.destroy();
     }
 
     @Test
     void testNotify() throws Exception {
-
         when(ds.get()).thenReturn(conn);
         when(conn.prepareStatement(anyString())).thenReturn(ps);
-
-        PgListener l = new PgListener(ds, bus, tester);
+        when(conn.prepareCall(anyString()).execute()).thenReturn(true);
         when(conn.getNotifications(anyInt())).thenReturn(new PGNotification[] { //
                 new Notification(PgConstants.CHANNEL_NAME, 1), //
                 new Notification(PgConstants.CHANNEL_NAME, 1), //
                 new Notification(PgConstants.CHANNEL_NAME, 1) },
                 new PGNotification[] { new Notification(PgConstants.CHANNEL_NAME, 2) }, //
-                new PGNotification[] { new Notification(PgConstants.CHANNEL_NAME, 3) }, null);
-        l.afterPropertiesSet();
-        sleep(400);
-        // 4 posts: one scheduled, 3 from notifications
-        verify(bus, times(4)).post(any(FactInsertionEvent.class));
+                new PGNotification[] { new Notification(PgConstants.CHANNEL_NAME, 3) }, null, null,
+                null);
 
+        PgListener l = new PgListener(ds, bus, tester);
+        l.afterPropertiesSet();
+        sleep(500);
         l.destroy();
+
+        verify(bus, atLeastOnce()).post(factCaptor.capture());
+        val allEvents = factCaptor.getAllValues();
+
+        // first event is the general wakeup to the subscribers after startup
+        assertEquals("scheduled-poll", allEvents.get(0).name());
+        // events 2 - incl. 4 are notifies
+        assertTrue(allEvents.subList(1, 4)
+                .stream()
+                .allMatch(event -> event.name().equals(PgConstants.CHANNEL_NAME)));
+
+        // in total there are only 3 notifies
+        long totalNotifyCount = allEvents.stream()
+                .filter(f -> f.name().equals(PgConstants.CHANNEL_NAME))
+                .count();
+        assertEquals(3, totalNotifyCount);
     }
 
     @Test
-    void testNotifyScheduled() throws Exception {
-
+    void testNotifyAfterConnectionResetScheduled() throws Exception {
         when(ds.get()).thenReturn(conn);
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-
-        // when(conn.prepareCall(anyString()).execute());
-        // when(conn.prepareCall(anyString()).execute()).thenReturn(true);
+        when(conn.prepareCall(anyString()).execute()).thenReturn(true);
+        when(conn.getNotifications(anyInt())).thenReturn(null);
 
         PgListener l = new PgListener(ds, bus, tester);
-        when(conn.getNotifications(anyInt())).thenReturn(null);
         l.afterPropertiesSet();
         sleep(200);
-        // one scheduled
-        verify(bus, times(1)).post(any(FactInsertionEvent.class));
-
         l.destroy();
+
+        // one scheduled
+        verify(bus, atLeastOnce()).post(factCaptor.capture());
+        // all captured events are schedule events
+        assertTrue(factCaptor.getAllValues()
+                .stream()
+                .allMatch(event -> event.name().equals("scheduled-poll")));
+    }
+
+    @Test
+    void noUnrelatedNotifiesArePosted() throws Exception {
+        val unrelatedNotifyName = "I don't belong here";
+
+        when(ds.get()).thenReturn(conn);
+        when(conn.prepareCall(anyString()).execute()).thenReturn(true);
+        when(conn.getNotifications(anyInt())).thenReturn(new PGNotification[] {
+                new Notification(unrelatedNotifyName, 1) }, null, null);
+
+        PgListener l = new PgListener(ds, bus, tester);
+        l.afterPropertiesSet();
+        sleep(100);
+        l.destroy();
+
+        // capture output
+        verify(bus, atLeastOnce()).post(factCaptor.capture());
+        assertTrue(factCaptor.getAllValues()
+                .stream()
+                .noneMatch(event -> event.name().equals(unrelatedNotifyName)));
     }
 
     @Test
     void testStop() throws Exception {
         when(ds.get()).thenReturn(conn);
         when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
+
         PgListener l = new PgListener(ds, bus, tester);
         l.afterPropertiesSet();
         l.destroy();
@@ -141,17 +171,36 @@ public class PgListenerTest {
         verify(conn).close();
     }
 
-    private void sleep(int i) {
-        try {
-            Thread.sleep(i);
-        } catch (InterruptedException ignored) {
-        }
-    }
-
     @Test
     void testStopWithoutStarting() {
         PgListener l = new PgListener(ds, bus, tester);
         l.destroy();
         verifyNoMoreInteractions(conn);
+    }
+
+    @Test
+    public void successfulProbesAreForwarded() throws SQLException {
+        when(conn.getNotifications(anyInt())).thenReturn(someNotification);
+
+        PgListener l = new PgListener(ds, bus, tester);
+        val result = l.sendProbeAndWaitForEcho(conn);
+        assertEquals(1, result.length);
+        assertEquals(PgConstants.CHANNEL_NAME, result[0].getName());
+    }
+
+    @Test
+    public void sqlExceptionAfterUnsuccessfulProbe() throws SQLException {
+        when(conn.getNotifications(anyInt())).thenReturn(null);
+        Assertions.assertThrows(SQLException.class, () -> {
+            PgListener l = new PgListener(ds, bus, tester);
+            l.sendProbeAndWaitForEcho(conn);
+        });
+    }
+
+    private void sleep(int i) {
+        try {
+            Thread.sleep(i);
+        } catch (InterruptedException ignored) {
+        }
     }
 }

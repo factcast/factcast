@@ -32,7 +32,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 import com.google.common.eventbus.EventBus;
 
-import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -127,8 +127,8 @@ public class PgListener implements InitializingBean, DisposableBean {
         }
     }
 
-    // TODO test separably
-    private PGNotification[] sendProbeAndWaitForEcho(PgConnection connection) throws SQLException {
+    protected PGNotification[] sendProbeAndWaitForEcho(PgConnection connection)
+            throws SQLException {
         connection.prepareCall(PgConstants.NOTIFY_ROUNDTRIP).execute();
         PGNotification[] notifications = connection.getNotifications(
                 MAX_ALLOWED_NOTIFICATION_LATENCY_IN_MILLIS);
@@ -156,10 +156,11 @@ public class PgListener implements InitializingBean, DisposableBean {
         }
     }
 
-    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    @RequiredArgsConstructor
     public static class FactInsertionEvent {
 
         @SuppressWarnings("unused")
+        @Getter
         final String name;
     }
 
