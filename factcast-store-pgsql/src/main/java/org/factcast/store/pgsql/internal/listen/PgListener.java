@@ -59,6 +59,7 @@ public class PgListener implements InitializingBean, DisposableBean {
     @NonNull
     final EventBus eventBus;
 
+    // TODO check if we can get rid of this now
     @NonNull
     final Predicate<Connection> pgConnectionTester;
 
@@ -126,6 +127,7 @@ public class PgListener implements InitializingBean, DisposableBean {
         }
     }
 
+    // TODO test separably
     private PGNotification[] sendProbeAndWaitForEcho(PgConnection connection) throws SQLException {
         connection.prepareCall(PgConstants.NOTIFY_ROUNDTRIP).execute();
         PGNotification[] notifications = connection.getNotifications(

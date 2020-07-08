@@ -27,6 +27,7 @@ import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.listen.PgListener.FactInsertionEvent;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
+import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -46,7 +47,7 @@ public class PgListenerTest {
     @Mock
     AsyncEventBus bus;
 
-    @Mock
+    @Mock(answer = Answers.RETURNS_MOCKS)
     PgConnection conn;
 
     @Mock
@@ -115,6 +116,9 @@ public class PgListenerTest {
 
         when(ds.get()).thenReturn(conn);
         when(conn.prepareStatement(anyString())).thenReturn(ps);
+
+        // when(conn.prepareCall(anyString()).execute());
+        // when(conn.prepareCall(anyString()).execute()).thenReturn(true);
 
         PgListener l = new PgListener(ds, bus, tester);
         when(conn.getNotifications(anyInt())).thenReturn(null);
