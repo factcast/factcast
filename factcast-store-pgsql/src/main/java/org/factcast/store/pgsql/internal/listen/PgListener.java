@@ -18,6 +18,7 @@ package org.factcast.store.pgsql.internal.listen;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -50,6 +51,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PgListener implements InitializingBean, DisposableBean {
 
+    private static final int MAX_ALLOWED_NOTIFICATION_LATENCY_IN_MILLIS = 200;
+
     @NonNull
     final PgConnectionSupplier pgConnectionSupplier;
 
@@ -63,42 +66,51 @@ public class PgListener implements InitializingBean, DisposableBean {
 
     private Thread listenerThread;
 
-    private final int blockingWaitTimeInMillis = 1000 * 60;
+    private final int blockingWaitTimeInMillis = 1000 * 15;
 
     private void listen() {
         log.trace("Starting instance Listener");
         CountDownLatch l = new CountDownLatch(1);
         listenerThread = new Thread(() -> {
             while (running.get()) {
+
+                // new connection
                 try (PgConnection pc = pgConnectionSupplier.get()) {
+
+                    try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_SQL)) {
+                        ps.execute();
+                    }
+                    try (PreparedStatement ps = pc.prepareStatement(
+                            PgConstants.LISTEN_ROUNDTRIP_CHANNEL_SQL)) {
+                        ps.execute();
+                    }
+                    l.countDown();
+
                     boolean poll = true;
                     while (running.get()) {
-                        try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_SQL)) {
-                            log.trace("Running LISTEN command");
-                            ps.execute();
-                        }
+
                         if (poll) {
                             // make sure, we did not miss anything while
                             // reconnecting,
                             postEvent("scheduled-poll");
                             poll = false;
                         }
-                        if (pgConnectionTester.test(pc)) {
-                            log.trace("Waiting for notifications for {}ms",
-                                    blockingWaitTimeInMillis);
-                            l.countDown();
-                            PGNotification[] notifications = pc.getNotifications(
-                                    blockingWaitTimeInMillis);
-                            if ((notifications != null) && (notifications.length > 0)) {
-                                final String name = notifications[0].getName();
-                                log.trace("notifying consumers for '{}'", name);
-                                postEvent(name);
-                            } else {
-                                log.trace("No notifications yet. Looping.");
-                            }
-                        } else {
-                            throw new SQLException("Connection is failing test");
+
+                        // listen to the real thing or pings
+                        PGNotification[] notifications = pc.getNotifications(
+                                blockingWaitTimeInMillis);
+                        if (notifications == null) {
+                            notifications = sendProbeAndWaitForEcho(pc);
                         }
+
+                        if (Arrays.stream(notifications)
+                                .anyMatch(n -> n.getName().equals(PgConstants.CHANNEL_NAME))) {
+                            log.trace("notifying consumers for '{}'", PgConstants.CHANNEL_NAME);
+                            postEvent(PgConstants.CHANNEL_NAME);
+                        } else {
+                            log.trace("No notifications yet. Looping.");
+                        }
+
                     }
                 } catch (SQLException e) {
                     log.warn("While waiting for Notifications", e);
@@ -118,9 +130,23 @@ public class PgListener implements InitializingBean, DisposableBean {
         }
     }
 
+    private PGNotification[] sendProbeAndWaitForEcho(PgConnection connection) throws SQLException {
+        connection.prepareCall(PgConstants.NOTIFY_ROUNDTRIP).execute();
+        PGNotification[] notifications = connection.getNotifications(
+                MAX_ALLOWED_NOTIFICATION_LATENCY_IN_MILLIS);
+        if (notifications == null) {
+            // missed the notifications from the DB, something is fishy
+            // here....
+            throw new SQLException("Missed roundtrip notification from channel '"
+                    + PgConstants.ROUNDTRIP_CHANNEL_NAME + "'");
+        } else {
+            return notifications;
+        }
+    }
+
     private void sleep() {
         try {
-            Thread.sleep(1000);
+            Thread.sleep(100);
         } catch (InterruptedException ignore) {
         }
 
