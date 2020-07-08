@@ -104,7 +104,7 @@ public class PgListener implements InitializingBean, DisposableBean {
                         }
 
                         if (Arrays.stream(notifications)
-                                .anyMatch(n -> n.getName().equals(PgConstants.CHANNEL_NAME))) {
+                                .anyMatch(n -> PgConstants.CHANNEL_NAME.equals(n.getName()))) {
                             log.trace("notifying consumers for '{}'", PgConstants.CHANNEL_NAME);
                             postEvent(PgConstants.CHANNEL_NAME);
                         } else {
