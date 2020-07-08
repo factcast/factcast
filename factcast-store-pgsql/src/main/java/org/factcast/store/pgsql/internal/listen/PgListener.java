@@ -86,15 +86,11 @@ public class PgListener implements InitializingBean, DisposableBean {
                     }
                     l.countDown();
 
-                    boolean poll = true;
-                    while (running.get()) {
+                    // make sure, we did not miss anything while
+                    // reconnecting,
+                    postEvent("scheduled-poll");
 
-                        if (poll) {
-                            // make sure, we did not miss anything while
-                            // reconnecting,
-                            postEvent("scheduled-poll");
-                            poll = false;
-                        }
+                    while (running.get()) {
 
                         // listen to the real thing or pings
                         PGNotification[] notifications = pc.getNotifications(
