@@ -66,7 +66,8 @@ public class PgListener implements InitializingBean, DisposableBean {
 
     private final int blockingWaitTimeInMillis = 1000 * 15;
 
-    private void listen() {
+    @VisibleForTesting
+    protected void listen() {
         log.trace("Starting instance Listener");
         listenerThread = new Thread(new NotificationReceiverLoop(), "PG Instance Listener");
         listenerThread.setDaemon(true);
@@ -83,15 +84,14 @@ public class PgListener implements InitializingBean, DisposableBean {
 
     @VisibleForTesting
     protected class NotificationReceiverLoop implements Runnable {
+
         @Override
         public void run() {
             while (running.get()) {
 
                 // new connection
                 try (PgConnection pc = pgConnectionSupplier.get()) {
-                    setupPostgresListeners(pc);
-                    countDownLatch.countDown();
-                    informSubscribersAboutFreshConnection();
+                    connectionSetup(pc);
 
                     while (running.get()) {
                         PGNotification[] notifications = receiveNotifications(pc);
@@ -103,14 +103,16 @@ public class PgListener implements InitializingBean, DisposableBean {
                 }
             }
         }
-    };
-
-    // make sure subscribers did not miss anything while we reconnected
-    private void informSubscribersAboutFreshConnection() {
-        postEvent("scheduled-poll");
     }
 
-    private void setupPostgresListeners(PgConnection pc) throws SQLException {
+    private void connectionSetup(PgConnection pc) throws SQLException {
+        setupPostgresListeners(pc);
+        countDownLatch.countDown();
+        informSubscribersAboutFreshConnection();
+    }
+
+    @VisibleForTesting
+    protected void setupPostgresListeners(PgConnection pc) throws SQLException {
         try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_SQL)) {
             ps.execute();
         }
@@ -120,7 +122,14 @@ public class PgListener implements InitializingBean, DisposableBean {
         }
     }
 
-    private void informSubscriberOfChannelNotifications(PGNotification[] notifications) {
+    // make sure subscribers did not miss anything while we reconnected
+    @VisibleForTesting
+    protected void informSubscribersAboutFreshConnection() {
+        postEvent("scheduled-poll");
+    }
+
+    @VisibleForTesting
+    protected void informSubscriberOfChannelNotifications(PGNotification[] notifications) {
         if (Arrays.stream(notifications)
                 .anyMatch(n -> PgConstants.CHANNEL_NAME.equals(n.getName()))) {
             log.trace("notifying consumers for '{}'", PgConstants.CHANNEL_NAME);
@@ -133,7 +142,8 @@ public class PgListener implements InitializingBean, DisposableBean {
     // try to receive Postgres notifications until timeout is over. In case we
     // didn't receive any notification we
     // check if the database connection is still healthy
-    private PGNotification[] receiveNotifications(PgConnection pc) throws SQLException {
+    @VisibleForTesting
+    protected PGNotification[] receiveNotifications(PgConnection pc) throws SQLException {
         PGNotification[] notifications = pc.getNotifications(
                 blockingWaitTimeInMillis);
         if (notifications == null) {
@@ -145,6 +155,7 @@ public class PgListener implements InitializingBean, DisposableBean {
     // sends a roundtrip notification to database and expects to receive at
     // least this
     // notification back
+    @VisibleForTesting
     protected PGNotification[] checkDatabaseConnectionHealthy(PgConnection connection)
             throws SQLException {
         connection.prepareCall(PgConstants.NOTIFY_ROUNDTRIP).execute();
@@ -161,7 +172,8 @@ public class PgListener implements InitializingBean, DisposableBean {
         }
     }
 
-    private void sleep() {
+    @VisibleForTesting
+    protected void sleep() {
         try {
             Thread.sleep(100);
         } catch (InterruptedException ignore) {
@@ -169,7 +181,8 @@ public class PgListener implements InitializingBean, DisposableBean {
 
     }
 
-    private void postEvent(final String name) {
+    @VisibleForTesting
+    protected void postEvent(final String name) {
         if (running.get()) {
             eventBus.post(new FactInsertionEvent(name));
         }
@@ -195,4 +208,5 @@ public class PgListener implements InitializingBean, DisposableBean {
             listenerThread.interrupt();
         }
     }
+
 }
