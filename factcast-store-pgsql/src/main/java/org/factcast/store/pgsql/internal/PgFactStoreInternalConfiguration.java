@@ -113,7 +113,7 @@ public class PgFactStoreInternalConfiguration {
     @Bean
     public PgListener pgListener(@NonNull PgConnectionSupplier pgConnectionSupplier,
             @NonNull EventBus eventBus, @NonNull Predicate<Connection> predicate) {
-        return new PgListener(pgConnectionSupplier, eventBus, predicate);
+        return new PgListener(pgConnectionSupplier, eventBus);
     }
 
     @Bean

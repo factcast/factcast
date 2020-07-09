@@ -19,10 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.function.Predicate;
 
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.listen.PgListener.FactInsertionEvent;
@@ -57,8 +55,6 @@ public class PgListenerTest {
     @Mock
     PreparedStatement ps;
 
-    Predicate<Connection> tester = c -> true;
-
     PGNotification[] someNotification = new PGNotification[] { //
             new Notification(PgConstants.CHANNEL_NAME, 1) };
 
@@ -72,7 +68,7 @@ public class PgListenerTest {
         when(conn.getNotifications(anyInt())).thenReturn(null);
         when(conn.prepareCall(anyString()).execute()).thenReturn(true);
 
-        PgListener l = new PgListener(ds, bus, tester);
+        PgListener l = new PgListener(ds, bus);
         l.afterPropertiesSet();
         sleep(100);
         l.destroy();
@@ -97,7 +93,7 @@ public class PgListenerTest {
                 new PGNotification[] { new Notification(PgConstants.CHANNEL_NAME, 3) }, null, null,
                 null);
 
-        PgListener l = new PgListener(ds, bus, tester);
+        PgListener l = new PgListener(ds, bus);
         l.afterPropertiesSet();
         sleep(500);
         l.destroy();
@@ -125,7 +121,7 @@ public class PgListenerTest {
         when(conn.prepareCall(anyString()).execute()).thenReturn(true);
         when(conn.getNotifications(anyInt())).thenReturn(null);
 
-        PgListener l = new PgListener(ds, bus, tester);
+        PgListener l = new PgListener(ds, bus);
         l.afterPropertiesSet();
         sleep(200);
         l.destroy();
@@ -147,7 +143,7 @@ public class PgListenerTest {
         when(conn.getNotifications(anyInt())).thenReturn(new PGNotification[] {
                 new Notification(unrelatedNotifyName, 1) }, null, null);
 
-        PgListener l = new PgListener(ds, bus, tester);
+        PgListener l = new PgListener(ds, bus);
         l.afterPropertiesSet();
         sleep(100);
         l.destroy();
@@ -164,7 +160,7 @@ public class PgListenerTest {
         when(ds.get()).thenReturn(conn);
         when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
 
-        PgListener l = new PgListener(ds, bus, tester);
+        PgListener l = new PgListener(ds, bus);
         l.afterPropertiesSet();
         l.destroy();
         sleep(150);// TODO flaky
@@ -173,7 +169,7 @@ public class PgListenerTest {
 
     @Test
     void testStopWithoutStarting() {
-        PgListener l = new PgListener(ds, bus, tester);
+        PgListener l = new PgListener(ds, bus);
         l.destroy();
         verifyNoMoreInteractions(conn);
     }
@@ -182,7 +178,7 @@ public class PgListenerTest {
     public void successfulProbesAreForwarded() throws SQLException {
         when(conn.getNotifications(anyInt())).thenReturn(someNotification);
 
-        PgListener l = new PgListener(ds, bus, tester);
+        PgListener l = new PgListener(ds, bus);
         val result = l.sendProbeAndWaitForEcho(conn);
         assertEquals(1, result.length);
         assertEquals(PgConstants.CHANNEL_NAME, result[0].getName());
@@ -192,7 +188,7 @@ public class PgListenerTest {
     public void sqlExceptionAfterUnsuccessfulProbe() throws SQLException {
         when(conn.getNotifications(anyInt())).thenReturn(null);
         Assertions.assertThrows(SQLException.class, () -> {
-            PgListener l = new PgListener(ds, bus, tester);
+            PgListener l = new PgListener(ds, bus);
             l.sendProbeAndWaitForEcho(conn);
         });
     }

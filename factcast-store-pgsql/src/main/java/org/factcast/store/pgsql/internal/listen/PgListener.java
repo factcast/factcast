@@ -15,14 +15,12 @@
  */
 package org.factcast.store.pgsql.internal.listen;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Predicate;
 
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.postgresql.PGNotification;
@@ -58,10 +56,6 @@ public class PgListener implements InitializingBean, DisposableBean {
 
     @NonNull
     final EventBus eventBus;
-
-    // TODO check if we can get rid of this now
-    @NonNull
-    final Predicate<Connection> pgConnectionTester;
 
     private final AtomicBoolean running = new AtomicBoolean(true);
 
