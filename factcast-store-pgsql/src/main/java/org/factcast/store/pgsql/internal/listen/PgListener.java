@@ -22,6 +22,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.postgresql.PGNotification;
 import org.postgresql.jdbc.PgConnection;
@@ -50,21 +51,20 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PgListener implements InitializingBean, DisposableBean {
 
-    private static final int MAX_ALLOWED_NOTIFICATION_LATENCY_IN_MILLIS = 200;
-
     @NonNull
     final PgConnectionSupplier pgConnectionSupplier;
 
     @NonNull
     final EventBus eventBus;
 
+    @NonNull
+    final PgConfigurationProperties props;
+
     private final AtomicBoolean running = new AtomicBoolean(true);
 
     private Thread listenerThread;
 
     private CountDownLatch countDownLatch = new CountDownLatch(1);
-
-    private final int blockingWaitTimeInMillis = 1000 * 15;
 
     @VisibleForTesting
     protected void listen() {
@@ -145,7 +145,7 @@ public class PgListener implements InitializingBean, DisposableBean {
     @VisibleForTesting
     protected PGNotification[] receiveNotifications(PgConnection pc) throws SQLException {
         PGNotification[] notifications = pc.getNotifications(
-                blockingWaitTimeInMillis);
+                props.getFactNotificationBlockingWaitTimeInMillis());
         if (notifications == null) {
             notifications = checkDatabaseConnectionHealthy(pc);
         }
@@ -159,8 +159,8 @@ public class PgListener implements InitializingBean, DisposableBean {
     protected PGNotification[] checkDatabaseConnectionHealthy(PgConnection connection)
             throws SQLException {
         connection.prepareCall(PgConstants.NOTIFY_ROUNDTRIP).execute();
-        PGNotification[] notifications = connection.getNotifications(
-                MAX_ALLOWED_NOTIFICATION_LATENCY_IN_MILLIS);
+        PGNotification[] notifications = connection.getNotifications(props
+                .getFactNotificationMaxRoundTripLatencyInMillis());
         if (notifications == null) {
             // missed the notifications from the DB, something is fishy
             // here....
@@ -175,7 +175,7 @@ public class PgListener implements InitializingBean, DisposableBean {
     @VisibleForTesting
     protected void sleep() {
         try {
-            Thread.sleep(100);
+            Thread.sleep(props.getFactNotificationNewConnectionWaitTimeInMillis());
         } catch (InterruptedException ignore) {
         }
 
