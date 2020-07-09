@@ -175,21 +175,21 @@ public class PgListenerTest {
     }
 
     @Test
-    public void successfulProbesAreForwarded() throws SQLException {
+    public void successfulHealthCheckForwardsNotifications() throws SQLException {
         when(conn.getNotifications(anyInt())).thenReturn(someNotification);
 
         PgListener l = new PgListener(ds, bus);
-        val result = l.sendProbeAndWaitForEcho(conn);
+        val result = l.checkDatabaseConnectionHealthy(conn);
         assertEquals(1, result.length);
         assertEquals(PgConstants.CHANNEL_NAME, result[0].getName());
     }
 
     @Test
-    public void sqlExceptionAfterUnsuccessfulProbe() throws SQLException {
+    public void sqlExceptionAfterUnsuccessfulHealthCheck() throws SQLException {
         when(conn.getNotifications(anyInt())).thenReturn(null);
         Assertions.assertThrows(SQLException.class, () -> {
             PgListener l = new PgListener(ds, bus);
-            l.sendProbeAndWaitForEcho(conn);
+            l.checkDatabaseConnectionHealthy(conn);
         });
     }
 

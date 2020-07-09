@@ -71,37 +71,13 @@ public class PgListener implements InitializingBean, DisposableBean {
 
                 // new connection
                 try (PgConnection pc = pgConnectionSupplier.get()) {
-
-                    try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_SQL)) {
-                        ps.execute();
-                    }
-                    try (PreparedStatement ps = pc.prepareStatement(
-                            PgConstants.LISTEN_ROUNDTRIP_CHANNEL_SQL)) {
-                        ps.execute();
-                    }
+                    setupPostgresListeners(pc);
                     l.countDown();
-
-                    // make sure, we did not miss anything while
-                    // reconnecting,
-                    postEvent("scheduled-poll");
+                    informSubscribersAboutFreshConnection();
 
                     while (running.get()) {
-
-                        // listen to the real thing or pings
-                        PGNotification[] notifications = pc.getNotifications(
-                                blockingWaitTimeInMillis);
-                        if (notifications == null) {
-                            notifications = sendProbeAndWaitForEcho(pc);
-                        }
-
-                        if (Arrays.stream(notifications)
-                                .anyMatch(n -> PgConstants.CHANNEL_NAME.equals(n.getName()))) {
-                            log.trace("notifying consumers for '{}'", PgConstants.CHANNEL_NAME);
-                            postEvent(PgConstants.CHANNEL_NAME);
-                        } else {
-                            log.trace("No notifications yet. Looping.");
-                        }
-
+                        PGNotification[] notifications = receiveNotifications(pc);
+                        informSubscriberOfChannelNotifications(notifications);
                     }
                 } catch (SQLException e) {
                     log.warn("While waiting for Notifications", e);
@@ -121,7 +97,47 @@ public class PgListener implements InitializingBean, DisposableBean {
         }
     }
 
-    protected PGNotification[] sendProbeAndWaitForEcho(PgConnection connection)
+    // make sure subscribers did not miss anything while we reconnected
+    private void informSubscribersAboutFreshConnection() {
+        postEvent("scheduled-poll");
+    }
+
+    private void setupPostgresListeners(PgConnection pc) throws SQLException {
+        try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_SQL)) {
+            ps.execute();
+        }
+        try (PreparedStatement ps = pc.prepareStatement(
+                PgConstants.LISTEN_ROUNDTRIP_CHANNEL_SQL)) {
+            ps.execute();
+        }
+    }
+
+    private void informSubscriberOfChannelNotifications(PGNotification[] notifications) {
+        if (Arrays.stream(notifications)
+                .anyMatch(n -> PgConstants.CHANNEL_NAME.equals(n.getName()))) {
+            log.trace("notifying consumers for '{}'", PgConstants.CHANNEL_NAME);
+            postEvent(PgConstants.CHANNEL_NAME);
+        } else {
+            log.trace("No notifications yet. Looping.");
+        }
+    }
+
+    // try to receive Postgres notifications until timeout is over. In case we
+    // didn't receive any notification we
+    // check if the database connection is still healthy
+    private PGNotification[] receiveNotifications(PgConnection pc) throws SQLException {
+        PGNotification[] notifications = pc.getNotifications(
+                blockingWaitTimeInMillis);
+        if (notifications == null) {
+            notifications = checkDatabaseConnectionHealthy(pc);
+        }
+        return notifications;
+    }
+
+    // sends a roundtrip notification to database and expects to receive at
+    // least this
+    // notification back
+    protected PGNotification[] checkDatabaseConnectionHealthy(PgConnection connection)
             throws SQLException {
         connection.prepareCall(PgConstants.NOTIFY_ROUNDTRIP).execute();
         PGNotification[] notifications = connection.getNotifications(
@@ -132,6 +148,7 @@ public class PgListener implements InitializingBean, DisposableBean {
             throw new SQLException("Missed roundtrip notification from channel '"
                     + PgConstants.ROUNDTRIP_CHANNEL_NAME + "'");
         } else {
+            // return since there might have also received channel notifications
             return notifications;
         }
     }
