@@ -28,6 +28,7 @@ import org.postgresql.jdbc.PgConnection;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 
 import lombok.Getter;
@@ -61,18 +62,35 @@ public class PgListener implements InitializingBean, DisposableBean {
 
     private Thread listenerThread;
 
+    private CountDownLatch countDownLatch = new CountDownLatch(1);
+
     private final int blockingWaitTimeInMillis = 1000 * 15;
 
     private void listen() {
         log.trace("Starting instance Listener");
-        CountDownLatch l = new CountDownLatch(1);
-        listenerThread = new Thread(() -> {
+        listenerThread = new Thread(new NotificationReceiverLoop(), "PG Instance Listener");
+        listenerThread.setDaemon(true);
+        listenerThread.setUncaughtExceptionHandler(
+                (t, e) -> log.error("thread " + t + " encountered an unhandled exception", e));
+        listenerThread.start();
+        try {
+            log.info("Waiting to establish postgres listener (max 15sec.)");
+            boolean await = countDownLatch.await(15, TimeUnit.SECONDS);
+            log.info("postgres listener " + (await ? "" : "not ") + "established");
+        } catch (InterruptedException ignored) {
+        }
+    }
+
+    @VisibleForTesting
+    protected class NotificationReceiverLoop implements Runnable {
+        @Override
+        public void run() {
             while (running.get()) {
 
                 // new connection
                 try (PgConnection pc = pgConnectionSupplier.get()) {
                     setupPostgresListeners(pc);
-                    l.countDown();
+                    countDownLatch.countDown();
                     informSubscribersAboutFreshConnection();
 
                     while (running.get()) {
@@ -84,18 +102,8 @@ public class PgListener implements InitializingBean, DisposableBean {
                     sleep();
                 }
             }
-        }, "PG Instance Listener");
-        listenerThread.setDaemon(true);
-        listenerThread.setUncaughtExceptionHandler(
-                (t, e) -> log.error("thread " + t + " encountered an unhandled exception", e));
-        listenerThread.start();
-        try {
-            log.info("Waiting to establish postgres listener (max 15sec.)");
-            boolean await = l.await(15, TimeUnit.SECONDS);
-            log.info("postgres listener " + (await ? "" : "not ") + "established");
-        } catch (InterruptedException ignored) {
         }
-    }
+    };
 
     // make sure subscribers did not miss anything while we reconnected
     private void informSubscribersAboutFreshConnection() {
