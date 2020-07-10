@@ -75,8 +75,7 @@ class CondensedQueryExecutor {
                         try {
                             CondensedQueryExecutor.this.runTarget();
                         } catch (Throwable e) {
-                            log.debug("Scheduled query failed, closing: {}", e.getMessage());
-                            // TODO needed?
+                            log.error("Scheduled query failed, closing: {}", e.getMessage());
                         }
                     }
                 }, maxDelayInMillis);
@@ -91,7 +90,7 @@ class CondensedQueryExecutor {
     }
 
     @SuppressWarnings("WeakerAccess")
-    protected void runTarget() {
+    protected synchronized void runTarget() {
         try {
             target.run(false);
         } catch (Throwable e) {
