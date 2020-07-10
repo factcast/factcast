@@ -217,8 +217,6 @@ public class PgListenerTest {
         assertEquals(3, totalNotifyCount);
     }
 
-    // TODO I'd like to test that the connection was closed. I currently don't
-    // see a simpler way
     @Test
     void testConnectionIsStopped() throws Exception {
         when(pgConnectionSupplier.get()).thenReturn(conn);
