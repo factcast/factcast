@@ -15,18 +15,20 @@
  */
 package org.factcast.store.pgsql.internal.listen;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.function.Predicate;
 
+import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.listen.PgListener.FactInsertionEvent;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -35,106 +37,203 @@ import org.postgresql.PGNotification;
 import org.postgresql.core.Notification;
 import org.postgresql.jdbc.PgConnection;
 
-import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
+
+import lombok.val;
 
 @ExtendWith(MockitoExtension.class)
 public class PgListenerTest {
 
     @Mock
-    PgConnectionSupplier ds;
+    PgConnectionSupplier pgConnectionSupplier;
 
     @Mock
-    AsyncEventBus bus;
+    EventBus eventBus;
 
-    @Mock
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     PgConnection conn;
 
     @Mock
     PreparedStatement ps;
 
-    Predicate<Connection> tester = c -> true;
+    PgConfigurationProperties props = new PgConfigurationProperties();
 
     @Captor
-    ArgumentCaptor<PgListener> captor;
+    ArgumentCaptor<FactInsertionEvent> factCaptor;
 
     @Test
-    void testCheckFails() throws SQLException {
+    public void postgresListenersAreSetup() throws SQLException {
+        when(conn.prepareStatement(anyString()).execute()).thenReturn(true);
 
-        when(ds.get()).thenReturn(conn);
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        pgListener.setupPostgresListeners(conn);
 
-        tester = mock(Predicate.class);
-        when(tester.test(any())).thenReturn(false, false, true, false);
-        PgListener l = new PgListener(ds, bus, tester);
-        l.afterPropertiesSet();
-        verify(bus, times(3)).post(any(FactInsertionEvent.class));
-        verifyNoMoreInteractions(bus);
-
-        l.destroy();
+        verify(conn.prepareStatement(anyString()), times(2)).execute();
     }
 
     @Test
-    void testListen() throws Exception {
-        when(ds.get()).thenReturn(conn);
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
+    public void subscribersAreInformedViaInternalEvent() {
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        pgListener.informSubscribersAboutFreshConnection();
 
-        PgListener l = new PgListener(ds, bus, tester);
-        l.afterPropertiesSet();
-        sleep(100);
-        verify(bus).post(any(FactInsertionEvent.class));
-        verifyNoMoreInteractions(bus);
-        verify(conn, atLeastOnce()).prepareStatement(PgConstants.LISTEN_SQL);
-        verify(ps, atLeastOnce()).execute();
-
-        l.destroy();
+        verify(eventBus, times(1)).post(factCaptor.capture());
+        assertEquals("scheduled-poll", factCaptor.getAllValues().get(0).name());
     }
 
+    @Test
+    public void receivedNotificationsArePassedThrough() throws SQLException {
+        // there are some notifications
+        when(conn.getNotifications(anyInt())).thenReturn(
+                new PGNotification[] { new Notification("some notification", 1) });
+        PgListener pgListener = spy(new PgListener(pgConnectionSupplier, eventBus, props));
+
+        PGNotification[] pgNotifications = pgListener.receiveNotifications(conn);
+
+        // no health check was required
+        verify(pgListener, never()).checkDatabaseConnectionHealthy(any());
+        assertEquals(1, pgNotifications.length);
+        assertEquals("some notification", pgNotifications[0].getName());
+    }
+
+    @Test
+    public void whenReceiveTimeoutExpiresHealthCheckIsExecuted() throws SQLException {
+        // arrange
+        PgListener pgListener = spy(new PgListener(pgConnectionSupplier, eventBus, props));
+        // no notifications received after timeout expired
+        when(conn.getNotifications(anyInt())).thenReturn(null);
+        // health check returned something
+        doReturn(new PGNotification[] { new Notification("some roundtrip notification", 1) })
+                .when(pgListener)
+                .checkDatabaseConnectionHealthy(any());
+
+        // act
+        PGNotification[] pgNotifications = pgListener.receiveNotifications(conn);
+
+        // assert
+        // health check was called
+        verify(pgListener, times(1)).checkDatabaseConnectionHealthy(any());
+        assertEquals(1, pgNotifications.length);
+        assertEquals("some roundtrip notification", pgNotifications[0].getName());
+    }
+
+    @Test
+    public void onSuccessfulHealthCheckNotificationsArePassedThrough() throws SQLException {
+        when(conn.prepareCall(PgConstants.NOTIFY_ROUNDTRIP).execute()).thenReturn(true);
+        // we found some notifications
+        when(conn.getNotifications(anyInt())).thenReturn(
+                new PGNotification[] { new Notification("some notification", 1) });
+
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        PGNotification[] pgNotifications = pgListener.checkDatabaseConnectionHealthy(conn);
+
+        assertEquals(1, pgNotifications.length);
+        assertEquals("some notification", pgNotifications[0].getName());
+    }
+
+    @Test
+    public void throwsSqlExceptionWhenNoRoundtripNotificationWasReceived() throws SQLException {
+        when(conn.prepareCall(PgConstants.NOTIFY_ROUNDTRIP).execute()).thenReturn(true);
+        // no answer from the database
+        when(conn.getNotifications(anyInt())).thenReturn(null);
+
+        Assertions.assertThrows(SQLException.class, () -> {
+            PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+            pgListener.checkDatabaseConnectionHealthy(conn);
+        });
+    }
+
+    @Test
+    public void subscribersAreOnlyInformedAboutNewFactsInDatabase() {
+        PGNotification[] receivedNotifications = new PGNotification[] {
+                new Notification("some notification", 1),
+                new Notification("fact_insert", 1)
+        };
+
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        pgListener.informSubscriberOfChannelNotifications(receivedNotifications);
+
+        verify(eventBus, times(1)).post(factCaptor.capture());
+        assertEquals("fact_insert", factCaptor.getAllValues().get(0).name());
+    }
+
+    @Test
+    public void otherNotificationsAreIgnored() {
+        PGNotification[] receivedNotifications = new PGNotification[] {
+                new Notification("some notification", 1),
+                new Notification("some other notification", 1)
+        };
+
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        pgListener.informSubscriberOfChannelNotifications(receivedNotifications);
+
+        verify(eventBus, never()).post(any(FactInsertionEvent.class));
+    }
+
+    @Test
+    public void notificationLoopHandlesSqlException() throws SQLException {
+        when(pgConnectionSupplier.get()).thenThrow(SQLException.class, RuntimeException.class);
+
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        PgListener.NotificationReceiverLoop notificationReceiverLoop = pgListener.new NotificationReceiverLoop();
+
+        Assertions.assertThrows(RuntimeException.class, notificationReceiverLoop::run);
+        verify(pgConnectionSupplier, times(2)).get();
+    }
+
+    // tests the whole thread
     @Test
     void testNotify() throws Exception {
-
-        when(ds.get()).thenReturn(conn);
+        when(pgConnectionSupplier.get()).thenReturn(conn);
         when(conn.prepareStatement(anyString())).thenReturn(ps);
-
-        PgListener l = new PgListener(ds, bus, tester);
+        when(conn.prepareCall(anyString()).execute()).thenReturn(true);
         when(conn.getNotifications(anyInt())).thenReturn(new PGNotification[] { //
                 new Notification(PgConstants.CHANNEL_NAME, 1), //
                 new Notification(PgConstants.CHANNEL_NAME, 1), //
                 new Notification(PgConstants.CHANNEL_NAME, 1) },
                 new PGNotification[] { new Notification(PgConstants.CHANNEL_NAME, 2) }, //
-                new PGNotification[] { new Notification(PgConstants.CHANNEL_NAME, 3) }, null);
-        l.afterPropertiesSet();
-        sleep(400);
-        // 4 posts: one scheduled, 3 from notifications
-        verify(bus, times(4)).post(any(FactInsertionEvent.class));
+                new PGNotification[] { new Notification(PgConstants.CHANNEL_NAME, 3) },
+                null, null,
+                null);
 
-        l.destroy();
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        pgListener.listen();
+        sleep(500);
+        pgListener.destroy();
+
+        verify(eventBus, atLeastOnce()).post(factCaptor.capture());
+        val allEvents = factCaptor.getAllValues();
+
+        // first event is the general wakeup to the subscribers after startup
+        assertEquals("scheduled-poll", allEvents.get(0).name());
+        // events 2 - incl. 4 are notifies
+        assertTrue(allEvents.subList(1, 4)
+                .stream()
+                .allMatch(event -> event.name().equals("fact_insert")));
+
+        // in total there are only 3 notifies
+        long totalNotifyCount = allEvents.stream()
+                .filter(f -> f.name().equals("fact_insert"))
+                .count();
+        assertEquals(3, totalNotifyCount);
     }
 
     @Test
-    void testNotifyScheduled() throws Exception {
-
-        when(ds.get()).thenReturn(conn);
-        when(conn.prepareStatement(anyString())).thenReturn(ps);
-
-        PgListener l = new PgListener(ds, bus, tester);
-        when(conn.getNotifications(anyInt())).thenReturn(null);
-        l.afterPropertiesSet();
-        sleep(200);
-        // one scheduled
-        verify(bus, times(1)).post(any(FactInsertionEvent.class));
-
-        l.destroy();
-    }
-
-    @Test
-    void testStop() throws Exception {
-        when(ds.get()).thenReturn(conn);
+    void testConnectionIsStopped() throws Exception {
+        when(pgConnectionSupplier.get()).thenReturn(conn);
         when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
-        PgListener l = new PgListener(ds, bus, tester);
-        l.afterPropertiesSet();
-        l.destroy();
+
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        pgListener.afterPropertiesSet();
+        pgListener.destroy();
         sleep(150);// TODO flaky
         verify(conn).close();
+    }
+
+    @Test
+    void testStopWithoutStarting() {
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        pgListener.destroy();
+        verifyNoMoreInteractions(conn);
     }
 
     private void sleep(int i) {
@@ -142,12 +241,5 @@ public class PgListenerTest {
             Thread.sleep(i);
         } catch (InterruptedException ignored) {
         }
-    }
-
-    @Test
-    void testStopWithoutStarting() {
-        PgListener l = new PgListener(ds, bus, tester);
-        l.destroy();
-        verifyNoMoreInteractions(conn);
     }
 }

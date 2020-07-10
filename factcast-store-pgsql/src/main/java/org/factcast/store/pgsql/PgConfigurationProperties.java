@@ -116,6 +116,32 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
      */
     boolean allowUnvalidatedPublish = false;
 
+    /**
+     * Controls how long to block waiting for new notifications from the
+     * database (Postgres LISTEN/ NOTIFY mechanism). When this time exceeds the
+     * health of the database connection is checked. After that waiting for new
+     * notifications is repeated.
+     */
+    int factNotificationBlockingWaitTimeInMillis = 1000 * 15;
+
+    /**
+     * When Factcast did not receive any notifications after
+     * factNotificationBlockingWaitTimeInMillis milliseconds it validates the
+     * health of the database connection. For this purpose it sends an internal
+     * notification to the database and waits for the given time to receive back
+     * an answer.
+     *
+     * If the time is exceeded the database connection is renewed.
+     */
+    int factNotificationMaxRoundTripLatencyInMillis = 200;
+
+    /**
+     * How much time to wait between invalidating and acquiring a new
+     * connection. Note: This parameter is only applied in the part of Factcast
+     * which deals with receiving and forwarding database notifications.
+     */
+    int factNotificationNewConnectionWaitTimeInMillis = 100;
+
     public int getFetchSize() {
         return getQueueSize() / queueFetchRatio;
     }
