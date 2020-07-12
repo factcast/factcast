@@ -30,6 +30,7 @@
     <module>factcast-store-pgsql-rds</module>
     <module>factcast-store-test</module>
     <module>factcast-core</module>
+    <module>factcast-simple</module>
     <module>factcast-server-grpc</module>
     <module>factcast-grpc-api</module>
     <module>factcast-schema-registry-cli</module>
