@@ -24,6 +24,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgConstants;
+import org.factcast.store.pgsql.internal.PgFactStore;
+import org.factcast.store.pgsql.internal.PgFactStore.StoreMetrics;
+import org.factcast.store.pgsql.internal.PgFactStore.StoreMetrics.OP;
 import org.postgresql.PGNotification;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.beans.factory.DisposableBean;
@@ -32,6 +35,7 @@ import org.springframework.beans.factory.InitializingBean;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 
+import io.micrometer.core.instrument.*;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +63,9 @@ public class PgListener implements InitializingBean, DisposableBean {
 
     @NonNull
     final PgConfigurationProperties props;
+
+    @NonNull
+    final MeterRegistry metrics;
 
     private final AtomicBoolean running = new AtomicBoolean(true);
 
@@ -134,8 +141,6 @@ public class PgListener implements InitializingBean, DisposableBean {
                 .anyMatch(n -> PgConstants.CHANNEL_NAME.equals(n.getName()))) {
             log.trace("notifying consumers for '{}'", PgConstants.CHANNEL_NAME);
             postEvent(PgConstants.CHANNEL_NAME);
-        } else {
-            log.trace("No notifications yet. Looping.");
         }
     }
 
@@ -158,18 +163,24 @@ public class PgListener implements InitializingBean, DisposableBean {
     @VisibleForTesting
     protected PGNotification[] checkDatabaseConnectionHealthy(PgConnection connection)
             throws SQLException {
+
+        long start = System.nanoTime();
         connection.prepareCall(PgConstants.NOTIFY_ROUNDTRIP).execute();
         PGNotification[] notifications = connection.getNotifications(props
                 .getFactNotificationMaxRoundTripLatencyInMillis());
         if (notifications == null) {
             // missed the notifications from the DB, something is fishy
             // here....
+            counter(OP.MISSED_ROUNDTRIP).increment();
             throw new SQLException("Missed roundtrip notification from channel '"
                     + PgConstants.ROUNDTRIP_CHANNEL_NAME + "'");
         } else {
             // return since there might have also received channel notifications
+            timer(OP.NOTIFY_ROUNDTRIP_LATENCY).record(System.nanoTime() - start,
+                    TimeUnit.NANOSECONDS);
             return notifications;
         }
+
     }
 
     @VisibleForTesting
@@ -207,6 +218,25 @@ public class PgListener implements InitializingBean, DisposableBean {
         if (listenerThread != null) {
             listenerThread.interrupt();
         }
+    }
+
+    // The metrics access should be unified.
+    @NonNull
+    private Timer timer(@NonNull PgFactStore.StoreMetrics.OP operation) {
+        Tags tags = Tags.of(
+                Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
+                Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()));
+        // ommitting the meter description here
+        return Timer.builder(StoreMetrics.METRIC_NAME).tags(tags).register(metrics);
+    }
+
+    @NonNull
+    private Counter counter(@NonNull PgFactStore.StoreMetrics.OP operation) {
+        Tags tags = Tags.of(
+                Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
+                Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()));
+        // ommitting the meter description here
+        return Counter.builder(StoreMetrics.METRIC_NAME).tags(tags).register(metrics);
     }
 
 }
