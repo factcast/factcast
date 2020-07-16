@@ -92,3 +92,5 @@ CREATE INDEX IF NOT EXISTS idx_transformationstore on transformationstore(ns,typ
 	last_access 		TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
+CREATE TABLE shedlock(name VARCHAR(64) NOT NULL, lock_until TIMESTAMP NOT NULL,
+    locked_at TIMESTAMP NOT NULL, locked_by VARCHAR(255) NOT NULL, PRIMARY KEY (name));
