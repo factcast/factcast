@@ -15,7 +15,7 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import java.lang.management.ManagementFactory;
+import java.util.Random;
 
 import lombok.AccessLevel;
 import lombok.Generated;
@@ -113,8 +113,8 @@ public class PgConstants {
 
     public static final String LISTEN_SQL = "LISTEN " + CHANNEL_NAME;
 
-    public static final String ROUNDTRIP_CHANNEL_NAME = ManagementFactory.getRuntimeMXBean()
-            .getName();
+    public static final String ROUNDTRIP_CHANNEL_NAME = "roundtrip_channel_" + Math.abs(new Random()
+            .nextLong()); // using the pid lead to a sql exception
 
     public static final String NOTIFY_ROUNDTRIP = "NOTIFY " + ROUNDTRIP_CHANNEL_NAME;
 

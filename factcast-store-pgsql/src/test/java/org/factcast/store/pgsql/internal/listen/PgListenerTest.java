@@ -39,6 +39,7 @@ import org.postgresql.jdbc.PgConnection;
 
 import com.google.common.eventbus.EventBus;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.val;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,6 +57,9 @@ public class PgListenerTest {
     @Mock
     PreparedStatement ps;
 
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    MeterRegistry registry;
+
     PgConfigurationProperties props = new PgConfigurationProperties();
 
     @Captor
@@ -65,7 +69,7 @@ public class PgListenerTest {
     public void postgresListenersAreSetup() throws SQLException {
         when(conn.prepareStatement(anyString()).execute()).thenReturn(true);
 
-        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
         pgListener.setupPostgresListeners(conn);
 
         verify(conn.prepareStatement(anyString()), times(2)).execute();
@@ -73,7 +77,7 @@ public class PgListenerTest {
 
     @Test
     public void subscribersAreInformedViaInternalEvent() {
-        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
         pgListener.informSubscribersAboutFreshConnection();
 
         verify(eventBus, times(1)).post(factCaptor.capture());
@@ -85,7 +89,8 @@ public class PgListenerTest {
         // there are some notifications
         when(conn.getNotifications(anyInt())).thenReturn(
                 new PGNotification[] { new Notification("some notification", 1) });
-        PgListener pgListener = spy(new PgListener(pgConnectionSupplier, eventBus, props));
+        PgListener pgListener = spy(new PgListener(pgConnectionSupplier, eventBus, props,
+                registry));
 
         PGNotification[] pgNotifications = pgListener.receiveNotifications(conn);
 
@@ -98,7 +103,8 @@ public class PgListenerTest {
     @Test
     public void whenReceiveTimeoutExpiresHealthCheckIsExecuted() throws SQLException {
         // arrange
-        PgListener pgListener = spy(new PgListener(pgConnectionSupplier, eventBus, props));
+        PgListener pgListener = spy(new PgListener(pgConnectionSupplier, eventBus, props,
+                registry));
         // no notifications received after timeout expired
         when(conn.getNotifications(anyInt())).thenReturn(null);
         // health check returned something
@@ -123,7 +129,7 @@ public class PgListenerTest {
         when(conn.getNotifications(anyInt())).thenReturn(
                 new PGNotification[] { new Notification("some notification", 1) });
 
-        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
         PGNotification[] pgNotifications = pgListener.checkDatabaseConnectionHealthy(conn);
 
         assertEquals(1, pgNotifications.length);
@@ -137,7 +143,7 @@ public class PgListenerTest {
         when(conn.getNotifications(anyInt())).thenReturn(null);
 
         Assertions.assertThrows(SQLException.class, () -> {
-            PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+            PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
             pgListener.checkDatabaseConnectionHealthy(conn);
         });
     }
@@ -149,7 +155,7 @@ public class PgListenerTest {
                 new Notification("fact_insert", 1)
         };
 
-        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
         pgListener.informSubscriberOfChannelNotifications(receivedNotifications);
 
         verify(eventBus, times(1)).post(factCaptor.capture());
@@ -163,7 +169,7 @@ public class PgListenerTest {
                 new Notification("some other notification", 1)
         };
 
-        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
         pgListener.informSubscriberOfChannelNotifications(receivedNotifications);
 
         verify(eventBus, never()).post(any(FactInsertionEvent.class));
@@ -173,7 +179,7 @@ public class PgListenerTest {
     public void notificationLoopHandlesSqlException() throws SQLException {
         when(pgConnectionSupplier.get()).thenThrow(SQLException.class, RuntimeException.class);
 
-        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
         PgListener.NotificationReceiverLoop notificationReceiverLoop = pgListener.new NotificationReceiverLoop();
 
         Assertions.assertThrows(RuntimeException.class, notificationReceiverLoop::run);
@@ -195,7 +201,7 @@ public class PgListenerTest {
                 null, null,
                 null);
 
-        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
         pgListener.listen();
         sleep(500);
         pgListener.destroy();
@@ -222,7 +228,7 @@ public class PgListenerTest {
         when(pgConnectionSupplier.get()).thenReturn(conn);
         when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
 
-        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
         pgListener.afterPropertiesSet();
         pgListener.destroy();
         sleep(150);// TODO flaky
@@ -231,7 +237,7 @@ public class PgListenerTest {
 
     @Test
     void testStopWithoutStarting() {
-        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props);
+        PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
         pgListener.destroy();
         verifyNoMoreInteractions(conn);
     }
