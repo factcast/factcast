@@ -1,5 +1,85 @@
 # Changelog
 
+## [0.2.5](https://github.com/factcast/factcast/tree/0.2.5) (2020-07-05)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.2.4...0.2.5)
+
+**Fixed bugs:**
+
+- Facts in recieve buffer may still be delivered after subscription.close\(\) is called during onNext\(\) [\#907](https://github.com/factcast/factcast/issues/907)
+
+**Closed issues:**
+
+- Dangeling subscriptions [\#937](https://github.com/factcast/factcast/issues/937)
+- Extract examples to extra project [\#923](https://github.com/factcast/factcast/issues/923)
+- add Coordinated subscription [\#450](https://github.com/factcast/factcast/issues/450)
+- Optimize startup time of factcast-docker [\#934](https://github.com/factcast/factcast/issues/934)
+- restructure modules \(integration tests\) [\#930](https://github.com/factcast/factcast/issues/930)
+- Create integration test for validation disabled mode [\#881](https://github.com/factcast/factcast/issues/881)
+
+**Merged pull requests:**
+
+- Update dependency com.github.vladimir-bukhtoyarov:bucket4j-core to v4.10.0 [\#939](https://github.com/factcast/factcast/pull/939) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.0.1 [\#936](https://github.com/factcast/factcast/pull/936) ([renovate[bot]](https://github.com/apps/renovate))
+- Issue930  [\#932](https://github.com/factcast/factcast/pull/932) ([uweschaefer](https://github.com/uweschaefer))
+- Issue905 [\#929](https://github.com/factcast/factcast/pull/929) ([uweschaefer](https://github.com/uweschaefer))
+- Update dependency org.liquibase:liquibase-core to v3.10.1 [\#927](https://github.com/factcast/factcast/pull/927) ([renovate[bot]](https://github.com/apps/renovate))
+- Issue907 [\#926](https://github.com/factcast/factcast/pull/926) ([uweschaefer](https://github.com/uweschaefer))
+- Issue937 [\#938](https://github.com/factcast/factcast/pull/938) ([uweschaefer](https://github.com/uweschaefer))
+- Issue934 optimize startup time of factcast-docker [\#935](https://github.com/factcast/factcast/pull/935) ([uweschaefer](https://github.com/uweschaefer))
+- \#881: added no validation test [\#933](https://github.com/factcast/factcast/pull/933) ([uweschaefer](https://github.com/uweschaefer))
+
+## [0.2.4](https://github.com/factcast/factcast/tree/0.2.4) (2020-07-02)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.2.3...0.2.4)
+
+**Closed issues:**
+
+- Prevent integration test artifacts from being deployed to central [\#924](https://github.com/factcast/factcast/issues/924)
+
+**Merged pull requests:**
+
+- Issue924 [\#925](https://github.com/factcast/factcast/pull/925) ([uweschaefer](https://github.com/uweschaefer))
+
+## [0.2.3](https://github.com/factcast/factcast/tree/0.2.3) (2020-07-02)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.2.2...0.2.3)
+
+## [0.2.2](https://github.com/factcast/factcast/tree/0.2.2) (2020-07-02)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.1...0.2.2)
+
+**Implemented enhancements:**
+
+- Simplify FactSpec generation from a list of classes. [\#888](https://github.com/factcast/factcast/issues/888)
+
+**Fixed bugs:**
+
+- Fix VM base for docker image [\#917](https://github.com/factcast/factcast/issues/917)
+
+**Closed issues:**
+
+- add database generated timestamp to metadata [\#910](https://github.com/factcast/factcast/issues/910)
+- Add retryer for IO actions [\#894](https://github.com/factcast/factcast/issues/894)
+- Switch CI from circleci to gh actions [\#877](https://github.com/factcast/factcast/issues/877)
+- Switch to gitflow maven plugin for release prep [\#921](https://github.com/factcast/factcast/issues/921)
+- Move to dockerfile-maven plugin for docker building and releasing [\#912](https://github.com/factcast/factcast/issues/912)
+- add fromNullable\(UUID orNull\) to the SubscriptionRequest api [\#908](https://github.com/factcast/factcast/issues/908)
+
+**Merged pull requests:**
+
+- \#921: use gitflow maven plugin [\#922](https://github.com/factcast/factcast/pull/922) ([uweschaefer](https://github.com/uweschaefer))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2 [\#920](https://github.com/factcast/factcast/pull/920) ([renovate[bot]](https://github.com/apps/renovate))
+- Update openjdk Docker tag to v8 [\#919](https://github.com/factcast/factcast/pull/919) ([renovate[bot]](https://github.com/apps/renovate))
+- \#877: added gh action workflow [\#916](https://github.com/factcast/factcast/pull/916) ([uweschaefer](https://github.com/uweschaefer))
+- \#888: FactSpec.from for multiple classes [\#915](https://github.com/factcast/factcast/pull/915) ([uweschaefer](https://github.com/uweschaefer))
+- Update dependency com.spotify:dockerfile-maven-plugin to v1.4.13 [\#914](https://github.com/factcast/factcast/pull/914) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.apache.maven.plugins:maven-surefire-plugin to v3.0.0-M5 [\#893](https://github.com/factcast/factcast/pull/893) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.apache.maven.plugins:maven-failsafe-plugin to v3.0.0-M5 [\#892](https://github.com/factcast/factcast/pull/892) ([renovate[bot]](https://github.com/apps/renovate))
+- \#917: moved to openjdk8 as a base for the docker image [\#918](https://github.com/factcast/factcast/pull/918) ([uweschaefer](https://github.com/uweschaefer))
+- \#912: build and push docker image [\#913](https://github.com/factcast/factcast/pull/913) ([uweschaefer](https://github.com/uweschaefer))
+- Issue \#908: added fromNullable to SpecBuilder [\#909](https://github.com/factcast/factcast/pull/909) ([uweschaefer](https://github.com/uweschaefer))
+
 ## [factcast-0.2.1](https://github.com/factcast/factcast/tree/factcast-0.2.1) (2020-06-29)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.2.0...factcast-0.2.1)

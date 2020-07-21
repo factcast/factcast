@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-examples</artifactId>
-    <version>0.2.4</version>
+    <version>0.2.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-example-tls-server</artifactId>
@@ -47,10 +47,6 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-store-pgsql</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-tcnative-boringssl-static</artifactId>
     </dependency>
     <!-- you want to remove this -->
     <dependency>

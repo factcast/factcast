@@ -17,15 +17,7 @@ package org.factcast.store.pgsql.internal;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Supplier;
 
 import org.factcast.core.Fact;
@@ -85,21 +77,21 @@ public class PgFactStore extends AbstractFactStore {
     @NonNull
     private final MeterRegistry registry;
 
-    static class StoreMetrics {
+    public static class StoreMetrics {
 
-        static final String METRIC_NAME = "factcast.store.operations";
+        public static final String METRIC_NAME = "factcast.store.operations";
 
-        static final String TAG_STORE_KEY = "store";
+        public static final String TAG_STORE_KEY = "store";
 
-        static final String TAG_STORE_VALUE = "pgsql";
+        public static final String TAG_STORE_VALUE = "pgsql";
 
-        static final String TAG_OPERATION_KEY = "operation";
+        public static final String TAG_OPERATION_KEY = "operation";
 
-        static final String TAG_EXCEPTION_KEY = "exception";
+        public static final String TAG_EXCEPTION_KEY = "exception";
 
-        static final String TAG_EXCEPTION_VALUE_NONE = "None";
+        public static final String TAG_EXCEPTION_VALUE_NONE = "None";
 
-        enum OP {
+        public enum OP {
 
             PUBLISH("publish"),
 
@@ -117,7 +109,11 @@ public class PgFactStore extends AbstractFactStore {
 
             GET_STAGE_FOR("getStateFor"),
 
-            PUBLISH_IF_UNCHANGED("publishIfUnchanged");
+            PUBLISH_IF_UNCHANGED("publishIfUnchanged"),
+
+            NOTIFY_ROUNDTRIP_LATENCY("notifyRoundTripLatency"),
+
+            MISSED_ROUNDTRIP("missedRoundtrip");
 
             @NonNull
             @Getter
@@ -132,7 +128,8 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Autowired
-    public PgFactStore(@NonNull JdbcTemplate jdbcTemplate,
+    public PgFactStore(
+            @NonNull JdbcTemplate jdbcTemplate,
             @NonNull PgSubscriptionFactory subscriptionFactory,
             TokenStore tokenStore, @NonNull FactTableWriteLock lock,
             @NonNull FactTransformerService factTransformerService,
@@ -205,19 +202,22 @@ public class PgFactStore extends AbstractFactStore {
         });
     }
 
-    private Fact extractFactFromResultSet(ResultSet resultSet,
+    private Fact extractFactFromResultSet(
+            ResultSet resultSet,
             @SuppressWarnings("unused") int rowNum) {
         return PgFact.from(resultSet);
     }
 
     @NonNull
-    private String extractStringFromResultSet(ResultSet resultSet,
+    private String extractStringFromResultSet(
+            ResultSet resultSet,
             @SuppressWarnings("unused") int rowNum) throws SQLException {
         return resultSet.getString(1);
     }
 
     @Override
-    public @NonNull Subscription subscribe(@NonNull SubscriptionRequestTO request,
+    public @NonNull Subscription subscribe(
+            @NonNull SubscriptionRequestTO request,
             @NonNull FactObserver observer) {
         OP operation = request.continuous() ? OP.SUBSCRIBE_FOLLOW : OP.SUBSCRIBE_CATCHUP;
         return time(operation, () -> subscriptionFactory.subscribe(request, observer));
@@ -256,7 +256,8 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Override
-    protected Map<UUID, Optional<UUID>> getStateFor(@NonNull Optional<String> ns,
+    protected Map<UUID, Optional<UUID>> getStateFor(
+            @NonNull Optional<String> ns,
             @NonNull Collection<UUID> forAggIds) {
         return time(OP.GET_STAGE_FOR, () -> {
             // just prototype code
@@ -288,7 +289,8 @@ public class PgFactStore extends AbstractFactStore {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
+    public boolean publishIfUnchanged(
+            @NonNull List<? extends Fact> factsToPublish,
             @NonNull Optional<StateToken> optionalToken) {
         return time(OP.PUBLISH_IF_UNCHANGED, () -> {
             lock.aquireExclusiveTXLock();

@@ -17,14 +17,10 @@ package org.factcast.server.grpc;
 
 import java.io.InputStream;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -33,6 +29,7 @@ import org.factcast.core.FactValidationException;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
@@ -42,21 +39,7 @@ import org.factcast.grpc.api.conv.IdAndVersion;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID_AND_VERSION;
+import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
@@ -65,10 +48,18 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.Bucket4j;
+import io.github.bucket4j.Refill;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusException;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
@@ -96,9 +87,16 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     final FactStore store;
 
+    final GrpcLimitProperties grpcLimitProperties;
+
     final CompressionCodecs codecs = new CompressionCodecs();
 
     final ProtoConverter converter = new ProtoConverter();
+
+    @VisibleForTesting
+    protected FactStoreGrpcService(FactStore store) {
+        this(store, new GrpcLimitProperties());
+    }
 
     @Override
     @Secured(FactCastAuthority.AUTHENTICATED)
@@ -135,32 +133,117 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     @Override
     @Secured(FactCastAuthority.AUTHENTICATED)
-    public void subscribe(MSG_SubscriptionRequest request,
+    public void subscribe(
+            MSG_SubscriptionRequest request,
             StreamObserver<MSG_Notification> responseObserver) {
-        enableResponseCompression(responseObserver);
-
         SubscriptionRequestTO req = converter.fromProto(request);
+        if (subscriptionRequestAccepted(req)) {
 
-        List<@NonNull String> namespaces = req.specs()
-                .stream()
-                .map(FactSpec::ns)
-                .distinct()
-                .collect(Collectors.toList());
-        try {
-            assertCanRead(namespaces);
+            enableResponseCompression(responseObserver);
 
-            resetDebugInfo(req);
-            BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(
-                    req.toString(),
-                    (ServerCallStreamObserver) responseObserver);
+            List<@NonNull String> namespaces = req.specs()
+                    .stream()
+                    .map(FactSpec::ns)
+                    .distinct()
+                    .collect(Collectors.toList());
+            try {
+                assertCanRead(namespaces);
 
-            store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp,
-                    f -> converter.createNotificationFor(f)));
+                resetDebugInfo(req);
+                BlockingStreamObserver<MSG_Notification> resp = new BlockingStreamObserver<>(
+                        req.toString(),
+                        (ServerCallStreamObserver) responseObserver);
 
-        } catch (StatusException e) {
-            responseObserver.onError(e);
+                Subscription sub = store.subscribe(req, new GrpcObserverAdapter(req.toString(),
+                        resp,
+                        f -> converter.createNotificationFor(f)));
+
+                ((ServerCallStreamObserver<MSG_Notification>) responseObserver).setOnCancelHandler(
+                        () -> {
+                            try {
+                                log.trace("got onCancel from stream, closing subscription {}", req
+                                        .debugInfo());
+                                sub.close();
+                            } catch (Exception e) {
+                                log.debug("While closing connection after canel", e);
+                            }
+                        });
+
+            } catch (StatusException e) {
+                responseObserver.onError(e);
+            }
+
+        } else {
+            throw new StatusRuntimeException(Status.RESOURCE_EXHAUSTED);
         }
 
+    }
+
+    private final LoadingCache<String, Bucket> subscriptionTrail = CacheBuilder.newBuilder()
+            .maximumSize(1000000)
+            .expireAfterWrite(3, TimeUnit.MINUTES)
+            .build(new CacheLoader<String, Bucket>() {
+                @Override
+                public Bucket load(String key) throws Exception {
+                    if (key.endsWith("con")) {
+
+                        log.trace("Creating new bucket4j for continous subscription: {}", key);
+
+                        Refill refill = Refill.intervally(
+                                grpcLimitProperties
+                                        .numberOfFollowRequestsAllowedPerClientPerMinute(),
+                                Duration
+                                        .ofMinutes(1));
+                        Bandwidth limit = Bandwidth.classic(
+                                grpcLimitProperties.initialNumberOfFollowRequestsAllowedPerClient(),
+                                refill);
+                        return Bucket4j.builder()
+                                .addLimit(limit)
+                                .build();
+                    } else {
+
+                        log.trace("Creating new bucket4j for catchup subscription: {}", key);
+
+                        Refill refill = Refill.intervally(
+                                grpcLimitProperties
+                                        .numberOfCatchupRequestsAllowedPerClientPerMinute(),
+                                Duration
+                                        .ofMinutes(1));
+                        Bandwidth limit = Bandwidth.classic(
+                                grpcLimitProperties
+                                        .initialNumberOfCatchupRequestsAllowedPerClient(),
+                                refill);
+                        return Bucket4j.builder()
+                                .addLimit(limit)
+                                .build();
+                    }
+
+                }
+            });
+
+    private boolean subscriptionRequestAccepted(SubscriptionRequestTO request) {
+        // if the client progresses, it is considered a different request
+        String requestFingerprint = request.pid() + "|" + (request.startingAfter()
+                .orElse(null));
+        try {
+            if (request.continuous()) {
+                requestFingerprint = requestFingerprint + "|con";
+            } else {
+                requestFingerprint = requestFingerprint + "|cat";
+            }
+            if (subscriptionTrail.get(requestFingerprint).tryConsume(1)) {
+                return true;
+            } else {
+                log.warn(
+                        "Client exhausts resources by excessivly (re-)subscribing: fingerprint: {}",
+                        requestFingerprint);
+                return false;
+            }
+        } catch (ExecutionException e) {
+            log.error("While finding or creating bucket: ", e);
+            // default to be permissive - for now...
+            return false;
+        }
     }
 
     private void enableResponseCompression(StreamObserver<?> responseObserver) {
@@ -232,7 +315,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     @Override
     @Secured(FactCastAuthority.AUTHENTICATED)
-    public void enumerateNamespaces(MSG_Empty request,
+    public void enumerateNamespaces(
+            MSG_Empty request,
             StreamObserver<MSG_StringSet> responseObserver) {
         try {
             Set<String> allNamespaces = store.enumerateNamespaces()
@@ -266,7 +350,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     @Override
     @Secured(FactCastAuthority.AUTHENTICATED)
-    public void publishConditional(MSG_ConditionalPublishRequest request,
+    public void publishConditional(
+            MSG_ConditionalPublishRequest request,
             StreamObserver<MSG_ConditionalPublishResult> responseObserver) {
         try {
             ConditionalPublishRequest req = converter.fromProto(request);
@@ -313,7 +398,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void currentTime(MSG_Empty request,
+    public void currentTime(
+            MSG_Empty request,
             StreamObserver<MSG_CurrentDatabaseTime> responseObserver) {
         try {
             responseObserver.onNext(converter.toProto(store.currentTime()));
@@ -341,16 +427,19 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     interface ThrowingSupplier<T> {
         T get() throws Exception;
+
     }
 
-    private void doFetchById(StreamObserver<MSG_OptionalFact> responseObserver,
+    private void doFetchById(
+            StreamObserver<MSG_OptionalFact> responseObserver,
             ThrowingSupplier<Optional<Fact>> o) {
         try {
             enableResponseCompression(responseObserver);
 
             val fetchById = o.get();
-            if (fetchById.isPresent())
+            if (fetchById.isPresent()) {
                 assertCanRead(fetchById.get().ns());
+            }
 
             responseObserver.onNext(converter.toProto(fetchById));
             responseObserver.onCompleted();
@@ -361,7 +450,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void fetchByIdAndVersion(MSG_UUID_AND_VERSION request,
+    public void fetchByIdAndVersion(
+            MSG_UUID_AND_VERSION request,
             StreamObserver<MSG_OptionalFact> responseObserver) {
 
         IdAndVersion fromProto = converter.fromProto(request);

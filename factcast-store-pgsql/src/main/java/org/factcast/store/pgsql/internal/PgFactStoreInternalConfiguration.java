@@ -15,9 +15,7 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import java.sql.Connection;
 import java.util.concurrent.Executors;
-import java.util.function.Predicate;
 
 import javax.sql.DataSource;
 
@@ -112,8 +110,9 @@ public class PgFactStoreInternalConfiguration {
 
     @Bean
     public PgListener pgListener(@NonNull PgConnectionSupplier pgConnectionSupplier,
-            @NonNull EventBus eventBus, @NonNull Predicate<Connection> predicate) {
-        return new PgListener(pgConnectionSupplier, eventBus, predicate);
+            @NonNull EventBus eventBus, @NonNull PgConfigurationProperties props,
+            MeterRegistry reg) {
+        return new PgListener(pgConnectionSupplier, eventBus, props, reg);
     }
 
     @Bean

@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.2.4</version>
+    <version>0.2.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-store-pgsql</artifactId>
@@ -61,7 +61,7 @@
     <dependency>
       <groupId>org.liquibase</groupId>
       <artifactId>liquibase-core</artifactId>
-      <version>3.10.0</version><!--$NO-MVN-MAN-VER$ -->
+      <version>3.10.1</version><!--$NO-MVN-MAN-VER$ -->
       <exclusions>
         <exclusion>
           <groupId>ch.qos.logback</groupId>
