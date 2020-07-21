@@ -21,7 +21,7 @@ import com.google.common.base.Stopwatch;
 
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.core.SchedulerLock;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 
 @Value
 @Slf4j
@@ -31,7 +31,7 @@ public class ScheduledRegistryRefresher {
 
     @Scheduled(
             cron = "${factcast.store.pgsql.schemaStoreRefreshCron:*/60 * * * * *}")
-    @SchedulerLock(name = "registryRefresh", lockAtMostFor = 1000 * 60 * 3)
+    @SchedulerLock(name = "registryRefresh", lockAtMostFor = "3m")
     public void refresh() {
 
         // yes, i know the time is recorded via micrometer already, but
