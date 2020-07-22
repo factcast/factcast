@@ -15,13 +15,7 @@
  */
 package org.factcast.grpc.api.conv;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
@@ -30,25 +24,8 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact.Builder;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProperties;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProtocolVersion;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID_AND_VERSION;
 
 import com.google.protobuf.ProtocolStringList;
 
@@ -134,10 +111,20 @@ public class ProtoConverter {
     }
 
     public Fact fromProto(MSG_Fact protoFact) {
-        return Fact.of(protoFact.getHeader(), protoFact.getPayload());
+        int encoder = protoFact.getEncoder();
+        String header = protoFact.getHeader();
+        if (encoder == 0 && header != null) {
+            // default, reads from string fields for compatibility
+            return Fact.of(header, protoFact.getPayload());
+        } else {
+            byte[] headerBytes = protoFact.getByteHeader().toByteArray();
+            byte[] payloadBytes = protoFact.getBytePayload().toByteArray();
+            return Fact.of(FactCastJson.Encoder.values()[encoder], headerBytes, payloadBytes);
+        }
     }
 
     @NonNull
+    // TODO add encoder here
     public MSG_Fact toProto(@NonNull Fact factMark) {
         MSG_Fact.Builder proto = MSG_Fact.newBuilder();
         proto.setHeader(factMark.jsonHeader());

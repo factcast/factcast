@@ -17,11 +17,7 @@ package org.factcast.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.UUID;
 
 import org.junit.jupiter.api.*;
@@ -32,53 +28,53 @@ public class DefaultFactTest {
 
     @Test
     void testNullHeader() {
-        Assertions.assertThrows(NullPointerException.class, () -> DefaultFact.of("{}", null));
+        Assertions.assertThrows(NullPointerException.class, () -> Fact.of("{}", null));
     }
 
     @Test
     void testNullPayload() {
-        Assertions.assertThrows(NullPointerException.class, () -> DefaultFact.of(null, "{}"));
+        Assertions.assertThrows(NullPointerException.class, () -> Fact.of(null, "{}"));
     }
 
     @Test
     void testNullContracts() {
-        Assertions.assertThrows(NullPointerException.class, () -> DefaultFact.of(null, null));
+        Assertions.assertThrows(NullPointerException.class, () -> Fact.of((String) null, null));
     }
 
     @Test
     void testUnparseableHeader() {
-        Assertions.assertThrows(JsonParseException.class, () -> DefaultFact.of("not json at all",
+        Assertions.assertThrows(JsonParseException.class, () -> Fact.of("not json at all",
                 "{}"));
     }
 
     @Test
     void testNoId() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> DefaultFact.of(
+        Assertions.assertThrows(IllegalArgumentException.class, () -> Fact.of(
                 "{\"ns\":\"default\"}", "{}"));
     }
 
     @Test
     void testIdNotUUID() {
-        Assertions.assertThrows(IOException.class, () -> DefaultFact.of(
+        Assertions.assertThrows(IOException.class, () -> Fact.of(
                 "{\"id\":\"buh\",\"ns\":\"default\"}", "{}"));
     }
 
     @Test
     void testValidFact() {
-        DefaultFact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\"}", "{}");
+        Fact.of("{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\"}", "{}");
     }
 
     @Test
     void testMetaDeser() {
-        Fact f = DefaultFact.of("{\"id\":\"" + UUID.randomUUID()
-                + "\",\"ns\":\"default\",\"meta\":{\"foo\":7}}", "{}");
+        Fact f = Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"meta\":{\"foo\":\"7\"}}", "{}");
         assertEquals("7", f.meta("foo"));
     }
 
     @Test
     void testExternalization() throws Exception {
-        Fact f = DefaultFact.of("{\"id\":\"" + UUID.randomUUID()
-                + "\",\"ns\":\"default\",\"meta\":{\"foo\":7}}", "{}");
+        Fact f = Fact.of("{\"id\":\"" + UUID.randomUUID()
+                + "\",\"ns\":\"default\",\"meta\":{\"foo\":\"7\"}}", "{}");
         Fact copy = copyBySerialization(f);
         assertEquals(f, copy);
     }
@@ -87,10 +83,11 @@ public class DefaultFactTest {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(os);
         objectOutputStream.writeObject(f);
-        objectOutputStream.flush();
-        ByteArrayInputStream is = new ByteArrayInputStream(os.toByteArray());
-        ObjectInputStream objectInputStream = new ObjectInputStream(is);
-        return (T) objectInputStream.readObject();
+        objectOutputStream.close();
+        try (ByteArrayInputStream is = new ByteArrayInputStream(os.toByteArray());) {
+            ObjectInputStream objectInputStream = new ObjectInputStream(is);
+            return (T) objectInputStream.readObject();
+        }
     }
 
     @Test
@@ -99,8 +96,8 @@ public class DefaultFactTest {
         final UUID aid = UUID.randomUUID();
         final String header = "{\"id\":\"" + id
                 + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggIds\":[\"" + aid
-                + "\"],\"meta\":{\"foo\":7}}";
-        Fact f = DefaultFact.of(header, "{}");
+                + "\"],\"meta\":{\"foo\":\"7\"}}";
+        Fact f = Fact.of(header, "{}");
         assertSame(header, f.jsonHeader());
     }
 
@@ -110,10 +107,10 @@ public class DefaultFactTest {
         final UUID aid = UUID.randomUUID();
         final String header = "{\"id\":\"" + id
                 + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggIds\":[\"" + aid
-                + "\"],\"meta\":{\"foo\":7}}";
-        Fact f = DefaultFact.of(header, "{}");
-        Fact f2 = DefaultFact.of("{\"ns\":\"ns\",\"id\":\"" + id + "\"}", "{}");
-        Fact f3 = DefaultFact.of("{\"ns\":\"ns\",\"id\":\"" + aid + "\"}", "{}");
+                + "\"],\"meta\":{\"foo\":\"7\"}}";
+        Fact f = Fact.of(header, "{}");
+        Fact f2 = Fact.of("{\"ns\":\"ns\",\"id\":\"" + id + "\"}", "{}");
+        Fact f3 = Fact.of("{\"ns\":\"ns\",\"id\":\"" + aid + "\"}", "{}");
         assertEquals(f, f);
         assertEquals(f, f2);
         assertNotEquals(f, f3);
@@ -123,9 +120,9 @@ public class DefaultFactTest {
     void testCopyAttributes() throws Exception {
         final UUID id = UUID.randomUUID();
         final UUID aid = UUID.randomUUID();
-        Fact f = DefaultFact.of("{\"id\":\"" + id
+        Fact f = Fact.of("{\"id\":\"" + id
                 + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggIds\":[\"" + aid
-                + "\"],\"meta\":{\"foo\":7}}", "{}");
+                + "\"],\"meta\":{\"foo\":\"7\"}}", "{}");
         Fact copy = copyBySerialization(f);
         assertNotSame(f.id(), copy.id());
         assertNotSame(f.ns(), copy.ns());
@@ -143,12 +140,12 @@ public class DefaultFactTest {
     @Test
     void testEqualityMustBeBasedOnIDOnly() {
         UUID id = UUID.randomUUID();
-        Fact f1 = DefaultFact.of("{\"id\":\"" + id
+        Fact f1 = Fact.of("{\"id\":\"" + id
                 + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggIds\":[\""
-                + UUID.randomUUID() + "\"],\"meta\":{\"foo\":7}}", "{}");
-        Fact f2 = DefaultFact.of("{\"id\":\"" + id
+                + UUID.randomUUID() + "\"],\"meta\":{\"foo\":\"7\"}}", "{}");
+        Fact f2 = Fact.of("{\"id\":\"" + id
                 + "\",\"ns\":\"poit\",\"type\":\"bar\",\"aggIds\":[\""
-                + UUID.randomUUID() + "\"],\"meta\":{\"foo\":7}}", "{}");
+                + UUID.randomUUID() + "\"],\"meta\":{\"foo\":\"7\"}}", "{}");
         assertEquals(f1, f2);
     }
 

@@ -19,23 +19,14 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
-import lombok.SneakyThrows;
+import lombok.*;
 
 /**
  * Note: creating an instance involves deserializing the header from JS. This is
@@ -56,12 +47,12 @@ public class DefaultFact implements Fact, Externalizable {
     }
 
     @Getter
-    String jsonHeader;
+    protected String jsonHeader;
 
     @Getter
-    String jsonPayload;
+    protected String jsonPayload;
 
-    transient Header deserializedHeader;
+    protected transient Header deserializedHeader;
 
     // needed for Externalizable – do not use !
     @Deprecated
@@ -91,15 +82,16 @@ public class DefaultFact implements Fact, Externalizable {
         validate();
     }
 
-    private void validate() {
+    protected void validate() {
         if (deserializedHeader.id == null) {
             throw new IllegalArgumentException("id attribute missing from " + jsonHeader);
         }
         if (deserializedHeader.ns == null || deserializedHeader.ns.trim().isEmpty()) {
             throw new IllegalArgumentException("ns attribute missing from " + jsonHeader);
         }
-        if (deserializedHeader.version < 0)
+        if (deserializedHeader.version < 0) {
             throw new IllegalArgumentException("version attribute is not valid " + jsonHeader);
+        }
     }
 
     @Getter
@@ -120,7 +112,7 @@ public class DefaultFact implements Fact, Externalizable {
         String type;
 
         @JsonProperty
-        int version;
+        int version = 0;
 
         @JsonProperty
         Set<UUID> aggIds = new HashSet<>();
@@ -174,4 +166,9 @@ public class DefaultFact implements Fact, Externalizable {
     public Set<UUID> aggIds() {
         return deserializedHeader.aggIds();
     }
+
+    public <T> @NonNull T payloadAs(@NonNull Class<T> clazz) {
+        return FactCastJson.readValue(clazz, jsonPayload);
+    }
+
 }

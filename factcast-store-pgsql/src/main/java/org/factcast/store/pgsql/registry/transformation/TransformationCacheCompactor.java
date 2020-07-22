@@ -25,7 +25,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.core.SchedulerLock;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -38,7 +38,7 @@ public class TransformationCacheCompactor {
 
     @Scheduled(
             cron = "${factcast.store.pgsql.transformationCacheCompactCron:0 0 0 * * *}")
-    @SchedulerLock(name = "transformationCacheCompact", lockAtMostFor = 1000 * 60 * 60)
+    @SchedulerLock(name = "transformationCacheCompact", lockAtMostFor = "PT3M")
     public void compact() {
 
         // yes, i know the time is recorded via micrometer already, but

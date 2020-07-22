@@ -19,25 +19,27 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.factcast.core.util.FactCastJson;
 import org.factcast.core.util.FactCastJson.Encoder;
-import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.fasterxml.jackson.databind.JsonNode;
+@ExtendWith(MockitoExtension.class)
+class TestHelperTest {
 
-import lombok.SneakyThrows;
-
-public class TestHelper {
-
-    public static void expectNPE(Executable e) {
-        expect(NullPointerException.class, e);
+    @Test
+    void json2simpleConversion() {
+        String json = "{\"foo\":{\"bar\":42}}";
+        byte[] bytes = TestHelper.json2msgpack(json);
+        TestClass tc = FactCastJson.readValue(TestClass.class, bytes, Encoder.MSGPACK);
+        assertEquals(42, tc.foo.bar);
     }
 
-    public static void expect(Class<? extends Throwable> ex, Executable e) {
-        assertThrows(ex, e);
+    public static class TestClass {
+        FooClass foo;
     }
 
-    @SneakyThrows
-    public static byte[] json2msgpack(String json) {
-        JsonNode tree = FactCastJson.readTree(json);
-        return FactCastJson.writeValueAsBytes(tree, Encoder.MSGPACK);
+    public static class FooClass {
+        int bar;
     }
+
 }

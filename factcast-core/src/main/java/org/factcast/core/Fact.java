@@ -19,6 +19,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.DefaultFact.Header;
+import org.factcast.core.util.FactCastJson;
+import org.factcast.core.util.FactCastJson.Encoder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -47,10 +49,22 @@ public interface Fact {
     Set<UUID> aggIds();
 
     @NonNull
+    /**
+     * Beware, this call might be expensive, if you chose a binary transission
+     * format instead of json
+     */
     String jsonHeader();
 
     @NonNull
+    /**
+     * Beware, this call might be expensive, if you chose a binary transission
+     * format instead of json
+     */
     String jsonPayload();
+
+    default <T> @NonNull T payloadAs(@NonNull Class<T> clazz) {
+        return FactCastJson.readValue(clazz, jsonPayload());
+    }
 
     String meta(String key);
 
@@ -83,7 +97,12 @@ public interface Fact {
     }
 
     static Fact of(@NonNull JsonNode jsonHeader, @NonNull JsonNode jsonPayload) {
+        // TODO too expensive and fragile
         return DefaultFact.of(jsonHeader.toString(), jsonPayload.toString());
+    }
+
+    static Fact of(Encoder enc, @NonNull byte[] jsonHeader, @NonNull byte[] jsonPayload) {
+        return BinaryFact.of(enc, jsonHeader, jsonPayload);
     }
 
     default boolean before(Fact other) {

@@ -27,7 +27,6 @@ import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
-import org.jetbrains.annotations.NotNull;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -66,7 +65,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
         final AtomicLong threadCount = new AtomicLong(0);
 
         @Override
-        public Thread newThread(@NotNull @NonNull Runnable r) {
+        public Thread newThread(@NonNull Runnable r) {
             Thread thread = new Thread(r);
             thread.setDaemon(true);
             thread.setName("factcast-recon-sub-wrapper-" + threadCount.incrementAndGet());

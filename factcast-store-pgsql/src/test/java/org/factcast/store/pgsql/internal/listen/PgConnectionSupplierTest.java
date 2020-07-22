@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.sql.SQLException;
 import java.util.Properties;
@@ -33,6 +32,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 public class PgConnectionSupplierTest {
 
@@ -43,7 +43,7 @@ public class PgConnectionSupplierTest {
 
     @BeforeEach
     void setUp() {
-        initMocks(this);
+        MockitoAnnotations.openMocks(this);
         uut = new PgConnectionSupplier(ds);
     }
 

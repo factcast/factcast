@@ -156,6 +156,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
                 Subscription sub = store.subscribe(req, new GrpcObserverAdapter(req.toString(),
                         resp,
+                        // TODO this is where the encoding should be passed
                         f -> converter.createNotificationFor(f)));
 
                 ((ServerCallStreamObserver<MSG_Notification>) responseObserver).setOnCancelHandler(
