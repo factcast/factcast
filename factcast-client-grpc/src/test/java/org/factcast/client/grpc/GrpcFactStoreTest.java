@@ -72,10 +72,10 @@ class GrpcFactStoreTest {
     @InjectMocks
     private GrpcFactStore uut;
 
-    @Mock
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private RemoteFactStoreBlockingStub blockingStub;
 
-    @Mock
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private RemoteFactStoreStub stub;
 
     @Mock
