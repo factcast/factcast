@@ -251,6 +251,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         if (responseObserver instanceof ServerCallStreamObserver) {
             ServerCallStreamObserver obs = (ServerCallStreamObserver) responseObserver;
             obs.setMessageCompression(true);
+            log.trace("enabled response compression");
         }
     }
 
@@ -265,7 +266,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         HashMap<String, String> properties = new HashMap<>();
         retrieveImplementationVersion(properties);
         properties.put(Capabilities.CODECS.toString(), codecs.available());
-        log.info("Handshake properties: {} ", properties);
+        log.info("handshake properties: {} ", properties);
         return properties;
     }
 
