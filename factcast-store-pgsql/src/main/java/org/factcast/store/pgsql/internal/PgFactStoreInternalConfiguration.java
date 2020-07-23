@@ -39,6 +39,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -50,6 +51,8 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.NonNull;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
 
 /**
  * Main @Configuration class for a PGFactStore
@@ -59,6 +62,8 @@ import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
 @SuppressWarnings("UnstableApiUsage")
 @Configuration
 @EnableTransactionManagement
+@EnableScheduling
+@EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_SCHEDULER)
 @Import(SchemaRegistryConfiguration.class)
 public class PgFactStoreInternalConfiguration {
 
