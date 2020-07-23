@@ -26,6 +26,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -85,4 +86,15 @@ public class TestFact implements Fact {
         }
         return this;
     }
+
+    @SneakyThrows
+    public JsonNode payload() {
+        return FactCastJson.readTree(jsonPayload());
+    }
+
+    @SneakyThrows
+    public JsonNode header() {
+        return FactCastJson.readTree(jsonHeader());
+    }
+
 }

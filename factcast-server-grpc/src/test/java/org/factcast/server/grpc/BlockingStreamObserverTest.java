@@ -32,6 +32,7 @@ import io.grpc.stub.ServerCallStreamObserver;
 import lombok.val;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public class BlockingStreamObserverTest {
 
     @Mock
@@ -53,9 +54,9 @@ public class BlockingStreamObserverTest {
 
     @Test
     void testNullContract() {
-        expectNPE(() -> new BlockingStreamObserver(null, mock(ServerCallStreamObserver.class)));
-        expectNPE(() -> new BlockingStreamObserver(null, null));
-        expectNPE(() -> new BlockingStreamObserver("oink", null));
+        expectNPE(() -> new BlockingStreamObserver<>(null, mock(ServerCallStreamObserver.class)));
+        expectNPE(() -> new BlockingStreamObserver<>(null, null));
+        expectNPE(() -> new BlockingStreamObserver<>("oink", null));
     }
 
     @Test

@@ -25,6 +25,7 @@ import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.*;
 
@@ -53,6 +54,10 @@ public class DefaultFact implements Fact, Externalizable {
     protected String jsonPayload;
 
     protected transient Header deserializedHeader;
+
+    protected transient JsonNode parsedHeader;
+
+    protected transient JsonNode parsedPayload;
 
     // needed for Externalizable – do not use !
     @Deprecated
@@ -167,8 +172,20 @@ public class DefaultFact implements Fact, Externalizable {
         return deserializedHeader.aggIds();
     }
 
-    public <T> @NonNull T payloadAs(@NonNull Class<T> clazz) {
-        return FactCastJson.readValue(clazz, jsonPayload);
+    @SneakyThrows
+    @Override
+    public JsonNode payload() {
+        if (parsedPayload == null)
+            parsedPayload = FactCastJson.readTree(jsonPayload);
+        return parsedPayload;
+    }
+
+    @SneakyThrows
+    @Override
+    public JsonNode header() {
+        if (parsedHeader == null)
+            parsedHeader = FactCastJson.readTree(jsonHeader);
+        return parsedHeader;
     }
 
 }

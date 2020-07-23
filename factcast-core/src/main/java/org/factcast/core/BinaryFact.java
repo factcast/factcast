@@ -49,7 +49,7 @@ public class BinaryFact extends DefaultFact implements Externalizable {
     }
 
     private void init() throws IOException {
-        this.deserializedHeader = encoder.get().readValue(byteHeader, Header.class);
+        this.deserializedHeader = encoder.get().readerFor(Header.class).readValue(header());
         validate();
     }
 
@@ -68,8 +68,7 @@ public class BinaryFact extends DefaultFact implements Externalizable {
      */
     public String jsonPayload() {
         if (jsonPayload == null) {
-            JsonNode tree = FactCastJson.readTree(bytePayload, encoder);
-            jsonPayload = FactCastJson.writeValueAsString(tree);
+            jsonPayload = payload().toString();
         }
         return jsonPayload;
     }
@@ -78,14 +77,9 @@ public class BinaryFact extends DefaultFact implements Externalizable {
     @Deprecated
     public String jsonHeader() {
         if (jsonHeader == null) {
-            jsonHeader = FactCastJson.writeValueAsString(deserializedHeader);
+            jsonHeader = header().toString();
         }
         return jsonHeader;
-    }
-
-    @Override
-    public <T> @NonNull T payloadAs(@NonNull Class<T> clazz) {
-        return FactCastJson.readValue(clazz, bytePayload, encoder);
     }
 
     @Override
@@ -106,5 +100,21 @@ public class BinaryFact extends DefaultFact implements Externalizable {
         byteHeader = (byte[]) in.readObject();
         bytePayload = (byte[]) in.readObject();
         init();
+    }
+
+    @SneakyThrows
+    @Override
+    public JsonNode payload() {
+        if (parsedPayload == null)
+            parsedPayload = FactCastJson.readTree(bytePayload, encoder);
+        return parsedPayload;
+    }
+
+    @SneakyThrows
+    @Override
+    public JsonNode header() {
+        if (parsedHeader == null)
+            parsedHeader = FactCastJson.readTree(byteHeader, encoder);
+        return parsedHeader;
     }
 }

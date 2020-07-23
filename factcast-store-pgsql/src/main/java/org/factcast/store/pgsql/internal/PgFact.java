@@ -16,31 +16,21 @@
 package org.factcast.store.pgsql.internal;
 
 import java.sql.ResultSet;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import org.factcast.core.Fact;
 import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.annotations.VisibleForTesting;
 
-import lombok.AccessLevel;
-import lombok.Generated;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.ToString;
+import lombok.*;
 
 /**
  * PG Specific implementation of a Fact.
- *
+ * <p>
  * This class is necessary in order to delay parsing of the header until
  * necessary (when accessing meta-data)
  *
@@ -125,5 +115,15 @@ public class PgFact implements Fact {
             }
         }
         return set;
+    }
+
+    @SneakyThrows
+    public JsonNode payload() {
+        return FactCastJson.readTree(jsonPayload());
+    }
+
+    @SneakyThrows
+    public JsonNode header() {
+        return FactCastJson.readTree(jsonHeader());
     }
 }
