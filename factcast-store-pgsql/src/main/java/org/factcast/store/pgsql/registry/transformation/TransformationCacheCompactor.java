@@ -23,13 +23,11 @@ import com.google.common.base.Stopwatch;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 
 @RequiredArgsConstructor
 @Slf4j
-@Value
 public class TransformationCacheCompactor {
     @NonNull
     final TransformationCache cache;
