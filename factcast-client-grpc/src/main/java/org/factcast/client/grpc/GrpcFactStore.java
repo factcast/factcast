@@ -17,13 +17,7 @@ package org.factcast.client.grpc;
 
 import static io.grpc.stub.ClientCalls.*;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -35,28 +29,12 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.grpc.api.Capabilities;
-import org.factcast.grpc.api.CompressionCodecs;
-import org.factcast.grpc.api.ConditionalPublishRequest;
-import org.factcast.grpc.api.StateForRequest;
+import org.factcast.grpc.api.*;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
+import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
@@ -67,12 +45,9 @@ import org.springframework.beans.factory.annotation.Value;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 
-import io.grpc.CallCredentials;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.Status;
+import io.grpc.*;
 import io.grpc.Status.Code;
-import io.grpc.StatusRuntimeException;
+import io.grpc.stub.MetadataUtils;
 import io.grpc.stub.StreamObserver;
 import lombok.Generated;
 import lombok.NonNull;
@@ -104,7 +79,8 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     @Autowired
     @Generated
-    public GrpcFactStore(FactCastGrpcChannelFactory channelFactory,
+    public GrpcFactStore(
+            FactCastGrpcChannelFactory channelFactory,
             @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials) {
         this(channelFactory.createChannel(CHANNEL_NAME), credentials);
     }
@@ -116,7 +92,8 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
                 credentials);
     }
 
-    private GrpcFactStore(RemoteFactStoreBlockingStub newBlockingStub, RemoteFactStoreStub newStub,
+    private GrpcFactStore(
+            RemoteFactStoreBlockingStub newBlockingStub, RemoteFactStoreStub newStub,
             Optional<String> credentials) {
         blockingStub = newBlockingStub;
         stub = newStub;
@@ -145,13 +122,15 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
         } catch (StatusRuntimeException e) {
             if (e.getStatus().equals(Status.UNKNOWN)) {
                 throw FactcastRemoteException.from(e);
-            } else
+            } else {
                 throw wrapRetryable(e);
+            }
         }
     }
 
     @Override
-    public Subscription subscribe(@NonNull SubscriptionRequestTO req,
+    public Subscription subscribe(
+            @NonNull SubscriptionRequestTO req,
             @NonNull FactObserver observer) {
         SubscriptionImpl subscription = SubscriptionImpl.on(observer);
         StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new ClientStreamObserver(
@@ -220,16 +199,20 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
                     PROTOCOL_VERSION,
                     serverProtocolVersion);
         } else {
-            log.info("Matching protocol version encountered {}", serverProtocolVersion);
+            log.info("Matching protocol version {}", serverProtocolVersion);
         }
     }
 
     @VisibleForTesting
     void configureCompression(String codecListFromServer) {
         codecs.selectFrom(codecListFromServer).ifPresent(c -> {
-            log.info("configuring Codec " + c);
-            blockingStub = blockingStub.withCompression(c);
-            stub = stub.withCompression(c);
+            log.info("configuring Codec for sending {}", c);
+            // configure compression used for sending messages and header
+            // to request compressed messages from server
+            Metadata meta = new Metadata();
+            meta.put(Headers.MESSAGE_COMPRESSION, c);
+            blockingStub = MetadataUtils.attachHeaders(blockingStub.withCompression(c), meta);
+            stub = MetadataUtils.attachHeaders(stub.withCompression(c), meta);
         });
     }
 
@@ -272,7 +255,8 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     }
 
     @Override
-    public boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
+    public boolean publishIfUnchanged(
+            @NonNull List<? extends Fact> factsToPublish,
             @NonNull Optional<StateToken> token) {
 
         ConditionalPublishRequest req = new ConditionalPublishRequest(factsToPublish,
