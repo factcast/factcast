@@ -13,25 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.highlevel;
+package org.factcast.core.spec;
 
-import org.factcast.highlevel.Handler;
-import org.factcast.highlevel.aggregate.AbstractAggregate;
+import org.factcast.core.Fact;
 
-import lombok.Getter;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
+import lombok.Value;
 
-public class TestAggregate extends AbstractAggregate {
+@Value
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class FactSpecCoordinates {
 
-    @Getter
-    int magicNumber = 42;
+    String ns;
 
-    class Fonzi {
+    String type;
 
-        @Handler
-        void apply(TestAggregateWasIncremented e) {
-            magicNumber++;
-        }
+    int version;
 
+    public static FactSpecCoordinates from(@NonNull FactSpec fs) {
+        return new FactSpecCoordinates(fs.ns(), fs.type(), fs.version());
     }
 
+    public static FactSpecCoordinates from(@NonNull Fact fact) {
+        return new FactSpecCoordinates(fact.ns(), fact.type(), fact.version());
+    }
 }
