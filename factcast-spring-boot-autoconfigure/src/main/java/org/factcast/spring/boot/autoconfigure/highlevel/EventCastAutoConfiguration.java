@@ -18,11 +18,14 @@ package org.factcast.spring.boot.autoconfigure.highlevel;
 import org.factcast.core.FactCast;
 import org.factcast.core.snap.SnapshotRepository;
 import org.factcast.highlevel.EventCast;
+import org.factcast.highlevel.applier.DefaultEventApplierFactory;
 import org.factcast.highlevel.snapshot.AggregateSnapshotRepositoryImpl;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Generated;
 
@@ -33,7 +36,9 @@ import lombok.Generated;
 public class EventCastAutoConfiguration {
 
     @Bean
-    public EventCast eventCast(FactCast fc, SnapshotRepository sr) {
-        return new EventCast(fc, new AggregateSnapshotRepositoryImpl(sr));
+    public EventCast eventCast(FactCast fc, SnapshotRepository sr, ObjectMapper om) {
+        return new EventCast(fc, new DefaultEventApplierFactory(om),
+                new AggregateSnapshotRepositoryImpl(sr));
     }
+
 }

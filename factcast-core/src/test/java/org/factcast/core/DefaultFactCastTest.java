@@ -202,7 +202,8 @@ public class DefaultFactCastTest {
         Subscription sub = mock(Subscription.class);
         when(store.subscribe(any(), any())).thenReturn(sub);
 
-        Subscription s = uut.subscribe(SubscriptionRequest.follow(new LinkedList<>()).fromScratch(),
+        Subscription s = uut.subscribe(SubscriptionRequest.follow(FactSpec.ns("test"))
+                .fromScratch(),
                 element -> {
                 });
         s.close();
@@ -220,7 +221,8 @@ public class DefaultFactCastTest {
 
         List<Fact> seen = new LinkedList<>();
 
-        Subscription s = uut.subscribe(SubscriptionRequest.follow(new LinkedList<>()).fromScratch(),
+        Subscription s = uut.subscribe(SubscriptionRequest.follow(FactSpec.ns("test"))
+                .fromScratch(),
                 seen::add);
 
         FactObserver fo = observer.getValue();
