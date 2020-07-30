@@ -15,45 +15,26 @@
  */
 package org.factcast.grpc.api.conv;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact.Builder;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProperties;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProtocolVersion;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID_AND_VERSION;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.ProtocolStringList;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 
 /**
  * Converts Protobuf messages to Java Objects and back.
@@ -325,5 +306,90 @@ public class ProtoConverter {
     @NonNull
     public MSG_CurrentDatabaseTime toProto(long currentTime) {
         return MSG_CurrentDatabaseTime.newBuilder().setMillis(currentTime).build();
+    }
+
+    public MSG_SnapshotId toProto(SnapshotId id) {
+        return MSG_SnapshotId.newBuilder()
+                .setKey(id.key())
+                .setUuid(toProtoOptional(id.uuid()))
+                .build();
+    }
+
+    public MSG_OptionalSerial toProtoOptional(Long serialVersionUidOrNull) {
+        MSG_OptionalSerial.Builder ret = MSG_OptionalSerial.newBuilder();
+        if (serialVersionUidOrNull != null) {
+            ret.setPresent(true);
+            return ret.setSerial(serialVersionUidOrNull).build();
+        } else {
+            return ret.setPresent(false).build();
+        }
+    }
+
+    public MSG_OptionalUuid toProtoOptional(@NonNull UUID uuid) {
+        MSG_OptionalUuid.Builder builder = MSG_OptionalUuid.newBuilder();
+        if (uuid == null) {
+            return builder
+                    .setPresent(false)
+                    .build();
+        } else {
+            return builder
+                    .setPresent(true)
+                    .setUuid(toProto(uuid))
+                    .build();
+        }
+    }
+
+    public Optional<Snapshot> fromProto(@NonNull MSG_OptionalSnapshot message) {
+        if (!message.getPresent()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(fromProto(message.getSnapshot()));
+        }
+
+    }
+
+    public Snapshot fromProto(@NonNull MSG_Snapshot snapshot) {
+        return new Snapshot(fromProto(snapshot.getId()), fromProto(snapshot.getFactId()), fromProto(
+                snapshot.getData()));
+    }
+
+    public SnapshotId fromProto(@NonNull MSG_SnapshotId id) {
+        return new SnapshotId(
+                id.getKey(),
+                fromProto(id.getUuid()));
+    }
+
+    public UUID fromProto(@NonNull MSG_OptionalUuid uuid) {
+        if (uuid.getPresent()) {
+            return fromProto(uuid.getUuid());
+        } else {
+            return null;
+        }
+    }
+
+    public byte[] fromProto(@NonNull ByteString data) {
+        return data.toByteArray();
+    }
+
+    public MSG_Snapshot toProto(
+            @NonNull SnapshotId id, @NonNull UUID state,
+            @NonNull byte[] bytes) {
+        val ret = MSG_Snapshot.newBuilder();
+        ret.setId(toProto(id));
+        ret.setFactId(toProto(state));
+        ret.setData(ByteString.copyFrom(bytes));
+        return ret.build();
+    }
+
+    public MSG_OptionalSnapshot toProtoSnapshot(Optional<Snapshot> snapshot) {
+        MSG_OptionalSnapshot.Builder ret = MSG_OptionalSnapshot.newBuilder();
+        if (snapshot.isPresent()) {
+            ret.setPresent(true);
+            ret.setSnapshot(toProto(snapshot.get().id(), snapshot.get().lastFact(), snapshot.get()
+                    .bytes()));
+        } else {
+            ret.setPresent(false);
+        }
+        return ret.build();
     }
 }

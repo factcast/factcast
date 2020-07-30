@@ -63,6 +63,11 @@
         <artifactId>factcast-store-test</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-highlevel-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <!-- needed dependencies -->
       <dependency>
         <groupId>org.postgresql</groupId>

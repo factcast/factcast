@@ -99,24 +99,30 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
             return toBuild;
         }
 
-        public SpecBuilder follow(FactSpec specification) {
+        public SpecBuilder follow(@NonNull FactSpec specification) {
             or(specification);
             toBuild.continuous = true;
             return this;
         }
 
-        public SpecBuilder catchup(FactSpec specification) {
+        public SpecBuilder catchup(@NonNull FactSpec specification) {
             or(specification);
             toBuild.continuous = false;
             return this;
         }
 
         public SpecBuilder catchup(Collection<FactSpec> specification) {
+            if (specification.isEmpty())
+                throw new IllegalArgumentException(
+                        "At least one FactSpec is needed for a subscription");
             specification.forEach(this::catchup);
             return this;
         }
 
         public SpecBuilder follow(Collection<FactSpec> specification) {
+            if (specification.isEmpty())
+                throw new IllegalArgumentException(
+                        "At least one FactSpec is needed for a subscription");
             specification.forEach(this::follow);
             return this;
         }

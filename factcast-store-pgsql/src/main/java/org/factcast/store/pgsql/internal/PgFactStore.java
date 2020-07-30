@@ -17,21 +17,13 @@ package org.factcast.store.pgsql.internal;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Supplier;
 
 import org.factcast.core.Fact;
-import org.factcast.core.store.AbstractFactStore;
-import org.factcast.core.store.StateToken;
-import org.factcast.core.store.TokenStore;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
+import org.factcast.core.store.*;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -117,7 +109,13 @@ public class PgFactStore extends AbstractFactStore {
 
             GET_STAGE_FOR("getStateFor"),
 
-            PUBLISH_IF_UNCHANGED("publishIfUnchanged");
+            PUBLISH_IF_UNCHANGED("publishIfUnchanged"),
+
+            GET_SNAPSHOT("getSnapshot"),
+
+            SET_SNAPSHOT("setSnapshot"),
+
+            CLEAR_SNAPSHOT("clearSnapshot");
 
             @NonNull
             @Getter
@@ -132,7 +130,8 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Autowired
-    public PgFactStore(@NonNull JdbcTemplate jdbcTemplate,
+    public PgFactStore(
+            @NonNull JdbcTemplate jdbcTemplate,
             @NonNull PgSubscriptionFactory subscriptionFactory,
             TokenStore tokenStore, @NonNull FactTableWriteLock lock,
             @NonNull FactTransformerService factTransformerService,
@@ -205,19 +204,31 @@ public class PgFactStore extends AbstractFactStore {
         });
     }
 
-    private Fact extractFactFromResultSet(ResultSet resultSet,
+    private Fact extractFactFromResultSet(
+            ResultSet resultSet,
             @SuppressWarnings("unused") int rowNum) {
         return PgFact.from(resultSet);
     }
 
+    private PgSnapshotData extractSnapshotFromResultSet(
+            ResultSet resultSet,
+            @SuppressWarnings("unused") int rowNum) throws SQLException {
+        return new PgSnapshotData(
+                UUID.fromString(
+                        resultSet.getString(1)),
+                resultSet.getBytes(2));
+    }
+
     @NonNull
-    private String extractStringFromResultSet(ResultSet resultSet,
+    private String extractStringFromResultSet(
+            ResultSet resultSet,
             @SuppressWarnings("unused") int rowNum) throws SQLException {
         return resultSet.getString(1);
     }
 
     @Override
-    public @NonNull Subscription subscribe(@NonNull SubscriptionRequestTO request,
+    public @NonNull Subscription subscribe(
+            @NonNull SubscriptionRequestTO request,
             @NonNull FactObserver observer) {
         OP operation = request.continuous() ? OP.SUBSCRIBE_FOLLOW : OP.SUBSCRIBE_CATCHUP;
         return time(operation, () -> subscriptionFactory.subscribe(request, observer));
@@ -256,7 +267,8 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Override
-    protected Map<UUID, Optional<UUID>> getStateFor(@NonNull Optional<String> ns,
+    protected Map<UUID, Optional<UUID>> getStateFor(
+            @NonNull Optional<String> ns,
             @NonNull Collection<UUID> forAggIds) {
         return time(OP.GET_STAGE_FOR, () -> {
             // just prototype code
@@ -288,7 +300,8 @@ public class PgFactStore extends AbstractFactStore {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
+    public boolean publishIfUnchanged(
+            @NonNull List<? extends Fact> factsToPublish,
             @NonNull Optional<StateToken> optionalToken) {
         return time(OP.PUBLISH_IF_UNCHANGED, () -> {
             lock.aquireExclusiveTXLock();
@@ -353,6 +366,30 @@ public class PgFactStore extends AbstractFactStore {
     public long currentTime() {
         return jdbcTemplate.queryForObject(PgConstants.CURRENT_TIME_MILLIS,
                 Long.class);
+    }
+
+    @Override
+    public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
+        return time(OP.GET_SNAPSHOT, () -> jdbcTemplate.query(PgConstants.SELECT_SNAPSHOT,
+                new Object[] {
+                        id.uuid(), id.key()
+                }, this::extractSnapshotFromResultSet)
+                .stream()
+                .findFirst()
+                .map(snapData -> new Snapshot(id, snapData.factId(), snapData.bytes())));
+    }
+
+    @Override
+    public void setSnapshot(@NonNull SnapshotId id, @NonNull UUID state, @NonNull byte[] bytes) {
+        time(OP.SET_SNAPSHOT, () -> jdbcTemplate.update(PgConstants.UPSERT_SNAPSHOT, id.uuid(), id
+                .key(), state, bytes, state, bytes));
+    }
+
+    @Override
+    public void clearSnapshot(@NonNull SnapshotId id) {
+        time(OP.CLEAR_SNAPSHOT, () -> jdbcTemplate.update(PgConstants.CLEAR_SNAPSHOT, id.uuid(), id
+                .key()));
+
     }
 
 }
