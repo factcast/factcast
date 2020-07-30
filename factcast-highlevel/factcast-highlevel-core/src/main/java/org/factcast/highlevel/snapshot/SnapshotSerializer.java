@@ -15,10 +15,10 @@
  */
 package org.factcast.highlevel.snapshot;
 
-import org.factcast.highlevel.aggregate.Aggregate;
+import org.factcast.highlevel.aggregate.ActivatableProjection;
 
-public interface AggregateSerializationCodec {
-    byte[] serialize(Aggregate a);
+public interface SnapshotSerializer {
+    byte[] serialize(ActivatableProjection a);
 
-    <A extends Aggregate> A deserialize(Class<A> type, byte[] bytes);
+    <A extends ActivatableProjection> A deserialize(Class<A> type, byte[] bytes);
 }

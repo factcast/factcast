@@ -13,18 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.highlevel.applier;
+package org.factcast.itests.highlevel;
 
-import org.factcast.highlevel.aggregate.ActivatableProjection;
+import java.util.Set;
+import java.util.UUID;
 
-import lombok.RequiredArgsConstructor;
+import org.factcast.core.spec.Specification;
+import org.factcast.highlevel.EventPojo;
 
-@RequiredArgsConstructor
-public class DefaultEventApplierFactory implements EventApplierFactory {
+import com.google.common.collect.Sets;
 
-    final EventSerializer deser;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    public <A extends ActivatableProjection> EventApplier<A> create(A projection) {
-        return new DefaultEventApplier<>(deser, projection);
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Specification(ns = "test")
+public class UserCreated implements EventPojo {
+    UUID aggregateId;
+
+    String userName;
+
+    @Override
+    public Set<UUID> aggregateIds() {
+        return Sets.newHashSet(aggregateId);
     }
+
 }

@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.highlevel.applier;
+package org.factcast.highlevel.aggregate;
 
-import org.factcast.highlevel.aggregate.ActivatableProjection;
+import java.util.List;
 
-import lombok.RequiredArgsConstructor;
+import org.factcast.core.spec.FactSpec;
 
-@RequiredArgsConstructor
-public class DefaultEventApplierFactory implements EventApplierFactory {
+import lombok.NonNull;
 
-    final EventSerializer deser;
-
-    public <A extends ActivatableProjection> EventApplier<A> create(A projection) {
-        return new DefaultEventApplier<>(deser, projection);
+public interface ActivatableProjection {
+    default @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
+        return specsAsDiscovered;
     }
 }

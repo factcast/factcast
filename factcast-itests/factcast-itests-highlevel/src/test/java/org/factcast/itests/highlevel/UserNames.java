@@ -13,18 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.highlevel.applier;
+package org.factcast.itests.highlevel;
 
+import java.util.*;
+
+import org.factcast.highlevel.Handler;
 import org.factcast.highlevel.aggregate.ActivatableProjection;
 
-import lombok.RequiredArgsConstructor;
+//TODO express activate/passivate
+public class UserNames implements ActivatableProjection {
 
-@RequiredArgsConstructor
-public class DefaultEventApplierFactory implements EventApplierFactory {
+    private final Map<UUID, String> existingNames = new HashMap<>();
 
-    final EventSerializer deser;
+    @Handler
+    void apply(UserCreated created) {
+        existingNames.put(created.aggregateId(), created.userName());
+    };
 
-    public <A extends ActivatableProjection> EventApplier<A> create(A projection) {
-        return new DefaultEventApplier<>(deser, projection);
+    @Handler
+    void apply(UserDeleted deleted) {
+        existingNames.remove(deleted.aggregateId());
+    };
+
+    int count() {
+        return existingNames.size();
     }
+
+    boolean contains(String name) {
+        return existingNames.values().contains(name);
+    }
+
 }

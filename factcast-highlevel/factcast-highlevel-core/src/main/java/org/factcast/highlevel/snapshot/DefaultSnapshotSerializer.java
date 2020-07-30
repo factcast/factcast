@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.highlevel.applier;
+package org.factcast.highlevel.snapshot;
 
+import org.factcast.core.util.FactCastJson;
 import org.factcast.highlevel.aggregate.ActivatableProjection;
 
-import lombok.RequiredArgsConstructor;
+public class DefaultSnapshotSerializer implements SnapshotSerializer {
+    @Override
+    public byte[] serialize(ActivatableProjection a) {
+        return FactCastJson.writeValueAsBytes(a);
+    }
 
-@RequiredArgsConstructor
-public class DefaultEventApplierFactory implements EventApplierFactory {
-
-    final EventSerializer deser;
-
-    public <A extends ActivatableProjection> EventApplier<A> create(A projection) {
-        return new DefaultEventApplier<>(deser, projection);
+    @Override
+    public <A extends ActivatableProjection> A deserialize(Class<A> type, byte[] bytes) {
+        return FactCastJson.readValueFromBytes(type, bytes);
     }
 }

@@ -30,8 +30,8 @@ import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.highlevel.EventPojo;
 import org.factcast.highlevel.Handler;
 import org.factcast.highlevel.HandlerFor;
+import org.factcast.highlevel.aggregate.ActivatableProjection;
 import org.factcast.highlevel.aggregate.Aggregate;
-import org.factcast.highlevel.aggregate.Projection;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
@@ -42,13 +42,13 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 @Slf4j
-public class DefaultEventApplier<A extends Projection> implements EventApplier<A> {
+public class DefaultEventApplier<A extends ActivatableProjection> implements EventApplier<A> {
 
-    private final Projection projection;
+    private final ActivatableProjection projection;
 
-    private static final Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>> cache = new HashMap<>();
+    private static final Map<Class<? extends ActivatableProjection>, Map<FactSpecCoordinates, Dispatcher>> cache = new HashMap<>();
 
-    interface TargetObjectResolver extends Function<Projection, Object> {
+    interface TargetObjectResolver extends Function<ActivatableProjection, Object> {
     }
 
     interface ParameterTransformer extends Function<Fact, Object[]> {
@@ -56,7 +56,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
 
     private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
 
-    protected DefaultEventApplier(EventSerializer ctx, Projection p) {
+    protected DefaultEventApplier(EventSerializer ctx, ActivatableProjection p) {
         this.projection = p;
         this.dispatchInfo = cache.computeIfAbsent(p.getClass(), c -> discoverDispatchInfo(ctx, p));
     }
@@ -114,7 +114,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
 
         EventSerializer deserializer;
 
-        void invoke(Projection projection, Fact f)
+        void invoke(ActivatableProjection projection, Fact f)
                 throws InvocationTargetException, IllegalAccessException,
                 NoSuchMethodException, JsonProcessingException {
             dispatchMethod.invoke(objectResolver.apply(projection), parameterTransformer.apply(f));
@@ -122,7 +122,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
     }
 
     private static Map<FactSpecCoordinates, Dispatcher> discoverDispatchInfo(
-            EventSerializer deserializer, Projection p) {
+            EventSerializer deserializer, ActivatableProjection p) {
         Map<FactSpecCoordinates, Dispatcher> map = new HashMap<>();
 
         Collection<CallTarget> relevantClasses = getRelevantClasses(p);
@@ -238,7 +238,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
         TargetObjectResolver resolver;
     }
 
-    private static Collection<CallTarget> getRelevantClasses(Projection p) {
+    private static Collection<CallTarget> getRelevantClasses(ActivatableProjection p) {
         return getRelevantClasses(new CallTarget(p.getClass(), o -> o));
     }
 

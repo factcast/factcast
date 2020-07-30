@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.highlevel.aggregate;
+package org.factcast.highlevel.snapshot;
 
-import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
-import org.factcast.core.spec.FactSpec;
+import org.factcast.highlevel.aggregate.ActivatableProjection;
 
 import lombok.NonNull;
 
-public interface Projection {
-    default @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
-        return specsAsDiscovered;
-    }
+public interface ProjectionSnapshotRepository {
+    <A extends ActivatableProjection> Optional<ProjectionSnapshot<A>> findLatest(
+            @NonNull Class<A> type);
+
+    <A extends ActivatableProjection> void putBlocking(@NonNull ProjectionSnapshot<A> snapshot);
+
+    <A extends ActivatableProjection> CompletableFuture<Void> put(
+            @NonNull ProjectionSnapshot<A> snapshot);
 }
