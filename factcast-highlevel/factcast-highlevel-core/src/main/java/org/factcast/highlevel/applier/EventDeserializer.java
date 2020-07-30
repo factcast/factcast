@@ -13,28 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.highlevel;
+package org.factcast.highlevel.applier;
 
-import java.util.UUID;
+import org.factcast.highlevel.EventPojo;
 
-import org.factcast.core.FactHeader;
-import org.factcast.highlevel.Handler;
-import org.factcast.highlevel.aggregate.AbstractAggregate;
-
-import lombok.Getter;
-
-public class TestAggregate extends AbstractAggregate {
-
-    @Getter
-    int magicNumber = 42;
-
-    class SomeNestedClass {
-
-        @Handler
-        void apply(FactHeader f, UUID id, TestAggregateWasIncremented e) {
-            magicNumber++;
-        }
-
-    }
-
+public interface EventDeserializer {
+    <T extends EventPojo> T deserialize(Class<T> targetClass, String json);
 }

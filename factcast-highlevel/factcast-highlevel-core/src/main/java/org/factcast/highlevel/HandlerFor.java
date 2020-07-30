@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.highlevel;
+package org.factcast.highlevel;
 
-import java.util.UUID;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import org.factcast.core.FactHeader;
-import org.factcast.highlevel.Handler;
-import org.factcast.highlevel.aggregate.AbstractAggregate;
+// TODO maybe match handler methods by name?
+@Retention(RetentionPolicy.RUNTIME)
+@Target(value = ElementType.METHOD)
+public @interface HandlerFor {
+    String ns();
 
-import lombok.Getter;
+    String type();
 
-public class TestAggregate extends AbstractAggregate {
-
-    @Getter
-    int magicNumber = 42;
-
-    class SomeNestedClass {
-
-        @Handler
-        void apply(FactHeader f, UUID id, TestAggregateWasIncremented e) {
-            magicNumber++;
-        }
-
-    }
-
+    int version() default 0;
 }

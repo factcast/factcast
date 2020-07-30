@@ -24,30 +24,27 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
+import org.factcast.core.FactHeader;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.spec.FactSpecCoordinates;
-import org.factcast.core.spec.Specification;
 import org.factcast.highlevel.EventPojo;
 import org.factcast.highlevel.Handler;
+import org.factcast.highlevel.HandlerFor;
 import org.factcast.highlevel.aggregate.Projection;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 /**
- * TODO - additional factHeader parameter - optional fact&specification -
- * abstract out OM, to enable use of gson or similar - discovery cache per class
+ * TODO abstract out OM, to enable use of gson or similar
  */
-@RequiredArgsConstructor
 @Slf4j
 public class DefaultEventApplier<A extends Projection> implements EventApplier<A> {
-    private final EventApplierContext ctx;
 
     private final Projection projection;
 
@@ -61,14 +58,13 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
 
     private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
 
-    protected DefaultEventApplier(EventApplierContext ctx, Projection p) {
-        this.ctx = ctx;
+    protected DefaultEventApplier(EventDeserializer ctx, Projection p) {
         this.projection = p;
         this.dispatchInfo = cache.computeIfAbsent(p.getClass(), c -> discoverDispatchInfo(ctx, p));
     }
 
     public void apply(@NonNull Fact f) {
-        log.trace("Dispatching fact {}", f.jsonHeader());
+        log.trace("Dispatching fact {}", f.id());
         val coords = FactSpecCoordinates.from(f);
         val dispatch = dispatchInfo.get(coords);
         if (dispatch == null) {
@@ -76,10 +72,10 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
         }
 
         try {
-            dispatch.invoke(ctx, projection, f);
+            dispatch.invoke(projection, f);
         } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException
                 | JsonProcessingException e) {
-            throw new IllegalStateException(e);
+            throw new IllegalArgumentException(e);
         }
     }
 
@@ -105,7 +101,9 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
 
         FactSpec spec;
 
-        void invoke(EventApplierContext ctx, Projection projection, Fact f)
+        EventDeserializer deserializer;
+
+        void invoke(Projection projection, Fact f)
                 throws InvocationTargetException, IllegalAccessException,
                 NoSuchMethodException, JsonProcessingException {
             dispatchMethod.invoke(objectResolver.apply(projection), parameterTransformer.apply(f));
@@ -113,7 +111,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
     }
 
     private static Map<FactSpecCoordinates, Dispatcher> discoverDispatchInfo(
-            EventApplierContext ctx, Projection p) {
+            EventDeserializer deserializer, Projection p) {
         Map<FactSpecCoordinates, Dispatcher> map = new HashMap<>();
 
         Collection<CallTarget> relevantClasses = getRelevantClasses(p);
@@ -124,13 +122,15 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
                     .forEach(m -> {
 
                         FactSpec fs = discoverFactSpec(m);
+                        FactSpecCoordinates key = FactSpecCoordinates.from(fs);
 
-                        Dispatcher dispatcher = new Dispatcher(m, callTarget.resolver,
-                                createParameterTransformer(ctx, m), fs);
-                        val before = map.put(FactSpecCoordinates.from(fs), dispatcher);
+                        Dispatcher dispatcher = new Dispatcher(
+                                m, callTarget.resolver,
+                                createParameterTransformer(deserializer, m), fs, deserializer);
+                        val before = map.put(key, dispatcher);
                         if (before != null) {
                             throw new UnsupportedOperationException(
-                                    "Duplicate @Handler found for spec '" + fs + "':\n " + m
+                                    "Duplicate Handler method found for spec '" + key + "':\n " + m
                                             + "\n clashes with\n " + before.dispatchMethod());
                         }
 
@@ -148,37 +148,76 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
     }
 
     private static FactSpec discoverFactSpec(Method m) {
+
+        HandlerFor handlerFor = m.getAnnotation(HandlerFor.class);
+        if (handlerFor != null) {
+            return FactSpec.ns(
+                    handlerFor.ns())
+                    .type(
+                            handlerFor.type())
+                    .version(
+                            handlerFor.version());
+        }
+
         List<Class<?>> eventPojoTypes = Arrays.stream(m.getParameterTypes())
                 .filter(t -> EventPojo.class.isAssignableFrom(t))
                 .collect(Collectors.toList());
 
         if (eventPojoTypes.isEmpty()) {
-            // TODO add @Spec
-            throw new IllegalArgumentException("Cannot introspect FactSpec from " + m);
+            throw new IllegalArgumentException("Cannot introspect FactSpec from " + m
+                    + ". Either use @HandlerFor or pass an EventPojo as a parameter.");
         } else {
             if (eventPojoTypes.size() > 1) {
                 throw new IllegalArgumentException(
                         "Multiple EventPojo Parameters. Cannot introspect FactSpec from " + m);
             } else {
-                return FactSpec.from(eventPojoTypes.get(0));
+                Class<?> eventPojoType = eventPojoTypes.get(0);
+                return FactSpec.from(eventPojoType);
             }
         }
     }
 
-    private static ParameterTransformer createParameterTransformer(EventApplierContext ctx,
+    private static ParameterTransformer createParameterTransformer(
+            EventDeserializer ctx,
             Method m) {
 
-        // TODO additional params, sanitize
-        Class<?> parameterType = m.getParameterTypes()[0];
+        Class<?>[] parameterTypes = m.getParameterTypes();
         return p -> {
-            try {
-                return new Object[] { ctx.mapper()
-                        .readerFor(parameterType)
-                        .readValue(p.jsonPayload()) };
-            } catch (JsonProcessingException e) {
-                throw new IllegalStateException(e);
+
+            Object[] parameters = new Object[parameterTypes.length];
+
+            for (int i = 0; i < parameterTypes.length; i++) {
+                Class<?> type = parameterTypes[i];
+                Function<Fact, Object> transformer = createSingleParameterTransformer(m, ctx, type);
+                parameters[i] = transformer.apply(p);
             }
+            return parameters;
         };
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Function<Fact, Object> createSingleParameterTransformer(Method m,
+            EventDeserializer deserializer, Class<?> type) {
+        if (EventPojo.class.isAssignableFrom(type)) {
+            return p -> deserializer.deserialize((Class<? extends EventPojo>) type, p
+                    .jsonPayload());
+        }
+
+        if (Fact.class == type) {
+            return p -> p;
+        }
+
+        if (FactHeader.class == type) {
+            return Fact::header;
+        }
+
+        if (UUID.class == type) {
+            return Fact::id;
+        }
+
+        throw new UnsupportedOperationException("Don't know how resolve " + type
+                + " from a Fact for a parameter to method:\n " + m);
+
     }
 
     @Value
@@ -218,61 +257,35 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
 
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException
                 | InvocationTargetException e) {
-            throw new UnsupportedOperationException("Cannot instantiate " + c, e);
+            throw new IllegalStateException("Cannot instantiate " + c, e);
         }
     }
 
     private static boolean isEventHandlerMethod(Method m) {
-        if (m.getAnnotation(Handler.class) != null) {
-
-            if (m.getParameterCount() != 1) {
-                throw new UnsupportedOperationException(
-                        "Methods annotated with @" + Handler.class.getSimpleName()
-                                + " need to have one parameter only: " + m);
-            }
-
-            if (!EventPojo.class.isAssignableFrom(getParameterType(m))) {
-                throw new UnsupportedOperationException("Methods annotated with @" + Handler.class
-                        .getSimpleName()
-                        + " need to have one parameter extending Type " + EventPojo.class
-                                .getSimpleName() + ": " + m);
-            }
+        if (m.getAnnotation(Handler.class) != null || m.getAnnotation(HandlerFor.class) != null) {
 
             if (!m.getReturnType().equals(void.class)) {
-                throw new UnsupportedOperationException("Methods annotated with @" + Handler.class
-                        .getSimpleName()
-                        + " need to return void, but returns '" + m.getReturnType() + "': " + m);
+                throw new UnsupportedOperationException("Handler methods must return void, but \n "
+                        + m + "\n returns '" + m.getReturnType() + "'");
+            }
+
+            if (m.getParameterCount() == 0) {
+                throw new UnsupportedOperationException(
+                        "Handler methods must have at least one parameter: " + m);
             }
 
             if (Modifier.isPublic(m.getModifiers())) {
-                log.warn("Methods annotated with @" + Handler.class.getSimpleName()
-                        + " should not be public: " + m);
+                log.warn("Handler methods should not be public: " + m);
             }
 
-            if (!m.getReturnType().equals(void.class)) {
-                throw new UnsupportedOperationException("Methods annotated with @" + Handler.class
-                        .getSimpleName()
-                        + " needs to return void, but returns '" + m.getReturnType() + "': " + m);
+            for (Class<?> type : m.getParameterTypes()) {
+                // trigger transformer creation in order to fail fast
+                createSingleParameterTransformer(m, null, type);
             }
 
             return true;
-
         }
         return false;
-    }
-
-    private static String getFactType(Class<?> parameterType) {
-        Specification s = parameterType.getAnnotation(Specification.class);
-        String annotatedType = s.type();
-        if (annotatedType != null && !annotatedType.trim().isEmpty()) {
-            return annotatedType;
-        } else {
-            return parameterType.getSimpleName();
-        }
-    }
-
-    private static Class<?> getParameterType(Method m) {
-        return m.getParameterTypes()[0];
     }
 
 }
