@@ -20,11 +20,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.function.Supplier;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.core.spec.Specification;
 import org.factcast.highlevel.EventPojo;
 import org.factcast.highlevel.Handler;
@@ -46,90 +47,161 @@ import lombok.val;
 @RequiredArgsConstructor
 @Slf4j
 public class DefaultEventApplier<A extends Projection> implements EventApplier<A> {
-    final EventApplierContext ctx;
-
-    private final List<FactSpec> factSpecs = new LinkedList<>();
+    private final EventApplierContext ctx;
 
     private final Projection projection;
 
-    @Value
-    @VisibleForTesting
-    class DispatchInfo {
+    private static final Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>> cache = new HashMap<>();
 
-        Class<? extends EventPojo> eventClass;
-
-        Object targetObject;
-
-        Method dispatchMethod;
-
-        @SuppressWarnings("unchecked")
-        <T extends EventPojo> T fromFact(Fact f) throws NoSuchMethodException,
-                InvocationTargetException, IllegalAccessException, JsonProcessingException {
-            return (T) ctx.mapper().readerFor(eventClass).readValue(f.jsonPayload());
-        }
-
-        void invoke(Fact f) throws InvocationTargetException, IllegalAccessException,
-                NoSuchMethodException, JsonProcessingException {
-            dispatchMethod.invoke(targetObject, fromFact(f));
-        }
+    interface TargetObjectResolver extends Function<Projection, Object> {
     }
 
-    private final Map<String, DispatchInfo> eventClassMap;
+    interface ParameterTransformer extends Function<Fact, Object[]> {
+    }
+
+    private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
 
     protected DefaultEventApplier(EventApplierContext ctx, Projection p) {
         this.ctx = ctx;
         this.projection = p;
-        this.eventClassMap = buildEventClassMap();
+        this.dispatchInfo = cache.computeIfAbsent(p.getClass(), c -> discoverDispatchInfo(ctx, p));
     }
 
-    private Map<String, DispatchInfo> buildEventClassMap() {
-        Map<String, DispatchInfo> map = new HashMap<>();
+    public void apply(@NonNull Fact f) {
+        log.trace("Dispatching fact {}", f.jsonHeader());
+        val coords = FactSpecCoordinates.from(f);
+        val dispatch = dispatchInfo.get(coords);
+        if (dispatch == null) {
+            throw new IllegalStateException("Unexpected Fact coordinates: '" + coords + "'");
+        }
 
-        getRelevantClasses().forEach(target -> Arrays.stream(target.clazz().getDeclaredMethods())
-                .filter(this::isEventHandlerMethod)
-                .forEach(m -> {
-                    val paramType = getParameterType(m);
-                    val factType = getFactType(paramType);
+        try {
+            dispatch.invoke(ctx, projection, f);
+        } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException
+                | JsonProcessingException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
-                    val before = map.put(factType, new DispatchInfo(
-                            (Class<? extends EventPojo>) paramType, target.lazyInstanceSupplier
-                                    .get(), m));
-                    if (before != null) {
-                        throw new UnsupportedOperationException(
-                                "Duplicate @Handler found for type '" + paramType + "':\n " + m
-                                        + "\n clashes with\n " + before.dispatchMethod());
-                    }
+    public List<FactSpec> createFactSpecs() {
+        if (dispatchInfo.isEmpty()) {
+            throw new IllegalArgumentException("No handler methods found on " + projection
+                    .getClass()
+                    .getCanonicalName());
+        }
+        return dispatchInfo.values().stream().map(d -> d.spec.copy()).collect(Collectors.toList());
+    }
 
-                    log.debug("Discovered Event handling method " + m.toString());
-                    m.setAccessible(true);
-                    factSpecs.add(FactSpec.from(paramType));
+    // --------------------------------------------------------
+    @Value
+    @VisibleForTesting
+    static class Dispatcher {
 
-                }));
+        Method dispatchMethod;
+
+        TargetObjectResolver objectResolver;
+
+        ParameterTransformer parameterTransformer;
+
+        FactSpec spec;
+
+        void invoke(EventApplierContext ctx, Projection projection, Fact f)
+                throws InvocationTargetException, IllegalAccessException,
+                NoSuchMethodException, JsonProcessingException {
+            dispatchMethod.invoke(objectResolver.apply(projection), parameterTransformer.apply(f));
+        }
+    }
+
+    private static Map<FactSpecCoordinates, Dispatcher> discoverDispatchInfo(
+            EventApplierContext ctx, Projection p) {
+        Map<FactSpecCoordinates, Dispatcher> map = new HashMap<>();
+
+        Collection<CallTarget> relevantClasses = getRelevantClasses(p);
+        relevantClasses.forEach(callTarget -> {
+            Method[] methods = callTarget.clazz.getDeclaredMethods();
+            Arrays.stream(methods)
+                    .filter(DefaultEventApplier::isEventHandlerMethod)
+                    .forEach(m -> {
+
+                        FactSpec fs = discoverFactSpec(m);
+
+                        Dispatcher dispatcher = new Dispatcher(m, callTarget.resolver,
+                                createParameterTransformer(ctx, m), fs);
+                        val before = map.put(FactSpecCoordinates.from(fs), dispatcher);
+                        if (before != null) {
+                            throw new UnsupportedOperationException(
+                                    "Duplicate @Handler found for spec '" + fs + "':\n " + m
+                                            + "\n clashes with\n " + before.dispatchMethod());
+                        }
+
+                        log.debug("Discovered Event handling method " + m.toString());
+                        m.setAccessible(true);
+
+                    });
+        });
+
+        if (map.isEmpty()) {
+            throw new IllegalArgumentException("No handler methods discovered on " + p.getClass());
+        }
 
         return map;
+    }
+
+    private static FactSpec discoverFactSpec(Method m) {
+        List<Class<?>> eventPojoTypes = Arrays.stream(m.getParameterTypes())
+                .filter(t -> EventPojo.class.isAssignableFrom(t))
+                .collect(Collectors.toList());
+
+        if (eventPojoTypes.isEmpty()) {
+            // TODO add @Spec
+            throw new IllegalArgumentException("Cannot introspect FactSpec from " + m);
+        } else {
+            if (eventPojoTypes.size() > 1) {
+                throw new IllegalArgumentException(
+                        "Multiple EventPojo Parameters. Cannot introspect FactSpec from " + m);
+            } else {
+                return FactSpec.from(eventPojoTypes.get(0));
+            }
+        }
+    }
+
+    private static ParameterTransformer createParameterTransformer(EventApplierContext ctx,
+            Method m) {
+
+        // TODO additional params, sanitize
+        Class<?> parameterType = m.getParameterTypes()[0];
+        return p -> {
+            try {
+                return new Object[] { ctx.mapper()
+                        .readerFor(parameterType)
+                        .readValue(p.jsonPayload()) };
+            } catch (JsonProcessingException e) {
+                throw new IllegalStateException(e);
+            }
+        };
     }
 
     @Value
     static class CallTarget {
         Class<?> clazz;
 
-        Supplier<Object> lazyInstanceSupplier;
+        TargetObjectResolver resolver;
     }
 
-    private Collection<CallTarget> getRelevantClasses() {
-        return getRelevantClasses(new CallTarget(projection.getClass(), () -> projection));
+    private static Collection<CallTarget> getRelevantClasses(Projection p) {
+        return getRelevantClasses(new CallTarget(p.getClass(), o -> o));
     }
 
-    private Collection<CallTarget> getRelevantClasses(CallTarget root) {
+    private static Collection<CallTarget> getRelevantClasses(CallTarget root) {
         List<CallTarget> classes = new LinkedList<>();
         classes.add(root);
         Arrays.asList(root.clazz().getDeclaredClasses())
                 .forEach(c -> classes.addAll(getRelevantClasses(new CallTarget(c,
-                        () -> resolveTargetObject(root.lazyInstanceSupplier.get(), c)))));
+                        p -> resolveTargetObject(root.resolver.apply(p), c)))));
         return classes;
     }
 
-    private Object resolveTargetObject(Object parent, Class<?> c) {
+    private static Object resolveTargetObject(Object parent, Class<?> c) {
         try {
             Constructor<?> ctor = null;
             try {
@@ -150,7 +222,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
         }
     }
 
-    private boolean isEventHandlerMethod(Method m) {
+    private static boolean isEventHandlerMethod(Method m) {
         if (m.getAnnotation(Handler.class) != null) {
 
             if (m.getParameterCount() != 1) {
@@ -189,7 +261,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
         return false;
     }
 
-    private String getFactType(Class<?> parameterType) {
+    private static String getFactType(Class<?> parameterType) {
         Specification s = parameterType.getAnnotation(Specification.class);
         String annotatedType = s.type();
         if (annotatedType != null && !annotatedType.trim().isEmpty()) {
@@ -199,31 +271,8 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
         }
     }
 
-    private Class<?> getParameterType(Method m) {
+    private static Class<?> getParameterType(Method m) {
         return m.getParameterTypes()[0];
     }
 
-    public void apply(@NonNull Fact f) {
-        log.trace("Dispatching fact {}", f.jsonHeader());
-        val type = f.type();
-        val dispatch = eventClassMap.get(type);
-        if (dispatch == null) {
-            throw new IllegalStateException("Unexpected Fact type: '" + type + "'");
-        }
-
-        try {
-            dispatch.invoke(f);
-        } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException
-                | JsonProcessingException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    public List<FactSpec> createFactSpecs() {
-        if (factSpecs.isEmpty()) {
-            throw new IllegalArgumentException("No handler methods found on " + this.getClass()
-                    .getCanonicalName());
-        }
-        return factSpecs.stream().map(fs -> fs.copy()).collect(Collectors.toList());
-    }
 }
