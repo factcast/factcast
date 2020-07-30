@@ -18,8 +18,6 @@ package org.factcast.core;
 import java.util.Set;
 import java.util.UUID;
 
-import org.factcast.core.DefaultFact.Header;
-
 import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.NonNull;
@@ -96,7 +94,7 @@ public interface Fact {
 
     class Builder {
 
-        final Header header = new Header().id(UUID.randomUUID()).ns("default");
+        final FactHeader header = new FactHeader().id(UUID.randomUUID()).ns("default");
 
         public Builder aggId(@NonNull UUID aggId) {
             header.aggIds().add(aggId);
@@ -151,5 +149,8 @@ public interface Fact {
             return new DefaultFact(header, pl);
         }
     }
+
+    @NonNull
+    FactHeader header();
 
 }

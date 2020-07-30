@@ -27,9 +27,9 @@ public class FactHeaderTest {
 
     @Test
     void testDeserializability() throws Exception {
-        DefaultFact.Header h = new ObjectMapper().readValue(
+        FactHeader h = new ObjectMapper().readValue(
                 "{\"id\":\"5d0e3ae9-6684-42bc-87a7-854f76506f7e\",\"ns\":\"ns\",\"type\":\"t\",\"meta\":{\"foo\":\"bar\"}}",
-                DefaultFact.Header.class);
+                FactHeader.class);
         assertEquals(UUID.fromString("5d0e3ae9-6684-42bc-87a7-854f76506f7e"), h.id());
         assertEquals("ns", h.ns());
         assertEquals("t", h.type());
@@ -38,9 +38,9 @@ public class FactHeaderTest {
 
     @Test
     void testIgnoreExtra() throws Exception {
-        DefaultFact.Header h = new ObjectMapper().readValue(
+        FactHeader h = new ObjectMapper().readValue(
                 "{\"id\":\"5d0e3ae9-6684-42bc-87a7-854f76506f7e\",\"ns\":\"ns\",\"type\":\"t\",\"bing\":\"bang\"}",
-                DefaultFact.Header.class);
+                FactHeader.class);
         assertEquals(UUID.fromString("5d0e3ae9-6684-42bc-87a7-854f76506f7e"), h.id());
         assertEquals("ns", h.ns());
         assertEquals("t", h.type());

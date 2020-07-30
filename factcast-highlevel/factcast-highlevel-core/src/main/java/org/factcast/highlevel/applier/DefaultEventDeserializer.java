@@ -15,14 +15,22 @@
  */
 package org.factcast.highlevel.applier;
 
+import org.factcast.highlevel.EventPojo;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.Value;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 
-//TODO necessary?
+@RequiredArgsConstructor
+public class DefaultEventDeserializer implements EventDeserializer {
+    @NonNull
+    final ObjectMapper om;
 
-@Value
-public class EventApplierContext {
-    ObjectMapper mapper;
-
+    @SneakyThrows
+    @Override
+    public <T extends EventPojo> T deserialize(Class<T> targetClass, String json) {
+        return om.readerFor(targetClass).readValue(json);
+    }
 }

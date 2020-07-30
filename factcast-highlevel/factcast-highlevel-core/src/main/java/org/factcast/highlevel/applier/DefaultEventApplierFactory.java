@@ -17,16 +17,14 @@ package org.factcast.highlevel.applier;
 
 import org.factcast.highlevel.aggregate.Projection;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class DefaultEventApplierFactory implements EventApplierFactory {
 
-    final ObjectMapper om;
+    final EventDeserializer deser;
 
     public <A extends Projection> EventApplier<A> create(A projection) {
-        return new DefaultEventApplier<>(new EventApplierContext(om), projection);
+        return new DefaultEventApplier<>(deser, projection);
     }
 }

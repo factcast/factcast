@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
+import org.factcast.core.FactHeader;
 import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -84,6 +85,15 @@ public class PgFact implements Fact {
             meta = deser();
         }
         return meta.get(key);
+    }
+
+    private transient FactHeader header;
+
+    @Override
+    public @NonNull FactHeader header() {
+        if (header == null)
+            header = FactCastJson.readValue(FactHeader.class, jsonHeader);
+        return header;
     }
 
     @SneakyThrows
