@@ -18,13 +18,10 @@ package org.factcast.highlevel.snapshot;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.checkerframework.checker.units.qual.A;
-import org.factcast.core.Fact;
 import org.factcast.core.snap.SnapshotRepository;
-import org.factcast.core.spec.FactSpec;
 import org.factcast.highlevel.aggregate.Aggregate;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
@@ -87,15 +84,6 @@ class AggregateSnapshotRepositoryImplTest {
             return null;
         }
 
-        @Override
-        public void apply(Fact f) {
-
-        }
-
-        @Override
-        public List<FactSpec> createFactSpecs() {
-            return null;
-        }
     }
 
     public static class WithoutSVUID implements Aggregate {
@@ -105,15 +93,6 @@ class AggregateSnapshotRepositoryImplTest {
             return null;
         }
 
-        @Override
-        public void apply(Fact f) {
-
-        }
-
-        @Override
-        public List<FactSpec> createFactSpecs() {
-            return null;
-        }
     }
 
 }

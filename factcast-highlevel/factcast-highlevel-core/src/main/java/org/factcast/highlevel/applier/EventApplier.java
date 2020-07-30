@@ -13,29 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.highlevel;
+package org.factcast.highlevel.applier;
 
-import java.util.UUID;
+import java.util.Collection;
 
-import org.factcast.highlevel.Handler;
-import org.factcast.highlevel.aggregate.AbstractAggregate;
+import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.highlevel.aggregate.Projection;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+public interface EventApplier<A extends Projection> {
+    void apply(Fact element);
 
-@Getter
-@NoArgsConstructor
-public class TestAggregate extends AbstractAggregate {
-    public TestAggregate(UUID aggregateId) {
-        super();
-        id(aggregateId);
-    }
-
-    int magicNumber = 42;
-
-    @Handler
-    void apply(TestAggregateWasIncremented e) {
-        magicNumber++;
-    }
-
+    Collection<FactSpec> createFactSpecs();
 }
