@@ -17,13 +17,15 @@ package org.factcast.highlevel.snapshot;
 
 import java.util.UUID;
 
-import org.factcast.highlevel.aggregate.ActivatableProjection;
+import org.factcast.highlevel.projection.SnapshotProjection;
+import org.factcast.highlevel.serializer.DefaultSnapshotSerializer;
+import org.factcast.highlevel.serializer.SnapshotSerializer;
 
 import lombok.Data;
 import lombok.NonNull;
 
 @Data
-public class ProjectionSnapshot<P extends ActivatableProjection> {
+public class ProjectionSnapshot<P extends SnapshotProjection> {
     private static SnapshotSerializer defaultSerializer = new DefaultSnapshotSerializer();
 
     Class<P> type;
@@ -46,12 +48,12 @@ public class ProjectionSnapshot<P extends ActivatableProjection> {
         this.factId = lastFactId;
     }
 
-    public static <T extends ActivatableProjection> byte[] serialize(T aggregate) {
+    public static <T extends SnapshotProjection> byte[] serialize(T aggregate) {
         // TODO configure by annotations
         return defaultSerializer.serialize(aggregate);
     }
 
-    public static <T extends ActivatableProjection> T deserialize(
+    public static <T extends SnapshotProjection> T deserialize(
             ProjectionSnapshot<T> snap) {
         // TODO configure by annotations
         return defaultSerializer.deserialize(snap.type(), snap.bytes());

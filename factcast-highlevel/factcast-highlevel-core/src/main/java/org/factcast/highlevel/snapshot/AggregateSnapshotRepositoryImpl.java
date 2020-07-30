@@ -22,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.snap.SnapshotRepository;
-import org.factcast.highlevel.aggregate.Aggregate;
+import org.factcast.highlevel.projection.Aggregate;
 import org.jetbrains.annotations.NotNull;
 
 import com.google.common.annotations.VisibleForTesting;

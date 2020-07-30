@@ -13,16 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.highlevel.snapshot;
+package org.factcast.highlevel.projection;
 
+import java.util.List;
 import java.util.UUID;
 
-public class ProjectionSnapshot {
-    ProjectionId id;
+import org.factcast.core.spec.FactSpec;
 
-    UUID state;
+import lombok.NonNull;
 
-    ProjectionSerializerId serId;
+public abstract class ManagedProjection implements Projection, StateAware {
 
-    byte[] data;
+    public @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
+        return specsAsDiscovered;
+    }
+
+    private UUID state = null;
+
+    public final UUID state() {
+        return this.state;
+    }
+
+    public final void state(@NonNull UUID state) {
+        this.state = state;
+    }
+
 }

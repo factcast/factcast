@@ -15,7 +15,8 @@
  */
 package org.factcast.highlevel.applier;
 
-import org.factcast.highlevel.aggregate.ActivatableProjection;
+import org.factcast.highlevel.projection.Projection;
+import org.factcast.highlevel.serializer.EventSerializer;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,7 +25,7 @@ public class DefaultEventApplierFactory implements EventApplierFactory {
 
     final EventSerializer deser;
 
-    public <A extends ActivatableProjection> EventApplier<A> create(A projection) {
+    public <A extends Projection> EventApplier<A> create(A projection) {
         return new DefaultEventApplier<>(deser, projection);
     }
 }

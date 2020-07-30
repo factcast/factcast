@@ -13,7 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.highlevel.snapshot;
+package org.factcast.highlevel.serializer;
 
-public class PushModel {
+import org.factcast.core.util.FactCastJson;
+import org.factcast.highlevel.projection.SnapshotProjection;
+
+public class DefaultSnapshotSerializer implements SnapshotSerializer {
+    @Override
+    public byte[] serialize(SnapshotProjection a) {
+        return FactCastJson.writeValueAsBytes(a);
+    }
+
+    @Override
+    public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
+        return FactCastJson.readValueFromBytes(type, bytes);
+    }
 }

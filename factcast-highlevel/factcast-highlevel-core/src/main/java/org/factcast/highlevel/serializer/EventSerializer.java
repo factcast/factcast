@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.highlevel.snapshot;
+package org.factcast.highlevel.serializer;
 
-import java.util.Optional;
+import org.factcast.highlevel.EventPojo;
 
-public interface ProjectionSerializers {
+public interface EventSerializer {
+    <T extends EventPojo> T deserialize(Class<T> targetClass, String json);
 
-    Optional<ProjectionSerializer> find(ProjectionSerializerId id);
+    <T extends EventPojo> String serialize(T pojo);
 }

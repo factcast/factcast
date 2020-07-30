@@ -15,8 +15,8 @@
  */
 package org.factcast.highlevel.applier;
 
-import org.factcast.highlevel.aggregate.ActivatableProjection;
+import org.factcast.highlevel.projection.Projection;
 
 public interface EventApplierFactory {
-    <A extends ActivatableProjection> EventApplier<A> create(A projection);
+    <A extends Projection> EventApplier<A> create(A projection);
 }

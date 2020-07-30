@@ -18,16 +18,16 @@ package org.factcast.highlevel.snapshot;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.factcast.highlevel.aggregate.ActivatableProjection;
+import org.factcast.highlevel.projection.SnapshotProjection;
 
 import lombok.NonNull;
 
 public interface ProjectionSnapshotRepository {
-    <A extends ActivatableProjection> Optional<ProjectionSnapshot<A>> findLatest(
+    <A extends SnapshotProjection> Optional<ProjectionSnapshot<A>> findLatest(
             @NonNull Class<A> type);
 
-    <A extends ActivatableProjection> void putBlocking(@NonNull ProjectionSnapshot<A> snapshot);
+    <A extends SnapshotProjection> void putBlocking(@NonNull ProjectionSnapshot<A> snapshot);
 
-    <A extends ActivatableProjection> CompletableFuture<Void> put(
+    <A extends SnapshotProjection> CompletableFuture<Void> put(
             @NonNull ProjectionSnapshot<A> snapshot);
 }

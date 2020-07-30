@@ -19,11 +19,11 @@ import java.util.UUID;
 
 import org.factcast.core.FactHeader;
 import org.factcast.highlevel.Handler;
-import org.factcast.highlevel.aggregate.AbstractAggregate;
+import org.factcast.highlevel.projection.Aggregate;
 
 import lombok.Getter;
 
-public class TestAggregate extends AbstractAggregate {
+public class TestAggregate extends Aggregate {
 
     @Getter
     int magicNumber = 42;

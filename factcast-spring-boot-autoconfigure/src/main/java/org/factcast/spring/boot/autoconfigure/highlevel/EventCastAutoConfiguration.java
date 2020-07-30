@@ -17,10 +17,11 @@ package org.factcast.spring.boot.autoconfigure.highlevel;
 
 import org.factcast.core.FactCast;
 import org.factcast.core.snap.SnapshotRepository;
+import org.factcast.highlevel.DefaultEventCast;
 import org.factcast.highlevel.EventCast;
 import org.factcast.highlevel.applier.DefaultEventApplierFactory;
-import org.factcast.highlevel.applier.DefaultEventSerializer;
-import org.factcast.highlevel.applier.EventSerializer;
+import org.factcast.highlevel.serializer.DefaultEventSerializer;
+import org.factcast.highlevel.serializer.EventSerializer;
 import org.factcast.highlevel.snapshot.AggregateSnapshotRepositoryImpl;
 import org.factcast.highlevel.snapshot.ProjectionSnapshotRepositoryImpl;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -42,7 +43,7 @@ public class EventCastAutoConfiguration {
 
     @Bean
     public EventCast eventCast(FactCast fc, SnapshotRepository sr, EventSerializer deserializer) {
-        return new EventCast(fc, new DefaultEventApplierFactory(deserializer), deserializer,
+        return new DefaultEventCast(fc, new DefaultEventApplierFactory(deserializer), deserializer,
                 new AggregateSnapshotRepositoryImpl(sr), new ProjectionSnapshotRepositoryImpl(sr) {
                 });
     }

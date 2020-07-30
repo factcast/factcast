@@ -13,11 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.highlevel.snapshot;
+package org.factcast.itests.highlevel;
 
-import lombok.Value;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
-@Value
-public class ProjectionSerializerId {
-    String value;
+import org.factcast.highlevel.Handler;
+import org.factcast.highlevel.projection.ManagedProjection;
+
+public class UserCount extends ManagedProjection {
+
+    private final Map<UUID, String> existingNames = new HashMap<>();
+
+    private int users = 0;
+
+    @Handler
+    void apply(UserCreated created) {
+        users++;
+    }
+
+    @Handler
+    void apply(UserDeleted deleted) {
+        users--;
+    }
+
+    int count() {
+        return users;
+    }
+
 }

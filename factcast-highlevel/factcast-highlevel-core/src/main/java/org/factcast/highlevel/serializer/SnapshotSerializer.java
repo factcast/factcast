@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.highlevel.snapshot;
+package org.factcast.highlevel.serializer;
 
-import org.factcast.highlevel.aggregate.ActivatableProjection;
+import org.factcast.highlevel.projection.SnapshotProjection;
 
 public interface SnapshotSerializer {
-    byte[] serialize(ActivatableProjection a);
+    byte[] serialize(SnapshotProjection a);
 
-    <A extends ActivatableProjection> A deserialize(Class<A> type, byte[] bytes);
+    <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes);
 }

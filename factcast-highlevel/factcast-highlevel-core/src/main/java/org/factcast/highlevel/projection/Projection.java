@@ -13,7 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.highlevel.snapshot;
+package org.factcast.highlevel.projection;
 
-public class PullModel {
+import java.util.List;
+
+import org.factcast.core.spec.FactSpec;
+
+import lombok.NonNull;
+
+public interface Projection {
+    default @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
+        return specsAsDiscovered;
+    }
 }
