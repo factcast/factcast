@@ -15,5 +15,14 @@
  */
 package org.factcast.highlevel.aggregate;
 
+import java.util.List;
+
+import org.factcast.core.spec.FactSpec;
+
+import lombok.NonNull;
+
 public interface Projection {
+    default @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
+        return specsAsDiscovered;
+    }
 }

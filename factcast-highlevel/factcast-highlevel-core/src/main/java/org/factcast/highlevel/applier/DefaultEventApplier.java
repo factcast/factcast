@@ -30,6 +30,7 @@ import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.highlevel.EventPojo;
 import org.factcast.highlevel.Handler;
 import org.factcast.highlevel.HandlerFor;
+import org.factcast.highlevel.aggregate.Aggregate;
 import org.factcast.highlevel.aggregate.Projection;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -40,9 +41,6 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
-/**
- * TODO abstract out OM, to enable use of gson or similar
- */
 @Slf4j
 public class DefaultEventApplier<A extends Projection> implements EventApplier<A> {
 
@@ -58,7 +56,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
 
     private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
 
-    protected DefaultEventApplier(EventDeserializer ctx, Projection p) {
+    protected DefaultEventApplier(EventSerializer ctx, Projection p) {
         this.projection = p;
         this.dispatchInfo = cache.computeIfAbsent(p.getClass(), c -> discoverDispatchInfo(ctx, p));
     }
@@ -80,12 +78,25 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
     }
 
     public List<FactSpec> createFactSpecs() {
-        if (dispatchInfo.isEmpty()) {
-            throw new IllegalArgumentException("No handler methods found on " + projection
-                    .getClass()
-                    .getCanonicalName());
+        List<FactSpec> discovered = dispatchInfo.values()
+                .stream()
+                .map(d -> d.spec.copy())
+                .collect(Collectors.toList());
+
+        if (projection instanceof Aggregate) {
+            UUID aggId = ((Aggregate) projection).id();
+            for (FactSpec factSpec : discovered) {
+                factSpec.aggId(aggId);
+            }
         }
-        return dispatchInfo.values().stream().map(d -> d.spec.copy()).collect(Collectors.toList());
+
+        val ret = projection.postprocess(discovered);
+        if (ret == null || ret.isEmpty()) {
+            throw new IllegalArgumentException("No FactSpecs discovered from " + projection
+                    .getClass()
+                    + ". Either add handler methods or implement postprocess(List<FactSpec)");
+        }
+        return Collections.unmodifiableList(ret);
     }
 
     // --------------------------------------------------------
@@ -101,7 +112,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
 
         FactSpec spec;
 
-        EventDeserializer deserializer;
+        EventSerializer deserializer;
 
         void invoke(Projection projection, Fact f)
                 throws InvocationTargetException, IllegalAccessException,
@@ -111,7 +122,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
     }
 
     private static Map<FactSpecCoordinates, Dispatcher> discoverDispatchInfo(
-            EventDeserializer deserializer, Projection p) {
+            EventSerializer deserializer, Projection p) {
         Map<FactSpecCoordinates, Dispatcher> map = new HashMap<>();
 
         Collection<CallTarget> relevantClasses = getRelevantClasses(p);
@@ -178,7 +189,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
     }
 
     private static ParameterTransformer createParameterTransformer(
-            EventDeserializer ctx,
+            EventSerializer ctx,
             Method m) {
 
         Class<?>[] parameterTypes = m.getParameterTypes();
@@ -197,7 +208,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
 
     @SuppressWarnings("unchecked")
     private static Function<Fact, Object> createSingleParameterTransformer(Method m,
-            EventDeserializer deserializer, Class<?> type) {
+            EventSerializer deserializer, Class<?> type) {
         if (EventPojo.class.isAssignableFrom(type)) {
             return p -> deserializer.deserialize((Class<? extends EventPojo>) type, p
                     .jsonPayload());

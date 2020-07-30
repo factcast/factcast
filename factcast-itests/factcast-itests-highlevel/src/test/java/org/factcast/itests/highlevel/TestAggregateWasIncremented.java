@@ -15,30 +15,26 @@
  */
 package org.factcast.itests.highlevel;
 
+import java.util.Set;
 import java.util.UUID;
 
-import org.factcast.core.Fact;
 import org.factcast.core.spec.Specification;
-import org.factcast.core.util.FactCastJson;
 import org.factcast.highlevel.EventPojo;
 
+import com.google.common.collect.Sets;
+
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Specification(ns = "test")
 public class TestAggregateWasIncremented implements EventPojo {
     UUID aggregateId;
 
     @Override
-    // TODO needs to be moved
-    public Fact toFact(UUID randomUUID) {
-        return Fact.builder()
-                .id(randomUUID)
-                .ns("test")
-                .type(TestAggregateWasIncremented.class.getSimpleName())
-                .aggId(aggregateId)
-                .build(FactCastJson.writeValueAsString(this));
+    public Set<UUID> aggregateIds() {
+        return Sets.newHashSet(aggregateId);
     }
 }

@@ -19,8 +19,8 @@ import org.factcast.core.FactCast;
 import org.factcast.core.snap.SnapshotRepository;
 import org.factcast.highlevel.EventCast;
 import org.factcast.highlevel.applier.DefaultEventApplierFactory;
-import org.factcast.highlevel.applier.DefaultEventDeserializer;
-import org.factcast.highlevel.applier.EventDeserializer;
+import org.factcast.highlevel.applier.DefaultEventSerializer;
+import org.factcast.highlevel.applier.EventSerializer;
 import org.factcast.highlevel.snapshot.AggregateSnapshotRepositoryImpl;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -40,15 +40,16 @@ import lombok.Generated;
 public class EventCastAutoConfiguration {
 
     @Bean
-    public EventCast eventCast(FactCast fc, SnapshotRepository sr, EventDeserializer deserializer) {
-        return new EventCast(fc, new DefaultEventApplierFactory(deserializer),
+    public EventCast eventCast(FactCast fc, SnapshotRepository sr, EventSerializer deserializer) {
+        return new EventCast(fc, new DefaultEventApplierFactory(deserializer), deserializer,
                 new AggregateSnapshotRepositoryImpl(sr));
     }
 
     @Bean
     @ConditionalOnMissingBean
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    public EventDeserializer eventDeserializer(ObjectMapper om) {
-        return new DefaultEventDeserializer(om);
+    public EventSerializer eventSerializer(ObjectMapper om) {
+        return new DefaultEventSerializer(om);
     }
+
 }
