@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DefaultEventApplierFactory implements EventApplierFactory {
 
-    final EventDeserializer deser;
+    final EventSerializer deser;
 
     public <A extends Projection> EventApplier<A> create(A projection) {
         return new DefaultEventApplier<>(deser, projection);

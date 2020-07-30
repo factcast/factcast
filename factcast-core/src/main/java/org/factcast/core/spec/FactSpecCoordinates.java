@@ -17,10 +17,7 @@ package org.factcast.core.spec;
 
 import org.factcast.core.Fact;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
-import lombok.Value;
+import lombok.*;
 
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -38,5 +35,28 @@ public class FactSpecCoordinates {
 
     public static FactSpecCoordinates from(@NonNull Fact fact) {
         return new FactSpecCoordinates(fact.ns(), fact.type(), fact.version());
+    }
+
+    public static FactSpecCoordinates from(Class<?> clazz) {
+
+        String defaultType = clazz.getSimpleName();
+        String defaultNs = "default";
+
+        val spec = clazz.getAnnotation(Specification.class);
+        if (spec == null)
+            throw new IllegalArgumentException("@" + Specification.class.getSimpleName()
+                    + " missing on " + clazz);
+
+        String _ns = spec.ns();
+        if (_ns.trim().isEmpty())
+            _ns = defaultNs;
+
+        String _type = spec.type();
+        if (_type.trim().isEmpty())
+            _type = defaultType;
+
+        int version = spec.version();
+
+        return new FactSpecCoordinates(_ns, _type, version);
     }
 }
