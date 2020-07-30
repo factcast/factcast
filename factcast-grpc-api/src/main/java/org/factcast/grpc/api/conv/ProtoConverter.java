@@ -325,7 +325,7 @@ public class ProtoConverter {
         }
     }
 
-    public MSG_OptionalUuid toProtoOptional(@NonNull UUID uuid) {
+    public MSG_OptionalUuid toProtoOptional(UUID uuid) {
         MSG_OptionalUuid.Builder builder = MSG_OptionalUuid.newBuilder();
         if (uuid == null) {
             return builder

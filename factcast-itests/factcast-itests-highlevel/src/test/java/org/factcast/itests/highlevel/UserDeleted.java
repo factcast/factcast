@@ -13,19 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.highlevel.snapshot;
+package org.factcast.itests.highlevel;
 
-import org.factcast.core.util.FactCastJson;
-import org.factcast.highlevel.aggregate.Aggregate;
+import java.util.Set;
+import java.util.UUID;
 
-public class DefaultAggregateSerializationCodec implements AggregateSerializationCodec {
+import org.factcast.core.spec.Specification;
+import org.factcast.highlevel.EventPojo;
+
+import com.google.common.collect.Sets;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Specification(ns = "test")
+public class UserDeleted implements EventPojo {
+    UUID aggregateId;
+
     @Override
-    public byte[] serialize(Aggregate a) {
-        return FactCastJson.writeValueAsBytes(a);
-    }
-
-    @Override
-    public <A extends Aggregate> A deserialize(Class<A> type, byte[] bytes) {
-        return FactCastJson.readValueFromBytes(type, bytes);
+    public Set<UUID> aggregateIds() {
+        return Sets.newHashSet(aggregateId);
     }
 }

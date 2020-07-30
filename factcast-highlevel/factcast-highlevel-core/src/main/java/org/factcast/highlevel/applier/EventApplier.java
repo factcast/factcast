@@ -19,9 +19,9 @@ import java.util.Collection;
 
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.highlevel.aggregate.Projection;
+import org.factcast.highlevel.aggregate.ActivatableProjection;
 
-public interface EventApplier<A extends Projection> {
+public interface EventApplier<A extends ActivatableProjection> {
     void apply(Fact element);
 
     Collection<FactSpec> createFactSpecs();
