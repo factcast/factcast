@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
@@ -512,4 +514,50 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         return (FactCastUser) authentication;
     }
 
+    @Override
+    public void clearSnapshot(MSG_SnapshotId request, StreamObserver<MSG_Empty> responseObserver) {
+        try {
+            store.clearSnapshot(converter.fromProto(request));
+            responseObserver.onNext(MSG_Empty.getDefaultInstance());
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            log.error("while clearing snapshot", e);
+            responseObserver.onError(e);
+        }
+    }
+
+    @Override
+    public void getSnapshot(MSG_SnapshotId request,
+            StreamObserver<MSG_OptionalSnapshot> responseObserver) {
+        try {
+            SnapshotId id = converter.fromProto(request);
+
+            Optional<Snapshot> snapshot = store.getSnapshot(id);
+
+            responseObserver.onNext(converter.toProtoSnapshot(snapshot));
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            log.error("while getting snapshot", e);
+            responseObserver.onError(e);
+        }
+
+    }
+
+    @Override
+    public void setSnapshot(MSG_Snapshot request, StreamObserver<MSG_Empty> responseObserver) {
+        try {
+            SnapshotId id = converter.fromProto(request.getId());
+            UUID state = converter.fromProto(request.getFactId());
+            byte[] bytes = converter.fromProto(request.getData());
+
+            store.setSnapshot(id, state, bytes);
+
+            responseObserver.onNext(MSG_Empty.getDefaultInstance());
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            log.error("while setting snapshot", e);
+            responseObserver.onError(e);
+        }
+
+    }
 }

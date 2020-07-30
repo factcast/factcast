@@ -23,6 +23,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
@@ -75,4 +77,12 @@ public interface FactStore {
     @NonNull
     Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected)
             throws TransformationException;
+
+    @NonNull
+    Optional<Snapshot> getSnapshot(@NonNull SnapshotId id);
+
+    void setSnapshot(@NonNull SnapshotId id, @NonNull UUID state, @NonNull byte[] bytes);
+
+    void clearSnapshot(@NonNull SnapshotId id);
+
 }

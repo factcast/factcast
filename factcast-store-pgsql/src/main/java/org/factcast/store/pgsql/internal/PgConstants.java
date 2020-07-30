@@ -36,6 +36,12 @@ public class PgConstants {
 
     public static final String TABLE_FACT = "fact";
 
+    public static final String SELECT_SNAPSHOT = "SELECT factid,data FROM snapshot_cache WHERE uuid=? AND cache_key=?";
+
+    public static final String UPSERT_SNAPSHOT = "INSERT INTO snapshot_cache(uuid,cache_key,factid,data) VALUES (?,?,?,?) ON CONFLICT (uuid,cache_key) DO UPDATE set factid=?, data=?";
+
+    public static final String CLEAR_SNAPSHOT = "DELETE FROM snapshot_cache WHERE uuid=? AND cache_key=?";
+
     private static final String TABLE_TOKENSTORE = "tokenstore";
 
     public static final String CHANNEL_NAME = "fact_insert";

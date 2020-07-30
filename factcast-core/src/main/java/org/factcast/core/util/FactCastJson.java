@@ -137,4 +137,15 @@ public final class FactCastJson {
         return objectMapper.convertValue(jsonAsMap, JsonNode.class);
     }
 
+    @SneakyThrows
+    public static byte[] writeValueAsBytes(Object a) {
+        return objectMapper.writeValueAsBytes(a);
+
+    }
+
+    @SneakyThrows
+    public static <A> A readValueFromBytes(Class<A> type, byte[] bytes) {
+        return objectMapper.reader(type).readValue(bytes);
+
+    }
 }

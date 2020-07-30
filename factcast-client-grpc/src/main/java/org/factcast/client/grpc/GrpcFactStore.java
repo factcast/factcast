@@ -28,9 +28,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
-import org.factcast.core.store.FactStore;
-import org.factcast.core.store.RetryableException;
-import org.factcast.core.store.StateToken;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
+import org.factcast.core.store.*;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -43,20 +43,7 @@ import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
+import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
@@ -77,6 +64,7 @@ import io.grpc.stub.StreamObserver;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 
 /**
@@ -356,4 +344,43 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
         }
 
     }
+
+    @Override
+    public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
+        log.trace("fetching snapshot {} from remote store", id);
+
+        MSG_OptionalSnapshot snap;
+        try {
+            snap = blockingStub.getSnapshot(converter.toProto(id));
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+        if (!snap.getPresent()) {
+            return Optional.empty();
+        } else {
+            return converter.fromProto(snap);
+        }
+    }
+
+    @Override
+    public void setSnapshot(@NonNull SnapshotId id, @NonNull UUID state, @NonNull byte[] bytes) {
+        log.trace("sending snapshot {} to remote store ({}kb)", id, bytes.length / 1024);
+
+        try {
+            val empty = blockingStub.setSnapshot(converter.toProto(id, state, bytes));
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+    }
+
+    @Override
+    public void clearSnapshot(@NonNull SnapshotId id) {
+        log.trace("clearing snapshot {} in remote store", id);
+        try {
+            val empty = blockingStub.clearSnapshot(converter.toProto(id));
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+    }
+
 }

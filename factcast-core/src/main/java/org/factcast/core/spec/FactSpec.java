@@ -47,6 +47,7 @@ public class FactSpec {
     @JsonProperty
     UUID aggId = null;
 
+    @Deprecated
     @JsonProperty
     String jsFilterScript = null;
 
@@ -151,4 +152,13 @@ public class FactSpec {
         return from(Arrays.asList(clazz));
     }
 
+    public FactSpec copy() {
+        FactSpec fs = FactSpec.ns(ns)
+                .type(type)
+                .version(version)
+                .aggId(aggId)
+                .filterScript(filterScript);
+        fs.meta.putAll(meta);
+        return fs;
+    }
 }
