@@ -18,10 +18,10 @@ package org.factcast.itests.highlevel;
 import java.util.*;
 
 import org.factcast.highlevel.Handler;
-import org.factcast.highlevel.aggregate.ActivatableProjection;
+import org.factcast.highlevel.projection.SnapshotProjection;
 
 //TODO express activate/passivate
-public class UserNames implements ActivatableProjection {
+public class UserNames implements SnapshotProjection {
 
     private final Map<UUID, String> existingNames = new HashMap<>();
 
@@ -41,6 +41,10 @@ public class UserNames implements ActivatableProjection {
 
     boolean contains(String name) {
         return existingNames.values().contains(name);
+    }
+
+    Set<UUID> allUserIdsForDeletingInTest() {
+        return existingNames.keySet();
     }
 
 }

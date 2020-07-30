@@ -22,7 +22,7 @@ import java.util.UUID;
 
 import org.checkerframework.checker.units.qual.A;
 import org.factcast.core.snap.SnapshotRepository;
-import org.factcast.highlevel.aggregate.Aggregate;
+import org.factcast.highlevel.projection.Aggregate;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
@@ -76,23 +76,11 @@ class AggregateSnapshotRepositoryImplTest {
         }
     }
 
-    public static class WithSVUID implements Aggregate {
+    public static class WithSVUID extends Aggregate {
         private static final long serialVersionUID = 42L;
-
-        @Override
-        public UUID id() {
-            return null;
-        }
-
     }
 
-    public static class WithoutSVUID implements Aggregate {
-
-        @Override
-        public UUID id() {
-            return null;
-        }
-
+    public static class WithoutSVUID extends Aggregate {
     }
 
 }

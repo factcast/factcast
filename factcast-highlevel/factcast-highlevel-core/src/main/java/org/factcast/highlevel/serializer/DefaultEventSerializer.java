@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.highlevel.applier;
+package org.factcast.highlevel.serializer;
 
 import org.factcast.highlevel.EventPojo;
 

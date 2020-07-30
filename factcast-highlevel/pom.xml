@@ -31,6 +31,5 @@
 
   <modules>
     <module>factcast-highlevel-core</module>
-    <module>factcast-highlevel-snapshot-api</module>
-    </modules>
+  </modules>
 </project>

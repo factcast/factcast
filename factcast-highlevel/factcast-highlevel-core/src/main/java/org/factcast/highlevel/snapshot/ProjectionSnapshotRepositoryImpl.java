@@ -22,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.snap.SnapshotRepository;
-import org.factcast.highlevel.aggregate.ActivatableProjection;
+import org.factcast.highlevel.projection.SnapshotProjection;
 import org.jetbrains.annotations.NotNull;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -44,7 +44,7 @@ public class ProjectionSnapshotRepositoryImpl implements ProjectionSnapshotRepos
     private static final String KEY_PREFIX = "ProjectionSnapshotRepository" + KEY_DELIMITER;
 
     @Override
-    public <A extends ActivatableProjection> Optional<ProjectionSnapshot<A>> findLatest(
+    public <A extends SnapshotProjection> Optional<ProjectionSnapshot<A>> findLatest(
             @NonNull Class<A> type) {
         SnapshotId snapshotId = new SnapshotId(createKeyForType(type), FAKE_UUID);
         return snap.getSnapshot(snapshotId)
@@ -54,12 +54,12 @@ public class ProjectionSnapshotRepositoryImpl implements ProjectionSnapshotRepos
 
     @NotNull
     @VisibleForTesting
-    protected <A extends ActivatableProjection> String createKeyForType(@NonNull Class<A> type) {
+    protected <A extends SnapshotProjection> String createKeyForType(@NonNull Class<A> type) {
         return KEY_PREFIX + type.getCanonicalName() + KEY_DELIMITER + getSerialVersionUid(type);
     }
 
     @VisibleForTesting
-    protected <A extends ActivatableProjection> Long getSerialVersionUid(Class<A> type) {
+    protected <A extends SnapshotProjection> Long getSerialVersionUid(Class<A> type) {
         // TODO add loadingcache
         try {
             Field field = type.getDeclaredField("serialVersionUID");
@@ -71,14 +71,14 @@ public class ProjectionSnapshotRepositoryImpl implements ProjectionSnapshotRepos
     }
 
     @Override
-    public <A extends ActivatableProjection> void putBlocking(
+    public <A extends SnapshotProjection> void putBlocking(
             @NonNull ProjectionSnapshot<A> snapshot) {
         val snapId = new SnapshotId(createKeyForType(snapshot.type()), FAKE_UUID);
         snap.setSnapshot(snapId, snapshot.factId(), snapshot.bytes());
     }
 
     @Override
-    public <A extends ActivatableProjection> CompletableFuture<Void> put(
+    public <A extends SnapshotProjection> CompletableFuture<Void> put(
             @NonNull ProjectionSnapshot<A> snapshot) {
         return CompletableFuture.runAsync(() -> {
             putBlocking(snapshot);
