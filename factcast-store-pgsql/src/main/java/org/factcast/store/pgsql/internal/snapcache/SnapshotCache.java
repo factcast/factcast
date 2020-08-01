@@ -75,8 +75,7 @@ public class SnapshotCache {
     }
 
     public void compact(@NonNull DateTime thresholdDate) {
-        jdbcTemplate.update("DELETE FROM snapshot_cache WHERE last_access < ?",
-                thresholdDate
-                        .toDate());
+        jdbcTemplate.update("DELETE FROM snapshot_cache WHERE last_access < ?", thresholdDate
+                .toDate());
     }
 }
