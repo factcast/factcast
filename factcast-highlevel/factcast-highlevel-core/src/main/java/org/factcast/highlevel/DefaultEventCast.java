@@ -17,7 +17,9 @@ package org.factcast.highlevel;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -65,6 +67,8 @@ public class DefaultEventCast implements EventCast {
 
     final ProjectionSnapshotRepository projectionSnapshotRepository;
 
+    private final Duration FOREVER = Duration.ofDays(1);
+
     @Override
     public PublishBatch batch() {
         return new DefaultPublishBatch(fc, serializer);
@@ -100,10 +104,18 @@ public class DefaultEventCast implements EventCast {
     @SneakyThrows
     public <P extends ManagedProjection> void update(@NonNull P managedProjection) {
         log.trace("updating local projection {}", managedProjection.getClass());
-        catchupProjection(managedProjection, managedProjection.state());
+        catchupProjection(managedProjection, managedProjection.state(), FOREVER);
     }
 
     @Override
+    public <P extends ManagedProjection> void update(@NonNull P managedProjection,
+            @NonNull Duration maxWaitTime) throws TimeoutException {
+        log.trace("updating local projection {}", managedProjection.getClass());
+        catchupProjection(managedProjection, managedProjection.state(), maxWaitTime);
+    }
+
+    @Override
+    @SneakyThrows
     public <P extends SnapshotProjection> P fetch(Class<P> projectionClass) {
         // TODO ugly, fix hierarchy?
         if (Aggregate.class.isAssignableFrom(projectionClass)) {
@@ -123,8 +135,9 @@ public class DefaultEventCast implements EventCast {
         }
 
         // catchup
-        UUID factUuid = catchupProjection(projection, latest.map(ProjectionSnapshot::factId)
-                .orElse(null));
+        UUID factUuid = null;
+        factUuid = catchupProjection(projection, latest.map(ProjectionSnapshot::factId)
+                .orElse(null), FOREVER);
         if (factUuid != null) {
             ProjectionSnapshot<P> currentSnap = new ProjectionSnapshot<P>(projectionClass,
                     factUuid, projection);
@@ -135,9 +148,8 @@ public class DefaultEventCast implements EventCast {
     }
 
     @Override
-    public <A extends Aggregate> Optional<A> fetch(
-            Class<A> aggregateClass,
-            UUID aggregateId) {
+    @SneakyThrows
+    public <A extends Aggregate> Optional<A> fetch(Class<A> aggregateClass, UUID aggregateId) {
         Optional<AggregateSnapshot<A>> latest = aggregateSnapshotRepository.findLatest(
                 aggregateClass, aggregateId);
         A aggregate = latest.map(AggregateSnapshot::deserialize)
@@ -145,7 +157,7 @@ public class DefaultEventCast implements EventCast {
                         aggregateClass, aggregateId));
 
         UUID factUuid = catchupProjection(aggregate, latest.map(AggregateSnapshot::factId)
-                .orElse(null));
+                .orElse(null), FOREVER);
         if (factUuid == null) {
             // nothing new
 
@@ -165,7 +177,8 @@ public class DefaultEventCast implements EventCast {
         }
     }
 
-    private <P extends Projection> UUID catchupProjection(@NonNull P projection, UUID stateOrNull) {
+    private <P extends Projection> UUID catchupProjection(@NonNull P projection, UUID stateOrNull,
+            Duration maxWait) throws TimeoutException {
         EventApplier<P> handler = ehFactory.create(projection);
         AtomicReference<UUID> factId = new AtomicReference<>();
         FactObserver fo = new FactObserver() {
@@ -181,7 +194,7 @@ public class DefaultEventCast implements EventCast {
                 SubscriptionRequest
                         .catchup(handler.createFactSpecs())
                         .fromNullable(stateOrNull), fo)
-                .awaitComplete();
+                .awaitComplete(maxWait.toMillis());
         return factId.get();
     }
 

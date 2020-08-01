@@ -15,9 +15,11 @@
  */
 package org.factcast.highlevel;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import org.factcast.core.Fact;
@@ -34,18 +36,25 @@ public interface EventCast {
 
     void publish(@NonNull EventPojo e);
 
-    <T> T publish(@NonNull EventPojo e, @NonNull Function<Fact, T> resultFn);
-
     void publish(@NonNull List<EventPojo> e);
 
+    <T> T publish(@NonNull EventPojo e, @NonNull Function<Fact, T> resultFn);
+
     <T> T publish(@NonNull List<EventPojo> e, @NonNull Function<List<Fact>, T> resultFn);
+
+    // snapshot projections
+    <P extends SnapshotProjection> P fetch(@NonNull Class<P> projectionClass);
+
+    <A extends Aggregate> Optional<A> fetch(@NonNull Class<A> aggregateClass,
+            @NonNull UUID aggregateId);
+    // managed projections
 
     @SneakyThrows
     <P extends ManagedProjection> void update(@NonNull P managedProjection);
 
-    <P extends SnapshotProjection> P fetch(Class<P> projectionClass);
+    @SneakyThrows
+    <P extends ManagedProjection> void update(@NonNull P managedProjection,
+            @NonNull Duration maxWaitTime)
+            throws TimeoutException;
 
-    <A extends Aggregate> Optional<A> fetch(
-            Class<A> aggregateClass,
-            UUID aggregateId);
 }
