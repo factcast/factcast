@@ -88,9 +88,10 @@ public class TransformationConfiguration {
     }
 
     @Bean
-    public TransformationCacheCompactor TransformationCachePurger(TransformationCache cache,
+    public TransformationCacheCompactor transformationCacheCompactor(TransformationCache cache,
             PgConfigurationProperties props) {
         return new TransformationCacheCompactor(cache, props
                 .getDeleteTransformationsStaleForDays());
     }
+
 }

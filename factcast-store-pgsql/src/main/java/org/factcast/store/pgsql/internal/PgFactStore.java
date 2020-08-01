@@ -18,19 +18,21 @@ package org.factcast.store.pgsql.internal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.function.Supplier;
 
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
-import org.factcast.core.store.*;
+import org.factcast.core.store.AbstractFactStore;
+import org.factcast.core.store.StateToken;
+import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.store.pgsql.internal.PgFactStore.StoreMetrics.OP;
+import org.factcast.store.pgsql.internal.PgMetrics.StoreMetrics.OP;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
+import org.factcast.store.pgsql.internal.snapcache.SnapshotCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -41,12 +43,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.Lists;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.Timer.Sample;
-import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -75,73 +71,27 @@ public class PgFactStore extends AbstractFactStore {
     private final FactTransformerService factTransformerService;
 
     @NonNull
-    private final MeterRegistry registry;
+    private final PgMetrics metrics;
 
-    static class StoreMetrics {
-
-        static final String METRIC_NAME = "factcast.store.operations";
-
-        static final String TAG_STORE_KEY = "store";
-
-        static final String TAG_STORE_VALUE = "pgsql";
-
-        static final String TAG_OPERATION_KEY = "operation";
-
-        static final String TAG_EXCEPTION_KEY = "exception";
-
-        static final String TAG_EXCEPTION_VALUE_NONE = "None";
-
-        enum OP {
-
-            PUBLISH("publish"),
-
-            SUBSCRIBE_FOLLOW("subscribe-follow"),
-
-            SUBSCRIBE_CATCHUP("subscribe-catchup"),
-
-            FETCH_BY_ID("fetchById"),
-
-            SERIAL_OF("serialOf"),
-
-            ENUMERATE_NAMESPACES("enumerateNamespaces"),
-
-            ENUMERATE_TYPES("enumerateTypes"),
-
-            GET_STAGE_FOR("getStateFor"),
-
-            PUBLISH_IF_UNCHANGED("publishIfUnchanged"),
-
-            GET_SNAPSHOT("getSnapshot"),
-
-            SET_SNAPSHOT("setSnapshot"),
-
-            CLEAR_SNAPSHOT("clearSnapshot");
-
-            @NonNull
-            @Getter
-            final String op;
-
-            OP(@NonNull String op) {
-                this.op = op;
-            }
-
-        }
-
-    }
+    @NonNull
+    private final SnapshotCache snapCache;
 
     @Autowired
     public PgFactStore(
             @NonNull JdbcTemplate jdbcTemplate,
             @NonNull PgSubscriptionFactory subscriptionFactory,
-            TokenStore tokenStore, @NonNull FactTableWriteLock lock,
+            @NonNull TokenStore tokenStore,
+            @NonNull FactTableWriteLock lock,
             @NonNull FactTransformerService factTransformerService,
-            @NonNull MeterRegistry registry) {
+            @NonNull SnapshotCache snapCache,
+            @NonNull PgMetrics metrics) {
         super(tokenStore);
 
         this.jdbcTemplate = jdbcTemplate;
         this.subscriptionFactory = subscriptionFactory;
         this.lock = lock;
-        this.registry = registry;
+        this.snapCache = snapCache;
+        this.metrics = metrics;
         this.factTransformerService = factTransformerService;
 
         /*
@@ -150,13 +100,13 @@ public class PgFactStore extends AbstractFactStore {
          * them.
          */
         for (OP op : OP.values()) {
-            timer(op, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+            metrics.timer(op, PgMetrics.StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
         }
     }
 
     @Override
     public @NonNull Optional<Fact> fetchById(@NonNull UUID id) {
-        return time(OP.FETCH_BY_ID, () -> jdbcTemplate.query(PgConstants.SELECT_BY_ID,
+        return metrics.time(OP.FETCH_BY_ID, () -> jdbcTemplate.query(PgConstants.SELECT_BY_ID,
                 new Object[] { "{\"id\":\"" + id + "\"}" }, this::extractFactFromResultSet)
                 .stream()
                 .findFirst());
@@ -178,7 +128,7 @@ public class PgFactStore extends AbstractFactStore {
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
-        time(() -> {
+        metrics.time(OP.PUBLISH, () -> {
             try {
                 lock.aquireExclusiveTXLock();
 
@@ -210,15 +160,6 @@ public class PgFactStore extends AbstractFactStore {
         return PgFact.from(resultSet);
     }
 
-    private PgSnapshotData extractSnapshotFromResultSet(
-            ResultSet resultSet,
-            @SuppressWarnings("unused") int rowNum) throws SQLException {
-        return new PgSnapshotData(
-                UUID.fromString(
-                        resultSet.getString(1)),
-                resultSet.getBytes(2));
-    }
-
     @NonNull
     private String extractStringFromResultSet(
             ResultSet resultSet,
@@ -231,12 +172,12 @@ public class PgFactStore extends AbstractFactStore {
             @NonNull SubscriptionRequestTO request,
             @NonNull FactObserver observer) {
         OP operation = request.continuous() ? OP.SUBSCRIBE_FOLLOW : OP.SUBSCRIBE_CATCHUP;
-        return time(operation, () -> subscriptionFactory.subscribe(request, observer));
+        return metrics.time(operation, () -> subscriptionFactory.subscribe(request, observer));
     }
 
     @Override
     public @NonNull OptionalLong serialOf(@NonNull UUID l) {
-        return time(OP.SERIAL_OF, () -> {
+        return metrics.time(OP.SERIAL_OF, () -> {
             try {
                 Long res = jdbcTemplate.queryForObject(PgConstants.SELECT_SER_BY_ID,
                         new Object[] { "{\"id\":\"" + l + "\"}" }, Long.class);
@@ -254,14 +195,14 @@ public class PgFactStore extends AbstractFactStore {
 
     @Override
     public @NonNull Set<String> enumerateNamespaces() {
-        return time(OP.ENUMERATE_NAMESPACES, () -> new HashSet<>(jdbcTemplate.query(
+        return metrics.time(OP.ENUMERATE_NAMESPACES, () -> new HashSet<>(jdbcTemplate.query(
                 PgConstants.SELECT_DISTINCT_NAMESPACE,
                 this::extractStringFromResultSet)));
     }
 
     @Override
     public @NonNull Set<String> enumerateTypes(@NonNull String ns) {
-        return time(OP.ENUMERATE_TYPES, () -> new HashSet<>(jdbcTemplate.query(
+        return metrics.time(OP.ENUMERATE_TYPES, () -> new HashSet<>(jdbcTemplate.query(
                 PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
                 new Object[] { ns }, this::extractStringFromResultSet)));
     }
@@ -270,7 +211,7 @@ public class PgFactStore extends AbstractFactStore {
     protected Map<UUID, Optional<UUID>> getStateFor(
             @NonNull Optional<String> ns,
             @NonNull Collection<UUID> forAggIds) {
-        return time(OP.GET_STAGE_FOR, () -> {
+        return metrics.time(OP.GET_STAGE_FOR, () -> {
             // just prototype code
             // can probably be optimized, suggestions/PRs welcome
             RowMapper<Optional<UUID>> rse = (rs, i) -> Optional
@@ -303,63 +244,10 @@ public class PgFactStore extends AbstractFactStore {
     public boolean publishIfUnchanged(
             @NonNull List<? extends Fact> factsToPublish,
             @NonNull Optional<StateToken> optionalToken) {
-        return time(OP.PUBLISH_IF_UNCHANGED, () -> {
+        return metrics.time(OP.PUBLISH_IF_UNCHANGED, () -> {
             lock.aquireExclusiveTXLock();
             return super.publishIfUnchanged(factsToPublish, optionalToken);
         });
-    }
-
-    private void time(@NonNull Runnable r) {
-        Sample sample = Timer.start();
-        Exception exception = null;
-        try {
-            r.run();
-        } catch (Exception e) {
-            exception = e;
-            throw e;
-        } finally {
-            time(OP.PUBLISH, sample, exception);
-        }
-    }
-
-    private <T> T time(@NonNull OP operation, @NonNull Supplier<T> s) {
-        Sample sample = Timer.start();
-        Exception exception = null;
-        try {
-            return s.get();
-        } catch (Exception e) {
-            exception = e;
-            throw e;
-        } finally {
-            time(operation, sample, exception);
-        }
-    }
-
-    private void time(@NonNull OP operation, @NonNull Sample sample, Exception e) {
-        try {
-            String exceptionTagValue = mapException(e);
-            sample.stop(timer(operation, exceptionTagValue));
-        } catch (Exception exception) {
-            log.warn("Failed timing operation!", exception);
-        }
-    }
-
-    @NonNull
-    private static String mapException(Exception e) {
-        if (e == null) {
-            return StoreMetrics.TAG_EXCEPTION_VALUE_NONE;
-        }
-        return e.getClass().getSimpleName();
-    }
-
-    @NonNull
-    private Timer timer(@NonNull OP operation, @NonNull String exceptionTagValue) {
-        Tags tags = Tags.of(
-                Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
-                Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()),
-                Tag.of(StoreMetrics.TAG_EXCEPTION_KEY, exceptionTagValue));
-        // ommitting the meter description here
-        return Timer.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
     }
 
     @Override
@@ -370,26 +258,17 @@ public class PgFactStore extends AbstractFactStore {
 
     @Override
     public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-        return time(OP.GET_SNAPSHOT, () -> jdbcTemplate.query(PgConstants.SELECT_SNAPSHOT,
-                new Object[] {
-                        id.uuid(), id.key()
-                }, this::extractSnapshotFromResultSet)
-                .stream()
-                .findFirst()
-                .map(snapData -> new Snapshot(id, snapData.factId(), snapData.bytes())));
+        return metrics.time(OP.GET_SNAPSHOT, () -> snapCache.getSnapshot(id));
     }
 
     @Override
     public void setSnapshot(@NonNull SnapshotId id, @NonNull UUID state, @NonNull byte[] bytes) {
-        time(OP.SET_SNAPSHOT, () -> jdbcTemplate.update(PgConstants.UPSERT_SNAPSHOT, id.uuid(), id
-                .key(), state, bytes, state, bytes));
+        metrics.time(OP.SET_SNAPSHOT, () -> snapCache.setSnapshot(id, state, bytes));
     }
 
     @Override
     public void clearSnapshot(@NonNull SnapshotId id) {
-        time(OP.CLEAR_SNAPSHOT, () -> jdbcTemplate.update(PgConstants.CLEAR_SNAPSHOT, id.uuid(), id
-                .key()));
-
+        metrics.time(OP.CLEAR_SNAPSHOT, () -> snapCache.clearSnapshot(id));
     }
 
 }
