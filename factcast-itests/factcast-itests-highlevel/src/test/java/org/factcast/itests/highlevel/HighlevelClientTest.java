@@ -21,6 +21,9 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
+import org.factcast.core.snap.SnapshotRepository;
 import org.factcast.highlevel.EventCast;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,6 +81,34 @@ public class HighlevelClientTest {
 
     @Autowired
     EventCast ec;
+
+    @Autowired
+    SnapshotRepository repository;
+
+    @Test
+    public void simpleSnapshotRoundtrip() throws Exception {
+
+        SnapshotId id = new SnapshotId("test", UUID.randomUUID());
+        // initially empty
+        assertThat(repository.getSnapshot(id)).isEmpty();
+
+        // set and retrieve
+        repository.setSnapshot(id, UUID.randomUUID(), "foo".getBytes());
+        Optional<Snapshot> snapshot = repository.getSnapshot(id);
+        assertThat(snapshot).isNotEmpty();
+        assertThat(snapshot.get().bytes()).isEqualTo("foo".getBytes());
+
+        // overwrite and retrieve
+        repository.setSnapshot(id, UUID.randomUUID(), "bar".getBytes());
+        snapshot = repository.getSnapshot(id);
+        assertThat(snapshot).isNotEmpty();
+        assertThat(snapshot.get().bytes()).isEqualTo("bar".getBytes());
+
+        // clear and make sure, it is cleared
+        repository.clearSnapshot(id);
+        assertThat(repository.getSnapshot(id)).isEmpty();
+
+    }
 
     @Test
     public void simpleAggregateRoundtrip() throws Exception {

@@ -116,6 +116,12 @@
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
     </dependency>
+    <dependency>
+      <!-- only for dependency and build order analysis -->
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-docker-dep</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
