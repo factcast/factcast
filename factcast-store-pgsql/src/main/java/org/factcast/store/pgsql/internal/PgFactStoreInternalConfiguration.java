@@ -34,6 +34,8 @@ import org.factcast.store.pgsql.internal.lock.AdvisoryWriteLock;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.pgsql.internal.snapcache.SnapshotCache;
+import org.factcast.store.pgsql.internal.snapcache.SnapshotCacheConfiguration;
 import org.factcast.store.pgsql.registry.SchemaRegistryConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -61,7 +63,7 @@ import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
 @SuppressWarnings("UnstableApiUsage")
 @Configuration
 @EnableTransactionManagement
-@Import(SchemaRegistryConfiguration.class)
+@Import({ SchemaRegistryConfiguration.class, SnapshotCacheConfiguration.class })
 public class PgFactStoreInternalConfiguration {
 
     @Bean
@@ -83,11 +85,18 @@ public class PgFactStoreInternalConfiguration {
     }
 
     @Bean
-    public FactStore factStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
+    public PgMetrics pgMetrics(@NonNull MeterRegistry registry) {
+        return new PgMetrics(registry);
+    }
+
+    @Bean
+    public FactStore factStore(
+            JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
             PgTokenStore tokenStore, FactTableWriteLock lock,
-            FactTransformerService factTransformerService, MeterRegistry registry) {
+            FactTransformerService factTransformerService, SnapshotCache snapCache,
+            PgMetrics pgMetrics) {
         return new PgFactStore(jdbcTemplate, subscriptionFactory, tokenStore, lock,
-                factTransformerService, registry);
+                factTransformerService, snapCache, pgMetrics);
     }
 
     @Bean

@@ -18,6 +18,7 @@ package org.factcast.store.pgsql;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
@@ -96,6 +97,12 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
     int deleteTransformationsStaleForDays = 14;
 
     /**
+     * this is the min number of days a snapshot is not read in order to be
+     * considered stale. This should free some space in a regular cleanup job
+     */
+    int deleteSnapshotStaleForDays = 90;
+
+    /**
      * If validation is enabled, this controls if transformed facts are
      * persistently cached in postgres, rather than in memory. (Defaults to
      * false)
@@ -122,7 +129,7 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
 
     @Override
     public void onApplicationEvent(@Nonnull ApplicationReadyEvent event) {
-        List<Map.Entry<String, Object>> legacyProperties = findAllProperties().entrySet()
+        List<Entry<String, Object>> legacyProperties = findAllProperties().entrySet()
                 .stream()
                 .filter(e -> e.getKey().startsWith(LEGACY_PREFIX))
                 .collect(Collectors.toList());
@@ -152,4 +159,5 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
     public boolean isValidationEnabled() {
         return schemaRegistryUrl != null;
     }
+
 }
