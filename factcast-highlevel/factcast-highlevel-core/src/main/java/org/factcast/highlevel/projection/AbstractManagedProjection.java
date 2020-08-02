@@ -15,18 +15,38 @@
  */
 package org.factcast.highlevel.projection;
 
-import java.util.function.Supplier;
+import java.util.List;
+import java.util.UUID;
+
+import org.factcast.core.spec.FactSpec;
 
 import lombok.NonNull;
 
-public interface ManagedProjection extends Projection, StateAware {
+abstract class AbstractManagedProjection implements ManagedProjection {
 
-    default void withLock(@NonNull Runnable r) {
+    @Override
+    public @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
+        return specsAsDiscovered;
+    }
+
+    private UUID state = null;
+
+    @Override
+    public final UUID state() {
+        return this.state;
+    }
+
+    @Override
+    public final void state(@NonNull UUID state) {
+        this.state = state;
+    }
+
+    @Override
+    public final void withLock(@NonNull Runnable r) {
         withLock(() -> {
             r.run();
             return null;
         });
     }
 
-    <T> T withLock(@NonNull Supplier<T> supplier);
 }

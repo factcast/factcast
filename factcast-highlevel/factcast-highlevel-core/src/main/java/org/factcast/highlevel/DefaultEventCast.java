@@ -67,8 +67,6 @@ public class DefaultEventCast implements EventCast {
 
     final ProjectionSnapshotRepository projectionSnapshotRepository;
 
-    private final Duration FOREVER = Duration.ofDays(1);
-
     @Override
     public PublishBatch batch() {
         return new DefaultPublishBatch(fc, serializer);
@@ -101,17 +99,12 @@ public class DefaultEventCast implements EventCast {
     }
 
     @Override
-    @SneakyThrows
-    public <P extends ManagedProjection> void update(@NonNull P managedProjection) {
-        log.trace("updating local projection {}", managedProjection.getClass());
-        catchupProjection(managedProjection, managedProjection.state(), FOREVER);
-    }
-
-    @Override
     public <P extends ManagedProjection> void update(@NonNull P managedProjection,
             @NonNull Duration maxWaitTime) throws TimeoutException {
         log.trace("updating local projection {}", managedProjection.getClass());
-        catchupProjection(managedProjection, managedProjection.state(), maxWaitTime);
+        managedProjection.withLock(() -> {
+            catchupProjection(managedProjection, managedProjection.state(), maxWaitTime);
+        });
     }
 
     @Override
@@ -177,8 +170,9 @@ public class DefaultEventCast implements EventCast {
         }
     }
 
+    @SneakyThrows
     private <P extends Projection> UUID catchupProjection(@NonNull P projection, UUID stateOrNull,
-            Duration maxWait) throws TimeoutException {
+            Duration maxWait) {
         EventApplier<P> handler = ehFactory.create(projection);
         AtomicReference<UUID> factId = new AtomicReference<>();
         FactObserver fo = new FactObserver() {

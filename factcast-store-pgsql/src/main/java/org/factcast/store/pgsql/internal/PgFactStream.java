@@ -108,7 +108,7 @@ public class PgFactStream {
         }
         if (isConnected())
             if (request.continuous()) {
-                log.info("{} entering follow mode", request);
+                log.debug("{} entering follow mode", request);
                 long delayInMs;
                 if (request.maxBatchDelayInMs() < 1) {
                     // ok, instant query after NOTIFY
@@ -123,7 +123,7 @@ public class PgFactStream {
                     delayInMs = ((request.maxBatchDelayInMs() / 4L) * 3L)
                             + (long) (Math.abs(Math.random() * (request.maxBatchDelayInMs()
                                     / 4.0)));
-                    log.info("{} setting delay to {}, maxDelay was {}", request, delayInMs, request
+                    log.trace("{} setting delay to {}, maxDelay was {}", request, delayInMs, request
                             .maxBatchDelayInMs());
                 }
                 condensedExecutor = new CondensedQueryExecutor(delayInMs, query, this::isConnected);
@@ -139,12 +139,12 @@ public class PgFactStream {
 
     private void catchup(PgPostQueryMatcher postQueryMatcher) {
         if (isConnected()) {
-            log.debug("{} catchup phase1 - historic facts staring with SER={}", request, serial
+            log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial
                     .get());
             pgCatchupFactory.create(request, postQueryMatcher, subscription, serial).run();
         }
         if (isConnected()) {
-            log.debug("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
+            log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
             pgCatchupFactory.create(request, postQueryMatcher, subscription, serial).run();
         }
     }
@@ -161,7 +161,7 @@ public class PgFactStream {
             condensedExecutor.cancel();
             condensedExecutor = null;
         }
-        log.info("{} disconnected ", request);
+        log.debug("{} disconnected ", request);
     }
 
     @RequiredArgsConstructor

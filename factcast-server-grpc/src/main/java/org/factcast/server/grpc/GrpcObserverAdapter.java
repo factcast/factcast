@@ -50,14 +50,14 @@ class GrpcObserverAdapter implements FactObserver {
 
     @Override
     public void onComplete() {
-        log.info("{} onComplete – sending complete notification", id);
+        log.debug("{} onComplete – sending complete notification", id);
         observer.onNext(converter.createCompleteNotification());
         tryComplete();
     }
 
     @Override
     public void onError(Throwable e) {
-        log.warn("{} onError – sending Error notification {}", id, e.getMessage());
+        log.info("{} onError – sending Error notification {}", id, e.getMessage());
         observer.onError(e);
         tryComplete();
     }
@@ -72,7 +72,7 @@ class GrpcObserverAdapter implements FactObserver {
 
     @Override
     public void onCatchup() {
-        log.info("{} onCatchup – sending catchup notification", id);
+        log.debug("{} onCatchup – sending catchup notification", id);
         observer.onNext(converter.createCatchupNotification());
     }
 
