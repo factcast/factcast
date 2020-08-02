@@ -17,8 +17,10 @@ package org.factcast.highlevel.projection;
 
 import java.util.UUID;
 
+import lombok.NonNull;
+
 public interface StateAware {
     UUID state();
 
-    void state(UUID state);
+    void state(@NonNull UUID state);
 }

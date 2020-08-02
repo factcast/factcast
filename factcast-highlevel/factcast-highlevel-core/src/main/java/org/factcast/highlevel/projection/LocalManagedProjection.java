@@ -13,33 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.highlevel;
+package org.factcast.highlevel.projection;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.function.Supplier;
 
-import org.factcast.highlevel.Handler;
-import org.factcast.highlevel.projection.LocalManagedProjection;
+public class LocalManagedProjection extends AbstractManagedProjection {
+    private final Object mutex = new Object();
 
-public class UserCount extends LocalManagedProjection {
-
-    private final Map<UUID, String> existingNames = new HashMap<>();
-
-    private int users = 0;
-
-    @Handler
-    void apply(UserCreated created) {
-        users++;
+    public <T> T withLock(Supplier<T> supplier) {
+        synchronized (mutex) {
+            return supplier.get();
+        }
     }
-
-    @Handler
-    void apply(UserDeleted deleted) {
-        users--;
-    }
-
-    int count() {
-        return users;
-    }
-
 }

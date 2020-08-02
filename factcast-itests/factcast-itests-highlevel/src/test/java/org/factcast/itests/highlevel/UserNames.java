@@ -20,7 +20,6 @@ import java.util.*;
 import org.factcast.highlevel.Handler;
 import org.factcast.highlevel.projection.SnapshotProjection;
 
-//TODO express activate/passivate
 public class UserNames implements SnapshotProjection {
 
     private final Map<UUID, String> existingNames = new HashMap<>();

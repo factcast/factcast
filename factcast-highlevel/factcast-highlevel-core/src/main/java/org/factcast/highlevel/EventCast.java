@@ -32,6 +32,9 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 
 public interface EventCast {
+
+    final Duration FOREVER = Duration.ofDays(1);
+
     PublishBatch batch();
 
     void publish(@NonNull EventPojo e);
@@ -50,9 +53,10 @@ public interface EventCast {
     // managed projections
 
     @SneakyThrows
-    <P extends ManagedProjection> void update(@NonNull P managedProjection);
+    public default <P extends ManagedProjection> void update(@NonNull P managedProjection) {
+        update(managedProjection, FOREVER);
+    }
 
-    @SneakyThrows
     <P extends ManagedProjection> void update(@NonNull P managedProjection,
             @NonNull Duration maxWaitTime)
             throws TimeoutException;

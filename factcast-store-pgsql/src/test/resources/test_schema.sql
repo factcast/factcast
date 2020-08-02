@@ -92,3 +92,12 @@ CREATE INDEX IF NOT EXISTS idx_transformationstore on transformationstore(ns,typ
 	last_access 		TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
+create table IF NOT EXISTS snapshot_cache(
+	cache_key 		varchar(2048) not null,
+	uuid     		uuid,
+	factid          uuid not null,
+	data 			bytea not null,
+	last_access     timestamp with time zone default now() not null,
+	created_at    	timestamp with time zone default now() not null,
+    primary key (uuid,cache_key)
+);
