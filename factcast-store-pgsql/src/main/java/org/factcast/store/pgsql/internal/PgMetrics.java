@@ -40,7 +40,7 @@ public class PgMetrics {
          * them.
          */
         for (OP op : OP.values()) {
-            registry.timer(op.name());
+            timer(op, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
         }
     }
 
