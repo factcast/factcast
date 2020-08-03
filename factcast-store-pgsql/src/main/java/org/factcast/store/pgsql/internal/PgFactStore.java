@@ -134,8 +134,8 @@ public class PgFactStore extends AbstractFactStore {
 
                 List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
                 final int numberOfFactsToPublish = factsToPublish.size();
-                log.trace("Inserting {} fact(s) in batches of {}", numberOfFactsToPublish,
-                        BATCH_SIZE);
+                log.trace("Inserting {} fact(s){}", numberOfFactsToPublish,
+                        numberOfFactsToPublish > BATCH_SIZE ? " in batches of " + BATCH_SIZE : "");
                 jdbcTemplate.batchUpdate(PgConstants.INSERT_FACT, copiedListOfFacts, BATCH_SIZE,
                         (statement, fact) -> {
                             statement.setString(1, fact.jsonHeader());

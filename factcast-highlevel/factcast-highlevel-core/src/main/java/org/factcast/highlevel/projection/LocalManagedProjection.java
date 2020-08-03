@@ -15,14 +15,38 @@
  */
 package org.factcast.highlevel.projection;
 
+import java.util.UUID;
 import java.util.function.Supplier;
 
-public class LocalManagedProjection extends AbstractManagedProjection {
+import lombok.NonNull;
+
+public abstract class LocalManagedProjection implements ManagedProjection {
     private final Object mutex = new Object();
+
+    private UUID state = null;
+
+    @Override
+    public final UUID state() {
+        return this.state;
+    }
+
+    @Override
+    public final void state(@NonNull UUID state) {
+        this.state = state;
+    }
+
+    @Override
+    public final void withLock(@NonNull Runnable r) {
+        withLock(() -> {
+            r.run();
+            return null;
+        });
+    }
 
     public <T> T withLock(Supplier<T> supplier) {
         synchronized (mutex) {
             return supplier.get();
         }
     }
+
 }
