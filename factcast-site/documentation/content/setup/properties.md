@@ -17,12 +17,25 @@ identifier = "properties"
 
 Properties you can use to configure Factcast:
 
-### Schema/Transformation-Registry
+### Schemaregistry
 
 | Property-Name        | Semantics           | Default   
 | ------------- |:-------------|:-----|
-| factcast.store.pgsql.deleteTransformationsStaleForDays    |  when using the persistent impl of the transformation cache, this is the min number of days a transformation result is not read in order to be considered stale. This should free some space in a regular cleanup job | 90  
-| factcast.store.pgsql.snapshotCacheCompactCron             |defines the cron schedule for compacting the transformation result cache | `0 0 0 * * *` (at midnight)
+| factcast.store.pgsql.schemaRegistryUrl            | if a schemaRegistryUrl is defined, FactCast goes into validating mode. The only protocols allowed here are *'http', 'https' and 'classpath'*|  
+| factcast.store.pgsql.persistentRegistry           | if fetched Schema and Transformation Documents are persisted into Postgres | false 
+| factcast.store.pgsql.allowUnvalidatedPublish      | If validation is enabled, this controls if publishing facts, that are **not validatable** (due to missing meta-data or due to missing schema in the registry) are allowed to be published or should be rejected.  |  false 
+| factcast.store.pgsql.schemaStoreRefreshCron       | defines the cron schedule for refreshing the SchemaRegistry by querying for the latest remote changes | `*/60 * * * * *` (once a minute) |
+
+---
+
+### Transformation-Registry
+
+| Property-Name        | Semantics           | Default   
+| ------------- |:-------------|:-----|
+| factcast.store.pgsql.persistentTransformationCache                    | if Transformed Fact payloads are persistently cached into Postgres| false 
+| factcast.store.pgsql.inMemTransformationCacheCapacity                 | when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum value here is 1000. | 1_000_000 
+| factcast.store.pgsql.deleteTransformationsStaleForDays                | when using the persistent impl of the transformation cache, this is the min number of days a transformation result is not read in order to be considered stale. This should free some space in a regular cleanup job | 14  
+| factcast.store.pgsql.transformationCacheCompactCron                   | defines the cron schedule for compacting the transformation result cache | `0 0 0 * * *` (at midnight)
 
 ---
 
@@ -30,8 +43,20 @@ Properties you can use to configure Factcast:
 
 | Property-Name        | Semantics           | Default   
 | ------------- |:-------------|:-----|
-| factcast.store.pgsql.deleteSnapshotStaleForDays |  when using the persistent impl of the transformation cache, this is the min number of days a transformation result is not read in order to be considered stale. This should free some space in a regular cleanup job | 14  
-| factcast.store.pgsql.transformationCacheCompactCron|defines the cron schedule for compacting the transformation result cache | `0 0 0 * * *` (at midnight)
+| factcast.store.pgsql.deleteSnapshotStaleForDays |   min number of days a snapshot is kept even though it is not read anymore | 90  
+| factcast.store.pgsql.snapshotCacheCompactCron             |defines the cron schedule for compacting the transformation result cache | `0 0 0 * * *` (at midnight)
+
+---
+
+### Other
+
+| Property-Name        | Semantics           | Default   
+| ------------- |:-------------|:-----|
+| factcast.store.pgsql.factNotificationBlockingWaitTimeInMillis         | Controls how long to block waiting for new notifications from the database (Postgres LISTEN/ NOTIFY mechanism). When this time exceeds the notifications is repeated | 15000 (15sec)
+| factcast.store.pgsql.factNotificationMaxRoundTripLatencyInMillis      | When Factcast did not receive any notifications after factNotificationBlockingWaitTimeInMillis milliseconds it validates the health of the database connection. For this purpose it sends an internal notification to the database and waits for the given time to receive back an answer. If the time is exceeded the database connection is renewed | 200
+| factcast.store.pgsql.factNotificationNewConnectionWaitTimeInMillis    | how much time to wait between invalidating and acquiring a new connection. note: This parameter is only applied in the part of Factcast which deals with receiving and forwarding database notifications | 100
+   
+
 
 
 

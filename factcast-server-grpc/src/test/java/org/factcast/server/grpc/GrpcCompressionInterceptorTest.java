@@ -18,6 +18,7 @@ package org.factcast.server.grpc;
 import static org.mockito.Mockito.*;
 
 import org.factcast.grpc.api.CompressionCodecs;
+import org.factcast.grpc.api.Headers;
 import org.junit.jupiter.api.*;
 
 import io.grpc.Metadata;
@@ -45,7 +46,7 @@ class GrpcCompressionInterceptorTest {
     void interceptCallGZip() {
         ServerCall call = mock(ServerCall.class);
         Metadata metadata = mock(Metadata.class);
-        when(metadata.get(uut.GRPC_ACCEPT_ENCODING)).thenReturn("gzip");
+        when(metadata.get(Headers.MESSAGE_COMPRESSION)).thenReturn("gzip");
         ServerCallHandler next = mock(ServerCallHandler.class);
 
         uut.interceptCall(call, metadata, next);
