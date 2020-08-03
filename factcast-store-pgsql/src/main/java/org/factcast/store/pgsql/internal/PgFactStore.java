@@ -102,14 +102,6 @@ public class PgFactStore extends AbstractFactStore {
         this.metrics = metrics;
         this.factTransformerService = factTransformerService;
 
-        /*
-         * Register all non-exceptional meters, so that an operational dashboard
-         * can visualize all possible operations dynamically without hardcoding
-         * them.
-         */
-        for (OP op : OP.values()) {
-            metrics.timer(op, PgMetrics.StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
-        }
     }
 
     @Override

@@ -24,6 +24,7 @@ import java.sql.SQLException;
 
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgConstants;
+import org.factcast.store.pgsql.internal.PgMetrics;
 import org.factcast.store.pgsql.internal.listen.PgListener.FactInsertionEvent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,6 @@ import org.postgresql.jdbc.PgConnection;
 
 import com.google.common.eventbus.EventBus;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import lombok.val;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,7 +58,7 @@ public class PgListenerTest {
     PreparedStatement ps;
 
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    MeterRegistry registry;
+    PgMetrics registry;
 
     PgConfigurationProperties props = new PgConfigurationProperties();
 
