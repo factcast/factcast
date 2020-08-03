@@ -119,9 +119,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             final int size = facts.size();
             log.debug("publish {} fact{}", size, size > 1 ? "s" : "");
             log.trace("publish {}", facts);
-            log.trace("store publish {}", facts);
             store.publish(facts);
-            log.trace("store publish done");
             responseObserver.onNext(MSG_Empty.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (FactValidationException e) {
@@ -163,7 +161,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                 ((ServerCallStreamObserver<MSG_Notification>) responseObserver).setOnCancelHandler(
                         () -> {
                             try {
-                                log.trace("got onCancel from stream, closing subscription {}", req
+                                log.debug("got onCancel from stream, closing subscription {}", req
                                         .debugInfo());
                                 sub.close();
                             } catch (Exception e) {
@@ -303,7 +301,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     private void resetDebugInfo(SubscriptionRequestTO req) {
         String newId = "grpc-sub#" + subscriptionIdStore.incrementAndGet();
-        log.info("subscribing {} for {} defined as {}", newId, req, req.dump());
+        log.debug("subscribing {} for {} defined as {}", newId, req, req.dump());
         req.debugInfo(newId);
     }
 
@@ -420,7 +418,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
         doFetchById(responseObserver, () -> {
             Optional<Fact> fetchById = store.fetchById(fromProto);
-            log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "")
+            log.trace("fetchById({}) was {}found", fromProto, fetchById.map(f -> "")
                     .orElse("NOT "));
             return fetchById;
         });
@@ -462,7 +460,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         doFetchById(responseObserver, () -> {
             Optional<Fact> fetchById = store.fetchByIdAndVersion(fromProto.uuid(), fromProto
                     .version());
-            log.debug("fetchById({}) was found", fromProto, fetchById.map(f -> "")
+            log.trace("fetchById({}) was found", fromProto, fetchById.map(f -> "")
                     .orElse("NOT "));
 
             return fetchById;

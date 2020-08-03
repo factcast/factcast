@@ -54,7 +54,7 @@ public class PgCatchUpFetchPage {
                 PgConstants.SELECT_FACT_FROM_CATCHUP, createSetter(serial, pageSize),
                 new PgFactExtractor(serial)));
         sw.stop();
-        log.debug("{}  fetched next page of Facts for cid={}, limit={}, ser>{} in {}ms", req,
+        log.trace("{} fetched next page of Facts for cid={}, limit={}, ser>{} in {}ms", req,
                 clientId, pageSize,
                 serial.get(), sw.elapsed(TimeUnit.MILLISECONDS));
         return list;
