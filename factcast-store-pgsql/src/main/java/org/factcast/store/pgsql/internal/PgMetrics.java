@@ -19,22 +19,39 @@ import java.util.function.Supplier;
 
 import org.factcast.store.pgsql.internal.PgMetrics.StoreMetrics.OP;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer.Sample;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@RequiredArgsConstructor
 @Slf4j
 public class PgMetrics {
 
     @NonNull
     private final MeterRegistry registry;
+
+    public PgMetrics(@NonNull MeterRegistry registry) {
+        this.registry = registry;
+
+        /*
+         * Register all non-exceptional meters, so that an operational dashboard
+         * can visualize all possible operations dynamically without hardcoding
+         * them.
+         */
+        for (OP op : OP.values()) {
+            registry.timer(op.name());
+        }
+    }
+
+    @NonNull
+    public Counter counter(@NonNull StoreMetrics.OP operation) {
+        Tags tags = Tags.of(
+                Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
+                Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()));
+        // ommitting the meter description here
+        return Counter.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
+    }
 
     public void time(@NonNull OP operation, @NonNull Runnable r) {
         Sample sample = Timer.start();
@@ -80,12 +97,19 @@ public class PgMetrics {
     }
 
     @NonNull
-    public Timer timer(@NonNull OP operation, @NonNull String exceptionTagValue) {
+    private Timer timer(@NonNull OP operation, @NonNull String exceptionTagValue) {
         Tags tags = Tags.of(
                 Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
                 Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()),
                 Tag.of(StoreMetrics.TAG_EXCEPTION_KEY, exceptionTagValue));
-        // ommitting the meter description here
+        return Timer.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
+    }
+
+    @NonNull
+    public Timer timer(@NonNull OP operation) {
+        Tags tags = Tags.of(
+                Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
+                Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()));
         return Timer.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
     }
 

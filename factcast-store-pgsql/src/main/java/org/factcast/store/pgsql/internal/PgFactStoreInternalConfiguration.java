@@ -125,8 +125,8 @@ public class PgFactStoreInternalConfiguration {
     @Bean
     public PgListener pgListener(@NonNull PgConnectionSupplier pgConnectionSupplier,
             @NonNull EventBus eventBus, @NonNull PgConfigurationProperties props,
-            MeterRegistry reg) {
-        return new PgListener(pgConnectionSupplier, eventBus, props, reg);
+            PgMetrics metrics) {
+        return new PgListener(pgConnectionSupplier, eventBus, props, metrics);
     }
 
     @Bean
