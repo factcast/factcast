@@ -132,8 +132,8 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
 
         Collection<CallTarget> relevantClasses = getRelevantClasses(p);
         relevantClasses.forEach(callTarget -> {
-            Method[] methods = callTarget.clazz.getDeclaredMethods();
-            Arrays.stream(methods)
+            List<Method> methods = collectMethods(callTarget.clazz);
+            methods.stream()
                     .filter(DefaultEventApplier::isEventHandlerMethod)
                     .forEach(m -> {
 
@@ -161,6 +161,16 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
         }
 
         return map;
+    }
+
+    private static List<Method> collectMethods(Class<?> clazz) {
+        if (clazz == null)
+            return Collections.emptyList();
+
+        LinkedList<Method> m = new LinkedList<>();
+        m.addAll(Arrays.asList(clazz.getDeclaredMethods()));
+        m.addAll(collectMethods(clazz.getSuperclass()));
+        return m;
     }
 
     private static FactSpec discoverFactSpec(Method m) {

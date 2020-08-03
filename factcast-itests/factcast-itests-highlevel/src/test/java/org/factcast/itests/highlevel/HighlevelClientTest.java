@@ -27,8 +27,13 @@ import org.factcast.core.snap.SnapshotRepository;
 import org.factcast.highlevel.EventCast;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.jdbc.Sql;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -44,6 +49,9 @@ import lombok.val;
 @ContextConfiguration(classes = Application.class)
 @Testcontainers
 @Slf4j
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureTestDatabase(replace = Replace.ANY)
+@Sql(scripts = "classpath:/test-setup.sql")
 public class HighlevelClientTest {
 
     static final Network _docker_network = Network.newNetwork();
@@ -208,4 +216,42 @@ public class HighlevelClientTest {
         assertThat(userCount.count()).isEqualTo(before);
 
     }
+
+    @Test
+    void simpleJpaProjectionRoundtrip() {
+
+        UUID johnsId = UUID.randomUUID();
+        ec.batch()
+                .add(new UserCreated(johnsId, "John"))
+                .add(new UserCreated(UUID.randomUUID(), "Paul"))
+                .add(new UserCreated(UUID.randomUUID(), "George"))
+                .add(new UserCreated(UUID.randomUUID(), "Ringo"))
+                .execute();
+
+        val fabFour = jpaUserNames;
+        ec.update(fabFour);
+
+        assertThat(fabFour.count()).isEqualTo(4);
+        assertThat(fabFour.contains("John")).isTrue();
+        assertThat(fabFour.contains("Paul")).isTrue();
+        assertThat(fabFour.contains("George")).isTrue();
+        assertThat(fabFour.contains("Ringo")).isTrue();
+
+        // sadly shot
+        ec.publish(new UserDeleted(johnsId));
+
+        val fabThree = jpaUserNames;
+        ec.update(fabThree);
+
+        assertThat(fabThree.count()).isEqualTo(3);
+        assertThat(fabThree.contains("John")).isFalse();
+        assertThat(fabThree.contains("Paul")).isTrue();
+        assertThat(fabThree.contains("George")).isTrue();
+        assertThat(fabThree.contains("Ringo")).isTrue();
+
+        fabThree.allUserIdsForDeletingInTest().forEach(id -> ec.publish(new UserDeleted(id)));
+    }
+
+    @Autowired
+    JpaUserNames jpaUserNames;
 }
