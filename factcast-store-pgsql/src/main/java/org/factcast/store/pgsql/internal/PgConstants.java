@@ -15,6 +15,8 @@
  */
 package org.factcast.store.pgsql.internal;
 
+import java.util.Random;
+
 import lombok.AccessLevel;
 import lombok.Generated;
 import lombok.experimental.FieldDefaults;
@@ -110,6 +112,13 @@ public class PgConstants {
             + COLUMN_HEADER + " @> ?::jsonb";
 
     public static final String LISTEN_SQL = "LISTEN " + CHANNEL_NAME;
+
+    public static final String ROUNDTRIP_CHANNEL_NAME = "roundtrip_channel_" + Math.abs(new Random()
+            .nextLong()); // using the pid lead to a sql exception
+
+    public static final String NOTIFY_ROUNDTRIP = "NOTIFY " + ROUNDTRIP_CHANNEL_NAME;
+
+    public static final String LISTEN_ROUNDTRIP_CHANNEL_SQL = "LISTEN " + ROUNDTRIP_CHANNEL_NAME;
 
     public static final String UPDATE_FACT_SERIALS = "update " + TABLE_FACT + " set "
             + COLUMN_HEADER + "= jsonb_set( "

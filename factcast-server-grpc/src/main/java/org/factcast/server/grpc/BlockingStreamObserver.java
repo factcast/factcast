@@ -40,11 +40,11 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
     private static final int WAIT_TIME = 1000;
 
-    final ServerCallStreamObserver<T> delegate;
+    private final ServerCallStreamObserver<T> delegate;
 
-    final Object lock = new Object();
+    private final Object lock = new Object();
 
-    final String id;
+    private final String id;
 
     BlockingStreamObserver(@NonNull String id, @NonNull ServerCallStreamObserver<T> delegate) {
         this.id = id;
@@ -67,7 +67,7 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
             synchronized (lock) {
                 if (!delegate.isReady()) {
                     for (int i = 1; i <= RETRY_COUNT; i++) {
-                        log.debug("{} channel not ready. Slow client? Attempt: {}/{}", id, i,
+                        log.trace("{} channel not ready. Slow client? Attempt: {}/{}", id, i,
                                 RETRY_COUNT);
                         try {
                             lock.wait(WAIT_TIME);

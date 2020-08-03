@@ -129,7 +129,11 @@ public class PgMetrics {
 
             CLEAR_SNAPSHOT("clearSnapshot"),
 
-            COMPACT_SNAPSHOT_CACHE("compactSnapshotCache");
+            COMPACT_SNAPSHOT_CACHE("compactSnapshotCache"),
+
+            NOTIFY_ROUNDTRIP_LATENCY("notifyRoundTripLatency"),
+
+            MISSED_ROUNDTRIP("missedRoundtrip");
 
             @NonNull
             @Getter
