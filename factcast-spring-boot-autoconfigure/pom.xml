@@ -52,7 +52,7 @@
       <optional>true</optional>
     </dependency>    <dependency>
     <groupId>org.factcast</groupId>
-    <artifactId>factcast-highlevel-core</artifactId>
+    <artifactId>factcast-factus</artifactId>
     <optional>true</optional>
   </dependency>
     <dependency>

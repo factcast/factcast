@@ -17,13 +17,13 @@ package org.factcast.spring.boot.autoconfigure.highlevel;
 
 import org.factcast.core.FactCast;
 import org.factcast.core.snap.SnapshotRepository;
-import org.factcast.highlevel.DefaultEventCast;
-import org.factcast.highlevel.EventCast;
-import org.factcast.highlevel.applier.DefaultEventApplierFactory;
-import org.factcast.highlevel.serializer.DefaultEventSerializer;
-import org.factcast.highlevel.serializer.EventSerializer;
-import org.factcast.highlevel.snapshot.AggregateSnapshotRepositoryImpl;
-import org.factcast.highlevel.snapshot.ProjectionSnapshotRepositoryImpl;
+import org.factcast.factus.DefaultFactus;
+import org.factcast.factus.Factus;
+import org.factcast.factus.applier.DefaultEventApplierFactory;
+import org.factcast.factus.serializer.DefaultEventSerializer;
+import org.factcast.factus.serializer.EventSerializer;
+import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
+import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -36,14 +36,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Generated;
 
 @Configuration
-@ConditionalOnClass(EventCast.class)
-@ConditionalOnMissingBean(EventCast.class)
+@ConditionalOnClass(Factus.class)
+@ConditionalOnMissingBean(Factus.class)
 @Generated
 public class EventCastAutoConfiguration {
 
     @Bean
-    public EventCast eventCast(FactCast fc, SnapshotRepository sr, EventSerializer deserializer) {
-        return new DefaultEventCast(fc, new DefaultEventApplierFactory(deserializer), deserializer,
+    public Factus eventCast(FactCast fc, SnapshotRepository sr, EventSerializer deserializer) {
+        return new DefaultFactus(fc, new DefaultEventApplierFactory(deserializer), deserializer,
                 new AggregateSnapshotRepositoryImpl(sr), new ProjectionSnapshotRepositoryImpl(sr) {
                 });
     }
