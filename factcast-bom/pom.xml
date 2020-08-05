@@ -59,7 +59,7 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-highlevel-core</artifactId>
+        <artifactId>factcast-factus</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
