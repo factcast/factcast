@@ -18,8 +18,11 @@ package org.factcast.itests.factus;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -190,6 +193,7 @@ public class FactusClientTest {
 
         // lets consider userCount a springbean
         UserCount userCount = new UserCount();
+
         assertThat(userCount.state()).isNull();
         assertThat(userCount.count()).isEqualTo(0);
         ec.update(userCount);
@@ -254,4 +258,63 @@ public class FactusClientTest {
 
     @Autowired
     JpaUserNames jpaUserNames;
+
+    @Test
+    public void simpleAggregateLockRoundtrip() throws Exception {
+        UUID aggregateId = UUID.randomUUID();
+        assertThat(ec.fetch(TestAggregate.class, aggregateId)).isEmpty();
+
+        ec.publish(new TestAggregateWasIncremented(aggregateId));
+        assertThat(ec.fetch(TestAggregate.class, aggregateId)).isNotEmpty();
+        assertThat(ec.fetch(TestAggregate.class, aggregateId).get().magicNumber()).isEqualTo(43);
+
+        // we start 10 threads that try to (in an isolated fashion) lock and
+        // increase
+        Set<CompletableFuture<Void>> futures = new HashSet<>();
+        for (int i = 0; i < 10; i++) {
+            String workerID = "Worker #" + i;
+
+            futures.add(CompletableFuture.runAsync(() -> ec.lockAggregate(aggregateId)
+                    .attempt(tx -> {
+
+                        log.info(workerID);
+                        sleepRandomMillis();
+
+                        // fetch
+                        TestAggregate fetch = tx.fetch(TestAggregate.class, aggregateId).get();
+                        // check business rule
+                        if (fetch.magicNumber() < 50) {
+                            // increment or
+                            tx.publish(new TestAggregateWasIncremented(aggregateId));
+                        } else {
+                            // abort, according to business rule
+                            tx.abort("aborting " + workerID + ": magic number is too high already ("
+                                    + fetch.magicNumber() + ")");
+                        }
+                    })));
+        }
+
+        // wait for all threads to succeed or abort
+        waitForAllToTerminate(futures);
+
+        assertThat(ec.fetch(TestAggregate.class, aggregateId).get().magicNumber()).isEqualTo(50);
+
+    }
+
+    private void waitForAllToTerminate(Set<CompletableFuture<Void>> futures) {
+        futures.forEach(f -> {
+            try {
+                f.get();
+            } catch (Exception e) {
+                log.warn(e.getMessage());
+            }
+        });
+    }
+
+    private void sleepRandomMillis() {
+        try {
+            Thread.sleep((long) (Math.random() * 1000));
+        } catch (InterruptedException e) {
+        }
+    }
 }

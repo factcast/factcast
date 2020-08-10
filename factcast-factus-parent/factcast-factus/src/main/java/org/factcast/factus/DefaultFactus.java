@@ -15,11 +15,14 @@
  */
 package org.factcast.factus;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -34,13 +37,13 @@ import org.factcast.factus.applier.EventApplier;
 import org.factcast.factus.applier.EventApplierFactory;
 import org.factcast.factus.batch.DefaultPublishBatch;
 import org.factcast.factus.batch.PublishBatch;
+import org.factcast.factus.lock.Locked;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.serializer.EventSerializer;
-import org.factcast.factus.snapshot.AggregateSnapshot;
-import org.factcast.factus.snapshot.AggregateSnapshotRepository;
-import org.factcast.factus.snapshot.ProjectionSnapshot;
-import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
+import org.factcast.factus.snapshot.*;
 import org.jetbrains.annotations.NotNull;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -64,21 +67,29 @@ public class DefaultFactus implements Factus {
 
     final ProjectionSnapshotRepository projectionSnapshotRepository;
 
+    final SnapshotFactory snapFactory;
+
+    private AtomicBoolean closed = new AtomicBoolean();
+
     @Override
     public PublishBatch batch() {
         return new DefaultPublishBatch(fc, serializer);
     }
 
     @Override
-    public void publish(@NonNull EventPojo e) {
-        publish(e, f -> null);
-    }
-
-    @Override
     public <T> T publish(@NonNull EventPojo e, @NonNull Function<Fact, T> resultFn) {
+
+        assertUnclosed();
+
         Fact factToPublish = e.toFact(serializer);
         fc.publish(factToPublish);
         return resultFn.apply(factToPublish);
+    }
+
+    private void assertUnclosed() {
+        if (closed.get()) {
+            throw new IllegalStateException("Already closed.");
+        }
     }
 
     @Override
@@ -88,6 +99,8 @@ public class DefaultFactus implements Factus {
 
     @Override
     public <T> T publish(@NonNull List<EventPojo> e, @NonNull Function<List<Fact>, T> resultFn) {
+        assertUnclosed();
+
         List<Fact> facts = StreamSupport.stream(e.spliterator(), false)
                 .map(p -> p.toFact(serializer))
                 .collect(Collectors.toList());
@@ -96,8 +109,11 @@ public class DefaultFactus implements Factus {
     }
 
     @Override
-    public <P extends ManagedProjection> void update(@NonNull P managedProjection,
+    public <P extends ManagedProjection> void update(
+            @NonNull P managedProjection,
             @NonNull Duration maxWaitTime) throws TimeoutException {
+        assertUnclosed();
+
         log.trace("updating local projection {}", managedProjection.getClass());
         managedProjection.withLock(() -> {
             catchupProjection(managedProjection, managedProjection.state(), maxWaitTime);
@@ -105,26 +121,63 @@ public class DefaultFactus implements Factus {
     }
 
     @Override
-    public <P extends SubscribedProjection> Subscription subscribe(
-            @NonNull P subscribedProjection) {
-        return null;
+    public <P extends SubscribedProjection> void subscribe(@NonNull P subscribedProjection) {
+        assertUnclosed();
+
+        CompletableFuture.runAsync(() -> {
+            // TODO how to exit this loop?
+            Duration INTERVAL = Duration.ofMinutes(5); // TODO needed?
+            while (!closed.get()) {
+                if (subscribedProjection.aquireWriteToken(INTERVAL) != null) {
+                    managedObjects.add(doSubscribe(subscribedProjection));
+                }
+            }
+        });
     }
+
+    @SneakyThrows
+    private <P extends SubscribedProjection> AutoCloseable doSubscribe(P subscribedProjection) {
+        EventApplier<P> handler = ehFactory.create(subscribedProjection);
+        FactObserver fo = new FactObserver() {
+            // TODO what about error control?
+            @Override
+            public void onNext(@NonNull Fact element) {
+                handler.apply(element);
+                subscribedProjection.state(element.id());
+            }
+        };
+
+        return fc.subscribe(
+                SubscriptionRequest
+                        .catchup(handler.createFactSpecs())
+                        .fromNullable(subscribedProjection.state()), fo)
+                .awaitComplete(FOREVER.toMillis());
+
+    }
+
+    private final Set<AutoCloseable> managedObjects = new HashSet<>();
 
     @Override
     @SneakyThrows
     public <P extends SnapshotProjection> P fetch(Class<P> projectionClass) {
+        assertUnclosed();
+
         // TODO ugly, fix hierarchy?
         if (Aggregate.class.isAssignableFrom(projectionClass)) {
             throw new IllegalArgumentException(
                     "Method confusion: UUID aggregateId is missing as a second parameter for aggregates");
         }
 
+        val ser = snapFactory.retrieveSerializer(projectionClass);
+
         Optional<ProjectionSnapshot<P>> latest = projectionSnapshotRepository.findLatest(
                 projectionClass);
 
         P projection;
         if (latest.isPresent()) {
-            projection = ProjectionSnapshot.deserialize(latest.get());
+            ProjectionSnapshot<P> snap = latest.get();
+
+            projection = ser.deserialize(projectionClass, snap.bytes());
         } else {
             log.trace("Creating initial projection version for {}", projectionClass);
             projection = initialProjection(projectionClass);
@@ -136,7 +189,7 @@ public class DefaultFactus implements Factus {
                 .orElse(null), FOREVER);
         if (factUuid != null) {
             ProjectionSnapshot<P> currentSnap = new ProjectionSnapshot<P>(projectionClass,
-                    factUuid, projection);
+                    factUuid, ser.serialize(projection));
             // TODO concurrency control
             projectionSnapshotRepository.putBlocking(currentSnap);
         }
@@ -146,11 +199,16 @@ public class DefaultFactus implements Factus {
     @Override
     @SneakyThrows
     public <A extends Aggregate> Optional<A> fetch(Class<A> aggregateClass, UUID aggregateId) {
+        assertUnclosed();
+
+        val ser = snapFactory.retrieveSerializer(aggregateClass);
+
         Optional<AggregateSnapshot<A>> latest = aggregateSnapshotRepository.findLatest(
                 aggregateClass, aggregateId);
-        A aggregate = latest.map(AggregateSnapshot::deserialize)
-                .orElseGet(() -> initial(
-                        aggregateClass, aggregateId));
+        Optional<A> optionalA = latest
+                .map(as -> ser.deserialize(aggregateClass, as.serializedAggregate()));
+        A aggregate = optionalA
+                .orElseGet(() -> (A) initial(aggregateClass, aggregateId));
 
         UUID factUuid = catchupProjection(aggregate, latest.map(AggregateSnapshot::factId)
                 .orElse(null), FOREVER);
@@ -166,7 +224,7 @@ public class DefaultFactus implements Factus {
             }
         } else {
             AggregateSnapshot<A> currentSnap = new AggregateSnapshot<A>(aggregateClass,
-                    factUuid, aggregate);
+                    factUuid, ser.serialize(aggregate));
             // TODO concurrency control
             aggregateSnapshotRepository.putBlocking(aggregateId, currentSnap);
             return Optional.of(aggregate);
@@ -174,7 +232,8 @@ public class DefaultFactus implements Factus {
     }
 
     @SneakyThrows
-    private <P extends Projection> UUID catchupProjection(@NonNull P projection, UUID stateOrNull,
+    private <P extends Projection> UUID catchupProjection(
+            @NonNull P projection, UUID stateOrNull,
             Duration maxWait) {
         EventApplier<P> handler = ehFactory.create(projection);
         AtomicReference<UUID> factId = new AtomicReference<>();
@@ -195,7 +254,8 @@ public class DefaultFactus implements Factus {
         return factId.get();
     }
 
-    List<Field> getAllFields(Class clazz) {
+    @VisibleForTesting
+    protected List<Field> getAllFields(Class clazz) {
         if (clazz == null) {
             return Collections.emptyList();
         }
@@ -206,8 +266,9 @@ public class DefaultFactus implements Factus {
         return result;
     }
 
+    @VisibleForTesting
     @SneakyThrows
-    private <A extends Aggregate> A initial(Class<A> aggregateClass, UUID aggregateId) {
+    protected <A extends Aggregate> A initial(Class<A> aggregateClass, UUID aggregateId) {
         log.trace("Creating initial aggregate version for {} with id {}", aggregateClass
                 .getSimpleName(), aggregateId);
         Constructor<A> con = aggregateClass.getDeclaredConstructor();
@@ -231,9 +292,37 @@ public class DefaultFactus implements Factus {
 
     @NotNull
     @SneakyThrows
+    // TODO extract?
     private <P extends SnapshotProjection> P initialProjection(Class<P> projectionClass) {
         Constructor<P> con = projectionClass.getDeclaredConstructor();
         con.setAccessible(true);
         return con.newInstance();
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (this.closed.getAndSet(true)) {
+            log.warn("close is being called more than once!?");
+        } else {
+            ArrayList<AutoCloseable> closeables = new ArrayList<>(managedObjects);
+            for (AutoCloseable c : closeables) {
+                try {
+                    c.close();
+                } catch (Exception e) {
+                    // needs to be swallowed
+                    log.warn("While closing {} of type {}:", c, c.getClass().getCanonicalName(), e);
+                }
+            }
+        }
+    }
+
+    @Override
+    public Fact toFact(@NonNull EventPojo e) {
+        return e.toFact(serializer);
+    }
+
+    @Override
+    public Locked lockAggregate(UUID first, UUID... others) {
+        return new Locked(fc, this, first, others);
     }
 }

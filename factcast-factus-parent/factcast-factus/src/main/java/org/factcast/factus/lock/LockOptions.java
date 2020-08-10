@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.factus.lock;
 
-import org.factcast.factus.Handler;
-import org.factcast.factus.projection.LocalManagedProjection;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 
-public class UserCount extends LocalManagedProjection {
+@Data
+@Accessors(fluent = true)
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+public class LockOptions {
 
-    private int users = 0;
+    public static final LockOptions DEFAULT = optimistic();
 
-    @Handler
-    void apply(UserCreated created) {
-        users++;
-    }
-
-    @Handler
-    void apply(UserDeleted deleted) {
-        users--;
-    }
-
-    int count() {
-        return users;
+    public static LockOptions optimistic() {
+        return new LockOptions();
     }
 
 }

@@ -18,16 +18,13 @@ package org.factcast.factus.snapshot;
 import java.util.UUID;
 
 import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.serializer.DefaultSnapshotSerializer;
-import org.factcast.factus.serializer.SnapshotSerializer;
 
 import lombok.NonNull;
 import lombok.Value;
 
 @Value
 public class AggregateSnapshot<A extends Aggregate> {
-    private static SnapshotSerializer defaultSerializer = new DefaultSnapshotSerializer();
-
+    @NonNull
     Class<A> type;
 
     @NonNull
@@ -36,27 +33,4 @@ public class AggregateSnapshot<A extends Aggregate> {
     @NonNull
     byte[] serializedAggregate;
 
-    public AggregateSnapshot(Class<A> aggregateClass, UUID lastFactId, A aggregate) {
-        this(aggregateClass, lastFactId, serialize(aggregate));
-    }
-
-    // bug in lombok plugin for intellij, please do not delete, even if it looks
-    // redundant.
-    public AggregateSnapshot(Class<A> aggregateClass, UUID lastFactId, byte[] bytes) {
-        this.type = aggregateClass;
-        this.factId = lastFactId;
-        this.serializedAggregate = bytes;
-    }
-
-    public static <AGGREGATE extends Aggregate> byte[] serialize(AGGREGATE aggregate) {
-        // TODO configure by annotations
-        return defaultSerializer.serialize(aggregate);
-    }
-
-    public static <AGGREGATE extends Aggregate> AGGREGATE deserialize(
-            AggregateSnapshot<AGGREGATE> aAggregateSnapshot) {
-        // TODO configure by annotations
-        return defaultSerializer.deserialize(aAggregateSnapshot.type(), aAggregateSnapshot
-                .serializedAggregate());
-    }
 }

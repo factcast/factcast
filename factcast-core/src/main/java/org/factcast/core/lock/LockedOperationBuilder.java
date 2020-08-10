@@ -15,10 +15,7 @@
  */
 package org.factcast.core.lock;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import org.factcast.core.lock.WithOptimisticLock.OptimisticRetriesExceededException;
 import org.factcast.core.store.FactStore;
@@ -39,6 +36,12 @@ public final class LockedOperationBuilder {
         LinkedList<UUID> ids = new LinkedList<>();
         ids.add(aggId);
         ids.addAll(Arrays.asList(otherAggIds));
+        return new OnBuilderStep(ids);
+    }
+
+    public OnBuilderStep on(@NonNull Collection<UUID> aggIds) {
+        LinkedList<UUID> ids = new LinkedList<>();
+        ids.addAll(aggIds);
         return new OnBuilderStep(ids);
     }
 

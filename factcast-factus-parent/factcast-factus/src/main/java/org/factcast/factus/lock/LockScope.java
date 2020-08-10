@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.factus.lock;
 
-import org.factcast.factus.Handler;
-import org.factcast.factus.projection.LocalManagedProjection;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
 
-public class UserCount extends LocalManagedProjection {
+import lombok.Data;
+import lombok.NonNull;
 
-    private int users = 0;
+@Data
+public class LockScope {
+    final List<UUID> aggregateIds = new LinkedList<>();
 
-    @Handler
-    void apply(UserCreated created) {
-        users++;
+    public LockScope aggregateId(@NonNull UUID id, UUID... others) {
+        aggregateIds.add(id);
+        if (others != null && others.length > 0)
+            aggregateIds.addAll(Arrays.asList(others));
+
+        return this;
     }
-
-    @Handler
-    void apply(UserDeleted deleted) {
-        users--;
-    }
-
-    int count() {
-        return users;
-    }
-
 }

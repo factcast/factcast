@@ -13,46 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus;
+package org.factcast.factus.lock;
 
-import java.io.Closeable;
 import java.time.Duration;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 
 import org.factcast.core.Fact;
-import org.factcast.factus.batch.PublishBatch;
-import org.factcast.factus.lock.*;
+import org.factcast.factus.EventPojo;
+import org.factcast.factus.Factus;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.ManagedProjection;
 import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.projection.SubscribedProjection;
 
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
-public interface Factus extends Closeable {
+/**
+ * Contains all operations that are available during locked execution
+ */
+public interface Transaction {
 
-    default void publish(@NonNull EventPojo e) {
-        publish(e, f -> null);
-    }
+    void publish(@NonNull EventPojo e);
 
-    default void publish(@NonNull List<EventPojo> e) {
-        publish(e, f -> null);
-    }
-
-    <T> T publish(@NonNull EventPojo e, @NonNull Function<Fact, T> resultFn);
-
-    <T> T publish(@NonNull List<EventPojo> e, @NonNull Function<List<Fact>, T> resultFn);
-
-    // TODO find a good place for:
-    public final Duration FOREVER = Duration.ofDays(1);
-
-    // publishing:
-    PublishBatch batch();
+    void publish(@NonNull Fact e);
 
     // snapshot projections:
 
@@ -63,6 +48,7 @@ public interface Factus extends Closeable {
             @NonNull UUID aggregateId);
 
     // managed projections:
+    // TODO should we allow this? -> isolation
 
     @SneakyThrows
     default <P extends ManagedProjection> void update(@NonNull P managedProjection) {
@@ -74,12 +60,12 @@ public interface Factus extends Closeable {
             @NonNull Duration maxWaitTime)
             throws TimeoutException;
 
-    // subscribed projections:
-    <P extends SubscribedProjection> void subscribe(@NonNull P subscribedProjection);
+    default void abort(@NonNull String msg) {
+        abort(new LockedOperationAbortedException(msg));
+    }
 
-    // Locking
-    Locked lockAggregate(UUID first, UUID... others);
+    default void abort(@NonNull LockedOperationAbortedException cause) {
+        throw cause;
+    }
 
-    // conversion
-    Fact toFact(@NonNull EventPojo e);
 }
