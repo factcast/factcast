@@ -29,5 +29,4 @@ final class LocalState {
     public final void state(@NonNull UUID state) {
         this.state = state;
     }
-
 }

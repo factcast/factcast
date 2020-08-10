@@ -13,27 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.factus.snapshot;
 
-import org.factcast.factus.Handler;
-import org.factcast.factus.projection.LocalManagedProjection;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class UserCount extends LocalManagedProjection {
+import org.factcast.factus.serializer.SnapshotSerializer;
 
-    private int users = 0;
-
-    @Handler
-    void apply(UserCreated created) {
-        users++;
-    }
-
-    @Handler
-    void apply(UserDeleted deleted) {
-        users--;
-    }
-
-    int count() {
-        return users;
-    }
-
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface SerializeUsing {
+    Class<? extends SnapshotSerializer> value();
 }

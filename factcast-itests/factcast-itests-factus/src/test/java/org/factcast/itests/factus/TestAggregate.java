@@ -15,9 +15,6 @@
  */
 package org.factcast.itests.factus;
 
-import java.util.UUID;
-
-import org.factcast.core.FactHeader;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.Aggregate;
 
@@ -31,7 +28,7 @@ public class TestAggregate extends Aggregate {
     class SomeNestedClass {
 
         @Handler
-        void apply(FactHeader f, UUID id, TestAggregateWasIncremented e) {
+        void apply(TestAggregateWasIncremented e) {
             magicNumber++;
         }
 

@@ -47,16 +47,16 @@ public class FactSpec {
     @JsonProperty
     UUID aggId = null;
 
+    @NonNull
+    @JsonProperty
+    final Map<String, String> meta = new HashMap<>();
+
     @Deprecated
     @JsonProperty
     String jsFilterScript = null;
 
     @JsonProperty
     FilterScript filterScript = null;
-
-    @NonNull
-    @JsonProperty
-    final Map<String, String> meta = new HashMap<>();
 
     public FactSpec meta(@NonNull String k, @NonNull String v) {
         meta.put(k, v);

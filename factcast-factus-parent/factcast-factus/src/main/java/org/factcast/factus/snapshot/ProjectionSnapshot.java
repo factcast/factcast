@@ -18,16 +18,15 @@ package org.factcast.factus.snapshot;
 import java.util.UUID;
 
 import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.serializer.DefaultSnapshotSerializer;
-import org.factcast.factus.serializer.SnapshotSerializer;
 
 import lombok.Data;
 import lombok.NonNull;
 
 @Data
 public class ProjectionSnapshot<P extends SnapshotProjection> {
-    private static SnapshotSerializer defaultSerializer = new DefaultSnapshotSerializer();
 
+    // TODO convert to/from string
+    @NonNull
     Class<P> type;
 
     @NonNull
@@ -36,26 +35,30 @@ public class ProjectionSnapshot<P extends SnapshotProjection> {
     @NonNull
     byte[] bytes;
 
-    public ProjectionSnapshot(Class<P> aggregateClass, UUID lastFactId, P aggregate) {
-        this(aggregateClass, lastFactId, serialize(aggregate));
-    }
-
-    // bug in lombok plugin for intellij, please do not delete, even if it looks
-    // redundant.
-    public ProjectionSnapshot(Class<P> aggregateClass, UUID lastFactId, byte[] bytes) {
-        this.type = aggregateClass;
-        this.bytes = bytes;
-        this.factId = lastFactId;
-    }
-
-    public static <T extends SnapshotProjection> byte[] serialize(T aggregate) {
-        // TODO configure by annotations
-        return defaultSerializer.serialize(aggregate);
-    }
-
-    public static <T extends SnapshotProjection> T deserialize(
-            ProjectionSnapshot<T> snap) {
-        // TODO configure by annotations
-        return defaultSerializer.deserialize(snap.type(), snap.bytes());
-    }
+    // public ProjectionSnapshot(Class<P> aggregateClass, UUID lastFactId, P
+    // aggregate) {
+    // this(aggregateClass, lastFactId, serialize(aggregate));
+    // }
+    //
+    // // bug in lombok plugin for intellij, please do not delete, even if it
+    // looks
+    // // redundant.
+    // public ProjectionSnapshot(Class<P> aggregateClass, UUID lastFactId,
+    // byte[] bytes) {
+    // this.type = aggregateClass;
+    // this.bytes = bytes;
+    // this.factId = lastFactId;
+    // }
+    //
+    // public static <T extends SnapshotProjection> byte[] serialize(T
+    // aggregate) {
+    // // TODO configure by annotations
+    // return defaultSerializer.serialize(aggregate);
+    // }
+    //
+    // public static <T extends SnapshotProjection> T deserialize(
+    // ProjectionSnapshot<T> snap) {
+    // // TODO configure by annotations
+    // return defaultSerializer.deserialize(snap.type(), snap.bytes());
+    // }
 }

@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.factus.lock;
 
-import org.factcast.factus.Handler;
-import org.factcast.factus.projection.LocalManagedProjection;
+import lombok.NonNull;
 
-public class UserCount extends LocalManagedProjection {
-
-    private int users = 0;
-
-    @Handler
-    void apply(UserCreated created) {
-        users++;
+//TODO checked?
+public class LockedOperationAbortedException extends RuntimeException {
+    public LockedOperationAbortedException(@NonNull String msg) {
+        super(msg);
     }
 
-    @Handler
-    void apply(UserDeleted deleted) {
-        users--;
+    public LockedOperationAbortedException(@NonNull Throwable e) {
+        super(e);
     }
 
-    int count() {
-        return users;
+    public static LockedOperationAbortedException wrap(@NonNull Throwable e) {
+
+        if (e instanceof LockedOperationAbortedException) {
+            return (LockedOperationAbortedException) e;
+        } else {
+            return new LockedOperationAbortedException(e);
+        }
     }
 
 }

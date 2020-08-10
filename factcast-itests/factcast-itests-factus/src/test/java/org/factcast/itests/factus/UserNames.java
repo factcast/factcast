@@ -17,6 +17,7 @@ package org.factcast.itests.factus;
 
 import java.util.*;
 
+import org.factcast.core.FactHeader;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.SnapshotProjection;
 
@@ -30,7 +31,7 @@ public class UserNames implements SnapshotProjection {
     };
 
     @Handler
-    void apply(UserDeleted deleted) {
+    void apply(UserDeleted deleted, FactHeader header) {
         existingNames.remove(deleted.aggregateId());
     };
 

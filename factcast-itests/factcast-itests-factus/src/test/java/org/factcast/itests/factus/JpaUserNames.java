@@ -37,20 +37,33 @@ public class JpaUserNames extends ManagedProjection {
 
     final JdbcTemplate tpl;
 
-    @Handler
-    void apply(UserCreated created) {
-        tpl.update("INSERT INTO usernames VALUES(?,?)", ps -> {
-            ps.setObject(1, created.aggregateId());
-            ps.setString(2, created.userName());
-        });
-    };
+    // TODO: @HandlerFor()//BANG!
 
-    @Handler
-    void apply(UserDeleted deleted) {
-        tpl.update("DELETE FROM usernames WHERE id=?", ps -> {
-            ps.setObject(1, deleted.aggregateId());
-        });
-    };
+    class MyHandlers {
+
+        @Handler
+        void apply(UserCreated created) {
+            tpl.update("INSERT INTO usernames VALUES(?,?)", ps -> {
+                ps.setObject(1, created.aggregateId());
+                ps.setString(2, created.userName());
+            });
+        }
+
+        ;
+
+        @Handler
+        void apply(UserDeleted deleted) {
+            tpl.update("DELETE FROM usernames WHERE id=?", ps -> {
+                ps.setObject(1, deleted.aggregateId());
+            });
+        }
+
+        ;
+    }
+
+    void onException(Exception e) {
+
+    }
 
     int count() {
         return tpl.queryForObject("SELECT count(*) FROM usernames", Integer.class);
