@@ -21,7 +21,9 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 
+import org.factcast.core.lock.DeprecatedLockedOperationBuilder;
 import org.factcast.core.lock.LockedOperationBuilder;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.ReconnectingFactSubscriptionWrapper;
 import org.factcast.core.subscription.Subscription;
@@ -58,6 +60,11 @@ class DefaultFactCast implements FactCast {
     }
 
     @Override
+    public LockedOperationBuilder lock(@NonNull List<FactSpec> scope) {
+        return new LockedOperationBuilder(store, scope);
+    }
+
+    @Override
     @NonNull
     public OptionalLong serialOf(@NonNull UUID id) {
         return store.serialOf(id);
@@ -74,15 +81,15 @@ class DefaultFactCast implements FactCast {
     }
 
     @Override
-    public LockedOperationBuilder lock(@NonNull String ns) {
+    public DeprecatedLockedOperationBuilder lock(@NonNull String ns) {
         if (ns.trim().isEmpty())
             throw new IllegalArgumentException("Namespace must not be empty");
-        return new LockedOperationBuilder(this.store, ns);
+        return new DeprecatedLockedOperationBuilder(this.store, ns);
     }
 
     @Override
-    public LockedOperationBuilder lockGlobally() {
-        return new LockedOperationBuilder(this.store, null);
+    public DeprecatedLockedOperationBuilder lockGlobally() {
+        return new DeprecatedLockedOperationBuilder(this.store, "*");
     }
 
     @Override

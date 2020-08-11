@@ -25,7 +25,7 @@ import java.util.function.Function;
 
 import org.factcast.core.Fact;
 import org.factcast.factus.batch.PublishBatch;
-import org.factcast.factus.lock.*;
+import org.factcast.factus.lock.Locked;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.ManagedProjection;
 import org.factcast.factus.projection.SnapshotProjection;
@@ -78,8 +78,14 @@ public interface Factus extends Closeable {
     <P extends SubscribedProjection> void subscribe(@NonNull P subscribedProjection);
 
     // Locking
-    Locked lockAggregate(UUID first, UUID... others);
+    Locked lockAggregateById(UUID first, UUID... others);
 
     // conversion
     Fact toFact(@NonNull EventPojo e);
+
+    <A extends Aggregate> Locked lock(@NonNull Class<A> aggregateClass, UUID id);
+
+    <P extends SnapshotProjection> Locked lock(@NonNull Class<P> projectionClass);
+
+    <M extends ManagedProjection> Locked lock(@NonNull M projectionClass);
 }

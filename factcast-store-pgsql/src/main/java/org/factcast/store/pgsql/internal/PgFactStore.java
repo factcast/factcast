@@ -17,20 +17,15 @@ package org.factcast.store.pgsql.internal;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.AbstractFactStore;
+import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.FactTransformerService;
@@ -40,12 +35,15 @@ import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.pgsql.internal.PgMetrics.StoreMetrics.OP;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
+import org.factcast.store.pgsql.internal.query.PgQueryBuilder;
 import org.factcast.store.pgsql.internal.snapcache.SnapshotCache;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -207,37 +205,37 @@ public class PgFactStore extends AbstractFactStore {
                 new Object[] { ns }, this::extractStringFromResultSet)));
     }
 
-    @Override
-    protected Map<UUID, Optional<UUID>> getStateFor(
-            @NonNull Optional<String> ns,
-            @NonNull Collection<UUID> forAggIds) {
-        return metrics.time(OP.GET_STAGE_FOR, () -> {
-            // just prototype code
-            // can probably be optimized, suggestions/PRs welcome
-            RowMapper<Optional<UUID>> rse = (rs, i) -> Optional
-                    .of(UUID.fromString(rs.getString(1)));
-            Map<UUID, Optional<UUID>> ret = new LinkedHashMap<>();
-            for (UUID uuid : forAggIds) {
-
-                StringBuilder sb = new StringBuilder();
-                sb.append("{");
-                ns.ifPresent(s -> sb.append("\"ns\":\"").append(s).append("\","));
-                sb.append("\"aggIds\":[\"").append(uuid).append("\"]}");
-
-                String json = sb.toString();
-
-                try {
-                    ret.put(uuid,
-                            jdbcTemplate.queryForObject(PgConstants.SELECT_LATEST_FACTID_FOR_AGGID,
-                                    new Object[] { json }, rse));
-                } catch (EmptyResultDataAccessException dont_care) {
-                    ret.put(uuid, Optional.empty());
-                }
-            }
-
-            return ret;
-        });
-    }
+    // @Override
+    // protected Map<UUID, Optional<UUID>> getStateFor(
+    // @NonNull Optional<String> ns,
+    // @NonNull Collection<UUID> forAggIds) {
+    // return metrics.time(OP.GET_STAGE_FOR, () -> {
+    // // just prototype code
+    // // can probably be optimized, suggestions/PRs welcome
+    // RowMapper<Optional<UUID>> rse = (rs, i) -> Optional
+    // .of(UUID.fromString(rs.getString(1)));
+    // Map<UUID, Optional<UUID>> ret = new LinkedHashMap<>();
+    // for (UUID uuid : forAggIds) {
+    //
+    // StringBuilder sb = new StringBuilder();
+    // sb.append("{");
+    // ns.ifPresent(s -> sb.append("\"ns\":\"").append(s).append("\","));
+    // sb.append("\"aggIds\":[\"").append(uuid).append("\"]}");
+    //
+    // String json = sb.toString();
+    //
+    // try {
+    // ret.put(uuid,
+    // jdbcTemplate.queryForObject(PgConstants.SELECT_LATEST_FACTID_FOR_AGGID,
+    // new Object[] { json }, rse));
+    // } catch (EmptyResultDataAccessException dont_care) {
+    // ret.put(uuid, Optional.empty());
+    // }
+    // }
+    //
+    // return ret;
+    // });
+    // }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
@@ -247,6 +245,34 @@ public class PgFactStore extends AbstractFactStore {
         return metrics.time(OP.PUBLISH_IF_UNCHANGED, () -> {
             lock.aquireExclusiveTXLock();
             return super.publishIfUnchanged(factsToPublish, optionalToken);
+        });
+    }
+
+    @Override
+    protected State getStateFor(@NonNull List<FactSpec> specs) {
+        return metrics.time(OP.GET_STATE_FOR, () -> {
+            PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+            String stateSQL = pgQueryBuilder.createStateSQL();
+            PreparedStatementSetter statementSetter = pgQueryBuilder.createStatementSetter(
+                    new AtomicLong(0));
+
+            try {
+                ResultSetExtractor<Long> rch = new ResultSetExtractor<Long>() {
+                    @Override
+                    public Long extractData(ResultSet resultSet) throws SQLException,
+                            DataAccessException {
+                        if (!resultSet.next()) {
+                            return 0L;
+                        } else {
+                            return resultSet.getLong(1);
+                        }
+                    }
+                };
+                long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
+                return State.of(specs, lastSerial);
+            } catch (EmptyResultDataAccessException lastSerialIs0Then) {
+                return State.of(specs, 0);
+            }
         });
     }
 

@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -43,7 +44,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 
 import io.grpc.*;
 import io.grpc.Status.Code;
@@ -273,22 +273,22 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     }
 
     @Override
+    public @NonNull StateToken stateFor(List<FactSpec> specs) {
+        MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
+        try {
+            MSG_UUID result = blockingStub.stateForSpecsJson(msg);
+            return new StateToken(converter.fromProto(result));
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+
+    }
+
+    @Override
     public void invalidate(@NonNull StateToken token) {
         MSG_UUID msg = converter.toProto(token.uuid());
         try {
             blockingStub.invalidate(msg);
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
-    }
-
-    @Override
-    public StateToken stateFor(@NonNull Collection<UUID> forAggIds, @NonNull Optional<String> ns) {
-        StateForRequest req = new StateForRequest(Lists.newArrayList(forAggIds), ns.orElse(null));
-        MSG_StateForRequest msg = converter.toProto(req);
-        try {
-            MSG_UUID result = blockingStub.stateFor(msg);
-            return new StateToken(converter.fromProto(result));
         } catch (StatusRuntimeException e) {
             throw wrapRetryable(e);
         }

@@ -15,22 +15,17 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.util.*;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
+import org.assertj.core.api.Assertions;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.core.store.State;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.store.pgsql.internal.PgTokenStore.StateJson;
 import org.factcast.store.test.AbstractTokenStoreTest;
 import org.factcast.store.test.IntegrationTest;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
@@ -52,38 +47,20 @@ public class PgTokenStoreTest extends AbstractTokenStoreTest {
     }
 
     @Test
-    public void testStateFromSymetric() throws Exception {
-        Map<UUID, Optional<UUID>> m = new HashMap<>();
-        m.put(new UUID(0, 1), Optional.of(new UUID(0, 2)));
-        m.put(new UUID(0, 2), Optional.empty());
-
-        StateJson s = PgTokenStore.StateJson.from(m);
-        assertThat(s.toMap().size()).isEqualTo(2);
-        assertThat(s.toMap()).isEqualTo(m);
-    }
-
-    @Test
     public void testStateJsonSerializable() throws Exception {
-        Map<UUID, Optional<UUID>> m = new LinkedHashMap<>();
-        m.put(new UUID(0, 1), Optional.of(new UUID(0, 2)));
-        m.put(new UUID(0, 2), Optional.empty());
 
-        StateJson s = PgTokenStore.StateJson.from(m);
+        State s = new State();
+        s.serialOfLastMatchingFact(99);
+        List<FactSpec> specs = Arrays.asList(FactSpec.ns("foo").aggId(new UUID(0, 1)), FactSpec.ns(
+                "bar").type("someType"));
+        s.specs(specs);
 
         String json = FactCastJson.writeValueAsString(s);
 
-        assertThat(json).isEqualTo(
-                "{\"lastFactIdByAggregate\":{\"00000000-0000-0000-0000-000000000001\":\"00000000-0000-0000-0000-000000000002\",\"00000000-0000-0000-0000-000000000002\":null}}");
+        Assertions.assertThat(json)
+                .isEqualTo(
+                        "{\"specs\":[{\"ns\":\"foo\",\"type\":null,\"version\":0,\"aggId\":\"00000000-0000-0000-0000-000000000001\",\"meta\":{},\"jsFilterScript\":null,\"filterScript\":null},{\"ns\":\"bar\",\"type\":\"someType\",\"version\":0,\"aggId\":null,\"meta\":{},\"jsFilterScript\":null,\"filterScript\":null}],\"serialOfLastMatchingFact\":99}");
 
-        Map<UUID, Optional<UUID>> m2 = FactCastJson.readValue(StateJson.class, json).toMap();
-        assertThat(m).isEqualTo(m2);
-    }
-
-    @Test
-    public void testStateJsonFromNullContract() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            StateJson.from(null);
-        });
     }
 
 }

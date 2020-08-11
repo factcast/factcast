@@ -77,7 +77,7 @@ public class PgFactStream {
         this.request = request;
         log.debug("{} connecting subscription {}", request, request.dump());
         postQueryMatcher = new PgPostQueryMatcher(request);
-        PgQueryBuilder q = new PgQueryBuilder(request);
+        PgQueryBuilder q = new PgQueryBuilder(request.specs());
         initializeSerialToStartAfter();
         String sql = q.createSQL();
         PreparedStatementSetter setter = q.createStatementSetter(serial);

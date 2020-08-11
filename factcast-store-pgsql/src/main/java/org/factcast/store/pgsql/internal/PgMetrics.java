@@ -143,7 +143,7 @@ public class PgMetrics {
 
             ENUMERATE_TYPES("enumerateTypes"),
 
-            GET_STAGE_FOR("getStateFor"),
+            GET_STATE_FOR("getStateFor"),
 
             PUBLISH_IF_UNCHANGED("publishIfUnchanged"),
 

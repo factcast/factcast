@@ -22,11 +22,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -598,14 +594,6 @@ public abstract class AbstractFactStoreTest {
     }
 
     @Test
-    protected void testStateForNullContract() {
-        Assertions.assertThrows(NullPointerException.class, () -> store.stateFor(Lists.emptyList(),
-                null));
-        Assertions.assertThrows(NullPointerException.class, () -> store.stateFor(null, Optional
-                .empty()));
-    }
-
-    @Test
     protected void testEnumerateTypes() {
         uut.publish(Fact.builder().ns("ns1").type("t1").build("{}"));
         uut.publish(Fact.builder().ns("ns2").type("t2").build("{}"));
@@ -777,7 +765,7 @@ public abstract class AbstractFactStoreTest {
 
     @Test
     void npeOnNamespaceMissing() throws Exception {
-        assertThrows(NullPointerException.class, () -> uut.lock(null));
+        assertThrows(NullPointerException.class, () -> uut.lock((List<FactSpec>) null));
     }
 
     @Test
@@ -1109,7 +1097,7 @@ public abstract class AbstractFactStoreTest {
         } catch (AttemptAbortedException expected) {
         }
 
-        verify(store, times(1)).stateFor(any(), any());
+        verify(store, times(1)).stateFor(any());
         verify(store, times(1)).invalidate(any());
     }
 
@@ -1120,7 +1108,7 @@ public abstract class AbstractFactStoreTest {
 
         uut.lock(NS).on(agg1).attempt(() -> Attempt.publish(fact(agg1)));
 
-        verify(store, times(1)).stateFor(any(), any());
+        verify(store, times(1)).stateFor(any());
         verify(store, times(1)).invalidate(any());
     }
 
@@ -1176,13 +1164,17 @@ public abstract class AbstractFactStoreTest {
                 SubscriptionRequestTO.class), null));
     }
 
-    @Test
-    public void testGetStateForNullContract() throws Exception {
-        assertThrows(NullPointerException.class, () -> store.stateFor(null, Optional.ofNullable(
-                "")));
-        assertThrows(NullPointerException.class, () -> store.stateFor(null, null));
-        assertThrows(NullPointerException.class, () -> store.stateFor(new LinkedList<>(), null));
-    }
+    // TODO
+    // @Test
+    // public void testGetStateForNullContract() throws Exception {
+    // assertThrows(NullPointerException.class, () -> store.stateFor(null,
+    // Optional.ofNullable(
+    // "")));
+    // assertThrows(NullPointerException.class, () -> store.stateFor(null,
+    // null));
+    // assertThrows(NullPointerException.class, () -> store.stateFor(new
+    // LinkedList<>(), null));
+    // }
 
     @Test
     public void testCurrentTimeProgresses() throws Exception {

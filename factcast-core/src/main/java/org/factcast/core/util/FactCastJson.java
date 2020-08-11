@@ -23,6 +23,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,6 +75,11 @@ public final class FactCastJson {
 
     @SneakyThrows
     public static <T> T readValue(@NonNull Class<T> class1, @NonNull String json) {
+        return reader.forType(class1).readValue(json);
+    }
+
+    @SneakyThrows
+    public static <T> T readValue(@NonNull TypeReference<T> class1, @NonNull String json) {
         return reader.forType(class1).readValue(json);
     }
 

@@ -19,8 +19,10 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
 
@@ -41,12 +43,9 @@ public class WithOptimisticLock {
     @Getter(value = AccessLevel.PROTECTED)
     private final FactStore store;
 
-    @Getter(value = AccessLevel.PROTECTED)
-    private final String ns;
-
     @NonNull
     @Getter(value = AccessLevel.PROTECTED)
-    private final List<UUID> ids;
+    private final List<FactSpec> factSpecs;
 
     @Setter
     private int retry = 10;
@@ -63,7 +62,8 @@ public class WithOptimisticLock {
         while (++count <= retry) {
 
             // fetch current state
-            StateToken token = store.stateFor(ids, Optional.ofNullable(ns));
+            // TODO
+            StateToken token = store.stateFor(factSpecs);
             try {
 
                 // execute the business logic
@@ -99,6 +99,10 @@ public class WithOptimisticLock {
         }
 
         throw new OptimisticRetriesExceededException(retry);
+    }
+
+    private List<FactSpec> toFactSpecs(String ns, List<UUID> ids) {
+        return ids.stream().map(id -> FactSpec.ns(ns).aggId(id)).collect(Collectors.toList());
     }
 
     private IntermediatePublishResult runAndWrapException(Attempt operation)

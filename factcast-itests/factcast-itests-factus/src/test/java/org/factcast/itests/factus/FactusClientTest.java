@@ -197,29 +197,26 @@ public class FactusClientTest {
     }
 
     @Test
-    public void simpleLockingRoundtrip() throws Exception {
+    public void simpleProjectionLockingRoundtrip() throws Exception {
         assertThat(ec.fetch(UserNames.class)).isNotNull();
 
         UUID petersId = UUID.randomUUID();
         UserCreateCMD cmd = new UserCreateCMD("Peter", petersId);
-        //
-        // ec.lockProjection(UserNames.class)
-        // .retries(5)
-        // .intervalMillis(50)
-        //
-        // .attempt(tx->{
-        //
-        // if (ec.fetch(UserNames.class).contains(cmd.userName)){
-        // tx.abort("baeh");
-        // }
-        // else {
-        // ec.publish(new UserCreated(cmd.userId, cmd.userName));
-        // }
-        //
-        // })
-        // .on(petersId)
-        //
-        //
+
+        ec.lock(UserNames.class)
+                .retries(5)
+                .intervalMillis(50)
+                .attempt(tx -> {
+
+                    if (tx.fetch(UserNames.class).contains(cmd.userName)) {
+                        tx.abort("baeh");
+                    } else {
+                        tx.publish(new UserCreated(cmd.userId, cmd.userName));
+                    }
+
+                });
+
+        ec.publish(new UserDeleted(petersId));
 
     }
 
@@ -309,7 +306,7 @@ public class FactusClientTest {
         for (int i = 0; i < 10; i++) {
             String workerID = "Worker #" + i;
 
-            futures.add(CompletableFuture.runAsync(() -> ec.lockAggregate(aggregateId)
+            futures.add(CompletableFuture.runAsync(() -> ec.lockAggregateById(aggregateId)
                     .attempt(tx -> {
 
                         log.info(workerID);

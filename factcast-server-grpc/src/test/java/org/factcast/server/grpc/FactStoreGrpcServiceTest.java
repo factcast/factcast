@@ -479,17 +479,17 @@ public class FactStoreGrpcServiceTest {
             MSG_StateForRequest req = conv.toProto(sfr);
             StreamObserver o = mock(StreamObserver.class);
             UUID token = UUID.randomUUID();
-            when(backend.stateFor(any(), any())).thenReturn(new StateToken(token));
+            when(backend.stateFor(any())).thenReturn(new StateToken(token));
             uut.stateFor(req, o);
 
-            verify(backend).stateFor(eq(Lists.newArrayList(id)), eq(Optional.of("foo")));
+            verify(backend).stateFor(any());
             verify(o).onNext(eq(conv.toProto(token)));
             verify(o).onCompleted();
         }
 
         {
             doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend)
-                    .stateFor(any(), any());
+                    .stateFor(any());
 
             UUID id = UUID.randomUUID();
             StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
