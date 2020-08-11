@@ -30,6 +30,7 @@ import java.util.stream.StreamSupport;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -325,7 +326,34 @@ public class DefaultFactus implements Factus {
     }
 
     @Override
-    public Locked lockAggregate(UUID first, UUID... others) {
-        return new Locked(fc, this, first, others);
+    public Locked lock(ManagedProjection projectionClass) {
+        return null;
+    }
+
+    @Override
+    public <A extends Aggregate> Locked lock(Class<A> aggregateClass, UUID id) {
+        Aggregate fresh = fetch(aggregateClass, id).orElse(initialProjection(aggregateClass));
+        EventApplier<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
+        List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
+        return new Locked(fc, this, specs);
+    }
+
+    @Override
+    public <P extends SnapshotProjection> Locked lock(@NonNull Class<P> projectionClass) {
+        SnapshotProjection fresh = fetch(projectionClass);
+        EventApplier<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
+        List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
+        return new Locked(fc, this, specs);
+    }
+
+    @Override
+    public Locked lockAggregateById(UUID first, UUID... others) {
+        val specs = new LinkedList<FactSpec>();
+        specs.add(FactSpec.anyNs().aggId(first));
+        if (others != null && others.length > 0) {
+            Arrays.stream(others).map(i -> FactSpec.anyNs().aggId(first)).forEach(specs::add);
+        }
+
+        return new Locked(fc, this, specs);
     }
 }

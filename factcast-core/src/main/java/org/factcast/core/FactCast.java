@@ -15,13 +15,18 @@
  */
 package org.factcast.core;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
+import org.factcast.core.lock.DeprecatedLockedOperationBuilder;
 import org.factcast.core.lock.LockedOperationBuilder;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 
 import lombok.NonNull;
+import lombok.val;
 
 /**
  * Main interface to work against as a client.
@@ -56,7 +61,20 @@ public interface FactCast extends ReadFactCast {
         return Retry.wrap(this, maxAttempts, minimumWaitIntervalMillis);
     }
 
-    LockedOperationBuilder lock(@NonNull String ns);
+    LockedOperationBuilder lock(@NonNull List<FactSpec> scope);
 
-    LockedOperationBuilder lockGlobally();
+    default LockedOperationBuilder lock(@NonNull FactSpec scope) {
+        return lock(Arrays.asList(scope));
+    }
+
+    default LockedOperationBuilder lock(@NonNull FactSpec scope, FactSpec... tail) {
+        val list = new LinkedList<FactSpec>();
+        list.add(scope);
+        list.addAll(Arrays.asList(tail));
+        return lock(list);
+    }
+
+    DeprecatedLockedOperationBuilder lock(@NonNull String ns);
+
+    DeprecatedLockedOperationBuilder lockGlobally();
 }

@@ -29,6 +29,7 @@ import org.factcast.core.lock.Attempt;
 import org.factcast.core.lock.AttemptAbortedException;
 import org.factcast.core.lock.IntermediatePublishResult;
 import org.factcast.core.lock.PublishingResult;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.EventPojo;
 import org.factcast.factus.Factus;
 import org.factcast.factus.projection.Aggregate;
@@ -50,11 +51,10 @@ public class Locked {
     @NonNull
     private final Factus factus;
 
-    private final UUID first;
+    @NonNull
+    private final List<FactSpec> specs;
 
-    private final UUID[] tail;
-
-    private Consumer<List<Fact>> andThen;
+    private Consumer<List<Fact>> andThen;// TODO
 
     int retries = 10;
 
@@ -67,8 +67,7 @@ public class Locked {
     public <R> R attempt(Consumer<RetryableTransaction> tx, Function<List<Fact>, R> resultFn) {
 
         try {
-            PublishingResult result = fc.lockGlobally()
-                    .on(first, tail)
+            PublishingResult result = fc.lock(specs)
                     .optimistic()
                     .retry(retries())
                     .interval(intervalMillis())

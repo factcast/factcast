@@ -377,11 +377,31 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     public void stateFor(MSG_StateForRequest request, StreamObserver<MSG_UUID> responseObserver) {
         try {
             StateForRequest req = converter.fromProto(request);
-            StateToken token = store.stateFor(req.aggIds(), Optional.ofNullable(req.ns()));
+            String ns = req.ns(); // TODO is this gets null, we're screwed
+            StateToken token = store.stateFor(req.aggIds()
+                    .stream()
+                    .map(id -> FactSpec.ns(ns).aggId(id))
+                    .collect(Collectors.toList()));
             responseObserver.onNext(converter.toProto(token.uuid()));
             responseObserver.onCompleted();
         } catch (Throwable e) {
             responseObserver.onError(e);
+        }
+    }
+
+    @Override
+    public void stateForSpecsJson(
+            MSG_FactSpecsJson request,
+            StreamObserver<MSG_UUID> responseObserver) {
+        List<FactSpec> req = converter.fromProto(request);
+        if (!req.isEmpty()) {
+
+            StateToken token = store.stateFor(req);
+            responseObserver.onNext(converter.toProto(token.uuid()));
+            responseObserver.onCompleted();
+        } else {
+            responseObserver.onError(new IllegalArgumentException(
+                    "Cannot determine state for empty list of fact specifications"));
         }
     }
 
@@ -526,7 +546,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     }
 
     @Override
-    public void getSnapshot(MSG_SnapshotId request,
+    public void getSnapshot(
+            MSG_SnapshotId request,
             StreamObserver<MSG_OptionalSnapshot> responseObserver) {
         try {
             SnapshotId id = converter.fromProto(request);

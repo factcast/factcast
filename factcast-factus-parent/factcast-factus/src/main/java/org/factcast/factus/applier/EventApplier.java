@@ -15,7 +15,7 @@
  */
 package org.factcast.factus.applier;
 
-import java.util.Collection;
+import java.util.List;
 
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -24,5 +24,5 @@ import org.factcast.factus.projection.Projection;
 public interface EventApplier<A extends Projection> {
     void apply(Fact element);
 
-    Collection<FactSpec> createFactSpecs();
+    List<FactSpec> createFactSpecs();
 }

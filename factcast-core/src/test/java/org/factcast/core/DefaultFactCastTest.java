@@ -179,7 +179,7 @@ public class DefaultFactCastTest {
 
     @Test
     public void testLockNullContract() {
-        assertThrows(NullPointerException.class, () -> uut.lock(null));
+        assertThrows(NullPointerException.class, () -> uut.lock((List<FactSpec>) null));
     }
 
     @Test

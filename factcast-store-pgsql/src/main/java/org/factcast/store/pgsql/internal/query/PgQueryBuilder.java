@@ -23,7 +23,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
@@ -39,19 +38,23 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PgQueryBuilder {
 
-    @NonNull
-    final SubscriptionRequestTO req;
+    final @NonNull List<FactSpec> factSpecs;
 
-    public PgQueryBuilder(@NonNull SubscriptionRequestTO request) {
-        this.req = request;
+    public PgQueryBuilder(@NonNull List<FactSpec> specs) {
+        this.factSpecs = specs;
     }
 
     public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
         return p -> {
             // TODO vulnerable of json injection attack
             int count = 0;
-            for (FactSpec spec : req.specs()) {
-                p.setString(++count, "{\"ns\": \"" + spec.ns() + "\" }");
+            for (FactSpec spec : factSpecs) {
+
+                String ns = spec.ns();
+                if (ns != null && !"*".equals(ns)) {
+                    p.setString(++count, "{\"ns\": \"" + spec.ns() + "\" }");
+                }
+
                 String type = spec.type();
                 if (type != null) {
                     p.setString(++count, "{\"type\": \"" + type + "\" }");
@@ -73,14 +76,20 @@ public class PgQueryBuilder {
 
     private String createWhereClause() {
         List<String> predicates = new LinkedList<>();
-        req.specs().forEach(spec -> {
+        factSpecs.forEach(spec -> {
             StringBuilder sb = new StringBuilder();
-            sb.append("( ");
-            sb.append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
+            sb.append("( 1=1 ");
+
+            String ns = spec.ns();
+            if (ns != null && !"*".equals(ns)) {
+                sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
+            }
+
             String type = spec.type();
             if (type != null) {
                 sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
             }
+
             UUID agg = spec.aggId();
             if (agg != null) {
                 sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
@@ -101,7 +110,16 @@ public class PgQueryBuilder {
                 PgConstants.PROJECTION_FACT
                 + " FROM " + PgConstants.TABLE_FACT + " WHERE " + createWhereClause() + " ORDER BY "
                 + PgConstants.COLUMN_SER + " ASC";
-        log.trace("{} createSQL={}", req, sql);
+        log.trace("{} createSQL={}", factSpecs, sql);
+        return sql;
+    }
+
+    public String createStateSQL() {
+        final String sql = "SELECT " +
+                PgConstants.COLUMN_SER
+                + " FROM " + PgConstants.TABLE_FACT + " WHERE " + createWhereClause() + " ORDER BY "
+                + PgConstants.COLUMN_SER + " DESC LIMIT 1";
+        log.trace("{} createStateSQL={}", factSpecs, sql);
         return sql;
     }
 
@@ -113,7 +131,7 @@ public class PgQueryBuilder {
                         PgConstants.COLUMN_SER + " FROM " + //
                         PgConstants.TABLE_FACT + " WHERE (" + createWhereClause() + //
                         ")" + " ORDER BY " + PgConstants.COLUMN_SER + " ASC)";
-        log.trace("{} catchupSQL={}", req, sql);
+        log.trace("{} catchupSQL={}", factSpecs, sql);
         return sql;
     }
 }

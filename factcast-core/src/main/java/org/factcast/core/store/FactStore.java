@@ -15,16 +15,12 @@
  */
 package org.factcast.core.store;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
@@ -34,10 +30,10 @@ import lombok.NonNull;
 
 /**
  * A read/Write FactStore.
- *
+ * <p>
  * Where FactCast is an interface to work with as an application, FactStore is
  * something that FactCast impls use to actually store and retrieve Facts.
- *
+ * <p>
  * In a sense it is an internal interface, or SPI implemented by for instance
  * InMemFactStore or PgFactStore.
  *
@@ -61,11 +57,12 @@ public interface FactStore {
     @NonNull
     Set<String> enumerateTypes(@NonNull String ns);
 
-    boolean publishIfUnchanged(@NonNull List<? extends Fact> factsToPublish,
+    boolean publishIfUnchanged(
+            @NonNull List<? extends Fact> factsToPublish,
             @NonNull Optional<StateToken> token);
 
     @NonNull
-    StateToken stateFor(@NonNull Collection<UUID> forAggIds, @NonNull Optional<String> ns);
+    StateToken stateFor(List<FactSpec> specs);
 
     void invalidate(@NonNull StateToken token);
 

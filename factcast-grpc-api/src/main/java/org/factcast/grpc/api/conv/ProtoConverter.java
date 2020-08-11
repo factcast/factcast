@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FactCastJson;
@@ -29,6 +30,7 @@ import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact.Builder;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ProtocolStringList;
 
@@ -391,5 +393,17 @@ public class ProtoConverter {
             ret.setPresent(false);
         }
         return ret.build();
+    }
+
+    public List<FactSpec> fromProto(MSG_FactSpecsJson request) {
+        return FactCastJson.readValue(new TypeReference<List<FactSpec>>() {
+        }, request.getJson());
+    }
+
+    public MSG_FactSpecsJson toProtoFactSpecs(List<FactSpec> specs) {
+        return MSG_FactSpecsJson.newBuilder()
+                .setJson(
+                        FactCastJson.writeValueAsString(specs))
+                .build();
     }
 }

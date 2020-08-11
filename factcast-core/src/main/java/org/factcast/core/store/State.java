@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.lock;
+package org.factcast.core.store;
 
-import java.util.Collections;
+import java.util.List;
 
-import org.factcast.core.store.FactStore;
-import org.junit.jupiter.api.*;
-import org.mockito.Mockito;
+import org.factcast.core.spec.FactSpec;
 
-class WithOptimisticLockTest {
+import lombok.Data;
 
-    @Test
-    void attemptReturnsNullShouldBeAnAbort() {
+@Data
+public class State {
+    List<FactSpec> specs;
 
-        WithOptimisticLock uut = new WithOptimisticLock(Mockito.mock(FactStore.class), Collections
-                .emptyList());
+    long serialOfLastMatchingFact;
 
-        Assertions.assertThrows(AttemptAbortedException.class,
-                () -> uut.attempt(() -> null));
-
+    public static State of(List<FactSpec> specs, long lastSerial) {
+        return new State().serialOfLastMatchingFact(lastSerial).specs(specs);
     }
 }

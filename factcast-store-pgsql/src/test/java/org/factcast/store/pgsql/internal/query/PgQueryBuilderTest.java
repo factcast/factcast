@@ -18,7 +18,8 @@ package org.factcast.store.pgsql.internal.query;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import java.util.List;
+
 import org.junit.jupiter.api.*;
 
 public class PgQueryBuilderTest {
@@ -27,7 +28,7 @@ public class PgQueryBuilderTest {
     public void testPGQueryBuilder() {
         assertThrows(NullPointerException.class, () -> new PgQueryBuilder(null));
 
-        PgQueryBuilder uut = new PgQueryBuilder(mock(SubscriptionRequestTO.class));
+        PgQueryBuilder uut = new PgQueryBuilder(mock(List.class));
         assertThrows(NullPointerException.class, () -> uut.createStatementSetter(null));
     }
 
