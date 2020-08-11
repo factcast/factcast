@@ -206,9 +206,9 @@ public class FactusClientTest {
         ec.lock(UserNames.class)
                 .retries(5)
                 .intervalMillis(50)
-                .attempt(tx -> {
+                .attempt((names, tx) -> {
 
-                    if (tx.fetch(UserNames.class).contains(cmd.userName)) {
+                    if (names.contains(cmd.userName)) {
                         tx.abort("baeh");
                     } else {
                         tx.publish(new UserCreated(cmd.userId, cmd.userName));
@@ -300,28 +300,28 @@ public class FactusClientTest {
         assertThat(ec.fetch(TestAggregate.class, aggregateId)).isNotEmpty();
         assertThat(ec.fetch(TestAggregate.class, aggregateId).get().magicNumber()).isEqualTo(43);
 
+        val a = ec.fetch(TestAggregate.class, aggregateId).get();
+
         // we start 10 threads that try to (in an isolated fashion) lock and
         // increase
         Set<CompletableFuture<Void>> futures = new HashSet<>();
         for (int i = 0; i < 10; i++) {
             String workerID = "Worker #" + i;
 
-            futures.add(CompletableFuture.runAsync(() -> ec.lockAggregateById(aggregateId)
-                    .attempt(tx -> {
+            futures.add(CompletableFuture.runAsync(() -> ec.lock(TestAggregate.class, aggregateId)
+                    .attempt((ta, tx) -> {
 
                         log.info(workerID);
                         sleepRandomMillis();
 
-                        // fetch
-                        TestAggregate fetch = tx.fetch(TestAggregate.class, aggregateId).get();
                         // check business rule
-                        if (fetch.magicNumber() < 50) {
+                        if (ta.magicNumber() < 50) {
                             // increment or
                             tx.publish(new TestAggregateWasIncremented(aggregateId));
                         } else {
                             // abort, according to business rule
                             tx.abort("aborting " + workerID + ": magic number is too high already ("
-                                    + fetch.magicNumber() + ")");
+                                    + ta.magicNumber() + ")");
                         }
                     })));
         }
