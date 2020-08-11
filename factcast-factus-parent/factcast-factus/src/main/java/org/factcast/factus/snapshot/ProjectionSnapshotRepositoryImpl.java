@@ -16,6 +16,8 @@
 package org.factcast.factus.snapshot;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -35,7 +37,7 @@ import lombok.val;
 public class ProjectionSnapshotRepositoryImpl implements ProjectionSnapshotRepository {
 
     private static final UUID FAKE_UUID = new UUID(0, 0); // needed to maintain
-                                                          // the PK.
+    // the PK.
 
     private final SnapshotRepository snap;
 
@@ -58,16 +60,19 @@ public class ProjectionSnapshotRepositoryImpl implements ProjectionSnapshotRepos
         return KEY_PREFIX + type.getCanonicalName() + KEY_DELIMITER + getSerialVersionUid(type);
     }
 
+    private final Map<Class<?>, Long> serials = new HashMap<>();
+
     @VisibleForTesting
     protected <A extends SnapshotProjection> Long getSerialVersionUid(Class<A> type) {
-        // TODO add loadingcache
-        try {
-            Field field = type.getDeclaredField("serialVersionUID");
-            field.setAccessible(true);
-            return field.getLong(null);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            return 0L;
-        }
+        return serials.computeIfAbsent(type, t -> {
+            try {
+                Field field = t.getDeclaredField("serialVersionUID");
+                field.setAccessible(true);
+                return field.getLong(null);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                return 0L;
+            }
+        });
     }
 
     @Override

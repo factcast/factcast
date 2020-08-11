@@ -33,7 +33,7 @@ import lombok.SneakyThrows;
 /**
  * Contains all operations that are available during locked execution
  */
-public interface Transaction {
+public interface RetryableTransaction {
 
     void publish(@NonNull EventPojo e);
 

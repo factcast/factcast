@@ -69,7 +69,9 @@ public class DefaultFactus implements Factus {
 
     final SnapshotFactory snapFactory;
 
-    private AtomicBoolean closed = new AtomicBoolean();
+    private final AtomicBoolean closed = new AtomicBoolean();
+
+    private final Set<AutoCloseable> managedObjects = new HashSet<>();
 
     @Override
     public PublishBatch batch() {
@@ -99,6 +101,7 @@ public class DefaultFactus implements Factus {
 
     @Override
     public <T> T publish(@NonNull List<EventPojo> e, @NonNull Function<List<Fact>, T> resultFn) {
+
         assertUnclosed();
 
         List<Fact> facts = StreamSupport.stream(e.spliterator(), false)
@@ -112,6 +115,7 @@ public class DefaultFactus implements Factus {
     public <P extends ManagedProjection> void update(
             @NonNull P managedProjection,
             @NonNull Duration maxWaitTime) throws TimeoutException {
+
         assertUnclosed();
 
         log.trace("updating local projection {}", managedProjection.getClass());
@@ -122,6 +126,7 @@ public class DefaultFactus implements Factus {
 
     @Override
     public <P extends SubscribedProjection> void subscribe(@NonNull P subscribedProjection) {
+
         assertUnclosed();
 
         CompletableFuture.runAsync(() -> {
@@ -154,8 +159,6 @@ public class DefaultFactus implements Factus {
                 .awaitComplete(FOREVER.toMillis());
 
     }
-
-    private final Set<AutoCloseable> managedObjects = new HashSet<>();
 
     @Override
     @SneakyThrows

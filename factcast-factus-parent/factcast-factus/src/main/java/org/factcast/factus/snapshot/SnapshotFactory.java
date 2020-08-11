@@ -76,7 +76,7 @@ public class SnapshotFactory {
 
     @SuppressWarnings("unchecked")
     private <A extends SnapshotProjection> Class<A> getType(A a) {
-        // TODO remove proxy classes
+        // TODO maybe remove proxy classes ?
         return (Class<A>) a.getClass();
     }
 
