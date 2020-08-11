@@ -18,6 +18,7 @@ package org.factcast.factus.lock;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -34,22 +35,26 @@ import org.factcast.factus.EventPojo;
 import org.factcast.factus.Factus;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.ManagedProjection;
+import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.SnapshotProjection;
 
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 @RequiredArgsConstructor
 @Slf4j
 @Data
-public class Locked {
+public class Locked<I extends Projection> {
     @NonNull
     private final FactCast fc;
 
     @NonNull
     private final Factus factus;
+
+    private final I projection;
 
     @NonNull
     private final List<FactSpec> specs;
@@ -60,11 +65,11 @@ public class Locked {
 
     long intervalMillis = 0;
 
-    public void attempt(Consumer<RetryableTransaction> tx) {
+    public void attempt(BiConsumer<I, RetryableTransaction> tx) {
         attempt(tx, result -> null);
     }
 
-    public <R> R attempt(Consumer<RetryableTransaction> tx, Function<List<Fact>, R> resultFn) {
+    public <R> R attempt(BiConsumer<I, RetryableTransaction> tx, Function<List<Fact>, R> resultFn) {
 
         try {
             PublishingResult result = fc.lock(specs)
@@ -74,11 +79,12 @@ public class Locked {
                     .attempt(() -> {
 
                         try {
+                            val p = update(projection);
                             List<Supplier<Fact>> toPublish = Collections.synchronizedList(
                                     new LinkedList<>());
                             RetryableTransaction lockedFactus = createTransaction(factus,
                                     toPublish);
-                            tx.accept(lockedFactus);
+                            tx.accept(p, lockedFactus);
                             IntermediatePublishResult intermediatePublishResult = Attempt.publish(
                                     toPublish.stream()
                                             .map(Supplier::get)
@@ -98,6 +104,24 @@ public class Locked {
         } catch (AttemptAbortedException e) {
             throw LockedOperationAbortedException.wrap(e);
         }
+    }
+
+    private I update(I projection) {
+        if (projection instanceof Aggregate) {
+            Class<? extends Aggregate> projectionClass = (Class<? extends Aggregate>) projection
+                    .getClass();
+            return (I) factus.fetch(projectionClass, ((Aggregate) projection).id()).get();// TODO
+        }
+        if (projection instanceof SnapshotProjection) {
+            Class<? extends SnapshotProjection> projectionClass = (Class<? extends SnapshotProjection>) projection
+                    .getClass();
+            return (I) factus.fetch(projectionClass);
+        }
+        if (projection instanceof ManagedProjection) {
+            factus.update((ManagedProjection) projection);
+            return (I) projection;
+        }
+        throw new IllegalStateException("Don't know how to update " + projection);
     }
 
     private RetryableTransaction createTransaction(Factus factus, List<Supplier<Fact>> toPublish) {

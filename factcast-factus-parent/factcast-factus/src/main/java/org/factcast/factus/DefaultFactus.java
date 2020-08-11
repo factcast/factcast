@@ -326,34 +326,39 @@ public class DefaultFactus implements Factus {
     }
 
     @Override
-    public Locked lock(ManagedProjection projectionClass) {
-        return null;
+    public <M extends ManagedProjection> Locked<M> lock(M managedProjection) {
+        val applier = ehFactory.create(managedProjection);
+        List<FactSpec> specs = applier
+                .createFactSpecs();
+        return new Locked<M>(fc, this, managedProjection, specs);
+
     }
 
     @Override
     public <A extends Aggregate> Locked lock(Class<A> aggregateClass, UUID id) {
-        Aggregate fresh = fetch(aggregateClass, id).orElse(initialProjection(aggregateClass));
+        A fresh = fetch(aggregateClass, id).orElse(initialProjection(aggregateClass));
         EventApplier<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
         List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
-        return new Locked(fc, this, specs);
+        return new Locked<A>(fc, this, fresh, specs);
     }
 
     @Override
     public <P extends SnapshotProjection> Locked lock(@NonNull Class<P> projectionClass) {
-        SnapshotProjection fresh = fetch(projectionClass);
+        P fresh = fetch(projectionClass);
         EventApplier<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
         List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
-        return new Locked(fc, this, specs);
+        return new Locked<P>(fc, this, fresh, specs);
     }
 
-    @Override
-    public Locked lockAggregateById(UUID first, UUID... others) {
-        val specs = new LinkedList<FactSpec>();
-        specs.add(FactSpec.anyNs().aggId(first));
-        if (others != null && others.length > 0) {
-            Arrays.stream(others).map(i -> FactSpec.anyNs().aggId(first)).forEach(specs::add);
-        }
-
-        return new Locked(fc, this, specs);
-    }
+    // @Override
+    // public Locked lockAggregateById(UUID first, UUID... others) {
+    // val specs = new LinkedList<FactSpec>();
+    // specs.add(FactSpec.anyNs().aggId(first));
+    // if (others != null && others.length > 0) {
+    // Arrays.stream(others).map(i ->
+    // FactSpec.anyNs().aggId(first)).forEach(specs::add);
+    // }
+    //
+    // return new Locked(fc, this, null, specs);//TODO
+    // }
 }
