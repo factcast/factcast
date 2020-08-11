@@ -19,14 +19,15 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LocalWriteToken {
+class LocalWriteToken {
 
     private final ReentrantLock lock = new ReentrantLock(true);
 
-    public AutoCloseable aquireWriteToken(Duration maxWait) {
+    public AutoCloseable aquireWriteToken(@NonNull Duration maxWait) {
         try {
             if (lock.tryLock(maxWait.toMillis(), TimeUnit.MILLISECONDS)) {
                 return new AutoCloseable() {

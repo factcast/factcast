@@ -17,6 +17,10 @@ package org.factcast.factus.projection;
 
 import lombok.experimental.Delegate;
 
+/**
+ * a managed Projection that is local to the process. Access to state and
+ * WriteToken will be synchronized in memory.
+ */
 public abstract class LocalManagedProjection extends ManagedProjection {
     @Delegate
     private final LocalState state = new LocalState();

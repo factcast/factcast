@@ -57,11 +57,11 @@ public class Locked {
 
     long intervalMillis = 0;
 
-    public void attempt(Consumer<Transaction> tx) {
+    public void attempt(Consumer<RetryableTransaction> tx) {
         attempt(tx, result -> null);
     }
 
-    public <R> R attempt(Consumer<Transaction> tx, Function<List<Fact>, R> resultFn) {
+    public <R> R attempt(Consumer<RetryableTransaction> tx, Function<List<Fact>, R> resultFn) {
 
         try {
             PublishingResult result = fc.lockGlobally()
@@ -74,7 +74,8 @@ public class Locked {
                         try {
                             List<Supplier<Fact>> toPublish = Collections.synchronizedList(
                                     new LinkedList<>());
-                            Transaction lockedFactus = createTransaction(factus, toPublish);
+                            RetryableTransaction lockedFactus = createTransaction(factus,
+                                    toPublish);
                             tx.accept(lockedFactus);
                             return Attempt.publish(toPublish.stream()
                                     .map(Supplier::get)
@@ -94,8 +95,8 @@ public class Locked {
         }
     }
 
-    private Transaction createTransaction(Factus factus, List<Supplier<Fact>> toPublish) {
-        return new Transaction() {
+    private RetryableTransaction createTransaction(Factus factus, List<Supplier<Fact>> toPublish) {
+        return new RetryableTransaction() {
             @Override
             public void publish(@NonNull EventPojo e) {
                 toPublish.add(() -> factus.toFact(e));

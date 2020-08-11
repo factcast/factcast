@@ -19,12 +19,17 @@ import java.time.Duration;
 
 import org.factcast.factus.Factus;
 
+import lombok.NonNull;
+
 //TODO may also replace lockaware ?
 public interface WriterTokenAware {
     default AutoCloseable aquireWriteToken() {
         return aquireWriteToken(Factus.FOREVER);
     };
 
-    AutoCloseable aquireWriteToken(Duration maxWait);
+    /**
+     * might return null if token cannot be aquired
+     **/
+    AutoCloseable aquireWriteToken(@NonNull Duration maxWait);
 
 }
