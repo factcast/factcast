@@ -41,11 +41,12 @@ public class SnapshotFactory {
 
     // TODO should be just one?
 
-    public <P extends SnapshotProjection> ProjectionSnapshot<P> createFrom(UUID factId, P p) {
-        val type = getType(p);
+    public <P extends SnapshotProjection> ProjectionSnapshot createFrom(@NonNull UUID factId,
+            @NonNull P p) {
+        val type = getType(p.getClass());
         val ser = retrieveSerializer(type);
         byte[] bytes = ser.serialize(p);
-        return new ProjectionSnapshot<P>(type, factId, bytes);
+        return new ProjectionSnapshot(type, factId, bytes);
     }
 
     public org.factcast.factus.serializer.SnapshotSerializer retrieveSerializer(
@@ -68,16 +69,24 @@ public class SnapshotFactory {
     }
 
     public <A extends Aggregate> AggregateSnapshot<A> createFrom(UUID factId, A a) {
-        Class<A> type = getType(a);
+        Class<A> type = getType(a.getClass());
         val ser = retrieveSerializer(type);
         byte[] bytes = ser.serialize(a);
         return new AggregateSnapshot<A>(type, factId, bytes);
     }
 
     @SuppressWarnings("unchecked")
-    private <A extends SnapshotProjection> Class<A> getType(A a) {
-        // TODO maybe remove proxy classes ?
-        return (Class<A>) a.getClass();
+    private <A extends SnapshotProjection, IN extends SnapshotProjection> Class<A> getType(
+            Class<? super IN> a) {
+        if (isProxy(a))
+            return getType(a.getSuperclass());
+        else
+            return (Class<A>) a;
+    }
+
+    private <IN extends SnapshotProjection> boolean isProxy(Class<? super IN> a) {
+        // TODO how?
+        return false;
     }
 
 }

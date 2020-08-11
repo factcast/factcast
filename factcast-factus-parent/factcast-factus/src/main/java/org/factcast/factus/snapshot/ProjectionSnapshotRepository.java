@@ -23,11 +23,11 @@ import org.factcast.factus.projection.SnapshotProjection;
 import lombok.NonNull;
 
 public interface ProjectionSnapshotRepository {
-    <A extends SnapshotProjection> Optional<ProjectionSnapshot<A>> findLatest(
+    <A extends SnapshotProjection> Optional<ProjectionSnapshot> findLatest(
             @NonNull Class<A> type);
 
-    <A extends SnapshotProjection> void putBlocking(@NonNull ProjectionSnapshot<A> snapshot);
+    <A extends SnapshotProjection> void putBlocking(@NonNull ProjectionSnapshot snapshot);
 
     <A extends SnapshotProjection> CompletableFuture<Void> put(
-            @NonNull ProjectionSnapshot<A> snapshot);
+            @NonNull ProjectionSnapshot snapshot);
 }
