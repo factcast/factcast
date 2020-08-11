@@ -173,12 +173,12 @@ public class DefaultFactus implements Factus {
 
         val ser = snapFactory.retrieveSerializer(projectionClass);
 
-        Optional<ProjectionSnapshot<P>> latest = projectionSnapshotRepository.findLatest(
+        Optional<ProjectionSnapshot> latest = projectionSnapshotRepository.findLatest(
                 projectionClass);
 
         P projection;
         if (latest.isPresent()) {
-            ProjectionSnapshot<P> snap = latest.get();
+            ProjectionSnapshot snap = latest.get();
 
             projection = ser.deserialize(projectionClass, snap.bytes());
         } else {
@@ -191,7 +191,7 @@ public class DefaultFactus implements Factus {
         factUuid = catchupProjection(projection, latest.map(ProjectionSnapshot::factId)
                 .orElse(null), FOREVER);
         if (factUuid != null) {
-            ProjectionSnapshot<P> currentSnap = new ProjectionSnapshot<P>(projectionClass,
+            ProjectionSnapshot currentSnap = new ProjectionSnapshot(projectionClass,
                     factUuid, ser.serialize(projection));
             // TODO concurrency control
             projectionSnapshotRepository.putBlocking(currentSnap);

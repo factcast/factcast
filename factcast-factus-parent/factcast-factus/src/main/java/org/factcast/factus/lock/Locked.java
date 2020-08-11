@@ -27,6 +27,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.lock.Attempt;
 import org.factcast.core.lock.AttemptAbortedException;
+import org.factcast.core.lock.IntermediatePublishResult;
 import org.factcast.core.lock.PublishingResult;
 import org.factcast.factus.EventPojo;
 import org.factcast.factus.Factus;
@@ -53,6 +54,8 @@ public class Locked {
 
     private final UUID[] tail;
 
+    private Consumer<List<Fact>> andThen;
+
     int retries = 10;
 
     long intervalMillis = 0;
@@ -77,9 +80,12 @@ public class Locked {
                             RetryableTransaction lockedFactus = createTransaction(factus,
                                     toPublish);
                             tx.accept(lockedFactus);
-                            return Attempt.publish(toPublish.stream()
-                                    .map(Supplier::get)
-                                    .collect(Collectors.toList()));
+                            IntermediatePublishResult intermediatePublishResult = Attempt.publish(
+                                    toPublish.stream()
+                                            .map(Supplier::get)
+                                            .collect(Collectors.toList()));
+
+                            return intermediatePublishResult;
                         } catch (LockedOperationAbortedException aborted) {
                             throw aborted;
                         } catch (Throwable e) {

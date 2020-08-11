@@ -46,11 +46,11 @@ public class ProjectionSnapshotRepositoryImpl implements ProjectionSnapshotRepos
     private static final String KEY_PREFIX = "ProjectionSnapshotRepository" + KEY_DELIMITER;
 
     @Override
-    public <A extends SnapshotProjection> Optional<ProjectionSnapshot<A>> findLatest(
+    public <A extends SnapshotProjection> Optional<ProjectionSnapshot> findLatest(
             @NonNull Class<A> type) {
         SnapshotId snapshotId = new SnapshotId(createKeyForType(type), FAKE_UUID);
         return snap.getSnapshot(snapshotId)
-                .map(s -> new ProjectionSnapshot<A>(type, s.lastFact(), s.bytes()));
+                .map(s -> new ProjectionSnapshot(type, s.lastFact(), s.bytes()));
 
     }
 
@@ -77,14 +77,14 @@ public class ProjectionSnapshotRepositoryImpl implements ProjectionSnapshotRepos
 
     @Override
     public <A extends SnapshotProjection> void putBlocking(
-            @NonNull ProjectionSnapshot<A> snapshot) {
+            @NonNull ProjectionSnapshot snapshot) {
         val snapId = new SnapshotId(createKeyForType(snapshot.type()), FAKE_UUID);
         snap.setSnapshot(snapId, snapshot.factId(), snapshot.bytes());
     }
 
     @Override
     public <A extends SnapshotProjection> CompletableFuture<Void> put(
-            @NonNull ProjectionSnapshot<A> snapshot) {
+            @NonNull ProjectionSnapshot snapshot) {
         return CompletableFuture.runAsync(() -> {
             putBlocking(snapshot);
         });

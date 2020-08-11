@@ -23,10 +23,10 @@ import lombok.Data;
 import lombok.NonNull;
 
 @Data
-public class ProjectionSnapshot<P extends SnapshotProjection> {
+public class ProjectionSnapshot {
 
     @NonNull
-    Class<P> type;
+    Class<? extends SnapshotProjection> type;
 
     @NonNull
     UUID factId;

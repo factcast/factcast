@@ -45,6 +45,7 @@ import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
@@ -185,6 +186,40 @@ public class FactusClientTest {
         assertThat(fabThree.contains("Ringo")).isTrue();
 
         fabThree.allUserIdsForDeletingInTest().forEach(id -> ec.publish(new UserDeleted(id)));
+
+    }
+
+    @Value
+    class UserCreateCMD {
+        String userName;
+
+        UUID userId;
+    }
+
+    @Test
+    public void simpleLockingRoundtrip() throws Exception {
+        assertThat(ec.fetch(UserNames.class)).isNotNull();
+
+        UUID petersId = UUID.randomUUID();
+        UserCreateCMD cmd = new UserCreateCMD("Peter", petersId);
+        //
+        // ec.lockProjection(UserNames.class)
+        // .retries(5)
+        // .intervalMillis(50)
+        //
+        // .attempt(tx->{
+        //
+        // if (ec.fetch(UserNames.class).contains(cmd.userName)){
+        // tx.abort("baeh");
+        // }
+        // else {
+        // ec.publish(new UserCreated(cmd.userId, cmd.userName));
+        // }
+        //
+        // })
+        // .on(petersId)
+        //
+        //
 
     }
 
