@@ -20,7 +20,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -96,8 +95,13 @@ public class DefaultFactus implements Factus {
     }
 
     @Override
-    public void publish(@NonNull List<EventPojo> e) {
-        publish(e, f -> null);
+    public void publish(@NonNull List<EventPojo> eventPojos) {
+        publish(eventPojos, f -> null);
+    }
+
+    @Override
+    public void publish(@NonNull Fact f) {
+        fc.publish(f);
     }
 
     @Override
@@ -126,23 +130,24 @@ public class DefaultFactus implements Factus {
     }
 
     @Override
-    public <P extends SubscribedProjection> void subscribe(@NonNull P subscribedProjection) {
+    public <P extends SubscribedProjection> Subscription subscribe(
+            @NonNull P subscribedProjection) {
 
         assertUnclosed();
 
-        CompletableFuture.runAsync(() -> {
-            // TODO how to exit this loop?
-            Duration INTERVAL = Duration.ofMinutes(5); // TODO needed?
-            while (!closed.get()) {
-                if (subscribedProjection.aquireWriteToken(INTERVAL) != null) {
-                    managedObjects.add(doSubscribe(subscribedProjection));
-                }
+        Duration INTERVAL = Duration.ofMinutes(5); // TODO needed?
+        while (!closed.get()) {
+            if (subscribedProjection.aquireWriteToken(INTERVAL) != null) {
+                Subscription e = doSubscribe(subscribedProjection);
+                managedObjects.add(e);
+                return e;
             }
-        });
+        }
+        throw new IllegalStateException("Already closed");
     }
 
     @SneakyThrows
-    private <P extends SubscribedProjection> AutoCloseable doSubscribe(P subscribedProjection) {
+    private <P extends SubscribedProjection> Subscription doSubscribe(P subscribedProjection) {
         EventApplier<P> handler = ehFactory.create(subscribedProjection);
         FactObserver fo = new FactObserver() {
             // TODO what about error control?
@@ -157,7 +162,7 @@ public class DefaultFactus implements Factus {
                 SubscriptionRequest
                         .catchup(handler.createFactSpecs())
                         .fromNullable(subscribedProjection.state()), fo)
-                .awaitComplete(FOREVER.toMillis());
+                .awaitComplete(FactusConstants.FOREVER.toMillis());
 
     }
 
@@ -190,7 +195,7 @@ public class DefaultFactus implements Factus {
         // catchup
         UUID factUuid = null;
         factUuid = catchupProjection(projection, latest.map(ProjectionSnapshot::factId)
-                .orElse(null), FOREVER);
+                .orElse(null), FactusConstants.FOREVER);
         if (factUuid != null) {
             ProjectionSnapshot currentSnap = new ProjectionSnapshot(projectionClass,
                     factUuid, ser.serialize(projection));
@@ -202,7 +207,7 @@ public class DefaultFactus implements Factus {
 
     @Override
     @SneakyThrows
-    public <A extends Aggregate> Optional<A> fetch(Class<A> aggregateClass, UUID aggregateId) {
+    public <A extends Aggregate> Optional<A> find(Class<A> aggregateClass, UUID aggregateId) {
         assertUnclosed();
 
         val ser = snapFactory.retrieveSerializer(aggregateClass);
@@ -215,7 +220,7 @@ public class DefaultFactus implements Factus {
                 .orElseGet(() -> (A) initial(aggregateClass, aggregateId));
 
         UUID factUuid = catchupProjection(aggregate, latest.map(AggregateSnapshot::factId)
-                .orElse(null), FOREVER);
+                .orElse(null), FactusConstants.FOREVER);
         if (factUuid == null) {
             // nothing new
 
@@ -335,15 +340,15 @@ public class DefaultFactus implements Factus {
     }
 
     @Override
-    public <A extends Aggregate> Locked lock(Class<A> aggregateClass, UUID id) {
-        A fresh = fetch(aggregateClass, id).orElse(initialProjection(aggregateClass));
+    public <A extends Aggregate> Locked<A> lock(Class<A> aggregateClass, UUID id) {
+        A fresh = find(aggregateClass, id).orElse(initialProjection(aggregateClass));
         EventApplier<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
         List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
         return new Locked<A>(fc, this, fresh, specs);
     }
 
     @Override
-    public <P extends SnapshotProjection> Locked lock(@NonNull Class<P> projectionClass) {
+    public <P extends SnapshotProjection> Locked<P> lock(@NonNull Class<P> projectionClass) {
         P fresh = fetch(projectionClass);
         EventApplier<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
         List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();

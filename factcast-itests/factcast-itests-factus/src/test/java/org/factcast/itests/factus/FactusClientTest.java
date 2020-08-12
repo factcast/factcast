@@ -125,8 +125,8 @@ public class FactusClientTest {
     @Test
     public void simpleAggregateRoundtrip() throws Exception {
         UUID aggregateId = UUID.randomUUID();
-        assertThat(ec.fetch(TestAggregate.class, aggregateId)).isEmpty();
-        assertThat(ec.fetch(TestAggregate.class, aggregateId)).isEmpty();
+        assertThat(ec.find(TestAggregate.class, aggregateId)).isEmpty();
+        assertThat(ec.find(TestAggregate.class, aggregateId)).isEmpty();
 
         ec.batch()
                 .add(new TestAggregateWasIncremented(aggregateId))
@@ -142,17 +142,14 @@ public class FactusClientTest {
 
                 .execute();
 
-        Optional<TestAggregate> optionalTestAggregate = ec.fetch(TestAggregate.class,
-                aggregateId);
-        assertThat(optionalTestAggregate).isNotEmpty();
-        assertThat(optionalTestAggregate.get().magicNumber()).isEqualTo(50);
+        TestAggregate a = ec.fetch(TestAggregate.class, aggregateId);
+        assertThat(a.magicNumber()).isEqualTo(50);
 
         log.info(
                 "now we're not expecting to see event processing due to the snapshot being up to date");
 
-        Optional<TestAggregate> refetch = ec.fetch(TestAggregate.class, aggregateId);
-        assertThat(optionalTestAggregate).isNotEmpty();
-        assertThat(optionalTestAggregate.get().magicNumber()).isEqualTo(50);
+        TestAggregate b = ec.fetch(TestAggregate.class, aggregateId);
+        assertThat(b.magicNumber()).isEqualTo(50);
 
     }
 
@@ -294,13 +291,13 @@ public class FactusClientTest {
     @Test
     public void simpleAggregateLockRoundtrip() throws Exception {
         UUID aggregateId = UUID.randomUUID();
-        assertThat(ec.fetch(TestAggregate.class, aggregateId)).isEmpty();
+        assertThat(ec.find(TestAggregate.class, aggregateId)).isEmpty();
 
         ec.publish(new TestAggregateWasIncremented(aggregateId));
-        assertThat(ec.fetch(TestAggregate.class, aggregateId)).isNotEmpty();
-        assertThat(ec.fetch(TestAggregate.class, aggregateId).get().magicNumber()).isEqualTo(43);
+        assertThat(ec.find(TestAggregate.class, aggregateId)).isNotEmpty();
+        assertThat(ec.fetch(TestAggregate.class, aggregateId).magicNumber()).isEqualTo(43);
 
-        val a = ec.fetch(TestAggregate.class, aggregateId).get();
+        val a = ec.fetch(TestAggregate.class, aggregateId);
 
         // we start 10 threads that try to (in an isolated fashion) lock and
         // increase
@@ -329,7 +326,7 @@ public class FactusClientTest {
         // wait for all threads to succeed or abort
         waitForAllToTerminate(futures);
 
-        assertThat(ec.fetch(TestAggregate.class, aggregateId).get().magicNumber()).isEqualTo(50);
+        assertThat(ec.fetch(TestAggregate.class, aggregateId).magicNumber()).isEqualTo(50);
 
     }
 

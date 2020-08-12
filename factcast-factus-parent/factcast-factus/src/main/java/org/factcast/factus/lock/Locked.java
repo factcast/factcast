@@ -110,7 +110,7 @@ public class Locked<I extends Projection> {
         if (projection instanceof Aggregate) {
             Class<? extends Aggregate> projectionClass = (Class<? extends Aggregate>) projection
                     .getClass();
-            return (I) factus.fetch(projectionClass, ((Aggregate) projection).id()).get();// TODO
+            return (I) factus.fetch(projectionClass, ((Aggregate) projection).id());
         }
         if (projection instanceof SnapshotProjection) {
             Class<? extends SnapshotProjection> projectionClass = (Class<? extends SnapshotProjection>) projection
@@ -132,6 +132,11 @@ public class Locked<I extends Projection> {
             }
 
             @Override
+            public void publish(@NonNull List<EventPojo> eventPojos) {
+                eventPojos.forEach(this::publish);
+            }
+
+            @Override
             public void publish(@NonNull Fact e) {
                 toPublish.add(() -> e);
             }
@@ -142,13 +147,15 @@ public class Locked<I extends Projection> {
             }
 
             @Override
-            public <A extends Aggregate> Optional<A> fetch(@NonNull Class<A> aggregateClass,
+            public <A extends Aggregate> Optional<A> find(
+                    @NonNull Class<A> aggregateClass,
                     @NonNull UUID aggregateId) {
-                return factus.fetch(aggregateClass, aggregateId);
+                return factus.find(aggregateClass, aggregateId);
             }
 
             @Override
-            public <P extends ManagedProjection> void update(@NonNull P managedProjection,
+            public <P extends ManagedProjection> void update(
+                    @NonNull P managedProjection,
                     @NonNull Duration maxWaitTime) throws TimeoutException {
                 factus.update(managedProjection, maxWaitTime);
             }
