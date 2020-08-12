@@ -13,24 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.lock;
+package org.factcast.factus;
 
-import org.factcast.factus.ProjectionAccessor;
-import org.factcast.factus.SimplePublisher;
+import java.time.Duration;
 
-import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 
-/**
- * Contains all operations that are available during locked execution
- */
-public interface RetryableTransaction extends SimplePublisher, ProjectionAccessor {
-
-    default void abort(@NonNull String msg) {
-        abort(new LockedOperationAbortedException(msg));
-    }
-
-    default void abort(@NonNull LockedOperationAbortedException cause) {
-        throw cause;
-    }
-
+@UtilityClass
+public class FactusConstants {
+    public final Duration FOREVER = Duration.ofDays(1);
 }

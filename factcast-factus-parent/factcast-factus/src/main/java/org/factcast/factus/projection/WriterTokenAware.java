@@ -17,13 +17,13 @@ package org.factcast.factus.projection;
 
 import java.time.Duration;
 
-import org.factcast.factus.Factus;
+import org.factcast.factus.FactusConstants;
 
 import lombok.NonNull;
 
 public interface WriterTokenAware {
     default AutoCloseable aquireWriteToken() {
-        return aquireWriteToken(Factus.FOREVER);
+        return aquireWriteToken(FactusConstants.FOREVER);
     };
 
     /**
