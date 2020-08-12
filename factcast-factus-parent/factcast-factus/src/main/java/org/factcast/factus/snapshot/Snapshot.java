@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.serializer;
+package org.factcast.factus.snapshot;
 
-import org.factcast.core.util.FactCastJson;
-import org.factcast.factus.projection.SnapshotProjection;
+import java.util.UUID;
 
-public class DefaultSnapshotSerializer implements SnapshotSerializer {
-    @Override
-    public byte[] serialize(SnapshotProjection a) {
-        return FactCastJson.writeValueAsBytes(a);
-    }
+import lombok.Data;
+import lombok.NonNull;
 
-    @Override
-    public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
-        return FactCastJson.readValueFromBytes(type, bytes);
-    }
+@Data
+public class Snapshot {
+
+    @NonNull
+    Class<?> type;
+
+    @NonNull
+    UUID factId;
+
+    @NonNull
+    byte[] bytes;
 }

@@ -16,16 +16,12 @@
 package org.factcast.factus.snapshot;
 
 import java.util.Set;
-import java.util.UUID;
 
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.serializer.DefaultSnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
+import org.factcast.factus.serializer.SnapshotSerializer.DefaultSnapshotSerializer;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 
 @Slf4j
 public class SnapshotFactory {
@@ -37,16 +33,6 @@ public class SnapshotFactory {
     public SnapshotFactory(
             @NonNull Set<org.factcast.factus.serializer.SnapshotSerializer> registeredSerializers) {
         this.registeredSerializers = registeredSerializers;
-    }
-
-    // TODO should be just one?
-
-    public <P extends SnapshotProjection> ProjectionSnapshot createFrom(@NonNull UUID factId,
-            @NonNull P p) {
-        val type = getType(p.getClass());
-        val ser = retrieveSerializer(type);
-        byte[] bytes = ser.serialize(p);
-        return new ProjectionSnapshot(type, factId, bytes);
     }
 
     public org.factcast.factus.serializer.SnapshotSerializer retrieveSerializer(
@@ -67,26 +53,4 @@ public class SnapshotFactory {
                     });
         }
     }
-
-    public <A extends Aggregate> AggregateSnapshot<A> createFrom(UUID factId, A a) {
-        Class<A> type = getType(a.getClass());
-        val ser = retrieveSerializer(type);
-        byte[] bytes = ser.serialize(a);
-        return new AggregateSnapshot<A>(type, factId, bytes);
-    }
-
-    @SuppressWarnings("unchecked")
-    private <A extends SnapshotProjection, IN extends SnapshotProjection> Class<A> getType(
-            Class<? super IN> a) {
-        if (isProxy(a))
-            return getType(a.getSuperclass());
-        else
-            return (Class<A>) a;
-    }
-
-    private <IN extends SnapshotProjection> boolean isProxy(Class<? super IN> a) {
-        // TODO how?
-        return false;
-    }
-
 }

@@ -24,17 +24,16 @@ import org.factcast.core.Fact;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.lock.Locked;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.ManagedProjection;
-import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.projection.SubscribedProjection;
+import org.factcast.factus.projection.*;
 
 import lombok.NonNull;
+import lombok.val;
 
 /**
  * Factus is a high-level API that should make building EDA with FactCast from
  * java more convenient.
  */
+@SuppressWarnings("unused")
 public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
 
     //// Publishing
@@ -80,9 +79,6 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
      * creates a permanent, async subscription to the projection. The
      * subscription will be remembered for autoclose, when Factus is closed.
      * (Probably more of a shutdown hook)
-     *
-     * @param subscribedProjection
-     * @param <P>
      */
     <P extends SubscribedProjection> Subscription subscribe(@NonNull P subscribedProjection);
 
@@ -92,18 +88,32 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
     /**
      * optimistically 'locks' on an aggregate.
      */
-    <A extends Aggregate> Locked<A> lock(@NonNull Class<A> aggregateClass, UUID id);
+    <A extends Aggregate> Locked<A> withLockOn(@NonNull Class<A> aggregateClass, UUID id);
+
+    /**
+     * optimistically 'locks' on an aggregate. shortcut to lock(Class,UUID)
+     */
+    @SuppressWarnings("unchecked")
+    default <S extends SnapshotProjection> Locked<S> withLockOn(@NonNull S snapshotProjection) {
+        if (snapshotProjection instanceof Aggregate) {
+            val aggregate = (Aggregate) snapshotProjection;
+            return (Locked<S>) withLockOn(aggregate.getClass(), AggregateUtil.aggregateId(
+                    aggregate));
+        } else {
+            return (Locked<S>) withLockOn(snapshotProjection.getClass());
+        }
+    }
 
     /**
      * optimistically 'locks' on a SnapshotProjection
      */
 
-    <P extends SnapshotProjection> Locked<P> lock(@NonNull Class<P> snapshotClass);
+    <P extends SnapshotProjection> Locked<P> withLockOn(@NonNull Class<P> snapshotClass);
 
     /**
      * optimistically 'locks' on a ManagedProjection
      */
-    <M extends ManagedProjection> Locked<M> lock(@NonNull M managed);
+    <M extends ManagedProjection> Locked<M> withLockOn(@NonNull M managed);
 
     // conversion
     Fact toFact(@NonNull EventPojo e);

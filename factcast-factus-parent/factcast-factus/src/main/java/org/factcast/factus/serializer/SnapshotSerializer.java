@@ -15,10 +15,23 @@
  */
 package org.factcast.factus.serializer;
 
+import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.projection.SnapshotProjection;
 
 public interface SnapshotSerializer {
     byte[] serialize(SnapshotProjection a);
 
     <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes);
+
+    class DefaultSnapshotSerializer implements SnapshotSerializer {
+        @Override
+        public byte[] serialize(SnapshotProjection a) {
+            return FactCastJson.writeValueAsBytes(a);
+        }
+
+        @Override
+        public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
+            return FactCastJson.readValueFromBytes(type, bytes);
+        }
+    }
 }

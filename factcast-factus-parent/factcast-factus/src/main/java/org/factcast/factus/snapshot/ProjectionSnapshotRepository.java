@@ -17,17 +17,22 @@ package org.factcast.factus.snapshot;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import org.factcast.factus.projection.SnapshotProjection;
 
 import lombok.NonNull;
 
 public interface ProjectionSnapshotRepository {
-    <A extends SnapshotProjection> Optional<ProjectionSnapshot> findLatest(
+    <A extends SnapshotProjection> Optional<Snapshot> findLatest(
             @NonNull Class<A> type);
 
-    <A extends SnapshotProjection> void putBlocking(@NonNull ProjectionSnapshot snapshot);
+    <A extends SnapshotProjection> void putBlocking(@NonNull Snapshot snapshot);
 
-    <A extends SnapshotProjection> CompletableFuture<Void> put(
-            @NonNull ProjectionSnapshot snapshot);
+    default <A extends SnapshotProjection> CompletableFuture<Void> put(
+            @NonNull Supplier<Snapshot> snapshot) {
+        return CompletableFuture.runAsync(() -> {
+            putBlocking(snapshot.get());
+        });
+    }
 }

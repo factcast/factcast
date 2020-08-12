@@ -24,7 +24,7 @@ public abstract class ManagedProjection implements Projection, StateAware, Write
         try {
             try (AutoCloseable token = aquireWriteToken()) {
                 if (token == null) {
-                    throw new IllegalStateException("cannot aquire write token");
+                    throw new IllegalStateException("cannot acquire write token");
                 } else {
                     runnable.run();
                 }

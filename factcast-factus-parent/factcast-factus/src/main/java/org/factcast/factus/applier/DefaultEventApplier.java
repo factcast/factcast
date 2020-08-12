@@ -31,11 +31,11 @@ import org.factcast.factus.EventPojo;
 import org.factcast.factus.Handler;
 import org.factcast.factus.HandlerFor;
 import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.projection.AggregateUtil;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.StateAware;
 import org.factcast.factus.serializer.EventSerializer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
@@ -73,11 +73,11 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
 
         try {
             dispatch.invoke(projection, f);
-            if (projection instanceof StateAware)
+            if (projection instanceof StateAware) {
                 ((StateAware) projection).state(f.id());
+            }
 
-        } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException
-                | JsonProcessingException e) {
+        } catch (InvocationTargetException | IllegalAccessException e) {
             throw new IllegalArgumentException(e);
         }
     }
@@ -89,7 +89,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
                 .collect(Collectors.toList());
 
         if (projection instanceof Aggregate) {
-            UUID aggId = ((Aggregate) projection).id();
+            UUID aggId = AggregateUtil.aggregateId((Aggregate) projection);
             for (FactSpec factSpec : discovered) {
                 factSpec.aggId(aggId);
             }
@@ -120,8 +120,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
         EventSerializer deserializer;
 
         void invoke(Projection projection, Fact f)
-                throws InvocationTargetException, IllegalAccessException,
-                NoSuchMethodException, JsonProcessingException {
+                throws InvocationTargetException, IllegalAccessException {
             dispatchMethod.invoke(objectResolver.apply(projection), parameterTransformer.apply(f));
         }
     }
@@ -164,8 +163,9 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
     }
 
     private static List<Method> collectMethods(Class<?> clazz) {
-        if (clazz == null)
+        if (clazz == null) {
             return Collections.emptyList();
+        }
 
         LinkedList<Method> m = new LinkedList<>();
         m.addAll(Arrays.asList(clazz.getDeclaredMethods()));
@@ -186,7 +186,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
         }
 
         List<Class<?>> eventPojoTypes = Arrays.stream(m.getParameterTypes())
-                .filter(t -> EventPojo.class.isAssignableFrom(t))
+                .filter(EventPojo.class::isAssignableFrom)
                 .collect(Collectors.toList());
 
         if (eventPojoTypes.isEmpty()) {
@@ -222,7 +222,8 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
     }
 
     @SuppressWarnings("unchecked")
-    private static Function<Fact, Object> createSingleParameterTransformer(Method m,
+    private static Function<Fact, Object> createSingleParameterTransformer(
+            Method m,
             EventSerializer deserializer, Class<?> type) {
         if (EventPojo.class.isAssignableFrom(type)) {
             return p -> deserializer.deserialize((Class<? extends EventPojo>) type, p
@@ -268,7 +269,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
 
     private static Object resolveTargetObject(Object parent, Class<?> c) {
         try {
-            Constructor<?> ctor = null;
+            Constructor<?> ctor;
             try {
                 ctor = c.getDeclaredConstructor(parent.getClass());
                 ctor.setAccessible(true);
