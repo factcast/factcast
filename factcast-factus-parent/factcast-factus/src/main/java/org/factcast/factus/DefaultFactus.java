@@ -224,15 +224,15 @@ public class DefaultFactus implements Factus {
 
         val ser = snapFactory.retrieveSerializer(aggregateClass);
 
-        Optional<AggregateSnapshot> latest = aggregateSnapshotRepository.findLatest(
+        Optional<Snapshot> latest = aggregateSnapshotRepository.findLatest(
                 aggregateClass, aggregateId);
         Optional<A> optionalA = latest
-                .map(as -> ser.deserialize(aggregateClass, as.serializedAggregate()));
+                .map(as -> ser.deserialize(aggregateClass, as.bytes()));
         // noinspection
         A aggregate = optionalA
                 .orElseGet(() -> this.<A> initial(aggregateClass, aggregateId));
 
-        UUID factUuid = catchupProjection(aggregate, latest.map(AggregateSnapshot::factId)
+        UUID factUuid = catchupProjection(aggregate, latest.map(Snapshot::factId)
                 .orElse(null), FactusConstants.FOREVER);
         if (factUuid == null) {
             // nothing new
@@ -245,7 +245,7 @@ public class DefaultFactus implements Factus {
                 return Optional.of(aggregate);
             }
         } else {
-            AggregateSnapshot currentSnap = new AggregateSnapshot(aggregateClass,
+            Snapshot currentSnap = new Snapshot(aggregateClass,
                     factUuid, ser.serialize(aggregate));
             // concurrency control decided to be irrelevant here
             aggregateSnapshotRepository.putBlocking(aggregateId, currentSnap);

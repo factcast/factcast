@@ -23,7 +23,6 @@ import org.factcast.factus.DefaultFactus;
 import org.factcast.factus.Factus;
 import org.factcast.factus.applier.DefaultEventApplierFactory;
 import org.factcast.factus.serializer.EventSerializer;
-import org.factcast.factus.serializer.EventSerializer.DefaultEventSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
@@ -57,7 +56,7 @@ public class EventCastAutoConfiguration {
     @ConditionalOnMissingBean
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public EventSerializer eventSerializer(ObjectMapper om) {
-        return new DefaultEventSerializer(om);
+        return new EventSerializer.Default(om);
     }
 
     @Bean
