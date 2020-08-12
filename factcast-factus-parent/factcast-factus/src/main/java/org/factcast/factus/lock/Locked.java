@@ -28,15 +28,11 @@ import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.lock.Attempt;
 import org.factcast.core.lock.AttemptAbortedException;
-import org.factcast.core.lock.IntermediatePublishResult;
 import org.factcast.core.lock.PublishingResult;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.EventPojo;
 import org.factcast.factus.Factus;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.ManagedProjection;
-import org.factcast.factus.projection.Projection;
-import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.projection.*;
 
 import lombok.Data;
 import lombok.NonNull;
@@ -47,6 +43,7 @@ import lombok.val;
 @RequiredArgsConstructor
 @Slf4j
 @Data
+@SuppressWarnings("unused")
 public class Locked<I extends Projection> {
     @NonNull
     private final FactCast fc;
@@ -69,8 +66,15 @@ public class Locked<I extends Projection> {
         attempt(tx, result -> null);
     }
 
-    public <R> R attempt(BiConsumer<I, RetryableTransaction> tx, Function<List<Fact>, R> resultFn) {
+    public void attempt(BiConsumer<I, RetryableTransaction> tx, Runnable e) {
+        attempt(tx, f -> {
+            e.run();
+            return null;
+        });
+    }
 
+    @SuppressWarnings("UnusedReturnValue")
+    public <R> R attempt(BiConsumer<I, RetryableTransaction> tx, Function<List<Fact>, R> resultFn) {
         try {
             PublishingResult result = fc.lock(specs)
                     .optimistic()
@@ -85,12 +89,18 @@ public class Locked<I extends Projection> {
                             RetryableTransaction lockedFactus = createTransaction(factus,
                                     toPublish);
                             tx.accept(p, lockedFactus);
-                            IntermediatePublishResult intermediatePublishResult = Attempt.publish(
-                                    toPublish.stream()
-                                            .map(Supplier::get)
-                                            .collect(Collectors.toList()));
 
-                            return intermediatePublishResult;
+                            try {
+                                InLockedOperation.enterLockedOperation();
+
+                                return Attempt
+                                        .publish(
+                                                toPublish.stream()
+                                                        .map(Supplier::get)
+                                                        .collect(Collectors.toList()));
+                            } finally {
+                                InLockedOperation.exitLockedOperation();
+                            }
                         } catch (LockedOperationAbortedException aborted) {
                             throw aborted;
                         } catch (Throwable e) {
@@ -106,11 +116,13 @@ public class Locked<I extends Projection> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private I update(I projection) {
         if (projection instanceof Aggregate) {
             Class<? extends Aggregate> projectionClass = (Class<? extends Aggregate>) projection
                     .getClass();
-            return (I) factus.fetch(projectionClass, ((Aggregate) projection).id());
+            return (I) factus.fetch(projectionClass, AggregateUtil.aggregateId(
+                    (Aggregate) projection));
         }
         if (projection instanceof SnapshotProjection) {
             Class<? extends SnapshotProjection> projectionClass = (Class<? extends SnapshotProjection>) projection
@@ -119,7 +131,7 @@ public class Locked<I extends Projection> {
         }
         if (projection instanceof ManagedProjection) {
             factus.update((ManagedProjection) projection);
-            return (I) projection;
+            return projection;
         }
         throw new IllegalStateException("Don't know how to update " + projection);
     }

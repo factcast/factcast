@@ -24,12 +24,21 @@ import lombok.Setter;
 /**
  * Aggregates can either extend this or implement the Aggregate interface
  * themselves. What also needs to be provided for being an Aggregate is having a
- * single Argument constructor that take the Aggregate id.
+ * noArg-Constructor.
  */
 public abstract class Aggregate implements SnapshotProjection {
 
-    @Getter
-    @Setter(value = AccessLevel.PROTECTED)
-    private UUID id;
+    // is protected in order to be able to wrap it into a domain-specific ID in
+    // the
+    // implementing class, think "PersonId".
+    //
+    // Also this is the reason, why this thing is called "aggregateId" rather
+    // than "id".
+    @Getter(value = AccessLevel.PROTECTED)
+    // the setter has package level access in order to be used from
+    // AggregateUtil,
+    // while not spoiling the public interface.
+    @Setter(value = AccessLevel.PACKAGE)
+    private UUID aggregateId;
 
 }

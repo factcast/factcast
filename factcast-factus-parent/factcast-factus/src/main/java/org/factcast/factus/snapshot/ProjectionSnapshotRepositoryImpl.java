@@ -15,78 +15,39 @@
  */
 package org.factcast.factus.snapshot;
 
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.snap.SnapshotRepository;
 import org.factcast.factus.projection.SnapshotProjection;
-import org.jetbrains.annotations.NotNull;
-
-import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 
 @RequiredArgsConstructor
-public class ProjectionSnapshotRepositoryImpl implements ProjectionSnapshotRepository {
+public class ProjectionSnapshotRepositoryImpl extends BaseSnapshotRepository implements
+        ProjectionSnapshotRepository {
 
     private static final UUID FAKE_UUID = new UUID(0, 0); // needed to maintain
     // the PK.
 
     private final SnapshotRepository snap;
 
-    private static final String KEY_DELIMITER = ":";
-
-    private static final String KEY_PREFIX = "ProjectionSnapshotRepository" + KEY_DELIMITER;
-
     @Override
-    public <A extends SnapshotProjection> Optional<ProjectionSnapshot> findLatest(
+    public <A extends SnapshotProjection> Optional<Snapshot> findLatest(
             @NonNull Class<A> type) {
         SnapshotId snapshotId = new SnapshotId(createKeyForType(type), FAKE_UUID);
         return snap.getSnapshot(snapshotId)
-                .map(s -> new ProjectionSnapshot(type, s.lastFact(), s.bytes()));
-
-    }
-
-    @NotNull
-    @VisibleForTesting
-    protected <A extends SnapshotProjection> String createKeyForType(@NonNull Class<A> type) {
-        return KEY_PREFIX + type.getCanonicalName() + KEY_DELIMITER + getSerialVersionUid(type);
-    }
-
-    private final Map<Class<?>, Long> serials = new HashMap<>();
-
-    @VisibleForTesting
-    protected <A extends SnapshotProjection> Long getSerialVersionUid(Class<A> type) {
-        return serials.computeIfAbsent(type, t -> {
-            try {
-                Field field = t.getDeclaredField("serialVersionUID");
-                field.setAccessible(true);
-                return field.getLong(null);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                return 0L;
-            }
-        });
+                .map(s -> new Snapshot(type, s.lastFact(), s.bytes()));
     }
 
     @Override
     public <A extends SnapshotProjection> void putBlocking(
-            @NonNull ProjectionSnapshot snapshot) {
+            @NonNull Snapshot snapshot) {
         val snapId = new SnapshotId(createKeyForType(snapshot.type()), FAKE_UUID);
         snap.setSnapshot(snapId, snapshot.factId(), snapshot.bytes());
     }
 
-    @Override
-    public <A extends SnapshotProjection> CompletableFuture<Void> put(
-            @NonNull ProjectionSnapshot snapshot) {
-        return CompletableFuture.runAsync(() -> {
-            putBlocking(snapshot);
-        });
-    }
 }

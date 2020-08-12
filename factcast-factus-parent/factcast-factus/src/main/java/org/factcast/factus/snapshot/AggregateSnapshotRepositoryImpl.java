@@ -15,70 +15,39 @@
  */
 package org.factcast.factus.snapshot;
 
-import java.lang.reflect.Field;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.snap.SnapshotRepository;
 import org.factcast.factus.projection.Aggregate;
-import org.jetbrains.annotations.NotNull;
-
-import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 
 @RequiredArgsConstructor
-public class AggregateSnapshotRepositoryImpl implements AggregateSnapshotRepository {
+public class AggregateSnapshotRepositoryImpl extends BaseSnapshotRepository implements
+        AggregateSnapshotRepository {
 
     private final SnapshotRepository snap;
 
-    private static final String KEY_DELIMITER = ":";
-
-    private static final String KEY_PREFIX = "AggregateSnapshotRepository" + KEY_DELIMITER;
-
     @Override
-    public <A extends Aggregate> Optional<AggregateSnapshot<A>> findLatest(@NonNull Class<A> type,
+    public <A extends Aggregate> Optional<Snapshot> findLatest(
+            @NonNull Class<A> type,
             @NonNull UUID aggregateId) {
         SnapshotId snapshotId = new SnapshotId(createKeyForType(type), aggregateId);
         return snap.getSnapshot(snapshotId)
-                .map(s -> new AggregateSnapshot<A>(type, s.lastFact(), s.bytes()));
+                .map(s -> new Snapshot(type, s.lastFact(), s.bytes()));
 
-    }
-
-    @NotNull
-    @VisibleForTesting
-    protected <A extends Aggregate> String createKeyForType(@NonNull Class<A> type) {
-        return KEY_PREFIX + type.getCanonicalName() + KEY_DELIMITER + getSerialVersionUid(type);
-    }
-
-    @VisibleForTesting
-    protected <A extends Aggregate> Long getSerialVersionUid(Class<A> type) {
-        // TODO add loadingcache
-        try {
-            Field field = type.getDeclaredField("serialVersionUID");
-            field.setAccessible(true);
-            return field.getLong(null);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            return 0L;
-        }
     }
 
     @Override
-    public <A extends Aggregate> void putBlocking(@NonNull UUID aggregateId,
-            @NonNull AggregateSnapshot<A> snapshot) {
+    public <A extends Aggregate> void putBlocking(
+            @NonNull UUID aggregateId,
+            @NonNull Snapshot snapshot) {
         val snapId = new SnapshotId(createKeyForType(snapshot.type()), aggregateId);
-        snap.setSnapshot(snapId, snapshot.factId(), snapshot.serializedAggregate());
+        snap.setSnapshot(snapId, snapshot.factId(), snapshot.bytes());
     }
 
-    @Override
-    public <A extends Aggregate> CompletableFuture<Void> put(@NonNull UUID aggregateId,
-            @NonNull AggregateSnapshot<A> snapshot) {
-        return CompletableFuture.runAsync(() -> {
-            putBlocking(aggregateId, snapshot);
-        });
-    }
 }

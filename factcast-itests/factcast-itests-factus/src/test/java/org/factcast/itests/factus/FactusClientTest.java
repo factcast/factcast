@@ -200,7 +200,7 @@ public class FactusClientTest {
         UUID petersId = UUID.randomUUID();
         UserCreateCMD cmd = new UserCreateCMD("Peter", petersId);
 
-        ec.lock(UserNames.class)
+        ec.withLockOn(UserNames.class)
                 .retries(5)
                 .intervalMillis(50)
                 .attempt((names, tx) -> {
@@ -305,7 +305,7 @@ public class FactusClientTest {
         for (int i = 0; i < 10; i++) {
             String workerID = "Worker #" + i;
 
-            futures.add(CompletableFuture.runAsync(() -> ec.lock(TestAggregate.class, aggregateId)
+            futures.add(CompletableFuture.runAsync(() -> ec.withLockOn(a)
                     .attempt((ta, tx) -> {
 
                         log.info(workerID);

@@ -18,11 +18,24 @@ package org.factcast.factus.projection;
 import java.util.List;
 
 import org.factcast.core.spec.FactSpec;
+import org.slf4j.LoggerFactory;
 
 import lombok.NonNull;
 
 public interface Projection {
     default @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
         return specsAsDiscovered;
+    }
+
+    default void onCatchup() {
+        // implement if you are interested in that event
+    }
+
+    default void onComplete() {
+        // implement if you are interested in that event
+    }
+
+    default void onError(@NonNull Throwable exception) {
+        LoggerFactory.getLogger(getClass()).warn("Unhandled onError:", exception);
     }
 }

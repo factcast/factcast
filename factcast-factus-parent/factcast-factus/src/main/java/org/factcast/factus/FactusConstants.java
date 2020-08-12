@@ -21,5 +21,5 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class FactusConstants {
-    public final Duration FOREVER = Duration.ofDays(1);
+    public final Duration FOREVER = Duration.ofDays(365);
 }

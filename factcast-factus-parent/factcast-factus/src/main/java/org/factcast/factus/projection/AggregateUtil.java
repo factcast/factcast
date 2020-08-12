@@ -13,24 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.snapshot;
+package org.factcast.factus.projection;
 
 import java.util.UUID;
 
-import org.factcast.factus.projection.SnapshotProjection;
-
-import lombok.Data;
 import lombok.NonNull;
 
-@Data
-public class ProjectionSnapshot {
+/**
+ * indirection to/from the aggregate's id, so that it does not spoil the public
+ * interface of Aggregate, in case you'd want to use wrapping or inline classes
+ * when exposing the Id.
+ */
 
-    @NonNull
-    Class<? extends SnapshotProjection> type;
+public class AggregateUtil {
+    public static UUID aggregateId(@NonNull Aggregate a) {
+        return a.aggregateId();
+    }
 
-    @NonNull
-    UUID factId;
-
-    @NonNull
-    byte[] bytes;
+    public static void aggregateId(@NonNull Aggregate a, @NonNull UUID idToSet) {
+        if (a.aggregateId() != null) {
+            throw new IllegalStateException(
+                    "aggregateId is already set and not supposed to change.");
+        }
+        a.aggregateId(idToSet);
+    }
 }

@@ -27,6 +27,10 @@ import org.factcast.factus.serializer.EventSerializer;
 import lombok.NonNull;
 import lombok.val;
 
+/**
+ * EventPojos are expected to carry
+ * a @{@link org.factcast.core.spec.Specification} annotation.
+ */
 public interface EventPojo {
 
     default Fact toFact(@NonNull EventSerializer ser) {
@@ -49,9 +53,7 @@ public interface EventPojo {
 
         aggregateIds().forEach(b::aggId);
 
-        additionalFactHeaders().entrySet().forEach(e -> {
-            String key = e.getKey();
-            String value = e.getValue();
+        additionalFactHeaders().forEach((key, value) -> {
             if (key == null) {
                 throw new IllegalArgumentException(
                         "Keys of additional fact headers must not be null ('" + key + "':'" + value

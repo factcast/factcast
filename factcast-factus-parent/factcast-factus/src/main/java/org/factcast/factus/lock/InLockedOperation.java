@@ -13,30 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projection;
+package org.factcast.factus.lock;
 
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
-
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@SuppressWarnings("unused")
-class LocalWriteToken {
+public class InLockedOperation {
+    private static final ThreadLocal<Boolean> isInLockedOperation = ThreadLocal.withInitial(
+            () -> false);
 
-    private final ReentrantLock lock = new ReentrantLock(true);
+    public static void enterLockedOperation() {
+        isInLockedOperation.set(true);
+    }
 
-    public AutoCloseable aquireWriteToken(@NonNull Duration maxWait) {
-        try {
-            if (lock.tryLock(maxWait.toMillis(), TimeUnit.MILLISECONDS)) {
-                return lock::unlock;
-            }
-        } catch (InterruptedException e) {
-            log.warn("while trying to aquire write token", e);
+    public static void exitLockedOperation() {
+        isInLockedOperation.set(false);
+    }
+
+    public static void assertNotInLockedOperation() {
+        if (isInLockedOperation.get()) {
+            throw new IllegalStateException(
+                    "Currently within locked operation 'Locked.attempt(...)', hence this operation is not allowed");
         }
-        return null;
     }
 
 }
