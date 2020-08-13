@@ -88,11 +88,10 @@ public class Locked<I extends Projection> {
                                     new LinkedList<>());
                             RetryableTransaction lockedFactus = createTransaction(factus,
                                     toPublish);
-                            tx.accept(p, lockedFactus);
 
                             try {
                                 InLockedOperation.enterLockedOperation();
-
+                                tx.accept(p, lockedFactus);
                                 return Attempt
                                         .publish(
                                                 toPublish.stream()
