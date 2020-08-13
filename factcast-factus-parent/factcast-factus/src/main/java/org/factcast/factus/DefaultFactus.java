@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.core.snap.Snapshot;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
@@ -37,7 +38,9 @@ import org.factcast.factus.lock.InLockedOperation;
 import org.factcast.factus.lock.Locked;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.serializer.EventSerializer;
-import org.factcast.factus.snapshot.*;
+import org.factcast.factus.snapshot.AggregateSnapshotRepository;
+import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
+import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 import org.jetbrains.annotations.NotNull;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -64,7 +67,7 @@ public class DefaultFactus implements Factus {
 
     final ProjectionSnapshotRepository projectionSnapshotRepository;
 
-    final SnapshotFactory snapFactory;
+    final SnapshotSerializerSupplier snapFactory;
 
     private final AtomicBoolean closed = new AtomicBoolean();
 
@@ -139,7 +142,7 @@ public class DefaultFactus implements Factus {
 
         Duration INTERVAL = Duration.ofMinutes(5); // TODO needed?
         while (!closed.get()) {
-            if (subscribedProjection.aquireWriteToken(INTERVAL) != null) {
+            if (subscribedProjection.acquireWriteToken(INTERVAL) != null) {
                 Subscription e = doSubscribe(subscribedProjection);
                 managedObjects.add(e);
                 return e;
@@ -208,11 +211,10 @@ public class DefaultFactus implements Factus {
         }
 
         // catchup
-        UUID factUuid = catchupProjection(projection, latest.map(Snapshot::factId)
+        UUID state = catchupProjection(projection, latest.map(Snapshot::lastFact)
                 .orElse(null), FactusConstants.FOREVER);
-        if (factUuid != null) {
-            projectionSnapshotRepository.put(() -> new Snapshot(projectionClass,
-                    factUuid, ser.serialize(projection)));
+        if (state != null) {
+            projectionSnapshotRepository.put(projection, state);
         }
         return projection;
     }
@@ -232,9 +234,9 @@ public class DefaultFactus implements Factus {
         A aggregate = optionalA
                 .orElseGet(() -> this.<A> initial(aggregateClass, aggregateId));
 
-        UUID factUuid = catchupProjection(aggregate, latest.map(Snapshot::factId)
+        UUID state = catchupProjection(aggregate, latest.map(Snapshot::lastFact)
                 .orElse(null), FactusConstants.FOREVER);
-        if (factUuid == null) {
+        if (state == null) {
             // nothing new
 
             if (!latest.isPresent()) {
@@ -245,10 +247,8 @@ public class DefaultFactus implements Factus {
                 return Optional.of(aggregate);
             }
         } else {
-            Snapshot currentSnap = new Snapshot(aggregateClass,
-                    factUuid, ser.serialize(aggregate));
             // concurrency control decided to be irrelevant here
-            aggregateSnapshotRepository.putBlocking(aggregateId, currentSnap);
+            aggregateSnapshotRepository.putBlocking(aggregate, state);
             return Optional.of(aggregate);
         }
     }

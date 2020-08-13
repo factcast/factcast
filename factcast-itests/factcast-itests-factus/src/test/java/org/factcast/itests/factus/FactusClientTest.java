@@ -25,8 +25,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
-import org.factcast.core.snap.SnapshotRepository;
 import org.factcast.factus.Factus;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,7 +95,7 @@ public class FactusClientTest {
     Factus ec;
 
     @Autowired
-    SnapshotRepository repository;
+    SnapshotCache repository;
 
     @Test
     public void simpleSnapshotRoundtrip() throws Exception {
@@ -105,13 +105,13 @@ public class FactusClientTest {
         assertThat(repository.getSnapshot(id)).isEmpty();
 
         // set and retrieve
-        repository.setSnapshot(id, UUID.randomUUID(), "foo".getBytes());
+        repository.setSnapshot(new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false));
         Optional<Snapshot> snapshot = repository.getSnapshot(id);
         assertThat(snapshot).isNotEmpty();
         assertThat(snapshot.get().bytes()).isEqualTo("foo".getBytes());
 
         // overwrite and retrieve
-        repository.setSnapshot(id, UUID.randomUUID(), "bar".getBytes());
+        repository.setSnapshot(new Snapshot(id, UUID.randomUUID(), "bar".getBytes(), false));
         snapshot = repository.getSnapshot(id);
         assertThat(snapshot).isNotEmpty();
         assertThat(snapshot.get().bytes()).isEqualTo("bar".getBytes());
@@ -294,8 +294,12 @@ public class FactusClientTest {
         assertThat(ec.find(TestAggregate.class, aggregateId)).isEmpty();
 
         ec.publish(new TestAggregateWasIncremented(aggregateId));
-        assertThat(ec.find(TestAggregate.class, aggregateId)).isNotEmpty();
-        assertThat(ec.fetch(TestAggregate.class, aggregateId).magicNumber()).isEqualTo(43);
+
+        Optional<TestAggregate> optAggregate = ec.find(TestAggregate.class, aggregateId);
+        assertThat(optAggregate).isNotEmpty();
+
+        val aggregate = ec.fetch(TestAggregate.class, aggregateId);
+        assertThat(aggregate.magicNumber()).isEqualTo(43);
 
         val a = ec.fetch(TestAggregate.class, aggregateId);
 

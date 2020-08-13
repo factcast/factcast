@@ -78,7 +78,7 @@ public interface FactStore {
     @NonNull
     Optional<Snapshot> getSnapshot(@NonNull SnapshotId id);
 
-    void setSnapshot(@NonNull SnapshotId id, @NonNull UUID state, @NonNull byte[] bytes);
+    void setSnapshot(@NonNull Snapshot snapshot);
 
     void clearSnapshot(@NonNull SnapshotId id);
 

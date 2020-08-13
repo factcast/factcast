@@ -13,22 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.snapshot;
+package org.factcast.core.snap;
 
-import java.util.UUID;
+import java.util.Optional;
 
-import lombok.Data;
 import lombok.NonNull;
 
-@Data
-public class Snapshot {
+/**
+ * Even though this functionality is available through factStore, we chose to
+ * extract it from the factcast facade. Using factcast itself for snapshots is a
+ * convenience feature - for heavy duty installations having a dedicated
+ * implementation using your favorite K/V Store is suggested in order to lift
+ * this load, as well as the data from factcast.
+ */
+public interface SnapshotCache {
 
     @NonNull
-    Class<?> type;
+    Optional<Snapshot> getSnapshot(@NonNull SnapshotId id);
 
-    @NonNull
-    UUID factId;
+    void setSnapshot(@NonNull Snapshot snapshot);
 
-    @NonNull
-    byte[] bytes;
+    void clearSnapshot(@NonNull SnapshotId id);
+
 }

@@ -25,6 +25,7 @@ import org.factcast.factus.EventPojo;
  * a Batch that can be passed around and defers publishing until either execute
  * or close is called. Note that a batch can be marked to be aborted.
  */
+@SuppressWarnings({ "unused", "UnusedReturnValue" })
 public interface PublishBatch extends AutoCloseable {
     PublishBatch add(EventPojo p);
 

@@ -18,26 +18,22 @@ package org.factcast.factus.snapshot;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
+import org.factcast.core.snap.Snapshot;
 import org.factcast.factus.projection.Aggregate;
 
 import lombok.NonNull;
+import lombok.SneakyThrows;
 
 public interface AggregateSnapshotRepository {
-    <A extends Aggregate> Optional<Snapshot> findLatest(
-            @NonNull Class<A> type,
+    Optional<Snapshot> findLatest(
+            @NonNull Class<? extends Aggregate> type,
             @NonNull UUID aggregateId);
 
-    <A extends Aggregate> void putBlocking(
-            @NonNull UUID aggregateId,
-            @NonNull Snapshot snapshot);
+    CompletableFuture<Void> put(Aggregate aggregate, UUID state);
 
-    default <A extends Aggregate> CompletableFuture<Void> put(
-            @NonNull UUID aggregateId,
-            @NonNull Supplier<Snapshot> snapshot) {
-        return CompletableFuture.runAsync(() -> {
-            putBlocking(aggregateId, snapshot.get());
-        });
+    @SneakyThrows
+    default void putBlocking(Aggregate aggregate, UUID state) {
+        put(aggregate, state).get();
     }
 }

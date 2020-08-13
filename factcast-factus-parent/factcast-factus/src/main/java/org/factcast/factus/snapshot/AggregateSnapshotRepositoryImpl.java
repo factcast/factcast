@@ -17,37 +17,49 @@ package org.factcast.factus.snapshot;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
-import org.factcast.core.snap.SnapshotRepository;
 import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.projection.AggregateUtil;
+import org.factcast.factus.serializer.SnapshotSerializer;
 
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.val;
 
-@RequiredArgsConstructor
-public class AggregateSnapshotRepositoryImpl extends BaseSnapshotRepository implements
+public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository implements
         AggregateSnapshotRepository {
 
-    private final SnapshotRepository snap;
+    private SnapshotSerializerSupplier serializerSupplier;
+
+    public AggregateSnapshotRepositoryImpl(SnapshotCache snapshotCache,
+            SnapshotSerializerSupplier serializerSupplier) {
+        super(snapshotCache);
+        this.serializerSupplier = serializerSupplier;
+    }
 
     @Override
-    public <A extends Aggregate> Optional<Snapshot> findLatest(
-            @NonNull Class<A> type,
+    public Optional<Snapshot> findLatest(
+            @NonNull Class<? extends Aggregate> type,
             @NonNull UUID aggregateId) {
         SnapshotId snapshotId = new SnapshotId(createKeyForType(type), aggregateId);
-        return snap.getSnapshot(snapshotId)
-                .map(s -> new Snapshot(type, s.lastFact(), s.bytes()));
+        return snapshotCache.getSnapshot(snapshotId);
 
     }
 
     @Override
-    public <A extends Aggregate> void putBlocking(
-            @NonNull UUID aggregateId,
-            @NonNull Snapshot snapshot) {
-        val snapId = new SnapshotId(createKeyForType(snapshot.type()), aggregateId);
-        snap.setSnapshot(snapId, snapshot.factId(), snapshot.bytes());
+    public CompletableFuture<Void> put(Aggregate aggregate, UUID state) {
+        // this is done before going async for exception escalation reasons:
+        Class<? extends Aggregate> type = aggregate.getClass();
+        SnapshotSerializer ser = serializerSupplier.retrieveSerializer(type);
+
+        return CompletableFuture.runAsync(() -> {
+            val id = new SnapshotId(createKeyForType(type), AggregateUtil.aggregateId(aggregate));
+            putBlocking(new Snapshot(id, state, ser.serialize(aggregate), ser
+                    .includesCompression()));
+        });
     }
 
 }

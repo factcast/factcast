@@ -434,6 +434,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     @Override
     @Secured(FactCastAuthority.AUTHENTICATED)
     public void fetchById(MSG_UUID request, StreamObserver<MSG_OptionalFact> responseObserver) {
+
         UUID fromProto = converter.fromProto(request);
         log.trace("fetchById {}", fromProto);
 
@@ -554,6 +555,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
             Optional<Snapshot> snapshot = store.getSnapshot(id);
 
+            if (snapshot.isPresent() && !snapshot.get().compressed())
+                enableResponseCompression(responseObserver);
+
             responseObserver.onNext(converter.toProtoSnapshot(snapshot));
             responseObserver.onCompleted();
         } catch (Throwable e) {
@@ -569,8 +573,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             SnapshotId id = converter.fromProto(request.getId());
             UUID state = converter.fromProto(request.getFactId());
             byte[] bytes = converter.fromProto(request.getData());
+            boolean compressed = request.getCompressed();
 
-            store.setSnapshot(id, state, bytes);
+            store.setSnapshot(new Snapshot(id, state, bytes, compressed));
 
             responseObserver.onNext(MSG_Empty.getDefaultInstance());
             responseObserver.onCompleted();

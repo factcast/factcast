@@ -24,13 +24,13 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class SnapshotFactory {
+public class SnapshotSerializerSupplier {
     private static final org.factcast.factus.serializer.SnapshotSerializer defaultSerializer = new DefaultSnapshotSerializer();
 
     @NonNull
     private final Set<org.factcast.factus.serializer.SnapshotSerializer> registeredSerializers;
 
-    public SnapshotFactory(
+    public SnapshotSerializerSupplier(
             @NonNull Set<org.factcast.factus.serializer.SnapshotSerializer> registeredSerializers) {
         this.registeredSerializers = registeredSerializers;
     }
@@ -53,4 +53,5 @@ public class SnapshotFactory {
                     });
         }
     }
+
 }

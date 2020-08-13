@@ -33,7 +33,7 @@ import lombok.val;
  * Factus is a high-level API that should make building EDA with FactCast from
  * java more convenient.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({ "unused", "UnusedReturnValue" })
 public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
 
     //// Publishing

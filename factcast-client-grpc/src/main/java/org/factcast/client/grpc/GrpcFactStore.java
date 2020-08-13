@@ -25,12 +25,17 @@ import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.*;
+import org.factcast.core.store.FactStore;
+import org.factcast.core.store.RetryableException;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.grpc.api.*;
+import org.factcast.grpc.api.Capabilities;
+import org.factcast.grpc.api.CompressionCodecs;
+import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.Headers;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
@@ -74,6 +79,10 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
     private RemoteFactStoreStub stub;
 
+    private RemoteFactStoreStub rawStub;
+
+    private RemoteFactStoreBlockingStub rawBlockingStub;
+
     private final ProtoConverter converter = new ProtoConverter();
 
     private final AtomicBoolean initialized = new AtomicBoolean(false);
@@ -96,8 +105,12 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     private GrpcFactStore(
             RemoteFactStoreBlockingStub newBlockingStub, RemoteFactStoreStub newStub,
             Optional<String> credentials) {
-        blockingStub = newBlockingStub;
-        stub = newStub;
+        rawBlockingStub = newBlockingStub;
+        rawStub = newStub;
+
+        // initially use the raw ones...
+        blockingStub = rawBlockingStub;
+        stub = rawStub;
 
         if (credentials.isPresent()) {
             String[] sa = credentials.get().split(":");
@@ -212,6 +225,8 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
             // to request compressed messages from server
             Metadata meta = new Metadata();
             meta.put(Headers.MESSAGE_COMPRESSION, c);
+            rawBlockingStub = blockingStub;
+            rawStub = stub;
             blockingStub = MetadataUtils.attachHeaders(blockingStub.withCompression(c), meta);
             stub = MetadataUtils.attachHeaders(stub.withCompression(c), meta);
         });
@@ -360,14 +375,23 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     }
 
     @Override
-    public void setSnapshot(@NonNull SnapshotId id, @NonNull UUID state, @NonNull byte[] bytes) {
+    public void setSnapshot(@NonNull Snapshot snapshot) {
+        val id = snapshot.id();
+        val bytes = snapshot.bytes();
+        val alreadyCompressed = snapshot.compressed();
+        val state = snapshot.lastFact();
+
         log.trace("sending snapshot {} to remote store ({}kb)", id, bytes.length / 1024);
 
+        RemoteFactStoreBlockingStub stubToUse = alreadyCompressed ? rawBlockingStub : blockingStub;
+
         try {
-            val empty = blockingStub.setSnapshot(converter.toProto(id, state, bytes));
+            val empty = stubToUse.setSnapshot(converter.toProto(id, state, bytes,
+                    alreadyCompressed));
         } catch (StatusRuntimeException e) {
             throw wrapRetryable(e);
         }
+
     }
 
     @Override
