@@ -25,5 +25,7 @@ public class SnapshotId {
     @NonNull
     String key;
 
-    UUID uuid; // optional
+    @NonNull
+    UUID uuid; // semantically optional, might be constant if not needed
+               // (SnapshotProjections)
 }

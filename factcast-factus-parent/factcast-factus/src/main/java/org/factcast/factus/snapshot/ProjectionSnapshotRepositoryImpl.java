@@ -17,37 +17,50 @@ package org.factcast.factus.snapshot;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
-import org.factcast.core.snap.SnapshotRepository;
 import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.SnapshotSerializer;
 
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.val;
 
-@RequiredArgsConstructor
-public class ProjectionSnapshotRepositoryImpl extends BaseSnapshotRepository implements
+public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository implements
         ProjectionSnapshotRepository {
 
     private static final UUID FAKE_UUID = new UUID(0, 0); // needed to maintain
+
+    private SnapshotSerializerSupplier serializerSupplier;
+
+    public ProjectionSnapshotRepositoryImpl(@NonNull SnapshotCache snapshotCache,
+            @NonNull SnapshotSerializerSupplier serializerSupplier) {
+        super(snapshotCache);
+        this.serializerSupplier = serializerSupplier;
+    }
     // the PK.
 
-    private final SnapshotRepository snap;
-
     @Override
-    public <A extends SnapshotProjection> Optional<Snapshot> findLatest(
-            @NonNull Class<A> type) {
+    public Optional<Snapshot> findLatest(
+            @NonNull Class<? extends SnapshotProjection> type) {
         SnapshotId snapshotId = new SnapshotId(createKeyForType(type), FAKE_UUID);
-        return snap.getSnapshot(snapshotId)
-                .map(s -> new Snapshot(type, s.lastFact(), s.bytes()));
+        return snapshotCache.getSnapshot(snapshotId)
+                .map(s -> new Snapshot(snapshotId, s.lastFact(), s.bytes(), s.compressed()));
     }
 
     @Override
-    public <A extends SnapshotProjection> void putBlocking(
-            @NonNull Snapshot snapshot) {
-        val snapId = new SnapshotId(createKeyForType(snapshot.type()), FAKE_UUID);
-        snap.setSnapshot(snapId, snapshot.factId(), snapshot.bytes());
+    public CompletableFuture<Void> put(SnapshotProjection projection, UUID state) {
+        // this is done before going async for exception escalation reasons:
+        Class<? extends SnapshotProjection> type = projection.getClass();
+        SnapshotSerializer ser = serializerSupplier.retrieveSerializer(type);
+
+        return CompletableFuture.runAsync(() -> {
+            val id = new SnapshotId(createKeyForType(type), FAKE_UUID);
+            putBlocking(new Snapshot(id, state, ser.serialize(projection), ser
+                    .includesCompression()));
+        });
     }
 
 }

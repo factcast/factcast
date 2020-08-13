@@ -352,7 +352,7 @@ public class ProtoConverter {
 
     public Snapshot fromProto(@NonNull MSG_Snapshot snapshot) {
         return new Snapshot(fromProto(snapshot.getId()), fromProto(snapshot.getFactId()), fromProto(
-                snapshot.getData()));
+                snapshot.getData()), snapshot.getCompressed());
     }
 
     public SnapshotId fromProto(@NonNull MSG_SnapshotId id) {
@@ -375,11 +375,12 @@ public class ProtoConverter {
 
     public MSG_Snapshot toProto(
             @NonNull SnapshotId id, @NonNull UUID state,
-            @NonNull byte[] bytes) {
-        val ret = MSG_Snapshot.newBuilder();
-        ret.setId(toProto(id));
-        ret.setFactId(toProto(state));
-        ret.setData(ByteString.copyFrom(bytes));
+            @NonNull byte[] bytes, boolean compressed) {
+        val ret = MSG_Snapshot.newBuilder()
+                .setId(toProto(id))
+                .setFactId(toProto(state))
+                .setData(ByteString.copyFrom(bytes))
+                .setCompressed(compressed);
         return ret.build();
     }
 
@@ -387,8 +388,9 @@ public class ProtoConverter {
         MSG_OptionalSnapshot.Builder ret = MSG_OptionalSnapshot.newBuilder();
         if (snapshot.isPresent()) {
             ret.setPresent(true);
-            ret.setSnapshot(toProto(snapshot.get().id(), snapshot.get().lastFact(), snapshot.get()
-                    .bytes()));
+            Snapshot snap = snapshot.get();
+            ret.setSnapshot(
+                    toProto(snap.id(), snap.lastFact(), snap.bytes(), snap.compressed()));
         } else {
             ret.setPresent(false);
         }

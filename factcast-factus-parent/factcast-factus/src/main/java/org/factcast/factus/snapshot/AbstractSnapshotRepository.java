@@ -18,20 +18,43 @@ package org.factcast.factus.snapshot;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotCache;
 import org.jetbrains.annotations.NotNull;
 
 import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
-abstract class BaseSnapshotRepository {
+@RequiredArgsConstructor
+abstract class AbstractSnapshotRepository {
     protected static final String KEY_DELIMITER = ":";
+
+    protected final SnapshotCache snapshotCache;
+
+    protected void putBlocking(@NonNull Snapshot snapshot) {
+        snapshotCache.setSnapshot(snapshot);
+    }
 
     @NotNull
     @VisibleForTesting
     protected String createKeyForType(@NonNull Class<?> type) {
-        return keyPrefix() + type.getCanonicalName() + KEY_DELIMITER + getSerialVersionUid(type);
+        return createKeyForType(type, null);
+    }
+
+    @NotNull
+    @VisibleForTesting
+    protected String createKeyForType(@NonNull Class<?> type, UUID optionalUUID) {
+        String classLevelKey = keyPrefix() + type.getCanonicalName() + KEY_DELIMITER
+                + getSerialVersionUid(type);
+        if (optionalUUID == null) {
+            return classLevelKey;
+        } else {
+            return classLevelKey + KEY_DELIMITER + optionalUUID.toString();
+        }
     }
 
     private final Map<Class<?>, Long> serials = new HashMap<>();
@@ -50,6 +73,7 @@ abstract class BaseSnapshotRepository {
     }
 
     protected String keyPrefix() {
-        return getClass().getSimpleName() + KEY_DELIMITER;
+        return getClass().getCanonicalName() + KEY_DELIMITER;
     }
+
 }

@@ -30,9 +30,9 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class SnapshotCache {
-    private static final String SELECT_SNAPSHOT = "SELECT factid,data FROM snapshot_cache WHERE uuid=? AND cache_key=?";
+    private static final String SELECT_SNAPSHOT = "SELECT factid,data,compressed FROM snapshot_cache WHERE uuid=? AND cache_key=?";
 
-    private static final String UPSERT_SNAPSHOT = "INSERT INTO snapshot_cache(uuid,cache_key,factid,data) VALUES (?,?,?,?) ON CONFLICT (uuid,cache_key) DO UPDATE set factid=?, data=?";
+    private static final String UPSERT_SNAPSHOT = "INSERT INTO snapshot_cache(uuid,cache_key,factid,data,compressed) VALUES (?,?,?,?,?) ON CONFLICT (uuid,cache_key) DO UPDATE set factid=?, data=?, compressed=?";
 
     private static final String CLEAR_SNAPSHOT = "DELETE FROM snapshot_cache WHERE uuid=? AND cache_key=?";
 
@@ -52,13 +52,15 @@ public class SnapshotCache {
                 }, this::extractSnapshotFromResultSet)
                 .stream()
                 .findFirst()
-                .map(snapData -> new Snapshot(id, snapData.factId(), snapData.bytes()));
+                .map(snapData -> new Snapshot(id, snapData.factId(), snapData.bytes(), snapData
+                        .compressed()));
 
     }
 
-    public void setSnapshot(@NonNull SnapshotId id, @NonNull UUID state, @NonNull byte[] bytes) {
-        jdbcTemplate.update(UPSERT_SNAPSHOT, id.uuid(), id
-                .key(), state, bytes, state, bytes);
+    public void setSnapshot(@NonNull Snapshot snap) {
+        jdbcTemplate.update(UPSERT_SNAPSHOT, snap.id().uuid(), snap.id()
+                .key(), snap.lastFact(), snap.bytes(), snap.compressed(), snap.lastFact(), snap
+                        .bytes(), snap.compressed());
     }
 
     public void clearSnapshot(@NonNull SnapshotId id) {
@@ -71,7 +73,8 @@ public class SnapshotCache {
             ResultSet resultSet,
             @SuppressWarnings("unused") int rowNum) throws SQLException {
         return new PgSnapshotData(
-                UUID.fromString(resultSet.getString(1)), resultSet.getBytes(2));
+                UUID.fromString(resultSet.getString(1)), resultSet.getBytes(2), resultSet
+                        .getBoolean(3));
     }
 
     public void compact(@NonNull DateTime thresholdDate) {

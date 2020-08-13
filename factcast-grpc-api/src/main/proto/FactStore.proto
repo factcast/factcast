@@ -137,9 +137,10 @@ message MSG_SnapshotId{
 }
 
 message MSG_Snapshot{
-	MSG_SnapshotId id = 2;
-	MSG_UUID factId = 3;
-	bytes data = 4;
+	MSG_SnapshotId id = 1;
+	MSG_UUID factId = 2;
+	bytes data = 3;
+	bool compressed = 4;
 }
 message MSG_OptionalSnapshot{
 	bool present = 1;

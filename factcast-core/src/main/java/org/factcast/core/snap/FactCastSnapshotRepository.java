@@ -16,7 +16,6 @@
 package org.factcast.core.snap;
 
 import java.util.Optional;
-import java.util.UUID;
 
 import org.factcast.core.store.FactStore;
 
@@ -24,7 +23,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class FactCastSnapshotRepository implements SnapshotRepository {
+public class FactCastSnapshotRepository implements SnapshotCache {
 
     @NonNull
     final FactStore store;
@@ -35,8 +34,8 @@ public class FactCastSnapshotRepository implements SnapshotRepository {
     }
 
     @Override
-    public void setSnapshot(@NonNull SnapshotId id, @NonNull UUID state, @NonNull byte[] bytes) {
-        store.setSnapshot(id, state, bytes);
+    public void setSnapshot(@NonNull Snapshot snapshot) {
+        store.setSnapshot(snapshot);
     }
 
     @Override

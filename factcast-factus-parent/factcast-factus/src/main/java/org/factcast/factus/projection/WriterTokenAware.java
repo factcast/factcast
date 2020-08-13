@@ -22,13 +22,13 @@ import org.factcast.factus.FactusConstants;
 import lombok.NonNull;
 
 public interface WriterTokenAware {
-    default AutoCloseable aquireWriteToken() {
-        return aquireWriteToken(FactusConstants.FOREVER);
+    default AutoCloseable acquireWriteToken() {
+        return acquireWriteToken(FactusConstants.FOREVER);
     };
 
     /**
-     * might return null if token cannot be aquired
+     * might return null if token cannot be acquired
      **/
-    AutoCloseable aquireWriteToken(@NonNull Duration maxWait);
+    AutoCloseable acquireWriteToken(@NonNull Duration maxWait);
 
 }

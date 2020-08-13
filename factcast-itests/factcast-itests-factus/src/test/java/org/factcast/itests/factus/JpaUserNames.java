@@ -81,7 +81,7 @@ public class JpaUserNames extends ManagedProjection {
     // JPA based impl of ManagedProjection:
 
     @Override
-    public AutoCloseable aquireWriteToken(Duration maxWait) {
+    public AutoCloseable acquireWriteToken(Duration maxWait) {
         // TODO probably use a dedicated table for locks
         return new AutoCloseable() {
             @Override

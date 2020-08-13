@@ -21,6 +21,7 @@ import org.factcast.core.Fact;
 
 import lombok.NonNull;
 
+@SuppressWarnings({ "UnusedReturnValue", "unused" })
 public interface SimplePublisher {
     /**
      * publishes a single event immediately

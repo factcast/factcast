@@ -22,7 +22,7 @@ public abstract class ManagedProjection implements Projection, StateAware, Write
 
     public void withLock(Runnable runnable) {
         try {
-            try (AutoCloseable token = aquireWriteToken()) {
+            try (AutoCloseable token = acquireWriteToken()) {
                 if (token == null) {
                     throw new IllegalStateException("cannot acquire write token");
                 } else {

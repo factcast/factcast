@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.UUID;
 
 import org.checkerframework.checker.units.qual.A;
-import org.factcast.core.snap.SnapshotRepository;
+import org.factcast.core.snap.SnapshotCache;
 import org.factcast.factus.projection.Aggregate;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
@@ -35,7 +35,7 @@ import lombok.NonNull;
 class AggregateSnapshotRepositoryImplTest {
 
     @Mock
-    private SnapshotRepository snap;
+    private SnapshotCache snap;
 
     @InjectMocks
     private AggregateSnapshotRepositoryImpl underTest;

@@ -23,6 +23,8 @@ public interface SnapshotSerializer {
 
     <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes);
 
+    boolean includesCompression();
+
     class DefaultSnapshotSerializer implements SnapshotSerializer {
         @Override
         public byte[] serialize(SnapshotProjection a) {
@@ -32,6 +34,11 @@ public interface SnapshotSerializer {
         @Override
         public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
             return FactCastJson.readValueFromBytes(type, bytes);
+        }
+
+        @Override
+        public boolean includesCompression() {
+            return false;
         }
     }
 }

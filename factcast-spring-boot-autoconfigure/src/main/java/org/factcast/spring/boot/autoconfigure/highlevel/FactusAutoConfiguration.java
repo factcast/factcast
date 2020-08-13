@@ -18,7 +18,7 @@ package org.factcast.spring.boot.autoconfigure.highlevel;
 import java.util.Set;
 
 import org.factcast.core.FactCast;
-import org.factcast.core.snap.SnapshotRepository;
+import org.factcast.core.snap.SnapshotCache;
 import org.factcast.factus.DefaultFactus;
 import org.factcast.factus.Factus;
 import org.factcast.factus.applier.DefaultEventApplierFactory;
@@ -26,7 +26,7 @@ import org.factcast.factus.serializer.EventSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
-import org.factcast.factus.snapshot.SnapshotFactory;
+import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -42,14 +42,15 @@ import lombok.Generated;
 @ConditionalOnClass(Factus.class)
 @ConditionalOnMissingBean(Factus.class)
 @Generated
-public class EventCastAutoConfiguration {
+public class FactusAutoConfiguration {
 
     @Bean
-    public Factus eventCast(FactCast fc, SnapshotRepository sr, EventSerializer deserializer,
-            SnapshotFactory snapshotFactory) {
+    public Factus eventCast(FactCast fc, SnapshotCache sr, EventSerializer deserializer,
+            SnapshotSerializerSupplier snapshotSerializerSupplier) {
         return new DefaultFactus(fc, new DefaultEventApplierFactory(deserializer), deserializer,
-                new AggregateSnapshotRepositoryImpl(sr), new ProjectionSnapshotRepositoryImpl(sr),
-                snapshotFactory);
+                new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
+                new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
+                snapshotSerializerSupplier);
     }
 
     @Bean
@@ -60,8 +61,8 @@ public class EventCastAutoConfiguration {
     }
 
     @Bean
-    public SnapshotFactory snapshotFactory(Set<SnapshotSerializer> ser) {
-        return new SnapshotFactory(ser);
+    public SnapshotSerializerSupplier snapshotFactory(Set<SnapshotSerializer> ser) {
+        return new SnapshotSerializerSupplier(ser);
     }
 
 }

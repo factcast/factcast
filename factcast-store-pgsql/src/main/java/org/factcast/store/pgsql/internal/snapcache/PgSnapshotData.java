@@ -24,4 +24,6 @@ public class PgSnapshotData {
     UUID factId;
 
     byte[] bytes;
+
+    boolean compressed;
 }

@@ -288,8 +288,8 @@ public class PgFactStore extends AbstractFactStore {
     }
 
     @Override
-    public void setSnapshot(@NonNull SnapshotId id, @NonNull UUID state, @NonNull byte[] bytes) {
-        metrics.time(OP.SET_SNAPSHOT, () -> snapCache.setSnapshot(id, state, bytes));
+    public void setSnapshot(@NonNull Snapshot snapshot) {
+        metrics.time(OP.SET_SNAPSHOT, () -> snapCache.setSnapshot(snapshot));
     }
 
     @Override
