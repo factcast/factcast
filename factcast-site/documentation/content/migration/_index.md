@@ -12,6 +12,11 @@ identifier = "migration"
 weight = 99
 +++
 
+## Upgrading to 0.3.0
+
+There is a new module for use in projects that provide 'EventObjects' but do not want to depend on factcast-core, which is called "factcast-factus-event".
+@Specification and interface EventObject have been moved there - please update your imports accordingly if necessary. 
+
 ## Upgrading to 0.2.1 
 
 #### Reconnection behavior
