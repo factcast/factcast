@@ -24,13 +24,13 @@
     <module>factcast-internal-dep</module>
     <module>factcast-internal-dep-boot</module>
     <module>factcast-spring-boot-autoconfigure</module>
+    <module>factcast-factus-event</module>
     <module>factcast-client-grpc</module>
     <module>factcast-client-grpc-cli</module>
     <module>factcast-store-pgsql</module>
     <module>factcast-store-pgsql-rds</module>
     <module>factcast-store-test</module>
     <module>factcast-core</module>
-    <module>factcast-factus-event</module>
     <module>factcast-factus</module>
     <module>factcast-server-grpc</module>
     <module>factcast-grpc-api</module>
