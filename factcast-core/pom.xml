@@ -8,6 +8,17 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-core</artifactId>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-internal-dep</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -33,7 +44,6 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus-event</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.github.java-json-tools</groupId>
