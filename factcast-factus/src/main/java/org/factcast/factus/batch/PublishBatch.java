@@ -39,5 +39,6 @@ public interface PublishBatch extends AutoCloseable {
 
     PublishBatch markAborted(Throwable cause);
 
-    void close(); // checks if either aborted or published
+    void close(); // checks if either aborted or executed already, otherwise
+                  // will execute
 }

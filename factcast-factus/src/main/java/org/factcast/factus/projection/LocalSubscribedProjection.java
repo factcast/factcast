@@ -21,7 +21,7 @@ import lombok.experimental.Delegate;
  * Local projection (using vm-locks to synchronize) for async subscription to a
  * stream of events/facts.
  */
-public class LocalSubscribedProjection implements SubscribedProjection {
+public abstract class LocalSubscribedProjection implements SubscribedProjection {
     @Delegate
     private final LocalState state = new LocalState();
 

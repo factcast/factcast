@@ -35,7 +35,7 @@ public interface SimplePublisher {
     void publish(@NonNull List<EventObject> eventPojos);
 
     /**
-     * In case you'd need to assemble a fact youself
+     * In case you'd need to assemble a fact yourself
      */
     void publish(@NonNull Fact f);
 
