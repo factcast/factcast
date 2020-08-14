@@ -1,9 +1,0 @@
-@startmindmap
-* Projection
-** SnapshotProjection
-*** Aggregate
-** ManagedProjection
-*** LocalManagedProjection
-** SubscribedProjection
-*** LocalSubScribedProjection
-@endmindmap
