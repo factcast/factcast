@@ -2,14 +2,14 @@
 
 interface Projection
 interface SnapshotProjection
-abstract class Aggregate #gold
+abstract class Aggregate
 
 
 abstract class  ManagedProjection
 abstract class LocalManagedProjection
 
 interface  SubscribedProjection
-abstract class LocalSubscribedProjection
+abstract class LocalSubscribedProjection #gold
 
 Projection <|-- SnapshotProjection
 SnapshotProjection <|-- Aggregate
