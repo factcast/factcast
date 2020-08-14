@@ -25,16 +25,16 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactHeader;
+import org.factcast.core.event.EventSerializer;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.spec.FactSpecCoordinates;
-import org.factcast.factus.EventPojo;
 import org.factcast.factus.Handler;
 import org.factcast.factus.HandlerFor;
+import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.AggregateUtil;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.StateAware;
-import org.factcast.factus.serializer.EventSerializer;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -186,7 +186,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
         }
 
         List<Class<?>> eventPojoTypes = Arrays.stream(m.getParameterTypes())
-                .filter(EventPojo.class::isAssignableFrom)
+                .filter(EventObject.class::isAssignableFrom)
                 .collect(Collectors.toList());
 
         if (eventPojoTypes.isEmpty()) {
@@ -225,8 +225,8 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
     private static Function<Fact, Object> createSingleParameterTransformer(
             Method m,
             EventSerializer deserializer, Class<?> type) {
-        if (EventPojo.class.isAssignableFrom(type)) {
-            return p -> deserializer.deserialize((Class<? extends EventPojo>) type, p
+        if (EventObject.class.isAssignableFrom(type)) {
+            return p -> deserializer.deserialize((Class<? extends EventObject>) type, p
                     .jsonPayload());
         }
 

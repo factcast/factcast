@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.factcast.core.Fact;
-import org.factcast.factus.EventPojo;
+import org.factcast.factus.event.EventObject;
 
 /**
  * a Batch that can be passed around and defers publishing until either execute
@@ -27,7 +27,7 @@ import org.factcast.factus.EventPojo;
  */
 @SuppressWarnings({ "unused", "UnusedReturnValue" })
 public interface PublishBatch extends AutoCloseable {
-    PublishBatch add(EventPojo p);
+    PublishBatch add(EventObject p);
 
     PublishBatch add(Fact f);
 

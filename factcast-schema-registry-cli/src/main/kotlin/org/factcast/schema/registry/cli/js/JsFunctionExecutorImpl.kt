@@ -22,7 +22,7 @@ import jdk.nashorn.api.scripting.NashornScriptEngineFactory
 import org.factcast.schema.registry.cli.fs.FileSystemService
 
 @Singleton
-class JsFunctionNashornExecutor(
+class JsFunctionExecutorImpl(
     private val fileSystemService: FileSystemService
 ) : JsFunctionExecutor {
     override fun <T> execute(functionName: String, pathToFile: Path, data: T): T {
@@ -31,8 +31,8 @@ class JsFunctionNashornExecutor(
     }
 
     override fun <T> execute(functionName: String, code: String, data: T): T {
-        val engine = NashornScriptEngineFactory().getScriptEngine(ClassLoader.getSystemClassLoader())
         // val engine = ScriptEngineManager().getEngineByName("javascript")
+        val engine = NashornScriptEngineFactory().getScriptEngine(ClassLoader.getSystemClassLoader())
         engine.eval(code)
         val invocable = engine as Invocable
 

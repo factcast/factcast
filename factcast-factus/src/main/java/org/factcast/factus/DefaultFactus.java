@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
@@ -34,10 +35,10 @@ import org.factcast.factus.applier.EventApplier;
 import org.factcast.factus.applier.EventApplierFactory;
 import org.factcast.factus.batch.DefaultPublishBatch;
 import org.factcast.factus.batch.PublishBatch;
+import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.InLockedOperation;
 import org.factcast.factus.lock.Locked;
 import org.factcast.factus.projection.*;
-import org.factcast.factus.serializer.EventSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
@@ -61,7 +62,7 @@ public class DefaultFactus implements Factus {
 
     final EventApplierFactory ehFactory;
 
-    final EventSerializer serializer;
+    final EventConverter eventConverter;
 
     final AggregateSnapshotRepository aggregateSnapshotRepository;
 
@@ -75,16 +76,16 @@ public class DefaultFactus implements Factus {
 
     @Override
     public PublishBatch batch() {
-        return new DefaultPublishBatch(fc, serializer);
+        return new DefaultPublishBatch(fc, eventConverter);
     }
 
     @Override
-    public <T> T publish(@NonNull EventPojo e, @NonNull Function<Fact, T> resultFn) {
+    public <T> T publish(@NonNull EventObject e, @NonNull Function<Fact, T> resultFn) {
 
         assertNotClosed();
         InLockedOperation.assertNotInLockedOperation();
 
-        Fact factToPublish = e.toFact(serializer);
+        Fact factToPublish = eventConverter.toFact(e);
         fc.publish(factToPublish);
         return resultFn.apply(factToPublish);
     }
@@ -96,7 +97,7 @@ public class DefaultFactus implements Factus {
     }
 
     @Override
-    public void publish(@NonNull List<EventPojo> eventPojos) {
+    public void publish(@NonNull List<EventObject> eventPojos) {
         publish(eventPojos, f -> null);
     }
 
@@ -109,13 +110,13 @@ public class DefaultFactus implements Factus {
     }
 
     @Override
-    public <T> T publish(@NonNull List<EventPojo> e, @NonNull Function<List<Fact>, T> resultFn) {
+    public <T> T publish(@NonNull List<EventObject> e, @NonNull Function<List<Fact>, T> resultFn) {
 
         assertNotClosed();
         InLockedOperation.assertNotInLockedOperation();
 
         List<Fact> facts = e.stream()
-                .map(p -> p.toFact(serializer))
+                .map(eventConverter::toFact)
                 .collect(Collectors.toList());
         fc.publish(facts);
         return resultFn.apply(facts);
@@ -326,8 +327,8 @@ public class DefaultFactus implements Factus {
     }
 
     @Override
-    public Fact toFact(@NonNull EventPojo e) {
-        return e.toFact(serializer);
+    public Fact toFact(@NonNull EventObject e) {
+        return eventConverter.toFact(e);
     }
 
     @Override

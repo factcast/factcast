@@ -6,8 +6,8 @@ import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.factcast.schema.registry.cli.fs.FileSystemService
 import java.nio.file.Paths
+import org.factcast.schema.registry.cli.fs.FileSystemService
 
 const val FN = """
 function foo(data) {
@@ -18,7 +18,7 @@ function foo(data) {
 class JsFunctionNashornExecutorTest : StringSpec() {
     val fs = mockk<FileSystemService>()
     val dummyPath = Paths.get(".")
-    val uut = JsFunctionNashornExecutor(fs)
+    val uut = JsFunctionExecutorImpl(fs)
 
     init {
         "execute with code" {
@@ -40,5 +40,4 @@ class JsFunctionNashornExecutorTest : StringSpec() {
             confirmVerified(fs)
         }
     }
-
 }

@@ -18,8 +18,8 @@ package org.factcast.itests.factus;
 import java.util.Set;
 import java.util.UUID;
 
-import org.factcast.core.spec.Specification;
-import org.factcast.factus.EventPojo;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
 import com.google.common.collect.Sets;
 
@@ -31,7 +31,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Specification(ns = "test")
-public class UserCreated implements EventPojo {
+public class UserCreated implements EventObject {
     UUID aggregateId;
 
     String userName;

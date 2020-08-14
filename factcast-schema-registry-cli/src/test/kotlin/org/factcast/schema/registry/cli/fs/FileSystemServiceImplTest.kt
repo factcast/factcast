@@ -9,10 +9,9 @@ import io.kotlintest.matchers.string.shouldContain
 import io.kotlintest.matchers.types.shouldBeInstanceOf
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
-import org.factcast.schema.registry.cli.fixture
 import java.nio.file.Files
 import java.nio.file.Paths
-
+import org.factcast.schema.registry.cli.fixture
 
 class FileSystemServiceImplTest : StringSpec() {
     var tmp = Files.createTempDirectory("fc-test")
@@ -99,5 +98,4 @@ class FileSystemServiceImplTest : StringSpec() {
             uut.exists(outputPath) shouldBe true
         }
     }
-
 }

@@ -16,6 +16,7 @@ import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.nio.file.Paths
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Example
 import org.factcast.schema.registry.cli.domain.Namespace
@@ -27,7 +28,6 @@ import org.factcast.schema.registry.cli.utils.SchemaService
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
 import org.factcast.schema.registry.cli.validation.ProjectError
 import org.factcast.schema.registry.cli.validation.TransformationEvaluator
-import java.nio.file.Paths
 
 class TransformationValidationServiceImplTest : StringSpec() {
     val missingTransformationCalculator = mockk<MissingTransformationCalculator>()

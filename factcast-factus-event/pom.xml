@@ -3,20 +3,11 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.factcast</groupId>
-    <artifactId>factcast-factus-parent</artifactId>
+    <artifactId>factcast</artifactId>
     <version>0.2.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>factcast-factus</artifactId>
-  <dependencies>
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <scope>provided</scope>
-    </dependency>
+  <artifactId>factcast-factus-event</artifactId>
 
-
-  </dependencies>
-
-
+  <packaging>jar</packaging>
 </project>

@@ -18,11 +18,12 @@ package org.factcast.spring.boot.autoconfigure.highlevel;
 import java.util.Set;
 
 import org.factcast.core.FactCast;
+import org.factcast.core.event.EventConverter;
+import org.factcast.core.event.EventSerializer;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.factus.DefaultFactus;
 import org.factcast.factus.Factus;
 import org.factcast.factus.applier.DefaultEventApplierFactory;
-import org.factcast.factus.serializer.EventSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
@@ -31,10 +32,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Generated;
 
@@ -45,23 +42,17 @@ import lombok.Generated;
 public class FactusAutoConfiguration {
 
     @Bean
-    public Factus eventCast(FactCast fc, SnapshotCache sr, EventSerializer deserializer,
+    public Factus factus(FactCast fc, SnapshotCache sr, EventSerializer deserializer,
+            EventConverter eventConverter,
             SnapshotSerializerSupplier snapshotSerializerSupplier) {
-        return new DefaultFactus(fc, new DefaultEventApplierFactory(deserializer), deserializer,
+        return new DefaultFactus(fc, new DefaultEventApplierFactory(deserializer), eventConverter,
                 new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
                 new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
                 snapshotSerializerSupplier);
     }
 
     @Bean
-    @ConditionalOnMissingBean
-    @Order(Ordered.HIGHEST_PRECEDENCE)
-    public EventSerializer eventSerializer(ObjectMapper om) {
-        return new EventSerializer.Default(om);
-    }
-
-    @Bean
-    public SnapshotSerializerSupplier snapshotFactory(Set<SnapshotSerializer> ser) {
+    public SnapshotSerializerSupplier snapshotSerializerSupplier(Set<SnapshotSerializer> ser) {
         return new SnapshotSerializerSupplier(ser);
     }
 

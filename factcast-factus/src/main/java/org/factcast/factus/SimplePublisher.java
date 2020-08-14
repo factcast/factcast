@@ -13,19 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.applier;
+package org.factcast.factus;
 
-import org.factcast.factus.projection.Projection;
-import org.factcast.factus.serializer.EventSerializer;
+import java.util.List;
 
-import lombok.RequiredArgsConstructor;
+import org.factcast.core.Fact;
+import org.factcast.factus.event.EventObject;
 
-@RequiredArgsConstructor
-public class DefaultEventApplierFactory implements EventApplierFactory {
+import lombok.NonNull;
 
-    final EventSerializer deser;
+@SuppressWarnings({ "UnusedReturnValue", "unused" })
+public interface SimplePublisher {
+    /**
+     * publishes a single event immediately
+     */
+    void publish(@NonNull EventObject eventPojo);
 
-    public <A extends Projection> EventApplier<A> create(A projection) {
-        return new DefaultEventApplier<>(deser, projection);
-    }
+    /**
+     * publishes a list of events immediately in an atomic manner (all or none)
+     */
+    void publish(@NonNull List<EventObject> eventPojos);
+
+    /**
+     * In case you'd need to assemble a fact youself
+     */
+    void publish(@NonNull Fact f);
+
 }

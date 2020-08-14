@@ -20,5 +20,4 @@ class NamespaceFolderTest : StringSpec() {
             ns.events shouldHaveSize 1
         }
     }
-
 }

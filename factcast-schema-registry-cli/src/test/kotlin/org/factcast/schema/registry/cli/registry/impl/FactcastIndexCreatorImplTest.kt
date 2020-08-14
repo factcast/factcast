@@ -10,6 +10,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import io.mockk.verifyAll
+import java.io.File
+import java.nio.file.Paths
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Example
 import org.factcast.schema.registry.cli.domain.Namespace
@@ -21,8 +23,6 @@ import org.factcast.schema.registry.cli.registry.IndexFileCalculator
 import org.factcast.schema.registry.cli.registry.getEventId
 import org.factcast.schema.registry.cli.registry.getTransformationId
 import org.factcast.schema.registry.cli.registry.index.Index
-import java.io.File
-import java.nio.file.Paths
 
 class FactcastIndexCreatorImplTest : StringSpec() {
     val indexFileCalculator = mockk<IndexFileCalculator>()
@@ -90,5 +90,4 @@ class FactcastIndexCreatorImplTest : StringSpec() {
             confirmVerified(fs)
         }
     }
-
 }

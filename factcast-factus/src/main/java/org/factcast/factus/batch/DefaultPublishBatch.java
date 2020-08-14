@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.factus.EventPojo;
-import org.factcast.factus.serializer.EventSerializer;
+import org.factcast.core.event.EventConverter;
+import org.factcast.factus.event.EventObject;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,7 +35,7 @@ public class DefaultPublishBatch implements PublishBatch {
 
     private final FactCast fc;
 
-    private final EventSerializer serializer;
+    private final EventConverter converter;
 
     private final List<Supplier<Fact>> toPublish = Collections.synchronizedList(new LinkedList<>());
 
@@ -44,8 +44,8 @@ public class DefaultPublishBatch implements PublishBatch {
     private BatchAbortedException abortedException;
 
     @Override
-    public PublishBatch add(EventPojo p) {
-        toPublish.add(() -> p.toFact(serializer));
+    public PublishBatch add(EventObject p) {
+        toPublish.add(() -> converter.toFact(p));
         return this;
     }
 

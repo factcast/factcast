@@ -18,8 +18,8 @@ package org.factcast.itests.factus;
 import java.util.Set;
 import java.util.UUID;
 
-import org.factcast.core.spec.Specification;
-import org.factcast.factus.EventPojo;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
 import com.google.common.collect.Sets;
 
@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Specification(ns = "test")
-public class TestAggregateWasIncremented implements EventPojo {
+public class TestAggregateWasIncremented implements EventObject {
     UUID aggregateId;
 
     @Override

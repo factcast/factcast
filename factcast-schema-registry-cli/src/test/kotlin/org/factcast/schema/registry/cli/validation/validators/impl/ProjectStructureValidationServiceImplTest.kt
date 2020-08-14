@@ -8,6 +8,7 @@ import io.kotlintest.matchers.types.shouldBeInstanceOf
 import io.kotlintest.specs.StringSpec
 import io.micronaut.context.ApplicationContext
 import io.micronaut.validation.validator.Validator
+import java.nio.file.Paths
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.project.structure.EventFolder
 import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
@@ -16,7 +17,6 @@ import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.project.structure.TransformationFolder
 import org.factcast.schema.registry.cli.validation.ProjectError
 import org.factcast.schema.registry.cli.validation.validators.ProjectStructureValidationService
-import java.nio.file.Paths
 
 class ProjectStructureValidationServiceImplTest : StringSpec() {
     val dummyPath = Paths.get(".")
@@ -145,5 +145,4 @@ class ProjectStructureValidationServiceImplTest : StringSpec() {
             }
         }
     }
-
 }

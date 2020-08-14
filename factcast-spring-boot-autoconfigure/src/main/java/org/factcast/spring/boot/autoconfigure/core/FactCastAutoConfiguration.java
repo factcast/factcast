@@ -16,22 +16,52 @@
 package org.factcast.spring.boot.autoconfigure.core;
 
 import org.factcast.core.FactCast;
+import org.factcast.core.event.EventConverter;
+import org.factcast.core.event.EventSerializer;
+import org.factcast.core.event.EventSerializer.Default;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.util.FactCastJson;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Generated;
+import lombok.NonNull;
 
 @Configuration
 @ConditionalOnClass(FactCast.class)
 @ConditionalOnMissingBean(FactCast.class)
 @Generated
+@SuppressWarnings("unused")
 public class FactCastAutoConfiguration {
 
     @Bean
-    public FactCast factCast(FactStore store) {
+    public FactCast factCast(@NonNull FactStore store) {
         return FactCast.from(store);
+    }
+
+    @Bean
+    public EventConverter eventConverter(@NonNull EventSerializer ser) {
+        return new EventConverter(ser);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public EventSerializer eventSerializer(ObjectMapper om) {
+        return new Default(om);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    // if there is no other one defined
+    public ObjectMapper objectMapper() {
+        return FactCastJson.mapper();
     }
 }
