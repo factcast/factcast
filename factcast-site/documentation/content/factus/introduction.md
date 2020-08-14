@@ -19,7 +19,7 @@ If Factus is optional, why does it exist in the first place, you might ask.
 
 FactCast tries to be non-intrusive. It focuses on publishing, retrieval, validation and transformation of json documents. It also provides some tools for advanced (yet necessary) concepts like optimistic locking, but it does not prescribe anything in terms of how to use this to build an application.
 
-Depending on your experience with eventsourcing in general or other products/approaches in particular, it might be hard to see, how exactly this helps you to build correct, scalable and maintainable systems. At least this was our experience working with a very diverse group of engineers over the years.
+Depending on your experience with eventsourcing in general or other products/approaches in particular, it might be hard to see, how exactly this helps you to build correct, scalable and maintainable systems. At least this was our experience working with diverse groups of engineers over the years.
 
 Now, instead of documenting lots of good practices here, we thought it would be easier to start with, more convenient and less error prone to offer a high-level API instead, that codifies those good practices.
 
@@ -50,6 +50,10 @@ public interface EventObject {
 ```
 
 Now the payload of a Fact created from your Events will be, as you'd expect, the json-serialized form of the Event which is created by the 'EventSerializer'.
+
+Factus ships with a default Serializer for EventObjects. It uses Jackson and builds on a predefined ObjectMapper, if defined (otherwise just uses the internal FactCast-configured ObjectMapper).
+If, for some reason, you want to redefine this, you can control the serialized used with your EventObject by annotating it with `@SerializeUsing(MyFunkySerializer.class)`, where MyFunkySerializer has to 
+implement EventSerializer.
 
 So. now that we covered Facts and Events and their conversion, what to do with them? 
 

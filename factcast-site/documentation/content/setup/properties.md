@@ -44,7 +44,7 @@ Properties you can use to configure Factcast:
 | Property-Name        | Semantics           | Default   
 | ------------- |:-------------|:-----|
 | factcast.store.pgsql.deleteSnapshotStaleForDays |   min number of days a snapshot is kept even though it is not read anymore | 90  
-| factcast.store.pgsql.snapshotCacheCompactCron             |defines the cron schedule for compacting the transformation result cache | `0 0 0 * * *` (at midnight)
+| factcast.store.pgsql.snapshotCacheCompactCron             |defines the cron schedule for compacting the snapshot cache | `0 0 0 * * *` (at midnight)
 
 ---
 

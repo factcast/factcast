@@ -13,9 +13,10 @@ weight = 31
 
 +++
 
-This section will walk you through how to use FactCast from an application programmers perspective using the abstractions of Factus.
+This section will walk you through using FactCast from an application programmers perspective using the abstractions of Factus.
+Factus is an optional high-level API provided in order to make it easier to work with FactCast from Java (or Kotlin).
 
-If you want to have more control and don't want to opt-in to Factus, you can have a look at the [Usage](/usage) section instead.
+If you want to have more control and don't want to opt-in to Factus, you can have a look at the lower-level FactCast API. See the [Usage](/usage) section instead.
 
 
 {{< children nohidden="true" >}}

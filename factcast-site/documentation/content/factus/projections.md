@@ -14,7 +14,10 @@ weight = 5
 
 +++
 
-Before we can look at processing Events, we first have to talk about another abstraction that does not exist in FactCast: `Projection``` 
+![](../ph_p.png)
+
+
+Before we can look at processing Events, we first have to talk about another abstraction that does not exist in FactCast: `Projection` 
 
 
 ```java
@@ -22,10 +25,6 @@ public interface Projection { ... }
 ```
 
 In Factus, a Projection is any kind of state that is distilled from processing Events - in other words: `Projection`s process (or handle) events.
-
-There are several kinds of Projections that we need to look at, but here is an overview:
-
-![](../projections.png)
 
 ## Projections in general
 
@@ -51,14 +50,39 @@ public class UserNames implements SnapshotProjection {
     };
 // ...
 ``` 
-Here the EventObject 'UserDeleted' and 'UserCreated' are just basically tuples.
+Here the EventObject 'UserDeleted' and 'UserCreated' are just basically tuples of a UserId (aggregateId) and a Name (userName).
+Also **projections must have a default (no-args) constructor**.
 
+As we established before, you could also decide to use a nested class to separate the methods from other instance methods, like:
 
+```java
 
-## A word on Snapshots
+public class UserNames implements SnapshotProjection {
 
-In EventSourcing a Snapshot is used to memorize an object at a certain point in the EventStream, so that when lateron this object needs to be retrieved again, rather than creating a fresh one and use it to process all relevant events, we can start with the snapshot (that already has the state of the object from before) and just process all the facts that happened since.  
-It is easy to see that storing and retrieving snapshots involves some kind of marshalling and unmarshalling, as well as some sort of Key/Value store to keep the snapshots. This store is called a `SnapshotCache`. Factus comes with a default SnapshotCache that uses FactCast to store/retrieve and maintain those cached snapshots. While this works reasonably well and is easy to use, as it does not involve any other piece of infrastructure, you might want to keep an eye on the load/storage imposed by this.
-It is very easy provide an implementation of SnapshotCache that uses for instance Redis or memcached for this, so that you keep this load away from FactCast for performance, scalability and in the end also cost efficiency reasons.
+    private final Map<UUID, String> existingNames = new HashMap<>();
 
-## SnapshotProjection 
+    class EventProcessing {
+
+        @Handler
+        void apply(UserCreated created) {
+            existingNames.put(created.aggregateId(), created.userName());
+        };
+
+        @Handler
+        void apply(UserDeleted deleted) {
+            existingNames.remove(deleted.aggregateId());
+        };
+
+    }
+
+// ...
+
+```
+
+## many Flavours
+
+There are several kinds of Projections that we need to look at. This is a rough overview:
+
+![](../projections.png)
+
+But before, let's start with Snapshots...
