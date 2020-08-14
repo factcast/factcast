@@ -16,6 +16,7 @@
 package org.factcast.core.spec;
 
 import org.factcast.core.Fact;
+import org.factcast.factus.event.Specification;
 
 import lombok.*;
 

@@ -30,8 +30,8 @@ import org.factcast.core.lock.Attempt;
 import org.factcast.core.lock.AttemptAbortedException;
 import org.factcast.core.lock.PublishingResult;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.factus.EventPojo;
 import org.factcast.factus.Factus;
+import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.*;
 
 import lombok.Data;
@@ -138,12 +138,12 @@ public class Locked<I extends Projection> {
     private RetryableTransaction createTransaction(Factus factus, List<Supplier<Fact>> toPublish) {
         return new RetryableTransaction() {
             @Override
-            public void publish(@NonNull EventPojo e) {
+            public void publish(@NonNull EventObject e) {
                 toPublish.add(() -> factus.toFact(e));
             }
 
             @Override
-            public void publish(@NonNull List<EventPojo> eventPojos) {
+            public void publish(@NonNull List<EventObject> eventPojos) {
                 eventPojos.forEach(this::publish);
             }
 

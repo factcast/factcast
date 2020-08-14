@@ -13,29 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.factus.event;
 
-import java.util.Set;
-import java.util.UUID;
+import java.lang.annotation.*;
 
-import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.Specification;
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@Documented
+public @interface Specification {
+    String ns();
 
-import com.google.common.collect.Sets;
+    String type() default "";
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Specification(ns = "test")
-public class UserDeleted implements EventObject {
-    UUID aggregateId;
-
-    @Override
-    public Set<UUID> aggregateIds() {
-        return Sets.newHashSet(aggregateId);
-    }
+    int version() default 0;
 }

@@ -23,6 +23,7 @@ import java.util.function.Function;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.batch.PublishBatch;
+import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.Locked;
 import org.factcast.factus.projection.*;
 
@@ -41,14 +42,14 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
     /**
      * publishes a single event immediately
      */
-    default void publish(@NonNull EventPojo eventPojo) {
+    default void publish(@NonNull EventObject eventPojo) {
         publish(eventPojo, f -> null);
     }
 
     /**
      * publishes a list of events immediately in an atomic manner (all or none)
      */
-    default void publish(@NonNull List<EventPojo> eventPojos) {
+    default void publish(@NonNull List<EventObject> eventPojos) {
         publish(eventPojos, f -> null);
     }
 
@@ -56,14 +57,14 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
      * publishes a single event immediately and transforms the resulting facts
      * to a return type with the given resultFn
      */
-    <T> T publish(@NonNull EventPojo e, @NonNull Function<Fact, T> resultFn);
+    <T> T publish(@NonNull EventObject e, @NonNull Function<Fact, T> resultFn);
 
     /**
      * publishes a list of events immediately in an atomic manner (all or none)
      * and transforms the resulting facts to a return type with the given
      * resultFn
      */
-    <T> T publish(@NonNull List<EventPojo> e, @NonNull Function<List<Fact>, T> resultFn);
+    <T> T publish(@NonNull List<EventObject> e, @NonNull Function<List<Fact>, T> resultFn);
 
     /**
      * creates a batch that can be passed around and added to. It is different
@@ -116,6 +117,6 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
     <M extends ManagedProjection> Locked<M> withLockOn(@NonNull M managed);
 
     // conversion
-    Fact toFact(@NonNull EventPojo e);
+    Fact toFact(@NonNull EventObject e);
 
 }

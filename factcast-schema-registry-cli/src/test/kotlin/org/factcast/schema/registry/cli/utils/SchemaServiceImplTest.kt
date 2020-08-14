@@ -15,9 +15,9 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifyAll
+import java.nio.file.Paths
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.validation.ProjectError
-import java.nio.file.Paths
 
 class SchemaServiceImplTest : StringSpec() {
     val fs = mockk<FileSystemService>()
@@ -73,5 +73,4 @@ class SchemaServiceImplTest : StringSpec() {
             }
         }
     }
-
 }

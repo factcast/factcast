@@ -16,6 +16,7 @@ import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.nio.file.Paths
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Example
 import org.factcast.schema.registry.cli.domain.Namespace
@@ -24,7 +25,6 @@ import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.utils.SchemaService
 import org.factcast.schema.registry.cli.validation.ProjectError
-import java.nio.file.Paths
 
 class ExampleValidationServiceImplTest : StringSpec() {
     val fs = mockk<FileSystemService>()
@@ -50,7 +50,7 @@ class ExampleValidationServiceImplTest : StringSpec() {
 
     init {
         "should fail on schema error" {
-            val error = ProjectError.NoSchema( dummyPath)
+            val error = ProjectError.NoSchema(dummyPath)
             every { schemaService.loadSchema(dummyPath) } returns Left(error)
 
             uut.validateExamples(dummyProject) shouldHaveSingleElement error
@@ -72,7 +72,6 @@ class ExampleValidationServiceImplTest : StringSpec() {
             verify(exactly = 2) { fs.readToJsonNode(dummyPath) }
             confirmVerified(fs, schemaService)
         }
-
 
         "should fail on example validation error against schema" {
             every { schemaService.loadSchema(dummyPath) } returns Right(mockSchema)

@@ -13,32 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus;
+package org.factcast.core.event;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpecCoordinates;
-import org.factcast.factus.serializer.EventSerializer;
+import org.factcast.factus.event.EventObject;
 
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.val;
 
-/**
- * EventPojos are expected to carry
- * a @{@link org.factcast.core.spec.Specification} annotation.
- */
-public interface EventPojo {
+@RequiredArgsConstructor
+public class EventConverter {
+    @NonNull
+    final EventSerializer ser;
 
-    default Fact toFact(@NonNull EventSerializer ser) {
-        return toFact(ser, UUID.randomUUID());
+    public Fact toFact(@NonNull EventObject p) {
+        return toFact(p, UUID.randomUUID());
     }
 
-    default Fact toFact(@NonNull EventSerializer ser, UUID factId) {
-        val spec = FactSpecCoordinates.from(getClass());
+    public Fact toFact(@NonNull EventObject p, UUID factId) {
+        val spec = FactSpecCoordinates.from(p.getClass());
 
         val b = Fact.builder();
         b.id(factId);
@@ -51,9 +48,9 @@ public interface EventPojo {
             b.version(version);
         }
 
-        aggregateIds().forEach(b::aggId);
+        p.aggregateIds().forEach(b::aggId);
 
-        additionalFactHeaders().forEach((key, value) -> {
+        p.additionalFactHeaders().forEach((key, value) -> {
             if (key == null) {
                 throw new IllegalArgumentException(
                         "Keys of additional fact headers must not be null ('" + key + "':'" + value
@@ -62,15 +59,6 @@ public interface EventPojo {
             b.meta(key, value);
         });
 
-        return b.build(ser.serialize(this));
+        return b.build(ser.serialize(p));
     }
-
-    @NonNull
-    default Map<String, String> additionalFactHeaders() {
-        return Collections.emptyMap();
-    }
-
-    @NonNull
-    Set<UUID> aggregateIds();
-
 }

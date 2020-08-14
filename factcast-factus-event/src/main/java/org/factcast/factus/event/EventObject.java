@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.spec;
+package org.factcast.factus.event;
 
-import java.lang.annotation.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-@Documented
-public @interface Specification {
-    String ns();
+/**
+ * EventObjects are expected to be annotated with @{@link Specification}.
+ */
+public interface EventObject {
 
-    String type() default "";
+    default Map<String, String> additionalFactHeaders() {
+        return Collections.emptyMap();
+    }
 
-    int version() default 0;
+    Set<UUID> aggregateIds();
+
 }

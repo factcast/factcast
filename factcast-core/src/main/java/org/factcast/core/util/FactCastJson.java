@@ -154,4 +154,8 @@ public final class FactCastJson {
         return objectMapper.reader(type).readValue(bytes);
 
     }
+
+    public static ObjectMapper mapper() {
+        return objectMapper;
+    }
 }

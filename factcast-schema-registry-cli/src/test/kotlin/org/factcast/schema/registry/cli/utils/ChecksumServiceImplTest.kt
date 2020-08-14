@@ -5,8 +5,8 @@ import io.kotlintest.specs.StringSpec
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifyAll
-import org.factcast.schema.registry.cli.fs.FileSystemService
 import java.nio.file.Paths
+import org.factcast.schema.registry.cli.fs.FileSystemService
 
 class ChecksumServiceImplTest : StringSpec() {
     private val fs = mockk<FileSystemService>()
@@ -24,5 +24,4 @@ class ChecksumServiceImplTest : StringSpec() {
             verifyAll { fs.readToBytes(dummyPath) }
         }
     }
-
 }
