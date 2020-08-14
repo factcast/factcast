@@ -13,9 +13,7 @@ identifier = "factus-projections"
 weight = 5
 
 +++
-
 ![](../ph_p.png)
-
 
 Before we can look at processing Events, we first have to talk about another abstraction that does not exist in FactCast: `Projection` 
 
