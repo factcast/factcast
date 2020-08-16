@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class ManagedProjection implements Projection, StateAware, WriterTokenAware {
 
-    public void withLock(Runnable runnable) {
+    public final void withLock(Runnable runnable) {
         try {
             try (AutoCloseable token = acquireWriteToken()) {
                 if (token == null) {
