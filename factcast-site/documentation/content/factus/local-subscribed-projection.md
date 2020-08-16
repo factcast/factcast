@@ -16,3 +16,7 @@ weight = 45
 
 ![](../ph_ls.png)
 
+As a specialization of SubscribedProjections, LocalSubscribedProjections are local to one VM (just like LocalManagedProjections).
+This introduces the same problem already discussed with LocalManagedProjections: possible inconistency between nodes.
+
+LocalSubscribedProjections already provider locking (trivial) and state awareness, so they a very easy to use/extend. 

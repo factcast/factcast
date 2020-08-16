@@ -26,7 +26,7 @@ Factus is a higher-level API for java applications to work with factcast. Using 
 
 > Whereas factcast tries to limit the number of assumptions, Factus is highly opinionated. 
 
-Factus provides higher level abstractions that are supposed to make it faster and more convenient to work with FactCast from Java. For an Overview about what Factus can do, see the Factus section.     
+Factus provides higher level abstractions that are supposed to make it faster and more convenient to work with FactCast from Java. For an Overview about what Factus can do, see the [Factus](/factus) section.     
 
 
  
