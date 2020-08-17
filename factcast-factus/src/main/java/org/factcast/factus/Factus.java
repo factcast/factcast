@@ -108,7 +108,6 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
     /**
      * optimistically 'locks' on a SnapshotProjection
      */
-
     <P extends SnapshotProjection> Locked<P> withLockOn(@NonNull Class<P> snapshotClass);
 
     /**

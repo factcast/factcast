@@ -12,6 +12,8 @@ weight = 15
 
 +++
 
+# TODO This has technically changed a bit and needs updating
+
 ## Optimistic Locking
 
 ### Motivation
