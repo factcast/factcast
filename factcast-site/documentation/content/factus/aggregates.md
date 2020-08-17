@@ -16,7 +16,7 @@ weight = 8
 
 ![](../ph_a.png)
 
-Another special flavor of a Snapshot Projection is an Aggregate. An Aggregate extends the notion on Snapshot Projection by bringing in an aggregate Id. This of the `UserNames` example. It does not make sense to maintain two different UserNames Projections, becuase by definition, the UserNames projection should contain **all** UserNames in the System.
+Another special flavor of a Snapshot Projection is an Aggregate. An Aggregate extends the notion on Snapshot Projection by bringing in an aggregate Id. This is the one of the `UserNames` example. It does not make sense to maintain two different UserNames Projections, because by definition, the UserNames projection should contain **all** UserNames in the system.
 When you think of `User` however, you have different users in the System that differ in Id and (probably) UserName.
 So calling `factus.fetch(User.class)` would not make any sense. Here Factus offers two different methods for access:
 
@@ -45,6 +45,6 @@ So calling `factus.fetch(User.class)` would not make any sense. Here Factus offe
 
 ```
 
-As you can see, `find` returns the user as an Optional (being empty if there never was **any** EventObject published regarding that User), whereas fetch returns the User unwrapped and fails if there is no Fact for that user found.
+As you can see, `find` returns the user as an Optional (being empty if there never was **any** EventObject published regarding that User), whereas `fetch` returns the User unwrapped and fails if there is no Fact for that user found.
 
 All the rules from SnapshotProjections apply: The User instance is (together with its id) stored as a snapshot at the end of the operation.

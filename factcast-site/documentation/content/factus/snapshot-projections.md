@@ -22,7 +22,7 @@ A SnapshotProjection is a Projection (read EventHandler) that can be stored into
 
 ```java
 /**
-*   maintains a map of UserId->UserName
+ *  maintains a map of UserId->UserName
 **/
 public class UserNames implements SnapshotProjection {
 
@@ -31,12 +31,12 @@ public class UserNames implements SnapshotProjection {
     @Handler
     void apply(UserCreated created) {
         existingNames.put(created.aggregateId(), created.userName());
-    };
+    }
 
     @Handler
     void apply(UserDeleted deleted) {
         existingNames.remove(deleted.aggregateId());
-    };
+    }
 // ...
 ``` 
 
@@ -51,7 +51,7 @@ If you have worked with FactCast before, you'll know what needs to be done (if y
     1. calls a method to actually process that EventObject
     1. keeps track of facts being successfully processed
 1. subscribe to a fact stream according to the FactSpecs from above (either from Scratch or from the last factId processed by the instance from the snapshot)
-1. await complete on the subscription to be sure to recieve all EventObjects currently in the EventLog
+1. await the completion of the subscription to be sure to receive all EventObjects currently in the EventLog
 1. maybe create a snapshot manually and store it somewhere, so that you do not have to start from scratch next time
 
 ... and this is just the "happy-path".
@@ -61,7 +61,7 @@ With Factus however, all you need to do is to use the following method:
 ```java
     /**
      * If there is a matching snapshot already, it is deserialized and the
-     * matching events, which are not yet applied, will be. Afterwards, a new
+     * matching events, which are not yet applied, will be as well. Afterwards, a new
      * snapshot is created and stored.
      * <p>
      * If there is no existing snapshot yet, or they are not matching (see
@@ -79,4 +79,4 @@ like
 ```java
 UserNames currentUserNames = factus.fetch(UserNames.class);
 ```
-Easy uh? As the instance is created from either a Snapshot or the class, the instance is private to the caller here. This is the reason, why there is no ConcurrentHashMap or any other kind of synchronization necessary within `UserNames`.
+Easy, uh? As the instance is created from either a Snapshot or the class, the instance is private to the caller here. This is the reason why there is no ConcurrentHashMap or any other kind of synchronization necessary within `UserNames`.

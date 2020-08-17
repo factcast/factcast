@@ -54,14 +54,14 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
 
 ```
 
-As you can see, you can either call a void method, or pass a function, that translates the published Facts to a return value, in case you need it.
+As you can see, you can either call a void method, or pass a function that translates the published Facts to a return value, in case you need it.
 
 #### Batches
 
-Just like FactCasts `publish(List<Fact>)`, you can publish a list of Events/Facts atomically. 
+Just like FactCast's `publish(List<Fact>)`, you can publish a list of Events/Facts atomically. 
 
 However in some more complex scenarios, it might be more appropriate to have an object to pass around (and maybe mark aborted) where different parts of the code can contribute Events/Facts to publish to.
-This is what a **PublishBatch** is used for:
+This is what **PublishBatch** is used for:
 
 ```java
 public interface PublishBatch extends AutoCloseable {
