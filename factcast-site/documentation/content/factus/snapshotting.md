@@ -14,7 +14,7 @@ weight = 6
 
 +++
 
-In EventSourcing a Snapshot is used to memorize an object at a certain point in the EventStream, so that when later-on this object needs to be retrieved again, 
+In EventSourcing a Snapshot is used to memorize an object at a certain point in the EventStream, so that when later-on this object has to be retrieved again, 
 rather than creating a fresh one and use it to process all relevant events, we can start with the snapshot (that already has the state of the object from before) 
 and just process all the facts that happened since.
   
@@ -43,7 +43,7 @@ Factus ships with a default SnapshotSerializer, that - you can guess by now - us
 The Key/Value store that keeps and maintains the snapshots is called a `SnapshotCache`.
  
 Factus comes with a default SnapshotCache that uses FactCast to store/retrieve and maintain those cached snapshots. While this works reasonably well and is easy to use, as it does not involve any other piece of infrastructure, you might want to keep an eye on the load- and storage-requirements imposed by this.
-It is very easy provide an implementation of SnapshotCache that uses for instance Redis or memcached instead, so that you keep this load away from FactCast for performance, scalability and in the end also cost efficiency reasons. Also it has an effect on the availability and maybe responsiveness of your application, but this is as obvious as outside of the scope of this document.
+It is very easy to provide an implementation of SnapshotCache that uses for instance Redis or memcached instead, so that you keep this load away from FactCast for performance, scalability and in the end also cost efficiency reasons. Also it has an effect on the availability and maybe responsiveness of your application, but this is obviously outside of the scope of this document.
 
 The SnapshotCache by default only keeps the last version of a particular snapshot, and deletes it after 90 days of being unused. 
 See [Properties](/setup/properties)

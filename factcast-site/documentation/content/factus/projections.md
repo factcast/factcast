@@ -26,12 +26,12 @@ In Factus, a Projection is any kind of state that is distilled from processing E
 
 ## Projections in general
 
-What projections have in common is, they handle Events (or Facts). In order to express that a projection can have any number of methods annotated with `@Handler` or `@HandlerFor`. These methods must be package-level/protected accessible and can be either on the Projection itself or on a nested (**non-static**) inner class.
+What projections have in common is that they handle Events (or Facts). In order to express that, a projection can have any number of methods annotated with `@Handler` or `@HandlerFor`. These methods must be package-level/protected accessible and can be either on the Projection itself or on a nested (**non-static**) inner class.
 A simple example might be:
 
 ```java
 /**
-*   maintains a map of UserId->UserName
+ *  maintains a map of UserId->UserName
 **/
 public class UserNames implements SnapshotProjection {
 
@@ -40,12 +40,12 @@ public class UserNames implements SnapshotProjection {
     @Handler
     void apply(UserCreated created) {
         existingNames.put(created.aggregateId(), created.userName());
-    };
+    }
 
     @Handler
     void apply(UserDeleted deleted) {
         existingNames.remove(deleted.aggregateId());
-    };
+    }
 // ...
 ``` 
 Here the EventObject 'UserDeleted' and 'UserCreated' are just basically tuples of a UserId (aggregateId) and a Name (userName).
@@ -64,12 +64,12 @@ public class UserNames implements SnapshotProjection {
         @Handler
         void apply(UserCreated created) {
             existingNames.put(created.aggregateId(), created.userName());
-        };
+        }
 
         @Handler
         void apply(UserDeleted deleted) {
             existingNames.remove(deleted.aggregateId());
-        };
+        }
 
     }
 

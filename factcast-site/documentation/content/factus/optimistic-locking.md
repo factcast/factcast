@@ -14,14 +14,14 @@ weight = 100
 
 +++
 
-Whenever you need to make business decisions you need a model to base those decisions on. Most of the time it is 
-important, that this model is consistent and up to date with the Facts published at the time the decisino takes place.
+Whenever you need to make business decisions, you need a model to base those decisions on. Most of the time it is 
+important that this model is consistent and up to date with the Facts published at the time the decision takes place.
 
-Think of a use-case like making sure, that UserNames in a system are unique. In (potentially) distributed applications
+Think of a use case like making sure that UserNames in a system are unique. In (potentially) distributed applications
 and especially in eventsourced applications this can be a challenging problem. For sure what you want to avoid is 
 pessimistic locking for all sorts of reasons, which leaves us with optimistic locking as a choice.
 
-On a general level, optimistic locking tries to make a change and write that change or, if something relevant that 
+On a general level, optimistic locking tries to make a change and to write that change or, if something relevant that 
 might invalidate this change in between, discard the change and try again taking the new state into account.
 Often this is done by adding a versionId or timestamp to a particular Entity/Aggregate to detect concurrent changes.
 
@@ -35,11 +35,11 @@ If a new user registers,
     * if not, prepare a change that creates the user
 1. check if a new user was created in between, and
     * repeat from the beginning if this is the case
-    * execute the change while emaking sure, no other change can interfere.
+    * execute the change while making sure no other change can interfere.
     
 In FactCast/Factus, there is no need to assign versionIds or Timestamps to aggregates or even have aggregates for that matter.
-All we need to do, is to define a 'scope' of an optimistic lock to check for concurrent changes in order to either 
-discard the prepared changes and try again or publish the prepared change if there was no interfering change in between.
+All we have to do is to define a 'scope' of an optimistic lock to check for concurrent changes in order to either 
+discard the prepared changes and try again, or to publish the prepared change if there was no interfering change in between.
 
 Let's look at the example above:
 
@@ -53,12 +53,12 @@ public class UserNames implements SnapshotProjection {
     @Handler
     void apply(UserCreated created) {
         existingNames.put(created.aggregateId(), created.userName());
-    };
+    }
 
     @Handler
     void apply(UserDeleted deleted, FactHeader header) {
         existingNames.remove(deleted.aggregateId());
-    };
+    }
 
     boolean contains(String name) {
         return existingNames.values().contains(name);
@@ -67,7 +67,7 @@ public class UserNames implements SnapshotProjection {
 // ...
 ```
 
-In order to implement the usecase above (enforcing unique usernames), what we can do is basically:
+In order to implement the use case above (enforcing unique usernames), what we can do is basically:
 
 ```java
   UserNames names = factus.fetch(UserNames.class);
@@ -100,7 +100,6 @@ Applied to our example that would be
         .retries(10)                     // optional call to limit the number of retries 
         .intervalMillis(50)              // optional call to insert pause with the given number of milliseconds in between attempts
         .attempt((names, tx) -> {
-
                     if (names.contains(cmd.userName)) {
                         tx.abort("The Username is already taken - please choose another one.");
                     } else {
@@ -110,16 +109,16 @@ Applied to our example that would be
         });
 ``` 
 
-As you can see here, the attempt call recieves a BiConsumer that consumes
+As you can see here, the attempt call receives a BiConsumer that consumes
 1. your defined scope, updated to the latest changes in the Fact-stream
 1. a 'RetryableTransaction' that you use to either publish to or abort.
 
 Note that you can use either SnapshotProjections (including aggregates) as well as ManagedProjections to lock on. 
-**SubscribedProjections however are not usable here**, due to the fact that they are in nature eventual consistent which 
+**SubscribedProjections however are not usable here**, due to the fact that they are in nature eventual consistent, which 
 breaks a necessary precondition for optimistic locking.  
 
-Also note, that you should not (and cannot) publish to Factus directly when executing an attempt, as this would potentiall 
-break the purpose of the optimistic lock and can lead to infinite loops.  
+Also note that you should not (and cannot) publish to Factus directly when executing an attempt, as this would potentially 
+break the purpose of the optimistic lock, and can lead to infinite loops.  
 
-For further details on how to add operations that are excuted after successful publishing or on failure handling, 
-please consult the javadocs, or look at the provided examples.
+For further details on how to add operations that are executed after successful publishing or on failure handling, 
+please consult the JavaDocs, or look at the provided examples.
