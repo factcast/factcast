@@ -17,9 +17,27 @@ package org.factcast.core.event;
 
 import org.factcast.factus.event.EventObject;
 
-public interface EventSerializer {
-    <T extends EventObject> T deserialize(Class<T> targetClass, String json);
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-    <T extends EventObject> String serialize(T pojo);
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 
+@RequiredArgsConstructor
+public class DefaultEventSerializer implements EventSerializer {
+    @NonNull
+    final ObjectMapper om;
+
+    @SneakyThrows
+    @Override
+    public <T extends EventObject> T deserialize(@NonNull Class<T> targetClass,
+            @NonNull String json) {
+        return om.readerFor(targetClass).readValue(json);
+    }
+
+    @SneakyThrows
+    @Override
+    public <T extends EventObject> String serialize(@NonNull T pojo) {
+        return om.writeValueAsString(pojo);
+    }
 }

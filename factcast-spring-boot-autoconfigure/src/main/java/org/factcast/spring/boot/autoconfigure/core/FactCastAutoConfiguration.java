@@ -16,9 +16,9 @@
 package org.factcast.spring.boot.autoconfigure.core;
 
 import org.factcast.core.FactCast;
+import org.factcast.core.event.DefaultEventSerializer;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.event.EventSerializer;
-import org.factcast.core.event.EventSerializer.Default;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.util.FactCastJson;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -54,7 +54,7 @@ public class FactCastAutoConfiguration {
     @ConditionalOnMissingBean
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public EventSerializer eventSerializer(ObjectMapper om) {
-        return new Default(om);
+        return new DefaultEventSerializer(om);
     }
 
     @Bean
