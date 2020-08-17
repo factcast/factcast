@@ -6,7 +6,8 @@
 
 It is not yet released, the API may change, the documentation is incomplete.
 
-[![CircleCI](https://circleci.com/gh/factcast/factcast.svg?style=shield)](https://circleci.com/gh/factcast/factcast)
+[![Actions
+Status](https://github.com/factcast/factcast/workflows/maven/badge.svg)](https://github.com/factcast/factcast/actions)
 [![codecov](https://codecov.io/gh/factcast/factcast/branch/master/graph/badge.svg)](https://codecov.io/gh/factcast/factcast)
 [![CodeFactor](https://www.codefactor.io/repository/github/factcast/factcast/badge)](https://www.codefactor.io/repository/github/factcast/factcast)
 [![MavenCentral](https://img.shields.io/maven-central/v/org.factcast/factcast/0.2.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast%22%20v:0.2)
