@@ -24,6 +24,7 @@ import java.net.URL;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
+import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.RegistryIndex;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
@@ -93,7 +94,7 @@ public class HttpSchemaRegistryTest {
     @Test
     public void testInitial() throws InterruptedException, ExecutionException, IOException {
         HttpSchemaRegistry uut = new HttpSchemaRegistry(schemaStore, transformationStore,
-                indexFetcher, fileFetcher, registryMetrics);
+                indexFetcher, fileFetcher, registryMetrics, new PgConfigurationProperties());
         uut.fetchInitial();
 
         verify(schemaStore, times(2)).register(Mockito.any(), Mockito.any());
@@ -117,7 +118,7 @@ public class HttpSchemaRegistryTest {
     @Test
     public void testRefresh() throws InterruptedException, ExecutionException, IOException {
         HttpSchemaRegistry uut = new HttpSchemaRegistry(schemaStore, transformationStore,
-                indexFetcher, fileFetcher, registryMetrics);
+                indexFetcher, fileFetcher, registryMetrics, new PgConfigurationProperties());
         uut.refresh();
 
         verify(schemaStore, times(2)).register(Mockito.any(), Mockito.any());
@@ -143,22 +144,22 @@ public class HttpSchemaRegistryTest {
     void testNullContracts() throws Exception {
         assertThrows(NullPointerException.class, () -> {
             new HttpSchemaRegistry(null, mock(SchemaStore.class), mock(TransformationStore.class),
-                    registryMetrics);
+                    registryMetrics, new PgConfigurationProperties());
         });
 
         assertThrows(NullPointerException.class, () -> {
             new HttpSchemaRegistry(new URL("http://ibm.com"), null, mock(
-                    TransformationStore.class), registryMetrics);
+                    TransformationStore.class), registryMetrics, new PgConfigurationProperties());
         });
 
         assertThrows(NullPointerException.class, () -> {
             new HttpSchemaRegistry(new URL("http://ibm.com"), mock(SchemaStore.class), null,
-                    registryMetrics);
+                    registryMetrics, new PgConfigurationProperties());
         });
 
         assertThrows(NullPointerException.class, () -> {
             new HttpSchemaRegistry(new URL("http://ibm.com"), mock(SchemaStore.class), mock(
-                    TransformationStore.class), null);
+                    TransformationStore.class), null, new PgConfigurationProperties());
         });
     }
 }
