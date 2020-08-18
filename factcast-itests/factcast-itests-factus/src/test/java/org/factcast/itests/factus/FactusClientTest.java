@@ -333,10 +333,14 @@ public class FactusClientTest {
                     .attempt((ta, tx) -> {
 
                         log.info(workerID);
-                        // TODO: Should it be part of the test to enforce that at least one thread
-                        // publishes while being in a stale state, and the code inside of attempt is re-run?
+                        // TODO: Should it be part of the test to enforce that
+                        // at least one thread
+                        // publishes while being in a stale state, and the code
+                        // inside of attempt is re-run?
                         // Then sleepRandomMillis might not be enough.
-                        // If it is not, then sleepRandomMillies is actually not needed?
+                        // If it is not, then sleepRandomMillies is actually not
+                        // needed?
+                        //
                         sleepRandomMillis();
 
                         // check business rule
@@ -354,7 +358,8 @@ public class FactusClientTest {
         // wait for all threads to succeed or abort
         waitForAllToTerminate(futures);
 
-        // make sure business rule was properly applied (we have 50 instead of 53)
+        // make sure business rule was properly applied (we have 50 instead of
+        // 53)
         assertThat(ec.fetch(TestAggregate.class, aggregateId).magicNumber()).isEqualTo(50);
 
     }
