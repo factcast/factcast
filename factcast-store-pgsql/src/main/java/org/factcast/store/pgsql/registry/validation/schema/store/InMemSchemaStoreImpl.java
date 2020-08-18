@@ -47,16 +47,7 @@ public class InMemSchemaStoreImpl implements SchemaStore {
     public void register(@NonNull SchemaSource source, @NonNull String schema)
             throws SchemaConflictException {
         synchronized (mutex) {
-            String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
-            if (oldHash != null && !oldHash.contentEquals(source.hash())) {
-                registryMetrics.count(MetricEvent.SCHEMA_CONFLICT, Tags.of(
-                        RegistryMetrics.TAG_IDENTITY_KEY, source.id()));
-
-                throw new SchemaConflictException("Key " + source
-                        + " does not match the stored hash "
-                        + oldHash);
-            }
-
+            id2hashMap.put(source.id(), source.hash());
             schemaMap.put(source.toKey(), schema);
         }
     }
