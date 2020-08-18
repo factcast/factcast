@@ -22,6 +22,7 @@ import org.factcast.factus.batch.BatchAbortedException;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
+import org.factcast.factus.lock.InLockedOperation;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
@@ -94,6 +95,37 @@ class DefaultFactusTest {
             // ASSERT
             verify(fc)
                     .publish(fact);
+        }
+
+        @Test
+        public void publishFactAfterClosed() {
+            // INIT
+            Fact fact = toFact(new SimpleEventObject("a"));
+
+            underTest.close();
+
+            // RUN
+            assertThatThrownBy(() -> underTest.publish(fact))
+                    // ASSERT
+                    .isExactlyInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        public void publishFactWhileInLockedOperation() {
+            // INIT
+            Fact fact = toFact(new SimpleEventObject("a"));
+
+            try {
+                InLockedOperation.enterLockedOperation();
+
+                // RUN
+                assertThatThrownBy(() -> underTest.publish(fact))
+                        // ASSERT
+                        .isExactlyInstanceOf(IllegalStateException.class);
+
+            } finally {
+                InLockedOperation.exitLockedOperation();
+            }
         }
 
         @Test
@@ -206,8 +238,9 @@ class DefaultFactusTest {
             // RUN
             try (PublishBatch batch = underTest.batch()) {
                 batch
+                        // let's mix event objects and facts in one batch
                         .add(new SimpleEventObject("a"))
-                        .add(new SimpleEventObject("b"));
+                        .add(toFact(new SimpleEventObject("b")));
             }
 
             // ASSERT
@@ -256,7 +289,12 @@ class DefaultFactusTest {
 
     }
 
-    void mockEventConverter() {
+    @Nested
+    class WhenUpdating {
+        // @Mock private @NonNull managedProjection;
+    }
+
+    private void mockEventConverter() {
         when(eventConverter.toFact(any()))
                 .thenAnswer(inv -> toFact(inv.getArgument(0, SimpleEventObject.class)));
     }
@@ -282,33 +320,7 @@ class DefaultFactusTest {
     }
 
     /*
-     * @Nested class WhenPublishing {
      * 
-     * @Mock private @NonNull EventObject e;
-     * 
-     * @Mock private @NonNull Function<Fact, T> resultFn;
-     * 
-     * @BeforeEach void setup() { } }
-     * 
-     * @Nested class WhenPublishing {
-     * 
-     * @Mock private EventObject eventObject;
-     * 
-     * @BeforeEach void setup() { } }
-     * 
-     * @Nested class WhenPublishing {
-     * 
-     * @Mock private @NonNull Fact f;
-     * 
-     * @BeforeEach void setup() { } }
-     * 
-     * @Nested class WhenPublishing {
-     * 
-     * @Mock private EventObject eventObject;
-     * 
-     * @Mock private @NonNull Function<List<Fact>, T> resultFn;
-     * 
-     * @BeforeEach void setup() { } }
      * 
      * @Nested class WhenUpdating {
      * 
