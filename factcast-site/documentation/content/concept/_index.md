@@ -25,7 +25,7 @@ With optimistic locking you can use conditional publishing, which is based upon 
 
 ### Read (subscribe)
 
-In order to receive `Facts` you have to subscribe to `FactCast` with a subscription request. This is where `FactCast` significantly differs from other solutions because the subscription request contains the *full specification* of what events to receive. This means that no server-side administration is needed, nor any prior knowledge about the streams where to publich the `Facts` into.
+In order to receive `Facts` you have to subscribe to `FactCast` with a subscription request. This is where `FactCast` significantly differs from other solutions because the subscription request contains the *full specification* of what events to receive. This means that no server-side administration is needed, nor any prior knowledge about the streams where to publish the `Facts` into.
 
 {{%alert theme="danger"%}} TODO see `SubscriptionRequest` {{% /alert%}}
 
