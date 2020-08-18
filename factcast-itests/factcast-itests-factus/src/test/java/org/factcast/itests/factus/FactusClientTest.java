@@ -15,7 +15,7 @@
  */
 package org.factcast.itests.factus;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.util.HashSet;
@@ -28,7 +28,8 @@ import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.Factus;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
@@ -46,8 +47,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import lombok.extern.slf4j.Slf4j;
 
 @SpringBootTest
 @ContextConfiguration(classes = Application.class)
@@ -99,7 +100,6 @@ public class FactusClientTest {
 
     @Test
     public void simpleSnapshotRoundtrip() throws Exception {
-
         SnapshotId id = new SnapshotId("test", UUID.randomUUID());
         // initially empty
         assertThat(repository.getSnapshot(id)).isEmpty();
@@ -126,9 +126,9 @@ public class FactusClientTest {
     public void simpleAggregateRoundtrip() throws Exception {
         UUID aggregateId = UUID.randomUUID();
         assertThat(ec.find(TestAggregate.class, aggregateId)).isEmpty();
-        assertThat(ec.find(TestAggregate.class, aggregateId)).isEmpty();
 
         ec.batch()
+                // 8 increment events for test aggregate
                 .add(new TestAggregateWasIncremented(aggregateId))
                 .add(new TestAggregateWasIncremented(aggregateId))
                 .add(new TestAggregateWasIncremented(aggregateId))
@@ -143,6 +143,8 @@ public class FactusClientTest {
                 .execute();
 
         TestAggregate a = ec.fetch(TestAggregate.class, aggregateId);
+        // We started with magic number 42, incremented 8 times -> magic number
+        // should be 50
         assertThat(a.magicNumber()).isEqualTo(50);
 
         log.info(
@@ -195,7 +197,17 @@ public class FactusClientTest {
 
     @Test
     public void simpleProjectionLockingRoundtrip() throws Exception {
-        assertThat(ec.fetch(UserNames.class)).isNotNull();
+        /*
+         * TODO:
+         * 
+         * - emptyUserNames is actually empty
+         * 
+         * - UserNames is 1 after first publish
+         * 
+         * - UserNames is 0 after publish of delete
+         */
+        UserNames emptyUserNames = ec.fetch(UserNames.class);
+        assertThat(emptyUserNames).isNotNull();
 
         UUID petersId = UUID.randomUUID();
         UserCreateCMD cmd = new UserCreateCMD("Peter", petersId);
@@ -219,6 +231,9 @@ public class FactusClientTest {
 
     @Test
     public void simpleManagedProjectionRoundtrip() throws Exception {
+        /*
+         * TODO: test again after ec.update
+         */
 
         // lets consider userCount a springbean
         UserCount userCount = new UserCount();
@@ -273,6 +288,8 @@ public class FactusClientTest {
         // sadly shot
         ec.publish(new UserDeleted(johnsId));
 
+        // TODO: test that publishing itself does not change the projection
+
         val fabThree = jpaUserNames;
         ec.update(fabThree);
 
@@ -301,10 +318,13 @@ public class FactusClientTest {
         val aggregate = ec.fetch(TestAggregate.class, aggregateId);
         assertThat(aggregate.magicNumber()).isEqualTo(43);
 
+        // TODO: why do we need to fetch another one, rather than reusing
+        // "aggregate"?
         val a = ec.fetch(TestAggregate.class, aggregateId);
 
         // we start 10 threads that try to (in an isolated fashion) lock and
-        // increase
+        // increase. Starting with magic number 43, we would end up 53, but
+        // we have a business rule that limits this to 50.
         Set<CompletableFuture<Void>> futures = new HashSet<>();
         for (int i = 0; i < 10; i++) {
             String workerID = "Worker #" + i;
@@ -313,6 +333,10 @@ public class FactusClientTest {
                     .attempt((ta, tx) -> {
 
                         log.info(workerID);
+                        // TODO: Should it be part of the test to enforce that at least one thread
+                        // publishes while being in a stale state, and the code inside of attempt is re-run?
+                        // Then sleepRandomMillis might not be enough.
+                        // If it is not, then sleepRandomMillies is actually not needed?
                         sleepRandomMillis();
 
                         // check business rule
@@ -330,6 +354,7 @@ public class FactusClientTest {
         // wait for all threads to succeed or abort
         waitForAllToTerminate(futures);
 
+        // make sure business rule was properly applied (we have 50 instead of 53)
         assertThat(ec.fetch(TestAggregate.class, aggregateId).magicNumber()).isEqualTo(50);
 
     }
