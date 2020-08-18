@@ -77,6 +77,9 @@ class DefaultFactusTest {
     class WhenPublishing {
 
         @Captor
+        private ArgumentCaptor<Fact> factCaptor;
+
+        @Captor
         private ArgumentCaptor<List<Fact>> factListCaptor;
 
         @Test
@@ -90,6 +93,45 @@ class DefaultFactusTest {
             // ASSERT
             verify(fc)
                     .publish(fact);
+        }
+
+        @Test
+        public void publishEventObject() {
+            // INIT
+            EventObject eventObject = new SimpleEventObject("a");
+
+            mockEventConverter();
+
+            // RUN
+            underTest.publish(eventObject);
+
+            // ASSERT
+            verify(fc)
+                    .publish(factCaptor.capture());
+
+            assertThatJson(factCaptor.getValue().jsonPayload())
+                    .and(f -> f.node("val").isEqualTo("a"));
+        }
+
+        @Test
+        public void publishEventObjectWithFunction() {
+            // INIT
+            EventObject eventObject = new SimpleEventObject("a");
+
+            mockEventConverter();
+
+            // RUN
+            String jsonPayload = underTest.publish(eventObject, Fact::jsonPayload);
+
+            // ASSERT
+            verify(fc)
+                    .publish(factCaptor.capture());
+
+            assertThatJson(factCaptor.getValue().jsonPayload())
+                    .and(f -> f.node("val").isEqualTo("a"));
+
+            assertThatJson(jsonPayload)
+                    .and(f -> f.node("val").isEqualTo("a"));
         }
 
         @Test
