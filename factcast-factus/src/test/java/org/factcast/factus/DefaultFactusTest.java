@@ -4,10 +4,12 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -17,12 +19,16 @@ import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.factus.applier.EventApplier;
 import org.factcast.factus.applier.EventApplierFactory;
 import org.factcast.factus.batch.BatchAbortedException;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
 import org.factcast.factus.lock.InLockedOperation;
+import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
@@ -85,7 +91,7 @@ class DefaultFactusTest {
         private ArgumentCaptor<List<Fact>> factListCaptor;
 
         @Test
-        public void publishFact() {
+        void publishFact() {
             // INIT
             Fact fact = toFact(new SimpleEventObject("a"));
 
@@ -98,7 +104,7 @@ class DefaultFactusTest {
         }
 
         @Test
-        public void publishFactAfterClosed() {
+        void publishFactAfterClosed() {
             // INIT
             Fact fact = toFact(new SimpleEventObject("a"));
 
@@ -111,7 +117,7 @@ class DefaultFactusTest {
         }
 
         @Test
-        public void publishFactWhileInLockedOperation() {
+        void publishFactWhileInLockedOperation() {
             // INIT
             Fact fact = toFact(new SimpleEventObject("a"));
 
@@ -129,7 +135,7 @@ class DefaultFactusTest {
         }
 
         @Test
-        public void publishEventObject() {
+        void publishEventObject() {
             // INIT
             EventObject eventObject = new SimpleEventObject("a");
 
@@ -147,7 +153,7 @@ class DefaultFactusTest {
         }
 
         @Test
-        public void publishEventObjectWithFunction() {
+        void publishEventObjectWithFunction() {
             // INIT
             EventObject eventObject = new SimpleEventObject("a");
 
@@ -168,7 +174,7 @@ class DefaultFactusTest {
         }
 
         @Test
-        public void publishEventObjectList() {
+        void publishEventObjectList() {
             // INIT
             List<EventObject> eventObjects = Lists.newArrayList(
                     new SimpleEventObject("a"),
@@ -191,7 +197,7 @@ class DefaultFactusTest {
         }
 
         @Test
-        public void publishEventObjectListWithFunction() {
+        void publishEventObjectListWithFunction() {
             // INIT
             List<EventObject> eventObjects = Lists.newArrayList(
                     new SimpleEventObject("a"),
@@ -230,7 +236,7 @@ class DefaultFactusTest {
         private ArgumentCaptor<List<Fact>> factListCaptor;
 
         @Test
-        public void simpleBatch() {
+        void simpleBatch() {
 
             // INIT
             mockEventConverter();
@@ -255,7 +261,7 @@ class DefaultFactusTest {
         }
 
         @Test
-        public void batchAbortedWithErrorMessage() {
+        void batchAbortedWithErrorMessage() {
             assertThatThrownBy(() -> {
                 // RUN
                 try (PublishBatch batch = underTest.batch()) {
@@ -271,7 +277,7 @@ class DefaultFactusTest {
         }
 
         @Test
-        public void batchAbortedWithException() {
+        void batchAbortedWithException() {
             assertThatThrownBy(() -> {
                 // RUN
                 try (PublishBatch batch = underTest.batch()) {
@@ -292,6 +298,48 @@ class DefaultFactusTest {
     @Nested
     class WhenUpdating {
         // @Mock private @NonNull managedProjection;
+    }
+
+    @Nested
+    class WhenFetching {
+
+        @Mock
+        private SnapshotSerializer snapshotSerializer;
+
+        @Mock
+        private EventApplier eventApplier;
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void fetchWithNoEvents() {
+            // INIT
+            mockSnapFactory();
+
+            when(projectionSnapshotRepository.findLatest(ConcatCodesProjection.class))
+                    .thenReturn(Optional.empty());
+
+            when(ehFactory.create(any(ConcatCodesProjection.class)))
+                    .thenReturn(eventApplier);
+
+            when(eventApplier.createFactSpecs())
+                    .thenReturn(mock(List.class));
+
+            when(fc.subscribe(any(), any()))
+                    .thenReturn(mock(Subscription.class));
+
+            // RUN
+            ConcatCodesProjection concatCodes = underTest.fetch(ConcatCodesProjection.class);
+
+            // ASSERT
+            assertThat(concatCodes.codes())
+                    .isEmpty();
+        }
+
+        private void mockSnapFactory() {
+            when(snapFactory.retrieveSerializer(ConcatCodesProjection.class))
+                    .thenReturn(snapshotSerializer);
+        }
+
     }
 
     private void mockEventConverter() {
@@ -316,6 +364,17 @@ class DefaultFactusTest {
         @Override
         public Set<UUID> aggregateIds() {
             return Sets.newHashSet(UUID.fromString("31a364d5-ccde-494c-817d-fbf5c60a658b"));
+        }
+    }
+
+    static class ConcatCodesProjection implements SnapshotProjection {
+
+        @Getter
+        private String codes = "";
+
+        @Handler
+        void apply(SimpleEventObject eventObject) {
+            codes += eventObject.code;
         }
     }
 
