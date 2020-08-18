@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
@@ -154,6 +155,38 @@ class DefaultFactusTest {
                     .anySatisfy(fact -> assertThatJson(fact.jsonPayload())
                             .and(f -> f.node("val").isEqualTo("a")))
                     .anySatisfy(fact -> assertThatJson(fact.jsonPayload())
+                            .and(f -> f.node("val").isEqualTo("b")));
+        }
+
+        @Test
+        public void publishEventObjectListWithFunction() {
+            // INIT
+            List<EventObject> eventObjects = Lists.newArrayList(
+                    new SimpleEventObject("a"),
+                    new SimpleEventObject("b"));
+
+            mockEventConverter();
+
+            // RUN
+            List<String> jsonPayloads = underTest.publish(eventObjects,
+                    list -> list.stream()
+                            .map(Fact::jsonPayload)
+                            .collect(Collectors.toList()));
+
+            // ASSERT
+            verify(fc)
+                    .publish(factListCaptor.capture());
+
+            assertThat(factListCaptor.getValue())
+                    .anySatisfy(fact -> assertThatJson(fact.jsonPayload())
+                            .and(f -> f.node("val").isEqualTo("a")))
+                    .anySatisfy(fact -> assertThatJson(fact.jsonPayload())
+                            .and(f -> f.node("val").isEqualTo("b")));
+
+            assertThat(jsonPayloads)
+                    .anySatisfy(fact -> assertThatJson(fact)
+                            .and(f -> f.node("val").isEqualTo("a")))
+                    .anySatisfy(fact -> assertThatJson(fact)
                             .and(f -> f.node("val").isEqualTo("b")));
         }
     }
