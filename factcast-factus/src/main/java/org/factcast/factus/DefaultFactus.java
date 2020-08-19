@@ -263,8 +263,10 @@ public class DefaultFactus implements Factus {
         FactObserver fo = new FactObserver() {
             @Override
             public void onNext(@NonNull Fact element) {
-                handler.apply(element);
-                factId.set(element.id());
+                projection.executeUpdate(() -> {
+                    handler.apply(element);
+                    factId.set(element.id());
+                });
             }
 
             @Override
