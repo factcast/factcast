@@ -35,7 +35,7 @@ by catching up with the Fact-Stream, there is a problem we did not have with Sna
 A ManagedProjection is a projection that is managed by the Application. Factus can be used to lock/update/release
 a Managed Projection in order to make sure it processes Facts in the correct order and uniquely.
 
-Factus needs to make sure only on thread will change the Projection by catching up with the latest Facts.
+Factus needs to make sure only one thread will change the Projection by catching up with the latest Facts.
 Also, when Factus has no control over the Projection, the Projection implementation itself needs to ensure 
 that proper concurrency handling is implemented in the place the Projection is being queried from, while being updated.
 Depending on the implementation strategy used by you, this might be something you don't need to worry about (for 
