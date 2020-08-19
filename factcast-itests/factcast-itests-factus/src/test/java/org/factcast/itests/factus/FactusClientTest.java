@@ -18,6 +18,7 @@ package org.factcast.itests.factus;
 import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
@@ -107,37 +108,50 @@ public class FactusClientTest {
     @Autowired
     EventConverter eventConverter;
 
+    @Autowired
+    JpaSomeEvents jpaSomeEvents;
+
     @Test
     public void allWaysToPublish() {
 
         UUID johnsId = randomUUID();
 
-        ec.publish(new UserCreated(johnsId, "John"));
+        ec.publish(new SomeEvent(johnsId, "John"));
 
         ec.publish(asList(
-                new UserCreated(randomUUID(), "Paul"),
-                new UserCreated(randomUUID(), "George")));
+                new SomeEvent(randomUUID(), "Paul"),
+                new SomeEvent(randomUUID(), "George")));
 
-        String payload = ec.publish(new UserCreated(randomUUID(), "Ringo"), Fact::jsonPayload);
+        String payload = ec.publish(new SomeEvent(randomUUID(), "Ringo"), Fact::jsonPayload);
 
-        List<String> morePayload = ec.publish(asList(new UserCreated(randomUUID(), "Mick"),
-                new UserCreated(randomUUID(), "Keith")),
+        assertThatJson(payload)
+                .and(j -> j.node("userName").isEqualTo("Ringo"));
+
+        List<String> morePayload = ec.publish(asList(new SomeEvent(randomUUID(), "Mick"),
+                new SomeEvent(randomUUID(), "Keith")),
                 list -> list.stream()
                         .map(Fact::jsonPayload)
                         .collect(toList()));
 
-        ec.publish(eventConverter.toFact(new UserCreated(randomUUID(), "Brian")));
+        assertThat(morePayload)
+                .hasSize(2)
+                .anySatisfy(p -> assertThatJson(p)
+                        .and(j -> j.node("userName").isEqualTo("Mick")))
+                .anySatisfy(p -> assertThatJson(p)
+                        .and(j -> j.node("userName").isEqualTo("Keith")));
 
-        ec.update(jpaUserNames);
+        ec.publish(eventConverter.toFact(new SomeEvent(randomUUID(), "Brian")));
 
-        assertThat(jpaUserNames.count()).isEqualTo(7);
-        assertThat(jpaUserNames.contains("John")).isTrue();
-        assertThat(jpaUserNames.contains("Paul")).isTrue();
-        assertThat(jpaUserNames.contains("George")).isTrue();
-        assertThat(jpaUserNames.contains("Ringo")).isTrue();
-        assertThat(jpaUserNames.contains("Mick")).isTrue();
-        assertThat(jpaUserNames.contains("Keith")).isTrue();
-        assertThat(jpaUserNames.contains("Brian")).isTrue();
+        ec.update(jpaSomeEvents);
+
+        assertThat(jpaSomeEvents.count()).isEqualTo(7);
+        assertThat(jpaSomeEvents.contains("John")).isTrue();
+        assertThat(jpaSomeEvents.contains("Paul")).isTrue();
+        assertThat(jpaSomeEvents.contains("George")).isTrue();
+        assertThat(jpaSomeEvents.contains("Ringo")).isTrue();
+        assertThat(jpaSomeEvents.contains("Mick")).isTrue();
+        assertThat(jpaSomeEvents.contains("Keith")).isTrue();
+        assertThat(jpaSomeEvents.contains("Brian")).isTrue();
 
     }
 
