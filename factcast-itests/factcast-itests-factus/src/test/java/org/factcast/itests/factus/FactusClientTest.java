@@ -20,6 +20,7 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
 import java.util.HashSet;
@@ -35,6 +36,7 @@ import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.Factus;
+import org.factcast.factus.lock.LockedOperationAbortedException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -152,6 +154,35 @@ public class FactusClientTest {
         assertThat(jpaSomeEvents.contains("Mick")).isTrue();
         assertThat(jpaSomeEvents.contains("Keith")).isTrue();
         assertThat(jpaSomeEvents.contains("Brian")).isTrue();
+
+    }
+
+    @Test
+    public void testSubscription() throws InterruptedException {
+
+        JpaSubscribedUserNames subscribedProjection = new JpaSubscribedUserNames();
+
+        ec.subscribe(subscribedProjection);
+
+        // questionable if this makes sense here
+        assertThat(subscribedProjection.names())
+                .isEmpty();
+
+        ec.publish(new JpaSubscribedUserNames.UserCreated(randomUUID(),
+                "Peter"));
+
+        Thread.sleep(5000);
+
+        assertThat(subscribedProjection.names())
+                .hasSize(1);
+
+        ec.publish(new JpaSubscribedUserNames.UserCreated(randomUUID(),
+                "John"));
+        Thread.sleep(5000);
+
+        assertThat(subscribedProjection.names())
+                .hasSize(2)
+                .containsExactlyInAnyOrder("John", "Peter");
 
     }
 
@@ -283,6 +314,20 @@ public class FactusClientTest {
 
         ec.publish(new UserDeleted(petersId));
 
+    }
+
+    @Test
+    public void testPublishSafeguard() throws Exception {
+
+        assertThatThrownBy(() -> ec.withLockOn(UserNames.class)
+                .retries(5)
+                .intervalMillis(50)
+                .attempt((names, tx) -> {
+                    // This must fail, as we didn't publish on the tx, but on
+                    // factus
+                    ec.publish(new UserCreated(randomUUID(), "Peter"));
+                }))
+                        .isInstanceOf(LockedOperationAbortedException.class);
     }
 
     @Test

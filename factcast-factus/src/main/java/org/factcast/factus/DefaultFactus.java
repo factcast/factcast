@@ -17,7 +17,12 @@ package org.factcast.factus;
 
 import java.lang.reflect.Constructor;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -38,7 +43,12 @@ import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.InLockedOperation;
 import org.factcast.factus.lock.Locked;
-import org.factcast.factus.projection.*;
+import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.projection.AggregateUtil;
+import org.factcast.factus.projection.ManagedProjection;
+import org.factcast.factus.projection.Projection;
+import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.projection.SubscribedProjection;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
@@ -49,8 +59,8 @@ import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Single entry point to the factus API.
@@ -180,9 +190,9 @@ public class DefaultFactus implements Factus {
 
         return fc.subscribe(
                 SubscriptionRequest
-                        .catchup(handler.createFactSpecs())
-                        .fromNullable(subscribedProjection.state()), fo)
-                .awaitComplete(FactusConstants.FOREVER.toMillis());
+                        .follow(handler.createFactSpecs())
+                        .fromNullable(subscribedProjection.state()),
+                fo);
     }
 
     @Override
