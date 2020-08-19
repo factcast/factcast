@@ -16,6 +16,8 @@
 package org.factcast.itests.factus;
 
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
@@ -30,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @SuppressWarnings("ALL")
 @SpringBootApplication
 @Slf4j
+@EnableAutoConfiguration(exclude = CompositeMeterRegistryAutoConfiguration.class)
 public class Application {
 
     public static void main(String[] args) {
