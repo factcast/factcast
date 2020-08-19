@@ -431,9 +431,6 @@ class DefaultFactusTest {
             when(fc.subscribe(any(), any()))
                     .thenReturn(subscription);
 
-            when(subscription.awaitComplete(anyLong()))
-                    .thenReturn(subscription);
-
             // RUN
             underTest.subscribe(subscribedProjection);
 
