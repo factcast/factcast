@@ -17,7 +17,6 @@ package org.factcast.spring.boot.autoconfigure.highlevel;
 
 import java.util.Set;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.event.EventSerializer;
@@ -36,6 +35,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Generated;
 
 @Configuration
@@ -51,7 +51,7 @@ public class FactusAutoConfiguration {
         return new DefaultFactus(fc, new DefaultEventApplierFactory(deserializer), eventConverter,
                 new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
                 new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
-                snapshotSerializerSupplier,factusMetrics);
+                snapshotSerializerSupplier, factusMetrics);
     }
 
     @Bean
@@ -60,7 +60,7 @@ public class FactusAutoConfiguration {
     }
 
     @Bean
-    public FactusMetrics factusMetrics(MeterRegistry meterRegistry){
+    public FactusMetrics factusMetrics(MeterRegistry meterRegistry) {
         return new FactusMetricsImpl(meterRegistry);
     }
 

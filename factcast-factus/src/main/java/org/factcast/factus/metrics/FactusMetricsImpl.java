@@ -15,15 +15,16 @@
  */
 package org.factcast.factus.metrics;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
+
 import com.google.common.base.Stopwatch;
 
 import io.micrometer.core.instrument.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
 
 @RequiredArgsConstructor
 public class FactusMetricsImpl implements FactusMetrics {
@@ -55,17 +56,12 @@ public class FactusMetricsImpl implements FactusMetrics {
 
     private AtomicLong gauge(@NonNull GaugedEvent op, Tags tags) {
         val t = Tags.of(Tag.of(TAG_NAME_KEY, op.event())).and(tags);
-        return  meterRegistry.gauge(METRIC_NAME_GAUGES, t, new AtomicLong(0));
+        return meterRegistry.gauge(METRIC_NAME_GAUGES, t, new AtomicLong(0));
     }
 
     @Override
     public void timed(@NonNull TimedOperation operation, Tags tags, @NonNull Runnable fn) {
         timer(operation, tags).record(fn);
-    }
-
-    @Override
-    public void timed(@NonNull TimedOperation operation, @NonNull Runnable fn) {
-        timed(operation, null, fn);
     }
 
     @Override
@@ -92,11 +88,6 @@ public class FactusMetricsImpl implements FactusMetrics {
     }
 
     @Override
-    public <T> T timed(@NonNull TimedOperation operation, @NonNull Supplier<T> fn) {
-        return timed(operation, null, fn);
-    }
-
-    @Override
     public <R, E extends Exception> R timed(@NonNull TimedOperation operation,
             @NonNull Class<E> exceptionClass,
             Tags tags, @NonNull SupplierWithException<R, E> fn) throws E {
@@ -112,10 +103,9 @@ public class FactusMetricsImpl implements FactusMetrics {
     }
 
     @Override
-    public <R, E extends Exception> R timed(@NonNull TimedOperation operation,
-            @NonNull Class<E> exceptionClass,
-            @NonNull SupplierWithException<R, E> fn) throws E {
-        return timed(operation, exceptionClass, null, fn);
+    public void timed(TimedOperation operation, Tags tags, long milliseconds) {
+        val timer = timer(operation, tags);
+        timer.record(milliseconds, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -124,18 +114,8 @@ public class FactusMetricsImpl implements FactusMetrics {
     }
 
     @Override
-    public void count(@NonNull CountedEvent event) {
-        count(event, null);
-    }
-
-    @Override
-    public void record(@NonNull GaugedEvent event, long value) {
-        record(event,null,value);
-    }
-
-    @Override
-    public void record(@NonNull GaugedEvent event,  Tags tags,long value) {
-        val g = gauge(event,tags);
+    public void record(@NonNull GaugedEvent event, Tags tags, long value) {
+        val g = gauge(event, tags);
         g.set(value);
     }
 }
