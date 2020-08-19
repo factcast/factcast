@@ -15,19 +15,28 @@
  */
 package org.factcast.itests.factus;
 
+import static java.util.Arrays.asList;
+import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.factcast.core.Fact;
+import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.Factus;
+import org.factcast.factus.lock.LockedOperationAbortedException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,20 +107,99 @@ public class FactusClientTest {
     @Autowired
     SnapshotCache repository;
 
+    @Autowired
+    EventConverter eventConverter;
+
+    @Autowired
+    JpaSomeEvents jpaSomeEvents;
+
+    @Test
+    public void allWaysToPublish() {
+
+        UUID johnsId = randomUUID();
+
+        ec.publish(new SomeEvent(johnsId, "John"));
+
+        ec.publish(asList(
+                new SomeEvent(randomUUID(), "Paul"),
+                new SomeEvent(randomUUID(), "George")));
+
+        String payload = ec.publish(new SomeEvent(randomUUID(), "Ringo"), Fact::jsonPayload);
+
+        assertThatJson(payload)
+                .and(j -> j.node("userName").isEqualTo("Ringo"));
+
+        List<String> morePayload = ec.publish(asList(new SomeEvent(randomUUID(), "Mick"),
+                new SomeEvent(randomUUID(), "Keith")),
+                list -> list.stream()
+                        .map(Fact::jsonPayload)
+                        .collect(toList()));
+
+        assertThat(morePayload)
+                .hasSize(2)
+                .anySatisfy(p -> assertThatJson(p)
+                        .and(j -> j.node("userName").isEqualTo("Mick")))
+                .anySatisfy(p -> assertThatJson(p)
+                        .and(j -> j.node("userName").isEqualTo("Keith")));
+
+        ec.publish(eventConverter.toFact(new SomeEvent(randomUUID(), "Brian")));
+
+        ec.update(jpaSomeEvents);
+
+        assertThat(jpaSomeEvents.count()).isEqualTo(7);
+        assertThat(jpaSomeEvents.contains("John")).isTrue();
+        assertThat(jpaSomeEvents.contains("Paul")).isTrue();
+        assertThat(jpaSomeEvents.contains("George")).isTrue();
+        assertThat(jpaSomeEvents.contains("Ringo")).isTrue();
+        assertThat(jpaSomeEvents.contains("Mick")).isTrue();
+        assertThat(jpaSomeEvents.contains("Keith")).isTrue();
+        assertThat(jpaSomeEvents.contains("Brian")).isTrue();
+
+    }
+
+    @Test
+    public void testSubscription() throws InterruptedException {
+
+        JpaSubscribedUserNames subscribedProjection = new JpaSubscribedUserNames();
+
+        ec.subscribe(subscribedProjection);
+
+        // questionable if this makes sense here
+        assertThat(subscribedProjection.names())
+                .isEmpty();
+
+        ec.publish(new JpaSubscribedUserNames.UserCreated(randomUUID(),
+                "Peter"));
+
+        Thread.sleep(5000);
+
+        assertThat(subscribedProjection.names())
+                .hasSize(1);
+
+        ec.publish(new JpaSubscribedUserNames.UserCreated(randomUUID(),
+                "John"));
+        Thread.sleep(5000);
+
+        assertThat(subscribedProjection.names())
+                .hasSize(2)
+                .containsExactlyInAnyOrder("John", "Peter");
+
+    }
+
     @Test
     public void simpleSnapshotRoundtrip() throws Exception {
-        SnapshotId id = new SnapshotId("test", UUID.randomUUID());
+        SnapshotId id = new SnapshotId("test", randomUUID());
         // initially empty
         assertThat(repository.getSnapshot(id)).isEmpty();
 
         // set and retrieve
-        repository.setSnapshot(new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false));
+        repository.setSnapshot(new Snapshot(id, randomUUID(), "foo".getBytes(), false));
         Optional<Snapshot> snapshot = repository.getSnapshot(id);
         assertThat(snapshot).isNotEmpty();
         assertThat(snapshot.get().bytes()).isEqualTo("foo".getBytes());
 
         // overwrite and retrieve
-        repository.setSnapshot(new Snapshot(id, UUID.randomUUID(), "bar".getBytes(), false));
+        repository.setSnapshot(new Snapshot(id, randomUUID(), "bar".getBytes(), false));
         snapshot = repository.getSnapshot(id);
         assertThat(snapshot).isNotEmpty();
         assertThat(snapshot.get().bytes()).isEqualTo("bar".getBytes());
@@ -119,12 +207,11 @@ public class FactusClientTest {
         // clear and make sure, it is cleared
         repository.clearSnapshot(id);
         assertThat(repository.getSnapshot(id)).isEmpty();
-
     }
 
     @Test
     public void simpleAggregateRoundtrip() throws Exception {
-        UUID aggregateId = UUID.randomUUID();
+        UUID aggregateId = randomUUID();
         assertThat(ec.find(TestAggregate.class, aggregateId)).isEmpty();
 
         ec.batch()
@@ -137,8 +224,8 @@ public class FactusClientTest {
                 .add(new TestAggregateWasIncremented(aggregateId))
                 .add(new TestAggregateWasIncremented(aggregateId))
                 .add(new TestAggregateWasIncremented(aggregateId))
-                .add(new TestAggregateWasIncremented(UUID.randomUUID()))
-                .add(new TestAggregateWasIncremented(UUID.randomUUID()))
+                .add(new TestAggregateWasIncremented(randomUUID()))
+                .add(new TestAggregateWasIncremented(randomUUID()))
 
                 .execute();
 
@@ -159,12 +246,12 @@ public class FactusClientTest {
     public void simpleSnapshotProjectionRoundtrip() throws Exception {
         assertThat(ec.fetch(UserNames.class)).isNotNull();
 
-        UUID johnsId = UUID.randomUUID();
+        UUID johnsId = randomUUID();
         ec.batch()
                 .add(new UserCreated(johnsId, "John"))
-                .add(new UserCreated(UUID.randomUUID(), "Paul"))
-                .add(new UserCreated(UUID.randomUUID(), "George"))
-                .add(new UserCreated(UUID.randomUUID(), "Ringo"))
+                .add(new UserCreated(randomUUID(), "Paul"))
+                .add(new UserCreated(randomUUID(), "George"))
+                .add(new UserCreated(randomUUID(), "Ringo"))
                 .execute();
 
         val fabFour = ec.fetch(UserNames.class);
@@ -209,7 +296,7 @@ public class FactusClientTest {
         UserNames emptyUserNames = ec.fetch(UserNames.class);
         assertThat(emptyUserNames).isNotNull();
 
-        UUID petersId = UUID.randomUUID();
+        UUID petersId = randomUUID();
         UserCreateCMD cmd = new UserCreateCMD("Peter", petersId);
 
         ec.withLockOn(UserNames.class)
@@ -230,6 +317,20 @@ public class FactusClientTest {
     }
 
     @Test
+    public void testPublishSafeguard() throws Exception {
+
+        assertThatThrownBy(() -> ec.withLockOn(UserNames.class)
+                .retries(5)
+                .intervalMillis(50)
+                .attempt((names, tx) -> {
+                    // This must fail, as we didn't publish on the tx, but on
+                    // factus
+                    ec.publish(new UserCreated(randomUUID(), "Peter"));
+                }))
+                        .isInstanceOf(LockedOperationAbortedException.class);
+    }
+
+    @Test
     public void simpleManagedProjectionRoundtrip() throws Exception {
         /*
          * TODO: test again after ec.update
@@ -244,8 +345,8 @@ public class FactusClientTest {
 
         int before = userCount.count();
 
-        UUID one = UUID.randomUUID();
-        UUID two = UUID.randomUUID();
+        UUID one = randomUUID();
+        UUID two = randomUUID();
         ec.batch()
                 .add(new UserCreated(one, "One"))
                 .add(new UserCreated(two, "Two"))
@@ -268,12 +369,12 @@ public class FactusClientTest {
     @Test
     void simpleJpaProjectionRoundtrip() {
 
-        UUID johnsId = UUID.randomUUID();
+        UUID johnsId = randomUUID();
         ec.batch()
                 .add(new UserCreated(johnsId, "John"))
-                .add(new UserCreated(UUID.randomUUID(), "Paul"))
-                .add(new UserCreated(UUID.randomUUID(), "George"))
-                .add(new UserCreated(UUID.randomUUID(), "Ringo"))
+                .add(new UserCreated(randomUUID(), "Paul"))
+                .add(new UserCreated(randomUUID(), "George"))
+                .add(new UserCreated(randomUUID(), "Ringo"))
                 .execute();
 
         val fabFour = jpaUserNames;
@@ -307,7 +408,7 @@ public class FactusClientTest {
 
     @Test
     public void simpleAggregateLockRoundtrip() throws Exception {
-        UUID aggregateId = UUID.randomUUID();
+        UUID aggregateId = randomUUID();
         assertThat(ec.find(TestAggregate.class, aggregateId)).isEmpty();
 
         ec.publish(new TestAggregateWasIncremented(aggregateId));
