@@ -15,6 +15,8 @@
  */
 package org.factcast.factus.lock;
 
+import static org.factcast.factus.metrics.TagKeys.CLASS;
+
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
@@ -24,8 +26,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.lock.Attempt;
@@ -38,13 +38,13 @@ import org.factcast.factus.metrics.CountedEvent;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.projection.*;
 
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-
-import static org.factcast.factus.metrics.TagKeys.CLASS;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -92,7 +92,8 @@ public class Locked<I extends Projection> {
                     .attempt(() -> {
 
                         try {
-                            factusMetrics.count(CountedEvent.TRANSACTION_ATTEMPTS,Tags.of(Tag.of(CLASS,projection.getClass().getCanonicalName())));
+                            factusMetrics.count(CountedEvent.TRANSACTION_ATTEMPTS, Tags.of(Tag.of(
+                                    CLASS, projection.getClass().getCanonicalName())));
                             val p = update(projection);
                             List<Supplier<Fact>> toPublish = Collections.synchronizedList(
                                     new LinkedList<>());
@@ -121,7 +122,9 @@ public class Locked<I extends Projection> {
             return resultFn.apply(result.publishedFacts());
 
         } catch (AttemptAbortedException e) {
-            factusMetrics.count(CountedEvent.TRANSACTION_ABORT, Tags.of(Tag.of(CLASS,projection.getClass().getCanonicalName())));
+            factusMetrics.count(CountedEvent.TRANSACTION_ABORT, Tags.of(Tag.of(CLASS, projection
+                    .getClass()
+                    .getCanonicalName())));
             throw LockedOperationAbortedException.wrap(e);
         }
     }
