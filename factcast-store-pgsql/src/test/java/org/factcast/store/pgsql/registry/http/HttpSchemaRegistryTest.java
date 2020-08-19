@@ -51,35 +51,35 @@ import lombok.val;
 @ExtendWith(MockitoExtension.class)
 public class HttpSchemaRegistryTest {
     @Spy
-    final RegistryMetrics registryMetrics = new NOPRegistryMetrics();
+    RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 
-    final HttpIndexFetcher indexFetcher = mock(HttpIndexFetcher.class);
+    HttpIndexFetcher indexFetcher = mock(HttpIndexFetcher.class);
 
-    final HttpRegistryFileFetcher fileFetcher = mock(HttpRegistryFileFetcher.class);
+    HttpRegistryFileFetcher fileFetcher = mock(HttpRegistryFileFetcher.class);
 
-    final RegistryIndex index = new RegistryIndex();
+    RegistryIndex index = new RegistryIndex();
 
-    final SchemaSource source1 = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
+    SchemaSource source1 = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
 
-    final SchemaSource source2 = new SchemaSource("http://foo/2", "123", "ns", "type", 2);
+    SchemaSource source2 = new SchemaSource("http://foo/2", "123", "ns", "type", 2);
 
-    final TransformationSource transformationSource1 = new TransformationSource("http://foo/1",
+    TransformationSource transformationSource1 = new TransformationSource("http://foo/1",
             "hash",
             "ns",
             "type", 1, 2);
 
-    final TransformationSource transformationSource2 = new TransformationSource(
+    TransformationSource transformationSource2 = new TransformationSource(
             "synthetic/http://foo/2", "hash", "ns",
             "type", 2, 1);
 
-    final TransformationSource transformationSource3 = new TransformationSource("http://foo/3",
+    TransformationSource transformationSource3 = new TransformationSource("http://foo/3",
             "hash",
             "ns",
             "type2", 1, 2);
 
-    final SchemaStore schemaStore = spy(new InMemSchemaStoreImpl(registryMetrics));
+    SchemaStore schemaStore = spy(new InMemSchemaStoreImpl(registryMetrics));
 
-    final TransformationStore transformationStore = spy(new InMemTransformationStoreImpl(
+    TransformationStore transformationStore = spy(new InMemTransformationStoreImpl(
             registryMetrics));
 
     @BeforeEach
