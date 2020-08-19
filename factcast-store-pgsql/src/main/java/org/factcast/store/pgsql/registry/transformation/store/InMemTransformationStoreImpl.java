@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.apache.commons.collections4.ListUtils;
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.SingleTransformation;
@@ -32,6 +33,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 
 @RequiredArgsConstructor
 public class InMemTransformationStoreImpl extends AbstractTransformationStore {
@@ -45,18 +47,17 @@ public class InMemTransformationStoreImpl extends AbstractTransformationStore {
     protected void doStore(@NonNull TransformationSource source, String transformation)
             throws TransformationConflictException {
         synchronized (mutex) {
-            String oldHash = id2hashMap.putIfAbsent(source.id(), source.hash());
-            if (oldHash != null && !oldHash.contentEquals(source.hash())) {
-                registryMetrics.count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
-                        RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
-
-                throw new TransformationConflictException("Key " + source
-                        + " does not match the stored hash " + oldHash);
-            }
-
+            id2hashMap.put(source.id(), source.hash());
             List<Transformation> transformations = get(source.toKey());
+            val t = SingleTransformation.of(source, transformation);
+            val index = ListUtils.indexOf(transformations, e -> e.key().equals(t.key()) && e
+                    .fromVersion() == t.fromVersion() && e.toVersion() == t.toVersion());
 
-            transformations.add(SingleTransformation.of(source, transformation));
+            if (index != -1) {
+                transformations.set(index, t);
+            } else {
+                transformations.add(t);
+            }
         }
     }
 
