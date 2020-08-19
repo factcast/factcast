@@ -15,6 +15,8 @@
  */
 package org.factcast.factus.metrics;
 
+import static org.factcast.factus.metrics.TagKeys.TAG_NAME;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -24,8 +26,6 @@ import com.google.common.base.Stopwatch;
 import io.micrometer.core.instrument.*;
 import lombok.NonNull;
 import lombok.val;
-
-import static org.factcast.factus.metrics.TagKeys.TAG_NAME;
 
 public class FactusMetricsImpl implements FactusMetrics {
     public static final String METRIC_NAME_TIMINGS = "factus.timings";
