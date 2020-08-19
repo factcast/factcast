@@ -50,5 +50,5 @@ public interface FactusMetrics {
 
     void record(GaugedEvent event, long value);
 
-    void record(GaugedEvent event, long value, Tags tags);
+    void record(GaugedEvent event, Tags tags,long value);
 }

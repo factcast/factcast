@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
@@ -38,6 +40,9 @@ import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.InLockedOperation;
 import org.factcast.factus.lock.Locked;
+import org.factcast.factus.metrics.FactusMetrics;
+import org.factcast.factus.metrics.GaugedEvent;
+import org.factcast.factus.metrics.TimedOperation;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
@@ -69,9 +74,17 @@ public class DefaultFactus implements Factus {
 
     final SnapshotSerializerSupplier snapFactory;
 
+    final FactusMetrics factusMetrics;
+
+    private final String CLASS = "class";
+    private final String LOCKED = "locked";
+    private final String TRUE = "true";
+    private final String FALSE = "false";
+
     private final AtomicBoolean closed = new AtomicBoolean();
 
     private final Set<AutoCloseable> managedObjects = new HashSet<>();
+
 
     @Override
     public PublishBatch batch() {
@@ -129,8 +142,9 @@ public class DefaultFactus implements Factus {
         assertNotClosed();
 
         log.trace("updating local projection {}", managedProjection.getClass());
-        managedProjection.withLock(() -> catchupProjection(managedProjection, managedProjection
-                .state(), maxWaitTime));
+        factusMetrics.timed(TimedOperation.MANAGED_PROJECTION_UPDATE_DURATION,Tags.of(Tag.of(CLASS,managedProjection.getClass().getCanonicalName())),()->        managedProjection.withLock(() -> catchupProjection(managedProjection, managedProjection
+                .state(), maxWaitTime)));
+
     }
 
     @Override
@@ -187,6 +201,11 @@ public class DefaultFactus implements Factus {
     @Override
     @SneakyThrows
     public <P extends SnapshotProjection> P fetch(Class<P> projectionClass) {
+        return factusMetrics.timed(TimedOperation.FETCH_DURATION,Tags.of(Tag.of(LOCKED,FALSE),Tag.of(CLASS,projectionClass.getCanonicalName())),()->_fetch(projectionClass));
+    }
+
+    @SneakyThrows
+    private <P extends SnapshotProjection> P _fetch(Class<P> projectionClass) {
         assertNotClosed();
 
         // ugly, fix hierarchy?
@@ -204,6 +223,7 @@ public class DefaultFactus implements Factus {
         if (latest.isPresent()) {
             Snapshot snap = latest.get();
 
+            factusMetrics.record(GaugedEvent.FETCH_SIZE, Tags.of(Tag.of(CLASS,projectionClass.getCanonicalName())),snap.bytes().length);
             projection = ser.deserialize(projectionClass, snap.bytes());
         } else {
             log.trace("Creating initial projection version for {}", projectionClass);
@@ -221,7 +241,12 @@ public class DefaultFactus implements Factus {
 
     @Override
     @SneakyThrows
-    public <A extends Aggregate> Optional<A> find(Class<A> aggregateClass, UUID aggregateId) {
+    public  <A extends Aggregate> Optional<A> find(Class<A> aggregateClass, UUID aggregateId) {
+        return factusMetrics.timed(TimedOperation.FIND_DURATION, Tags.of(Tag.of(LOCKED,FALSE),Tag.of(CLASS,aggregateClass.getCanonicalName())),()->_find(aggregateClass,aggregateId));
+    }
+
+    @SneakyThrows
+    private <A extends Aggregate> Optional<A> _find(Class<A> aggregateClass, UUID aggregateId) {
         assertNotClosed();
 
         val ser = snapFactory.retrieveSerializer(aggregateClass);
@@ -341,7 +366,7 @@ public class DefaultFactus implements Factus {
 
     @Override
     public <A extends Aggregate> Locked<A> withLockOn(Class<A> aggregateClass, UUID id) {
-        A fresh = find(aggregateClass, id).orElse(instantiate(aggregateClass));
+        A fresh = factusMetrics.timed(TimedOperation.FIND_DURATION,Tags.of(Tag.of(LOCKED,TRUE),Tag.of(CLASS,aggregateClass.getCanonicalName())),()->find(aggregateClass, id).orElse(instantiate(aggregateClass)));
         EventApplier<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
         List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
         return new Locked<>(fc, this, fresh, specs);
@@ -349,7 +374,7 @@ public class DefaultFactus implements Factus {
 
     @Override
     public <P extends SnapshotProjection> Locked<P> withLockOn(@NonNull Class<P> projectionClass) {
-        P fresh = fetch(projectionClass);
+        P fresh = factusMetrics.timed(TimedOperation.FETCH_DURATION, Tags.of(Tag.of(LOCKED,TRUE),Tag.of(CLASS,projectionClass.getCanonicalName())),()->fetch(projectionClass));
         EventApplier<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
         List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
         return new Locked<>(fc, this, fresh, specs);

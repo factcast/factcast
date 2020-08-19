@@ -130,11 +130,11 @@ public class FactusMetricsImpl implements FactusMetrics {
 
     @Override
     public void record(@NonNull GaugedEvent event, long value) {
-        record(event,value,null);
+        record(event,null,value);
     }
 
     @Override
-    public void record(@NonNull GaugedEvent event, long value, Tags tags) {
+    public void record(@NonNull GaugedEvent event,  Tags tags,long value) {
         val g = gauge(event,tags);
         g.set(value);
     }
