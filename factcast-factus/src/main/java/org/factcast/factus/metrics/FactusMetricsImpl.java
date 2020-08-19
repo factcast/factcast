@@ -23,10 +23,10 @@ import com.google.common.base.Stopwatch;
 
 import io.micrometer.core.instrument.*;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.val;
 
-@RequiredArgsConstructor
+import static org.factcast.factus.metrics.TagKeys.TAG_NAME;
+
 public class FactusMetricsImpl implements FactusMetrics {
     public static final String METRIC_NAME_TIMINGS = "factus.timings";
 
@@ -34,13 +34,17 @@ public class FactusMetricsImpl implements FactusMetrics {
 
     public static final String METRIC_NAME_GAUGES = "factus.gauges";
 
-    public static final String TAG_NAME_KEY = "name";
-
     private final MeterRegistry meterRegistry;
+
+    public FactusMetricsImpl(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+        meterRegistry.counter(METRIC_NAME_COUNTS);
+        meterRegistry.timer(METRIC_NAME_TIMINGS);
+    }
 
     private Counter counter(@NonNull CountedEvent op, Tags tags) {
         val t = Tags
-                .of(Tag.of(TAG_NAME_KEY, op.event()))
+                .of(Tag.of(TAG_NAME, op.event()))
                 .and(tags);
 
         return meterRegistry.counter(METRIC_NAME_COUNTS, t);
@@ -48,14 +52,14 @@ public class FactusMetricsImpl implements FactusMetrics {
 
     private Timer timer(@NonNull TimedOperation op, Tags tags) {
         val t = Tags
-                .of(Tag.of(TAG_NAME_KEY, op.op()))
+                .of(Tag.of(TAG_NAME, op.op()))
                 .and(tags);
 
         return meterRegistry.timer(METRIC_NAME_TIMINGS, t);
     }
 
     private AtomicLong gauge(@NonNull GaugedEvent op, Tags tags) {
-        val t = Tags.of(Tag.of(TAG_NAME_KEY, op.event())).and(tags);
+        val t = Tags.of(Tag.of(TAG_NAME, op.event())).and(tags);
         return meterRegistry.gauge(METRIC_NAME_GAUGES, t, new AtomicLong(0));
     }
 
