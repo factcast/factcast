@@ -21,6 +21,7 @@ import lombok.NonNull;
 public enum TimedOperation {
     MANAGED_PROJECTION_UPDATE_DURATION("managed_projection_update_duration"),
     FETCH_DURATION("fetch_duration"),
+    FIND_DURATION("find_duration"),
     EVENT_PROCESSING_LATENCY("event_processing_latency");
 
     @NonNull
