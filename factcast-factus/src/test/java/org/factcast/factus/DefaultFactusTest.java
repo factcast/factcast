@@ -78,7 +78,23 @@ class DefaultFactusTest {
     private DefaultFactus underTest;
 
     @Test
-    void batch() {
+    void testToFact() {
+        // INIT
+        Fact mockedFact = mock(Fact.class);
+        EventObject mockedEventObject = mock(EventObject.class);
+
+        when(eventConverter.toFact(mockedEventObject))
+                .thenReturn(mockedFact);
+
+        // RUN
+        Fact fact = underTest.toFact(mockedEventObject);
+
+        // ASSERT
+        assertThat(fact)
+                .isEqualTo(mockedFact);
+
+        verify(eventConverter)
+                .toFact(mockedEventObject);
     }
 
     @Nested
