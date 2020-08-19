@@ -42,7 +42,6 @@ import org.factcast.factus.projection.*;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
-import org.jetbrains.annotations.NotNull;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -301,7 +300,7 @@ public class DefaultFactus implements Factus {
         return a;
     }
 
-    @NotNull
+    @NonNull
     @SneakyThrows
     private <P extends SnapshotProjection> P instantiate(Class<P> projectionClass) {
         Constructor<P> con = projectionClass.getDeclaredConstructor();
