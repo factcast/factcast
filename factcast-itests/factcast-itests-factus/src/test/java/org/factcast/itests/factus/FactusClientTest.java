@@ -47,8 +47,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import lombok.Value;
-import lombok.val;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 @SpringBootTest
 @ContextConfiguration(classes = Application.class)
@@ -199,11 +199,11 @@ public class FactusClientTest {
     public void simpleProjectionLockingRoundtrip() throws Exception {
         /*
          * TODO:
-         * 
+         *
          * - emptyUserNames is actually empty
-         * 
+         *
          * - UserNames is 1 after first publish
-         * 
+         *
          * - UserNames is 0 after publish of delete
          */
         UserNames emptyUserNames = ec.fetch(UserNames.class);

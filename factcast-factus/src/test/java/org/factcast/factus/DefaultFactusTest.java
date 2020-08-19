@@ -1,17 +1,26 @@
+/*
+ * Copyright © 2017-2020 factcast.org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.factcast.factus;
 
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -20,6 +29,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.applier.EventApplier;
 import org.factcast.factus.applier.EventApplierFactory;
 import org.factcast.factus.batch.BatchAbortedException;
@@ -27,19 +37,17 @@ import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
 import org.factcast.factus.lock.InLockedOperation;
+import org.factcast.factus.projection.LocalManagedProjection;
+import org.factcast.factus.projection.ManagedProjection;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.google.common.collect.Sets;
@@ -298,6 +306,50 @@ class DefaultFactusTest {
     @Nested
     class WhenUpdating {
         // @Mock private @NonNull managedProjection;
+
+        @Specification(ns = "test")
+        class FooEvent implements EventObject {
+            @Override
+            public Set<UUID> aggregateIds() {
+                return Collections.emptySet();
+            }
+        }
+
+        class SimpleProjection extends LocalManagedProjection {
+            @Handler
+            void apply(FooEvent foo) {
+            }
+        }
+
+        ;
+
+        @Test
+        void updateExecutedViaProjection() {
+
+            ManagedProjection m = Mockito.spy(new SimpleProjection());
+
+            EventApplier<ManagedProjection> ea = Mockito.mock(EventApplier.class);
+            when(ehFactory.create(m)).thenReturn(ea);
+            ArgumentCaptor<FactObserver> observer = ArgumentCaptor.forClass(FactObserver.class);
+            when(fc.subscribe(any(), observer.capture()))
+                    .thenAnswer(
+                            inv -> {
+
+                                Fact f1 = Fact.of("{}", "{}");
+                                Fact f2 = Fact.of("{}", "{}");
+
+                                FactObserver obs = observer.getValue();
+                                obs.onNext(f1);
+                                obs.onNext(f2);
+
+                                return Mockito.mock(Subscription.class);
+                            });
+            underTest.update(m);
+
+            Mockito.verify(ea, times(2)).apply(any(Fact.class));
+            Mockito.verify(m, times(2)).executeUpdate(any());
+
+        }
     }
 
     @Nested
@@ -379,54 +431,54 @@ class DefaultFactusTest {
     }
 
     /*
-     * 
-     * 
+     *
+     *
      * @Nested class WhenUpdating {
-     * 
+     *
      * @Mock private @NonNull P managedProjection;
-     * 
+     *
      * @BeforeEach void setup() { } }
-     * 
+     *
      * @Nested class WhenSubscribing {
-     * 
+     *
      * @Mock private @NonNull P subscribedProjection;
-     * 
+     *
      * @BeforeEach void setup() { } }
-     * 
+     *
      * @Nested class WhenFetching {
-     * 
+     *
      * @Mock private Class<P> projectionClass;
-     * 
+     *
      * @BeforeEach void setup() { } }
-     * 
+     *
      * @Nested class WhenFinding { private final UUID AGGREGATE_ID =
      * UUID.randomUUID();
-     * 
+     *
      * @Mock private Class<A> aggregateClass;
-     * 
+     *
      * @BeforeEach void setup() { } }
-     * 
+     *
      * @Nested class WhenInitialing { private final UUID AGGREGATE_ID =
      * UUID.randomUUID();
-     * 
+     *
      * @Mock private Class<A> aggregateClass;
-     * 
+     *
      * @BeforeEach void setup() { } }
-     * 
+     *
      * @Nested class WhenClosing {
-     * 
+     *
      * @BeforeEach void setup() { } }
-     * 
+     *
      * @Nested class WhenToingFact {
-     * 
+     *
      * @Mock private @NonNull EventObject e;
-     * 
+     *
      * @BeforeEach void setup() { } }
-     * 
+     *
      * @Nested class WhenWithingLockOn {
-     * 
+     *
      * @Mock private M managedProjection;
-     * 
+     *
      * @BeforeEach void setup() { } }
      */
 
