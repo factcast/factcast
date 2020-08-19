@@ -56,6 +56,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
+import static org.factcast.factus.metrics.TagKeys.*;
+
 /**
  * Single entry point to the factus API.
  */
@@ -75,11 +77,6 @@ public class DefaultFactus implements Factus {
     final SnapshotSerializerSupplier snapFactory;
 
     final FactusMetrics factusMetrics;
-
-    private final String CLASS = "class";
-    private final String LOCKED = "locked";
-    private final String TRUE = "true";
-    private final String FALSE = "false";
 
     private final AtomicBoolean closed = new AtomicBoolean();
 
@@ -360,7 +357,7 @@ public class DefaultFactus implements Factus {
         val applier = ehFactory.create(managedProjection);
         List<FactSpec> specs = applier
                 .createFactSpecs();
-        return new Locked<>(fc, this, managedProjection, specs);
+        return new Locked<>(fc, this, managedProjection, specs, factusMetrics);
 
     }
 
@@ -369,7 +366,7 @@ public class DefaultFactus implements Factus {
         A fresh = factusMetrics.timed(TimedOperation.FIND_DURATION,Tags.of(Tag.of(LOCKED,TRUE),Tag.of(CLASS,aggregateClass.getCanonicalName())),()->find(aggregateClass, id).orElse(instantiate(aggregateClass)));
         EventApplier<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
         List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
-        return new Locked<>(fc, this, fresh, specs);
+        return new Locked<>(fc, this, fresh, specs,factusMetrics);
     }
 
     @Override
@@ -377,6 +374,6 @@ public class DefaultFactus implements Factus {
         P fresh = factusMetrics.timed(TimedOperation.FETCH_DURATION, Tags.of(Tag.of(LOCKED,TRUE),Tag.of(CLASS,projectionClass.getCanonicalName())),()->fetch(projectionClass));
         EventApplier<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
         List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
-        return new Locked<>(fc, this, fresh, specs);
+        return new Locked<>(fc, this, fresh, specs, factusMetrics);
     }
 }
