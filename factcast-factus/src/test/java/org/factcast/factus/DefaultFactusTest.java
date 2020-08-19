@@ -20,7 +20,10 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -28,8 +31,10 @@ import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
+import org.factcast.core.event.EventSerializer;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.factus.applier.DefaultEventApplier;
 import org.factcast.factus.applier.EventApplier;
 import org.factcast.factus.applier.EventApplierFactory;
 import org.factcast.factus.batch.BatchAbortedException;
@@ -37,7 +42,6 @@ import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
 import org.factcast.factus.lock.InLockedOperation;
-import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.projection.ManagedProjection;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
@@ -305,38 +309,22 @@ class DefaultFactusTest {
 
     @Nested
     class WhenUpdating {
-        // @Mock private @NonNull managedProjection;
-
-        @Specification(ns = "test")
-        class FooEvent implements EventObject {
-            @Override
-            public Set<UUID> aggregateIds() {
-                return Collections.emptySet();
-            }
-        }
-
-        class SimpleProjection extends LocalManagedProjection {
-            @Handler
-            void apply(FooEvent foo) {
-            }
-        }
-
-        ;
 
         @Test
-        void updateExecutedViaProjection() {
+        void updateIsExecutedViaProjection() {
 
             ManagedProjection m = Mockito.spy(new SimpleProjection());
-
-            EventApplier<ManagedProjection> ea = Mockito.mock(EventApplier.class);
+            EventApplier<ManagedProjection> ea = Mockito.spy(new DefaultEventApplier<>(mock(
+                    EventSerializer.class), m));
             when(ehFactory.create(m)).thenReturn(ea);
             ArgumentCaptor<FactObserver> observer = ArgumentCaptor.forClass(FactObserver.class);
+
+            Fact f1 = Fact.builder().ns("test").type("FooEvent").build("{}");
+            Fact f2 = Fact.builder().ns("test").type("FooEvent").build("{}");
+
             when(fc.subscribe(any(), observer.capture()))
                     .thenAnswer(
                             inv -> {
-
-                                Fact f1 = Fact.of("{}", "{}");
-                                Fact f2 = Fact.of("{}", "{}");
 
                                 FactObserver obs = observer.getValue();
                                 obs.onNext(f1);
@@ -346,8 +334,14 @@ class DefaultFactusTest {
                             });
             underTest.update(m);
 
-            Mockito.verify(ea, times(2)).apply(any(Fact.class));
+            // make sure m.executeUpdate is used
             Mockito.verify(m, times(2)).executeUpdate(any());
+            // make sure m.executeUpdate actually calls the updated passed so
+            // that
+            // the prepared update happens on the projection and updates its
+            // state.
+            Mockito.verify(ea, times(2)).apply(any(Fact.class));
+            assertThat(m.state()).isEqualTo(f2.id());
 
         }
     }

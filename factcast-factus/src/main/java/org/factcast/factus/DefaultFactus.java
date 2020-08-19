@@ -285,9 +285,10 @@ public class DefaultFactus implements Factus {
             }
         };
 
+        List<FactSpec> factSpecs = handler.createFactSpecs();
         fc.subscribe(
                 SubscriptionRequest
-                        .catchup(handler.createFactSpecs())
+                        .catchup(factSpecs)
                         .fromNullable(stateOrNull), fo)
                 .awaitComplete(maxWait.toMillis());
         return factId.get();
