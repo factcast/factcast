@@ -15,15 +15,21 @@
  */
 package org.factcast.itests.factus;
 
+import static java.util.Arrays.asList;
+import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.factcast.core.Fact;
+import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
@@ -98,20 +104,57 @@ public class FactusClientTest {
     @Autowired
     SnapshotCache repository;
 
+    @Autowired
+    EventConverter eventConverter;
+
+    @Test
+    public void allWaysToPublish() {
+
+        UUID johnsId = randomUUID();
+
+        ec.publish(new UserCreated(johnsId, "John"));
+
+        ec.publish(asList(
+                new UserCreated(randomUUID(), "Paul"),
+                new UserCreated(randomUUID(), "George")));
+
+        String payload = ec.publish(new UserCreated(randomUUID(), "Ringo"), Fact::jsonPayload);
+
+        List<String> morePayload = ec.publish(asList(new UserCreated(randomUUID(), "Mick"),
+                new UserCreated(randomUUID(), "Keith")),
+                list -> list.stream()
+                        .map(Fact::jsonPayload)
+                        .collect(toList()));
+
+        ec.publish(eventConverter.toFact(new UserCreated(randomUUID(), "Brian")));
+
+        ec.update(jpaUserNames);
+
+        assertThat(jpaUserNames.count()).isEqualTo(7);
+        assertThat(jpaUserNames.contains("John")).isTrue();
+        assertThat(jpaUserNames.contains("Paul")).isTrue();
+        assertThat(jpaUserNames.contains("George")).isTrue();
+        assertThat(jpaUserNames.contains("Ringo")).isTrue();
+        assertThat(jpaUserNames.contains("Mick")).isTrue();
+        assertThat(jpaUserNames.contains("Keith")).isTrue();
+        assertThat(jpaUserNames.contains("Brian")).isTrue();
+
+    }
+
     @Test
     public void simpleSnapshotRoundtrip() throws Exception {
-        SnapshotId id = new SnapshotId("test", UUID.randomUUID());
+        SnapshotId id = new SnapshotId("test", randomUUID());
         // initially empty
         assertThat(repository.getSnapshot(id)).isEmpty();
 
         // set and retrieve
-        repository.setSnapshot(new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false));
+        repository.setSnapshot(new Snapshot(id, randomUUID(), "foo".getBytes(), false));
         Optional<Snapshot> snapshot = repository.getSnapshot(id);
         assertThat(snapshot).isNotEmpty();
         assertThat(snapshot.get().bytes()).isEqualTo("foo".getBytes());
 
         // overwrite and retrieve
-        repository.setSnapshot(new Snapshot(id, UUID.randomUUID(), "bar".getBytes(), false));
+        repository.setSnapshot(new Snapshot(id, randomUUID(), "bar".getBytes(), false));
         snapshot = repository.getSnapshot(id);
         assertThat(snapshot).isNotEmpty();
         assertThat(snapshot.get().bytes()).isEqualTo("bar".getBytes());
@@ -119,12 +162,11 @@ public class FactusClientTest {
         // clear and make sure, it is cleared
         repository.clearSnapshot(id);
         assertThat(repository.getSnapshot(id)).isEmpty();
-
     }
 
     @Test
     public void simpleAggregateRoundtrip() throws Exception {
-        UUID aggregateId = UUID.randomUUID();
+        UUID aggregateId = randomUUID();
         assertThat(ec.find(TestAggregate.class, aggregateId)).isEmpty();
 
         ec.batch()
@@ -137,8 +179,8 @@ public class FactusClientTest {
                 .add(new TestAggregateWasIncremented(aggregateId))
                 .add(new TestAggregateWasIncremented(aggregateId))
                 .add(new TestAggregateWasIncremented(aggregateId))
-                .add(new TestAggregateWasIncremented(UUID.randomUUID()))
-                .add(new TestAggregateWasIncremented(UUID.randomUUID()))
+                .add(new TestAggregateWasIncremented(randomUUID()))
+                .add(new TestAggregateWasIncremented(randomUUID()))
 
                 .execute();
 
@@ -159,12 +201,12 @@ public class FactusClientTest {
     public void simpleSnapshotProjectionRoundtrip() throws Exception {
         assertThat(ec.fetch(UserNames.class)).isNotNull();
 
-        UUID johnsId = UUID.randomUUID();
+        UUID johnsId = randomUUID();
         ec.batch()
                 .add(new UserCreated(johnsId, "John"))
-                .add(new UserCreated(UUID.randomUUID(), "Paul"))
-                .add(new UserCreated(UUID.randomUUID(), "George"))
-                .add(new UserCreated(UUID.randomUUID(), "Ringo"))
+                .add(new UserCreated(randomUUID(), "Paul"))
+                .add(new UserCreated(randomUUID(), "George"))
+                .add(new UserCreated(randomUUID(), "Ringo"))
                 .execute();
 
         val fabFour = ec.fetch(UserNames.class);
@@ -209,7 +251,7 @@ public class FactusClientTest {
         UserNames emptyUserNames = ec.fetch(UserNames.class);
         assertThat(emptyUserNames).isNotNull();
 
-        UUID petersId = UUID.randomUUID();
+        UUID petersId = randomUUID();
         UserCreateCMD cmd = new UserCreateCMD("Peter", petersId);
 
         ec.withLockOn(UserNames.class)
@@ -244,8 +286,8 @@ public class FactusClientTest {
 
         int before = userCount.count();
 
-        UUID one = UUID.randomUUID();
-        UUID two = UUID.randomUUID();
+        UUID one = randomUUID();
+        UUID two = randomUUID();
         ec.batch()
                 .add(new UserCreated(one, "One"))
                 .add(new UserCreated(two, "Two"))
@@ -268,12 +310,12 @@ public class FactusClientTest {
     @Test
     void simpleJpaProjectionRoundtrip() {
 
-        UUID johnsId = UUID.randomUUID();
+        UUID johnsId = randomUUID();
         ec.batch()
                 .add(new UserCreated(johnsId, "John"))
-                .add(new UserCreated(UUID.randomUUID(), "Paul"))
-                .add(new UserCreated(UUID.randomUUID(), "George"))
-                .add(new UserCreated(UUID.randomUUID(), "Ringo"))
+                .add(new UserCreated(randomUUID(), "Paul"))
+                .add(new UserCreated(randomUUID(), "George"))
+                .add(new UserCreated(randomUUID(), "Ringo"))
                 .execute();
 
         val fabFour = jpaUserNames;
@@ -307,7 +349,7 @@ public class FactusClientTest {
 
     @Test
     public void simpleAggregateLockRoundtrip() throws Exception {
-        UUID aggregateId = UUID.randomUUID();
+        UUID aggregateId = randomUUID();
         assertThat(ec.find(TestAggregate.class, aggregateId)).isEmpty();
 
         ec.publish(new TestAggregateWasIncremented(aggregateId));
