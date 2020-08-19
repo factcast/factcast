@@ -19,9 +19,8 @@ import lombok.Getter;
 import lombok.NonNull;
 
 public enum CountedEvent {
-    FETCH_SIZE("fetch_size"),
     TRANSACTION_ABORT("transaction_abort"),
-    TRANSACTION_RETRY("transaction_retry");
+    TRANSACTION_ATTEMPTS("transaction_attempts");
 
     @NonNull
     @Getter
