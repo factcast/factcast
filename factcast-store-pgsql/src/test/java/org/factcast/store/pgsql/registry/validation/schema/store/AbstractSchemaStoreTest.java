@@ -100,6 +100,22 @@ public abstract class AbstractSchemaStoreTest {
     }
 
     @Test
+    public void testMultipleRegisterAttempts() {
+
+        s.id("http://testContainsSensesConflict");
+        s.hash("123");
+        s.ns("ns");
+        s.type("testContainsSensesConflict");
+        s.version(5);
+
+        uut.register(s, "{}");
+        uut.register(s, "{{}}");
+
+        assertThat(uut.contains(s)).isTrue();
+        assertThat(uut.get(s.toKey())).isPresent().hasValue("{{}}");
+    }
+
+    @Test
     void testNullContracts() {
         assertNpe(() -> uut.contains(null));
         assertNpe(() -> uut.register(null, "{}"));
