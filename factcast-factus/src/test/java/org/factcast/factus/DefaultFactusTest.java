@@ -1,9 +1,11 @@
 package org.factcast.factus;
 
+import static java.util.Arrays.asList;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -12,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -19,7 +22,9 @@ import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.applier.EventApplier;
 import org.factcast.factus.applier.EventApplierFactory;
 import org.factcast.factus.batch.BatchAbortedException;
@@ -28,6 +33,7 @@ import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
 import org.factcast.factus.lock.InLockedOperation;
 import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.projection.SubscribedProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
@@ -312,11 +318,6 @@ class DefaultFactusTest {
     }
 
     @Nested
-    class WhenUpdating {
-        // @Mock private @NonNull managedProjection;
-    }
-
-    @Nested
     class WhenFetching {
 
         @Mock
@@ -358,6 +359,57 @@ class DefaultFactusTest {
 
     }
 
+    @Nested
+    class WhenSubscribing {
+
+        @Captor
+        ArgumentCaptor<FactObserver> factObserverArgumentCaptor;
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void subscribe() throws TimeoutException {
+            // INIT
+            SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
+            EventApplier<SubscribedProjection> eventApplier = mock(EventApplier.class);
+
+            when(subscribedProjection.acquireWriteToken(any()))
+                    .thenReturn(mock(AutoCloseable.class));
+
+            when(ehFactory.create(subscribedProjection))
+                    .thenReturn(eventApplier);
+
+            when(eventApplier.createFactSpecs())
+                    .thenReturn(asList(mock(FactSpec.class)));
+
+            Subscription subscription = mock(Subscription.class);
+            when(fc.subscribe(any(), any()))
+                    .thenReturn(subscription);
+
+            when(subscription.awaitComplete(anyLong()))
+                    .thenReturn(subscription);
+
+            // RUN
+            underTest.subscribe(subscribedProjection);
+
+            // ASSERT
+            verify(fc)
+                    .subscribe(any(), factObserverArgumentCaptor.capture());
+
+            FactObserver factObserver = factObserverArgumentCaptor.getValue();
+
+            Fact mockedFact = mock(Fact.class);
+
+            // now assume a new fact has been observed...
+            factObserver.onNext(mockedFact);
+
+            // ... then it should be applied to event applier
+            verify(eventApplier)
+                    .apply(mockedFact);
+
+        }
+
+    }
+
     private void mockEventConverter() {
         when(eventConverter.toFact(any()))
                 .thenAnswer(inv -> toFact(inv.getArgument(0, SimpleEventObject.class)));
@@ -395,13 +447,6 @@ class DefaultFactusTest {
     }
 
     /*
-     * 
-     * 
-     * @Nested class WhenUpdating {
-     * 
-     * @Mock private @NonNull P managedProjection;
-     * 
-     * @BeforeEach void setup() { } }
      * 
      * @Nested class WhenSubscribing {
      * 
