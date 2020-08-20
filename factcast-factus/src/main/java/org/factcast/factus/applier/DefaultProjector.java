@@ -321,4 +321,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
         return false;
     }
 
+    public static void flushCache() {
+        cache.clear();
+    }
 }

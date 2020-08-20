@@ -15,13 +15,18 @@
  */
 package org.factcast.core.spec;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.function.Supplier;
+
 import org.factcast.core.Fact;
 import org.factcast.factus.event.Specification;
 
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Slf4j
 public class FactSpecCoordinates {
 
     String ns;
@@ -44,20 +49,51 @@ public class FactSpecCoordinates {
         String defaultNs = "default";
 
         val spec = clazz.getAnnotation(Specification.class);
-        if (spec == null)
+        if (spec == null) {
             throw new IllegalArgumentException("@" + Specification.class.getSimpleName()
                     + " missing on " + clazz);
+        }
 
         String _ns = spec.ns();
-        if (_ns.trim().isEmpty())
+        if (_ns.trim().isEmpty()) {
             _ns = defaultNs;
+        }
+
+        if (_ns.endsWith("$")) {
+            _ns = _ns + replacement();
+        }
 
         String _type = spec.type();
-        if (_type.trim().isEmpty())
+        if (_type.trim().isEmpty()) {
             _type = defaultType;
+        }
 
         int version = spec.version();
 
         return new FactSpecCoordinates(_ns, _type, version);
     }
+
+    private static Supplier<String> cachedReplacement = null;
+
+    private static String replacement() {
+        if (cachedReplacement == null) {
+            cachedReplacement = discoverReplacement();
+        }
+        return cachedReplacement.get();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Supplier<String> discoverReplacement() {
+        try {
+            Class<?> r = Class.forName("org.factcast.test.StaticNamespaceReplacement");
+            return (Supplier<String>) r.getConstructor().newInstance();
+        } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException
+                | IllegalAccessException | InvocationTargetException e) {
+            return () -> {
+                throw new IllegalArgumentException(
+                        "$ replacements in namespaces should only be used in tests. If this is a test, please fix this by adding a dependency to org.factcast:factcast-test.");
+            };
+        }
+    }
+
 }
