@@ -15,14 +15,17 @@
  */
 package org.factcast.factus.applier;
 
-import java.util.List;
-
-import org.factcast.core.Fact;
-import org.factcast.core.spec.FactSpec;
+import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.Projection;
 
-public interface EventApplier<A extends Projection> {
-    void apply(Fact element);
+import lombok.RequiredArgsConstructor;
 
-    List<FactSpec> createFactSpecs();
+@RequiredArgsConstructor
+public class DefaultProjectorFactory implements ProjectorFactory {
+
+    final EventSerializer deser;
+
+    public <A extends Projection> Projector<A> create(A projection) {
+        return new DefaultProjector<>(deser, projection);
+    }
 }

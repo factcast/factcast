@@ -46,11 +46,15 @@ public class PgMetrics {
 
     @NonNull
     public Counter counter(@NonNull StoreMetrics.OP operation) {
-        Tags tags = Tags.of(
-                Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
-                Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()));
+        Tags tags = forOperation(operation);
         // ommitting the meter description here
         return Counter.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
+    }
+
+    private Tags forOperation(@NonNull PgMetrics.StoreMetrics.OP operation) {
+        return Tags.of(
+                Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
+                Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()));
     }
 
     public void time(@NonNull OP operation, @NonNull Runnable r) {
@@ -107,9 +111,7 @@ public class PgMetrics {
 
     @NonNull
     public Timer timer(@NonNull OP operation) {
-        Tags tags = Tags.of(
-                Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
-                Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()));
+        Tags tags = forOperation(operation);
         return Timer.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
     }
 

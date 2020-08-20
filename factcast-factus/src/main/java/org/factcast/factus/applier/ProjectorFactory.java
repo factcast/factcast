@@ -17,6 +17,6 @@ package org.factcast.factus.applier;
 
 import org.factcast.factus.projection.Projection;
 
-public interface EventApplierFactory {
-    <A extends Projection> EventApplier<A> create(A projection);
+public interface ProjectorFactory {
+    <A extends Projection> Projector<A> create(A projection);
 }

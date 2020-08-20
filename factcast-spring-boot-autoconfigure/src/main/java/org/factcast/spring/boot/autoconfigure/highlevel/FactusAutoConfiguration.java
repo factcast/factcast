@@ -22,7 +22,7 @@ import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.factus.DefaultFactus;
 import org.factcast.factus.Factus;
-import org.factcast.factus.applier.DefaultEventApplierFactory;
+import org.factcast.factus.applier.DefaultProjectorFactory;
 import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
@@ -48,7 +48,7 @@ public class FactusAutoConfiguration {
     public Factus factus(FactCast fc, SnapshotCache sr, EventSerializer deserializer,
             EventConverter eventConverter,
             SnapshotSerializerSupplier snapshotSerializerSupplier, FactusMetrics factusMetrics) {
-        return new DefaultFactus(fc, new DefaultEventApplierFactory(deserializer), eventConverter,
+        return new DefaultFactus(fc, new DefaultProjectorFactory(deserializer), eventConverter,
                 new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
                 new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
                 snapshotSerializerSupplier, factusMetrics);
