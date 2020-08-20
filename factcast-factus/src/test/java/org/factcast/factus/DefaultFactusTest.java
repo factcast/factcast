@@ -19,9 +19,17 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -50,9 +58,14 @@ import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
-import org.mockito.*;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.google.common.collect.Sets;
@@ -421,6 +434,14 @@ class DefaultFactusTest {
             when(subscribedProjection.acquireWriteToken(any()))
                     .thenReturn(mock(AutoCloseable.class));
 
+            // make sure updates get executed
+            doAnswer(inv -> {
+                inv.getArgument(0, Runnable.class).run();
+                return Void.TYPE;
+            })
+                    .when(subscribedProjection)
+                    .executeUpdate(any());
+
             when(ehFactory.create(subscribedProjection))
                     .thenReturn(eventApplier);
 
@@ -442,12 +463,50 @@ class DefaultFactusTest {
 
             Fact mockedFact = mock(Fact.class);
 
+            UUID factId = UUID.randomUUID();
+            when(mockedFact.id())
+                    .thenReturn(factId);
+
+            // onNext(...)
             // now assume a new fact has been observed...
             factObserver.onNext(mockedFact);
 
-            // ... then it should be applied to event applier
+            // ... then make sure executeUpdate got called...
+            verify(subscribedProjection)
+                    .executeUpdate(any());
+
+            // ... and then it should be applied to event applier
             verify(eventApplier)
                     .apply(mockedFact);
+
+            // ... and the state should be updated as well
+            verify(subscribedProjection)
+                    .state(factId);
+
+            // onCatchup()
+            // assume onCatchup got called on the fact observer...
+            factObserver.onCatchup();
+
+            // ... then make sure it got called on the subscribed projection
+            verify(subscribedProjection)
+                    .onCatchup();
+
+            // onComplete()
+            // assume onComplete got called on the fact observer...
+            factObserver.onComplete();
+
+            // ... then make sure it got called on the subscribed projection
+            verify(subscribedProjection)
+                    .onComplete();
+
+            // onError(...)
+            // assume onError got called on the fact observer...
+            Exception exc = new Exception();
+            factObserver.onError(exc);
+
+            // ... then make sure it got called on the subscribed projection
+            verify(subscribedProjection)
+                    .onError(exc);
 
         }
 
