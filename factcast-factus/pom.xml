@@ -10,6 +10,18 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-factus</artifactId>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-internal-dep-boot</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -37,6 +49,12 @@
       <scope>test</scope>
     </dependency>
 
+
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-core</artifactId>
+      <version>1.5.4</version>
+    </dependency>
   </dependencies>
 
 

@@ -57,8 +57,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import lombok.Value;
-import lombok.val;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 @SpringBootTest
 @ContextConfiguration(classes = Application.class)

@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.event;
+package org.factcast.factus.metrics;
 
-import org.factcast.factus.event.EventObject;
+import lombok.Getter;
+import lombok.NonNull;
 
-public interface EventSerializer {
-    <T extends EventObject> T deserialize(Class<T> targetClass, String json);
+public enum CountedEvent {
+    TRANSACTION_ABORT("transaction_abort"),
+    TRANSACTION_ATTEMPTS("transaction_attempts");
 
-    <T extends EventObject> String serialize(T pojo);
+    @NonNull
+    @Getter
+    final String event;
 
+    CountedEvent(@NonNull String event) {
+        this.event = event;
+    }
 }

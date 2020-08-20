@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.event;
+package org.factcast.factus.metrics;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import lombok.Getter;
+import lombok.NonNull;
 
-/**
- * EventObjects are expected to be annotated with @{@link Specification}.
- */
-public interface EventObject {
+public enum TimedOperation {
+    MANAGED_PROJECTION_UPDATE_DURATION("managed_projection_update_duration"),
+    FETCH_DURATION("fetch_duration"),
+    FIND_DURATION("find_duration"),
+    EVENT_PROCESSING_LATENCY("event_processing_latency");
 
-    default Map<String, String> additionalMetaMap() {
-        return Collections.emptyMap();
+    @NonNull
+    @Getter
+    final String op;
+
+    TimedOperation(@NonNull String op) {
+        this.op = op;
     }
-
-    Set<UUID> aggregateIds();
 
 }

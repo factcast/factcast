@@ -13,22 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.event;
+package org.factcast.factus.metrics;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
-/**
- * EventObjects are expected to be annotated with @{@link Specification}.
- */
-public interface EventObject {
-
-    default Map<String, String> additionalMetaMap() {
-        return Collections.emptyMap();
-    }
-
-    Set<UUID> aggregateIds();
-
+@FunctionalInterface
+public interface RunnableWithException<E extends Exception> {
+    void run() throws E;
 }
