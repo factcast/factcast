@@ -38,8 +38,10 @@ import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.lock.LockedOperationAbortedException;
+import org.factcast.test.FactCastNamespaceExtension;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
@@ -67,6 +69,7 @@ import lombok.val;
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureTestDatabase(replace = Replace.ANY)
 @Sql(scripts = "classpath:/test-setup.sql")
+@ExtendWith(FactCastNamespaceExtension.class)
 public class FactusClientTest {
 
     static final Network _docker_network = Network.newNetwork();
@@ -163,7 +166,7 @@ public class FactusClientTest {
 
         SubscribedUserNames subscribedProjection = new SubscribedUserNames();
 
-        ec.publish(new SubscribedUserNames.UserCreated(randomUUID(),
+        ec.publish(new UserCreated(randomUUID(),
                 "preexisting"));
 
         Subscription subscription = ec.subscribe(subscribedProjection);
@@ -172,7 +175,7 @@ public class FactusClientTest {
         assertThat(subscribedProjection.names())
                 .hasSize(1);
 
-        ec.publish(new SubscribedUserNames.UserCreated(randomUUID(),
+        ec.publish(new UserCreated(randomUUID(),
                 "Peter"));
 
         Thread.sleep(500);
@@ -182,7 +185,7 @@ public class FactusClientTest {
                 .contains("preexisting")
                 .contains("Peter");
 
-        ec.publish(new SubscribedUserNames.UserCreated(randomUUID(),
+        ec.publish(new UserCreated(randomUUID(),
                 "John"));
         Thread.sleep(500);
 

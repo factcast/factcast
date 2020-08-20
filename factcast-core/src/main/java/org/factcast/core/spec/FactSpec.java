@@ -18,8 +18,6 @@ package org.factcast.core.spec;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.factcast.factus.event.Specification;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -122,23 +120,11 @@ public class FactSpec {
 
     @NonNull
     public static <T> FactSpec from(@NonNull Class<T> clazz) {
-        Specification annotationSpec = clazz.getAnnotation(Specification.class);
+        return from(FactSpecCoordinates.from(clazz));
+    }
 
-        if (annotationSpec == null) {
-            throw new IllegalArgumentException("You must annotate your Payload class with @"
-                    + Specification.class.getSimpleName());
-        }
-
-        FactSpec factSpec = new FactSpec(annotationSpec.ns());
-
-        if (!annotationSpec.type().isEmpty()) {
-            factSpec.type(annotationSpec.type());
-        } else
-            factSpec.type(clazz.getSimpleName());
-
-        factSpec.version(annotationSpec.version());
-
-        return factSpec;
+    private static FactSpec from(FactSpecCoordinates from) {
+        return FactSpec.ns(from.ns()).type(from.type()).version(from.version());
     }
 
     /**

@@ -13,24 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.test;
 
-import java.util.HashSet;
-import java.util.Set;
+import org.factcast.factus.applier.DefaultProjector;
+import org.junit.jupiter.api.extension.*;
 
-import org.factcast.factus.Handler;
-import org.factcast.factus.projection.LocalSubscribedProjection;
+public class FactCastNamespaceExtension implements Extension, BeforeEachCallback {
 
-import lombok.Getter;
-
-public class SubscribedUserNames extends LocalSubscribedProjection {
-
-    @Getter
-    private final Set<String> names = new HashSet<>();
-
-    @Handler
-    void userCreated(UserCreated userCreated) {
-        names.add(userCreated.userName());
+    @Override
+    public void beforeEach(ExtensionContext extensionContext) throws Exception {
+        DefaultProjector.flushCache();
+        StaticNamespaceReplacement.next();
     }
-
 }
