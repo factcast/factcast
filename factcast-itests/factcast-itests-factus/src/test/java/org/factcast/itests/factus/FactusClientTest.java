@@ -15,14 +15,19 @@
  */
 package org.factcast.itests.factus;
 
-import static java.util.Arrays.*;
-import static java.util.UUID.*;
-import static java.util.stream.Collectors.*;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
-import static org.assertj.core.api.Assertions.*;
+import static java.util.Arrays.asList;
+import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.Fact;
@@ -33,7 +38,8 @@ import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.lock.LockedOperationAbortedException;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
@@ -51,8 +57,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import lombok.extern.slf4j.Slf4j;
 
 @SpringBootTest
 @ContextConfiguration(classes = Application.class)
@@ -286,17 +292,9 @@ public class FactusClientTest {
 
     @Test
     public void simpleProjectionLockingRoundtrip() throws Exception {
-        /*
-         * TODO:
-         *
-         * - emptyUserNames is actually empty
-         *
-         * - UserNames is 1 after first publish
-         *
-         * - UserNames is 0 after publish of delete
-         */
         UserNames emptyUserNames = ec.fetch(UserNames.class);
         assertThat(emptyUserNames).isNotNull();
+        assertThat(emptyUserNames.count()).isEqualTo(0);
 
         UUID petersId = randomUUID();
         UserCreateCMD cmd = new UserCreateCMD("Peter", petersId);
@@ -314,8 +312,13 @@ public class FactusClientTest {
 
                 });
 
+        assertThat(ec.fetch(UserNames.class).count())
+                .isEqualTo(1);
+
         ec.publish(new UserDeleted(petersId));
 
+        assertThat(ec.fetch(UserNames.class).count())
+                .isEqualTo(0);
     }
 
     @Test
@@ -334,10 +337,6 @@ public class FactusClientTest {
 
     @Test
     public void simpleManagedProjectionRoundtrip() throws Exception {
-        /*
-         * TODO: test again after ec.update
-         */
-
         // lets consider userCount a springbean
         UserCount userCount = new UserCount();
 
@@ -369,6 +368,66 @@ public class FactusClientTest {
     }
 
     @Test
+    public void simpleManagedProjectionRoundtrip_withLock() throws Exception {
+        // lets consider userCount a springbean
+        UserCount userCount = new UserCount();
+
+        assertThat(userCount.state()).isNull();
+        assertThat(userCount.count()).isEqualTo(0);
+        ec.update(userCount);
+
+        int before = userCount.count();
+
+        UUID one = randomUUID();
+        UUID two = randomUUID();
+        ec.batch()
+                .add(new UserCreated(one, "One"))
+                .add(new UserCreated(two, "Two"))
+                .execute();
+
+        assertThat(userCount.count()).isEqualTo(before);
+        ec.update(userCount);
+        assertThat(userCount.count()).isEqualTo(before + 2);
+
+        ec.publish(new UserDeleted(one));
+        ec.update(userCount);
+        assertThat(userCount.count()).isEqualTo(before + 1);
+
+        ec.publish(new UserDeleted(two));
+        ec.update(userCount);
+        assertThat(userCount.count()).isEqualTo(before);
+
+        // we start 10 threads that try to (in an isolated fashion) lock and
+        // increase. Starting with magic number 43, we would end up 53, but
+        // we have a business rule that limits this to 50.
+        Set<CompletableFuture<Void>> futures = new HashSet<>();
+        for (UUID name : asList(one, two, one)) {
+
+            futures.add(CompletableFuture.runAsync(() -> ec.withLockOn(userCount)
+                    .attempt((ta, tx) -> {
+
+                        // check business rule (yes it's sloppy)
+                        if (userCount.count() > 0) {
+                            // increment or
+                            tx.publish(new UserDeleted(name));
+                        } else {
+                            // abort, according to business rule
+                            tx.abort("aborting");
+                        }
+                    })));
+        }
+
+        // wait for all threads to succeed or abort
+        waitForAllToTerminate(futures);
+
+        // make sure business rule was properly applied
+        ec.update(userCount);
+        assertThat(userCount.count())
+                .isEqualTo(0);
+
+    }
+
+    @Test
     void simpleJpaProjectionRoundtrip() {
 
         UUID johnsId = randomUUID();
@@ -391,7 +450,8 @@ public class FactusClientTest {
         // sadly shot
         ec.publish(new UserDeleted(johnsId));
 
-        // TODO: test that publishing itself does not change the projection
+        // publishing does not update a simple projection
+        assertThat(fabFour.count()).isEqualTo(4);
 
         val fabThree = jpaUserNames;
         ec.update(fabThree);
@@ -421,30 +481,39 @@ public class FactusClientTest {
         val aggregate = ec.fetch(TestAggregate.class, aggregateId);
         assertThat(aggregate.magicNumber()).isEqualTo(43);
 
-        // TODO: why do we need to fetch another one, rather than reusing
-        // "aggregate"?
         val a = ec.fetch(TestAggregate.class, aggregateId);
 
         // we start 10 threads that try to (in an isolated fashion) lock and
         // increase. Starting with magic number 43, we would end up 53, but
         // we have a business rule that limits this to 50.
         Set<CompletableFuture<Void>> futures = new HashSet<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
             String workerID = "Worker #" + i;
 
             futures.add(CompletableFuture.runAsync(() -> ec.withLockOn(a)
                     .attempt((ta, tx) -> {
 
                         log.info(workerID);
-                        // TODO: Should it be part of the test to enforce that
-                        // at least one thread
-                        // publishes while being in a stale state, and the code
-                        // inside of attempt is re-run?
-                        // Then sleepRandomMillis might not be enough.
-                        // If it is not, then sleepRandomMillies is actually not
-                        // needed?
-                        //
-                        sleepRandomMillis();
+
+                        // check business rule
+                        if (ta.magicNumber() < 50) {
+                            // increment or
+                            tx.publish(new TestAggregateWasIncremented(aggregateId));
+                        } else {
+                            // abort, according to business rule
+                            tx.abort("aborting " + workerID + ": magic number is too high already ("
+                                    + ta.magicNumber() + ")");
+                        }
+                    })));
+        }
+        for (int i = 5; i < 10; i++) {
+            String workerID = "Worker #" + i;
+
+            futures.add(CompletableFuture.runAsync(() -> ec.withLockOn(TestAggregate.class,
+                    aggregateId)
+                    .attempt((ta, tx) -> {
+
+                        log.info(workerID);
 
                         // check business rule
                         if (ta.magicNumber() < 50) {
