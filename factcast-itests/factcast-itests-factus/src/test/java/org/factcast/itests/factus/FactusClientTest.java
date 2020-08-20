@@ -171,14 +171,14 @@ public class FactusClientTest {
         ec.publish(new JpaSubscribedUserNames.UserCreated(randomUUID(),
                 "Peter"));
 
-        Thread.sleep(5000);
+        Thread.sleep(200);
 
         assertThat(subscribedProjection.names())
                 .hasSize(1);
 
         ec.publish(new JpaSubscribedUserNames.UserCreated(randomUUID(),
                 "John"));
-        Thread.sleep(5000);
+        Thread.sleep(200);
 
         assertThat(subscribedProjection.names())
                 .hasSize(2)
