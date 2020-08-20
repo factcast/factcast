@@ -15,19 +15,14 @@
  */
 package org.factcast.itests.factus;
 
-import static java.util.Arrays.asList;
-import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.toList;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static java.util.Arrays.*;
+import static java.util.UUID.*;
+import static java.util.stream.Collectors.*;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import org.factcast.core.Fact;
@@ -35,10 +30,10 @@ import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.lock.LockedOperationAbortedException;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
@@ -56,8 +51,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import lombok.Value;
-import lombok.val;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 @SpringBootTest
 @ContextConfiguration(classes = Application.class)
@@ -72,7 +67,7 @@ public class FactusClientTest {
 
     @Container
     static final PostgreSQLContainer _database_container = new PostgreSQLContainer<>(
-            "postgres:11.5")
+            "postgres:11.4")
                     .withDatabaseName("fc")
                     .withUsername("fc")
                     .withPassword("fc")
@@ -158,31 +153,38 @@ public class FactusClientTest {
     }
 
     @Test
-    public void testSubscription() throws InterruptedException {
+    public void testSubscription() throws Exception {
 
-        JpaSubscribedUserNames subscribedProjection = new JpaSubscribedUserNames();
+        SubscribedUserNames subscribedProjection = new SubscribedUserNames();
 
-        ec.subscribe(subscribedProjection);
+        ec.publish(new SubscribedUserNames.UserCreated(randomUUID(),
+                "preexisting"));
 
-        // questionable if this makes sense here
-        assertThat(subscribedProjection.names())
-                .isEmpty();
-
-        ec.publish(new JpaSubscribedUserNames.UserCreated(randomUUID(),
-                "Peter"));
-
-        Thread.sleep(200);
-
+        Subscription subscription = ec.subscribe(subscribedProjection);
+        // nothing in there yet, so catchup must be received
+        subscription.awaitCatchup();
         assertThat(subscribedProjection.names())
                 .hasSize(1);
 
-        ec.publish(new JpaSubscribedUserNames.UserCreated(randomUUID(),
-                "John"));
-        Thread.sleep(200);
+        ec.publish(new SubscribedUserNames.UserCreated(randomUUID(),
+                "Peter"));
+
+        Thread.sleep(500);
 
         assertThat(subscribedProjection.names())
                 .hasSize(2)
-                .containsExactlyInAnyOrder("John", "Peter");
+                .contains("preexisting")
+                .contains("Peter");
+
+        ec.publish(new SubscribedUserNames.UserCreated(randomUUID(),
+                "John"));
+        Thread.sleep(500);
+
+        assertThat(subscribedProjection.names())
+                .hasSize(3)
+                .containsExactlyInAnyOrder("John", "Peter", "preexisting");
+
+        subscription.close();
 
     }
 
@@ -286,11 +288,11 @@ public class FactusClientTest {
     public void simpleProjectionLockingRoundtrip() throws Exception {
         /*
          * TODO:
-         * 
+         *
          * - emptyUserNames is actually empty
-         * 
+         *
          * - UserNames is 1 after first publish
-         * 
+         *
          * - UserNames is 0 after publish of delete
          */
         UserNames emptyUserNames = ec.fetch(UserNames.class);
