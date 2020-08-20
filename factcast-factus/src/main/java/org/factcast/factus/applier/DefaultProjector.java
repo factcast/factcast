@@ -44,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 @Slf4j
-public class DefaultEventApplier<A extends Projection> implements EventApplier<A> {
+public class DefaultProjector<A extends Projection> implements Projector<A> {
 
     private final Projection projection;
 
@@ -59,7 +59,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
     private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
 
     @VisibleForTesting
-    public DefaultEventApplier(EventSerializer ctx, Projection p) {
+    public DefaultProjector(EventSerializer ctx, Projection p) {
         this.projection = p;
         this.dispatchInfo = cache.computeIfAbsent(p.getClass(), c -> discoverDispatchInfo(ctx, p));
     }
@@ -134,7 +134,7 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
         relevantClasses.forEach(callTarget -> {
             List<Method> methods = collectMethods(callTarget.clazz);
             methods.stream()
-                    .filter(DefaultEventApplier::isEventHandlerMethod)
+                    .filter(DefaultProjector::isEventHandlerMethod)
                     .forEach(m -> {
 
                         FactSpec fs = discoverFactSpec(m);

@@ -34,9 +34,9 @@ import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.factus.applier.DefaultEventApplier;
-import org.factcast.factus.applier.EventApplier;
-import org.factcast.factus.applier.EventApplierFactory;
+import org.factcast.factus.applier.DefaultProjector;
+import org.factcast.factus.applier.Projector;
+import org.factcast.factus.applier.ProjectorFactory;
 import org.factcast.factus.batch.BatchAbortedException;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
@@ -73,7 +73,7 @@ class DefaultFactusTest {
     private FactCast fc;
 
     @Mock
-    private EventApplierFactory ehFactory;
+    private ProjectorFactory ehFactory;
 
     @Mock
     private EventConverter eventConverter;
@@ -343,7 +343,7 @@ class DefaultFactusTest {
         void updateIsExecutedViaProjection() {
 
             ManagedProjection m = Mockito.spy(new SimpleProjection());
-            EventApplier<ManagedProjection> ea = Mockito.spy(new DefaultEventApplier<>(mock(
+            Projector<ManagedProjection> ea = Mockito.spy(new DefaultProjector<>(mock(
                     EventSerializer.class), m));
             when(ehFactory.create(m)).thenReturn(ea);
             ArgumentCaptor<FactObserver> observer = ArgumentCaptor.forClass(FactObserver.class);
@@ -483,7 +483,7 @@ class DefaultFactusTest {
     private SnapshotSerializer snapshotSerializer;
 
     @Mock
-    private EventApplier eventApplier;
+    private Projector eventApplier;
 
     @Captor
     ArgumentCaptor<Fact> factCaptor;
@@ -778,7 +778,7 @@ class DefaultFactusTest {
         void subscribe() throws Exception {
             // INIT
             SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
-            EventApplier<SubscribedProjection> eventApplier = mock(EventApplier.class);
+            Projector<SubscribedProjection> eventApplier = mock(Projector.class);
 
             when(subscribedProjection.acquireWriteToken(any()))
                     .thenReturn(mock(AutoCloseable.class));
@@ -863,7 +863,7 @@ class DefaultFactusTest {
         void closeSubscribed() throws Exception {
             // INIT
             SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
-            EventApplier<SubscribedProjection> eventApplier = mock(EventApplier.class);
+            Projector<SubscribedProjection> eventApplier = mock(Projector.class);
 
             when(subscribedProjection.acquireWriteToken(any()))
                     .thenReturn(mock(AutoCloseable.class));
