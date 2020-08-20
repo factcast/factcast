@@ -22,7 +22,6 @@ import java.util.UUID;
 
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
-import org.jetbrains.annotations.NotNull;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -39,13 +38,11 @@ abstract class AbstractSnapshotRepository {
         snapshotCache.setSnapshot(snapshot);
     }
 
-    @NotNull
     @VisibleForTesting
     protected String createKeyForType(@NonNull Class<?> type) {
         return createKeyForType(type, null);
     }
 
-    @NotNull
     @VisibleForTesting
     protected String createKeyForType(@NonNull Class<?> type, UUID optionalUUID) {
         String classLevelKey = keyPrefix() + type.getCanonicalName() + KEY_DELIMITER
