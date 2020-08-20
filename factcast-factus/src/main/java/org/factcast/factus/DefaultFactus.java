@@ -176,10 +176,14 @@ public class DefaultFactus implements Factus {
                     subscribedProjection.state(element.id());
                 });
 
-                val latency = Instant.now().toEpochMilli() - Long.parseLong(element.meta("_ts"));
-                factusMetrics.timed(TimedOperation.EVENT_PROCESSING_LATENCY, Tags.of(Tag.of(CLASS,
-                        subscribedProjection.getClass().getCanonicalName())), latency);
-
+                String ts = element.meta("_ts");
+                // _ts might not be there in unit testing for instance.
+                if (ts != null) {
+                    val latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
+                    factusMetrics.timed(TimedOperation.EVENT_PROCESSING_LATENCY, Tags.of(Tag.of(
+                            CLASS,
+                            subscribedProjection.getClass().getCanonicalName())), latency);
+                }
             }
 
             @Override
