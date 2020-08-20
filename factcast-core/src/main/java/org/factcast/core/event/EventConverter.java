@@ -20,6 +20,7 @@ import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.EventSerializer;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +51,7 @@ public class EventConverter {
 
         p.aggregateIds().forEach(b::aggId);
 
-        p.additionalFactHeaders().forEach((key, value) -> {
+        p.additionalMetaMap().forEach((key, value) -> {
             if (key == null) {
                 throw new IllegalArgumentException(
                         "Keys of additional fact headers must not be null ('" + key + "':'" + value

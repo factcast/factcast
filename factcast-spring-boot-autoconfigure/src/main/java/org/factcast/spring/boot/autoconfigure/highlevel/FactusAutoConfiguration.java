@@ -19,11 +19,13 @@ import java.util.Set;
 
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
-import org.factcast.core.event.EventSerializer;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.factus.DefaultFactus;
 import org.factcast.factus.Factus;
 import org.factcast.factus.applier.DefaultEventApplierFactory;
+import org.factcast.factus.event.EventSerializer;
+import org.factcast.factus.metrics.FactusMetrics;
+import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
@@ -33,6 +35,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Generated;
 
 @Configuration
@@ -44,16 +47,21 @@ public class FactusAutoConfiguration {
     @Bean
     public Factus factus(FactCast fc, SnapshotCache sr, EventSerializer deserializer,
             EventConverter eventConverter,
-            SnapshotSerializerSupplier snapshotSerializerSupplier) {
+            SnapshotSerializerSupplier snapshotSerializerSupplier, FactusMetrics factusMetrics) {
         return new DefaultFactus(fc, new DefaultEventApplierFactory(deserializer), eventConverter,
                 new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
                 new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
-                snapshotSerializerSupplier);
+                snapshotSerializerSupplier, factusMetrics);
     }
 
     @Bean
     public SnapshotSerializerSupplier snapshotSerializerSupplier(Set<SnapshotSerializer> ser) {
         return new SnapshotSerializerSupplier(ser);
+    }
+
+    @Bean
+    public FactusMetrics factusMetrics(MeterRegistry meterRegistry) {
+        return new FactusMetricsImpl(meterRegistry);
     }
 
 }

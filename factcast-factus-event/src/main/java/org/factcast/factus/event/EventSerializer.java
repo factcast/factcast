@@ -15,20 +15,9 @@
  */
 package org.factcast.factus.event;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+public interface EventSerializer {
+    <T extends EventObject> T deserialize(Class<T> targetClass, String json);
 
-/**
- * EventObjects are expected to be annotated with @{@link Specification}.
- */
-public interface EventObject {
-
-    default Map<String, String> additionalMetaMap() {
-        return Collections.emptyMap();
-    }
-
-    Set<UUID> aggregateIds();
+    <T extends EventObject> String serialize(T pojo);
 
 }

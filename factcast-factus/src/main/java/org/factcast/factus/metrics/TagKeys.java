@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.event;
+package org.factcast.factus.metrics;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import lombok.experimental.UtilityClass;
 
-/**
- * EventObjects are expected to be annotated with @{@link Specification}.
- */
-public interface EventObject {
+@UtilityClass
+public class TagKeys {
 
-    default Map<String, String> additionalMetaMap() {
-        return Collections.emptyMap();
-    }
+    public static final String CLASS = "class";
 
-    Set<UUID> aggregateIds();
+    public static final String LOCKED = "locked";
 
+    public static final String TRUE = "true";
+
+    public static final String FALSE = "false";
+
+    public static final String TAG_NAME = "name";
 }

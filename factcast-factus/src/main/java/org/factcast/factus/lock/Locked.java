@@ -15,6 +15,8 @@
  */
 package org.factcast.factus.lock;
 
+import static org.factcast.factus.metrics.TagKeys.CLASS;
+
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
@@ -32,8 +34,12 @@ import org.factcast.core.lock.PublishingResult;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
+import org.factcast.factus.metrics.CountedEvent;
+import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.projection.*;
 
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +61,9 @@ public class Locked<I extends Projection> {
 
     @NonNull
     private final List<FactSpec> specs;
+
+    @NonNull
+    private final FactusMetrics factusMetrics;
 
     private Consumer<List<Fact>> andThen;// TODO
 
@@ -83,6 +92,8 @@ public class Locked<I extends Projection> {
                     .attempt(() -> {
 
                         try {
+                            factusMetrics.count(CountedEvent.TRANSACTION_ATTEMPTS, Tags.of(Tag.of(
+                                    CLASS, projection.getClass().getCanonicalName())));
                             val p = update(projection);
                             List<Supplier<Fact>> toPublish = Collections.synchronizedList(
                                     new LinkedList<>());
@@ -111,6 +122,9 @@ public class Locked<I extends Projection> {
             return resultFn.apply(result.publishedFacts());
 
         } catch (AttemptAbortedException e) {
+            factusMetrics.count(CountedEvent.TRANSACTION_ABORT, Tags.of(Tag.of(CLASS, projection
+                    .getClass()
+                    .getCanonicalName())));
             throw LockedOperationAbortedException.wrap(e);
         }
     }

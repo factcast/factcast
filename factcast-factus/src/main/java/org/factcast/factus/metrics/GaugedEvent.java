@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.event;
+package org.factcast.factus.metrics;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import lombok.Getter;
+import lombok.NonNull;
 
-/**
- * EventObjects are expected to be annotated with @{@link Specification}.
- */
-public interface EventObject {
+public enum GaugedEvent {
+    FETCH_SIZE("fetch_size");
 
-    default Map<String, String> additionalMetaMap() {
-        return Collections.emptyMap();
+    @NonNull
+    @Getter
+    final String event;
+
+    GaugedEvent(@NonNull String event) {
+        this.event = event;
     }
-
-    Set<UUID> aggregateIds();
-
 }
