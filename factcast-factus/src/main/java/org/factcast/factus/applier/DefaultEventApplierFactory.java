@@ -15,7 +15,7 @@
  */
 package org.factcast.factus.applier;
 
-import org.factcast.core.event.EventSerializer;
+import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.Projection;
 
 import lombok.RequiredArgsConstructor;

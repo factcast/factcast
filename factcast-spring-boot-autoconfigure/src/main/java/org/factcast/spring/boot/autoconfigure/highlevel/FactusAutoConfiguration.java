@@ -19,11 +19,11 @@ import java.util.Set;
 
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
-import org.factcast.core.event.EventSerializer;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.factus.DefaultFactus;
 import org.factcast.factus.Factus;
 import org.factcast.factus.applier.DefaultEventApplierFactory;
+import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.serializer.SnapshotSerializer;

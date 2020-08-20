@@ -25,12 +25,12 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactHeader;
-import org.factcast.core.event.EventSerializer;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.factus.Handler;
 import org.factcast.factus.HandlerFor;
 import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.AggregateUtil;
 import org.factcast.factus.projection.Projection;

@@ -25,7 +25,7 @@ import java.util.UUID;
  */
 public interface EventObject {
 
-    default Map<String, String> additionalFactHeaders() {
+    default Map<String, String> additionalMetaMap() {
         return Collections.emptyMap();
     }
 
