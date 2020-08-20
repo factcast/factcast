@@ -17,6 +17,12 @@ package org.factcast.factus.lock;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * This class is not so much for actual locking of concurrent access to
+ * factcast, but rather a safeguard that makes sure that when inside of a
+ * ec.lock().attempt(), you publish to the transaction and not to factus
+ * directly (which would be a mistake).
+ */
 @Slf4j
 public class InLockedOperation {
     private static final ThreadLocal<Boolean> isInLockedOperation = ThreadLocal.withInitial(

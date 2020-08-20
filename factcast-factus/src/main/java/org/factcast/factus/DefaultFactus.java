@@ -158,6 +158,7 @@ public class DefaultFactus implements Factus {
             if (subscribedProjection.acquireWriteToken(INTERVAL) != null) {
                 Subscription e = doSubscribe(subscribedProjection);
                 managedObjects.add(e);
+                // TODO close and release WT on Error
                 return e;
             }
         }
@@ -170,13 +171,19 @@ public class DefaultFactus implements Factus {
         FactObserver fo = new FactObserver() {
             @Override
             public void onNext(@NonNull Fact element) {
-                handler.apply(element);
-                subscribedProjection.state(element.id());
+                subscribedProjection.executeUpdate(() -> {
+                    handler.apply(element);
+                    subscribedProjection.state(element.id());
+                });
 
-                val latency = Instant.now().toEpochMilli() - Long.parseLong(element.meta("_ts"));
-                factusMetrics.timed(TimedOperation.EVENT_PROCESSING_LATENCY, Tags.of(Tag.of(CLASS,
-                        subscribedProjection.getClass().getCanonicalName())), latency);
-
+                String ts = element.meta("_ts");
+                // _ts might not be there in unit testing for instance.
+                if (ts != null) {
+                    val latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
+                    factusMetrics.timed(TimedOperation.EVENT_PROCESSING_LATENCY, Tags.of(Tag.of(
+                            CLASS,
+                            subscribedProjection.getClass().getCanonicalName())), latency);
+                }
             }
 
             @Override
@@ -197,9 +204,9 @@ public class DefaultFactus implements Factus {
 
         return fc.subscribe(
                 SubscriptionRequest
-                        .catchup(handler.createFactSpecs())
-                        .fromNullable(subscribedProjection.state()), fo)
-                .awaitComplete(FactusConstants.FOREVER.toMillis());
+                        .follow(handler.createFactSpecs())
+                        .fromNullable(subscribedProjection.state()),
+                fo);
     }
 
     @Override
@@ -295,8 +302,10 @@ public class DefaultFactus implements Factus {
         FactObserver fo = new FactObserver() {
             @Override
             public void onNext(@NonNull Fact element) {
-                handler.apply(element);
-                factId.set(element.id());
+                projection.executeUpdate(() -> {
+                    handler.apply(element);
+                    factId.set(element.id());
+                });
             }
 
             @Override
@@ -315,9 +324,10 @@ public class DefaultFactus implements Factus {
             }
         };
 
+        List<FactSpec> factSpecs = handler.createFactSpecs();
         fc.subscribe(
                 SubscriptionRequest
-                        .catchup(handler.createFactSpecs())
+                        .catchup(factSpecs)
                         .fromNullable(stateOrNull), fo)
                 .awaitComplete(maxWait.toMillis());
         return factId.get();

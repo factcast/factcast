@@ -58,7 +58,8 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
 
     private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
 
-    protected DefaultEventApplier(EventSerializer ctx, Projection p) {
+    @VisibleForTesting
+    public DefaultEventApplier(EventSerializer ctx, Projection p) {
         this.projection = p;
         this.dispatchInfo = cache.computeIfAbsent(p.getClass(), c -> discoverDispatchInfo(ctx, p));
     }
@@ -308,6 +309,11 @@ public class DefaultEventApplier<A extends Projection> implements EventApplier<A
             for (Class<?> type : m.getParameterTypes()) {
                 // trigger transformer creation in order to fail fast
                 createSingleParameterTransformer(m, null, type);
+            }
+
+            // exclude MockitoMocks
+            if (m.getDeclaringClass().getCanonicalName().contains("$MockitoMock")) {
+                return false;
             }
 
             return true;
