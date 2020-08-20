@@ -16,11 +16,11 @@
 package org.factcast.spring.boot.autoconfigure.core;
 
 import org.factcast.core.FactCast;
-import org.factcast.core.event.DefaultEventSerializer;
 import org.factcast.core.event.EventConverter;
-import org.factcast.core.event.EventSerializer;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.factus.event.DefaultEventSerializer;
+import org.factcast.factus.event.EventSerializer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;

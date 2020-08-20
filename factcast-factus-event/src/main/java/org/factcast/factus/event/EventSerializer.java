@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.event;
-
-import org.factcast.factus.event.EventObject;
+package org.factcast.factus.event;
 
 public interface EventSerializer {
     <T extends EventObject> T deserialize(Class<T> targetClass, String json);
