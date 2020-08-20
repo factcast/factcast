@@ -16,20 +16,23 @@
 package org.factcast.factus.snapshot;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
+import java.util.Optional;
 import java.util.UUID;
 
-import org.checkerframework.checker.units.qual.A;
+import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.projection.Aggregate;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import lombok.NonNull;
 
 @ExtendWith(MockitoExtension.class)
 class AggregateSnapshotRepositoryImplTest {
@@ -42,13 +45,36 @@ class AggregateSnapshotRepositoryImplTest {
 
     @Nested
     class WhenFindingLatest {
-        private @NonNull Class<A> type;
 
-        @Mock
-        private @NonNull UUID aggregateId;
+        private UUID aggregateId = UUID.randomUUID();
 
-        @BeforeEach
-        void setup() {
+        @Test
+        void findNone() {
+            Optional<Snapshot> result = underTest.findLatest(WithSVUID.class, aggregateId);
+
+            assertThat(result)
+                    .isEmpty();
+        }
+
+        @Test
+        void findOne() {
+            // INIT
+            Snapshot withSVUID = new Snapshot(new SnapshotId("some key", aggregateId), UUID
+                    .randomUUID(),
+                    new byte[0], false);
+
+            when(snap.getSnapshot(any()))
+                    .thenReturn(Optional.of(withSVUID));
+
+            // RUN
+            Optional<Snapshot> result = underTest.findLatest(WithSVUID.class, aggregateId);
+
+            // ASSERT
+            assertThat(result)
+                    .isPresent()
+                    .get()
+                    .extracting("id.uuid")
+                    .isEqualTo(aggregateId);
         }
     }
 

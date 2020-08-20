@@ -13,19 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.docker;
+package org.factcast.itests.factus;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import java.util.Set;
+import java.util.UUID;
 
-import lombok.extern.slf4j.Slf4j;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
-@SpringBootApplication
-@Slf4j
-public class FactCastServer {
+import com.google.common.collect.Sets;
 
-    public static void main(String[] args) {
-        SpringApplication.run(FactCastServer.class, args);
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Specification(ns = "anotherTest")
+public class SomeEvent implements EventObject {
+    UUID aggregateId;
+
+    String userName;
+
+    @Override
+    public Set<UUID> aggregateIds() {
+        return Sets.newHashSet(aggregateId);
     }
-
 }
