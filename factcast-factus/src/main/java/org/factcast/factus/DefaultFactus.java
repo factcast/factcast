@@ -17,12 +17,7 @@ package org.factcast.factus;
 
 import java.lang.reflect.Constructor;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -43,12 +38,7 @@ import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.InLockedOperation;
 import org.factcast.factus.lock.Locked;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.AggregateUtil;
-import org.factcast.factus.projection.ManagedProjection;
-import org.factcast.factus.projection.Projection;
-import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.projection.SubscribedProjection;
+import org.factcast.factus.projection.*;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
@@ -59,8 +49,8 @@ import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.val;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 /**
  * Single entry point to the factus API.
@@ -156,6 +146,7 @@ public class DefaultFactus implements Factus {
             if (subscribedProjection.acquireWriteToken(INTERVAL) != null) {
                 Subscription e = doSubscribe(subscribedProjection);
                 managedObjects.add(e);
+                // TODO close and release WT on Error
                 return e;
             }
         }
@@ -168,8 +159,10 @@ public class DefaultFactus implements Factus {
         FactObserver fo = new FactObserver() {
             @Override
             public void onNext(@NonNull Fact element) {
-                handler.apply(element);
-                subscribedProjection.state(element.id());
+                subscribedProjection.executeUpdate(() -> {
+                    handler.apply(element);
+                    subscribedProjection.state(element.id());
+                });
             }
 
             @Override
@@ -273,8 +266,10 @@ public class DefaultFactus implements Factus {
         FactObserver fo = new FactObserver() {
             @Override
             public void onNext(@NonNull Fact element) {
-                handler.apply(element);
-                factId.set(element.id());
+                projection.executeUpdate(() -> {
+                    handler.apply(element);
+                    factId.set(element.id());
+                });
             }
 
             @Override
@@ -293,9 +288,10 @@ public class DefaultFactus implements Factus {
             }
         };
 
+        List<FactSpec> factSpecs = handler.createFactSpecs();
         fc.subscribe(
                 SubscriptionRequest
-                        .catchup(handler.createFactSpecs())
+                        .catchup(factSpecs)
                         .fromNullable(stateOrNull), fo)
                 .awaitComplete(maxWait.toMillis());
         return factId.get();

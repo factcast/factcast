@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.docker;
+package org.factcast.factus;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.factcast.factus.projection.LocalManagedProjection;
 
-import lombok.extern.slf4j.Slf4j;
-
-@SpringBootApplication
-@Slf4j
-public class FactCastServer {
-
-    public static void main(String[] args) {
-        SpringApplication.run(FactCastServer.class, args);
+class SimpleProjection extends LocalManagedProjection {
+    @Handler
+    void apply(SimpleEvent foo) {
     }
-
 }
