@@ -44,9 +44,16 @@ public class PgTransformationStoreImpl extends AbstractTransformationStore {
     protected void doStore(@NonNull TransformationSource source, String transformation)
             throws TransformationConflictException {
         jdbcTemplate.update(
-                "INSERT INTO transformationstore (id, hash, ns, type, from_version, to_version, transformation) VALUES (?,?,?,?,?,?,?)",
+                "INSERT INTO transformationstore (id, hash, ns, type, from_version, to_version, transformation) VALUES (?,?,?,?,?,?,?)"
+                        +
+                        "ON CONFLICT ON CONSTRAINT transformationstore_pkey DO " +
+                        "UPDATE set hash=?,ns=?,type=?,from_version=?, to_version=?, transformation=? WHERE transformationstore.id=?",
+                // INSERT
                 source.id(), source.hash(), source.ns(), source.type(), source.from(), source.to(),
-                transformation);
+                transformation,
+                // UPDATE
+                source.hash(), source.ns(), source.type(), source.from(), source.to(),
+                transformation, source.id());
     }
 
     @Override
