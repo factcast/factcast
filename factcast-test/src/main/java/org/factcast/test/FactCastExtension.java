@@ -18,7 +18,7 @@ package org.factcast.test;
 import org.factcast.factus.applier.DefaultProjector;
 import org.junit.jupiter.api.extension.*;
 
-public class FactCastNamespaceExtension implements Extension, BeforeEachCallback {
+public class FactCastExtension implements Extension, BeforeEachCallback {
 
     @Override
     public void beforeEach(ExtensionContext extensionContext) throws Exception {
