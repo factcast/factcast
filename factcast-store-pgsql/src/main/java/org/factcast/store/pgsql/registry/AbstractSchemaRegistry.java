@@ -20,17 +20,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.factcast.store.pgsql.registry.http.ValidationConstants;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.TimedOperation;
-import org.factcast.store.pgsql.registry.transformation.Transformation;
-import org.factcast.store.pgsql.registry.transformation.TransformationKey;
-import org.factcast.store.pgsql.registry.transformation.TransformationSource;
-import org.factcast.store.pgsql.registry.transformation.TransformationStore;
-import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
+import org.factcast.store.pgsql.registry.transformation.*;
+import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
@@ -62,6 +58,9 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
 
     @NonNull
     protected final RegistryMetrics registryMetrics;
+
+    @NonNull
+    protected final boolean isAllowSchemaReplace;
 
     protected final Object mutex = new Object();
 
@@ -121,17 +120,25 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
     }
 
     private void updateSchemes(RegistryIndex index) {
-        List<SchemaSource> toFetch = index.schemes()
-                .stream()
-                .filter(source -> !schemaStore.contains(source))
-                .collect(Collectors.toList());
+        List<SchemaSource> toFetch = index.schemes();
         if (!toFetch.isEmpty()) {
             int count = toFetch.size();
             log.info("SchemaStore will be updated, {} {} to fetch.", count, count == 1 ? "schema"
                     : "schemes");
             toFetch.parallelStream().forEach(source -> {
                 try {
-                    schemaStore.register(source, registryFileFetcher.fetchSchema(source));
+                    String schema = registryFileFetcher.fetchSchema(source);
+                    try {
+                        if (!schemaStore.contains(source)) {
+                            schemaStore.register(source, schema);
+                        }
+                    } catch (SchemaConflictException e) {
+                        if (isAllowSchemaReplace) {
+                            schemaStore.register(source, schema);
+                        } else {
+                            throw e;
+                        }
+                    }
                 } catch (IOException e) {
                     throw new SchemaRegistryUnavailableException(e);
                 }
@@ -140,10 +147,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
     }
 
     private void updateTransformations(RegistryIndex index) {
-        List<TransformationSource> toFetch = index.transformations()
-                .stream()
-                .filter(source -> !transformationStore.contains(source))
-                .collect(Collectors.toList());
+        List<TransformationSource> toFetch = index.transformations();
 
         if (!toFetch.isEmpty()) {
             int count = toFetch.size();
@@ -155,7 +159,18 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
                     if (!source.isSynthetic()) {
                         transformationCode = registryFileFetcher.fetchTransformation(source);
                     }
-                    transformationStore.store(source, transformationCode);
+                    try {
+                        if (!transformationStore.contains(source)) {
+                            transformationStore.store(source, transformationCode);
+                        }
+                    } catch (TransformationConflictException conflict) {
+                        if (isAllowSchemaReplace) {
+                            transformationStore.store(source, transformationCode);
+                        } else {
+                            throw conflict;
+                        }
+                    }
+
                 } catch (IOException e) {
                     throw new SchemaRegistryUnavailableException(e);
                 }

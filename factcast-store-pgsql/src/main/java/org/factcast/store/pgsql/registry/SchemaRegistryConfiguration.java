@@ -63,7 +63,7 @@ public class SchemaRegistryConfiguration {
                 if ("http".equals(protocol) || "https".equals(protocol)) {
                     HttpSchemaRegistry httpSchemaRegistry;
                     httpSchemaRegistry = new HttpSchemaRegistry(new URL(fullUrl + "/"),
-                            schemaStore, transformationStore, registryMetrics);
+                            schemaStore, transformationStore, registryMetrics, p);
                     httpSchemaRegistry.fetchInitial();
                     return httpSchemaRegistry;
                 }
@@ -71,7 +71,7 @@ public class SchemaRegistryConfiguration {
                 if ("classpath".equals(protocol)) {
                     ClasspathSchemaRegistry registry = new ClasspathSchemaRegistry(fullUrl
                             .substring("classpath:".length()),
-                            schemaStore, transformationStore, registryMetrics);
+                            schemaStore, transformationStore, registryMetrics, p);
                     registry.fetchInitial();
                     return registry;
                 }

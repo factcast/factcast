@@ -46,8 +46,14 @@ public class PgSchemaStoreImpl implements SchemaStore {
     public void register(@NonNull SchemaSource key, @NonNull String schema)
             throws SchemaConflictException {
         jdbcTemplate.update(
-                "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,?) ",
-                key.id(), key.hash(), key.ns(), key.type(), key.version(), schema);
+                "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,?) "
+                        +
+                        "ON CONFLICT ON CONSTRAINT schemastore_pkey DO " +
+                        "UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? WHERE schemastore.id=?",
+                // INSERT
+                key.id(), key.hash(), key.ns(), key.type(), key.version(), schema,
+                // UPDATE
+                key.hash(), key.ns(), key.type(), key.version(), schema, key.id());
     }
 
     @Override
@@ -62,12 +68,12 @@ public class PgSchemaStoreImpl implements SchemaStore {
             } else {
                 registryMetrics.count(MetricEvent.SCHEMA_CONFLICT, Tags.of(
                         RegistryMetrics.TAG_IDENTITY_KEY, key.id()));
-
                 throw new SchemaConflictException("Key " + key + " does not match the stored hash "
                         + hash);
             }
-        } else
+        } else {
             return false;
+        }
     }
 
     @Override
@@ -78,8 +84,9 @@ public class PgSchemaStoreImpl implements SchemaStore {
                 key.type(), key.version());
         if (!schema.isEmpty()) {
             return Optional.of(schema.get(0));
-        } else
+        } else {
             return Optional.empty();
+        }
     }
 
 }
