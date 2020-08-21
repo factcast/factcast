@@ -15,6 +15,7 @@
  */
 package org.factcast.store.pgsql.registry.classpath;
 
+import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.AbstractSchemaRegistry;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
@@ -24,12 +25,15 @@ import lombok.NonNull;
 
 public class ClasspathSchemaRegistry extends AbstractSchemaRegistry {
 
-    public ClasspathSchemaRegistry(@NonNull String base, @NonNull SchemaStore schemaStore,
+    public ClasspathSchemaRegistry(
+            @NonNull String base, @NonNull SchemaStore schemaStore,
             @NonNull TransformationStore transformationStore,
-            @NonNull RegistryMetrics registryMetrics) {
+            @NonNull RegistryMetrics registryMetrics,
+            @NonNull PgConfigurationProperties pgConfigurationProperties) {
         super(new ClasspathIndexFetcher(base), new ClasspathRegistryFileFetcher(base),
                 schemaStore,
-                transformationStore, registryMetrics);
+                transformationStore, registryMetrics, pgConfigurationProperties
+                        .isAllowSchemaReplace());
     }
 
     @Override
