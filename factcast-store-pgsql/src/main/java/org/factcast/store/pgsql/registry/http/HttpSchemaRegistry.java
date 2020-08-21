@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.registry.http;
 
 import java.net.URL;
 
+import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.AbstractSchemaRegistry;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
@@ -32,21 +33,25 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class HttpSchemaRegistry extends AbstractSchemaRegistry {
 
-    public HttpSchemaRegistry(@NonNull URL baseUrl, @NonNull SchemaStore schemaStore,
+    public HttpSchemaRegistry(
+            @NonNull URL baseUrl, @NonNull SchemaStore schemaStore,
             @NonNull TransformationStore transformationStore,
-            @NonNull RegistryMetrics registryMetrics) {
+            @NonNull RegistryMetrics registryMetrics, @NonNull PgConfigurationProperties props) {
         this(schemaStore, transformationStore, new HttpIndexFetcher(baseUrl, registryMetrics),
                 new HttpRegistryFileFetcher(
-                        baseUrl, registryMetrics), registryMetrics);
+                        baseUrl, registryMetrics), registryMetrics, props);
     }
 
     @VisibleForTesting
-    protected HttpSchemaRegistry(@NonNull SchemaStore schemaStore,
+    protected HttpSchemaRegistry(
+            @NonNull SchemaStore schemaStore,
             @NonNull TransformationStore transformationStore,
             @NonNull HttpIndexFetcher indexFetcher,
             @NonNull HttpRegistryFileFetcher registryFileFetcher,
-            @NonNull RegistryMetrics registryMetrics) {
-        super(indexFetcher, registryFileFetcher, schemaStore, transformationStore, registryMetrics);
+            @NonNull RegistryMetrics registryMetrics,
+            @NonNull PgConfigurationProperties properties) {
+        super(indexFetcher, registryFileFetcher, schemaStore, transformationStore, registryMetrics,
+                properties.isAllowSchemaReplace());
     }
 
 }

@@ -28,11 +28,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
-import org.springframework.core.env.AbstractEnvironment;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.MapPropertySource;
-import org.springframework.core.env.MutablePropertySources;
-import org.springframework.core.env.PropertySource;
+import org.springframework.core.env.*;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -124,6 +120,12 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
     boolean allowUnvalidatedPublish = false;
 
     /**
+     * If a schema can be replaced by an updated version from the registry (not
+     * a good idea in production environments)
+     */
+    boolean allowSchemaReplace = false;
+
+    /**
      * Controls how long to block waiting for new notifications from the
      * database (Postgres LISTEN/ NOTIFY mechanism). When this time exceeds the
      * health of the database connection is checked. After that waiting for new
@@ -137,7 +139,7 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
      * health of the database connection. For this purpose it sends an internal
      * notification to the database and waits for the given time to receive back
      * an answer.
-     *
+     * <p>
      * If the time is exceeded the database connection is renewed.
      */
     int factNotificationMaxRoundTripLatencyInMillis = 200;
