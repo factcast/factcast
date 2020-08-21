@@ -1,15 +1,15 @@
 +++
-draft = true
+draft = false
 title = "Testing"
 description = ""
 date = "2017-04-24T18:36:24+02:00"
-weight = 20
+weight = 99
 
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe@codesmell.de"
 
 [menu.main]
-parent = "setup"
+parent = "usage"
 identifier = "testing"
 
 +++
