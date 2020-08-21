@@ -15,7 +15,7 @@ identifier = "properties"
 +++
 
 
-Properties you can use to configure Factcast:
+Properties you can use to configure FactCast:
 
 ### Schemaregistry
 
@@ -25,6 +25,7 @@ Properties you can use to configure Factcast:
 | factcast.store.pgsql.persistentRegistry           | if fetched Schema and Transformation Documents are persisted into Postgres | false 
 | factcast.store.pgsql.allowUnvalidatedPublish      | If validation is enabled, this controls if publishing facts, that are **not validatable** (due to missing meta-data or due to missing schema in the registry) are allowed to be published or should be rejected.  |  false 
 | factcast.store.pgsql.schemaStoreRefreshCron       | defines the cron schedule for refreshing the SchemaRegistry by querying for the latest remote changes | `*/60 * * * * *` (once a minute) |
+| factcast.store.pgsql.allowSchemaReplace|If a schema can be replaced by an updated version from the registry (not a good idea in production environments)|false
 
 ---
 
@@ -39,6 +40,16 @@ Properties you can use to configure Factcast:
 
 ---
 
+### Performance / Reliability
+
+| Property-Name        | Semantics           | Default   
+| ------------- |:-------------|:-----|
+|factcast.store.pgsql.factNotificationBlockingWaitTimeInMillis| Controls how long to block waiting for new notifications from the database (Postgres LISTEN/ NOTIFY mechanism). When this time exceeds the notifications is repeated | 15000 (15sec)
+|factcast.store.pgsql.factNotificationMaxRoundTripLatencyInMillis| When Factcast did not receive any notifications after factNotificationBlockingWaitTimeInMillis milliseconds it validates the health of the database connection. For this purpose it sends an internal notification to the database and waits for the given time to receive back an answer. If the time is exceeded the database connection is renewed | 200
+|factcast.store.pgsql.factNotificationNewConnectionWaitTimeInMillis| how much time to wait between invalidating and acquiring a new connection. note: This parameter is only applied in the part of Factcast which deals with receiving and forwarding database notifications | 100
+
+___
+
 ### Snapshots
 
 | Property-Name        | Semantics           | Default   
@@ -46,23 +57,9 @@ Properties you can use to configure Factcast:
 | factcast.store.pgsql.deleteSnapshotStaleForDays |   min number of days a snapshot is kept even though it is not read anymore | 90  
 | factcast.store.pgsql.snapshotCacheCompactCron             |defines the cron schedule for compacting the snapshot cache | `0 0 0 * * *` (at midnight)
 
----
-
-### Other
-
-| Property-Name        | Semantics           | Default   
-| ------------- |:-------------|:-----|
-| factcast.store.pgsql.factNotificationBlockingWaitTimeInMillis         | Controls how long to block waiting for new notifications from the database (Postgres LISTEN/ NOTIFY mechanism). When this time exceeds the notifications is repeated | 15000 (15sec)
-| factcast.store.pgsql.factNotificationMaxRoundTripLatencyInMillis      | When Factcast did not receive any notifications after factNotificationBlockingWaitTimeInMillis milliseconds it validates the health of the database connection. For this purpose it sends an internal notification to the database and waits for the given time to receive back an answer. If the time is exceeded the database connection is renewed | 200
-| factcast.store.pgsql.factNotificationNewConnectionWaitTimeInMillis    | how much time to wait between invalidating and acquiring a new connection. note: This parameter is only applied in the part of Factcast which deals with receiving and forwarding database notifications | 100
-   
-
-
-
-
 ___
 
-## gRPC
+### gRPC
 
 Properties you can use to configure gRPC:
 
