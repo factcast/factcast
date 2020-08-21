@@ -38,7 +38,7 @@ import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.lock.LockedOperationAbortedException;
-import org.factcast.test.FactCastNamespaceExtension;
+import org.factcast.test.FactCastExtension;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.*;
@@ -69,7 +69,7 @@ import lombok.val;
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureTestDatabase(replace = Replace.ANY)
 @Sql(scripts = "classpath:/test-setup.sql")
-@ExtendWith(FactCastNamespaceExtension.class)
+@ExtendWith(FactCastExtension.class)
 public class FactusClientTest {
 
     static final Network _docker_network = Network.newNetwork();
