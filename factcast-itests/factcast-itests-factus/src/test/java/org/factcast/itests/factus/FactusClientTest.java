@@ -97,6 +97,8 @@ public class FactusClientTest {
                     .waitingFor(new HostPortWaitStrategy()
                             .withStartupTimeout(Duration.ofSeconds(180)));
 
+    private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
+
     @BeforeAll
     public static void startContainers() throws InterruptedException {
         String address = "static://" +
@@ -178,7 +180,7 @@ public class FactusClientTest {
         ec.publish(new UserCreated(randomUUID(),
                 "Peter"));
 
-        Thread.sleep(500);
+        Thread.sleep(WAIT_TIME_FOR_ASYNC_FACT_DELIVERY);
 
         assertThat(subscribedProjection.names())
                 .hasSize(2)
@@ -187,7 +189,7 @@ public class FactusClientTest {
 
         ec.publish(new UserCreated(randomUUID(),
                 "John"));
-        Thread.sleep(500);
+        Thread.sleep(WAIT_TIME_FOR_ASYNC_FACT_DELIVERY);
 
         assertThat(subscribedProjection.names())
                 .hasSize(3)

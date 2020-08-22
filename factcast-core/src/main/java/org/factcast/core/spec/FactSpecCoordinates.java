@@ -15,8 +15,8 @@
  */
 package org.factcast.core.spec;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.function.Supplier;
+import java.util.Iterator;
+import java.util.ServiceLoader;
 
 import org.factcast.core.Fact;
 import org.factcast.factus.event.Specification;
@@ -60,7 +60,7 @@ public class FactSpecCoordinates {
         }
 
         if (_ns.endsWith("$")) {
-            _ns = _ns + replacement();
+            _ns = _ns + suffixProvider().get();
         }
 
         String _type = spec.type();
@@ -73,27 +73,27 @@ public class FactSpecCoordinates {
         return new FactSpecCoordinates(_ns, _type, version);
     }
 
-    private static Supplier<String> cachedReplacement = null;
+    private static DynamicNamespaceSuffixProvider cachedSuffixProvider = null;
 
-    private static String replacement() {
-        if (cachedReplacement == null) {
-            cachedReplacement = discoverReplacement();
+    private static DynamicNamespaceSuffixProvider suffixProvider() {
+        if (cachedSuffixProvider == null) {
+            cachedSuffixProvider = discoverSuffixProvider();
         }
-        return cachedReplacement.get();
+        return cachedSuffixProvider;
     }
 
     @SuppressWarnings("unchecked")
-    private static Supplier<String> discoverReplacement() {
-        try {
-            Class<?> r = Class.forName("org.factcast.test.StaticNamespaceReplacement");
-            return (Supplier<String>) r.getConstructor().newInstance();
-        } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException
-                | IllegalAccessException | InvocationTargetException e) {
+    private static DynamicNamespaceSuffixProvider discoverSuffixProvider() {
+        ServiceLoader<DynamicNamespaceSuffixProvider> sl = ServiceLoader.load(
+                DynamicNamespaceSuffixProvider.class);
+        Iterator<DynamicNamespaceSuffixProvider> iterator = sl.iterator();
+        if (iterator.hasNext())
+            return iterator.next();
+        else
             return () -> {
                 throw new IllegalArgumentException(
                         "$ replacements in namespaces should only be used in tests. If this is a test, please fix this by adding a dependency to org.factcast:factcast-test.");
             };
-        }
     }
 
 }

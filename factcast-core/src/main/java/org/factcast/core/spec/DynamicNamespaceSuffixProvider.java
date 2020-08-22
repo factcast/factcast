@@ -13,16 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.test;
+package org.factcast.core.spec;
 
-import org.factcast.factus.applier.DefaultProjector;
-import org.junit.jupiter.api.extension.*;
+import java.util.function.Supplier;
 
-public class FactCastExtension implements Extension, BeforeEachCallback {
+public interface DynamicNamespaceSuffixProvider extends Supplier<String> {
 
-    @Override
-    public void beforeEach(ExtensionContext extensionContext) throws Exception {
-        DefaultProjector.flushCache();
-        TestSuffixProvider.next();
-    }
 }
