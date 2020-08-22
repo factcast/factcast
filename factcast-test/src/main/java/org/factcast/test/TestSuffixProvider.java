@@ -16,12 +16,13 @@
 package org.factcast.test;
 
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
+
+import org.factcast.core.spec.DynamicNamespaceSuffixProvider;
 
 /**
  * This is meant for integration testing only
  */
-public class StaticNamespaceReplacement implements Supplier<String> {
+public class TestSuffixProvider implements DynamicNamespaceSuffixProvider {
 
     private static final AtomicLong state = new AtomicLong();
 

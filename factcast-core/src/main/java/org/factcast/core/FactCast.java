@@ -74,7 +74,12 @@ public interface FactCast extends ReadFactCast {
         return lock(list);
     }
 
+    @Deprecated
     DeprecatedLockedOperationBuilder lock(@NonNull String ns);
 
-    DeprecatedLockedOperationBuilder lockGlobally();
+    // TODO maybe must be removed from interface as this breaks the updated
+    // locking code and
+    // was a bad idea in the first place
+    //
+    // DeprecatedLockedOperationBuilder lockGlobally();
 }

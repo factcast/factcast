@@ -67,6 +67,7 @@ public class FactSpec {
         return new FactSpec(ns);
     }
 
+    // TODO see if this is used everywhere
     public static FactSpec anyNs() {
         return new FactSpec("*");
     }
