@@ -800,7 +800,7 @@ public abstract class AbstractFactStoreTest {
         UUID agg2 = UUID.randomUUID();
         uut.publish(fact(agg1));
 
-        PublishingResult ret = uut.lockGlobally().on(agg1, agg2).attempt(() -> {
+        PublishingResult ret = uut.lock(NS).on(agg1, agg2).attempt(() -> {
             return Attempt.publish(fact(agg1));
         });
 
@@ -875,7 +875,7 @@ public abstract class AbstractFactStoreTest {
 
         CountDownLatch c = new CountDownLatch(8);
 
-        PublishingResult ret = uut.lockGlobally()
+        PublishingResult ret = uut.lock(NS)
                 .on(agg1, agg2)
                 .optimistic()
                 .retry(100)

@@ -88,11 +88,6 @@ class DefaultFactCast implements FactCast {
     }
 
     @Override
-    public DeprecatedLockedOperationBuilder lockGlobally() {
-        return new DeprecatedLockedOperationBuilder(this.store, "*");
-    }
-
-    @Override
     public Subscription subscribe(@NonNull SubscriptionRequest request,
             @NonNull FactObserver observer) {
         return new ReconnectingFactSubscriptionWrapper(store, SubscriptionRequestTO.forFacts(

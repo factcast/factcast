@@ -41,7 +41,6 @@ public class FactSpecCoordinates {
     public static FactSpecCoordinates from(Class<?> clazz) {
 
         String defaultType = clazz.getSimpleName();
-        String defaultNs = "default";
 
         val spec = clazz.getAnnotation(Specification.class);
         if (spec == null)
@@ -50,7 +49,7 @@ public class FactSpecCoordinates {
 
         String _ns = spec.ns();
         if (_ns.trim().isEmpty())
-            _ns = defaultNs;
+            throw new IllegalArgumentException("Empty namespace encountered on class " + clazz);
 
         String _type = spec.type();
         if (_type.trim().isEmpty())
