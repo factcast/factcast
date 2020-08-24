@@ -69,10 +69,6 @@ public class FactSpec {
         return new FactSpec(ns);
     }
 
-    public static FactSpec anyNs() {
-        return new FactSpec("*");
-    }
-
     public FactSpec(@NonNull @JsonProperty("ns") String ns) {
         super();
         this.ns = ns;

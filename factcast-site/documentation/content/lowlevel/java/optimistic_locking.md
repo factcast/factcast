@@ -6,13 +6,11 @@ description = ""
 creatordisplayname = "Uwe Schaefer"
 creatoremail = "uwe@codesmell.de"
 
-parent = "concept"
+parent = "usage"
 identifier = "optlocking"
-weight = 15
+weight = 215
 
 +++
-
-# TODO This has technically changed a bit and needs updating
 
 ## Optimistic Locking
 
@@ -43,7 +41,7 @@ Transferred to Factcast, this means to express a body of code that:
 This code checks if an account with id *newAccountId* already exists, and if not - creates it by publishing the Fact accordingly.
 
 ```
-        factcast.lockGlobally()
+        factcast.lock("myBankNamespace")
                 .on(newAccountId)
                 .attempt(() -> {
                     // check and maybe abort

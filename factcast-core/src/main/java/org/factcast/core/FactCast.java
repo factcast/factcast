@@ -74,7 +74,14 @@ public interface FactCast extends ReadFactCast {
         return lock(list);
     }
 
+    /**
+     * @deprecated use lock(FactSpec) instead
+     */
+    @Deprecated
     DeprecatedLockedOperationBuilder lock(@NonNull String ns);
 
-    DeprecatedLockedOperationBuilder lockGlobally();
+    // removed from interface as this breaks the updated locking code and
+    // was a bad idea in the first place. See migration guide (0.3.0)
+    //
+    // DeprecatedLockedOperationBuilder lockGlobally();
 }
