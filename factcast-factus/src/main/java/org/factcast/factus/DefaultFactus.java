@@ -168,6 +168,9 @@ public class DefaultFactus implements Factus {
     @SneakyThrows
     private <P extends SubscribedProjection> Subscription doSubscribe(P subscribedProjection) {
         Projector<P> handler = ehFactory.create(subscribedProjection);
+
+        // TODO recheck locking
+
         FactObserver fo = new FactObserver() {
             @Override
             public void onNext(@NonNull Fact element) {
