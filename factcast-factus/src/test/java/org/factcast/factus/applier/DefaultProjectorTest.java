@@ -26,13 +26,10 @@ import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.DefaultEventSerializer;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Blackbox test, we are wiring real objects into the test class, no mocks.
  */
-@ExtendWith(MockitoExtension.class)
 class DefaultProjectorTest {
 
     private final DefaultEventSerializer eventSerializer = new DefaultEventSerializer(FactCastJson
