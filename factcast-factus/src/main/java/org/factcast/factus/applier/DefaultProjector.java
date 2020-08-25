@@ -19,7 +19,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -48,7 +55,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
 
     private final Projection projection;
 
-    private static final Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>> cache = new HashMap<>();
+    private static Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>> cache = new HashMap<>();
 
     interface TargetObjectResolver extends Function<Projection, Object> {
     }
@@ -106,6 +113,10 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
     }
 
     // --------------------------------------------------------
+
+    /**
+     *
+     */
     @Value
     @VisibleForTesting
     static class Dispatcher {
