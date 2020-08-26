@@ -37,8 +37,8 @@ import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.lock.LockedOperationAbortedException;
+import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
@@ -58,7 +58,7 @@ import lombok.val;
 @AutoConfigureTestDatabase(replace = Replace.ANY)
 @Sql(scripts = "classpath:/test-setup.sql")
 @Slf4j
-public class FactusClientTest extends AbstractFactcastIntegrationTest {
+public class FactusClientTest extends AbstractFactCastIntegrationTest {
     private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
 
     @Autowired

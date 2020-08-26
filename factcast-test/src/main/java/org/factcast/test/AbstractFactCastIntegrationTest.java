@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.test;
 
 import java.time.Duration;
 
-import org.factcast.test.FactCastExtension;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.testcontainers.containers.GenericContainer;
@@ -33,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @Testcontainers
 @ExtendWith(FactCastExtension.class)
 @Slf4j
-public class AbstractFactcastIntegrationTest {
+public class AbstractFactCastIntegrationTest {
 
     static final Network _docker_network = Network.newNetwork();
 
