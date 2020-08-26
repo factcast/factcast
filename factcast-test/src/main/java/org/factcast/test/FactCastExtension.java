@@ -18,22 +18,28 @@ package org.factcast.test;
 import java.lang.reflect.Field;
 import java.util.Optional;
 
-import org.factcast.factus.applier.DefaultProjector;
 import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.support.ModifierSupport;
 import org.junit.platform.commons.util.ReflectionUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
+@Slf4j
 public class FactCastExtension implements Extension, BeforeEachCallback {
 
     @Override
     public void beforeEach(ExtensionContext extensionContext) throws Exception {
-        DefaultProjector.flushCache();
         val pg = findPG(extensionContext.getTestClass()
                 .orElseThrow(() -> new IllegalArgumentException("TestClass cannot be resolved")));
-        PostgresEraser.wipeAllFactCastDataDataFromPostgres(pg.get());
+        if (pg.isPresent()) {
+            PostgresEraser.wipeAllFactCastDataDataFromPostgres(pg.get());
+        } else {
+            log.warn(
+                    "No static field of type {} found, so wiping data from Postgres was not possible."
+                            + PostgreSQLContainer.class.getCanonicalName());
+        }
     }
 
     private Optional<? extends PostgreSQLContainer<?>> findPG(Class<?> testClass) {
@@ -44,6 +50,7 @@ public class FactCastExtension implements Extension, BeforeEachCallback {
                 .stream()
                 .map(f -> {
                     try {
+                        f.setAccessible(true);
                         return (PostgreSQLContainer<?>) f.get(null);
                     } catch (IllegalAccessException e) {
                         throw new IllegalArgumentException(
