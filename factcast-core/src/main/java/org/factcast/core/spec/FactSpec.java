@@ -66,9 +66,6 @@ public class FactSpec {
     }
 
     public static FactSpec ns(@NonNull String ns) {
-        if (ns.trim().isEmpty()) {
-            throw new IllegalArgumentException("Empty namespace encountered.");
-        }
         return new FactSpec(ns);
     }
 
@@ -78,24 +75,20 @@ public class FactSpec {
     }
 
     public FilterScript filterScript() {
-        if (filterScript != null) {
+        if (filterScript != null)
             return filterScript;
-        } else {
-            if (jsFilterScript != null) {
-                return new FilterScript("js", jsFilterScript);
-            } else {
-                return null;
-            }
-        }
+        else if (jsFilterScript != null)
+            return new FilterScript("js", jsFilterScript);
+        else
+            return null;
     }
 
     @NonNull
     public FactSpec filterScript(FilterScript script) {
         if (script != null) {
             this.filterScript = script;
-            if ("js".equals(script.languageIdentifier())) {
+            if ("js".equals(script.languageIdentifier()))
                 jsFilterScript = script.source();
-            }
         } else {
             filterScript = null;
             jsFilterScript = null;
@@ -106,25 +99,21 @@ public class FactSpec {
 
     @NonNull
     public FactSpec jsFilterScript(String script) {
-        if (script != null) {
+        if (script != null)
             filterScript(new FilterScript("js", script));
-        } else {
+        else
             filterScript(null);
-        }
 
         return this;
     }
 
     public String jsFilterScript() {
-        if (filterScript != null && "js".equals(filterScript.languageIdentifier())) {
+        if (filterScript != null && "js".equals(filterScript.languageIdentifier()))
             return filterScript.source();
-        } else {
-            if (filterScript == null && jsFilterScript != null) {
-                return jsFilterScript;
-            } else {
-                return null;
-            }
-        }
+        else if (filterScript == null && jsFilterScript != null)
+            return jsFilterScript;
+        else
+            return null;
     }
 
     @NonNull
@@ -140,9 +129,8 @@ public class FactSpec {
 
         if (!annotationSpec.type().isEmpty()) {
             factSpec.type(annotationSpec.type());
-        } else {
+        } else
             factSpec.type(clazz.getSimpleName());
-        }
 
         factSpec.version(annotationSpec.version());
 
