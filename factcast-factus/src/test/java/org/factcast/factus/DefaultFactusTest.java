@@ -802,7 +802,7 @@ class DefaultFactusTest {
                     .thenReturn(subscription);
 
             // RUN
-            underTest.subscribe(subscribedProjection);
+            underTest.subscribeAndBlock(subscribedProjection);
 
             // ASSERT
             verify(fc)
@@ -888,8 +888,8 @@ class DefaultFactusTest {
                     .close();
 
             // RUN
-            underTest.subscribe(subscribedProjection);
-            underTest.subscribe(subscribedProjection);
+            underTest.subscribeAndBlock(subscribedProjection);
+            underTest.subscribeAndBlock(subscribedProjection);
 
             // ASSERT
             // make sure when closing, managed objects are released
