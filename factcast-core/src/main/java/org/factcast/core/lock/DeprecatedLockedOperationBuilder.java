@@ -15,12 +15,15 @@
  */
 package org.factcast.core.lock;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
-import org.jetbrains.annotations.NotNull;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +42,7 @@ public final class DeprecatedLockedOperationBuilder {
         return new LockedOperationBuilder(store, toFactSpecs(ids));
     }
 
-    @NotNull
+    @NonNull
     private List<FactSpec> toFactSpecs(LinkedList<UUID> ids) {
         return ids.stream().map(i -> FactSpec.ns(ns).aggId(i)).collect(Collectors.toList());
     }

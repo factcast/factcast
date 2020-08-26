@@ -18,7 +18,11 @@ package org.factcast.factus.lock;
 import static org.factcast.factus.metrics.TagKeys.CLASS;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -36,15 +40,19 @@ import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.metrics.CountedEvent;
 import org.factcast.factus.metrics.FactusMetrics;
-import org.factcast.factus.projection.*;
+import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.projection.AggregateUtil;
+import org.factcast.factus.projection.ManagedProjection;
+import org.factcast.factus.projection.Projection;
+import org.factcast.factus.projection.SnapshotProjection;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -97,12 +105,12 @@ public class Locked<I extends Projection> {
                             val p = update(projection);
                             List<Supplier<Fact>> toPublish = Collections.synchronizedList(
                                     new LinkedList<>());
-                            RetryableTransaction lockedFactus = createTransaction(factus,
+                            RetryableTransaction txWithLockOnSpecs = createTransaction(factus,
                                     toPublish);
 
                             try {
                                 InLockedOperation.enterLockedOperation();
-                                tx.accept(p, lockedFactus);
+                                tx.accept(p, txWithLockOnSpecs);
                                 return Attempt
                                         .publish(
                                                 toPublish.stream()
