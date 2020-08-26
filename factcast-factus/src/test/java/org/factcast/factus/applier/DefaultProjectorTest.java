@@ -47,7 +47,7 @@ class DefaultProjectorTest {
     private final DefaultEventSerializer eventSerializer = new DefaultEventSerializer(FactCastJson
             .mapper());
 
-    private EventConverter eventConverter = new EventConverter(eventSerializer);
+    private final EventConverter eventConverter = new EventConverter(eventSerializer);
 
     @Nested
     class WhenApplying {
@@ -132,6 +132,7 @@ class DefaultProjectorTest {
         }
 
         @Test
+        // TODO usr: prevent this
         void applyWithStaticSubclass() {
             // INIT
             UUID aggregateId = UUID.randomUUID();

@@ -15,26 +15,13 @@
  */
 package org.factcast.factus;
 
-import static java.util.UUID.randomUUID;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static java.util.UUID.*;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -67,15 +54,9 @@ import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.google.common.collect.Sets;
@@ -324,7 +305,7 @@ class DefaultFactusTest {
         }
 
         @Test
-        void batchExecutedTwice() {
+        void batchFailsIfExecutedTwice() {
             // INIT
             PublishBatch batch = underTest.batch();
             batch.add(new SimpleEventObject("a"));
@@ -423,9 +404,9 @@ class DefaultFactusTest {
             SimpleProjection managedProjection = new SimpleProjection();
 
             when(ehFactory.create(managedProjection))
-                    .thenReturn(eventApplier);
+                    .thenReturn(projector);
 
-            when(eventApplier.createFactSpecs())
+            when(projector.createFactSpecs())
                     .thenReturn(specs);
 
             // RUN
@@ -436,7 +417,7 @@ class DefaultFactusTest {
             verify(ehFactory)
                     .create(managedProjection);
 
-            verify(eventApplier)
+            verify(projector)
                     .createFactSpecs();
 
             assertThat(locked.factus())
@@ -461,9 +442,9 @@ class DefaultFactusTest {
             mockSnapFactory();
 
             when(ehFactory.create(any(PersonAggregate.class)))
-                    .thenReturn(eventApplier);
+                    .thenReturn(projector);
 
-            when(eventApplier.createFactSpecs())
+            when(projector.createFactSpecs())
                     .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
@@ -478,7 +459,7 @@ class DefaultFactusTest {
             verify(ehFactory, atLeast(1))
                     .create(any());
 
-            verify(eventApplier, atLeast(1))
+            verify(projector, atLeast(1))
                     .createFactSpecs();
 
             assertThat(locked.factus())
@@ -490,7 +471,7 @@ class DefaultFactusTest {
             // this is important; if they are not the specs for the given
             // projection, the lock would be broken
             assertThat(locked.specs())
-                    .isEqualTo(specs);
+                    .isEqualTo(projector.createFactSpecs());
         }
 
         @Test
@@ -499,9 +480,9 @@ class DefaultFactusTest {
             mockSnapFactory();
 
             when(ehFactory.create(any(ConcatCodesProjection.class)))
-                    .thenReturn(eventApplier);
+                    .thenReturn(projector);
 
-            when(eventApplier.createFactSpecs())
+            when(projector.createFactSpecs())
                     .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
@@ -515,7 +496,7 @@ class DefaultFactusTest {
             verify(ehFactory, atLeast(1))
                     .create(any());
 
-            verify(eventApplier, atLeast(1))
+            verify(projector, atLeast(1))
                     .createFactSpecs();
 
             assertThat(locked.factus())
@@ -536,7 +517,7 @@ class DefaultFactusTest {
     private SnapshotSerializer snapshotSerializer;
 
     @Mock
-    private Projector eventApplier;
+    private Projector projector;
 
     @Captor
     ArgumentCaptor<Fact> factCaptor;
@@ -563,9 +544,9 @@ class DefaultFactusTest {
                     .thenReturn(Optional.empty());
 
             when(ehFactory.create(any(ConcatCodesProjection.class)))
-                    .thenReturn(eventApplier);
+                    .thenReturn(projector);
 
-            when(eventApplier.createFactSpecs())
+            when(projector.createFactSpecs())
                     .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
@@ -591,9 +572,9 @@ class DefaultFactusTest {
                     .thenReturn(Optional.of(snapshot));
 
             when(ehFactory.create(any(ConcatCodesProjection.class)))
-                    .thenReturn(eventApplier);
+                    .thenReturn(projector);
 
-            when(eventApplier.createFactSpecs())
+            when(projector.createFactSpecs())
                     .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
@@ -626,7 +607,7 @@ class DefaultFactusTest {
 
             // capture projection for later...
             when(ehFactory.create(projectionCaptor.capture()))
-                    .thenReturn(eventApplier);
+                    .thenReturn(projector);
 
             // make sure when event applier is asked to apply events, to wire
             // them through
@@ -639,10 +620,10 @@ class DefaultFactusTest {
 
                 return Void.TYPE;
             })
-                    .when(eventApplier)
+                    .when(projector)
                     .apply(factCaptor.capture());
 
-            when(eventApplier.createFactSpecs())
+            when(projector.createFactSpecs())
                     .thenReturn(specs);
 
             when(fc.subscribe(any(), factObserverCaptor.capture()))
@@ -678,7 +659,7 @@ class DefaultFactusTest {
 
             // capture projection for later...
             when(ehFactory.create(projectionCaptor.capture()))
-                    .thenReturn(eventApplier);
+                    .thenReturn(projector);
 
             // make sure when event applier is asked to apply events, to wire
             // them through
@@ -691,10 +672,10 @@ class DefaultFactusTest {
 
                 return Void.TYPE;
             })
-                    .when(eventApplier)
+                    .when(projector)
                     .apply(factCaptor.capture());
 
-            when(eventApplier.createFactSpecs())
+            when(projector.createFactSpecs())
                     .thenReturn(specs);
 
             when(fc.subscribe(any(), factObserverCaptor.capture()))
@@ -742,9 +723,9 @@ class DefaultFactusTest {
 
             // capture projection for later...
             when(ehFactory.create(projectionCaptor.capture()))
-                    .thenReturn(eventApplier);
+                    .thenReturn(projector);
 
-            when(eventApplier.createFactSpecs())
+            when(projector.createFactSpecs())
                     .thenReturn(specs);
 
             when(fc.subscribe(any(), factObserverCaptor.capture()))
@@ -784,7 +765,7 @@ class DefaultFactusTest {
                     .executeUpdate(any());
 
             // ... and then it should be applied to event applier
-            verify(eventApplier)
+            verify(projector)
                     .apply(mockedFact);
 
             // onCatchup()
@@ -1012,9 +993,9 @@ class DefaultFactusTest {
             mockSnapFactory();
 
             when(ehFactory.create(any(PersonAggregate.class)))
-                    .thenReturn(eventApplier);
+                    .thenReturn(projector);
 
-            when(eventApplier.createFactSpecs())
+            when(projector.createFactSpecs())
                     .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
@@ -1031,7 +1012,7 @@ class DefaultFactusTest {
             verify(fc)
                     .subscribe(any(), any());
 
-            verify(eventApplier, never())
+            verify(projector, never())
                     .apply(any());
         }
 
@@ -1047,9 +1028,9 @@ class DefaultFactusTest {
                     .thenReturn(Optional.of(snapshot));
 
             when(ehFactory.create(any(PersonAggregate.class)))
-                    .thenReturn(eventApplier);
+                    .thenReturn(projector);
 
-            when(eventApplier.createFactSpecs())
+            when(projector.createFactSpecs())
                     .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
@@ -1086,9 +1067,9 @@ class DefaultFactusTest {
                     .thenReturn(Optional.of(snapshot));
 
             when(ehFactory.create(any(PersonAggregate.class)))
-                    .thenReturn(eventApplier);
+                    .thenReturn(projector);
 
-            when(eventApplier.createFactSpecs())
+            when(projector.createFactSpecs())
                     .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
@@ -1109,10 +1090,10 @@ class DefaultFactusTest {
                 }
                 return Void.TYPE;
             })
-                    .when(eventApplier)
+                    .when(projector)
                     .apply(factCaptor.capture());
 
-            when(eventApplier.createFactSpecs())
+            when(projector.createFactSpecs())
                     .thenReturn(specs);
 
             when(fc.subscribe(any(), factObserverCaptor.capture()))
@@ -1148,9 +1129,9 @@ class DefaultFactusTest {
             mockSnapFactory();
 
             when(ehFactory.create(personAggregateCaptor.capture()))
-                    .thenReturn(eventApplier);
+                    .thenReturn(projector);
 
-            when(eventApplier.createFactSpecs())
+            when(projector.createFactSpecs())
                     .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
@@ -1164,10 +1145,10 @@ class DefaultFactusTest {
                 }
                 return Void.TYPE;
             })
-                    .when(eventApplier)
+                    .when(projector)
                     .apply(factCaptor.capture());
 
-            when(eventApplier.createFactSpecs())
+            when(projector.createFactSpecs())
                     .thenReturn(specs);
 
             when(fc.subscribe(any(), factObserverCaptor.capture()))

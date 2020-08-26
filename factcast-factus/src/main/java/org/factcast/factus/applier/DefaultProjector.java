@@ -55,7 +55,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
 
     private final Projection projection;
 
-    private static Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>> cache = new HashMap<>();
+    private static final Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>> cache = new HashMap<>();
 
     interface TargetObjectResolver extends Function<Projection, Object> {
     }
