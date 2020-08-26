@@ -15,14 +15,10 @@
  */
 package org.factcast.factus.projection;
 
-import java.util.List;
 import java.util.UUID;
-
-import org.factcast.core.spec.FactSpec;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.Setter;
 
 /**
@@ -45,9 +41,4 @@ public abstract class Aggregate implements SnapshotProjection {
     @Setter(value = AccessLevel.PACKAGE)
     private UUID aggregateId;
 
-    @Override
-    public @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
-        specsAsDiscovered.forEach(fs -> fs.aggId(aggregateId));
-        return specsAsDiscovered;
-    }
 }
