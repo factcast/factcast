@@ -18,7 +18,11 @@ package org.factcast.core.subscription;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -27,7 +31,6 @@ import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
-import org.jetbrains.annotations.NotNull;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -66,7 +69,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
         final AtomicLong threadCount = new AtomicLong(0);
 
         @Override
-        public Thread newThread(@NotNull @NonNull Runnable r) {
+        public Thread newThread(@NonNull Runnable r) {
             Thread thread = new Thread(r);
             thread.setDaemon(true);
             thread.setName("factcast-recon-sub-wrapper-" + threadCount.incrementAndGet());

@@ -15,13 +15,26 @@
  */
 package org.factcast.factus;
 
-import static java.util.UUID.*;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static java.util.UUID.randomUUID;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -54,9 +67,15 @@ import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
-import org.mockito.*;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.google.common.collect.Sets;
@@ -101,6 +120,9 @@ class DefaultFactusTest {
 
     @Captor
     ArgumentCaptor<FactObserver> factObserverCaptor;
+
+    @Mock
+    List<Specification> specs;
 
     @Test
     void testToFact() {
@@ -302,6 +324,23 @@ class DefaultFactusTest {
         }
 
         @Test
+        void batchExecutedTwice() {
+            // INIT
+            PublishBatch batch = underTest.batch();
+            batch.add(new SimpleEventObject("a"));
+
+            // should be fine
+            batch.execute();
+
+            // RUN
+            // execute batch a second time without adding anzthing
+            assertThatThrownBy(batch::execute)
+                    // ASSERT
+                    .isExactlyInstanceOf(IllegalStateException.class)
+                    .hasMessage("Has already been executed");
+        }
+
+        @Test
         void batchAbortedWithErrorMessage() {
             assertThatThrownBy(() -> {
                 // RUN
@@ -383,10 +422,9 @@ class DefaultFactusTest {
             // INIT
             SimpleProjection managedProjection = new SimpleProjection();
 
-            when(ehFactory.create(any(SimpleProjection.class)))
+            when(ehFactory.create(managedProjection))
                     .thenReturn(eventApplier);
 
-            List specs = mock(List.class);
             when(eventApplier.createFactSpecs())
                     .thenReturn(specs);
 
@@ -410,6 +448,9 @@ class DefaultFactusTest {
             assertThat(locked.projection())
                     .isEqualTo(managedProjection);
 
+            // this is important; if they are not the specs for the given
+            // projection,
+            // the lock would be broken
             assertThat(locked.specs())
                     .isEqualTo(specs);
         }
@@ -423,14 +464,15 @@ class DefaultFactusTest {
                     .thenReturn(eventApplier);
 
             when(eventApplier.createFactSpecs())
-                    .thenReturn(mock(List.class));
+                    .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
                     .thenReturn(mock(Subscription.class));
 
             // RUN
+            UUID aggId = randomUUID();
             Locked<PersonAggregate> locked = underTest
-                    .withLockOn(PersonAggregate.class, UUID.randomUUID());
+                    .withLockOn(PersonAggregate.class, aggId);
 
             // ASSERT
             verify(ehFactory, atLeast(1))
@@ -444,6 +486,11 @@ class DefaultFactusTest {
 
             assertThat(locked.fc())
                     .isEqualTo(fc);
+
+            // this is important; if they are not the specs for the given
+            // projection, the lock would be broken
+            assertThat(locked.specs())
+                    .isEqualTo(specs);
         }
 
         @Test
@@ -455,7 +502,7 @@ class DefaultFactusTest {
                     .thenReturn(eventApplier);
 
             when(eventApplier.createFactSpecs())
-                    .thenReturn(mock(List.class));
+                    .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
                     .thenReturn(mock(Subscription.class));
@@ -476,6 +523,12 @@ class DefaultFactusTest {
 
             assertThat(locked.fc())
                     .isEqualTo(fc);
+
+            // this is important; if they are not the specs for the given
+            // projection,
+            // the lock would be broken
+            assertThat(locked.specs())
+                    .isEqualTo(specs);
         }
     }
 
@@ -513,7 +566,7 @@ class DefaultFactusTest {
                     .thenReturn(eventApplier);
 
             when(eventApplier.createFactSpecs())
-                    .thenReturn(mock(List.class));
+                    .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
                     .thenReturn(mock(Subscription.class));
@@ -541,7 +594,7 @@ class DefaultFactusTest {
                     .thenReturn(eventApplier);
 
             when(eventApplier.createFactSpecs())
-                    .thenReturn(mock(List.class));
+                    .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
                     .thenReturn(mock(Subscription.class));
@@ -590,7 +643,7 @@ class DefaultFactusTest {
                     .apply(factCaptor.capture());
 
             when(eventApplier.createFactSpecs())
-                    .thenReturn(mock(List.class));
+                    .thenReturn(specs);
 
             when(fc.subscribe(any(), factObserverCaptor.capture()))
                     .thenAnswer(inv -> {
@@ -642,7 +695,7 @@ class DefaultFactusTest {
                     .apply(factCaptor.capture());
 
             when(eventApplier.createFactSpecs())
-                    .thenReturn(mock(List.class));
+                    .thenReturn(specs);
 
             when(fc.subscribe(any(), factObserverCaptor.capture()))
                     .thenAnswer(inv -> {
@@ -692,7 +745,7 @@ class DefaultFactusTest {
                     .thenReturn(eventApplier);
 
             when(eventApplier.createFactSpecs())
-                    .thenReturn(mock(List.class));
+                    .thenReturn(specs);
 
             when(fc.subscribe(any(), factObserverCaptor.capture()))
                     .thenReturn(mock(Subscription.class));
@@ -962,7 +1015,7 @@ class DefaultFactusTest {
                     .thenReturn(eventApplier);
 
             when(eventApplier.createFactSpecs())
-                    .thenReturn(mock(List.class));
+                    .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
                     .thenReturn(mock(Subscription.class));
@@ -997,7 +1050,7 @@ class DefaultFactusTest {
                     .thenReturn(eventApplier);
 
             when(eventApplier.createFactSpecs())
-                    .thenReturn(mock(List.class));
+                    .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
                     .thenReturn(mock(Subscription.class));
@@ -1036,7 +1089,7 @@ class DefaultFactusTest {
                     .thenReturn(eventApplier);
 
             when(eventApplier.createFactSpecs())
-                    .thenReturn(mock(List.class));
+                    .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
                     .thenReturn(mock(Subscription.class));
@@ -1060,7 +1113,7 @@ class DefaultFactusTest {
                     .apply(factCaptor.capture());
 
             when(eventApplier.createFactSpecs())
-                    .thenReturn(mock(List.class));
+                    .thenReturn(specs);
 
             when(fc.subscribe(any(), factObserverCaptor.capture()))
                     .thenAnswer(inv -> {
@@ -1098,7 +1151,7 @@ class DefaultFactusTest {
                     .thenReturn(eventApplier);
 
             when(eventApplier.createFactSpecs())
-                    .thenReturn(mock(List.class));
+                    .thenReturn(specs);
 
             when(fc.subscribe(any(), any()))
                     .thenReturn(mock(Subscription.class));
@@ -1115,7 +1168,7 @@ class DefaultFactusTest {
                     .apply(factCaptor.capture());
 
             when(eventApplier.createFactSpecs())
-                    .thenReturn(mock(List.class));
+                    .thenReturn(specs);
 
             when(fc.subscribe(any(), factObserverCaptor.capture()))
                     .thenAnswer(inv -> {
