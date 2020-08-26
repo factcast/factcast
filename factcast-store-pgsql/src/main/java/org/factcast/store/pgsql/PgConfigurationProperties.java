@@ -202,7 +202,7 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
         if (integrationTestMode) {
             log.warn(
                     "**** You are running in INTEGRATION TEST MODE. If you see this in production, "
-                            + "this'd be a good time to panic. (See " + PROPERTIES_PREFIX
+                            + "this would be a good time to panic. (See " + PROPERTIES_PREFIX
                             + ".integrationTestMode) ****");
         }
     }
