@@ -256,12 +256,12 @@ public class DefaultFactus implements Factus {
     @SneakyThrows
     public <A extends Aggregate> Optional<A> find(Class<A> aggregateClass, UUID aggregateId) {
         return factusMetrics.timed(TimedOperation.FIND_DURATION, Tags.of(Tag.of(LOCKED, FALSE), Tag
-                .of(CLASS, aggregateClass.getCanonicalName())), () -> _find(aggregateClass,
+                .of(CLASS, aggregateClass.getCanonicalName())), () -> doFind(aggregateClass,
                         aggregateId));
     }
 
     @SneakyThrows
-    private <A extends Aggregate> Optional<A> _find(Class<A> aggregateClass, UUID aggregateId) {
+    private <A extends Aggregate> Optional<A> doFind(Class<A> aggregateClass, UUID aggregateId) {
         assertNotClosed();
 
         val ser = snapFactory.retrieveSerializer(aggregateClass);
