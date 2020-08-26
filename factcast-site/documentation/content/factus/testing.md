@@ -14,6 +14,8 @@ identifier = "testing"
 
 +++
 
+//TODO needs to be updated
+
 
 Factcast comes with a module 'factcast-test' that includes a Junit5 extension that you can use to modify namespaces dynamically during testing.
 The idea is, that in integration tests, you may want to start every test method with no preexisting events. That would normally involve removing all events from factcast to create a clean fixture.
