@@ -19,14 +19,13 @@ import java.util.UUID;
 
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.AggregateUtil;
 
 import lombok.Getter;
 
 class ComplexAggregate extends Aggregate {
 
     ComplexAggregate(UUID aggregateId) {
-        AggregateUtil.aggregateId(this, aggregateId);
+        super(aggregateId);
     }
 
     @Getter

@@ -51,8 +51,8 @@ import io.micrometer.core.instrument.Tags;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 @RequiredArgsConstructor
 @Slf4j
