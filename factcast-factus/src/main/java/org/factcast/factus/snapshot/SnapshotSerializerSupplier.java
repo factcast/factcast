@@ -15,7 +15,9 @@
  */
 package org.factcast.factus.snapshot;
 
-import java.util.Set;
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer.DefaultSnapshotSerializer;
@@ -25,14 +27,18 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class SnapshotSerializerSupplier {
-    private static final org.factcast.factus.serializer.SnapshotSerializer defaultSerializer = new DefaultSnapshotSerializer();
 
     @NonNull
-    private final Set<org.factcast.factus.serializer.SnapshotSerializer> registeredSerializers;
+    private final SnapshotSerializer defaultSerializer;
 
-    public SnapshotSerializerSupplier(
-            @NonNull Set<org.factcast.factus.serializer.SnapshotSerializer> registeredSerializers) {
-        this.registeredSerializers = registeredSerializers;
+    private final Map<Class<?>, Object> cache = new HashMap<>();
+
+    public SnapshotSerializerSupplier(@NonNull SnapshotSerializer defaultSerializer) {
+        this.defaultSerializer = defaultSerializer;
+        if (!(defaultSerializer instanceof DefaultSnapshotSerializer)) {
+            log.info("Using {} as a default SnapshotSerializer", defaultSerializer.getClass()
+                    .getSimpleName());
+        }
     }
 
     public org.factcast.factus.serializer.SnapshotSerializer retrieveSerializer(
@@ -42,15 +48,17 @@ public class SnapshotSerializerSupplier {
             return defaultSerializer;
         } else {
             Class<? extends SnapshotSerializer> ser = classAnnotation.value();
-            return registeredSerializers.stream()
-                    .filter(ser::isInstance)
-                    .findFirst()
-                    .orElseGet(() -> {
-                        log.error(
-                                "Unregistered serializer requested: {}. Falling back to default. ",
-                                ser);
-                        return defaultSerializer;
-                    });
+            return (SnapshotSerializer) cache.computeIfAbsent(ser,
+                    SnapshotSerializerSupplier::instanciate);
+        }
+    }
+
+    private static <C> C instanciate(Class<C> clazz) {
+        try {
+            return clazz.getDeclaredConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException
+                | NoSuchMethodException e) {
+            throw new IllegalStateException("Cannot create instance from " + clazz, e);
         }
     }
 

@@ -15,8 +15,6 @@
  */
 package org.factcast.spring.boot.autoconfigure.highlevel;
 
-import java.util.Set;
-
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.SnapshotCache;
@@ -27,6 +25,7 @@ import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.serializer.SnapshotSerializer;
+import org.factcast.factus.serializer.SnapshotSerializer.DefaultSnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
@@ -34,14 +33,20 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Generated;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @ConditionalOnClass(Factus.class)
 @ConditionalOnMissingBean(Factus.class)
 @Generated
+@Slf4j
+@Import(BinarySnapshotSerializerAutoConfiguration.class)
 public class FactusAutoConfiguration {
 
     @Bean
@@ -55,8 +60,15 @@ public class FactusAutoConfiguration {
     }
 
     @Bean
-    public SnapshotSerializerSupplier snapshotSerializerSupplier(Set<SnapshotSerializer> ser) {
+    public SnapshotSerializerSupplier snapshotSerializerSupplier(SnapshotSerializer ser) {
         return new SnapshotSerializerSupplier(ser);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    @Order(Ordered.LOWEST_PRECEDENCE)
+    public SnapshotSerializer snapshotSerializer() {
+        return new DefaultSnapshotSerializer();
     }
 
     @Bean
