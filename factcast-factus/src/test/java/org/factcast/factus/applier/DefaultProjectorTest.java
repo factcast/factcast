@@ -76,6 +76,29 @@ class DefaultProjectorTest {
         }
 
         @Test
+        void applySimpleViaProjectorFactory() {
+            // INIT
+            UUID aggregateId = UUID.randomUUID();
+            SimpleEvent event = new SimpleEvent(Maps.newHashMap("Some key", "Some value"),
+                    aggregateId, "abc");
+
+            Fact fact = eventConverter.toFact(event);
+
+            SimpleProjection projection = new SimpleProjection();
+
+            DefaultProjectorFactory factory = new DefaultProjectorFactory(eventSerializer);
+            Projector<SimpleProjection> underTest = factory.create(projection);
+
+            // RUN
+            underTest.apply(fact);
+
+            // ASSERT
+            assertThat(projection.recordedEvent())
+                    .isEqualTo(event);
+
+        }
+
+        @Test
         void applyWithSubclass() {
             // INIT
             UUID aggregateId = UUID.randomUUID();
@@ -105,6 +128,30 @@ class DefaultProjectorTest {
 
             assertThat(projection.recordedEvent2())
                     .isEqualTo(event2);
+
+        }
+
+        @Test
+        void applyWithStaticSubclass() {
+            // INIT
+            UUID aggregateId = UUID.randomUUID();
+            SimpleEvent event = new SimpleEvent(Maps.newHashMap("Some key", "Some value"),
+                    aggregateId, "abc");
+
+            Fact fact = eventConverter.toFact(event);
+
+            SimpleProjectionWithStaticSubclass projection = new SimpleProjectionWithStaticSubclass();
+
+            DefaultProjector<SimpleProjectionWithStaticSubclass> underTest = new DefaultProjector<>(
+                    eventSerializer,
+                    projection);
+
+            // RUN
+            underTest.apply(fact);
+
+            // ASSERT
+            assertThat(projection.recordedEvent())
+                    .isEqualTo(event);
 
         }
 
@@ -308,15 +355,27 @@ class DefaultProjectorTest {
         }
 
         @Test
-        void handlerWithoutEventProjection() {
+        void handlerWithoutParamters() {
+            // INIT / RUN
+            assertThatThrownBy(() -> new DefaultProjector<>(
+                    eventSerializer,
+                    new HandlerWithoutParameters()))
+                            // ASSERT
+                            .isInstanceOf(UnsupportedOperationException.class)
+                            .hasMessageStartingWith(
+                                    "Handler methods must have at least one parameter");
+        }
+
+        @Test
+        void handlerWithoutEventObjectParameters() {
             // INIT / RUN
             assertThatThrownBy(() -> new DefaultProjector<>(
                     eventSerializer,
                     new HandlerWithoutEventProjection()))
                             // ASSERT
-                            .isInstanceOf(UnsupportedOperationException.class)
+                            .isInstanceOf(IllegalArgumentException.class)
                             .hasMessageStartingWith(
-                                    "Handler methods must have at least one parameter");
+                                    "Cannot introspect FactSpec from");
         }
 
         @Test
@@ -415,10 +474,21 @@ class DefaultProjectorTest {
     }
 
     @Value
-    static class HandlerWithoutEventProjection implements Projection {
+    static class HandlerWithoutParameters implements Projection {
 
         @Handler
         void handle() {
+            // nothing
+        }
+    }
+
+    @Value
+    static class HandlerWithoutEventProjection implements Projection {
+
+        // UUID is valid parameter, but then we would have to
+        // use @HandlerFor in order to get the fact specs
+        @Handler
+        void handle(UUID factId) {
             // nothing
         }
     }
