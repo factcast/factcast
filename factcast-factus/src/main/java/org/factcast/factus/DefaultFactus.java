@@ -147,19 +147,37 @@ public class DefaultFactus implements Factus {
     }
 
     @Override
-    public <P extends SubscribedProjection> Subscription subscribe(
+    public <P extends SubscribedProjection> Subscription subscribeAndBlock(
             @NonNull P subscribedProjection) {
 
         assertNotClosed();
         InLockedOperation.assertNotInLockedOperation();
 
-        Duration INTERVAL = Duration.ofMinutes(5); // TODO needed?
+        Duration INTERVAL = Duration.ofMinutes(5); // TODO should be a property?
         while (!closed.get()) {
-            if (subscribedProjection.acquireWriteToken(INTERVAL) != null) {
-                Subscription e = doSubscribe(subscribedProjection);
-                managedObjects.add(e);
-                // TODO close and release WT on Error
-                return e;
+            AutoCloseable token = subscribedProjection.acquireWriteToken(INTERVAL);
+            if (token != null) {
+                log.info("Acquired writer token for {}", subscribedProjection.getClass());
+                Subscription subscription = doSubscribe(subscribedProjection);
+                // close token & subscription on shutdown
+                managedObjects.add(new AutoCloseable() {
+                    @Override
+                    public void close() throws Exception {
+                        tryClose(subscription);
+                        tryClose(token);
+                    }
+
+                    private void tryClose(AutoCloseable c) {
+                        try {
+                            c.close();
+                        } catch (Exception ignore) {
+                        }
+                    }
+                });
+                return subscription;
+            } else {
+                log.trace("failed to acquire writer token for {}. Will keep trying.",
+                        subscribedProjection.getClass());
             }
         }
         throw new IllegalStateException("Already closed");
