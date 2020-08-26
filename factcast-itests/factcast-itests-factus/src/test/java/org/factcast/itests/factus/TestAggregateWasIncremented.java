@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Specification(ns = "test")
+@Specification(ns = "$")
 public class TestAggregateWasIncremented implements EventObject {
     UUID aggregateId;
 

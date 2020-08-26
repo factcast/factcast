@@ -80,8 +80,9 @@ public interface FactCast extends ReadFactCast {
     @Deprecated
     DeprecatedLockedOperationBuilder lock(@NonNull String ns);
 
-    // removed from interface as this breaks the updated locking code and
-    // was a bad idea in the first place. See migration guide (0.3.0)
+    // TODO maybe must be removed from interface as this breaks the updated
+    // locking code and
+    // was a bad idea in the first place
     //
     // DeprecatedLockedOperationBuilder lockGlobally();
 }
