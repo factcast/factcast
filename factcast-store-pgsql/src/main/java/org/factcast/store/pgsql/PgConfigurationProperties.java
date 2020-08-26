@@ -200,9 +200,10 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
     @Override
     public void afterPropertiesSet() throws Exception {
         if (integrationTestMode) {
-            log.warn("You are running in **INTEGRATION TEST MODE**. If you see this in production, "
-                    + "this'd be a good time to panic. (See " + PROPERTIES_PREFIX
-                    + ".integrationTestMode)");
+            log.warn(
+                    "**** You are running in INTEGRATION TEST MODE. If you see this in production, "
+                            + "this'd be a good time to panic. (See " + PROPERTIES_PREFIX
+                            + ".integrationTestMode) ****");
         }
     }
 }
