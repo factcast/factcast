@@ -38,8 +38,10 @@ import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.lock.LockedOperationAbortedException;
+import org.factcast.test.FactCastExtension;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
@@ -67,6 +69,7 @@ import lombok.val;
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureTestDatabase(replace = Replace.ANY)
 @Sql(scripts = "classpath:/test-setup.sql")
+@ExtendWith(FactCastExtension.class)
 public class FactusClientTest {
 
     static final Network _docker_network = Network.newNetwork();
@@ -93,6 +96,8 @@ public class FactusClientTest {
                     .withLogConsumer(new Slf4jLogConsumer(log))
                     .waitingFor(new HostPortWaitStrategy()
                             .withStartupTimeout(Duration.ofSeconds(180)));
+
+    private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
 
     @BeforeAll
     public static void startContainers() throws InterruptedException {
@@ -163,7 +168,7 @@ public class FactusClientTest {
 
         SubscribedUserNames subscribedProjection = new SubscribedUserNames();
 
-        ec.publish(new SubscribedUserNames.UserCreated(randomUUID(),
+        ec.publish(new UserCreated(randomUUID(),
                 "preexisting"));
 
         Subscription subscription = ec.subscribe(subscribedProjection);
@@ -172,19 +177,19 @@ public class FactusClientTest {
         assertThat(subscribedProjection.names())
                 .hasSize(1);
 
-        ec.publish(new SubscribedUserNames.UserCreated(randomUUID(),
+        ec.publish(new UserCreated(randomUUID(),
                 "Peter"));
 
-        Thread.sleep(500);
+        Thread.sleep(WAIT_TIME_FOR_ASYNC_FACT_DELIVERY);
 
         assertThat(subscribedProjection.names())
                 .hasSize(2)
                 .contains("preexisting")
                 .contains("Peter");
 
-        ec.publish(new SubscribedUserNames.UserCreated(randomUUID(),
+        ec.publish(new UserCreated(randomUUID(),
                 "John"));
-        Thread.sleep(500);
+        Thread.sleep(WAIT_TIME_FOR_ASYNC_FACT_DELIVERY);
 
         assertThat(subscribedProjection.names())
                 .hasSize(3)
