@@ -16,6 +16,7 @@
 package org.factcast.test;
 
 import java.sql.DriverManager;
+import java.util.Properties;
 
 import org.testcontainers.containers.PostgreSQLContainer;
 
@@ -26,8 +27,13 @@ public class PostgresEraser {
     @SneakyThrows
     static void wipeAllFactCastDataDataFromPostgres(PostgreSQLContainer<?> pg) {
         val url = pg.getJdbcUrl();
+
+        Properties p = new Properties();
+        p.put("user", pg.getUsername());
+        p.put("password", pg.getPassword());
+
         try (
-                val con = DriverManager.getConnection(url.toString());
+                val con = DriverManager.getConnection(url.toString(), p);
                 val st = con.createStatement();) {
             st.execute("TRUNCATE fact");
             st.execute("TRUNCATE tokenstore");
