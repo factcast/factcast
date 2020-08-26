@@ -28,10 +28,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.SnapshotProjection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import lombok.NonNull;
 
+@ExtendWith(MockitoExtension.class)
 class ProjectionSnapshotRepositoryTest {
 
     @Test
@@ -73,4 +79,37 @@ class ProjectionSnapshotRepositoryTest {
                 .get();
     }
 
+    @Nested
+    class WhenFindingLatest {
+        @Mock
+        private @NonNull Class<? extends SnapshotProjection> type;
+
+        @BeforeEach
+        void setup() {
+        }
+    }
+
+    @Nested
+    class WhenPuting {
+        private final UUID STATE = UUID.randomUUID();
+
+        @Mock
+        private SnapshotProjection projection;
+
+        @BeforeEach
+        void setup() {
+        }
+    }
+
+    @Nested
+    class WhenPutingBlocking {
+        private final UUID STATE = UUID.randomUUID();
+
+        @Mock
+        private SnapshotProjection projection;
+
+        @BeforeEach
+        void setup() {
+        }
+    }
 }
