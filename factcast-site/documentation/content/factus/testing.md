@@ -23,7 +23,7 @@ In order to use the extension you either need to enable [Junit-Extension-Autodet
 ``` 
 on your integration Test Class.
 
-The easy way to get the full package by just extending AbstractIntegrationTest:
+The easy way to get the full package is to just extend AbstractIntegrationTest:
 
 ```java
 public class MyIntegrationTest extends AbstractFactcastIntegrationTest { // ...
