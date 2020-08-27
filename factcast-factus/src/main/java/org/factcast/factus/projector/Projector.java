@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.metrics;
+package org.factcast.factus.projector;
 
-public class TagKeys {
+import java.util.List;
 
-    public static final String CLASS = "class";
+import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.factus.projection.Projection;
 
-    public static final String LOCKED = "locked";
+public interface Projector<A extends Projection> {
+    void apply(Fact element);
 
-    public static final String TRUE = "true";
-
-    public static final String FALSE = "false";
-
-    public static final String TAG_NAME = "name";
+    List<FactSpec> createFactSpecs();
 }

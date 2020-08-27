@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.metrics;
+package org.factcast.factus.serializer;
 
-public class TagKeys {
+import org.factcast.factus.projection.SnapshotProjection;
 
-    public static final String CLASS = "class";
+public class MyDefaultSnapshotSerializer implements SnapshotSerializer {
+    @Override
+    public byte[] serialize(SnapshotProjection a) {
+        return new byte[0];
+    }
 
-    public static final String LOCKED = "locked";
+    @Override
+    public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
+        return null;
+    }
 
-    public static final String TRUE = "true";
-
-    public static final String FALSE = "false";
-
-    public static final String TAG_NAME = "name";
+    @Override
+    public boolean includesCompression() {
+        return false;
+    }
 }

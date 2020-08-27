@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.metrics;
+package org.factcast.factus.lock;
 
-public class TagKeys {
+import java.util.HashSet;
+import java.util.Set;
 
-    public static final String CLASS = "class";
+import org.factcast.factus.Handler;
+import org.factcast.factus.projection.LocalManagedProjection;
 
-    public static final String LOCKED = "locked";
+public class NamesProjection extends LocalManagedProjection {
 
-    public static final String TRUE = "true";
+    private final Set<String> names = new HashSet<>();
 
-    public static final String FALSE = "false";
+    public boolean contains(String name) {
+        return names.contains(name);
+    }
 
-    public static final String TAG_NAME = "name";
+    @Handler
+    void handle(UserCreated evt) {
+        names.add(evt.name());
+    }
 }

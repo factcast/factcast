@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.applier;
+package org.factcast.factus.projector;
 
-import java.util.List;
+import org.factcast.factus.Handler;
+import org.factcast.factus.projection.LocalManagedProjection;
 
-import org.factcast.core.Fact;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.factus.projection.Projection;
+import lombok.Getter;
 
-public interface Projector<A extends Projection> {
-    void apply(Fact element);
+class SimpleProjectionWithStaticSubclass extends LocalManagedProjection {
 
-    List<FactSpec> createFactSpecs();
+    @Getter
+    private static SimpleEvent recordedEvent = null;
+
+    static class handlers {
+
+        @Handler
+        void apply(SimpleEvent foo) {
+            recordedEvent = foo;
+        }
+
+    }
 }

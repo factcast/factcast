@@ -13,17 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.metrics;
+package org.factcast.factus.projection;
 
-public class TagKeys {
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-    public static final String CLASS = "class";
+import java.util.UUID;
 
-    public static final String LOCKED = "locked";
+import org.junit.jupiter.api.Test;
 
-    public static final String TRUE = "true";
+class AggregateUtilTest {
 
-    public static final String FALSE = "false";
+    @Test
+    void aggregateIdCannotBeOverwritten() {
+        Aggregate aggregate = new Aggregate() {
+        };
 
-    public static final String TAG_NAME = "name";
+        // this should work
+        AggregateUtil.aggregateId(aggregate, UUID.randomUUID());
+
+        // this not
+        assertThatThrownBy(() -> AggregateUtil.aggregateId(aggregate, UUID.randomUUID()))
+                .hasMessageContaining("aggregateId is already set");
+    }
 }

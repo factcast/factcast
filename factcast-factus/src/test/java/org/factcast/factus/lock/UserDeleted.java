@@ -13,17 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.metrics;
+package org.factcast.factus.lock;
 
-public class TagKeys {
+import java.util.Set;
+import java.util.UUID;
 
-    public static final String CLASS = "class";
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
-    public static final String LOCKED = "locked";
+import com.google.common.collect.Sets;
 
-    public static final String TRUE = "true";
+import lombok.Value;
 
-    public static final String FALSE = "false";
+@Value
+@Specification(ns = "test")
+public class UserDeleted implements EventObject {
+    UUID aggId;
 
-    public static final String TAG_NAME = "name";
+    @Override
+    public Set<UUID> aggregateIds() {
+        return Sets.newHashSet(aggId);
+    }
 }

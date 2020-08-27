@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.metrics;
+package org.factcast.factus.projector;
 
-public class TagKeys {
+import lombok.NoArgsConstructor;
 
-    public static final String CLASS = "class";
+@NoArgsConstructor
+public class InvalidHandlerDefinition extends RuntimeException {
+    public InvalidHandlerDefinition(String msg) {
+        super(msg);
+    }
 
-    public static final String LOCKED = "locked";
-
-    public static final String TRUE = "true";
-
-    public static final String FALSE = "false";
-
-    public static final String TAG_NAME = "name";
+    public InvalidHandlerDefinition(String msg, Throwable e) {
+        super(msg, e);
+    }
 }
