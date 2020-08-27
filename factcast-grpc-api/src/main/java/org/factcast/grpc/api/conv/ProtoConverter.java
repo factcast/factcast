@@ -317,16 +317,6 @@ public class ProtoConverter {
                 .build();
     }
 
-    public MSG_OptionalSerial toProtoOptional(Long serialVersionUidOrNull) {
-        MSG_OptionalSerial.Builder ret = MSG_OptionalSerial.newBuilder();
-        if (serialVersionUidOrNull != null) {
-            ret.setPresent(true);
-            return ret.setSerial(serialVersionUidOrNull).build();
-        } else {
-            return ret.setPresent(false).build();
-        }
-    }
-
     public MSG_OptionalUuid toProtoOptional(UUID uuid) {
         MSG_OptionalUuid.Builder builder = MSG_OptionalUuid.newBuilder();
         if (uuid == null) {
