@@ -13,10 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.applier;
+package org.factcast.factus.lock;
 
-import org.factcast.factus.projection.Projection;
+import java.util.HashSet;
+import java.util.Set;
 
-public interface ProjectorFactory {
-    <A extends Projection> Projector<A> create(A projection);
+import org.factcast.factus.Handler;
+import org.factcast.factus.projection.SnapshotProjection;
+
+public class NamesSnapshotProjection implements SnapshotProjection {
+
+    private final Set<String> names = new HashSet<>();
+
+    public boolean contains(String name) {
+        return names.contains(name);
+    }
+
+    @Handler
+    void handle(UserCreated evt) {
+        names.add(evt.name());
+    }
 }

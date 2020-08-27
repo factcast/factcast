@@ -97,7 +97,6 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
     }
 
     // Locking
-    // TODO needed? Locked lockAggregateById(UUID first, UUID... others);
 
     /**
      * optimistically 'locks' on an aggregate.

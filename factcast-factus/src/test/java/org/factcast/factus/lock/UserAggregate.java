@@ -13,19 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.applier;
+package org.factcast.factus.lock;
 
-import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.projection.Projection;
+import org.factcast.factus.Handler;
+import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.projection.AggregateUtil;
 
-import lombok.RequiredArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@RequiredArgsConstructor
-public class DefaultProjectorFactory implements ProjectorFactory {
+@EqualsAndHashCode(callSuper = true)
+@Data
+@NoArgsConstructor
+public class UserAggregate extends Aggregate {
 
-    final EventSerializer deser;
+    private String name;
 
-    public <A extends Projection> Projector<A> create(A projection) {
-        return new DefaultProjector<>(deser, projection);
+    @Handler
+    void handle(UserCreated evt) {
+        AggregateUtil.aggregateId(this, evt.aggId());
+        this.name = evt.name();
     }
 }

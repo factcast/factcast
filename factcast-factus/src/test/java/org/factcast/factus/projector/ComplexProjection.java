@@ -13,17 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.metrics;
+package org.factcast.factus.projector;
 
-public class TagKeys {
+import org.factcast.factus.Handler;
+import org.factcast.factus.projection.LocalManagedProjection;
 
-    public static final String CLASS = "class";
+import lombok.Getter;
 
-    public static final String LOCKED = "locked";
+class ComplexProjection extends LocalManagedProjection {
 
-    public static final String TRUE = "true";
+    @Getter
+    private ComplexEvent recordedEvent = null;
 
-    public static final String FALSE = "false";
+    @Getter
+    private ComplexEvent2 recordedEvent2 = null;
 
-    public static final String TAG_NAME = "name";
+    class Nested {
+
+        @Handler
+        void apply(ComplexEvent foo) {
+            recordedEvent = foo;
+        }
+
+        @Handler
+        void apply2(ComplexEvent2 foo) {
+            recordedEvent2 = foo;
+        }
+    }
 }
