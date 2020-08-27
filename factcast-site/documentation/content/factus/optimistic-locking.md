@@ -10,7 +10,7 @@ creatoremail = "uwe@codesmell.de"
 
 parent = "factus-projections"
 identifier = "factus-optlock"
-weight = 100
+weight = 1000
 
 +++
 

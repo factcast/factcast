@@ -9,7 +9,7 @@ creatoremail = "uwe@codesmell.de"
 
 parent = "factus"
 identifier = "factus-publishing"
-weight = 2
+weight = 20
 
 +++
 

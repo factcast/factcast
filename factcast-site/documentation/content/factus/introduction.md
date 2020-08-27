@@ -9,7 +9,7 @@ creatoremail = "uwe@codesmell.de"
 
 parent = "factus"
 identifier = "factus-intro"
-weight = 1
+weight = 10
 
 +++
 
@@ -52,8 +52,7 @@ public interface EventObject {
 Now the payload of a Fact created from your Events will be, as you'd expect, the json-serialized form of the Event which is created by the `EventSerializer`.
 
 Factus ships with a default serializer for EventObjects. It uses Jackson and builds on a predefined ObjectMapper, if defined (otherwise just uses the internal FactCast-configured ObjectMapper).
-If, for some reason, you want to redefine this, you can control the serialization used with your EventObject by annotating it with `@SerializeUsing(MyFunkySerializer.class)`, where MyFunkySerializer has to 
-implement EventSerializer.
+If, for some reason, you want to redefine this, you can use/ provide your own EventSerializer.
 
-So, now that we have covered Facts and Events and their conversion, what to do with them? 
+As factus is optional, you'll first want to setup you project to use it. See [Factus Setup](../setup) 
 
