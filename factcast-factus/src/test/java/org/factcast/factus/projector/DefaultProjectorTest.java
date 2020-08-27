@@ -206,7 +206,7 @@ class DefaultProjectorTest {
     }
 
     @Nested
-    class whenCreatingFactSpec {
+    class WhenCreatingFactSpec {
 
         @Test
         void createSimple() {
@@ -317,7 +317,7 @@ class DefaultProjectorTest {
     }
 
     @Nested
-    class whenConstructingWithDefectiveProjection {
+    class WhenConstructingWithDefectiveProjection {
         @Test
         void duplicateHandler() {
             // INIT / RUN
@@ -397,6 +397,32 @@ class DefaultProjectorTest {
                             .hasMessageStartingWith("No handler methods discovered on");
         }
     }
+
+    @Nested
+    class WhenResolvingTargets {
+
+        @Test
+        void resolveTargetFromStaticClass() {
+            assertThat(DefaultProjector.resolveTargetObject(this, StaticClass.class))
+                    .isNotNull()
+                    .isInstanceOf(StaticClass.class);
+        }
+
+        @Test
+        void resolveTargetFromNonStaticClass() {
+            assertThat(DefaultProjector.resolveTargetObject(DefaultProjectorTest.this,
+                    NonStaticClass.class))
+                            .isNotNull()
+                            .isInstanceOf(NonStaticClass.class);
+        }
+
+    }
+
+    class NonStaticClass {
+    };
+
+    static class StaticClass {
+    };
 
     // Working handlers
 
