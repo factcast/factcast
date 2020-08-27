@@ -28,31 +28,6 @@ public class LockedOperationBuilderTest {
 
     final DeprecatedLockedOperationBuilder uut = new DeprecatedLockedOperationBuilder(mock(
             FactStore.class), "ns");
-    // TODO
-    //
-    // @Test
-    // public void testOn() {
-    //
-    // UUID id = UUID.randomUUID();
-    // OnBuilderStep on = uut.on(id);
-    // assertThat(on.ids()).hasSize(1).contains(id);
-    //
-    // UUID id2 = UUID.randomUUID();
-    // on = uut.on(id, id2);
-    // assertThat(on.ids()).hasSize(2).contains(id).contains(id2);
-    //
-    // assertThrows(NullPointerException.class, () -> uut.on(null));
-    // }
-    //
-    // @Test
-    // public void testOptimistic() {
-    // UUID id = new UUID(1, 2);
-    // WithOptimisticLock wol = uut.on(id).optimistic();
-    // assertThat(wol).isNotNull();
-    // assertThat(wol.ns()).isEqualTo("ns");
-    // assertThat(wol.factSpecs().get(0)).isEqualTo(id);
-    // assertThat(wol.factSpecs().size()).isEqualTo(1);
-    // }
 
     @Test
     public void testAttemptNullContracts() {
