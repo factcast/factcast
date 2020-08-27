@@ -10,7 +10,7 @@ creatoremail = "uwe@codesmell.de"
 
 parent = "factus-projections"
 identifier = "factus-snapshotting"
-weight = 6
+weight = 60
 
 +++
 
