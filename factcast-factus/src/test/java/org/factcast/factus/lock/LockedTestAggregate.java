@@ -15,16 +15,20 @@
  */
 package org.factcast.factus.lock;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
+import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.lock.LockedOperationBuilder;
 import org.factcast.core.spec.FactSpec;
@@ -36,6 +40,8 @@ import org.factcast.factus.projection.AggregateUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -74,8 +80,11 @@ class LockedTestAggregate {
     @Mock
     private StateToken noEvents;
 
-    @Mock
-    private StateToken firstEvent;
+    @Captor
+    private ArgumentCaptor<List<? extends Fact>> factListCaptor;
+
+    @Captor
+    private ArgumentCaptor<Optional<StateToken>> tokenCaptor;
 
     @BeforeEach
     void mockFactCast() {
@@ -116,6 +125,10 @@ class LockedTestAggregate {
                     }
                 });
 
+        Fact mockedUserDeletedFact = mock(Fact.class);
+        when(factus.toFact(any(UserDeleted.class)))
+                .thenReturn(mockedUserDeletedFact);
+
         // RUN
         underTest.attempt(businessCode);
 
@@ -130,7 +143,18 @@ class LockedTestAggregate {
                 .accept(any(), any());
         // ... and then we published things
         inOrder.verify(factStore)
-                .publishIfUnchanged(any(), any());
+                .publishIfUnchanged(factListCaptor.capture(), tokenCaptor.capture());
+
+        assertThat(factListCaptor.getValue())
+                .hasSize(1);
+
+        assertThat(factListCaptor.getValue().get(0))
+                .isEqualTo(mockedUserDeletedFact);
+
+        assertThat(tokenCaptor.getValue())
+                .isPresent()
+                .get()
+                .isEqualTo(noEvents);
     }
 
 }
