@@ -114,9 +114,6 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
 
     // --------------------------------------------------------
 
-    /**
-     *
-     */
     @Value
     @VisibleForTesting
     static class Dispatcher {
