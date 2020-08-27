@@ -15,45 +15,22 @@
  */
 package org.factcast.itests.factus;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 import org.factcast.factus.Handler;
-import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.Specification;
 import org.factcast.factus.projection.LocalSubscribedProjection;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 public class SubscribedUserNames extends LocalSubscribedProjection {
 
     @Getter
     private final Set<String> names = new HashSet<>();
 
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Data
-    @Specification(ns = "subscribed_username")
-    public static class UserCreated implements EventObject {
-
-        UUID aggregateId;
-
-        String name;
-
-        @Override
-        public Set<UUID> aggregateIds() {
-            return Collections.singleton(aggregateId);
-        }
-    }
-
     @Handler
-    void userCreated(SubscribedUserNames.UserCreated userCreated) {
-        names.add(userCreated.name);
+    void userCreated(UserCreated userCreated) {
+        names.add(userCreated.userName());
     }
 
 }

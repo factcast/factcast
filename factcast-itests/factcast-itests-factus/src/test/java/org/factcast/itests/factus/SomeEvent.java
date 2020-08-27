@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Specification(ns = "anotherTest")
+@Specification(ns = "test")
 public class SomeEvent implements EventObject {
     UUID aggregateId;
 
