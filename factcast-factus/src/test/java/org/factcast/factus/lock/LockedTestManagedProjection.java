@@ -45,6 +45,8 @@ import org.factcast.factus.metrics.FactusMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -88,6 +90,12 @@ class LockedTestManagedProjection {
     @Mock
     private StateToken firstEvent;
 
+    @Captor
+    private ArgumentCaptor<List<? extends Fact>> factListCaptor;
+
+    @Captor
+    private ArgumentCaptor<Optional<StateToken>> tokenCaptor;
+
     @BeforeEach
     void mockFactCast() {
         when(fc.lock(factSpecs))
@@ -119,6 +127,10 @@ class LockedTestManagedProjection {
                     }
                 });
 
+        Fact mockedUserCreatedFact = mock(Fact.class);
+        when(factus.toFact(any(UserCreated.class)))
+                .thenReturn(mockedUserCreatedFact);
+
         // RUN
         underTest.attempt(businessCode);
 
@@ -133,7 +145,18 @@ class LockedTestManagedProjection {
                 .accept(any(), any());
         // ... and then we published things
         inOrder.verify(factStore)
-                .publishIfUnchanged(any(), any());
+                .publishIfUnchanged(factListCaptor.capture(), tokenCaptor.capture());
+
+        assertThat(factListCaptor.getValue())
+                .hasSize(1);
+
+        assertThat(factListCaptor.getValue().get(0))
+                .isEqualTo(mockedUserCreatedFact);
+
+        assertThat(tokenCaptor.getValue())
+                .isPresent()
+                .get()
+                .isEqualTo(noEvents);
     }
 
     @Test
@@ -162,6 +185,10 @@ class LockedTestManagedProjection {
                     }
                 });
 
+        Fact mockedUserCreatedFact = mock(Fact.class);
+        when(factus.toFact(any(UserCreated.class)))
+                .thenReturn(mockedUserCreatedFact);
+
         // RUN
         underTest.attempt(businessCode);
 
@@ -176,7 +203,18 @@ class LockedTestManagedProjection {
                 .accept(any(), any());
         // ... and then we published things
         inOrder.verify(factStore)
-                .publishIfUnchanged(any(), any());
+                .publishIfUnchanged(factListCaptor.capture(), tokenCaptor.capture());
+
+        assertThat(factListCaptor.getValue())
+                .hasSize(1);
+
+        assertThat(factListCaptor.getValue().get(0))
+                .isEqualTo(mockedUserCreatedFact);
+
+        assertThat(tokenCaptor.getValue())
+                .isPresent()
+                .get()
+                .isEqualTo(noEvents);
     }
 
     @Test
@@ -190,6 +228,10 @@ class LockedTestManagedProjection {
         when(factStore.publishIfUnchanged(any(), any()))
                 .thenReturn(true);
 
+        final Fact rawFact = Fact.builder()
+                .id(UUID.randomUUID())
+                .buildWithoutPayload();
+
         BiConsumer<NamesProjection, RetryableTransaction> businessCode = spy(
                 // cannot be lambda, as we cannot spy on it otherwise
                 new BiConsumer<NamesProjection, RetryableTransaction>() {
@@ -200,9 +242,7 @@ class LockedTestManagedProjection {
 
                         // then test publish
                         if (!projection.contains("Peter")) {
-                            tx.publish(Fact.builder()
-                                    .id(UUID.randomUUID())
-                                    .buildWithoutPayload());
+                            tx.publish(rawFact);
                         } else {
                             tx.abort("Peter is already there");
                         }
@@ -223,7 +263,18 @@ class LockedTestManagedProjection {
                 .accept(any(), any());
         // ... and then we published things
         inOrder.verify(factStore)
-                .publishIfUnchanged(any(), any());
+                .publishIfUnchanged(factListCaptor.capture(), tokenCaptor.capture());
+
+        assertThat(factListCaptor.getValue())
+                .hasSize(1);
+
+        assertThat(factListCaptor.getValue().get(0))
+                .isEqualTo(rawFact);
+
+        assertThat(tokenCaptor.getValue())
+                .isPresent()
+                .get()
+                .isEqualTo(noEvents);
 
     }
 
