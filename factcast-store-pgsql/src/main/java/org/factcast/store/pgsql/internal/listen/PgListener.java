@@ -220,15 +220,4 @@ public class PgListener implements InitializingBean, DisposableBean {
         }
     }
 
-    // // The metrics access should be unified.
-    // @NonNull
-    // private Timer timer(@NonNull PgFactStore.StoreMetrics.OP operation) {
-    // Tags tags = Tags.of(
-    // Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
-    // Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()));
-    // // ommitting the meter description here
-    // return
-    // Timer.builder(StoreMetrics.METRIC_NAME).tags(tags).register(metrics);
-    // }
-
 }

@@ -21,8 +21,10 @@ import java.util.Properties;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
 import lombok.val;
 
+@UtilityClass
 public class PostgresEraser {
     @SneakyThrows
     static void wipeAllFactCastDataDataFromPostgres(PostgreSQLContainer<?> pg) {
