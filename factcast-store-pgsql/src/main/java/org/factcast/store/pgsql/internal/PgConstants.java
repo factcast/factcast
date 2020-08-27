@@ -96,7 +96,11 @@ public class PgConstants {
                     TABLE_FACT + " WHERE " + COLUMN_SER + //
                     " IN ( " + "   SELECT " + COLUMN_SER + " FROM " + //
                     TABLE_CATCHUP + "   WHERE ( " + COLUMN_CID + "=? AND " + COLUMN_SER + //
-                    ">? ) LIMIT ? " + ") ORDER BY " + COLUMN_SER + " ASC";
+
+                    // the inner ORDER BY is important! see #1002
+
+                    ">? ) ORDER BY " + COLUMN_SER + " ASC LIMIT ? ) ORDER BY " + COLUMN_SER
+                    + " ASC";
 
     public static final //
     String SELECT_LATEST_FACTID_FOR_AGGID = //
