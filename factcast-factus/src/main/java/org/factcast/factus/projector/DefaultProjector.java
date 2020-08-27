@@ -299,7 +299,8 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
         }
     }
 
-    private static boolean isEventHandlerMethod(Method m) {
+    @VisibleForTesting
+    static boolean isEventHandlerMethod(Method m) {
         if (m.getAnnotation(Handler.class) != null || m.getAnnotation(HandlerFor.class) != null) {
 
             if (!m.getReturnType().equals(void.class)) {

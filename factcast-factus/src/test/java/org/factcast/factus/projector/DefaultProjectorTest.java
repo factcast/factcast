@@ -15,9 +15,9 @@
  */
 package org.factcast.factus.projector;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,8 +32,7 @@ import org.factcast.factus.Handler;
 import org.factcast.factus.HandlerFor;
 import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.projection.Projection;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import lombok.Data;
 import lombok.NonNull;
@@ -418,11 +417,47 @@ class DefaultProjectorTest {
 
     }
 
+    @Nested
+    class WhenTestingForHandlerMethods {
+
+        @Test
+        void matchesHandlerMethods() throws NoSuchMethodException {
+            Method realMethod = NonStaticClass.class
+                    .getDeclaredMethod("apply", SimpleEvent.class);
+            assertThat(
+                    DefaultProjector.isEventHandlerMethod(
+                            realMethod)).isTrue();
+        }
+
+        @Test
+        void ignoresMockitoMockProvidedMethods() throws NoSuchMethodException {
+            Method realMethod = NonStaticClass$MockitoMock.class
+                    .getDeclaredMethod("apply", SimpleEvent.class);
+            assertThat(
+                    DefaultProjector.isEventHandlerMethod(
+                            realMethod)).isFalse();
+        }
+
+    }
+
     class NonStaticClass {
-    };
+        @Handler
+        void apply(SimpleEvent e) {
+        }
+    }
+
+    class NonStaticClass$MockitoMock extends NonStaticClass {
+        @Handler
+        void apply(SimpleEvent e) {
+        }
+    }
+
+    ;
 
     static class StaticClass {
-    };
+    }
+
+    ;
 
     // Working handlers
 
