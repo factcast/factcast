@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.applier;
+package org.factcast.factus.projector;
 
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Specification(ns = "test")
-public class ComplexEvent2 implements EventObject {
+public class ComplexEvent implements EventObject {
 
     private Map<String, String> metaMap;
 

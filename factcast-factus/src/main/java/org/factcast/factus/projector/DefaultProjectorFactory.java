@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.metrics;
+package org.factcast.factus.projector;
 
-public class TagKeys {
+import org.factcast.factus.event.EventSerializer;
+import org.factcast.factus.projection.Projection;
 
-    public static final String CLASS = "class";
+import lombok.RequiredArgsConstructor;
 
-    public static final String LOCKED = "locked";
+@RequiredArgsConstructor
+public class DefaultProjectorFactory implements ProjectorFactory {
 
-    public static final String TRUE = "true";
+    final EventSerializer deser;
 
-    public static final String FALSE = "false";
-
-    public static final String TAG_NAME = "name";
+    public <A extends Projection> Projector<A> create(A projection) {
+        return new DefaultProjector<>(deser, projection);
+    }
 }

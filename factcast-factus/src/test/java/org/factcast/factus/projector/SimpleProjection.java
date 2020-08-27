@@ -13,37 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.applier;
-
-import java.util.UUID;
+package org.factcast.factus.projector;
 
 import org.factcast.factus.Handler;
-import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.projection.LocalManagedProjection;
 
 import lombok.Getter;
 
-class ComplexAggregate extends Aggregate {
-
-    ComplexAggregate(UUID aggregateId) {
-        super(aggregateId);
-    }
+class SimpleProjection extends LocalManagedProjection {
 
     @Getter
-    private ComplexEvent recordedEvent = null;
+    private SimpleEvent recordedEvent = null;
 
-    @Getter
-    private ComplexEvent2 recordedEvent2 = null;
-
-    class Nested {
-
-        @Handler
-        void apply(ComplexEvent foo) {
-            recordedEvent = foo;
-        }
-
-        @Handler
-        void apply2(ComplexEvent2 foo) {
-            recordedEvent2 = foo;
-        }
+    @Handler
+    void apply(SimpleEvent foo) {
+        this.recordedEvent = foo;
     }
 }

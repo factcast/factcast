@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.applier;
+package org.factcast.factus.projector;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -132,27 +132,12 @@ class DefaultProjectorTest {
         }
 
         @Test
-        // TODO usr: prevent this
         void applyWithStaticSubclass() {
-            // INIT
-            UUID aggregateId = UUID.randomUUID();
-            SimpleEvent event = new SimpleEvent(Maps.newHashMap("Some key", "Some value"),
-                    aggregateId, "abc");
-
-            Fact fact = eventConverter.toFact(event);
-
             SimpleProjectionWithStaticSubclass projection = new SimpleProjectionWithStaticSubclass();
 
-            DefaultProjector<SimpleProjectionWithStaticSubclass> underTest = new DefaultProjector<>(
+            assertThatThrownBy(() -> new DefaultProjector<>(
                     eventSerializer,
-                    projection);
-
-            // RUN
-            underTest.apply(fact);
-
-            // ASSERT
-            assertThat(projection.recordedEvent())
-                    .isEqualTo(event);
+                    projection)).isInstanceOf(InvalidHandlerDefinition.class);
 
         }
 
@@ -174,7 +159,7 @@ class DefaultProjectorTest {
 
             // RUN / ASSERT
             assertThatThrownBy(() -> underTest.apply(fact))
-                    .isInstanceOf(IllegalStateException.class)
+                    .isInstanceOf(InvalidHandlerDefinition.class)
                     .hasMessageStartingWith("Unexpected Fact coordinates");
 
         }
@@ -311,7 +296,7 @@ class DefaultProjectorTest {
             // RUN
             assertThatThrownBy(() -> underTest.createFactSpecs())
                     // ASSERT
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(InvalidHandlerDefinition.class)
                     .hasMessageStartingWith("No FactSpecs discovered from");
         }
 
@@ -325,7 +310,7 @@ class DefaultProjectorTest {
             // RUN
             assertThatThrownBy(() -> underTest.createFactSpecs())
                     // ASSERT
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(InvalidHandlerDefinition.class)
                     .hasMessageStartingWith("No FactSpecs discovered from");
         }
 
@@ -340,7 +325,7 @@ class DefaultProjectorTest {
                     eventSerializer,
                     new DuplicateHandlerProjection()))
                             // ASSERT
-                            .isInstanceOf(UnsupportedOperationException.class)
+                            .isInstanceOf(InvalidHandlerDefinition.class)
                             .hasMessageStartingWith("Duplicate Handler method found for spec");
         }
 
@@ -351,7 +336,7 @@ class DefaultProjectorTest {
                     eventSerializer,
                     new DuplicateArgumentProjection()))
                             // ASSERT
-                            .isInstanceOf(IllegalArgumentException.class)
+                            .isInstanceOf(InvalidHandlerDefinition.class)
                             .hasMessageStartingWith("Multiple EventPojo Parameters");
         }
 
@@ -362,7 +347,7 @@ class DefaultProjectorTest {
                     eventSerializer,
                     new HandlerWithoutParameters()))
                             // ASSERT
-                            .isInstanceOf(UnsupportedOperationException.class)
+                            .isInstanceOf(InvalidHandlerDefinition.class)
                             .hasMessageStartingWith(
                                     "Handler methods must have at least one parameter");
         }
@@ -374,7 +359,7 @@ class DefaultProjectorTest {
                     eventSerializer,
                     new HandlerWithoutEventProjection()))
                             // ASSERT
-                            .isInstanceOf(IllegalArgumentException.class)
+                            .isInstanceOf(InvalidHandlerDefinition.class)
                             .hasMessageStartingWith(
                                     "Cannot introspect FactSpec from");
         }
@@ -386,7 +371,7 @@ class DefaultProjectorTest {
                     eventSerializer,
                     new NonVoidEventHandler()))
                             // ASSERT
-                            .isInstanceOf(UnsupportedOperationException.class)
+                            .isInstanceOf(InvalidHandlerDefinition.class)
                             .hasMessageStartingWith("Handler methods must return void");
         }
 
@@ -397,7 +382,7 @@ class DefaultProjectorTest {
                     eventSerializer,
                     new HandlerWithUnknownParameterType()))
                             // ASSERT
-                            .isInstanceOf(UnsupportedOperationException.class)
+                            .isInstanceOf(InvalidHandlerDefinition.class)
                             .hasMessageStartingWith("Don't know how resolve");
         }
 
@@ -408,7 +393,7 @@ class DefaultProjectorTest {
                     eventSerializer,
                     new NoHandlerProjection()))
                             // ASSERT
-                            .isInstanceOf(IllegalArgumentException.class)
+                            .isInstanceOf(InvalidHandlerDefinition.class)
                             .hasMessageStartingWith("No handler methods discovered on");
         }
     }

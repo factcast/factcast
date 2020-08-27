@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.metrics;
+package org.factcast.factus.snapshot;
 
-public class TagKeys {
-
-    public static final String CLASS = "class";
-
-    public static final String LOCKED = "locked";
-
-    public static final String TRUE = "true";
-
-    public static final String FALSE = "false";
-
-    public static final String TAG_NAME = "name";
+public class SerializerInstantiationException extends RuntimeException {
+    public SerializerInstantiationException(String msg, Throwable e) {
+        super(msg, e);
+    }
 }

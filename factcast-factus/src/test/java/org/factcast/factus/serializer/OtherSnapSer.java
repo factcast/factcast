@@ -13,19 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.applier;
+package org.factcast.factus.serializer;
 
-import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.projection.Projection;
+import org.factcast.factus.projection.SnapshotProjection;
 
-import lombok.RequiredArgsConstructor;
+public class OtherSnapSer implements SnapshotSerializer {
+    @Override
+    public byte[] serialize(SnapshotProjection a) {
+        return new byte[0];
+    }
 
-@RequiredArgsConstructor
-public class DefaultProjectorFactory implements ProjectorFactory {
+    @Override
+    public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
+        return null;
+    }
 
-    final EventSerializer deser;
-
-    public <A extends Projection> Projector<A> create(A projection) {
-        return new DefaultProjector<>(deser, projection);
+    @Override
+    public boolean includesCompression() {
+        return false;
     }
 }

@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -72,8 +71,6 @@ public class Locked<I extends Projection> {
 
     @NonNull
     private final FactusMetrics factusMetrics;
-
-    private Consumer<List<Fact>> andThen;// TODO
 
     int retries = 10;
 
