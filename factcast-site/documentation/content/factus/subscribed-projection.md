@@ -10,7 +10,7 @@ creatoremail = "uwe@codesmell.de"
 
 parent = "factus-projections"
 identifier = "factus-projections-subscribed"
-weight = 40
+weight = 400
 
 +++
 
