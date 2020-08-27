@@ -166,7 +166,7 @@ public class FactusClientTest {
         ec.publish(new SubscribedUserNames.UserCreated(randomUUID(),
                 "preexisting"));
 
-        Subscription subscription = ec.subscribe(subscribedProjection);
+        Subscription subscription = ec.subscribeAndBlock(subscribedProjection);
         // nothing in there yet, so catchup must be received
         subscription.awaitCatchup();
         assertThat(subscribedProjection.names())
