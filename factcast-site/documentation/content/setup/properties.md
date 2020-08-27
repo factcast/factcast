@@ -104,4 +104,11 @@ grpc.server.permit-keep-alive-without-calls=true
 grpc.server.permit-keep-alive-time=100
 ```
 
+
+### Testing
+
+| Property-Name        | Semantics           | Default   
+| ------------- |:-------------|:-----|
+|factcast.store.pgsql.integrationTestMode| when set to true, disables all non-essential memory-internal caches, timing might differ to production of course. | false
+
 Further details can be found here : `net.devh.boot.grpc.server.config.GrpcServerProperties`. 

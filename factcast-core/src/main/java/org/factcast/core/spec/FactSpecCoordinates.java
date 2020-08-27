@@ -19,9 +19,11 @@ import org.factcast.core.Fact;
 import org.factcast.factus.event.Specification;
 
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Slf4j
 public class FactSpecCoordinates {
 
     String ns;
@@ -43,20 +45,23 @@ public class FactSpecCoordinates {
         String defaultType = clazz.getSimpleName();
 
         val spec = clazz.getAnnotation(Specification.class);
-        if (spec == null)
+        if (spec == null) {
             throw new IllegalArgumentException("@" + Specification.class.getSimpleName()
                     + " missing on " + clazz);
+        }
 
         String _ns = spec.ns();
         if (_ns.trim().isEmpty())
             throw new IllegalArgumentException("Empty namespace encountered on class " + clazz);
 
         String _type = spec.type();
-        if (_type.trim().isEmpty())
+        if (_type.trim().isEmpty()) {
             _type = defaultType;
+        }
 
         int version = spec.version();
 
         return new FactSpecCoordinates(_ns, _type, version);
     }
+
 }
