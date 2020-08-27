@@ -18,6 +18,7 @@ package org.factcast.factus;
 import java.io.Closeable;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.factcast.core.Fact;
@@ -80,8 +81,20 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
      * creates a permanent, async subscription to the projection. The
      * subscription will be remembered for autoclose, when Factus is closed.
      * (Probably more of a shutdown hook)
+     *
+     * Note that this method will block forever, if this node fails to acquire a
+     * writer token.
      */
-    <P extends SubscribedProjection> Subscription subscribe(@NonNull P subscribedProjection);
+    <P extends SubscribedProjection> Subscription subscribeAndBlock(
+            @NonNull P subscribedProjection);
+
+    /**
+     * Method returns immediately, but you wont know if subscription was
+     * sucessful (kind of "keep trying to subscribe" and forget)
+     */
+    default <P extends SubscribedProjection> void subscribe(@NonNull P subscribedProjection) {
+        CompletableFuture.runAsync(() -> subscribeAndBlock(subscribedProjection));
+    }
 
     // Locking
     // TODO needed? Locked lockAggregateById(UUID first, UUID... others);
