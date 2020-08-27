@@ -277,7 +277,8 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
         return classes;
     }
 
-    private static Object resolveTargetObject(Object parent, Class<?> c) {
+    @VisibleForTesting
+    static Object resolveTargetObject(Object parent, Class<?> c) {
         try {
             Constructor<?> ctor;
             try {
