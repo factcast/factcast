@@ -44,6 +44,11 @@ class SnapshotSerializerTest {
                 .isEqualTo("Hello");
     }
 
+    @Test
+    void testCompressionProperty() {
+        assertThat(underTest.includesCompression()).isFalse();
+    }
+
     @Data
     static class SimpleSnapshotProjection implements SnapshotProjection {
         String val;

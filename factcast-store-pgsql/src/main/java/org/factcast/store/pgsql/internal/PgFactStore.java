@@ -205,38 +205,6 @@ public class PgFactStore extends AbstractFactStore {
                 new Object[] { ns }, this::extractStringFromResultSet)));
     }
 
-    // @Override
-    // protected Map<UUID, Optional<UUID>> getStateFor(
-    // @NonNull Optional<String> ns,
-    // @NonNull Collection<UUID> forAggIds) {
-    // return metrics.time(OP.GET_STAGE_FOR, () -> {
-    // // just prototype code
-    // // can probably be optimized, suggestions/PRs welcome
-    // RowMapper<Optional<UUID>> rse = (rs, i) -> Optional
-    // .of(UUID.fromString(rs.getString(1)));
-    // Map<UUID, Optional<UUID>> ret = new LinkedHashMap<>();
-    // for (UUID uuid : forAggIds) {
-    //
-    // StringBuilder sb = new StringBuilder();
-    // sb.append("{");
-    // ns.ifPresent(s -> sb.append("\"ns\":\"").append(s).append("\","));
-    // sb.append("\"aggIds\":[\"").append(uuid).append("\"]}");
-    //
-    // String json = sb.toString();
-    //
-    // try {
-    // ret.put(uuid,
-    // jdbcTemplate.queryForObject(PgConstants.SELECT_LATEST_FACTID_FOR_AGGID,
-    // new Object[] { json }, rse));
-    // } catch (EmptyResultDataAccessException dont_care) {
-    // ret.put(uuid, Optional.empty());
-    // }
-    // }
-    //
-    // return ret;
-    // });
-    // }
-
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public boolean publishIfUnchanged(

@@ -18,13 +18,14 @@ package org.factcast.factus.projection;
 import java.util.UUID;
 
 import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 
 /**
  * indirection to/from the aggregate's id, so that it does not spoil the public
  * interface of Aggregate, in case you'd want to use wrapping or inline classes
  * when exposing the Id.
  */
-
+@UtilityClass
 public class AggregateUtil {
     public static UUID aggregateId(@NonNull Aggregate a) {
         return a.aggregateId();
