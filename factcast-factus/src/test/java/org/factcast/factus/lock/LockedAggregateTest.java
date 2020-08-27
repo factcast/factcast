@@ -52,7 +52,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * Component test of Locked and WithOptimisticLock.
  */
 @ExtendWith(MockitoExtension.class)
-class LockedTestAggregate {
+class LockedAggregateTest {
 
     @Mock
     private FactCast fc;

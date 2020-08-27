@@ -13,24 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.applier;
+package org.factcast.factus.projector;
 
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
 
 import lombok.Getter;
 
-class SimpleProjectionWithStaticSubclass extends LocalManagedProjection {
+class ComplexProjection extends LocalManagedProjection {
 
     @Getter
-    private static SimpleEvent recordedEvent = null;
+    private ComplexEvent recordedEvent = null;
 
-    static class handlers {
+    @Getter
+    private ComplexEvent2 recordedEvent2 = null;
+
+    class Nested {
 
         @Handler
-        void apply(SimpleEvent foo) {
+        void apply(ComplexEvent foo) {
             recordedEvent = foo;
         }
 
+        @Handler
+        void apply2(ComplexEvent2 foo) {
+            recordedEvent2 = foo;
+        }
     }
 }

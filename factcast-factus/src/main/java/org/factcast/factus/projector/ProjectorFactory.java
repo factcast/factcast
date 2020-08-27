@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.applier;
+package org.factcast.factus.projector;
 
-import org.factcast.factus.Handler;
-import org.factcast.factus.projection.LocalManagedProjection;
+import org.factcast.factus.projection.Projection;
 
-import lombok.Getter;
-
-class SimpleProjection extends LocalManagedProjection {
-
-    @Getter
-    private SimpleEvent recordedEvent = null;
-
-    @Handler
-    void apply(SimpleEvent foo) {
-        this.recordedEvent = foo;
-    }
+public interface ProjectorFactory {
+    <A extends Projection> Projector<A> create(A projection);
 }

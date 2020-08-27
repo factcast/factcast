@@ -59,7 +59,7 @@ import lombok.SneakyThrows;
  * Component test of Locked and WithOptimisticLock.
  */
 @ExtendWith(MockitoExtension.class)
-class LockedTestManagedProjection {
+class LockedManagedProjectionTest {
 
     @Mock
     private FactCast fc;

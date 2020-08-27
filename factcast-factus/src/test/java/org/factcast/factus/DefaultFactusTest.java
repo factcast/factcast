@@ -34,9 +34,6 @@ import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.factus.applier.DefaultProjector;
-import org.factcast.factus.applier.Projector;
-import org.factcast.factus.applier.ProjectorFactory;
 import org.factcast.factus.batch.BatchAbortedException;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
@@ -50,6 +47,9 @@ import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.ManagedProjection;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.projection.SubscribedProjection;
+import org.factcast.factus.projector.DefaultProjector;
+import org.factcast.factus.projector.Projector;
+import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
@@ -433,7 +433,7 @@ class DefaultFactusTest {
             // projection,
             // the lock would be broken
             assertThat(locked.specs())
-                    .isEqualTo(specs);
+                    .isEqualTo(projector.createFactSpecs());
         }
 
         @Test
@@ -509,7 +509,7 @@ class DefaultFactusTest {
             // projection,
             // the lock would be broken
             assertThat(locked.specs())
-                    .isEqualTo(specs);
+                    .isEqualTo(projector.createFactSpecs());
         }
     }
 
@@ -609,7 +609,7 @@ class DefaultFactusTest {
             when(ehFactory.create(projectionCaptor.capture()))
                     .thenReturn(projector);
 
-            // make sure when event applier is asked to apply events, to wire
+            // make sure when event projector is asked to apply events, to wire
             // them through
             doAnswer(inv -> {
                 if (factCaptor.getValue().jsonPayload().contains("abc")) {
@@ -661,7 +661,7 @@ class DefaultFactusTest {
             when(ehFactory.create(projectionCaptor.capture()))
                     .thenReturn(projector);
 
-            // make sure when event applier is asked to apply events, to wire
+            // make sure when event projector is asked to apply events, to wire
             // them through
             doAnswer(inv -> {
                 if (factCaptor.getValue().jsonPayload().contains("abc")) {
@@ -764,7 +764,7 @@ class DefaultFactusTest {
             verify(concatCodesProjection)
                     .executeUpdate(any());
 
-            // ... and then it should be applied to event applier
+            // ... and then it should be applied to event projector
             verify(projector)
                     .apply(mockedFact);
 
@@ -858,7 +858,7 @@ class DefaultFactusTest {
             verify(subscribedProjection)
                     .executeUpdate(any());
 
-            // ... and then it should be applied to event applier
+            // ... and then it should be applied to event projector
             verify(eventApplier)
                     .apply(mockedFact);
 
@@ -1082,7 +1082,7 @@ class DefaultFactusTest {
             when(snapshotSerializer.deserialize(PersonAggregate.class, "Fred".getBytes()))
                     .thenReturn(personAggregate);
 
-            // make sure when event applier is asked to apply events, to wire
+            // make sure when event projector is asked to apply events, to wire
             // them through
             doAnswer(inv -> {
                 if (factCaptor.getValue().jsonPayload().contains("Barney")) {
@@ -1137,7 +1137,7 @@ class DefaultFactusTest {
             when(fc.subscribe(any(), any()))
                     .thenReturn(mock(Subscription.class));
 
-            // make sure when event applier is asked to apply events, to wire
+            // make sure when event projector is asked to apply events, to wire
             // them through
             doAnswer(inv -> {
                 if (factCaptor.getValue().jsonPayload().contains("Barney")) {

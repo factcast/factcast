@@ -19,6 +19,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer.DefaultSnapshotSerializer;
 
@@ -42,7 +43,7 @@ public class SnapshotSerializerSupplier {
     }
 
     public org.factcast.factus.serializer.SnapshotSerializer retrieveSerializer(
-            @NonNull Class<?> aClass) {
+            @NonNull Class<? extends SnapshotProjection> aClass) {
         SerializeUsing classAnnotation = aClass.getAnnotation(SerializeUsing.class);
         if (classAnnotation == null) {
             return defaultSerializer;
@@ -58,7 +59,7 @@ public class SnapshotSerializerSupplier {
             return clazz.getDeclaredConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException
                 | NoSuchMethodException e) {
-            throw new IllegalStateException("Cannot create instance from " + clazz, e);
+            throw new SerializerInstantiationException("Cannot create instance from " + clazz, e);
         }
     }
 

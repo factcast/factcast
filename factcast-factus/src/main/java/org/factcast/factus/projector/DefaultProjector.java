@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.applier;
+package org.factcast.factus.projector;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -76,7 +76,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
         val coords = FactSpecCoordinates.from(f);
         val dispatch = dispatchInfo.get(coords);
         if (dispatch == null) {
-            throw new IllegalStateException("Unexpected Fact coordinates: '" + coords + "'");
+            throw new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
         }
 
         try {
@@ -105,7 +105,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
 
         val ret = projection.postprocess(discovered);
         if (ret == null || ret.isEmpty()) {
-            throw new IllegalArgumentException("No FactSpecs discovered from " + projection
+            throw new InvalidHandlerDefinition("No FactSpecs discovered from " + projection
                     .getClass()
                     + ". Either add handler methods or implement postprocess(List<FactSpec)");
         }
@@ -153,7 +153,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
                                 createParameterTransformer(deserializer, m), fs, deserializer);
                         val before = map.put(key, dispatcher);
                         if (before != null) {
-                            throw new UnsupportedOperationException(
+                            throw new InvalidHandlerDefinition(
                                     "Duplicate Handler method found for spec '" + key + "':\n " + m
                                             + "\n clashes with\n " + before.dispatchMethod());
                         }
@@ -165,7 +165,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
         });
 
         if (map.isEmpty()) {
-            throw new IllegalArgumentException("No handler methods discovered on " + p.getClass());
+            throw new InvalidHandlerDefinition("No handler methods discovered on " + p.getClass());
         }
 
         return map;
@@ -199,11 +199,11 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
                 .collect(Collectors.toList());
 
         if (eventPojoTypes.isEmpty()) {
-            throw new IllegalArgumentException("Cannot introspect FactSpec from " + m
+            throw new InvalidHandlerDefinition("Cannot introspect FactSpec from " + m
                     + ". Either use @HandlerFor or pass an EventPojo as a parameter.");
         } else {
             if (eventPojoTypes.size() > 1) {
-                throw new IllegalArgumentException(
+                throw new InvalidHandlerDefinition(
                         "Multiple EventPojo Parameters. Cannot introspect FactSpec from " + m);
             } else {
                 Class<?> eventPojoType = eventPojoTypes.get(0);
@@ -251,7 +251,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
             return Fact::id;
         }
 
-        throw new UnsupportedOperationException("Don't know how resolve " + type
+        throw new InvalidHandlerDefinition("Don't know how resolve " + type
                 + " from a Fact for a parameter to method:\n " + m);
 
     }
@@ -270,7 +270,8 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
     private static Collection<CallTarget> getRelevantClasses(CallTarget root) {
         List<CallTarget> classes = new LinkedList<>();
         classes.add(root);
-        Arrays.asList(root.clazz().getDeclaredClasses())
+        Arrays.stream(root.clazz().getDeclaredClasses())
+                .filter(c -> !Modifier.isStatic(c.getModifiers()))
                 .forEach(c -> classes.addAll(getRelevantClasses(new CallTarget(c,
                         p -> resolveTargetObject(root.resolver.apply(p), c)))));
         return classes;
@@ -301,12 +302,12 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
         if (m.getAnnotation(Handler.class) != null || m.getAnnotation(HandlerFor.class) != null) {
 
             if (!m.getReturnType().equals(void.class)) {
-                throw new UnsupportedOperationException("Handler methods must return void, but \n "
+                throw new InvalidHandlerDefinition("Handler methods must return void, but \n "
                         + m + "\n returns '" + m.getReturnType() + "'");
             }
 
             if (m.getParameterCount() == 0) {
-                throw new UnsupportedOperationException(
+                throw new InvalidHandlerDefinition(
                         "Handler methods must have at least one parameter: " + m);
             }
 

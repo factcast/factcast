@@ -50,7 +50,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * Component test of Locked and WithOptimisticLock.
  */
 @ExtendWith(MockitoExtension.class)
-class LockedTestSnapshotProjection {
+class LockedSnapshotProjectionTest {
 
     @Mock
     private FactCast fc;
