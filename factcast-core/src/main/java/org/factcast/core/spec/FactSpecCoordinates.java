@@ -22,9 +22,17 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 @Value
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
 public class FactSpecCoordinates {
+
+    FactSpecCoordinates(String ns, String type, int version) {
+        if (ns.trim().isEmpty())
+            throw new IllegalArgumentException("Namespace must not be empty");
+
+        this.ns = ns;
+        this.type = type;
+        this.version = version;
+    }
 
     String ns;
 
