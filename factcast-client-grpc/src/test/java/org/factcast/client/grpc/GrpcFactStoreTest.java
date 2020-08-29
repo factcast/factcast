@@ -136,6 +136,26 @@ class GrpcFactStoreTest {
         assertThat(result.get().id()).isEqualTo(uuid);
 
     }
+    @Test
+    void fetchByIdThrowsRetryable() {
+        final TestFact fact = new TestFact();
+        val uuid = fact.id();
+        val id = conv.toProto(uuid);
+        when(blockingStub.fetchById(eq(id))).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+
+        assertThatThrownBy(()->uut.fetchById(fact.id())).isInstanceOf(RetryableException.class);
+    }
+
+    @Test
+    void fetchByIdAndVersionThrowsRetryable() {
+        final TestFact fact = new TestFact();
+        val uuid = fact.id();
+        val id = conv.toProto(uuid, 100);
+        when(blockingStub.fetchByIdAndVersion(eq(id))).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+
+        assertThatThrownBy(()->uut.fetchByIdAndVersion(fact.id(), 100)).isInstanceOf(RetryableException.class);
+
+    }
 
     static class SomeException extends RuntimeException {
 
@@ -478,17 +498,15 @@ class GrpcFactStoreTest {
 
     @Test
     void testCurrentTimePropagatesRetryableExceptionOnUnavailableStatus() {
-        when(blockingStub.enumerateNamespaces(any())).thenThrow(new StatusRuntimeException(
+        when(blockingStub.currentTime(any())).thenThrow(new StatusRuntimeException(
                 Status.UNAVAILABLE));
-        assertThrows(RetryableException.class, () -> uut.enumerateNamespaces());
+        assertThrows(RetryableException.class, () -> uut.currentTime());
     }
 
     @Test
     void getSnapshotEmpty() {
         SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
         when(blockingStub.getSnapshot(eq(conv.toProto(id)))).thenReturn(conv.toProtoSnapshot(Optional.empty()));
-        //.thenThrow(new StatusRuntimeException(                Status.UNAVAILABLE));
-
         assertThat(uut.getSnapshot(id)).isEmpty();
     }
 
