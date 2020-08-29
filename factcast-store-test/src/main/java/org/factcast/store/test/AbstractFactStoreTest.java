@@ -37,6 +37,8 @@ import org.factcast.core.lock.AttemptAbortedException;
 import org.factcast.core.lock.ExceptionAfterPublish;
 import org.factcast.core.lock.PublishingResult;
 import org.factcast.core.lock.WithOptimisticLock.OptimisticRetriesExceededException;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
@@ -1164,18 +1166,6 @@ public abstract class AbstractFactStoreTest {
                 SubscriptionRequestTO.class), null));
     }
 
-    // TODO
-    // @Test
-    // public void testGetStateForNullContract() throws Exception {
-    // assertThrows(NullPointerException.class, () -> store.stateFor(null,
-    // Optional.ofNullable(
-    // "")));
-    // assertThrows(NullPointerException.class, () -> store.stateFor(null,
-    // null));
-    // assertThrows(NullPointerException.class, () -> store.stateFor(new
-    // LinkedList<>(), null));
-    // }
-
     @Test
     public void testCurrentTimeProgresses() throws Exception {
 
@@ -1189,4 +1179,5 @@ public abstract class AbstractFactStoreTest {
         assertTrue(Math.abs(t1 - t2) > 40);
 
     }
+
 }
