@@ -66,6 +66,7 @@ import net.devh.boot.grpc.client.security.CallCredentialsHelper;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
 public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
