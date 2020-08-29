@@ -18,26 +18,33 @@ package org.factcast.core.util;
 import static org.assertj.core.api.Assertions.*;
 import static org.factcast.core.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import org.factcast.core.FactHeader;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.io.*;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.val;
+import lombok.*;
 
 public class FactCastJsonTest {
     @Test
@@ -75,6 +82,22 @@ public class FactCastJsonTest {
         expectNPE(() -> FactCastJson.readValue(null, (InputStream) null));
         expectNPE(() -> FactCastJson.readValue(FactCastJson.class, (InputStream) null));
     }
+
+    static class TestClassWithValue {
+        int value;
+    }
+
+    @Test
+    void testReadValueWithClass() {
+        assertEquals(7, FactCastJson.readValue(TestClassWithValue.class, "{\"value\":7}").value);
+    }
+
+    @Test
+    void testReadValueWithTypeRef() {
+        assertEquals(7, FactCastJson.readValue(new TypeReference<TestClassWithValue>() {
+        }, "{\"value\":7}").value);
+    }
+
 
     public static class X {
         String foo;
@@ -171,4 +194,104 @@ public class FactCastJsonTest {
                 "}", pretty);
     }
 
+    @Test
+    void testValueToTree() throws Exception {
+        ObjectMapper om = Mockito.mock(ObjectMapper.class);
+        try (val reset = FactCastJson.replaceObjectMapper(om);) {
+
+            val probe = UUID.randomUUID();
+            FactCastJson.valueToTree(probe);
+
+            Mockito.verify(om).valueToTree(ArgumentMatchers.same(probe));
+        }
+    }
+
+    @Test
+    void testReadTree() throws Exception {
+        ObjectMapper om = Mockito.mock(ObjectMapper.class);
+        try (val reset = FactCastJson.replaceObjectMapper(om);) {
+
+            String probe=UUID.randomUUID().toString();
+            FactCastJson.readTree(probe);
+
+            Mockito.verify(om).readTree(probe);
+        }
+    }
+
+    @Test
+    void convertValue() throws Exception {
+        ObjectMapper om = Mockito.mock(ObjectMapper.class);
+        try (val reset = FactCastJson.replaceObjectMapper(om);) {
+
+            String probe=UUID.randomUUID().toString();
+            FactCastJson.convertValue(probe, Integer.class);
+
+            Mockito.verify(om).convertValue(probe,Integer.class);
+        }
+    }
+
+
+    @Test
+    void toJsonNode() throws Exception {
+        ObjectMapper om = Mockito.mock(ObjectMapper.class);
+        try (val reset = FactCastJson.replaceObjectMapper(om);) {
+
+            Map<String,Object> probe=new HashMap<>();
+            FactCastJson.toJsonNode(probe);
+
+            Mockito.verify(om).convertValue(probe,JsonNode.class);
+        }
+    }
+
+    @Test
+    void writeValueAsBytes() throws Exception {
+        ObjectMapper om = Mockito.mock(ObjectMapper.class);
+        try (val reset = FactCastJson.replaceObjectMapper(om);) {
+
+            Map<String,Object> probe=new HashMap<>();
+            FactCastJson.writeValueAsBytes(probe);
+
+            Mockito.verify(om).writeValueAsBytes(probe);
+        }
+    }
+
+    @Test
+    void readValueFromBytes() throws Exception {
+        ObjectMapper om = Mockito.mock(ObjectMapper.class);
+        try (val reset = FactCastJson.replaceObjectMapper(om);) {
+
+            ObjectReader or=mock(ObjectReader.class);
+            when(om.readerFor(String.class)).thenReturn(or);
+
+            byte[] probe="foo".getBytes();
+            FactCastJson.readValueFromBytes(String.class,probe);
+
+            Mockito.verify(om).readerFor(String.class);
+            Mockito.verify(or).readValue(probe);
+
+        }
+    }
+
+    @Test
+    void writeValueAsString() throws Exception {
+        ObjectMapper om = Mockito.mock(ObjectMapper.class);
+        try (val reset = FactCastJson.replaceObjectMapper(om);) {
+
+            UUID probe=UUID.randomUUID();
+            FactCastJson.writeValueAsString(probe);
+
+            Mockito.verify(om).writeValueAsString(probe);
+
+        }
+    }
+
+    @Test
+    void objectMapper() throws Exception {
+        ObjectMapper om = Mockito.mock(ObjectMapper.class);
+        try (val reset = FactCastJson.replaceObjectMapper(om);) {
+
+         assertSame(om, FactCastJson.mapper());
+
+        }
+    }
 }
