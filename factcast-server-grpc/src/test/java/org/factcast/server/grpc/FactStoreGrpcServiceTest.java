@@ -23,6 +23,8 @@ import java.net.URL;
 import java.util.*;
 
 import org.factcast.core.Fact;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
@@ -62,7 +64,7 @@ import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
 import lombok.val;
 
-@SuppressWarnings({ "unchecked", "rawtypes" })
+@SuppressWarnings({"unchecked", "rawtypes"})
 @ExtendWith(MockitoExtension.class)
 public class FactStoreGrpcServiceTest {
 
@@ -117,6 +119,18 @@ public class FactStoreGrpcServiceTest {
         verify(stream).onCompleted();
         verifyNoMoreInteractions(stream);
     }
+    @Test
+    void currentTimeWithException() {
+        when(backend.currentTime()).thenThrow(RuntimeException.class);
+        StreamObserver<MSG_CurrentDatabaseTime> stream = mock(StreamObserver.class);
+
+        uut.currentTime(MSG_Empty.getDefaultInstance(), stream);
+
+        verify(stream).onError(any(RuntimeException.class));
+        verifyNoMoreInteractions(stream);
+
+    }
+
 
     @Test
     void fetchById() {
@@ -223,6 +237,17 @@ public class FactStoreGrpcServiceTest {
 
     }
 
+    static class TokenWithoutPrincipal extends RunAsUserToken {
+
+        public TokenWithoutPrincipal() {
+            super("BR0KEN", null, "", AuthorityUtils.createAuthorityList(
+                    FactCastAuthority.AUTHENTICATED), null);
+        }
+
+        private static final long serialVersionUID = 1L;
+
+    }
+
     @Test
     void testPublishNull() {
         expectNPE(() -> uut.publish(null, mock(StreamObserver.class)));
@@ -276,7 +301,7 @@ public class FactStoreGrpcServiceTest {
         val sre = assertThrows(StatusRuntimeException.class, () -> {
             for (int i = 0; i < 10; i++) {
                 uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)
-                        .continuous(true)),
+                                .continuous(true)),
                         mock(ServerCallStreamObserver.class));
 
             }
@@ -296,7 +321,7 @@ public class FactStoreGrpcServiceTest {
         val sre = assertThrows(StatusRuntimeException.class, () -> {
             for (int i = 0; i < 10; i++) {
                 uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)
-                        .continuous(false)),
+                                .continuous(false)),
                         mock(ServerCallStreamObserver.class));
 
             }
@@ -620,5 +645,196 @@ public class FactStoreGrpcServiceTest {
                 fail("Wrong exception, expected " + Arrays.toString(ex) + " but got " + actual);
             }
         }
+    }
+
+    @Test
+    void stateForSpecsJson() {
+        val list = Lists.newArrayList(
+                FactSpec.ns("foo").type("bar").version(1),
+                FactSpec.ns("foo").type("bar2").version(2));
+        MSG_FactSpecsJson req = conv.toProtoFactSpecs(list);
+        StreamObserver<MSG_UUID> obs = mock(StreamObserver.class);
+        UUID tokenId = UUID.randomUUID();
+
+        when(backend.stateFor(eq(list))).thenReturn(new StateToken(tokenId));
+
+        // ACT
+        uut.stateForSpecsJson(req, obs);
+
+        verify(obs).onNext(eq(conv.toProto(tokenId)));
+        verify(obs).onCompleted();
+    }
+
+    @Test
+    void stateForSpecsJsonEmpty() {
+        List<FactSpec> list = Lists.newArrayList();
+        MSG_FactSpecsJson req = conv.toProtoFactSpecs(list);
+        StreamObserver<MSG_UUID> obs = mock(StreamObserver.class);
+
+        // ACT
+        uut.stateForSpecsJson(req, obs);
+
+        verify(obs).onError(any(IllegalArgumentException.class));
+    }
+
+    @Test
+    void invalidateStateToken() {
+
+        val id = UUID.randomUUID();
+        val req = conv.toProto(id);
+        val stateToken = new StateToken(id);
+        StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
+
+        // ACT
+        uut.invalidate(req, obs);
+
+        verify(backend).invalidate(eq(stateToken));
+        verify(obs).onNext(any(MSG_Empty.class));
+        verify(obs).onCompleted();
+    }
+
+    @Test
+    void invalidateStateTokenWithError() {
+
+        val id = UUID.randomUUID();
+        val req = conv.toProto(id);
+        val stateToken = new StateToken(id);
+        StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
+        doThrow(RuntimeException.class).when(backend).invalidate(any());
+        // ACT
+        uut.invalidate(req, obs);
+
+        verify(backend).invalidate(eq(stateToken));
+        verify(obs).onError(any());
+    }
+
+    @Test
+    void getFactcastUserWithoutPrincipal() throws StatusException {
+        SecurityContextHolder.setContext(new SecurityContext() {
+            Authentication testToken = new TokenWithoutPrincipal();
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void setAuthentication(Authentication authentication) {
+                this.testToken = authentication;
+            }
+
+            @Override
+            public Authentication getAuthentication() {
+                return testToken;
+            }
+        });
+
+        assertThrows(StatusException.class,()->uut.getFactcastUser());
+    }
+
+    @Test
+    void clearSnapshot() {
+
+        val id = new SnapshotId("foo", UUID.randomUUID());
+        val req = conv.toProto(id);
+        StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
+
+        // ACT
+        uut.clearSnapshot(req, obs);
+
+        verify(backend).clearSnapshot(eq(id));
+        verify(obs).onNext(any(MSG_Empty.class));
+        verify(obs).onCompleted();
+    }
+
+    static class TestException extends RuntimeException{}
+
+    @Test
+    void clearSnapshotWithException() {
+
+        val id = new SnapshotId("foo", UUID.randomUUID());
+        val req = conv.toProto(id);
+        StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
+        doThrow(TestException.class).when(backend).clearSnapshot(eq(id));
+
+        // ACT
+        uut.clearSnapshot(req, obs);
+
+        verify(obs).onError(any(TestException.class));
+    }
+
+    @Test
+    void getSnapshot() {
+        val id = new SnapshotId("foo", UUID.randomUUID());
+        val req = conv.toProto(id);
+        StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
+        Snapshot snap=new Snapshot(id,UUID.randomUUID(), "foo".getBytes(), false);
+        Optional<Snapshot> optSnap = Optional.of(snap);
+        when(backend.getSnapshot(id)).thenReturn(optSnap);
+
+        // ACT
+        uut.getSnapshot(req, obs);
+
+        verify(backend).getSnapshot(eq(id));
+        verify(obs).onNext(eq(conv.toProtoSnapshot(optSnap)));
+        verify(obs).onCompleted();
+    }
+
+    @Test
+    void getSnapshotEmpty() {
+        val id = new SnapshotId("foo", UUID.randomUUID());
+        val req = conv.toProto(id);
+        StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
+        Optional<Snapshot> optSnap = Optional.empty();
+        when(backend.getSnapshot(id)).thenReturn(optSnap);
+
+        // ACT
+        uut.getSnapshot(req, obs);
+
+        verify(backend).getSnapshot(eq(id));
+        verify(obs).onNext(eq(conv.toProtoSnapshot(optSnap)));
+        verify(obs).onCompleted();
+    }
+
+    @Test
+    void getSnapshotException() {
+        val id = new SnapshotId("foo", UUID.randomUUID());
+        val req = conv.toProto(id);
+        StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
+        Optional<Snapshot> optSnap = Optional.empty();
+        when(backend.getSnapshot(id)).thenThrow(TestException.class);
+
+        // ACT
+        uut.getSnapshot(req, obs);
+
+        verify(backend).getSnapshot(eq(id));
+        verify(obs).onError(any(TestException.class));
+    }
+
+    @Test
+    void setSnapshot() {
+        val id = new SnapshotId("foo", UUID.randomUUID());
+        Snapshot snap=new Snapshot(id,UUID.randomUUID(), "foo".getBytes(), false);
+        val req = conv.toProto(snap);
+        StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
+
+        // ACT
+        uut.setSnapshot(req, obs);
+
+        verify(backend).setSnapshot(snap);
+        verify(obs).onNext(any(MSG_Empty.class));
+        verify(obs).onCompleted();
+    }
+
+    @Test
+    void setSnapshotWithException() {
+        val id = new SnapshotId("foo", UUID.randomUUID());
+        Snapshot snap=new Snapshot(id,UUID.randomUUID(), "foo".getBytes(), false);
+        val req = conv.toProto(snap);
+        StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
+        doThrow(TestException.class).when(backend).setSnapshot(any());
+
+        // ACT
+        uut.setSnapshot(req, obs);
+
+        verify(backend).setSnapshot(snap);
+        verify(obs).onError(any(TestException.class));
     }
 }

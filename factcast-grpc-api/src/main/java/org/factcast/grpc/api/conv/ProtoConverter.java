@@ -374,6 +374,10 @@ public class ProtoConverter {
         return ret.build();
     }
 
+    public MSG_Snapshot toProto(Snapshot snap) {
+        return toProto(snap.id(), snap.lastFact(), snap.bytes(), snap.compressed());
+    }
+
     public MSG_OptionalSnapshot toProtoSnapshot(Optional<Snapshot> snapshot) {
         MSG_OptionalSnapshot.Builder ret = MSG_OptionalSnapshot.newBuilder();
         if (snapshot.isPresent()) {

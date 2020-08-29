@@ -241,7 +241,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             }
         } catch (ExecutionException e) {
             log.error("While finding or creating bucket: ", e);
-            // default to be permissive - for now...
             return false;
         }
     }
@@ -276,8 +275,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         URL propertiesUrl = getProjectProperties();
         Properties buildProperties = new Properties();
         if (propertiesUrl != null) {
-            try {
-                InputStream is = propertiesUrl.openStream();
+            try (InputStream is = propertiesUrl.openStream();){
                 if (is != null) {
                     buildProperties.load(is);
                     String v = buildProperties.getProperty("version");
