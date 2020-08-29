@@ -42,4 +42,10 @@ public class FactCastSnapshotRepository implements SnapshotCache {
     public void clearSnapshot(@NonNull SnapshotId id) {
         store.clearSnapshot(id);
     }
+
+    /**
+     * compacting will be controlled on server side, so this impl is empty.
+     */
+    public void compact(int retentionTimeInDays) {
+    }
 }

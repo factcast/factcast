@@ -49,7 +49,7 @@ class SnapshotCacheTest {
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private SnapshotCache underTest;
+    private PgSnapshotCache underTest;
 
     @Test
     void getSnapshot_empty() {

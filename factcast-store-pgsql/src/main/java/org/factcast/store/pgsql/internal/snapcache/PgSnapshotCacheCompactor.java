@@ -27,10 +27,10 @@ import net.javacrumbs.shedlock.core.SchedulerLock;
 
 @RequiredArgsConstructor
 @Slf4j
-public class SnapshotCacheCompactor {
+public class PgSnapshotCacheCompactor {
 
     @NonNull
-    final SnapshotCache cache;
+    final PgSnapshotCache cache;
 
     @NonNull
     final PgMetrics pgMetrics;

@@ -36,7 +36,7 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.pgsql.internal.PgMetrics.StoreMetrics.OP;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.factcast.store.pgsql.internal.query.PgQueryBuilder;
-import org.factcast.store.pgsql.internal.snapcache.SnapshotCache;
+import org.factcast.store.pgsql.internal.snapcache.PgSnapshotCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
@@ -80,7 +80,7 @@ public class PgFactStore extends AbstractFactStore {
     private final PgMetrics metrics;
 
     @NonNull
-    private final SnapshotCache snapCache;
+    private final PgSnapshotCache snapCache;
 
     @Autowired
     public PgFactStore(
@@ -89,7 +89,7 @@ public class PgFactStore extends AbstractFactStore {
             @NonNull TokenStore tokenStore,
             @NonNull FactTableWriteLock lock,
             @NonNull FactTransformerService factTransformerService,
-            @NonNull SnapshotCache snapCache,
+            @NonNull PgSnapshotCache snapCache,
             @NonNull PgMetrics metrics) {
         super(tokenStore);
 

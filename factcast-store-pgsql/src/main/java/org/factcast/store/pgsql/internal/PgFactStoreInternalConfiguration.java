@@ -32,8 +32,8 @@ import org.factcast.store.pgsql.internal.lock.AdvisoryWriteLock;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
-import org.factcast.store.pgsql.internal.snapcache.SnapshotCache;
-import org.factcast.store.pgsql.internal.snapcache.SnapshotCacheConfiguration;
+import org.factcast.store.pgsql.internal.snapcache.PgSnapshotCache;
+import org.factcast.store.pgsql.internal.snapcache.PgSnapshotCacheConfiguration;
 import org.factcast.store.pgsql.registry.SchemaRegistryConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -66,7 +66,7 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMo
 @EnableTransactionManagement
 @EnableScheduling
 @EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_SCHEDULER)
-@Import({ SchemaRegistryConfiguration.class, SnapshotCacheConfiguration.class })
+@Import({ SchemaRegistryConfiguration.class, PgSnapshotCacheConfiguration.class })
 public class PgFactStoreInternalConfiguration {
 
     @Bean
@@ -96,7 +96,7 @@ public class PgFactStoreInternalConfiguration {
     public FactStore factStore(
             JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
             PgTokenStore tokenStore, FactTableWriteLock lock,
-            FactTransformerService factTransformerService, SnapshotCache snapCache,
+            FactTransformerService factTransformerService, PgSnapshotCache snapCache,
             PgMetrics pgMetrics) {
         return new PgFactStore(jdbcTemplate, subscriptionFactory, tokenStore, lock,
                 factTransformerService, snapCache, pgMetrics);

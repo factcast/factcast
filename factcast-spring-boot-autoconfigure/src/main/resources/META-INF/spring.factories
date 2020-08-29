@@ -1,6 +1,6 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 org.factcast.spring.boot.autoconfigure.core.FactCastAutoConfiguration,\
-org.factcast.spring.boot.autoconfigure.core.FactCastSnapshotRepositoryAutoConfiguration,\
+org.factcast.spring.boot.autoconfigure.core.FactCastSnapshotCacheAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.highlevel.FactusAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.client.grpc.GrpcFactStoreAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.client.grpc.LZ4ClientAutoConfiguration,\
