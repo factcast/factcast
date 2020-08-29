@@ -34,7 +34,8 @@ jobs:
         run: ./mvnw -B clean verify --file pom.xml
         # jacoco:report
         # jacoco:report-aggregate
+      - name: Remove partial execution reports
+        run: find -wholename "**/target/jacoco-output" -exec rm -rf {} +
       - uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          directory: ./**/target/site/jacoco/jacoco.xml
