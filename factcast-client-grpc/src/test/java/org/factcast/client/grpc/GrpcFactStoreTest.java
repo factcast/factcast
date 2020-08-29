@@ -17,8 +17,8 @@ package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.factcast.core.TestHelper.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -26,6 +26,8 @@ import java.util.*;
 
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
@@ -52,7 +54,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import lombok.val;
 
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "ResultOfMethodCallIgnored"})
 @ExtendWith(MockitoExtension.class)
 class GrpcFactStoreTest {
 
@@ -479,5 +481,69 @@ class GrpcFactStoreTest {
         when(blockingStub.enumerateNamespaces(any())).thenThrow(new StatusRuntimeException(
                 Status.UNAVAILABLE));
         assertThrows(RetryableException.class, () -> uut.enumerateNamespaces());
+    }
+
+    @Test
+    void getSnapshotEmpty() {
+        SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+        when(blockingStub.getSnapshot(eq(conv.toProto(id)))).thenReturn(conv.toProtoSnapshot(Optional.empty()));
+        //.thenThrow(new StatusRuntimeException(                Status.UNAVAILABLE));
+
+        assertThat(uut.getSnapshot(id)).isEmpty();
+    }
+
+    @Test
+    void getSnapshotException() {
+        SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+        when(blockingStub.getSnapshot(eq(conv.toProto(id)))).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+
+        assertThatThrownBy(() -> uut.getSnapshot(id)).isInstanceOf(RetryableException.class);
+    }
+
+    @Test
+    void getSnapshot() {
+        SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+        val snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+        when(blockingStub.getSnapshot(eq(conv.toProto(id)))).thenReturn(conv.toProtoSnapshot(Optional.of(snap)));
+
+        assertThat(uut.getSnapshot(id)).isPresent().contains(snap);
+    }
+
+    @Test
+    void setSnapshotException() {
+        SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+        val snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+        when(blockingStub.setSnapshot(eq(conv.toProto(snap)))).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+
+        assertThatThrownBy(() -> uut.setSnapshot(snap)).isInstanceOf(RetryableException.class);
+    }
+
+    @Test
+    void setSnapshot() {
+        SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+        val snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+        when(blockingStub.setSnapshot(eq(conv.toProto(snap)))).thenReturn(conv.empty());
+
+        uut.setSnapshot(snap);
+
+        verify(blockingStub).setSnapshot(conv.toProto(snap));
+    }
+
+    @Test
+    void clearSnapshotException() {
+        SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+        when(blockingStub.clearSnapshot(eq(conv.toProto(id)))).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+
+        assertThatThrownBy(() -> uut.clearSnapshot(id)).isInstanceOf(RetryableException.class);
+    }
+
+    @Test
+    void clearSnapshot() {
+        SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+        when(blockingStub.clearSnapshot(eq(conv.toProto(id)))).thenReturn(conv.empty());
+
+        uut.clearSnapshot(id);
+
+        verify(blockingStub).clearSnapshot(conv.toProto(id));
     }
 }
