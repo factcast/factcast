@@ -17,16 +17,14 @@ package org.factcast.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.UUID;
 
 import org.junit.jupiter.api.*;
 
 import com.fasterxml.jackson.core.JsonParseException;
+
+import lombok.val;
 
 public class DefaultFactTest {
 
@@ -183,5 +181,21 @@ public class DefaultFactTest {
                 + "\",\"ns\":\"ns\"}", "{}")
                 .version());
 
+    }
+
+    @Test
+    void testToString() {
+        UUID id = UUID.randomUUID();
+        Fact fact = Fact.of("{\"id\":\"" + id + "\",\"version\":\"" + 7
+                + "\",\"ns\":\"ns\"}", "{\"foo\":\"payload\"}");
+        assertEquals("DefaultFact [id=" + id.toString() + "]", fact.toString());
+    }
+
+    @Test
+    void testHeader() {
+        FactHeader fh = new FactHeader();
+        fh.id(UUID.randomUUID()        ).ns("foo");
+        val f = new DefaultFact(fh, "{}");
+        assertSame(fh, f.header());
     }
 }

@@ -76,7 +76,7 @@ public class DefaultFact implements Fact, Externalizable {
         init(jsonHeader);
     }
 
-    public DefaultFact(FactHeader header, String payload) {
+    public DefaultFact(@NonNull FactHeader header, @NonNull String payload) {
         deserializedHeader = header;
         jsonPayload = payload;
         jsonHeader = FactCastJson.writeValueAsString(header);
