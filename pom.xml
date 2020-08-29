@@ -299,9 +299,6 @@
             <goals>
               <goal>report</goal>
             </goals>
-            <configuration>
-              <outputDirectory>${project.reporting.outputDirectory}/jacoco-merged-test-coverage-report</outputDirectory>
-            </configuration>
           </execution>
         </executions>
       </plugin>
