@@ -35,4 +35,5 @@ public interface SnapshotCache {
 
     void clearSnapshot(@NonNull SnapshotId id);
 
+    void compact(int retentionTimeInDays);
 }

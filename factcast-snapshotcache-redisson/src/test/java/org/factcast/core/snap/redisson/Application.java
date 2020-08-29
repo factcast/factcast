@@ -13,24 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.snap;
+package org.factcast.core.snap.redisson;
 
-import java.io.Serializable;
-import java.util.UUID;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import lombok.NonNull;
-import lombok.Value;
-
-@Value
-public class Snapshot implements Serializable {
-    @NonNull
-    SnapshotId id;
-
-    @NonNull
-    UUID lastFact;
-
-    @NonNull
-    byte[] bytes;
-
-    boolean compressed;
+@SpringBootApplication
+public class Application {
 }

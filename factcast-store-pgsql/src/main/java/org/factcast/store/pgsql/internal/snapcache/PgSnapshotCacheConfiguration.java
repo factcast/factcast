@@ -22,16 +22,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
-public class SnapshotCacheConfiguration {
+public class PgSnapshotCacheConfiguration {
     @Bean
-    public SnapshotCache snapshotCache(JdbcTemplate jdbcTemplate) {
-        return new SnapshotCache(jdbcTemplate);
+    public PgSnapshotCache pgSnapshotCache(JdbcTemplate jdbcTemplate) {
+        return new PgSnapshotCache(jdbcTemplate);
     }
 
     @Bean
-    public SnapshotCacheCompactor snapshotCacheCompactor(
-            SnapshotCache cache,
+    public PgSnapshotCacheCompactor pgSnapshotCacheCompactor(
+            PgSnapshotCache cache,
             PgConfigurationProperties props, PgMetrics pgMetrics) {
-        return new SnapshotCacheCompactor(cache, pgMetrics, props.getDeleteSnapshotStaleForDays());
+        return new PgSnapshotCacheCompactor(cache, pgMetrics, props
+                .getDeleteSnapshotStaleForDays());
     }
 }
