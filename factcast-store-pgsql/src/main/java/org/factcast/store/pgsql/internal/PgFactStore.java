@@ -154,7 +154,7 @@ public class PgFactStore extends AbstractFactStore {
 
     private Fact extractFactFromResultSet(
             ResultSet resultSet,
-            @SuppressWarnings("unused") int rowNum) {
+            @SuppressWarnings("unused") int rowNum) throws SQLException {
         return PgFact.from(resultSet);
     }
 

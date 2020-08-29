@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Set;
 import java.util.UUID;
 
@@ -39,12 +40,14 @@ public class PgFactTest {
         String aggIdArr = "[\"" + aggId + "\"]";
         String header = "{\"meta\":{\"foo\":\"1\",\"bar\":\"2\",\"baz\":\"3\"}}";
         String payload = "{}";
+        int version = 7;
         when(rs.getString(eq(PgConstants.ALIAS_ID))).thenReturn(aggId);
         when(rs.getString(eq(PgConstants.ALIAS_NS))).thenReturn(ns);
         when(rs.getString(eq(PgConstants.ALIAS_TYPE))).thenReturn(type);
         when(rs.getString(eq(PgConstants.ALIAS_AGGID))).thenReturn(aggIdArr);
         when(rs.getString(eq(PgConstants.COLUMN_HEADER))).thenReturn(header);
         when(rs.getString(eq(PgConstants.COLUMN_PAYLOAD))).thenReturn(payload);
+        when(rs.getInt(eq(PgConstants.COLUMN_VERSION))).thenReturn(version);
         when(rs.next()).thenReturn(true);
         PgFact uut = (PgFact) PgFact.from(rs);
         assertEquals(ns, uut.ns());
@@ -56,6 +59,7 @@ public class PgFactTest {
         assertEquals("1", uut.meta("foo"));
         assertEquals("2", uut.meta("bar"));
         assertEquals("3", uut.meta("baz"));
+        assertEquals(7,uut.version());
     }
 
     @Test
@@ -86,5 +90,30 @@ public class PgFactTest {
         assertEquals(2, res.size());
         assertTrue(res.contains(aggId1));
         assertTrue(res.contains(aggId2));
+    }
+
+    @Test
+    void testToString() throws SQLException {
+        ResultSet rs = mock(ResultSet.class);
+        when(rs.next()).thenReturn(true);
+        String ns = "ns";
+        String type = "type";
+        String aggId = UUID.randomUUID().toString();
+        String aggIdArr = "[\"" + aggId + "\"]";
+        String header = "{\"meta\":{\"foo\":\"1\",\"bar\":\"2\",\"baz\":\"3\"}}";
+        String payload = "{}";
+        int version = 7;
+        when(rs.getString(eq(PgConstants.ALIAS_ID))).thenReturn(aggId);
+        when(rs.getString(eq(PgConstants.ALIAS_NS))).thenReturn(ns);
+        when(rs.getString(eq(PgConstants.ALIAS_TYPE))).thenReturn(type);
+        when(rs.getString(eq(PgConstants.ALIAS_AGGID))).thenReturn(aggIdArr);
+        when(rs.getString(eq(PgConstants.COLUMN_HEADER))).thenReturn(header);
+        when(rs.getString(eq(PgConstants.COLUMN_PAYLOAD))).thenReturn(payload);
+        when(rs.getInt(eq(PgConstants.COLUMN_VERSION))).thenReturn(version);
+        when(rs.next()).thenReturn(true);
+        PgFact uut = (PgFact) PgFact.from(rs);
+
+        assertEquals("PgFact(id="+uut.id()+")", uut.toString());
+
     }
 }
