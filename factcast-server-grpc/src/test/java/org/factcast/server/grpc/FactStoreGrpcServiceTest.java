@@ -64,7 +64,7 @@ import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
 import lombok.val;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "unchecked", "rawtypes" })
 @ExtendWith(MockitoExtension.class)
 public class FactStoreGrpcServiceTest {
 
@@ -119,6 +119,7 @@ public class FactStoreGrpcServiceTest {
         verify(stream).onCompleted();
         verifyNoMoreInteractions(stream);
     }
+
     @Test
     void currentTimeWithException() {
         when(backend.currentTime()).thenThrow(RuntimeException.class);
@@ -130,7 +131,6 @@ public class FactStoreGrpcServiceTest {
         verifyNoMoreInteractions(stream);
 
     }
-
 
     @Test
     void fetchById() {
@@ -301,7 +301,7 @@ public class FactStoreGrpcServiceTest {
         val sre = assertThrows(StatusRuntimeException.class, () -> {
             for (int i = 0; i < 10; i++) {
                 uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)
-                                .continuous(true)),
+                        .continuous(true)),
                         mock(ServerCallStreamObserver.class));
 
             }
@@ -321,7 +321,7 @@ public class FactStoreGrpcServiceTest {
         val sre = assertThrows(StatusRuntimeException.class, () -> {
             for (int i = 0; i < 10; i++) {
                 uut.subscribe(new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)
-                                .continuous(false)),
+                        .continuous(false)),
                         mock(ServerCallStreamObserver.class));
 
             }
@@ -726,7 +726,7 @@ public class FactStoreGrpcServiceTest {
             }
         });
 
-        assertThrows(StatusException.class,()->uut.getFactcastUser());
+        assertThrows(StatusException.class, () -> uut.getFactcastUser());
     }
 
     @Test
@@ -744,7 +744,8 @@ public class FactStoreGrpcServiceTest {
         verify(obs).onCompleted();
     }
 
-    static class TestException extends RuntimeException{}
+    static class TestException extends RuntimeException {
+    }
 
     @Test
     void clearSnapshotWithException() {
@@ -765,7 +766,7 @@ public class FactStoreGrpcServiceTest {
         val id = new SnapshotId("foo", UUID.randomUUID());
         val req = conv.toProto(id);
         StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
-        Snapshot snap=new Snapshot(id,UUID.randomUUID(), "foo".getBytes(), false);
+        Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
         Optional<Snapshot> optSnap = Optional.of(snap);
         when(backend.getSnapshot(id)).thenReturn(optSnap);
 
@@ -811,7 +812,7 @@ public class FactStoreGrpcServiceTest {
     @Test
     void setSnapshot() {
         val id = new SnapshotId("foo", UUID.randomUUID());
-        Snapshot snap=new Snapshot(id,UUID.randomUUID(), "foo".getBytes(), false);
+        Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
         val req = conv.toProto(snap);
         StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
 
@@ -826,7 +827,7 @@ public class FactStoreGrpcServiceTest {
     @Test
     void setSnapshotWithException() {
         val id = new SnapshotId("foo", UUID.randomUUID());
-        Snapshot snap=new Snapshot(id,UUID.randomUUID(), "foo".getBytes(), false);
+        Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
         val req = conv.toProto(snap);
         StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
         doThrow(TestException.class).when(backend).setSnapshot(any());

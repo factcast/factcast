@@ -17,8 +17,8 @@ package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.factcast.core.TestHelper.*;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -54,7 +54,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import lombok.val;
 
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "ResultOfMethodCallIgnored"})
+@SuppressWarnings({ "OptionalUsedAsFieldOrParameterType", "ResultOfMethodCallIgnored" })
 @ExtendWith(MockitoExtension.class)
 class GrpcFactStoreTest {
 
@@ -136,14 +136,16 @@ class GrpcFactStoreTest {
         assertThat(result.get().id()).isEqualTo(uuid);
 
     }
+
     @Test
     void fetchByIdThrowsRetryable() {
         final TestFact fact = new TestFact();
         val uuid = fact.id();
         val id = conv.toProto(uuid);
-        when(blockingStub.fetchById(eq(id))).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+        when(blockingStub.fetchById(eq(id))).thenThrow(new StatusRuntimeException(
+                Status.UNAVAILABLE));
 
-        assertThatThrownBy(()->uut.fetchById(fact.id())).isInstanceOf(RetryableException.class);
+        assertThatThrownBy(() -> uut.fetchById(fact.id())).isInstanceOf(RetryableException.class);
     }
 
     @Test
@@ -151,9 +153,11 @@ class GrpcFactStoreTest {
         final TestFact fact = new TestFact();
         val uuid = fact.id();
         val id = conv.toProto(uuid, 100);
-        when(blockingStub.fetchByIdAndVersion(eq(id))).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+        when(blockingStub.fetchByIdAndVersion(eq(id))).thenThrow(new StatusRuntimeException(
+                Status.UNAVAILABLE));
 
-        assertThatThrownBy(()->uut.fetchByIdAndVersion(fact.id(), 100)).isInstanceOf(RetryableException.class);
+        assertThatThrownBy(() -> uut.fetchByIdAndVersion(fact.id(), 100)).isInstanceOf(
+                RetryableException.class);
 
     }
 
@@ -506,14 +510,16 @@ class GrpcFactStoreTest {
     @Test
     void getSnapshotEmpty() {
         SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
-        when(blockingStub.getSnapshot(eq(conv.toProto(id)))).thenReturn(conv.toProtoSnapshot(Optional.empty()));
+        when(blockingStub.getSnapshot(eq(conv.toProto(id)))).thenReturn(conv.toProtoSnapshot(
+                Optional.empty()));
         assertThat(uut.getSnapshot(id)).isEmpty();
     }
 
     @Test
     void getSnapshotException() {
         SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
-        when(blockingStub.getSnapshot(eq(conv.toProto(id)))).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+        when(blockingStub.getSnapshot(eq(conv.toProto(id)))).thenThrow(new StatusRuntimeException(
+                Status.UNAVAILABLE));
 
         assertThatThrownBy(() -> uut.getSnapshot(id)).isInstanceOf(RetryableException.class);
     }
@@ -522,7 +528,8 @@ class GrpcFactStoreTest {
     void getSnapshot() {
         SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
         val snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
-        when(blockingStub.getSnapshot(eq(conv.toProto(id)))).thenReturn(conv.toProtoSnapshot(Optional.of(snap)));
+        when(blockingStub.getSnapshot(eq(conv.toProto(id)))).thenReturn(conv.toProtoSnapshot(
+                Optional.of(snap)));
 
         assertThat(uut.getSnapshot(id)).isPresent().contains(snap);
     }
@@ -531,7 +538,8 @@ class GrpcFactStoreTest {
     void setSnapshotException() {
         SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
         val snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
-        when(blockingStub.setSnapshot(eq(conv.toProto(snap)))).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+        when(blockingStub.setSnapshot(eq(conv.toProto(snap)))).thenThrow(new StatusRuntimeException(
+                Status.UNAVAILABLE));
 
         assertThatThrownBy(() -> uut.setSnapshot(snap)).isInstanceOf(RetryableException.class);
     }
@@ -550,7 +558,8 @@ class GrpcFactStoreTest {
     @Test
     void clearSnapshotException() {
         SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
-        when(blockingStub.clearSnapshot(eq(conv.toProto(id)))).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+        when(blockingStub.clearSnapshot(eq(conv.toProto(id)))).thenThrow(new StatusRuntimeException(
+                Status.UNAVAILABLE));
 
         assertThatThrownBy(() -> uut.clearSnapshot(id)).isInstanceOf(RetryableException.class);
     }

@@ -38,7 +38,7 @@ import lombok.*;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-@ToString(of = {"id"})
+@ToString(of = { "id" })
 public class PgFact implements Fact {
 
     @Getter
@@ -98,7 +98,6 @@ public class PgFact implements Fact {
         @JsonProperty
         final Map<String, String> meta = new HashMap<>();
     }
-
 
     public static Fact from(ResultSet resultSet) throws SQLException {
         String id = resultSet.getString(PgConstants.ALIAS_ID);
