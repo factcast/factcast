@@ -15,7 +15,6 @@
  */
 package org.factcast.core.util;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +42,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FactCastJson {
 
-    private static ObjectMapper objectMapper ;
+    private static ObjectMapper objectMapper;
 
     private static ObjectReader reader;
 

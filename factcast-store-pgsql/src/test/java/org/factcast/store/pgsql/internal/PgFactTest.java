@@ -59,7 +59,7 @@ public class PgFactTest {
         assertEquals("1", uut.meta("foo"));
         assertEquals("2", uut.meta("bar"));
         assertEquals("3", uut.meta("baz"));
-        assertEquals(7,uut.version());
+        assertEquals(7, uut.version());
     }
 
     @Test
@@ -113,7 +113,7 @@ public class PgFactTest {
         when(rs.next()).thenReturn(true);
         PgFact uut = (PgFact) PgFact.from(rs);
 
-        assertEquals("PgFact(id="+uut.id()+")", uut.toString());
+        assertEquals("PgFact(id=" + uut.id() + ")", uut.toString());
 
     }
 }

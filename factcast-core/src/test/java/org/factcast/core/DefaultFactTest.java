@@ -194,7 +194,7 @@ public class DefaultFactTest {
     @Test
     void testHeader() {
         FactHeader fh = new FactHeader();
-        fh.id(UUID.randomUUID()        ).ns("foo");
+        fh.id(UUID.randomUUID()).ns("foo");
         val f = new DefaultFact(fh, "{}");
         assertSame(fh, f.header());
     }

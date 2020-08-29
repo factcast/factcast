@@ -38,13 +38,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import lombok.val;
 
-@ContextConfiguration(classes = {PgTestConfiguration.class})
+@ContextConfiguration(classes = { PgTestConfiguration.class })
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 public class PgFactStoreTest
         extends AbstractFactStoreTest {
-
 
     @Autowired
     FactStore fs;
@@ -67,7 +66,7 @@ public class PgFactStoreTest
 
     @Test
     void testClearSnapshotMetered() {
-        val id=new SnapshotId("xxx", UUID.randomUUID());
+        val id = new SnapshotId("xxx", UUID.randomUUID());
         store.clearSnapshot(id);
         verify(metrics).time(same(CLEAR_SNAPSHOT), any(Runnable.class));
     }
@@ -75,7 +74,7 @@ public class PgFactStoreTest
     @Test
     void testSetSnapshotMetered() {
         val id = new SnapshotId("xxx", UUID.randomUUID());
-        val snap = new Snapshot(id,UUID.randomUUID(), "foo".getBytes(), false);
+        val snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
         store.setSnapshot(snap);
 
         verify(metrics).time(same(SET_SNAPSHOT), any(Runnable.class));
