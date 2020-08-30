@@ -10,15 +10,15 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifyAll
+import java.io.IOException
+import java.nio.file.InvalidPathException
+import java.nio.file.Paths
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.ProjectService
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.registry.DistributionCreatorService
 import org.factcast.schema.registry.cli.validation.ValidationService
-import java.io.IOException
-import java.nio.file.InvalidPathException
-import java.nio.file.Paths
 
 class CommandServiceImplTest : StringSpec() {
     val fs = mockk<FileSystemService>()
@@ -118,7 +118,6 @@ class CommandServiceImplTest : StringSpec() {
             }
         }
 
-
         "validate on wrong input path" {
             every { projectService.detectProject(dummyPath) } throws InvalidPathException("", "")
 
@@ -127,5 +126,4 @@ class CommandServiceImplTest : StringSpec() {
             verifyAll { projectService.detectProject(dummyPath) }
         }
     }
-
 }

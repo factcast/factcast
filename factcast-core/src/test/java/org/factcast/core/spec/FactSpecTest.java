@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import org.factcast.core.util.FactCastJson;
+import org.factcast.factus.event.Specification;
 import org.junit.jupiter.api.*;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;

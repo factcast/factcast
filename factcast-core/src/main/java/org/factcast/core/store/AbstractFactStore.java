@@ -15,13 +15,10 @@
  */
 package org.factcast.core.store;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -38,16 +35,19 @@ public abstract class AbstractFactStore implements FactStore {
 
         if (optionalToken.isPresent()) {
             StateToken token = optionalToken.get();
-            Optional<String> ns = tokenStore.getNs(token);
-            Optional<Map<UUID, Optional<UUID>>> state = tokenStore.getState(token);
+            Optional<State> state = tokenStore.get(token);
 
             if (state.isPresent()) {
-                if (isStateUnchanged(ns, state.get())) {
-                    publish(factsToPublish);
+                try {
+                    if (isStateUnchanged(state.get())) {
+                        publish(factsToPublish);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } finally {
                     tokenStore.invalidate(token);
-                    return true;
-                } else
-                    return false;
+                }
             } else {
                 // token is unknown, just reject.
                 return false;
@@ -64,43 +64,19 @@ public abstract class AbstractFactStore implements FactStore {
         tokenStore.invalidate(token);
     }
 
-    @Override
-    public StateToken stateFor(@NonNull Collection<UUID> forAggIds,
-            @NonNull Optional<String> ns) {
-        Map<UUID, Optional<UUID>> state = getStateFor(ns, forAggIds);
-        return tokenStore.create(state, ns);
+    // TODO needed?
+    public StateToken stateFor(@NonNull List<FactSpec> specs) {
+        State state = getStateFor(specs);
+        return tokenStore.create(state);
     }
 
     @SuppressWarnings("WeakerAccess")
-    protected final boolean isStateUnchanged(@NonNull Optional<String> ns,
-            @NonNull Map<UUID, Optional<UUID>> snapshotState) {
-        Map<UUID, Optional<UUID>> currentState = getStateFor(ns, snapshotState
-                .keySet());
-
-        if (currentState.size() == snapshotState.size()) {
-            for (UUID k : currentState.keySet()) {
-                if (!sameValue(currentState, snapshotState, k))
-                    return false;
-            }
-            return true;
-        } else
-            return false;
+    protected final boolean isStateUnchanged(
+            @NonNull State snapshotState) {
+        State currentState = getStateFor(snapshotState.specs());
+        return currentState.serialOfLastMatchingFact() == snapshotState.serialOfLastMatchingFact();
     }
 
-    private boolean sameValue(Map<UUID, Optional<UUID>> currentState,
-            Map<UUID, Optional<UUID>> snapshotState, UUID k) {
-        Optional<UUID> current = currentState.get(k);
-        Optional<UUID> snap = snapshotState.get(k);
-        if (current == null && snap == null)
-            return true;
-        else // noinspection OptionalAssignedToNull
-        if (current == null || snap == null)
-            return false;
-        else
-            return snap.equals(current);
-    }
-
-    protected abstract Map<UUID, Optional<UUID>> getStateFor(@NonNull Optional<String> ns,
-            @NonNull Collection<UUID> forAggIds);
+    protected abstract State getStateFor(@NonNull List<FactSpec> specs);
 
 }

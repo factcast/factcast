@@ -15,12 +15,10 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.util.FactCastJson;
@@ -35,30 +33,14 @@ public class PgTokenStore implements TokenStore {
 
     final JdbcTemplate tpl;
 
-    static class StateJson {
-
-        private final Map<UUID, UUID> lastFactIdByAggregate = new LinkedHashMap<>();
-
-        public static StateJson from(@NonNull Map<UUID, Optional<UUID>> state) {
-            StateJson json = new StateJson();
-            state.forEach((key, value) -> json.lastFactIdByAggregate.put(key, value.orElse(null)));
-            return json;
-        }
-
-        public Map<UUID, Optional<UUID>> toMap() {
-            HashMap<UUID, Optional<UUID>> ret = new HashMap<>();
-            lastFactIdByAggregate.forEach((key, value) -> ret.put(key, Optional.ofNullable(value)));
-            return ret;
-        }
-    }
-
     @Override
     public @NonNull StateToken create(
-            @NonNull Map<UUID, Optional<UUID>> state, @NonNull Optional<String> nsOrNull) {
+            @NonNull State state) {
 
-        String stateAsJson = FactCastJson.writeValueAsString(StateJson.from(state));
+        String stateAsJson = FactCastJson.writeValueAsString(
+                state);
         UUID queryForObject = tpl.queryForObject(PgConstants.INSERT_TOKEN,
-                new Object[] { nsOrNull.orElse(null), stateAsJson },
+                new Object[] { stateAsJson },
                 UUID.class);
         return new StateToken(
                 queryForObject);
@@ -70,27 +52,14 @@ public class PgTokenStore implements TokenStore {
     }
 
     @Override
-    public @NonNull Optional<Map<UUID, Optional<UUID>>> getState(@NonNull StateToken token) {
+    public @NonNull Optional<State> get(@NonNull StateToken token) {
         try {
             String state = tpl.queryForObject(PgConstants.SELECT_STATE_FROM_TOKEN,
                     new Object[] { token.uuid() },
                     String.class);
-            return Optional.of(FactCastJson.readValue(StateJson.class, state).toMap());
+            return Optional.of(FactCastJson.readValue(State.class, state));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
     }
-
-    @Override
-    public @NonNull Optional<String> getNs(@NonNull StateToken token) {
-        try {
-            String ns = tpl.queryForObject(PgConstants.SELECT_NS_FROM_TOKEN,
-                    new Object[] { token.uuid() },
-                    String.class);
-            return Optional.ofNullable(ns);
-        } catch (EmptyResultDataAccessException e) {
-            return Optional.empty();
-        }
-    }
-
 }

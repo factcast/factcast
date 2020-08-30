@@ -15,7 +15,7 @@
  */
 package org.factcast.example.client.spring.boot2.hello;
 
-import org.factcast.core.spec.Specification;
+import org.factcast.factus.event.Specification;
 
 import lombok.ToString;
 

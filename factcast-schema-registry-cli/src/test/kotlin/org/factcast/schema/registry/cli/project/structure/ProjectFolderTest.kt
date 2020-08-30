@@ -19,5 +19,4 @@ class ProjectFolderTest : StringSpec() {
             project.namespaces shouldHaveSize 1
         }
     }
-
 }

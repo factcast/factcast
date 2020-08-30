@@ -16,31 +16,22 @@
 package org.factcast.store.pgsql.internal;
 
 import java.sql.ResultSet;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.sql.SQLException;
+import java.util.*;
 
 import org.factcast.core.Fact;
+import org.factcast.core.FactHeader;
 import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 
-import lombok.AccessLevel;
-import lombok.Generated;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.ToString;
+import lombok.*;
 
 /**
  * PG Specific implementation of a Fact.
- *
+ * <p>
  * This class is necessary in order to delay parsing of the header until
  * necessary (when accessing meta-data)
  *
@@ -81,16 +72,23 @@ public class PgFact implements Fact {
     @Override
     public String meta(String key) {
         if (meta == null) {
-            meta = deser();
+            meta = deserializeMeta();
         }
         return meta.get(key);
     }
 
-    @SneakyThrows
-    @Generated
-    private Map<String, String> deser() {
-        Meta deserializedMeta = FactCastJson.readValue(Meta.class, jsonHeader);
-        return deserializedMeta.meta;
+    private transient FactHeader header;
+
+    @Override
+    public @NonNull FactHeader header() {
+        if (header == null) {
+            header = FactCastJson.readValue(FactHeader.class, jsonHeader);
+        }
+        return header;
+    }
+
+    private Map<String, String> deserializeMeta() {
+        return header().meta();
     }
 
     // just picks the MetaData from the Header (as we know the rest already
@@ -101,9 +99,7 @@ public class PgFact implements Fact {
         final Map<String, String> meta = new HashMap<>();
     }
 
-    @SneakyThrows
-    @Generated
-    public static Fact from(ResultSet resultSet) {
+    public static Fact from(ResultSet resultSet) throws SQLException {
         String id = resultSet.getString(PgConstants.ALIAS_ID);
         String aggId = resultSet.getString(PgConstants.ALIAS_AGGID);
         String type = resultSet.getString(PgConstants.ALIAS_TYPE);

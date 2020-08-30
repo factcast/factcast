@@ -13,12 +13,12 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifyAll
+import java.nio.file.Paths
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.validation.validators.ExampleValidationService
 import org.factcast.schema.registry.cli.validation.validators.ProjectStructureValidationService
 import org.factcast.schema.registry.cli.validation.validators.TransformationValidationService
-import java.nio.file.Paths
 
 class ValidationServiceImplTest : StringSpec() {
     val validateExamplesServiceMock = mockk<ExampleValidationService>()
@@ -91,5 +91,4 @@ class ValidationServiceImplTest : StringSpec() {
             }
         }
     }
-
 }

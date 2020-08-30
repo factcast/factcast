@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
@@ -117,9 +119,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             final int size = facts.size();
             log.debug("publish {} fact{}", size, size > 1 ? "s" : "");
             log.trace("publish {}", facts);
-            log.trace("store publish {}", facts);
             store.publish(facts);
-            log.trace("store publish done");
             responseObserver.onNext(MSG_Empty.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (FactValidationException e) {
@@ -161,7 +161,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                 ((ServerCallStreamObserver<MSG_Notification>) responseObserver).setOnCancelHandler(
                         () -> {
                             try {
-                                log.trace("got onCancel from stream, closing subscription {}", req
+                                log.debug("got onCancel from stream, closing subscription {}", req
                                         .debugInfo());
                                 sub.close();
                             } catch (Exception e) {
@@ -241,7 +241,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             }
         } catch (ExecutionException e) {
             log.error("While finding or creating bucket: ", e);
-            // default to be permissive - for now...
             return false;
         }
     }
@@ -276,8 +275,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         URL propertiesUrl = getProjectProperties();
         Properties buildProperties = new Properties();
         if (propertiesUrl != null) {
-            try {
-                InputStream is = propertiesUrl.openStream();
+            try (InputStream is = propertiesUrl.openStream();) {
                 if (is != null) {
                     buildProperties.load(is);
                     String v = buildProperties.getProperty("version");
@@ -302,7 +300,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     private void resetDebugInfo(SubscriptionRequestTO req) {
         String newId = "grpc-sub#" + subscriptionIdStore.incrementAndGet();
-        log.info("subscribing {} for {} defined as {}", newId, req, req.dump());
+        log.debug("subscribing {} for {} defined as {}", newId, req, req.dump());
         req.debugInfo(newId);
     }
 
@@ -377,11 +375,31 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     public void stateFor(MSG_StateForRequest request, StreamObserver<MSG_UUID> responseObserver) {
         try {
             StateForRequest req = converter.fromProto(request);
-            StateToken token = store.stateFor(req.aggIds(), Optional.ofNullable(req.ns()));
+            String ns = req.ns(); // TODO is this gets null, we're screwed
+            StateToken token = store.stateFor(req.aggIds()
+                    .stream()
+                    .map(id -> FactSpec.ns(ns).aggId(id))
+                    .collect(Collectors.toList()));
             responseObserver.onNext(converter.toProto(token.uuid()));
             responseObserver.onCompleted();
         } catch (Throwable e) {
             responseObserver.onError(e);
+        }
+    }
+
+    @Override
+    public void stateForSpecsJson(
+            MSG_FactSpecsJson request,
+            StreamObserver<MSG_UUID> responseObserver) {
+        List<FactSpec> req = converter.fromProto(request);
+        if (!req.isEmpty()) {
+
+            StateToken token = store.stateFor(req);
+            responseObserver.onNext(converter.toProto(token.uuid()));
+            responseObserver.onCompleted();
+        } else {
+            responseObserver.onError(new IllegalArgumentException(
+                    "Cannot determine state for empty list of fact specifications"));
         }
     }
 
@@ -414,12 +432,13 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     @Override
     @Secured(FactCastAuthority.AUTHENTICATED)
     public void fetchById(MSG_UUID request, StreamObserver<MSG_OptionalFact> responseObserver) {
+
         UUID fromProto = converter.fromProto(request);
         log.trace("fetchById {}", fromProto);
 
         doFetchById(responseObserver, () -> {
             Optional<Fact> fetchById = store.fetchById(fromProto);
-            log.debug("fetchById({}) was {}found", fromProto, fetchById.map(f -> "")
+            log.trace("fetchById({}) was {}found", fromProto, fetchById.map(f -> "")
                     .orElse("NOT "));
             return fetchById;
         });
@@ -461,7 +480,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         doFetchById(responseObserver, () -> {
             Optional<Fact> fetchById = store.fetchByIdAndVersion(fromProto.uuid(), fromProto
                     .version());
-            log.debug("fetchById({}) was found", fromProto, fetchById.map(f -> "")
+            log.trace("fetchById({}) was found", fromProto, fetchById.map(f -> "")
                     .orElse("NOT "));
 
             return fetchById;
@@ -513,4 +532,55 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         return (FactCastUser) authentication;
     }
 
+    @Override
+    public void clearSnapshot(MSG_SnapshotId request, StreamObserver<MSG_Empty> responseObserver) {
+        try {
+            store.clearSnapshot(converter.fromProto(request));
+            responseObserver.onNext(MSG_Empty.getDefaultInstance());
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            log.error("while clearing snapshot", e);
+            responseObserver.onError(e);
+        }
+    }
+
+    @Override
+    public void getSnapshot(
+            MSG_SnapshotId request,
+            StreamObserver<MSG_OptionalSnapshot> responseObserver) {
+        try {
+            SnapshotId id = converter.fromProto(request);
+
+            Optional<Snapshot> snapshot = store.getSnapshot(id);
+
+            if (snapshot.isPresent() && !snapshot.get().compressed())
+                enableResponseCompression(responseObserver);
+
+            responseObserver.onNext(converter.toProtoSnapshot(snapshot));
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            log.error("while getting snapshot", e);
+            responseObserver.onError(e);
+        }
+
+    }
+
+    @Override
+    public void setSnapshot(MSG_Snapshot request, StreamObserver<MSG_Empty> responseObserver) {
+        try {
+            SnapshotId id = converter.fromProto(request.getId());
+            UUID state = converter.fromProto(request.getFactId());
+            byte[] bytes = converter.fromProto(request.getData());
+            boolean compressed = request.getCompressed();
+
+            store.setSnapshot(new Snapshot(id, state, bytes, compressed));
+
+            responseObserver.onNext(MSG_Empty.getDefaultInstance());
+            responseObserver.onCompleted();
+        } catch (Throwable e) {
+            log.error("while setting snapshot", e);
+            responseObserver.onError(e);
+        }
+
+    }
 }

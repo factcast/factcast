@@ -7,6 +7,7 @@ import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.nio.file.Paths
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Project
@@ -14,7 +15,6 @@ import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.utils.ChecksumService
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
-import java.nio.file.Paths
 
 class IndexFileCalculatorImplTest : StringSpec() {
     val checksumService = mockk<ChecksumService>()
@@ -27,7 +27,6 @@ class IndexFileCalculatorImplTest : StringSpec() {
     val event1 = Event("bar", dummyPath, listOf(version1, version2), listOf(transformation1to2))
     val namespace1 = Namespace("foo", dummyPath, listOf(event1))
     val dummyProject = Project(null, listOf(namespace1))
-
 
     val uut = IndexFileCalculatorImpl(checksumService, missingTransformationCalculator)
 
@@ -53,5 +52,4 @@ class IndexFileCalculatorImplTest : StringSpec() {
             confirmVerified(checksumService, missingTransformationCalculator)
         }
     }
-
 }

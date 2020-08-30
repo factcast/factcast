@@ -16,7 +16,6 @@
 package org.factcast.core.lock;
 
 import java.util.Collections;
-import java.util.UUID;
 
 import org.factcast.core.store.FactStore;
 import org.junit.jupiter.api.*;
@@ -27,8 +26,8 @@ class WithOptimisticLockTest {
     @Test
     void attemptReturnsNullShouldBeAnAbort() {
 
-        WithOptimisticLock uut = new WithOptimisticLock(Mockito.mock(FactStore.class), null,
-                Collections.singletonList(UUID.randomUUID()));
+        WithOptimisticLock uut = new WithOptimisticLock(Mockito.mock(FactStore.class), Collections
+                .emptyList());
 
         Assertions.assertThrows(AttemptAbortedException.class,
                 () -> uut.attempt(() -> null));

@@ -37,6 +37,7 @@ import lombok.SneakyThrows;
 @Getter
 @Setter
 @EqualsAndHashCode(of = "id")
+// TODO remove this class
 public class TestFact implements Fact {
 
     UUID id = UUID.randomUUID();
@@ -77,4 +78,12 @@ public class TestFact implements Fact {
         return this;
     }
 
+    private transient FactHeader header;
+
+    @Override
+    public @NonNull FactHeader header() {
+        if (header == null)
+            header = FactCastJson.readValue(FactHeader.class, jsonHeader());
+        return header;
+    }
 }

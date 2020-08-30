@@ -22,6 +22,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
@@ -29,7 +32,10 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.grpc.api.*;
+import org.factcast.grpc.api.Capabilities;
+import org.factcast.grpc.api.CompressionCodecs;
+import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.Headers;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
@@ -43,7 +49,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 
 import io.grpc.*;
 import io.grpc.Status.Code;
@@ -52,6 +57,7 @@ import io.grpc.stub.StreamObserver;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 
 /**
@@ -60,6 +66,7 @@ import net.devh.boot.grpc.client.security.CallCredentialsHelper;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
 public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
@@ -72,6 +79,10 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     private RemoteFactStoreBlockingStub blockingStub;
 
     private RemoteFactStoreStub stub;
+
+    private RemoteFactStoreStub rawStub;
+
+    private RemoteFactStoreBlockingStub rawBlockingStub;
 
     private final ProtoConverter converter = new ProtoConverter();
 
@@ -95,8 +106,12 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     private GrpcFactStore(
             RemoteFactStoreBlockingStub newBlockingStub, RemoteFactStoreStub newStub,
             Optional<String> credentials) {
-        blockingStub = newBlockingStub;
-        stub = newStub;
+        rawBlockingStub = newBlockingStub;
+        rawStub = newStub;
+
+        // initially use the raw ones...
+        blockingStub = rawBlockingStub;
+        stub = rawStub;
 
         if (credentials.isPresent()) {
             String[] sa = credentials.get().split(":");
@@ -211,6 +226,8 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
             // to request compressed messages from server
             Metadata meta = new Metadata();
             meta.put(Headers.MESSAGE_COMPRESSION, c);
+            rawBlockingStub = blockingStub;
+            rawStub = stub;
             blockingStub = MetadataUtils.attachHeaders(blockingStub.withCompression(c), meta);
             stub = MetadataUtils.attachHeaders(stub.withCompression(c), meta);
         });
@@ -272,22 +289,22 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     }
 
     @Override
+    public @NonNull StateToken stateFor(List<FactSpec> specs) {
+        MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
+        try {
+            MSG_UUID result = blockingStub.stateForSpecsJson(msg);
+            return new StateToken(converter.fromProto(result));
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+
+    }
+
+    @Override
     public void invalidate(@NonNull StateToken token) {
         MSG_UUID msg = converter.toProto(token.uuid());
         try {
             blockingStub.invalidate(msg);
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
-    }
-
-    @Override
-    public StateToken stateFor(@NonNull Collection<UUID> forAggIds, @NonNull Optional<String> ns) {
-        StateForRequest req = new StateForRequest(Lists.newArrayList(forAggIds), ns.orElse(null));
-        MSG_StateForRequest msg = converter.toProto(req);
-        try {
-            MSG_UUID result = blockingStub.stateFor(msg);
-            return new StateToken(converter.fromProto(result));
         } catch (StatusRuntimeException e) {
             throw wrapRetryable(e);
         }
@@ -340,4 +357,52 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
         }
 
     }
+
+    @Override
+    public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
+        log.trace("fetching snapshot {} from remote store", id);
+
+        MSG_OptionalSnapshot snap;
+        try {
+            snap = blockingStub.getSnapshot(converter.toProto(id));
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+        if (!snap.getPresent()) {
+            return Optional.empty();
+        } else {
+            return converter.fromProto(snap);
+        }
+    }
+
+    @Override
+    public void setSnapshot(@NonNull Snapshot snapshot) {
+        val id = snapshot.id();
+        val bytes = snapshot.bytes();
+        val alreadyCompressed = snapshot.compressed();
+        val state = snapshot.lastFact();
+
+        log.trace("sending snapshot {} to remote store ({}kb)", id, bytes.length / 1024);
+
+        RemoteFactStoreBlockingStub stubToUse = alreadyCompressed ? rawBlockingStub : blockingStub;
+
+        try {
+            val empty = stubToUse.setSnapshot(converter.toProto(id, state, bytes,
+                    alreadyCompressed));
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+
+    }
+
+    @Override
+    public void clearSnapshot(@NonNull SnapshotId id) {
+        log.trace("clearing snapshot {} in remote store", id);
+        try {
+            val empty = blockingStub.clearSnapshot(converter.toProto(id));
+        } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+        }
+    }
+
 }

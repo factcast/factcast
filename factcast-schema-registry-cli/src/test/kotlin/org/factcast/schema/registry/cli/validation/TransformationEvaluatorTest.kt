@@ -7,8 +7,8 @@ import io.kotlintest.specs.StringSpec
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifyAll
-import org.factcast.schema.registry.cli.js.JsFunctionNashornExecutor
 import java.nio.file.Paths
+import org.factcast.schema.registry.cli.js.JsFunctionExecutorImpl
 
 class TransformationEvaluatorTest : StringSpec() {
 
@@ -17,7 +17,7 @@ class TransformationEvaluatorTest : StringSpec() {
 
     val dummyPath = Paths.get(".")
     val om = mockk<ObjectMapper>(relaxed = true)
-    val executor = mockk<JsFunctionNashornExecutor>(relaxed = true)
+    val executor = mockk<JsFunctionExecutorImpl>(relaxed = true)
 
     val uut = TransformationEvaluator(executor, om)
 
@@ -33,7 +33,6 @@ class TransformationEvaluatorTest : StringSpec() {
             every { om.treeToValue(dummyData, any<Class<Any>>()) } returns inputMap
             every { om.valueToTree<JsonNode>(resultMap) } returns resultData
 
-
             val result = uut.evaluate(dummyPath, dummyData)
 
             result shouldBe resultData
@@ -45,5 +44,4 @@ class TransformationEvaluatorTest : StringSpec() {
             }
         }
     }
-
 }

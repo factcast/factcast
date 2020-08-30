@@ -21,37 +21,13 @@ import static org.mockito.Mockito.*;
 
 import java.util.UUID;
 
-import org.factcast.core.lock.LockedOperationBuilder.OnBuilderStep;
 import org.factcast.core.store.FactStore;
 import org.junit.jupiter.api.*;
 
 public class LockedOperationBuilderTest {
 
-    final LockedOperationBuilder uut = new LockedOperationBuilder(mock(FactStore.class), "ns");
-
-    @Test
-    public void testOn() {
-
-        UUID id = UUID.randomUUID();
-        OnBuilderStep on = uut.on(id);
-        assertThat(on.ids()).hasSize(1).contains(id);
-
-        UUID id2 = UUID.randomUUID();
-        on = uut.on(id, id2);
-        assertThat(on.ids()).hasSize(2).contains(id).contains(id2);
-
-        assertThrows(NullPointerException.class, () -> uut.on(null));
-    }
-
-    @Test
-    public void testOptimistic() {
-        UUID id = new UUID(1, 2);
-        WithOptimisticLock wol = uut.on(id).optimistic();
-        assertThat(wol).isNotNull();
-        assertThat(wol.ns()).isEqualTo("ns");
-        assertThat(wol.ids().get(0)).isEqualTo(id);
-        assertThat(wol.ids().size()).isEqualTo(1);
-    }
+    final DeprecatedLockedOperationBuilder uut = new DeprecatedLockedOperationBuilder(mock(
+            FactStore.class), "ns");
 
     @Test
     public void testAttemptNullContracts() {

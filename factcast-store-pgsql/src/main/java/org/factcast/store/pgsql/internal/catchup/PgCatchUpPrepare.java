@@ -46,7 +46,7 @@ public class PgCatchUpPrepare {
 
     @SuppressWarnings("ConstantConditions")
     public long prepareCatchup(AtomicLong serial) {
-        PgQueryBuilder b = new PgQueryBuilder(req);
+        PgQueryBuilder b = new PgQueryBuilder(req.specs());
         long clientId = jdbc.queryForObject(PgConstants.NEXT_FROM_CATCHUP_SEQ, Long.class);
         String catchupSQL = b.catchupSQL(clientId);
         // noinspection ConstantConditions

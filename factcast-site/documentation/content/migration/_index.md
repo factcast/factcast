@@ -12,6 +12,21 @@ identifier = "migration"
 weight = 99
 +++
 
+## Upgrading to 0.3.0
+
+There is a new module for use in projects that provide 'EventObjects' but do not want to depend on factcast-core, which is called "factcast-factus-event".
+@Specification and interface EventObject have been moved there - please update your imports accordingly if necessary.
+
+Another new module is factcast-test which is supposed to help with integration tests by adding a capability to dynamically alter namespaces in integration tests.
+See [testing section](/factus/testing)
+
+`factcast.lockGlobally()` **has been removed**. By adding the new locking capabilities, that define the scope of the lock not
+just by aggregate-ids, but by FactSpecs, 'lockGlobally()' needed to be deleted, as there is no proper way to provide a compatible
+migration path.
+As most of the internals of factcast rely on namespaces (for instance for authorization), you really need to enumerate 
+all possible namespaces that are in scope for the lock. Please use `factcast.lock(List<FactSpec>)` instead. Sorry for the inconvenience.
+ 
+
 ## Upgrading to 0.2.1 
 
 #### Reconnection behavior

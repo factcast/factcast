@@ -18,8 +18,6 @@ class TransformationFolderTest : StringSpec() {
             transformation.to shouldBe 2
 
             transformation.transformationPath shouldBe dummyPath
-
         }
     }
-
 }

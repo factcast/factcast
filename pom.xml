@@ -21,18 +21,24 @@
   </issueManagement>
   <modules>
     <module>factcast-bom</module>
+    <module>factcast-test</module>
     <module>factcast-internal-dep</module>
     <module>factcast-internal-dep-boot</module>
     <module>factcast-spring-boot-autoconfigure</module>
+    <module>factcast-factus-event</module>
+    <module>factcast-factus-bin-snapser</module>
     <module>factcast-client-grpc</module>
     <module>factcast-client-grpc-cli</module>
     <module>factcast-store-pgsql</module>
     <module>factcast-store-pgsql-rds</module>
     <module>factcast-store-test</module>
     <module>factcast-core</module>
+    <module>factcast-factus</module>
     <module>factcast-server-grpc</module>
     <module>factcast-grpc-api</module>
     <module>factcast-schema-registry-cli</module>
+    <module>factcast-schema-registry-maven-plugin</module>
+    <module>factcast-snapshotcache-redisson</module>
   </modules>
   <url>https://github.com/uweschaefer/factcast/tree/master/</url>
   <licenses>
@@ -224,13 +230,72 @@
         </configuration>
         <executions>
           <execution>
+            <id>before-unit-test-execution</id>
             <phase>test-compile</phase>
             <goals>
               <goal>prepare-agent</goal>
             </goals>
+            <configuration>
+              <destFile>${project.build.directory}/jacoco-output/jacoco-unit-tests.exec</destFile>
+              <propertyName>surefire.jacoco.args</propertyName>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>after-unit-test-execution</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco-output/jacoco-unit-tests.exec</dataFile>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco-unit-test-coverage-report</outputDirectory>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>before-integration-test-execution</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <destFile>${project.build.directory}/jacoco-output/jacoco-integration-tests.exec</destFile>
+              <propertyName>failsafe.jacoco.args</propertyName>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>after-integration-test-execution</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco-output/jacoco-integration-tests.exec</dataFile>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco-integration-test-coverage-report</outputDirectory>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>merge-unit-and-integration</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>merge</goal>
+            </goals>
+            <configuration>
+              <fileSets>
+                <fileSet>
+                  <directory>${project.build.directory}/jacoco-output/</directory>
+                  <includes>
+                    <include>*.exec</include>
+                  </includes>
+                </fileSet>
+              </fileSets>
+            </configuration>
           </execution>
           <execution>
-            <id>report</id>
+            <id>create-merged-report</id>
             <phase>post-integration-test</phase>
             <goals>
               <goal>report</goal>
@@ -247,6 +312,7 @@
             <include>*</include>
           </includes>
           <excludedGroups>integration</excludedGroups>
+          <argLine>${surefire.jacoco.args}</argLine>
         </configuration>
       </plugin>
       <plugin>
@@ -258,6 +324,7 @@
           <includes>
             <include>*</include>
           </includes>
+          <argLine>${failsafe.jacoco.args}</argLine>
         </configuration>
         <executions>
           <execution>
@@ -446,8 +513,8 @@
       <modules>
         <module>factcast-site</module>
         <module>factcast-docker</module>
+        <module>factcast-docker-dep</module>
         <module>factcast-examples</module>
-        <module>factcast-schema-registry-maven-plugin</module>
         <module>factcast-itests</module>
       </modules>
     </profile>

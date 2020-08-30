@@ -17,8 +17,12 @@ package org.factcast.core.subscription;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.LinkedList;
+
 import org.factcast.core.spec.FactSpec;
 import org.junit.jupiter.api.*;
+
+import lombok.val;
 
 public class FluentSubscriptionRequestTest {
 
@@ -74,4 +78,21 @@ public class FluentSubscriptionRequestTest {
         // method name
         assertTrue(debugInfo.contains("testDebugInfo"));
     }
+
+    @Test
+    void failsCatchupIfFactSpecListIsEmpty() {
+        val l = new LinkedList<FactSpec>();
+        assertThrows(IllegalArgumentException.class, () -> SubscriptionRequest.catchup(l)
+                .fromScratch()
+                .debugInfo());
+    }
+
+    @Test
+    void failsFollowIfFactSpecListIsEmpty() {
+        val l = new LinkedList<FactSpec>();
+        assertThrows(IllegalArgumentException.class, () -> SubscriptionRequest.follow(l)
+                .fromScratch()
+                .debugInfo());
+    }
+
 }

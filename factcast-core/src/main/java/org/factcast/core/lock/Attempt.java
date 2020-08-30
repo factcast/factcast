@@ -33,7 +33,7 @@ public interface Attempt {
      * subclasses in order to pass additional info out of your lamdba.
      *
      * @param msg
-     *            String messgae to be passed into Exception
+     *            String message to be passed into Exception
      * @throws AttemptAbortedException
      *             inevitably thrown
      */

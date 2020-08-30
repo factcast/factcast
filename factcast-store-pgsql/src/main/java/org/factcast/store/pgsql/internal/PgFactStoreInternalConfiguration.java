@@ -32,6 +32,8 @@ import org.factcast.store.pgsql.internal.lock.AdvisoryWriteLock;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.pgsql.internal.snapcache.PgSnapshotCache;
+import org.factcast.store.pgsql.internal.snapcache.PgSnapshotCacheConfiguration;
 import org.factcast.store.pgsql.registry.SchemaRegistryConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -64,7 +66,7 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMo
 @EnableTransactionManagement
 @EnableScheduling
 @EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_SCHEDULER)
-@Import(SchemaRegistryConfiguration.class)
+@Import({ SchemaRegistryConfiguration.class, PgSnapshotCacheConfiguration.class })
 public class PgFactStoreInternalConfiguration {
 
     @Bean
@@ -86,11 +88,18 @@ public class PgFactStoreInternalConfiguration {
     }
 
     @Bean
-    public FactStore factStore(JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
+    public PgMetrics pgMetrics(@NonNull MeterRegistry registry) {
+        return new PgMetrics(registry);
+    }
+
+    @Bean
+    public FactStore factStore(
+            JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
             PgTokenStore tokenStore, FactTableWriteLock lock,
-            FactTransformerService factTransformerService, MeterRegistry registry) {
+            FactTransformerService factTransformerService, PgSnapshotCache snapCache,
+            PgMetrics pgMetrics) {
         return new PgFactStore(jdbcTemplate, subscriptionFactory, tokenStore, lock,
-                factTransformerService, registry);
+                factTransformerService, snapCache, pgMetrics);
     }
 
     @Bean
@@ -116,8 +125,8 @@ public class PgFactStoreInternalConfiguration {
     @Bean
     public PgListener pgListener(@NonNull PgConnectionSupplier pgConnectionSupplier,
             @NonNull EventBus eventBus, @NonNull PgConfigurationProperties props,
-            MeterRegistry reg) {
-        return new PgListener(pgConnectionSupplier, eventBus, props, reg);
+            PgMetrics metrics) {
+        return new PgListener(pgConnectionSupplier, eventBus, props, metrics);
     }
 
     @Bean
