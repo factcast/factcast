@@ -19,22 +19,14 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.util.FactCastJson;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.SneakyThrows;
 
 /**
@@ -52,7 +44,7 @@ public class DefaultFact implements Fact, Externalizable {
 
     @Override
     public String toString() {
-        return "DefaultFact [id=" + deserializedHeader.id + "]";
+        return "DefaultFact [id=" + deserializedHeader.id() + "]";
     }
 
     @Getter
@@ -61,7 +53,7 @@ public class DefaultFact implements Fact, Externalizable {
     @Getter
     String jsonPayload;
 
-    transient Header deserializedHeader;
+    transient FactHeader deserializedHeader;
 
     // needed for Externalizable – do not use !
     @Deprecated
@@ -72,6 +64,11 @@ public class DefaultFact implements Fact, Externalizable {
         return new DefaultFact(jsonHeader, jsonPayload);
     }
 
+    @Override
+    public @NonNull FactHeader header() {
+        return deserializedHeader;
+    }
+
     @SneakyThrows
     protected DefaultFact(String jsonHeader, String jsonPayload) {
         this.jsonHeader = jsonHeader;
@@ -79,7 +76,7 @@ public class DefaultFact implements Fact, Externalizable {
         init(jsonHeader);
     }
 
-    public DefaultFact(Header header, String payload) {
+    public DefaultFact(@NonNull FactHeader header, @NonNull String payload) {
         deserializedHeader = header;
         jsonPayload = payload;
         jsonHeader = FactCastJson.writeValueAsString(header);
@@ -87,51 +84,24 @@ public class DefaultFact implements Fact, Externalizable {
     }
 
     private void init(String jsonHeader) {
-        deserializedHeader = FactCastJson.readValue(Header.class, jsonHeader);
+        deserializedHeader = FactCastJson.readValue(FactHeader.class, jsonHeader);
         validate();
     }
 
     private void validate() {
-        if (deserializedHeader.id == null) {
+        if (deserializedHeader.id() == null) {
             throw new IllegalArgumentException("id attribute missing from " + jsonHeader);
         }
-        if (deserializedHeader.ns == null || deserializedHeader.ns.trim().isEmpty()) {
+        if (deserializedHeader.ns() == null || deserializedHeader.ns().trim().isEmpty()) {
             throw new IllegalArgumentException("ns attribute missing from " + jsonHeader);
         }
-        if (deserializedHeader.version < 0)
+        if (deserializedHeader.version() < 0)
             throw new IllegalArgumentException("version attribute is not valid " + jsonHeader);
-    }
-
-    @Getter
-    @Setter(value = AccessLevel.PROTECTED)
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    @EqualsAndHashCode(of = { "id" })
-    static class Header {
-
-        @JsonProperty
-        @NonNull
-        UUID id;
-
-        @JsonProperty
-        @NonNull
-        String ns;
-
-        @JsonProperty
-        String type;
-
-        @JsonProperty
-        int version;
-
-        @JsonProperty
-        Set<UUID> aggIds = new HashSet<>();
-
-        @JsonProperty
-        final Map<String, String> meta = new HashMap<>();
     }
 
     @Override
     public String meta(String key) {
-        return deserializedHeader.meta.get(key);
+        return deserializedHeader.meta().get(key);
     }
 
     @Override

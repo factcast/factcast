@@ -18,41 +18,21 @@ package org.factcast.grpc.api.conv;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import org.assertj.core.util.Lists;
 import org.assertj.core.util.Maps;
 import org.factcast.core.Fact;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProperties;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProtocolVersion;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID_AND_VERSION;
+import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.junit.jupiter.api.*;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 
 import lombok.NonNull;
@@ -582,5 +562,138 @@ public class ProtoConverterTest {
         assertThat(actual.getLsb()).isEqualTo(1);
         assertThat(actual.getMsb()).isEqualTo(2);
         assertThat(actual.getVer()).isEqualTo(99);
+    }
+
+    @Test
+    void toProtoSnapshotId() {
+        SnapshotId snapId = new SnapshotId("test234", UUID.randomUUID());
+        MSG_SnapshotId msg_snapshotId = uut.toProto(snapId);
+
+        assertThat(msg_snapshotId).isNotNull();
+        assertThat(uut.fromProto(msg_snapshotId.getUuid())).isNotNull().isEqualTo(snapId.uuid());
+        assertThat(msg_snapshotId.getKey()).isNotNull().isEqualTo(snapId.key());
+    }
+
+    @Test
+    void toProtoOptionalLong() {
+        OptionalLong l = OptionalLong.of(123);
+        MSG_OptionalSerial msg_optionalSerial = uut.toProto(l);
+
+        assertThat(msg_optionalSerial).isNotNull();
+        assertThat(msg_optionalSerial.getSerial()).isEqualTo(123);
+    }
+
+    @Test
+    void toProtoOptionalLongEmpty() {
+        OptionalLong l = OptionalLong.empty();
+        MSG_OptionalSerial msg_optionalSerial = uut.toProto(l);
+
+        assertThat(msg_optionalSerial).isNotNull();
+        assertThat(msg_optionalSerial.getPresent()).isFalse();
+    }
+
+    @Test
+    void toProtoOptionalUUID() {
+
+        UUID id = UUID.randomUUID();
+        MSG_OptionalUuid msg_optionalUuid = uut.toProtoOptional(id);
+
+        assertThat(msg_optionalUuid).isNotNull();
+        assertThat(msg_optionalUuid.getPresent()).isTrue();
+        assertThat(uut.fromProto(msg_optionalUuid.getUuid())).isEqualTo(id);
+    }
+
+    @Test
+    void fromProtoMSG_OptionalSnapshotEmpty() {
+        val os = MSG_OptionalSnapshot.newBuilder()
+                .setPresent(false)
+                .build();
+
+        Optional<Snapshot> snapshot = uut.fromProto(os);
+        assertThat(snapshot).isEmpty();
+    }
+
+    @Test
+    void fromProtoMSG_OptionalSnapshot() {
+        UUID factId = UUID.randomUUID();
+        SnapshotId snapId = new SnapshotId("test123", UUID.randomUUID());
+
+        MSG_Snapshot snap = uut.toProto(snapId, factId, "huhu".getBytes(Charsets.UTF_8), false);
+
+        val os = MSG_OptionalSnapshot.newBuilder()
+                .setPresent(true)
+                .setSnapshot(snap)
+                .build();
+
+        Optional<Snapshot> snapshot = uut.fromProto(os);
+        assertThat(snapshot).isPresent();
+        assertThat(snapshot.get()).isNotNull();
+        assertThat(snapshot.get().id()).isEqualTo(snapId);
+        assertThat(snapshot.get().compressed()).isFalse();
+        assertThat(snapshot.get().lastFact()).isEqualTo(factId);
+        assertThat(new String(snapshot.get().bytes())).isEqualTo("huhu");
+
+    }
+
+    @Test
+    void toProtoSnapshotOptionalEmpty() {
+        Optional<Snapshot> snapshot = uut.fromProto(uut.toProtoSnapshot(Optional.empty()));
+        assertThat(snapshot).isEmpty();
+    }
+
+    @Test
+    void toProtoSnapshotOptional() {
+        UUID factId = UUID.randomUUID();
+        SnapshotId snapId = new SnapshotId("test123", UUID.randomUUID());
+        MSG_Snapshot snap = uut.toProto(snapId, factId, "huhu".getBytes(Charsets.UTF_8), false);
+        MSG_OptionalSnapshot osnap = MSG_OptionalSnapshot.newBuilder()
+                .setPresent(true)
+                .setSnapshot(snap)
+                .build();
+
+        Optional<Snapshot> snapshot = uut.fromProto(osnap);
+        assertThat(snapshot).isPresent();
+        assertThat(snapshot.get().lastFact()).isEqualTo(factId);
+        assertThat(new String(snapshot.get().bytes())).isEqualTo("huhu");
+        assertThat(snapshot.get().id()).isEqualTo(snapId);
+
+        MSG_OptionalSnapshot msg_optionalSnapshot = uut.toProtoSnapshot(snapshot);
+        assertThat(msg_optionalSnapshot.getPresent()).isTrue();
+        assertThat(msg_optionalSnapshot.getSnapshot().getFactId()).isEqualTo(uut.toProto(factId));
+        assertThat(msg_optionalSnapshot.getSnapshot().getData().toStringUtf8()).isEqualTo("huhu");
+        assertThat(msg_optionalSnapshot.getSnapshot().getId()).isEqualTo(uut.toProto(snapId));
+
+    }
+
+    @Test
+    void fromProtoMSG_FactSpecsJsonEmpty() {
+        String json = "[]";
+        MSG_FactSpecsJson m = MSG_FactSpecsJson.newBuilder().setJson(json).build();
+        List<FactSpec> factSpecs = uut.fromProto(m);
+        assertThat(factSpecs).isEmpty();
+
+    }
+
+    @Test
+    void fromProtoMSG_FactSpecsJson() {
+        FactSpec f1 = FactSpec.ns("foo").type("bar").version(1);
+        FactSpec f2 = FactSpec.ns("x").type("y").version(2);
+        val l = Lists.newArrayList(f1, f2);
+        MSG_FactSpecsJson m = uut.toProtoFactSpecs(l);
+        List<FactSpec> factSpecs = uut.fromProto(m);
+        assertThat(factSpecs).isNotEmpty().hasSize(2).contains(f1).contains(f2);
+
+    }
+
+    @Test
+    void fromProtoMSG_OptionalUuidEmpty() {
+        val msg = MSG_OptionalUuid.newBuilder().setPresent(false).build();
+        assertThat(uut.fromProto(msg)).isNull();
+    }
+
+    @Test
+    void toProtoOptionalUUIDNull() {
+        MSG_OptionalUuid msg = uut.toProtoOptional(null);
+        assertThat(msg.getPresent()).isFalse();
     }
 }

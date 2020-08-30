@@ -23,18 +23,12 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.annotations.VisibleForTesting;
 
-import lombok.AccessLevel;
-import lombok.Generated;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+import lombok.*;
 
 /**
  * Statically shared ObjectMapper reader & writer to be used within FactCast for
@@ -48,13 +42,26 @@ import lombok.SneakyThrows;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FactCastJson {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static ObjectMapper objectMapper;
 
-    private static final ObjectReader reader;
+    private static ObjectReader reader;
 
-    private static final ObjectWriter writer;
+    private static ObjectWriter writer;
 
     static {
+        initializeObjectMapper();
+    }
+
+    @VisibleForTesting
+    static AutoCloseable replaceObjectMapper(@NonNull ObjectMapper om) {
+        objectMapper = om;
+        writer = objectMapper.writer();
+        reader = objectMapper.reader();
+        return FactCastJson::initializeObjectMapper;
+    }
+
+    private static void initializeObjectMapper() {
+        objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         writer = objectMapper.writer();
@@ -69,11 +76,16 @@ public final class FactCastJson {
 
     @SneakyThrows
     public static <T> String writeValueAsString(@NonNull T value) {
-        return writer.writeValueAsString(value);
+        return objectMapper.writeValueAsString(value);
     }
 
     @SneakyThrows
     public static <T> T readValue(@NonNull Class<T> class1, @NonNull String json) {
+        return reader.forType(class1).readValue(json);
+    }
+
+    @SneakyThrows
+    public static <T> T readValue(@NonNull TypeReference<T> class1, @NonNull String json) {
         return reader.forType(class1).readValue(json);
     }
 
@@ -137,4 +149,19 @@ public final class FactCastJson {
         return objectMapper.convertValue(jsonAsMap, JsonNode.class);
     }
 
+    @SneakyThrows
+    public static byte[] writeValueAsBytes(Object a) {
+        return objectMapper.writeValueAsBytes(a);
+
+    }
+
+    @SneakyThrows
+    public static <A> A readValueFromBytes(Class<A> type, byte[] bytes) {
+        return objectMapper.readerFor(type).readValue(bytes);
+
+    }
+
+    public static ObjectMapper mapper() {
+        return objectMapper;
+    }
 }

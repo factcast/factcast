@@ -47,15 +47,16 @@ public class FactSpec {
     @JsonProperty
     UUID aggId = null;
 
+    @NonNull
+    @JsonProperty
+    final Map<String, String> meta = new HashMap<>();
+
+    @Deprecated
     @JsonProperty
     String jsFilterScript = null;
 
     @JsonProperty
     FilterScript filterScript = null;
-
-    @NonNull
-    @JsonProperty
-    final Map<String, String> meta = new HashMap<>();
 
     public FactSpec meta(@NonNull String k, @NonNull String v) {
         meta.put(k, v);
@@ -115,23 +116,11 @@ public class FactSpec {
 
     @NonNull
     public static <T> FactSpec from(@NonNull Class<T> clazz) {
-        Specification annotationSpec = clazz.getAnnotation(Specification.class);
+        return from(FactSpecCoordinates.from(clazz));
+    }
 
-        if (annotationSpec == null) {
-            throw new IllegalArgumentException("You must annotate your Payload class with @"
-                    + Specification.class.getSimpleName());
-        }
-
-        FactSpec factSpec = new FactSpec(annotationSpec.ns());
-
-        if (!annotationSpec.type().isEmpty()) {
-            factSpec.type(annotationSpec.type());
-        } else
-            factSpec.type(clazz.getSimpleName());
-
-        factSpec.version(annotationSpec.version());
-
-        return factSpec;
+    private static FactSpec from(FactSpecCoordinates from) {
+        return FactSpec.ns(from.ns()).type(from.type()).version(from.version());
     }
 
     /**
@@ -149,6 +138,16 @@ public class FactSpec {
      */
     public static List<FactSpec> from(Class<?>... clazz) {
         return from(Arrays.asList(clazz));
+    }
+
+    public FactSpec copy() {
+        FactSpec fs = FactSpec.ns(ns)
+                .type(type)
+                .version(version)
+                .aggId(aggId)
+                .filterScript(filterScript);
+        fs.meta.putAll(meta);
+        return fs;
     }
 
 }

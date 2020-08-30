@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
+import org.factcast.core.FactHeader;
 import org.factcast.core.util.FactCastJson;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -40,6 +41,7 @@ import lombok.SneakyThrows;
 @Getter
 @Setter
 @EqualsAndHashCode(of = "id")
+// TODO remove this class
 public class TestFact implements Fact {
 
     @JsonProperty
@@ -85,4 +87,14 @@ public class TestFact implements Fact {
         }
         return this;
     }
+
+    private transient FactHeader header;
+
+    @Override
+    public @NonNull FactHeader header() {
+        if (header == null)
+            header = FactCastJson.readValue(FactHeader.class, jsonHeader());
+        return header;
+    }
+
 }

@@ -15,16 +15,22 @@
  */
 package org.factcast.store.pgsql.internal;
 
+import static org.mockito.Mockito.*;
+
 import org.factcast.store.pgsql.PgFactStoreConfiguration;
 import org.postgresql.Driver;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("resource")
@@ -52,6 +58,12 @@ public class PgTestConfiguration {
             System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
             System.setProperty("spring.datasource.url", url);
         }
+    }
+
+    @Bean
+    @Primary
+    public PgMetrics pgMetrics(@NonNull MeterRegistry registry) {
+        return spy(new PgMetrics(registry));
     }
 
 }

@@ -34,7 +34,8 @@ Source Code is available as [github](https://github.com/factcast/factcast) repos
 
 
 {{< rawhtml >}}
-<a href="https://circleci.com/gh/factcast/factcast" rel="nofollow"><img class="inline" src="https://camo.githubusercontent.com/b299595840f0219a60095dc0f63cbbb2e388a41a/68747470733a2f2f636972636c6563692e636f6d2f67682f66616374636173742f66616374636173742e7376673f7374796c653d736869656c64" alt="CircleCI" data-canonical-src="https://circleci.com/gh/factcast/factcast.svg?style=shield" style="max-width:100%;"></a>
+<a href="https://github.com/factcast/factcast/actions"><img src="https://github.com/factcast/factcast/workflows/maven/badge.svg?branch=master" alt="Actions Status"
+class="inline"></a>
 <a href="https://codecov.io/gh/factcast/factcast" rel="nofollow"><img class="inline" src="https://camo.githubusercontent.com/2863b83e96f773ebd91aa268323339b8b9ce14b6/68747470733a2f2f636f6465636f762e696f2f67682f66616374636173742f66616374636173742f6272616e63682f6d61737465722f67726170682f62616467652e737667" alt="codecov" data-canonical-src="https://codecov.io/gh/factcast/factcast/branch/master/graph/badge.svg" style="max-width:100%;"></a>
 <a href="https://www.codefactor.io/repository/github/factcast/factcast" rel="nofollow"><img class="inline" src="https://camo.githubusercontent.com/22d2823679b006ca86c5651006f0372c659f255d/68747470733a2f2f7777772e636f6465666163746f722e696f2f7265706f7369746f72792f6769746875622f66616374636173742f66616374636173742f6261646765" alt="CodeFactor" data-canonical-src="https://www.codefactor.io/repository/github/factcast/factcast/badge" style="max-width:100%;"></a>
 <a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast%22%20v:0.2" rel="nofollow"><img class="inline" src="https://img.shields.io/maven-central/v/org.factcast/factcast/0.2.svg" alt="MavenCentral" data-canonical-src="https://img.shields.io/maven-central/v/org.factcast/factcast/0.2.svg" style="max-width:100%;"></a>
@@ -46,9 +47,37 @@ src="https://img.shields.io/docker/v/factcast/factcast?label=dockerhub"></a>
 <a href="https://dependabot.com" rel="nofollow"><img class="inline" src="https://camo.githubusercontent.com/9067c86d33741a2fa11586e87089c65cdda10ec3/68747470733a2f2f6170692e646570656e6461626f742e636f6d2f6261646765732f7374617475733f686f73743d676974687562267265706f3d66616374636173742f6661637463617374" alt="Dependabot Status" data-canonical-src="https://api.dependabot.com/badges/status?host=github&amp;repo=factcast/factcast" style="max-width:100%;"></a>
 {{< /rawhtml >}}
 
-### Current Version: 0.2.5
+### Current Version: 0.3.0
 
 ## Noteworthy Releases 
+
+### RELEASE 0.3.0
+{{< rawhtml >}}
+<a
+href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.3.0+">
+    0.3.0
+</a>
+{{< /rawhtml >}}
+
+#### Feature
+
+* high-level API called [Factus](/factus) that should make application code **MUCH** easier when using FactCast
+* plenty of new modules:
+ * factcast-test
+ * factcast-factus
+ * factcast-factus-event
+ * factcast-factus-bin-snapser
+ * factcast-itests-factus
+ * factcast-snapshotcache-redisson
+
+#### Fix / Maint
+
+* fix important bug screwing with the Fact order in catchup phase if you have >1000 Facts to catch up to (thx, @dibimer)
+* the usual dependency upgrades
+* added switch to allow updates of SchemaRegistry (not a good idea in production, but handy on other stages)
+
+
+see changelog
 
 ### RELEASE 0.2.5
 {{< rawhtml >}}

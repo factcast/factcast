@@ -18,10 +18,12 @@ package org.factcast.store.pgsql;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -38,7 +40,8 @@ import lombok.extern.slf4j.Slf4j;
 @Data
 @Slf4j
 @Accessors(fluent = false)
-public class PgConfigurationProperties implements ApplicationListener<ApplicationReadyEvent> {
+public class PgConfigurationProperties implements ApplicationListener<ApplicationReadyEvent>,
+        InitializingBean {
     private static final String LEGACY_PREFIX = "factcast.pg";
 
     public static final String PROPERTIES_PREFIX = "factcast.store.pgsql";
@@ -90,6 +93,12 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
      * considered stale. This should free some space in a regular cleanup job
      */
     int deleteTransformationsStaleForDays = 14;
+
+    /**
+     * this is the min number of days a snapshot is not read in order to be
+     * considered stale. This should free some space in a regular cleanup job
+     */
+    int deleteSnapshotStaleForDays = 90;
 
     /**
      * If validation is enabled, this controls if transformed facts are
@@ -144,13 +153,20 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
      */
     int factNotificationNewConnectionWaitTimeInMillis = 100;
 
+    /**
+     * If this is set to true, all process-internal caches are bypassed (unless
+     * they are essential, like schemareg). That makes it possible to wipe the
+     * database between integration tests in order to prevent side-effects.
+     */
+    boolean integrationTestMode = false;
+
     public int getFetchSize() {
         return getQueueSize() / queueFetchRatio;
     }
 
     @Override
     public void onApplicationEvent(@Nonnull ApplicationReadyEvent event) {
-        List<Map.Entry<String, Object>> legacyProperties = findAllProperties().entrySet()
+        List<Entry<String, Object>> legacyProperties = findAllProperties().entrySet()
                 .stream()
                 .filter(e -> e.getKey().startsWith(LEGACY_PREFIX))
                 .collect(Collectors.toList());
@@ -181,4 +197,13 @@ public class PgConfigurationProperties implements ApplicationListener<Applicatio
         return schemaRegistryUrl != null;
     }
 
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        if (integrationTestMode) {
+            log.warn(
+                    "**** You are running in INTEGRATION TEST MODE. If you see this in production, "
+                            + "this would be a good time to panic. (See " + PROPERTIES_PREFIX
+                            + ".integrationTestMode) ****");
+        }
+    }
 }

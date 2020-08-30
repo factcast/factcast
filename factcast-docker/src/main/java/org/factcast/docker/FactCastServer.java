@@ -15,12 +15,8 @@
  */
 package org.factcast.docker;
 
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Configuration;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,14 +28,4 @@ public class FactCastServer {
         SpringApplication.run(FactCastServer.class, args);
     }
 
-    @Configuration
-    static class LazyInitBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
-        @Override
-        public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
-                throws BeansException {
-            for (String beanName : beanFactory.getBeanDefinitionNames()) {
-                beanFactory.getBeanDefinition(beanName).setLazyInit(true);
-            }
-        }
-    }
 }

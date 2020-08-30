@@ -23,5 +23,4 @@ class EventVersionFolderTest : StringSpec() {
             eventVersion.examples[0].exampleFilePath shouldBe examplePath
         }
     }
-
 }

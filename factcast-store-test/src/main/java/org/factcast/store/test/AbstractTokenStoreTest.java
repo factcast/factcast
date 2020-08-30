@@ -18,10 +18,9 @@ package org.factcast.store.test;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.HashMap;
-import java.util.Optional;
 import java.util.UUID;
 
+import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
 import org.junit.jupiter.api.*;
@@ -44,52 +43,30 @@ public abstract class AbstractTokenStoreTest {
     protected abstract TokenStore createTokenStore();
 
     @Test
-    public void invalidateShouldRemoteToken() throws Exception {
-        StateToken token = uut.create(new HashMap<>(), Optional.of("foo"));
+    public void invalidateShouldRemoveToken() throws Exception {
+        StateToken token = uut.create(new State());
         uut.invalidate(token);
-        assertThat(uut.getNs(token)).isNotPresent();
-        assertThat(uut.getState(token)).isNotPresent();
-
-    }
-
-    @Test
-    public void tokenMustMaintainNamespace() throws Exception {
-        StateToken token = uut.create(new HashMap<>(), Optional.of("123123"));
-        assertThat(uut.getNs(token)).isPresent();
-        assertThat(uut.getNs(token).get()).isEqualTo("123123");
-
+        assertThat(uut.get(token)).isNotPresent();
     }
 
     @Test
     public void createShouldActuallyCreateARecord() throws Exception {
-        StateToken token = uut.create(new HashMap<>(), Optional.of("foo"));
+        StateToken token = uut.create(new State().serialOfLastMatchingFact(100));
 
-        assertThat(uut.getNs(token)).isPresent();
-        assertThat(uut.getNs(token).get()).isEqualTo("foo");
-        assertThat(uut.getState(token)).isPresent();
+        assertThat(uut.get(token)).isPresent();
 
         // and is not deleted as an effect of get
-        assertThat(uut.getState(token)).isPresent();
-        assertThat(uut.getNs(token)).isPresent();
-
+        assertThat(uut.get(token)).isPresent();
     }
 
     @Test
     public void getStateShouldReturnAbsentForUnknownToken() throws Exception {
-        assertThat(!uut.getState(new StateToken(UUID.randomUUID())).isPresent());
-    }
-
-    @Test
-    public void getNsShouldReturnAbsentForUnknownToken() throws Exception {
-        assertThat(!uut.getNs(new StateToken(UUID.randomUUID())).isPresent());
+        assertThat(uut.get(new StateToken(UUID.randomUUID()))).isNotPresent();
     }
 
     @Test
     public void testCreateNullContract() throws Exception {
-        assertThrows(NullPointerException.class, () -> uut.create(null, null));
-        assertThrows(NullPointerException.class, () -> uut.create(null, Optional.of("foo")));
-
-        uut.create(new HashMap<>(), Optional.empty());
+        assertThrows(NullPointerException.class, () -> uut.create(null));
     }
 
     @Test

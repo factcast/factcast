@@ -3,7 +3,6 @@ package org.factcast.schema.registry.cli.registry.impl
 import com.karumi.kotlinsnapshot.matchWithSnapshot
 import io.kotlintest.TestCase
 import io.kotlintest.TestResult
-import io.kotlintest.matchers.string.shouldContain
 import io.kotlintest.specs.StringSpec
 import io.mockk.clearAllMocks
 import io.mockk.confirmVerified
@@ -11,6 +10,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import io.mockk.verifyAll
+import java.nio.file.Paths
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Example
 import org.factcast.schema.registry.cli.domain.Namespace
@@ -18,8 +18,6 @@ import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.fs.FileSystemService
-import java.nio.file.Path
-import java.nio.file.Paths
 
 class HugoTemplateServiceImplTest : StringSpec() {
 val fs = mockk<FileSystemService>()
@@ -56,7 +54,7 @@ val fs = mockk<FileSystemService>()
             val eventDescriptionPath = Paths.get("description.md")
             val version1 = Version(1, dummyPath, dummyPath, emptyList())
             val version2 = Version(2, dummyPath, dummyPath, emptyList())
-             val event = Event("eventA", eventDescriptionPath, listOf(version1, version2), emptyList())
+            val event = Event("eventA", eventDescriptionPath, listOf(version1, version2), emptyList())
 
             val namespace = Namespace("NamespaceA", dummyPath, emptyList())
 
@@ -68,7 +66,6 @@ val fs = mockk<FileSystemService>()
             verify(exactly = 4) { fs.readToString(dummyPath.toFile()) }
             verify(exactly = 1) { fs.readToString(eventDescriptionPath.toFile()) }
             confirmVerified(fs)
-
         }
 
         "loadVersionTemplate" {
@@ -101,5 +98,4 @@ val fs = mockk<FileSystemService>()
             confirmVerified(fs)
         }
     }
-
 }

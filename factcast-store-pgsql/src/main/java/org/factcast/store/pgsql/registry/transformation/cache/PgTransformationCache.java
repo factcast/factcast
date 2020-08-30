@@ -45,7 +45,8 @@ public class PgTransformationCache implements TransformationCache {
     }
 
     @Override
-    public Optional<Fact> find(@NonNull UUID eventId, int version,
+    public Optional<Fact> find(
+            @NonNull UUID eventId, int version,
             @NonNull String transformationChainId) {
         String cacheKey = CacheKey.of(eventId, version, transformationChainId);
 
@@ -77,8 +78,7 @@ public class PgTransformationCache implements TransformationCache {
     public void compact(@NonNull DateTime thresholdDate) {
         registryMetrics.timed(TimedOperation.COMPACT_TRANSFORMATION_CACHE, () -> {
             jdbcTemplate.update("DELETE FROM transformationcache WHERE last_access < ?",
-                    thresholdDate
-                            .toDate());
+                    thresholdDate.toDate());
         });
 
     }

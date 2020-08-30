@@ -22,16 +22,13 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -41,20 +38,12 @@ import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
-import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
-import org.mockito.Answers;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.google.common.collect.Sets;
@@ -65,7 +54,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import lombok.val;
 
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+@SuppressWarnings({ "OptionalUsedAsFieldOrParameterType", "ResultOfMethodCallIgnored" })
 @ExtendWith(MockitoExtension.class)
 class GrpcFactStoreTest {
 
@@ -145,6 +134,30 @@ class GrpcFactStoreTest {
         val result = uut.fetchByIdAndVersion(fact.id(), 100);
         assertThat(result).isPresent();
         assertThat(result.get().id()).isEqualTo(uuid);
+
+    }
+
+    @Test
+    void fetchByIdThrowsRetryable() {
+        final TestFact fact = new TestFact();
+        val uuid = fact.id();
+        val id = conv.toProto(uuid);
+        when(blockingStub.fetchById(eq(id))).thenThrow(new StatusRuntimeException(
+                Status.UNAVAILABLE));
+
+        assertThatThrownBy(() -> uut.fetchById(fact.id())).isInstanceOf(RetryableException.class);
+    }
+
+    @Test
+    void fetchByIdAndVersionThrowsRetryable() {
+        final TestFact fact = new TestFact();
+        val uuid = fact.id();
+        val id = conv.toProto(uuid, 100);
+        when(blockingStub.fetchByIdAndVersion(eq(id))).thenThrow(new StatusRuntimeException(
+                Status.UNAVAILABLE));
+
+        assertThatThrownBy(() -> uut.fetchByIdAndVersion(fact.id(), 100)).isInstanceOf(
+                RetryableException.class);
 
     }
 
@@ -403,18 +416,18 @@ class GrpcFactStoreTest {
         UUID id = new UUID(0, 1);
         StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
         when(blockingStub.stateFor(any())).thenReturn(conv.toProto(id));
-
-        uut.stateFor(Lists.emptyList(), Optional.of("foo"));
-        verify(blockingStub).stateFor(conv.toProto(req));
+        val list = Arrays.asList(FactSpec.ns("foo").aggId(id));
+        uut.stateFor(list);
+        verify(blockingStub).stateForSpecsJson(conv.toProtoFactSpecs(list));
     }
 
     @Test
     void testStateForNegative() {
-        when(blockingStub.stateFor(any())).thenThrow(
+        when(blockingStub.stateForSpecsJson(any())).thenThrow(
                 new StatusRuntimeException(
                         Status.UNAVAILABLE));
         try {
-            uut.stateFor(Lists.emptyList(), Optional.of("foo"));
+            uut.stateFor(Lists.emptyList());
             fail();
         } catch (RetryableException expected) {
         }
@@ -489,8 +502,75 @@ class GrpcFactStoreTest {
 
     @Test
     void testCurrentTimePropagatesRetryableExceptionOnUnavailableStatus() {
-        when(blockingStub.enumerateNamespaces(any())).thenThrow(new StatusRuntimeException(
+        when(blockingStub.currentTime(any())).thenThrow(new StatusRuntimeException(
                 Status.UNAVAILABLE));
-        assertThrows(RetryableException.class, () -> uut.enumerateNamespaces());
+        assertThrows(RetryableException.class, () -> uut.currentTime());
+    }
+
+    @Test
+    void getSnapshotEmpty() {
+        SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+        when(blockingStub.getSnapshot(eq(conv.toProto(id)))).thenReturn(conv.toProtoSnapshot(
+                Optional.empty()));
+        assertThat(uut.getSnapshot(id)).isEmpty();
+    }
+
+    @Test
+    void getSnapshotException() {
+        SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+        when(blockingStub.getSnapshot(eq(conv.toProto(id)))).thenThrow(new StatusRuntimeException(
+                Status.UNAVAILABLE));
+
+        assertThatThrownBy(() -> uut.getSnapshot(id)).isInstanceOf(RetryableException.class);
+    }
+
+    @Test
+    void getSnapshot() {
+        SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+        val snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+        when(blockingStub.getSnapshot(eq(conv.toProto(id)))).thenReturn(conv.toProtoSnapshot(
+                Optional.of(snap)));
+
+        assertThat(uut.getSnapshot(id)).isPresent().contains(snap);
+    }
+
+    @Test
+    void setSnapshotException() {
+        SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+        val snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+        when(blockingStub.setSnapshot(eq(conv.toProto(snap)))).thenThrow(new StatusRuntimeException(
+                Status.UNAVAILABLE));
+
+        assertThatThrownBy(() -> uut.setSnapshot(snap)).isInstanceOf(RetryableException.class);
+    }
+
+    @Test
+    void setSnapshot() {
+        SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+        val snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+        when(blockingStub.setSnapshot(eq(conv.toProto(snap)))).thenReturn(conv.empty());
+
+        uut.setSnapshot(snap);
+
+        verify(blockingStub).setSnapshot(conv.toProto(snap));
+    }
+
+    @Test
+    void clearSnapshotException() {
+        SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+        when(blockingStub.clearSnapshot(eq(conv.toProto(id)))).thenThrow(new StatusRuntimeException(
+                Status.UNAVAILABLE));
+
+        assertThatThrownBy(() -> uut.clearSnapshot(id)).isInstanceOf(RetryableException.class);
+    }
+
+    @Test
+    void clearSnapshot() {
+        SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+        when(blockingStub.clearSnapshot(eq(conv.toProto(id)))).thenReturn(conv.empty());
+
+        uut.clearSnapshot(id);
+
+        verify(blockingStub).clearSnapshot(conv.toProto(id));
     }
 }

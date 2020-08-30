@@ -17,5 +17,4 @@ class EventFolderKtTest : StringSpec() {
             event.descriptionPath shouldBe descriptionPath
         }
     }
-
 }

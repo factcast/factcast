@@ -57,12 +57,38 @@
         <artifactId>factcast-docker</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-factus</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-factus-bin-snapser</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-snapshotcache-redisson</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-factus-event</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-docker-dep</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <!-- for testing only! -->
       <dependency>
         <groupId>org.factcast</groupId>
         <artifactId>factcast-store-test</artifactId>
         <version>${project.version}</version>
       </dependency>
+
       <!-- needed dependencies -->
       <dependency>
         <groupId>org.postgresql</groupId>
@@ -88,6 +114,11 @@
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
         <version>2.11.2</version>
+      </dependency>
+      <dependency>
+        <groupId>org.msgpack</groupId>
+        <artifactId>jackson-dataformat-msgpack</artifactId>
+        <version>0.8.20</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

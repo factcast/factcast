@@ -15,16 +15,12 @@
  */
 package org.factcast.core.lock;
 
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.UUID;
 
 import org.factcast.core.lock.WithOptimisticLock.OptimisticRetriesExceededException;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 
-import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -33,46 +29,33 @@ public final class LockedOperationBuilder {
     @NonNull
     final FactStore store;
 
-    final String ns;
+    final List<FactSpec> specs;
 
-    public OnBuilderStep on(@NonNull UUID aggId, UUID... otherAggIds) {
-        LinkedList<UUID> ids = new LinkedList<>();
-        ids.add(aggId);
-        ids.addAll(Arrays.asList(otherAggIds));
-        return new OnBuilderStep(ids);
+    public WithOptimisticLock optimistic() {
+        return new WithOptimisticLock(store, specs);
     }
 
-    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-    public class OnBuilderStep {
-        @Getter(value = AccessLevel.PROTECTED)
-        private final List<UUID> ids;
+    // we MIGHT add pessimistic if we REALLY REALLY have to
 
-        public WithOptimisticLock optimistic() {
-            return new WithOptimisticLock(store, ns, ids);
-        }
-
-        // we MIGHT add pessimistic if we REALLY REALLY have to
-
-        /**
-         * convenience method that uses optimistic locking with defaults.
-         * Alternatively, you can call optimistic() to get control over the
-         * optimistic settings.
-         *
-         * @param operation
-         *            will be attempted to be executed, maybe many times
-         * @return id of the last fact published
-         * @throws OptimisticRetriesExceededException
-         *             if max number of retries are reached
-         * @throws ExceptionAfterPublish
-         *             if andThen-block throws an exception
-         * @throws AttemptAbortedException
-         *             if calling Attempt.abort, operation will not be retried
-         */
-        public @NonNull PublishingResult attempt(@NonNull Attempt operation)
-                throws OptimisticRetriesExceededException,
-                ExceptionAfterPublish, AttemptAbortedException {
-            return optimistic().attempt(operation);
-        }
-
+    /**
+     * convenience method that uses optimistic locking with defaults.
+     * Alternatively, you can call optimistic() to get control over the
+     * optimistic settings.
+     *
+     * @param operation
+     *            will be attempted to be executed, maybe many times
+     * @return id of the last fact published
+     * @throws OptimisticRetriesExceededException
+     *             if max number of retries are reached
+     * @throws ExceptionAfterPublish
+     *             if andThen-block throws an exception
+     * @throws AttemptAbortedException
+     *             if calling Attempt.abort, operation will not be retried
+     */
+    public @NonNull PublishingResult attempt(@NonNull Attempt operation)
+            throws OptimisticRetriesExceededException,
+            ExceptionAfterPublish, AttemptAbortedException {
+        return optimistic().attempt(operation);
     }
+
 }

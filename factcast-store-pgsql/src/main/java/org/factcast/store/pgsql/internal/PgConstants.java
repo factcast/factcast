@@ -78,8 +78,8 @@ public class PgConstants {
             + ") VALUES (cast(? as jsonb),cast (? as jsonb))";
 
     public static final String INSERT_TOKEN = "INSERT INTO " + TABLE_TOKENSTORE + " ("
-            + COLUMN_NAMESPACE + "," + COLUMN_STATE
-            + ") VALUES (?,cast (? as jsonb)) RETURNING token";
+            + COLUMN_STATE
+            + ") VALUES (cast (? as jsonb)) RETURNING token";
 
     public static final String DELETE_TOKEN = "DELETE FROM " + TABLE_TOKENSTORE + " WHERE token=?";
 

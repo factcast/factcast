@@ -3,10 +3,10 @@ package org.factcast.schema.registry.cli.validation
 import io.kotlintest.matchers.collections.shouldContain
 import io.kotlintest.matchers.collections.shouldHaveSize
 import io.kotlintest.specs.StringSpec
+import java.nio.file.Paths
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.domain.Version
-import java.nio.file.Paths
 
 class MissingTransformationCalculatorImplTest : StringSpec() {
     val uut = MissingTransformationCalculatorImpl()
@@ -94,5 +94,4 @@ class MissingTransformationCalculatorImplTest : StringSpec() {
             result shouldHaveSize 0
         }
     }
-
 }

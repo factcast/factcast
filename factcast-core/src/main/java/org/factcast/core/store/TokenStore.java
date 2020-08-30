@@ -15,9 +15,7 @@
  */
 package org.factcast.core.store;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 import lombok.NonNull;
 
@@ -25,13 +23,11 @@ import lombok.NonNull;
 public interface TokenStore {
 
     @NonNull
-    StateToken create(@NonNull Map<UUID, Optional<UUID>> state, @NonNull Optional<String> ns);
+    StateToken create(@NonNull State state);
 
     void invalidate(@NonNull StateToken token);
 
     @NonNull
-    Optional<Map<UUID, Optional<UUID>>> getState(@NonNull StateToken token);
+    Optional<State> get(@NonNull StateToken token);
 
-    @NonNull
-    Optional<String> getNs(@NonNull StateToken token);
 }

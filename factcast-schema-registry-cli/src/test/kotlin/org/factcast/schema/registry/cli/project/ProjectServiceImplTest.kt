@@ -12,14 +12,14 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import io.mockk.verifyAll
+import java.nio.file.NoSuchFileException
+import java.nio.file.Paths
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.impl.EXAMPLES_FOLDER
 import org.factcast.schema.registry.cli.project.impl.ProjectServiceImpl
 import org.factcast.schema.registry.cli.project.impl.TRANSFORMATIONS_FOLDER
 import org.factcast.schema.registry.cli.project.impl.VERSIONS_FOLDER
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
-import java.nio.file.NoSuchFileException
-import java.nio.file.Paths
 
 class ProjectServiceImplTest : StringSpec() {
     val fs = mockk<FileSystemService>()
@@ -39,7 +39,7 @@ class ProjectServiceImplTest : StringSpec() {
             every { fs.exists(any()) } returns true
 
             val result = uut.fileExists(dummyPath, "foo")
-            result shouldBe dummyPath.resolve( "foo")
+            result shouldBe dummyPath.resolve("foo")
 
             verify { fs.exists(any()) }
             confirmVerified(fs)
@@ -169,7 +169,6 @@ class ProjectServiceImplTest : StringSpec() {
             confirmVerified(fs)
         }
 
-
         "detectProject - should return project (w/ namespaces)" {
             every { fs.listDirectories(dummyPath) } returns listOf(dummyPath)
             every { fs.listDirectories(transfromationsPath) } returns emptyList()
@@ -189,5 +188,4 @@ class ProjectServiceImplTest : StringSpec() {
             confirmVerified(fs)
         }
     }
-
 }
