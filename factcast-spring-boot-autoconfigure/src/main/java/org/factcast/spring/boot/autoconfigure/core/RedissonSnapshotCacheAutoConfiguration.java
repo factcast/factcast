@@ -17,22 +17,24 @@ package org.factcast.spring.boot.autoconfigure.core;
 
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.redisson.RedissonSnapshotCache;
-import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 
 import lombok.Generated;
 
 @Configuration
-@ConditionalOnClass(RedissonSnapshotCache.class)
+@ConditionalOnClass({ RedissonSnapshotCache.class, RedissonClient.class })
 @ConditionalOnMissingBean(SnapshotCache.class)
 @Generated
 public class RedissonSnapshotCacheAutoConfiguration {
 
     @Bean
-    public SnapshotCache snapshotCache(Redisson redisson) {
+    @Order(100)
+    public SnapshotCache snapshotCache(RedissonClient redisson) {
         return new RedissonSnapshotCache(redisson);
     }
 }

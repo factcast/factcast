@@ -19,14 +19,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -68,7 +61,20 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
     @VisibleForTesting
     public DefaultProjector(EventSerializer ctx, Projection p) {
         this.projection = p;
-        this.dispatchInfo = cache.computeIfAbsent(p.getClass(), c -> discoverDispatchInfo(ctx, p));
+        this.dispatchInfo = cache.computeIfAbsent(getRelevantClass(p), c -> discoverDispatchInfo(
+                ctx, p));
+    }
+
+    private static Class<? extends Projection> getRelevantClass(Projection p) {
+        Class<? extends Projection> c = p.getClass();
+        return getRelevantClass(c);
+    }
+
+    private static Class<? extends Projection> getRelevantClass(Class<? extends Projection> c) {
+        while (c.getCanonicalName().contains("$$EnhancerBySpring") || c.getCanonicalName()
+                .contains("CGLIB"))
+            c = (Class<? extends Projection>) c.getSuperclass();
+        return c;
     }
 
     public void apply(@NonNull Fact f) {
@@ -140,7 +146,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
 
         Collection<CallTarget> relevantClasses = getRelevantClasses(p);
         relevantClasses.forEach(callTarget -> {
-            List<Method> methods = collectMethods(callTarget.clazz);
+            Set<Method> methods = collectMethods(callTarget.clazz);
             methods.stream()
                     .filter(DefaultProjector::isEventHandlerMethod)
                     .forEach(m -> {
@@ -171,12 +177,13 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
         return map;
     }
 
-    private static List<Method> collectMethods(Class<?> clazz) {
+    private static Set<Method> collectMethods(Class<?> clazz) {
         if (clazz == null) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
 
-        LinkedList<Method> m = new LinkedList<>();
+        HashSet<Method> m = new HashSet<>();
+        m.addAll(Arrays.asList(clazz.getMethods()));
         m.addAll(Arrays.asList(clazz.getDeclaredMethods()));
         m.addAll(collectMethods(clazz.getSuperclass()));
         return m;
@@ -264,7 +271,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
     }
 
     private static Collection<CallTarget> getRelevantClasses(Projection p) {
-        return getRelevantClasses(new CallTarget(p.getClass(), o -> o));
+        return getRelevantClasses(new CallTarget(getRelevantClass(p.getClass()), o -> o));
     }
 
     private static Collection<CallTarget> getRelevantClasses(CallTarget root) {

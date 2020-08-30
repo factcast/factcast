@@ -48,6 +48,10 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-snapshotcache-redisson</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-factus</artifactId>
     </dependency>
     <dependency>
@@ -91,21 +95,7 @@
         </exclusion>
       </exclusions>
     </dependency>
-    <dependency>
-      <groupId>org.springframework.data</groupId>
-      <artifactId>spring-data-jdbc</artifactId>
-      <version>1.0.11.RELEASE</version>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <version>1.4.197</version>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-jdbc</artifactId>
-      <version>2.1.9.RELEASE</version>
-    </dependency>
+
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus-bin-snapser</artifactId>
@@ -148,6 +138,11 @@
       <artifactId>json-unit-assertj</artifactId>
       <version>2.18.0</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.redisson</groupId>
+      <artifactId>redisson-spring-boot-starter</artifactId>
+      <version>3.13.3</version>
     </dependency>
   </dependencies>
   <build>

@@ -13,29 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests.factus.proj;
 
-import java.util.Set;
-import java.util.UUID;
+import org.factcast.factus.Handler;
+import org.factcast.factus.projection.Aggregate;
+import org.factcast.itests.factus.event.TestAggregateIncremented;
 
-import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.Specification;
+import lombok.Getter;
 
-import com.google.common.collect.Sets;
+public class TestAggregate extends Aggregate {
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+    @Getter
+    int magicNumber = 42;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Specification(ns = "test")
-public class UserDeleted implements EventObject {
-    UUID aggregateId;
+    class SomeNestedClass {
 
-    @Override
-    public Set<UUID> aggregateIds() {
-        return Sets.newHashSet(aggregateId);
+        @Handler
+        void apply(TestAggregateIncremented e) {
+            magicNumber++;
+        }
+
     }
+
 }

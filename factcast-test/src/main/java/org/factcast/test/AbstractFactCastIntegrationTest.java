@@ -29,15 +29,15 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import lombok.extern.slf4j.Slf4j;
 
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @ExtendWith(FactCastExtension.class)
 @Slf4j
 public class AbstractFactCastIntegrationTest {
 
-    static final Network _docker_network = Network.newNetwork();
+    protected static final Network _docker_network = Network.newNetwork();
 
     @Container
-    static final PostgreSQLContainer _database_container = new PostgreSQLContainer<>(
+    protected static final PostgreSQLContainer _postgres = new PostgreSQLContainer<>(
             "postgres:11.4")
                     .withDatabaseName("fc")
                     .withUsername("fc")
@@ -46,7 +46,7 @@ public class AbstractFactCastIntegrationTest {
                     .withNetwork(_docker_network);
 
     @Container
-    static final GenericContainer _factcast_container = new GenericContainer<>(
+    protected static final GenericContainer _factcast = new GenericContainer<>(
             "factcast/factcast:latest")
                     .withExposedPorts(9090)
                     .withFileSystemBind("./config", "/config/")
@@ -54,16 +54,24 @@ public class AbstractFactCastIntegrationTest {
                     .withEnv("factcast.security.enabled", "false")
                     .withEnv("spring.datasource.url", "jdbc:postgresql://db/fc?user=fc&password=fc")
                     .withNetwork(_docker_network)
-                    .dependsOn(_database_container)
+                    .dependsOn(_postgres)
                     .withLogConsumer(new Slf4jLogConsumer(log))
                     .waitingFor(new HostPortWaitStrategy()
                             .withStartupTimeout(Duration.ofSeconds(180)));
 
+    @SuppressWarnings("rawtypes")
+    @Container
+    static final GenericContainer _redis = new GenericContainer<>("redis:5.0.3-alpine")
+            .withExposedPorts(6379);
+
     @BeforeAll
     public static void startContainers() throws InterruptedException {
         String address = "static://" +
-                _factcast_container.getHost() + ":" +
-                _factcast_container.getMappedPort(9090);
+                _factcast.getHost() + ":" +
+                _factcast.getMappedPort(9090);
         System.setProperty("grpc.client.factstore.address", address);
+
+        System.setProperty("spring.redis.host", _redis.getHost());
+        System.setProperty("spring.redis.port", String.valueOf(_redis.getMappedPort(6379)));
     }
 }

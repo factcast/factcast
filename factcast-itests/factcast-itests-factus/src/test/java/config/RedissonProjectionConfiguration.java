@@ -13,28 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package config;
 
-import java.util.Set;
-import java.util.UUID;
+import org.factcast.itests.factus.proj.RedissonManagedUserNames;
+import org.redisson.api.RedissonClient;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.Specification;
-
-import com.google.common.collect.Sets;
-
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-
-@AllArgsConstructor
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Specification(ns = "test")
-public class TestAggregateWasIncremented implements EventObject {
-    UUID aggregateId;
-
-    @Override
-    public Set<UUID> aggregateIds() {
-        return Sets.newHashSet(aggregateId);
+@Configuration
+public class RedissonProjectionConfiguration {
+    @Bean
+    RedissonManagedUserNames redissonManagedUserNames(RedissonClient client) {
+        return new RedissonManagedUserNames(client);
     }
 }

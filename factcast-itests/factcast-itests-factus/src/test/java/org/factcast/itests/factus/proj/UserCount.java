@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests.factus.proj;
 
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
+import org.factcast.itests.factus.event.UserCreated;
+import org.factcast.itests.factus.event.UserDeleted;
+import org.springframework.stereotype.Component;
 
+@Component
 public class UserCount extends LocalManagedProjection {
 
     private int users = 0;
@@ -32,7 +36,7 @@ public class UserCount extends LocalManagedProjection {
         users--;
     }
 
-    int count() {
+    public int count() {
         return users;
     }
 
