@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests.factus.event;
 
 import java.util.Set;
 import java.util.UUID;
@@ -31,7 +31,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Specification(ns = "test")
-public class SomeEvent implements EventObject {
+public class UserCreated implements EventObject {
     UUID aggregateId;
 
     String userName;
@@ -40,4 +40,5 @@ public class SomeEvent implements EventObject {
     public Set<UUID> aggregateIds() {
         return Sets.newHashSet(aggregateId);
     }
+
 }

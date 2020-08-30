@@ -13,32 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests.factus.proj;
 
-import java.util.Set;
 import java.util.UUID;
 
-import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.Specification;
+import org.redisson.api.RMap;
+import org.redisson.api.RedissonClient;
 
-import com.google.common.collect.Sets;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+@Slf4j
+public class RedissonManagedUserNames extends AbstractRedisManagedProjection implements UserNames {
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Specification(ns = "it-user")
-public class UserCreated implements EventObject {
-    UUID aggregateId;
+    @Getter
+    private final RMap<UUID, String> userNames;
 
-    String userName;
-
-    @Override
-    public Set<UUID> aggregateIds() {
-        return Sets.newHashSet(aggregateId);
+    public RedissonManagedUserNames(RedissonClient redisson) {
+        super(redisson);
+        userNames = redisson.getMap(getClass().getSimpleName());
     }
 
 }

@@ -13,24 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests.factus.event;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
-import org.factcast.factus.Handler;
-import org.factcast.factus.projection.LocalSubscribedProjection;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
-import lombok.Getter;
+import com.google.common.collect.Sets;
 
-public class SubscribedUserNames extends LocalSubscribedProjection {
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
-    @Getter
-    private final Set<String> names = new HashSet<>();
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Specification(ns = "test")
+public class TestAggregateIncremented implements EventObject {
+    UUID aggregateId;
 
-    @Handler
-    void userCreated(UserCreated userCreated) {
-        names.add(userCreated.userName());
+    @Override
+    public Set<UUID> aggregateIds() {
+        return Sets.newHashSet(aggregateId);
     }
-
 }

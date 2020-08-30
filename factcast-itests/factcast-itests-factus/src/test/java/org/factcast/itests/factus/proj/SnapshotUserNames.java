@@ -13,25 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests.factus.proj;
 
-import org.factcast.factus.Handler;
-import org.factcast.factus.projection.Aggregate;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import org.factcast.factus.projection.SnapshotProjection;
 
 import lombok.Getter;
 
-public class TestAggregate extends Aggregate {
-
+public class SnapshotUserNames implements SnapshotProjection, UserNames {
     @Getter
-    int magicNumber = 42;
-
-    class SomeNestedClass {
-
-        @Handler
-        void apply(TestAggregateWasIncremented e) {
-            magicNumber++;
-        }
-
-    }
+    private final Map<UUID, String> userNames = new HashMap<>();
 
 }

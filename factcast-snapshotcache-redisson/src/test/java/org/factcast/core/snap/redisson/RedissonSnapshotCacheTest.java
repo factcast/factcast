@@ -43,9 +43,6 @@ import lombok.SneakyThrows;
 @Testcontainers
 class RedissonSnapshotCacheTest {
 
-    // new GenericContainer(DockerImageName.parse("redis:5.0.3-alpine"))
-    // .withExposedPorts(6379)
-
     @SuppressWarnings("rawtypes")
     @Container
     static final GenericContainer redis = new GenericContainer<>("redis:5.0.3-alpine")

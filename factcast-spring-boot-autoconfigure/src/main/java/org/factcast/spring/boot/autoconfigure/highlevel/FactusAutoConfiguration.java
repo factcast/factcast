@@ -33,7 +33,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
@@ -43,10 +42,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @ConditionalOnClass(Factus.class)
-@ConditionalOnMissingBean(Factus.class)
 @Generated
 @Slf4j
-@Import(BinarySnapshotSerializerAutoConfiguration.class)
 public class FactusAutoConfiguration {
 
     @Bean
@@ -60,6 +57,7 @@ public class FactusAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public SnapshotSerializerSupplier snapshotSerializerSupplier(SnapshotSerializer ser) {
         return new SnapshotSerializerSupplier(ser);
     }
@@ -72,6 +70,7 @@ public class FactusAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public FactusMetrics factusMetrics(MeterRegistry meterRegistry) {
         return new FactusMetricsImpl(meterRegistry);
     }
