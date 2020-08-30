@@ -63,12 +63,12 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.3.0
 
 * high-level API called [Factus](/factus) that should make application code **MUCH** easier when using FactCast
 * plenty of new modules:
- * factcast-test
- * factcast-factus
- * factcast-factus-event
- * factcast-factus-bin-snapser
- * factcast-itests-factus
- * factcast-snapshotcache-redisson
+    * factcast-test
+    * factcast-factus
+    * factcast-factus-event
+    * factcast-factus-bin-snapser
+    * factcast-itests-factus
+    * factcast-snapshotcache-redisson
 * locking now based on arbitrary `FactSpecs` rather than only `aggIds`  
 
 #### Fix / Maint
