@@ -65,15 +65,17 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
                 ctx, p));
     }
 
-    private static Class<? extends Projection> getRelevantClass(Projection p) {
+    private static Class<? extends Projection> getRelevantClass(@NonNull Projection p) {
         Class<? extends Projection> c = p.getClass();
         return getRelevantClass(c);
     }
 
-    private static Class<? extends Projection> getRelevantClass(Class<? extends Projection> c) {
-        while (c.getCanonicalName().contains("$$EnhancerBySpring") || c.getCanonicalName()
-                .contains("CGLIB"))
+    private static Class<? extends Projection> getRelevantClass(
+            @NonNull Class<? extends Projection> c) {
+        while (c.getCanonicalName().contains("$$EnhancerBySpring")
+                || c.getCanonicalName().contains("CGLIB")) {
             c = (Class<? extends Projection>) c.getSuperclass();
+        }
         return c;
     }
 

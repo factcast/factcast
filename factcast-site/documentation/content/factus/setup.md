@@ -15,7 +15,7 @@ weight = 12
 
 First thing you need in your project is a dependency to factus itself.
 
-```java
+```xml
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus</artifactId>
@@ -23,7 +23,7 @@ First thing you need in your project is a dependency to factus itself.
 ```
 
 If you use Spring-Boot and also have the spring boot autoconfiguration dependency included, 
-```java
+```xml
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-spring-boot-autoconfigure</artifactId>
@@ -31,14 +31,16 @@ If you use Spring-Boot and also have the spring boot autoconfiguration dependenc
 ```
 this is all you need to get started.
 
-However, there is a growing list of additional helpful dependencies when it comes to using Factus:
+However, there is a growing list of optional helpful dependencies when it comes to using Factus:
+
+____
 
 ## Binary Snapshot Serializer
 
 The default Snapshot Serializer in Factus uses Jackson to serialize to/from JSON. This might be less than optimal in terms of storage cost and transport performance/efficiency.
 This optional dependency:
 
-```java
+```xml
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus-bin-snapser</artifactId>
@@ -53,3 +55,34 @@ just want to switch to plain Java Serialization. In this case, have a look at `B
 (If you do, please contribute it back - might be worthwhile integrating into factcast)
 
 Should be straightforward and easy. 
+
+____
+
+## Redis SnapshotCache
+
+From a client's perspective, it is nice to be able to persist snapshots directly into factcast, so that you dont
+need any additional infrastructure to get started. In busy applications with many clients however, it might be
+a good idea to keep that load away from factcast, so that it can use its capacity to deal with Facts only.
+
+In this case you want to use a different implementation of the SnapshotCache interface on a client, in order to 
+persist snapshots in your favorite K/V store, Document Database, etc.
+
+We chose Redis as an example database for externalized shared data for the examples, as it has a very simple API and is 
+far more lightweight to use than a RDBMS. **But, please be aware, that you can use *ANY* Database to store shared data 
+and snapshots**, by just implementing the respective interfaces. 
+
+In case Redis is you weapon of choice, there is a Redis implementation of that interface. Just add 
+
+```xml
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-snapshotcache-redisson</artifactId>
+    </dependency>
+```
+ 
+to your client's project and spring autoconfiguration (if you use spring boot) will do the rest.
+
+As it relies on the excellent [Reddison](https://redisson.org/) library, all you need is to add the corresponding redis configuration to your project.
+See [the Redisson documentation](https://github.com/redisson/redisson/tree/master/redisson-spring-boot-starter).
+
+____
