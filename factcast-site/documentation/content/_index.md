@@ -47,9 +47,37 @@ src="https://img.shields.io/docker/v/factcast/factcast?label=dockerhub"></a>
 <a href="https://dependabot.com" rel="nofollow"><img class="inline" src="https://camo.githubusercontent.com/9067c86d33741a2fa11586e87089c65cdda10ec3/68747470733a2f2f6170692e646570656e6461626f742e636f6d2f6261646765732f7374617475733f686f73743d676974687562267265706f3d66616374636173742f6661637463617374" alt="Dependabot Status" data-canonical-src="https://api.dependabot.com/badges/status?host=github&amp;repo=factcast/factcast" style="max-width:100%;"></a>
 {{< /rawhtml >}}
 
-### Current Version: 0.2.5
+### Current Version: 0.3.0
 
 ## Noteworthy Releases 
+
+### RELEASE 0.3.0
+{{< rawhtml >}}
+<a
+href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.3.0+">
+    0.3.0
+</a>
+{{< /rawhtml >}}
+
+#### Feature
+
+* high-level API called [Factus](/factus) that should make application code **MUCH** easier when using FactCast
+* plenty of new modules:
+ * factcast-test
+ * factcast-factus
+ * factcast-factus-event
+ * factcast-factus-bin-snapser
+ * factcast-itests-factus
+ * factcast-snapshotcache-redisson
+
+#### Fix / Maint
+
+* fix important bug screwing with the Fact order in catchup phase if you have >1000 Facts to catch up to (thx, @dibimer)
+* the usual dependency upgrades
+* added switch to allow updates of SchemaRegistry (not a good idea in production, but handy on other stages)
+
+
+see changelog
 
 ### RELEASE 0.2.5
 {{< rawhtml >}}
