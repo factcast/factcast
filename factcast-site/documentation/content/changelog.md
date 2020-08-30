@@ -3,6 +3,52 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 
 # Changelog
 
+## [0.3.0](https://github.com/factcast/factcast/tree/0.3.0) (2020-08-30)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.1.4.3...0.3.0)
+
+**Implemented enhancements:**
+
+- Add property to allow updating of schema from the registry [\#986](https://github.com/factcast/factcast/issues/986)
+- binary snapshot serializer [\#1004](https://github.com/factcast/factcast/pull/1004) ([uweschaefer](https://github.com/uweschaefer))
+- Isolate integration tests \(wipe postgres in between\) [\#1003](https://github.com/factcast/factcast/pull/1003) ([uweschaefer](https://github.com/uweschaefer))
+- \#942 Add Factus as a high-level API to FactCast [\#991](https://github.com/factcast/factcast/pull/991) ([uweschaefer](https://github.com/uweschaefer))
+
+**Fixed bugs:**
+
+- Mixed up fact order in catchup phase 1, if more than 1000 facts are waiting [\#1002](https://github.com/factcast/factcast/issues/1002)
+- \#1002: stable order for catchup beyond page-size [\#1006](https://github.com/factcast/factcast/pull/1006) ([uweschaefer](https://github.com/uweschaefer))
+
+**Closed issues:**
+
+- Provide high-level client library for java [\#942](https://github.com/factcast/factcast/issues/942)
+- Introduce msgpack as optional format for \(only\) fact serialization [\#928](https://github.com/factcast/factcast/issues/928)
+
+**Merged pull requests:**
+
+- Foo 1526 more coverage [\#1007](https://github.com/factcast/factcast/pull/1007) ([BernhardBln](https://github.com/BernhardBln))
+- Micrometer integration with Factus [\#990](https://github.com/factcast/factcast/pull/990) ([edthamm](https://github.com/edthamm))
+- \#942\_hook\_for\_tx\_handling: suggestion for a hook [\#989](https://github.com/factcast/factcast/pull/989) ([uweschaefer](https://github.com/uweschaefer))
+- \#986: added switch for schemaReplace [\#987](https://github.com/factcast/factcast/pull/987) ([uweschaefer](https://github.com/uweschaefer))
+- Foo 1464 unit tests [\#985](https://github.com/factcast/factcast/pull/985) ([BernhardBln](https://github.com/BernhardBln))
+- \#959: fix response compression, add some tracing [\#960](https://github.com/factcast/factcast/pull/960) ([uweschaefer](https://github.com/uweschaefer))
+- Coordinate Scheduled Tasks between servers via JDBC [\#954](https://github.com/factcast/factcast/pull/954) ([uweschaefer](https://github.com/uweschaefer))
+- Issue950 add metrics to roundtrip testing [\#951](https://github.com/factcast/factcast/pull/951) ([uweschaefer](https://github.com/uweschaefer))
+- Issue941 - Implement Keepalive roundtrip to detect stale postgres listeners [\#943](https://github.com/factcast/factcast/pull/943) ([samba2](https://github.com/samba2))
+- Foo 1527 more unit tests [\#999](https://github.com/factcast/factcast/pull/999) ([BernhardBln](https://github.com/BernhardBln))
+
+## [factcast-0.1.4.3](https://github.com/factcast/factcast/tree/factcast-0.1.4.3) (2020-08-28)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.2.5...factcast-0.1.4.3)
+
+**Closed issues:**
+
+- Fix Response Compression [\#959](https://github.com/factcast/factcast/issues/959)
+- Coordinate Schemaregistry updates between servers... [\#953](https://github.com/factcast/factcast/issues/953)
+- Add metrics for changes in \#941 [\#950](https://github.com/factcast/factcast/issues/950)
+- Improve connection testing and keepalive while waiting for notifications [\#941](https://github.com/factcast/factcast/issues/941)
+- Add Module for integration Tests including GRPC [\#612](https://github.com/factcast/factcast/issues/612)
+
 ## [0.2.5](https://github.com/factcast/factcast/tree/0.2.5) (2020-07-05)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/0.2.4...0.2.5)
@@ -13,9 +59,9 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 
 **Closed issues:**
 
-- Dangeling subscriptions [\#937](https://github.com/factcast/factcast/issues/937)
 - Extract examples to extra project [\#923](https://github.com/factcast/factcast/issues/923)
 - add Coordinated subscription [\#450](https://github.com/factcast/factcast/issues/450)
+- Dangling subscriptions [\#937](https://github.com/factcast/factcast/issues/937)
 - Optimize startup time of factcast-docker [\#934](https://github.com/factcast/factcast/issues/934)
 - restructure modules \(integration tests\) [\#930](https://github.com/factcast/factcast/issues/930)
 - Create integration test for validation disabled mode [\#881](https://github.com/factcast/factcast/issues/881)
