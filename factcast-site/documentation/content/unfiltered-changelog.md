@@ -1,5 +1,86 @@
 # Changelog
 
+## [0.3.0](https://github.com/factcast/factcast/tree/0.3.0) (2020-08-30)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.1.4.3...0.3.0)
+
+**Implemented enhancements:**
+
+- Add property to allow updating of schema from the registry [\#986](https://github.com/factcast/factcast/issues/986)
+- binary snapshot serializer [\#1004](https://github.com/factcast/factcast/pull/1004) ([uweschaefer](https://github.com/uweschaefer))
+- Isolate integration tests \(wipe postgres in between\) [\#1003](https://github.com/factcast/factcast/pull/1003) ([uweschaefer](https://github.com/uweschaefer))
+- \#942 Add Factus as a high-level API to FactCast [\#991](https://github.com/factcast/factcast/pull/991) ([uweschaefer](https://github.com/uweschaefer))
+
+**Fixed bugs:**
+
+- Mixed up fact order in catchup phase 1, if more than 1000 facts are waiting [\#1002](https://github.com/factcast/factcast/issues/1002)
+- \#1002: stable order for catchup beyond page-size [\#1006](https://github.com/factcast/factcast/pull/1006) ([uweschaefer](https://github.com/uweschaefer))
+
+**Closed issues:**
+
+- Provide high-level client library for java [\#942](https://github.com/factcast/factcast/issues/942)
+- Introduce msgpack as optional format for \(only\) fact serialization [\#928](https://github.com/factcast/factcast/issues/928)
+
+**Merged pull requests:**
+
+- Update dependency org.assertj:assertj-core to v3.17.1 [\#1010](https://github.com/factcast/factcast/pull/1010) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.1.0 [\#1009](https://github.com/factcast/factcast/pull/1009) ([renovate[bot]](https://github.com/apps/renovate))
+- Foo 1526 more coverage [\#1007](https://github.com/factcast/factcast/pull/1007) ([BernhardBln](https://github.com/BernhardBln))
+- Update dependency io.javalin:javalin to v3.10.0 [\#1005](https://github.com/factcast/factcast/pull/1005) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.xerial.snappy:snappy-java to v1.1.7.7 [\#1001](https://github.com/factcast/factcast/pull/1001) ([renovate[bot]](https://github.com/apps/renovate))
+- Update mockito.version to v3.5.7 [\#1000](https://github.com/factcast/factcast/pull/1000) ([renovate[bot]](https://github.com/apps/renovate))
+- Update mockito.version to v3.5.6 [\#998](https://github.com/factcast/factcast/pull/998) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.assertj:assertj-core to v3.17.0 [\#997](https://github.com/factcast/factcast/pull/997) ([renovate[bot]](https://github.com/apps/renovate))
+- Update mockito.version to v3.5.5 [\#996](https://github.com/factcast/factcast/pull/996) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.0.3 [\#995](https://github.com/factcast/factcast/pull/995) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.postgresql:postgresql to v42.2.16 [\#994](https://github.com/factcast/factcast/pull/994) ([renovate[bot]](https://github.com/apps/renovate))
+- Micrometer integration with Factus [\#990](https://github.com/factcast/factcast/pull/990) ([edthamm](https://github.com/edthamm))
+- \#942\_hook\_for\_tx\_handling: suggestion for a hook [\#989](https://github.com/factcast/factcast/pull/989) ([uweschaefer](https://github.com/uweschaefer))
+- Update mockito.version to v3.5.2 [\#988](https://github.com/factcast/factcast/pull/988) ([renovate[bot]](https://github.com/apps/renovate))
+- \#986: added switch for schemaReplace [\#987](https://github.com/factcast/factcast/pull/987) ([uweschaefer](https://github.com/uweschaefer))
+- Foo 1464 unit tests [\#985](https://github.com/factcast/factcast/pull/985) ([BernhardBln](https://github.com/BernhardBln))
+- Update mockito.version to v3.5.0 [\#983](https://github.com/factcast/factcast/pull/983) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.postgresql:postgresql to v42.2.15 [\#982](https://github.com/factcast/factcast/pull/982) ([renovate[bot]](https://github.com/apps/renovate))
+- Update kotlin.version to v1.4.0 [\#981](https://github.com/factcast/factcast/pull/981) ([renovate[bot]](https://github.com/apps/renovate))
+- Update spring boot to v2.3.3.RELEASE [\#980](https://github.com/factcast/factcast/pull/980) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.apache.maven.plugins:maven-resources-plugin to v3.2.0 [\#978](https://github.com/factcast/factcast/pull/978) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.0.2 [\#977](https://github.com/factcast/factcast/pull/977) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.squareup.okhttp3:okhttp to v4.8.1 [\#976](https://github.com/factcast/factcast/pull/976) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency net.javacrumbs.shedlock:shedlock-spring to v4.14.0 [\#975](https://github.com/factcast/factcast/pull/975) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency net.javacrumbs.shedlock:shedlock-provider-jdbc-template to v4.14.0 [\#974](https://github.com/factcast/factcast/pull/974) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency net.javacrumbs.shedlock:shedlock-provider-jdbc-template to v4.13.0 [\#973](https://github.com/factcast/factcast/pull/973) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency net.javacrumbs.shedlock:shedlock-spring to v4.13.0 [\#972](https://github.com/factcast/factcast/pull/972) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson.core:jackson-databind to v2.11.2 [\#971](https://github.com/factcast/factcast/pull/971) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson.core:jackson-core to v2.11.2 [\#970](https://github.com/factcast/factcast/pull/970) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson.core:jackson-annotations to v2.11.2 [\#969](https://github.com/factcast/factcast/pull/969) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.springframework.cloud:spring-cloud-dependencies to vHoxton.SR7 [\#968](https://github.com/factcast/factcast/pull/968) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.mockito:mockito-junit-jupiter to v3.4.6 [\#966](https://github.com/factcast/factcast/pull/966) ([renovate[bot]](https://github.com/apps/renovate))
+- Update spring boot to v2.3.2.RELEASE [\#962](https://github.com/factcast/factcast/pull/962) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.liquibase:liquibase-core to v4 [\#961](https://github.com/factcast/factcast/pull/961) ([renovate[bot]](https://github.com/apps/renovate))
+- \#959: fix response compression, add some tracing [\#960](https://github.com/factcast/factcast/pull/960) ([uweschaefer](https://github.com/uweschaefer))
+- Update mockito.version to v3.4.4 [\#958](https://github.com/factcast/factcast/pull/958) ([renovate[bot]](https://github.com/apps/renovate))
+- Update mockito.version to v3.4.3 [\#956](https://github.com/factcast/factcast/pull/956) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.mockito:mockito-junit-jupiter to v3.4.2 [\#955](https://github.com/factcast/factcast/pull/955) ([renovate[bot]](https://github.com/apps/renovate))
+- Coordinate Scheduled Tasks between servers via JDBC [\#954](https://github.com/factcast/factcast/pull/954) ([uweschaefer](https://github.com/uweschaefer))
+- Update dependency io.github.microutils:kotlin-logging to v1.8.3 [\#952](https://github.com/factcast/factcast/pull/952) ([renovate[bot]](https://github.com/apps/renovate))
+- Issue950 add metrics to roundtrip testing [\#951](https://github.com/factcast/factcast/pull/951) ([uweschaefer](https://github.com/uweschaefer))
+- Update dependency com.squareup.okhttp3:okhttp to v4.8.0 [\#949](https://github.com/factcast/factcast/pull/949) ([renovate[bot]](https://github.com/apps/renovate))
+- Update mockito.version to v3.4.0 [\#948](https://github.com/factcast/factcast/pull/948) ([renovate[bot]](https://github.com/apps/renovate))
+- Issue941 - Implement Keepalive roundtrip to detect stale postgres listeners [\#943](https://github.com/factcast/factcast/pull/943) ([samba2](https://github.com/samba2))
+- Foo 1527 more unit tests [\#999](https://github.com/factcast/factcast/pull/999) ([BernhardBln](https://github.com/BernhardBln))
+
+## [factcast-0.1.4.3](https://github.com/factcast/factcast/tree/factcast-0.1.4.3) (2020-08-28)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.2.5...factcast-0.1.4.3)
+
+**Closed issues:**
+
+- Fix Response Compression [\#959](https://github.com/factcast/factcast/issues/959)
+- Coordinate Schemaregistry updates between servers... [\#953](https://github.com/factcast/factcast/issues/953)
+- Add metrics for changes in \#941 [\#950](https://github.com/factcast/factcast/issues/950)
+- Improve connection testing and keepalive while waiting for notifications [\#941](https://github.com/factcast/factcast/issues/941)
+- Add Module for integration Tests including GRPC [\#612](https://github.com/factcast/factcast/issues/612)
+
 ## [0.2.5](https://github.com/factcast/factcast/tree/0.2.5) (2020-07-05)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/0.2.4...0.2.5)
@@ -10,9 +91,9 @@
 
 **Closed issues:**
 
-- Dangeling subscriptions [\#937](https://github.com/factcast/factcast/issues/937)
 - Extract examples to extra project [\#923](https://github.com/factcast/factcast/issues/923)
 - add Coordinated subscription [\#450](https://github.com/factcast/factcast/issues/450)
+- Dangling subscriptions [\#937](https://github.com/factcast/factcast/issues/937)
 - Optimize startup time of factcast-docker [\#934](https://github.com/factcast/factcast/issues/934)
 - restructure modules \(integration tests\) [\#930](https://github.com/factcast/factcast/issues/930)
 - Create integration test for validation disabled mode [\#881](https://github.com/factcast/factcast/issues/881)
