@@ -25,6 +25,9 @@ import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Abstract super class for RegistryFileFetcher that operate on local files.
+ */
 @RequiredArgsConstructor
 public abstract class AbstractRegistryFileFetcher implements RegistryFileFetcher {
 
@@ -59,6 +62,13 @@ public abstract class AbstractRegistryFileFetcher implements RegistryFileFetcher
         }
     }
 
+    /**
+     * @param subPath
+     *            the sub path of a file, relative to some context
+     * @return a File object pointing to the requested file
+     * @throws IOException
+     *             in case of problems resolving the File object
+     */
     protected abstract File getFile(String subPath) throws IOException;
 
     private static @NonNull String readFile(@NonNull File file)
