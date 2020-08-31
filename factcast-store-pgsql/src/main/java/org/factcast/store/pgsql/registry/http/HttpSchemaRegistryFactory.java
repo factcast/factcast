@@ -15,41 +15,37 @@
  */
 package org.factcast.store.pgsql.registry.http;
 
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 import org.factcast.store.pgsql.PgConfigurationProperties;
-import org.factcast.store.pgsql.registry.AbstractSchemaRegistry;
+import org.factcast.store.pgsql.registry.SchemaRegistryFactory;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
+import org.springframework.stereotype.Component;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 
 import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
-public class HttpSchemaRegistry extends AbstractSchemaRegistry {
+@Component
+public class HttpSchemaRegistryFactory implements SchemaRegistryFactory<HttpSchemaRegistry> {
 
-    public HttpSchemaRegistry(
-            @NonNull URL baseUrl, @NonNull SchemaStore schemaStore,
-            @NonNull TransformationStore transformationStore,
-            @NonNull RegistryMetrics registryMetrics, @NonNull PgConfigurationProperties props) {
-        this(schemaStore, transformationStore, new HttpIndexFetcher(baseUrl, registryMetrics),
-                new HttpRegistryFileFetcher(
-                        baseUrl, registryMetrics), registryMetrics, props);
+    @Override
+    public List<String> getProtocols() {
+        return Lists.newArrayList("http", "https");
     }
 
-    @VisibleForTesting
-    protected HttpSchemaRegistry(
+    @Override
+    public HttpSchemaRegistry createInstance(@NonNull String fullUrl,
             @NonNull SchemaStore schemaStore,
             @NonNull TransformationStore transformationStore,
-            @NonNull HttpIndexFetcher indexFetcher,
-            @NonNull HttpRegistryFileFetcher registryFileFetcher,
             @NonNull RegistryMetrics registryMetrics,
-            @NonNull PgConfigurationProperties properties) {
-        super(indexFetcher, registryFileFetcher, schemaStore, transformationStore, registryMetrics,
-                properties.isAllowSchemaReplace());
-    }
+            @NonNull PgConfigurationProperties props) throws MalformedURLException {
 
+        return new HttpSchemaRegistry(new URL(fullUrl + "/"),
+                schemaStore, transformationStore, registryMetrics, props);
+    }
 }
