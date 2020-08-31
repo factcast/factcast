@@ -58,18 +58,14 @@ public class SchemaRegistryConfiguration {
 
             if (p.isValidationEnabled()) {
                 String fullUrl = p.getSchemaRegistryUrl();
-                if (!fullUrl.contains(":"))
+                if (!fullUrl.contains(":")) {
                     fullUrl = "classpath:" + fullUrl;
+                }
 
                 String protocol = fullUrl.substring(0, fullUrl.indexOf(":"));
 
-                SchemaRegistryFactory<? extends SchemaRegistry> registryFactory = factories
-                        .stream()
-                        .filter(f -> f.canHandle(protocol))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "schemaRegistryUrl has an unknown protocol: '" + protocol
-                                        + "'. Allowed protocols: " + getProtocols(factories)));
+                SchemaRegistryFactory<? extends SchemaRegistry> registryFactory = getSchemaRegistryFactory(
+                        factories, protocol);
 
                 SchemaRegistry registry = registryFactory
                         .createInstance(
@@ -89,6 +85,19 @@ public class SchemaRegistryConfiguration {
             throw new SchemaRegistryUnavailableException(e);
         }
 
+    }
+
+    private SchemaRegistryFactory<? extends SchemaRegistry> getSchemaRegistryFactory(
+            @NonNull List<SchemaRegistryFactory<? extends SchemaRegistry>> factories,
+            String protocol) {
+
+        return factories
+                .stream()
+                .filter(f -> f.canHandle(protocol))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "schemaRegistryUrl has an unknown protocol: '" + protocol
+                                + "'. Allowed protocols: " + getProtocols(factories)));
     }
 
     private String getProtocols(List<SchemaRegistryFactory<? extends SchemaRegistry>> factories) {
