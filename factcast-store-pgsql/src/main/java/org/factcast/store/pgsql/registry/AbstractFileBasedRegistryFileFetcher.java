@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
  * Abstract super class for RegistryFileFetcher that operate on local files.
  */
 @RequiredArgsConstructor
-public abstract class AbstractRegistryFileFetcher implements RegistryFileFetcher {
+public abstract class AbstractFileBasedRegistryFileFetcher implements RegistryFileFetcher {
 
     @Override
     public String fetchTransformation(@NonNull TransformationSource key) {

@@ -35,8 +35,13 @@ public class FilesystemIndexFetcher implements IndexFetcher {
 
     @Override
     public Optional<RegistryIndex> fetchIndex() {
+        File file = new File(base, "index.json");
+        return fetch_index(file);
+    }
+
+    @NonNull
+    public static Optional<RegistryIndex> fetch_index(File file) {
         try {
-            File file = new File(base, "index.json");
             if (file.exists()) {
                 return Optional.of(ValidationConstants.JACKSON.readValue(file,
                         RegistryIndex.class));

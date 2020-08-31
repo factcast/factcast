@@ -18,14 +18,14 @@ package org.factcast.store.pgsql.registry.classpath;
 import java.io.File;
 import java.io.IOException;
 
-import org.factcast.store.pgsql.registry.AbstractRegistryFileFetcher;
+import org.factcast.store.pgsql.registry.AbstractFileBasedRegistryFileFetcher;
 import org.springframework.core.io.ClassPathResource;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class ClasspathRegistryFileFetcher extends AbstractRegistryFileFetcher {
+public class ClasspathRegistryFileFetcher extends AbstractFileBasedRegistryFileFetcher {
 
     private final @NonNull String base;
 
