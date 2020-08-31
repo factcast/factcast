@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.registry;
 
 import java.net.MalformedURLException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
@@ -26,6 +27,7 @@ import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -37,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 @EnableScheduling
+@ComponentScan
 @Import({ FactValidatorConfiguration.class, TransformationConfiguration.class })
 public class SchemaRegistryConfiguration {
     @Bean
@@ -66,7 +69,7 @@ public class SchemaRegistryConfiguration {
                         .findFirst()
                         .orElseThrow(() -> new IllegalArgumentException(
                                 "schemaRegistryUrl has an unknown protocol: '" + protocol
-                                        + "'. Just 'http', 'https' and 'classpath' are allowed"));
+                                        + "'. Allowed protocols: " + getProtocols(factories)));
 
                 SchemaRegistry registry = registryFactory
                         .createInstance(
@@ -86,6 +89,14 @@ public class SchemaRegistryConfiguration {
             throw new SchemaRegistryUnavailableException(e);
         }
 
+    }
+
+    private String getProtocols(List<SchemaRegistryFactory<? extends SchemaRegistry>> factories) {
+        return factories.stream()
+                .map(SchemaRegistryFactory::getProtocols)
+                .flatMap(List::stream)
+                .map(p -> "'" + p + "'")
+                .collect(Collectors.joining(", "));
     }
 
     @Bean
