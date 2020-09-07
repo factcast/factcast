@@ -37,9 +37,13 @@ import org.factcast.factus.lock.LockedOperationAbortedException;
 import org.factcast.itests.factus.event.TestAggregateIncremented;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
-import org.factcast.itests.factus.proj.*;
+import org.factcast.itests.factus.proj.RedissonManagedUserNames;
+import org.factcast.itests.factus.proj.SnapshotUserNames;
+import org.factcast.itests.factus.proj.SubscribedUserNames;
+import org.factcast.itests.factus.proj.TestAggregate;
+import org.factcast.itests.factus.proj.UserCount;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -181,7 +185,8 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
         assertThat(a.magicNumber()).isEqualTo(50);
 
         log.info(
-                "now we're not expecting to see event processing due to the snapshot being up to date");
+                "now we're not expecting to see event processing due to the snapshot being up to " +
+                        "date");
 
         TestAggregate b = ec.fetch(TestAggregate.class, aggregateId);
         assertThat(b.magicNumber()).isEqualTo(50);
@@ -479,10 +484,4 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
         });
     }
 
-    private void sleepRandomMillis() {
-        try {
-            Thread.sleep((long) (Math.random() * 1000));
-        } catch (InterruptedException e) {
-        }
-    }
 }
