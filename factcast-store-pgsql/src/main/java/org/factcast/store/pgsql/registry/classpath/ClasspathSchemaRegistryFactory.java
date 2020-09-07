@@ -22,13 +22,11 @@ import org.factcast.store.pgsql.registry.SchemaRegistryFactory;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
-import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
 
 import lombok.NonNull;
 
-@Component
 public class ClasspathSchemaRegistryFactory implements
         SchemaRegistryFactory<ClasspathSchemaRegistry> {
 

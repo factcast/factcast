@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.factcast.store.pgsql.PgConfigurationProperties;
+import org.factcast.store.pgsql.registry.classpath.ClasspathSchemaRegistryFactory;
+import org.factcast.store.pgsql.registry.filesystem.FilesystemSchemaRegistryFactory;
+import org.factcast.store.pgsql.registry.http.HttpSchemaRegistryFactory;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetricsImpl;
 import org.factcast.store.pgsql.registry.transformation.TransformationConfiguration;
@@ -27,7 +30,6 @@ import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.FactValidatorConfiguration;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -39,12 +41,27 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 @EnableScheduling
-@ComponentScan
 @Import({ FactValidatorConfiguration.class, TransformationConfiguration.class })
 public class SchemaRegistryConfiguration {
+
     @Bean
     public RegistryMetrics registryMetrics(MeterRegistry meterRegistry) {
         return new RegistryMetricsImpl(meterRegistry);
+    }
+
+    @Bean
+    public FilesystemSchemaRegistryFactory filesystemSchemaRegistryFactory() {
+        return new FilesystemSchemaRegistryFactory();
+    }
+
+    @Bean
+    public ClasspathSchemaRegistryFactory classpathSchemaRegistryFactory() {
+        return new ClasspathSchemaRegistryFactory();
+    }
+
+    @Bean
+    public HttpSchemaRegistryFactory httpSchemaRegistryFactory() {
+        return new HttpSchemaRegistryFactory();
     }
 
     @Bean
