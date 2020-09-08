@@ -19,6 +19,7 @@ import org.factcast.server.grpc.FactStoreGrpcService;
 import org.factcast.server.grpc.codec.SnappyGrpcServerCodec;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.xerial.snappy.SnappyInputStream;
@@ -33,6 +34,7 @@ import lombok.Generated;
 @AutoConfigureBefore(FactCastGrpcServerAutoConfiguration.class)
 public class SnappyServerAutoConfiguration {
     @Bean
+    @ConditionalOnMissingBean
     public SnappyGrpcServerCodec snappyServerCodec() {
         return new SnappyGrpcServerCodec();
     }
