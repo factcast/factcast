@@ -13,25 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.classpath;
+package org.factcast.itests.factus.proj;
 
-import java.io.File;
-import java.io.IOException;
+import org.factcast.factus.Handler;
+import org.factcast.factus.projection.Aggregate;
+import org.factcast.itests.factus.event.versioned.v1.UserCreated;
 
-import org.factcast.store.pgsql.registry.AbstractFileBasedRegistryFileFetcher;
-import org.springframework.core.io.ClassPathResource;
+import lombok.Getter;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+public class UserV1 extends Aggregate {
 
-@RequiredArgsConstructor
-public class ClasspathRegistryFileFetcher extends AbstractFileBasedRegistryFileFetcher {
+    @Getter
+    private String userName;
 
-    private final @NonNull String base;
-
-    @Override
-    protected File getFile(String subPath) throws IOException {
-        return new ClassPathResource(base + "/" + subPath).getFile();
+    @Handler
+    void apply(UserCreated u) {
+        userName = u.userName();
     }
 
 }
