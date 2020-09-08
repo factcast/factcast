@@ -38,7 +38,7 @@ public class SnappyClientAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public SnappyGrpcClientCodec snappCodec() {
+    public SnappyGrpcClientCodec snappyCodec() {
         return new SnappyGrpcClientCodec();
     }
 }
