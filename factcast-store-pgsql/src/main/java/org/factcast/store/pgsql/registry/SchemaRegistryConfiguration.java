@@ -16,11 +16,13 @@
 package org.factcast.store.pgsql.registry;
 
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.factcast.store.pgsql.PgConfigurationProperties;
-import org.factcast.store.pgsql.registry.classpath.ClasspathSchemaRegistry;
-import org.factcast.store.pgsql.registry.http.HttpSchemaRegistry;
+import org.factcast.store.pgsql.registry.classpath.ClasspathSchemaRegistryFactory;
+import org.factcast.store.pgsql.registry.filesystem.FilesystemSchemaRegistryFactory;
+import org.factcast.store.pgsql.registry.http.HttpSchemaRegistryFactory;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetricsImpl;
 import org.factcast.store.pgsql.registry.transformation.TransformationConfiguration;
@@ -41,44 +43,54 @@ import lombok.extern.slf4j.Slf4j;
 @EnableScheduling
 @Import({ FactValidatorConfiguration.class, TransformationConfiguration.class })
 public class SchemaRegistryConfiguration {
+
     @Bean
     public RegistryMetrics registryMetrics(MeterRegistry meterRegistry) {
         return new RegistryMetricsImpl(meterRegistry);
     }
 
     @Bean
+    public FilesystemSchemaRegistryFactory filesystemSchemaRegistryFactory() {
+        return new FilesystemSchemaRegistryFactory();
+    }
+
+    @Bean
+    public ClasspathSchemaRegistryFactory classpathSchemaRegistryFactory() {
+        return new ClasspathSchemaRegistryFactory();
+    }
+
+    @Bean
+    public HttpSchemaRegistryFactory httpSchemaRegistryFactory() {
+        return new HttpSchemaRegistryFactory();
+    }
+
+    @Bean
     public SchemaRegistry schemaRegistry(PgConfigurationProperties p,
-            @NonNull SchemaStore schemaStore, @NonNull TransformationStore transformationStore,
+            @NonNull SchemaStore schemaStore,
+            @NonNull TransformationStore transformationStore,
+            @NonNull List<SchemaRegistryFactory<? extends SchemaRegistry>> factories,
             @NonNull RegistryMetrics registryMetrics) {
 
         try {
 
             if (p.isValidationEnabled()) {
                 String fullUrl = p.getSchemaRegistryUrl();
-                if (!fullUrl.contains(":"))
+                if (!fullUrl.contains(":")) {
                     fullUrl = "classpath:" + fullUrl;
+                }
 
                 String protocol = fullUrl.substring(0, fullUrl.indexOf(":"));
 
-                if ("http".equals(protocol) || "https".equals(protocol)) {
-                    HttpSchemaRegistry httpSchemaRegistry;
-                    httpSchemaRegistry = new HttpSchemaRegistry(new URL(fullUrl + "/"),
-                            schemaStore, transformationStore, registryMetrics, p);
-                    httpSchemaRegistry.fetchInitial();
-                    return httpSchemaRegistry;
-                }
+                SchemaRegistryFactory<? extends SchemaRegistry> registryFactory = getSchemaRegistryFactory(
+                        factories, protocol);
 
-                if ("classpath".equals(protocol)) {
-                    ClasspathSchemaRegistry registry = new ClasspathSchemaRegistry(fullUrl
-                            .substring("classpath:".length()),
-                            schemaStore, transformationStore, registryMetrics, p);
-                    registry.fetchInitial();
-                    return registry;
-                }
+                SchemaRegistry registry = registryFactory
+                        .createInstance(
+                                fullUrl, schemaStore, transformationStore, registryMetrics, p);
 
-                throw new IllegalArgumentException(
-                        "schemaRegistryUrl has an unknown protocol: '" + protocol
-                                + "'. Just 'http', 'https' and 'classpath' are allowed");
+                registry.fetchInitial();
+
+                return registry;
 
             } else {
                 log.warn(
@@ -90,6 +102,27 @@ public class SchemaRegistryConfiguration {
             throw new SchemaRegistryUnavailableException(e);
         }
 
+    }
+
+    private SchemaRegistryFactory<? extends SchemaRegistry> getSchemaRegistryFactory(
+            @NonNull List<SchemaRegistryFactory<? extends SchemaRegistry>> factories,
+            String protocol) {
+
+        return factories
+                .stream()
+                .filter(f -> f.canHandle(protocol))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "schemaRegistryUrl has an unknown protocol: '" + protocol
+                                + "'. Allowed protocols: " + getProtocols(factories)));
+    }
+
+    private String getProtocols(List<SchemaRegistryFactory<? extends SchemaRegistry>> factories) {
+        return factories.stream()
+                .map(SchemaRegistryFactory::getProtocols)
+                .flatMap(List::stream)
+                .map(p -> "'" + p + "'")
+                .collect(Collectors.joining(", "));
     }
 
     @Bean
