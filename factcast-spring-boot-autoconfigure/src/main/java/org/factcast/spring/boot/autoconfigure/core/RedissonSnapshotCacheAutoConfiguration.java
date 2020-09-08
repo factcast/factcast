@@ -33,6 +33,7 @@ import lombok.Generated;
 public class RedissonSnapshotCacheAutoConfiguration {
 
     @Bean
+    @ConditionalOnMissingBean
     @Order(100)
     public SnapshotCache snapshotCache(RedissonClient redisson) {
         return new RedissonSnapshotCache(redisson);
