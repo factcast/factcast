@@ -13,44 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.classpath;
+package org.factcast.store.pgsql.registry.filesystem;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Optional;
 
 import org.factcast.store.pgsql.registry.IndexFetcher;
 import org.factcast.store.pgsql.registry.RegistryIndex;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
-import org.factcast.store.pgsql.registry.filesystem.FilesystemIndexFetcher;
-import org.springframework.core.io.ClassPathResource;
+import org.factcast.store.pgsql.registry.http.ValidationConstants;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class ClasspathIndexFetcher implements IndexFetcher {
+public class FilesystemIndexFetcher implements IndexFetcher {
 
     private final @NonNull String base;
 
-    private boolean initialRun = true;
-
     @Override
     public Optional<RegistryIndex> fetchIndex() {
-        if (initialRun) {
+        File file = new File(base, "index.json");
+        return fetch_index(file);
+    }
 
-            try {
-                File file = new ClassPathResource(base + "/index.json").getFile();
-                return FilesystemIndexFetcher.fetch_index(file);
-
-            } catch (IOException e) {
-                throw new SchemaRegistryUnavailableException(e);
-            } finally {
-                initialRun = false;
+    @NonNull
+    public static Optional<RegistryIndex> fetch_index(File file) {
+        try {
+            if (file.exists()) {
+                return Optional.of(ValidationConstants.JACKSON.readValue(file,
+                        RegistryIndex.class));
+            } else {
+                throw new SchemaRegistryUnavailableException(new FileNotFoundException(
+                        "Resource " + file + " does not exist."));
             }
-
-        } else
-            // assume unchanged
-            return Optional.empty();
+        } catch (IOException e) {
+            throw new SchemaRegistryUnavailableException(e);
+        }
     }
 }

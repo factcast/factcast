@@ -13,25 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.classpath;
+package org.factcast.itests.factus.event.versioned.v1;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.Set;
+import java.util.UUID;
 
-import org.factcast.store.pgsql.registry.AbstractFileBasedRegistryFileFetcher;
-import org.springframework.core.io.ClassPathResource;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import com.google.common.collect.Sets;
 
-@RequiredArgsConstructor
-public class ClasspathRegistryFileFetcher extends AbstractFileBasedRegistryFileFetcher {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    private final @NonNull String base;
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Specification(ns = "users", version = 1)
+public class UserCreated implements EventObject {
+    UUID aggregateId;
+
+    String userName;
 
     @Override
-    protected File getFile(String subPath) throws IOException {
-        return new ClassPathResource(base + "/" + subPath).getFile();
+    public Set<UUID> aggregateIds() {
+        return Sets.newHashSet(aggregateId);
     }
 
 }
