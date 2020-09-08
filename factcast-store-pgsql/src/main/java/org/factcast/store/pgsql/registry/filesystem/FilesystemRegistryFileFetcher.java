@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.registry.classpath;
+package org.factcast.store.pgsql.registry.filesystem;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.factcast.store.pgsql.registry.AbstractFileBasedRegistryFileFetcher;
-import org.springframework.core.io.ClassPathResource;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class ClasspathRegistryFileFetcher extends AbstractFileBasedRegistryFileFetcher {
+public class FilesystemRegistryFileFetcher extends AbstractFileBasedRegistryFileFetcher {
 
     private final @NonNull String base;
 
     @Override
-    protected File getFile(String subPath) throws IOException {
-        return new ClassPathResource(base + "/" + subPath).getFile();
+    protected File getFile(String subPath) {
+        return new File(base, subPath);
     }
 
 }

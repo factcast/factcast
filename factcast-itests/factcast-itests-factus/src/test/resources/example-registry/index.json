@@ -1,0 +1,36 @@
+{
+  "schemes": [
+    {
+      "id": "users/UserCreated/1/schema.json",
+      "ns": "users",
+      "type": "UserCreated",
+      "version": 1,
+      "hash": "f29f8bbb5166d4b38f1a372e0065c46e"
+    },
+    {
+      "id": "users/UserCreated/2/schema.json",
+      "ns": "users",
+      "type": "UserCreated",
+      "version": 2,
+      "hash": "477bb95fdad94809108f0ec8abe18041"
+    }
+  ],
+  "transformations": [
+    {
+      "id": "users/UserCreated/1-2/transform.js",
+      "ns": "users",
+      "type": "UserCreated",
+      "from": 1,
+      "to": 2,
+      "hash": "546d80170d224d6f24b276f3b8c4656e"
+    },
+    {
+      "id": "users/UserCreated/2-1/transform.js",
+      "ns": "users",
+      "type": "UserCreated",
+      "from": 2,
+      "to": 1,
+      "hash": "c7350723f7d786f59abe660e92d138de"
+    }
+  ]
+}

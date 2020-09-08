@@ -73,8 +73,6 @@ class SnapshotCacheTest {
 
         Timestamp firstAccess = getTimestamp(id);
 
-        Thread.sleep(5);
-
         // RUN
         Optional<Snapshot> snapshot = underTest
                 .getSnapshot(id);
@@ -94,6 +92,8 @@ class SnapshotCacheTest {
 
         assertThat(recentAccess)
                 .isAfter(firstAccess);
+
+        Thread.sleep(100);
 
         // also make sure the timestamp is properly set to the current time, and
         // not some time in the future / past
