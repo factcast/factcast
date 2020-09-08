@@ -47,6 +47,7 @@ import lombok.extern.slf4j.Slf4j;
 public class FactusAutoConfiguration {
 
     @Bean
+    @ConditionalOnMissingBean
     public Factus factus(FactCast fc, SnapshotCache sr, EventSerializer deserializer,
             EventConverter eventConverter,
             SnapshotSerializerSupplier snapshotSerializerSupplier, FactusMetrics factusMetrics) {
