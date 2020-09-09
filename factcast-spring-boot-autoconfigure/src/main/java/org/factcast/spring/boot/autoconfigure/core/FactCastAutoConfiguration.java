@@ -35,7 +35,6 @@ import lombok.NonNull;
 
 @Configuration
 @ConditionalOnClass(FactCast.class)
-@ConditionalOnMissingBean(FactCast.class)
 @Generated
 @SuppressWarnings("unused")
 public class FactCastAutoConfiguration {
