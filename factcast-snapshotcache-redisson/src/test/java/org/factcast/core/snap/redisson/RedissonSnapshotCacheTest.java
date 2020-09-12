@@ -148,11 +148,13 @@ class RedissonSnapshotCacheTest {
 
             underTest.getSnapshot(s2); // touches it
 
-            sleep(100); // wait for async op to complete
+            sleep(300); // wait for async op to complete
 
-            underTest.removeEntriesUntouchedSince(System.currentTimeMillis() - 300); // should
+            underTest.removeEntriesUntouchedSince(System.currentTimeMillis() - 500); // should
                                                                                      // leave
                                                                                      // snap2
+
+            sleep(300); // wait for async op to complete
 
             assertThat(underTest.getSnapshot(s1)).isEmpty();
             assertThat(underTest.getSnapshot(s3)).isEmpty();
