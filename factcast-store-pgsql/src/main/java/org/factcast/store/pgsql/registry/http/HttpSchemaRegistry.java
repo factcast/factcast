@@ -22,7 +22,6 @@ import org.factcast.store.pgsql.registry.AbstractSchemaRegistry;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
-import org.springframework.stereotype.Component;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -30,7 +29,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Component
 public class HttpSchemaRegistry extends AbstractSchemaRegistry {
 
     public HttpSchemaRegistry(

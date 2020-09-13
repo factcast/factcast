@@ -19,6 +19,7 @@ import org.factcast.core.FactCast;
 import org.factcast.core.snap.FactCastSnapshotRepository;
 import org.factcast.core.store.FactStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -30,6 +31,7 @@ import lombok.Generated;
 public class FactCastSnapshotCacheAutoConfiguration {
 
     @Bean
+    @ConditionalOnMissingBean
     public FactCastSnapshotRepository snapshotRepository(FactStore store) {
         return new FactCastSnapshotRepository(store);
     }

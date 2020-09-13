@@ -35,17 +35,18 @@ import lombok.NonNull;
 
 @Configuration
 @ConditionalOnClass(FactCast.class)
-@ConditionalOnMissingBean(FactCast.class)
 @Generated
 @SuppressWarnings("unused")
 public class FactCastAutoConfiguration {
 
     @Bean
+    @ConditionalOnMissingBean
     public FactCast factCast(@NonNull FactStore store) {
         return FactCast.from(store);
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public EventConverter eventConverter(@NonNull EventSerializer ser) {
         return new EventConverter(ser);
     }

@@ -16,14 +16,13 @@
 package org.factcast.store.pgsql.registry.classpath;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Optional;
 
 import org.factcast.store.pgsql.registry.IndexFetcher;
 import org.factcast.store.pgsql.registry.RegistryIndex;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
-import org.factcast.store.pgsql.registry.http.ValidationConstants;
+import org.factcast.store.pgsql.registry.filesystem.FilesystemIndexFetcher;
 import org.springframework.core.io.ClassPathResource;
 
 import lombok.NonNull;
@@ -39,21 +38,17 @@ public class ClasspathIndexFetcher implements IndexFetcher {
     @Override
     public Optional<RegistryIndex> fetchIndex() {
         if (initialRun) {
-            String index = base + "/index.json";
+
             try {
-                File file = new ClassPathResource(index).getFile();
-                if (file.exists()) {
-                    return Optional.of(ValidationConstants.JACKSON.readValue(file,
-                            RegistryIndex.class));
-                } else {
-                    throw new SchemaRegistryUnavailableException(new FileNotFoundException(
-                            "Resource " + index + " does not exist."));
-                }
+                File file = new ClassPathResource(base + "/index.json").getFile();
+                return FilesystemIndexFetcher.fetch_index(file);
+
             } catch (IOException e) {
                 throw new SchemaRegistryUnavailableException(e);
             } finally {
                 initialRun = false;
             }
+
         } else
             // assume unchanged
             return Optional.empty();
