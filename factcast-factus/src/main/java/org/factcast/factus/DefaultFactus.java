@@ -404,7 +404,7 @@ public class DefaultFactus implements Factus {
     public <A extends Aggregate> Locked<A> withLockOn(Class<A> aggregateClass, UUID id) {
         A fresh = factusMetrics.timed(TimedOperation.FIND_DURATION, Tags.of(Tag.of(LOCKED, TRUE),
                 Tag.of(CLASS, aggregateClass.getCanonicalName())), () -> find(aggregateClass, id)
-                        .orElse(instantiate(aggregateClass)));
+                        .orElse(initial(aggregateClass, id)));
         Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
         List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
         return new Locked<>(fc, this, fresh, specs, factusMetrics);
