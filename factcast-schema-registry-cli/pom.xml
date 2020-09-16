@@ -91,7 +91,7 @@
     <dependency>
       <groupId>io.github.microutils</groupId>
       <artifactId>kotlin-logging</artifactId>
-      <version>1.11.3</version>
+      <version>1.11.5</version>
     </dependency>
     <dependency>
       <groupId>io.arrow-kt</groupId>
