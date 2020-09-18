@@ -17,6 +17,7 @@ package org.factcast.factus.serializer.binary;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.function.Function;
 
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
@@ -26,24 +27,40 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
+import com.google.common.annotations.VisibleForTesting;
 
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.val;
-import net.jpountz.lz4.*;
+import net.jpountz.lz4.LZ4BlockInputStream;
+import net.jpountz.lz4.LZ4BlockOutputStream;
 
 public class BinarySnapshotSerializer implements SnapshotSerializer {
 
-    private static final ObjectMapper om = new ObjectMapper(new MessagePackFactory())
-            .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private static final ObjectMapper omMessagePack = configure(new ObjectMapper(
+            new MessagePackFactory()));
+
+    // needed for schema generation, but with same settings like message pack
+    // mapper
+    private static final ObjectMapper omJson = configure(new ObjectMapper());
+
+    private static final ObjectWriter writerJson = omJson.writer();
+
+    private static final JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(omJson);
+
+    @Setter(onMethod = @__(@VisibleForTesting))
+    private static Function<String, String> schemaModifier = Function.identity();
 
     @SneakyThrows
     @Override
     public byte[] serialize(@NonNull SnapshotProjection a) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         val os = new LZ4BlockOutputStream(baos, 8192);
-        om.writeValue(os, a);
+        omMessagePack.writeValue(os, a);
         os.close();
         return baos.toByteArray();
     }
@@ -52,7 +69,7 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
     @Override
     public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
         try (LZ4BlockInputStream is = new LZ4BlockInputStream(new ByteArrayInputStream(bytes));) {
-            return om.readerFor(type).readValue(is);
+            return omMessagePack.readerFor(type).readValue(is);
         }
     }
 
@@ -60,4 +77,23 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
     public boolean includesCompression() {
         return true;
     }
+
+    @Override
+    @SneakyThrows
+    public int calculateProjectionClassHash(Class<? extends SnapshotProjection> projectionClass) {
+        JsonSchema jsonSchema = schemaGen.generateSchema(projectionClass);
+
+        String schema = writerJson
+                .writeValueAsString(jsonSchema);
+
+        return schemaModifier.apply(schema)
+                .hashCode();
+    }
+
+    private static ObjectMapper configure(ObjectMapper objectMapper) {
+        return objectMapper
+                .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
+
 }
