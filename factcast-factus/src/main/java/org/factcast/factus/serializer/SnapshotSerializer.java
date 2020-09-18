@@ -25,7 +25,29 @@ public interface SnapshotSerializer {
 
     boolean includesCompression();
 
+    /**
+     * In order to catch changes when a {@link SnapshotProjection} got changed,
+     * calculate a hash that changes when the schema of the serialised class
+     * changes.
+     * <p>
+     * Note that in some cases, it is possible to add fields and use
+     * serializer-specific means to ignore them for serialization (e.g. by
+     * using @JsonIgnore with FactCastJson).
+     * <p>
+     * Hence, every serializer is asked to calculate it's own hash, that should
+     * only change in case changes to the projection where made that were
+     * relevant for deserialization.
+     *
+     * @param projectionClass
+     *            the snapshot projection class to calculate the hash for
+     * @return the calculated hash
+     */
+    default int calculateProjectionClassHash(Class<? extends SnapshotProjection> projectionClass) {
+        return 0;
+    }
+
     class DefaultSnapshotSerializer implements SnapshotSerializer {
+
         @Override
         public byte[] serialize(SnapshotProjection a) {
             return FactCastJson.writeValueAsBytes(a);
@@ -39,6 +61,12 @@ public interface SnapshotSerializer {
         @Override
         public boolean includesCompression() {
             return false;
+        }
+
+        @Override
+        public int calculateProjectionClassHash(
+                Class<? extends SnapshotProjection> projectionClass) {
+            return FactCastJson.calculateHash(projectionClass);
         }
     }
 }
