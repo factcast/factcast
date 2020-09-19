@@ -105,8 +105,8 @@ class LockedAggregateTest {
 
         UUID aggId = UUID.randomUUID();
 
-        when(factus.fetch(UserAggregate.class, aggId))
-                .thenReturn(userAggregate);
+        when(factus.find(UserAggregate.class, aggId))
+                .thenReturn(Optional.of(userAggregate));
 
         AggregateUtil.aggregateId(userAggregate, aggId);
         userAggregate.name("Peter");
@@ -137,7 +137,7 @@ class LockedAggregateTest {
 
         // verify that first, projection got updated...
         inOrder.verify(factus)
-                .fetch(UserAggregate.class, aggId);
+                .find(UserAggregate.class, aggId);
         // ... then our business code was run...
         inOrder.verify(businessCode)
                 .accept(any(), any());
