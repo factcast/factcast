@@ -60,14 +60,14 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 /**
- * Single entry point to the factus API.
+ * Single entry point to the Factus API.
  */
 @RequiredArgsConstructor
 @Slf4j
 public class DefaultFactus implements Factus {
     final FactCast fc;
 
-    final ProjectorFactory ehFactory;
+    final ProjectorFactory projectorFactory;
 
     final EventConverter eventConverter;
 
@@ -84,7 +84,7 @@ public class DefaultFactus implements Factus {
     private final Set<AutoCloseable> managedObjects = new HashSet<>();
 
     @Override
-    public PublishBatch batch() {
+    public @NonNull PublishBatch batch() {
         return new DefaultPublishBatch(fc, eventConverter);
     }
 
@@ -162,7 +162,7 @@ public class DefaultFactus implements Factus {
                 // close token & subscription on shutdown
                 managedObjects.add(new AutoCloseable() {
                     @Override
-                    public void close() throws Exception {
+                    public void close() {
                         tryClose(subscription);
                         tryClose(token);
                     }
@@ -185,7 +185,7 @@ public class DefaultFactus implements Factus {
 
     @SneakyThrows
     private <P extends SubscribedProjection> Subscription doSubscribe(P subscribedProjection) {
-        Projector<P> handler = ehFactory.create(subscribedProjection);
+        Projector<P> handler = projectorFactory.create(subscribedProjection);
         FactObserver fo = new FactObserver() {
             @Override
             public void onNext(@NonNull Fact element) {
@@ -229,13 +229,13 @@ public class DefaultFactus implements Factus {
 
     @Override
     @SneakyThrows
-    public <P extends SnapshotProjection> P fetch(Class<P> projectionClass) {
+    public <P extends SnapshotProjection> @NonNull P fetch(Class<P> projectionClass) {
         return factusMetrics.timed(TimedOperation.FETCH_DURATION, Tags.of(Tag.of(LOCKED, FALSE), Tag
-                .of(CLASS, projectionClass.getCanonicalName())), () -> dofetch(projectionClass));
+                .of(CLASS, projectionClass.getCanonicalName())), () -> doFetch(projectionClass));
     }
 
     @SneakyThrows
-    private <P extends SnapshotProjection> P dofetch(Class<P> projectionClass) {
+    private <P extends SnapshotProjection> P doFetch(Class<P> projectionClass) {
         assertNotClosed();
 
         // ugly, fix hierarchy?
@@ -272,12 +272,14 @@ public class DefaultFactus implements Factus {
 
     @Override
     @SneakyThrows
-    public <A extends Aggregate> Optional<A> find(Class<A> aggregateClass, UUID aggregateId) {
+    public <A extends Aggregate> @NonNull Optional<A> find(Class<A> aggregateClass,
+            @NonNull UUID aggregateId) {
         return factusMetrics.timed(TimedOperation.FIND_DURATION, Tags.of(Tag.of(LOCKED, FALSE), Tag
                 .of(CLASS, aggregateClass.getCanonicalName())), () -> doFind(aggregateClass,
                         aggregateId));
     }
 
+    @SuppressWarnings("RedundantTypeArguments")
     @SneakyThrows
     private <A extends Aggregate> Optional<A> doFind(Class<A> aggregateClass, UUID aggregateId) {
         assertNotClosed();
@@ -315,7 +317,7 @@ public class DefaultFactus implements Factus {
     private <P extends Projection> UUID catchupProjection(
             @NonNull P projection, UUID stateOrNull,
             Duration maxWait) {
-        Projector<P> handler = ehFactory.create(projection);
+        Projector<P> handler = projectorFactory.create(projection);
         AtomicReference<UUID> factId = new AtomicReference<>();
         FactObserver fo = new FactObserver() {
             @Override
@@ -392,8 +394,8 @@ public class DefaultFactus implements Factus {
     }
 
     @Override
-    public <M extends ManagedProjection> Locked<M> withLockOn(M managedProjection) {
-        val applier = ehFactory.create(managedProjection);
+    public <M extends ManagedProjection> Locked<M> withLockOn(@NonNull M managedProjection) {
+        val applier = projectorFactory.create(managedProjection);
         List<FactSpec> specs = applier
                 .createFactSpecs();
         return new Locked<>(fc, this, managedProjection, specs, factusMetrics);
@@ -405,7 +407,8 @@ public class DefaultFactus implements Factus {
         A fresh = factusMetrics.timed(TimedOperation.FIND_DURATION, Tags.of(Tag.of(LOCKED, TRUE),
                 Tag.of(CLASS, aggregateClass.getCanonicalName())), () -> find(aggregateClass, id)
                         .orElse(initial(aggregateClass, id)));
-        Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
+        Projector<SnapshotProjection> snapshotProjectionEventApplier = projectorFactory.create(
+                fresh);
         List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
         return new Locked<>(fc, this, fresh, specs, factusMetrics);
     }
@@ -414,7 +417,8 @@ public class DefaultFactus implements Factus {
     public <P extends SnapshotProjection> Locked<P> withLockOn(@NonNull Class<P> projectionClass) {
         P fresh = factusMetrics.timed(TimedOperation.FETCH_DURATION, Tags.of(Tag.of(LOCKED, TRUE),
                 Tag.of(CLASS, projectionClass.getCanonicalName())), () -> fetch(projectionClass));
-        Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
+        Projector<SnapshotProjection> snapshotProjectionEventApplier = projectorFactory.create(
+                fresh);
         List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
         return new Locked<>(fc, this, fresh, specs, factusMetrics);
     }
