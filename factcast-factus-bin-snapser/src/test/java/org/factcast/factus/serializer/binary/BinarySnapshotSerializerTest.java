@@ -76,14 +76,14 @@ class BinarySnapshotSerializerTest {
                         "TestClassV[^\"]*\"",
                         "TestClass"));
 
-                int v1 = underTest.calculateProjectionClassHash(TestClassV1.class);
-                int v1a = underTest.calculateProjectionClassHash(
+                long v1 = underTest.calculateProjectionClassHash(TestClassV1.class);
+                long v1a = underTest.calculateProjectionClassHash(
                         TestClassV1a_noRelevantChange.class);
-                int v2a = underTest.calculateProjectionClassHash(
+                long v2a = underTest.calculateProjectionClassHash(
                         TestClassV2a_withChanges_newField.class);
-                int v2b = underTest.calculateProjectionClassHash(
+                long v2b = underTest.calculateProjectionClassHash(
                         TestClassV2b_withChanges_typeChanged.class);
-                int v2c = underTest.calculateProjectionClassHash(
+                long v2c = underTest.calculateProjectionClassHash(
                         TestClassV2c_withChanges_fieldRenamed.class);
 
                 assertThat(v1)

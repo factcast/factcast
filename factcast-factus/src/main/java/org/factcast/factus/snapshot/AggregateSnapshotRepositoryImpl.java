@@ -44,7 +44,11 @@ public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository 
     public Optional<Snapshot> findLatest(
             @NonNull Class<? extends Aggregate> type,
             @NonNull UUID aggregateId) {
-        SnapshotId snapshotId = new SnapshotId(createKeyForType(type), aggregateId);
+
+        SnapshotId snapshotId = new SnapshotId(
+                createKeyForType(type, () -> serializerSupplier.retrieveSerializer(type)),
+                aggregateId);
+
         return snapshotCache.getSnapshot(snapshotId);
 
     }
@@ -56,7 +60,8 @@ public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository 
         SnapshotSerializer ser = serializerSupplier.retrieveSerializer(type);
 
         return CompletableFuture.runAsync(() -> {
-            val id = new SnapshotId(createKeyForType(type), AggregateUtil.aggregateId(aggregate));
+            val id = new SnapshotId(createKeyForType(type, () -> ser), AggregateUtil.aggregateId(
+                    aggregate));
             putBlocking(new Snapshot(id, state, ser.serialize(aggregate), ser
                     .includesCompression()));
         });

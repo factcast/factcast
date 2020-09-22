@@ -184,7 +184,7 @@ public final class FactCastJson {
     }
 
     @SneakyThrows
-    public static int calculateHash(Class<?> projectionClass) {
+    public static long calculateHash(Class<?> projectionClass) {
 
         JsonSchema jsonSchema = schemaGen.generateSchema(projectionClass);
 
