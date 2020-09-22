@@ -18,6 +18,8 @@ package org.factcast.factus.snapshot;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,6 +34,7 @@ import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.AggregateUtil;
 import org.factcast.factus.serializer.SnapshotSerializer;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,13 +53,25 @@ class AggregateSnapshotRepositoryImplTest {
     @Mock
     private SnapshotSerializerSupplier snapshotSerializerSupplier;
 
+    @Mock
+    private SnapshotSerializer snapshotSerializer;
+
     @InjectMocks
     private AggregateSnapshotRepositoryImpl underTest;
 
     @Nested
     class WhenFindingLatest {
 
+        @Captor
+        ArgumentCaptor<SnapshotId> idCaptor;
+
         private UUID aggregateId = UUID.randomUUID();
+
+        @BeforeEach
+        void setup() {
+            when(snapshotSerializerSupplier.retrieveSerializer(any()))
+                    .thenReturn(snapshotSerializer);
+        }
 
         @Test
         void findNone() {
@@ -67,7 +82,7 @@ class AggregateSnapshotRepositoryImplTest {
         }
 
         @Test
-        void findOne() {
+        void findOne_givenSVUID() {
             // INIT
             Snapshot withSVUID = new Snapshot(new SnapshotId("some key", aggregateId), UUID
                     .randomUUID(),
@@ -85,7 +100,100 @@ class AggregateSnapshotRepositoryImplTest {
                     .get()
                     .extracting("id.uuid")
                     .isEqualTo(aggregateId);
+
+            verify(snap)
+                    .getSnapshot(idCaptor.capture());
+
+            assertThat(idCaptor.getValue())
+                    .isNotNull();
+
+            // never calculate hash, as it is given
+            verify(snapshotSerializer, never())
+                    .calculateProjectionClassHash(any());
+
+            assertThat(idCaptor.getValue().key())
+                    .contains(":org.factcast.factus.serializer.SnapshotSerializer")
+                    // use value from serialVersionUID, not what serializer
+                    // would calculate
+                    .endsWith(":42");
         }
+
+        @Test
+        void findOne_calculatedSVUID() {
+            // INIT
+            Snapshot withoutSVUID = new Snapshot(new SnapshotId("some key", aggregateId), UUID
+                    .randomUUID(),
+                    new byte[0], false);
+
+            when(snap.getSnapshot(any()))
+                    .thenReturn(Optional.of(withoutSVUID));
+
+            when(snapshotSerializer.calculateProjectionClassHash(WithoutSVUID.class))
+                    // let's assume this is the serial id computed by the
+                    // serialiser; will not be used as we used a class with
+                    // serialVersionUID field
+                    .thenReturn(500L);
+
+            // RUN
+            Optional<Snapshot> result = underTest.findLatest(WithoutSVUID.class, aggregateId);
+
+            // ASSERT
+            assertThat(result)
+                    .isPresent()
+                    .get()
+                    .extracting("id.uuid")
+                    .isEqualTo(aggregateId);
+
+            verify(snap)
+                    .getSnapshot(idCaptor.capture());
+
+            assertThat(idCaptor.getValue())
+                    .isNotNull();
+
+            assertThat(idCaptor.getValue().key())
+                    .contains(":org.factcast.factus.serializer.SnapshotSerializer")
+                    // use value from serialVersionUID, not what serializer
+                    // would calculate
+                    .endsWith(":500");
+        }
+
+        @Test
+        void findOne_calculatedSVUID_useCache() {
+            // INIT
+            Snapshot withoutSVUID = new Snapshot(new SnapshotId("some key", aggregateId), UUID
+                    .randomUUID(),
+                    new byte[0], false);
+
+            when(snap.getSnapshot(any()))
+                    .thenReturn(Optional.of(withoutSVUID));
+
+            when(snapshotSerializer.calculateProjectionClassHash(WithoutSVUID.class))
+                    // let's assume this is the serial id computed by the
+                    // serialiser; will not be used as we used a class with
+                    // serialVersionUID field
+                    .thenReturn(500L);
+
+            // RUN
+            underTest.findLatest(WithoutSVUID.class, aggregateId);
+            underTest.findLatest(WithoutSVUID.class, aggregateId);
+
+            // ASSERT
+            verify(snap, times(2))
+                    .getSnapshot(idCaptor.capture());
+
+            assertThat(idCaptor.getAllValues())
+                    .hasSize(2);
+
+            idCaptor.getAllValues()
+                    .stream()
+                    .map(SnapshotId::key)
+                    .forEach(key -> {
+                        assertThat(key)
+                                .contains(":org.factcast.factus.serializer.SnapshotSerializer")
+                                .endsWith(":500");
+                    });
+        }
+
     }
 
     @Nested
@@ -103,8 +211,14 @@ class AggregateSnapshotRepositoryImplTest {
 
         @Test
         void createsKeyIncludingSerialVersionUid() {
-            String with = underTest.createKeyForType(WithSVUID.class);
-            String without = underTest.createKeyForType(WithoutSVUID.class);
+
+            when(snapshotSerializerSupplier.retrieveSerializer(any()))
+                    .thenReturn(snapshotSerializer);
+
+            String with = underTest.createKeyForType(WithSVUID.class,
+                    () -> snapshotSerializerSupplier.retrieveSerializer(WithSVUID.class));
+            String without = underTest.createKeyForType(WithoutSVUID.class,
+                    () -> snapshotSerializerSupplier.retrieveSerializer(WithoutSVUID.class));
 
             assertThat(with).contains(WithSVUID.class.getCanonicalName()).contains(":42");
             assertThat(without).contains(WithoutSVUID.class.getCanonicalName()).contains(":0");
@@ -116,10 +230,7 @@ class AggregateSnapshotRepositoryImplTest {
     class WhenPutting {
         private final UUID STATE = UUID.randomUUID();
 
-        private WithoutSVUID aggregate = new WithoutSVUID();
-
-        @Mock
-        private SnapshotSerializer snapshotSerializer;
+        private final WithoutSVUID aggregate = new WithoutSVUID();
 
         @Captor
         private ArgumentCaptor<Snapshot> snapshotCaptor;

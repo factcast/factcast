@@ -37,12 +37,18 @@ public interface SnapshotSerializer {
      * Hence, every serializer is asked to calculate it's own hash, that should
      * only change in case changes to the projection where made that were
      * relevant for deserialization.
+     * <p>
+     * In case a field of type long with name serialVersionUID (according to
+     * Serializable interface) exists, it is used instead (then this method will
+     * not be called).
+     * <p>
+     * In case your serializer cannot calculate a hash, return 0.
      *
      * @param projectionClass
      *            the snapshot projection class to calculate the hash for
-     * @return the calculated hash
+     * @return the calculated hash or 0, if no hash could be calculated
      */
-    default int calculateProjectionClassHash(Class<? extends SnapshotProjection> projectionClass) {
+    default long calculateProjectionClassHash(Class<? extends SnapshotProjection> projectionClass) {
         return 0;
     }
 
@@ -64,7 +70,7 @@ public interface SnapshotSerializer {
         }
 
         @Override
-        public int calculateProjectionClassHash(
+        public long calculateProjectionClassHash(
                 Class<? extends SnapshotProjection> projectionClass) {
             return FactCastJson.calculateHash(projectionClass);
         }

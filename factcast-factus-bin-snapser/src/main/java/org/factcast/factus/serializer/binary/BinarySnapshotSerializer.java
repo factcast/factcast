@@ -80,7 +80,7 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
 
     @Override
     @SneakyThrows
-    public int calculateProjectionClassHash(Class<? extends SnapshotProjection> projectionClass) {
+    public long calculateProjectionClassHash(Class<? extends SnapshotProjection> projectionClass) {
         JsonSchema jsonSchema = schemaGen.generateSchema(projectionClass);
 
         String schema = writerJson

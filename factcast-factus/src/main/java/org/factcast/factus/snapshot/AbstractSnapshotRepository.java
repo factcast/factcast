@@ -19,9 +19,13 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
+import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.SnapshotSerializer;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -34,19 +38,26 @@ abstract class AbstractSnapshotRepository {
 
     protected final SnapshotCache snapshotCache;
 
+    private final Map<Class<? extends SnapshotProjection>, String> typeSerializerAndSerialUIdCache = new ConcurrentHashMap<>();
+
     protected void putBlocking(@NonNull Snapshot snapshot) {
         snapshotCache.setSnapshot(snapshot);
     }
 
     @VisibleForTesting
-    protected String createKeyForType(@NonNull Class<?> type) {
-        return createKeyForType(type, null);
+    protected String createKeyForType(@NonNull Class<? extends SnapshotProjection> type,
+            @NonNull Supplier<SnapshotSerializer> serializerSupplier) {
+        return createKeyForType(type, serializerSupplier, null);
     }
 
     @VisibleForTesting
-    protected String createKeyForType(@NonNull Class<?> type, UUID optionalUUID) {
+    protected String createKeyForType(@NonNull Class<? extends SnapshotProjection> type,
+            @NonNull Supplier<SnapshotSerializer> serializerSupplier,
+            UUID optionalUUID) {
+
         String classLevelKey = keyPrefix() + type.getCanonicalName() + KEY_DELIMITER
-                + getSerialVersionUid(type);
+                + serializerAndSerialUId(type, serializerSupplier);
+
         if (optionalUUID == null) {
             return classLevelKey;
         } else {
@@ -54,10 +65,29 @@ abstract class AbstractSnapshotRepository {
         }
     }
 
+    private String serializerAndSerialUId(Class<? extends SnapshotProjection> type,
+            Supplier<SnapshotSerializer> serializerSupplier) {
+
+        return typeSerializerAndSerialUIdCache.computeIfAbsent(type,
+                t -> {
+
+                    long serialVersionUid = getSerialVersionUid(type);
+                    SnapshotSerializer serializer = serializerSupplier.get();
+
+                    if (serialVersionUid == 0) {
+                        serialVersionUid = serializer.calculateProjectionClassHash(t);
+                    }
+
+                    return serializer.getClass().getCanonicalName()
+                            + KEY_DELIMITER
+                            + serialVersionUid;
+                });
+    }
+
     private final Map<Class<?>, Long> serials = new HashMap<>();
 
     @VisibleForTesting
-    protected Long getSerialVersionUid(Class<?> type) {
+    protected long getSerialVersionUid(Class<?> type) {
         return serials.computeIfAbsent(type, t -> {
             try {
                 Field field = t.getDeclaredField("serialVersionUID");
