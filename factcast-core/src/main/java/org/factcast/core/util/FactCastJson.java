@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.hash.Hashing;
 
 import lombok.AccessLevel;
 import lombok.Generated;
@@ -191,7 +192,8 @@ public final class FactCastJson {
         String schema = writer
                 .writeValueAsString(jsonSchema);
 
-        return schemaModifier.apply(schema)
-                .hashCode();
+        return Hashing.sha512()
+                .hashUnencodedChars(schemaModifier.apply(schema))
+                .asLong();
     }
 }
