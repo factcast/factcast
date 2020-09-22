@@ -72,9 +72,9 @@ class SnapshotSerializerTest {
                 // The problem is that then, we will always get different hashes
                 // as the Classname is part of the schema.
                 // The solution is to rename the classname of all TestClassV*
-                // classes to "TestClassV1".
+                // classes to "TestClass".
                 FactCastJson.schemaModifier(schema -> schema.replaceAll("TestClassV[^\"]*\"",
-                        "TestClassV1"));
+                        "TestClass"));
 
                 int v1 = underTest.calculateProjectionClassHash(TestClassV1.class);
                 int v1a = underTest.calculateProjectionClassHash(
