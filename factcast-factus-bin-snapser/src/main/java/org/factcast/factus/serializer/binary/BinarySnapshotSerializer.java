@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.hash.Hashing;
 
 import lombok.NonNull;
 import lombok.Setter;
@@ -86,8 +87,9 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
         String schema = writerJson
                 .writeValueAsString(jsonSchema);
 
-        return schemaModifier.apply(schema)
-                .hashCode();
+        return Hashing.sha512()
+                .hashUnencodedChars(schemaModifier.apply(schema))
+                .asLong();
     }
 
     private static ObjectMapper configure(ObjectMapper objectMapper) {
