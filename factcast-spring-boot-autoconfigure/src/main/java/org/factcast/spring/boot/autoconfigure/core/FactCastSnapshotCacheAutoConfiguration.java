@@ -17,6 +17,7 @@ package org.factcast.spring.boot.autoconfigure.core;
 
 import org.factcast.core.FactCast;
 import org.factcast.core.snap.FactCastSnapshotRepository;
+import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.store.FactStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -32,7 +33,7 @@ public class FactCastSnapshotCacheAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public FactCastSnapshotRepository snapshotRepository(FactStore store) {
+    public SnapshotCache snapshotRepository(FactStore store) {
         return new FactCastSnapshotRepository(store);
     }
 }
