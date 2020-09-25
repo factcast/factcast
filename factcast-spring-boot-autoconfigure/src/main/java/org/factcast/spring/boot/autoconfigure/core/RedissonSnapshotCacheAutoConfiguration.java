@@ -28,7 +28,6 @@ import lombok.Generated;
 
 @Configuration
 @ConditionalOnClass({ RedissonSnapshotCache.class, RedissonClient.class })
-@ConditionalOnMissingBean(SnapshotCache.class)
 @Generated
 public class RedissonSnapshotCacheAutoConfiguration {
 
