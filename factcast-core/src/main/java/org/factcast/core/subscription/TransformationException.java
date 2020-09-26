@@ -19,10 +19,9 @@ import lombok.NonNull;
 
 public class TransformationException extends Exception {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    public TransformationException(@NonNull Exception e) {
-        super(e);
-    }
-
+  public TransformationException(@NonNull Exception e) {
+    super(e);
+  }
 }

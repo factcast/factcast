@@ -15,6 +15,9 @@
  */
 package org.factcast.spring.boot.autoconfigure.core;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Generated;
+import lombok.NonNull;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.store.FactStore;
@@ -28,41 +31,36 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.Generated;
-import lombok.NonNull;
-
 @Configuration
 @ConditionalOnClass(FactCast.class)
 @Generated
 @SuppressWarnings("unused")
 public class FactCastAutoConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean
-    public FactCast factCast(@NonNull FactStore store) {
-        return FactCast.from(store);
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  public FactCast factCast(@NonNull FactStore store) {
+    return FactCast.from(store);
+  }
 
-    @Bean
-    @ConditionalOnMissingBean
-    public EventConverter eventConverter(@NonNull EventSerializer ser) {
-        return new EventConverter(ser);
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  public EventConverter eventConverter(@NonNull EventSerializer ser) {
+    return new EventConverter(ser);
+  }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @Order(Ordered.HIGHEST_PRECEDENCE)
-    public EventSerializer eventSerializer(ObjectMapper om) {
-        return new DefaultEventSerializer(om);
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  @Order(Ordered.HIGHEST_PRECEDENCE)
+  public EventSerializer eventSerializer(ObjectMapper om) {
+    return new DefaultEventSerializer(om);
+  }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @Order(Ordered.HIGHEST_PRECEDENCE)
-    // if there is no other one defined
-    public ObjectMapper objectMapper() {
-        return FactCastJson.mapper();
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  @Order(Ordered.HIGHEST_PRECEDENCE)
+  // if there is no other one defined
+  public ObjectMapper objectMapper() {
+    return FactCastJson.mapper();
+  }
 }

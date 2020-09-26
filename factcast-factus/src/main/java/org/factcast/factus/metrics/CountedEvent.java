@@ -19,14 +19,12 @@ import lombok.Getter;
 import lombok.NonNull;
 
 public enum CountedEvent {
-    TRANSACTION_ABORT("transaction_abort"),
-    TRANSACTION_ATTEMPTS("transaction_attempts");
+  TRANSACTION_ABORT("transaction_abort"),
+  TRANSACTION_ATTEMPTS("transaction_attempts");
 
-    @NonNull
-    @Getter
-    final String event;
+  @NonNull @Getter final String event;
 
-    CountedEvent(@NonNull String event) {
-        this.event = event;
-    }
+  CountedEvent(@NonNull String event) {
+    this.event = event;
+  }
 }

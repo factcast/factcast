@@ -15,6 +15,8 @@
  */
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
+import lombok.Generated;
+import net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
 import org.factcast.server.grpc.FactCastGrpcServerConfiguration;
 import org.factcast.server.grpc.FactCastSecurityConfiguration;
 import org.factcast.server.grpc.FactStoreGrpcService;
@@ -24,15 +26,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import lombok.Generated;
-import net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
-
 @Generated
 @Configuration
-@Import({ FactCastGrpcServerConfiguration.class, FactCastSecurityConfiguration.class })
+@Import({FactCastGrpcServerConfiguration.class, FactCastSecurityConfiguration.class})
 @ConditionalOnClass(FactStoreGrpcService.class)
 @ConditionalOnMissingBean(FactStoreGrpcService.class)
 @AutoConfigureBefore(GrpcServerAutoConfiguration.class)
-public class FactCastGrpcServerAutoConfiguration {
-
-}
+public class FactCastGrpcServerAutoConfiguration {}

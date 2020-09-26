@@ -17,16 +17,13 @@ package org.factcast.grpc.api;
 
 import java.util.List;
 import java.util.UUID;
-
 import lombok.NonNull;
 import lombok.Value;
 
 @Value
 public class StateForRequest {
 
-    @NonNull
-    List<UUID> aggIds;
+  @NonNull List<UUID> aggIds;
 
-    String ns;
-
+  String ns;
 }

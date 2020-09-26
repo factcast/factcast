@@ -15,32 +15,39 @@
  */
 package org.factcast.client.grpc.cli.util;
 
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.core.util.FactCastJson;
-
-import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class FactRenderer {
 
-    final Options options;
+  final Options options;
 
-    private static final String TAB = "\t";
+  private static final String TAB = "\t";
 
-    private static final String CR = "\n";
+  private static final String CR = "\n";
 
-    public String render(Fact f) {
-        return "Fact: id=" + f.id() + CR + TAB + "header: " + renderJson(f.jsonHeader()).replaceAll(
-                CR, CR + TAB + TAB)
-                + CR + TAB + "payload: " + renderJson(f.jsonPayload()).replaceAll(CR, CR + TAB
-                        + TAB) + CR + CR;
+  public String render(Fact f) {
+    return "Fact: id="
+        + f.id()
+        + CR
+        + TAB
+        + "header: "
+        + renderJson(f.jsonHeader()).replaceAll(CR, CR + TAB + TAB)
+        + CR
+        + TAB
+        + "payload: "
+        + renderJson(f.jsonPayload()).replaceAll(CR, CR + TAB + TAB)
+        + CR
+        + CR;
+  }
+
+  private String renderJson(String jsonString) {
+    if (options.pretty) {
+      return FactCastJson.toPrettyString(jsonString);
+    } else {
+      return jsonString;
     }
-
-    private String renderJson(String jsonString) {
-        if (options.pretty) {
-            return FactCastJson.toPrettyString(jsonString);
-        } else {
-            return jsonString;
-        }
-    }
+  }
 }

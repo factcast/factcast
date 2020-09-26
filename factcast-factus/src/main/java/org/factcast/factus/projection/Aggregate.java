@@ -16,29 +16,26 @@
 package org.factcast.factus.projection;
 
 import java.util.UUID;
-
 import lombok.*;
 
 /**
- * Aggregates can either extend this or implement the Aggregate interface
- * themselves. What also needs to be provided for being an Aggregate is having a
- * noArg-Constructor.
+ * Aggregates can either extend this or implement the Aggregate interface themselves. What also
+ * needs to be provided for being an Aggregate is having a noArg-Constructor.
  */
 @NoArgsConstructor
 @AllArgsConstructor
 public abstract class Aggregate implements SnapshotProjection {
 
-    // is protected in order to be able to wrap it into a domain-specific ID in
-    // the
-    // implementing class, think "PersonId".
-    //
-    // Also this is the reason, why this thing is called "aggregateId" rather
-    // than "id".
-    @Getter(value = AccessLevel.PROTECTED)
-    // the setter has package level access in order to be used from
-    // AggregateUtil,
-    // while not spoiling the public interface.
-    @Setter(value = AccessLevel.PROTECTED)
-    private UUID aggregateId;
-
+  // is protected in order to be able to wrap it into a domain-specific ID in
+  // the
+  // implementing class, think "PersonId".
+  //
+  // Also this is the reason, why this thing is called "aggregateId" rather
+  // than "id".
+  @Getter(value = AccessLevel.PROTECTED)
+  // the setter has package level access in order to be used from
+  // AggregateUtil,
+  // while not spoiling the public interface.
+  @Setter(value = AccessLevel.PROTECTED)
+  private UUID aggregateId;
 }

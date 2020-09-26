@@ -15,20 +15,17 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
-import org.factcast.core.Fact;
-
 import lombok.NonNull;
 import lombok.Value;
+import org.factcast.core.Fact;
 
 @Value(staticConstructor = "of")
 public class TransformationKey {
-    @NonNull
-    String ns;
+  @NonNull String ns;
 
-    @NonNull
-    String type;
+  @NonNull String type;
 
-    static TransformationKey from(Fact fact) {
-        return TransformationKey.of(fact.ns(), fact.type());
-    }
+  static TransformationKey from(Fact fact) {
+    return TransformationKey.of(fact.ns(), fact.type());
+  }
 }

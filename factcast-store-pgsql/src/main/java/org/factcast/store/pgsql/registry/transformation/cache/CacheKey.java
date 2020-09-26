@@ -16,17 +16,15 @@
 package org.factcast.store.pgsql.registry.transformation.cache;
 
 import java.util.UUID;
-
+import lombok.NonNull;
 import org.factcast.core.Fact;
 
-import lombok.NonNull;
-
 class CacheKey {
-    static String of(@NonNull Fact fact, @NonNull String transformationChainId) {
-        return CacheKey.of(fact.id(), fact.version(), transformationChainId);
-    }
+  static String of(@NonNull Fact fact, @NonNull String transformationChainId) {
+    return CacheKey.of(fact.id(), fact.version(), transformationChainId);
+  }
 
-    static String of(@NonNull UUID id, int version, @NonNull String transformationChainId) {
-        return String.join("-", id.toString(), String.valueOf(version), transformationChainId);
-    }
+  static String of(@NonNull UUID id, int version, @NonNull String transformationChainId) {
+    return String.join("-", id.toString(), String.valueOf(version), transformationChainId);
+  }
 }

@@ -18,30 +18,28 @@ package org.factcast.store.pgsql.registry;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Optional;
-
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.junit.jupiter.api.*;
 
 public class NOPSchemaRegistryTest {
 
-    @Test
-    public void testSchemaGet() {
-        NOPSchemaRegistry uut = new NOPSchemaRegistry();
-        assertEquals(Optional.empty(), uut.get(SchemaKey.of("ns", "type", 1)));
-    }
+  @Test
+  public void testSchemaGet() {
+    NOPSchemaRegistry uut = new NOPSchemaRegistry();
+    assertEquals(Optional.empty(), uut.get(SchemaKey.of("ns", "type", 1)));
+  }
 
-    @Test
-    public void testTransformationGet() {
-        NOPSchemaRegistry uut = new NOPSchemaRegistry();
-        assertTrue(uut.get(TransformationKey.of("ns", "type")).isEmpty());
-    }
+  @Test
+  public void testTransformationGet() {
+    NOPSchemaRegistry uut = new NOPSchemaRegistry();
+    assertTrue(uut.get(TransformationKey.of("ns", "type")).isEmpty());
+  }
 
-    @Test
-    public void testRefreshDoesNotThrow() {
-        NOPSchemaRegistry uut = new NOPSchemaRegistry();
-        uut.fetchInitial();
-        uut.refresh();
-    }
-
+  @Test
+  public void testRefreshDoesNotThrow() {
+    NOPSchemaRegistry uut = new NOPSchemaRegistry();
+    uut.fetchInitial();
+    uut.refresh();
+  }
 }

@@ -15,23 +15,22 @@
  */
 package org.factcast.client.grpc.cli.cmd;
 
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import org.factcast.client.grpc.cli.util.Command;
 import org.factcast.client.grpc.cli.util.Options;
 import org.factcast.core.FactCast;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-
 @Parameters(
-        commandNames = "enumerateTypes",
-        commandDescription = "lists all types used with a namespace in no particular order")
+    commandNames = "enumerateTypes",
+    commandDescription = "lists all types used with a namespace in no particular order")
 public class EnumerateTypes implements Command {
 
-    @Parameter(required = true, description = "namespace")
-    String ns;
+  @Parameter(required = true, description = "namespace")
+  String ns;
 
-    @Override
-    public void runWith(FactCast fc, Options opt) {
-        fc.enumerateTypes(ns).forEach(System.out::println);
-    }
+  @Override
+  public void runWith(FactCast fc, Options opt) {
+    fc.enumerateTypes(ns).forEach(System.out::println);
+  }
 }

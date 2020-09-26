@@ -18,7 +18,6 @@ package org.factcast.factus.projection;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,17 +25,16 @@ import lombok.extern.slf4j.Slf4j;
 @SuppressWarnings("unused")
 class LocalWriteToken {
 
-    private final ReentrantLock lock = new ReentrantLock(true);
+  private final ReentrantLock lock = new ReentrantLock(true);
 
-    public AutoCloseable acquireWriteToken(@NonNull Duration maxWait) {
-        try {
-            if (lock.tryLock(maxWait.toMillis(), TimeUnit.MILLISECONDS)) {
-                return lock::unlock;
-            }
-        } catch (InterruptedException e) {
-            log.warn("while trying to aquire write token", e);
-        }
-        return null;
+  public AutoCloseable acquireWriteToken(@NonNull Duration maxWait) {
+    try {
+      if (lock.tryLock(maxWait.toMillis(), TimeUnit.MILLISECONDS)) {
+        return lock::unlock;
+      }
+    } catch (InterruptedException e) {
+      log.warn("while trying to aquire write token", e);
     }
-
+    return null;
+  }
 }

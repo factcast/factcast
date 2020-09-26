@@ -23,10 +23,9 @@ import org.junit.jupiter.api.Test;
 
 public class ReadFactCastTest {
 
-    @Test
-    void testRetryValidatesMaxAttempts() {
-        FactStore store = mock(FactStore.class);
-        assertThrows(IllegalArgumentException.class, () -> FactCast.fromReadOnly(store).retry(-42));
-    }
-
+  @Test
+  void testRetryValidatesMaxAttempts() {
+    FactStore store = mock(FactStore.class);
+    assertThrows(IllegalArgumentException.class, () -> FactCast.fromReadOnly(store).retry(-42));
+  }
 }

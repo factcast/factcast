@@ -25,21 +25,21 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class FactSpecCoordinatesTest {
 
-    @Specification(ns = "")
-    @Nested
-    class WhenFroming {
-        @Test
-        void failsIfNamespaceIsEmpty() {
-            assertThatThrownBy(() -> FactSpecCoordinates.from(FactSpec.ns(""))).isInstanceOf(
-                    IllegalArgumentException.class)
-                    .hasMessageStartingWith("Namespace must not be empty");
-        }
-
-        @Test
-        void failsIfNamespaceIsEmptyInSpecification() {
-            assertThatThrownBy(() -> FactSpecCoordinates.from(WhenFroming.class))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageStartingWith("Empty namespace encountered on class");
-        }
+  @Specification(ns = "")
+  @Nested
+  class WhenFroming {
+    @Test
+    void failsIfNamespaceIsEmpty() {
+      assertThatThrownBy(() -> FactSpecCoordinates.from(FactSpec.ns("")))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageStartingWith("Namespace must not be empty");
     }
+
+    @Test
+    void failsIfNamespaceIsEmptyInSpecification() {
+      assertThatThrownBy(() -> FactSpecCoordinates.from(WhenFroming.class))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageStartingWith("Empty namespace encountered on class");
+    }
+  }
 }

@@ -15,6 +15,8 @@
  */
 package org.factcast.store.pgsql.rds;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.cloud.aws.jdbc.datasource.TomcatJdbcDataSourceFactory;
@@ -22,48 +24,46 @@ import org.springframework.cloud.aws.jdbc.rds.AmazonRdsDataSourceFactoryBean;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 /**
- * exchange the given TomcatJdbcDataSourceFactory with a customized factory so
- * we can configure the datasource connection pool
+ * exchange the given TomcatJdbcDataSourceFactory with a customized factory so we can configure the
+ * datasource connection pool
  */
 @SuppressWarnings("NullableProblems")
 @RequiredArgsConstructor
 public class RdsDataSourceFactoryBeanPostProcessor implements BeanPostProcessor, Ordered {
-    @NonNull
-    private final Environment env;
+  @NonNull private final Environment env;
 
-    @Override
-    public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE;
-    }
+  @Override
+  public int getOrder() {
+    return Ordered.HIGHEST_PRECEDENCE;
+  }
 
-    @Override
-    @NonNull
-    public Object postProcessBeforeInitialization(@NonNull Object bean, @NonNull String beanName)
-            throws BeansException {
-        if (bean instanceof AmazonRdsDataSourceFactoryBean) {
-            ((AmazonRdsDataSourceFactoryBean) bean).setDataSourceFactory(
-                    tomcatJdbcDataSourceFactory());
-        }
-        return bean;
+  @Override
+  @NonNull
+  public Object postProcessBeforeInitialization(@NonNull Object bean, @NonNull String beanName)
+      throws BeansException {
+    if (bean instanceof AmazonRdsDataSourceFactoryBean) {
+      ((AmazonRdsDataSourceFactoryBean) bean).setDataSourceFactory(tomcatJdbcDataSourceFactory());
     }
+    return bean;
+  }
 
-    private TomcatJdbcDataSourceFactory tomcatJdbcDataSourceFactory() {
-        TomcatJdbcDataSourceFactory fac = new TomcatJdbcDataSourceFactory();
-        fac.setTestOnBorrow(env.getProperty("spring.datasource.tomcat.testOnBorrow", Boolean.class,
-                true));
-        fac.setConnectionProperties(env.getProperty("spring.datasource.tomcat.connectionProperties",
-                String.class, "socketTimeout=20;connectTimeout=10;loginTimeout=10"));
-        return fac;
-    }
+  private TomcatJdbcDataSourceFactory tomcatJdbcDataSourceFactory() {
+    TomcatJdbcDataSourceFactory fac = new TomcatJdbcDataSourceFactory();
+    fac.setTestOnBorrow(
+        env.getProperty("spring.datasource.tomcat.testOnBorrow", Boolean.class, true));
+    fac.setConnectionProperties(
+        env.getProperty(
+            "spring.datasource.tomcat.connectionProperties",
+            String.class,
+            "socketTimeout=20;connectTimeout=10;loginTimeout=10"));
+    return fac;
+  }
 
-    @Override
-    @NonNull
-    public Object postProcessAfterInitialization(@NonNull Object bean, @NonNull String beanName)
-            throws BeansException {
-        return bean;
-    }
+  @Override
+  @NonNull
+  public Object postProcessAfterInitialization(@NonNull Object bean, @NonNull String beanName)
+      throws BeansException {
+    return bean;
+  }
 }

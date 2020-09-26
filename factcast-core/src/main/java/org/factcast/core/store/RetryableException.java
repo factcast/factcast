@@ -19,9 +19,9 @@ import lombok.NonNull;
 
 public class RetryableException extends RuntimeException {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    public RetryableException(@NonNull RuntimeException cause) {
-        super(cause);
-    }
+  public RetryableException(@NonNull RuntimeException cause) {
+    super(cause);
+  }
 }

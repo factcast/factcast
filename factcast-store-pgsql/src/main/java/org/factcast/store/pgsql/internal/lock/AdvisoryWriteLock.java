@@ -15,20 +15,18 @@
  */
 package org.factcast.store.pgsql.internal.lock;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import lombok.RequiredArgsConstructor;
-
 @RequiredArgsConstructor
 public class AdvisoryWriteLock implements FactTableWriteLock {
-    private final JdbcTemplate tpl;
+  private final JdbcTemplate tpl;
 
-    @Override
-    @Transactional(propagation = Propagation.MANDATORY)
-    public void aquireExclusiveTXLock() {
-        tpl.execute("SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")");
-    }
-
+  @Override
+  @Transactional(propagation = Propagation.MANDATORY)
+  public void aquireExclusiveTXLock() {
+    tpl.execute("SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")");
+  }
 }

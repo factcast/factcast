@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
@@ -46,173 +45,142 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ProjectionSnapshotRepositoryImplTest {
 
-    @Mock
-    private SnapshotSerializer serializer;
+  @Mock private SnapshotSerializer serializer;
 
-    @Mock
-    private SnapshotSerializerSupplier serializerSupplier;
+  @Mock private SnapshotSerializerSupplier serializerSupplier;
 
-    @Mock
-    private SnapshotCache snapshotCache;
+  @Mock private SnapshotCache snapshotCache;
 
-    @Mock
-    private Map<Class<?>, Long> serials;
+  @Mock private Map<Class<?>, Long> serials;
 
-    @InjectMocks
-    private ProjectionSnapshotRepositoryImpl underTest;
+  @InjectMocks private ProjectionSnapshotRepositoryImpl underTest;
 
-    @Nested
-    class WhenFindingLatest {
+  @Nested
+  class WhenFindingLatest {
 
-        @Captor
-        ArgumentCaptor<SnapshotId> idCaptor;
+    @Captor ArgumentCaptor<SnapshotId> idCaptor;
 
-        @BeforeEach
-        void setup() {
-            when(serializerSupplier.retrieveSerializer(any()))
-                    .thenReturn(serializer);
-        }
+    @BeforeEach
+    void setup() {
+      when(serializerSupplier.retrieveSerializer(any())).thenReturn(serializer);
+    }
 
-        @Test
-        void findLatest_exists() {
-            // INIT
-            SnapshotId id = mock(SnapshotId.class);
-            UUID lastFact = UUID.randomUUID();
-            byte[] bytes = "foo".getBytes();
+    @Test
+    void findLatest_exists() {
+      // INIT
+      SnapshotId id = mock(SnapshotId.class);
+      UUID lastFact = UUID.randomUUID();
+      byte[] bytes = "foo".getBytes();
 
-            when(snapshotCache.getSnapshot(any()))
-                    .thenReturn(Optional.of(new Snapshot(id, lastFact, bytes, true)));
+      when(snapshotCache.getSnapshot(any()))
+          .thenReturn(Optional.of(new Snapshot(id, lastFact, bytes, true)));
 
-            when(serializer.calculateProjectionClassHash(SomeSnapshotProjection.class))
-                    // let's assume this is the serial id computed by the
-                    // serialiser
-                    .thenReturn(45L);
+      when(serializer.calculateProjectionClassHash(SomeSnapshotProjection.class))
+          // let's assume this is the serial id computed by the
+          // serialiser
+          .thenReturn(45L);
 
-            // RUN
-            Optional<Snapshot> latest = underTest.findLatest(SomeSnapshotProjection.class);
+      // RUN
+      Optional<Snapshot> latest = underTest.findLatest(SomeSnapshotProjection.class);
 
-            // ASSERT
-            assertThat(latest)
-                    .isPresent()
-                    .get()
-                    .extracting(
-                            Snapshot::lastFact,
-                            Snapshot::bytes,
-                            Snapshot::compressed)
-                    .containsExactly(lastFact, bytes, true);
+      // ASSERT
+      assertThat(latest)
+          .isPresent()
+          .get()
+          .extracting(Snapshot::lastFact, Snapshot::bytes, Snapshot::compressed)
+          .containsExactly(lastFact, bytes, true);
 
-            assertThat(latest.get().id())
-                    .isNotNull();
+      assertThat(latest.get().id()).isNotNull();
 
-            verify(snapshotCache)
-                    .getSnapshot(idCaptor.capture());
+      verify(snapshotCache).getSnapshot(idCaptor.capture());
 
-            assertThat(idCaptor.getValue())
-                    .isNotNull();
+      assertThat(idCaptor.getValue()).isNotNull();
 
-            assertThat(idCaptor.getValue().key())
+      assertThat(idCaptor.getValue().key())
+          .contains(":org.factcast.factus.serializer.SnapshotSerializer")
+          .endsWith(":45");
+    }
+
+    @Test
+    void findLatest_cachesSerialUId() {
+      // INIT
+      SnapshotId id = mock(SnapshotId.class);
+      UUID lastFact = UUID.randomUUID();
+      byte[] bytes = "foo".getBytes();
+
+      when(snapshotCache.getSnapshot(any()))
+          .thenReturn(Optional.of(new Snapshot(id, lastFact, bytes, true)));
+
+      when(serializer.calculateProjectionClassHash(SomeSnapshotProjection.class))
+          // let's assume this is the serial id computed by the
+          // serialiser
+          .thenReturn(45L, 0L);
+
+      // RUN
+      underTest.findLatest(SomeSnapshotProjection.class);
+      underTest.findLatest(SomeSnapshotProjection.class);
+
+      // ASSERT
+      verify(snapshotCache, times(2)).getSnapshot(idCaptor.capture());
+
+      verify(serializer, times(1)).calculateProjectionClassHash(any());
+
+      assertThat(idCaptor.getAllValues()).hasSize(2);
+
+      idCaptor.getAllValues().stream()
+          .map(SnapshotId::key)
+          .forEach(
+              key -> {
+                assertThat(key)
                     .contains(":org.factcast.factus.serializer.SnapshotSerializer")
                     .endsWith(":45");
-        }
-
-        @Test
-        void findLatest_cachesSerialUId() {
-            // INIT
-            SnapshotId id = mock(SnapshotId.class);
-            UUID lastFact = UUID.randomUUID();
-            byte[] bytes = "foo".getBytes();
-
-            when(snapshotCache.getSnapshot(any()))
-                    .thenReturn(Optional.of(new Snapshot(id, lastFact, bytes, true)));
-
-            when(serializer.calculateProjectionClassHash(SomeSnapshotProjection.class))
-                    // let's assume this is the serial id computed by the
-                    // serialiser
-                    .thenReturn(45L, 0L);
-
-            // RUN
-            underTest.findLatest(SomeSnapshotProjection.class);
-            underTest.findLatest(SomeSnapshotProjection.class);
-
-            // ASSERT
-            verify(snapshotCache, times(2))
-                    .getSnapshot(idCaptor.capture());
-
-            verify(serializer, times(1))
-                    .calculateProjectionClassHash(any());
-
-            assertThat(idCaptor.getAllValues())
-                    .hasSize(2);
-
-            idCaptor.getAllValues()
-                    .stream()
-                    .map(SnapshotId::key)
-                    .forEach(key -> {
-                        assertThat(key)
-                                .contains(":org.factcast.factus.serializer.SnapshotSerializer")
-                                .endsWith(":45");
-                    });
-
-        }
-
-        @Test
-        void findLatest_doesNotExist() {
-            // INIT
-            when(snapshotCache.getSnapshot(any()))
-                    .thenReturn(Optional.empty());
-            // RUN
-            Optional<Snapshot> latest = underTest.findLatest(SomeSnapshotProjection.class);
-
-            // ASSERT
-            assertThat(latest)
-                    .isEmpty();
-        }
+              });
     }
 
-    @Nested
-    class WhenPutting {
-        private final UUID STATE = UUID.randomUUID();
+    @Test
+    void findLatest_doesNotExist() {
+      // INIT
+      when(snapshotCache.getSnapshot(any())).thenReturn(Optional.empty());
+      // RUN
+      Optional<Snapshot> latest = underTest.findLatest(SomeSnapshotProjection.class);
 
-        @Mock
-        private SnapshotProjection projection;
-
-        @Captor
-        private ArgumentCaptor<Snapshot> snapshotCaptor;
-
-        @Test
-        void put() {
-            // INIT
-            when(serializerSupplier.retrieveSerializer(any()))
-                    .thenReturn(serializer);
-
-            when(serializer.serialize(projection))
-                    .thenReturn("foo".getBytes());
-            when(serializer.includesCompression())
-                    .thenReturn(true);
-
-            // RUN
-            CompletableFuture<Void> result = underTest.put(projection, STATE);
-
-            // ASSERT
-            assertThat(result)
-                    .succeedsWithin(Duration.ofSeconds(5));
-
-            verify(serializerSupplier)
-                    .retrieveSerializer(any());
-
-            verify(snapshotCache)
-                    .setSnapshot(snapshotCaptor.capture());
-
-            assertThat(snapshotCaptor.getValue())
-                    .isNotNull()
-                    .extracting(Snapshot::lastFact,
-                            Snapshot::bytes,
-                            Snapshot::compressed)
-                    .containsExactly(STATE, "foo".getBytes(), true);
-        }
+      // ASSERT
+      assertThat(latest).isEmpty();
     }
+  }
 
-    static class SomeSnapshotProjection implements SnapshotProjection {
+  @Nested
+  class WhenPutting {
+    private final UUID STATE = UUID.randomUUID();
+
+    @Mock private SnapshotProjection projection;
+
+    @Captor private ArgumentCaptor<Snapshot> snapshotCaptor;
+
+    @Test
+    void put() {
+      // INIT
+      when(serializerSupplier.retrieveSerializer(any())).thenReturn(serializer);
+
+      when(serializer.serialize(projection)).thenReturn("foo".getBytes());
+      when(serializer.includesCompression()).thenReturn(true);
+
+      // RUN
+      CompletableFuture<Void> result = underTest.put(projection, STATE);
+
+      // ASSERT
+      assertThat(result).succeedsWithin(Duration.ofSeconds(5));
+
+      verify(serializerSupplier).retrieveSerializer(any());
+
+      verify(snapshotCache).setSnapshot(snapshotCaptor.capture());
+
+      assertThat(snapshotCaptor.getValue())
+          .isNotNull()
+          .extracting(Snapshot::lastFact, Snapshot::bytes, Snapshot::compressed)
+          .containsExactly(STATE, "foo".getBytes(), true);
     }
+  }
 
+  static class SomeSnapshotProjection implements SnapshotProjection {}
 }
