@@ -353,15 +353,12 @@
             <licenseHeader>
               <file>file://${etc}/header.txt</file>
             </licenseHeader>
-            <eclipse>
-              <file>file://${formatter.config}/eclipse_code_formatter.xml</file>
-              <version>4.11.0</version>
-            </eclipse>
             <trimTrailingWhitespace/>
             <removeUnusedImports/>
-            <importOrder>
-              <file>file://${formatter.config}/eclipse.importorder</file>
-            </importOrder>
+            <googleJavaFormat>
+              <version>1.7</version> <!-- optional -->
+              <style>GOOGLE</style>  <!-- or AOSP (optional) -->
+            </googleJavaFormat>
             <includes>
               <include>**/src/main/java/**/*.java
               </include>
