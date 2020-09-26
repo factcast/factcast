@@ -29,16 +29,18 @@ import org.xerial.snappy.SnappyOutputStream;
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-
 @Configuration
-@ConditionalOnClass({ SnappyInputStream.class, SnappyOutputStream.class,
-        SnappyGrpcClientCodec.class })
+@ConditionalOnClass({
+  SnappyInputStream.class,
+  SnappyOutputStream.class,
+  SnappyGrpcClientCodec.class
+})
 @AutoConfigureBefore(GrpcFactStoreAutoConfiguration.class)
 public class SnappyClientAutoConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean
-    public SnappyGrpcClientCodec snappyCodec() {
-        return new SnappyGrpcClientCodec();
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  public SnappyGrpcClientCodec snappyCodec() {
+    return new SnappyGrpcClientCodec();
+  }
 }

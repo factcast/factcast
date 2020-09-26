@@ -17,6 +17,8 @@ package org.factcast.factus.lock;
 
 import static org.factcast.factus.metrics.TagKeys.CLASS;
 
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -28,7 +30,11 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
+import lombok.Data;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.lock.Attempt;
@@ -45,150 +51,134 @@ import org.factcast.factus.projection.ManagedProjection;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.SnapshotProjection;
 
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import lombok.Data;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
-
 @RequiredArgsConstructor
 @Slf4j
 @Data
 @SuppressWarnings("unused")
 public class Locked<I extends Projection> {
-    @NonNull
-    private final FactCast fc;
+  @NonNull private final FactCast fc;
 
-    @NonNull
-    private final Factus factus;
+  @NonNull private final Factus factus;
 
-    private final I projection;
+  private final I projection;
 
-    @NonNull
-    private final List<FactSpec> specs;
+  @NonNull private final List<FactSpec> specs;
 
-    @NonNull
-    private final FactusMetrics factusMetrics;
+  @NonNull private final FactusMetrics factusMetrics;
 
-    int retries = 10;
+  int retries = 10;
 
-    long intervalMillis = 0;
+  long intervalMillis = 0;
 
-    public void attempt(BiConsumer<I, RetryableTransaction> tx) {
-        attempt(tx, result -> null);
-    }
+  public void attempt(BiConsumer<I, RetryableTransaction> tx) {
+    attempt(tx, result -> null);
+  }
 
-    public void attempt(BiConsumer<I, RetryableTransaction> tx, Runnable e) {
-        attempt(tx, f -> {
-            e.run();
-            return null;
+  public void attempt(BiConsumer<I, RetryableTransaction> tx, Runnable e) {
+    attempt(
+        tx,
+        f -> {
+          e.run();
+          return null;
         });
+  }
+
+  @SuppressWarnings("UnusedReturnValue")
+  public <R> R attempt(BiConsumer<I, RetryableTransaction> tx, Function<List<Fact>, R> resultFn) {
+    try {
+      PublishingResult result =
+          fc.lock(specs)
+              .optimistic()
+              .retry(retries())
+              .interval(intervalMillis())
+              .attempt(
+                  () -> {
+                    try {
+                      factusMetrics.count(
+                          CountedEvent.TRANSACTION_ATTEMPTS,
+                          Tags.of(Tag.of(CLASS, projection.getClass().getCanonicalName())));
+                      val p = update(projection);
+                      List<Supplier<Fact>> toPublish =
+                          Collections.synchronizedList(new LinkedList<>());
+                      RetryableTransaction txWithLockOnSpecs = createTransaction(factus, toPublish);
+
+                      try {
+                        InLockedOperation.enterLockedOperation();
+                        tx.accept(p, txWithLockOnSpecs);
+                        return Attempt.publish(
+                            toPublish.stream().map(Supplier::get).collect(Collectors.toList()));
+                      } finally {
+                        InLockedOperation.exitLockedOperation();
+                      }
+                    } catch (LockedOperationAbortedException aborted) {
+                      throw aborted;
+                    } catch (Throwable e) {
+                      throw LockedOperationAbortedException.wrap(e);
+                    }
+                  });
+
+      return resultFn.apply(result.publishedFacts());
+
+    } catch (AttemptAbortedException e) {
+      factusMetrics.count(
+          CountedEvent.TRANSACTION_ABORT,
+          Tags.of(Tag.of(CLASS, projection.getClass().getCanonicalName())));
+      throw LockedOperationAbortedException.wrap(e);
     }
+  }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public <R> R attempt(BiConsumer<I, RetryableTransaction> tx, Function<List<Fact>, R> resultFn) {
-        try {
-            PublishingResult result = fc.lock(specs)
-                    .optimistic()
-                    .retry(retries())
-                    .interval(intervalMillis())
-                    .attempt(() -> {
-
-                        try {
-                            factusMetrics.count(CountedEvent.TRANSACTION_ATTEMPTS, Tags.of(Tag.of(
-                                    CLASS, projection.getClass().getCanonicalName())));
-                            val p = update(projection);
-                            List<Supplier<Fact>> toPublish = Collections.synchronizedList(
-                                    new LinkedList<>());
-                            RetryableTransaction txWithLockOnSpecs = createTransaction(factus,
-                                    toPublish);
-
-                            try {
-                                InLockedOperation.enterLockedOperation();
-                                tx.accept(p, txWithLockOnSpecs);
-                                return Attempt
-                                        .publish(
-                                                toPublish.stream()
-                                                        .map(Supplier::get)
-                                                        .collect(Collectors.toList()));
-                            } finally {
-                                InLockedOperation.exitLockedOperation();
-                            }
-                        } catch (LockedOperationAbortedException aborted) {
-                            throw aborted;
-                        } catch (Throwable e) {
-                            throw LockedOperationAbortedException.wrap(e);
-                        }
-
-                    });
-
-            return resultFn.apply(result.publishedFacts());
-
-        } catch (AttemptAbortedException e) {
-            factusMetrics.count(CountedEvent.TRANSACTION_ABORT, Tags.of(Tag.of(CLASS, projection
-                    .getClass()
-                    .getCanonicalName())));
-            throw LockedOperationAbortedException.wrap(e);
-        }
+  @SuppressWarnings("unchecked")
+  private I update(I projection) {
+    if (projection instanceof Aggregate) {
+      Class<? extends Aggregate> projectionClass =
+          (Class<? extends Aggregate>) projection.getClass();
+      return (I) factus.fetch(projectionClass, AggregateUtil.aggregateId((Aggregate) projection));
     }
-
-    @SuppressWarnings("unchecked")
-    private I update(I projection) {
-        if (projection instanceof Aggregate) {
-            Class<? extends Aggregate> projectionClass = (Class<? extends Aggregate>) projection
-                    .getClass();
-            return (I) factus.fetch(projectionClass, AggregateUtil.aggregateId(
-                    (Aggregate) projection));
-        }
-        if (projection instanceof SnapshotProjection) {
-            Class<? extends SnapshotProjection> projectionClass = (Class<? extends SnapshotProjection>) projection
-                    .getClass();
-            return (I) factus.fetch(projectionClass);
-        }
-        if (projection instanceof ManagedProjection) {
-            factus.update((ManagedProjection) projection);
-            return projection;
-        }
-        throw new IllegalStateException("Don't know how to update " + projection);
+    if (projection instanceof SnapshotProjection) {
+      Class<? extends SnapshotProjection> projectionClass =
+          (Class<? extends SnapshotProjection>) projection.getClass();
+      return (I) factus.fetch(projectionClass);
     }
-
-    private RetryableTransaction createTransaction(Factus factus, List<Supplier<Fact>> toPublish) {
-        return new RetryableTransaction() {
-            @Override
-            public void publish(@NonNull EventObject e) {
-                toPublish.add(() -> factus.toFact(e));
-            }
-
-            @Override
-            public void publish(@NonNull List<EventObject> eventPojos) {
-                eventPojos.forEach(this::publish);
-            }
-
-            @Override
-            public void publish(@NonNull Fact e) {
-                toPublish.add(() -> e);
-            }
-
-            @Override
-            public <P extends SnapshotProjection> P fetch(@NonNull Class<P> projectionClass) {
-                return factus.fetch(projectionClass);
-            }
-
-            @Override
-            public <A extends Aggregate> Optional<A> find(
-                    @NonNull Class<A> aggregateClass,
-                    @NonNull UUID aggregateId) {
-                return factus.find(aggregateClass, aggregateId);
-            }
-
-            @Override
-            public <P extends ManagedProjection> void update(
-                    @NonNull P managedProjection,
-                    @NonNull Duration maxWaitTime) throws TimeoutException {
-                factus.update(managedProjection, maxWaitTime);
-            }
-        };
+    if (projection instanceof ManagedProjection) {
+      factus.update((ManagedProjection) projection);
+      return projection;
     }
+    throw new IllegalStateException("Don't know how to update " + projection);
+  }
+
+  private RetryableTransaction createTransaction(Factus factus, List<Supplier<Fact>> toPublish) {
+    return new RetryableTransaction() {
+      @Override
+      public void publish(@NonNull EventObject e) {
+        toPublish.add(() -> factus.toFact(e));
+      }
+
+      @Override
+      public void publish(@NonNull List<EventObject> eventPojos) {
+        eventPojos.forEach(this::publish);
+      }
+
+      @Override
+      public void publish(@NonNull Fact e) {
+        toPublish.add(() -> e);
+      }
+
+      @Override
+      public <P extends SnapshotProjection> P fetch(@NonNull Class<P> projectionClass) {
+        return factus.fetch(projectionClass);
+      }
+
+      @Override
+      public <A extends Aggregate> Optional<A> find(
+          @NonNull Class<A> aggregateClass, @NonNull UUID aggregateId) {
+        return factus.find(aggregateClass, aggregateId);
+      }
+
+      @Override
+      public <P extends ManagedProjection> void update(
+          @NonNull P managedProjection, @NonNull Duration maxWaitTime) throws TimeoutException {
+        factus.update(managedProjection, maxWaitTime);
+      }
+    };
+  }
 }

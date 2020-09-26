@@ -1,0 +1,22 @@
+name: Format
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2 # v2 minimum required
+      - uses: actions/setup-java@v1
+        with:
+          # Recommended: latest versions of Google Java Format require JDK 11+
+          java-version: "8"
+      - uses: axel-op/googlejavaformat-action@v3
+        with:
+          args: " --replace"
+          # Recommended if you use MacOS:
+          # githubToken: ${{ secrets.GITHUB_TOKEN }}

@@ -15,14 +15,6 @@
  */
 package org.factcast.factus.serializer.binary;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.function.Function;
-
-import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.serializer.SnapshotSerializer;
-import org.msgpack.jackson.dataformat.MessagePackFactory;
-
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -32,70 +24,71 @@ import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
-
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.function.Function;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.val;
 import net.jpountz.lz4.LZ4BlockInputStream;
 import net.jpountz.lz4.LZ4BlockOutputStream;
+import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.SnapshotSerializer;
+import org.msgpack.jackson.dataformat.MessagePackFactory;
 
 public class BinarySnapshotSerializer implements SnapshotSerializer {
 
-    private static final ObjectMapper omMessagePack = configure(new ObjectMapper(
-            new MessagePackFactory()));
+  private static final ObjectMapper omMessagePack =
+      configure(new ObjectMapper(new MessagePackFactory()));
 
-    // needed for schema generation, but with same settings like message pack
-    // mapper
-    private static final ObjectMapper omJson = configure(new ObjectMapper());
+  // needed for schema generation, but with same settings like message pack
+  // mapper
+  private static final ObjectMapper omJson = configure(new ObjectMapper());
 
-    private static final ObjectWriter writerJson = omJson.writer();
+  private static final ObjectWriter writerJson = omJson.writer();
 
-    private static final JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(omJson);
+  private static final JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(omJson);
 
-    @Setter(onMethod = @__(@VisibleForTesting))
-    private static Function<String, String> schemaModifier = Function.identity();
+  @Setter(onMethod = @__(@VisibleForTesting))
+  private static Function<String, String> schemaModifier = Function.identity();
 
-    @SneakyThrows
-    @Override
-    public byte[] serialize(@NonNull SnapshotProjection a) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        val os = new LZ4BlockOutputStream(baos, 8192);
-        omMessagePack.writeValue(os, a);
-        os.close();
-        return baos.toByteArray();
+  @SneakyThrows
+  @Override
+  public byte[] serialize(@NonNull SnapshotProjection a) {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    val os = new LZ4BlockOutputStream(baos, 8192);
+    omMessagePack.writeValue(os, a);
+    os.close();
+    return baos.toByteArray();
+  }
+
+  @SneakyThrows
+  @Override
+  public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
+    try (LZ4BlockInputStream is = new LZ4BlockInputStream(new ByteArrayInputStream(bytes)); ) {
+      return omMessagePack.readerFor(type).readValue(is);
     }
+  }
 
-    @SneakyThrows
-    @Override
-    public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
-        try (LZ4BlockInputStream is = new LZ4BlockInputStream(new ByteArrayInputStream(bytes));) {
-            return omMessagePack.readerFor(type).readValue(is);
-        }
-    }
+  @Override
+  public boolean includesCompression() {
+    return true;
+  }
 
-    @Override
-    public boolean includesCompression() {
-        return true;
-    }
+  @Override
+  @SneakyThrows
+  public long calculateProjectionClassHash(Class<? extends SnapshotProjection> projectionClass) {
+    JsonSchema jsonSchema = schemaGen.generateSchema(projectionClass);
 
-    @Override
-    @SneakyThrows
-    public long calculateProjectionClassHash(Class<? extends SnapshotProjection> projectionClass) {
-        JsonSchema jsonSchema = schemaGen.generateSchema(projectionClass);
+    String schema = writerJson.writeValueAsString(jsonSchema);
 
-        String schema = writerJson
-                .writeValueAsString(jsonSchema);
+    return Hashing.sha512().hashUnencodedChars(schemaModifier.apply(schema)).asLong();
+  }
 
-        return Hashing.sha512()
-                .hashUnencodedChars(schemaModifier.apply(schema))
-                .asLong();
-    }
-
-    private static ObjectMapper configure(ObjectMapper objectMapper) {
-        return objectMapper
-                .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    }
-
+  private static ObjectMapper configure(ObjectMapper objectMapper) {
+    return objectMapper
+        .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  }
 }

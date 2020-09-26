@@ -16,36 +16,33 @@
 package org.factcast.factus.projection;
 
 import java.util.List;
-
+import lombok.NonNull;
 import org.factcast.core.spec.FactSpec;
 import org.slf4j.LoggerFactory;
 
-import lombok.NonNull;
-
 public interface Projection {
-    default @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
-        return specsAsDiscovered;
-    }
+  default @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
+    return specsAsDiscovered;
+  }
 
-    default void onCatchup() {
-        // implement if you are interested in that event
-    }
+  default void onCatchup() {
+    // implement if you are interested in that event
+  }
 
-    default void onComplete() {
-        // implement if you are interested in that event
-    }
+  default void onComplete() {
+    // implement if you are interested in that event
+  }
 
-    default void onError(@NonNull Throwable exception) {
-        LoggerFactory.getLogger(getClass()).warn("Unhandled onError:", exception);
-    }
+  default void onError(@NonNull Throwable exception) {
+    LoggerFactory.getLogger(getClass()).warn("Unhandled onError:", exception);
+  }
 
-    /**
-     * meant as an opportunity to do something around the actual update, like
-     * synchronizing on the object or start/commit a transaction. There is no
-     * assumption about the granularity of the update, so that it can
-     * potentially be used for batching etc as well.
-     */
-    default void executeUpdate(@NonNull Runnable update) {
-        update.run();
-    }
+  /**
+   * meant as an opportunity to do something around the actual update, like synchronizing on the
+   * object or start/commit a transaction. There is no assumption about the granularity of the
+   * update, so that it can potentially be used for batching etc as well.
+   */
+  default void executeUpdate(@NonNull Runnable update) {
+    update.run();
+  }
 }

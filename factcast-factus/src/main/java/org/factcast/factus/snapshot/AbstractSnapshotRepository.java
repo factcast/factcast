@@ -15,92 +15,94 @@
  */
 package org.factcast.factus.snapshot;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
 
-import com.google.common.annotations.VisibleForTesting;
-
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 @RequiredArgsConstructor
 abstract class AbstractSnapshotRepository {
-    protected static final String KEY_DELIMITER = ":";
+  protected static final String KEY_DELIMITER = ":";
 
-    protected final SnapshotCache snapshotCache;
+  protected final SnapshotCache snapshotCache;
 
-    private final Map<Class<? extends SnapshotProjection>, String> typeSerializerAndSerialUIdCache = new ConcurrentHashMap<>();
+  private final Map<Class<? extends SnapshotProjection>, String> typeSerializerAndSerialUIdCache =
+      new ConcurrentHashMap<>();
 
-    protected void putBlocking(@NonNull Snapshot snapshot) {
-        snapshotCache.setSnapshot(snapshot);
+  protected void putBlocking(@NonNull Snapshot snapshot) {
+    snapshotCache.setSnapshot(snapshot);
+  }
+
+  @VisibleForTesting
+  protected String createKeyForType(
+      @NonNull Class<? extends SnapshotProjection> type,
+      @NonNull Supplier<SnapshotSerializer> serializerSupplier) {
+    return createKeyForType(type, serializerSupplier, null);
+  }
+
+  @VisibleForTesting
+  protected String createKeyForType(
+      @NonNull Class<? extends SnapshotProjection> type,
+      @NonNull Supplier<SnapshotSerializer> serializerSupplier,
+      UUID optionalUUID) {
+
+    String classLevelKey =
+        keyPrefix()
+            + type.getCanonicalName()
+            + KEY_DELIMITER
+            + serializerAndSerialUId(type, serializerSupplier);
+
+    if (optionalUUID == null) {
+      return classLevelKey;
+    } else {
+      return classLevelKey + KEY_DELIMITER + optionalUUID.toString();
     }
+  }
 
-    @VisibleForTesting
-    protected String createKeyForType(@NonNull Class<? extends SnapshotProjection> type,
-            @NonNull Supplier<SnapshotSerializer> serializerSupplier) {
-        return createKeyForType(type, serializerSupplier, null);
-    }
+  private String serializerAndSerialUId(
+      Class<? extends SnapshotProjection> type, Supplier<SnapshotSerializer> serializerSupplier) {
 
-    @VisibleForTesting
-    protected String createKeyForType(@NonNull Class<? extends SnapshotProjection> type,
-            @NonNull Supplier<SnapshotSerializer> serializerSupplier,
-            UUID optionalUUID) {
+    return typeSerializerAndSerialUIdCache.computeIfAbsent(
+        type,
+        t -> {
+          long serialVersionUid = getSerialVersionUid(type);
+          SnapshotSerializer serializer = serializerSupplier.get();
 
-        String classLevelKey = keyPrefix() + type.getCanonicalName() + KEY_DELIMITER
-                + serializerAndSerialUId(type, serializerSupplier);
+          if (serialVersionUid == 0) {
+            serialVersionUid = serializer.calculateProjectionClassHash(t);
+          }
 
-        if (optionalUUID == null) {
-            return classLevelKey;
-        } else {
-            return classLevelKey + KEY_DELIMITER + optionalUUID.toString();
-        }
-    }
-
-    private String serializerAndSerialUId(Class<? extends SnapshotProjection> type,
-            Supplier<SnapshotSerializer> serializerSupplier) {
-
-        return typeSerializerAndSerialUIdCache.computeIfAbsent(type,
-                t -> {
-
-                    long serialVersionUid = getSerialVersionUid(type);
-                    SnapshotSerializer serializer = serializerSupplier.get();
-
-                    if (serialVersionUid == 0) {
-                        serialVersionUid = serializer.calculateProjectionClassHash(t);
-                    }
-
-                    return serializer.getClass().getCanonicalName()
-                            + KEY_DELIMITER
-                            + serialVersionUid;
-                });
-    }
-
-    private final Map<Class<?>, Long> serials = new HashMap<>();
-
-    @VisibleForTesting
-    protected long getSerialVersionUid(Class<?> type) {
-        return serials.computeIfAbsent(type, t -> {
-            try {
-                Field field = t.getDeclaredField("serialVersionUID");
-                field.setAccessible(true);
-                return field.getLong(null);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                return 0L;
-            }
+          return serializer.getClass().getCanonicalName() + KEY_DELIMITER + serialVersionUid;
         });
-    }
+  }
 
-    protected String keyPrefix() {
-        return getClass().getCanonicalName() + KEY_DELIMITER;
-    }
+  private final Map<Class<?>, Long> serials = new HashMap<>();
 
+  @VisibleForTesting
+  protected long getSerialVersionUid(Class<?> type) {
+    return serials.computeIfAbsent(
+        type,
+        t -> {
+          try {
+            Field field = t.getDeclaredField("serialVersionUID");
+            field.setAccessible(true);
+            return field.getLong(null);
+          } catch (NoSuchFieldException | IllegalAccessException e) {
+            return 0L;
+          }
+        });
+  }
+
+  protected String keyPrefix() {
+    return getClass().getCanonicalName() + KEY_DELIMITER;
+  }
 }

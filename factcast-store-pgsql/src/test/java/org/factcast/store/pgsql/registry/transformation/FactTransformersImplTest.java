@@ -19,9 +19,9 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.subscription.FactTransformerService;
@@ -41,111 +41,101 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 @ExtendWith(MockitoExtension.class)
 public class FactTransformersImplTest {
 
-    @Mock
-    TransformationChains chains;
+  @Mock TransformationChains chains;
 
-    @Mock
-    Transformer trans;
+  @Mock Transformer trans;
 
-    @Mock
-    TransformationCache cache;
+  @Mock TransformationCache cache;
 
-    @Mock
-    TransformationChain chain;
+  @Mock TransformationChain chain;
 
-    @Spy
-    final RegistryMetrics registryMetrics = new NOPRegistryMetrics();
+  @Spy final RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 
-    @Test
-    public void testTransformNotNecessaryEmpty() throws Exception {
+  @Test
+  public void testTransformNotNecessaryEmpty() throws Exception {
 
-        RequestedVersions requestedVersions = new RequestedVersions();
-        Fact probe = new TestFact().version(33);
-        FactTransformerService service = new FactTransformerServiceImpl(chains, trans, cache,
-                registryMetrics);
-        FactTransformersImpl uut = new FactTransformersImpl(requestedVersions, service,
-                registryMetrics);
+    RequestedVersions requestedVersions = new RequestedVersions();
+    Fact probe = new TestFact().version(33);
+    FactTransformerService service =
+        new FactTransformerServiceImpl(chains, trans, cache, registryMetrics);
+    FactTransformersImpl uut =
+        new FactTransformersImpl(requestedVersions, service, registryMetrics);
 
-        assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
+    assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
 
-        verifyNoInteractions(registryMetrics);
-    }
+    verifyNoInteractions(registryMetrics);
+  }
 
-    @Test
-    public void testTransformNotNecessary_version0() throws Exception {
+  @Test
+  public void testTransformNotNecessary_version0() throws Exception {
 
-        RequestedVersions requestedVersions = new RequestedVersions();
-        Fact probe = new TestFact().version(33);
-        String ns = probe.ns();
-        String type = probe.type();
-        requestedVersions.add(ns, type, 0);
-        FactTransformerService service = new FactTransformerServiceImpl(chains, trans, cache,
-                registryMetrics);
+    RequestedVersions requestedVersions = new RequestedVersions();
+    Fact probe = new TestFact().version(33);
+    String ns = probe.ns();
+    String type = probe.type();
+    requestedVersions.add(ns, type, 0);
+    FactTransformerService service =
+        new FactTransformerServiceImpl(chains, trans, cache, registryMetrics);
 
-        FactTransformersImpl uut = new FactTransformersImpl(requestedVersions, service,
-                registryMetrics);
-        assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
+    FactTransformersImpl uut =
+        new FactTransformersImpl(requestedVersions, service, registryMetrics);
+    assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
 
-        verifyNoInteractions(registryMetrics);
+    verifyNoInteractions(registryMetrics);
+  }
 
-    }
+  @Test
+  public void testTransformNotNecessary_versionMatches() throws Exception {
 
-    @Test
-    public void testTransformNotNecessary_versionMatches() throws Exception {
+    RequestedVersions requestedVersions = new RequestedVersions();
+    Fact probe = new TestFact().version(33);
+    String ns = probe.ns();
+    String type = probe.type();
+    requestedVersions.add(ns, type, 33);
 
-        RequestedVersions requestedVersions = new RequestedVersions();
-        Fact probe = new TestFact().version(33);
-        String ns = probe.ns();
-        String type = probe.type();
-        requestedVersions.add(ns, type, 33);
+    FactTransformerService service =
+        new FactTransformerServiceImpl(chains, trans, cache, registryMetrics);
 
-        FactTransformerService service = new FactTransformerServiceImpl(chains, trans, cache,
-                registryMetrics);
+    FactTransformersImpl uut =
+        new FactTransformersImpl(requestedVersions, service, registryMetrics);
 
-        FactTransformersImpl uut = new FactTransformersImpl(requestedVersions, service,
-                registryMetrics);
+    assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
 
-        assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
+    verifyNoInteractions(registryMetrics);
+  }
 
-        verifyNoInteractions(registryMetrics);
+  @Test
+  public void testTransform() throws Exception {
+    String chainId = "chainId";
+    Fact probe = new TestFact().version(1);
+    String ns = probe.ns();
+    String type = probe.type();
+    RequestedVersions requestedVersions = new RequestedVersions();
+    requestedVersions.add(ns, type, 33);
 
-    }
+    when(chains.get(eq(TransformationKey.from(probe)), eq(probe.version()), eq(33)))
+        .thenReturn(chain);
+    when(chain.id()).thenReturn(chainId);
+    Map<String, Object> propertyMap = new HashMap<>();
+    JsonNode transformedJsonNode = FactCastJson.toJsonNode(propertyMap);
+    when(trans.transform(any(), eq(FactCastJson.readTree(probe.jsonPayload()))))
+        .thenReturn(transformedJsonNode);
 
-    @Test
-    public void testTransform() throws Exception {
-        String chainId = "chainId";
-        Fact probe = new TestFact().version(1);
-        String ns = probe.ns();
-        String type = probe.type();
-        RequestedVersions requestedVersions = new RequestedVersions();
-        requestedVersions.add(ns, type, 33);
+    FactTransformerService service =
+        new FactTransformerServiceImpl(chains, trans, cache, registryMetrics);
 
-        when(chains.get(eq(TransformationKey.from(probe)), eq(probe.version()), eq(33))).thenReturn(
-                chain);
-        when(chain.id()).thenReturn(chainId);
-        Map<String, Object> propertyMap = new HashMap<>();
-        JsonNode transformedJsonNode = FactCastJson.toJsonNode(propertyMap);
-        when(trans.transform(any(), eq(FactCastJson.readTree(probe.jsonPayload())))).thenReturn(
-                transformedJsonNode);
+    FactTransformersImpl uut =
+        new FactTransformersImpl(requestedVersions, service, registryMetrics);
 
-        FactTransformerService service = new FactTransformerServiceImpl(chains, trans, cache,
-                registryMetrics);
+    Fact transformed = uut.transformIfNecessary(probe);
+    assertThat(transformed.jsonPayload()).isEqualTo(transformedJsonNode.toString());
 
-        FactTransformersImpl uut = new FactTransformersImpl(requestedVersions, service,
-                registryMetrics);
+    verify(cache).find(eq(probe.id()), eq(33), eq(chainId));
 
-        Fact transformed = uut.transformIfNecessary(probe);
-        assertThat(transformed.jsonPayload()).isEqualTo(transformedJsonNode.toString());
-
-        verify(cache).find(eq(probe.id()), eq(33), eq(chainId));
-
-        verify(registryMetrics).timed(eq(TimedOperation.TRANSFORMATION), any(), any(
-                SupplierWithException.class));
-
-    }
+    verify(registryMetrics)
+        .timed(eq(TimedOperation.TRANSFORMATION), any(), any(SupplierWithException.class));
+  }
 }

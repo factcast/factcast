@@ -21,8 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class InMemTransformationStoreImplTest extends AbstractTransformationStoreTest {
-    @Override
-    protected TransformationStore createUUT() {
-        return new InMemTransformationStoreImpl(registryMetrics);
-    }
+  @Override
+  protected TransformationStore createUUT() {
+    return new InMemTransformationStoreImpl(registryMetrics);
+  }
 }

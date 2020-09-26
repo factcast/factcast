@@ -16,13 +16,12 @@
 package org.factcast.grpc.api.conv;
 
 import java.util.Map;
-
 import lombok.Value;
 
 @Value(staticConstructor = "of")
 public class ServerConfig {
 
-    ProtocolVersion version;
+  ProtocolVersion version;
 
-    Map<String, String> properties;
+  Map<String, String> properties;
 }

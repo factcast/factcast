@@ -15,11 +15,10 @@
  */
 package org.factcast.store.pgsql.registry.transformation.chains;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 public interface Transformer {
-    JsonNode transform(Transformation t, JsonNode input) throws TransformationException;
+  JsonNode transform(Transformation t, JsonNode input) throws TransformationException;
 }

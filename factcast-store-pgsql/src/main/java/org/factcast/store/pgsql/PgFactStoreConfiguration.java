@@ -24,8 +24,8 @@ import org.springframework.context.annotation.Import;
 /**
  * Configuration to include in order to use a PGFactStore
  *
- * just forwards to {@link PgFactStoreInternalConfiguration}, so that IDEs can
- * still complain about internal references.
+ * <p>just forwards to {@link PgFactStoreInternalConfiguration}, so that IDEs can still complain
+ * about internal references.
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
@@ -33,8 +33,8 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties
 @Import(PgFactStoreInternalConfiguration.class)
 public class PgFactStoreConfiguration {
-    @Bean
-    PgConfigurationProperties PGConfigurationProperties() {
-        return new PgConfigurationProperties();
-    }
+  @Bean
+  PgConfigurationProperties PGConfigurationProperties() {
+    return new PgConfigurationProperties();
+  }
 }

@@ -23,9 +23,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(value = ElementType.METHOD)
 public @interface HandlerFor {
-    String ns();
+  String ns();
 
-    String type();
+  String type();
 
-    int version() default 0;
+  int version() default 0;
 }

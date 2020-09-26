@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.UUID;
-
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
@@ -28,50 +27,49 @@ import org.junit.jupiter.api.*;
 @SuppressWarnings("ALL")
 public abstract class AbstractTokenStoreTest {
 
-    TokenStore uut;
+  TokenStore uut;
 
-    @BeforeEach
-    public void setup() {
-        uut = createTokenStore();
-    }
+  @BeforeEach
+  public void setup() {
+    uut = createTokenStore();
+  }
 
-    @Test
-    public void invalidateShouldIgnoreUnknownTokens() throws Exception {
-        uut.invalidate(new StateToken(UUID.randomUUID()));
-    }
+  @Test
+  public void invalidateShouldIgnoreUnknownTokens() throws Exception {
+    uut.invalidate(new StateToken(UUID.randomUUID()));
+  }
 
-    protected abstract TokenStore createTokenStore();
+  protected abstract TokenStore createTokenStore();
 
-    @Test
-    public void invalidateShouldRemoveToken() throws Exception {
-        StateToken token = uut.create(new State());
-        uut.invalidate(token);
-        assertThat(uut.get(token)).isNotPresent();
-    }
+  @Test
+  public void invalidateShouldRemoveToken() throws Exception {
+    StateToken token = uut.create(new State());
+    uut.invalidate(token);
+    assertThat(uut.get(token)).isNotPresent();
+  }
 
-    @Test
-    public void createShouldActuallyCreateARecord() throws Exception {
-        StateToken token = uut.create(new State().serialOfLastMatchingFact(100));
+  @Test
+  public void createShouldActuallyCreateARecord() throws Exception {
+    StateToken token = uut.create(new State().serialOfLastMatchingFact(100));
 
-        assertThat(uut.get(token)).isPresent();
+    assertThat(uut.get(token)).isPresent();
 
-        // and is not deleted as an effect of get
-        assertThat(uut.get(token)).isPresent();
-    }
+    // and is not deleted as an effect of get
+    assertThat(uut.get(token)).isPresent();
+  }
 
-    @Test
-    public void getStateShouldReturnAbsentForUnknownToken() throws Exception {
-        assertThat(uut.get(new StateToken(UUID.randomUUID()))).isNotPresent();
-    }
+  @Test
+  public void getStateShouldReturnAbsentForUnknownToken() throws Exception {
+    assertThat(uut.get(new StateToken(UUID.randomUUID()))).isNotPresent();
+  }
 
-    @Test
-    public void testCreateNullContract() throws Exception {
-        assertThrows(NullPointerException.class, () -> uut.create(null));
-    }
+  @Test
+  public void testCreateNullContract() throws Exception {
+    assertThrows(NullPointerException.class, () -> uut.create(null));
+  }
 
-    @Test
-    public void testInvalidateNullContract() throws Exception {
-        assertThrows(NullPointerException.class, () -> uut.invalidate(null));
-    }
-
+  @Test
+  public void testInvalidateNullContract() throws Exception {
+    assertThrows(NullPointerException.class, () -> uut.invalidate(null));
+  }
 }

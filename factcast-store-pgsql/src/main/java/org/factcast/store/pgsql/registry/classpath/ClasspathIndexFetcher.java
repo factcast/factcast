@@ -18,39 +18,37 @@ package org.factcast.store.pgsql.registry.classpath;
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.store.pgsql.registry.IndexFetcher;
 import org.factcast.store.pgsql.registry.RegistryIndex;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
 import org.factcast.store.pgsql.registry.filesystem.FilesystemIndexFetcher;
 import org.springframework.core.io.ClassPathResource;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 @RequiredArgsConstructor
 public class ClasspathIndexFetcher implements IndexFetcher {
 
-    private final @NonNull String base;
+  private final @NonNull String base;
 
-    private boolean initialRun = true;
+  private boolean initialRun = true;
 
-    @Override
-    public Optional<RegistryIndex> fetchIndex() {
-        if (initialRun) {
+  @Override
+  public Optional<RegistryIndex> fetchIndex() {
+    if (initialRun) {
 
-            try {
-                File file = new ClassPathResource(base + "/index.json").getFile();
-                return FilesystemIndexFetcher.fetch_index(file);
+      try {
+        File file = new ClassPathResource(base + "/index.json").getFile();
+        return FilesystemIndexFetcher.fetch_index(file);
 
-            } catch (IOException e) {
-                throw new SchemaRegistryUnavailableException(e);
-            } finally {
-                initialRun = false;
-            }
+      } catch (IOException e) {
+        throw new SchemaRegistryUnavailableException(e);
+      } finally {
+        initialRun = false;
+      }
 
-        } else
-            // assume unchanged
-            return Optional.empty();
-    }
+    } else
+      // assume unchanged
+      return Optional.empty();
+  }
 }

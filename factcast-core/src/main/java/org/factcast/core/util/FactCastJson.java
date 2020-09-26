@@ -15,12 +15,6 @@
  */
 package org.factcast.core.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-import java.util.function.Function;
-
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -35,7 +29,11 @@ import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
-
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.function.Function;
 import lombok.AccessLevel;
 import lombok.Generated;
 import lombok.NoArgsConstructor;
@@ -44,156 +42,153 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 
 /**
- * Statically shared ObjectMapper reader & writer to be used within FactCast for
- * Headers and FactCast-specific objects.
- * <p>
- * You must not change the configuration of this mapper, and it should not be
- * used outside of FactCast.
+ * Statically shared ObjectMapper reader & writer to be used within FactCast for Headers and
+ * FactCast-specific objects.
+ *
+ * <p>You must not change the configuration of this mapper, and it should not be used outside of
+ * FactCast.
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FactCastJson {
 
-    private static ObjectMapper objectMapper;
+  private static ObjectMapper objectMapper;
 
-    private static ObjectReader reader;
+  private static ObjectReader reader;
 
-    private static ObjectWriter writer;
+  private static ObjectWriter writer;
 
-    private static JsonSchemaGenerator schemaGen;
+  private static JsonSchemaGenerator schemaGen;
 
-    @Setter(onMethod = @__(@VisibleForTesting))
-    private static Function<String, String> schemaModifier = Function.identity();
+  @Setter(onMethod = @__(@VisibleForTesting))
+  private static Function<String, String> schemaModifier = Function.identity();
 
-    static {
-        initializeObjectMapper();
+  static {
+    initializeObjectMapper();
+  }
+
+  @VisibleForTesting
+  static AutoCloseable replaceObjectMapper(@NonNull ObjectMapper om) {
+    objectMapper = om;
+    writer = objectMapper.writer();
+    reader = objectMapper.reader();
+    return FactCastJson::initializeObjectMapper;
+  }
+
+  private static void initializeObjectMapper() {
+    objectMapper = new ObjectMapper();
+    objectMapper
+        .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    writer = objectMapper.writer();
+    reader = objectMapper.reader();
+
+    schemaGen = new JsonSchemaGenerator(objectMapper);
+  }
+
+  @SneakyThrows
+  public static <T> T copy(@NonNull T toCopy) {
+    Class<?> c = toCopy.getClass();
+    return reader.forType(c).readValue(writer.forType(c).writeValueAsString(toCopy));
+  }
+
+  @SneakyThrows
+  public static <T> String writeValueAsString(@NonNull T value) {
+    return objectMapper.writeValueAsString(value);
+  }
+
+  @SneakyThrows
+  public static <T> T readValue(@NonNull Class<T> class1, @NonNull String json) {
+    return reader.forType(class1).readValue(json);
+  }
+
+  @SneakyThrows
+  public static <T> T readValue(@NonNull TypeReference<T> class1, @NonNull String json) {
+    return reader.forType(class1).readValue(json);
+  }
+
+  @SneakyThrows
+  public static <T> T readValue(@NonNull Class<T> class1, @NonNull InputStream json) {
+    return reader.forType(class1).readValue(json);
+  }
+
+  public static ObjectNode toObjectNode(String json) {
+    try {
+      return (ObjectNode) objectMapper.readTree(json);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
+  }
 
-    @VisibleForTesting
-    static AutoCloseable replaceObjectMapper(@NonNull ObjectMapper om) {
-        objectMapper = om;
-        writer = objectMapper.writer();
-        reader = objectMapper.reader();
-        return FactCastJson::initializeObjectMapper;
+  public static ObjectNode newObjectNode() {
+    return objectMapper.getNodeFactory().objectNode();
+  }
+
+  @SneakyThrows
+  @Generated
+  public static String writeValueAsPrettyString(Object o) {
+    return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
+  }
+
+  public static String addSerToHeader(long ser, String jsonHeader) {
+    ObjectNode json = toObjectNode(jsonHeader);
+    ObjectNode meta = (ObjectNode) json.get("meta");
+    if (meta == null) {
+      // create a new node
+      meta = newObjectNode();
+      json.set("meta", meta);
     }
+    // set ser as attribute _ser
+    meta.put("_ser", ser);
+    return json.toString();
+  }
 
-    private static void initializeObjectMapper() {
-        objectMapper = new ObjectMapper();
-        objectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        writer = objectMapper.writer();
-        reader = objectMapper.reader();
+  public static String toPrettyString(String jsonString) {
+    return writeValueAsPrettyString(toObjectNode(jsonString));
+  }
 
-        schemaGen = new JsonSchemaGenerator(objectMapper);
-    }
+  public static String readJSON(File file) throws IOException {
+    return objectMapper.readTree(file).toString();
+  }
 
-    @SneakyThrows
-    public static <T> T copy(@NonNull T toCopy) {
-        Class<?> c = toCopy.getClass();
-        return reader.forType(c).readValue(writer.forType(c).writeValueAsString(toCopy));
-    }
+  public static <T> JsonNode valueToTree(T object) {
+    return objectMapper.valueToTree(object);
+  }
 
-    @SneakyThrows
-    public static <T> String writeValueAsString(@NonNull T value) {
-        return objectMapper.writeValueAsString(value);
-    }
+  public static JsonNode readTree(String json) throws JsonProcessingException {
+    return objectMapper.readTree(json);
+  }
 
-    @SneakyThrows
-    public static <T> T readValue(@NonNull Class<T> class1, @NonNull String json) {
-        return reader.forType(class1).readValue(json);
-    }
+  public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
+    return objectMapper.convertValue(fromValue, toValueType);
+  }
 
-    @SneakyThrows
-    public static <T> T readValue(@NonNull TypeReference<T> class1, @NonNull String json) {
-        return reader.forType(class1).readValue(json);
-    }
+  public static JsonNode toJsonNode(Map<String, Object> jsonAsMap) {
+    return objectMapper.convertValue(jsonAsMap, JsonNode.class);
+  }
 
-    @SneakyThrows
-    public static <T> T readValue(@NonNull Class<T> class1, @NonNull InputStream json) {
-        return reader.forType(class1).readValue(json);
-    }
+  @SneakyThrows
+  public static byte[] writeValueAsBytes(Object a) {
+    return objectMapper.writeValueAsBytes(a);
+  }
 
-    public static ObjectNode toObjectNode(String json) {
-        try {
-            return (ObjectNode) objectMapper.readTree(json);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
+  @SneakyThrows
+  public static <A> A readValueFromBytes(Class<A> type, byte[] bytes) {
+    return objectMapper.readerFor(type).readValue(bytes);
+  }
 
-    public static ObjectNode newObjectNode() {
-        return objectMapper.getNodeFactory().objectNode();
-    }
+  public static ObjectMapper mapper() {
+    return objectMapper;
+  }
 
-    @SneakyThrows
-    @Generated
-    public static String writeValueAsPrettyString(Object o) {
-        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
-    }
+  @SneakyThrows
+  public static long calculateHash(Class<?> projectionClass) {
 
-    public static String addSerToHeader(long ser, String jsonHeader) {
-        ObjectNode json = toObjectNode(jsonHeader);
-        ObjectNode meta = (ObjectNode) json.get("meta");
-        if (meta == null) {
-            // create a new node
-            meta = newObjectNode();
-            json.set("meta", meta);
-        }
-        // set ser as attribute _ser
-        meta.put("_ser", ser);
-        return json.toString();
-    }
+    JsonSchema jsonSchema = schemaGen.generateSchema(projectionClass);
 
-    public static String toPrettyString(String jsonString) {
-        return writeValueAsPrettyString(toObjectNode(jsonString));
-    }
+    String schema = writer.writeValueAsString(jsonSchema);
 
-    public static String readJSON(File file) throws IOException {
-        return objectMapper.readTree(file).toString();
-    }
-
-    public static <T> JsonNode valueToTree(T object) {
-        return objectMapper.valueToTree(object);
-    }
-
-    public static JsonNode readTree(String json) throws JsonProcessingException {
-        return objectMapper.readTree(json);
-    }
-
-    public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
-        return objectMapper.convertValue(fromValue, toValueType);
-    }
-
-    public static JsonNode toJsonNode(Map<String, Object> jsonAsMap) {
-        return objectMapper.convertValue(jsonAsMap, JsonNode.class);
-    }
-
-    @SneakyThrows
-    public static byte[] writeValueAsBytes(Object a) {
-        return objectMapper.writeValueAsBytes(a);
-
-    }
-
-    @SneakyThrows
-    public static <A> A readValueFromBytes(Class<A> type, byte[] bytes) {
-        return objectMapper.readerFor(type).readValue(bytes);
-    }
-
-    public static ObjectMapper mapper() {
-        return objectMapper;
-    }
-
-    @SneakyThrows
-    public static long calculateHash(Class<?> projectionClass) {
-
-        JsonSchema jsonSchema = schemaGen.generateSchema(projectionClass);
-
-        String schema = writer
-                .writeValueAsString(jsonSchema);
-
-        return Hashing.sha512()
-                .hashUnencodedChars(schemaModifier.apply(schema))
-                .asLong();
-    }
+    return Hashing.sha512().hashUnencodedChars(schemaModifier.apply(schema)).asLong();
+  }
 }
