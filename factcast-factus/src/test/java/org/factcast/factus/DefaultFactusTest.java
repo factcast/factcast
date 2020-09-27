@@ -66,6 +66,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+@SuppressWarnings("ALL")
 @ExtendWith(MockitoExtension.class)
 class DefaultFactusTest {
 
@@ -73,7 +74,7 @@ class DefaultFactusTest {
     private FactCast fc;
 
     @Mock
-    private ProjectorFactory ehFactory;
+    private ProjectorFactory projectorFactory;
 
     @Mock
     private EventConverter eventConverter;
@@ -314,7 +315,7 @@ class DefaultFactusTest {
             batch.execute();
 
             // RUN
-            // execute batch a second time without adding anzthing
+            // execute batch a second time without adding anything
             assertThatThrownBy(batch::execute)
                     // ASSERT
                     .isExactlyInstanceOf(IllegalStateException.class)
@@ -365,7 +366,7 @@ class DefaultFactusTest {
             ManagedProjection m = Mockito.spy(new SimpleProjection());
             Projector<ManagedProjection> ea = Mockito.spy(new DefaultProjector<>(mock(
                     EventSerializer.class), m));
-            when(ehFactory.create(m)).thenReturn(ea);
+            when(projectorFactory.create(m)).thenReturn(ea);
             ArgumentCaptor<FactObserver> observer = ArgumentCaptor.forClass(FactObserver.class);
 
             Fact f1 = Fact.builder().ns("test").type(SimpleEvent.class.getSimpleName()).build("{}");
@@ -403,7 +404,7 @@ class DefaultFactusTest {
             // INIT
             SimpleProjection managedProjection = new SimpleProjection();
 
-            when(ehFactory.create(managedProjection))
+            when(projectorFactory.create(managedProjection))
                     .thenReturn(projector);
 
             when(projector.createFactSpecs())
@@ -414,7 +415,7 @@ class DefaultFactusTest {
                     .withLockOn(managedProjection);
 
             // ASSERT
-            verify(ehFactory)
+            verify(projectorFactory)
                     .create(managedProjection);
 
             verify(projector)
@@ -441,7 +442,7 @@ class DefaultFactusTest {
             // INIT
             mockSnapFactory();
 
-            when(ehFactory.create(any(PersonAggregate.class)))
+            when(projectorFactory.create(any(PersonAggregate.class)))
                     .thenReturn(projector);
 
             when(projector.createFactSpecs())
@@ -456,7 +457,7 @@ class DefaultFactusTest {
                     .withLockOn(PersonAggregate.class, aggId);
 
             // ASSERT
-            verify(ehFactory, atLeast(1))
+            verify(projectorFactory, atLeast(1))
                     .create(any());
 
             verify(projector, atLeast(1))
@@ -479,7 +480,7 @@ class DefaultFactusTest {
             // INIT
             mockSnapFactory();
 
-            when(ehFactory.create(any(ConcatCodesProjection.class)))
+            when(projectorFactory.create(any(ConcatCodesProjection.class)))
                     .thenReturn(projector);
 
             when(projector.createFactSpecs())
@@ -493,7 +494,7 @@ class DefaultFactusTest {
                     .withLockOn(ConcatCodesProjection.class);
 
             // ASSERT
-            verify(ehFactory, atLeast(1))
+            verify(projectorFactory, atLeast(1))
                     .create(any());
 
             verify(projector, atLeast(1))
@@ -543,7 +544,7 @@ class DefaultFactusTest {
             when(projectionSnapshotRepository.findLatest(ConcatCodesProjection.class))
                     .thenReturn(Optional.empty());
 
-            when(ehFactory.create(any(ConcatCodesProjection.class)))
+            when(projectorFactory.create(any(ConcatCodesProjection.class)))
                     .thenReturn(projector);
 
             when(projector.createFactSpecs())
@@ -571,7 +572,7 @@ class DefaultFactusTest {
             when(projectionSnapshotRepository.findLatest(ConcatCodesProjection.class))
                     .thenReturn(Optional.of(snapshot));
 
-            when(ehFactory.create(any(ConcatCodesProjection.class)))
+            when(projectorFactory.create(any(ConcatCodesProjection.class)))
                     .thenReturn(projector);
 
             when(projector.createFactSpecs())
@@ -606,7 +607,7 @@ class DefaultFactusTest {
                     .thenReturn(Optional.empty());
 
             // capture projection for later...
-            when(ehFactory.create(projectionCaptor.capture()))
+            when(projectorFactory.create(projectionCaptor.capture()))
                     .thenReturn(projector);
 
             // make sure when event projector is asked to apply events, to wire
@@ -658,7 +659,7 @@ class DefaultFactusTest {
                     .thenReturn(Optional.of(snapshot));
 
             // capture projection for later...
-            when(ehFactory.create(projectionCaptor.capture()))
+            when(projectorFactory.create(projectionCaptor.capture()))
                     .thenReturn(projector);
 
             // make sure when event projector is asked to apply events, to wire
@@ -722,7 +723,7 @@ class DefaultFactusTest {
                     .thenReturn(Optional.of(snapshot));
 
             // capture projection for later...
-            when(ehFactory.create(projectionCaptor.capture()))
+            when(projectorFactory.create(projectionCaptor.capture()))
                     .thenReturn(projector);
 
             when(projector.createFactSpecs())
@@ -825,7 +826,7 @@ class DefaultFactusTest {
                     .when(subscribedProjection)
                     .executeUpdate(any());
 
-            when(ehFactory.create(subscribedProjection))
+            when(projectorFactory.create(subscribedProjection))
                     .thenReturn(eventApplier);
 
             when(eventApplier.createFactSpecs())
@@ -902,7 +903,7 @@ class DefaultFactusTest {
             when(subscribedProjection.acquireWriteToken(any()))
                     .thenReturn(mock(AutoCloseable.class));
 
-            when(ehFactory.create(subscribedProjection))
+            when(projectorFactory.create(subscribedProjection))
                     .thenReturn(eventApplier);
 
             when(eventApplier.createFactSpecs())
@@ -992,7 +993,7 @@ class DefaultFactusTest {
             // INIT
             mockSnapFactory();
 
-            when(ehFactory.create(any(PersonAggregate.class)))
+            when(projectorFactory.create(any(PersonAggregate.class)))
                     .thenReturn(projector);
 
             when(projector.createFactSpecs())
@@ -1027,7 +1028,7 @@ class DefaultFactusTest {
             when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
                     .thenReturn(Optional.of(snapshot));
 
-            when(ehFactory.create(any(PersonAggregate.class)))
+            when(projectorFactory.create(any(PersonAggregate.class)))
                     .thenReturn(projector);
 
             when(projector.createFactSpecs())
@@ -1066,7 +1067,7 @@ class DefaultFactusTest {
             when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
                     .thenReturn(Optional.of(snapshot));
 
-            when(ehFactory.create(any(PersonAggregate.class)))
+            when(projectorFactory.create(any(PersonAggregate.class)))
                     .thenReturn(projector);
 
             when(projector.createFactSpecs())
@@ -1128,7 +1129,7 @@ class DefaultFactusTest {
             // INIT
             mockSnapFactory();
 
-            when(ehFactory.create(personAggregateCaptor.capture()))
+            when(projectorFactory.create(personAggregateCaptor.capture()))
                     .thenReturn(projector);
 
             when(projector.createFactSpecs())

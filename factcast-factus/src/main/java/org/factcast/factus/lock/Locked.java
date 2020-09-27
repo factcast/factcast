@@ -56,7 +56,7 @@ import lombok.val;
 @RequiredArgsConstructor
 @Slf4j
 @Data
-@SuppressWarnings("unused")
+@SuppressWarnings({ "unused", "RedundantSuppression" })
 public class Locked<I extends Projection> {
     @NonNull
     private final FactCast fc;
@@ -139,8 +139,10 @@ public class Locked<I extends Projection> {
         if (projection instanceof Aggregate) {
             Class<? extends Aggregate> projectionClass = (Class<? extends Aggregate>) projection
                     .getClass();
-            return (I) factus.fetch(projectionClass, AggregateUtil.aggregateId(
-                    (Aggregate) projection));
+            Optional<? extends Aggregate> aggregate = factus.find(projectionClass, AggregateUtil
+                    .aggregateId(
+                            (Aggregate) projection));
+            return aggregate.map(value -> (I) value).orElse(projection);
         }
         if (projection instanceof SnapshotProjection) {
             Class<? extends SnapshotProjection> projectionClass = (Class<? extends SnapshotProjection>) projection
@@ -172,12 +174,13 @@ public class Locked<I extends Projection> {
             }
 
             @Override
-            public <P extends SnapshotProjection> P fetch(@NonNull Class<P> projectionClass) {
+            public <P extends SnapshotProjection> @NonNull P fetch(
+                    @NonNull Class<P> projectionClass) {
                 return factus.fetch(projectionClass);
             }
 
             @Override
-            public <A extends Aggregate> Optional<A> find(
+            public <A extends Aggregate> @NonNull Optional<A> find(
                     @NonNull Class<A> aggregateClass,
                     @NonNull UUID aggregateId) {
                 return factus.find(aggregateClass, aggregateId);
