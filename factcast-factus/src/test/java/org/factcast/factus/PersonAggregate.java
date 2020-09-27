@@ -15,20 +15,19 @@
  */
 package org.factcast.factus;
 
-import org.factcast.factus.projection.Aggregate;
-
 import lombok.Data;
+import org.factcast.factus.projection.Aggregate;
 
 @Data
 class PersonAggregate extends Aggregate {
 
-    private String name = "";
+  private String name = "";
 
-    private int processed = 0;
+  private int processed = 0;
 
-    @Handler
-    void process(NameEvent event) {
-        this.name = event.name();
-        this.processed++;
-    }
+  @Handler
+  void process(NameEvent event) {
+    this.name = event.name();
+    this.processed++;
+  }
 }

@@ -16,9 +16,7 @@
 package org.factcast.core.spec;
 
 import java.util.function.Supplier;
-
 import javax.script.ScriptEngine;
-
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -27,21 +25,19 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 class JavaScriptEngineSupplier implements Supplier<ScriptEngine> {
-    private static final NashornScriptEngineFactory staticFactory = new NashornScriptEngineFactory();
+  private static final NashornScriptEngineFactory staticFactory = new NashornScriptEngineFactory();
 
-    final NashornScriptEngineFactory factory;
+  final NashornScriptEngineFactory factory;
 
-    public JavaScriptEngineSupplier() {
-        this(staticFactory);
-    }
+  public JavaScriptEngineSupplier() {
+    this(staticFactory);
+  }
 
-    @Override
-    public ScriptEngine get() {
-        ScriptEngine engine = factory.getScriptEngine();
-        if (engine == null)
-            throw new IllegalStateException("Cannot find any engine to run javascript code.");
-        else
-            return engine;
-    }
-
+  @Override
+  public ScriptEngine get() {
+    ScriptEngine engine = factory.getScriptEngine();
+    if (engine == null)
+      throw new IllegalStateException("Cannot find any engine to run javascript code.");
+    else return engine;
+  }
 }

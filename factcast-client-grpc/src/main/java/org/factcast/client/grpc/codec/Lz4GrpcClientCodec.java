@@ -15,33 +15,31 @@
  */
 package org.factcast.client.grpc.codec;
 
+import io.grpc.Codec;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import io.grpc.Codec;
 import net.devh.boot.grpc.common.codec.CodecType;
 import net.devh.boot.grpc.common.codec.GrpcCodec;
 import net.jpountz.lz4.*;
 
 @GrpcCodec(advertised = true, codecType = CodecType.ALL)
 public class Lz4GrpcClientCodec implements Codec {
-    private static final LZ4FastDecompressor decomp = LZ4Factory.fastestInstance()
-            .fastDecompressor();
+  private static final LZ4FastDecompressor decomp = LZ4Factory.fastestInstance().fastDecompressor();
 
-    private static final LZ4Compressor comp = LZ4Factory.fastestInstance().fastCompressor();
+  private static final LZ4Compressor comp = LZ4Factory.fastestInstance().fastCompressor();
 
-    @Override
-    public String getMessageEncoding() {
-        return "lz4";
-    }
+  @Override
+  public String getMessageEncoding() {
+    return "lz4";
+  }
 
-    @Override
-    public InputStream decompress(InputStream inputStream) {
-        return new LZ4BlockInputStream(inputStream, decomp);
-    }
+  @Override
+  public InputStream decompress(InputStream inputStream) {
+    return new LZ4BlockInputStream(inputStream, decomp);
+  }
 
-    @Override
-    public OutputStream compress(OutputStream outputStream) {
-        return new LZ4BlockOutputStream(outputStream, 65536, comp);
-    }
+  @Override
+  public OutputStream compress(OutputStream outputStream) {
+    return new LZ4BlockOutputStream(outputStream, 65536, comp);
+  }
 }

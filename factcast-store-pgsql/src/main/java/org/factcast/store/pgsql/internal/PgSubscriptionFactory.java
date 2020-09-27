@@ -15,8 +15,9 @@
  */
 package org.factcast.store.pgsql.internal;
 
+import com.google.common.eventbus.EventBus;
 import java.util.concurrent.CompletableFuture;
-
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -27,33 +28,30 @@ import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import com.google.common.eventbus.EventBus;
-
-import lombok.RequiredArgsConstructor;
-
 // TODO integrate with PGQuery
 @SuppressWarnings("UnstableApiUsage")
 @RequiredArgsConstructor
 class PgSubscriptionFactory {
 
-    final JdbcTemplate jdbcTemplate;
+  final JdbcTemplate jdbcTemplate;
 
-    final EventBus eventBus;
+  final EventBus eventBus;
 
-    final PgFactIdToSerialMapper idToSerialMapper;
+  final PgFactIdToSerialMapper idToSerialMapper;
 
-    final PgLatestSerialFetcher fetcher;
+  final PgLatestSerialFetcher fetcher;
 
-    final PgCatchupFactory catchupFactory;
+  final PgCatchupFactory catchupFactory;
 
-    final FactTransformersFactory transformersFactory;
+  final FactTransformersFactory transformersFactory;
 
-    public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
-        final SubscriptionImpl subscription = SubscriptionImpl.on(observer,
-                transformersFactory.createFor(req));
-        PgFactStream pgsub = new PgFactStream(jdbcTemplate, eventBus, idToSerialMapper,
-                subscription, fetcher, catchupFactory);
-        CompletableFuture.runAsync(() -> pgsub.connect(req));
-        return subscription.onClose(pgsub::close);
-    }
+  public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
+    final SubscriptionImpl subscription =
+        SubscriptionImpl.on(observer, transformersFactory.createFor(req));
+    PgFactStream pgsub =
+        new PgFactStream(
+            jdbcTemplate, eventBus, idToSerialMapper, subscription, fetcher, catchupFactory);
+    CompletableFuture.runAsync(() -> pgsub.connect(req));
+    return subscription.onClose(pgsub::close);
+  }
 }

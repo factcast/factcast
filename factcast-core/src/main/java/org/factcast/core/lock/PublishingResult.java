@@ -16,17 +16,12 @@
 package org.factcast.core.lock;
 
 import java.util.List;
-
-import org.factcast.core.Fact;
-
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.factcast.core.Fact;
 
 @RequiredArgsConstructor
 public class PublishingResult {
-    @Getter
-    @NonNull
-    private final List<Fact> publishedFacts;
-
+  @Getter @NonNull private final List<Fact> publishedFacts;
 }

@@ -20,7 +20,8 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.lock.DeprecatedLockedOperationBuilder;
 import org.factcast.core.lock.LockedOperationBuilder;
 import org.factcast.core.spec.FactSpec;
@@ -32,9 +33,6 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 /**
  * Default impl for FactCast used by FactCast.from* methods.
  *
@@ -43,69 +41,65 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 class DefaultFactCast implements FactCast {
 
-    @NonNull
-    final FactStore store;
+  @NonNull final FactStore store;
 
-    @Override
-    @NonNull
-    public Subscription subscribeEphemeral(@NonNull SubscriptionRequest req,
-            @NonNull FactObserver observer) {
-        return store.subscribe(SubscriptionRequestTO.forFacts(req), observer);
-    }
+  @Override
+  @NonNull
+  public Subscription subscribeEphemeral(
+      @NonNull SubscriptionRequest req, @NonNull FactObserver observer) {
+    return store.subscribe(SubscriptionRequestTO.forFacts(req), observer);
+  }
 
-    @Override
-    public void publish(@NonNull List<? extends Fact> factsToPublish) {
-        FactValidation.validateOnPublish(factsToPublish);
-        store.publish(factsToPublish);
-    }
+  @Override
+  public void publish(@NonNull List<? extends Fact> factsToPublish) {
+    FactValidation.validateOnPublish(factsToPublish);
+    store.publish(factsToPublish);
+  }
 
-    @Override
-    public LockedOperationBuilder lock(@NonNull List<FactSpec> scope) {
-        return new LockedOperationBuilder(store, scope);
-    }
+  @Override
+  public LockedOperationBuilder lock(@NonNull List<FactSpec> scope) {
+    return new LockedOperationBuilder(store, scope);
+  }
 
-    @Override
-    @NonNull
-    public OptionalLong serialOf(@NonNull UUID id) {
-        return store.serialOf(id);
-    }
+  @Override
+  @NonNull
+  public OptionalLong serialOf(@NonNull UUID id) {
+    return store.serialOf(id);
+  }
 
-    @Override
-    public Set<String> enumerateNamespaces() {
-        return store.enumerateNamespaces();
-    }
+  @Override
+  public Set<String> enumerateNamespaces() {
+    return store.enumerateNamespaces();
+  }
 
-    @Override
-    public Set<String> enumerateTypes(@NonNull String ns) {
-        return store.enumerateTypes(ns);
-    }
+  @Override
+  public Set<String> enumerateTypes(@NonNull String ns) {
+    return store.enumerateTypes(ns);
+  }
 
-    @Override
-    public DeprecatedLockedOperationBuilder lock(@NonNull String ns) {
-        if (ns.trim().isEmpty())
-            throw new IllegalArgumentException("Namespace must not be empty");
-        return new DeprecatedLockedOperationBuilder(this.store, ns);
-    }
+  @Override
+  public DeprecatedLockedOperationBuilder lock(@NonNull String ns) {
+    if (ns.trim().isEmpty()) throw new IllegalArgumentException("Namespace must not be empty");
+    return new DeprecatedLockedOperationBuilder(this.store, ns);
+  }
 
-    @Override
-    public Subscription subscribe(@NonNull SubscriptionRequest request,
-            @NonNull FactObserver observer) {
-        return new ReconnectingFactSubscriptionWrapper(store, SubscriptionRequestTO.forFacts(
-                request),
-                observer);
-    }
+  @Override
+  public Subscription subscribe(
+      @NonNull SubscriptionRequest request, @NonNull FactObserver observer) {
+    return new ReconnectingFactSubscriptionWrapper(
+        store, SubscriptionRequestTO.forFacts(request), observer);
+  }
 
-    @Override
-    @NonNull
-    public Optional<Fact> fetchById(@NonNull UUID id) {
-        return store.fetchById(id);
-    }
+  @Override
+  @NonNull
+  public Optional<Fact> fetchById(@NonNull UUID id) {
+    return store.fetchById(id);
+  }
 
-    @Override
-    public Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected)
-            // TODO is transport of this exception reasonable?
-            throws TransformationException {
-        return store.fetchByIdAndVersion(id, versionExpected);
-    }
-
+  @Override
+  public Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected)
+      // TODO is transport of this exception reasonable?
+      throws TransformationException {
+    return store.fetchByIdAndVersion(id, versionExpected);
+  }
 }

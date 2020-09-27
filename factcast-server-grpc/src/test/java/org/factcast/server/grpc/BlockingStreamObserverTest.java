@@ -19,106 +19,101 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import io.grpc.stub.ServerCallStreamObserver;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+import lombok.val;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import io.grpc.stub.ServerCallStreamObserver;
-import lombok.val;
-
 @ExtendWith(MockitoExtension.class)
 public class BlockingStreamObserverTest {
 
-    @Mock
-    private ServerCallStreamObserver<Object> delegate;
+  @Mock private ServerCallStreamObserver<Object> delegate;
 
-    private BlockingStreamObserver<Object> uut;
+  private BlockingStreamObserver<Object> uut;
 
-    @BeforeEach
-    void setUp() {
-        uut = new BlockingStreamObserver<>("foo", delegate);
+  @BeforeEach
+  void setUp() {
+    uut = new BlockingStreamObserver<>("foo", delegate);
+  }
+
+  @Test
+  void testOnCompleted() {
+    verify(delegate, never()).onCompleted();
+    uut.onCompleted();
+    verify(delegate).onCompleted();
+  }
+
+  @Test
+  void testNullContract() {
+    expectNPE(() -> new BlockingStreamObserver(null, mock(ServerCallStreamObserver.class)));
+    expectNPE(() -> new BlockingStreamObserver(null, null));
+    expectNPE(() -> new BlockingStreamObserver("oink", null));
+  }
+
+  @Test
+  void testOnError() {
+    verify(delegate, never()).onError(any());
+    uut.onError(new Exception());
+    verify(delegate).onError(any());
+  }
+
+  @Test
+  void testOnNextWhenReady() {
+    when(delegate.isReady()).thenReturn(true);
+    uut.onNext(new Object());
+    verify(delegate).onNext(any());
+  }
+
+  @Test
+  void testOnNextNotYetReady() throws Exception {
+    AtomicBoolean ready = new AtomicBoolean(false);
+    when(delegate.isReady()).thenAnswer(i -> ready.get());
+    CompletableFuture<Void> onNextCall = CompletableFuture.runAsync(() -> uut.onNext(new Object()));
+    Thread.sleep(30);
+    assertFalse(onNextCall.isDone());
+    ready.set(true);
+    uut.wakeup();
+    Thread.sleep(30);
+    assertTrue(onNextCall.isDone());
+    verify(delegate).onNext(any());
+  }
+
+  @Test
+  void testOnNextNotReadyThenCancelled() throws Exception {
+    AtomicBoolean ready = new AtomicBoolean(false);
+    AtomicBoolean cancelled = new AtomicBoolean(false);
+    when(delegate.isReady()).thenAnswer(i -> ready.get());
+    when(delegate.isCancelled()).thenAnswer(i -> cancelled.get());
+    CompletableFuture<Void> onNextCall = CompletableFuture.runAsync(() -> uut.onNext(new Object()));
+    Thread.sleep(100);
+    assertFalse(onNextCall.isDone());
+    cancelled.set(true);
+    uut.wakeup();
+    Thread.sleep(100);
+    assertTrue(onNextCall.isDone());
+    verify(delegate, never()).onNext(any());
+  }
+
+  public static void expectNPE(Runnable r) {
+    expect(r, NullPointerException.class, IllegalArgumentException.class);
+  }
+
+  @SafeVarargs
+  public static void expect(Runnable r, Class<? extends Throwable>... ex) {
+    try {
+      r.run();
+      fail("expected " + Arrays.toString(ex));
+    } catch (Throwable actual) {
+
+      val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
+      if (!matches) {
+        fail("Wrong exception, expected " + Arrays.toString(ex) + " but got " + actual);
+      }
     }
-
-    @Test
-    void testOnCompleted() {
-        verify(delegate, never()).onCompleted();
-        uut.onCompleted();
-        verify(delegate).onCompleted();
-    }
-
-    @Test
-    void testNullContract() {
-        expectNPE(() -> new BlockingStreamObserver(null, mock(ServerCallStreamObserver.class)));
-        expectNPE(() -> new BlockingStreamObserver(null, null));
-        expectNPE(() -> new BlockingStreamObserver("oink", null));
-    }
-
-    @Test
-    void testOnError() {
-        verify(delegate, never()).onError(any());
-        uut.onError(new Exception());
-        verify(delegate).onError(any());
-    }
-
-    @Test
-    void testOnNextWhenReady() {
-        when(delegate.isReady()).thenReturn(true);
-        uut.onNext(new Object());
-        verify(delegate).onNext(any());
-    }
-
-    @Test
-    void testOnNextNotYetReady() throws Exception {
-        AtomicBoolean ready = new AtomicBoolean(false);
-        when(delegate.isReady()).thenAnswer(i -> ready.get());
-        CompletableFuture<Void> onNextCall = CompletableFuture.runAsync(() -> uut.onNext(
-                new Object()));
-        Thread.sleep(30);
-        assertFalse(onNextCall.isDone());
-        ready.set(true);
-        uut.wakeup();
-        Thread.sleep(30);
-        assertTrue(onNextCall.isDone());
-        verify(delegate).onNext(any());
-    }
-
-    @Test
-    void testOnNextNotReadyThenCancelled() throws Exception {
-        AtomicBoolean ready = new AtomicBoolean(false);
-        AtomicBoolean cancelled = new AtomicBoolean(false);
-        when(delegate.isReady()).thenAnswer(i -> ready.get());
-        when(delegate.isCancelled()).thenAnswer(i -> cancelled.get());
-        CompletableFuture<Void> onNextCall = CompletableFuture.runAsync(() -> uut.onNext(
-                new Object()));
-        Thread.sleep(100);
-        assertFalse(onNextCall.isDone());
-        cancelled.set(true);
-        uut.wakeup();
-        Thread.sleep(100);
-        assertTrue(onNextCall.isDone());
-        verify(delegate, never()).onNext(any());
-    }
-
-    public static void expectNPE(Runnable r) {
-        expect(r, NullPointerException.class, IllegalArgumentException.class);
-    }
-
-    @SafeVarargs
-    public static void expect(Runnable r, Class<? extends Throwable>... ex) {
-        try {
-            r.run();
-            fail("expected " + Arrays.toString(ex));
-        } catch (Throwable actual) {
-
-            val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
-            if (!matches) {
-                fail("Wrong exception, expected " + Arrays.toString(ex) + " but got " + actual);
-            }
-        }
-    }
+  }
 }

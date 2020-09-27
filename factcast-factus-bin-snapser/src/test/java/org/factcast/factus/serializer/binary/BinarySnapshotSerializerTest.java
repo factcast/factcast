@@ -25,29 +25,27 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class BinarySnapshotSerializerTest {
 
-    @InjectMocks
-    private BinarySnapshotSerializer underTest;
+  @InjectMocks private BinarySnapshotSerializer underTest;
 
-    @Nested
-    class WhenSerializing {
+  @Nested
+  class WhenSerializing {
 
-        @Test
-        void canDeserialize() {
-            TestProjection b = underTest.deserialize(TestProjection.class, underTest.serialize(
-                    new TestProjection()));
-            assertEquals("bar", b.foo());
-        }
-
-        @Test
-        void compresses() {
-            CompressableTestProjection testProjection = new CompressableTestProjection();
-            byte[] bytes = underTest.serialize(testProjection);
-            CompressableTestProjection b = underTest.deserialize(CompressableTestProjection.class,
-                    bytes);
-            assertEquals(b.someString(), testProjection.someString());
-            // lots of same chars in there, should be able to compress to 50%
-            // including the overhead of msgpack
-            assertTrue(bytes.length < testProjection.someString().length() / 2);
-        }
+    @Test
+    void canDeserialize() {
+      TestProjection b =
+          underTest.deserialize(TestProjection.class, underTest.serialize(new TestProjection()));
+      assertEquals("bar", b.foo());
     }
+
+    @Test
+    void compresses() {
+      CompressableTestProjection testProjection = new CompressableTestProjection();
+      byte[] bytes = underTest.serialize(testProjection);
+      CompressableTestProjection b = underTest.deserialize(CompressableTestProjection.class, bytes);
+      assertEquals(b.someString(), testProjection.someString());
+      // lots of same chars in there, should be able to compress to 50%
+      // including the overhead of msgpack
+      assertTrue(bytes.length < testProjection.someString().length() / 2);
+    }
+  }
 }

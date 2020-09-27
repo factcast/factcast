@@ -15,8 +15,14 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import java.util.Optional;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.TransformationException;
@@ -28,64 +34,49 @@ import org.factcast.store.pgsql.registry.transformation.chains.TransformationCha
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
 import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 @RequiredArgsConstructor
 public class FactTransformerServiceImpl implements FactTransformerService {
 
-    @NonNull
-    private final TransformationChains chains;
+  @NonNull private final TransformationChains chains;
 
-    @NonNull
-    private final Transformer trans;
+  @NonNull private final Transformer trans;
 
-    @NonNull
-    private final TransformationCache cache;
+  @NonNull private final TransformationCache cache;
 
-    @NonNull
-    private final RegistryMetrics registryMetrics;
+  @NonNull private final RegistryMetrics registryMetrics;
 
-    @Override
-    public Fact transformIfNecessary(Fact e, int targetVersion) throws TransformationException {
+  @Override
+  public Fact transformIfNecessary(Fact e, int targetVersion) throws TransformationException {
 
-        int sourceVersion = e.version();
-        if (sourceVersion == targetVersion || targetVersion == 0)
-            return e;
+    int sourceVersion = e.version();
+    if (sourceVersion == targetVersion || targetVersion == 0) return e;
 
-        TransformationKey key = TransformationKey.of(e.ns(), e.type());
-        TransformationChain chain = chains.get(key, sourceVersion,
-                targetVersion);
+    TransformationKey key = TransformationKey.of(e.ns(), e.type());
+    TransformationChain chain = chains.get(key, sourceVersion, targetVersion);
 
-        String chainId = chain.id();
+    String chainId = chain.id();
 
-        Optional<Fact> cached = cache.find(e.id(), targetVersion, chainId);
-        if (cached.isPresent())
-            return cached.get();
-        else {
-            try {
-                JsonNode input = FactCastJson.readTree(e.jsonPayload());
-                JsonNode header = FactCastJson.readTree(e.jsonHeader());
-                ((ObjectNode) header).put("version", targetVersion);
-                JsonNode transformedPayload = trans.transform(chain, input);
-                Fact transformed = Fact.of(header, transformedPayload);
-                // can be optimized by passing jsonnode?
-                cache.put(transformed, chainId);
-                return transformed;
-            } catch (JsonProcessingException e1) {
-                registryMetrics.count(MetricEvent.TRANSFORMATION_FAILED, Tags.of(
-                        Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
-                        Tag.of("version", String.valueOf(targetVersion))));
+    Optional<Fact> cached = cache.find(e.id(), targetVersion, chainId);
+    if (cached.isPresent()) return cached.get();
+    else {
+      try {
+        JsonNode input = FactCastJson.readTree(e.jsonPayload());
+        JsonNode header = FactCastJson.readTree(e.jsonHeader());
+        ((ObjectNode) header).put("version", targetVersion);
+        JsonNode transformedPayload = trans.transform(chain, input);
+        Fact transformed = Fact.of(header, transformedPayload);
+        // can be optimized by passing jsonnode?
+        cache.put(transformed, chainId);
+        return transformed;
+      } catch (JsonProcessingException e1) {
+        registryMetrics.count(
+            MetricEvent.TRANSFORMATION_FAILED,
+            Tags.of(
+                Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
+                Tag.of("version", String.valueOf(targetVersion))));
 
-                throw new TransformationException(e1);
-            }
-        }
-
+        throw new TransformationException(e1);
+      }
     }
+  }
 }

@@ -15,13 +15,12 @@
  */
 package org.factcast.store.pgsql.internal.query;
 
-import org.factcast.store.pgsql.internal.PgConstants;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.store.pgsql.internal.PgConstants;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 
 /**
  * Fetches the latest SERIAL from the fact table.
@@ -32,22 +31,19 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PgLatestSerialFetcher {
 
-    @NonNull
-    final JdbcTemplate jdbcTemplate;
+  @NonNull final JdbcTemplate jdbcTemplate;
 
-    /**
-     * @return 0, if no Fact is found, or exception is raised.
-     */
-    public long retrieveLatestSer() {
-        // noinspection CatchMayIgnoreException
-        try {
-            SqlRowSet rs = jdbcTemplate.queryForRowSet(PgConstants.SELECT_LATEST_SER);
-            if (rs.next()) {
-                return rs.getLong(1);
-            }
-        } catch (Exception ignored) {
-            log.warn("While retrieveLatestSer:", ignored);
-        }
-        return 0;
+  /** @return 0, if no Fact is found, or exception is raised. */
+  public long retrieveLatestSer() {
+    // noinspection CatchMayIgnoreException
+    try {
+      SqlRowSet rs = jdbcTemplate.queryForRowSet(PgConstants.SELECT_LATEST_SER);
+      if (rs.next()) {
+        return rs.getLong(1);
+      }
+    } catch (Exception ignored) {
+      log.warn("While retrieveLatestSer:", ignored);
     }
+    return 0;
+  }
 }

@@ -18,57 +18,52 @@ package org.factcast.store.pgsql.registry.validation;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 @Aspect
 @Slf4j
 @RequiredArgsConstructor
 public class FactValidationAspect {
 
-    private final FactValidator validator;
+  private final FactValidator validator;
 
-    @SuppressWarnings("unchecked")
-    @Around("execution(public void org.factcast.core.store.FactStore.publish(*))")
-    public Object interceptPublish(ProceedingJoinPoint joinPoint) throws Throwable {
-        log.trace("intercepting publish()");
+  @SuppressWarnings("unchecked")
+  @Around("execution(public void org.factcast.core.store.FactStore.publish(*))")
+  public Object interceptPublish(ProceedingJoinPoint joinPoint) throws Throwable {
+    log.trace("intercepting publish()");
 
-        Object[] args = joinPoint.getArgs();
-        List<? extends Fact> facts = (List<? extends Fact>) args[0];
-        validate(facts);
+    Object[] args = joinPoint.getArgs();
+    List<? extends Fact> facts = (List<? extends Fact>) args[0];
+    validate(facts);
 
-        return joinPoint.proceed();
-    }
+    return joinPoint.proceed();
+  }
 
-    private void validate(List<? extends Fact> facts) {
+  private void validate(List<? extends Fact> facts) {
 
-        List<FactValidationError> errors = new LinkedList<>();
+    List<FactValidationError> errors = new LinkedList<>();
 
-        facts.forEach(f -> errors.addAll(validator.validate(f)));
+    facts.forEach(f -> errors.addAll(validator.validate(f)));
 
-        if (!errors.isEmpty())
-            throw new FactValidationException(
-                    errors.stream()
-                            .map(FactValidationError::toString)
-                            .collect(Collectors.toList()));
+    if (!errors.isEmpty())
+      throw new FactValidationException(
+          errors.stream().map(FactValidationError::toString).collect(Collectors.toList()));
+  }
 
-    }
+  @SuppressWarnings("unchecked")
+  @Around("execution(public boolean org.factcast.core.store.FactStore.publishIfUnchanged(..))")
+  public Object interceptPublishIfUnchanged(ProceedingJoinPoint joinPoint) throws Throwable {
+    log.trace("intercepting publishIfUnchanged()");
+    Object[] args = joinPoint.getArgs();
+    List<? extends Fact> facts = (List<? extends Fact>) args[0];
+    validate(facts);
 
-    @SuppressWarnings("unchecked")
-    @Around("execution(public boolean org.factcast.core.store.FactStore.publishIfUnchanged(..))")
-    public Object interceptPublishIfUnchanged(ProceedingJoinPoint joinPoint) throws Throwable {
-        log.trace("intercepting publishIfUnchanged()");
-        Object[] args = joinPoint.getArgs();
-        List<? extends Fact> facts = (List<? extends Fact>) args[0];
-        validate(facts);
-
-        return joinPoint.proceed();
-    }
+    return joinPoint.proceed();
+  }
 }
