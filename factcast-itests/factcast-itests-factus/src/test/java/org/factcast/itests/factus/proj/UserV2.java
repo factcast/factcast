@@ -15,24 +15,20 @@
  */
 package org.factcast.itests.factus.proj;
 
+import lombok.Getter;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.itests.factus.event.versioned.v2.UserCreated;
 
-import lombok.Getter;
-
 public class UserV2 extends Aggregate {
 
-    @Getter
-    private String userName;
+  @Getter private String userName;
 
-    @Getter
-    private String salutation;
+  @Getter private String salutation;
 
-    @Handler
-    void apply(UserCreated u) {
-        userName = u.userName();
-        salutation = u.salutation();
-    }
-
+  @Handler
+  void apply(UserCreated u) {
+    userName = u.userName();
+    salutation = u.salutation();
+  }
 }

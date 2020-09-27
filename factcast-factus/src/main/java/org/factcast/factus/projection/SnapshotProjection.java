@@ -15,6 +15,4 @@
  */
 package org.factcast.factus.projection;
 
-public interface SnapshotProjection extends Projection {
-
-}
+public interface SnapshotProjection extends Projection {}

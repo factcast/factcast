@@ -20,9 +20,9 @@ import java.util.Map;
 
 public class FactCastSecretProperties {
 
-    public Map<String, String> getSecrets() {
-        return secrets;
-    }
+  public Map<String, String> getSecrets() {
+    return secrets;
+  }
 
-    private final Map<String, String> secrets = new HashMap<String, String>();
+  private final Map<String, String> secrets = new HashMap<String, String>();
 }

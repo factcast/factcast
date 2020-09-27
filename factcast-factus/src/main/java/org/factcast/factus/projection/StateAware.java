@@ -16,11 +16,10 @@
 package org.factcast.factus.projection;
 
 import java.util.UUID;
-
 import lombok.NonNull;
 
 public interface StateAware {
-    UUID state();
+  UUID state();
 
-    void state(@NonNull UUID state);
+  void state(@NonNull UUID state);
 }

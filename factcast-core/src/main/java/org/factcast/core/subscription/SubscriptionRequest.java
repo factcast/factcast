@@ -19,59 +19,57 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.factcast.core.spec.FactSpec;
-
 import lombok.NonNull;
+import org.factcast.core.spec.FactSpec;
 
 /**
  * Defines a request for Subscription.
  *
- * see {@link FluentSubscriptionRequest}, {@link SubscriptionRequestTO}
+ * <p>see {@link FluentSubscriptionRequest}, {@link SubscriptionRequestTO}
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
 public interface SubscriptionRequest {
 
-    long maxBatchDelayInMs();
+  long maxBatchDelayInMs();
 
-    boolean continuous();
+  boolean continuous();
 
-    boolean ephemeral();
+  boolean ephemeral();
 
-    Optional<UUID> startingAfter();
+  Optional<UUID> startingAfter();
 
-    List<FactSpec> specs();
+  List<FactSpec> specs();
 
-    String debugInfo();
+  String debugInfo();
 
-    String pid();
+  String pid();
 
-    // ------------
-    static SpecBuilder follow(@NonNull FactSpec specification) {
-        return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).follow(
-                specification);
-    }
+  // ------------
+  static SpecBuilder follow(@NonNull FactSpec specification) {
+    return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest())
+        .follow(specification);
+  }
 
-    static SpecBuilder follow(long maxBatchDelayInMs, @NonNull FactSpec specification) {
-        FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest();
-        toBuild.maxBatchDelayInMs = maxBatchDelayInMs;
-        return new FluentSubscriptionRequest.Builder(toBuild).follow(specification);
-    }
+  static SpecBuilder follow(long maxBatchDelayInMs, @NonNull FactSpec specification) {
+    FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest();
+    toBuild.maxBatchDelayInMs = maxBatchDelayInMs;
+    return new FluentSubscriptionRequest.Builder(toBuild).follow(specification);
+  }
 
-    static SpecBuilder catchup(@NonNull FactSpec specification) {
-        return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).catchup(
-                specification);
-    }
+  static SpecBuilder catchup(@NonNull FactSpec specification) {
+    return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest())
+        .catchup(specification);
+  }
 
-    // convenience
-    static SpecBuilder catchup(@NonNull Collection<FactSpec> specification) {
-        return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).catchup(
-                specification);
-    }
+  // convenience
+  static SpecBuilder catchup(@NonNull Collection<FactSpec> specification) {
+    return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest())
+        .catchup(specification);
+  }
 
-    static SpecBuilder follow(@NonNull Collection<FactSpec> specification) {
-        return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest()).follow(
-                specification);
-    }
+  static SpecBuilder follow(@NonNull Collection<FactSpec> specification) {
+    return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest())
+        .follow(specification);
+  }
 }

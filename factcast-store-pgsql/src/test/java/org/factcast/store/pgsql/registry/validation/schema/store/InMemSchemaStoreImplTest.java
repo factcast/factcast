@@ -22,8 +22,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class InMemSchemaStoreImplTest extends AbstractSchemaStoreTest {
 
-    @Override
-    protected SchemaStore createUUT() {
-        return new InMemSchemaStoreImpl(registryMetrics);
-    }
+  @Override
+  protected SchemaStore createUUT() {
+    return new InMemSchemaStoreImpl(registryMetrics);
+  }
 }

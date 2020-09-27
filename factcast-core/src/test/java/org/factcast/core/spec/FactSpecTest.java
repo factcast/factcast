@@ -18,188 +18,179 @@ package org.factcast.core.spec;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Arrays;
 import java.util.UUID;
-
+import lombok.val;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.Specification;
 import org.junit.jupiter.api.*;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import lombok.val;
-
 public class FactSpecTest {
 
-    @Test
-    void testMetaBothNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> FactSpec.ns("foo")
-                .meta(null, null));
-    }
+  @Test
+  void testMetaBothNull() {
+    Assertions.assertThrows(NullPointerException.class, () -> FactSpec.ns("foo").meta(null, null));
+  }
 
-    @Test
-    void testMetaKeyNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> FactSpec.ns("foo")
-                .meta(null, ""));
-    }
+  @Test
+  void testMetaKeyNull() {
+    Assertions.assertThrows(NullPointerException.class, () -> FactSpec.ns("foo").meta(null, ""));
+  }
 
-    @Test
-    void testMetaValueNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> FactSpec.ns("foo")
-                .meta("", null));
-    }
+  @Test
+  void testMetaValueNull() {
+    Assertions.assertThrows(NullPointerException.class, () -> FactSpec.ns("foo").meta("", null));
+  }
 
-    @Test
-    void testFactSpecConstructorNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> new FactSpec(null));
-    }
+  @Test
+  void testFactSpecConstructorNull() {
+    Assertions.assertThrows(NullPointerException.class, () -> new FactSpec(null));
+  }
 
-    @SuppressWarnings("static-access")
-    @Test
-    void testFactSpecNs() {
-        assertEquals("y", FactSpec.ns("x").ns("y").ns());
-    }
+  @SuppressWarnings("static-access")
+  @Test
+  void testFactSpecNs() {
+    assertEquals("y", FactSpec.ns("x").ns("y").ns());
+  }
 
-    @Test
-    void testFactSpecType() {
-        assertEquals("y", FactSpec.ns("x").type("y").type());
-    }
+  @Test
+  void testFactSpecType() {
+    assertEquals("y", FactSpec.ns("x").type("y").type());
+  }
 
-    @Test
-    void testFactSpecVersion() {
-        assertEquals(1, FactSpec.ns("x").type("y").version(1).version());
-    }
+  @Test
+  void testFactSpecVersion() {
+    assertEquals(1, FactSpec.ns("x").type("y").version(1).version());
+  }
 
-    @Test
-    void testFactSpecAggId() {
-        UUID id = UUID.randomUUID();
-        assertEquals(id, FactSpec.ns("x").aggId(id).aggId());
-    }
+  @Test
+  void testFactSpecAggId() {
+    UUID id = UUID.randomUUID();
+    assertEquals(id, FactSpec.ns("x").aggId(id).aggId());
+  }
 
-    @Test
-    void testFactSpecJsFilter() {
-        FactSpec ns = FactSpec.ns("x");
-        ns = ns.jsFilterScript("foo");
-        String script = ns.jsFilterScript();
-        assertEquals("foo", script);
-    }
+  @Test
+  void testFactSpecJsFilter() {
+    FactSpec ns = FactSpec.ns("x");
+    ns = ns.jsFilterScript("foo");
+    String script = ns.jsFilterScript();
+    assertEquals("foo", script);
+  }
 
-    @Test
-    void testFactSpecEquality() {
-        FactSpec f1 = FactSpec.ns("x");
-        FactSpec f2 = FactSpec.ns("x");
-        assertEquals(f1, f2);
-        assertNotSame(f1, f2);
-    }
+  @Test
+  void testFactSpecEquality() {
+    FactSpec f1 = FactSpec.ns("x");
+    FactSpec f2 = FactSpec.ns("x");
+    assertEquals(f1, f2);
+    assertNotSame(f1, f2);
+  }
 
-    @Test
-    public void testJsFilterScriptDeserDownwardCompatibility() {
-        String script = "foo";
-        String json = "{\"ns\":\"x\",\"jsFilterScript\":\"" + script + "\"}";
+  @Test
+  public void testJsFilterScriptDeserDownwardCompatibility() {
+    String script = "foo";
+    String json = "{\"ns\":\"x\",\"jsFilterScript\":\"" + script + "\"}";
 
-        FactSpec spec = FactCastJson.readValue(FactSpec.class, json);
+    FactSpec spec = FactCastJson.readValue(FactSpec.class, json);
 
-        assertEquals(new FilterScript("js", script), spec.filterScript());
-    }
+    assertEquals(new FilterScript("js", script), spec.filterScript());
+  }
 
-    @Test
-    public void testJsFilterScriptDeserRemoved() {
-        String script = "foo";
-        String json = "{\"ns\":\"x\",\"jsFilterScript\":\"" + script + "\"}";
+  @Test
+  public void testJsFilterScriptDeserRemoved() {
+    String script = "foo";
+    String json = "{\"ns\":\"x\",\"jsFilterScript\":\"" + script + "\"}";
 
-        FactSpec spec = FactCastJson.readValue(FactSpec.class, json);
-        spec.filterScript(null);
-        assertNull(spec.jsFilterScript());
-        assertNull(spec.filterScript());
-    }
+    FactSpec spec = FactCastJson.readValue(FactSpec.class, json);
+    spec.filterScript(null);
+    assertNull(spec.jsFilterScript());
+    assertNull(spec.filterScript());
+  }
 
-    @Test
-    public void testFilterScriptDeser() {
-        String script = "foo";
-        String json = "{\"ns\":\"x\",\"filterScript\":{\"languageIdentifier\":\"js\",\"source\":\""
-                + script + "\"}}";
+  @Test
+  public void testFilterScriptDeser() {
+    String script = "foo";
+    String json =
+        "{\"ns\":\"x\",\"filterScript\":{\"languageIdentifier\":\"js\",\"source\":\""
+            + script
+            + "\"}}";
 
-        FactSpec spec = FactCastJson.readValue(FactSpec.class, json);
-        assertEquals(script, spec.jsFilterScript());
-        assertEquals(FilterScript.js(script), spec.filterScript());
+    FactSpec spec = FactCastJson.readValue(FactSpec.class, json);
+    assertEquals(script, spec.jsFilterScript());
+    assertEquals(FilterScript.js(script), spec.filterScript());
 
-        spec.filterScript(null);
-        assertNull(spec.jsFilterScript());
-        assertNull(spec.filterScript());
-    }
+    spec.filterScript(null);
+    assertNull(spec.jsFilterScript());
+    assertNull(spec.filterScript());
+  }
 
-    @Test
-    public void testJsFilterScriptSerDownwardCompatibility() {
-        String expected = "foo";
-        FactSpec fs = FactSpec.ns("x").filterScript(FilterScript.js("foo"));
-        ObjectNode node = FactCastJson.toObjectNode(FactCastJson.writeValueAsString(fs));
+  @Test
+  public void testJsFilterScriptSerDownwardCompatibility() {
+    String expected = "foo";
+    FactSpec fs = FactSpec.ns("x").filterScript(FilterScript.js("foo"));
+    ObjectNode node = FactCastJson.toObjectNode(FactCastJson.writeValueAsString(fs));
 
-        assertEquals(expected, node.get("jsFilterScript").asText());
-    }
+    assertEquals(expected, node.get("jsFilterScript").asText());
+  }
 
-    @Specification(ns = "ns")
-    static class TestFactPayload {
-    }
+  @Specification(ns = "ns")
+  static class TestFactPayload {}
 
-    @Test
-    public void testFactSpecFromAnnotation1() {
-        FactSpec factSpec = FactSpec.from(TestFactPayload.class);
+  @Test
+  public void testFactSpecFromAnnotation1() {
+    FactSpec factSpec = FactSpec.from(TestFactPayload.class);
 
-        assertEquals("ns", factSpec.ns());
-        assertEquals("TestFactPayload", factSpec.type());
-        assertEquals(0, factSpec.version());
+    assertEquals("ns", factSpec.ns());
+    assertEquals("TestFactPayload", factSpec.type());
+    assertEquals(0, factSpec.version());
+  }
 
-    }
+  @Specification(ns = "ns", type = "type")
+  public static class TestFactWithType {}
 
-    @Specification(ns = "ns", type = "type")
-    public static class TestFactWithType {
-    }
+  @Test
+  public void testFactSpecFromAnnotation2() {
+    FactSpec factSpec = FactSpec.from(TestFactWithType.class);
 
-    @Test
-    public void testFactSpecFromAnnotation2() {
-        FactSpec factSpec = FactSpec.from(TestFactWithType.class);
+    assertEquals("ns", factSpec.ns());
+    assertEquals("type", factSpec.type());
+    assertEquals(0, factSpec.version());
+  }
 
-        assertEquals("ns", factSpec.ns());
-        assertEquals("type", factSpec.type());
-        assertEquals(0, factSpec.version());
+  @Specification(ns = "ns", type = "type", version = 2)
+  public static class TestFactWithTypeAndVersion {}
 
-    }
+  @Test
+  public void testFactSpecFromAnnotation3() {
+    FactSpec factSpec = FactSpec.from(TestFactWithTypeAndVersion.class);
 
-    @Specification(ns = "ns", type = "type", version = 2)
-    public static class TestFactWithTypeAndVersion {
-    }
+    assertEquals("ns", factSpec.ns());
+    assertEquals("type", factSpec.type());
+    assertEquals(2, factSpec.version());
+  }
 
-    @Test
-    public void testFactSpecFromAnnotation3() {
-        FactSpec factSpec = FactSpec.from(TestFactWithTypeAndVersion.class);
+  @Test
+  public void testThrowIfNoAnnotationSpecPresent() {
+    Assertions.assertThrows(
+        IllegalArgumentException.class, () -> FactSpec.from(Specification.class));
+  }
 
-        assertEquals("ns", factSpec.ns());
-        assertEquals("type", factSpec.type());
-        assertEquals(2, factSpec.version());
+  @Test
+  public void testFromVarArgs() {
+    val spec = FactSpec.from(TestFactWithType.class, TestFactWithTypeAndVersion.class);
+    assertThat(spec)
+        .hasSize(2)
+        .contains(FactSpec.ns("ns").type("type").version(2))
+        .contains(FactSpec.ns("ns").type("type"));
+  }
 
-    }
-
-    @Test
-    public void testThrowIfNoAnnotationSpecPresent() {
-        Assertions.assertThrows(IllegalArgumentException.class,
-                () -> FactSpec.from(Specification.class));
-    }
-
-    @Test
-    public void testFromVarArgs() {
-        val spec = FactSpec.from(TestFactWithType.class, TestFactWithTypeAndVersion.class);
-        assertThat(spec).hasSize(2)
-                .contains(FactSpec.ns("ns").type("type").version(2))
-                .contains(FactSpec.ns("ns").type("type"));
-    }
-
-    @Test
-    public void testFromList() {
-        val spec = FactSpec.from(Arrays.asList(TestFactWithType.class,
-                TestFactWithTypeAndVersion.class));
-        assertThat(spec).hasSize(2)
-                .contains(FactSpec.ns("ns").type("type").version(2))
-                .contains(FactSpec.ns("ns").type("type"));
-    }
-
+  @Test
+  public void testFromList() {
+    val spec =
+        FactSpec.from(Arrays.asList(TestFactWithType.class, TestFactWithTypeAndVersion.class));
+    assertThat(spec)
+        .hasSize(2)
+        .contains(FactSpec.ns("ns").type("type").version(2))
+        .contains(FactSpec.ns("ns").type("type"));
+  }
 }

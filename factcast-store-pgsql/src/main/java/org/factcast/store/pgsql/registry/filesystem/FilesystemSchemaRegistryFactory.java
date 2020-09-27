@@ -15,35 +15,36 @@
  */
 package org.factcast.store.pgsql.registry.filesystem;
 
+import com.google.common.collect.Lists;
 import java.util.List;
-
+import lombok.NonNull;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.SchemaRegistryFactory;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 
-import com.google.common.collect.Lists;
+public class FilesystemSchemaRegistryFactory
+    implements SchemaRegistryFactory<FilesystemSchemaRegistry> {
 
-import lombok.NonNull;
+  @Override
+  public List<String> getProtocols() {
+    return Lists.newArrayList("file");
+  }
 
-public class FilesystemSchemaRegistryFactory implements
-        SchemaRegistryFactory<FilesystemSchemaRegistry> {
+  @Override
+  public FilesystemSchemaRegistry createInstance(
+      @NonNull String fullUrl,
+      @NonNull SchemaStore schemaStore,
+      @NonNull TransformationStore transformationStore,
+      @NonNull RegistryMetrics registryMetrics,
+      @NonNull PgConfigurationProperties props) {
 
-    @Override
-    public List<String> getProtocols() {
-        return Lists.newArrayList("file");
-    }
-
-    @Override
-    public FilesystemSchemaRegistry createInstance(@NonNull String fullUrl,
-            @NonNull SchemaStore schemaStore,
-            @NonNull TransformationStore transformationStore,
-            @NonNull RegistryMetrics registryMetrics,
-            @NonNull PgConfigurationProperties props) {
-
-        return new FilesystemSchemaRegistry(fullUrl
-                .substring("file://".length()),
-                schemaStore, transformationStore, registryMetrics, props);
-    }
+    return new FilesystemSchemaRegistry(
+        fullUrl.substring("file://".length()),
+        schemaStore,
+        transformationStore,
+        registryMetrics,
+        props);
+  }
 }

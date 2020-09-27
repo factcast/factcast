@@ -15,10 +15,17 @@
  */
 package org.factcast.store.pgsql.internal;
 
+import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.concurrent.Executors;
-
 import javax.sql.DataSource;
-
+import lombok.NonNull;
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
@@ -45,17 +52,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import com.google.common.eventbus.AsyncEventBus;
-import com.google.common.eventbus.EventBus;
-
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import lombok.NonNull;
-import net.javacrumbs.shedlock.core.LockProvider;
-import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
-import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
-import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
-
 /**
  * Main @Configuration class for a PGFactStore
  *
@@ -66,106 +62,121 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMo
 @EnableTransactionManagement
 @EnableScheduling
 @EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_SCHEDULER)
-@Import({ SchemaRegistryConfiguration.class, PgSnapshotCacheConfiguration.class })
+@Import({SchemaRegistryConfiguration.class, PgSnapshotCacheConfiguration.class})
 public class PgFactStoreInternalConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean(EventBus.class)
-    public EventBus eventBus() {
-        return new AsyncEventBus(this.getClass().getSimpleName(), Executors.newCachedThreadPool());
+  @Bean
+  @ConditionalOnMissingBean(EventBus.class)
+  public EventBus eventBus() {
+    return new AsyncEventBus(this.getClass().getSimpleName(), Executors.newCachedThreadPool());
+  }
+
+  @Bean
+  public PgCatchupFactory pgCatchupFactory(
+      PgConfigurationProperties props, JdbcTemplate jdbc, PgFactIdToSerialMapper serMapper) {
+    // noinspection SwitchStatementWithTooFewBranches
+    switch (props.getCatchupStrategy()) {
+      case PAGED:
+        return new PgPagedCatchUpFactory(jdbc, props, serMapper);
+      default:
+        throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
     }
+  }
 
-    @Bean
-    public PgCatchupFactory pgCatchupFactory(PgConfigurationProperties props, JdbcTemplate jdbc,
-            PgFactIdToSerialMapper serMapper) {
-        // noinspection SwitchStatementWithTooFewBranches
-        switch (props.getCatchupStrategy()) {
-        case PAGED:
-            return new PgPagedCatchUpFactory(jdbc, props, serMapper);
-        default:
-            throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
-        }
-    }
+  @Bean
+  public PgMetrics pgMetrics(@NonNull MeterRegistry registry) {
+    return new PgMetrics(registry);
+  }
 
-    @Bean
-    public PgMetrics pgMetrics(@NonNull MeterRegistry registry) {
-        return new PgMetrics(registry);
-    }
+  @Bean
+  public FactStore factStore(
+      JdbcTemplate jdbcTemplate,
+      PgSubscriptionFactory subscriptionFactory,
+      PgTokenStore tokenStore,
+      FactTableWriteLock lock,
+      FactTransformerService factTransformerService,
+      PgSnapshotCache snapCache,
+      PgMetrics pgMetrics) {
+    return new PgFactStore(
+        jdbcTemplate,
+        subscriptionFactory,
+        tokenStore,
+        lock,
+        factTransformerService,
+        snapCache,
+        pgMetrics);
+  }
 
-    @Bean
-    public FactStore factStore(
-            JdbcTemplate jdbcTemplate, PgSubscriptionFactory subscriptionFactory,
-            PgTokenStore tokenStore, FactTableWriteLock lock,
-            FactTransformerService factTransformerService, PgSnapshotCache snapCache,
-            PgMetrics pgMetrics) {
-        return new PgFactStore(jdbcTemplate, subscriptionFactory, tokenStore, lock,
-                factTransformerService, snapCache, pgMetrics);
-    }
+  @Bean
+  public PgSubscriptionFactory pgSubscriptionFactory(
+      JdbcTemplate jdbcTemplate,
+      EventBus eventBus,
+      PgFactIdToSerialMapper pgFactIdToSerialMapper,
+      PgLatestSerialFetcher pgLatestSerialFetcher,
+      PgCatchupFactory pgCatchupFactory,
+      FactTransformersFactory transformerFactory) {
+    return new PgSubscriptionFactory(
+        jdbcTemplate,
+        eventBus,
+        pgFactIdToSerialMapper,
+        pgLatestSerialFetcher,
+        pgCatchupFactory,
+        transformerFactory);
+  }
 
-    @Bean
-    public PgSubscriptionFactory pgSubscriptionFactory(JdbcTemplate jdbcTemplate, EventBus eventBus,
-            PgFactIdToSerialMapper pgFactIdToSerialMapper,
-            PgLatestSerialFetcher pgLatestSerialFetcher, PgCatchupFactory pgCatchupFactory,
-            FactTransformersFactory transformerFactory) {
-        return new PgSubscriptionFactory(jdbcTemplate, eventBus, pgFactIdToSerialMapper,
-                pgLatestSerialFetcher, pgCatchupFactory, transformerFactory);
+  @Bean
+  public PgConnectionSupplier pgConnectionSupplier(DataSource ds) {
+    return new PgConnectionSupplier(ds);
+  }
 
-    }
+  @Bean
+  public PgConnectionTester pgConnectionTester() {
+    return new PgConnectionTester();
+  }
 
-    @Bean
-    public PgConnectionSupplier pgConnectionSupplier(DataSource ds) {
-        return new PgConnectionSupplier(ds);
-    }
+  @Bean
+  public PgListener pgListener(
+      @NonNull PgConnectionSupplier pgConnectionSupplier,
+      @NonNull EventBus eventBus,
+      @NonNull PgConfigurationProperties props,
+      PgMetrics metrics) {
+    return new PgListener(pgConnectionSupplier, eventBus, props, metrics);
+  }
 
-    @Bean
-    public PgConnectionTester pgConnectionTester() {
-        return new PgConnectionTester();
-    }
+  @Bean
+  public PgFactIdToSerialMapper pgFactIdToSerialMapper(JdbcTemplate jdbcTemplate) {
+    return new PgFactIdToSerialMapper(jdbcTemplate);
+  }
 
-    @Bean
-    public PgListener pgListener(@NonNull PgConnectionSupplier pgConnectionSupplier,
-            @NonNull EventBus eventBus, @NonNull PgConfigurationProperties props,
-            PgMetrics metrics) {
-        return new PgListener(pgConnectionSupplier, eventBus, props, metrics);
-    }
+  @Bean
+  public PgLatestSerialFetcher pgLatestSerialFetcher(JdbcTemplate jdbcTemplate) {
+    return new PgLatestSerialFetcher(jdbcTemplate);
+  }
 
-    @Bean
-    public PgFactIdToSerialMapper pgFactIdToSerialMapper(JdbcTemplate jdbcTemplate) {
-        return new PgFactIdToSerialMapper(jdbcTemplate);
-    }
+  @Bean
+  public PgTokenStore pgTokenStore(JdbcTemplate jdbcTemplate) {
+    return new PgTokenStore(jdbcTemplate);
+  }
 
-    @Bean
-    public PgLatestSerialFetcher pgLatestSerialFetcher(JdbcTemplate jdbcTemplate) {
-        return new PgLatestSerialFetcher(jdbcTemplate);
-    }
+  @Bean
+  public FactTableWriteLock factTableWriteLock(JdbcTemplate tpl) {
+    return new AdvisoryWriteLock(tpl);
+  }
 
-    @Bean
-    public PgTokenStore pgTokenStore(JdbcTemplate jdbcTemplate) {
-        return new PgTokenStore(jdbcTemplate);
-    }
+  @Bean
+  public PlatformTransactionManager txManager(DataSource ds) {
+    return new DataSourceTransactionManager(ds);
+  }
 
-    @Bean
-    public FactTableWriteLock factTableWriteLock(JdbcTemplate tpl) {
-        return new AdvisoryWriteLock(tpl);
-    }
+  /** @return A fallback {@code MeterRegistry} in case none is configured. */
+  @Bean
+  @ConditionalOnMissingBean
+  public MeterRegistry meterRegistry() {
+    return new SimpleMeterRegistry();
+  }
 
-    @Bean
-    public PlatformTransactionManager txManager(DataSource ds) {
-        return new DataSourceTransactionManager(ds);
-    }
-
-    /**
-     * @return A fallback {@code MeterRegistry} in case none is configured.
-     */
-    @Bean
-    @ConditionalOnMissingBean
-    public MeterRegistry meterRegistry() {
-        return new SimpleMeterRegistry();
-    }
-
-    @Bean
-    public LockProvider lockProvider(DataSource dataSource) {
-        return new JdbcTemplateLockProvider(dataSource, "shedlock");
-    }
-
+  @Bean
+  public LockProvider lockProvider(DataSource dataSource) {
+    return new JdbcTemplateLockProvider(dataSource, "shedlock");
+  }
 }

@@ -24,15 +24,14 @@ import org.junit.jupiter.api.*;
 
 public class ObserverBridgeTest {
 
-    final ObserverBridge<?> uut = new ObserverBridge<>(mock(FactObserver.class), f -> f);
+  final ObserverBridge<?> uut = new ObserverBridge<>(mock(FactObserver.class), f -> f);
 
-    @Test
-    public void testNullParameterContracts() {
-        assertThrows(NullPointerException.class, () -> uut.onNext(null));
-        assertThrows(NullPointerException.class, () -> uut.onError(null));
+  @Test
+  public void testNullParameterContracts() {
+    assertThrows(NullPointerException.class, () -> uut.onNext(null));
+    assertThrows(NullPointerException.class, () -> uut.onError(null));
 
-        uut.onNext(Fact.builder().build("{}"));
-        uut.onError(new RuntimeException());
-    }
-
+    uut.onNext(Fact.builder().build("{}"));
+    uut.onError(new RuntimeException());
+  }
 }

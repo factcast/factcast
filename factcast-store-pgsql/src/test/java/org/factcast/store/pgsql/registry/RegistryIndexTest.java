@@ -17,18 +17,18 @@ package org.factcast.store.pgsql.registry;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Test;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
 
 public class RegistryIndexTest {
 
-    @Test
-    void testDeserialization() throws Exception {
-        String json = "\n"
-                + "{\"schemes\":[{\"id\":\"namespaceA/eventA/1/schema.json\",\"ns\":\"namespaceA\",\"type\":\"eventA\",\"version\":1,\"hash\":\"84e69a2d3e3d195abb986aad22b95ffd\"},{\"id\":\"namespaceA/eventA/2/schema.json\",\"ns\":\"namespaceA\",\"type\":\"eventA\",\"version\":2,\"hash\":\"24d48268356e3cb7ac2f148850e4aac1\"}]}";
-        RegistryIndex index = new ObjectMapper().readValue(json, RegistryIndex.class);
+  @Test
+  void testDeserialization() throws Exception {
+    String json =
+        "\n"
+            + "{\"schemes\":[{\"id\":\"namespaceA/eventA/1/schema.json\",\"ns\":\"namespaceA\",\"type\":\"eventA\",\"version\":1,\"hash\":\"84e69a2d3e3d195abb986aad22b95ffd\"},{\"id\":\"namespaceA/eventA/2/schema.json\",\"ns\":\"namespaceA\",\"type\":\"eventA\",\"version\":2,\"hash\":\"24d48268356e3cb7ac2f148850e4aac1\"}]}";
+    RegistryIndex index = new ObjectMapper().readValue(json, RegistryIndex.class);
 
-        assertEquals("84e69a2d3e3d195abb986aad22b95ffd", index.schemes().get(0).hash());
-    }
+    assertEquals("84e69a2d3e3d195abb986aad22b95ffd", index.schemes().get(0).hash());
+  }
 }

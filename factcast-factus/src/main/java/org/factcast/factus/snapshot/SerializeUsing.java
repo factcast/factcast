@@ -19,11 +19,10 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
 import org.factcast.factus.serializer.SnapshotSerializer;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface SerializeUsing {
-    Class<? extends SnapshotSerializer> value();
+  Class<? extends SnapshotSerializer> value();
 }

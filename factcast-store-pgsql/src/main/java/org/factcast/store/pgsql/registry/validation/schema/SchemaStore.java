@@ -21,13 +21,11 @@ import java.util.Optional;
  * Abstraction for a (potentially persistent) Schemastore
  *
  * @author uwe
- *
  */
 public interface SchemaStore {
-    void register(SchemaSource source, String schema) throws SchemaConflictException;
+  void register(SchemaSource source, String schema) throws SchemaConflictException;
 
-    boolean contains(SchemaSource source) throws SchemaConflictException;
+  boolean contains(SchemaSource source) throws SchemaConflictException;
 
-    Optional<String> get(SchemaKey key);
-
+  Optional<String> get(SchemaKey key);
 }

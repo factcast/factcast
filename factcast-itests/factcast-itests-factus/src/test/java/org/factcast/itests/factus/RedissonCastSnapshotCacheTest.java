@@ -23,13 +23,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
-
-@ContextConfiguration(classes = { Application.class })
+@ContextConfiguration(classes = {Application.class})
 public class RedissonCastSnapshotCacheTest extends SnapshotCacheTest {
 
-    @Autowired
-    public RedissonCastSnapshotCacheTest(SnapshotCache repository) {
-        super(repository);
-    }
-
+  @Autowired
+  public RedissonCastSnapshotCacheTest(SnapshotCache repository) {
+    super(repository);
+  }
 }

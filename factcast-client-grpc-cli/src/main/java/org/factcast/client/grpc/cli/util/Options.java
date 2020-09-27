@@ -19,39 +19,46 @@ import com.beust.jcommander.Parameter;
 
 public class Options {
 
-    @Parameter(names = { "--help", "-help", "-?", "--?" }, help = true, hidden = true)
-    boolean help;
+  @Parameter(
+      names = {"--help", "-help", "-?", "--?"},
+      help = true,
+      hidden = true)
+  boolean help;
 
-    @Parameter(
-            names = { "--basic", "-basic", },
-            help = true,
-            description = "Basic-Auth crendentials in the form \"user:password\"")
-    String basicAuthCredentials;
+  @Parameter(
+      names = {
+        "--basic", "-basic",
+      },
+      help = true,
+      description = "Basic-Auth crendentials in the form \"user:password\"")
+  String basicAuthCredentials;
 
-    @Parameter(names = { "--pretty" }, help = true, description = "format JSON output")
-    boolean pretty = false;
+  @Parameter(
+      names = {"--pretty"},
+      help = true,
+      description = "format JSON output")
+  boolean pretty = false;
 
-    @Parameter(
-            names = {
-                    "--no-tls" },
-            help = true,
-            description = "do NOT use TLS to connect (plaintext-communication)")
-    boolean notls = false;
+  @Parameter(
+      names = {"--no-tls"},
+      help = true,
+      description = "do NOT use TLS to connect (plaintext-communication)")
+  boolean notls = false;
 
-    @Parameter(
-            names = { "--debug" },
-            help = true,
-            description = "show debug-level debug messages",
-            order = 0)
-    boolean debug = false;
+  @Parameter(
+      names = {"--debug"},
+      help = true,
+      description = "show debug-level debug messages",
+      order = 0)
+  boolean debug = false;
 
-    @Parameter(names = "--address", description = "the address to connect to", order = 1)
-    String address = "static://localhost:9090";
+  @Parameter(names = "--address", description = "the address to connect to", order = 1)
+  String address = "static://localhost:9090";
 
-    public Options() {
-        String fc = System.getenv("FACTCAST_SERVER");
-        if (fc != null) {
-            address = fc;
-        }
+  public Options() {
+    String fc = System.getenv("FACTCAST_SERVER");
+    if (fc != null) {
+      address = fc;
     }
+  }
 }
