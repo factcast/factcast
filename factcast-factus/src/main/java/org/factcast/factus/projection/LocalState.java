@@ -16,17 +16,16 @@
 package org.factcast.factus.projection;
 
 import java.util.UUID;
-
 import lombok.NonNull;
 
 final class LocalState {
-    private UUID state = null;
+  private UUID state = null;
 
-    public final UUID state() {
-        return this.state;
-    }
+  public final UUID state() {
+    return this.state;
+  }
 
-    public final void state(@NonNull UUID state) {
-        this.state = state;
-    }
+  public final void state(@NonNull UUID state) {
+    this.state = state;
+  }
 }

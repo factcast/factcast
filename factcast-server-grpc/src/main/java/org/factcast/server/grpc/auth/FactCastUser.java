@@ -17,39 +17,38 @@ package org.factcast.server.grpc.auth;
 
 import java.util.HashMap;
 import java.util.Map;
-
+import lombok.NonNull;
+import lombok.experimental.Delegate;
 import org.springframework.security.core.CredentialsContainer;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import lombok.NonNull;
-import lombok.experimental.Delegate;
-
 public class FactCastUser implements UserDetails, CredentialsContainer {
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Delegate
-    private final User user;
+  @Delegate private final User user;
 
-    private final FactCastAccount account;
+  private final FactCastAccount account;
 
-    public FactCastUser(FactCastAccount account, String secret) {
-        this.account = account;
-        this.user = new User(account.id(), secret, AuthorityUtils.createAuthorityList(
-                FactCastAuthority.AUTHENTICATED));
-    }
+  public FactCastUser(FactCastAccount account, String secret) {
+    this.account = account;
+    this.user =
+        new User(
+            account.id(),
+            secret,
+            AuthorityUtils.createAuthorityList(FactCastAuthority.AUTHENTICATED));
+  }
 
-    private final Map<String, Boolean> readAccess = new HashMap<>();
+  private final Map<String, Boolean> readAccess = new HashMap<>();
 
-    private final Map<String, Boolean> writeAccess = new HashMap<>();
+  private final Map<String, Boolean> writeAccess = new HashMap<>();
 
-    public boolean canRead(@NonNull String ns) {
-        return readAccess.computeIfAbsent(ns, account::canRead);
-    }
+  public boolean canRead(@NonNull String ns) {
+    return readAccess.computeIfAbsent(ns, account::canRead);
+  }
 
-    public boolean canWrite(@NonNull String ns) {
-        return writeAccess.computeIfAbsent(ns, account::canWrite);
-    }
-
+  public boolean canWrite(@NonNull String ns) {
+    return writeAccess.computeIfAbsent(ns, account::canWrite);
+  }
 }

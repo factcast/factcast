@@ -21,48 +21,48 @@ import org.junit.jupiter.api.*;
 
 public class AccessRulesTest {
 
-    private final AccessRules uut = new AccessRules();
+  private final AccessRules uut = new AccessRules();
 
-    @Test
-    public void testIncludesDefaultsToNull() {
-        assertNull(uut.includes("foo"));
-    }
+  @Test
+  public void testIncludesDefaultsToNull() {
+    assertNull(uut.includes("foo"));
+  }
 
-    @Test
-    public void testIncludesNegative() {
-        uut.exclude().add("foo");
-        assertFalse(uut.includes("foo"));
-    }
+  @Test
+  public void testIncludesNegative() {
+    uut.exclude().add("foo");
+    assertFalse(uut.includes("foo"));
+  }
 
-    @Test
-    public void testIncludesNegativeExcludeWins() {
-        uut.exclude().add("foo");
-        uut.include().add("foo");
-        assertFalse(uut.includes("foo"));
-    }
+  @Test
+  public void testIncludesNegativeExcludeWins() {
+    uut.exclude().add("foo");
+    uut.include().add("foo");
+    assertFalse(uut.includes("foo"));
+  }
 
-    @Test
-    public void testIncludesNegativeExcludeWildcardWins() {
-        uut.exclude().add("*");
-        uut.include().add("foo");
-        assertFalse(uut.includes("foo"));
-    }
+  @Test
+  public void testIncludesNegativeExcludeWildcardWins() {
+    uut.exclude().add("*");
+    uut.include().add("foo");
+    assertFalse(uut.includes("foo"));
+  }
 
-    @Test
-    public void testIncludesPositive() {
-        uut.include().add("foo");
-        assertTrue(uut.includes("foo"));
-    }
+  @Test
+  public void testIncludesPositive() {
+    uut.include().add("foo");
+    assertTrue(uut.includes("foo"));
+  }
 
-    @Test
-    public void testIncludesPositiveWildcardStar() {
-        uut.include().add("*");
-        assertTrue(uut.includes("foo"));
-    }
+  @Test
+  public void testIncludesPositiveWildcardStar() {
+    uut.include().add("*");
+    assertTrue(uut.includes("foo"));
+  }
 
-    @Test
-    public void testIncludesPositiveWildcard() {
-        uut.include().add("fo*");
-        assertTrue(uut.includes("foo"));
-    }
+  @Test
+  public void testIncludesPositiveWildcard() {
+    uut.include().add("fo*");
+    assertTrue(uut.includes("foo"));
+  }
 }

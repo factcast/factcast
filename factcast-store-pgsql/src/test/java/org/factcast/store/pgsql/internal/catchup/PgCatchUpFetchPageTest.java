@@ -27,19 +27,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @ExtendWith(MockitoExtension.class)
 public class PgCatchUpFetchPageTest {
 
-    @Mock
-    SubscriptionRequestTO req;
+  @Mock SubscriptionRequestTO req;
 
-    @Mock
-    JdbcTemplate jdbc;
+  @Mock JdbcTemplate jdbc;
 
-    @Test
-    public void testNullParameterContracts() {
-        assertThrows(NullPointerException.class, () -> new PgCatchUpFetchPage(null, 10, req, 1));
-        assertThrows(NullPointerException.class, () -> new PgCatchUpFetchPage(jdbc, 10, null, 1));
-        PgCatchUpFetchPage uut = new PgCatchUpFetchPage(jdbc, 10, req, 1);
-        assertThrows(NullPointerException.class, () -> uut.fetchFacts(null));
-
-    }
-
+  @Test
+  public void testNullParameterContracts() {
+    assertThrows(NullPointerException.class, () -> new PgCatchUpFetchPage(null, 10, req, 1));
+    assertThrows(NullPointerException.class, () -> new PgCatchUpFetchPage(jdbc, 10, null, 1));
+    PgCatchUpFetchPage uut = new PgCatchUpFetchPage(jdbc, 10, req, 1);
+    assertThrows(NullPointerException.class, () -> uut.fetchFacts(null));
+  }
 }

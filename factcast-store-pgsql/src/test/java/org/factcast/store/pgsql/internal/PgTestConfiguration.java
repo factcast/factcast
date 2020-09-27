@@ -17,6 +17,9 @@ package org.factcast.store.pgsql.internal;
 
 import static org.mockito.Mockito.*;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.pgsql.PgFactStoreConfiguration;
 import org.postgresql.Driver;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -29,41 +32,39 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-
 @SuppressWarnings("resource")
 @Configuration
 @Import(PgFactStoreConfiguration.class)
-@ImportAutoConfiguration({ DataSourceAutoConfiguration.class, JdbcTemplateAutoConfiguration.class,
-        TransactionAutoConfiguration.class })
+@ImportAutoConfiguration({
+  DataSourceAutoConfiguration.class,
+  JdbcTemplateAutoConfiguration.class,
+  TransactionAutoConfiguration.class
+})
 @Slf4j
 public class PgTestConfiguration {
 
-    static {
-        String url = System.getenv("pg_url");
-        if (url == null) {
-            log.info("Trying to start postgres testcontainer");
-            PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:11.4");
-            postgres.start();
-            url = postgres.getJdbcUrl();
-            System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
-            System.setProperty("spring.datasource.url", url);
-            System.setProperty("spring.datasource.username", postgres.getUsername());
-            System.setProperty("spring.datasource.password", postgres.getPassword());
-        } else {
-            log.info("Using predefined external postgres URL: " + url);
-            // use predefined url
-            System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
-            System.setProperty("spring.datasource.url", url);
-        }
+  static {
+    String url = System.getenv("pg_url");
+    if (url == null) {
+      log.info("Trying to start postgres testcontainer");
+      PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:11.4");
+      postgres.start();
+      url = postgres.getJdbcUrl();
+      System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
+      System.setProperty("spring.datasource.url", url);
+      System.setProperty("spring.datasource.username", postgres.getUsername());
+      System.setProperty("spring.datasource.password", postgres.getPassword());
+    } else {
+      log.info("Using predefined external postgres URL: " + url);
+      // use predefined url
+      System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
+      System.setProperty("spring.datasource.url", url);
     }
+  }
 
-    @Bean
-    @Primary
-    public PgMetrics pgMetrics(@NonNull MeterRegistry registry) {
-        return spy(new PgMetrics(registry));
-    }
-
+  @Bean
+  @Primary
+  public PgMetrics pgMetrics(@NonNull MeterRegistry registry) {
+    return spy(new PgMetrics(registry));
+  }
 }

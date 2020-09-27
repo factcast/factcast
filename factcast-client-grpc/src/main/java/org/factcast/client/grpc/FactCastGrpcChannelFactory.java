@@ -15,52 +15,40 @@
  */
 package org.factcast.client.grpc;
 
-import java.util.List;
-
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
+import java.util.List;
 
 public interface FactCastGrpcChannelFactory extends AutoCloseable {
 
-    /**
-     * Creates a new channel for the given service name. The returned channel
-     * will use all globally registered {@link ClientInterceptor}s.
-     *
-     * <p>
-     * <b>Note:</b> The underlying implementation might reuse existing
-     * {@link ManagedChannel}s allow connection reuse.
-     * </p>
-     *
-     * @param name
-     *            The name of the service.
-     * @return The newly created channel for the given service.
-     */
-    Channel createChannel(String name);
+  /**
+   * Creates a new channel for the given service name. The returned channel will use all globally
+   * registered {@link ClientInterceptor}s.
+   *
+   * <p><b>Note:</b> The underlying implementation might reuse existing {@link ManagedChannel}s
+   * allow connection reuse.
+   *
+   * @param name The name of the service.
+   * @return The newly created channel for the given service.
+   */
+  Channel createChannel(String name);
 
-    /**
-     * Creates a new channel for the given service name. The returned channel
-     * will use all globally registered {@link ClientInterceptor}s.
-     *
-     * <p>
-     * <b>Note:</b> The underlying implementation might reuse existing
-     * {@link ManagedChannel}s allow connection reuse.
-     * </p>
-     *
-     * <p>
-     * <b>Note:</b> The given interceptors will be applied after the global
-     * interceptors. But the interceptors that were applied last, will be called
-     * first.
-     * </p>
-     *
-     * @param name
-     *            The name of the service.
-     * @param interceptors
-     *            A list of additional client interceptors that should be added
-     *            to the channel.
-     * @return The newly created channel for the given service.
-     */
-    @SuppressWarnings("unused")
-    Channel createChannel(String name, List<ClientInterceptor> interceptors);
-
+  /**
+   * Creates a new channel for the given service name. The returned channel will use all globally
+   * registered {@link ClientInterceptor}s.
+   *
+   * <p><b>Note:</b> The underlying implementation might reuse existing {@link ManagedChannel}s
+   * allow connection reuse.
+   *
+   * <p><b>Note:</b> The given interceptors will be applied after the global interceptors. But the
+   * interceptors that were applied last, will be called first.
+   *
+   * @param name The name of the service.
+   * @param interceptors A list of additional client interceptors that should be added to the
+   *     channel.
+   * @return The newly created channel for the given service.
+   */
+  @SuppressWarnings("unused")
+  Channel createChannel(String name, List<ClientInterceptor> interceptors);
 }

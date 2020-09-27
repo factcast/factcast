@@ -18,5 +18,4 @@ package org.factcast.core.snap.redisson;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class Application {
-}
+public class Application {}

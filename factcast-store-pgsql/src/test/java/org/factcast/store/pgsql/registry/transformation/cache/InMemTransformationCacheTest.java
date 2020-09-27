@@ -20,8 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class InMemTransformationCacheTest extends AbstractTransformationCacheTest {
-    @Override
-    protected TransformationCache createUUT() {
-        return new InMemTransformationCache(registryMetrics);
-    }
+  @Override
+  protected TransformationCache createUUT() {
+    return new InMemTransformationCache(registryMetrics);
+  }
 }

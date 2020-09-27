@@ -18,57 +18,54 @@ package org.factcast.store.pgsql.registry.filesystem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
-
+import lombok.val;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 
-import lombok.val;
-
 class FilesystemRegistryFileFetcherTest {
 
-    @Test
-    void fetchTransformation() throws IOException {
-        // INIT
-        String path = new ClassPathResource("/example-registry/").getFile()
-                .getAbsolutePath();
+  @Test
+  void fetchTransformation() throws IOException {
+    // INIT
+    String path = new ClassPathResource("/example-registry/").getFile().getAbsolutePath();
 
-        val uut = new FilesystemRegistryFileFetcher(path);
+    val uut = new FilesystemRegistryFileFetcher(path);
 
-        // RUN
-        String transformation = uut.fetchTransformation(new TransformationSource("1-2", "xxx", "ns",
-                "type", 1, 2));
+    // RUN
+    String transformation =
+        uut.fetchTransformation(new TransformationSource("1-2", "xxx", "ns", "type", 1, 2));
 
-        // ASSERT
-        assertEquals("function transform(event) {\n" +
-                "    event.salutation = \"NA\"\n" +
-                "}", transformation);
-    }
+    // ASSERT
+    assertEquals(
+        "function transform(event) {\n" + "    event.salutation = \"NA\"\n" + "}", transformation);
+  }
 
-    @Test
-    void fetchSchema() throws IOException {
-        // INIT
-        String path = new ClassPathResource("/example-registry/").getFile()
-                .getAbsolutePath();
+  @Test
+  void fetchSchema() throws IOException {
+    // INIT
+    String path = new ClassPathResource("/example-registry/").getFile().getAbsolutePath();
 
-        val uut = new FilesystemRegistryFileFetcher(path);
+    val uut = new FilesystemRegistryFileFetcher(path);
 
-        // RUN
-        val s = uut.fetchSchema(new SchemaSource("x", "xxx", "ns", "type", 1));
+    // RUN
+    val s = uut.fetchSchema(new SchemaSource("x", "xxx", "ns", "type", 1));
 
-        // ASSERT
-        assertEquals("{\n" +
-                "  \"additionalProperties\" : true,\n" +
-                "  \"properties\" : {\n" +
-                "    \"firstName\" : {\n" +
-                "      \"type\": \"string\"\n" +
-                "    },\n" +
-                "    \"lastName\" : {\n" +
-                "      \"type\": \"string\"\n" +
-                "    }\n" +
-                "  },\n" +
-                "  \"required\": [\"firstName\", \"lastName\"]\n" +
-                "}\n", s);
-    }
+    // ASSERT
+    assertEquals(
+        "{\n"
+            + "  \"additionalProperties\" : true,\n"
+            + "  \"properties\" : {\n"
+            + "    \"firstName\" : {\n"
+            + "      \"type\": \"string\"\n"
+            + "    },\n"
+            + "    \"lastName\" : {\n"
+            + "      \"type\": \"string\"\n"
+            + "    }\n"
+            + "  },\n"
+            + "  \"required\": [\"firstName\", \"lastName\"]\n"
+            + "}\n",
+        s);
+  }
 }

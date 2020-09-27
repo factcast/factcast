@@ -17,21 +17,18 @@ package org.factcast.store.pgsql.registry.classpath;
 
 import java.io.File;
 import java.io.IOException;
-
-import org.factcast.store.pgsql.registry.AbstractFileBasedRegistryFileFetcher;
-import org.springframework.core.io.ClassPathResource;
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.factcast.store.pgsql.registry.AbstractFileBasedRegistryFileFetcher;
+import org.springframework.core.io.ClassPathResource;
 
 @RequiredArgsConstructor
 public class ClasspathRegistryFileFetcher extends AbstractFileBasedRegistryFileFetcher {
 
-    private final @NonNull String base;
+  private final @NonNull String base;
 
-    @Override
-    protected File getFile(String subPath) throws IOException {
-        return new ClassPathResource(base + "/" + subPath).getFile();
-    }
-
+  @Override
+  protected File getFile(String subPath) throws IOException {
+    return new ClassPathResource(base + "/" + subPath).getFile();
+  }
 }

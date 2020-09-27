@@ -15,33 +15,28 @@
  */
 package org.factcast.store.pgsql.internal.snapcache;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.factcast.store.pgsql.internal.PgMetrics;
 import org.factcast.store.pgsql.internal.PgMetrics.StoreMetrics.OP;
 import org.joda.time.DateTime;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.core.SchedulerLock;
-
 @RequiredArgsConstructor
 @Slf4j
 public class PgSnapshotCacheCompactor {
 
-    @NonNull
-    final PgSnapshotCache cache;
+  @NonNull final PgSnapshotCache cache;
 
-    @NonNull
-    final PgMetrics pgMetrics;
+  @NonNull final PgMetrics pgMetrics;
 
-    final int days;
+  final int days;
 
-    @Scheduled(
-            cron = "${factcast.store.pgsql.snapshotCacheCompactCron:0 0 0 * * *}")
-    @SchedulerLock(name = "snapshotCacheCompact", lockAtMostFor = 1000 * 60 * 60)
-    public void compact() {
-        pgMetrics.time(OP.COMPACT_SNAPSHOT_CACHE, () -> cache.compact(DateTime.now()
-                .minusDays(days)));
-    }
+  @Scheduled(cron = "${factcast.store.pgsql.snapshotCacheCompactCron:0 0 0 * * *}")
+  @SchedulerLock(name = "snapshotCacheCompact", lockAtMostFor = 1000 * 60 * 60)
+  public void compact() {
+    pgMetrics.time(OP.COMPACT_SNAPSHOT_CACHE, () -> cache.compact(DateTime.now().minusDays(days)));
+  }
 }

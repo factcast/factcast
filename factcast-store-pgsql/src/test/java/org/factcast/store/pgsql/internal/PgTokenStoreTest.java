@@ -16,7 +16,6 @@
 package org.factcast.store.pgsql.internal;
 
 import java.util.*;
-
 import org.assertj.core.api.Assertions;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.State;
@@ -32,35 +31,33 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ContextConfiguration(classes = { PgTestConfiguration.class })
+@ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 public class PgTokenStoreTest extends AbstractTokenStoreTest {
 
-    @Autowired
-    PgTokenStore tokenStore;
+  @Autowired PgTokenStore tokenStore;
 
-    @Override
-    protected TokenStore createTokenStore() {
-        return tokenStore;
-    }
+  @Override
+  protected TokenStore createTokenStore() {
+    return tokenStore;
+  }
 
-    @Test
-    public void testStateJsonSerializable() throws Exception {
+  @Test
+  public void testStateJsonSerializable() throws Exception {
 
-        State s = new State();
-        s.serialOfLastMatchingFact(99);
-        List<FactSpec> specs = Arrays.asList(FactSpec.ns("foo").aggId(new UUID(0, 1)), FactSpec.ns(
-                "bar").type("someType"));
-        s.specs(specs);
+    State s = new State();
+    s.serialOfLastMatchingFact(99);
+    List<FactSpec> specs =
+        Arrays.asList(
+            FactSpec.ns("foo").aggId(new UUID(0, 1)), FactSpec.ns("bar").type("someType"));
+    s.specs(specs);
 
-        String json = FactCastJson.writeValueAsString(s);
+    String json = FactCastJson.writeValueAsString(s);
 
-        Assertions.assertThat(json)
-                .isEqualTo(
-                        "{\"specs\":[{\"ns\":\"foo\",\"type\":null,\"version\":0,\"aggId\":\"00000000-0000-0000-0000-000000000001\",\"meta\":{},\"jsFilterScript\":null,\"filterScript\":null},{\"ns\":\"bar\",\"type\":\"someType\",\"version\":0,\"aggId\":null,\"meta\":{},\"jsFilterScript\":null,\"filterScript\":null}],\"serialOfLastMatchingFact\":99}");
-
-    }
-
+    Assertions.assertThat(json)
+        .isEqualTo(
+            "{\"specs\":[{\"ns\":\"foo\",\"type\":null,\"version\":0,\"aggId\":\"00000000-0000-0000-0000-000000000001\",\"meta\":{},\"jsFilterScript\":null,\"filterScript\":null},{\"ns\":\"bar\",\"type\":\"someType\",\"version\":0,\"aggId\":null,\"meta\":{},\"jsFilterScript\":null,\"filterScript\":null}],\"serialOfLastMatchingFact\":99}");
+  }
 }

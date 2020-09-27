@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
-
+import lombok.val;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.store.FactStore;
@@ -36,48 +36,42 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import lombok.val;
-
-@ContextConfiguration(classes = { PgTestConfiguration.class })
+@ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
-public class PgFactStoreTest
-        extends AbstractFactStoreTest {
+public class PgFactStoreTest extends AbstractFactStoreTest {
 
-    @Autowired
-    FactStore fs;
+  @Autowired FactStore fs;
 
-    @Autowired
-    PgMetrics metrics;
+  @Autowired PgMetrics metrics;
 
-    @Override
-    protected FactStore createStoreToTest() {
-        return fs;
-    }
+  @Override
+  protected FactStore createStoreToTest() {
+    return fs;
+  }
 
-    @Test
-    void testGetSnapshotMetered() {
-        Optional<Snapshot> snapshot = store.getSnapshot(new SnapshotId("xxx", UUID.randomUUID()));
-        assertThat(snapshot).isEmpty();
+  @Test
+  void testGetSnapshotMetered() {
+    Optional<Snapshot> snapshot = store.getSnapshot(new SnapshotId("xxx", UUID.randomUUID()));
+    assertThat(snapshot).isEmpty();
 
-        verify(metrics).time(same(GET_SNAPSHOT), any(Supplier.class));
-    }
+    verify(metrics).time(same(GET_SNAPSHOT), any(Supplier.class));
+  }
 
-    @Test
-    void testClearSnapshotMetered() {
-        val id = new SnapshotId("xxx", UUID.randomUUID());
-        store.clearSnapshot(id);
-        verify(metrics).time(same(CLEAR_SNAPSHOT), any(Runnable.class));
-    }
+  @Test
+  void testClearSnapshotMetered() {
+    val id = new SnapshotId("xxx", UUID.randomUUID());
+    store.clearSnapshot(id);
+    verify(metrics).time(same(CLEAR_SNAPSHOT), any(Runnable.class));
+  }
 
-    @Test
-    void testSetSnapshotMetered() {
-        val id = new SnapshotId("xxx", UUID.randomUUID());
-        val snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-        store.setSnapshot(snap);
+  @Test
+  void testSetSnapshotMetered() {
+    val id = new SnapshotId("xxx", UUID.randomUUID());
+    val snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+    store.setSnapshot(snap);
 
-        verify(metrics).time(same(SET_SNAPSHOT), any(Runnable.class));
-    }
-
+    verify(metrics).time(same(SET_SNAPSHOT), any(Runnable.class));
+  }
 }
