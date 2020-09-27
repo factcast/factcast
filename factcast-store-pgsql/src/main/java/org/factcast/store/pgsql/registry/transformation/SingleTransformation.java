@@ -16,33 +16,29 @@
 package org.factcast.store.pgsql.registry.transformation;
 
 import java.util.Optional;
-
 import lombok.NonNull;
 import lombok.Value;
 
 @Value
 public class SingleTransformation implements Transformation {
-    @NonNull
-    TransformationKey key;
+  @NonNull TransformationKey key;
 
-    int fromVersion;
+  int fromVersion;
 
-    int toVersion;
+  int toVersion;
 
-    @NonNull
-    Optional<String> transformationCode;
+  @NonNull Optional<String> transformationCode;
 
-    public static Transformation of(@NonNull TransformationSource source, String transformation) {
-        return new SingleTransformation(source.toKey(), source.from(), source.to(),
-                Optional.ofNullable(transformation));
-    }
+  public static Transformation of(@NonNull TransformationSource source, String transformation) {
+    return new SingleTransformation(
+        source.toKey(), source.from(), source.to(), Optional.ofNullable(transformation));
+  }
 
-    public static Transformation of(@NonNull TransformationKey key, int from, int to, String code) {
-        return new SingleTransformation(key, from, to, Optional.ofNullable(code));
-    }
+  public static Transformation of(@NonNull TransformationKey key, int from, int to, String code) {
+    return new SingleTransformation(key, from, to, Optional.ofNullable(code));
+  }
 
-    public static Transformation empty(@NonNull TransformationKey key, int from, int to) {
-        return new SingleTransformation(key, from, to, Optional.empty());
-    }
-
+  public static Transformation empty(@NonNull TransformationKey key, int from, int to) {
+    return new SingleTransformation(key, from, to, Optional.empty());
+  }
 }

@@ -20,15 +20,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
 class TransformationSourceTest {
-    @Test
-    public void testToKey() {
+  @Test
+  public void testToKey() {
 
-        TransformationSource uut = new TransformationSource("id", "hash", "ns", "type", 2, 1);
+    TransformationSource uut = new TransformationSource("id", "hash", "ns", "type", 2, 1);
 
-        TransformationKey key = uut.toKey();
+    TransformationKey key = uut.toKey();
 
-        assertEquals(key.ns(), "ns");
-        assertEquals(key.type(), "type");
-    }
-
+    assertEquals(key.ns(), "ns");
+    assertEquals(key.type(), "type");
+  }
 }

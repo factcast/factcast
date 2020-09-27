@@ -19,46 +19,44 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
+import lombok.AccessLevel;
+import lombok.Getter;
 import org.factcast.store.pgsql.registry.transformation.TransformationConflictException;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-
 public abstract class AbstractTransformationStore implements TransformationStore {
 
-    private final List<TransformationStoreListener> listeners = new CopyOnWriteArrayList<>();
+  private final List<TransformationStoreListener> listeners = new CopyOnWriteArrayList<>();
 
-    @Getter(value = AccessLevel.PROTECTED)
-    private final ExecutorService executorService = Executors.newCachedThreadPool(r -> {
-        Thread t = new Thread(r);
-        t.setDaemon(true);
-        return t;
-    });
+  @Getter(value = AccessLevel.PROTECTED)
+  private final ExecutorService executorService =
+      Executors.newCachedThreadPool(
+          r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+          });
 
-    @Override
-    public final void store(TransformationSource source, String transformation)
-            throws TransformationConflictException {
-        doStore(source, transformation);
-        // uses task per listener to avoid a listener throwing an exception
-        // spoil the whole thing
-        listeners.forEach(t -> executorService.submit(() -> t.notifyFor(source.toKey())));
+  @Override
+  public final void store(TransformationSource source, String transformation)
+      throws TransformationConflictException {
+    doStore(source, transformation);
+    // uses task per listener to avoid a listener throwing an exception
+    // spoil the whole thing
+    listeners.forEach(t -> executorService.submit(() -> t.notifyFor(source.toKey())));
+  }
 
-    }
+  protected abstract void doStore(TransformationSource source, String transformation);
 
-    protected abstract void doStore(TransformationSource source, String transformation);
+  @Override
+  public void register(TransformationStoreListener listener) {
+    listeners.add(listener);
+  }
 
-    @Override
-    public void register(TransformationStoreListener listener) {
-        listeners.add(listener);
-    }
-
-    @Override
-    public void unregister(TransformationStoreListener listener) {
-        listeners.remove(listener);
-    }
-
+  @Override
+  public void unregister(TransformationStoreListener listener) {
+    listeners.remove(listener);
+  }
 }

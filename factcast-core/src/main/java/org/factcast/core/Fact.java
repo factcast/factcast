@@ -15,142 +15,136 @@
  */
 package org.factcast.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.util.Set;
 import java.util.UUID;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
 import lombok.NonNull;
 
 /**
- * Defines a fact to be either published or consumed. Consists of two JSON
- * Strings: jsonHeader and jsonPayload. Also provides convenience getters for
- * id,ns,type and aggId.
+ * Defines a fact to be either published or consumed. Consists of two JSON Strings: jsonHeader and
+ * jsonPayload. Also provides convenience getters for id,ns,type and aggId.
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
 public interface Fact {
 
-    @NonNull
-    UUID id();
+  @NonNull
+  UUID id();
 
-    @NonNull
-    String ns();
+  @NonNull
+  String ns();
 
-    String type();
+  String type();
 
-    int version();
+  int version();
 
-    @NonNull
-    Set<UUID> aggIds();
+  @NonNull
+  Set<UUID> aggIds();
 
-    @NonNull
-    String jsonHeader();
+  @NonNull
+  String jsonHeader();
 
-    @NonNull
-    String jsonPayload();
+  @NonNull
+  String jsonPayload();
 
-    String meta(String key);
+  String meta(String key);
 
-    default long serial() {
-        String s = meta("_ser");
-        if (s != null) {
-            return Long.parseLong(s);
-        } else {
-            throw new IllegalStateException(
-                    "'_ser' Meta attribute not found. Fact not yet published?");
-        }
+  default long serial() {
+    String s = meta("_ser");
+    if (s != null) {
+      return Long.parseLong(s);
+    } else {
+      throw new IllegalStateException("'_ser' Meta attribute not found. Fact not yet published?");
+    }
+  }
+
+  /**
+   * beware, might return null
+   *
+   * @return timestamp in milliseconds of publishing, or null if this information is not there
+   *     (historic events)
+   */
+  default Long timestamp() {
+    String s = meta("_ts");
+    if (s != null) return Long.parseLong(s);
+    return null;
+  }
+
+  // hint to where to get the default from
+  static Fact of(@NonNull String jsonHeader, @NonNull String jsonPayload) {
+    return DefaultFact.of(jsonHeader, jsonPayload);
+  }
+
+  static Fact of(@NonNull JsonNode jsonHeader, @NonNull JsonNode jsonPayload) {
+    return DefaultFact.of(jsonHeader.toString(), jsonPayload.toString());
+  }
+
+  default boolean before(Fact other) {
+    return serial() < other.serial();
+  }
+
+  static Fact.Builder builder() {
+    return new Builder();
+  }
+
+  class Builder {
+
+    final FactHeader header = new FactHeader().id(UUID.randomUUID()).ns("default");
+
+    public Builder aggId(@NonNull UUID aggId) {
+      header.aggIds().add(aggId);
+      return this;
     }
 
-    /**
-     * beware, might return null
-     *
-     * @return timestamp in milliseconds of publishing, or null if this
-     *         information is not there (historic events)
-     */
-    default Long timestamp() {
-        String s = meta("_ts");
-        if (s != null)
-            return Long.parseLong(s);
-        return null;
+    public Builder ns(@NonNull String ns) {
+      if (ns.trim().isEmpty()) {
+        throw new IllegalArgumentException("Namespace must not be empty");
+      }
+      header.ns(ns);
+      return this;
     }
 
-    // hint to where to get the default from
-    static Fact of(@NonNull String jsonHeader, @NonNull String jsonPayload) {
-        return DefaultFact.of(jsonHeader, jsonPayload);
+    public Builder id(@NonNull UUID id) {
+      header.id(id);
+      return this;
     }
 
-    static Fact of(@NonNull JsonNode jsonHeader, @NonNull JsonNode jsonPayload) {
-        return DefaultFact.of(jsonHeader.toString(), jsonPayload.toString());
+    public Builder type(@NonNull String type) {
+      if (type.trim().isEmpty()) {
+        throw new IllegalArgumentException("type must not be empty");
+      }
+
+      header.type(type);
+      return this;
     }
 
-    default boolean before(Fact other) {
-        return serial() < other.serial();
+    public Builder version(int version) {
+      if (version < 1) {
+        throw new IllegalArgumentException("version must be >=1");
+      }
+
+      header.version(version);
+      return this;
     }
 
-    static Fact.Builder builder() {
-        return new Builder();
+    public Builder meta(@NonNull String key, String value) {
+      header.meta().put(key, value);
+      return this;
     }
 
-    class Builder {
-
-        final FactHeader header = new FactHeader().id(UUID.randomUUID()).ns("default");
-
-        public Builder aggId(@NonNull UUID aggId) {
-            header.aggIds().add(aggId);
-            return this;
-        }
-
-        public Builder ns(@NonNull String ns) {
-            if (ns.trim().isEmpty()) {
-                throw new IllegalArgumentException("Namespace must not be empty");
-            }
-            header.ns(ns);
-            return this;
-        }
-
-        public Builder id(@NonNull UUID id) {
-            header.id(id);
-            return this;
-        }
-
-        public Builder type(@NonNull String type) {
-            if (type.trim().isEmpty()) {
-                throw new IllegalArgumentException("type must not be empty");
-            }
-
-            header.type(type);
-            return this;
-        }
-
-        public Builder version(int version) {
-            if (version < 1) {
-                throw new IllegalArgumentException("version must be >=1");
-            }
-
-            header.version(version);
-            return this;
-        }
-
-        public Builder meta(@NonNull String key, String value) {
-            header.meta().put(key, value);
-            return this;
-        }
-
-        public Fact buildWithoutPayload() {
-            return build(null);
-        }
-
-        public Fact build(String payload) {
-            String pl = payload;
-            if (payload == null || payload.trim().isEmpty()) {
-                pl = "{}";
-            }
-            return new DefaultFact(header, pl);
-        }
+    public Fact buildWithoutPayload() {
+      return build(null);
     }
 
-    @NonNull
-    FactHeader header();
+    public Fact build(String payload) {
+      String pl = payload;
+      if (payload == null || payload.trim().isEmpty()) {
+        pl = "{}";
+      }
+      return new DefaultFact(header, pl);
+    }
+  }
 
+  @NonNull
+  FactHeader header();
 }

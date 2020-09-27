@@ -21,7 +21,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.UUID;
-
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
@@ -33,65 +32,61 @@ import org.springframework.core.env.Environment;
 
 @ExtendWith(MockitoExtension.class)
 public class RdsDataSourceFactoryBeanPostProcessorTest {
-    @Mock
-    Environment env;
+  @Mock Environment env;
 
-    @InjectMocks
-    RdsDataSourceFactoryBeanPostProcessor uut;
+  @InjectMocks RdsDataSourceFactoryBeanPostProcessor uut;
 
-    @Test
-    public void shouldReturnFromAfterInitSameBeanAsPassed() {
-        UUID instance = UUID.randomUUID();
+  @Test
+  public void shouldReturnFromAfterInitSameBeanAsPassed() {
+    UUID instance = UUID.randomUUID();
 
-        Object afterInit = uut.postProcessAfterInitialization(instance, "foo");
+    Object afterInit = uut.postProcessAfterInitialization(instance, "foo");
 
-        assertThat(afterInit).isSameAs(instance);
-    }
+    assertThat(afterInit).isSameAs(instance);
+  }
 
-    @Test
-    public void shouldReturnFromBeforeSameBeanAsPassed() {
-        UUID instance = UUID.randomUUID();
+  @Test
+  public void shouldReturnFromBeforeSameBeanAsPassed() {
+    UUID instance = UUID.randomUUID();
 
-        Object beforeInit = uut.postProcessBeforeInitialization(instance, "foo");
+    Object beforeInit = uut.postProcessBeforeInitialization(instance, "foo");
 
-        assertThat(beforeInit).isSameAs(instance);
-    }
+    assertThat(beforeInit).isSameAs(instance);
+  }
 
-    @Test
-    public void shouldReplaceJdbcCP() {
-        AmazonRdsDataSourceFactoryBean instance = mock(AmazonRdsDataSourceFactoryBean.class);
-        when(env.getProperty(any(), any(), anyBoolean())).thenReturn(true);
+  @Test
+  public void shouldReplaceJdbcCP() {
+    AmazonRdsDataSourceFactoryBean instance = mock(AmazonRdsDataSourceFactoryBean.class);
+    when(env.getProperty(any(), any(), anyBoolean())).thenReturn(true);
 
-        AmazonRdsDataSourceFactoryBean afterInit = (AmazonRdsDataSourceFactoryBean) uut
-                .postProcessBeforeInitialization(instance, "foo");
+    AmazonRdsDataSourceFactoryBean afterInit =
+        (AmazonRdsDataSourceFactoryBean) uut.postProcessBeforeInitialization(instance, "foo");
 
-        assertThat(afterInit).isSameAs(instance);
-        verify(instance).setDataSourceFactory(any());
-    }
+    assertThat(afterInit).isSameAs(instance);
+    verify(instance).setDataSourceFactory(any());
+  }
 
-    @Test
-    public void testNullContracts() {
-        assertThrows(NullPointerException.class, () -> new RdsDataSourceFactoryBeanPostProcessor(
-                null));
+  @Test
+  public void testNullContracts() {
+    assertThrows(NullPointerException.class, () -> new RdsDataSourceFactoryBeanPostProcessor(null));
 
-        RdsDataSourceFactoryBeanPostProcessor uut = new RdsDataSourceFactoryBeanPostProcessor(mock(
-                Environment.class));
-        assertThrows(NullPointerException.class, () -> uut
-                .postProcessBeforeInitialization(null, "foo"));
-        assertThrows(NullPointerException.class, () -> uut.postProcessBeforeInitialization(
-                new Object(), null));
-        assertThrows(NullPointerException.class, () -> uut.postProcessAfterInitialization(null,
-                "foo"));
-        assertThrows(NullPointerException.class, () -> uut.postProcessAfterInitialization(
-                new Object(), null));
-    }
+    RdsDataSourceFactoryBeanPostProcessor uut =
+        new RdsDataSourceFactoryBeanPostProcessor(mock(Environment.class));
+    assertThrows(
+        NullPointerException.class, () -> uut.postProcessBeforeInitialization(null, "foo"));
+    assertThrows(
+        NullPointerException.class, () -> uut.postProcessBeforeInitialization(new Object(), null));
+    assertThrows(NullPointerException.class, () -> uut.postProcessAfterInitialization(null, "foo"));
+    assertThrows(
+        NullPointerException.class, () -> uut.postProcessAfterInitialization(new Object(), null));
+  }
 
-    @Test
-    void hasHigherPrecedenceThanDataSourceInitializerPostProcessor() {
-        // uut needs higher precedence than
-        // org.springframework.boot.autoconfigure.jdbc.DataSourceInitializerPostProcessor,
-        // which triggers creation of the AmazonRdsDataSourceFactoryBean
-        int dataSourceInitializerPostProcessorOrder = Ordered.HIGHEST_PRECEDENCE + 1;
-        assertThat(uut.getOrder()).isLessThan(dataSourceInitializerPostProcessorOrder);
-    }
+  @Test
+  void hasHigherPrecedenceThanDataSourceInitializerPostProcessor() {
+    // uut needs higher precedence than
+    // org.springframework.boot.autoconfigure.jdbc.DataSourceInitializerPostProcessor,
+    // which triggers creation of the AmazonRdsDataSourceFactoryBean
+    int dataSourceInitializerPostProcessorOrder = Ordered.HIGHEST_PRECEDENCE + 1;
+    assertThat(uut.getOrder()).isLessThan(dataSourceInitializerPostProcessorOrder);
+  }
 }

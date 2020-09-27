@@ -15,22 +15,18 @@
  */
 package org.factcast.factus.lock;
 
+import lombok.NonNull;
 import org.factcast.factus.ProjectionAccessor;
 import org.factcast.factus.SimplePublisher;
 
-import lombok.NonNull;
-
-/**
- * Contains all operations that are available during locked execution
- */
+/** Contains all operations that are available during locked execution */
 public interface RetryableTransaction extends SimplePublisher, ProjectionAccessor {
 
-    default void abort(@NonNull String msg) {
-        abort(new LockedOperationAbortedException(msg));
-    }
+  default void abort(@NonNull String msg) {
+    abort(new LockedOperationAbortedException(msg));
+  }
 
-    default void abort(@NonNull LockedOperationAbortedException cause) {
-        throw cause;
-    }
-
+  default void abort(@NonNull LockedOperationAbortedException cause) {
+    throw cause;
+  }
 }

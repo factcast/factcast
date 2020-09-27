@@ -19,5 +19,5 @@ import org.factcast.core.FactCast;
 
 public interface Command {
 
-    void runWith(FactCast fc, Options opt);
+  void runWith(FactCast fc, Options opt);
 }

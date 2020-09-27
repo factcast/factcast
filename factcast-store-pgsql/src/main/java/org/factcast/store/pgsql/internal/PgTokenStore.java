@@ -17,7 +17,8 @@ package org.factcast.store.pgsql.internal;
 
 import java.util.Optional;
 import java.util.UUID;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
@@ -25,41 +26,34 @@ import org.factcast.core.util.FactCastJson;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 @RequiredArgsConstructor
 public class PgTokenStore implements TokenStore {
 
-    final JdbcTemplate tpl;
+  final JdbcTemplate tpl;
 
-    @Override
-    public @NonNull StateToken create(
-            @NonNull State state) {
+  @Override
+  public @NonNull StateToken create(@NonNull State state) {
 
-        String stateAsJson = FactCastJson.writeValueAsString(
-                state);
-        UUID queryForObject = tpl.queryForObject(PgConstants.INSERT_TOKEN,
-                new Object[] { stateAsJson },
-                UUID.class);
-        return new StateToken(
-                queryForObject);
+    String stateAsJson = FactCastJson.writeValueAsString(state);
+    UUID queryForObject =
+        tpl.queryForObject(PgConstants.INSERT_TOKEN, new Object[] {stateAsJson}, UUID.class);
+    return new StateToken(queryForObject);
+  }
+
+  @Override
+  public void invalidate(@NonNull StateToken token) {
+    tpl.update(PgConstants.DELETE_TOKEN, token.uuid());
+  }
+
+  @Override
+  public @NonNull Optional<State> get(@NonNull StateToken token) {
+    try {
+      String state =
+          tpl.queryForObject(
+              PgConstants.SELECT_STATE_FROM_TOKEN, new Object[] {token.uuid()}, String.class);
+      return Optional.of(FactCastJson.readValue(State.class, state));
+    } catch (EmptyResultDataAccessException e) {
+      return Optional.empty();
     }
-
-    @Override
-    public void invalidate(@NonNull StateToken token) {
-        tpl.update(PgConstants.DELETE_TOKEN, token.uuid());
-    }
-
-    @Override
-    public @NonNull Optional<State> get(@NonNull StateToken token) {
-        try {
-            String state = tpl.queryForObject(PgConstants.SELECT_STATE_FROM_TOKEN,
-                    new Object[] { token.uuid() },
-                    String.class);
-            return Optional.of(FactCastJson.readValue(State.class, state));
-        } catch (EmptyResultDataAccessException e) {
-            return Optional.empty();
-        }
-    }
+  }
 }

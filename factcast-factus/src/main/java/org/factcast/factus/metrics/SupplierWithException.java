@@ -17,5 +17,5 @@ package org.factcast.factus.metrics;
 
 @FunctionalInterface
 public interface SupplierWithException<R, E extends Exception> {
-    R get() throws E;
+  R get() throws E;
 }

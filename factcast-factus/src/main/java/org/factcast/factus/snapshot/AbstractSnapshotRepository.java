@@ -15,62 +15,60 @@
  */
 package org.factcast.factus.snapshot;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 
-import com.google.common.annotations.VisibleForTesting;
-
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 @RequiredArgsConstructor
 abstract class AbstractSnapshotRepository {
-    protected static final String KEY_DELIMITER = ":";
+  protected static final String KEY_DELIMITER = ":";
 
-    protected final SnapshotCache snapshotCache;
+  protected final SnapshotCache snapshotCache;
 
-    protected void putBlocking(@NonNull Snapshot snapshot) {
-        snapshotCache.setSnapshot(snapshot);
+  protected void putBlocking(@NonNull Snapshot snapshot) {
+    snapshotCache.setSnapshot(snapshot);
+  }
+
+  @VisibleForTesting
+  protected String createKeyForType(@NonNull Class<?> type) {
+    return createKeyForType(type, null);
+  }
+
+  @VisibleForTesting
+  protected String createKeyForType(@NonNull Class<?> type, UUID optionalUUID) {
+    String classLevelKey =
+        keyPrefix() + type.getCanonicalName() + KEY_DELIMITER + getSerialVersionUid(type);
+    if (optionalUUID == null) {
+      return classLevelKey;
+    } else {
+      return classLevelKey + KEY_DELIMITER + optionalUUID.toString();
     }
+  }
 
-    @VisibleForTesting
-    protected String createKeyForType(@NonNull Class<?> type) {
-        return createKeyForType(type, null);
-    }
+  private final Map<Class<?>, Long> serials = new HashMap<>();
 
-    @VisibleForTesting
-    protected String createKeyForType(@NonNull Class<?> type, UUID optionalUUID) {
-        String classLevelKey = keyPrefix() + type.getCanonicalName() + KEY_DELIMITER
-                + getSerialVersionUid(type);
-        if (optionalUUID == null) {
-            return classLevelKey;
-        } else {
-            return classLevelKey + KEY_DELIMITER + optionalUUID.toString();
-        }
-    }
-
-    private final Map<Class<?>, Long> serials = new HashMap<>();
-
-    @VisibleForTesting
-    protected Long getSerialVersionUid(Class<?> type) {
-        return serials.computeIfAbsent(type, t -> {
-            try {
-                Field field = t.getDeclaredField("serialVersionUID");
-                field.setAccessible(true);
-                return field.getLong(null);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                return 0L;
-            }
+  @VisibleForTesting
+  protected Long getSerialVersionUid(Class<?> type) {
+    return serials.computeIfAbsent(
+        type,
+        t -> {
+          try {
+            Field field = t.getDeclaredField("serialVersionUID");
+            field.setAccessible(true);
+            return field.getLong(null);
+          } catch (NoSuchFieldException | IllegalAccessException e) {
+            return 0L;
+          }
         });
-    }
+  }
 
-    protected String keyPrefix() {
-        return getClass().getCanonicalName() + KEY_DELIMITER;
-    }
-
+  protected String keyPrefix() {
+    return getClass().getCanonicalName() + KEY_DELIMITER;
+  }
 }

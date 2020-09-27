@@ -21,16 +21,14 @@ import org.junit.jupiter.api.*;
 
 public class FactValidationErrorTest {
 
-    @Test
-    void testNullContracts() {
-        assertThrows(NullPointerException.class, () -> new FactValidationError(null));
+  @Test
+  void testNullContracts() {
+    assertThrows(NullPointerException.class, () -> new FactValidationError(null));
 
-        assertThrows(NullPointerException.class, () -> new FactValidationError("foo", null));
+    assertThrows(NullPointerException.class, () -> new FactValidationError("foo", null));
 
-        assertThrows(NullPointerException.class, () -> new FactValidationError(null, "foo"));
+    assertThrows(NullPointerException.class, () -> new FactValidationError(null, "foo"));
 
-        new FactValidationError("must not throw");
-
-    }
-
+    new FactValidationError("must not throw");
+  }
 }

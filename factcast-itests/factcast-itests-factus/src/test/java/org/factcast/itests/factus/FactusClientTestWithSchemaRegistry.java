@@ -17,13 +17,15 @@ package org.factcast.itests.factus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import config.RedissonProjectionConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.UUID;
-
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
 import org.factcast.itests.factus.proj.UserV1;
 import org.factcast.itests.factus.proj.UserV2;
@@ -49,136 +51,115 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 
-import config.RedissonProjectionConfiguration;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-
 @ExtendWith(FactCastExtension.class)
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest
 @EnableAutoConfiguration
-@ContextConfiguration(classes = { Application.class, RedissonProjectionConfiguration.class })
+@ContextConfiguration(classes = {Application.class, RedissonProjectionConfiguration.class})
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
 public class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrationTest {
 
-    protected static final Network _docker_network = Network.newNetwork();
+  protected static final Network _docker_network = Network.newNetwork();
 
-    private static Path folderForSchemas;
+  private static Path folderForSchemas;
 
-    static {
-        try {
-            folderForSchemas = Files
-                    .createTempDirectory("test_schemas")
-                    .toAbsolutePath();
+  static {
+    try {
+      folderForSchemas = Files.createTempDirectory("test_schemas").toAbsolutePath();
 
-            log.info("Created temporary schema directory: {}", folderForSchemas);
+      log.info("Created temporary schema directory: {}", folderForSchemas);
 
-            File registry = new ClassPathResource("example-registry").getFile();
+      File registry = new ClassPathResource("example-registry").getFile();
 
-            log.info("Copying schema files into temporary schema directory: {}", registry);
-            FileUtils.copyDirectory(registry, folderForSchemas.toFile());
+      log.info("Copying schema files into temporary schema directory: {}", registry);
+      FileUtils.copyDirectory(registry, folderForSchemas.toFile());
 
-        } catch (IOException e) {
-            // this is unexpected but kind of fatal
-            log.error("Error creating schema directory", e);
-        }
+    } catch (IOException e) {
+      // this is unexpected but kind of fatal
+      log.error("Error creating schema directory", e);
     }
+  }
 
-    @SneakyThrows
-    @AfterAll
-    public static void cleanup() {
-        FileUtils.deleteQuietly(folderForSchemas.toFile());
-    }
+  @SneakyThrows
+  @AfterAll
+  public static void cleanup() {
+    FileUtils.deleteQuietly(folderForSchemas.toFile());
+  }
 
-    @Container
-    protected static final PostgreSQLContainer _postgres = new PostgreSQLContainer<>(
-            "postgres:11.4")
-                    .withDatabaseName("fc")
-                    .withUsername("fc")
-                    .withPassword("fc")
-                    .withNetworkAliases("db")
-                    .withNetwork(_docker_network);
+  @Container
+  protected static final PostgreSQLContainer _postgres =
+      new PostgreSQLContainer<>("postgres:11.4")
+          .withDatabaseName("fc")
+          .withUsername("fc")
+          .withPassword("fc")
+          .withNetworkAliases("db")
+          .withNetwork(_docker_network);
 
-    @Container
-    protected static final GenericContainer _factcast = new GenericContainer<>(
-            "factcast/factcast:latest")
-                    .withExposedPorts(9090)
-                    .withFileSystemBind("./config", "/config/")
-                    .withEnv("grpc.server.port", "9090")
-                    .withEnv("factcast.security.enabled", "false")
-                    .withEnv("spring.datasource.url", "jdbc:postgresql://db/fc?user=fc&password=fc")
+  @Container
+  protected static final GenericContainer _factcast =
+      new GenericContainer<>("factcast/factcast:latest")
+          .withExposedPorts(9090)
+          .withFileSystemBind("./config", "/config/")
+          .withEnv("grpc.server.port", "9090")
+          .withEnv("factcast.security.enabled", "false")
+          .withEnv("spring.datasource.url", "jdbc:postgresql://db/fc?user=fc&password=fc")
+          .withFileSystemBind(folderForSchemas.toString(), "/schemata/")
+          .withEnv("FACTCAST_STORE_PGSQL_SCHEMA_REGISTRY_URL", "file:///schemata")
+          .withNetwork(_docker_network)
+          .dependsOn(_postgres)
+          .withLogConsumer(new Slf4jLogConsumer(log))
+          .waitingFor(new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
 
-                    .withFileSystemBind(folderForSchemas.toString(), "/schemata/")
-                    .withEnv("FACTCAST_STORE_PGSQL_SCHEMA_REGISTRY_URL", "file:///schemata")
+  @SuppressWarnings("rawtypes")
+  @Container
+  static final GenericContainer _redis =
+      new GenericContainer<>("redis:5.0.3-alpine").withExposedPorts(6379);
 
-                    .withNetwork(_docker_network)
-                    .dependsOn(_postgres)
-                    .withLogConsumer(new Slf4jLogConsumer(log))
-                    .waitingFor(new HostPortWaitStrategy()
-                            .withStartupTimeout(Duration.ofSeconds(180)));
+  @BeforeAll
+  public static void startContainers() throws InterruptedException {
+    String address = "static://" + _factcast.getHost() + ":" + _factcast.getMappedPort(9090);
+    System.setProperty("grpc.client.factstore.address", address);
 
-    @SuppressWarnings("rawtypes")
-    @Container
-    static final GenericContainer _redis = new GenericContainer<>("redis:5.0.3-alpine")
-            .withExposedPorts(6379);
+    System.setProperty("spring.redis.host", _redis.getHost());
+    System.setProperty("spring.redis.port", String.valueOf(_redis.getMappedPort(6379)));
+  }
 
-    @BeforeAll
-    public static void startContainers() throws InterruptedException {
-        String address = "static://" +
-                _factcast.getHost() + ":" +
-                _factcast.getMappedPort(9090);
-        System.setProperty("grpc.client.factstore.address", address);
+  @Autowired Factus ec;
 
-        System.setProperty("spring.redis.host", _redis.getHost());
-        System.setProperty("spring.redis.port",
-                String.valueOf(_redis.getMappedPort(6379)));
-    }
+  @Test
+  public void testVersions_upcast() {
+    // INIT
+    UUID aggId = UUID.randomUUID();
 
-    @Autowired
-    Factus ec;
+    // RUN
+    ec.publish(new org.factcast.itests.factus.event.versioned.v1.UserCreated(aggId, "foo"));
 
-    @Test
-    public void testVersions_upcast() {
-        // INIT
-        UUID aggId = UUID.randomUUID();
+    // ASSERT
+    // this should work anyways:
+    UserV1 userV1 = ec.fetch(UserV1.class, aggId);
+    assertThat(userV1.userName()).isEqualTo("foo");
 
-        // RUN
-        ec.publish(new org.factcast.itests.factus.event.versioned.v1.UserCreated(aggId, "foo"));
+    UserV2 userV2 = ec.fetch(UserV2.class, aggId);
+    assertThat(userV2.userName()).isEqualTo("foo");
+    assertThat(userV2.salutation()).isEqualTo("NA");
+  }
 
-        // ASSERT
-        // this should work anyways:
-        UserV1 userV1 = ec.fetch(UserV1.class, aggId);
-        assertThat(userV1.userName())
-                .isEqualTo("foo");
+  @Test
+  public void testVersions_downcast() {
+    // INIT
+    UUID aggId = UUID.randomUUID();
 
-        UserV2 userV2 = ec.fetch(UserV2.class, aggId);
-        assertThat(userV2.userName())
-                .isEqualTo("foo");
-        assertThat(userV2.salutation())
-                .isEqualTo("NA");
-    }
+    // RUN
+    ec.publish(new org.factcast.itests.factus.event.versioned.v2.UserCreated(aggId, "foo", "MR"));
 
-    @Test
-    public void testVersions_downcast() {
-        // INIT
-        UUID aggId = UUID.randomUUID();
+    // ASSERT
+    // this should work anyways:
+    UserV2 userV2 = ec.fetch(UserV2.class, aggId);
+    assertThat(userV2.userName()).isEqualTo("foo");
+    assertThat(userV2.salutation()).isEqualTo("MR");
 
-        // RUN
-        ec.publish(new org.factcast.itests.factus.event.versioned.v2.UserCreated(aggId, "foo",
-                "MR"));
-
-        // ASSERT
-        // this should work anyways:
-        UserV2 userV2 = ec.fetch(UserV2.class, aggId);
-        assertThat(userV2.userName())
-                .isEqualTo("foo");
-        assertThat(userV2.salutation())
-                .isEqualTo("MR");
-
-        UserV1 userV1 = ec.fetch(UserV1.class, aggId);
-        assertThat(userV1.userName())
-                .isEqualTo("foo");
-    }
-
+    UserV1 userV1 = ec.fetch(UserV1.class, aggId);
+    assertThat(userV1.userName()).isEqualTo("foo");
+  }
 }

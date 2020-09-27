@@ -15,6 +15,7 @@
  */
 package org.factcast.grpc.api;
 
+import io.grpc.CompressorRegistry;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -22,46 +23,45 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.*;
 
-import io.grpc.CompressorRegistry;
-
 public class CompressionCodecs {
 
-    private final Map<String, Optional<String>> cache = new HashMap<>();
+  private final Map<String, Optional<String>> cache = new HashMap<>();
 
-    private final List<String> orderedListOfAvailableCodecs;
+  private final List<String> orderedListOfAvailableCodecs;
 
-    private final String orderedListOfAvailableCodecsAsString;
+  private final String orderedListOfAvailableCodecsAsString;
 
-    public CompressionCodecs() {
-        orderedListOfAvailableCodecs = Stream.of("lz4", "snappy", "gzip")
-                .filter(CompressionCodecs::locallyAvailable)
-                .collect(Collectors.toList());
-        orderedListOfAvailableCodecsAsString = String.join(",", orderedListOfAvailableCodecs);
+  public CompressionCodecs() {
+    orderedListOfAvailableCodecs =
+        Stream.of("lz4", "snappy", "gzip")
+            .filter(CompressionCodecs::locallyAvailable)
+            .collect(Collectors.toList());
+    orderedListOfAvailableCodecsAsString = String.join(",", orderedListOfAvailableCodecs);
+  }
+
+  private static boolean locallyAvailable(String codec) {
+    return CompressorRegistry.getDefaultInstance().lookupCompressor(codec) != null;
+  }
+
+  public Optional<String> selectFrom(String commaSeparatedList) {
+    return cache.computeIfAbsent(commaSeparatedList, this::fromCommaSeparatedList);
+  }
+
+  public String available() {
+    return orderedListOfAvailableCodecsAsString;
+  }
+
+  private Optional<String> fromCommaSeparatedList(String listOrNull) {
+    if (listOrNull != null) {
+      List<String> codecs =
+          Arrays.stream(listOrNull.toLowerCase().split(","))
+              .map(String::trim)
+              .filter(s -> !s.trim().isEmpty())
+              .collect(Collectors.toList());
+      for (String codec : orderedListOfAvailableCodecs) {
+        if (codecs.contains(codec)) return Optional.of(codec);
+      }
     }
-
-    private static boolean locallyAvailable(String codec) {
-        return CompressorRegistry.getDefaultInstance().lookupCompressor(codec) != null;
-    }
-
-    public Optional<String> selectFrom(String commaSeparatedList) {
-        return cache.computeIfAbsent(commaSeparatedList, this::fromCommaSeparatedList);
-    }
-
-    public String available() {
-        return orderedListOfAvailableCodecsAsString;
-    }
-
-    private Optional<String> fromCommaSeparatedList(String listOrNull) {
-        if (listOrNull != null) {
-            List<String> codecs = Arrays.stream(listOrNull.toLowerCase().split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.trim().isEmpty())
-                    .collect(Collectors.toList());
-            for (String codec : orderedListOfAvailableCodecs) {
-                if (codecs.contains(codec))
-                    return Optional.of(codec);
-            }
-        }
-        return Optional.empty();
-    }
+    return Optional.empty();
+  }
 }

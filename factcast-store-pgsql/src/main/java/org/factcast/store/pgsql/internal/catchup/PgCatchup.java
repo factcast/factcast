@@ -15,5 +15,4 @@
  */
 package org.factcast.store.pgsql.internal.catchup;
 
-public interface PgCatchup extends Runnable {
-}
+public interface PgCatchup extends Runnable {}

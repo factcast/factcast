@@ -16,34 +16,30 @@
 package org.factcast.factus.projector;
 
 import java.util.UUID;
-
+import lombok.Getter;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.Aggregate;
 
-import lombok.Getter;
-
 class ComplexAggregate extends Aggregate {
 
-    ComplexAggregate(UUID aggregateId) {
-        super(aggregateId);
+  ComplexAggregate(UUID aggregateId) {
+    super(aggregateId);
+  }
+
+  @Getter private ComplexEvent recordedEvent = null;
+
+  @Getter private ComplexEvent2 recordedEvent2 = null;
+
+  class Nested {
+
+    @Handler
+    void apply(ComplexEvent foo) {
+      recordedEvent = foo;
     }
 
-    @Getter
-    private ComplexEvent recordedEvent = null;
-
-    @Getter
-    private ComplexEvent2 recordedEvent2 = null;
-
-    class Nested {
-
-        @Handler
-        void apply(ComplexEvent foo) {
-            recordedEvent = foo;
-        }
-
-        @Handler
-        void apply2(ComplexEvent2 foo) {
-            recordedEvent2 = foo;
-        }
+    @Handler
+    void apply2(ComplexEvent2 foo) {
+      recordedEvent2 = foo;
     }
+  }
 }

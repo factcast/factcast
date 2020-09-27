@@ -16,18 +16,16 @@
 package org.factcast.core.store;
 
 import java.util.Optional;
-
 import lombok.NonNull;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public interface TokenStore {
 
-    @NonNull
-    StateToken create(@NonNull State state);
+  @NonNull
+  StateToken create(@NonNull State state);
 
-    void invalidate(@NonNull StateToken token);
+  void invalidate(@NonNull StateToken token);
 
-    @NonNull
-    Optional<State> get(@NonNull StateToken token);
-
+  @NonNull
+  Optional<State> get(@NonNull StateToken token);
 }

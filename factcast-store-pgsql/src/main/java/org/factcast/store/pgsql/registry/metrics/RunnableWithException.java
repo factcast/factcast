@@ -17,5 +17,5 @@ package org.factcast.store.pgsql.registry.metrics;
 
 @FunctionalInterface
 public interface RunnableWithException<E extends Exception> {
-    void run() throws E;
+  void run() throws E;
 }
