@@ -16,16 +16,16 @@
 package org.factcast.store.pgsql.internal.catchup;
 
 import java.util.concurrent.atomic.AtomicLong;
-
+import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
 
-import lombok.NonNull;
-
 public interface PgCatchupFactory {
 
-    PgCatchup create(@NonNull SubscriptionRequestTO request,
-            @NonNull PgPostQueryMatcher postQueryMatcher,
-            @NonNull SubscriptionImpl subscription, @NonNull AtomicLong serial);
+  PgCatchup create(
+      @NonNull SubscriptionRequestTO request,
+      @NonNull PgPostQueryMatcher postQueryMatcher,
+      @NonNull SubscriptionImpl subscription,
+      @NonNull AtomicLong serial);
 }

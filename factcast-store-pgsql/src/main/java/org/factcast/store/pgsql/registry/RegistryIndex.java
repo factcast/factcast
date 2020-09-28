@@ -15,15 +15,12 @@
  */
 package org.factcast.store.pgsql.registry;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.LinkedList;
 import java.util.List;
-
+import lombok.Data;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import lombok.Data;
 
 /**
  * Object representation for an index.json
@@ -32,9 +29,7 @@ import lombok.Data;
  */
 @Data
 public class RegistryIndex {
-    @JsonProperty
-    private List<SchemaSource> schemes = new LinkedList<>();
+  @JsonProperty private List<SchemaSource> schemes = new LinkedList<>();
 
-    @JsonProperty
-    private List<TransformationSource> transformations = new LinkedList<>();
+  @JsonProperty private List<TransformationSource> transformations = new LinkedList<>();
 }

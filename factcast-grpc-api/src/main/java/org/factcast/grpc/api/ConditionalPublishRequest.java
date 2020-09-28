@@ -18,25 +18,19 @@ package org.factcast.grpc.api;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
+import lombok.NonNull;
+import lombok.Value;
 import org.factcast.core.Fact;
 import org.factcast.core.store.StateToken;
 
-import lombok.NonNull;
-import lombok.Value;
-
 @Value
 public class ConditionalPublishRequest {
-    @NonNull
-    List<? extends Fact> facts;
+  @NonNull List<? extends Fact> facts;
 
-    private UUID token;
+  private UUID token;
 
-    public Optional<StateToken> token() {
-        if (token == null)
-            return Optional.empty();
-        else
-            return Optional.of(new StateToken(token));
-    }
-
+  public Optional<StateToken> token() {
+    if (token == null) return Optional.empty();
+    else return Optional.of(new StateToken(token));
+  }
 }

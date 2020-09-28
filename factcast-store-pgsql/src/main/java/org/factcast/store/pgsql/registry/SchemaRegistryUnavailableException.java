@@ -19,15 +19,14 @@ import lombok.NonNull;
 
 public class SchemaRegistryUnavailableException extends RuntimeException {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    public SchemaRegistryUnavailableException(Exception e) {
-        super(e);
-    }
+  public SchemaRegistryUnavailableException(Exception e) {
+    super(e);
+  }
 
-    public SchemaRegistryUnavailableException(@NonNull String httpUrlAsString, int code,
-            @NonNull String message) {
-        super("Status code " + code + ": " + message + " while requesting " + httpUrlAsString);
-    }
-
+  public SchemaRegistryUnavailableException(
+      @NonNull String httpUrlAsString, int code, @NonNull String message) {
+    super("Status code " + code + ": " + message + " while requesting " + httpUrlAsString);
+  }
 }

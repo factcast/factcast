@@ -15,46 +15,45 @@
  */
 package org.factcast.client.grpc.cli.conv;
 
-import java.util.UUID;
-import java.util.function.Function;
-
 import com.beust.jcommander.IStringConverterInstanceFactory;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.converters.BaseConverter;
+import java.util.UUID;
+import java.util.function.Function;
 
 public class Converters {
 
-    public static IStringConverterInstanceFactory factory() {
-        return (param, clazz, name) -> {
-            if (clazz == UUID.class)
-                return new SimpleConverter<>(param.description(), UUID.class, UUID::fromString);
-            if (clazz == ExistingJsonFile.class)
-                return new SimpleConverter<>(param.description(), ExistingJsonFile.class,
-                        ExistingJsonFile::new);
-            return null;
-        };
+  public static IStringConverterInstanceFactory factory() {
+    return (param, clazz, name) -> {
+      if (clazz == UUID.class)
+        return new SimpleConverter<>(param.description(), UUID.class, UUID::fromString);
+      if (clazz == ExistingJsonFile.class)
+        return new SimpleConverter<>(
+            param.description(), ExistingJsonFile.class, ExistingJsonFile::new);
+      return null;
+    };
+  }
+
+  static class SimpleConverter<T> extends BaseConverter<T> {
+
+    private final Function<String, T> l;
+
+    private final Class<T> clazz;
+
+    SimpleConverter(String optionName, Class<T> clazz, Function<String, T> l) {
+      super(optionName);
+      this.clazz = clazz;
+      this.l = l;
     }
 
-    static class SimpleConverter<T> extends BaseConverter<T> {
-
-        private final Function<String, T> l;
-
-        private final Class<T> clazz;
-
-        SimpleConverter(String optionName, Class<T> clazz, Function<String, T> l) {
-            super(optionName);
-            this.clazz = clazz;
-            this.l = l;
-        }
-
-        @Override
-        public T convert(String value) {
-            try {
-                return l.apply(value);
-            } catch (Exception e) {
-                throw new ParameterException(getErrorString(value, clazz.getCanonicalName()) + " : "
-                        + e.getMessage());
-            }
-        }
+    @Override
+    public T convert(String value) {
+      try {
+        return l.apply(value);
+      } catch (Exception e) {
+        throw new ParameterException(
+            getErrorString(value, clazz.getCanonicalName()) + " : " + e.getMessage());
+      }
     }
+  }
 }

@@ -15,6 +15,8 @@
  */
 package org.factcast.store.pgsql.registry.validation;
 
+import liquibase.integration.spring.SpringLiquibase;
+import lombok.NonNull;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
@@ -27,36 +29,34 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import liquibase.integration.spring.SpringLiquibase;
-import lombok.NonNull;
-
 @Configuration
 public class FactValidatorConfiguration {
-    @Bean
-    public SchemaStore schemaStore(@NonNull JdbcTemplate jdbcTemplate,
-            @NonNull PgConfigurationProperties props, @NonNull RegistryMetrics registryMetrics,
-            @Autowired(
-                    required = false) SpringLiquibase unused) {
-        if (props.isValidationEnabled() && props.isPersistentRegistry())
-            return new PgSchemaStoreImpl(jdbcTemplate, registryMetrics);
+  @Bean
+  public SchemaStore schemaStore(
+      @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull PgConfigurationProperties props,
+      @NonNull RegistryMetrics registryMetrics,
+      @Autowired(required = false) SpringLiquibase unused) {
+    if (props.isValidationEnabled() && props.isPersistentRegistry())
+      return new PgSchemaStoreImpl(jdbcTemplate, registryMetrics);
 
-        // otherwise
-        return new InMemSchemaStoreImpl(registryMetrics);
-    }
+    // otherwise
+    return new InMemSchemaStoreImpl(registryMetrics);
+  }
 
-    @Bean
-    public FactValidator factValidator(PgConfigurationProperties props, SchemaRegistry registry,
-            @NonNull RegistryMetrics registryMetrics) {
-        if (props.isValidationEnabled())
-            return new FactValidator(props, registry, registryMetrics);
-        else
-            return null;
-    }
+  @Bean
+  public FactValidator factValidator(
+      PgConfigurationProperties props,
+      SchemaRegistry registry,
+      @NonNull RegistryMetrics registryMetrics) {
+    if (props.isValidationEnabled()) return new FactValidator(props, registry, registryMetrics);
+    else return null;
+  }
 
-    @Bean
-    @ConditionalOnProperty(name = "factcast.store.pgsql.schemaRegistryUrl")
-    public FactValidationAspect factValidationAspect(PgConfigurationProperties props,
-            FactValidator v) {
-        return new FactValidationAspect(v);
-    }
+  @Bean
+  @ConditionalOnProperty(name = "factcast.store.pgsql.schemaRegistryUrl")
+  public FactValidationAspect factValidationAspect(
+      PgConfigurationProperties props, FactValidator v) {
+    return new FactValidationAspect(v);
+  }
 }

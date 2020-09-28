@@ -16,26 +16,23 @@
 package org.factcast.factus.projection;
 
 import java.util.UUID;
-
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 
 /**
- * indirection to/from the aggregate's id, so that it does not spoil the public
- * interface of Aggregate, in case you'd want to use wrapping or inline classes
- * when exposing the Id.
+ * indirection to/from the aggregate's id, so that it does not spoil the public interface of
+ * Aggregate, in case you'd want to use wrapping or inline classes when exposing the Id.
  */
 @UtilityClass
 public class AggregateUtil {
-    public static UUID aggregateId(@NonNull Aggregate a) {
-        return a.aggregateId();
-    }
+  public static UUID aggregateId(@NonNull Aggregate a) {
+    return a.aggregateId();
+  }
 
-    public static void aggregateId(@NonNull Aggregate a, @NonNull UUID idToSet) {
-        if (a.aggregateId() != null) {
-            throw new IllegalStateException(
-                    "aggregateId is already set and not supposed to change.");
-        }
-        a.aggregateId(idToSet);
+  public static void aggregateId(@NonNull Aggregate a, @NonNull UUID idToSet) {
+    if (a.aggregateId() != null) {
+      throw new IllegalStateException("aggregateId is already set and not supposed to change.");
     }
+    a.aggregateId(idToSet);
+  }
 }

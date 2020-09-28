@@ -20,30 +20,26 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.LinkedList;
 import java.util.List;
-
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 
 public class ExceptionAfterPublishTest {
 
-    @Test
-    public void testNullContracts() {
-        assertThrows(NullPointerException.class, () -> new ExceptionAfterPublish(null,
-                new RuntimeException()));
-        assertThrows(NullPointerException.class, () -> new ExceptionAfterPublish(new LinkedList<>(),
-                null));
-        assertThrows(NullPointerException.class, () -> new ExceptionAfterPublish(null, null));
+  @Test
+  public void testNullContracts() {
+    assertThrows(
+        NullPointerException.class, () -> new ExceptionAfterPublish(null, new RuntimeException()));
+    assertThrows(
+        NullPointerException.class, () -> new ExceptionAfterPublish(new LinkedList<>(), null));
+    assertThrows(NullPointerException.class, () -> new ExceptionAfterPublish(null, null));
+  }
 
-    }
-
-    @Test
-    public void testExceptionAfterPublish() {
-        Throwable e = Mockito.mock(Exception.class);
-        List facts = new LinkedList<>();
-        ExceptionAfterPublish uut = new ExceptionAfterPublish(facts, e);
-        assertThat(uut.publishedFacts()).isSameAs(facts);
-        assertThat(uut.getCause()).isSameAs(e);
-
-    }
-
+  @Test
+  public void testExceptionAfterPublish() {
+    Throwable e = Mockito.mock(Exception.class);
+    List facts = new LinkedList<>();
+    ExceptionAfterPublish uut = new ExceptionAfterPublish(facts, e);
+    assertThat(uut.publishedFacts()).isSameAs(facts);
+    assertThat(uut.getCause()).isSameAs(e);
+  }
 }

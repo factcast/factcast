@@ -16,7 +16,6 @@
 package org.factcast.grpc.api.conv;
 
 import java.util.StringJoiner;
-
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.With;
@@ -26,21 +25,21 @@ import lombok.With;
 @Value
 public class ProtocolVersion {
 
-    int major;
+  int major;
 
-    int minor;
+  int minor;
 
-    int patch;
+  int patch;
 
-    public boolean isCompatibleTo(ProtocolVersion other) {
-        // patch level must be irrelevant
-        return (major == other.major) && (minor <= other.minor);
-    }
+  public boolean isCompatibleTo(ProtocolVersion other) {
+    // patch level must be irrelevant
+    return (major == other.major) && (minor <= other.minor);
+  }
 
-    @Override
-    public String toString() {
-        StringJoiner joiner = new StringJoiner(".");
-        joiner.add(String.valueOf(major)).add(String.valueOf(minor)).add(String.valueOf(patch));
-        return joiner.toString();
-    }
+  @Override
+  public String toString() {
+    StringJoiner joiner = new StringJoiner(".");
+    joiner.add(String.valueOf(major)).add(String.valueOf(minor)).add(String.valueOf(patch));
+    return joiner.toString();
+  }
 }

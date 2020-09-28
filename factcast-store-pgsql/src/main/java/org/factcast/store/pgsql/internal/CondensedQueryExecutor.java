@@ -15,20 +15,16 @@
  */
 package org.factcast.store.pgsql.internal;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
-
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.pgsql.internal.listen.PgListener.FactInsertionEvent;
 
-import com.google.common.eventbus.Subscribe;
-
-import lombok.extern.slf4j.Slf4j;
-
 /**
- * Executes a given runnable if triggered, but ignores all subsequent triggers
- * for maxDelayInMillis.
+ * Executes a given runnable if triggered, but ignores all subsequent triggers for maxDelayInMillis.
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
@@ -36,73 +32,79 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class CondensedQueryExecutor {
 
-    private final long maxDelayInMillis;
+  private final long maxDelayInMillis;
 
-    private final PgSynchronizedQuery target;
+  private final PgSynchronizedQuery target;
 
-    private final Supplier<Boolean> connectionStateSupplier;
+  private final Supplier<Boolean> connectionStateSupplier;
 
-    private Timer timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer",
-            true);
+  private Timer timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer", true);
 
-    private final AtomicBoolean currentlyScheduled = new AtomicBoolean(false);
+  private final AtomicBoolean currentlyScheduled = new AtomicBoolean(false);
 
-    CondensedQueryExecutor(long maxDelayInMillis, PgSynchronizedQuery target,
-            Supplier<Boolean> connectionStateSupplier, Timer timer) {
-        this.maxDelayInMillis = maxDelayInMillis;
-        this.target = target;
-        this.connectionStateSupplier = connectionStateSupplier;
-        this.timer = timer;
+  CondensedQueryExecutor(
+      long maxDelayInMillis,
+      PgSynchronizedQuery target,
+      Supplier<Boolean> connectionStateSupplier,
+      Timer timer) {
+    this.maxDelayInMillis = maxDelayInMillis;
+    this.target = target;
+    this.connectionStateSupplier = connectionStateSupplier;
+    this.timer = timer;
+  }
+
+  public CondensedQueryExecutor(
+      long maxDelayInMillis,
+      PgSynchronizedQuery target,
+      Supplier<Boolean> connectionStateSupplier) {
+    this.maxDelayInMillis = maxDelayInMillis;
+    this.target = target;
+    this.connectionStateSupplier = connectionStateSupplier;
+  }
+
+  public void trigger() {
+    if (connectionStateSupplier.get()) {
+      if (maxDelayInMillis < 1) {
+        runTarget();
+      } else if (!currentlyScheduled.getAndSet(true)) {
+        timer.schedule(
+            new TimerTask() {
+
+              @Override
+              public void run() {
+                currentlyScheduled.set(false);
+                try {
+                  CondensedQueryExecutor.this.runTarget();
+                } catch (Throwable e) {
+                  log.error("Scheduled query failed, closing: {}", e.getMessage());
+                }
+              }
+            },
+            maxDelayInMillis);
+      }
     }
+  }
 
-    public CondensedQueryExecutor(long maxDelayInMillis, PgSynchronizedQuery target,
-            Supplier<Boolean> connectionStateSupplier) {
-        this.maxDelayInMillis = maxDelayInMillis;
-        this.target = target;
-        this.connectionStateSupplier = connectionStateSupplier;
+  // called by the EventBus
+  @Subscribe
+  public void onEvent(FactInsertionEvent ev) {
+    trigger();
+  }
+
+  @SuppressWarnings("WeakerAccess")
+  protected synchronized void runTarget() {
+    try {
+      target.run(false);
+    } catch (Throwable e) {
+      log.error("cannot run Target: ", e);
     }
+  }
 
-    public void trigger() {
-        if (connectionStateSupplier.get()) {
-            if (maxDelayInMillis < 1) {
-                runTarget();
-            } else if (!currentlyScheduled.getAndSet(true)) {
-                timer.schedule(new TimerTask() {
-
-                    @Override
-                    public void run() {
-                        currentlyScheduled.set(false);
-                        try {
-                            CondensedQueryExecutor.this.runTarget();
-                        } catch (Throwable e) {
-                            log.error("Scheduled query failed, closing: {}", e.getMessage());
-                        }
-                    }
-                }, maxDelayInMillis);
-            }
-        }
-    }
-
-    // called by the EventBus
-    @Subscribe
-    public void onEvent(FactInsertionEvent ev) {
-        trigger();
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    protected synchronized void runTarget() {
-        try {
-            target.run(false);
-        } catch (Throwable e) {
-            log.error("cannot run Target: ", e);
-        }
-    }
-
-    public void cancel() {
-        currentlyScheduled.set(true);
-        timer.cancel();
-        timer.purge();
-        // make sure, the final run did not flip again
-        currentlyScheduled.set(true);
-    }
+  public void cancel() {
+    currentlyScheduled.set(true);
+    timer.cancel();
+    timer.purge();
+    // make sure, the final run did not flip again
+    currentlyScheduled.set(true);
+  }
 }
