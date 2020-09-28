@@ -16,12 +16,11 @@
 package org.factcast.grpc.api.conv;
 
 import java.util.UUID;
-
 import lombok.Value;
 
 @Value
 public class IdAndVersion {
-    UUID uuid;
+  UUID uuid;
 
-    int version;
+  int version;
 }

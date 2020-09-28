@@ -15,9 +15,5 @@
  */
 package sorry;
 
-/**
- * This is a kotlin module, please look at the sources.
- */
-public class SorryNoJavaDocs {
-
-}
+/** This is a kotlin module, please look at the sources. */
+public class SorryNoJavaDocs {}

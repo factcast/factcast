@@ -15,14 +15,12 @@
  */
 package org.factcast.core.subscription;
 
-import org.factcast.core.Fact;
-
 import lombok.NonNull;
+import org.factcast.core.Fact;
 
 @FunctionalInterface
 public interface FactTransformers {
 
-    @NonNull
-    Fact transformIfNecessary(@NonNull Fact e) throws TransformationException;
-
+  @NonNull
+  Fact transformIfNecessary(@NonNull Fact e) throws TransformationException;
 }

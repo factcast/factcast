@@ -19,27 +19,25 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
 import lombok.NonNull;
 
 public class RequestedVersions {
-    private final Map<String, Set<Integer>> c = new HashMap<>();
+  private final Map<String, Set<Integer>> c = new HashMap<>();
 
-    public void add(@NonNull String ns, @NonNull String type, int version) {
-        get(ns, type).add(version);
-    }
+  public void add(@NonNull String ns, @NonNull String type, int version) {
+    get(ns, type).add(version);
+  }
 
-    public Set<Integer> get(@NonNull String ns, String type) {
-        return c.computeIfAbsent(ns + ":" + type, k -> new HashSet<>());
-    }
+  public Set<Integer> get(@NonNull String ns, String type) {
+    return c.computeIfAbsent(ns + ":" + type, k -> new HashSet<>());
+  }
 
-    public boolean dontCare(@NonNull String ns, String type) {
-        Set<Integer> set = get(ns, type);
-        return set.isEmpty() || set.contains(0);
-    }
+  public boolean dontCare(@NonNull String ns, String type) {
+    Set<Integer> set = get(ns, type);
+    return set.isEmpty() || set.contains(0);
+  }
 
-    public boolean exactVersion(@NonNull String ns, String type, int version) {
-        return get(ns, type).contains(version);
-    }
-
+  public boolean exactVersion(@NonNull String ns, String type, int version) {
+    return get(ns, type).contains(version);
+  }
 }

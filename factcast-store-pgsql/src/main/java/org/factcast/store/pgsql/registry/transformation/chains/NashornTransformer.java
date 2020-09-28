@@ -15,68 +15,63 @@
  */
 package org.factcast.store.pgsql.registry.transformation.chains;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.util.Map;
-
 import javax.script.Compilable;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
-
 public class NashornTransformer implements Transformer {
 
-    private static final int ENGINE_CACHE_CAPACITY = 128;
+  private static final int ENGINE_CACHE_CAPACITY = 128;
 
-    private static final ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
+  private static final ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
 
-    private static final LRUMap<String, Invocable> warmEngines = new LRUMap<>(
-            ENGINE_CACHE_CAPACITY);
+  private static final LRUMap<String, Invocable> warmEngines = new LRUMap<>(ENGINE_CACHE_CAPACITY);
 
-    @Override
-    public JsonNode transform(Transformation t, JsonNode input) throws TransformationException {
+  @Override
+  public JsonNode transform(Transformation t, JsonNode input) throws TransformationException {
 
-        if (!t.transformationCode().isPresent()) {
-            return input;
-        } else {
-            String js = t.transformationCode().get();
+    if (!t.transformationCode().isPresent()) {
+      return input;
+    } else {
+      String js = t.transformationCode().get();
 
-            Invocable invocable = warmEngines.get(js);
-            if (invocable == null) {
-                ScriptEngine engine = null;
-                synchronized (scriptEngineManager) {
-                    // no guarantee is found anywhere, that creating a
-                    // scriptEngine was
-                    // supposed to be threadsafe, so...
-                    engine = new NashornScriptEngineFactory().getScriptEngine(ClassLoader
-                            .getSystemClassLoader());
-                }
-                try {
-                    Compilable compilable = (Compilable) engine;
-                    compilable.compile(js).eval();
-                    invocable = (Invocable) engine;
-                    warmEngines.put(js, invocable);
-                } catch (ScriptException e) {
-                    throw new TransformationException(e);
-                }
-            }
-
-            try {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
-                invocable.invokeFunction("transform", jsonAsMap);
-                return FactCastJson.toJsonNode(jsonAsMap);
-            } catch (NoSuchMethodException | ScriptException e) {
-                throw new TransformationException(e);
-            }
+      Invocable invocable = warmEngines.get(js);
+      if (invocable == null) {
+        ScriptEngine engine = null;
+        synchronized (scriptEngineManager) {
+          // no guarantee is found anywhere, that creating a
+          // scriptEngine was
+          // supposed to be threadsafe, so...
+          engine =
+              new NashornScriptEngineFactory().getScriptEngine(ClassLoader.getSystemClassLoader());
         }
+        try {
+          Compilable compilable = (Compilable) engine;
+          compilable.compile(js).eval();
+          invocable = (Invocable) engine;
+          warmEngines.put(js, invocable);
+        } catch (ScriptException e) {
+          throw new TransformationException(e);
+        }
+      }
+
+      try {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
+        invocable.invokeFunction("transform", jsonAsMap);
+        return FactCastJson.toJsonNode(jsonAsMap);
+      } catch (NoSuchMethodException | ScriptException e) {
+        throw new TransformationException(e);
+      }
     }
+  }
 }

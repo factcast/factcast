@@ -16,13 +16,12 @@
 package org.factcast.factus.projector;
 
 import java.util.List;
-
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.projection.Projection;
 
 public interface Projector<A extends Projection> {
-    void apply(Fact element);
+  void apply(Fact element);
 
-    List<FactSpec> createFactSpecs();
+  List<FactSpec> createFactSpecs();
 }

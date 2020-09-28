@@ -17,23 +17,22 @@ package org.factcast.factus.lock;
 
 import lombok.NonNull;
 
-//TODO checked?
+// TODO checked?
 public class LockedOperationAbortedException extends RuntimeException {
-    public LockedOperationAbortedException(@NonNull String msg) {
-        super(msg);
+  public LockedOperationAbortedException(@NonNull String msg) {
+    super(msg);
+  }
+
+  public LockedOperationAbortedException(@NonNull Throwable e) {
+    super(e);
+  }
+
+  public static LockedOperationAbortedException wrap(@NonNull Throwable e) {
+
+    if (e instanceof LockedOperationAbortedException) {
+      return (LockedOperationAbortedException) e;
+    } else {
+      return new LockedOperationAbortedException(e);
     }
-
-    public LockedOperationAbortedException(@NonNull Throwable e) {
-        super(e);
-    }
-
-    public static LockedOperationAbortedException wrap(@NonNull Throwable e) {
-
-        if (e instanceof LockedOperationAbortedException) {
-            return (LockedOperationAbortedException) e;
-        } else {
-            return new LockedOperationAbortedException(e);
-        }
-    }
-
+  }
 }

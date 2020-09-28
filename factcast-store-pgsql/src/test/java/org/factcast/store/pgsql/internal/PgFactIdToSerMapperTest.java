@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Collections;
 import java.util.UUID;
-
 import org.factcast.core.*;
 import org.factcast.core.store.FactStore;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
@@ -34,33 +33,31 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ContextConfiguration(classes = { PgTestConfiguration.class })
+@ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 public class PgFactIdToSerMapperTest {
 
-    @Autowired
-    JdbcTemplate tpl;
+  @Autowired JdbcTemplate tpl;
 
-    @Autowired
-    FactStore store;
+  @Autowired FactStore store;
 
-    @Test
-    void testRetrieve() {
-        Fact m = Fact.builder().buildWithoutPayload();
-        store.publish(Collections.singletonList(m));
-        long retrieve = new PgFactIdToSerialMapper(tpl).retrieve(m.id());
-        assertTrue(retrieve > 0);
+  @Test
+  void testRetrieve() {
+    Fact m = Fact.builder().buildWithoutPayload();
+    store.publish(Collections.singletonList(m));
+    long retrieve = new PgFactIdToSerialMapper(tpl).retrieve(m.id());
+    assertTrue(retrieve > 0);
+  }
+
+  @Test
+  void testRetrieveNonExistant() {
+    try {
+      new PgFactIdToSerialMapper(tpl)
+          .retrieve(UUID.fromString("2b86d90e-2755-4f82-b86d-fd092b25ccc8"));
+      fail();
+    } catch (Throwable ignored) {
     }
-
-    @Test
-    void testRetrieveNonExistant() {
-        try {
-            new PgFactIdToSerialMapper(tpl).retrieve(UUID.fromString(
-                    "2b86d90e-2755-4f82-b86d-fd092b25ccc8"));
-            fail();
-        } catch (Throwable ignored) {
-        }
-    }
+  }
 }

@@ -20,9 +20,8 @@ import org.factcast.core.Fact;
 /**
  * an observer that provides Facts.
  *
- * see {@link GenericObserver}.
+ * <p>see {@link GenericObserver}.
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-public interface FactObserver extends GenericObserver<Fact> {
-}
+public interface FactObserver extends GenericObserver<Fact> {}

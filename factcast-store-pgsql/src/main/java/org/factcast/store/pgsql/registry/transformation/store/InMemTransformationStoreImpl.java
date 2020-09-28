@@ -15,11 +15,15 @@
  */
 package org.factcast.store.pgsql.registry.transformation.store;
 
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.apache.commons.collections4.ListUtils;
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
@@ -29,65 +33,62 @@ import org.factcast.store.pgsql.registry.transformation.TransformationConflictEx
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.val;
-
 @RequiredArgsConstructor
 public class InMemTransformationStoreImpl extends AbstractTransformationStore {
-    private final RegistryMetrics registryMetrics;
+  private final RegistryMetrics registryMetrics;
 
-    private final Map<String, String> id2hashMap = new HashMap<>();
+  private final Map<String, String> id2hashMap = new HashMap<>();
 
-    private final Map<TransformationKey, List<Transformation>> transformationCache = new HashMap<>();
+  private final Map<TransformationKey, List<Transformation>> transformationCache = new HashMap<>();
 
-    @Override
-    protected void doStore(@NonNull TransformationSource source, String transformation)
-            throws TransformationConflictException {
-        synchronized (mutex) {
-            id2hashMap.put(source.id(), source.hash());
-            List<Transformation> transformations = get(source.toKey());
-            val t = SingleTransformation.of(source, transformation);
-            val index = ListUtils.indexOf(transformations, e -> e.key().equals(t.key()) && e
-                    .fromVersion() == t.fromVersion() && e.toVersion() == t.toVersion());
+  @Override
+  protected void doStore(@NonNull TransformationSource source, String transformation)
+      throws TransformationConflictException {
+    synchronized (mutex) {
+      id2hashMap.put(source.id(), source.hash());
+      List<Transformation> transformations = get(source.toKey());
+      val t = SingleTransformation.of(source, transformation);
+      val index =
+          ListUtils.indexOf(
+              transformations,
+              e ->
+                  e.key().equals(t.key())
+                      && e.fromVersion() == t.fromVersion()
+                      && e.toVersion() == t.toVersion());
 
-            if (index != -1) {
-                transformations.set(index, t);
-            } else {
-                transformations.add(t);
-            }
-        }
+      if (index != -1) {
+        transformations.set(index, t);
+      } else {
+        transformations.add(t);
+      }
     }
+  }
 
-    @Override
-    public boolean contains(@NonNull TransformationSource source)
-            throws TransformationConflictException {
-        synchronized (mutex) {
-            String hash = id2hashMap.get(source.id());
-            if (hash != null)
-                if (hash.equals(source.hash()))
-                    return true;
-                else {
-                    registryMetrics.count(MetricEvent.TRANSFORMATION_CONFLICT, Tags.of(Tag.of(
-                            RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
+  @Override
+  public boolean contains(@NonNull TransformationSource source)
+      throws TransformationConflictException {
+    synchronized (mutex) {
+      String hash = id2hashMap.get(source.id());
+      if (hash != null)
+        if (hash.equals(source.hash())) return true;
+        else {
+          registryMetrics.count(
+              MetricEvent.TRANSFORMATION_CONFLICT,
+              Tags.of(Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
 
-                    throw new TransformationConflictException(
-                            "TransformationSource at " + source + " does not match the stored hash "
-                                    + hash);
-                }
-            else
-                return false;
+          throw new TransformationConflictException(
+              "TransformationSource at " + source + " does not match the stored hash " + hash);
         }
+      else return false;
     }
+  }
 
-    private final Object mutex = new Object();
+  private final Object mutex = new Object();
 
-    @Override
-    public List<Transformation> get(@NonNull TransformationKey key) {
-        synchronized (mutex) {
-            return transformationCache.computeIfAbsent(key, (k) -> new CopyOnWriteArrayList<>());
-        }
+  @Override
+  public List<Transformation> get(@NonNull TransformationKey key) {
+    synchronized (mutex) {
+      return transformationCache.computeIfAbsent(key, (k) -> new CopyOnWriteArrayList<>());
     }
+  }
 }

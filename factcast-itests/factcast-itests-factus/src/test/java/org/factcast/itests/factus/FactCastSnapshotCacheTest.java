@@ -26,14 +26,15 @@ import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
 @EnableAutoConfiguration(
-        exclude = {
-                RedissonSnapshotCacheAutoConfiguration.class,
-                RedissonAutoConfiguration.class,
-                RedisAutoConfiguration.class })
+    exclude = {
+      RedissonSnapshotCacheAutoConfiguration.class,
+      RedissonAutoConfiguration.class,
+      RedisAutoConfiguration.class
+    })
 @ContextConfiguration(classes = Application.class)
 public class FactCastSnapshotCacheTest extends SnapshotCacheTest {
-    @Autowired
-    public FactCastSnapshotCacheTest(SnapshotCache repository) {
-        super(repository);
-    }
+  @Autowired
+  public FactCastSnapshotCacheTest(SnapshotCache repository) {
+    super(repository);
+  }
 }

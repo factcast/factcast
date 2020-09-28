@@ -17,39 +17,39 @@ package org.factcast.store.pgsql.registry.classpath;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import lombok.val;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.junit.jupiter.api.*;
 
-import lombok.val;
-
 class ClasspathRegistryFileFetcherTest {
 
-    @Test
-    void fetchTransformation() {
-        val uut = new ClasspathRegistryFileFetcher("/example-registry");
-        String transformation = uut.fetchTransformation(new TransformationSource("1-2", "xxx", "ns",
-                "type", 1, 2));
-        assertEquals("function transform(event) {\n" +
-                "    event.salutation = \"NA\"\n" +
-                "}", transformation);
-    }
+  @Test
+  void fetchTransformation() {
+    val uut = new ClasspathRegistryFileFetcher("/example-registry");
+    String transformation =
+        uut.fetchTransformation(new TransformationSource("1-2", "xxx", "ns", "type", 1, 2));
+    assertEquals(
+        "function transform(event) {\n" + "    event.salutation = \"NA\"\n" + "}", transformation);
+  }
 
-    @Test
-    void fetchSchema() {
-        val uut = new ClasspathRegistryFileFetcher("/example-registry");
-        val s = uut.fetchSchema(new SchemaSource("x", "xxx", "ns", "type", 1));
-        assertEquals("{\n" +
-                "  \"additionalProperties\" : true,\n" +
-                "  \"properties\" : {\n" +
-                "    \"firstName\" : {\n" +
-                "      \"type\": \"string\"\n" +
-                "    },\n" +
-                "    \"lastName\" : {\n" +
-                "      \"type\": \"string\"\n" +
-                "    }\n" +
-                "  },\n" +
-                "  \"required\": [\"firstName\", \"lastName\"]\n" +
-                "}\n", s);
-    }
+  @Test
+  void fetchSchema() {
+    val uut = new ClasspathRegistryFileFetcher("/example-registry");
+    val s = uut.fetchSchema(new SchemaSource("x", "xxx", "ns", "type", 1));
+    assertEquals(
+        "{\n"
+            + "  \"additionalProperties\" : true,\n"
+            + "  \"properties\" : {\n"
+            + "    \"firstName\" : {\n"
+            + "      \"type\": \"string\"\n"
+            + "    },\n"
+            + "    \"lastName\" : {\n"
+            + "      \"type\": \"string\"\n"
+            + "    }\n"
+            + "  },\n"
+            + "  \"required\": [\"firstName\", \"lastName\"]\n"
+            + "}\n",
+        s);
+  }
 }

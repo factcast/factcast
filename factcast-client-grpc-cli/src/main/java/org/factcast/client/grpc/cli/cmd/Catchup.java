@@ -15,8 +15,11 @@
  */
 package org.factcast.client.grpc.cli.cmd;
 
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import java.util.UUID;
-
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.factcast.client.grpc.cli.util.Command;
 import org.factcast.client.grpc.cli.util.ConsoleFactObserver;
 import org.factcast.client.grpc.cli.util.Options;
@@ -25,33 +28,25 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SpecBuilder;
 import org.factcast.core.subscription.SubscriptionRequest;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-
 @Parameters(
-        commandNames = "catchup",
-        commandDescription = "Read all the matching facts up to now and exit.")
+    commandNames = "catchup",
+    commandDescription = "Read all the matching facts up to now and exit.")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Catchup implements Command {
 
-    @Parameter(names = "-ns", description = "the namespace filtered on", required = true)
-    String ns;
+  @Parameter(names = "-ns", description = "the namespace filtered on", required = true)
+  String ns;
 
-    @Parameter(names = "-from", description = "start reading AFTER the fact with the given id")
-    UUID from;
+  @Parameter(names = "-from", description = "start reading AFTER the fact with the given id")
+  UUID from;
 
-    @Override
-    public void runWith(FactCast fc, Options opt) {
-        ConsoleFactObserver obs = new ConsoleFactObserver(opt);
-        SpecBuilder catchup = SubscriptionRequest.catchup(FactSpec.ns(ns));
-        if (from == null)
-            fc.subscribeEphemeral(catchup.fromScratch(), obs);
-        else
-            fc.subscribeEphemeral(catchup.from(from), obs);
-        obs.awaitTermination();
-    }
+  @Override
+  public void runWith(FactCast fc, Options opt) {
+    ConsoleFactObserver obs = new ConsoleFactObserver(opt);
+    SpecBuilder catchup = SubscriptionRequest.catchup(FactSpec.ns(ns));
+    if (from == null) fc.subscribeEphemeral(catchup.fromScratch(), obs);
+    else fc.subscribeEphemeral(catchup.from(from), obs);
+    obs.awaitTermination();
+  }
 }

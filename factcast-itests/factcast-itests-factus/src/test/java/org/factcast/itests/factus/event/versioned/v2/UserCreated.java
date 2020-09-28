@@ -15,32 +15,28 @@
  */
 package org.factcast.itests.factus.event.versioned.v2;
 
+import com.google.common.collect.Sets;
 import java.util.Set;
 import java.util.UUID;
-
-import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.Specification;
-
-import com.google.common.collect.Sets;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Specification(ns = "users", version = 2)
 public class UserCreated implements EventObject {
-    UUID aggregateId;
+  UUID aggregateId;
 
-    String userName;
+  String userName;
 
-    String salutation;
+  String salutation;
 
-    @Override
-    public Set<UUID> aggregateIds() {
-        return Sets.newHashSet(aggregateId);
-    }
-
+  @Override
+  public Set<UUID> aggregateIds() {
+    return Sets.newHashSet(aggregateId);
+  }
 }

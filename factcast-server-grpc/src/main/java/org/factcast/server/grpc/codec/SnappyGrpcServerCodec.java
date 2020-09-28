@@ -15,32 +15,30 @@
  */
 package org.factcast.server.grpc.codec;
 
+import io.grpc.Codec;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import org.xerial.snappy.SnappyInputStream;
-import org.xerial.snappy.SnappyOutputStream;
-
-import io.grpc.Codec;
 import net.devh.boot.grpc.common.codec.CodecType;
 import net.devh.boot.grpc.common.codec.GrpcCodec;
+import org.xerial.snappy.SnappyInputStream;
+import org.xerial.snappy.SnappyOutputStream;
 
 @GrpcCodec(advertised = true, codecType = CodecType.ALL)
 public class SnappyGrpcServerCodec implements Codec {
 
-    @Override
-    public String getMessageEncoding() {
-        return "snappy";
-    }
+  @Override
+  public String getMessageEncoding() {
+    return "snappy";
+  }
 
-    @Override
-    public InputStream decompress(InputStream inputStream) throws IOException {
-        return new SnappyInputStream(inputStream);
-    }
+  @Override
+  public InputStream decompress(InputStream inputStream) throws IOException {
+    return new SnappyInputStream(inputStream);
+  }
 
-    @Override
-    public OutputStream compress(OutputStream outputStream) {
-        return new SnappyOutputStream(outputStream);
-    }
+  @Override
+  public OutputStream compress(OutputStream outputStream) {
+    return new SnappyOutputStream(outputStream);
+  }
 }

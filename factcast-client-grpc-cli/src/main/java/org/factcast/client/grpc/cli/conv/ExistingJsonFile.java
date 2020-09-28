@@ -16,30 +16,28 @@
 package org.factcast.client.grpc.cli.conv;
 
 import java.io.File;
-
-import org.factcast.core.util.FactCastJson;
-
 import lombok.SneakyThrows;
+import org.factcast.core.util.FactCastJson;
 
 public class ExistingJsonFile extends File {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    public ExistingJsonFile(String pathname) {
-        super(pathname);
-        if (!exists()) {
-            throw new IllegalArgumentException(getAbsolutePath() + " does not exist");
-        }
-        if (isDirectory()) {
-            throw new IllegalArgumentException(getAbsolutePath() + " is a directory");
-        }
-        if (!canRead()) {
-            throw new IllegalArgumentException(getAbsolutePath() + " cannot be read");
-        }
+  public ExistingJsonFile(String pathname) {
+    super(pathname);
+    if (!exists()) {
+      throw new IllegalArgumentException(getAbsolutePath() + " does not exist");
     }
+    if (isDirectory()) {
+      throw new IllegalArgumentException(getAbsolutePath() + " is a directory");
+    }
+    if (!canRead()) {
+      throw new IllegalArgumentException(getAbsolutePath() + " cannot be read");
+    }
+  }
 
-    @SneakyThrows
-    public String read() {
-        return FactCastJson.readJSON(this);
-    }
+  @SneakyThrows
+  public String read() {
+    return FactCastJson.readJSON(this);
+  }
 }

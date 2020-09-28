@@ -21,8 +21,8 @@ import org.junit.jupiter.api.*;
 
 class TransformationCacheCompactorTest {
 
-    @Test
-    void compact() {
-        // TODO
-    }
+  @Test
+  void compact() {
+    // TODO
+  }
 }
