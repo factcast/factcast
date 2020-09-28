@@ -22,18 +22,21 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class AttemptAbortedExceptionTest {
-    @Test
-    public void testNullContracts() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new AttemptAbortedException((String) null);
+  @Test
+  public void testNullContracts() throws Exception {
+    assertThrows(
+        NullPointerException.class,
+        () -> {
+          new AttemptAbortedException((String) null);
         });
-        assertThrows(NullPointerException.class, () -> {
-            new AttemptAbortedException((Exception) null);
+    assertThrows(
+        NullPointerException.class,
+        () -> {
+          new AttemptAbortedException((Exception) null);
         });
 
-        assertThat(new AttemptAbortedException("foo").getMessage()).isEqualTo("foo");
-        Exception e = Mockito.mock(Exception.class);
-        assertThat(new AttemptAbortedException(e).getCause()).isSameAs(e);
-    }
-
+    assertThat(new AttemptAbortedException("foo").getMessage()).isEqualTo("foo");
+    Exception e = Mockito.mock(Exception.class);
+    assertThat(new AttemptAbortedException(e).getCause()).isSameAs(e);
+  }
 }

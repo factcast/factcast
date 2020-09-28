@@ -15,29 +15,32 @@
  */
 package org.factcast.store.pgsql.registry.classpath;
 
+import lombok.NonNull;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.AbstractSchemaRegistry;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 
-import lombok.NonNull;
-
 public class ClasspathSchemaRegistry extends AbstractSchemaRegistry {
 
-    public ClasspathSchemaRegistry(
-            @NonNull String base, @NonNull SchemaStore schemaStore,
-            @NonNull TransformationStore transformationStore,
-            @NonNull RegistryMetrics registryMetrics,
-            @NonNull PgConfigurationProperties pgConfigurationProperties) {
-        super(new ClasspathIndexFetcher(base), new ClasspathRegistryFileFetcher(base),
-                schemaStore,
-                transformationStore, registryMetrics, pgConfigurationProperties
-                        .isAllowSchemaReplace());
-    }
+  public ClasspathSchemaRegistry(
+      @NonNull String base,
+      @NonNull SchemaStore schemaStore,
+      @NonNull TransformationStore transformationStore,
+      @NonNull RegistryMetrics registryMetrics,
+      @NonNull PgConfigurationProperties pgConfigurationProperties) {
+    super(
+        new ClasspathIndexFetcher(base),
+        new ClasspathRegistryFileFetcher(base),
+        schemaStore,
+        transformationStore,
+        registryMetrics,
+        pgConfigurationProperties.isAllowSchemaReplace());
+  }
 
-    @Override
-    public void refresh() {
-        // does not need to be refreshed.
-    }
+  @Override
+  public void refresh() {
+    // does not need to be refreshed.
+  }
 }

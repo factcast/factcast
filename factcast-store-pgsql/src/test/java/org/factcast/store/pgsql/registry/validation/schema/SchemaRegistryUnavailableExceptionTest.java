@@ -19,45 +19,45 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
-
+import okhttp3.HttpUrl;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import okhttp3.HttpUrl;
-
 @ExtendWith(MockitoExtension.class)
 public class SchemaRegistryUnavailableExceptionTest {
 
-    @Test
-    public void testSchemaRegistryUnavailableExceptionHttpUrlIntString() {
-        HttpUrl url = new HttpUrl.Builder().scheme("https")
-                .host("www.google.com")
-                .addPathSegment("search")
-                .addQueryParameter("q", "polar bears")
-                .build();
-        SchemaRegistryUnavailableException uut = new SchemaRegistryUnavailableException(url
-                .toString(), 403, "damnit");
+  @Test
+  public void testSchemaRegistryUnavailableExceptionHttpUrlIntString() {
+    HttpUrl url =
+        new HttpUrl.Builder()
+            .scheme("https")
+            .host("www.google.com")
+            .addPathSegment("search")
+            .addQueryParameter("q", "polar bears")
+            .build();
+    SchemaRegistryUnavailableException uut =
+        new SchemaRegistryUnavailableException(url.toString(), 403, "damnit");
 
-        assertThat(uut.getMessage()).contains("403").contains("damnit").contains("bears");
-    }
+    assertThat(uut.getMessage()).contains("403").contains("damnit").contains("bears");
+  }
 
-    @Test
-    public void testWrapsException() {
-        IOException probe = new IOException("probe");
-        SchemaRegistryUnavailableException uut = new SchemaRegistryUnavailableException(probe);
+  @Test
+  public void testWrapsException() {
+    IOException probe = new IOException("probe");
+    SchemaRegistryUnavailableException uut = new SchemaRegistryUnavailableException(probe);
 
-        assertSame(probe, uut.getCause());
-    }
+    assertSame(probe, uut.getCause());
+  }
 
-    @Test
-    public void testNullContracts() {
-        assertThrows(NullPointerException.class, () -> new SchemaRegistryUnavailableException("url",
-                7, null));
-        assertThrows(NullPointerException.class, () -> new SchemaRegistryUnavailableException(null,
-                7, ""));
-        assertThrows(NullPointerException.class, () -> new SchemaRegistryUnavailableException(null,
-                7, null));
-    }
+  @Test
+  public void testNullContracts() {
+    assertThrows(
+        NullPointerException.class, () -> new SchemaRegistryUnavailableException("url", 7, null));
+    assertThrows(
+        NullPointerException.class, () -> new SchemaRegistryUnavailableException(null, 7, ""));
+    assertThrows(
+        NullPointerException.class, () -> new SchemaRegistryUnavailableException(null, 7, null));
+  }
 }

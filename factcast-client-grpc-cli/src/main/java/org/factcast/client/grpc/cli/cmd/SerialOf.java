@@ -15,37 +15,34 @@
  */
 package org.factcast.client.grpc.cli.cmd;
 
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
+import com.beust.jcommander.converters.CommaParameterSplitter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.UUID;
-
 import org.factcast.client.grpc.cli.util.Command;
 import org.factcast.client.grpc.cli.util.Options;
 import org.factcast.core.FactCast;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import com.beust.jcommander.converters.CommaParameterSplitter;
-
 @SuppressWarnings("ALL")
 @Parameters(
-        commandNames = "serialOf",
-        commandDescription = "get the serial of a fact identified by id")
+    commandNames = "serialOf",
+    commandDescription = "get the serial of a fact identified by id")
 public class SerialOf implements Command {
 
-    @Parameter(required = true, description = "id", splitter = CommaParameterSplitter.class)
-    List<UUID> ids = new LinkedList<>();
+  @Parameter(required = true, description = "id", splitter = CommaParameterSplitter.class)
+  List<UUID> ids = new LinkedList<>();
 
-    @Override
-    public void runWith(FactCast fc, Options opt) {
-        ids.forEach(id -> {
-            System.out.print(id + ": ");
-            OptionalLong serial = fc.serialOf(id);
-            if (serial.isPresent())
-                System.out.println(serial.getAsLong());
-            else
-                System.out.println("not found");
+  @Override
+  public void runWith(FactCast fc, Options opt) {
+    ids.forEach(
+        id -> {
+          System.out.print(id + ": ");
+          OptionalLong serial = fc.serialOf(id);
+          if (serial.isPresent()) System.out.println(serial.getAsLong());
+          else System.out.println("not found");
         });
-    }
+  }
 }

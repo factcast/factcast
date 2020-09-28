@@ -17,7 +17,6 @@ package org.factcast.store.pgsql.registry.transformation;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,30 +28,29 @@ import lombok.With;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @With
 public class TransformationSource {
-    @JsonProperty(required = true)
-    private String id;
+  @JsonProperty(required = true)
+  private String id;
 
-    // needs a default
-    @JsonProperty
-    private String hash = "none";
+  // needs a default
+  @JsonProperty private String hash = "none";
 
-    @JsonProperty(required = true)
-    private String ns;
+  @JsonProperty(required = true)
+  private String ns;
 
-    @JsonProperty(required = true)
-    private String type;
+  @JsonProperty(required = true)
+  private String type;
 
-    @JsonProperty(required = true)
-    private Integer from;
+  @JsonProperty(required = true)
+  private Integer from;
 
-    @JsonProperty(required = true)
-    private Integer to;
+  @JsonProperty(required = true)
+  private Integer to;
 
-    public TransformationKey toKey() {
-        return TransformationKey.of(ns, type);
-    }
+  public TransformationKey toKey() {
+    return TransformationKey.of(ns, type);
+  }
 
-    public boolean isSynthetic() {
-        return id.startsWith("synthetic/");
-    }
+  public boolean isSynthetic() {
+    return id.startsWith("synthetic/");
+  }
 }

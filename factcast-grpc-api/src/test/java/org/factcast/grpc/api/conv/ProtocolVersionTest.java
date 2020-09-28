@@ -23,17 +23,17 @@ import org.junit.jupiter.api.Test;
 
 public class ProtocolVersionTest {
 
-    @Test
-    void testIsCompatibleTo() {
-        assertTrue(ProtocolVersion.of(1, 0, 0).isCompatibleTo(ProtocolVersion.of(1, 0, 0)));
-        assertTrue(ProtocolVersion.of(1, 0, 0).isCompatibleTo(ProtocolVersion.of(1, 0, 1)));
-        assertTrue(ProtocolVersion.of(1, 0, 0).isCompatibleTo(ProtocolVersion.of(1, 1, 0)));
-        assertFalse(ProtocolVersion.of(1, 1, 0).isCompatibleTo(ProtocolVersion.of(1, 0, 0)));
-        assertFalse(ProtocolVersion.of(1, 1, 0).isCompatibleTo(ProtocolVersion.of(2, 0, 0)));
-    }
+  @Test
+  void testIsCompatibleTo() {
+    assertTrue(ProtocolVersion.of(1, 0, 0).isCompatibleTo(ProtocolVersion.of(1, 0, 0)));
+    assertTrue(ProtocolVersion.of(1, 0, 0).isCompatibleTo(ProtocolVersion.of(1, 0, 1)));
+    assertTrue(ProtocolVersion.of(1, 0, 0).isCompatibleTo(ProtocolVersion.of(1, 1, 0)));
+    assertFalse(ProtocolVersion.of(1, 1, 0).isCompatibleTo(ProtocolVersion.of(1, 0, 0)));
+    assertFalse(ProtocolVersion.of(1, 1, 0).isCompatibleTo(ProtocolVersion.of(2, 0, 0)));
+  }
 
-    @Test
-    void testToString() {
-        assertEquals("3.1.2", ProtocolVersion.of(3, 1, 2).toString());
-    }
+  @Test
+  void testToString() {
+    assertEquals("3.1.2", ProtocolVersion.of(3, 1, 2).toString());
+  }
 }

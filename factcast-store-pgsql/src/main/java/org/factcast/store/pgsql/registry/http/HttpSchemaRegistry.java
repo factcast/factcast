@@ -15,41 +15,48 @@
  */
 package org.factcast.store.pgsql.registry.http;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.net.URL;
-
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.AbstractSchemaRegistry;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 
-import com.google.common.annotations.VisibleForTesting;
-
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-
 @Slf4j
 public class HttpSchemaRegistry extends AbstractSchemaRegistry {
 
-    public HttpSchemaRegistry(
-            @NonNull URL baseUrl, @NonNull SchemaStore schemaStore,
-            @NonNull TransformationStore transformationStore,
-            @NonNull RegistryMetrics registryMetrics, @NonNull PgConfigurationProperties props) {
-        this(schemaStore, transformationStore, new HttpIndexFetcher(baseUrl, registryMetrics),
-                new HttpRegistryFileFetcher(
-                        baseUrl, registryMetrics), registryMetrics, props);
-    }
+  public HttpSchemaRegistry(
+      @NonNull URL baseUrl,
+      @NonNull SchemaStore schemaStore,
+      @NonNull TransformationStore transformationStore,
+      @NonNull RegistryMetrics registryMetrics,
+      @NonNull PgConfigurationProperties props) {
+    this(
+        schemaStore,
+        transformationStore,
+        new HttpIndexFetcher(baseUrl, registryMetrics),
+        new HttpRegistryFileFetcher(baseUrl, registryMetrics),
+        registryMetrics,
+        props);
+  }
 
-    @VisibleForTesting
-    protected HttpSchemaRegistry(
-            @NonNull SchemaStore schemaStore,
-            @NonNull TransformationStore transformationStore,
-            @NonNull HttpIndexFetcher indexFetcher,
-            @NonNull HttpRegistryFileFetcher registryFileFetcher,
-            @NonNull RegistryMetrics registryMetrics,
-            @NonNull PgConfigurationProperties properties) {
-        super(indexFetcher, registryFileFetcher, schemaStore, transformationStore, registryMetrics,
-                properties.isAllowSchemaReplace());
-    }
-
+  @VisibleForTesting
+  protected HttpSchemaRegistry(
+      @NonNull SchemaStore schemaStore,
+      @NonNull TransformationStore transformationStore,
+      @NonNull HttpIndexFetcher indexFetcher,
+      @NonNull HttpRegistryFileFetcher registryFileFetcher,
+      @NonNull RegistryMetrics registryMetrics,
+      @NonNull PgConfigurationProperties properties) {
+    super(
+        indexFetcher,
+        registryFileFetcher,
+        schemaStore,
+        transformationStore,
+        registryMetrics,
+        properties.isAllowSchemaReplace());
+  }
 }

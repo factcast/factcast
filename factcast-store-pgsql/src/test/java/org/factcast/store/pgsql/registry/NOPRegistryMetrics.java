@@ -15,65 +15,61 @@
  */
 package org.factcast.store.pgsql.registry;
 
-import java.util.function.Supplier;
-
-import org.factcast.store.pgsql.registry.metrics.*;
-
 import io.micrometer.core.instrument.Tags;
+import java.util.function.Supplier;
+import org.factcast.store.pgsql.registry.metrics.*;
 
 public class NOPRegistryMetrics implements RegistryMetrics {
 
-    @Override
-    public void timed(TimedOperation operation, Runnable fn) {
-        fn.run();
-    }
+  @Override
+  public void timed(TimedOperation operation, Runnable fn) {
+    fn.run();
+  }
 
-    @Override
-    public void timed(TimedOperation operation, Tags tags, Runnable fn) {
-        fn.run();
-    }
+  @Override
+  public void timed(TimedOperation operation, Tags tags, Runnable fn) {
+    fn.run();
+  }
 
-    @Override
-    public <E extends Exception> void timed(TimedOperation operation, Class<E> exceptionClass,
-            RunnableWithException<E> fn) throws E {
-        fn.run();
-    }
+  @Override
+  public <E extends Exception> void timed(
+      TimedOperation operation, Class<E> exceptionClass, RunnableWithException<E> fn) throws E {
+    fn.run();
+  }
 
-    @Override
-    public <E extends Exception> void timed(TimedOperation operation, Class<E> exceptionClass,
-            Tags tags, RunnableWithException<E> fn) throws E {
-        fn.run();
-    }
+  @Override
+  public <E extends Exception> void timed(
+      TimedOperation operation, Class<E> exceptionClass, Tags tags, RunnableWithException<E> fn)
+      throws E {
+    fn.run();
+  }
 
-    @Override
-    public <T> T timed(TimedOperation operation, Supplier<T> fn) {
-        return fn.get();
-    }
+  @Override
+  public <T> T timed(TimedOperation operation, Supplier<T> fn) {
+    return fn.get();
+  }
 
-    @Override
-    public <T> T timed(TimedOperation operation, Tags tags, Supplier<T> fn) {
-        return fn.get();
-    }
+  @Override
+  public <T> T timed(TimedOperation operation, Tags tags, Supplier<T> fn) {
+    return fn.get();
+  }
 
-    @Override
-    public <R, E extends Exception> R timed(TimedOperation operation, Class<E> exceptionClass,
-            SupplierWithException<R, E> fn) throws E {
-        return fn.get();
-    }
+  @Override
+  public <R, E extends Exception> R timed(
+      TimedOperation operation, Class<E> exceptionClass, SupplierWithException<R, E> fn) throws E {
+    return fn.get();
+  }
 
-    @Override
-    public <R, E extends Exception> R timed(TimedOperation operation, Class<E> exceptionClass,
-            Tags tags, SupplierWithException<R, E> fn) throws E {
-        return fn.get();
-    }
+  @Override
+  public <R, E extends Exception> R timed(
+      TimedOperation operation, Class<E> exceptionClass, Tags tags, SupplierWithException<R, E> fn)
+      throws E {
+    return fn.get();
+  }
 
-    @Override
-    public void count(MetricEvent event) {
+  @Override
+  public void count(MetricEvent event) {}
 
-    }
-
-    @Override
-    public void count(MetricEvent event, Tags tags) {
-
-    }
+  @Override
+  public void count(MetricEvent event, Tags tags) {}
 }

@@ -15,18 +15,15 @@
  */
 package org.factcast.factus.projector;
 
+import com.google.common.collect.Sets;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
-import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.Specification;
-
-import com.google.common.collect.Sets;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
 @Data
 @AllArgsConstructor
@@ -34,19 +31,19 @@ import lombok.NoArgsConstructor;
 @Specification(ns = "test")
 public class ComplexEvent2 implements EventObject {
 
-    private Map<String, String> metaMap;
+  private Map<String, String> metaMap;
 
-    private UUID aggregateId;
+  private UUID aggregateId;
 
-    private String code;
+  private String code;
 
-    @Override
-    public Set<UUID> aggregateIds() {
-        return Sets.newHashSet(aggregateId);
-    }
+  @Override
+  public Set<UUID> aggregateIds() {
+    return Sets.newHashSet(aggregateId);
+  }
 
-    @Override
-    public Map<String, String> additionalMetaMap() {
-        return metaMap;
-    }
+  @Override
+  public Map<String, String> additionalMetaMap() {
+    return metaMap;
+  }
 }

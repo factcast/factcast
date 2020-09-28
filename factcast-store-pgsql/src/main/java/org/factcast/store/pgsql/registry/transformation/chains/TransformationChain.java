@@ -15,60 +15,55 @@
  */
 package org.factcast.store.pgsql.registry.transformation.chains;
 
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import org.factcast.store.pgsql.registry.transformation.Transformation;
-import org.factcast.store.pgsql.registry.transformation.TransformationKey;
-
-import com.google.common.base.Preconditions;
-
 import lombok.NonNull;
 import lombok.Value;
+import org.factcast.store.pgsql.registry.transformation.Transformation;
+import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 
 @Value
 public class TransformationChain implements Transformation {
 
-    @NonNull
-    String id;
+  @NonNull String id;
 
-    @NonNull
-    TransformationKey key;
+  @NonNull TransformationKey key;
 
-    int fromVersion;
+  int fromVersion;
 
-    int toVersion;
+  int toVersion;
 
-    @NonNull
-    Optional<String> transformationCode;
+  @NonNull Optional<String> transformationCode;
 
-    public static TransformationChain of(@NonNull TransformationKey key,
-            @NonNull List<Transformation> orderedListOfSteps, String id) {
+  public static TransformationChain of(
+      @NonNull TransformationKey key, @NonNull List<Transformation> orderedListOfSteps, String id) {
 
-        Preconditions.checkArgument(!orderedListOfSteps.isEmpty());
-        Preconditions.checkArgument(orderedListOfSteps.stream().allMatch(t -> key.equals(t.key())));
+    Preconditions.checkArgument(!orderedListOfSteps.isEmpty());
+    Preconditions.checkArgument(orderedListOfSteps.stream().allMatch(t -> key.equals(t.key())));
 
-        int from = orderedListOfSteps.get(0).fromVersion();
-        int to = orderedListOfSteps.get(orderedListOfSteps.size() - 1).toVersion();
-        String compositeJson = createCompositeJS(orderedListOfSteps);
+    int from = orderedListOfSteps.get(0).fromVersion();
+    int to = orderedListOfSteps.get(orderedListOfSteps.size() - 1).toVersion();
+    String compositeJson = createCompositeJS(orderedListOfSteps);
 
-        return new TransformationChain(id, key, from, to, Optional.of(compositeJson));
-    }
+    return new TransformationChain(id, key, from, to, Optional.of(compositeJson));
+  }
 
-    private static String createCompositeJS(List<Transformation> list) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("var steps = [");
+  private static String createCompositeJS(List<Transformation> list) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("var steps = [");
 
-        List<String> code = list.stream()
-                .map(Transformation::transformationCode)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
+    List<String> code =
+        list.stream()
+            .map(Transformation::transformationCode)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
 
-        sb.append(String.join(",", code));
-        sb.append("]; ");
-        sb.append("function transform(event) { steps.forEach( function(f){f(event)} ); }");
-        return sb.toString();
-    }
+    sb.append(String.join(",", code));
+    sb.append("]; ");
+    sb.append("function transform(event) { steps.forEach( function(f){f(event)} ); }");
+    return sb.toString();
+  }
 }

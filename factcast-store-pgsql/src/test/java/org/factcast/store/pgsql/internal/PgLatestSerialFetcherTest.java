@@ -21,7 +21,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.UUID;
-
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -34,40 +33,60 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ContextConfiguration(classes = { PgTestConfiguration.class })
+@ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 public class PgLatestSerialFetcherTest {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+  @Autowired private JdbcTemplate jdbcTemplate;
 
-    private PgLatestSerialFetcher uut;
+  private PgLatestSerialFetcher uut;
 
-    @Test
-    void testRetrieveLatestSer() {
-        uut = new PgLatestSerialFetcher(jdbcTemplate);
-        assertEquals(0, uut.retrieveLatestSer());
-        assertEquals(0, uut.retrieveLatestSer());
-        jdbcTemplate.execute("INSERT INTO " + PgConstants.TABLE_FACT + "("
-                + PgConstants.COLUMN_HEADER + "," + PgConstants.COLUMN_PAYLOAD
-                + ") VALUES('{\"id\":\"" + UUID.randomUUID() + "\"}','{}') ");
-        assertEquals(1, uut.retrieveLatestSer());
-        jdbcTemplate.execute("INSERT INTO " + PgConstants.TABLE_FACT + "("
-                + PgConstants.COLUMN_HEADER + "," + PgConstants.COLUMN_PAYLOAD
-                + ") VALUES('{\"id\":\"" + UUID.randomUUID() + "\"}','{}') ");
-        jdbcTemplate.execute("INSERT INTO " + PgConstants.TABLE_FACT + "("
-                + PgConstants.COLUMN_HEADER + "," + PgConstants.COLUMN_PAYLOAD
-                + ") VALUES('{\"id\":\"" + UUID.randomUUID() + "\"}','{}') ");
-        assertEquals(3, uut.retrieveLatestSer());
-    }
+  @Test
+  void testRetrieveLatestSer() {
+    uut = new PgLatestSerialFetcher(jdbcTemplate);
+    assertEquals(0, uut.retrieveLatestSer());
+    assertEquals(0, uut.retrieveLatestSer());
+    jdbcTemplate.execute(
+        "INSERT INTO "
+            + PgConstants.TABLE_FACT
+            + "("
+            + PgConstants.COLUMN_HEADER
+            + ","
+            + PgConstants.COLUMN_PAYLOAD
+            + ") VALUES('{\"id\":\""
+            + UUID.randomUUID()
+            + "\"}','{}') ");
+    assertEquals(1, uut.retrieveLatestSer());
+    jdbcTemplate.execute(
+        "INSERT INTO "
+            + PgConstants.TABLE_FACT
+            + "("
+            + PgConstants.COLUMN_HEADER
+            + ","
+            + PgConstants.COLUMN_PAYLOAD
+            + ") VALUES('{\"id\":\""
+            + UUID.randomUUID()
+            + "\"}','{}') ");
+    jdbcTemplate.execute(
+        "INSERT INTO "
+            + PgConstants.TABLE_FACT
+            + "("
+            + PgConstants.COLUMN_HEADER
+            + ","
+            + PgConstants.COLUMN_PAYLOAD
+            + ") VALUES('{\"id\":\""
+            + UUID.randomUUID()
+            + "\"}','{}') ");
+    assertEquals(3, uut.retrieveLatestSer());
+  }
 
-    @Test
-    void testRetrieveLatestSerWithException() {
-        JdbcTemplate jdbcMock = mock(JdbcTemplate.class);
-        when(jdbcMock.queryForRowSet(anyString())).thenThrow(new EmptyResultDataAccessException(1));
-        uut = new PgLatestSerialFetcher(jdbcMock);
-        assertEquals(0, uut.retrieveLatestSer());
-    }
+  @Test
+  void testRetrieveLatestSerWithException() {
+    JdbcTemplate jdbcMock = mock(JdbcTemplate.class);
+    when(jdbcMock.queryForRowSet(anyString())).thenThrow(new EmptyResultDataAccessException(1));
+    uut = new PgLatestSerialFetcher(jdbcMock);
+    assertEquals(0, uut.retrieveLatestSer());
+  }
 }

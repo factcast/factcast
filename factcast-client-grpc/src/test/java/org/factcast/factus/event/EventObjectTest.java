@@ -19,23 +19,21 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Set;
 import java.util.UUID;
-
+import lombok.val;
 import org.junit.jupiter.api.*;
 
-import lombok.val;
-
 class EventObjectTest {
-    @Test
-    void defaultsToEmptyMap() {
-        val map = new EventObject() {
-            @Override
-            public Set<UUID> aggregateIds() {
-                return null;
-            }
+  @Test
+  void defaultsToEmptyMap() {
+    val map =
+        new EventObject() {
+          @Override
+          public Set<UUID> aggregateIds() {
+            return null;
+          }
         }.additionalMetaMap();
 
-        assertNotNull(map);
-        assertTrue(map.isEmpty());
-
-    }
+    assertNotNull(map);
+    assertTrue(map.isEmpty());
+  }
 }

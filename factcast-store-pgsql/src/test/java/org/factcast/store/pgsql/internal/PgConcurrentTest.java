@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -42,65 +41,64 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ContextConfiguration(classes = { PgTestConfiguration.class })
+@ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 public class PgConcurrentTest {
 
-    @Autowired
-    FactStore store;
+  @Autowired FactStore store;
 
-    FactCast uut;
+  FactCast uut;
 
-    @BeforeEach
-    void setUp() {
-        uut = FactCast.from(store);
+  @BeforeEach
+  void setUp() {
+    uut = FactCast.from(store);
+  }
+
+  private Fact newConcurrentTestFact() {
+    return Fact.builder().ns("concurrenttest").id(UUID.randomUUID()).type("lonely").build("{}");
+  }
+
+  @Test
+  public void testConcurrent() throws Exception {
+    // prepare facts
+    List<Fact> factsForAsyncBatchPublish =
+        IntStream.range(0, 1000)
+            .mapToObj(i -> newConcurrentTestFact())
+            .collect(Collectors.toList());
+    Fact lonelyFact = newConcurrentTestFact();
+    int totalNoOfFacts = factsForAsyncBatchPublish.size() + 1;
+
+    AtomicReference<CountDownLatch> subscriptionBeforePublish = subscribe(totalNoOfFacts);
+
+    boolean letTestFail = true;
+
+    CompletableFuture<Void> batchPublishFuture =
+        CompletableFuture.runAsync(() -> uut.publish(factsForAsyncBatchPublish));
+    Thread.sleep(200);
+    if (letTestFail) {
+      uut.publish(lonelyFact);
+      batchPublishFuture.get(10, TimeUnit.SECONDS);
+    } else {
+      batchPublishFuture.get(10, TimeUnit.SECONDS);
+      uut.publish(lonelyFact);
     }
 
-    private Fact newConcurrentTestFact() {
-        return Fact.builder().ns("concurrenttest").id(UUID.randomUUID()).type("lonely").build("{}");
-    }
+    AtomicReference<CountDownLatch> subscriptionAfterPublish = subscribe(totalNoOfFacts);
+    assertTrue(subscriptionAfterPublish.get().await(5, TimeUnit.SECONDS));
 
-    @Test
-    public void testConcurrent() throws Exception {
-        // prepare facts
-        List<Fact> factsForAsyncBatchPublish = IntStream.range(0, 1000)
-                .mapToObj(i -> newConcurrentTestFact())
-                .collect(Collectors.toList());
-        Fact lonelyFact = newConcurrentTestFact();
-        int totalNoOfFacts = factsForAsyncBatchPublish.size() + 1;
+    // this fails if letTestFail is true
+    assertTrue(subscriptionBeforePublish.get().await(5, TimeUnit.SECONDS));
+  }
 
-        AtomicReference<CountDownLatch> subscriptionBeforePublish = subscribe(totalNoOfFacts);
-
-        boolean letTestFail = true;
-
-        CompletableFuture<Void> batchPublishFuture = CompletableFuture
-                .runAsync(() -> uut.publish(factsForAsyncBatchPublish));
-        Thread.sleep(200);
-        if (letTestFail) {
-            uut.publish(lonelyFact);
-            batchPublishFuture.get(10, TimeUnit.SECONDS);
-        } else {
-            batchPublishFuture.get(10, TimeUnit.SECONDS);
-            uut.publish(lonelyFact);
-        }
-
-        AtomicReference<CountDownLatch> subscriptionAfterPublish = subscribe(totalNoOfFacts);
-        assertTrue(subscriptionAfterPublish.get().await(5, TimeUnit.SECONDS));
-
-        // this fails if letTestFail is true
-        assertTrue(subscriptionBeforePublish.get().await(5, TimeUnit.SECONDS));
-    }
-
-    private AtomicReference<CountDownLatch> subscribe(int expectedNoOfFacts) {
-        AtomicReference<CountDownLatch> l = new AtomicReference<>(new CountDownLatch(
-                expectedNoOfFacts));
-        FactObserver observer = element -> l.get().countDown();
-        SubscriptionRequest request = SubscriptionRequest.follow(FactSpec.ns("concurrenttest"))
-                .fromScratch();
-        uut.subscribeEphemeral(request, observer);
-        return l;
-    }
-
+  private AtomicReference<CountDownLatch> subscribe(int expectedNoOfFacts) {
+    AtomicReference<CountDownLatch> l =
+        new AtomicReference<>(new CountDownLatch(expectedNoOfFacts));
+    FactObserver observer = element -> l.get().countDown();
+    SubscriptionRequest request =
+        SubscriptionRequest.follow(FactSpec.ns("concurrenttest")).fromScratch();
+    uut.subscribeEphemeral(request, observer);
+    return l;
+  }
 }

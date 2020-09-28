@@ -17,6 +17,5 @@ package org.factcast.store.pgsql.internal.lock;
 
 public interface FactTableWriteLock {
 
-    void aquireExclusiveTXLock();
-
+  void aquireExclusiveTXLock();
 }
