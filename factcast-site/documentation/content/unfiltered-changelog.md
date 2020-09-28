@@ -1,5 +1,74 @@
 # Changelog
 
+## [0.3.3](https://github.com/factcast/factcast/tree/0.3.3) (2020-09-25)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.2...0.3.3)
+
+**Closed issues:**
+
+- RedissonSnapshotCacheAutoConfiguration doesnt kick in  [\#1052](https://github.com/factcast/factcast/issues/1052)
+
+**Merged pull requests:**
+
+- Fixes 1052 [\#1053](https://github.com/factcast/factcast/pull/1053) ([otbe](https://github.com/otbe))
+- Update mockito.version to v3.5.13 [\#1051](https://github.com/factcast/factcast/pull/1051) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.4.1 [\#1049](https://github.com/factcast/factcast/pull/1049) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency io.github.microutils:kotlin-logging to v1.12.0 [\#1048](https://github.com/factcast/factcast/pull/1048) ([renovate[bot]](https://github.com/apps/renovate))
+- Update mockito.version to v3.5.11 [\#1047](https://github.com/factcast/factcast/pull/1047) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.4.0 [\#1046](https://github.com/factcast/factcast/pull/1046) ([renovate[bot]](https://github.com/apps/renovate))
+- Update spring boot to v2.3.4.RELEASE [\#1044](https://github.com/factcast/factcast/pull/1044) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency io.micrometer:micrometer-core to v1.5.5 [\#1043](https://github.com/factcast/factcast/pull/1043) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.jacoco:jacoco-maven-plugin to v0.8.6 [\#1039](https://github.com/factcast/factcast/pull/1039) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency io.github.microutils:kotlin-logging to v1.11.5 [\#1038](https://github.com/factcast/factcast/pull/1038) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.junit:junit-bom to v5.7.0 [\#1037](https://github.com/factcast/factcast/pull/1037) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.junit.jupiter:junit-jupiter-api to v5.7.0 [\#1036](https://github.com/factcast/factcast/pull/1036) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency io.github.microutils:kotlin-logging to v1.11.3 [\#1035](https://github.com/factcast/factcast/pull/1035) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.3.1 [\#1034](https://github.com/factcast/factcast/pull/1034) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency io.github.microutils:kotlin-logging to v1.11.0 [\#1033](https://github.com/factcast/factcast/pull/1033) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.msgpack:jackson-dataformat-msgpack to v0.8.21 [\#1032](https://github.com/factcast/factcast/pull/1032) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.squareup.okhttp3:okhttp to v4.9.0 [\#1031](https://github.com/factcast/factcast/pull/1031) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency io.github.microutils:kotlin-logging to v1.10.7 [\#1030](https://github.com/factcast/factcast/pull/1030) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.3.0 [\#1029](https://github.com/factcast/factcast/pull/1029) ([renovate[bot]](https://github.com/apps/renovate))
+- Update kotlin.version to v1.4.10 [\#1028](https://github.com/factcast/factcast/pull/1028) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency commons-io:commons-io to v2.8.0 [\#1027](https://github.com/factcast/factcast/pull/1027) ([renovate[bot]](https://github.com/apps/renovate))
+- Docs updated [\#1045](https://github.com/factcast/factcast/pull/1045) ([BernhardBln](https://github.com/BernhardBln))
+
+## [0.3.2](https://github.com/factcast/factcast/tree/0.3.2) (2020-09-10)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.1...0.3.2)
+
+**Merged pull requests:**
+
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.2.0 [\#1022](https://github.com/factcast/factcast/pull/1022) ([renovate[bot]](https://github.com/apps/renovate))
+- Fix: FactCastAutoConfiguration also configures EventSerializer [\#1025](https://github.com/factcast/factcast/pull/1025) ([BernhardBln](https://github.com/BernhardBln))
+
+## [0.3.1](https://github.com/factcast/factcast/tree/0.3.1) (2020-09-08)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.0...0.3.1)
+
+**Fixed bugs:**
+
+- Factus autoconfiguration is always on [\#1023](https://github.com/factcast/factcast/issues/1023)
+
+**Closed issues:**
+
+- Implement filesystem based schemaregistry [\#965](https://github.com/factcast/factcast/issues/965)
+
+**Merged pull requests:**
+
+- Update dependency org.assertj:assertj-core to v3.17.2 [\#1021](https://github.com/factcast/factcast/pull/1021) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency net.javacrumbs.json-unit:json-unit-assertj to v2.19.0 [\#1020](https://github.com/factcast/factcast/pull/1020) ([renovate[bot]](https://github.com/apps/renovate))
+- Update mockito.version to v3.5.10 [\#1019](https://github.com/factcast/factcast/pull/1019) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.redisson:redisson-spring-boot-starter to v3.13.4 [\#1018](https://github.com/factcast/factcast/pull/1018) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency io.javalin:javalin to v3.10.1 [\#1017](https://github.com/factcast/factcast/pull/1017) ([renovate[bot]](https://github.com/apps/renovate))
+- Update mockito.version to v3.5.9 [\#1016](https://github.com/factcast/factcast/pull/1016) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency commons-codec:commons-codec to v1.15 [\#1015](https://github.com/factcast/factcast/pull/1015) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.springframework.boot:spring-boot-dependencies to v2.3.3.RELEASE [\#1012](https://github.com/factcast/factcast/pull/1012) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency net.javacrumbs.json-unit:json-unit-assertj to v2.18.1 [\#1011](https://github.com/factcast/factcast/pull/1011) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.springframework.cloud:spring-cloud-dependencies to vHoxton.SR8 [\#1008](https://github.com/factcast/factcast/pull/1008) ([renovate[bot]](https://github.com/apps/renovate))
+- Issue1023 @ConditionalOnMissingBean on autoconfiguration [\#1024](https://github.com/factcast/factcast/pull/1024) ([uweschaefer](https://github.com/uweschaefer))
+- Issue965 filesystem based schema registry [\#1014](https://github.com/factcast/factcast/pull/1014) ([BernhardBln](https://github.com/BernhardBln))
+
 ## [0.3.0](https://github.com/factcast/factcast/tree/0.3.0) (2020-08-30)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.1.4.3...0.3.0)
@@ -100,7 +169,6 @@
 
 **Merged pull requests:**
 
-- Update dependency com.github.vladimir-bukhtoyarov:bucket4j-core to v4.10.0 [\#939](https://github.com/factcast/factcast/pull/939) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.0.1 [\#936](https://github.com/factcast/factcast/pull/936) ([renovate[bot]](https://github.com/apps/renovate))
 - Issue930  [\#932](https://github.com/factcast/factcast/pull/932) ([uweschaefer](https://github.com/uweschaefer))
 - Issue905 [\#929](https://github.com/factcast/factcast/pull/929) ([uweschaefer](https://github.com/uweschaefer))
