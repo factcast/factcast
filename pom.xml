@@ -352,6 +352,7 @@
           </execution>
         </executions>
         <configuration>
+          <ratchetFrom>origin/master</ratchetFrom>
           <java>
             <googleJavaFormat>
               <version>1.7</version> <!-- optional -->
