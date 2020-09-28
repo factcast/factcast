@@ -26,5 +26,4 @@ public class SnapshotId implements Serializable {
 
   @NonNull UUID uuid; // semantically optional, might be constant if not needed
   // (SnapshotProjections)
-
 }
