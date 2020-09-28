@@ -15,9 +15,11 @@
  */
 package org.factcast.store.pgsql.registry.validation.schema.store;
 
+import io.micrometer.core.instrument.Tags;
 import java.util.List;
 import java.util.Optional;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
@@ -26,67 +28,69 @@ import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import io.micrometer.core.instrument.Tags;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
-/**
- * @author uwe
- */
+/** @author uwe */
 @RequiredArgsConstructor
 public class PgSchemaStoreImpl implements SchemaStore {
 
-    @NonNull
-    private final JdbcTemplate jdbcTemplate;
+  @NonNull private final JdbcTemplate jdbcTemplate;
 
-    @NonNull
-    private final RegistryMetrics registryMetrics;
+  @NonNull private final RegistryMetrics registryMetrics;
 
-    @Override
-    public void register(@NonNull SchemaSource key, @NonNull String schema)
-            throws SchemaConflictException {
-        jdbcTemplate.update(
-                "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,?) "
-                        +
-                        "ON CONFLICT ON CONSTRAINT schemastore_pkey DO " +
-                        "UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? WHERE schemastore.id=?",
-                // INSERT
-                key.id(), key.hash(), key.ns(), key.type(), key.version(), schema,
-                // UPDATE
-                key.hash(), key.ns(), key.type(), key.version(), schema, key.id());
+  @Override
+  public void register(@NonNull SchemaSource key, @NonNull String schema)
+      throws SchemaConflictException {
+    jdbcTemplate.update(
+        "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,?) "
+            + "ON CONFLICT ON CONSTRAINT schemastore_pkey DO "
+            + "UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? WHERE schemastore.id=?",
+        // INSERT
+        key.id(),
+        key.hash(),
+        key.ns(),
+        key.type(),
+        key.version(),
+        schema,
+        // UPDATE
+        key.hash(),
+        key.ns(),
+        key.type(),
+        key.version(),
+        schema,
+        key.id());
+  }
+
+  @Override
+  public boolean contains(@NonNull SchemaSource key) throws SchemaConflictException {
+    List<String> hashes =
+        jdbcTemplate.queryForList(
+            "SELECT hash FROM schemastore WHERE id=?", String.class, key.id());
+    if (!hashes.isEmpty()) {
+      String hash = hashes.get(0);
+      if (hash.equals(key.hash())) {
+        return true;
+      } else {
+        registryMetrics.count(
+            MetricEvent.SCHEMA_CONFLICT, Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.id()));
+        throw new SchemaConflictException("Key " + key + " does not match the stored hash " + hash);
+      }
+    } else {
+      return false;
     }
+  }
 
-    @Override
-    public boolean contains(@NonNull SchemaSource key) throws SchemaConflictException {
-        List<String> hashes = jdbcTemplate.queryForList("SELECT hash FROM schemastore WHERE id=?",
-                String.class,
-                key.id());
-        if (!hashes.isEmpty()) {
-            String hash = hashes.get(0);
-            if (hash.equals(key.hash())) {
-                return true;
-            } else {
-                registryMetrics.count(MetricEvent.SCHEMA_CONFLICT, Tags.of(
-                        RegistryMetrics.TAG_IDENTITY_KEY, key.id()));
-                throw new SchemaConflictException("Key " + key + " does not match the stored hash "
-                        + hash);
-            }
-        } else {
-            return false;
-        }
+  @Override
+  public synchronized Optional<String> get(@NonNull SchemaKey key) {
+    List<String> schema =
+        jdbcTemplate.queryForList(
+            "SELECT jsonschema FROM schemastore WHERE ns=? AND type=? AND version=? ",
+            String.class,
+            key.ns(),
+            key.type(),
+            key.version());
+    if (!schema.isEmpty()) {
+      return Optional.of(schema.get(0));
+    } else {
+      return Optional.empty();
     }
-
-    @Override
-    public synchronized Optional<String> get(@NonNull SchemaKey key) {
-        List<String> schema = jdbcTemplate.queryForList(
-                "SELECT jsonschema FROM schemastore WHERE ns=? AND type=? AND version=? ",
-                String.class, key.ns(),
-                key.type(), key.version());
-        if (!schema.isEmpty()) {
-            return Optional.of(schema.get(0));
-        } else {
-            return Optional.empty();
-        }
-    }
-
+  }
 }

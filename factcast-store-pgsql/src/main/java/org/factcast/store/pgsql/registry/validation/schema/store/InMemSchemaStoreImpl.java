@@ -15,10 +15,12 @@
  */
 package org.factcast.store.pgsql.registry.validation.schema.store;
 
+import io.micrometer.core.instrument.Tags;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
@@ -26,59 +28,47 @@ import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 
-import io.micrometer.core.instrument.Tags;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
-/**
- * @author uwe
- */
+/** @author uwe */
 @RequiredArgsConstructor
 public class InMemSchemaStoreImpl implements SchemaStore {
-    private final RegistryMetrics registryMetrics;
+  private final RegistryMetrics registryMetrics;
 
-    private final Map<String, String> id2hashMap = new HashMap<>();
+  private final Map<String, String> id2hashMap = new HashMap<>();
 
-    private final Map<SchemaKey, String> schemaMap = new HashMap<>();
+  private final Map<SchemaKey, String> schemaMap = new HashMap<>();
 
-    private final Object mutex = new Object();
+  private final Object mutex = new Object();
 
-    @Override
-    public void register(@NonNull SchemaSource source, @NonNull String schema)
-            throws SchemaConflictException {
-        synchronized (mutex) {
-            id2hashMap.put(source.id(), source.hash());
-            schemaMap.put(source.toKey(), schema);
-        }
+  @Override
+  public void register(@NonNull SchemaSource source, @NonNull String schema)
+      throws SchemaConflictException {
+    synchronized (mutex) {
+      id2hashMap.put(source.id(), source.hash());
+      schemaMap.put(source.toKey(), schema);
     }
+  }
 
-    @Override
-    public boolean contains(@NonNull SchemaSource source)
-            throws SchemaConflictException {
-        synchronized (mutex) {
-            String hash = id2hashMap.get(source.id());
-            if (hash != null)
-                if (hash.equals(source.hash()))
-                    return true;
-                else {
-                    registryMetrics.count(MetricEvent.SCHEMA_CONFLICT, Tags.of(
-                            RegistryMetrics.TAG_IDENTITY_KEY, source.id()));
+  @Override
+  public boolean contains(@NonNull SchemaSource source) throws SchemaConflictException {
+    synchronized (mutex) {
+      String hash = id2hashMap.get(source.id());
+      if (hash != null)
+        if (hash.equals(source.hash())) return true;
+        else {
+          registryMetrics.count(
+              MetricEvent.SCHEMA_CONFLICT, Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, source.id()));
 
-                    throw new SchemaConflictException(
-                            "SchemaSource at " + source + " does not match the stored hash "
-                                    + hash);
-                }
-            else
-                return false;
+          throw new SchemaConflictException(
+              "SchemaSource at " + source + " does not match the stored hash " + hash);
         }
-
+      else return false;
     }
+  }
 
-    @Override
-    public Optional<String> get(@NonNull SchemaKey key) {
-        synchronized (mutex) {
-            return Optional.ofNullable(schemaMap.get(key));
-        }
+  @Override
+  public Optional<String> get(@NonNull SchemaKey key) {
+    synchronized (mutex) {
+      return Optional.ofNullable(schemaMap.get(key));
     }
-
+  }
 }

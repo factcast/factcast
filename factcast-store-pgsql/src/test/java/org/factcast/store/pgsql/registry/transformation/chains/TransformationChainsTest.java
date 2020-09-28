@@ -19,8 +19,11 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.Lists;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import java.util.ArrayList;
-
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
@@ -31,173 +34,176 @@ import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.junit.jupiter.api.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.collect.Lists;
-
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-
 public class TransformationChainsTest {
-    final SchemaRegistry r = mock(SchemaRegistry.class);
+  final SchemaRegistry r = mock(SchemaRegistry.class);
 
-    final RegistryMetrics registryMetrics = spy(new NOPRegistryMetrics());
+  final RegistryMetrics registryMetrics = spy(new NOPRegistryMetrics());
 
-    final TransformationChains uut = new TransformationChains(r, registryMetrics);
+  final TransformationChains uut = new TransformationChains(r, registryMetrics);
 
-    final TransformationKey key = TransformationKey.of("ns", "UserCreated");
+  final TransformationKey key = TransformationKey.of("ns", "UserCreated");
 
-    @Test
-    void testStraightLine() throws Exception {
+  @Test
+  void testStraightLine() throws Exception {
 
-        ArrayList<Transformation> all = Lists.newArrayList();
-        all.add(SingleTransformation.of(key, 1, 2, js(1)));
-        all.add(SingleTransformation.of(key, 2, 3, js(2)));
-        all.add(SingleTransformation.of(key, 3, 4, js(3)));
-        all.add(SingleTransformation.of(key, 4, 5, js(4)));
-        all.add(SingleTransformation.of(key, 5, 6, js(5)));
-        all.add(SingleTransformation.of(key, 6, 7, js(6)));
+    ArrayList<Transformation> all = Lists.newArrayList();
+    all.add(SingleTransformation.of(key, 1, 2, js(1)));
+    all.add(SingleTransformation.of(key, 2, 3, js(2)));
+    all.add(SingleTransformation.of(key, 3, 4, js(3)));
+    all.add(SingleTransformation.of(key, 4, 5, js(4)));
+    all.add(SingleTransformation.of(key, 5, 6, js(5)));
+    all.add(SingleTransformation.of(key, 6, 7, js(6)));
 
-        when(r.get(key)).thenReturn(all);
+    when(r.get(key)).thenReturn(all);
 
-        TransformationChain chain = uut.get(key, 2, 5);
+    TransformationChain chain = uut.get(key, 2, 5);
 
-        assertEquals(2, chain.fromVersion());
-        assertEquals(5, chain.toVersion());
-        assertEquals(key, chain.key());
-        assertEquals("[2, 3, 4, 5]", chain.id());
-        assertThat(chain.transformationCode()).isPresent();
+    assertEquals(2, chain.fromVersion());
+    assertEquals(5, chain.toVersion());
+    assertEquals(key, chain.key());
+    assertEquals("[2, 3, 4, 5]", chain.id());
+    assertThat(chain.transformationCode()).isPresent();
 
-        JsonNode input = FactCastJson.readTree("{}");
-        JsonNode actual = new NashornTransformer().transform(chain, input);
-        assertThat(actual.toString()).isEqualTo(
-                "{\"stage2\":true,\"stage3\":true,\"stage4\":true}");
-    }
+    JsonNode input = FactCastJson.readTree("{}");
+    JsonNode actual = new NashornTransformer().transform(chain, input);
+    assertThat(actual.toString()).isEqualTo("{\"stage2\":true,\"stage3\":true,\"stage4\":true}");
+  }
 
-    @Test
-    void testUnreachable() {
+  @Test
+  void testUnreachable() {
 
-        ArrayList<Transformation> all = Lists.newArrayList();
-        all.add(SingleTransformation.of(key, 1, 2, js(1)));
-        all.add(SingleTransformation.of(key, 2, 3, js(2)));
-        all.add(SingleTransformation.of(key, 5, 6, js(5)));
-        all.add(SingleTransformation.of(key, 6, 7, js(6)));
+    ArrayList<Transformation> all = Lists.newArrayList();
+    all.add(SingleTransformation.of(key, 1, 2, js(1)));
+    all.add(SingleTransformation.of(key, 2, 3, js(2)));
+    all.add(SingleTransformation.of(key, 5, 6, js(5)));
+    all.add(SingleTransformation.of(key, 6, 7, js(6)));
 
-        when(r.get(key)).thenReturn(all);
+    when(r.get(key)).thenReturn(all);
 
-        assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 1, 7));
-        verify(registryMetrics).count(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
-                Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", "1"), Tag
-                        .of("to", "7"))));
-    }
+    assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 1, 7));
+    verify(registryMetrics)
+        .count(
+            eq(MetricEvent.MISSING_TRANSFORMATION_INFO),
+            eq(
+                Tags.of(
+                    Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
+                    Tag.of("from", "1"),
+                    Tag.of("to", "7"))));
+  }
 
-    @Test
-    void testShortcut() throws Exception {
+  @Test
+  void testShortcut() throws Exception {
 
-        ArrayList<Transformation> all = Lists.newArrayList();
-        all.add(SingleTransformation.of(key, 1, 2, js(1)));
-        all.add(SingleTransformation.of(key, 2, 3, js(2)));
-        all.add(SingleTransformation.of(key, 5, 6, js(5)));
-        all.add(SingleTransformation.of(key, 6, 7, js(6)));
+    ArrayList<Transformation> all = Lists.newArrayList();
+    all.add(SingleTransformation.of(key, 1, 2, js(1)));
+    all.add(SingleTransformation.of(key, 2, 3, js(2)));
+    all.add(SingleTransformation.of(key, 5, 6, js(5)));
+    all.add(SingleTransformation.of(key, 6, 7, js(6)));
 
-        all.add(SingleTransformation.of(key, 2, 6, js(6)));
+    all.add(SingleTransformation.of(key, 2, 6, js(6)));
 
-        when(r.get(key)).thenReturn(all);
+    when(r.get(key)).thenReturn(all);
 
-        TransformationChain chain = uut.get(key, 1, 7);
+    TransformationChain chain = uut.get(key, 1, 7);
 
-        assertEquals(1, chain.fromVersion());
-        assertEquals(7, chain.toVersion());
-        assertEquals(key, chain.key());
-        assertEquals("[1, 2, 6, 7]", chain.id());
-        assertThat(chain.transformationCode()).isPresent();
+    assertEquals(1, chain.fromVersion());
+    assertEquals(7, chain.toVersion());
+    assertEquals(key, chain.key());
+    assertEquals("[1, 2, 6, 7]", chain.id());
+    assertThat(chain.transformationCode()).isPresent();
 
-        JsonNode input = FactCastJson.readTree("{}");
-        JsonNode actual = new NashornTransformer().transform(chain, input);
-        assertThat(actual.toString()).isEqualTo("{\"stage1\":true,\"stage6\":true}");
+    JsonNode input = FactCastJson.readTree("{}");
+    JsonNode actual = new NashornTransformer().transform(chain, input);
+    assertThat(actual.toString()).isEqualTo("{\"stage1\":true,\"stage6\":true}");
+  }
 
-    }
+  @Test
+  void testConcurringShortcuts() throws Exception {
 
-    @Test
-    void testConcurringShortcuts() throws Exception {
+    ArrayList<Transformation> all = Lists.newArrayList();
+    all.add(SingleTransformation.of(key, 1, 2, js(1)));
+    all.add(SingleTransformation.of(key, 2, 3, js(2)));
+    all.add(SingleTransformation.of(key, 3, 4, js(3)));
+    all.add(SingleTransformation.of(key, 4, 5, js(4)));
+    all.add(SingleTransformation.of(key, 5, 6, js(5)));
+    all.add(SingleTransformation.of(key, 6, 7, js(6)));
 
-        ArrayList<Transformation> all = Lists.newArrayList();
-        all.add(SingleTransformation.of(key, 1, 2, js(1)));
-        all.add(SingleTransformation.of(key, 2, 3, js(2)));
-        all.add(SingleTransformation.of(key, 3, 4, js(3)));
-        all.add(SingleTransformation.of(key, 4, 5, js(4)));
-        all.add(SingleTransformation.of(key, 5, 6, js(5)));
-        all.add(SingleTransformation.of(key, 6, 7, js(6)));
+    all.add(SingleTransformation.of(key, 2, 5, js(2)));
+    all.add(SingleTransformation.of(key, 1, 4, js(1))); // <- should win
 
-        all.add(SingleTransformation.of(key, 2, 5, js(2)));
-        all.add(SingleTransformation.of(key, 1, 4, js(1))); // <- should win
+    when(r.get(key)).thenReturn(all);
 
-        when(r.get(key)).thenReturn(all);
+    TransformationChain chain = uut.get(key, 1, 7);
 
-        TransformationChain chain = uut.get(key, 1, 7);
+    assertEquals(1, chain.fromVersion());
+    assertEquals(7, chain.toVersion());
+    assertEquals(key, chain.key());
+    assertEquals("[1, 2, 5, 6, 7]", chain.id());
+    assertThat(chain.transformationCode()).isPresent();
 
-        assertEquals(1, chain.fromVersion());
-        assertEquals(7, chain.toVersion());
-        assertEquals(key, chain.key());
-        assertEquals("[1, 2, 5, 6, 7]", chain.id());
-        assertThat(chain.transformationCode()).isPresent();
+    JsonNode input = FactCastJson.readTree("{}");
+    JsonNode actual = new NashornTransformer().transform(chain, input);
+    assertThat(actual.toString())
+        .isEqualTo("{\"stage1\":true,\"stage2\":true,\"stage5\":true,\"stage6\":true}");
+  }
 
-        JsonNode input = FactCastJson.readTree("{}");
-        JsonNode actual = new NashornTransformer().transform(chain, input);
-        assertThat(actual.toString()).isEqualTo(
-                "{\"stage1\":true,\"stage2\":true,\"stage5\":true,\"stage6\":true}");
+  @Test
+  void testTargetNotFound() {
+    ArrayList<Transformation> all = Lists.newArrayList();
+    all.add(SingleTransformation.of(key, 1, 2, js(1)));
+    all.add(SingleTransformation.of(key, 2, 3, js(2)));
+    all.add(SingleTransformation.of(key, 3, 4, js(3)));
+    all.add(SingleTransformation.of(key, 4, 5, js(4)));
+    all.add(SingleTransformation.of(key, 5, 6, js(5)));
+    all.add(SingleTransformation.of(key, 6, 7, js(6)));
+    all.add(SingleTransformation.of(key, 3, 5, js(100)));
 
-    }
+    when(r.get(key)).thenReturn(all);
 
-    @Test
-    void testTargetNotFound() {
-        ArrayList<Transformation> all = Lists.newArrayList();
-        all.add(SingleTransformation.of(key, 1, 2, js(1)));
-        all.add(SingleTransformation.of(key, 2, 3, js(2)));
-        all.add(SingleTransformation.of(key, 3, 4, js(3)));
-        all.add(SingleTransformation.of(key, 4, 5, js(4)));
-        all.add(SingleTransformation.of(key, 5, 6, js(5)));
-        all.add(SingleTransformation.of(key, 6, 7, js(6)));
-        all.add(SingleTransformation.of(key, 3, 5, js(100)));
+    assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 2, 99));
+    verify(registryMetrics)
+        .count(
+            eq(MetricEvent.MISSING_TRANSFORMATION_INFO),
+            eq(
+                Tags.of(
+                    Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
+                    Tag.of("from", "2"),
+                    Tag.of("to", "99"))));
+  }
 
-        when(r.get(key)).thenReturn(all);
+  @Test
+  void testSyntheticTransformation() throws Exception {
 
-        assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 2, 99));
-        verify(registryMetrics).count(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
-                Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", "2"), Tag
-                        .of("to", "99"))));
+    ArrayList<Transformation> all = Lists.newArrayList();
+    all.add(SingleTransformation.of(key, 2, 1, js(1)));
+    all.add(SingleTransformation.of(key, 3, 2, null));
 
-    }
+    when(r.get(key)).thenReturn(all);
 
-    @Test
-    void testSyntheticTransformation() throws Exception {
+    TransformationChain chain = uut.get(key, 3, 1);
 
-        ArrayList<Transformation> all = Lists.newArrayList();
-        all.add(SingleTransformation.of(key, 2, 1, js(1)));
-        all.add(SingleTransformation.of(key, 3, 2, null));
+    JsonNode input = FactCastJson.readTree("{}");
+    JsonNode actual = new NashornTransformer().transform(chain, input);
+    assertThat(actual.toString()).isEqualTo("{\"stage1\":true}");
+  }
 
-        when(r.get(key)).thenReturn(all);
+  @Test
+  void testNoTransformationForKey() {
+    ArrayList<Transformation> all = Lists.newArrayList();
+    when(r.get(key)).thenReturn(all);
 
-        TransformationChain chain = uut.get(key, 3, 1);
+    assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 2, 99));
+    verify(registryMetrics)
+        .count(
+            eq(MetricEvent.MISSING_TRANSFORMATION_INFO),
+            eq(
+                Tags.of(
+                    Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
+                    Tag.of("from", "2"),
+                    Tag.of("to", "99"))));
+  }
 
-        JsonNode input = FactCastJson.readTree("{}");
-        JsonNode actual = new NashornTransformer().transform(chain, input);
-        assertThat(actual.toString()).isEqualTo("{\"stage1\":true}");
-
-    }
-
-    @Test
-    void testNoTransformationForKey() {
-        ArrayList<Transformation> all = Lists.newArrayList();
-        when(r.get(key)).thenReturn(all);
-
-        assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 2, 99));
-        verify(registryMetrics).count(eq(MetricEvent.MISSING_TRANSFORMATION_INFO), eq(Tags.of(
-                Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()), Tag.of("from", "2"), Tag
-                        .of("to", "99"))));
-
-    }
-
-    private String js(int n) {
-        return "function transform(event){ event.stage" + n + " = true }";
-    }
+  private String js(int n) {
+    return "function transform(event){ event.stage" + n + " = true }";
+  }
 }

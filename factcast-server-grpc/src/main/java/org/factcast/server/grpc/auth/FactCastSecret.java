@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 @Data
 @EqualsAndHashCode(of = "id")
 public class FactCastSecret {
-    private String id;
+  private String id;
 
-    private String secret;
+  private String secret;
 }

@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.Projection;
 import org.factcast.itests.factus.event.UserCreated;
@@ -27,32 +26,31 @@ import org.factcast.itests.factus.event.UserDeleted;
 
 public interface UserNames extends Projection {
 
-    Map<UUID, String> userNames();
+  Map<UUID, String> userNames();
 
-    @Handler
-    default void apply(UserCreated created) {
-        userNames().put(created.aggregateId(), created.userName());
-    }
+  @Handler
+  default void apply(UserCreated created) {
+    userNames().put(created.aggregateId(), created.userName());
+  }
 
-    @Handler
-    default void apply(UserDeleted deleted) {
-        userNames().remove(deleted.aggregateId());
-    }
+  @Handler
+  default void apply(UserDeleted deleted) {
+    userNames().remove(deleted.aggregateId());
+  }
 
-    default int count() {
-        return userNames().size();
-    }
+  default int count() {
+    return userNames().size();
+  }
 
-    default boolean contains(String name) {
-        return userNames().containsValue(name);
-    }
+  default boolean contains(String name) {
+    return userNames().containsValue(name);
+  }
 
-    default Set<String> names() {
-        return new HashSet<>(userNames().values());
-    }
+  default Set<String> names() {
+    return new HashSet<>(userNames().values());
+  }
 
-    default void clear() {
-        userNames().clear();
-    }
-
+  default void clear() {
+    userNames().clear();
+  }
 }

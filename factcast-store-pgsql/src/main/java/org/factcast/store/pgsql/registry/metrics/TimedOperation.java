@@ -19,18 +19,14 @@ import lombok.Getter;
 import lombok.NonNull;
 
 public enum TimedOperation {
+  REFRESH_REGISTRY("refresh_registry"),
+  COMPACT_TRANSFORMATION_CACHE("compact_transformation_cache"),
+  TRANSFORMATION("transform_event"),
+  FETCH_REGISTRY_FILE("fetch_registry_file");
 
-    REFRESH_REGISTRY("refresh_registry"),
-    COMPACT_TRANSFORMATION_CACHE("compact_transformation_cache"),
-    TRANSFORMATION("transform_event"),
-    FETCH_REGISTRY_FILE("fetch_registry_file");
+  @NonNull @Getter final String op;
 
-    @NonNull
-    @Getter
-    final String op;
-
-    TimedOperation(@NonNull String op) {
-        this.op = op;
-    }
-
+  TimedOperation(@NonNull String op) {
+    this.op = op;
+  }
 }

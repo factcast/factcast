@@ -15,11 +15,14 @@
  */
 package org.factcast.store.pgsql.internal;
 
+import com.google.common.collect.Lists;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -47,12 +50,6 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.google.common.collect.Lists;
-
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
-
 /**
  * A PostgreSQL based FactStore implementation
  *
@@ -61,208 +58,229 @@ import lombok.val;
 @Slf4j
 public class PgFactStore extends AbstractFactStore {
 
-    // is that interesting to configure?
-    private static final int BATCH_SIZE = 500;
+  // is that interesting to configure?
+  private static final int BATCH_SIZE = 500;
 
-    @NonNull
-    private final JdbcTemplate jdbcTemplate;
+  @NonNull private final JdbcTemplate jdbcTemplate;
 
-    @NonNull
-    private final PgSubscriptionFactory subscriptionFactory;
+  @NonNull private final PgSubscriptionFactory subscriptionFactory;
 
-    @NonNull
-    private final FactTableWriteLock lock;
+  @NonNull private final FactTableWriteLock lock;
 
-    @NonNull
-    private final FactTransformerService factTransformerService;
+  @NonNull private final FactTransformerService factTransformerService;
 
-    @NonNull
-    private final PgMetrics metrics;
+  @NonNull private final PgMetrics metrics;
 
-    @NonNull
-    private final PgSnapshotCache snapCache;
+  @NonNull private final PgSnapshotCache snapCache;
 
-    @Autowired
-    public PgFactStore(
-            @NonNull JdbcTemplate jdbcTemplate,
-            @NonNull PgSubscriptionFactory subscriptionFactory,
-            @NonNull TokenStore tokenStore,
-            @NonNull FactTableWriteLock lock,
-            @NonNull FactTransformerService factTransformerService,
-            @NonNull PgSnapshotCache snapCache,
-            @NonNull PgMetrics metrics) {
-        super(tokenStore);
+  @Autowired
+  public PgFactStore(
+      @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull PgSubscriptionFactory subscriptionFactory,
+      @NonNull TokenStore tokenStore,
+      @NonNull FactTableWriteLock lock,
+      @NonNull FactTransformerService factTransformerService,
+      @NonNull PgSnapshotCache snapCache,
+      @NonNull PgMetrics metrics) {
+    super(tokenStore);
 
-        this.jdbcTemplate = jdbcTemplate;
-        this.subscriptionFactory = subscriptionFactory;
-        this.lock = lock;
-        this.snapCache = snapCache;
-        this.metrics = metrics;
-        this.factTransformerService = factTransformerService;
+    this.jdbcTemplate = jdbcTemplate;
+    this.subscriptionFactory = subscriptionFactory;
+    this.lock = lock;
+    this.snapCache = snapCache;
+    this.metrics = metrics;
+    this.factTransformerService = factTransformerService;
+  }
 
-    }
-
-    @Override
-    public @NonNull Optional<Fact> fetchById(@NonNull UUID id) {
-        return metrics.time(OP.FETCH_BY_ID, () -> jdbcTemplate.query(PgConstants.SELECT_BY_ID,
-                new Object[] { "{\"id\":\"" + id + "\"}" }, this::extractFactFromResultSet)
+  @Override
+  public @NonNull Optional<Fact> fetchById(@NonNull UUID id) {
+    return metrics.time(
+        OP.FETCH_BY_ID,
+        () ->
+            jdbcTemplate
+                .query(
+                    PgConstants.SELECT_BY_ID,
+                    new Object[] {"{\"id\":\"" + id + "\"}"},
+                    this::extractFactFromResultSet)
                 .stream()
                 .findFirst());
+  }
+
+  @Override
+  public @NonNull Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int version)
+      throws TransformationException {
+
+    val fact = fetchById(id);
+    // map does not work here due to checked exception
+    if (fact.isPresent()) {
+      return Optional.of(factTransformerService.transformIfNecessary(fact.get(), version));
+    } else {
+      return fact;
     }
+  }
 
-    @Override
-    public @NonNull Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int version)
-            throws TransformationException {
-
-        val fact = fetchById(id);
-        // map does not work here due to checked exception
-        if (fact.isPresent()) {
-            return Optional.of(factTransformerService.transformIfNecessary(fact.get(), version));
-        } else {
-            return fact;
-        }
-    }
-
-    @Override
-    @Transactional(propagation = Propagation.REQUIRED)
-    public void publish(@NonNull List<? extends Fact> factsToPublish) {
-        metrics.time(OP.PUBLISH, () -> {
-            try {
-                lock.aquireExclusiveTXLock();
-
-                List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
-                final int numberOfFactsToPublish = factsToPublish.size();
-                log.trace("Inserting {} fact(s){}", numberOfFactsToPublish,
-                        numberOfFactsToPublish > BATCH_SIZE ? " in batches of " + BATCH_SIZE : "");
-                jdbcTemplate.batchUpdate(PgConstants.INSERT_FACT, copiedListOfFacts, BATCH_SIZE,
-                        (statement, fact) -> {
-                            statement.setString(1, fact.jsonHeader());
-                            statement.setString(2, fact.jsonPayload());
-                        });
-                // add serials to headers
-                jdbcTemplate.batchUpdate(PgConstants.UPDATE_FACT_SERIALS, copiedListOfFacts,
-                        BATCH_SIZE, (statement, fact) -> {
-                            final String idMatch = "{\"id\":\"" + fact.id() + "\"}";
-                            statement.setString(1, idMatch);
-                        });
-
-            } catch (DuplicateKeyException dupkey) {
-                throw new IllegalArgumentException(dupkey.getMessage());
-            }
-        });
-    }
-
-    private Fact extractFactFromResultSet(
-            ResultSet resultSet,
-            @SuppressWarnings("unused") int rowNum) throws SQLException {
-        return PgFact.from(resultSet);
-    }
-
-    @NonNull
-    private String extractStringFromResultSet(
-            ResultSet resultSet,
-            @SuppressWarnings("unused") int rowNum) throws SQLException {
-        return resultSet.getString(1);
-    }
-
-    @Override
-    public @NonNull Subscription subscribe(
-            @NonNull SubscriptionRequestTO request,
-            @NonNull FactObserver observer) {
-        OP operation = request.continuous() ? OP.SUBSCRIBE_FOLLOW : OP.SUBSCRIBE_CATCHUP;
-        return metrics.time(operation, () -> subscriptionFactory.subscribe(request, observer));
-    }
-
-    @Override
-    public @NonNull OptionalLong serialOf(@NonNull UUID l) {
-        return metrics.time(OP.SERIAL_OF, () -> {
-            try {
-                Long res = jdbcTemplate.queryForObject(PgConstants.SELECT_SER_BY_ID,
-                        new Object[] { "{\"id\":\"" + l + "\"}" }, Long.class);
-
-                if (res != null && res > 0) {
-                    return OptionalLong.of(res);
-                }
-
-            } catch (EmptyResultDataAccessException ignore) {
-                // ignore
-            }
-            return OptionalLong.empty();
-        });
-    }
-
-    @Override
-    public @NonNull Set<String> enumerateNamespaces() {
-        return metrics.time(OP.ENUMERATE_NAMESPACES, () -> new HashSet<>(jdbcTemplate.query(
-                PgConstants.SELECT_DISTINCT_NAMESPACE,
-                this::extractStringFromResultSet)));
-    }
-
-    @Override
-    public @NonNull Set<String> enumerateTypes(@NonNull String ns) {
-        return metrics.time(OP.ENUMERATE_TYPES, () -> new HashSet<>(jdbcTemplate.query(
-                PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
-                new Object[] { ns }, this::extractStringFromResultSet)));
-    }
-
-    @Override
-    @Transactional(propagation = Propagation.REQUIRED)
-    public boolean publishIfUnchanged(
-            @NonNull List<? extends Fact> factsToPublish,
-            @NonNull Optional<StateToken> optionalToken) {
-        return metrics.time(OP.PUBLISH_IF_UNCHANGED, () -> {
+  @Override
+  @Transactional(propagation = Propagation.REQUIRED)
+  public void publish(@NonNull List<? extends Fact> factsToPublish) {
+    metrics.time(
+        OP.PUBLISH,
+        () -> {
+          try {
             lock.aquireExclusiveTXLock();
-            return super.publishIfUnchanged(factsToPublish, optionalToken);
+
+            List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
+            final int numberOfFactsToPublish = factsToPublish.size();
+            log.trace(
+                "Inserting {} fact(s){}",
+                numberOfFactsToPublish,
+                numberOfFactsToPublish > BATCH_SIZE ? " in batches of " + BATCH_SIZE : "");
+            jdbcTemplate.batchUpdate(
+                PgConstants.INSERT_FACT,
+                copiedListOfFacts,
+                BATCH_SIZE,
+                (statement, fact) -> {
+                  statement.setString(1, fact.jsonHeader());
+                  statement.setString(2, fact.jsonPayload());
+                });
+            // add serials to headers
+            jdbcTemplate.batchUpdate(
+                PgConstants.UPDATE_FACT_SERIALS,
+                copiedListOfFacts,
+                BATCH_SIZE,
+                (statement, fact) -> {
+                  final String idMatch = "{\"id\":\"" + fact.id() + "\"}";
+                  statement.setString(1, idMatch);
+                });
+
+          } catch (DuplicateKeyException dupkey) {
+            throw new IllegalArgumentException(dupkey.getMessage());
+          }
         });
-    }
+  }
 
-    @Override
-    protected State getStateFor(@NonNull List<FactSpec> specs) {
-        return metrics.time(OP.GET_STATE_FOR, () -> {
-            PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-            String stateSQL = pgQueryBuilder.createStateSQL();
-            PreparedStatementSetter statementSetter = pgQueryBuilder.createStatementSetter(
-                    new AtomicLong(0));
+  private Fact extractFactFromResultSet(ResultSet resultSet, @SuppressWarnings("unused") int rowNum)
+      throws SQLException {
+    return PgFact.from(resultSet);
+  }
 
-            try {
-                ResultSetExtractor<Long> rch = new ResultSetExtractor<Long>() {
-                    @Override
-                    public Long extractData(ResultSet resultSet) throws SQLException,
-                            DataAccessException {
-                        if (!resultSet.next()) {
-                            return 0L;
-                        } else {
-                            return resultSet.getLong(1);
-                        }
-                    }
-                };
-                long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
-                return State.of(specs, lastSerial);
-            } catch (EmptyResultDataAccessException lastSerialIs0Then) {
-                return State.of(specs, 0);
+  @NonNull
+  private String extractStringFromResultSet(
+      ResultSet resultSet, @SuppressWarnings("unused") int rowNum) throws SQLException {
+    return resultSet.getString(1);
+  }
+
+  @Override
+  public @NonNull Subscription subscribe(
+      @NonNull SubscriptionRequestTO request, @NonNull FactObserver observer) {
+    OP operation = request.continuous() ? OP.SUBSCRIBE_FOLLOW : OP.SUBSCRIBE_CATCHUP;
+    return metrics.time(operation, () -> subscriptionFactory.subscribe(request, observer));
+  }
+
+  @Override
+  public @NonNull OptionalLong serialOf(@NonNull UUID l) {
+    return metrics.time(
+        OP.SERIAL_OF,
+        () -> {
+          try {
+            Long res =
+                jdbcTemplate.queryForObject(
+                    PgConstants.SELECT_SER_BY_ID,
+                    new Object[] {"{\"id\":\"" + l + "\"}"},
+                    Long.class);
+
+            if (res != null && res > 0) {
+              return OptionalLong.of(res);
             }
+
+          } catch (EmptyResultDataAccessException ignore) {
+            // ignore
+          }
+          return OptionalLong.empty();
         });
-    }
+  }
 
-    @Override
-    public long currentTime() {
-        return jdbcTemplate.queryForObject(PgConstants.CURRENT_TIME_MILLIS,
-                Long.class);
-    }
+  @Override
+  public @NonNull Set<String> enumerateNamespaces() {
+    return metrics.time(
+        OP.ENUMERATE_NAMESPACES,
+        () ->
+            new HashSet<>(
+                jdbcTemplate.query(
+                    PgConstants.SELECT_DISTINCT_NAMESPACE, this::extractStringFromResultSet)));
+  }
 
-    @Override
-    public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-        return metrics.time(OP.GET_SNAPSHOT, () -> snapCache.getSnapshot(id));
-    }
+  @Override
+  public @NonNull Set<String> enumerateTypes(@NonNull String ns) {
+    return metrics.time(
+        OP.ENUMERATE_TYPES,
+        () ->
+            new HashSet<>(
+                jdbcTemplate.query(
+                    PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
+                    new Object[] {ns},
+                    this::extractStringFromResultSet)));
+  }
 
-    @Override
-    public void setSnapshot(@NonNull Snapshot snapshot) {
-        metrics.time(OP.SET_SNAPSHOT, () -> snapCache.setSnapshot(snapshot));
-    }
+  @Override
+  @Transactional(propagation = Propagation.REQUIRED)
+  public boolean publishIfUnchanged(
+      @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> optionalToken) {
+    return metrics.time(
+        OP.PUBLISH_IF_UNCHANGED,
+        () -> {
+          lock.aquireExclusiveTXLock();
+          return super.publishIfUnchanged(factsToPublish, optionalToken);
+        });
+  }
 
-    @Override
-    public void clearSnapshot(@NonNull SnapshotId id) {
-        metrics.time(OP.CLEAR_SNAPSHOT, () -> snapCache.clearSnapshot(id));
-    }
+  @Override
+  protected State getStateFor(@NonNull List<FactSpec> specs) {
+    return metrics.time(
+        OP.GET_STATE_FOR,
+        () -> {
+          PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+          String stateSQL = pgQueryBuilder.createStateSQL();
+          PreparedStatementSetter statementSetter =
+              pgQueryBuilder.createStatementSetter(new AtomicLong(0));
 
+          try {
+            ResultSetExtractor<Long> rch =
+                new ResultSetExtractor<Long>() {
+                  @Override
+                  public Long extractData(ResultSet resultSet)
+                      throws SQLException, DataAccessException {
+                    if (!resultSet.next()) {
+                      return 0L;
+                    } else {
+                      return resultSet.getLong(1);
+                    }
+                  }
+                };
+            long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
+            return State.of(specs, lastSerial);
+          } catch (EmptyResultDataAccessException lastSerialIs0Then) {
+            return State.of(specs, 0);
+          }
+        });
+  }
+
+  @Override
+  public long currentTime() {
+    return jdbcTemplate.queryForObject(PgConstants.CURRENT_TIME_MILLIS, Long.class);
+  }
+
+  @Override
+  public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
+    return metrics.time(OP.GET_SNAPSHOT, () -> snapCache.getSnapshot(id));
+  }
+
+  @Override
+  public void setSnapshot(@NonNull Snapshot snapshot) {
+    metrics.time(OP.SET_SNAPSHOT, () -> snapCache.setSnapshot(snapshot));
+  }
+
+  @Override
+  public void clearSnapshot(@NonNull SnapshotId id) {
+    metrics.time(OP.CLEAR_SNAPSHOT, () -> snapCache.clearSnapshot(id));
+  }
 }

@@ -15,10 +15,12 @@
  */
 package org.factcast.store.pgsql.registry;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.classpath.ClasspathSchemaRegistryFactory;
 import org.factcast.store.pgsql.registry.filesystem.FilesystemSchemaRegistryFactory;
@@ -34,103 +36,100 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-
 @Slf4j
 @Configuration
 @EnableScheduling
-@Import({ FactValidatorConfiguration.class, TransformationConfiguration.class })
+@Import({FactValidatorConfiguration.class, TransformationConfiguration.class})
 public class SchemaRegistryConfiguration {
 
-    @Bean
-    public RegistryMetrics registryMetrics(MeterRegistry meterRegistry) {
-        return new RegistryMetricsImpl(meterRegistry);
-    }
+  @Bean
+  public RegistryMetrics registryMetrics(MeterRegistry meterRegistry) {
+    return new RegistryMetricsImpl(meterRegistry);
+  }
 
-    @Bean
-    public FilesystemSchemaRegistryFactory filesystemSchemaRegistryFactory() {
-        return new FilesystemSchemaRegistryFactory();
-    }
+  @Bean
+  public FilesystemSchemaRegistryFactory filesystemSchemaRegistryFactory() {
+    return new FilesystemSchemaRegistryFactory();
+  }
 
-    @Bean
-    public ClasspathSchemaRegistryFactory classpathSchemaRegistryFactory() {
-        return new ClasspathSchemaRegistryFactory();
-    }
+  @Bean
+  public ClasspathSchemaRegistryFactory classpathSchemaRegistryFactory() {
+    return new ClasspathSchemaRegistryFactory();
+  }
 
-    @Bean
-    public HttpSchemaRegistryFactory httpSchemaRegistryFactory() {
-        return new HttpSchemaRegistryFactory();
-    }
+  @Bean
+  public HttpSchemaRegistryFactory httpSchemaRegistryFactory() {
+    return new HttpSchemaRegistryFactory();
+  }
 
-    @Bean
-    public SchemaRegistry schemaRegistry(PgConfigurationProperties p,
-            @NonNull SchemaStore schemaStore,
-            @NonNull TransformationStore transformationStore,
-            @NonNull List<SchemaRegistryFactory<? extends SchemaRegistry>> factories,
-            @NonNull RegistryMetrics registryMetrics) {
+  @Bean
+  public SchemaRegistry schemaRegistry(
+      PgConfigurationProperties p,
+      @NonNull SchemaStore schemaStore,
+      @NonNull TransformationStore transformationStore,
+      @NonNull List<SchemaRegistryFactory<? extends SchemaRegistry>> factories,
+      @NonNull RegistryMetrics registryMetrics) {
 
-        try {
+    try {
 
-            if (p.isValidationEnabled()) {
-                String fullUrl = p.getSchemaRegistryUrl();
-                if (!fullUrl.contains(":")) {
-                    fullUrl = "classpath:" + fullUrl;
-                }
-
-                String protocol = fullUrl.substring(0, fullUrl.indexOf(":"));
-
-                SchemaRegistryFactory<? extends SchemaRegistry> registryFactory = getSchemaRegistryFactory(
-                        factories, protocol);
-
-                SchemaRegistry registry = registryFactory
-                        .createInstance(
-                                fullUrl, schemaStore, transformationStore, registryMetrics, p);
-
-                registry.fetchInitial();
-
-                return registry;
-
-            } else {
-                log.warn(
-                        "**** SchemaRegistry-mode is disabled. Fact validation will not happen. This is discouraged for production environments. You have been warned. ****");
-                return new NOPSchemaRegistry();
-            }
-
-        } catch (MalformedURLException e) {
-            throw new SchemaRegistryUnavailableException(e);
+      if (p.isValidationEnabled()) {
+        String fullUrl = p.getSchemaRegistryUrl();
+        if (!fullUrl.contains(":")) {
+          fullUrl = "classpath:" + fullUrl;
         }
 
-    }
+        String protocol = fullUrl.substring(0, fullUrl.indexOf(":"));
 
-    private SchemaRegistryFactory<? extends SchemaRegistry> getSchemaRegistryFactory(
-            @NonNull List<SchemaRegistryFactory<? extends SchemaRegistry>> factories,
-            String protocol) {
+        SchemaRegistryFactory<? extends SchemaRegistry> registryFactory =
+            getSchemaRegistryFactory(factories, protocol);
 
-        return factories
-                .stream()
-                .filter(f -> f.canHandle(protocol))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "schemaRegistryUrl has an unknown protocol: '" + protocol
-                                + "'. Allowed protocols: " + getProtocols(factories)));
-    }
+        SchemaRegistry registry =
+            registryFactory.createInstance(
+                fullUrl, schemaStore, transformationStore, registryMetrics, p);
 
-    private String getProtocols(List<SchemaRegistryFactory<? extends SchemaRegistry>> factories) {
-        return factories.stream()
-                .map(SchemaRegistryFactory::getProtocols)
-                .flatMap(List::stream)
-                .map(p -> "'" + p + "'")
-                .collect(Collectors.joining(", "));
-    }
+        registry.fetchInitial();
 
-    @Bean
-    public ScheduledRegistryRefresher scheduledRegistryFresher(SchemaRegistry registry,
-            PgConfigurationProperties properties) {
-        if (properties.isValidationEnabled()) {
-            return new ScheduledRegistryRefresher(registry);
-        } else
-            return null;
+        return registry;
+
+      } else {
+        log.warn(
+            "**** SchemaRegistry-mode is disabled. Fact validation will not happen. This is discouraged for production environments. You have been warned. ****");
+        return new NOPSchemaRegistry();
+      }
+
+    } catch (MalformedURLException e) {
+      throw new SchemaRegistryUnavailableException(e);
     }
+  }
+
+  private SchemaRegistryFactory<? extends SchemaRegistry> getSchemaRegistryFactory(
+      @NonNull List<SchemaRegistryFactory<? extends SchemaRegistry>> factories, String protocol) {
+
+    return factories.stream()
+        .filter(f -> f.canHandle(protocol))
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    "schemaRegistryUrl has an unknown protocol: '"
+                        + protocol
+                        + "'. Allowed protocols: "
+                        + getProtocols(factories)));
+  }
+
+  private String getProtocols(List<SchemaRegistryFactory<? extends SchemaRegistry>> factories) {
+    return factories.stream()
+        .map(SchemaRegistryFactory::getProtocols)
+        .flatMap(List::stream)
+        .map(p -> "'" + p + "'")
+        .collect(Collectors.joining(", "));
+  }
+
+  @Bean
+  public ScheduledRegistryRefresher scheduledRegistryFresher(
+      SchemaRegistry registry, PgConfigurationProperties properties) {
+    if (properties.isValidationEnabled()) {
+      return new ScheduledRegistryRefresher(registry);
+    } else return null;
+  }
 }

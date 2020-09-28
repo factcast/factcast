@@ -16,7 +16,9 @@
 package org.factcast.store.pgsql.internal.catchup.paged;
 
 import java.util.concurrent.atomic.AtomicLong;
-
+import lombok.Generated;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.pgsql.PgConfigurationProperties;
@@ -25,29 +27,23 @@ import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import lombok.Generated;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 @RequiredArgsConstructor
 // no code in here, just generated @nonnull checks
 @Generated
 public class PgPagedCatchUpFactory implements PgCatchupFactory {
 
-    @NonNull
-    final JdbcTemplate jdbc;
+  @NonNull final JdbcTemplate jdbc;
 
-    @NonNull
-    final PgConfigurationProperties props;
+  @NonNull final PgConfigurationProperties props;
 
-    @NonNull
-    final PgFactIdToSerialMapper serMapper;
+  @NonNull final PgFactIdToSerialMapper serMapper;
 
-    @Override
-    public PgPagedCatchup create(@NonNull SubscriptionRequestTO request,
-            @NonNull PgPostQueryMatcher postQueryMatcher,
-            @NonNull SubscriptionImpl subscription, @NonNull AtomicLong serial) {
-        return new PgPagedCatchup(jdbc, props, request, postQueryMatcher, subscription,
-                serial);
-    }
+  @Override
+  public PgPagedCatchup create(
+      @NonNull SubscriptionRequestTO request,
+      @NonNull PgPostQueryMatcher postQueryMatcher,
+      @NonNull SubscriptionImpl subscription,
+      @NonNull AtomicLong serial) {
+    return new PgPagedCatchup(jdbc, props, request, postQueryMatcher, subscription, serial);
+  }
 }

@@ -15,12 +15,10 @@
  */
 package org.factcast.core.spec;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import java.util.*;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.NonNull;
 
@@ -33,121 +31,92 @@ import lombok.NonNull;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FactSpec {
 
-    @NonNull
-    @JsonProperty
-    final String ns;
+  @NonNull @JsonProperty final String ns;
 
-    // type & aggId should probably be sets?
-    @JsonProperty
-    String type = null;
+  // type & aggId should probably be sets?
+  @JsonProperty String type = null;
 
-    @JsonProperty
-    int version = 0; // 0 means I don't care
+  @JsonProperty int version = 0; // 0 means I don't care
 
-    @JsonProperty
-    UUID aggId = null;
+  @JsonProperty UUID aggId = null;
 
-    @NonNull
-    @JsonProperty
-    final Map<String, String> meta = new HashMap<>();
+  @NonNull @JsonProperty final Map<String, String> meta = new HashMap<>();
 
-    @Deprecated
-    @JsonProperty
-    String jsFilterScript = null;
+  @Deprecated @JsonProperty String jsFilterScript = null;
 
-    @JsonProperty
-    FilterScript filterScript = null;
+  @JsonProperty FilterScript filterScript = null;
 
-    public FactSpec meta(@NonNull String k, @NonNull String v) {
-        meta.put(k, v);
-        return this;
+  public FactSpec meta(@NonNull String k, @NonNull String v) {
+    meta.put(k, v);
+    return this;
+  }
+
+  public static FactSpec ns(@NonNull String ns) {
+    return new FactSpec(ns);
+  }
+
+  public FactSpec(@NonNull @JsonProperty("ns") String ns) {
+    super();
+    this.ns = ns;
+  }
+
+  public FilterScript filterScript() {
+    if (filterScript != null) return filterScript;
+    else if (jsFilterScript != null) return new FilterScript("js", jsFilterScript);
+    else return null;
+  }
+
+  @NonNull
+  public FactSpec filterScript(FilterScript script) {
+    if (script != null) {
+      this.filterScript = script;
+      if ("js".equals(script.languageIdentifier())) jsFilterScript = script.source();
+    } else {
+      filterScript = null;
+      jsFilterScript = null;
     }
 
-    public static FactSpec ns(@NonNull String ns) {
-        return new FactSpec(ns);
-    }
+    return this;
+  }
 
-    public FactSpec(@NonNull @JsonProperty("ns") String ns) {
-        super();
-        this.ns = ns;
-    }
+  @NonNull
+  public FactSpec jsFilterScript(String script) {
+    if (script != null) filterScript(new FilterScript("js", script));
+    else filterScript(null);
 
-    public FilterScript filterScript() {
-        if (filterScript != null)
-            return filterScript;
-        else if (jsFilterScript != null)
-            return new FilterScript("js", jsFilterScript);
-        else
-            return null;
-    }
+    return this;
+  }
 
-    @NonNull
-    public FactSpec filterScript(FilterScript script) {
-        if (script != null) {
-            this.filterScript = script;
-            if ("js".equals(script.languageIdentifier()))
-                jsFilterScript = script.source();
-        } else {
-            filterScript = null;
-            jsFilterScript = null;
-        }
+  public String jsFilterScript() {
+    if (filterScript != null && "js".equals(filterScript.languageIdentifier()))
+      return filterScript.source();
+    else if (filterScript == null && jsFilterScript != null) return jsFilterScript;
+    else return null;
+  }
 
-        return this;
-    }
+  @NonNull
+  public static <T> FactSpec from(@NonNull Class<T> clazz) {
+    return from(FactSpecCoordinates.from(clazz));
+  }
 
-    @NonNull
-    public FactSpec jsFilterScript(String script) {
-        if (script != null)
-            filterScript(new FilterScript("js", script));
-        else
-            filterScript(null);
+  private static FactSpec from(FactSpecCoordinates from) {
+    return FactSpec.ns(from.ns()).type(from.type()).version(from.version());
+  }
 
-        return this;
-    }
+  /** convenience method */
+  public static List<FactSpec> from(@NonNull List<Class<?>> clazz) {
+    return clazz.stream().filter(Objects::nonNull).map(FactSpec::from).collect(Collectors.toList());
+  }
 
-    public String jsFilterScript() {
-        if (filterScript != null && "js".equals(filterScript.languageIdentifier()))
-            return filterScript.source();
-        else if (filterScript == null && jsFilterScript != null)
-            return jsFilterScript;
-        else
-            return null;
-    }
+  /** convenience method */
+  public static List<FactSpec> from(Class<?>... clazz) {
+    return from(Arrays.asList(clazz));
+  }
 
-    @NonNull
-    public static <T> FactSpec from(@NonNull Class<T> clazz) {
-        return from(FactSpecCoordinates.from(clazz));
-    }
-
-    private static FactSpec from(FactSpecCoordinates from) {
-        return FactSpec.ns(from.ns()).type(from.type()).version(from.version());
-    }
-
-    /**
-     * convenience method
-     */
-    public static List<FactSpec> from(@NonNull List<Class<?>> clazz) {
-        return clazz.stream()
-                .filter(Objects::nonNull)
-                .map(FactSpec::from)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * convenience method
-     */
-    public static List<FactSpec> from(Class<?>... clazz) {
-        return from(Arrays.asList(clazz));
-    }
-
-    public FactSpec copy() {
-        FactSpec fs = FactSpec.ns(ns)
-                .type(type)
-                .version(version)
-                .aggId(aggId)
-                .filterScript(filterScript);
-        fs.meta.putAll(meta);
-        return fs;
-    }
-
+  public FactSpec copy() {
+    FactSpec fs =
+        FactSpec.ns(ns).type(type).version(version).aggId(aggId).filterScript(filterScript);
+    fs.meta.putAll(meta);
+    return fs;
+  }
 }

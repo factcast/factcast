@@ -21,9 +21,9 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Documented
 public @interface Specification {
-    String ns();
+  String ns();
 
-    String type() default "";
+  String type() default "";
 
-    int version() default 0;
+  int version() default 0;
 }

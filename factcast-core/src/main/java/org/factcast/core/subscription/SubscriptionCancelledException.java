@@ -22,13 +22,13 @@ package org.factcast.core.subscription;
  */
 public class SubscriptionCancelledException extends RuntimeException {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    public SubscriptionCancelledException(Throwable e) {
-        super(e);
-    }
+  public SubscriptionCancelledException(Throwable e) {
+    super(e);
+  }
 
-    public SubscriptionCancelledException(String msg) {
-        super(msg);
-    }
+  public SubscriptionCancelledException(String msg) {
+    super(msg);
+  }
 }

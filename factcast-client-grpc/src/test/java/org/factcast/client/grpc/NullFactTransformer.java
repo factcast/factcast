@@ -15,16 +15,14 @@
  */
 package org.factcast.client.grpc;
 
+import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactTransformers;
 
-import lombok.NonNull;
-
 public class NullFactTransformer implements FactTransformers {
 
-    @Override
-    public @NonNull Fact transformIfNecessary(@NonNull Fact e) {
-        return e;
-    }
-
+  @Override
+  public @NonNull Fact transformIfNecessary(@NonNull Fact e) {
+    return e;
+  }
 }

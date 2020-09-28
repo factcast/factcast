@@ -21,7 +21,6 @@ import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 import java.util.UUID;
-
 import org.factcast.core.Fact;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
@@ -32,105 +31,93 @@ import org.junit.jupiter.api.function.*;
 import org.mockito.Spy;
 
 public abstract class AbstractTransformationCacheTest {
-    protected TransformationCache uut;
+  protected TransformationCache uut;
 
-    @Spy
-    protected RegistryMetrics registryMetrics = new NOPRegistryMetrics();
+  @Spy protected RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 
-    @BeforeEach
-    public void init() {
-        this.uut = createUUT();
-    }
+  @BeforeEach
+  public void init() {
+    this.uut = createUUT();
+  }
 
-    protected abstract TransformationCache createUUT();
+  protected abstract TransformationCache createUUT();
 
-    @Test
-    void testEmptyFind() {
-        Optional<Fact> fact = uut.find(UUID.randomUUID(), 1, "1");
+  @Test
+  void testEmptyFind() {
+    Optional<Fact> fact = uut.find(UUID.randomUUID(), 1, "1");
 
-        assertThat(fact.isPresent()).isFalse();
+    assertThat(fact.isPresent()).isFalse();
 
-        verify(registryMetrics).count(MetricEvent.TRANSFORMATION_CACHE_MISS);
-    }
+    verify(registryMetrics).count(MetricEvent.TRANSFORMATION_CACHE_MISS);
+  }
 
-    @Test
-    void testFindAfterPut() {
-        Fact fact = Fact.builder()
-                .ns("ns")
-                .type("type")
-                .id(UUID.randomUUID())
-                .version(1)
-                .build("{}");
-        String chainId = "1-2-3";
+  @Test
+  void testFindAfterPut() {
+    Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
+    String chainId = "1-2-3";
 
-        uut.put(fact, chainId);
+    uut.put(fact, chainId);
 
-        Optional<Fact> found = uut.find(fact.id(), fact.version(), chainId);
+    Optional<Fact> found = uut.find(fact.id(), fact.version(), chainId);
 
-        assertThat(found.isPresent()).isTrue();
-        assertEquals(fact, found.get());
-        verify(registryMetrics).count(MetricEvent.TRANSFORMATION_CACHE_HIT);
-    }
+    assertThat(found.isPresent()).isTrue();
+    assertEquals(fact, found.get());
+    verify(registryMetrics).count(MetricEvent.TRANSFORMATION_CACHE_HIT);
+  }
 
-    @Test
-    void testCompact() {
-        Fact fact = Fact.builder()
-                .ns("ns")
-                .type("type")
-                .id(UUID.randomUUID())
-                .version(1)
-                .build("{}");
-        String chainId = "1-2-3";
+  @Test
+  void testCompact() {
+    Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
+    String chainId = "1-2-3";
 
-        uut.put(fact, chainId);
+    uut.put(fact, chainId);
 
-        // clocks aren't synchronized so Im gonna add an hour here :)
-        uut.compact(DateTime.now().plusHours(1));
+    // clocks aren't synchronized so Im gonna add an hour here :)
+    uut.compact(DateTime.now().plusHours(1));
 
-        Optional<Fact> found = uut.find(fact.id(), fact.version(), chainId);
+    Optional<Fact> found = uut.find(fact.id(), fact.version(), chainId);
 
-        assertThat(found.isPresent()).isFalse();
-    }
+    assertThat(found.isPresent()).isFalse();
+  }
 
-    @Test
-    void testNullContracts() {
-        assertNpe(() -> uut.find(null, 1, "1"));
-        assertNpe(() -> uut.find(UUID.randomUUID(), 1, null));
-        assertNpe(() -> uut.put(null, ""));
-        assertNpe(() -> uut.put(Fact.builder().buildWithoutPayload(), null));
+  @Test
+  void testNullContracts() {
+    assertNpe(() -> uut.find(null, 1, "1"));
+    assertNpe(() -> uut.find(UUID.randomUUID(), 1, null));
+    assertNpe(() -> uut.put(null, ""));
+    assertNpe(() -> uut.put(Fact.builder().buildWithoutPayload(), null));
+  }
 
-    }
+  private void assertNpe(Executable r) {
+    assertThrows(NullPointerException.class, r);
+  }
 
-    private void assertNpe(Executable r) {
-        assertThrows(NullPointerException.class, r);
-    }
+  @Test
+  void testRespectsChainId() {
+    Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
 
-    @Test
-    void testRespectsChainId() {
-        Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
+    uut.put(f, "foo");
+    assertThat(uut.find(f.id(), 1, "xoo")).isEmpty();
+  }
 
-        uut.put(f, "foo");
-        assertThat(uut.find(f.id(), 1, "xoo")).isEmpty();
-    }
+  @Test
+  void testDoesNotFindUnknown() {
+    uut.find(UUID.randomUUID(), 1, "foo");
+  }
 
-    @Test
-    void testDoesNotFindUnknown() {
-        uut.find(UUID.randomUUID(), 1, "foo");
-    }
+  @Test
+  void testHappyPath() {
+    Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
 
-    @Test
-    void testHappyPath() {
-        Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
+    uut.put(f, "foo");
+    assertThat(uut.find(f.id(), 1, "foo")).contains(f);
+  }
 
-        uut.put(f, "foo");
-        assertThat(uut.find(f.id(), 1, "foo")).contains(f);
-    }
+  @Test
+  void testRespectsVersion() {
+    Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
 
-    @Test
-    void testRespectsVersion() {
-        Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
-
-        uut.put(f, "foo");
-        assertThat(uut.find(f.id(), 2, "foo")).isEmpty();
-    }
+    uut.put(f, "foo");
+    assertThat(uut.find(f.id(), 2, "foo")).isEmpty();
+  }
 }

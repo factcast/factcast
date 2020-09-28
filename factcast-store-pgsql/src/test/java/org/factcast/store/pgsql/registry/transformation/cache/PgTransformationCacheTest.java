@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Date;
 import java.util.UUID;
-
 import org.factcast.core.Fact;
 import org.factcast.store.pgsql.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
@@ -33,43 +32,40 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ContextConfiguration(classes = { PgTestConfiguration.class })
+@ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
 @IntegrationTest
 class PgTransformationCacheTest extends AbstractTransformationCacheTest {
-    @Autowired
-    private JdbcTemplate tpl;
+  @Autowired private JdbcTemplate tpl;
 
-    @Override
-    protected TransformationCache createUUT() {
-        return new PgTransformationCache(tpl, registryMetrics);
-    }
+  @Override
+  protected TransformationCache createUUT() {
+    return new PgTransformationCache(tpl, registryMetrics);
+  }
 
-    @Test
-    void testLastAccessUpdateAfterFind() {
-        Fact fact = Fact.builder()
-                .ns("ns")
-                .type("type")
-                .id(UUID.randomUUID())
-                .version(1)
-                .build("{}");
-        String chainId = "1-2-3";
+  @Test
+  void testLastAccessUpdateAfterFind() {
+    Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
+    String chainId = "1-2-3";
 
-        uut.put(fact, chainId);
+    uut.put(fact, chainId);
 
-        Date dateOnInsert = getLastAccessDate();
+    Date dateOnInsert = getLastAccessDate();
 
-        uut.find(fact.id(), fact.version(), chainId);
+    uut.find(fact.id(), fact.version(), chainId);
 
-        Date dateAfterUpdate = getLastAccessDate();
+    Date dateAfterUpdate = getLastAccessDate();
 
-        assertTrue(dateOnInsert.before(dateAfterUpdate));
-    }
+    assertTrue(dateOnInsert.before(dateAfterUpdate));
+  }
 
-    private Date getLastAccessDate() {
-        return tpl.query("SELECT last_access FROM transformationcache", new Object[] {}, (rs,
-                rowNum) -> rs.getObject("last_access", Date.class)).get(0);
-    }
+  private Date getLastAccessDate() {
+    return tpl.query(
+            "SELECT last_access FROM transformationcache",
+            new Object[] {},
+            (rs, rowNum) -> rs.getObject("last_access", Date.class))
+        .get(0);
+  }
 }
