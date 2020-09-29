@@ -22,7 +22,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.serializer.SnapshotSerializer.DefaultSnapshotSerializer;
+import org.factcast.factus.serializer.SnapshotSerializer.JacksonSnapshotSerializer;
 
 @Slf4j
 public class SnapshotSerializerSupplier {
@@ -33,7 +33,7 @@ public class SnapshotSerializerSupplier {
 
   public SnapshotSerializerSupplier(@NonNull SnapshotSerializer defaultSerializer) {
     this.defaultSerializer = defaultSerializer;
-    if (!(defaultSerializer instanceof DefaultSnapshotSerializer)) {
+    if (!(defaultSerializer instanceof JacksonSnapshotSerializer)) {
       log.info(
           "Using {} as a default SnapshotSerializer", defaultSerializer.getClass().getSimpleName());
     }

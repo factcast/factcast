@@ -19,27 +19,14 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.hash.Hashing;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
-import java.util.function.Function;
-import lombok.AccessLevel;
-import lombok.Generated;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.Setter;
-import lombok.SneakyThrows;
+import lombok.*;
 
 /**
  * Statically shared ObjectMapper reader & writer to be used within FactCast for Headers and
@@ -58,11 +45,6 @@ public final class FactCastJson {
   private static ObjectReader reader;
 
   private static ObjectWriter writer;
-
-  private static JsonSchemaGenerator schemaGen;
-
-  @Setter(onMethod = @__(@VisibleForTesting))
-  private static Function<String, String> schemaModifier = Function.identity();
 
   static {
     initializeObjectMapper();
@@ -83,8 +65,6 @@ public final class FactCastJson {
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     writer = objectMapper.writer();
     reader = objectMapper.reader();
-
-    schemaGen = new JsonSchemaGenerator(objectMapper);
   }
 
   @SneakyThrows
@@ -182,13 +162,7 @@ public final class FactCastJson {
     return objectMapper;
   }
 
-  @SneakyThrows
-  public static long calculateHash(Class<?> projectionClass) {
-
-    JsonSchema jsonSchema = schemaGen.generateSchema(projectionClass);
-
-    String schema = writer.writeValueAsString(jsonSchema);
-
-    return Hashing.sha512().hashUnencodedChars(schemaModifier.apply(schema)).asLong();
+  public static ObjectMapper getObjectMapper() {
+    return objectMapper;
   }
 }
