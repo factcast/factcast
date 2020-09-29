@@ -15,6 +15,15 @@
  */
 package org.factcast.factus.serializer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.hash.Hashing;
+import java.util.function.Function;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.SneakyThrows;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.projection.SnapshotProjection;
 
@@ -43,20 +52,40 @@ public interface SnapshotSerializer {
    * @param projectionClass the snapshot projection class to calculate the hash for
    * @return the calculated hash or 0, if no hash could be calculated
    */
+  // TODO make it a string?
   default long calculateProjectionClassHash(Class<? extends SnapshotProjection> projectionClass) {
     return 0;
   }
 
-  class DefaultSnapshotSerializer implements SnapshotSerializer {
+  public static class DefaultSnapshotSerializer extends JacksonSnapshotSerializer {}
 
-    @Override
-    public byte[] serialize(SnapshotProjection a) {
-      return FactCastJson.writeValueAsBytes(a);
+  public static class JacksonSnapshotSerializer implements SnapshotSerializer {
+
+    private final ObjectMapper objectMapper;
+    private final JsonSchemaGenerator schemaGen;
+
+    @Setter(onMethod = @__(@VisibleForTesting))
+    private static Function<String, String> schemaModifier = Function.identity();
+
+    public JacksonSnapshotSerializer(@NonNull ObjectMapper configuredObjectMapper) {
+      this.objectMapper = configuredObjectMapper;
+      schemaGen = new JsonSchemaGenerator(objectMapper);
     }
 
+    public JacksonSnapshotSerializer() {
+      this(FactCastJson.getObjectMapper());
+    }
+
+    @SneakyThrows
+    @Override
+    public byte[] serialize(SnapshotProjection a) {
+      return objectMapper.writeValueAsBytes(a);
+    }
+
+    @SneakyThrows
     @Override
     public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
-      return FactCastJson.readValueFromBytes(type, bytes);
+      return objectMapper.readerFor(type).readValue(bytes);
     }
 
     @Override
@@ -64,9 +93,13 @@ public interface SnapshotSerializer {
       return false;
     }
 
+    @SuppressWarnings("UnstableApiUsage")
+    @SneakyThrows
     @Override
     public long calculateProjectionClassHash(Class<? extends SnapshotProjection> projectionClass) {
-      return FactCastJson.calculateHash(projectionClass);
+      JsonSchema jsonSchema = schemaGen.generateSchema(projectionClass);
+      String schema = objectMapper.writeValueAsString(jsonSchema);
+      return Hashing.sha512().hashUnencodedChars(schemaModifier.apply(schema)).asLong();
     }
   }
 }

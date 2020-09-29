@@ -21,17 +21,17 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 import java.util.function.Function;
 import lombok.Data;
-import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.SnapshotSerializer.JacksonSnapshotSerializer;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class SnapshotSerializerTest {
+class JacksonSnapshotSerializerTest {
 
-  private final SnapshotSerializer underTest = new SnapshotSerializer.DefaultSnapshotSerializer();
+  private final JacksonSnapshotSerializer underTest = new JacksonSnapshotSerializer();
 
   @Test
   void testRoundtrip() {
@@ -69,7 +69,7 @@ class SnapshotSerializerTest {
         // as the Classname is part of the schema.
         // The solution is to rename the classname of all TestClassV*
         // classes to "TestClass".
-        FactCastJson.schemaModifier(schema -> schema.replaceAll("TestClassV[^\"]*\"", "TestClass"));
+        underTest.schemaModifier(schema -> schema.replaceAll("TestClassV[^\"]*\"", "TestClass"));
 
         long v1 = underTest.calculateProjectionClassHash(TestClassV1.class);
         long v1a = underTest.calculateProjectionClassHash(TestClassV1a_noRelevantChange.class);
@@ -87,7 +87,7 @@ class SnapshotSerializerTest {
 
       } finally {
         // reset to "do nothing"
-        FactCastJson.schemaModifier(Function.identity());
+        underTest.schemaModifier(Function.identity());
       }
     }
 
