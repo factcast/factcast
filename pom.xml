@@ -83,7 +83,6 @@
     <assertj.version>3.17.2</assertj.version>
     <mockito.version>3.5.13</mockito.version>
     <lombok.version>1.18.14</lombok.version>
-    <formatter.config>${basedir}/src/eclipse/config</formatter.config>
     <etc>${session.executionRootDirectory}/src/etc</etc>
 </properties>
   <dependencies>
