@@ -3,6 +3,24 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 
 # Changelog
 
+## [0.3.4](https://github.com/factcast/factcast/tree/0.3.4) (2020-10-14)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.3...0.3.4)
+
+**Fixed bugs:**
+
+- Unify naming \(SnapshotCache vs SnapshotRepository\) and fix Autoconfiguration for SnapshotCaches [\#1070](https://github.com/factcast/factcast/issues/1070)
+- Issue1070 autoconfiguration & name unification of snapshotCaches [\#1072](https://github.com/factcast/factcast/pull/1072) ([uweschaefer](https://github.com/uweschaefer))
+
+**Closed issues:**
+
+- Switch formatting to google format [\#1054](https://github.com/factcast/factcast/issues/1054)
+
+**Merged pull requests:**
+
+- \#1071: introduce RedisExtension that clears all keys in redis [\#1073](https://github.com/factcast/factcast/pull/1073) ([otbe](https://github.com/otbe))
+- switch to google format [\#1056](https://github.com/factcast/factcast/pull/1056) ([uweschaefer](https://github.com/uweschaefer))
+
 ## [0.3.3](https://github.com/factcast/factcast/tree/0.3.3) (2020-09-25)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/0.3.2...0.3.3)
