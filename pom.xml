@@ -83,9 +83,8 @@
     <assertj.version>3.17.2</assertj.version>
     <mockito.version>3.5.13</mockito.version>
     <lombok.version>1.18.14</lombok.version>
-    <formatter.config>${basedir}/src/eclipse/config</formatter.config>
-    <etc>${basedir}/src/etc</etc>
-  </properties>
+    <etc>${session.executionRootDirectory}/src/etc</etc>
+</properties>
   <dependencies>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -339,7 +338,6 @@
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
         <version>${spotless-maven-plugin.version}</version>
-        <inherited>false</inherited>
         <configuration>
           <java>
             <licenseHeader>
@@ -352,9 +350,9 @@
               <style>GOOGLE</style>  <!-- or AOSP (optional) -->
             </googleJavaFormat>
             <includes>
-              <include>**/src/main/java/**/*.java
+              <include>/src/main/java/**/*.java
               </include>
-              <include>**/src/test/java/**/*.java
+              <include>/src/test/java/**/*.java
               </include>
             </includes>
           </java>
@@ -368,7 +366,7 @@
               <version>0.36.0</version>
             </ktlint>
             <includes>
-              <include>**/src/main/kotlin/**/*.kt
+              <include>/src/main/kotlin/**/*.kt
               </include>
             </includes>
           </kotlin>
