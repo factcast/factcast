@@ -50,6 +50,11 @@
       <version>1.14.3</version>
     </dependency>
     <dependency>
+      <groupId>org.redisson</groupId>
+      <artifactId>redisson</artifactId>
+      <version>3.13.5</version>
+    </dependency>
+    <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-commons</artifactId>
     </dependency>
