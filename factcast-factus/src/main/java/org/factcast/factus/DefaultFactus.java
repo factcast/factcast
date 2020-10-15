@@ -130,7 +130,7 @@ public class DefaultFactus implements Factus {
 
     assertNotClosed();
 
-    log.trace("updating local projection {}", managedProjection.getClass());
+    log.trace("updating managed projection {}", managedProjection.getClass());
     factusMetrics.timed(
         TimedOperation.MANAGED_PROJECTION_UPDATE_DURATION,
         Tags.of(Tag.of(CLASS, managedProjection.getClass().getCanonicalName())),
