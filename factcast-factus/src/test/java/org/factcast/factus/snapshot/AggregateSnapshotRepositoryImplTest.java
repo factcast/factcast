@@ -16,7 +16,7 @@
 package org.factcast.factus.snapshot;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -32,6 +32,8 @@ import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.AggregateUtil;
+import org.factcast.factus.serializer.OtherSnapSer;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -59,7 +61,7 @@ class AggregateSnapshotRepositoryImplTest {
 
     @Captor ArgumentCaptor<SnapshotId> idCaptor;
 
-    private UUID aggregateId = UUID.randomUUID();
+    private final UUID aggregateId = UUID.randomUUID();
 
     @BeforeEach
     void setup() {
@@ -93,7 +95,7 @@ class AggregateSnapshotRepositoryImplTest {
       assertThat(idCaptor.getValue()).isNotNull();
 
       // never calculate hash, as it is given
-      verify(snapshotSerializer, never()).calculateProjectionClassHash(any());
+      verify(snapshotSerializer, never()).calculateProjectionSerial(any());
 
       assertThat(idCaptor.getValue().key())
           .contains(":org.factcast.factus.serializer.SnapshotSerializer")
@@ -111,7 +113,7 @@ class AggregateSnapshotRepositoryImplTest {
 
       when(snap.getSnapshot(any())).thenReturn(Optional.of(withoutSVUID));
 
-      when(snapshotSerializer.calculateProjectionClassHash(WithoutSVUID.class))
+      when(snapshotSerializer.calculateProjectionSerial(WithoutSVUID.class))
           // let's assume this is the serial id computed by the
           // serialiser; will not be used as we used a class with
           // serialVersionUID field
@@ -143,7 +145,7 @@ class AggregateSnapshotRepositoryImplTest {
 
       when(snap.getSnapshot(any())).thenReturn(Optional.of(withoutSVUID));
 
-      when(snapshotSerializer.calculateProjectionClassHash(WithoutSVUID.class))
+      when(snapshotSerializer.calculateProjectionSerial(WithoutSVUID.class))
           // let's assume this is the serial id computed by the
           // serialiser; will not be used as we used a class with
           // serialVersionUID field
@@ -174,8 +176,10 @@ class AggregateSnapshotRepositoryImplTest {
 
     @Test
     void retrievesExistingSVUID() {
-      assertEquals(42, underTest.getSerialVersionUid(WithSVUID.class));
-      assertEquals(0, underTest.getSerialVersionUid(WithoutSVUID.class));
+      assertEquals(Long.valueOf(42), underTest.getSerialVersionUid(WithSVUID.class, () -> null));
+      assertEquals(
+          Long.valueOf(43), underTest.getSerialVersionUid(WithAnnotation.class, () -> null));
+      assertNull(underTest.getSerialVersionUid(WithoutSVUID.class, OtherSnapSer::new));
     }
   }
 
@@ -237,6 +241,11 @@ class AggregateSnapshotRepositoryImplTest {
   }
 
   public static class WithSVUID extends Aggregate {
+    private static final long serialVersionUID = 42L;
+  }
+
+  @ProjectionMetaData(hash = 43)
+  public static class WithAnnotation extends Aggregate {
     private static final long serialVersionUID = 42L;
   }
 

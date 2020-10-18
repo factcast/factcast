@@ -32,4 +32,9 @@ public class OtherSnapSer implements SnapshotSerializer {
   public boolean includesCompression() {
     return false;
   }
+
+  @Override
+  public Long calculateProjectionSerial(Class<? extends SnapshotProjection> projectionClass) {
+    return null;
+  }
 }

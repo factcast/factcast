@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 
 class LocalWriteTokenTest {
 
-  private LocalWriteToken underTest = new LocalWriteToken();
+  private final LocalWriteToken underTest = new LocalWriteToken();
 
   @Test
   void acquireWriteToken() throws Exception {

@@ -31,7 +31,7 @@ public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository
 
   private static final UUID FAKE_UUID = new UUID(0, 0); // needed to maintain
 
-  private SnapshotSerializerSupplier serializerSupplier;
+  private final SnapshotSerializerSupplier serializerSupplier;
 
   public ProjectionSnapshotRepositoryImpl(
       @NonNull SnapshotCache snapshotCache,

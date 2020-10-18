@@ -66,7 +66,7 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
   @SneakyThrows
   @Override
   public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
-    try (LZ4BlockInputStream is = new LZ4BlockInputStream(new ByteArrayInputStream(bytes)); ) {
+    try (LZ4BlockInputStream is = new LZ4BlockInputStream(new ByteArrayInputStream(bytes))) {
       return omMessagePack.readerFor(type).readValue(is);
     }
   }
@@ -76,9 +76,10 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
     return true;
   }
 
+  @SuppressWarnings("UnstableApiUsage")
   @Override
   @SneakyThrows
-  public long calculateProjectionClassHash(Class<? extends SnapshotProjection> projectionClass) {
+  public Long calculateProjectionSerial(Class<? extends SnapshotProjection> projectionClass) {
     JsonSchema jsonSchema = schemaGen.generateSchema(projectionClass);
 
     String schema = writerJson.writeValueAsString(jsonSchema);

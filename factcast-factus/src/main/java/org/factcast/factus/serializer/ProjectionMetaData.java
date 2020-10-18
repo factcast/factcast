@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projection;
+package org.factcast.factus.serializer;
 
-import java.time.Duration;
-import lombok.NonNull;
-import org.factcast.factus.FactusConstants;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public interface WriterTokenAware {
-  default AutoCloseable acquireWriteToken() {
-    return acquireWriteToken(FactusConstants.FOREVER);
-  }
-
-  /** might return null if token cannot be acquired */
-  AutoCloseable acquireWriteToken(@NonNull Duration maxWait);
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface ProjectionMetaData {
+  long hash();
 }

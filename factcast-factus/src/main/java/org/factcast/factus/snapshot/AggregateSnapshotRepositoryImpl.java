@@ -30,7 +30,7 @@ import org.factcast.factus.serializer.SnapshotSerializer;
 public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository
     implements AggregateSnapshotRepository {
 
-  private SnapshotSerializerSupplier serializerSupplier;
+  private final SnapshotSerializerSupplier serializerSupplier;
 
   public AggregateSnapshotRepositoryImpl(
       SnapshotCache snapshotCache, SnapshotSerializerSupplier serializerSupplier) {

@@ -24,12 +24,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.serializer.SnapshotSerializer;
 
 @RequiredArgsConstructor
+@Slf4j
 abstract class AbstractSnapshotRepository {
   protected static final String KEY_DELIMITER = ":";
 
@@ -74,31 +77,46 @@ abstract class AbstractSnapshotRepository {
     return typeSerializerAndSerialUIdCache.computeIfAbsent(
         type,
         t -> {
-          long serialVersionUid = getSerialVersionUid(type);
           SnapshotSerializer serializer = serializerSupplier.get();
-
-          if (serialVersionUid == 0) {
-            serialVersionUid = serializer.calculateProjectionClassHash(t);
+          Long serialVersionUid = getSerialVersionUid(type, serializerSupplier);
+          if (serialVersionUid == null) {
+            log.error(
+                "Cannot determine serial for class "
+                    + t.getCanonicalName()
+                    + ". Falling back to currentTimeMillis to avoid deserialization errors. However this *WILL* flood your SnapshotCache with useless Snapshots, so please provide a serial for this class.");
+            serialVersionUid = System.currentTimeMillis();
           }
 
           return serializer.getClass().getCanonicalName() + KEY_DELIMITER + serialVersionUid;
         });
   }
 
-  private final Map<Class<?>, Long> serials = new HashMap<>();
+  private final Map<Class<? extends SnapshotProjection>, Long> serials = new HashMap<>();
 
   @VisibleForTesting
-  protected long getSerialVersionUid(Class<?> type) {
+  protected Long getSerialVersionUid(
+      Class<? extends SnapshotProjection> type, Supplier<SnapshotSerializer> serializerSupplier) {
+    SnapshotSerializer serializer = serializerSupplier.get();
     return serials.computeIfAbsent(
         type,
         t -> {
+
+          // 1st: @ProjectionMetaData
+          ProjectionMetaData annotation = t.getAnnotation(ProjectionMetaData.class);
+          if (annotation != null) {
+            return annotation.hash();
+          }
+
+          // 2nd: static serialVersionUID
           try {
             Field field = t.getDeclaredField("serialVersionUID");
             field.setAccessible(true);
             return field.getLong(null);
           } catch (NoSuchFieldException | IllegalAccessException e) {
-            return 0L;
           }
+
+          // fallback: calculated hash
+          return serializer.calculateProjectionSerial(t);
         });
   }
 

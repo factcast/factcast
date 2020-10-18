@@ -82,7 +82,7 @@ class DefaultFactusTest {
 
   @Mock private AutoCloseable autoCloseable;
 
-  @Spy private FactusMetrics factusMetrics = new FactusMetricsImpl(new SimpleMeterRegistry());
+  @Spy private final FactusMetrics factusMetrics = new FactusMetricsImpl(new SimpleMeterRegistry());
 
   @InjectMocks private DefaultFactus underTest;
 

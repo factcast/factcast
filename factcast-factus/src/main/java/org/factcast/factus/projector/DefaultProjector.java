@@ -336,11 +336,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
       }
 
       // exclude MockitoMocks
-      if (m.getDeclaringClass().getCanonicalName().contains("$MockitoMock")) {
-        return false;
-      }
-
-      return true;
+      return !m.getDeclaringClass().getCanonicalName().contains("$MockitoMock");
     }
     return false;
   }

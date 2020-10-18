@@ -44,7 +44,7 @@ public class PgSnapshotCache {
 
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
 
-    jdbcTemplate.update(TOUCH_SNAPSHOT_ACCESSTIME, new Object[] {id.uuid(), id.key()});
+    jdbcTemplate.update(TOUCH_SNAPSHOT_ACCESSTIME, id.uuid(), id.key());
     return jdbcTemplate
         .query(
             SELECT_SNAPSHOT, new Object[] {id.uuid(), id.key()}, this::extractSnapshotFromResultSet)

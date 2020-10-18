@@ -71,13 +71,11 @@ class BinarySnapshotSerializerTest {
         BinarySnapshotSerializer.schemaModifier(
             schema -> schema.replaceAll("TestClassV[^\"]*\"", "TestClass"));
 
-        long v1 = underTest.calculateProjectionClassHash(TestClassV1.class);
-        long v1a = underTest.calculateProjectionClassHash(TestClassV1a_noRelevantChange.class);
-        long v2a = underTest.calculateProjectionClassHash(TestClassV2a_withChanges_newField.class);
-        long v2b =
-            underTest.calculateProjectionClassHash(TestClassV2b_withChanges_typeChanged.class);
-        long v2c =
-            underTest.calculateProjectionClassHash(TestClassV2c_withChanges_fieldRenamed.class);
+        long v1 = underTest.calculateProjectionSerial(TestClassV1.class);
+        long v1a = underTest.calculateProjectionSerial(TestClassV1a_noRelevantChange.class);
+        long v2a = underTest.calculateProjectionSerial(TestClassV2a_withChanges_newField.class);
+        long v2b = underTest.calculateProjectionSerial(TestClassV2b_withChanges_typeChanged.class);
+        long v2c = underTest.calculateProjectionSerial(TestClassV2c_withChanges_fieldRenamed.class);
 
         assertThat(v1).isEqualTo(v1a);
 

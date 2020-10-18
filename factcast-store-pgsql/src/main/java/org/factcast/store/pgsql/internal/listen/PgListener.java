@@ -61,7 +61,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   private Thread listenerThread;
 
-  private CountDownLatch countDownLatch = new CountDownLatch(1);
+  private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
   @VisibleForTesting
   protected void listen() {
