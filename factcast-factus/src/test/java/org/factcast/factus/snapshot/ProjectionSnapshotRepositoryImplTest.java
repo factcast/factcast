@@ -30,6 +30,7 @@ import java.util.concurrent.CompletableFuture;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
+import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +53,8 @@ class ProjectionSnapshotRepositoryImplTest {
   @Mock private SnapshotCache snapshotCache;
 
   @Mock private Map<Class<?>, Long> serials;
+
+  @Mock private FactusMetrics factusMetrics;
 
   @InjectMocks private ProjectionSnapshotRepositoryImpl underTest;
 
