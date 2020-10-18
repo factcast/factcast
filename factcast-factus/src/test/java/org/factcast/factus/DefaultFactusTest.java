@@ -23,12 +23,12 @@ import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
@@ -38,6 +38,7 @@ import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.factus.DefaultFactus.IntervalSnapshotter;
 import org.factcast.factus.batch.BatchAbortedException;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
@@ -1039,6 +1040,46 @@ class DefaultFactusTest {
           .get()
           .extracting("name", "processed")
           .containsExactly("Barney", 1);
+    }
+  }
+
+  @Nested
+  class IntervalSnapshotterTests {
+    @SneakyThrows
+    @Test
+    void happyPath() {
+      AtomicInteger calls = new AtomicInteger(0);
+      Duration wait = Duration.ofSeconds(3);
+      val uut =
+          new IntervalSnapshotter<SnapshotProjection>(wait) {
+            @Override
+            void createSnapshot(SnapshotProjection projection, UUID state) {
+              calls.incrementAndGet();
+            }
+          };
+
+      uut.accept(null, UUID.randomUUID());
+      uut.accept(null, UUID.randomUUID());
+      uut.accept(null, UUID.randomUUID());
+      uut.accept(null, UUID.randomUUID());
+
+      assertThat(calls.get()).isEqualTo(0);
+
+      Thread.sleep(wait.toMillis() + 100);
+
+      assertThat(calls.get()).isEqualTo(0);
+      uut.accept(null, UUID.randomUUID());
+      uut.accept(null, UUID.randomUUID());
+
+      assertThat(calls.get()).isEqualTo(1);
+
+      Thread.sleep(wait.toMillis() + 100);
+
+      assertThat(calls.get()).isEqualTo(1);
+      uut.accept(null, UUID.randomUUID());
+      uut.accept(null, UUID.randomUUID());
+
+      assertThat(calls.get()).isEqualTo(2);
     }
   }
 }
