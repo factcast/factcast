@@ -21,11 +21,10 @@ import org.junit.jupiter.api.Test;
 
 public class SingleTransformationTest {
 
-    @Test
-    public void testEmpty() throws Exception {
-        Transformation t = SingleTransformation.empty(TransformationKey.of("n", "t"), 1, 2);
+  @Test
+  public void testEmpty() throws Exception {
+    Transformation t = SingleTransformation.empty(TransformationKey.of("n", "t"), 1, 2);
 
-        assertThat(t.transformationCode()).isEmpty();
-    }
-
+    assertThat(t.transformationCode()).isEmpty();
+  }
 }

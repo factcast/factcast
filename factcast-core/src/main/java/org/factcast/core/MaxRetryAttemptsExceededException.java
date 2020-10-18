@@ -19,9 +19,9 @@ import lombok.NonNull;
 
 public class MaxRetryAttemptsExceededException extends RuntimeException {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    public MaxRetryAttemptsExceededException(@NonNull String msg) {
-        super(msg);
-    }
+  public MaxRetryAttemptsExceededException(@NonNull String msg) {
+    super(msg);
+  }
 }

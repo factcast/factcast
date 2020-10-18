@@ -23,16 +23,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
 public class PgSnapshotCacheConfiguration {
-    @Bean
-    public PgSnapshotCache pgSnapshotCache(JdbcTemplate jdbcTemplate) {
-        return new PgSnapshotCache(jdbcTemplate);
-    }
+  @Bean
+  public PgSnapshotCache pgSnapshotCache(JdbcTemplate jdbcTemplate) {
+    return new PgSnapshotCache(jdbcTemplate);
+  }
 
-    @Bean
-    public PgSnapshotCacheCompactor pgSnapshotCacheCompactor(
-            PgSnapshotCache cache,
-            PgConfigurationProperties props, PgMetrics pgMetrics) {
-        return new PgSnapshotCacheCompactor(cache, pgMetrics, props
-                .getDeleteSnapshotStaleForDays());
-    }
+  @Bean
+  public PgSnapshotCacheCompactor pgSnapshotCacheCompactor(
+      PgSnapshotCache cache, PgConfigurationProperties props, PgMetrics pgMetrics) {
+    return new PgSnapshotCacheCompactor(cache, pgMetrics, props.getDeleteSnapshotStaleForDays());
+  }
 }

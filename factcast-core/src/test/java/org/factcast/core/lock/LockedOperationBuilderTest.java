@@ -20,30 +20,29 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.UUID;
-
 import org.factcast.core.store.FactStore;
 import org.junit.jupiter.api.*;
 
 public class LockedOperationBuilderTest {
 
-    final DeprecatedLockedOperationBuilder uut = new DeprecatedLockedOperationBuilder(mock(
-            FactStore.class), "ns");
+  final DeprecatedLockedOperationBuilder uut =
+      new DeprecatedLockedOperationBuilder(mock(FactStore.class), "ns");
 
-    @Test
-    public void testAttemptNullContracts() {
-        assertThrows(NullPointerException.class, () -> uut.on(UUID.randomUUID()).attempt(null));
-    }
+  @Test
+  public void testAttemptNullContracts() {
+    assertThrows(NullPointerException.class, () -> uut.on(UUID.randomUUID()).attempt(null));
+  }
 
-    @Test
-    public void testAttemptAbortsOnNull() {
-        assertThrows(AttemptAbortedException.class, () -> uut.on(UUID.randomUUID())
-                .attempt(() -> null));
-    }
+  @Test
+  public void testAttemptAbortsOnNull() {
+    assertThrows(
+        AttemptAbortedException.class, () -> uut.on(UUID.randomUUID()).attempt(() -> null));
+  }
 
-    @Test
-    public void testAttemptWithoutPublishing() {
-        assertThrows(IllegalArgumentException.class, () -> uut.on(UUID.randomUUID())
-                .attempt(() -> mock(IntermediatePublishResult.class)));
-    }
-
+  @Test
+  public void testAttemptWithoutPublishing() {
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> uut.on(UUID.randomUUID()).attempt(() -> mock(IntermediatePublishResult.class)));
+  }
 }

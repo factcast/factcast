@@ -15,24 +15,20 @@
  */
 package org.factcast.itests.factus.proj;
 
+import lombok.Getter;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.itests.factus.event.TestAggregateIncremented;
 
-import lombok.Getter;
-
 public class TestAggregate extends Aggregate {
 
-    @Getter
-    int magicNumber = 42;
+  @Getter int magicNumber = 42;
 
-    class SomeNestedClass {
+  class SomeNestedClass {
 
-        @Handler
-        void apply(TestAggregateIncremented e) {
-            magicNumber++;
-        }
-
+    @Handler
+    void apply(TestAggregateIncremented e) {
+      magicNumber++;
     }
-
+  }
 }

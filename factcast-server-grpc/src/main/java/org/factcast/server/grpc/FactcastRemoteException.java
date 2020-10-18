@@ -21,23 +21,21 @@ import io.grpc.StatusRuntimeException;
 
 public class FactcastRemoteException {
 
-    public static Throwable of(Throwable e) {
+  public static Throwable of(Throwable e) {
 
-        if (e instanceof RuntimeException && e.getClass()
-                .getCanonicalName()
-                .startsWith("org.factcast."))
-            return new StatusRuntimeException(Status.UNKNOWN, createMetaData(e));
-        else
-            return new StatusRuntimeException(Status.UNKNOWN);
-    }
+    if (e instanceof RuntimeException
+        && e.getClass().getCanonicalName().startsWith("org.factcast."))
+      return new StatusRuntimeException(Status.UNKNOWN, createMetaData(e));
+    else return new StatusRuntimeException(Status.UNKNOWN);
+  }
 
-    private static Metadata createMetaData(Throwable e) {
-        Metadata metadata = new Metadata();
-        metadata.put(Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage()
-                .getBytes());
-        metadata.put(Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER),
-                e.getClass().getCanonicalName().getBytes());
-        return metadata;
-    }
-
+  private static Metadata createMetaData(Throwable e) {
+    Metadata metadata = new Metadata();
+    metadata.put(
+        Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
+    metadata.put(
+        Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER),
+        e.getClass().getCanonicalName().getBytes());
+    return metadata;
+  }
 }

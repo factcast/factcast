@@ -18,6 +18,7 @@ package org.factcast.factus.snapshot;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+import lombok.NonNull;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.MyDefaultSnapshotSerializer;
 import org.factcast.factus.serializer.OtherSnapSer;
@@ -25,49 +26,44 @@ import org.factcast.factus.serializer.SnapSerWithoutNoArgsConstructor;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.junit.jupiter.api.*;
 
-import lombok.NonNull;
-
 class SnapshotSerializerSupplierTest {
 
-    private @NonNull SnapshotSerializer defaultSerializer = new MyDefaultSnapshotSerializer();
+  private @NonNull final SnapshotSerializer defaultSerializer = new MyDefaultSnapshotSerializer();
 
-    private SnapshotSerializerSupplier underTest = new SnapshotSerializerSupplier(
-            defaultSerializer);
+  private final SnapshotSerializerSupplier underTest =
+      new SnapshotSerializerSupplier(defaultSerializer);
 
-    @Nested
-    class WhenRetrievingSerializer {
+  @Nested
+  class WhenRetrievingSerializer {
 
-        @BeforeEach
-        void setup() {
-        }
+    @BeforeEach
+    void setup() {}
 
-        @Test
-        void defaultSerializer() {
-            assertThat(underTest.retrieveSerializer(ProjectionWithDefaultSerializer.class))
-                    .isSameAs(defaultSerializer);
-        }
-
-        @Test
-        void alternativeSerializer() {
-            assertThat(underTest.retrieveSerializer(ProjectionWithAlternateSerializer.class))
-                    .isInstanceOf(OtherSnapSer.class);
-        }
-
-        @Test
-        void failIfSerializerCannotBeCreated() {
-            assertThrows(SerializerInstantiationException.class, () -> underTest.retrieveSerializer(
-                    ProjectionWithBrokenSerializer.class));
-        }
+    @Test
+    void defaultSerializer() {
+      assertThat(underTest.retrieveSerializer(ProjectionWithDefaultSerializer.class))
+          .isSameAs(defaultSerializer);
     }
 
-    @SerializeUsing(SnapSerWithoutNoArgsConstructor.class)
-    static class ProjectionWithBrokenSerializer implements SnapshotProjection {
+    @Test
+    void alternativeSerializer() {
+      assertThat(underTest.retrieveSerializer(ProjectionWithAlternateSerializer.class))
+          .isInstanceOf(OtherSnapSer.class);
     }
 
-    @SerializeUsing(OtherSnapSer.class)
-    static class ProjectionWithAlternateSerializer implements SnapshotProjection {
+    @Test
+    void failIfSerializerCannotBeCreated() {
+      assertThrows(
+          SerializerInstantiationException.class,
+          () -> underTest.retrieveSerializer(ProjectionWithBrokenSerializer.class));
     }
+  }
 
-    static class ProjectionWithDefaultSerializer implements SnapshotProjection {
-    }
+  @SerializeUsing(SnapSerWithoutNoArgsConstructor.class)
+  static class ProjectionWithBrokenSerializer implements SnapshotProjection {}
+
+  @SerializeUsing(OtherSnapSer.class)
+  static class ProjectionWithAlternateSerializer implements SnapshotProjection {}
+
+  static class ProjectionWithDefaultSerializer implements SnapshotProjection {}
 }

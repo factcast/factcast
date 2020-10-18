@@ -18,10 +18,8 @@ package org.factcast.grpc.api;
 import io.grpc.Metadata;
 
 public class Headers {
-    private static final String GRPC_COMPRESSION_HEADER = "fc-msgcomp";
+  private static final String GRPC_COMPRESSION_HEADER = "fc-msgcomp";
 
-    public static final Metadata.Key<String> MESSAGE_COMPRESSION = Metadata.Key.of(
-            Headers.GRPC_COMPRESSION_HEADER,
-            Metadata.ASCII_STRING_MARSHALLER);
-
+  public static final Metadata.Key<String> MESSAGE_COMPRESSION =
+      Metadata.Key.of(Headers.GRPC_COMPRESSION_HEADER, Metadata.ASCII_STRING_MARSHALLER);
 }

@@ -18,7 +18,8 @@ package org.factcast.core.event;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.*;
-
+import lombok.NonNull;
+import lombok.val;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.event.Specification;
@@ -28,44 +29,39 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import lombok.NonNull;
-import lombok.val;
-
 @ExtendWith(MockitoExtension.class)
 class EventConverterTest {
 
-    @Mock
-    private @NonNull EventSerializer ser;
+  @Mock private @NonNull EventSerializer ser;
 
-    @InjectMocks
-    private EventConverter underTest;
+  @InjectMocks private EventConverter underTest;
 
-    @Test
-    void negativeVersionIsIgnored() {
-        assertThat(underTest.toFact(new E()).header().version()).isEqualTo(0);
+  @Test
+  void negativeVersionIsIgnored() {
+    assertThat(underTest.toFact(new E()).header().version()).isEqualTo(0);
+  }
+
+  @Test
+  void failsOnNullKeyInMeta() {
+    assertThatThrownBy(() -> underTest.toFact(new E2()))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Specification(ns = "test", version = -99)
+  static class E implements EventObject {
+    @Override
+    public Set<UUID> aggregateIds() {
+      return new HashSet<>();
     }
+  }
 
-    @Test
-    void failsOnNullKeyInMeta() {
-        assertThatThrownBy(() -> underTest.toFact(new E2())).isInstanceOf(
-                IllegalArgumentException.class);
+  @Specification(ns = "test", version = 10)
+  static class E2 extends E {
+    @Override
+    public Map<String, String> additionalMetaMap() {
+      val m = new HashMap<String, String>();
+      m.put(null, "foo");
+      return m;
     }
-
-    @Specification(ns = "test", version = -99)
-    static class E implements EventObject {
-        @Override
-        public Set<UUID> aggregateIds() {
-            return new HashSet<>();
-        }
-    }
-
-    @Specification(ns = "test", version = 10)
-    static class E2 extends E {
-        @Override
-        public Map<String, String> additionalMetaMap() {
-            val m = new HashMap<String, String>();
-            m.put((String) null, "foo");
-            return m;
-        }
-    }
+  }
 }

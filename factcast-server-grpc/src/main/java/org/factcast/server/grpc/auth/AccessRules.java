@@ -15,11 +15,9 @@
  */
 package org.factcast.server.grpc.auth;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.LinkedList;
 import java.util.List;
-
-import com.google.common.annotations.VisibleForTesting;
-
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,29 +26,26 @@ import lombok.NonNull;
 @NoArgsConstructor
 // exclusion has precedents
 public class AccessRules {
-    @VisibleForTesting
-    @Getter(value = AccessLevel.PROTECTED)
-    private final List<String> include = new LinkedList<>();
+  @VisibleForTesting
+  @Getter(value = AccessLevel.PROTECTED)
+  private final List<String> include = new LinkedList<>();
 
-    @VisibleForTesting
-    @Getter(value = AccessLevel.PROTECTED)
-    private final List<String> exclude = new LinkedList<>();
+  @VisibleForTesting
+  @Getter(value = AccessLevel.PROTECTED)
+  private final List<String> exclude = new LinkedList<>();
 
-    Boolean includes(@NonNull String ns) {
-        boolean excluded = exclude.stream().anyMatch(s -> matches(s, ns));
-        if (excluded)
-            return false;
+  Boolean includes(@NonNull String ns) {
+    boolean excluded = exclude.stream().anyMatch(s -> matches(s, ns));
+    if (excluded) return false;
 
-        if (include.stream().anyMatch(s -> matches(s, ns)))
-            return true;
+    if (include.stream().anyMatch(s -> matches(s, ns))) return true;
 
-        return null;
-    }
+    return null;
+  }
 
-    private boolean matches(@NonNull String pattern, @NonNull String ns) {
-        if (pattern.equals(ns) || "*".equals(pattern))
-            return true;
+  private boolean matches(@NonNull String pattern, @NonNull String ns) {
+    if (pattern.equals(ns) || "*".equals(pattern)) return true;
 
-        return pattern.endsWith("*") && ns.startsWith(pattern.substring(0, pattern.length() - 1));
-    }
+    return pattern.endsWith("*") && ns.startsWith(pattern.substring(0, pattern.length() - 1));
+  }
 }

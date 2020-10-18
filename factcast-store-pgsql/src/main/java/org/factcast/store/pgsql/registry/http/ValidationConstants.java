@@ -17,24 +17,23 @@ package org.factcast.store.pgsql.registry.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
-
 import okhttp3.OkHttpClient;
 
 public class ValidationConstants {
 
-    public static final JsonSchemaFactory JSON_SCHEMA_FACTORY = JsonSchemaFactory.byDefault();
+  public static final JsonSchemaFactory JSON_SCHEMA_FACTORY = JsonSchemaFactory.byDefault();
 
-    public static final ObjectMapper JACKSON = new ObjectMapper();
+  public static final ObjectMapper JACKSON = new ObjectMapper();
 
-    public static final OkHttpClient OK_HTTP = new OkHttpClient();
+  public static final OkHttpClient OK_HTTP = new OkHttpClient();
 
-    public static final String HTTPHEADER_IF_MODIFIED_SINCE = "If-Modified-Since";
+  public static final String HTTPHEADER_IF_MODIFIED_SINCE = "If-Modified-Since";
 
-    public static final String HTTPHEADER_E_TAG = "ETag";
+  public static final String HTTPHEADER_E_TAG = "ETag";
 
-    public static final String HTTPHEADER_LAST_MODIFIED = "Last-Modified";
+  public static final String HTTPHEADER_LAST_MODIFIED = "Last-Modified";
 
-    public static final int HTTP_OK = 200;
+  public static final int HTTP_OK = 200;
 
-    public static final int HTTP_NOT_MODIFIED = 304;
+  public static final int HTTP_NOT_MODIFIED = 304;
 }

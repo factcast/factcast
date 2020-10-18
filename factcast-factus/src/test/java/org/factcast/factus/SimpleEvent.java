@@ -18,14 +18,13 @@ package org.factcast.factus;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
-
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
 
 @Specification(ns = "test")
 class SimpleEvent implements EventObject {
-    @Override
-    public Set<UUID> aggregateIds() {
-        return Collections.emptySet();
-    }
+  @Override
+  public Set<UUID> aggregateIds() {
+    return Collections.emptySet();
+  }
 }

@@ -18,18 +18,16 @@ package org.factcast.factus.batch;
 import lombok.NonNull;
 
 public class BatchAbortedException extends RuntimeException {
-    public BatchAbortedException(Throwable cause) {
-        super(cause);
-    }
+  public BatchAbortedException(Throwable cause) {
+    super(cause);
+  }
 
-    public BatchAbortedException(String msg) {
-        super(msg);
-    }
+  public BatchAbortedException(String msg) {
+    super(msg);
+  }
 
-    public static BatchAbortedException wrap(@NonNull Throwable e) {
-        if (e instanceof BatchAbortedException)
-            return (BatchAbortedException) e;
-        else
-            return new BatchAbortedException(e);
-    }
+  public static BatchAbortedException wrap(@NonNull Throwable e) {
+    if (e instanceof BatchAbortedException) return (BatchAbortedException) e;
+    else return new BatchAbortedException(e);
+  }
 }

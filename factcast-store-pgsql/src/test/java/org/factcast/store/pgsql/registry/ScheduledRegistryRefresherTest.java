@@ -27,22 +27,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ScheduledRegistryRefresherTest {
 
-    @Mock
-    private SchemaRegistry registry;
+  @Mock private SchemaRegistry registry;
 
-    @InjectMocks
-    private ScheduledRegistryRefresher underTest;
+  @InjectMocks private ScheduledRegistryRefresher underTest;
 
-    @Nested
-    class WhenRefreshing {
-        @BeforeEach
-        void setup() {
-        }
+  @Nested
+  class WhenRefreshing {
+    @BeforeEach
+    void setup() {}
 
-        @Test
-        void testRefreshIsPassedThrough() {
-            underTest.refresh();
-            verify(registry).refresh();
-        }
+    @Test
+    void testRefreshIsPassedThrough() {
+      underTest.refresh();
+      verify(registry).refresh();
     }
+  }
 }

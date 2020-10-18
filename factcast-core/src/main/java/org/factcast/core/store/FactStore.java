@@ -16,7 +16,7 @@
 package org.factcast.core.store;
 
 import java.util.*;
-
+import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -26,60 +26,56 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 
-import lombok.NonNull;
-
 /**
  * A read/Write FactStore.
- * <p>
- * Where FactCast is an interface to work with as an application, FactStore is
- * something that FactCast impls use to actually store and retrieve Facts.
- * <p>
- * In a sense it is an internal interface, or SPI implemented by for instance
- * InMemFactStore or PgFactStore.
+ *
+ * <p>Where FactCast is an interface to work with as an application, FactStore is something that
+ * FactCast impls use to actually store and retrieve Facts.
+ *
+ * <p>In a sense it is an internal interface, or SPI implemented by for instance InMemFactStore or
+ * PgFactStore.
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public interface FactStore {
 
-    void publish(@NonNull List<? extends Fact> factsToPublish);
+  void publish(@NonNull List<? extends Fact> factsToPublish);
 
-    @NonNull
-    Subscription subscribe(@NonNull SubscriptionRequestTO request, @NonNull FactObserver observer);
+  @NonNull
+  Subscription subscribe(@NonNull SubscriptionRequestTO request, @NonNull FactObserver observer);
 
-    @NonNull
-    OptionalLong serialOf(@NonNull UUID l);
+  @NonNull
+  OptionalLong serialOf(@NonNull UUID l);
 
-    // see #153
-    @NonNull
-    Set<String> enumerateNamespaces();
+  // see #153
+  @NonNull
+  Set<String> enumerateNamespaces();
 
-    @NonNull
-    Set<String> enumerateTypes(@NonNull String ns);
+  @NonNull
+  Set<String> enumerateTypes(@NonNull String ns);
 
-    boolean publishIfUnchanged(
-            @NonNull List<? extends Fact> factsToPublish,
-            @NonNull Optional<StateToken> token);
+  boolean publishIfUnchanged(
+      @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> token);
 
-    @NonNull
-    StateToken stateFor(List<FactSpec> specs);
+  @NonNull
+  StateToken stateFor(List<FactSpec> specs);
 
-    void invalidate(@NonNull StateToken token);
+  void invalidate(@NonNull StateToken token);
 
-    long currentTime();
+  long currentTime();
 
-    @NonNull
-    Optional<Fact> fetchById(@NonNull UUID id);
+  @NonNull
+  Optional<Fact> fetchById(@NonNull UUID id);
 
-    @NonNull
-    Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected)
-            throws TransformationException;
+  @NonNull
+  Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected)
+      throws TransformationException;
 
-    @NonNull
-    Optional<Snapshot> getSnapshot(@NonNull SnapshotId id);
+  @NonNull
+  Optional<Snapshot> getSnapshot(@NonNull SnapshotId id);
 
-    void setSnapshot(@NonNull Snapshot snapshot);
+  void setSnapshot(@NonNull Snapshot snapshot);
 
-    void clearSnapshot(@NonNull SnapshotId id);
-
+  void clearSnapshot(@NonNull SnapshotId id);
 }

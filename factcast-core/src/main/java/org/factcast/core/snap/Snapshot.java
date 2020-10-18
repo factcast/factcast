@@ -17,20 +17,16 @@ package org.factcast.core.snap;
 
 import java.io.Serializable;
 import java.util.UUID;
-
 import lombok.NonNull;
 import lombok.Value;
 
 @Value
 public class Snapshot implements Serializable {
-    @NonNull
-    SnapshotId id;
+  @NonNull SnapshotId id;
 
-    @NonNull
-    UUID lastFact;
+  @NonNull UUID lastFact;
 
-    @NonNull
-    byte[] bytes;
+  @NonNull byte[] bytes;
 
-    boolean compressed;
+  boolean compressed;
 }

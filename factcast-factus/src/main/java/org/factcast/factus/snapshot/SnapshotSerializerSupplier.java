@@ -18,49 +18,47 @@ package org.factcast.factus.snapshot;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.serializer.SnapshotSerializer.DefaultSnapshotSerializer;
-
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.JacksonSnapshotSerializer;
+import org.factcast.factus.serializer.SnapshotSerializer;
 
 @Slf4j
 public class SnapshotSerializerSupplier {
 
-    @NonNull
-    private final SnapshotSerializer defaultSerializer;
+  @NonNull private final SnapshotSerializer defaultSerializer;
 
-    private final Map<Class<?>, Object> cache = new HashMap<>();
+  private final Map<Class<?>, Object> cache = new HashMap<>();
 
-    public SnapshotSerializerSupplier(@NonNull SnapshotSerializer defaultSerializer) {
-        this.defaultSerializer = defaultSerializer;
-        if (!(defaultSerializer instanceof DefaultSnapshotSerializer)) {
-            log.info("Using {} as a default SnapshotSerializer", defaultSerializer.getClass()
-                    .getSimpleName());
-        }
+  public SnapshotSerializerSupplier(@NonNull SnapshotSerializer defaultSerializer) {
+    this.defaultSerializer = defaultSerializer;
+    if (!(defaultSerializer instanceof JacksonSnapshotSerializer)) {
+      log.info(
+          "Using {} as a default SnapshotSerializer", defaultSerializer.getClass().getSimpleName());
     }
+  }
 
-    public org.factcast.factus.serializer.SnapshotSerializer retrieveSerializer(
-            @NonNull Class<? extends SnapshotProjection> aClass) {
-        SerializeUsing classAnnotation = aClass.getAnnotation(SerializeUsing.class);
-        if (classAnnotation == null) {
-            return defaultSerializer;
-        } else {
-            Class<? extends SnapshotSerializer> ser = classAnnotation.value();
-            return (SnapshotSerializer) cache.computeIfAbsent(ser,
-                    SnapshotSerializerSupplier::instanciate);
-        }
+  public org.factcast.factus.serializer.SnapshotSerializer retrieveSerializer(
+      @NonNull Class<? extends SnapshotProjection> aClass) {
+    SerializeUsing classAnnotation = aClass.getAnnotation(SerializeUsing.class);
+    if (classAnnotation == null) {
+      return defaultSerializer;
+    } else {
+      Class<? extends SnapshotSerializer> ser = classAnnotation.value();
+      return (SnapshotSerializer)
+          cache.computeIfAbsent(ser, SnapshotSerializerSupplier::instanciate);
     }
+  }
 
-    private static <C> C instanciate(Class<C> clazz) {
-        try {
-            return clazz.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException
-                | NoSuchMethodException e) {
-            throw new SerializerInstantiationException("Cannot create instance from " + clazz, e);
-        }
+  private static <C> C instanciate(Class<C> clazz) {
+    try {
+      return clazz.getDeclaredConstructor().newInstance();
+    } catch (InstantiationException
+        | IllegalAccessException
+        | InvocationTargetException
+        | NoSuchMethodException e) {
+      throw new SerializerInstantiationException("Cannot create instance from " + clazz, e);
     }
-
+  }
 }

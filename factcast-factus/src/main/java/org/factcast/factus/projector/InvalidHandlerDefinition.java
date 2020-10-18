@@ -19,11 +19,11 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 public class InvalidHandlerDefinition extends RuntimeException {
-    public InvalidHandlerDefinition(String msg) {
-        super(msg);
-    }
+  public InvalidHandlerDefinition(String msg) {
+    super(msg);
+  }
 
-    public InvalidHandlerDefinition(String msg, Throwable e) {
-        super(msg, e);
-    }
+  public InvalidHandlerDefinition(String msg, Throwable e) {
+    super(msg, e);
+  }
 }

@@ -15,27 +15,31 @@
  */
 package org.factcast.factus.serializer;
 
-import org.factcast.factus.projection.SnapshotProjection;
-
 import lombok.RequiredArgsConstructor;
+import org.factcast.factus.projection.SnapshotProjection;
 
 @RequiredArgsConstructor
 public class SnapSerWithoutNoArgsConstructor implements SnapshotSerializer {
 
-    private final String necessaryParameter;
+  private final String necessaryParameter;
 
-    @Override
-    public byte[] serialize(SnapshotProjection a) {
-        return new byte[0];
-    }
+  @Override
+  public byte[] serialize(SnapshotProjection a) {
+    return new byte[0];
+  }
 
-    @Override
-    public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
-        return null;
-    }
+  @Override
+  public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
+    return null;
+  }
 
-    @Override
-    public boolean includesCompression() {
-        return false;
-    }
+  @Override
+  public boolean includesCompression() {
+    return false;
+  }
+
+  @Override
+  public Long calculateProjectionSerial(Class<? extends SnapshotProjection> projectionClass) {
+    return null;
+  }
 }

@@ -17,41 +17,34 @@ package org.factcast.core.subscription;
 
 import java.util.concurrent.TimeoutException;
 
-/**
- * @author <uwe.schaefer@prisma-capacity.eu>
- */
+/** @author <uwe.schaefer@prisma-capacity.eu> */
 public interface Subscription extends AutoCloseable {
 
-    /**
-     * blocks until Catchup or Cancelled event received
-     *
-     * @return this for fluency
-     * @throws SubscriptionCancelledException
-     *             if Subscription was cancelled before or during the wait
-     */
-    Subscription awaitCatchup() throws SubscriptionCancelledException;
+  /**
+   * blocks until Catchup or Cancelled event received
+   *
+   * @return this for fluency
+   * @throws SubscriptionCancelledException if Subscription was cancelled before or during the wait
+   */
+  Subscription awaitCatchup() throws SubscriptionCancelledException;
 
-    /**
-     * blocks until Catchup or Cancelled event received
-     *
-     * @throws TimeoutException
-     *             if no relevant event was received in time
-     */
-    Subscription awaitCatchup(long waitTimeInMillis) throws SubscriptionCancelledException,
-            TimeoutException;
+  /**
+   * blocks until Catchup or Cancelled event received
+   *
+   * @throws TimeoutException if no relevant event was received in time
+   */
+  Subscription awaitCatchup(long waitTimeInMillis)
+      throws SubscriptionCancelledException, TimeoutException;
 
-    /**
-     * blocks until Complete or Cancelled event received
-     */
-    Subscription awaitComplete() throws SubscriptionCancelledException;
+  /** blocks until Complete or Cancelled event received */
+  Subscription awaitComplete() throws SubscriptionCancelledException;
 
-    /**
-     * blocks until Complete or Cancelled event received
-     *
-     * @return this
-     * @throws TimeoutException
-     *             if no relevant event was received in time
-     */
-    Subscription awaitComplete(long waitTimeInMillis) throws SubscriptionCancelledException,
-            TimeoutException;
+  /**
+   * blocks until Complete or Cancelled event received
+   *
+   * @return this
+   * @throws TimeoutException if no relevant event was received in time
+   */
+  Subscription awaitComplete(long waitTimeInMillis)
+      throws SubscriptionCancelledException, TimeoutException;
 }

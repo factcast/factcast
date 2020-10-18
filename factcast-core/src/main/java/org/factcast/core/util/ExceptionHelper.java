@@ -19,11 +19,10 @@ import lombok.NonNull;
 
 public class ExceptionHelper {
 
-    public static RuntimeException toRuntime(@NonNull Throwable exception) {
-        if (exception instanceof RuntimeException) {
-            return (RuntimeException) exception;
-        }
-        return new RuntimeException(exception);
+  public static RuntimeException toRuntime(@NonNull Throwable exception) {
+    if (exception instanceof RuntimeException) {
+      return (RuntimeException) exception;
     }
-
+    return new RuntimeException(exception);
+  }
 }

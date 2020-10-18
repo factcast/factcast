@@ -15,18 +15,17 @@
  */
 package org.factcast.server.grpc;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-
 import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "factcast.grpc.bandwith")
 @Data
 public class GrpcLimitProperties {
-    private int initialNumberOfFollowRequestsAllowedPerClient = 50;
+  private int initialNumberOfFollowRequestsAllowedPerClient = 50;
 
-    private int numberOfFollowRequestsAllowedPerClientPerMinute = 5;
+  private int numberOfFollowRequestsAllowedPerClientPerMinute = 5;
 
-    private int initialNumberOfCatchupRequestsAllowedPerClient = 36000;
+  private int initialNumberOfCatchupRequestsAllowedPerClient = 36000;
 
-    private int numberOfCatchupRequestsAllowedPerClientPerMinute = 6000;
+  private int numberOfCatchupRequestsAllowedPerClientPerMinute = 6000;
 }

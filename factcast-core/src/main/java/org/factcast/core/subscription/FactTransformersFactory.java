@@ -18,6 +18,5 @@ package org.factcast.core.subscription;
 @FunctionalInterface
 public interface FactTransformersFactory {
 
-    FactTransformers createFor(SubscriptionRequestTO sr);
-
+  FactTransformers createFor(SubscriptionRequestTO sr);
 }

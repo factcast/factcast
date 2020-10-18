@@ -20,11 +20,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-
+import lombok.val;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.RegistryIndex;
@@ -44,206 +45,242 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.google.common.collect.Lists;
-
-import lombok.val;
-
 @ExtendWith(MockitoExtension.class)
 public class HttpSchemaRegistryTest {
-    @Spy
-    RegistryMetrics registryMetrics = new NOPRegistryMetrics();
+  @Spy final RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 
-    HttpIndexFetcher indexFetcher = mock(HttpIndexFetcher.class);
+  final HttpIndexFetcher indexFetcher = mock(HttpIndexFetcher.class);
 
-    HttpRegistryFileFetcher fileFetcher = mock(HttpRegistryFileFetcher.class);
+  final HttpRegistryFileFetcher fileFetcher = mock(HttpRegistryFileFetcher.class);
 
-    RegistryIndex index = new RegistryIndex();
+  final RegistryIndex index = new RegistryIndex();
 
-    SchemaSource source1 = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
+  final SchemaSource source1 = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
 
-    SchemaSource source2 = new SchemaSource("http://foo/2", "123", "ns", "type", 2);
+  final SchemaSource source2 = new SchemaSource("http://foo/2", "123", "ns", "type", 2);
 
-    TransformationSource transformationSource1 = new TransformationSource("http://foo/1",
-            "hash",
-            "ns",
-            "type", 1, 2);
+  final TransformationSource transformationSource1 =
+      new TransformationSource("http://foo/1", "hash", "ns", "type", 1, 2);
 
-    TransformationSource transformationSource2 = new TransformationSource(
-            "synthetic/http://foo/2", "hash", "ns",
-            "type", 2, 1);
+  final TransformationSource transformationSource2 =
+      new TransformationSource("synthetic/http://foo/2", "hash", "ns", "type", 2, 1);
 
-    TransformationSource transformationSource3 = new TransformationSource("http://foo/3",
-            "hash",
-            "ns",
-            "type2", 1, 2);
+  final TransformationSource transformationSource3 =
+      new TransformationSource("http://foo/3", "hash", "ns", "type2", 1, 2);
 
-    SchemaStore schemaStore = spy(new InMemSchemaStoreImpl(registryMetrics));
+  final SchemaStore schemaStore = spy(new InMemSchemaStoreImpl(registryMetrics));
 
-    TransformationStore transformationStore = spy(new InMemTransformationStoreImpl(
-            registryMetrics));
+  final TransformationStore transformationStore =
+      spy(new InMemTransformationStoreImpl(registryMetrics));
 
-    @BeforeEach
-    public void setup() throws IOException {
-        index.schemes(Lists.newArrayList(source1, source2));
-        index.transformations(Lists.newArrayList(transformationSource1, transformationSource2,
-                transformationSource3));
+  @BeforeEach
+  public void setup() throws IOException {
+    index.schemes(Lists.newArrayList(source1, source2));
+    index.transformations(
+        Lists.newArrayList(transformationSource1, transformationSource2, transformationSource3));
 
-        when(indexFetcher.fetchIndex()).thenReturn(Optional.of(index));
+    when(indexFetcher.fetchIndex()).thenReturn(Optional.of(index));
 
-        when(fileFetcher.fetchSchema(any())).thenReturn("{}");
-        when(fileFetcher.fetchTransformation(any())).thenReturn("");
+    when(fileFetcher.fetchSchema(any())).thenReturn("{}");
+    when(fileFetcher.fetchTransformation(any())).thenReturn("");
+  }
 
-    }
+  @Test
+  public void testInitial() throws InterruptedException, ExecutionException, IOException {
+    HttpSchemaRegistry uut =
+        new HttpSchemaRegistry(
+            schemaStore,
+            transformationStore,
+            indexFetcher,
+            fileFetcher,
+            registryMetrics,
+            new PgConfigurationProperties());
+    uut.fetchInitial();
 
-    @Test
-    public void testInitial() throws InterruptedException, ExecutionException, IOException {
-        HttpSchemaRegistry uut = new HttpSchemaRegistry(schemaStore, transformationStore,
-                indexFetcher, fileFetcher, registryMetrics, new PgConfigurationProperties());
-        uut.fetchInitial();
+    verify(schemaStore, times(2)).register(Mockito.any(), Mockito.any());
+    verify(transformationStore, times(3)).store(Mockito.any(), Mockito.any());
 
-        verify(schemaStore, times(2)).register(Mockito.any(), Mockito.any());
-        verify(transformationStore, times(3)).store(Mockito.any(), Mockito.any());
+    verify(fileFetcher, times(2)).fetchSchema(Mockito.any());
+    verify(fileFetcher, times(2)).fetchTransformation(Mockito.any());
 
-        verify(fileFetcher, times(2)).fetchSchema(Mockito.any());
-        verify(fileFetcher, times(2)).fetchTransformation(Mockito.any());
+    assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 1)).isPresent());
+    assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 2)).isPresent());
+    assertFalse(schemaStore.get(SchemaKey.of("ns", "type", 3)).isPresent());
 
-        assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 1))
-                .isPresent());
-        assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 2))
-                .isPresent());
-        assertFalse(schemaStore.get(SchemaKey.of("ns", "type", 3))
-                .isPresent());
+    assertEquals(2, transformationStore.get(TransformationKey.of("ns", "type")).size());
+    assertEquals(1, transformationStore.get(TransformationKey.of("ns", "type2")).size());
+  }
 
-        assertEquals(2, transformationStore.get(TransformationKey.of("ns", "type")).size());
-        assertEquals(1, transformationStore.get(TransformationKey.of("ns", "type2")).size());
+  @Test
+  public void testRefresh() throws InterruptedException, ExecutionException, IOException {
+    HttpSchemaRegistry uut =
+        new HttpSchemaRegistry(
+            schemaStore,
+            transformationStore,
+            indexFetcher,
+            fileFetcher,
+            registryMetrics,
+            new PgConfigurationProperties());
+    uut.refresh();
 
-    }
+    verify(schemaStore, times(2)).register(Mockito.any(), Mockito.any());
+    verify(transformationStore, times(3)).store(Mockito.any(), Mockito.any());
 
-    @Test
-    public void testRefresh() throws InterruptedException, ExecutionException, IOException {
-        HttpSchemaRegistry uut = new HttpSchemaRegistry(schemaStore, transformationStore,
-                indexFetcher, fileFetcher, registryMetrics, new PgConfigurationProperties());
-        uut.refresh();
+    verify(fileFetcher, times(2)).fetchSchema(Mockito.any());
+    verify(fileFetcher, times(2)).fetchTransformation(Mockito.any());
 
-        verify(schemaStore, times(2)).register(Mockito.any(), Mockito.any());
-        verify(transformationStore, times(3)).store(Mockito.any(), Mockito.any());
+    assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 1)).isPresent());
+    assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 2)).isPresent());
+    assertFalse(schemaStore.get(SchemaKey.of("ns", "type", 3)).isPresent());
 
-        verify(fileFetcher, times(2)).fetchSchema(Mockito.any());
-        verify(fileFetcher, times(2)).fetchTransformation(Mockito.any());
+    assertEquals(2, transformationStore.get(TransformationKey.of("ns", "type")).size());
+    assertEquals(1, transformationStore.get(TransformationKey.of("ns", "type2")).size());
 
-        assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 1))
-                .isPresent());
-        assertTrue(schemaStore.get(SchemaKey.of("ns", "type", 2))
-                .isPresent());
-        assertFalse(schemaStore.get(SchemaKey.of("ns", "type", 3))
-                .isPresent());
+    verify(registryMetrics).timed(eq(TimedOperation.REFRESH_REGISTRY), any(Runnable.class));
+  }
 
-        assertEquals(2, transformationStore.get(TransformationKey.of("ns", "type")).size());
-        assertEquals(1, transformationStore.get(TransformationKey.of("ns", "type2")).size());
+  @Test
+  public void testAllowReplaceFalseForSchemes()
+      throws InterruptedException, ExecutionException, IOException {
+    val testSource = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
+    index.schemes(Lists.newArrayList(testSource));
 
-        verify(registryMetrics).timed(eq(TimedOperation.REFRESH_REGISTRY), any(Runnable.class));
-    }
+    HttpSchemaRegistry uut =
+        new HttpSchemaRegistry(
+            schemaStore,
+            transformationStore,
+            indexFetcher,
+            fileFetcher,
+            registryMetrics,
+            new PgConfigurationProperties());
+    uut.fetchInitial();
 
-    @Test
-    public void testAllowReplaceFalseForSchemes() throws InterruptedException, ExecutionException,
-            IOException {
-        val testSource = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
-        index.schemes(Lists.newArrayList(testSource));
+    index.schemes(Lists.newArrayList(testSource.hash("changed")));
 
-        HttpSchemaRegistry uut = new HttpSchemaRegistry(schemaStore, transformationStore,
-                indexFetcher, fileFetcher, registryMetrics, new PgConfigurationProperties());
-        uut.fetchInitial();
+    assertThrows(SchemaConflictException.class, uut::refresh);
+  }
 
-        index.schemes(Lists.newArrayList(testSource.hash("changed")));
+  @Test
+  public void testAllowReplaceTrueForSchemes()
+      throws InterruptedException, ExecutionException, IOException {
+    val testSource = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
+    index.schemes(Lists.newArrayList(testSource));
 
-        assertThrows(SchemaConflictException.class, uut::refresh);
-    }
+    when(fileFetcher.fetchSchema(any())).thenReturn("{}").thenReturn("{\"foo\":\"bar\"}");
 
-    @Test
-    public void testAllowReplaceTrueForSchemes() throws InterruptedException, ExecutionException,
-            IOException {
-        val testSource = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
-        index.schemes(Lists.newArrayList(testSource));
+    HttpSchemaRegistry uut =
+        new HttpSchemaRegistry(
+            schemaStore,
+            transformationStore,
+            indexFetcher,
+            fileFetcher,
+            registryMetrics,
+            new PgConfigurationProperties().setAllowSchemaReplace(true));
+    uut.fetchInitial();
 
-        when(fileFetcher.fetchSchema(any())).thenReturn("{}").thenReturn("{\"foo\":\"bar\"}");
+    assertThat(schemaStore.get(testSource.toKey())).isPresent().hasValue("{}");
 
-        HttpSchemaRegistry uut = new HttpSchemaRegistry(schemaStore, transformationStore,
-                indexFetcher, fileFetcher, registryMetrics, new PgConfigurationProperties()
-                        .setAllowSchemaReplace(true));
-        uut.fetchInitial();
+    index.schemes(Lists.newArrayList(testSource.hash("changed")));
+    uut.refresh();
 
-        assertThat(schemaStore.get(testSource.toKey())).isPresent().hasValue("{}");
+    assertThat(schemaStore.get(testSource.toKey())).isPresent().hasValue("{\"foo\":\"bar\"}");
+  }
 
-        index.schemes(Lists.newArrayList(testSource.hash("changed")));
-        uut.refresh();
+  @Test
+  public void testAllowReplaceFalseForTransformations()
+      throws InterruptedException, ExecutionException, IOException {
+    val testSource = new TransformationSource("http://foo/1", "hash", "ns", "type", 1, 2);
+    index.transformations(Lists.newArrayList(testSource));
 
-        assertThat(schemaStore.get(testSource.toKey())).isPresent().hasValue("{\"foo\":\"bar\"}");
-    }
+    HttpSchemaRegistry uut =
+        new HttpSchemaRegistry(
+            schemaStore,
+            transformationStore,
+            indexFetcher,
+            fileFetcher,
+            registryMetrics,
+            new PgConfigurationProperties());
+    uut.fetchInitial();
 
-    @Test
-    public void testAllowReplaceFalseForTransformations() throws InterruptedException,
-            ExecutionException, IOException {
-        val testSource = new TransformationSource("http://foo/1", "hash",
-                "ns",
-                "type", 1, 2);
-        index.transformations(Lists.newArrayList(testSource));
+    index.transformations(Lists.newArrayList(testSource.hash("changed")));
 
-        HttpSchemaRegistry uut = new HttpSchemaRegistry(schemaStore, transformationStore,
-                indexFetcher, fileFetcher, registryMetrics, new PgConfigurationProperties());
-        uut.fetchInitial();
+    assertThrows(TransformationConflictException.class, uut::refresh);
+  }
 
-        index.transformations(Lists.newArrayList(testSource.hash("changed")));
+  @Test
+  public void testAllowReplaceTrueForTransformations()
+      throws InterruptedException, ExecutionException, IOException {
+    val testSource = new TransformationSource("http://foo/1", "hash", "ns", "type", 1, 2);
+    index.transformations(Lists.newArrayList(testSource));
 
-        assertThrows(TransformationConflictException.class, uut::refresh);
-    }
+    when(fileFetcher.fetchTransformation(any())).thenReturn("").thenReturn("bar");
 
-    @Test
-    public void testAllowReplaceTrueForTransformations() throws InterruptedException,
-            ExecutionException, IOException {
-        val testSource = new TransformationSource("http://foo/1", "hash",
-                "ns",
-                "type", 1, 2);
-        index.transformations(Lists.newArrayList(testSource));
+    HttpSchemaRegistry uut =
+        new HttpSchemaRegistry(
+            schemaStore,
+            transformationStore,
+            indexFetcher,
+            fileFetcher,
+            registryMetrics,
+            new PgConfigurationProperties().setAllowSchemaReplace(true));
+    uut.fetchInitial();
 
-        when(fileFetcher.fetchTransformation(any())).thenReturn("").thenReturn("bar");
+    assertThat(transformationStore.get(testSource.toKey()).get(0).transformationCode())
+        .isPresent()
+        .hasValue("");
 
-        HttpSchemaRegistry uut = new HttpSchemaRegistry(schemaStore, transformationStore,
-                indexFetcher, fileFetcher, registryMetrics, new PgConfigurationProperties()
-                        .setAllowSchemaReplace(true));
-        uut.fetchInitial();
+    index.transformations(Lists.newArrayList(testSource.hash("changed")));
+    uut.refresh();
 
-        assertThat(transformationStore.get(testSource.toKey()).get(0).transformationCode())
-                .isPresent()
-                .hasValue("");
+    assertThat(transformationStore.get(testSource.toKey()).get(0).transformationCode())
+        .isPresent()
+        .hasValue("bar");
+  }
 
-        index.transformations(Lists.newArrayList(testSource.hash("changed")));
-        uut.refresh();
-
-        assertThat(transformationStore.get(testSource.toKey()).get(0).transformationCode())
-                .isPresent()
-                .hasValue("bar");
-    }
-
-    @Test
-    void testNullContracts() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new HttpSchemaRegistry(null, mock(SchemaStore.class), mock(TransformationStore.class),
-                    registryMetrics, new PgConfigurationProperties());
+  @Test
+  void testNullContracts() throws Exception {
+    assertThrows(
+        NullPointerException.class,
+        () -> {
+          new HttpSchemaRegistry(
+              null,
+              mock(SchemaStore.class),
+              mock(TransformationStore.class),
+              registryMetrics,
+              new PgConfigurationProperties());
         });
 
-        assertThrows(NullPointerException.class, () -> {
-            new HttpSchemaRegistry(new URL("http://ibm.com"), null, mock(
-                    TransformationStore.class), registryMetrics, new PgConfigurationProperties());
+    assertThrows(
+        NullPointerException.class,
+        () -> {
+          new HttpSchemaRegistry(
+              new URL("http://ibm.com"),
+              null,
+              mock(TransformationStore.class),
+              registryMetrics,
+              new PgConfigurationProperties());
         });
 
-        assertThrows(NullPointerException.class, () -> {
-            new HttpSchemaRegistry(new URL("http://ibm.com"), mock(SchemaStore.class), null,
-                    registryMetrics, new PgConfigurationProperties());
+    assertThrows(
+        NullPointerException.class,
+        () -> {
+          new HttpSchemaRegistry(
+              new URL("http://ibm.com"),
+              mock(SchemaStore.class),
+              null,
+              registryMetrics,
+              new PgConfigurationProperties());
         });
 
-        assertThrows(NullPointerException.class, () -> {
-            new HttpSchemaRegistry(new URL("http://ibm.com"), mock(SchemaStore.class), mock(
-                    TransformationStore.class), null, new PgConfigurationProperties());
+    assertThrows(
+        NullPointerException.class,
+        () -> {
+          new HttpSchemaRegistry(
+              new URL("http://ibm.com"),
+              mock(SchemaStore.class),
+              mock(TransformationStore.class),
+              null,
+              new PgConfigurationProperties());
         });
-    }
+  }
 }

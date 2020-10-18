@@ -15,82 +15,76 @@
  */
 package org.factcast.store.pgsql.internal.listen;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
-
 import javax.sql.DataSource;
-
-import org.apache.tomcat.jdbc.pool.PoolConfiguration;
-import org.postgresql.jdbc.PgConnection;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.jdbc.pool.PoolConfiguration;
+import org.postgresql.jdbc.PgConnection;
 
 @Slf4j
 public class PgConnectionSupplier {
 
-    @NonNull
-    @VisibleForTesting
-    protected final org.apache.tomcat.jdbc.pool.DataSource ds;
+  @NonNull @VisibleForTesting protected final org.apache.tomcat.jdbc.pool.DataSource ds;
 
-    public PgConnectionSupplier(DataSource dataSource) {
-        if (org.apache.tomcat.jdbc.pool.DataSource.class.isAssignableFrom(dataSource.getClass())) {
-            this.ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
-        } else {
-            throw new IllegalArgumentException("expected "
-                    + org.apache.tomcat.jdbc.pool.DataSource.class.getName()
-                    + " , but got " + dataSource.getClass().getName());
-        }
+  public PgConnectionSupplier(DataSource dataSource) {
+    if (org.apache.tomcat.jdbc.pool.DataSource.class.isAssignableFrom(dataSource.getClass())) {
+      this.ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
+    } else {
+      throw new IllegalArgumentException(
+          "expected "
+              + org.apache.tomcat.jdbc.pool.DataSource.class.getName()
+              + " , but got "
+              + dataSource.getClass().getName());
     }
+  }
 
-    public PgConnection get() throws SQLException {
+  public PgConnection get() throws SQLException {
+    try {
+      return (PgConnection)
+          DriverManager.getDriver(ds.getUrl())
+              .connect(ds.getUrl(), buildPgConnectionProperties(ds));
+    } catch (SQLException e) {
+      final String msg = "Cannot acquire Connection from DriverManager: " + ds.getUrl();
+      log.error(msg, e);
+      throw e;
+    }
+  }
+
+  private void setProperty(Properties dbp, String propertyName, String value) {
+    if (value != null) dbp.setProperty(propertyName, value);
+  }
+
+  @VisibleForTesting
+  Properties buildPgConnectionProperties(org.apache.tomcat.jdbc.pool.DataSource ds) {
+    Properties dbp = new Properties();
+    final PoolConfiguration poolProperties = ds.getPoolProperties();
+    if (poolProperties != null) {
+      setProperty(dbp, "user", poolProperties.getUsername());
+      setProperty(dbp, "password", poolProperties.getPassword());
+      final String connectionProperties = poolProperties.getConnectionProperties();
+      if (connectionProperties != null) {
         try {
-            return (PgConnection) DriverManager.getDriver(ds.getUrl())
-                    .connect(ds.getUrl(), buildPgConnectionProperties(ds));
-        } catch (SQLException e) {
-            final String msg = "Cannot acquire Connection from DriverManager: " + ds.getUrl();
-            log.error(msg, e);
-            throw e;
+          @SuppressWarnings("UnstableApiUsage")
+          Map<String, String> singleConnectionProperties =
+              Splitter.on(";")
+                  .omitEmptyStrings()
+                  .withKeyValueSeparator("=")
+                  .split(connectionProperties);
+          setProperty(dbp, "socketTimeout", singleConnectionProperties.get("socketTimeout"));
+          setProperty(dbp, "connectTimeout", singleConnectionProperties.get("connectTimeout"));
+          setProperty(dbp, "loginTimeout", singleConnectionProperties.get("loginTimeout"));
+        } catch (IllegalArgumentException e) {
+          throw new IllegalArgumentException(
+              "illegal connectionProperties: " + connectionProperties);
         }
+      }
     }
-
-    private void setProperty(Properties dbp, String propertyName, String value) {
-        if (value != null)
-            dbp.setProperty(propertyName, value);
-    }
-
-    @VisibleForTesting
-    Properties buildPgConnectionProperties(org.apache.tomcat.jdbc.pool.DataSource ds) {
-        Properties dbp = new Properties();
-        final PoolConfiguration poolProperties = ds.getPoolProperties();
-        if (poolProperties != null) {
-            setProperty(dbp, "user", poolProperties.getUsername());
-            setProperty(dbp, "password", poolProperties.getPassword());
-            final String connectionProperties = poolProperties.getConnectionProperties();
-            if (connectionProperties != null) {
-                try {
-                    @SuppressWarnings("UnstableApiUsage")
-                    Map<String, String> singleConnectionProperties = Splitter.on(";")
-                            .omitEmptyStrings()
-                            .withKeyValueSeparator("=")
-                            .split(connectionProperties);
-                    setProperty(dbp, "socketTimeout", singleConnectionProperties.get(
-                            "socketTimeout"));
-                    setProperty(dbp, "connectTimeout", singleConnectionProperties.get(
-                            "connectTimeout"));
-                    setProperty(dbp, "loginTimeout", singleConnectionProperties.get(
-                            "loginTimeout"));
-                } catch (IllegalArgumentException e) {
-                    throw new IllegalArgumentException("illegal connectionProperties: "
-                            + connectionProperties);
-                }
-            }
-        }
-        return dbp;
-    }
+    return dbp;
+  }
 }

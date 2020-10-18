@@ -16,18 +16,16 @@
 package org.factcast.core.store;
 
 import java.util.List;
-
-import org.factcast.core.spec.FactSpec;
-
 import lombok.Data;
+import org.factcast.core.spec.FactSpec;
 
 @Data
 public class State {
-    List<FactSpec> specs;
+  List<FactSpec> specs;
 
-    long serialOfLastMatchingFact;
+  long serialOfLastMatchingFact;
 
-    public static State of(List<FactSpec> specs, long lastSerial) {
-        return new State().serialOfLastMatchingFact(lastSerial).specs(specs);
-    }
+  public static State of(List<FactSpec> specs, long lastSerial) {
+    return new State().serialOfLastMatchingFact(lastSerial).specs(specs);
+  }
 }

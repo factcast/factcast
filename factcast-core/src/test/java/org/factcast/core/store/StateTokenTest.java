@@ -21,9 +21,8 @@ import org.junit.jupiter.api.*;
 
 public class StateTokenTest {
 
-    @Test
-    public void testStateToken() {
-        assertThat(new StateToken().uuid()).isNotNull();
-    }
-
+  @Test
+  public void testStateToken() {
+    assertThat(new StateToken().uuid()).isNotNull();
+  }
 }

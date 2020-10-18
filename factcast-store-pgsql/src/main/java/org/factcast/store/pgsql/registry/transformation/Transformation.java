@@ -18,11 +18,11 @@ package org.factcast.store.pgsql.registry.transformation;
 import java.util.Optional;
 
 public interface Transformation {
-    TransformationKey key();
+  TransformationKey key();
 
-    Optional<String> transformationCode();
+  Optional<String> transformationCode();
 
-    int fromVersion();
+  int fromVersion();
 
-    int toVersion();
+  int toVersion();
 }

@@ -25,6 +25,4 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties
 @ConditionalOnClass(PgFactStoreConfiguration.class)
 @Import(PgFactStoreConfiguration.class)
-public class PgFactStoreAutoConfiguration {
-
-}
+public class PgFactStoreAutoConfiguration {}

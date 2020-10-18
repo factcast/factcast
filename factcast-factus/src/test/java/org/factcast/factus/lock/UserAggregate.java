@@ -15,24 +15,23 @@
  */
 package org.factcast.factus.lock;
 
-import org.factcast.factus.Handler;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.AggregateUtil;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.factcast.factus.Handler;
+import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.projection.AggregateUtil;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 public class UserAggregate extends Aggregate {
 
-    private String name;
+  private String name;
 
-    @Handler
-    void handle(UserCreated evt) {
-        AggregateUtil.aggregateId(this, evt.aggId());
-        this.name = evt.name();
-    }
+  @Handler
+  void handle(UserCreated evt) {
+    AggregateUtil.aggregateId(this, evt.aggId());
+    this.name = evt.name();
+  }
 }

@@ -20,7 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.util.UUID;
-
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.junit.jupiter.api.*;
@@ -35,139 +36,125 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import lombok.NonNull;
-import lombok.SneakyThrows;
-
 @SpringBootTest(classes = Application.class)
 @ExtendWith(SpringExtension.class)
 @Testcontainers
 class RedissonSnapshotCacheTest {
 
-    @SuppressWarnings("rawtypes")
-    @Container
-    static final GenericContainer redis = new GenericContainer<>("redis:5.0.3-alpine")
-            .withExposedPorts(6379);
+  @SuppressWarnings("rawtypes")
+  @Container
+  static final GenericContainer redis =
+      new GenericContainer<>("redis:5.0.3-alpine").withExposedPorts(6379);
 
-    @Mock
-    private RMap<String, Long> index;
+  @Mock private RMap<String, Long> index;
 
-    @BeforeAll
-    public static void startContainers() throws InterruptedException {
-        System.setProperty("spring.redis.host", redis.getHost());
-        System.setProperty("spring.redis.port", String.valueOf(redis.getMappedPort(6379)));
+  @BeforeAll
+  public static void startContainers() throws InterruptedException {
+    System.setProperty("spring.redis.host", redis.getHost());
+    System.setProperty("spring.redis.port", String.valueOf(redis.getMappedPort(6379)));
+  }
+
+  @Autowired private RedissonClient redisson;
+
+  private RedissonSnapshotCache underTest;
+
+  @Nested
+  class WhenGettingSnapshot {
+
+    private @NonNull SnapshotId id;
+
+    @BeforeEach
+    void setup() {
+      underTest = new RedissonSnapshotCache(redisson);
     }
 
-    @Autowired
-    private RedissonClient redisson;
-
-    private RedissonSnapshotCache underTest;
-
-    @Nested
-    class WhenGettingSnapshot {
-
-        private @NonNull SnapshotId id;
-
-        @BeforeEach
-        void setup() {
-            underTest = new RedissonSnapshotCache(redisson);
-        }
-
-        @Test
-        void testGetNull() {
-            assertThat(underTest.getSnapshot(new SnapshotId("foo", UUID.randomUUID()))).isEmpty();
-        }
-
-        @Test
-        void testGetPojo() {
-            SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
-            Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-            underTest.setSnapshot(snap);
-
-            assertThat(underTest.getSnapshot(id))
-                    .isNotEmpty()
-                    .hasValue(snap);
-        }
-
+    @Test
+    void testGetNull() {
+      assertThat(underTest.getSnapshot(new SnapshotId("foo", UUID.randomUUID()))).isEmpty();
     }
 
-    @Nested
-    class WhenClearingSnapshot {
-        private @NonNull SnapshotId id;
+    @Test
+    void testGetPojo() {
+      SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+      Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+      underTest.setSnapshot(snap);
 
-        @BeforeEach
-        void setup() {
-            underTest = new RedissonSnapshotCache(redisson);
-        }
+      assertThat(underTest.getSnapshot(id)).isNotEmpty().hasValue(snap);
+    }
+  }
 
-        @Test
-        void testClearPojo() {
-            SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
-            Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-            underTest.setSnapshot(snap);
+  @Nested
+  class WhenClearingSnapshot {
+    private @NonNull SnapshotId id;
 
-            assertThat(underTest.getSnapshot(id))
-                    .isNotEmpty()
-                    .hasValue(snap);
-
-            underTest.clearSnapshot(id);
-
-            assertThat(underTest.getSnapshot(id))
-                    .isEmpty();
-
-        }
-
+    @BeforeEach
+    void setup() {
+      underTest = new RedissonSnapshotCache(redisson);
     }
 
-    @Nested
-    class WhenCompacting {
-        private final int RETENTION_TIME_IN_DAYS = 95;
+    @Test
+    void testClearPojo() {
+      SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+      Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+      underTest.setSnapshot(snap);
 
-        @BeforeEach
-        void setup() {
-            underTest = new RedissonSnapshotCache(redisson);
-        }
+      assertThat(underTest.getSnapshot(id)).isNotEmpty().hasValue(snap);
 
-        @Test
-        void testCompactionThreashold() {
+      underTest.clearSnapshot(id);
 
-            int i = 1;
-            SnapshotId s1 = new SnapshotId("foo" + (i++), UUID.randomUUID());
-            Snapshot snap1 = new Snapshot(s1, UUID.randomUUID(), "foo".getBytes(), false);
+      assertThat(underTest.getSnapshot(id)).isEmpty();
+    }
+  }
 
-            SnapshotId s2 = new SnapshotId("foo" + (i++), UUID.randomUUID());
-            Snapshot snap2 = new Snapshot(s2, UUID.randomUUID(), "foo".getBytes(), false);
+  @Nested
+  class WhenCompacting {
+    private final int RETENTION_TIME_IN_DAYS = 95;
 
-            SnapshotId s3 = new SnapshotId("foo" + (i++), UUID.randomUUID());
-            Snapshot snap3 = new Snapshot(s3, UUID.randomUUID(), "foo".getBytes(), false);
-
-            underTest.setSnapshot(snap1);
-            underTest.setSnapshot(snap2);
-            underTest.setSnapshot(snap3);
-
-            sleep(500);
-
-            underTest.getSnapshot(s2); // touches it
-
-            sleep(300); // wait for async op to complete
-
-            underTest.removeEntriesUntouchedSince(System.currentTimeMillis() - 500); // should
-                                                                                     // leave
-                                                                                     // snap2
-
-            sleep(300); // wait for async op to complete
-
-            assertThat(underTest.getSnapshot(s1)).isEmpty();
-            assertThat(underTest.getSnapshot(s3)).isEmpty();
-
-            assertThat(underTest.getSnapshot(s2)).isNotEmpty().hasValue(snap2);
-
-            return;
-        }
-
-        @SneakyThrows
-        private void sleep(long millis) {
-            Thread.sleep(millis);
-        }
+    @BeforeEach
+    void setup() {
+      underTest = new RedissonSnapshotCache(redisson);
     }
 
+    @Test
+    void testCompactionThreashold() {
+
+      int i = 1;
+      SnapshotId s1 = new SnapshotId("foo" + (i++), UUID.randomUUID());
+      Snapshot snap1 = new Snapshot(s1, UUID.randomUUID(), "foo".getBytes(), false);
+
+      SnapshotId s2 = new SnapshotId("foo" + (i++), UUID.randomUUID());
+      Snapshot snap2 = new Snapshot(s2, UUID.randomUUID(), "foo".getBytes(), false);
+
+      SnapshotId s3 = new SnapshotId("foo" + (i++), UUID.randomUUID());
+      Snapshot snap3 = new Snapshot(s3, UUID.randomUUID(), "foo".getBytes(), false);
+
+      underTest.setSnapshot(snap1);
+      underTest.setSnapshot(snap2);
+      underTest.setSnapshot(snap3);
+
+      sleep(500);
+
+      underTest.getSnapshot(s2); // touches it
+
+      sleep(300); // wait for async op to complete
+
+      underTest.removeEntriesUntouchedSince(System.currentTimeMillis() - 500); // should
+      // leave
+      // snap2
+
+      sleep(300); // wait for async op to complete
+
+      assertThat(underTest.getSnapshot(s1)).isEmpty();
+      assertThat(underTest.getSnapshot(s3)).isEmpty();
+
+      assertThat(underTest.getSnapshot(s2)).isNotEmpty().hasValue(snap2);
+
+      return;
+    }
+
+    @SneakyThrows
+    private void sleep(long millis) {
+      Thread.sleep(millis);
+    }
+  }
 }

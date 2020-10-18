@@ -16,7 +16,7 @@
 package org.factcast.test;
 
 import java.time.Duration;
-
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.testcontainers.containers.GenericContainer;
@@ -27,51 +27,46 @@ import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import lombok.extern.slf4j.Slf4j;
-
 @Testcontainers(disabledWithoutDocker = true)
-@ExtendWith(FactCastExtension.class)
+@ExtendWith({FactCastExtension.class, RedisExtension.class})
 @Slf4j
 public class AbstractFactCastIntegrationTest {
 
-    protected static final Network _docker_network = Network.newNetwork();
+  protected static final Network _docker_network = Network.newNetwork();
 
-    @Container
-    protected static final PostgreSQLContainer _postgres = new PostgreSQLContainer<>(
-            "postgres:11.4")
-                    .withDatabaseName("fc")
-                    .withUsername("fc")
-                    .withPassword("fc")
-                    .withNetworkAliases("db")
-                    .withNetwork(_docker_network);
+  @Container
+  protected static final PostgreSQLContainer _postgres =
+      new PostgreSQLContainer<>("postgres:11.5")
+          .withDatabaseName("fc")
+          .withUsername("fc")
+          .withPassword("fc")
+          .withNetworkAliases("db")
+          .withNetwork(_docker_network);
 
-    @Container
-    protected static final GenericContainer _factcast = new GenericContainer<>(
-            "factcast/factcast:latest")
-                    .withExposedPorts(9090)
-                    .withFileSystemBind("./config", "/config/")
-                    .withEnv("grpc.server.port", "9090")
-                    .withEnv("factcast.security.enabled", "false")
-                    .withEnv("spring.datasource.url", "jdbc:postgresql://db/fc?user=fc&password=fc")
-                    .withNetwork(_docker_network)
-                    .dependsOn(_postgres)
-                    .withLogConsumer(new Slf4jLogConsumer(log))
-                    .waitingFor(new HostPortWaitStrategy()
-                            .withStartupTimeout(Duration.ofSeconds(180)));
+  @Container
+  protected static final GenericContainer _factcast =
+      new GenericContainer<>("factcast/factcast:latest")
+          .withExposedPorts(9090)
+          .withFileSystemBind("./config", "/config/")
+          .withEnv("grpc_server_port", "9090")
+          .withEnv("factcast_security_enabled", "false")
+          .withEnv("spring_datasource_url", "jdbc:postgresql://db/fc?user=fc&password=fc")
+          .withNetwork(_docker_network)
+          .dependsOn(_postgres)
+          .withLogConsumer(new Slf4jLogConsumer(log))
+          .waitingFor(new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
 
-    @SuppressWarnings("rawtypes")
-    @Container
-    static final GenericContainer _redis = new GenericContainer<>("redis:5.0.3-alpine")
-            .withExposedPorts(6379);
+  @SuppressWarnings("rawtypes")
+  @Container
+  static final GenericContainer _redis =
+      new GenericContainer<>("redis:5.0.9-alpine").withExposedPorts(6379);
 
-    @BeforeAll
-    public static void startContainers() throws InterruptedException {
-        String address = "static://" +
-                _factcast.getHost() + ":" +
-                _factcast.getMappedPort(9090);
-        System.setProperty("grpc.client.factstore.address", address);
+  @BeforeAll
+  public static void startContainers() throws InterruptedException {
+    String address = "static://" + _factcast.getHost() + ":" + _factcast.getMappedPort(9090);
+    System.setProperty("grpc.client.factstore.address", address);
 
-        System.setProperty("spring.redis.host", _redis.getHost());
-        System.setProperty("spring.redis.port", String.valueOf(_redis.getMappedPort(6379)));
-    }
+    System.setProperty("spring.redis.host", _redis.getHost());
+    System.setProperty("spring.redis.port", String.valueOf(_redis.getMappedPort(6379)));
+  }
 }

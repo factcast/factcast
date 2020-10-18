@@ -16,49 +16,46 @@
 package org.factcast.client.grpc.cli.util;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-
+import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.FactObserver;
 
-import lombok.SneakyThrows;
-
 public class ConsoleFactObserver implements FactObserver {
 
-    private final FactRenderer factRenderer;
+  private final FactRenderer factRenderer;
 
-    private final AtomicBoolean done = new AtomicBoolean(false);
+  private final AtomicBoolean done = new AtomicBoolean(false);
 
-    public ConsoleFactObserver(Options opt) {
-        this.factRenderer = new FactRenderer(opt);
-    }
+  public ConsoleFactObserver(Options opt) {
+    this.factRenderer = new FactRenderer(opt);
+  }
 
-    @Override
-    public synchronized void onNext(Fact f) {
-        System.out.println(factRenderer.render(f));
-    }
+  @Override
+  public synchronized void onNext(Fact f) {
+    System.out.println(factRenderer.render(f));
+  }
 
-    @SneakyThrows
-    public synchronized void awaitTermination() {
-        while (!done.get())
-            this.wait();
-    }
+  @SneakyThrows
+  public synchronized void awaitTermination() {
+    while (!done.get()) this.wait();
+  }
 
-    @Override
-    public synchronized void onCatchup() {
-        System.out.println("-> Signal: Catchup");
-    }
+  @Override
+  public synchronized void onCatchup() {
+    System.out.println("-> Signal: Catchup");
+  }
 
-    @Override
-    public synchronized void onComplete() {
-        System.out.println("-> Signal: Complete");
-        done.set(true);
-        notify();
-    }
+  @Override
+  public synchronized void onComplete() {
+    System.out.println("-> Signal: Complete");
+    done.set(true);
+    notify();
+  }
 
-    @Override
-    public synchronized void onError(Throwable exception) {
-        System.out.println("-> Signal: Error");
-        exception.printStackTrace();
-        notify();
-    }
+  @Override
+  public synchronized void onError(Throwable exception) {
+    System.out.println("-> Signal: Error");
+    exception.printStackTrace();
+    notify();
+  }
 }

@@ -21,9 +21,8 @@ import org.junit.jupiter.api.*;
 
 public class MaxRetryAttemptsExceededExceptionTest {
 
-    @Test
-    public void testMaxRetryAttemptsExceededExceptionNullContracts() {
-        assertThrows(NullPointerException.class, () -> new MaxRetryAttemptsExceededException(null));
-    }
-
+  @Test
+  public void testMaxRetryAttemptsExceededExceptionNullContracts() {
+    assertThrows(NullPointerException.class, () -> new MaxRetryAttemptsExceededException(null));
+  }
 }

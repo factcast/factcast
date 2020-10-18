@@ -17,10 +17,9 @@ package org.factcast.store.pgsql.registry.validation.schema;
 
 public class SchemaConflictException extends IllegalStateException {
 
-    public SchemaConflictException(String string) {
-        super(string);
-    }
+  public SchemaConflictException(String string) {
+    super(string);
+  }
 
-    private static final long serialVersionUID = 1L;
-
+  private static final long serialVersionUID = 1L;
 }

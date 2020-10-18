@@ -15,18 +15,17 @@
  */
 package org.factcast.itests.transformation;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * Spring boot starter for running a factcast server.
- * <p>
- * This should contain a pgsql backend and grpc API frontend.
+ *
+ * <p>This should contain a pgsql backend and grpc API frontend.
  *
  * @author uwe.schaefer@mercateo.com
  */
@@ -35,14 +34,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ExampleServerWithPostgresContainer {
 
-    public static void main(String[] args) {
-        SpringApplication.run(ExampleServerWithPostgresContainer.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(ExampleServerWithPostgresContainer.class, args);
+  }
 
-    @Bean
-    @Order(Ordered.LOWEST_PRECEDENCE)
-    public IntegrationTestContext integrationTestContext() {
-        return new IntegrationTestContext();
-    }
-
+  @Bean
+  @Order(Ordered.LOWEST_PRECEDENCE)
+  public IntegrationTestContext integrationTestContext() {
+    return new IntegrationTestContext();
+  }
 }

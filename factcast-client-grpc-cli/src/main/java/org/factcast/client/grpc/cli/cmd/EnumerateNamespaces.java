@@ -15,19 +15,18 @@
  */
 package org.factcast.client.grpc.cli.cmd;
 
+import com.beust.jcommander.Parameters;
 import org.factcast.client.grpc.cli.util.Command;
 import org.factcast.client.grpc.cli.util.Options;
 import org.factcast.core.FactCast;
 
-import com.beust.jcommander.Parameters;
-
 @Parameters(
-        commandNames = "enumerateNamespaces",
-        commandDescription = "lists all namespaces in the factstore in no particular order")
+    commandNames = "enumerateNamespaces",
+    commandDescription = "lists all namespaces in the factstore in no particular order")
 public class EnumerateNamespaces implements Command {
 
-    @Override
-    public void runWith(FactCast fc, Options opt) {
-        fc.enumerateNamespaces().forEach(System.out::println);
-    }
+  @Override
+  public void runWith(FactCast fc, Options opt) {
+    fc.enumerateNamespaces().forEach(System.out::println);
+  }
 }

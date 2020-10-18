@@ -17,16 +17,13 @@ package org.factcast.core.snap;
 
 import java.io.Serializable;
 import java.util.UUID;
-
 import lombok.NonNull;
 import lombok.Value;
 
 @Value
 public class SnapshotId implements Serializable {
-    @NonNull
-    String key;
+  @NonNull String key;
 
-    @NonNull
-    UUID uuid; // semantically optional, might be constant if not needed
-               // (SnapshotProjections)
+  @NonNull UUID uuid; // semantically optional, might be constant if not needed
+  // (SnapshotProjections)
 }

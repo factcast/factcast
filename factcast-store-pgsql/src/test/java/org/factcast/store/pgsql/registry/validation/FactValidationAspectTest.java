@@ -20,7 +20,6 @@ import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 import java.util.LinkedList;
-
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
@@ -28,48 +27,48 @@ import org.junit.jupiter.api.*;
 
 public class FactValidationAspectTest {
 
-    final ProceedingJoinPoint jp = mock(ProceedingJoinPoint.class);
+  final ProceedingJoinPoint jp = mock(ProceedingJoinPoint.class);
 
-    final FactValidator v = mock(FactValidator.class);
+  final FactValidator v = mock(FactValidator.class);
 
-    final FactValidationAspect uut = new FactValidationAspect(v);
+  final FactValidationAspect uut = new FactValidationAspect(v);
 
-    final Fact f = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
+  final Fact f = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
 
-    @Test
-    void testInterceptPublish() throws Throwable {
+  @Test
+  void testInterceptPublish() throws Throwable {
 
-        when(jp.getArgs()).thenReturn(new Object[] { Collections.singletonList(f) });
-        when(v.validate(f)).thenReturn(new LinkedList<>());
+    when(jp.getArgs()).thenReturn(new Object[] {Collections.singletonList(f)});
+    when(v.validate(f)).thenReturn(new LinkedList<>());
 
-        uut.interceptPublish(jp);
+    uut.interceptPublish(jp);
 
-        verify(jp).proceed();
+    verify(jp).proceed();
+  }
+
+  @Test
+  void testInterceptPublishConditional() throws Throwable {
+
+    when(jp.getArgs()).thenReturn(new Object[] {Collections.singletonList(f)});
+    when(v.validate(f)).thenReturn(new LinkedList<>());
+
+    uut.interceptPublishIfUnchanged(jp);
+
+    verify(jp).proceed();
+  }
+
+  @Test
+  void testInterceptPublishPropagatesErros() throws Throwable {
+
+    when(jp.getArgs()).thenReturn(new Object[] {Collections.singletonList(f)});
+    when(v.validate(f)).thenReturn(Collections.singletonList(new FactValidationError("doing")));
+
+    try {
+      uut.interceptPublish(jp);
+      fail();
+    } catch (FactValidationException e) {
+      // expected
     }
-
-    @Test
-    void testInterceptPublishConditional() throws Throwable {
-
-        when(jp.getArgs()).thenReturn(new Object[] { Collections.singletonList(f) });
-        when(v.validate(f)).thenReturn(new LinkedList<>());
-
-        uut.interceptPublishIfUnchanged(jp);
-
-        verify(jp).proceed();
-    }
-
-    @Test
-    void testInterceptPublishPropagatesErros() throws Throwable {
-
-        when(jp.getArgs()).thenReturn(new Object[] { Collections.singletonList(f) });
-        when(v.validate(f)).thenReturn(Collections.singletonList(new FactValidationError("doing")));
-
-        try {
-            uut.interceptPublish(jp);
-            fail();
-        } catch (FactValidationException e) {
-            // expected
-        }
-        verify(jp, never()).proceed();
-    }
+    verify(jp, never()).proceed();
+  }
 }

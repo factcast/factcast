@@ -18,5 +18,5 @@ package org.factcast.store.pgsql.registry;
 import java.util.Optional;
 
 public interface IndexFetcher {
-    Optional<RegistryIndex> fetchIndex();
+  Optional<RegistryIndex> fetchIndex();
 }

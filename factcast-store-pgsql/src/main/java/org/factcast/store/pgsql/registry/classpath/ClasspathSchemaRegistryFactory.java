@@ -15,35 +15,36 @@
  */
 package org.factcast.store.pgsql.registry.classpath;
 
+import com.google.common.collect.Lists;
 import java.util.List;
-
+import lombok.NonNull;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.SchemaRegistryFactory;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 
-import com.google.common.collect.Lists;
+public class ClasspathSchemaRegistryFactory
+    implements SchemaRegistryFactory<ClasspathSchemaRegistry> {
 
-import lombok.NonNull;
+  @Override
+  public List<String> getProtocols() {
+    return Lists.newArrayList("classpath");
+  }
 
-public class ClasspathSchemaRegistryFactory implements
-        SchemaRegistryFactory<ClasspathSchemaRegistry> {
+  @Override
+  public ClasspathSchemaRegistry createInstance(
+      @NonNull String fullUrl,
+      @NonNull SchemaStore schemaStore,
+      @NonNull TransformationStore transformationStore,
+      @NonNull RegistryMetrics registryMetrics,
+      @NonNull PgConfigurationProperties props) {
 
-    @Override
-    public List<String> getProtocols() {
-        return Lists.newArrayList("classpath");
-    }
-
-    @Override
-    public ClasspathSchemaRegistry createInstance(@NonNull String fullUrl,
-            @NonNull SchemaStore schemaStore,
-            @NonNull TransformationStore transformationStore,
-            @NonNull RegistryMetrics registryMetrics,
-            @NonNull PgConfigurationProperties props) {
-
-        return new ClasspathSchemaRegistry(fullUrl
-                .substring("classpath:".length()),
-                schemaStore, transformationStore, registryMetrics, props);
-    }
+    return new ClasspathSchemaRegistry(
+        fullUrl.substring("classpath:".length()),
+        schemaStore,
+        transformationStore,
+        registryMetrics,
+        props);
+  }
 }

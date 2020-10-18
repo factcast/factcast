@@ -15,22 +15,20 @@
  */
 package org.factcast.itests.transformation;
 
+import lombok.extern.slf4j.Slf4j;
 import org.postgresql.Driver;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-import lombok.extern.slf4j.Slf4j;
-
 @Slf4j
 public class IntegrationTestContext {
-    public IntegrationTestContext() {
-        log.info("Trying to start postgres testcontainer");
-        PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:11.4");
-        postgres.start();
-        String url = postgres.getJdbcUrl();
-        System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
-        System.setProperty("spring.datasource.url", url);
-        System.setProperty("spring.datasource.username", postgres.getUsername());
-        System.setProperty("spring.datasource.password", postgres.getPassword());
-
-    }
+  public IntegrationTestContext() {
+    log.info("Trying to start postgres testcontainer");
+    PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:11.4");
+    postgres.start();
+    String url = postgres.getJdbcUrl();
+    System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
+    System.setProperty("spring.datasource.url", url);
+    System.setProperty("spring.datasource.username", postgres.getUsername());
+    System.setProperty("spring.datasource.password", postgres.getPassword());
+  }
 }

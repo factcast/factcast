@@ -17,10 +17,19 @@ package org.factcast.client.grpc;
 
 import static io.grpc.stub.ClientCalls.*;
 
+import com.google.common.annotations.VisibleForTesting;
+import io.grpc.*;
+import io.grpc.Status.Code;
+import io.grpc.stub.MetadataUtils;
+import io.grpc.stub.StreamObserver;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-
+import lombok.Generated;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
+import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -48,361 +57,350 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import com.google.common.annotations.VisibleForTesting;
-
-import io.grpc.*;
-import io.grpc.Status.Code;
-import io.grpc.stub.MetadataUtils;
-import io.grpc.stub.StreamObserver;
-import lombok.Generated;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
-import net.devh.boot.grpc.client.security.CallCredentialsHelper;
-
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
 public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
 
-    private final CompressionCodecs codecs = new CompressionCodecs();
+  private final CompressionCodecs codecs = new CompressionCodecs();
 
-    private static final String CHANNEL_NAME = "factstore";
+  private static final String CHANNEL_NAME = "factstore";
 
-    private static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
+  private static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
 
-    private RemoteFactStoreBlockingStub blockingStub;
+  private RemoteFactStoreBlockingStub blockingStub;
 
-    private RemoteFactStoreStub stub;
+  private RemoteFactStoreStub stub;
 
-    private RemoteFactStoreStub rawStub;
+  private RemoteFactStoreStub rawStub;
 
-    private RemoteFactStoreBlockingStub rawBlockingStub;
+  private RemoteFactStoreBlockingStub rawBlockingStub;
 
-    private final ProtoConverter converter = new ProtoConverter();
+  private final ProtoConverter converter = new ProtoConverter();
 
-    private final AtomicBoolean initialized = new AtomicBoolean(false);
+  private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-    @Autowired
-    @Generated
-    public GrpcFactStore(
-            FactCastGrpcChannelFactory channelFactory,
-            @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials) {
-        this(channelFactory.createChannel(CHANNEL_NAME), credentials);
+  @Autowired
+  @Generated
+  public GrpcFactStore(
+      FactCastGrpcChannelFactory channelFactory,
+      @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials) {
+    this(channelFactory.createChannel(CHANNEL_NAME), credentials);
+  }
+
+  @Generated
+  @VisibleForTesting
+  GrpcFactStore(Channel channel, Optional<String> credentials) {
+    this(
+        RemoteFactStoreGrpc.newBlockingStub(channel),
+        RemoteFactStoreGrpc.newStub(channel),
+        credentials);
+  }
+
+  private GrpcFactStore(
+      RemoteFactStoreBlockingStub newBlockingStub,
+      RemoteFactStoreStub newStub,
+      Optional<String> credentials) {
+    rawBlockingStub = newBlockingStub;
+    rawStub = newStub;
+
+    // initially use the raw ones...
+    blockingStub = rawBlockingStub;
+    stub = rawStub;
+
+    if (credentials.isPresent()) {
+      String[] sa = credentials.get().split(":");
+      if (sa.length != 2) {
+        throw new IllegalArgumentException(
+            "Credentials in 'grpc.client.factstore.credentials' have to be defined as 'username:password'");
+      }
+      CallCredentials basic = CallCredentialsHelper.basicAuth(sa[0], sa[1]);
+      blockingStub = blockingStub.withCallCredentials(basic);
+      stub = stub.withCallCredentials(basic);
     }
+  }
 
-    @Generated
-    @VisibleForTesting
-    GrpcFactStore(Channel channel, Optional<String> credentials) {
-        this(RemoteFactStoreGrpc.newBlockingStub(channel), RemoteFactStoreGrpc.newStub(channel),
-                credentials);
+  @Override
+  public void publish(@NonNull List<? extends Fact> factsToPublish) {
+    log.trace("publishing {} facts to remote store", factsToPublish.size());
+    List<MSG_Fact> mf =
+        factsToPublish.stream().map(converter::toProto).collect(Collectors.toList());
+    MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
+    try {
+      blockingStub.publish(mfs);
+    } catch (StatusRuntimeException e) {
+      if (e.getStatus().equals(Status.UNKNOWN)) {
+        throw FactcastRemoteException.from(e);
+      } else {
+        throw wrapRetryable(e);
+      }
     }
+  }
 
-    private GrpcFactStore(
-            RemoteFactStoreBlockingStub newBlockingStub, RemoteFactStoreStub newStub,
-            Optional<String> credentials) {
-        rawBlockingStub = newBlockingStub;
-        rawStub = newStub;
-
-        // initially use the raw ones...
-        blockingStub = rawBlockingStub;
-        stub = rawStub;
-
-        if (credentials.isPresent()) {
-            String[] sa = credentials.get().split(":");
-            if (sa.length != 2) {
-                throw new IllegalArgumentException(
-                        "Credentials in 'grpc.client.factstore.credentials' have to be defined as 'username:password'");
-            }
-            CallCredentials basic = CallCredentialsHelper.basicAuth(sa[0], sa[1]);
-            blockingStub = blockingStub.withCallCredentials(basic);
-            stub = stub.withCallCredentials(basic);
-        }
+  @Override
+  public Subscription subscribe(
+      @NonNull SubscriptionRequestTO req, @NonNull FactObserver observer) {
+    SubscriptionImpl subscription = SubscriptionImpl.on(observer);
+    StreamObserver<FactStoreProto.MSG_Notification> responseObserver =
+        new ClientStreamObserver(subscription);
+    ClientCall<MSG_SubscriptionRequest, MSG_Notification> call =
+        stub.getChannel()
+            .newCall(
+                RemoteFactStoreGrpc.getSubscribeMethod(), stub.getCallOptions().withWaitForReady());
+    try {
+      asyncServerStreamingCall(call, converter.toProto(req), responseObserver);
+    } catch (StatusRuntimeException e) {
+      throw wrapRetryable(e);
     }
+    return subscription.onClose(() -> cancel(call));
+  }
 
-    @Override
-    public void publish(@NonNull List<? extends Fact> factsToPublish) {
-        log.trace("publishing {} facts to remote store", factsToPublish.size());
-        List<MSG_Fact> mf = factsToPublish.stream()
-                .map(converter::toProto)
-                .collect(Collectors.toList());
-        MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
-        try {
-            blockingStub.publish(mfs);
-        } catch (StatusRuntimeException e) {
-            if (e.getStatus().equals(Status.UNKNOWN)) {
-                throw FactcastRemoteException.from(e);
-            } else {
-                throw wrapRetryable(e);
-            }
-        }
+  @VisibleForTesting
+  void cancel(final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call) {
+    // cancel does not need to be retried.
+    call.cancel("Client is no longer interested", null);
+  }
+
+  @Override
+  public OptionalLong serialOf(@NonNull UUID l) {
+    MSG_UUID protoMessage = converter.toProto(l);
+    MSG_OptionalSerial responseMessage;
+    try {
+      responseMessage = blockingStub.serialOf(protoMessage);
+    } catch (StatusRuntimeException e) {
+      throw wrapRetryable(e);
     }
+    return converter.fromProto(responseMessage);
+  }
 
-    @Override
-    public Subscription subscribe(
-            @NonNull SubscriptionRequestTO req,
-            @NonNull FactObserver observer) {
-        SubscriptionImpl subscription = SubscriptionImpl.on(observer);
-        StreamObserver<FactStoreProto.MSG_Notification> responseObserver = new ClientStreamObserver(
-                subscription);
-        ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = stub.getChannel()
-                .newCall(RemoteFactStoreGrpc.getSubscribeMethod(), stub.getCallOptions()
-                        .withWaitForReady());
-        try {
-            asyncServerStreamingCall(call, converter.toProto(req), responseObserver);
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
-        return subscription.onClose(() -> cancel(call));
+  public synchronized void initialize() {
+    if (!initialized.getAndSet(true)) {
+      log.debug("Invoking handshake");
+      Map<String, String> serverProperties;
+      ProtocolVersion serverProtocolVersion;
+      try {
+        ServerConfig cfg = converter.fromProto(blockingStub.handshake(converter.empty()));
+        serverProtocolVersion = cfg.version();
+        serverProperties = cfg.properties();
+      } catch (StatusRuntimeException e) {
+        throw wrapRetryable(e);
+      }
+      logProtocolVersion(serverProtocolVersion);
+      logServerVersion(serverProperties);
+      configureCompression(serverProperties.get(Capabilities.CODECS.toString()));
     }
+  }
 
-    @VisibleForTesting
-    void cancel(final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call) {
-        // cancel does not need to be retried.
-        call.cancel("Client is no longer interested", null);
+  private static void logServerVersion(Map<String, String> serverProperties) {
+    String serverVersion = serverProperties.get(Capabilities.FACTCAST_IMPL_VERSION.toString());
+    log.info("Server reported implementation version {}", serverVersion);
+  }
+
+  private static void logProtocolVersion(ProtocolVersion serverProtocolVersion) {
+    if (!PROTOCOL_VERSION.isCompatibleTo(serverProtocolVersion)) {
+      throw new IncompatibleProtocolVersions(
+          "Apparently, the local Protocol Version "
+              + PROTOCOL_VERSION
+              + " is not compatible with the Server's "
+              + serverProtocolVersion
+              + ". \nPlease choose a compatible GRPC Client to connect to this Server.");
     }
-
-    @Override
-    public OptionalLong serialOf(@NonNull UUID l) {
-        MSG_UUID protoMessage = converter.toProto(l);
-        MSG_OptionalSerial responseMessage;
-        try {
-            responseMessage = blockingStub.serialOf(protoMessage);
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
-        return converter.fromProto(responseMessage);
+    if (!PROTOCOL_VERSION.equals(serverProtocolVersion)) {
+      log.info(
+          "Compatible protocol version encountered client={}, server={}",
+          PROTOCOL_VERSION,
+          serverProtocolVersion);
+    } else {
+      log.info("Matching protocol version {}", serverProtocolVersion);
     }
+  }
 
-    public synchronized void initialize() {
-        if (!initialized.getAndSet(true)) {
-            log.debug("Invoking handshake");
-            Map<String, String> serverProperties;
-            ProtocolVersion serverProtocolVersion;
-            try {
-                ServerConfig cfg = converter.fromProto(blockingStub.handshake(converter.empty()));
-                serverProtocolVersion = cfg.version();
-                serverProperties = cfg.properties();
-            } catch (StatusRuntimeException e) {
-                throw wrapRetryable(e);
-            }
-            logProtocolVersion(serverProtocolVersion);
-            logServerVersion(serverProperties);
-            configureCompression(serverProperties.get(Capabilities.CODECS.toString()));
-        }
+  @VisibleForTesting
+  void configureCompression(String codecListFromServer) {
+    codecs
+        .selectFrom(codecListFromServer)
+        .ifPresent(
+            c -> {
+              log.info("configuring Codec for sending {}", c);
+              // configure compression used for sending messages and header
+              // to request compressed messages from server
+              Metadata meta = new Metadata();
+              meta.put(Headers.MESSAGE_COMPRESSION, c);
+              rawBlockingStub = blockingStub;
+              rawStub = stub;
+              blockingStub = MetadataUtils.attachHeaders(blockingStub.withCompression(c), meta);
+              stub = MetadataUtils.attachHeaders(stub.withCompression(c), meta);
+            });
+  }
+
+  @Override
+  public synchronized void afterSingletonsInstantiated() {
+    initialize();
+  }
+
+  @Override
+  public Set<String> enumerateNamespaces() {
+    MSG_Empty empty = converter.empty();
+    MSG_StringSet resp;
+    try {
+      resp = blockingStub.enumerateNamespaces(empty);
+    } catch (StatusRuntimeException e) {
+      throw wrapRetryable(e);
     }
+    return converter.fromProto(resp);
+  }
 
-    private static void logServerVersion(Map<String, String> serverProperties) {
-        String serverVersion = serverProperties.get(Capabilities.FACTCAST_IMPL_VERSION.toString());
-        log.info("Server reported implementation version {}", serverVersion);
+  @Override
+  public Set<String> enumerateTypes(String ns) {
+    MSG_String ns_message = converter.toProto(ns);
+    MSG_StringSet resp;
+    try {
+      resp = blockingStub.enumerateTypes(ns_message);
+    } catch (StatusRuntimeException e) {
+      throw wrapRetryable(e);
     }
+    return converter.fromProto(resp);
+  }
 
-    private static void logProtocolVersion(ProtocolVersion serverProtocolVersion) {
-        if (!PROTOCOL_VERSION.isCompatibleTo(serverProtocolVersion)) {
-            throw new IncompatibleProtocolVersions("Apparently, the local Protocol Version "
-                    + PROTOCOL_VERSION
-                    + " is not compatible with the Server's " + serverProtocolVersion
-                    + ". \nPlease choose a compatible GRPC Client to connect to this Server.");
-        }
-        if (!PROTOCOL_VERSION.equals(serverProtocolVersion)) {
-            log.info("Compatible protocol version encountered client={}, server={}",
-                    PROTOCOL_VERSION,
-                    serverProtocolVersion);
-        } else {
-            log.info("Matching protocol version {}", serverProtocolVersion);
-        }
+  @VisibleForTesting
+  static RuntimeException wrapRetryable(StatusRuntimeException e) {
+    if (e.getStatus().getCode() == Code.UNAVAILABLE) {
+      return new RetryableException(e);
+    } else {
+      return e;
     }
+  }
 
-    @VisibleForTesting
-    void configureCompression(String codecListFromServer) {
-        codecs.selectFrom(codecListFromServer).ifPresent(c -> {
-            log.info("configuring Codec for sending {}", c);
-            // configure compression used for sending messages and header
-            // to request compressed messages from server
-            Metadata meta = new Metadata();
-            meta.put(Headers.MESSAGE_COMPRESSION, c);
-            rawBlockingStub = blockingStub;
-            rawStub = stub;
-            blockingStub = MetadataUtils.attachHeaders(blockingStub.withCompression(c), meta);
-            stub = MetadataUtils.attachHeaders(stub.withCompression(c), meta);
-        });
+  @Override
+  public boolean publishIfUnchanged(
+      @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> token) {
+
+    ConditionalPublishRequest req =
+        new ConditionalPublishRequest(factsToPublish, token.map(StateToken::uuid).orElse(null));
+    MSG_ConditionalPublishRequest msg = converter.toProto(req);
+    try {
+
+      MSG_ConditionalPublishResult r = blockingStub.publishConditional(msg);
+      return r.getSuccess();
+    } catch (StatusRuntimeException e) {
+      throw wrapRetryable(e);
     }
+  }
 
-    @Override
-    public synchronized void afterSingletonsInstantiated() {
-        initialize();
+  @Override
+  public @NonNull StateToken stateFor(List<FactSpec> specs) {
+    MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
+    try {
+      MSG_UUID result = blockingStub.stateForSpecsJson(msg);
+      return new StateToken(converter.fromProto(result));
+    } catch (StatusRuntimeException e) {
+      throw wrapRetryable(e);
     }
+  }
 
-    @Override
-    public Set<String> enumerateNamespaces() {
-        MSG_Empty empty = converter.empty();
-        MSG_StringSet resp;
-        try {
-            resp = blockingStub.enumerateNamespaces(empty);
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
-        return converter.fromProto(resp);
+  @Override
+  public void invalidate(@NonNull StateToken token) {
+    MSG_UUID msg = converter.toProto(token.uuid());
+    try {
+      blockingStub.invalidate(msg);
+    } catch (StatusRuntimeException e) {
+      throw wrapRetryable(e);
     }
+  }
 
-    @Override
-    public Set<String> enumerateTypes(String ns) {
-        MSG_String ns_message = converter.toProto(ns);
-        MSG_StringSet resp;
-        try {
-            resp = blockingStub.enumerateTypes(ns_message);
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
-        return converter.fromProto(resp);
+  @Override
+  public long currentTime() {
+
+    MSG_Empty empty = converter.empty();
+    MSG_CurrentDatabaseTime resp;
+    try {
+      resp = blockingStub.currentTime(empty);
+    } catch (StatusRuntimeException e) {
+      throw wrapRetryable(e);
     }
+    return converter.fromProto(resp);
+  }
 
-    @VisibleForTesting
-    static RuntimeException wrapRetryable(StatusRuntimeException e) {
-        if (e.getStatus().getCode() == Code.UNAVAILABLE) {
-            return new RetryableException(e);
-        } else {
-            return e;
-        }
+  @Override
+  public Optional<Fact> fetchById(UUID id) {
+    log.trace("fetching {} from remote store", id);
+
+    MSG_OptionalFact fetchById;
+    try {
+      fetchById = blockingStub.fetchById(converter.toProto(id));
+    } catch (StatusRuntimeException e) {
+      throw wrapRetryable(e);
     }
-
-    @Override
-    public boolean publishIfUnchanged(
-            @NonNull List<? extends Fact> factsToPublish,
-            @NonNull Optional<StateToken> token) {
-
-        ConditionalPublishRequest req = new ConditionalPublishRequest(factsToPublish,
-                token.map(StateToken::uuid).orElse(null));
-        MSG_ConditionalPublishRequest msg = converter.toProto(req);
-        try {
-
-            MSG_ConditionalPublishResult r = blockingStub.publishConditional(msg);
-            return r.getSuccess();
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
+    if (!fetchById.getPresent()) {
+      return Optional.empty();
+    } else {
+      return converter.fromProto(fetchById);
     }
+  }
 
-    @Override
-    public @NonNull StateToken stateFor(List<FactSpec> specs) {
-        MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
-        try {
-            MSG_UUID result = blockingStub.stateForSpecsJson(msg);
-            return new StateToken(converter.fromProto(result));
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
+  @Override
+  public Optional<Fact> fetchByIdAndVersion(UUID id, int versionExpected) {
+    log.trace("fetching {} from remote store as version {}", id, versionExpected);
 
+    MSG_OptionalFact fetchById;
+    try {
+      fetchById = blockingStub.fetchByIdAndVersion(converter.toProto(id, versionExpected));
+    } catch (StatusRuntimeException e) {
+      throw wrapRetryable(e);
     }
-
-    @Override
-    public void invalidate(@NonNull StateToken token) {
-        MSG_UUID msg = converter.toProto(token.uuid());
-        try {
-            blockingStub.invalidate(msg);
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
+    if (!fetchById.getPresent()) {
+      return Optional.empty();
+    } else {
+      return converter.fromProto(fetchById);
     }
+  }
 
-    @Override
-    public long currentTime() {
+  @Override
+  public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
+    log.trace("fetching snapshot {} from remote store", id);
 
-        MSG_Empty empty = converter.empty();
-        MSG_CurrentDatabaseTime resp;
-        try {
-            resp = blockingStub.currentTime(empty);
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
-        return converter.fromProto(resp);
+    MSG_OptionalSnapshot snap;
+    try {
+      snap = blockingStub.getSnapshot(converter.toProto(id));
+    } catch (StatusRuntimeException e) {
+      throw wrapRetryable(e);
     }
-
-    @Override
-    public Optional<Fact> fetchById(UUID id) {
-        log.trace("fetching {} from remote store", id);
-
-        MSG_OptionalFact fetchById;
-        try {
-            fetchById = blockingStub.fetchById(converter.toProto(id));
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
-        if (!fetchById.getPresent()) {
-            return Optional.empty();
-        } else {
-            return converter.fromProto(fetchById);
-        }
+    if (!snap.getPresent()) {
+      return Optional.empty();
+    } else {
+      return converter.fromProto(snap);
     }
+  }
 
-    @Override
-    public Optional<Fact> fetchByIdAndVersion(UUID id, int versionExpected) {
-        log.trace("fetching {} from remote store as version {}", id, versionExpected);
+  @Override
+  public void setSnapshot(@NonNull Snapshot snapshot) {
+    val id = snapshot.id();
+    val bytes = snapshot.bytes();
+    val alreadyCompressed = snapshot.compressed();
+    val state = snapshot.lastFact();
 
-        MSG_OptionalFact fetchById;
-        try {
-            fetchById = blockingStub.fetchByIdAndVersion(converter.toProto(id, versionExpected));
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
-        if (!fetchById.getPresent()) {
-            return Optional.empty();
-        } else {
-            return converter.fromProto(fetchById);
-        }
+    log.trace("sending snapshot {} to remote store ({}kb)", id, bytes.length / 1024);
 
+    RemoteFactStoreBlockingStub stubToUse = alreadyCompressed ? rawBlockingStub : blockingStub;
+
+    try {
+      val empty = stubToUse.setSnapshot(converter.toProto(id, state, bytes, alreadyCompressed));
+    } catch (StatusRuntimeException e) {
+      throw wrapRetryable(e);
     }
+  }
 
-    @Override
-    public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-        log.trace("fetching snapshot {} from remote store", id);
-
-        MSG_OptionalSnapshot snap;
-        try {
-            snap = blockingStub.getSnapshot(converter.toProto(id));
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
-        if (!snap.getPresent()) {
-            return Optional.empty();
-        } else {
-            return converter.fromProto(snap);
-        }
+  @Override
+  public void clearSnapshot(@NonNull SnapshotId id) {
+    log.trace("clearing snapshot {} in remote store", id);
+    try {
+      val empty = blockingStub.clearSnapshot(converter.toProto(id));
+    } catch (StatusRuntimeException e) {
+      throw wrapRetryable(e);
     }
-
-    @Override
-    public void setSnapshot(@NonNull Snapshot snapshot) {
-        val id = snapshot.id();
-        val bytes = snapshot.bytes();
-        val alreadyCompressed = snapshot.compressed();
-        val state = snapshot.lastFact();
-
-        log.trace("sending snapshot {} to remote store ({}kb)", id, bytes.length / 1024);
-
-        RemoteFactStoreBlockingStub stubToUse = alreadyCompressed ? rawBlockingStub : blockingStub;
-
-        try {
-            val empty = stubToUse.setSnapshot(converter.toProto(id, state, bytes,
-                    alreadyCompressed));
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
-
-    }
-
-    @Override
-    public void clearSnapshot(@NonNull SnapshotId id) {
-        log.trace("clearing snapshot {} in remote store", id);
-        try {
-            val empty = blockingStub.clearSnapshot(converter.toProto(id));
-        } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-        }
-    }
-
+  }
 }

@@ -15,6 +15,7 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.FactTransformersFactory;
@@ -22,28 +23,26 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.pgsql.internal.RequestedVersions;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 
-import lombok.RequiredArgsConstructor;
-
 @RequiredArgsConstructor
 public class FactTransformersFactoryImpl implements FactTransformersFactory {
 
-    private final FactTransformerService trans;
+  private final FactTransformerService trans;
 
-    private final RegistryMetrics registryMetrics;
+  private final RegistryMetrics registryMetrics;
 
-    @Override
-    public FactTransformers createFor(SubscriptionRequestTO sr) {
+  @Override
+  public FactTransformers createFor(SubscriptionRequestTO sr) {
 
-        RequestedVersions rv = new RequestedVersions();
+    RequestedVersions rv = new RequestedVersions();
 
-        sr.specs().forEach(s -> {
-            if (s.type() != null) {
+    sr.specs()
+        .forEach(
+            s -> {
+              if (s.type() != null) {
                 rv.add(s.ns(), s.type(), s.version());
-            }
-        });
+              }
+            });
 
-        return new FactTransformersImpl(rv, trans, registryMetrics);
-
-    }
-
+    return new FactTransformersImpl(rv, trans, registryMetrics);
+  }
 }

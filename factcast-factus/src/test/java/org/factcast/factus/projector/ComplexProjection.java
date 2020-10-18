@@ -15,29 +15,26 @@
  */
 package org.factcast.factus.projector;
 
+import lombok.Getter;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
 
-import lombok.Getter;
-
 class ComplexProjection extends LocalManagedProjection {
 
-    @Getter
-    private ComplexEvent recordedEvent = null;
+  @Getter private ComplexEvent recordedEvent = null;
 
-    @Getter
-    private ComplexEvent2 recordedEvent2 = null;
+  @Getter private ComplexEvent2 recordedEvent2 = null;
 
-    class Nested {
+  class Nested {
 
-        @Handler
-        void apply(ComplexEvent foo) {
-            recordedEvent = foo;
-        }
-
-        @Handler
-        void apply2(ComplexEvent2 foo) {
-            recordedEvent2 = foo;
-        }
+    @Handler
+    void apply(ComplexEvent foo) {
+      recordedEvent = foo;
     }
+
+    @Handler
+    void apply2(ComplexEvent2 foo) {
+      recordedEvent2 = foo;
+    }
+  }
 }

@@ -27,18 +27,17 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ContextConfiguration(classes = { PgTestConfiguration.class })
+@ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
 @IntegrationTest
 public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
 
-    @Autowired
-    private JdbcTemplate tpl;
+  @Autowired private JdbcTemplate tpl;
 
-    @Override
-    protected SchemaStore createUUT() {
-        return new PgSchemaStoreImpl(tpl, registryMetrics);
-    }
+  @Override
+  protected SchemaStore createUUT() {
+    return new PgSchemaStoreImpl(tpl, registryMetrics);
+  }
 }

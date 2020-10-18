@@ -18,21 +18,19 @@ package org.factcast.factus;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
-
-import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.Specification;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
 @Data
 @AllArgsConstructor
 @Specification(ns = "name_test")
 class NameEvent implements EventObject {
-    @Override
-    public Set<UUID> aggregateIds() {
-        return Collections.emptySet();
-    }
+  @Override
+  public Set<UUID> aggregateIds() {
+    return Collections.emptySet();
+  }
 
-    String name;
+  String name;
 }

@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.3.3-SNAPSHOT</version>
+  <version>0.3.5-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -74,18 +74,17 @@
     <maven-failsafe-plugin.version>3.0.0-M4</maven-failsafe-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
-    <spotless-maven-plugin.version>2.3.1</spotless-maven-plugin.version>
+    <spotless-maven-plugin.version>2.4.2</spotless-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.6</jacoco-maven-plugin.version>
-    <spring-boot-maven-plugin.version>2.3.3.RELEASE</spring-boot-maven-plugin.version>
+    <spring-boot-maven-plugin.version>2.3.4.RELEASE</spring-boot-maven-plugin.version>
     <maven.version>3.6.3</maven.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <assertj.version>3.17.2</assertj.version>
-    <mockito.version>3.5.10</mockito.version>
-    <lombok.version>1.18.12</lombok.version>
-    <formatter.config>${basedir}/src/eclipse/config</formatter.config>
-    <etc>${basedir}/src/etc</etc>
-  </properties>
+    <mockito.version>3.5.13</mockito.version>
+    <lombok.version>1.18.16</lombok.version>
+    <etc>${session.executionRootDirectory}/src/etc</etc>
+</properties>
   <dependencies>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -339,33 +338,21 @@
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
         <version>${spotless-maven-plugin.version}</version>
-        <inherited>false</inherited>
-        <executions>
-          <execution>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
         <configuration>
           <java>
             <licenseHeader>
               <file>file://${etc}/header.txt</file>
             </licenseHeader>
-            <eclipse>
-              <file>file://${formatter.config}/eclipse_code_formatter.xml</file>
-              <version>4.11.0</version>
-            </eclipse>
             <trimTrailingWhitespace/>
             <removeUnusedImports/>
-            <importOrder>
-              <file>file://${formatter.config}/eclipse.importorder</file>
-            </importOrder>
+            <googleJavaFormat>
+              <version>1.7</version> <!-- optional -->
+              <style>GOOGLE</style>  <!-- or AOSP (optional) -->
+            </googleJavaFormat>
             <includes>
-              <include>**/src/main/java/**/*.java
+              <include>/src/main/java/**/*.java
               </include>
-              <include>**/src/test/java/**/*.java
+              <include>/src/test/java/**/*.java
               </include>
             </includes>
           </java>
@@ -379,7 +366,7 @@
               <version>0.36.0</version>
             </ktlint>
             <includes>
-              <include>**/src/main/kotlin/**/*.kt
+              <include>/src/main/kotlin/**/*.kt
               </include>
             </includes>
           </kotlin>
@@ -598,3 +585,4 @@
     </profile>
   </profiles>
 </project>
+

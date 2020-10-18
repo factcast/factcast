@@ -15,36 +15,26 @@
  */
 package org.factcast.core;
 
-import java.util.*;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import java.util.*;
 import lombok.*;
 
 @Getter
 @Setter(value = AccessLevel.PROTECTED)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@EqualsAndHashCode(of = { "id" })
+@EqualsAndHashCode(of = {"id"})
 public class FactHeader {
 
-    @JsonProperty
-    @NonNull
-    UUID id;
+  @JsonProperty @NonNull UUID id;
 
-    @JsonProperty
-    @NonNull
-    String ns;
+  @JsonProperty @NonNull String ns;
 
-    @JsonProperty
-    String type;
+  @JsonProperty String type;
 
-    @JsonProperty
-    int version;
+  @JsonProperty int version;
 
-    @JsonProperty
-    Set<UUID> aggIds = new HashSet<>();
+  @JsonProperty Set<UUID> aggIds = new HashSet<>();
 
-    @JsonProperty
-    final Map<String, String> meta = new HashMap<>();
+  @JsonProperty final Map<String, String> meta = new HashMap<>();
 }

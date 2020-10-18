@@ -20,7 +20,9 @@ import static org.assertj.core.api.Assertions.*;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.UUID;
-
+import lombok.Data;
+import lombok.NonNull;
+import lombok.Value;
 import org.assertj.core.util.Lists;
 import org.assertj.core.util.Maps;
 import org.factcast.core.Fact;
@@ -34,533 +36,457 @@ import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.projection.Projection;
 import org.junit.jupiter.api.*;
 
-import lombok.Data;
-import lombok.NonNull;
-import lombok.Value;
-
-/**
- * Blackbox test, we are wiring real objects into the test class, no mocks.
- */
+/** Blackbox test, we are wiring real objects into the test class, no mocks. */
 class DefaultProjectorTest {
 
-    private final DefaultEventSerializer eventSerializer = new DefaultEventSerializer(FactCastJson
-            .mapper());
+  private final DefaultEventSerializer eventSerializer =
+      new DefaultEventSerializer(FactCastJson.mapper());
 
-    private final EventConverter eventConverter = new EventConverter(eventSerializer);
+  private final EventConverter eventConverter = new EventConverter(eventSerializer);
 
-    @Nested
-    class WhenApplying {
+  @Nested
+  class WhenApplying {
 
-        @Test
-        void applySimple() {
-            // INIT
-            UUID aggregateId = UUID.randomUUID();
-            SimpleEvent event = new SimpleEvent(Maps.newHashMap("Some key", "Some value"),
-                    aggregateId, "abc");
+    @Test
+    void applySimple() {
+      // INIT
+      UUID aggregateId = UUID.randomUUID();
+      SimpleEvent event =
+          new SimpleEvent(Maps.newHashMap("Some key", "Some value"), aggregateId, "abc");
 
-            Fact fact = eventConverter.toFact(event);
+      Fact fact = eventConverter.toFact(event);
 
-            SimpleProjection projection = new SimpleProjection();
+      SimpleProjection projection = new SimpleProjection();
 
-            DefaultProjector<SimpleProjection> underTest = new DefaultProjector<>(eventSerializer,
-                    projection);
+      DefaultProjector<SimpleProjection> underTest =
+          new DefaultProjector<>(eventSerializer, projection);
 
-            // RUN
-            underTest.apply(fact);
+      // RUN
+      underTest.apply(fact);
 
-            // ASSERT
-            assertThat(projection.recordedEvent())
-                    .isEqualTo(event);
-
-        }
-
-        @Test
-        void applySimpleViaProjectorFactory() {
-            // INIT
-            UUID aggregateId = UUID.randomUUID();
-            SimpleEvent event = new SimpleEvent(Maps.newHashMap("Some key", "Some value"),
-                    aggregateId, "abc");
-
-            Fact fact = eventConverter.toFact(event);
-
-            SimpleProjection projection = new SimpleProjection();
-
-            DefaultProjectorFactory factory = new DefaultProjectorFactory(eventSerializer);
-            Projector<SimpleProjection> underTest = factory.create(projection);
-
-            // RUN
-            underTest.apply(fact);
-
-            // ASSERT
-            assertThat(projection.recordedEvent())
-                    .isEqualTo(event);
-
-        }
-
-        @Test
-        void applyWithSubclass() {
-            // INIT
-            UUID aggregateId = UUID.randomUUID();
-            UUID aggregateId2 = UUID.randomUUID();
-
-            ComplexEvent event = new ComplexEvent(Maps.newHashMap("Some key", "Some value"),
-                    aggregateId, "abc");
-            ComplexEvent2 event2 = new ComplexEvent2(Maps.newHashMap("Some key",
-                    "Some other value"),
-                    aggregateId2, "def");
-
-            Fact fact = eventConverter.toFact(event);
-            Fact fact2 = eventConverter.toFact(event2);
-
-            ComplexProjection projection = new ComplexProjection();
-
-            DefaultProjector<ComplexProjection> underTest = new DefaultProjector<>(eventSerializer,
-                    projection);
-
-            // RUN
-            underTest.apply(fact);
-            underTest.apply(fact2);
-
-            // ASSERT
-            assertThat(projection.recordedEvent())
-                    .isEqualTo(event);
-
-            assertThat(projection.recordedEvent2())
-                    .isEqualTo(event2);
-
-        }
-
-        @Test
-        void applyWithStaticSubclass() {
-            SimpleProjectionWithStaticSubclass projection = new SimpleProjectionWithStaticSubclass();
-
-            assertThatThrownBy(() -> new DefaultProjector<>(
-                    eventSerializer,
-                    projection)).isInstanceOf(InvalidHandlerDefinition.class);
-
-        }
-
-        @Test
-        void noSuchHandler() {
-            // INIT
-            UUID aggregateId = UUID.randomUUID();
-            SimpleEvent event = new SimpleEvent(Maps.newHashMap("Some key", "Some value"),
-                    aggregateId, "abc");
-
-            Fact fact = eventConverter.toFact(event);
-
-            // complex projection does NOT have an event handler for
-            // SimpleEvent!
-            ComplexProjection projection = new ComplexProjection();
-
-            DefaultProjector<SimpleProjection> underTest = new DefaultProjector<>(eventSerializer,
-                    projection);
-
-            // RUN / ASSERT
-            assertThatThrownBy(() -> underTest.apply(fact))
-                    .isInstanceOf(InvalidHandlerDefinition.class)
-                    .hasMessageStartingWith("Unexpected Fact coordinates");
-
-        }
-
-        @Test
-        void applyWithHandlerFor() {
-            // INIT
-            UUID factId = UUID.randomUUID();
-            UUID aggId = UUID.randomUUID();
-
-            Fact fact = Fact.builder()
-                    .ns("test")
-                    .type("someType")
-                    .id(factId)
-                    .aggId(aggId)
-                    .build("{}");
-
-            ProjectionWithHandlerFor projection = new ProjectionWithHandlerFor();
-
-            DefaultProjector<SimpleProjection> underTest = new DefaultProjector<>(eventSerializer,
-                    projection);
-
-            assertThat(projection.factId())
-                    .isNull();
-            assertThat(projection.fact())
-                    .isNull();
-            assertThat(projection.factHeader())
-                    .isNull();
-
-            // RUN
-            underTest.apply(fact);
-
-            // ASSERT
-            assertThat(projection.factId())
-                    .isEqualTo(factId);
-
-            assertThat(projection.fact())
-                    .isEqualTo(fact);
-
-            assertThat(projection.factHeader())
-                    .isEqualTo(fact.header());
-        }
-
+      // ASSERT
+      assertThat(projection.recordedEvent()).isEqualTo(event);
     }
 
-    @Nested
-    class WhenCreatingFactSpec {
+    @Test
+    void applySimpleViaProjectorFactory() {
+      // INIT
+      UUID aggregateId = UUID.randomUUID();
+      SimpleEvent event =
+          new SimpleEvent(Maps.newHashMap("Some key", "Some value"), aggregateId, "abc");
 
-        @Test
-        void createSimple() {
-            // INIT
-            UUID state = UUID.fromString("9258562c-e6aa-4855-a765-3b1f49a113d5");
+      Fact fact = eventConverter.toFact(event);
 
-            ComplexProjection projection = new ComplexProjection();
-            projection.state(state);
+      SimpleProjection projection = new SimpleProjection();
 
-            DefaultProjector<ComplexAggregate> underTest = new DefaultProjector<>(eventSerializer,
-                    projection);
+      DefaultProjectorFactory factory = new DefaultProjectorFactory(eventSerializer);
+      Projector<SimpleProjection> underTest = factory.create(projection);
 
-            // RUN
-            List<FactSpec> factSpecs = underTest.createFactSpecs();
+      // RUN
+      underTest.apply(fact);
 
-            // ASSERT
-            assertThat(factSpecs)
-                    .hasSize(2)
-                    .flatExtracting(
-                            FactSpec::aggId,
-                            FactSpec::ns,
-                            FactSpec::version,
-                            FactSpec::type)
-                    .contains(
-                            // ComplexProjection has two handlers
-                            null, "test", 0, "ComplexEvent",
-                            null, "test", 0, "ComplexEvent2");
-        }
-
-        @Test
-        void createFromAggregate() {
-            // INIT
-            UUID aggregateId = UUID.randomUUID();
-            ComplexAggregate aggregate = new ComplexAggregate(aggregateId);
-
-            DefaultProjector<ComplexAggregate> underTest = new DefaultProjector<>(eventSerializer,
-                    aggregate);
-
-            // RUN
-            List<FactSpec> factSpecs = underTest.createFactSpecs();
-
-            // ASSERT
-            assertThat(factSpecs)
-                    .hasSize(2)
-                    .flatExtracting(
-                            FactSpec::aggId,
-                            FactSpec::ns,
-                            FactSpec::version,
-                            FactSpec::type)
-                    .contains(
-                            // ComplexAggregate has two handlers
-                            aggregateId, "test", 0, "ComplexEvent",
-                            aggregateId, "test", 0, "ComplexEvent2");
-        }
-
-        @Test
-        void createFromProjectionWithHandlerFor() {
-            // INIT
-            ProjectionWithHandlerFor projection = new ProjectionWithHandlerFor();
-
-            DefaultProjector<ProjectionWithHandlerFor> underTest = new DefaultProjector<>(
-                    eventSerializer,
-                    projection);
-
-            // RUN
-            List<FactSpec> factSpecs = underTest.createFactSpecs();
-
-            // ASSERT
-            assertThat(factSpecs)
-                    .hasSize(1)
-                    .flatExtracting(
-                            FactSpec::aggId,
-                            FactSpec::ns,
-                            FactSpec::version,
-                            FactSpec::type)
-                    .contains(
-                            null, "test", 0, "someType");
-        }
-
-        @Test
-        void invalidPostprocessReturnsNull() {
-            // INIT
-            DefaultProjector<Projection> underTest = new DefaultProjector<>(
-                    eventSerializer,
-                    new PostProcessingProjection(null));
-
-            // RUN
-            assertThatThrownBy(() -> underTest.createFactSpecs())
-                    // ASSERT
-                    .isInstanceOf(InvalidHandlerDefinition.class)
-                    .hasMessageStartingWith("No FactSpecs discovered from");
-        }
-
-        @Test
-        void invalidPostprocessReturnsEmptyList() {
-            // INIT
-            DefaultProjector<Projection> underTest = new DefaultProjector<>(
-                    eventSerializer,
-                    new PostProcessingProjection(Lists.emptyList()));
-
-            // RUN
-            assertThatThrownBy(() -> underTest.createFactSpecs())
-                    // ASSERT
-                    .isInstanceOf(InvalidHandlerDefinition.class)
-                    .hasMessageStartingWith("No FactSpecs discovered from");
-        }
-
+      // ASSERT
+      assertThat(projection.recordedEvent()).isEqualTo(event);
     }
 
-    @Nested
-    class WhenConstructingWithDefectiveProjection {
-        @Test
-        void duplicateHandler() {
-            // INIT / RUN
-            assertThatThrownBy(() -> new DefaultProjector<>(
-                    eventSerializer,
-                    new DuplicateHandlerProjection()))
-                            // ASSERT
-                            .isInstanceOf(InvalidHandlerDefinition.class)
-                            .hasMessageStartingWith("Duplicate Handler method found for spec");
-        }
+    @Test
+    void applyWithSubclass() {
+      // INIT
+      UUID aggregateId = UUID.randomUUID();
+      UUID aggregateId2 = UUID.randomUUID();
 
-        @Test
-        void duplicateArgumentHandler() {
-            // INIT / RUN
-            assertThatThrownBy(() -> new DefaultProjector<>(
-                    eventSerializer,
-                    new DuplicateArgumentProjection()))
-                            // ASSERT
-                            .isInstanceOf(InvalidHandlerDefinition.class)
-                            .hasMessageStartingWith("Multiple EventPojo Parameters");
-        }
+      ComplexEvent event =
+          new ComplexEvent(Maps.newHashMap("Some key", "Some value"), aggregateId, "abc");
+      ComplexEvent2 event2 =
+          new ComplexEvent2(Maps.newHashMap("Some key", "Some other value"), aggregateId2, "def");
 
-        @Test
-        void handlerWithoutParamters() {
-            // INIT / RUN
-            assertThatThrownBy(() -> new DefaultProjector<>(
-                    eventSerializer,
-                    new HandlerWithoutParameters()))
-                            // ASSERT
-                            .isInstanceOf(InvalidHandlerDefinition.class)
-                            .hasMessageStartingWith(
-                                    "Handler methods must have at least one parameter");
-        }
+      Fact fact = eventConverter.toFact(event);
+      Fact fact2 = eventConverter.toFact(event2);
 
-        @Test
-        void handlerWithoutEventObjectParameters() {
-            // INIT / RUN
-            assertThatThrownBy(() -> new DefaultProjector<>(
-                    eventSerializer,
-                    new HandlerWithoutEventProjection()))
-                            // ASSERT
-                            .isInstanceOf(InvalidHandlerDefinition.class)
-                            .hasMessageStartingWith(
-                                    "Cannot introspect FactSpec from");
-        }
+      ComplexProjection projection = new ComplexProjection();
 
-        @Test
-        void nonVoidEventHandler() {
-            // INIT / RUN
-            assertThatThrownBy(() -> new DefaultProjector<>(
-                    eventSerializer,
-                    new NonVoidEventHandler()))
-                            // ASSERT
-                            .isInstanceOf(InvalidHandlerDefinition.class)
-                            .hasMessageStartingWith("Handler methods must return void");
-        }
+      DefaultProjector<ComplexProjection> underTest =
+          new DefaultProjector<>(eventSerializer, projection);
 
-        @Test
-        void unknownHandlerParamType() {
-            // INIT / RUN
-            assertThatThrownBy(() -> new DefaultProjector<>(
-                    eventSerializer,
-                    new HandlerWithUnknownParameterType()))
-                            // ASSERT
-                            .isInstanceOf(InvalidHandlerDefinition.class)
-                            .hasMessageStartingWith("Don't know how resolve");
-        }
+      // RUN
+      underTest.apply(fact);
+      underTest.apply(fact2);
 
-        @Test
-        void noHandler() {
-            // INIT / RUN
-            assertThatThrownBy(() -> new DefaultProjector<>(
-                    eventSerializer,
-                    new NoHandlerProjection()))
-                            // ASSERT
-                            .isInstanceOf(InvalidHandlerDefinition.class)
-                            .hasMessageStartingWith("No handler methods discovered on");
-        }
+      // ASSERT
+      assertThat(projection.recordedEvent()).isEqualTo(event);
+
+      assertThat(projection.recordedEvent2()).isEqualTo(event2);
     }
 
-    @Nested
-    class WhenResolvingTargets {
+    @Test
+    void applyWithStaticSubclass() {
+      SimpleProjectionWithStaticSubclass projection = new SimpleProjectionWithStaticSubclass();
 
-        @Test
-        void resolveTargetFromStaticClass() {
-            assertThat(DefaultProjector.resolveTargetObject(this, StaticClass.class))
-                    .isNotNull()
-                    .isInstanceOf(StaticClass.class);
-        }
-
-        @Test
-        void resolveTargetFromNonStaticClass() {
-            assertThat(DefaultProjector.resolveTargetObject(DefaultProjectorTest.this,
-                    NonStaticClass.class))
-                            .isNotNull()
-                            .isInstanceOf(NonStaticClass.class);
-        }
-
+      assertThatThrownBy(() -> new DefaultProjector<>(eventSerializer, projection))
+          .isInstanceOf(InvalidHandlerDefinition.class);
     }
 
-    @Nested
-    class WhenTestingForHandlerMethods {
+    @Test
+    void noSuchHandler() {
+      // INIT
+      UUID aggregateId = UUID.randomUUID();
+      SimpleEvent event =
+          new SimpleEvent(Maps.newHashMap("Some key", "Some value"), aggregateId, "abc");
 
-        @Test
-        void matchesHandlerMethods() throws NoSuchMethodException {
-            Method realMethod = NonStaticClass.class
-                    .getDeclaredMethod("apply", SimpleEvent.class);
-            assertThat(
-                    DefaultProjector.isEventHandlerMethod(
-                            realMethod)).isTrue();
-        }
+      Fact fact = eventConverter.toFact(event);
 
-        @Test
-        void ignoresMockitoMockProvidedMethods() throws NoSuchMethodException {
-            Method realMethod = NonStaticClass$MockitoMock.class
-                    .getDeclaredMethod("apply", SimpleEvent.class);
-            assertThat(
-                    DefaultProjector.isEventHandlerMethod(
-                            realMethod)).isFalse();
-        }
+      // complex projection does NOT have an event handler for
+      // SimpleEvent!
+      ComplexProjection projection = new ComplexProjection();
 
+      DefaultProjector<SimpleProjection> underTest =
+          new DefaultProjector<>(eventSerializer, projection);
+
+      // RUN / ASSERT
+      assertThatThrownBy(() -> underTest.apply(fact))
+          .isInstanceOf(InvalidHandlerDefinition.class)
+          .hasMessageStartingWith("Unexpected Fact coordinates");
     }
 
-    class NonStaticClass {
-        @Handler
-        void apply(SimpleEvent e) {
-        }
+    @Test
+    void applyWithHandlerFor() {
+      // INIT
+      UUID factId = UUID.randomUUID();
+      UUID aggId = UUID.randomUUID();
+
+      Fact fact = Fact.builder().ns("test").type("someType").id(factId).aggId(aggId).build("{}");
+
+      ProjectionWithHandlerFor projection = new ProjectionWithHandlerFor();
+
+      DefaultProjector<SimpleProjection> underTest =
+          new DefaultProjector<>(eventSerializer, projection);
+
+      assertThat(projection.factId()).isNull();
+      assertThat(projection.fact()).isNull();
+      assertThat(projection.factHeader()).isNull();
+
+      // RUN
+      underTest.apply(fact);
+
+      // ASSERT
+      assertThat(projection.factId()).isEqualTo(factId);
+
+      assertThat(projection.fact()).isEqualTo(fact);
+
+      assertThat(projection.factHeader()).isEqualTo(fact.header());
+    }
+  }
+
+  @Nested
+  class WhenCreatingFactSpec {
+
+    @Test
+    void createSimple() {
+      // INIT
+      UUID state = UUID.fromString("9258562c-e6aa-4855-a765-3b1f49a113d5");
+
+      ComplexProjection projection = new ComplexProjection();
+      projection.state(state);
+
+      DefaultProjector<ComplexAggregate> underTest =
+          new DefaultProjector<>(eventSerializer, projection);
+
+      // RUN
+      List<FactSpec> factSpecs = underTest.createFactSpecs();
+
+      // ASSERT
+      assertThat(factSpecs)
+          .hasSize(2)
+          .flatExtracting(FactSpec::aggId, FactSpec::ns, FactSpec::version, FactSpec::type)
+          .contains(
+              // ComplexProjection has two handlers
+              null, "test", 0, "ComplexEvent", null, "test", 0, "ComplexEvent2");
     }
 
-    class NonStaticClass$MockitoMock extends NonStaticClass {
-        @Handler
-        void apply(SimpleEvent e) {
-        }
+    @Test
+    void createFromAggregate() {
+      // INIT
+      UUID aggregateId = UUID.randomUUID();
+      ComplexAggregate aggregate = new ComplexAggregate(aggregateId);
+
+      DefaultProjector<ComplexAggregate> underTest =
+          new DefaultProjector<>(eventSerializer, aggregate);
+
+      // RUN
+      List<FactSpec> factSpecs = underTest.createFactSpecs();
+
+      // ASSERT
+      assertThat(factSpecs)
+          .hasSize(2)
+          .flatExtracting(FactSpec::aggId, FactSpec::ns, FactSpec::version, FactSpec::type)
+          .contains(
+              // ComplexAggregate has two handlers
+              aggregateId, "test", 0, "ComplexEvent", aggregateId, "test", 0, "ComplexEvent2");
     }
 
-    ;
+    @Test
+    void createFromProjectionWithHandlerFor() {
+      // INIT
+      ProjectionWithHandlerFor projection = new ProjectionWithHandlerFor();
 
-    static class StaticClass {
+      DefaultProjector<ProjectionWithHandlerFor> underTest =
+          new DefaultProjector<>(eventSerializer, projection);
+
+      // RUN
+      List<FactSpec> factSpecs = underTest.createFactSpecs();
+
+      // ASSERT
+      assertThat(factSpecs)
+          .hasSize(1)
+          .flatExtracting(FactSpec::aggId, FactSpec::ns, FactSpec::version, FactSpec::type)
+          .contains(null, "test", 0, "someType");
     }
 
-    ;
+    @Test
+    void invalidPostprocessReturnsNull() {
+      // INIT
+      DefaultProjector<Projection> underTest =
+          new DefaultProjector<>(eventSerializer, new PostProcessingProjection(null));
 
-    // Working handlers
-
-    @Value
-    static class PostProcessingProjection implements Projection {
-
-        private final List<FactSpec> factSpecs;
-
-        @Override
-        public @NonNull List<FactSpec> postprocess(
-                @NonNull List<FactSpec> specsAsDiscovered) {
-            return factSpecs;
-        }
-
-        @Handler
-        void handle(SimpleEvent event) {
-            // nothing
-        }
+      // RUN
+      assertThatThrownBy(() -> underTest.createFactSpecs())
+          // ASSERT
+          .isInstanceOf(InvalidHandlerDefinition.class)
+          .hasMessageStartingWith("No FactSpecs discovered from");
     }
 
-    @Data
-    static class ProjectionWithHandlerFor implements Projection {
+    @Test
+    void invalidPostprocessReturnsEmptyList() {
+      // INIT
+      DefaultProjector<Projection> underTest =
+          new DefaultProjector<>(eventSerializer, new PostProcessingProjection(Lists.emptyList()));
 
-        private UUID factId;
+      // RUN
+      assertThatThrownBy(() -> underTest.createFactSpecs())
+          // ASSERT
+          .isInstanceOf(InvalidHandlerDefinition.class)
+          .hasMessageStartingWith("No FactSpecs discovered from");
+    }
+  }
 
-        private Fact fact;
-
-        private FactHeader factHeader;
-
-        @HandlerFor(ns = "test", type = "someType")
-        void handle(UUID factId, Fact fact, FactHeader factHeader) {
-            this.factId = factId;
-            this.fact = fact;
-            this.factHeader = factHeader;
-        }
+  @Nested
+  class WhenConstructingWithDefectiveProjection {
+    @Test
+    void duplicateHandler() {
+      // INIT / RUN
+      assertThatThrownBy(
+              () -> new DefaultProjector<>(eventSerializer, new DuplicateHandlerProjection()))
+          // ASSERT
+          .isInstanceOf(InvalidHandlerDefinition.class)
+          .hasMessageStartingWith("Duplicate Handler method found for spec");
     }
 
-    // Faulty handlers
-
-    @Value
-    static class DuplicateHandlerProjection implements Projection {
-
-        @Handler
-        void handle(SimpleEvent event) {
-            // nothing
-        }
-
-        @Handler
-        void handleSame(SimpleEvent event) {
-            // nothing
-        }
+    @Test
+    void duplicateArgumentHandler() {
+      // INIT / RUN
+      assertThatThrownBy(
+              () -> new DefaultProjector<>(eventSerializer, new DuplicateArgumentProjection()))
+          // ASSERT
+          .isInstanceOf(InvalidHandlerDefinition.class)
+          .hasMessageStartingWith("Multiple EventPojo Parameters");
     }
 
-    @Value
-    static class DuplicateArgumentProjection implements Projection {
-
-        @Handler
-        void handle(SimpleEvent event, SimpleEvent eventAgain) {
-            // nothing
-        }
+    @Test
+    void handlerWithoutParamters() {
+      // INIT / RUN
+      assertThatThrownBy(
+              () -> new DefaultProjector<>(eventSerializer, new HandlerWithoutParameters()))
+          // ASSERT
+          .isInstanceOf(InvalidHandlerDefinition.class)
+          .hasMessageStartingWith("Handler methods must have at least one parameter");
     }
 
-    @Value
-    static class HandlerWithoutParameters implements Projection {
-
-        @Handler
-        void handle() {
-            // nothing
-        }
+    @Test
+    void handlerWithoutEventObjectParameters() {
+      // INIT / RUN
+      assertThatThrownBy(
+              () -> new DefaultProjector<>(eventSerializer, new HandlerWithoutEventProjection()))
+          // ASSERT
+          .isInstanceOf(InvalidHandlerDefinition.class)
+          .hasMessageStartingWith("Cannot introspect FactSpec from");
     }
 
-    @Value
-    static class HandlerWithoutEventProjection implements Projection {
-
-        // UUID is valid parameter, but then we would have to
-        // use @HandlerFor in order to get the fact specs
-        @Handler
-        void handle(UUID factId) {
-            // nothing
-        }
+    @Test
+    void nonVoidEventHandler() {
+      // INIT / RUN
+      assertThatThrownBy(() -> new DefaultProjector<>(eventSerializer, new NonVoidEventHandler()))
+          // ASSERT
+          .isInstanceOf(InvalidHandlerDefinition.class)
+          .hasMessageStartingWith("Handler methods must return void");
     }
 
-    @Value
-    static class NonVoidEventHandler implements Projection {
-
-        @Handler
-        int handle(SimpleEvent event) {
-            // nothing
-            return 0;
-        }
+    @Test
+    void unknownHandlerParamType() {
+      // INIT / RUN
+      assertThatThrownBy(
+              () -> new DefaultProjector<>(eventSerializer, new HandlerWithUnknownParameterType()))
+          // ASSERT
+          .isInstanceOf(InvalidHandlerDefinition.class)
+          .hasMessageStartingWith("Don't know how resolve");
     }
 
-    @Value
-    static class NoHandlerProjection implements Projection {
+    @Test
+    void noHandler() {
+      // INIT / RUN
+      assertThatThrownBy(() -> new DefaultProjector<>(eventSerializer, new NoHandlerProjection()))
+          // ASSERT
+          .isInstanceOf(InvalidHandlerDefinition.class)
+          .hasMessageStartingWith("No handler methods discovered on");
+    }
+  }
+
+  @Nested
+  class WhenResolvingTargets {
+
+    @Test
+    void resolveTargetFromStaticClass() {
+      assertThat(DefaultProjector.resolveTargetObject(this, StaticClass.class))
+          .isNotNull()
+          .isInstanceOf(StaticClass.class);
     }
 
-    @Value
-    static class HandlerWithUnknownParameterType implements Projection {
+    @Test
+    void resolveTargetFromNonStaticClass() {
+      assertThat(
+              DefaultProjector.resolveTargetObject(DefaultProjectorTest.this, NonStaticClass.class))
+          .isNotNull()
+          .isInstanceOf(NonStaticClass.class);
+    }
+  }
 
-        @Handler
-        void handle(Object someObject) {
-            // nothing
-        }
+  @Nested
+  class WhenTestingForHandlerMethods {
+
+    @Test
+    void matchesHandlerMethods() throws NoSuchMethodException {
+      Method realMethod = NonStaticClass.class.getDeclaredMethod("apply", SimpleEvent.class);
+      assertThat(DefaultProjector.isEventHandlerMethod(realMethod)).isTrue();
     }
 
+    @Test
+    void ignoresMockitoMockProvidedMethods() throws NoSuchMethodException {
+      Method realMethod =
+          NonStaticClass$MockitoMock.class.getDeclaredMethod("apply", SimpleEvent.class);
+      assertThat(DefaultProjector.isEventHandlerMethod(realMethod)).isFalse();
+    }
+  }
+
+  class NonStaticClass {
+    @Handler
+    void apply(SimpleEvent e) {}
+  }
+
+  class NonStaticClass$MockitoMock extends NonStaticClass {
+    @Handler
+    void apply(SimpleEvent e) {}
+  }
+
+  static class StaticClass {}
+
+  // Working handlers
+
+  @Value
+  static class PostProcessingProjection implements Projection {
+
+    private final List<FactSpec> factSpecs;
+
+    @Override
+    public @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
+      return factSpecs;
+    }
+
+    @Handler
+    void handle(SimpleEvent event) {
+      // nothing
+    }
+  }
+
+  @Data
+  static class ProjectionWithHandlerFor implements Projection {
+
+    private UUID factId;
+
+    private Fact fact;
+
+    private FactHeader factHeader;
+
+    @HandlerFor(ns = "test", type = "someType")
+    void handle(UUID factId, Fact fact, FactHeader factHeader) {
+      this.factId = factId;
+      this.fact = fact;
+      this.factHeader = factHeader;
+    }
+  }
+
+  // Faulty handlers
+
+  @Value
+  static class DuplicateHandlerProjection implements Projection {
+
+    @Handler
+    void handle(SimpleEvent event) {
+      // nothing
+    }
+
+    @Handler
+    void handleSame(SimpleEvent event) {
+      // nothing
+    }
+  }
+
+  @Value
+  static class DuplicateArgumentProjection implements Projection {
+
+    @Handler
+    void handle(SimpleEvent event, SimpleEvent eventAgain) {
+      // nothing
+    }
+  }
+
+  @Value
+  static class HandlerWithoutParameters implements Projection {
+
+    @Handler
+    void handle() {
+      // nothing
+    }
+  }
+
+  @Value
+  static class HandlerWithoutEventProjection implements Projection {
+
+    // UUID is valid parameter, but then we would have to
+    // use @HandlerFor in order to get the fact specs
+    @Handler
+    void handle(UUID factId) {
+      // nothing
+    }
+  }
+
+  @Value
+  static class NonVoidEventHandler implements Projection {
+
+    @Handler
+    int handle(SimpleEvent event) {
+      // nothing
+      return 0;
+    }
+  }
+
+  @Value
+  static class NoHandlerProjection implements Projection {}
+
+  @Value
+  static class HandlerWithUnknownParameterType implements Projection {
+
+    @Handler
+    void handle(Object someObject) {
+      // nothing
+    }
+  }
 }

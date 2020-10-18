@@ -15,48 +15,45 @@
  */
 package org.factcast.store.pgsql.registry;
 
+import com.github.fge.jsonschema.main.JsonSchema;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 
-import com.github.fge.jsonschema.main.JsonSchema;
-
 /**
  * used to inject instead of real registry, if validation is disabled
  *
  * @author uwe
- *
  */
 public class NOPSchemaRegistry implements SchemaRegistry {
-    private static final List<Transformation> EMPTY = new LinkedList<>();
+  private static final List<Transformation> EMPTY = new LinkedList<>();
 
-    @Override
-    public Optional<JsonSchema> get(SchemaKey key) {
-        return Optional.empty();
-    }
+  @Override
+  public Optional<JsonSchema> get(SchemaKey key) {
+    return Optional.empty();
+  }
 
-    @Override
-    public List<Transformation> get(TransformationKey key) {
-        return EMPTY;
-    }
+  @Override
+  public List<Transformation> get(TransformationKey key) {
+    return EMPTY;
+  }
 
-    @Override
-    public void refresh() {
-        // NOP
-    }
+  @Override
+  public void refresh() {
+    // NOP
+  }
 
-    @Override
-    public void fetchInitial() {
-        // NOP
-    }
+  @Override
+  public void fetchInitial() {
+    // NOP
+  }
 
-    @Override
-    public void register(TransformationStoreListener transformationChains) {
-        // NOP
-    }
+  @Override
+  public void register(TransformationStoreListener transformationChains) {
+    // NOP
+  }
 }

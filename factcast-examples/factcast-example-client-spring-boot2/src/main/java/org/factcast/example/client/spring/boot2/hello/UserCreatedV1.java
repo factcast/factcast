@@ -15,15 +15,13 @@
  */
 package org.factcast.example.client.spring.boot2.hello;
 
-import org.factcast.factus.event.Specification;
-
 import lombok.ToString;
+import org.factcast.factus.event.Specification;
 
 @Specification(ns = "Users", type = "UserCreated", version = 1)
 @ToString
 public class UserCreatedV1 {
-    String lastName;
+  String lastName;
 
-    String firstName;
-
+  String firstName;
 }

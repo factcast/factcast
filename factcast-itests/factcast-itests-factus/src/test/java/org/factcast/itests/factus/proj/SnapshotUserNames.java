@@ -18,13 +18,9 @@ package org.factcast.itests.factus.proj;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
+import lombok.Getter;
 import org.factcast.factus.projection.SnapshotProjection;
 
-import lombok.Getter;
-
 public class SnapshotUserNames implements SnapshotProjection, UserNames {
-    @Getter
-    private final Map<UUID, String> userNames = new HashMap<>();
-
+  @Getter private final Map<UUID, String> userNames = new HashMap<>();
 }

@@ -16,7 +16,6 @@
 package org.factcast.schema.registry.plugin;
 
 import java.io.File;
-
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -24,32 +23,31 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 @Mojo(name = "build", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
 public class BuildMojo extends AbstractMojo {
-    @Parameter(
-            defaultValue = "${project.build.directory}/registry",
-            property = "outputDir",
-            required = true)
-    private File outputDirectory;
+  @Parameter(
+      defaultValue = "${project.build.directory}/registry",
+      property = "outputDir",
+      required = true)
+  private File outputDirectory;
 
-    @Parameter(
-            defaultValue = "${project.basedir}/src/main/resources",
-            property = "sourceDir",
-            required = true)
-    private File sourceDirectory;
+  @Parameter(
+      defaultValue = "${project.basedir}/src/main/resources",
+      property = "sourceDir",
+      required = true)
+  private File sourceDirectory;
 
-    @Override
-    public void execute() {
-        if (!sourceDirectory.exists())
-            throw new IllegalArgumentException(
-                    "Source directory (property 'sourceDir') does not exist: "
-                            + sourceDirectory.getPath());
+  @Override
+  public void execute() {
+    if (!sourceDirectory.exists())
+      throw new IllegalArgumentException(
+          "Source directory (property 'sourceDir') does not exist: " + sourceDirectory.getPath());
 
-        if (!outputDirectory.exists()) {
-            outputDirectory.mkdirs();
-        }
-
-        org.factcast.schema.registry.cli.Application
-                .main(new String[] { "build", "-p", sourceDirectory.getAbsolutePath(), "-o",
-                        outputDirectory.getAbsolutePath() });
+    if (!outputDirectory.exists()) {
+      outputDirectory.mkdirs();
     }
 
+    org.factcast.schema.registry.cli.Application.main(
+        new String[] {
+          "build", "-p", sourceDirectory.getAbsolutePath(), "-o", outputDirectory.getAbsolutePath()
+        });
+  }
 }

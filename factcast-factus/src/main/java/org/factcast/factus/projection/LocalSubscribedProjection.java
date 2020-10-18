@@ -18,14 +18,11 @@ package org.factcast.factus.projection;
 import lombok.experimental.Delegate;
 
 /**
- * Local projection (using vm-locks to synchronize) for async subscription to a
- * stream of events/facts.
+ * Local projection (using vm-locks to synchronize) for async subscription to a stream of
+ * events/facts.
  */
 public abstract class LocalSubscribedProjection implements SubscribedProjection {
-    @Delegate
-    private final LocalState state = new LocalState();
+  @Delegate private final LocalState state = new LocalState();
 
-    @Delegate
-    private final LocalWriteToken lock = new LocalWriteToken();
-
+  @Delegate private final LocalWriteToken lock = new LocalWriteToken();
 }

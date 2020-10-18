@@ -16,11 +16,11 @@
 package org.factcast.grpc.api;
 
 public enum Capabilities {
+  FACTCAST_IMPL_VERSION,
+  CODECS;
 
-    FACTCAST_IMPL_VERSION, CODECS;
-
-    @Override
-    public String toString() {
-        return getClass().getCanonicalName() + "." + name();
-    }
+  @Override
+  public String toString() {
+    return getClass().getCanonicalName() + "." + name();
+  }
 }

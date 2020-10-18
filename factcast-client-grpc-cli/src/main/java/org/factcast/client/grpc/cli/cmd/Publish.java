@@ -15,6 +15,8 @@
  */
 package org.factcast.client.grpc.cli.cmd;
 
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import org.factcast.client.grpc.cli.conv.ExistingJsonFile;
 import org.factcast.client.grpc.cli.util.Command;
 import org.factcast.client.grpc.cli.util.FactRenderer;
@@ -22,32 +24,27 @@ import org.factcast.client.grpc.cli.util.Options;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-
 @Parameters(commandDescription = "publish a fact", commandNames = "publish")
 public class Publish implements Command {
 
-    @Parameter(
-            names = { "--header",
-                    "-h" },
-            required = true,
-            description = "Filename of an existing json file to read the header from")
-    ExistingJsonFile headerFile;
+  @Parameter(
+      names = {"--header", "-h"},
+      required = true,
+      description = "Filename of an existing json file to read the header from")
+  ExistingJsonFile headerFile;
 
-    @Parameter(
-            names = { "--payload",
-                    "-p" },
-            required = true,
-            description = "Filename of an existing json file to read the payload from")
-    ExistingJsonFile payloadFile;
+  @Parameter(
+      names = {"--payload", "-p"},
+      required = true,
+      description = "Filename of an existing json file to read the payload from")
+  ExistingJsonFile payloadFile;
 
-    @Override
-    public void runWith(FactCast fc, Options opt) {
-        FactRenderer factRenderer = new FactRenderer(opt);
-        Fact f = Fact.of(headerFile.read(), payloadFile.read());
-        fc.publish(f);
-        System.out.println("Published:");
-        System.out.println(factRenderer.render(f));
-    }
+  @Override
+  public void runWith(FactCast fc, Options opt) {
+    FactRenderer factRenderer = new FactRenderer(opt);
+    Fact f = Fact.of(headerFile.read(), payloadFile.read());
+    fc.publish(f);
+    System.out.println("Published:");
+    System.out.println(factRenderer.render(f));
+  }
 }

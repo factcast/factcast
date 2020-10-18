@@ -15,14 +15,11 @@
  */
 package org.factcast.factus.serializer.binary;
 
-import org.factcast.factus.projection.SnapshotProjection;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.Data;
+import org.factcast.factus.projection.SnapshotProjection;
 
 @Data
 public class TestProjection implements SnapshotProjection {
-    @JsonProperty
-    String foo = "bar";
+  @JsonProperty String foo = "bar";
 }

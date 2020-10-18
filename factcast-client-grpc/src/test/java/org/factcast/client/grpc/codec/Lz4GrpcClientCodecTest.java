@@ -19,24 +19,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
-
 import org.junit.jupiter.api.Test;
 
 class Lz4GrpcClientCodecTest {
 
-    Lz4GrpcClientCodec uut = new Lz4GrpcClientCodec();
+  final Lz4GrpcClientCodec uut = new Lz4GrpcClientCodec();
 
-    @Test
-    void getMessageEncoding() {
-        assertEquals("lz4", uut.getMessageEncoding());
-    }
+  @Test
+  void getMessageEncoding() {
+    assertEquals("lz4", uut.getMessageEncoding());
+  }
 
-    @Test
-    void compressionIsSymetric() throws IOException {
-        byte[] original = "Some uncompressed String".getBytes();
-        byte[] compressed = CodecTestHelper.toByteArray(uut, original);
-        byte[] uncompressed = CodecTestHelper.fromByteArray(uut, compressed);
+  @Test
+  void compressionIsSymetric() throws IOException {
+    byte[] original = "Some uncompressed String".getBytes();
+    byte[] compressed = CodecTestHelper.toByteArray(uut, original);
+    byte[] uncompressed = CodecTestHelper.fromByteArray(uut, compressed);
 
-        assertThat(uncompressed).isEqualTo(original);
-    }
+    assertThat(uncompressed).isEqualTo(original);
+  }
 }

@@ -15,6 +15,8 @@
  */
 package org.factcast.store.pgsql.registry.transformation;
 
+import liquibase.integration.spring.SpringLiquibase;
+import lombok.NonNull;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
@@ -33,65 +35,65 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import liquibase.integration.spring.SpringLiquibase;
-import lombok.NonNull;
-
 @Configuration
 public class TransformationConfiguration {
-    @Bean
-    public TransformationStore transformationStore(@NonNull JdbcTemplate jdbcTemplate,
-            @NonNull PgConfigurationProperties props, @NonNull RegistryMetrics registryMetrics,
-            @Autowired(
-                    required = false) SpringLiquibase unused) {
-        if (props.isValidationEnabled() && props.isPersistentRegistry())
-            return new PgTransformationStoreImpl(jdbcTemplate, registryMetrics);
+  @Bean
+  public TransformationStore transformationStore(
+      @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull PgConfigurationProperties props,
+      @NonNull RegistryMetrics registryMetrics,
+      @Autowired(required = false) SpringLiquibase unused) {
+    if (props.isValidationEnabled() && props.isPersistentRegistry())
+      return new PgTransformationStoreImpl(jdbcTemplate, registryMetrics);
 
-        // otherwise
-        return new InMemTransformationStoreImpl(registryMetrics);
-    }
+    // otherwise
+    return new InMemTransformationStoreImpl(registryMetrics);
+  }
 
-    @Bean
-    public TransformationCache transformationCache(@NonNull JdbcTemplate jdbcTemplate,
-            @NonNull PgConfigurationProperties props, @NonNull RegistryMetrics registryMetrics,
-            @Autowired(
-                    required = false) SpringLiquibase unused) {
-        if (props.isValidationEnabled() && props.isPersistentTransformationCache())
-            return new PgTransformationCache(jdbcTemplate, registryMetrics);
+  @Bean
+  public TransformationCache transformationCache(
+      @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull PgConfigurationProperties props,
+      @NonNull RegistryMetrics registryMetrics,
+      @Autowired(required = false) SpringLiquibase unused) {
+    if (props.isValidationEnabled() && props.isPersistentTransformationCache())
+      return new PgTransformationCache(jdbcTemplate, registryMetrics);
 
-        // otherwise
-        return new InMemTransformationCache(props.getInMemTransformationCacheCapacity(),
-                registryMetrics);
-    }
+    // otherwise
+    return new InMemTransformationCache(
+        props.getInMemTransformationCacheCapacity(), registryMetrics);
+  }
 
-    @Bean
-    public TransformationChains transformationChains(@NonNull SchemaRegistry r,
-            @NonNull RegistryMetrics registryMetrics) {
-        return new TransformationChains(r, registryMetrics);
-    }
+  @Bean
+  public TransformationChains transformationChains(
+      @NonNull SchemaRegistry r, @NonNull RegistryMetrics registryMetrics) {
+    return new TransformationChains(r, registryMetrics);
+  }
 
-    @Bean
-    public Transformer transformer() {
-        // TODO should test for Graal here, as nashorn is deprecated
-        return new NashornTransformer();
-    }
+  @Bean
+  public Transformer transformer() {
+    // TODO should test for Graal here, as nashorn is deprecated
+    return new NashornTransformer();
+  }
 
-    @Bean
-    public FactTransformersFactory factTransformersFactory(FactTransformerService trans,
-            RegistryMetrics registryMetrics) {
-        return new FactTransformersFactoryImpl(trans, registryMetrics);
-    }
+  @Bean
+  public FactTransformersFactory factTransformersFactory(
+      FactTransformerService trans, RegistryMetrics registryMetrics) {
+    return new FactTransformersFactoryImpl(trans, registryMetrics);
+  }
 
-    @Bean
-    public FactTransformerService factTransformerService(TransformationChains chains,
-            Transformer trans, TransformationCache cache, RegistryMetrics registryMetrics) {
-        return new FactTransformerServiceImpl(chains, trans, cache, registryMetrics);
-    }
+  @Bean
+  public FactTransformerService factTransformerService(
+      TransformationChains chains,
+      Transformer trans,
+      TransformationCache cache,
+      RegistryMetrics registryMetrics) {
+    return new FactTransformerServiceImpl(chains, trans, cache, registryMetrics);
+  }
 
-    @Bean
-    public TransformationCacheCompactor transformationCacheCompactor(TransformationCache cache,
-            PgConfigurationProperties props) {
-        return new TransformationCacheCompactor(cache, props
-                .getDeleteTransformationsStaleForDays());
-    }
-
+  @Bean
+  public TransformationCacheCompactor transformationCacheCompactor(
+      TransformationCache cache, PgConfigurationProperties props) {
+    return new TransformationCacheCompactor(cache, props.getDeleteTransformationsStaleForDays());
+  }
 }

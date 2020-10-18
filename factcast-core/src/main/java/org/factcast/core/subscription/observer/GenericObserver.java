@@ -16,13 +16,11 @@
 package org.factcast.core.subscription.observer;
 
 import java.util.function.Function;
-
-import org.factcast.core.Fact;
-import org.slf4j.LoggerFactory;
-
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.factcast.core.Fact;
+import org.slf4j.LoggerFactory;
 
 /**
  * Callback interface to use when subscribing to Facts or Ids from a FactCast.
@@ -31,49 +29,49 @@ import lombok.RequiredArgsConstructor;
  */
 public interface GenericObserver<I> {
 
-    void onNext(@NonNull I element);
+  void onNext(@NonNull I element);
 
-    default void onCatchup() {
-        // implement if you are interested in that event
+  default void onCatchup() {
+    // implement if you are interested in that event
+  }
+
+  default void onComplete() {
+    // implement if you are interested in that event
+  }
+
+  default void onError(@NonNull Throwable exception) {
+    LoggerFactory.getLogger(GenericObserver.class).warn("Unhandled onError:", exception);
+  }
+
+  default FactObserver map(@NonNull Function<Fact, I> projection) {
+    return new ObserverBridge<>(this, projection);
+  }
+
+  @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
+  class ObserverBridge<I> implements FactObserver {
+
+    private final GenericObserver<I> delegate;
+
+    private final Function<Fact, I> project;
+
+    @Override
+    public void onNext(@NonNull Fact from) {
+      delegate.onNext(project.apply(from));
     }
 
-    default void onComplete() {
-        // implement if you are interested in that event
+    @Override
+    public void onCatchup() {
+      delegate.onCatchup();
     }
 
-    default void onError(@NonNull Throwable exception) {
-        LoggerFactory.getLogger(GenericObserver.class).warn("Unhandled onError:", exception);
+    @Override
+    public void onError(@NonNull Throwable exception) {
+      delegate.onError(exception);
     }
 
-    default FactObserver map(@NonNull Function<Fact, I> projection) {
-        return new ObserverBridge<>(this, projection);
+    @Override
+    public void onComplete() {
+      delegate.onComplete();
     }
-
-    @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
-    class ObserverBridge<I> implements FactObserver {
-
-        private final GenericObserver<I> delegate;
-
-        private final Function<Fact, I> project;
-
-        @Override
-        public void onNext(@NonNull Fact from) {
-            delegate.onNext(project.apply(from));
-        }
-
-        @Override
-        public void onCatchup() {
-            delegate.onCatchup();
-        }
-
-        @Override
-        public void onError(@NonNull Throwable exception) {
-            delegate.onError(exception);
-        }
-
-        @Override
-        public void onComplete() {
-            delegate.onComplete();
-        }
-    }
+  }
 }

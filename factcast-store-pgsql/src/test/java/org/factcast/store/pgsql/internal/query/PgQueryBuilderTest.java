@@ -19,17 +19,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
-
 import org.junit.jupiter.api.*;
 
 public class PgQueryBuilderTest {
 
-    @Test
-    public void testPGQueryBuilder() {
-        assertThrows(NullPointerException.class, () -> new PgQueryBuilder(null));
+  @Test
+  public void testPGQueryBuilder() {
+    assertThrows(NullPointerException.class, () -> new PgQueryBuilder(null));
 
-        PgQueryBuilder uut = new PgQueryBuilder(mock(List.class));
-        assertThrows(NullPointerException.class, () -> uut.createStatementSetter(null));
-    }
-
+    PgQueryBuilder uut = new PgQueryBuilder(mock(List.class));
+    assertThrows(NullPointerException.class, () -> uut.createStatementSetter(null));
+  }
 }

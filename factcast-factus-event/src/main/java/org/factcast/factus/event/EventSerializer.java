@@ -16,8 +16,7 @@
 package org.factcast.factus.event;
 
 public interface EventSerializer {
-    <T extends EventObject> T deserialize(Class<T> targetClass, String json);
+  <T extends EventObject> T deserialize(Class<T> targetClass, String json);
 
-    <T extends EventObject> String serialize(T pojo);
-
+  <T extends EventObject> String serialize(T pojo);
 }

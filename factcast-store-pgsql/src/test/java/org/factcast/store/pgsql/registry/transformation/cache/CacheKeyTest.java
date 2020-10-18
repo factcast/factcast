@@ -18,29 +18,22 @@ package org.factcast.store.pgsql.registry.transformation.cache;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.UUID;
-
 import org.factcast.core.Fact;
 import org.junit.jupiter.api.Test;
 
 class CacheKeyTest {
 
-    @Test
-    void of() {
-        String chainId = "1-2-3";
-        Fact fact = Fact.builder()
-                .ns("ns")
-                .type("type")
-                .id(UUID.randomUUID())
-                .version(1)
-                .build("{}");
+  @Test
+  void of() {
+    String chainId = "1-2-3";
+    Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
 
-        String ofFact = CacheKey.of(fact, chainId);
-        String ofId = CacheKey.of(fact.id(), fact.version(), chainId);
+    String ofFact = CacheKey.of(fact, chainId);
+    String ofId = CacheKey.of(fact.id(), fact.version(), chainId);
 
-        assertEquals(ofFact, ofId);
-        assertTrue(ofFact.contains(fact.id().toString()));
-        assertTrue(ofFact.contains(String.valueOf(fact.version())));
-        assertTrue(ofFact.contains(chainId));
-
-    }
+    assertEquals(ofFact, ofId);
+    assertTrue(ofFact.contains(fact.id().toString()));
+    assertTrue(ofFact.contains(String.valueOf(fact.version())));
+    assertTrue(ofFact.contains(chainId));
+  }
 }
