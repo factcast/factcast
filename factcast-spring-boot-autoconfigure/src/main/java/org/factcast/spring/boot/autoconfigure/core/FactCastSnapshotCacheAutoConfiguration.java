@@ -17,21 +17,25 @@ package org.factcast.spring.boot.autoconfigure.core;
 
 import lombok.Generated;
 import org.factcast.core.FactCast;
-import org.factcast.core.snap.FactCastSnapshotRepository;
+import org.factcast.core.snap.FactCastSnapshotCache;
+import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.store.FactStore;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 
 @Configuration
 @ConditionalOnClass(FactCast.class)
 @Generated
+@AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
 public class FactCastSnapshotCacheAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public FactCastSnapshotRepository snapshotRepository(FactStore store) {
-    return new FactCastSnapshotRepository(store);
+  public SnapshotCache snapshotCache(FactStore store) {
+    return new FactCastSnapshotCache(store);
   }
 }
