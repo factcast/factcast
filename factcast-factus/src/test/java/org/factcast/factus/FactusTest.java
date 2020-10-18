@@ -46,7 +46,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class FactusTest {
 
-  private Factus underTest =
+  private final Factus underTest =
       spy(
           new Factus() {
             @Override

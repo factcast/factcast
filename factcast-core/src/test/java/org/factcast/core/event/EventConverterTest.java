@@ -60,7 +60,7 @@ class EventConverterTest {
     @Override
     public Map<String, String> additionalMetaMap() {
       val m = new HashMap<String, String>();
-      m.put((String) null, "foo");
+      m.put(null, "foo");
       return m;
     }
   }

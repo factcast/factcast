@@ -56,7 +56,7 @@ class HugoTemplateServiceImpl(private val fileSystemService: FileSystemService) 
 
     override fun loadEventTemplate(namespace: Namespace, event: Event): String {
         val description = fileSystemService.readToString(event.descriptionPath.toFile())
-        val latestVersion = event.versions.maxBy { it.version }!!
+        val latestVersion = event.versions.maxByOrNull { it.version }!!
 
         val latestVersionData =
             getVersionTemplateData(namespace, event, latestVersion)
@@ -82,7 +82,7 @@ class HugoTemplateServiceImpl(private val fileSystemService: FileSystemService) 
         val transformations = event.transformations.map {
             TransformationData(it.from, it.to, fileSystemService.readToString(it.transformationPath.toFile()))
         }
-        val maxVersion = event.versions.maxBy { it.version }!!
+        val maxVersion = event.versions.maxByOrNull { it.version }!!
 
         val data = TransformationTemplateData(namespace.name, event.type, maxVersion.version, transformations)
 

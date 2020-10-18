@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 
 class SnappyGrpcClientCodecTest {
 
-  SnappyGrpcClientCodec uut = new SnappyGrpcClientCodec();
+  final SnappyGrpcClientCodec uut = new SnappyGrpcClientCodec();
 
   @Test
   void getMessageEncoding() {

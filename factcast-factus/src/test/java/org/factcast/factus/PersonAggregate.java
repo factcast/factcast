@@ -16,8 +16,10 @@
 package org.factcast.factus;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.factcast.factus.projection.Aggregate;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 class PersonAggregate extends Aggregate {
 

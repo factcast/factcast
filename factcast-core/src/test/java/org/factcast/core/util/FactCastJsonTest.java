@@ -204,7 +204,7 @@ public class FactCastJsonTest {
   @Test
   void testValueToTree() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om); ) {
+    try (val reset = FactCastJson.replaceObjectMapper(om)) {
 
       val probe = UUID.randomUUID();
       FactCastJson.valueToTree(probe);
@@ -216,7 +216,7 @@ public class FactCastJsonTest {
   @Test
   void testReadTree() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om); ) {
+    try (val reset = FactCastJson.replaceObjectMapper(om)) {
 
       String probe = UUID.randomUUID().toString();
       FactCastJson.readTree(probe);
@@ -228,7 +228,7 @@ public class FactCastJsonTest {
   @Test
   void convertValue() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om); ) {
+    try (val reset = FactCastJson.replaceObjectMapper(om)) {
 
       String probe = UUID.randomUUID().toString();
       FactCastJson.convertValue(probe, Integer.class);
@@ -240,7 +240,7 @@ public class FactCastJsonTest {
   @Test
   void toJsonNode() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om); ) {
+    try (val reset = FactCastJson.replaceObjectMapper(om)) {
 
       Map<String, Object> probe = new HashMap<>();
       FactCastJson.toJsonNode(probe);
@@ -252,7 +252,7 @@ public class FactCastJsonTest {
   @Test
   void writeValueAsBytes() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om); ) {
+    try (val reset = FactCastJson.replaceObjectMapper(om)) {
 
       Map<String, Object> probe = new HashMap<>();
       FactCastJson.writeValueAsBytes(probe);
@@ -264,7 +264,7 @@ public class FactCastJsonTest {
   @Test
   void readValueFromBytes() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om); ) {
+    try (val reset = FactCastJson.replaceObjectMapper(om)) {
 
       ObjectReader or = mock(ObjectReader.class);
       when(om.readerFor(String.class)).thenReturn(or);
@@ -280,7 +280,7 @@ public class FactCastJsonTest {
   @Test
   void writeValueAsString() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om); ) {
+    try (val reset = FactCastJson.replaceObjectMapper(om)) {
 
       UUID probe = UUID.randomUUID();
       FactCastJson.writeValueAsString(probe);
@@ -292,7 +292,7 @@ public class FactCastJsonTest {
   @Test
   void objectMapper() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om); ) {
+    try (val reset = FactCastJson.replaceObjectMapper(om)) {
 
       assertSame(om, FactCastJson.mapper());
     }

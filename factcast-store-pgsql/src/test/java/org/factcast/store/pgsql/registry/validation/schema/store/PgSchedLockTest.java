@@ -41,7 +41,7 @@ public class PgSchedLockTest {
 
   @Autowired JdbcTemplate tpl;
 
-  CountDownLatch latch = new CountDownLatch(1);
+  final CountDownLatch latch = new CountDownLatch(1);
 
   SqlRowSet rs;
 

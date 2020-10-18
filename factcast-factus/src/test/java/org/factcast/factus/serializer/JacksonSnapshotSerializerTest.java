@@ -22,7 +22,6 @@ import java.util.UUID;
 import java.util.function.Function;
 import lombok.Data;
 import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.serializer.SnapshotSerializer.JacksonSnapshotSerializer;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -69,15 +68,14 @@ class JacksonSnapshotSerializerTest {
         // as the Classname is part of the schema.
         // The solution is to rename the classname of all TestClassV*
         // classes to "TestClass".
-        underTest.schemaModifier(schema -> schema.replaceAll("TestClassV[^\"]*\"", "TestClass"));
+        JacksonSnapshotSerializer.schemaModifier(
+            schema -> schema.replaceAll("TestClassV[^\"]*\"", "TestClass"));
 
-        long v1 = underTest.calculateProjectionClassHash(TestClassV1.class);
-        long v1a = underTest.calculateProjectionClassHash(TestClassV1a_noRelevantChange.class);
-        long v2a = underTest.calculateProjectionClassHash(TestClassV2a_withChanges_newField.class);
-        long v2b =
-            underTest.calculateProjectionClassHash(TestClassV2b_withChanges_typeChanged.class);
-        long v2c =
-            underTest.calculateProjectionClassHash(TestClassV2c_withChanges_fieldRenamed.class);
+        long v1 = underTest.calculateProjectionSerial(TestClassV1.class);
+        long v1a = underTest.calculateProjectionSerial(TestClassV1a_noRelevantChange.class);
+        long v2a = underTest.calculateProjectionSerial(TestClassV2a_withChanges_newField.class);
+        long v2b = underTest.calculateProjectionSerial(TestClassV2b_withChanges_typeChanged.class);
+        long v2c = underTest.calculateProjectionSerial(TestClassV2c_withChanges_fieldRenamed.class);
 
         assertThat(v1).isEqualTo(v1a);
 
@@ -87,7 +85,7 @@ class JacksonSnapshotSerializerTest {
 
       } finally {
         // reset to "do nothing"
-        underTest.schemaModifier(Function.identity());
+        JacksonSnapshotSerializer.schemaModifier(Function.identity());
       }
     }
 

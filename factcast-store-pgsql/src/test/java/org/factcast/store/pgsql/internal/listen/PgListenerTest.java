@@ -54,7 +54,7 @@ public class PgListenerTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   PgMetrics registry;
 
-  PgConfigurationProperties props = new PgConfigurationProperties();
+  final PgConfigurationProperties props = new PgConfigurationProperties();
 
   @Captor ArgumentCaptor<FactInsertionEvent> factCaptor;
 

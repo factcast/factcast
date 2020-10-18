@@ -75,7 +75,7 @@ class ProjectionSnapshotRepositoryImplTest {
       when(snapshotCache.getSnapshot(any()))
           .thenReturn(Optional.of(new Snapshot(id, lastFact, bytes, true)));
 
-      when(serializer.calculateProjectionClassHash(SomeSnapshotProjection.class))
+      when(serializer.calculateProjectionSerial(SomeSnapshotProjection.class))
           // let's assume this is the serial id computed by the
           // serialiser
           .thenReturn(45L);
@@ -111,7 +111,7 @@ class ProjectionSnapshotRepositoryImplTest {
       when(snapshotCache.getSnapshot(any()))
           .thenReturn(Optional.of(new Snapshot(id, lastFact, bytes, true)));
 
-      when(serializer.calculateProjectionClassHash(SomeSnapshotProjection.class))
+      when(serializer.calculateProjectionSerial(SomeSnapshotProjection.class))
           // let's assume this is the serial id computed by the
           // serialiser
           .thenReturn(45L, 0L);
@@ -123,7 +123,7 @@ class ProjectionSnapshotRepositoryImplTest {
       // ASSERT
       verify(snapshotCache, times(2)).getSnapshot(idCaptor.capture());
 
-      verify(serializer, times(1)).calculateProjectionClassHash(any());
+      verify(serializer, times(1)).calculateProjectionSerial(any());
 
       assertThat(idCaptor.getAllValues()).hasSize(2);
 

@@ -33,7 +33,7 @@ public class PostgresEraser {
     p.put("password", pg.getPassword());
 
     try (val con = DriverManager.getConnection(url, p);
-        val st = con.createStatement(); ) {
+        val st = con.createStatement()) {
       st.execute("TRUNCATE fact");
       st.execute("TRUNCATE tokenstore");
       st.execute("TRUNCATE transformationcache");
