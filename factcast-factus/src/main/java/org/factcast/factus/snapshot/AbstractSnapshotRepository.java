@@ -113,6 +113,7 @@ abstract class AbstractSnapshotRepository {
             field.setAccessible(true);
             return field.getLong(null);
           } catch (NoSuchFieldException | IllegalAccessException e) {
+            // intentionally empty, falling back to serializer
           }
 
           // fallback: calculated hash
