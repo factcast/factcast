@@ -71,7 +71,11 @@ public interface ProjectionAccessor {
 
   // managed projections:
 
-  /** blockingly updates the given projection with default timeout */
+  /**
+   * blockingly updates the given projection with default timeout
+   *
+   * <p>This method is thread-safe, even on the same projection.
+   */
   @SneakyThrows
   default <P extends ManagedProjection> void update(@NonNull P managedProjection) {
     update(managedProjection, FactusConstants.FOREVER);
@@ -80,6 +84,8 @@ public interface ProjectionAccessor {
   /**
    * blockingly updates the given projection with the given timeout. If that timeout is reached, a
    * timeoutexception will be thrown.
+   *
+   * <p>This method is thread-safe, even on the same projection.
    */
   <P extends ManagedProjection> void update(
       @NonNull P managedProjection, @NonNull Duration maxWaitTime) throws TimeoutException;

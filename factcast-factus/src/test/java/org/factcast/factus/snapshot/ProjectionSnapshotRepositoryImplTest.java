@@ -18,6 +18,7 @@ package org.factcast.factus.snapshot;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +32,7 @@ import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,6 +45,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ProjectionSnapshotRepositoryImplTest {
 
+  @Mock private SnapshotSerializer serializer;
+
   @Mock private SnapshotSerializerSupplier serializerSupplier;
 
   @Mock private SnapshotCache snapshotCache;
@@ -54,6 +58,13 @@ class ProjectionSnapshotRepositoryImplTest {
   @Nested
   class WhenFindingLatest {
 
+    @Captor ArgumentCaptor<SnapshotId> idCaptor;
+
+    @BeforeEach
+    void setup() {
+      when(serializerSupplier.retrieveSerializer(any())).thenReturn(serializer);
+    }
+
     @Test
     void findLatest_exists() {
       // INIT
@@ -63,6 +74,12 @@ class ProjectionSnapshotRepositoryImplTest {
 
       when(snapshotCache.getSnapshot(any()))
           .thenReturn(Optional.of(new Snapshot(id, lastFact, bytes, true)));
+
+      when(serializer.calculateProjectionSerial(SomeSnapshotProjection.class))
+          // let's assume this is the serial id computed by the
+          // serialiser
+          .thenReturn(45L);
+
       // RUN
       Optional<Snapshot> latest = underTest.findLatest(SomeSnapshotProjection.class);
 
@@ -74,6 +91,50 @@ class ProjectionSnapshotRepositoryImplTest {
           .containsExactly(lastFact, bytes, true);
 
       assertThat(latest.get().id()).isNotNull();
+
+      verify(snapshotCache).getSnapshot(idCaptor.capture());
+
+      assertThat(idCaptor.getValue()).isNotNull();
+
+      assertThat(idCaptor.getValue().key())
+          .contains(":org.factcast.factus.serializer.SnapshotSerializer")
+          .endsWith(":45");
+    }
+
+    @Test
+    void findLatest_cachesSerialUId() {
+      // INIT
+      SnapshotId id = mock(SnapshotId.class);
+      UUID lastFact = UUID.randomUUID();
+      byte[] bytes = "foo".getBytes();
+
+      when(snapshotCache.getSnapshot(any()))
+          .thenReturn(Optional.of(new Snapshot(id, lastFact, bytes, true)));
+
+      when(serializer.calculateProjectionSerial(SomeSnapshotProjection.class))
+          // let's assume this is the serial id computed by the
+          // serialiser
+          .thenReturn(45L, 0L);
+
+      // RUN
+      underTest.findLatest(SomeSnapshotProjection.class);
+      underTest.findLatest(SomeSnapshotProjection.class);
+
+      // ASSERT
+      verify(snapshotCache, times(2)).getSnapshot(idCaptor.capture());
+
+      verify(serializer, times(1)).calculateProjectionSerial(any());
+
+      assertThat(idCaptor.getAllValues()).hasSize(2);
+
+      idCaptor.getAllValues().stream()
+          .map(SnapshotId::key)
+          .forEach(
+              key -> {
+                assertThat(key)
+                    .contains(":org.factcast.factus.serializer.SnapshotSerializer")
+                    .endsWith(":45");
+              });
     }
 
     @Test
@@ -93,8 +154,6 @@ class ProjectionSnapshotRepositoryImplTest {
     private final UUID STATE = UUID.randomUUID();
 
     @Mock private SnapshotProjection projection;
-
-    @Mock private SnapshotSerializer serializer;
 
     @Captor private ArgumentCaptor<Snapshot> snapshotCaptor;
 

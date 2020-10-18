@@ -30,7 +30,7 @@ import org.factcast.factus.serializer.SnapshotSerializer;
 public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository
     implements AggregateSnapshotRepository {
 
-  private SnapshotSerializerSupplier serializerSupplier;
+  private final SnapshotSerializerSupplier serializerSupplier;
 
   public AggregateSnapshotRepositoryImpl(
       SnapshotCache snapshotCache, SnapshotSerializerSupplier serializerSupplier) {
@@ -41,7 +41,11 @@ public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository
   @Override
   public Optional<Snapshot> findLatest(
       @NonNull Class<? extends Aggregate> type, @NonNull UUID aggregateId) {
-    SnapshotId snapshotId = new SnapshotId(createKeyForType(type), aggregateId);
+
+    SnapshotId snapshotId =
+        new SnapshotId(
+            createKeyForType(type, () -> serializerSupplier.retrieveSerializer(type)), aggregateId);
+
     return snapshotCache.getSnapshot(snapshotId);
   }
 
@@ -53,7 +57,9 @@ public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository
 
     return CompletableFuture.runAsync(
         () -> {
-          val id = new SnapshotId(createKeyForType(type), AggregateUtil.aggregateId(aggregate));
+          val id =
+              new SnapshotId(
+                  createKeyForType(type, () -> ser), AggregateUtil.aggregateId(aggregate));
           putBlocking(new Snapshot(id, state, ser.serialize(aggregate), ser.includesCompression()));
         });
   }

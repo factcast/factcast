@@ -161,4 +161,8 @@ public final class FactCastJson {
   public static ObjectMapper mapper() {
     return objectMapper;
   }
+
+  public static ObjectMapper getObjectMapper() {
+    return objectMapper;
+  }
 }

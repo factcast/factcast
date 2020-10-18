@@ -384,9 +384,9 @@ class DefaultProjectorTest {
   class NonStaticClass$MockitoMock extends NonStaticClass {
     @Handler
     void apply(SimpleEvent e) {}
-  };
+  }
 
-  static class StaticClass {};
+  static class StaticClass {}
 
   // Working handlers
 

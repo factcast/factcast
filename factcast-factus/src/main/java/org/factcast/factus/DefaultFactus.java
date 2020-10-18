@@ -290,7 +290,7 @@ public class DefaultFactus implements Factus {
     Optional<Snapshot> latest = aggregateSnapshotRepository.findLatest(aggregateClass, aggregateId);
     Optional<A> optionalA = latest.map(as -> ser.deserialize(aggregateClass, as.bytes()));
     // noinspection
-    A aggregate = optionalA.orElseGet(() -> this.<A>initial(aggregateClass, aggregateId));
+    A aggregate = optionalA.orElseGet(() -> this.initial(aggregateClass, aggregateId));
 
     UUID state =
         catchupProjection(
