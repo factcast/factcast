@@ -27,11 +27,33 @@ Serialization is done using a `SnapshotSerializer`.
 ```java
 
 public interface SnapshotSerializer {
-    byte[] serialize(SnapshotProjection a);
+  byte[] serialize(SnapshotProjection a);
 
-    <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes);
+  <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes);
 
-    boolean includesCompression();
+  boolean includesCompression();
+
+  /**
+   * In order to catch changes when a {@link SnapshotProjection} got changed, calculate a hash that
+   * changes when the schema of the serialised class changes.
+   *
+   * <p>Note that in some cases, it is possible to add fields and use serializer-specific means to
+   * ignore them for serialization (e.g. by using @JsonIgnore with Jackson).
+   *
+   * <p>Hence, every serializer is asked to calculate it's own hash, that should only change in case
+   * changes to the projection where made that were relevant for deserialization.
+   *
+   * <p>This method is only used if no other means of providing a hash is used. Alternatives are
+   * using the @ProjectionSerial annotation or defining a final static long field called
+   * serialVersionUID.
+   *
+   * <p>Note, that the serial will be cached per class
+   *
+   * @param projectionClass the snapshot projection class to calculate the hash for
+   * @return the calculated hash or null, if no hash could be calculated (makes snapshotting fail if
+   *     no other means of providing a hash is used)
+   */
+  Long calculateProjectionSerial(Class<? extends SnapshotProjection> projectionClass);
 }
 ```
 
@@ -48,3 +70,16 @@ It is very easy to provide an implementation of SnapshotCache that uses for inst
 The SnapshotCache by default only keeps the last version of a particular snapshot, and deletes it after 90 days of being unused. 
 See [Properties](/setup/properties)
 
+### Serials
+
+When a projection class is changed (e.g. a field is renamed or its type is changed), depending on the Serializer, there will be a problem with deserialization.
+In order to rebuild a snapshot in this case a "serial" is to be provided for the Projection.
+Only snapshots that have the same "serial" than the class in its current state will be used.
+
+There are 3 ways to provide a serial:
+
+1. adding `@ProjectionMetaData(hash = 1L)` to the projection class will set the serial to 1
+2. adding `private static final serialVersionUID = 1L` to the projection class will set the serial to 1
+3. let the serial be calculated by the SnapshotSerializer.
+
+If no serial is provided through any means, you will get a warning and snapshots will not be used beyond the lifecycle of the JVM. (Which will make your old snapshots pile up in the cache, so please don't rely on this)
