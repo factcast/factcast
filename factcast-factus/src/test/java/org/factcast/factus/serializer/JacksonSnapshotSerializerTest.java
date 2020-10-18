@@ -13,47 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.serializer.binary;
+package org.factcast.factus.serializer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 import java.util.function.Function;
+import lombok.Data;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class BinarySnapshotSerializerTest {
+class JacksonSnapshotSerializerTest {
 
-  @InjectMocks private BinarySnapshotSerializer underTest;
+  private final JacksonSnapshotSerializer underTest = new JacksonSnapshotSerializer();
 
-  @Nested
-  class WhenSerializing {
+  @Test
+  void testRoundtrip() {
+    // RUN
+    SimpleSnapshotProjection initialProjection = new SimpleSnapshotProjection();
+    initialProjection.val("Hello");
 
-    @Test
-    void canDeserialize() {
-      TestProjection b =
-          underTest.deserialize(TestProjection.class, underTest.serialize(new TestProjection()));
-      assertEquals("bar", b.foo());
-    }
+    byte[] bytes = underTest.serialize(initialProjection);
+    SimpleSnapshotProjection projection =
+        underTest.deserialize(SimpleSnapshotProjection.class, bytes);
 
-    @Test
-    void compresses() {
-      CompressableTestProjection testProjection = new CompressableTestProjection();
-      byte[] bytes = underTest.serialize(testProjection);
-      CompressableTestProjection b = underTest.deserialize(CompressableTestProjection.class, bytes);
-      assertEquals(b.someString(), testProjection.someString());
-      // lots of same chars in there, should be able to compress to 50%
-      // including the overhead of msgpack
-      assertTrue(bytes.length < testProjection.someString().length() / 2);
-    }
+    // ASSERT
+    assertThat(projection.val()).isEqualTo("Hello");
+  }
+
+  @Test
+  void testCompressionProperty() {
+    assertThat(underTest.includesCompression()).isFalse();
+  }
+
+  @Data
+  static class SimpleSnapshotProjection implements SnapshotProjection {
+    String val;
   }
 
   @Nested
@@ -68,7 +68,7 @@ class BinarySnapshotSerializerTest {
         // as the Classname is part of the schema.
         // The solution is to rename the classname of all TestClassV*
         // classes to "TestClass".
-        BinarySnapshotSerializer.schemaModifier(
+        JacksonSnapshotSerializer.schemaModifier(
             schema -> schema.replaceAll("TestClassV[^\"]*\"", "TestClass"));
 
         long v1 = underTest.calculateProjectionSerial(TestClassV1.class);
@@ -85,7 +85,7 @@ class BinarySnapshotSerializerTest {
 
       } finally {
         // reset to "do nothing"
-        BinarySnapshotSerializer.schemaModifier(Function.identity());
+        JacksonSnapshotSerializer.schemaModifier(Function.identity());
       }
     }
 

@@ -28,9 +28,10 @@ import org.junit.jupiter.api.*;
 
 class SnapshotSerializerSupplierTest {
 
-  private @NonNull SnapshotSerializer defaultSerializer = new MyDefaultSnapshotSerializer();
+  private @NonNull final SnapshotSerializer defaultSerializer = new MyDefaultSnapshotSerializer();
 
-  private SnapshotSerializerSupplier underTest = new SnapshotSerializerSupplier(defaultSerializer);
+  private final SnapshotSerializerSupplier underTest =
+      new SnapshotSerializerSupplier(defaultSerializer);
 
   @Nested
   class WhenRetrievingSerializer {

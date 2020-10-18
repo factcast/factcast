@@ -13,17 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projection;
+package org.factcast.factus.serializer;
 
-import java.time.Duration;
-import lombok.NonNull;
-import org.factcast.factus.FactusConstants;
-
-public interface WriterTokenAware {
-  default AutoCloseable acquireWriteToken() {
-    return acquireWriteToken(FactusConstants.FOREVER);
-  }
-
-  /** might return null if token cannot be acquired */
-  AutoCloseable acquireWriteToken(@NonNull Duration maxWait);
-}
+public class DefaultSnapshotSerializer extends JacksonSnapshotSerializer {}

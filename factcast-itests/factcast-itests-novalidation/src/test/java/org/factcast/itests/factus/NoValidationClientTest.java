@@ -91,7 +91,7 @@ public class NoValidationClientTest {
                   assertEquals(fact.type(), f.type());
                   assertEquals(fact.id(), f.id());
                 })
-            .awaitCatchup(1000); ) {
+            .awaitCatchup(1000)) {
       // empty block
     }
   }

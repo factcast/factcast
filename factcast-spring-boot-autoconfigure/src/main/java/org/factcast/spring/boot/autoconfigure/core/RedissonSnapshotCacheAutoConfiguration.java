@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ConditionalOnClass({RedissonSnapshotCache.class, RedissonClient.class})
+@ConditionalOnMissingBean(SnapshotCache.class)
 @Generated
 @AutoConfigureOrder(-100)
 public class RedissonSnapshotCacheAutoConfiguration {

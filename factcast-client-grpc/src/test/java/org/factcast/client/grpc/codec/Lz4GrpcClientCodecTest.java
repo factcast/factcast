@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 
 class Lz4GrpcClientCodecTest {
 
-  Lz4GrpcClientCodec uut = new Lz4GrpcClientCodec();
+  final Lz4GrpcClientCodec uut = new Lz4GrpcClientCodec();
 
   @Test
   void getMessageEncoding() {
