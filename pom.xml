@@ -343,14 +343,6 @@
         <artifactId>spotless-maven-plugin</artifactId>
         <version>${spotless-maven-plugin.version}</version>
         <inherited>false</inherited>
-        <executions>
-          <execution>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
         <configuration>
           <ratchetFrom>origin/master</ratchetFrom>
           <java>
