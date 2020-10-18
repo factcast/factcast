@@ -47,7 +47,6 @@ import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.InLockedOperation;
 import org.factcast.factus.lock.Locked;
 import org.factcast.factus.metrics.FactusMetrics;
-import org.factcast.factus.metrics.GaugedEvent;
 import org.factcast.factus.metrics.TimedOperation;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.projector.Projector;
@@ -147,9 +146,9 @@ public class DefaultFactus implements Factus {
     assertNotClosed();
     InLockedOperation.assertNotInLockedOperation();
 
-    Duration INTERVAL = Duration.ofMinutes(5); // TODO should be a property?
+    Duration interval = Duration.ofMinutes(5); // TODO should be a property?
     while (!closed.get()) {
-      AutoCloseable token = subscribedProjection.acquireWriteToken(INTERVAL);
+      AutoCloseable token = subscribedProjection.acquireWriteToken(interval);
       if (token != null) {
         log.info("Acquired writer token for {}", subscribedProjection.getClass());
         Subscription subscription = doSubscribe(subscribedProjection);
@@ -157,7 +156,7 @@ public class DefaultFactus implements Factus {
         managedObjects.add(
             new AutoCloseable() {
               @Override
-              public void close() throws Exception {
+              public void close() {
                 tryClose(subscription);
                 tryClose(token);
               }
@@ -166,6 +165,7 @@ public class DefaultFactus implements Factus {
                 try {
                   c.close();
                 } catch (Exception ignore) {
+                  // intentional
                 }
               }
             });
@@ -251,11 +251,6 @@ public class DefaultFactus implements Factus {
     P projection;
     if (latest.isPresent()) {
       Snapshot snap = latest.get();
-
-      factusMetrics.record(
-          GaugedEvent.FETCH_SIZE,
-          Tags.of(Tag.of(CLASS, projectionClass.getCanonicalName())),
-          snap.bytes().length);
       projection = ser.deserialize(projectionClass, snap.bytes());
     } else {
       log.trace("Creating initial projection version for {}", projectionClass);
@@ -413,11 +408,7 @@ public class DefaultFactus implements Factus {
 
   @Override
   public <P extends SnapshotProjection> Locked<P> withLockOn(@NonNull Class<P> projectionClass) {
-    P fresh =
-        factusMetrics.timed(
-            TimedOperation.FETCH_DURATION,
-            Tags.of(Tag.of(LOCKED, TRUE), Tag.of(CLASS, projectionClass.getCanonicalName())),
-            () -> fetch(projectionClass));
+    P fresh = fetch(projectionClass);
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
