@@ -18,17 +18,16 @@ package org.factcast.core.spec;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.*;
-
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
+import org.junit.jupiter.api.*;
 
 public class JavaScriptEngineSupplierTest {
 
-    @Test
-    void testUnavailable() {
-        NashornScriptEngineFactory m = spy(new NashornScriptEngineFactory());
-        when(m.getScriptEngine()).thenReturn(null);
-        JavaScriptEngineSupplier uut = spy(new JavaScriptEngineSupplier(m));
-        assertThrows(IllegalStateException.class, uut::get);
-    }
+  @Test
+  void testUnavailable() {
+    NashornScriptEngineFactory m = spy(new NashornScriptEngineFactory());
+    when(m.getScriptEngine()).thenReturn(null);
+    JavaScriptEngineSupplier uut = spy(new JavaScriptEngineSupplier(m));
+    assertThrows(IllegalStateException.class, uut::get);
+  }
 }

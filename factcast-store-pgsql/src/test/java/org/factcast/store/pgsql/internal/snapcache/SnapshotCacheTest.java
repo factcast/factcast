@@ -21,7 +21,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
-
+import lombok.NonNull;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.store.pgsql.internal.PgTestConfiguration;
@@ -36,197 +36,175 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import lombok.NonNull;
-
 @SuppressWarnings("unchecked")
-@ContextConfiguration(classes = { PgTestConfiguration.class })
+@ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 class SnapshotCacheTest {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+  @Autowired private JdbcTemplate jdbcTemplate;
 
-    @Autowired
-    private PgSnapshotCache underTest;
+  @Autowired private PgSnapshotCache underTest;
 
-    @Test
-    void getSnapshot_empty() {
-        // RUN
-        Optional<Snapshot> snapshot = underTest
-                .getSnapshot(new SnapshotId("xxx", UUID.randomUUID()));
+  @Test
+  void getSnapshot_empty() {
+    // RUN
+    Optional<Snapshot> snapshot = underTest.getSnapshot(new SnapshotId("xxx", UUID.randomUUID()));
 
-        // ASSERT
-        assertThat(snapshot)
-                .isEmpty();
-    }
+    // ASSERT
+    assertThat(snapshot).isEmpty();
+  }
 
-    @Test
-    void getSnapshot_returnsSnapshotAndUpdatesTimestamp() throws InterruptedException {
-        // INIT
-        // put snapshot
-        SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
-        UUID lastFact = UUID.randomUUID();
+  @Test
+  void getSnapshot_returnsSnapshotAndUpdatesTimestamp() throws InterruptedException {
+    // INIT
+    // put snapshot
+    SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
+    UUID lastFact = UUID.randomUUID();
 
-        underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
+    underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
 
-        Timestamp firstAccess = getTimestamp(id);
+    Timestamp firstAccess = getTimestamp(id);
 
-        // RUN
-        Optional<Snapshot> snapshot = underTest
-                .getSnapshot(id);
+    // RUN
+    Optional<Snapshot> snapshot = underTest.getSnapshot(id);
 
-        // ASSERT
-        assertThat(snapshot)
-                .isNotEmpty()
-                .get()
-                .extracting(Snapshot::id,
-                        Snapshot::lastFact,
-                        Snapshot::bytes,
-                        Snapshot::compressed)
-                .containsExactly(id, lastFact, "foo".getBytes(), false);
+    // ASSERT
+    assertThat(snapshot)
+        .isNotEmpty()
+        .get()
+        .extracting(Snapshot::id, Snapshot::lastFact, Snapshot::bytes, Snapshot::compressed)
+        .containsExactly(id, lastFact, "foo".getBytes(), false);
 
-        // assert that timestamp got updated
-        Timestamp recentAccess = getTimestamp(id);
+    // assert that timestamp got updated
+    Timestamp recentAccess = getTimestamp(id);
 
-        assertThat(recentAccess)
-                .isAfter(firstAccess);
+    assertThat(recentAccess).isAfter(firstAccess);
 
-        Thread.sleep(100);
+    Thread.sleep(100);
 
-        // also make sure the timestamp is properly set to the current time, and
-        // not some time in the future / past
-        Date now = new Date();
-        assertThat(recentAccess)
-                // should not be newer than current time
-                .isBefore(now)
-                // but also not older than 5 seconds,
-                // assuming test execution is less than 5 seconds ;-)
-                .isAfter(minus5seconds(now));
-    }
+    // also make sure the timestamp is properly set to the current time, and
+    // not some time in the future / past
+    Date now = new Date();
+    assertThat(recentAccess)
+        // should not be newer than current time
+        .isBefore(now)
+        // but also not older than 5 seconds,
+        // assuming test execution is less than 5 seconds ;-)
+        .isAfter(minus5seconds(now));
+  }
 
-    @NonNull
-    private Date minus5seconds(Date now) {
-        return new Date(now.getTime() - 1000 * 5);
-    }
+  @NonNull
+  private Date minus5seconds(Date now) {
+    return new Date(now.getTime() - 1000 * 5);
+  }
 
-    @Test
-    void setSnapshot_insert() {
-        // INIT
-        SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
-        UUID lastFact = UUID.randomUUID();
+  @Test
+  void setSnapshot_insert() {
+    // INIT
+    SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
+    UUID lastFact = UUID.randomUUID();
 
-        Optional<Snapshot> snapshot = underTest
-                .getSnapshot(id);
+    Optional<Snapshot> snapshot = underTest.getSnapshot(id);
 
-        assertThat(snapshot)
-                .isEmpty();
+    assertThat(snapshot).isEmpty();
 
-        // RUN
-        // put snapshot
-        underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
+    // RUN
+    // put snapshot
+    underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
 
-        // ASSERT
-        byte[] data = getData(id);
+    // ASSERT
+    byte[] data = getData(id);
 
-        assertThat(data)
-                .isEqualTo("foo".getBytes());
-    }
+    assertThat(data).isEqualTo("foo".getBytes());
+  }
 
-    private byte[] getData(SnapshotId id) {
-        return jdbcTemplate.queryForObject(
-                "SELECT data FROM snapshot_cache WHERE uuid=? AND cache_key=?",
-                byte[].class,
-                id.uuid(),
-                id.key());
-    }
+  private byte[] getData(SnapshotId id) {
+    return jdbcTemplate.queryForObject(
+        "SELECT data FROM snapshot_cache WHERE uuid=? AND cache_key=?",
+        byte[].class,
+        id.uuid(),
+        id.key());
+  }
 
-    @Test
-    void setSnapshot_update() {
-        // INIT
-        SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
-        UUID lastFact = UUID.randomUUID();
+  @Test
+  void setSnapshot_update() {
+    // INIT
+    SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
+    UUID lastFact = UUID.randomUUID();
 
-        underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
+    underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
 
-        byte[] data = getData(id);
+    byte[] data = getData(id);
 
-        assertThat(data)
-                .isEqualTo("foo".getBytes());
+    assertThat(data).isEqualTo("foo".getBytes());
 
-        // RUN
-        // put snapshot
-        UUID newerFact = UUID.randomUUID();
-        underTest.setSnapshot(new Snapshot(id, newerFact, "bar".getBytes(), false));
+    // RUN
+    // put snapshot
+    UUID newerFact = UUID.randomUUID();
+    underTest.setSnapshot(new Snapshot(id, newerFact, "bar".getBytes(), false));
 
-        // ASSERT
-        data = getData(id);
+    // ASSERT
+    data = getData(id);
 
-        // check got actually updated
-        assertThat(data)
-                .isEqualTo("bar".getBytes());
-    }
+    // check got actually updated
+    assertThat(data).isEqualTo("bar".getBytes());
+  }
 
-    @Test
-    void clearSnapshot() {
-        // INIT
-        SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
-        UUID lastFact = UUID.randomUUID();
+  @Test
+  void clearSnapshot() {
+    // INIT
+    SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
+    UUID lastFact = UUID.randomUUID();
 
-        underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
+    underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
 
-        byte[] data = getData(id);
+    byte[] data = getData(id);
 
-        assertThat(data)
-                .isEqualTo("foo".getBytes());
+    assertThat(data).isEqualTo("foo".getBytes());
 
-        // RUN
-        underTest.clearSnapshot(id);
+    // RUN
+    underTest.clearSnapshot(id);
 
-        // ASSERT
-        Optional<Snapshot> snapshot = underTest
-                .getSnapshot(id);
+    // ASSERT
+    Optional<Snapshot> snapshot = underTest.getSnapshot(id);
 
-        assertThat(snapshot)
-                .isEmpty();
-    }
+    assertThat(snapshot).isEmpty();
+  }
 
-    @Test
-    void compact() {
-        // INIT
-        SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
-        UUID lastFact = UUID.randomUUID();
+  @Test
+  void compact() {
+    // INIT
+    SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
+    UUID lastFact = UUID.randomUUID();
 
-        underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
-        Optional<Snapshot> snapshot = underTest.getSnapshot(id);
+    underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
+    Optional<Snapshot> snapshot = underTest.getSnapshot(id);
 
-        assertThat(snapshot)
-                .isNotEmpty();
+    assertThat(snapshot).isNotEmpty();
 
-        Timestamp lastAccess = getTimestamp(id);
+    Timestamp lastAccess = getTimestamp(id);
 
-        // RUN
-        underTest.compact(plusOneSecond(lastAccess));
+    // RUN
+    underTest.compact(plusOneSecond(lastAccess));
 
-        // ASSERT
-        snapshot = underTest.getSnapshot(id);
+    // ASSERT
+    snapshot = underTest.getSnapshot(id);
 
-        assertThat(snapshot)
-                .isEmpty();
-    }
+    assertThat(snapshot).isEmpty();
+  }
 
-    @NonNull
-    private DateTime plusOneSecond(Date date) {
-        return new DateTime(date)
-                .plusSeconds(1);
-    }
+  @NonNull
+  private DateTime plusOneSecond(Date date) {
+    return new DateTime(date).plusSeconds(1);
+  }
 
-    private Timestamp getTimestamp(SnapshotId id) {
-        return jdbcTemplate.queryForObject(
-                "SELECT last_access FROM snapshot_cache WHERE uuid=? AND cache_key=?",
-                Timestamp.class,
-                id.uuid(),
-                id.key());
-    }
+  private Timestamp getTimestamp(SnapshotId id) {
+    return jdbcTemplate.queryForObject(
+        "SELECT last_access FROM snapshot_cache WHERE uuid=? AND cache_key=?",
+        Timestamp.class,
+        id.uuid(),
+        id.key());
+  }
 }

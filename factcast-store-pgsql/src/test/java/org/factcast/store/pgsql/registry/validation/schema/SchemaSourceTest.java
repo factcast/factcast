@@ -21,17 +21,16 @@ import org.junit.jupiter.api.Test;
 
 public class SchemaSourceTest {
 
-    @Test
-    public void testToKey() throws Exception {
-        String ns = "ns";
-        String type = "type";
-        int version = 7;
-        SchemaSource uut = new SchemaSource("id", "hash", ns, type, version);
-        SchemaKey actual = uut.toKey();
+  @Test
+  public void testToKey() throws Exception {
+    String ns = "ns";
+    String type = "type";
+    int version = 7;
+    SchemaSource uut = new SchemaSource("id", "hash", ns, type, version);
+    SchemaKey actual = uut.toKey();
 
-        assertThat(actual.ns()).isEqualTo(ns);
-        assertThat(actual.type()).isEqualTo(type);
-        assertThat(actual.version()).isEqualTo(version);
-    }
-
+    assertThat(actual.ns()).isEqualTo(ns);
+    assertThat(actual.type()).isEqualTo(type);
+    assertThat(actual.version()).isEqualTo(version);
+  }
 }

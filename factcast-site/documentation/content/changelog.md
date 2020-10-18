@@ -3,6 +3,62 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 
 # Changelog
 
+## [0.3.4](https://github.com/factcast/factcast/tree/0.3.4) (2020-10-14)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.3...0.3.4)
+
+**Fixed bugs:**
+
+- Unify naming \(SnapshotCache vs SnapshotRepository\) and fix Autoconfiguration for SnapshotCaches [\#1070](https://github.com/factcast/factcast/issues/1070)
+- Issue1070 autoconfiguration & name unification of snapshotCaches [\#1072](https://github.com/factcast/factcast/pull/1072) ([uweschaefer](https://github.com/uweschaefer))
+
+**Closed issues:**
+
+- Switch formatting to google format [\#1054](https://github.com/factcast/factcast/issues/1054)
+
+**Merged pull requests:**
+
+- \#1071: introduce RedisExtension that clears all keys in redis [\#1073](https://github.com/factcast/factcast/pull/1073) ([otbe](https://github.com/otbe))
+- switch to google format [\#1056](https://github.com/factcast/factcast/pull/1056) ([uweschaefer](https://github.com/uweschaefer))
+
+## [0.3.3](https://github.com/factcast/factcast/tree/0.3.3) (2020-09-25)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.2...0.3.3)
+
+**Closed issues:**
+
+- RedissonSnapshotCacheAutoConfiguration doesnt kick in  [\#1052](https://github.com/factcast/factcast/issues/1052)
+
+**Merged pull requests:**
+
+- Fixes 1052 [\#1053](https://github.com/factcast/factcast/pull/1053) ([otbe](https://github.com/otbe))
+- Docs updated [\#1045](https://github.com/factcast/factcast/pull/1045) ([BernhardBln](https://github.com/BernhardBln))
+
+## [0.3.2](https://github.com/factcast/factcast/tree/0.3.2) (2020-09-10)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.1...0.3.2)
+
+**Merged pull requests:**
+
+- Fix: FactCastAutoConfiguration also configures EventSerializer [\#1025](https://github.com/factcast/factcast/pull/1025) ([BernhardBln](https://github.com/BernhardBln))
+
+## [0.3.1](https://github.com/factcast/factcast/tree/0.3.1) (2020-09-08)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.0...0.3.1)
+
+**Fixed bugs:**
+
+- Factus autoconfiguration is always on [\#1023](https://github.com/factcast/factcast/issues/1023)
+
+**Closed issues:**
+
+- Implement filesystem based schemaregistry [\#965](https://github.com/factcast/factcast/issues/965)
+
+**Merged pull requests:**
+
+- Issue1023 @ConditionalOnMissingBean on autoconfiguration [\#1024](https://github.com/factcast/factcast/pull/1024) ([uweschaefer](https://github.com/uweschaefer))
+- Issue965 filesystem based schema registry [\#1014](https://github.com/factcast/factcast/pull/1014) ([BernhardBln](https://github.com/BernhardBln))
+
 ## [0.3.0](https://github.com/factcast/factcast/tree/0.3.0) (2020-08-30)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/factcast-0.1.4.3...0.3.0)

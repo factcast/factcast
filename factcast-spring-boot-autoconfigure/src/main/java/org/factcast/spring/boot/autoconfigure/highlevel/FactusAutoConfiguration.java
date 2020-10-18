@@ -15,6 +15,9 @@
  */
 package org.factcast.spring.boot.autoconfigure.highlevel;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import lombok.Generated;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.SnapshotCache;
@@ -24,8 +27,8 @@ import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.projector.DefaultProjectorFactory;
+import org.factcast.factus.serializer.DefaultSnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.serializer.SnapshotSerializer.DefaultSnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
@@ -36,44 +39,47 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import lombok.Generated;
-import lombok.extern.slf4j.Slf4j;
-
 @Configuration
 @ConditionalOnClass(Factus.class)
 @Generated
 @Slf4j
 public class FactusAutoConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean
-    public Factus factus(FactCast fc, SnapshotCache sr, EventSerializer deserializer,
-            EventConverter eventConverter,
-            SnapshotSerializerSupplier snapshotSerializerSupplier, FactusMetrics factusMetrics) {
-        return new DefaultFactus(fc, new DefaultProjectorFactory(deserializer), eventConverter,
-                new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
-                new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
-                snapshotSerializerSupplier, factusMetrics);
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  public Factus factus(
+      FactCast fc,
+      SnapshotCache sr,
+      EventSerializer deserializer,
+      EventConverter eventConverter,
+      SnapshotSerializerSupplier snapshotSerializerSupplier,
+      FactusMetrics factusMetrics) {
+    return new DefaultFactus(
+        fc,
+        new DefaultProjectorFactory(deserializer),
+        eventConverter,
+        new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
+        new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
+        snapshotSerializerSupplier,
+        factusMetrics);
+  }
 
-    @Bean
-    @ConditionalOnMissingBean
-    public SnapshotSerializerSupplier snapshotSerializerSupplier(SnapshotSerializer ser) {
-        return new SnapshotSerializerSupplier(ser);
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  public SnapshotSerializerSupplier snapshotSerializerSupplier(SnapshotSerializer ser) {
+    return new SnapshotSerializerSupplier(ser);
+  }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @Order(Ordered.LOWEST_PRECEDENCE)
-    public SnapshotSerializer snapshotSerializer() {
-        return new DefaultSnapshotSerializer();
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  @Order(Ordered.LOWEST_PRECEDENCE)
+  public SnapshotSerializer snapshotSerializer() {
+    return new DefaultSnapshotSerializer();
+  }
 
-    @Bean
-    @ConditionalOnMissingBean
-    public FactusMetrics factusMetrics(MeterRegistry meterRegistry) {
-        return new FactusMetricsImpl(meterRegistry);
-    }
-
+  @Bean
+  @ConditionalOnMissingBean
+  public FactusMetrics factusMetrics(MeterRegistry meterRegistry) {
+    return new FactusMetricsImpl(meterRegistry);
+  }
 }

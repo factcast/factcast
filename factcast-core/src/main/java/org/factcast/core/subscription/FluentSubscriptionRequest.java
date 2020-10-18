@@ -19,14 +19,12 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
-
-import org.factcast.core.spec.FactSpec;
-
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.factcast.core.spec.FactSpec;
 
 /**
  * SubscriptionRequest intended to be used by clients for convenience.
@@ -37,104 +35,109 @@ import lombok.experimental.FieldDefaults;
 @Getter
 class FluentSubscriptionRequest implements SubscriptionRequest {
 
-    boolean ephemeral = false;
+  boolean ephemeral = false;
 
-    boolean marks = true;
+  boolean marks = true;
 
-    long maxBatchDelayInMs = 0;
+  long maxBatchDelayInMs = 0;
 
-    boolean continuous;
+  boolean continuous;
 
-    UUID startingAfter;
+  UUID startingAfter;
 
-    final List<FactSpec> specs = new LinkedList<>();
+  final List<FactSpec> specs = new LinkedList<>();
 
-    boolean idOnly = false;
+  boolean idOnly = false;
 
-    final String debugInfo;
+  final String debugInfo;
 
-    String pid;
+  String pid;
 
-    FluentSubscriptionRequest() {
-        debugInfo = createDebugInfo();
-    }
+  FluentSubscriptionRequest() {
+    debugInfo = createDebugInfo();
+  }
 
-    private String createDebugInfo() {
-        StackTraceElement stackTraceElement = new Exception().getStackTrace()[3];
-        return UUID.randomUUID() + " (" + stackTraceElement.getClassName()
-                .substring(stackTraceElement.getClassName().lastIndexOf(".") + 1) + "."
-                + stackTraceElement.getMethodName() + ":" + stackTraceElement.getLineNumber() + ")";
-    }
+  private String createDebugInfo() {
+    StackTraceElement stackTraceElement = new Exception().getStackTrace()[3];
+    return UUID.randomUUID()
+        + " ("
+        + stackTraceElement
+            .getClassName()
+            .substring(stackTraceElement.getClassName().lastIndexOf(".") + 1)
+        + "."
+        + stackTraceElement.getMethodName()
+        + ":"
+        + stackTraceElement.getLineNumber()
+        + ")";
+  }
 
-    @RequiredArgsConstructor
-    public static class Builder implements SpecBuilder {
+  @RequiredArgsConstructor
+  public static class Builder implements SpecBuilder {
 
-        private final FluentSubscriptionRequest toBuild;
+    private final FluentSubscriptionRequest toBuild;
 
-        @Override
-        public SpecBuilder or(@NonNull FactSpec specification) {
-            toBuild.specs.add(specification);
-            return this;
-        }
-
-        @Override
-        public SubscriptionRequest fromScratch() {
-            return toBuild;
-        }
-
-        @Override
-        public SubscriptionRequest fromNowOn() {
-            toBuild.ephemeral = true;
-            return toBuild;
-        }
-
-        @Override
-        public SubscriptionRequest from(@NonNull UUID id) {
-            toBuild.startingAfter = id;
-            return toBuild;
-        }
-
-        public SubscriptionRequest fromNullable(UUID id) {
-            toBuild.startingAfter = id;
-            return toBuild;
-        }
-
-        public SpecBuilder follow(@NonNull FactSpec specification) {
-            or(specification);
-            toBuild.continuous = true;
-            return this;
-        }
-
-        public SpecBuilder catchup(@NonNull FactSpec specification) {
-            or(specification);
-            toBuild.continuous = false;
-            return this;
-        }
-
-        public SpecBuilder catchup(Collection<FactSpec> specification) {
-            if (specification.isEmpty())
-                throw new IllegalArgumentException(
-                        "At least one FactSpec is needed for a subscription");
-            specification.forEach(this::catchup);
-            return this;
-        }
-
-        public SpecBuilder follow(Collection<FactSpec> specification) {
-            if (specification.isEmpty())
-                throw new IllegalArgumentException(
-                        "At least one FactSpec is needed for a subscription");
-            specification.forEach(this::follow);
-            return this;
-        }
+    @Override
+    public SpecBuilder or(@NonNull FactSpec specification) {
+      toBuild.specs.add(specification);
+      return this;
     }
 
     @Override
-    public java.util.Optional<UUID> startingAfter() {
-        return java.util.Optional.ofNullable(startingAfter);
+    public SubscriptionRequest fromScratch() {
+      return toBuild;
     }
 
     @Override
-    public String toString() {
-        return debugInfo;
+    public SubscriptionRequest fromNowOn() {
+      toBuild.ephemeral = true;
+      return toBuild;
     }
+
+    @Override
+    public SubscriptionRequest from(@NonNull UUID id) {
+      toBuild.startingAfter = id;
+      return toBuild;
+    }
+
+    public SubscriptionRequest fromNullable(UUID id) {
+      toBuild.startingAfter = id;
+      return toBuild;
+    }
+
+    public SpecBuilder follow(@NonNull FactSpec specification) {
+      or(specification);
+      toBuild.continuous = true;
+      return this;
+    }
+
+    public SpecBuilder catchup(@NonNull FactSpec specification) {
+      or(specification);
+      toBuild.continuous = false;
+      return this;
+    }
+
+    public SpecBuilder catchup(Collection<FactSpec> specification) {
+      if (specification.isEmpty())
+        throw new IllegalArgumentException("At least one FactSpec is needed for a subscription");
+      specification.forEach(this::catchup);
+      return this;
+    }
+
+    public SpecBuilder follow(Collection<FactSpec> specification) {
+      if (specification.isEmpty())
+        throw new IllegalArgumentException("At least one FactSpec is needed for a subscription");
+      specification.forEach(this::follow);
+      return this;
+    }
+  }
+
+  @Override
+  public java.util.Optional<UUID> startingAfter() {
+    return java.util.Optional.ofNullable(startingAfter);
+  }
+
+  @Override
+  public String toString() {
+    return debugInfo;
+  }
 }

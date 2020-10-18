@@ -16,12 +16,10 @@
 package org.factcast.store.pgsql.internal.query;
 
 import java.util.UUID;
-
+import lombok.RequiredArgsConstructor;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import lombok.RequiredArgsConstructor;
 
 /**
  * Fetches a SER from a Fact-Id.
@@ -31,25 +29,26 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PgFactIdToSerialMapper {
 
-    final JdbcTemplate jdbcTemplate;
+  final JdbcTemplate jdbcTemplate;
 
-    /**
-     * Fetches the SER of a particular Fact identified by id
-     *
-     * @param id
-     *            the FactId to look for
-     * @return the corresponding SER, 0, if no Fact is found for the id given.
-     */
-    public long retrieve(UUID id) {
-        if (id != null) {
-            try {
-                // throws EmptyResultDataAccessException if is not found!
-                // noinspection ConstantConditions
-                return jdbcTemplate.queryForObject(PgConstants.SELECT_BY_HEADER_JSON, new Object[] {
-                        "{\"id\":\"" + id + "\"}" }, Long.class);
-            } catch (EmptyResultDataAccessException ignored) {
-            }
-        }
-        return 0;
+  /**
+   * Fetches the SER of a particular Fact identified by id
+   *
+   * @param id the FactId to look for
+   * @return the corresponding SER, 0, if no Fact is found for the id given.
+   */
+  public long retrieve(UUID id) {
+    if (id != null) {
+      try {
+        // throws EmptyResultDataAccessException if is not found!
+        // noinspection ConstantConditions
+        return jdbcTemplate.queryForObject(
+            PgConstants.SELECT_BY_HEADER_JSON,
+            new Object[] {"{\"id\":\"" + id + "\"}"},
+            Long.class);
+      } catch (EmptyResultDataAccessException ignored) {
+      }
     }
+    return 0;
+  }
 }

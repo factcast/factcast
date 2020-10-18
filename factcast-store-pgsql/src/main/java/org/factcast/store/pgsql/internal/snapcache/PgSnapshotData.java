@@ -16,14 +16,13 @@
 package org.factcast.store.pgsql.internal.snapcache;
 
 import java.util.UUID;
-
 import lombok.Value;
 
 @Value
 public class PgSnapshotData {
-    UUID factId;
+  UUID factId;
 
-    byte[] bytes;
+  byte[] bytes;
 
-    boolean compressed;
+  boolean compressed;
 }

@@ -16,20 +16,18 @@
 package org.factcast.core.subscription;
 
 import java.util.UUID;
-
-import org.factcast.core.spec.FactSpec;
-
 import lombok.NonNull;
+import org.factcast.core.spec.FactSpec;
 
 public interface SpecBuilder {
 
-    SpecBuilder or(@NonNull FactSpec specification);
+  SpecBuilder or(@NonNull FactSpec specification);
 
-    SubscriptionRequest from(@NonNull UUID id);
+  SubscriptionRequest from(@NonNull UUID id);
 
-    SubscriptionRequest fromNullable(UUID id);
+  SubscriptionRequest fromNullable(UUID id);
 
-    SubscriptionRequest fromScratch();
+  SubscriptionRequest fromScratch();
 
-    SubscriptionRequest fromNowOn();
+  SubscriptionRequest fromNowOn();
 }

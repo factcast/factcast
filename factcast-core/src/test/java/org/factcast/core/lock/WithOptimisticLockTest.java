@@ -16,21 +16,18 @@
 package org.factcast.core.lock;
 
 import java.util.Collections;
-
 import org.factcast.core.store.FactStore;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 
 class WithOptimisticLockTest {
 
-    @Test
-    void attemptReturnsNullShouldBeAnAbort() {
+  @Test
+  void attemptReturnsNullShouldBeAnAbort() {
 
-        WithOptimisticLock uut = new WithOptimisticLock(Mockito.mock(FactStore.class), Collections
-                .emptyList());
+    WithOptimisticLock uut =
+        new WithOptimisticLock(Mockito.mock(FactStore.class), Collections.emptyList());
 
-        Assertions.assertThrows(AttemptAbortedException.class,
-                () -> uut.attempt(() -> null));
-
-    }
+    Assertions.assertThrows(AttemptAbortedException.class, () -> uut.attempt(() -> null));
+  }
 }

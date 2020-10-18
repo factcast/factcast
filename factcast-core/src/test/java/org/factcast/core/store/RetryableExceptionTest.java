@@ -21,10 +21,12 @@ import org.junit.jupiter.api.Test;
 
 public class RetryableExceptionTest {
 
-    @Test
-    public void testRetryableExceptionNullContract() throws Exception {
-        assertThrows(NullPointerException.class, () -> {
-            new RetryableException(null);
+  @Test
+  public void testRetryableExceptionNullContract() throws Exception {
+    assertThrows(
+        NullPointerException.class,
+        () -> {
+          new RetryableException(null);
         });
-    }
+  }
 }

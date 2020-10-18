@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.registry.classpath;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import lombok.NonNull;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
@@ -28,44 +29,31 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import lombok.NonNull;
-
 @ExtendWith(MockitoExtension.class)
 class ClasspathSchemaRegistryFactoryTest {
 
-    @InjectMocks
-    private ClasspathSchemaRegistryFactory underTest;
+  @InjectMocks private ClasspathSchemaRegistryFactory underTest;
+
+  @Test
+  void getProtocols() {
+    assertThat(underTest.getProtocols()).containsExactly("classpath");
+  }
+
+  @Nested
+  class WhenCreatingInstance {
+    private final String FULL_URL = "classpath:xxx";
+
+    @Mock private @NonNull SchemaStore schemaStore;
+
+    @Mock private @NonNull TransformationStore transformationStore;
+
+    @Mock private @NonNull RegistryMetrics registryMetrics;
+
+    @Mock private @NonNull PgConfigurationProperties props;
 
     @Test
-    void getProtocols() {
-        assertThat(underTest.getProtocols())
-                .containsExactly("classpath");
+    void createInstance() {
+      underTest.createInstance(FULL_URL, schemaStore, transformationStore, registryMetrics, props);
     }
-
-    @Nested
-    class WhenCreatingInstance {
-        private final String FULL_URL = "classpath:xxx";
-
-        @Mock
-        private @NonNull SchemaStore schemaStore;
-
-        @Mock
-        private @NonNull TransformationStore transformationStore;
-
-        @Mock
-        private @NonNull RegistryMetrics registryMetrics;
-
-        @Mock
-        private @NonNull PgConfigurationProperties props;
-
-        @Test
-        void createInstance() {
-            underTest.createInstance(FULL_URL,
-                    schemaStore,
-                    transformationStore,
-                    registryMetrics,
-                    props);
-        }
-
-    }
+  }
 }

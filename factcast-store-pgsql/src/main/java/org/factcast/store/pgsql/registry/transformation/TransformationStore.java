@@ -18,14 +18,14 @@ package org.factcast.store.pgsql.registry.transformation;
 import java.util.List;
 
 public interface TransformationStore {
-    void store(TransformationSource source, String transformation)
-            throws TransformationConflictException;
+  void store(TransformationSource source, String transformation)
+      throws TransformationConflictException;
 
-    void register(TransformationStoreListener listener);
+  void register(TransformationStoreListener listener);
 
-    void unregister(TransformationStoreListener listener);
+  void unregister(TransformationStoreListener listener);
 
-    boolean contains(TransformationSource source) throws TransformationConflictException;
+  boolean contains(TransformationSource source) throws TransformationConflictException;
 
-    List<Transformation> get(TransformationKey key);
+  List<Transformation> get(TransformationKey key);
 }

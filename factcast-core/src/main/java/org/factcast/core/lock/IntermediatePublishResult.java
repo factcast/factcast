@@ -17,28 +17,21 @@ package org.factcast.core.lock;
 
 import java.util.List;
 import java.util.Optional;
-
-import org.factcast.core.Fact;
-
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.factcast.core.Fact;
 
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public final class IntermediatePublishResult {
 
-    @Getter
-    @NonNull
-    final List<Fact> factsToPublish;
+  @Getter @NonNull final List<Fact> factsToPublish;
 
-    @Setter
-    @NonNull
-    private Runnable andThen = null;
+  @Setter @NonNull private Runnable andThen = null;
 
-    public Optional<Runnable> andThen() {
-        return Optional.ofNullable(andThen);
-    }
-
+  public Optional<Runnable> andThen() {
+    return Optional.ofNullable(andThen);
+  }
 }

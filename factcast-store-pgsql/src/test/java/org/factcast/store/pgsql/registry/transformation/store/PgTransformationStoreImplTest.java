@@ -27,18 +27,16 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ContextConfiguration(classes = { PgTestConfiguration.class })
+@ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
 @IntegrationTest
 class PgTransformationStoreImplTest extends AbstractTransformationStoreTest {
-    @Autowired
-    private JdbcTemplate tpl;
+  @Autowired private JdbcTemplate tpl;
 
-    @Override
-    protected TransformationStore createUUT() {
-        return new PgTransformationStoreImpl(tpl, registryMetrics);
-    }
-
+  @Override
+  protected TransformationStore createUUT() {
+    return new PgTransformationStoreImpl(tpl, registryMetrics);
+  }
 }

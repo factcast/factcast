@@ -17,26 +17,25 @@ package org.factcast.store.pgsql.registry;
 
 import java.net.MalformedURLException;
 import java.util.List;
-
+import lombok.NonNull;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 
-import lombok.NonNull;
-
 public interface SchemaRegistryFactory<T extends SchemaRegistry> {
 
-    default boolean canHandle(String protocol) {
-        return getProtocols().contains(protocol);
-    }
+  default boolean canHandle(String protocol) {
+    return getProtocols().contains(protocol);
+  }
 
-    List<String> getProtocols();
+  List<String> getProtocols();
 
-    T createInstance(@NonNull String fullUrl,
-            @NonNull SchemaStore schemaStore,
-            @NonNull TransformationStore transformationStore,
-            @NonNull RegistryMetrics registryMetrics,
-            @NonNull PgConfigurationProperties props)
-            throws MalformedURLException;
+  T createInstance(
+      @NonNull String fullUrl,
+      @NonNull SchemaStore schemaStore,
+      @NonNull TransformationStore transformationStore,
+      @NonNull RegistryMetrics registryMetrics,
+      @NonNull PgConfigurationProperties props)
+      throws MalformedURLException;
 }

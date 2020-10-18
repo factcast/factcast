@@ -17,32 +17,34 @@ package org.factcast.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.UUID;
-
-import org.junit.jupiter.api.Test;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
 
 public class FactHeaderTest {
 
-    @Test
-    void testDeserializability() throws Exception {
-        FactHeader h = new ObjectMapper().readValue(
+  @Test
+  void testDeserializability() throws Exception {
+    FactHeader h =
+        new ObjectMapper()
+            .readValue(
                 "{\"id\":\"5d0e3ae9-6684-42bc-87a7-854f76506f7e\",\"ns\":\"ns\",\"type\":\"t\",\"meta\":{\"foo\":\"bar\"}}",
                 FactHeader.class);
-        assertEquals(UUID.fromString("5d0e3ae9-6684-42bc-87a7-854f76506f7e"), h.id());
-        assertEquals("ns", h.ns());
-        assertEquals("t", h.type());
-        assertEquals("bar", h.meta().get("foo"));
-    }
+    assertEquals(UUID.fromString("5d0e3ae9-6684-42bc-87a7-854f76506f7e"), h.id());
+    assertEquals("ns", h.ns());
+    assertEquals("t", h.type());
+    assertEquals("bar", h.meta().get("foo"));
+  }
 
-    @Test
-    void testIgnoreExtra() throws Exception {
-        FactHeader h = new ObjectMapper().readValue(
+  @Test
+  void testIgnoreExtra() throws Exception {
+    FactHeader h =
+        new ObjectMapper()
+            .readValue(
                 "{\"id\":\"5d0e3ae9-6684-42bc-87a7-854f76506f7e\",\"ns\":\"ns\",\"type\":\"t\",\"bing\":\"bang\"}",
                 FactHeader.class);
-        assertEquals(UUID.fromString("5d0e3ae9-6684-42bc-87a7-854f76506f7e"), h.id());
-        assertEquals("ns", h.ns());
-        assertEquals("t", h.type());
-    }
+    assertEquals(UUID.fromString("5d0e3ae9-6684-42bc-87a7-854f76506f7e"), h.id());
+    assertEquals("ns", h.ns());
+    assertEquals("t", h.type());
+  }
 }

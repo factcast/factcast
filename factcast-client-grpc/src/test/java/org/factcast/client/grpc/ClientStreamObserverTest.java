@@ -21,7 +21,6 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.util.UUID;
-
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -37,71 +36,72 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ClientStreamObserverTest {
 
-    @Mock
-    FactObserver factObserver;
+  @Mock FactObserver factObserver;
 
-    ClientStreamObserver uut;
+  ClientStreamObserver uut;
 
-    final ProtoConverter converter = new ProtoConverter();
+  final ProtoConverter converter = new ProtoConverter();
 
-    private SubscriptionImpl subscription;
+  private SubscriptionImpl subscription;
 
-    @BeforeEach
-    void setUp() {
-        FactTransformers trans = new NullFactTransformer();
-        SubscriptionImpl subscriptionImpl = new SubscriptionImpl(factObserver, trans);
-        subscription = spy(subscriptionImpl);
-        uut = new ClientStreamObserver(subscription);
-    }
+  @BeforeEach
+  void setUp() {
+    FactTransformers trans = new NullFactTransformer();
+    SubscriptionImpl subscriptionImpl = new SubscriptionImpl(factObserver, trans);
+    subscription = spy(subscriptionImpl);
+    uut = new ClientStreamObserver(subscription);
+  }
 
-    @Test
-    void testConstructorNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> new ClientStreamObserver(null));
-    }
+  @Test
+  void testConstructorNull() {
+    Assertions.assertThrows(NullPointerException.class, () -> new ClientStreamObserver(null));
+  }
 
-    @Test
-    void testOnNext() {
-        Fact f = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
-        MSG_Notification n = converter.createNotificationFor(f);
-        uut.onNext(n);
-        verify(factObserver).onNext(eq(f));
-    }
+  @Test
+  void testOnNext() {
+    Fact f = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+    MSG_Notification n = converter.createNotificationFor(f);
+    uut.onNext(n);
+    verify(factObserver).onNext(eq(f));
+  }
 
-    @Test
-    void testOnNextFailsOnUnknownMessage() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            MSG_Notification n = MSG_Notification.newBuilder().setType(Type.UNRECOGNIZED).build();
-            uut.onNext(n);
+  @Test
+  void testOnNextFailsOnUnknownMessage() {
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          MSG_Notification n = MSG_Notification.newBuilder().setType(Type.UNRECOGNIZED).build();
+          uut.onNext(n);
         });
-    }
+  }
 
-    @Test
-    void testOnCatchup() {
-        uut.onNext(converter.createCatchupNotification());
-        verify(factObserver).onCatchup();
-    }
+  @Test
+  void testOnCatchup() {
+    uut.onNext(converter.createCatchupNotification());
+    verify(factObserver).onCatchup();
+  }
 
-    @Test
-    void testFailOnUnknownType() {
-        uut.onNext(MSG_Notification.newBuilder().setTypeValue(999).build());
-        verify(subscription).notifyError(any(RuntimeException.class));
-    }
+  @Test
+  void testFailOnUnknownType() {
+    uut.onNext(MSG_Notification.newBuilder().setTypeValue(999).build());
+    verify(subscription).notifyError(any(RuntimeException.class));
+  }
 
-    @Test
-    void testOnComplete() {
-        uut.onNext(converter.createCompleteNotification());
-        verify(factObserver).onComplete();
-    }
+  @Test
+  void testOnComplete() {
+    uut.onNext(converter.createCompleteNotification());
+    verify(factObserver).onComplete();
+  }
 
-    @Test
-    void testOnTransportComplete() {
-        uut.onCompleted();
-        verify(factObserver).onComplete();
-    }
+  @Test
+  void testOnTransportComplete() {
+    uut.onCompleted();
+    verify(factObserver).onComplete();
+  }
 
-    @Test
-    void testOnError() {
-        uut.onError(new IOException());
-        verify(factObserver).onError(any());
-    }
+  @Test
+  void testOnError() {
+    uut.onError(new IOException());
+    verify(factObserver).onError(any());
+  }
 }

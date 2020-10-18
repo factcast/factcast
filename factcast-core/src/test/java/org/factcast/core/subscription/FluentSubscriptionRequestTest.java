@@ -18,81 +18,77 @@ package org.factcast.core.subscription;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.LinkedList;
-
+import lombok.val;
 import org.factcast.core.spec.FactSpec;
 import org.junit.jupiter.api.*;
 
-import lombok.val;
-
 public class FluentSubscriptionRequestTest {
 
-    @Test
-    void testFromSubscription() {
-        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
-        assertTrue(r.ephemeral());
-    }
+  @Test
+  void testFromSubscription() {
+    SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
+    assertTrue(r.ephemeral());
+  }
 
-    @Test
-    void testFromNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> SubscriptionRequest.catchup(
-                FactSpec.ns("foo")).from(null));
-    }
+  @Test
+  void testFromNull() {
+    Assertions.assertThrows(
+        NullPointerException.class,
+        () -> SubscriptionRequest.catchup(FactSpec.ns("foo")).from(null));
+  }
 
-    @Test
-    void testFollowNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> SubscriptionRequest.follow(
-                (FactSpec) null));
-    }
+  @Test
+  void testFollowNull() {
+    Assertions.assertThrows(
+        NullPointerException.class, () -> SubscriptionRequest.follow((FactSpec) null));
+  }
 
-    @Test
-    void testFollowNullable() {
-        SubscriptionRequest req = SubscriptionRequest.follow(FactSpec.ns("foo")).fromNullable(null);
-        assertFalse(req.startingAfter().isPresent());
-    }
+  @Test
+  void testFollowNullable() {
+    SubscriptionRequest req = SubscriptionRequest.follow(FactSpec.ns("foo")).fromNullable(null);
+    assertFalse(req.startingAfter().isPresent());
+  }
 
-    @Test
-    void testCatchupNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> SubscriptionRequest.catchup(
-                (FactSpec) null));
-    }
+  @Test
+  void testCatchupNull() {
+    Assertions.assertThrows(
+        NullPointerException.class, () -> SubscriptionRequest.catchup((FactSpec) null));
+  }
 
-    @Test
-    void testOrNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> SubscriptionRequest.catchup(
-                FactSpec.ns("foo")).or(null));
-    }
+  @Test
+  void testOrNull() {
+    Assertions.assertThrows(
+        NullPointerException.class, () -> SubscriptionRequest.catchup(FactSpec.ns("foo")).or(null));
+  }
 
-    @Test
-    void testToString() {
-        SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch();
-        assertSame(r.debugInfo(), r.toString());
-    }
+  @Test
+  void testToString() {
+    SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch();
+    assertSame(r.debugInfo(), r.toString());
+  }
 
-    @Test
-    void testDebugInfo() {
-        String debugInfo = SubscriptionRequest.catchup(FactSpec.ns("foo"))
-                .fromScratch()
-                .debugInfo();
-        assertNotNull(debugInfo);
-        assertTrue(debugInfo.contains(this.getClass().getSimpleName()));
-        // method name
-        assertTrue(debugInfo.contains("testDebugInfo"));
-    }
+  @Test
+  void testDebugInfo() {
+    String debugInfo = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch().debugInfo();
+    assertNotNull(debugInfo);
+    assertTrue(debugInfo.contains(this.getClass().getSimpleName()));
+    // method name
+    assertTrue(debugInfo.contains("testDebugInfo"));
+  }
 
-    @Test
-    void failsCatchupIfFactSpecListIsEmpty() {
-        val l = new LinkedList<FactSpec>();
-        assertThrows(IllegalArgumentException.class, () -> SubscriptionRequest.catchup(l)
-                .fromScratch()
-                .debugInfo());
-    }
+  @Test
+  void failsCatchupIfFactSpecListIsEmpty() {
+    val l = new LinkedList<FactSpec>();
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> SubscriptionRequest.catchup(l).fromScratch().debugInfo());
+  }
 
-    @Test
-    void failsFollowIfFactSpecListIsEmpty() {
-        val l = new LinkedList<FactSpec>();
-        assertThrows(IllegalArgumentException.class, () -> SubscriptionRequest.follow(l)
-                .fromScratch()
-                .debugInfo());
-    }
-
+  @Test
+  void failsFollowIfFactSpecListIsEmpty() {
+    val l = new LinkedList<FactSpec>();
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> SubscriptionRequest.follow(l).fromScratch().debugInfo());
+  }
 }

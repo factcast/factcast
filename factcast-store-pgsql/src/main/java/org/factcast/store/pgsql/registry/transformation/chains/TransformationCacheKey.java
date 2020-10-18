@@ -15,15 +15,14 @@
  */
 package org.factcast.store.pgsql.registry.transformation.chains;
 
-import org.factcast.store.pgsql.registry.transformation.TransformationKey;
-
 import lombok.Value;
+import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 
 @Value
 public class TransformationCacheKey {
-    TransformationKey key;
+  TransformationKey key;
 
-    int fromVersion;
+  int fromVersion;
 
-    int toVersion;
+  int toVersion;
 }

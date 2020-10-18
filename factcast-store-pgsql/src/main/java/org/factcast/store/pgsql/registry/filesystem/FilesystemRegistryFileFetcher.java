@@ -16,20 +16,17 @@
 package org.factcast.store.pgsql.registry.filesystem;
 
 import java.io.File;
-
-import org.factcast.store.pgsql.registry.AbstractFileBasedRegistryFileFetcher;
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.factcast.store.pgsql.registry.AbstractFileBasedRegistryFileFetcher;
 
 @RequiredArgsConstructor
 public class FilesystemRegistryFileFetcher extends AbstractFileBasedRegistryFileFetcher {
 
-    private final @NonNull String base;
+  private final @NonNull String base;
 
-    @Override
-    protected File getFile(String subPath) {
-        return new File(base, subPath);
-    }
-
+  @Override
+  protected File getFile(String subPath) {
+    return new File(base, subPath);
+  }
 }

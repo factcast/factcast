@@ -16,13 +16,11 @@
 package org.factcast.store.pgsql.registry;
 
 import java.io.IOException;
-
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 
 public interface RegistryFileFetcher {
-    String fetchTransformation(TransformationSource key) throws IOException;
+  String fetchTransformation(TransformationSource key) throws IOException;
 
-    String fetchSchema(SchemaSource key) throws IOException;
-
+  String fetchSchema(SchemaSource key) throws IOException;
 }

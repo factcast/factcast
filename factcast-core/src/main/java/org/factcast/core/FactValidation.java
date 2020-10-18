@@ -17,37 +17,33 @@ package org.factcast.core;
 
 import java.util.LinkedList;
 import java.util.List;
-
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class FactValidation {
 
-    private boolean lacksRequiredNamespace(Fact f) {
-        return f.ns() == null || f.ns().trim().isEmpty();
-    }
+  private boolean lacksRequiredNamespace(Fact f) {
+    return f.ns() == null || f.ns().trim().isEmpty();
+  }
 
-    private boolean lacksRequiredId(Fact f) {
-        return f.id() == null;
-    }
+  private boolean lacksRequiredId(Fact f) {
+    return f.id() == null;
+  }
 
-    private boolean lacksRequiredType(Fact f) {
-        return f.type() == null;
-    }
+  private boolean lacksRequiredType(Fact f) {
+    return f.type() == null;
+  }
 
-    public void validateOnPublish(@NonNull List<? extends Fact> facts) {
-        List<String> errors = new LinkedList<>();
-        facts.forEach(f -> {
-            if (lacksRequiredNamespace(f))
-                errors.add("Fact " + f.id() + " lacks required namespace.");
-            if (lacksRequiredId(f))
-                errors.add("Fact " + f.jsonHeader() + " lacks required id.");
-            if (lacksRequiredType(f))
-                errors.add("Fact " + f.jsonHeader() + " lacks required type.");
-
+  public void validateOnPublish(@NonNull List<? extends Fact> facts) {
+    List<String> errors = new LinkedList<>();
+    facts.forEach(
+        f -> {
+          if (lacksRequiredNamespace(f))
+            errors.add("Fact " + f.id() + " lacks required namespace.");
+          if (lacksRequiredId(f)) errors.add("Fact " + f.jsonHeader() + " lacks required id.");
+          if (lacksRequiredType(f)) errors.add("Fact " + f.jsonHeader() + " lacks required type.");
         });
-        if (!errors.isEmpty())
-            throw new FactValidationException(errors);
-    }
+    if (!errors.isEmpty()) throw new FactValidationException(errors);
+  }
 }

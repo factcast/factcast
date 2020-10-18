@@ -21,9 +21,8 @@ import org.junit.jupiter.api.*;
 
 public class PgPostQueryMatcherTest {
 
-    @Test
-    public void testPGPostQueryMatcher() {
-        assertThrows(NullPointerException.class, () -> new PgPostQueryMatcher(null));
-    }
-
+  @Test
+  public void testPGPostQueryMatcher() {
+    assertThrows(NullPointerException.class, () -> new PgPostQueryMatcher(null));
+  }
 }

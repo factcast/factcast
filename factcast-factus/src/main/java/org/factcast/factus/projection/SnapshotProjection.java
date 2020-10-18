@@ -15,6 +15,7 @@
  */
 package org.factcast.factus.projection;
 
-public interface SnapshotProjection extends Projection {
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-}
+@JsonPropertyOrder(alphabetic = true)
+public interface SnapshotProjection extends Projection {}

@@ -15,31 +15,28 @@
  */
 package org.factcast.client.grpc.codec;
 
+import io.grpc.Codec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-
-import org.apache.commons.compress.utils.IOUtils;
-
-import io.grpc.Codec;
 import lombok.experimental.UtilityClass;
+import org.apache.commons.compress.utils.IOUtils;
 
 @UtilityClass
 class CodecTestHelper {
-    byte[] fromByteArray(Codec uut, byte[] compressedBytes) throws IOException {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        IOUtils.copy(uut.decompress(new ByteArrayInputStream(
-                compressedBytes)), os);
-        os.close();
-        return os.toByteArray();
-    }
+  byte[] fromByteArray(Codec uut, byte[] compressedBytes) throws IOException {
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    IOUtils.copy(uut.decompress(new ByteArrayInputStream(compressedBytes)), os);
+    os.close();
+    return os.toByteArray();
+  }
 
-    byte[] toByteArray(Codec uut, byte[] uncompressed) throws IOException {
-        ByteArrayOutputStream target = new ByteArrayOutputStream();
-        OutputStream compressedStream = uut.compress(target);
-        IOUtils.copy(new ByteArrayInputStream(uncompressed), compressedStream);
-        compressedStream.close();
-        return target.toByteArray();
-    }
+  byte[] toByteArray(Codec uut, byte[] uncompressed) throws IOException {
+    ByteArrayOutputStream target = new ByteArrayOutputStream();
+    OutputStream compressedStream = uut.compress(target);
+    IOUtils.copy(new ByteArrayInputStream(uncompressed), compressedStream);
+    compressedStream.close();
+    return target.toByteArray();
+  }
 }

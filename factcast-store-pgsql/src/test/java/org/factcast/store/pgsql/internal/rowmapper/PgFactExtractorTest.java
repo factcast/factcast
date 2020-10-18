@@ -21,39 +21,38 @@ import static org.mockito.Mockito.*;
 import java.sql.ResultSet;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
-
 import org.factcast.core.Fact;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.junit.jupiter.api.*;
 
 public class PgFactExtractorTest {
 
-    final AtomicLong serial = new AtomicLong(5);
+  final AtomicLong serial = new AtomicLong(5);
 
-    final PgFactExtractor uut = new PgFactExtractor(serial);
+  final PgFactExtractor uut = new PgFactExtractor(serial);
 
-    @Test
-    void testMapRow() throws Exception {
+  @Test
+  void testMapRow() throws Exception {
 
-        ResultSet rs = mock(ResultSet.class);
-        final UUID id = UUID.randomUUID();
+    ResultSet rs = mock(ResultSet.class);
+    final UUID id = UUID.randomUUID();
 
-        when(rs.getString(PgConstants.ALIAS_ID)).thenReturn(id.toString());
-        when(rs.getString(PgConstants.ALIAS_NS)).thenReturn("ns");
-        when(rs.getString(PgConstants.COLUMN_HEADER)).thenReturn("{\"ns\":\"ns\",\"id\":\"" + id
-                + "\"}");
-        when(rs.getString(PgConstants.COLUMN_PAYLOAD)).thenReturn("{}");
-        when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(27L);
-        when(rs.getInt(PgConstants.COLUMN_VERSION)).thenReturn(110);
-        Fact mapRow = uut.mapRow(rs, 1);
-        assertEquals(27, serial.get());
-        assertEquals(110, mapRow.version());
-        assertEquals(id, mapRow.id());
-    }
+    when(rs.getString(PgConstants.ALIAS_ID)).thenReturn(id.toString());
+    when(rs.getString(PgConstants.ALIAS_NS)).thenReturn("ns");
+    when(rs.getString(PgConstants.COLUMN_HEADER))
+        .thenReturn("{\"ns\":\"ns\",\"id\":\"" + id + "\"}");
+    when(rs.getString(PgConstants.COLUMN_PAYLOAD)).thenReturn("{}");
+    when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(27L);
+    when(rs.getInt(PgConstants.COLUMN_VERSION)).thenReturn(110);
+    Fact mapRow = uut.mapRow(rs, 1);
+    assertEquals(27, serial.get());
+    assertEquals(110, mapRow.version());
+    assertEquals(id, mapRow.id());
+  }
 
-    @Test
-    void testMapRowNullContracts() {
+  @Test
+  void testMapRowNullContracts() {
 
-        assertThrows(NullPointerException.class, () -> uut.mapRow(null, 1));
-    }
+    assertThrows(NullPointerException.class, () -> uut.mapRow(null, 1));
+  }
 }

@@ -19,25 +19,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
-
 import org.junit.jupiter.api.Test;
 
 class SnappyGrpcClientCodecTest {
 
-    SnappyGrpcClientCodec uut = new SnappyGrpcClientCodec();
+  final SnappyGrpcClientCodec uut = new SnappyGrpcClientCodec();
 
-    @Test
-    void getMessageEncoding() {
-        assertEquals("snappy", uut.getMessageEncoding());
-    }
+  @Test
+  void getMessageEncoding() {
+    assertEquals("snappy", uut.getMessageEncoding());
+  }
 
-    @Test
-    void compressionIsSymetric() throws IOException {
-        byte[] original = "Some uncompressed String".getBytes();
-        byte[] compressed = CodecTestHelper.toByteArray(uut, original);
-        byte[] uncompressed = CodecTestHelper.fromByteArray(uut, compressed);
+  @Test
+  void compressionIsSymetric() throws IOException {
+    byte[] original = "Some uncompressed String".getBytes();
+    byte[] compressed = CodecTestHelper.toByteArray(uut, original);
+    byte[] uncompressed = CodecTestHelper.fromByteArray(uut, compressed);
 
-        assertThat(uncompressed).isEqualTo(original);
-    }
-
+    assertThat(uncompressed).isEqualTo(original);
+  }
 }

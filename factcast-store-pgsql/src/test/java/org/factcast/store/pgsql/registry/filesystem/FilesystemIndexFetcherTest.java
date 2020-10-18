@@ -19,32 +19,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
-
+import lombok.val;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 
-import lombok.val;
-
 class FilesystemIndexFetcherTest {
 
-    @Test
-    void fetchIndex() throws IOException {
-        // INIT
-        String path = new ClassPathResource("/example-registry/").getFile()
-                .getAbsolutePath();
+  @Test
+  void fetchIndex() throws IOException {
+    // INIT
+    String path = new ClassPathResource("/example-registry/").getFile().getAbsolutePath();
 
-        // RUN / ASSERT
-        val uut = new FilesystemIndexFetcher(path);
-        assertThat(uut.fetchIndex())
-                .isPresent();
-    }
+    // RUN / ASSERT
+    val uut = new FilesystemIndexFetcher(path);
+    assertThat(uut.fetchIndex()).isPresent();
+  }
 
-    @Test
-    void throwsOnNonExistingIndex() {
-        assertThrows(SchemaRegistryUnavailableException.class, () -> {
-            new FilesystemIndexFetcher("/not-there/").fetchIndex();
+  @Test
+  void throwsOnNonExistingIndex() {
+    assertThrows(
+        SchemaRegistryUnavailableException.class,
+        () -> {
+          new FilesystemIndexFetcher("/not-there/").fetchIndex();
         });
-    }
-
+  }
 }

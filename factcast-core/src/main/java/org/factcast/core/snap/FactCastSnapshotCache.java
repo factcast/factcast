@@ -16,36 +16,30 @@
 package org.factcast.core.snap;
 
 import java.util.Optional;
-
-import org.factcast.core.store.FactStore;
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.factcast.core.store.FactStore;
 
 @RequiredArgsConstructor
-public class FactCastSnapshotRepository implements SnapshotCache {
+public class FactCastSnapshotCache implements SnapshotCache {
 
-    @NonNull
-    final FactStore store;
+  @NonNull final FactStore store;
 
-    @Override
-    public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-        return store.getSnapshot(id);
-    }
+  @Override
+  public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
+    return store.getSnapshot(id);
+  }
 
-    @Override
-    public void setSnapshot(@NonNull Snapshot snapshot) {
-        store.setSnapshot(snapshot);
-    }
+  @Override
+  public void setSnapshot(@NonNull Snapshot snapshot) {
+    store.setSnapshot(snapshot);
+  }
 
-    @Override
-    public void clearSnapshot(@NonNull SnapshotId id) {
-        store.clearSnapshot(id);
-    }
+  @Override
+  public void clearSnapshot(@NonNull SnapshotId id) {
+    store.clearSnapshot(id);
+  }
 
-    /**
-     * compacting will be controlled on server side, so this impl is empty.
-     */
-    public void compact(int retentionTimeInDays) {
-    }
+  /** compacting will be controlled on server side, so this impl is empty. */
+  public void compact(int retentionTimeInDays) {}
 }

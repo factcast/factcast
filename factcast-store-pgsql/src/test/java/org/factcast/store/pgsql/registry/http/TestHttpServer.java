@@ -18,19 +18,17 @@ package org.factcast.store.pgsql.registry.http;
 import io.javalin.Javalin;
 
 public class TestHttpServer implements AutoCloseable {
-    @lombok.experimental.Delegate
-    final Javalin instance = Javalin.create();
+  @lombok.experimental.Delegate final Javalin instance = Javalin.create();
 
-    public TestHttpServer() {
-        instance.start(0);
+  public TestHttpServer() {
+    instance.start(0);
+  }
+
+  @Override
+  public void close() throws Exception {
+    try {
+      instance.stop();
+    } catch (Exception dontCare) {
     }
-
-    @Override
-    public void close() throws Exception {
-        try {
-            instance.stop();
-        } catch (Exception dontCare) {
-        }
-    }
-
+  }
 }

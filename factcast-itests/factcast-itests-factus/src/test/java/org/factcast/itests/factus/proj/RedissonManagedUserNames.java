@@ -16,22 +16,18 @@
 package org.factcast.itests.factus.proj;
 
 import java.util.UUID;
-
-import org.redisson.api.RMap;
-import org.redisson.api.RedissonClient;
-
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RMap;
+import org.redisson.api.RedissonClient;
 
 @Slf4j
 public class RedissonManagedUserNames extends AbstractRedisManagedProjection implements UserNames {
 
-    @Getter
-    private final RMap<UUID, String> userNames;
+  @Getter private final RMap<UUID, String> userNames;
 
-    public RedissonManagedUserNames(RedissonClient redisson) {
-        super(redisson);
-        userNames = redisson.getMap(getClass().getSimpleName());
-    }
-
+  public RedissonManagedUserNames(RedissonClient redisson) {
+    super(redisson);
+    userNames = redisson.getMap(getClass().getSimpleName());
+  }
 }

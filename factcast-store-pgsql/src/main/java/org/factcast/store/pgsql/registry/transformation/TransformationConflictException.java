@@ -16,10 +16,9 @@
 package org.factcast.store.pgsql.registry.transformation;
 
 public class TransformationConflictException extends IllegalStateException {
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    public TransformationConflictException(String s) {
-        super(s);
-    }
-
+  public TransformationConflictException(String s) {
+    super(s);
+  }
 }

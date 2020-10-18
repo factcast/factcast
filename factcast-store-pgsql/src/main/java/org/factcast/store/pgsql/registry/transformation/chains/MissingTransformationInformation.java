@@ -15,14 +15,11 @@
  */
 package org.factcast.store.pgsql.registry.transformation.chains;
 
-/**
- * TODO RT or not RT ?
- */
+/** TODO RT or not RT ? */
 public class MissingTransformationInformation extends RuntimeException {
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    public MissingTransformationInformation(String string) {
-        super(string);
-    }
-
+  public MissingTransformationInformation(String string) {
+    super(string);
+  }
 }

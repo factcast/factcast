@@ -16,67 +16,61 @@
 package org.factcast.core.store;
 
 import java.util.*;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 @RequiredArgsConstructor
 public abstract class AbstractFactStore implements FactStore {
-    @NonNull
-    protected final TokenStore tokenStore;
+  @NonNull protected final TokenStore tokenStore;
 
-    @Override
-    public boolean publishIfUnchanged(
-            @NonNull List<? extends Fact> factsToPublish,
-            @NonNull Optional<StateToken> optionalToken) {
+  @Override
+  public boolean publishIfUnchanged(
+      @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> optionalToken) {
 
-        if (optionalToken.isPresent()) {
-            StateToken token = optionalToken.get();
-            Optional<State> state = tokenStore.get(token);
+    if (optionalToken.isPresent()) {
+      StateToken token = optionalToken.get();
+      Optional<State> state = tokenStore.get(token);
 
-            if (state.isPresent()) {
-                try {
-                    if (isStateUnchanged(state.get())) {
-                        publish(factsToPublish);
-                        return true;
-                    } else {
-                        return false;
-                    }
-                } finally {
-                    tokenStore.invalidate(token);
-                }
-            } else {
-                // token is unknown, just reject.
-                return false;
-            }
-        } else {
-            // publish unconditionally
+      if (state.isPresent()) {
+        try {
+          if (isStateUnchanged(state.get())) {
             publish(factsToPublish);
             return true;
+          } else {
+            return false;
+          }
+        } finally {
+          tokenStore.invalidate(token);
         }
+      } else {
+        // token is unknown, just reject.
+        return false;
+      }
+    } else {
+      // publish unconditionally
+      publish(factsToPublish);
+      return true;
     }
+  }
 
-    @Override
-    public void invalidate(@NonNull StateToken token) {
-        tokenStore.invalidate(token);
-    }
+  @Override
+  public void invalidate(@NonNull StateToken token) {
+    tokenStore.invalidate(token);
+  }
 
-    // TODO needed?
-    public StateToken stateFor(@NonNull List<FactSpec> specs) {
-        State state = getStateFor(specs);
-        return tokenStore.create(state);
-    }
+  // TODO needed?
+  public StateToken stateFor(@NonNull List<FactSpec> specs) {
+    State state = getStateFor(specs);
+    return tokenStore.create(state);
+  }
 
-    @SuppressWarnings("WeakerAccess")
-    protected final boolean isStateUnchanged(
-            @NonNull State snapshotState) {
-        State currentState = getStateFor(snapshotState.specs());
-        return currentState.serialOfLastMatchingFact() == snapshotState.serialOfLastMatchingFact();
-    }
+  @SuppressWarnings("WeakerAccess")
+  protected final boolean isStateUnchanged(@NonNull State snapshotState) {
+    State currentState = getStateFor(snapshotState.specs());
+    return currentState.serialOfLastMatchingFact() == snapshotState.serialOfLastMatchingFact();
+  }
 
-    protected abstract State getStateFor(@NonNull List<FactSpec> specs);
-
+  protected abstract State getStateFor(@NonNull List<FactSpec> specs);
 }

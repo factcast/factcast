@@ -20,21 +20,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class ManagedProjection implements Projection, StateAware, WriterTokenAware {
 
-    public final void withLock(Runnable runnable) {
-        try {
-            try (AutoCloseable token = acquireWriteToken()) {
-                if (token == null) {
-                    throw new IllegalStateException("cannot acquire write token");
-                } else {
-                    runnable.run();
-                }
-            }
-        } catch (RuntimeException e) {
-            // assuming coming from runnable.run()
-            log.warn("While executing with lock:", e);
-        } catch (Exception e) {
-            // assuming coming from AutoCloseable.close()
-            log.warn("While trying to release write token:", e);
+  public final void withLock(Runnable runnable) {
+    try {
+      try (AutoCloseable token = acquireWriteToken()) {
+        if (token == null) {
+          throw new IllegalStateException("cannot acquire write token");
+        } else {
+          runnable.run();
         }
+      }
+    } catch (RuntimeException e) {
+      // assuming coming from runnable.run()
+      log.warn("While executing with lock:", e);
+    } catch (Exception e) {
+      // assuming coming from AutoCloseable.close()
+      log.warn("While trying to release write token:", e);
     }
+  }
 }

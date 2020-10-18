@@ -22,12 +22,10 @@ import org.mockito.InjectMocks;
 
 public class PgFactStreamTest {
 
-    @InjectMocks
-    PgFactStream uut;
+  @InjectMocks PgFactStream uut;
 
-    @Test
-    public void testConnectNullParameter() {
-        assertThrows(NullPointerException.class, () -> uut.connect(null));
-    }
-
+  @Test
+  public void testConnectNullParameter() {
+    assertThrows(NullPointerException.class, () -> uut.connect(null));
+  }
 }

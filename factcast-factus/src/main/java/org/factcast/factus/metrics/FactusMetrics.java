@@ -15,28 +15,29 @@
  */
 package org.factcast.factus.metrics;
 
-import java.util.function.Supplier;
-
 import io.micrometer.core.instrument.Tags;
+import java.util.function.Supplier;
 
 public interface FactusMetrics {
 
-    void timed(TimedOperation operation, Tags tags, Runnable fn);
+  void timed(TimedOperation operation, Tags tags, Runnable fn);
 
-    void timed(TimedOperation operation, Tags tags, long milliseconds);
+  void timed(TimedOperation operation, Tags tags, long milliseconds);
 
-    <E extends Exception> void timed(TimedOperation operation, Class<E> exceptionClass,
-            RunnableWithException<E> fn) throws E;
+  <E extends Exception> void timed(
+      TimedOperation operation, Class<E> exceptionClass, RunnableWithException<E> fn) throws E;
 
-    <E extends Exception> void timed(TimedOperation operation, Class<E> exceptionClass, Tags tags,
-            RunnableWithException<E> fn) throws E;
+  <E extends Exception> void timed(
+      TimedOperation operation, Class<E> exceptionClass, Tags tags, RunnableWithException<E> fn)
+      throws E;
 
-    <T> T timed(TimedOperation operation, Tags tags, Supplier<T> fn);
+  <T> T timed(TimedOperation operation, Tags tags, Supplier<T> fn);
 
-    <R, E extends Exception> R timed(TimedOperation operation, Class<E> exceptionClass, Tags tags,
-            SupplierWithException<R, E> fn) throws E;
+  <R, E extends Exception> R timed(
+      TimedOperation operation, Class<E> exceptionClass, Tags tags, SupplierWithException<R, E> fn)
+      throws E;
 
-    void count(CountedEvent event, Tags tags);
+  void count(CountedEvent event, Tags tags);
 
-    void record(GaugedEvent event, Tags tags, long value);
+  void record(GaugedEvent event, Tags tags, long value);
 }

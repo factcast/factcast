@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.store.pgsql.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
 import org.junit.jupiter.api.*;
@@ -33,32 +33,28 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-
-@ContextConfiguration(classes = { PgTestConfiguration.class })
+@ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 public class PgSchedLockTest {
 
-    @Autowired
-    JdbcTemplate tpl;
+  @Autowired JdbcTemplate tpl;
 
-    CountDownLatch latch = new CountDownLatch(1);
+  final CountDownLatch latch = new CountDownLatch(1);
 
-    SqlRowSet rs;
+  SqlRowSet rs;
 
-    @Scheduled(initialDelay = 1000, fixedDelay = 1000)
-    @SchedulerLock(name = "hubba")
-    public void scheduled() throws InterruptedException {
-        rs = tpl.queryForRowSet("select * from shedlock");
-        latch.countDown();
-    }
+  @Scheduled(initialDelay = 1000, fixedDelay = 1000)
+  @SchedulerLock(name = "hubba")
+  public void scheduled() throws InterruptedException {
+    rs = tpl.queryForRowSet("select * from shedlock");
+    latch.countDown();
+  }
 
-    @Test
-    public void schedLockEffectiveWithScheduledMethod() throws InterruptedException {
-        latch.await(5, TimeUnit.SECONDS);
-        assertTrue(rs.next(), "Lock should have been found");
-    }
-
+  @Test
+  public void schedLockEffectiveWithScheduledMethod() throws InterruptedException {
+    latch.await(5, TimeUnit.SECONDS);
+    assertTrue(rs.next(), "Lock should have been found");
+  }
 }

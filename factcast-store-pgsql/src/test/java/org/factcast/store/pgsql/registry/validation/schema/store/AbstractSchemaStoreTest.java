@@ -20,8 +20,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import io.micrometer.core.instrument.Tags;
 import java.util.Optional;
-
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
@@ -33,112 +33,109 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.function.*;
 import org.mockito.Spy;
 
-import io.micrometer.core.instrument.Tags;
-
 public abstract class AbstractSchemaStoreTest {
 
-    @Spy
-    protected RegistryMetrics registryMetrics = new NOPRegistryMetrics();
+  @Spy protected RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 
-    private SchemaStore uut;
+  private SchemaStore uut;
 
-    @BeforeEach
-    public void init() {
-        this.uut = createUUT();
-    }
+  @BeforeEach
+  public void init() {
+    this.uut = createUUT();
+  }
 
-    protected abstract SchemaStore createUUT();
+  protected abstract SchemaStore createUUT();
 
-    final SchemaSource s = new SchemaSource();
+  final SchemaSource s = new SchemaSource();
 
-    @Test
-    void testEmptyContains() {
-        s.id("http://testEmptyContains");
-        s.hash("123");
+  @Test
+  void testEmptyContains() {
+    s.id("http://testEmptyContains");
+    s.hash("123");
 
-        assertThat(uut.contains(s)).isFalse();
-    }
+    assertThat(uut.contains(s)).isFalse();
+  }
 
-    @Test
-    void testEmptyGet() {
-        Optional<String> actual = uut.get(SchemaKey.of("ns", "testEmptyGet", 5));
-        assertThat(actual).isEmpty();
-    }
+  @Test
+  void testEmptyGet() {
+    Optional<String> actual = uut.get(SchemaKey.of("ns", "testEmptyGet", 5));
+    assertThat(actual).isEmpty();
+  }
 
-    @Test
-    void testGetAfterRegister() {
+  @Test
+  void testGetAfterRegister() {
 
-        s.id("http://testGetAfterRegister");
-        s.hash("123");
-        s.ns("ns");
-        s.type("type");
-        s.version(5);
-        uut.register(s, "{}");
+    s.id("http://testGetAfterRegister");
+    s.hash("123");
+    s.ns("ns");
+    s.type("type");
+    s.version(5);
+    uut.register(s, "{}");
 
-        Optional<String> actual = uut.get(s.toKey());
-        assertThat(actual).isNotEmpty();
-    }
+    Optional<String> actual = uut.get(s.toKey());
+    assertThat(actual).isNotEmpty();
+  }
 
-    @Test
-    void testContainsSensesConflict() {
+  @Test
+  void testContainsSensesConflict() {
 
-        s.id("http://testContainsSensesConflict");
-        s.hash("123");
-        s.ns("ns");
-        s.type("testContainsSensesConflict");
-        s.version(5);
-        uut.register(s, "{}");
+    s.id("http://testContainsSensesConflict");
+    s.hash("123");
+    s.ns("ns");
+    s.type("testContainsSensesConflict");
+    s.version(5);
+    uut.register(s, "{}");
 
-        assertThrows(SchemaConflictException.class, () -> {
-            SchemaSource conflicting = new SchemaSource();
-            conflicting.id("http://testContainsSensesConflict");
-            conflicting.hash("1234");
-            uut.contains(conflicting);
+    assertThrows(
+        SchemaConflictException.class,
+        () -> {
+          SchemaSource conflicting = new SchemaSource();
+          conflicting.id("http://testContainsSensesConflict");
+          conflicting.hash("1234");
+          uut.contains(conflicting);
         });
 
-        verify(registryMetrics).count(eq(MetricEvent.SCHEMA_CONFLICT), any(Tags.class));
-    }
+    verify(registryMetrics).count(eq(MetricEvent.SCHEMA_CONFLICT), any(Tags.class));
+  }
 
-    @Test
-    public void testMultipleRegisterAttempts() {
+  @Test
+  public void testMultipleRegisterAttempts() {
 
-        s.id("http://testContainsSensesConflict");
-        s.hash("123");
-        s.ns("ns");
-        s.type("testContainsSensesConflict");
-        s.version(5);
+    s.id("http://testContainsSensesConflict");
+    s.hash("123");
+    s.ns("ns");
+    s.type("testContainsSensesConflict");
+    s.version(5);
 
-        uut.register(s, "{}");
-        uut.register(s, "{{}}");
+    uut.register(s, "{}");
+    uut.register(s, "{{}}");
 
-        assertThat(uut.contains(s)).isTrue();
-        assertThat(uut.get(s.toKey())).isPresent().hasValue("{{}}");
-    }
+    assertThat(uut.contains(s)).isTrue();
+    assertThat(uut.get(s.toKey())).isPresent().hasValue("{{}}");
+  }
 
-    @Test
-    void testNullContracts() {
-        assertNpe(() -> uut.contains(null));
-        assertNpe(() -> uut.register(null, "{}"));
-        assertNpe(() -> uut.register(s, null));
-        assertNpe(() -> uut.get(null));
+  @Test
+  void testNullContracts() {
+    assertNpe(() -> uut.contains(null));
+    assertNpe(() -> uut.register(null, "{}"));
+    assertNpe(() -> uut.register(s, null));
+    assertNpe(() -> uut.get(null));
+  }
 
-    }
+  private void assertNpe(Executable r) {
+    assertThrows(NullPointerException.class, r);
+  }
 
-    private void assertNpe(Executable r) {
-        assertThrows(NullPointerException.class, r);
-    }
+  @Test
+  public void testMatchingContains() {
 
-    @Test
-    public void testMatchingContains() {
+    s.id("http://testMatchingContains");
+    s.hash("123");
+    s.ns("ns");
+    s.type("testMatchingContains");
+    s.version(5);
+    uut.register(s, "{}");
 
-        s.id("http://testMatchingContains");
-        s.hash("123");
-        s.ns("ns");
-        s.type("testMatchingContains");
-        s.version(5);
-        uut.register(s, "{}");
-
-        assertThat(uut.contains(s)).isTrue();
-    }
-
+    assertThat(uut.contains(s)).isTrue();
+  }
 }

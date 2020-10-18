@@ -17,10 +17,10 @@ package org.factcast.itests.tls;
 
 import org.testcontainers.containers.output.OutputFrame;
 
-public class SysoutConsumer implements
-        java.util.function.Consumer<org.testcontainers.containers.output.OutputFrame> {
-    @Override
-    public void accept(OutputFrame outputFrame) {
-        System.out.print(outputFrame.getUtf8String());
-    }
+public class SysoutConsumer
+    implements java.util.function.Consumer<org.testcontainers.containers.output.OutputFrame> {
+  @Override
+  public void accept(OutputFrame outputFrame) {
+    System.out.print(outputFrame.getUtf8String());
+  }
 }

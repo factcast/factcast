@@ -21,117 +21,144 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
-
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-
 /**
- * Provides {@link PreparedStatementSetter} and the corresponding SQL from a
- * list of {@link FactSpec}s.
+ * Provides {@link PreparedStatementSetter} and the corresponding SQL from a list of {@link
+ * FactSpec}s.
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
 public class PgQueryBuilder {
 
-    final @NonNull List<FactSpec> factSpecs;
+  final @NonNull List<FactSpec> factSpecs;
 
-    public PgQueryBuilder(@NonNull List<FactSpec> specs) {
-        this.factSpecs = specs;
-    }
+  public PgQueryBuilder(@NonNull List<FactSpec> specs) {
+    this.factSpecs = specs;
+  }
 
-    public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
-        return p -> {
-            // TODO vulnerable of json injection attack
-            int count = 0;
-            for (FactSpec spec : factSpecs) {
+  public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
+    return p -> {
+      // TODO vulnerable of json injection attack
+      int count = 0;
+      for (FactSpec spec : factSpecs) {
 
-                String ns = spec.ns();
-                if (ns != null && !"*".equals(ns)) {
-                    p.setString(++count, "{\"ns\": \"" + spec.ns() + "\" }");
-                }
+        String ns = spec.ns();
+        if (ns != null && !"*".equals(ns)) {
+          p.setString(++count, "{\"ns\": \"" + spec.ns() + "\" }");
+        }
 
-                String type = spec.type();
-                if (type != null) {
-                    p.setString(++count, "{\"type\": \"" + type + "\" }");
-                }
-                // version is intentionally not used here
-                UUID agg = spec.aggId();
-                if (agg != null) {
-                    p.setString(++count, "{\"aggIds\": [\"" + agg + "\"]}");
-                }
-                Map<String, String> meta = spec.meta();
-                for (Entry<String, String> e : meta.entrySet()) {
-                    p.setString(++count, "{\"meta\":{\"" + e.getKey() + "\":\"" + e.getValue()
-                            + "\" }}");
-                }
-            }
-            p.setLong(++count, serial.get());
-        };
-    }
+        String type = spec.type();
+        if (type != null) {
+          p.setString(++count, "{\"type\": \"" + type + "\" }");
+        }
+        // version is intentionally not used here
+        UUID agg = spec.aggId();
+        if (agg != null) {
+          p.setString(++count, "{\"aggIds\": [\"" + agg + "\"]}");
+        }
+        Map<String, String> meta = spec.meta();
+        for (Entry<String, String> e : meta.entrySet()) {
+          p.setString(++count, "{\"meta\":{\"" + e.getKey() + "\":\"" + e.getValue() + "\" }}");
+        }
+      }
+      p.setLong(++count, serial.get());
+    };
+  }
 
-    private String createWhereClause() {
-        List<String> predicates = new LinkedList<>();
-        factSpecs.forEach(spec -> {
-            StringBuilder sb = new StringBuilder();
-            sb.append("( 1=1 ");
+  private String createWhereClause() {
+    List<String> predicates = new LinkedList<>();
+    factSpecs.forEach(
+        spec -> {
+          StringBuilder sb = new StringBuilder();
+          sb.append("( 1=1 ");
 
-            String ns = spec.ns();
-            if (ns != null && !"*".equals(ns)) {
-                sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
-            }
+          String ns = spec.ns();
+          if (ns != null && !"*".equals(ns)) {
+            sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
+          }
 
-            String type = spec.type();
-            if (type != null) {
-                sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
-            }
+          String type = spec.type();
+          if (type != null) {
+            sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
+          }
 
-            UUID agg = spec.aggId();
-            if (agg != null) {
-                sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
-            }
-            Map<String, String> meta = spec.meta();
-            meta.forEach((key, value) -> sb.append("AND ")
-                    .append(PgConstants.COLUMN_HEADER)
-                    .append(" @> ?::jsonb "));
-            sb.append(") ");
-            predicates.add(sb.toString());
+          UUID agg = spec.aggId();
+          if (agg != null) {
+            sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
+          }
+          Map<String, String> meta = spec.meta();
+          meta.forEach(
+              (key, value) ->
+                  sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb "));
+          sb.append(") ");
+          predicates.add(sb.toString());
         });
-        String predicatesAsString = String.join(" OR ", predicates);
-        return "( " + predicatesAsString + " ) AND " + PgConstants.COLUMN_SER + ">?";
-    }
+    String predicatesAsString = String.join(" OR ", predicates);
+    return "( " + predicatesAsString + " ) AND " + PgConstants.COLUMN_SER + ">?";
+  }
 
-    public String createSQL() {
-        final String sql = "SELECT " +
-                PgConstants.PROJECTION_FACT
-                + " FROM " + PgConstants.TABLE_FACT + " WHERE " + createWhereClause() + " ORDER BY "
-                + PgConstants.COLUMN_SER + " ASC";
-        log.trace("{} createSQL={}", factSpecs, sql);
-        return sql;
-    }
+  public String createSQL() {
+    final String sql =
+        "SELECT "
+            + PgConstants.PROJECTION_FACT
+            + " FROM "
+            + PgConstants.TABLE_FACT
+            + " WHERE "
+            + createWhereClause()
+            + " ORDER BY "
+            + PgConstants.COLUMN_SER
+            + " ASC";
+    log.trace("{} createSQL={}", factSpecs, sql);
+    return sql;
+  }
 
-    public String createStateSQL() {
-        final String sql = "SELECT " +
-                PgConstants.COLUMN_SER
-                + " FROM " + PgConstants.TABLE_FACT + " WHERE " + createWhereClause() + " ORDER BY "
-                + PgConstants.COLUMN_SER + " DESC LIMIT 1";
-        log.trace("{} createStateSQL={}", factSpecs, sql);
-        return sql;
-    }
+  public String createStateSQL() {
+    final String sql =
+        "SELECT "
+            + PgConstants.COLUMN_SER
+            + " FROM "
+            + PgConstants.TABLE_FACT
+            + " WHERE "
+            + createWhereClause()
+            + " ORDER BY "
+            + PgConstants.COLUMN_SER
+            + " DESC LIMIT 1";
+    log.trace("{} createStateSQL={}", factSpecs, sql);
+    return sql;
+  }
 
-    public String catchupSQL(long clientId) {
-        final String sql = //
-                "INSERT INTO " + PgConstants.TABLE_CATCHUP + " (" + PgConstants.COLUMN_CID + ","
-                        + PgConstants.COLUMN_SER + //
-                        ") " + "(SELECT " + clientId + "," + //
-                        PgConstants.COLUMN_SER + " FROM " + //
-                        PgConstants.TABLE_FACT + " WHERE (" + createWhereClause() + //
-                        ")" + " ORDER BY " + PgConstants.COLUMN_SER + " ASC)";
-        log.trace("{} catchupSQL={}", factSpecs, sql);
-        return sql;
-    }
+  public String catchupSQL(long clientId) {
+    final String sql = //
+        "INSERT INTO "
+            + PgConstants.TABLE_CATCHUP
+            + " ("
+            + PgConstants.COLUMN_CID
+            + ","
+            + PgConstants.COLUMN_SER
+            + //
+            ") "
+            + "(SELECT "
+            + clientId
+            + ","
+            + //
+            PgConstants.COLUMN_SER
+            + " FROM "
+            + //
+            PgConstants.TABLE_FACT
+            + " WHERE ("
+            + createWhereClause()
+            + //
+            ")"
+            + " ORDER BY "
+            + PgConstants.COLUMN_SER
+            + " ASC)";
+    log.trace("{} catchupSQL={}", factSpecs, sql);
+    return sql;
+  }
 }

@@ -16,27 +16,18 @@
 package org.factcast.factus;
 
 import java.util.List;
-
+import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.factus.event.EventObject;
 
-import lombok.NonNull;
-
-@SuppressWarnings({ "UnusedReturnValue", "unused" })
+@SuppressWarnings({"UnusedReturnValue", "unused"})
 public interface SimplePublisher {
-    /**
-     * publishes a single event immediately
-     */
-    void publish(@NonNull EventObject eventPojo);
+  /** publishes a single event immediately */
+  void publish(@NonNull EventObject eventPojo);
 
-    /**
-     * publishes a list of events immediately in an atomic manner (all or none)
-     */
-    void publish(@NonNull List<EventObject> eventPojos);
+  /** publishes a list of events immediately in an atomic manner (all or none) */
+  void publish(@NonNull List<EventObject> eventPojos);
 
-    /**
-     * In case you'd need to assemble a fact yourself
-     */
-    void publish(@NonNull Fact f);
-
+  /** In case you'd need to assemble a fact yourself */
+  void publish(@NonNull Fact f);
 }

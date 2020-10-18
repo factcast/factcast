@@ -16,7 +16,7 @@
 package org.factcast.factus.snapshot;
 
 public class SerializerInstantiationException extends RuntimeException {
-    public SerializerInstantiationException(String msg, Throwable e) {
-        super(msg, e);
-    }
+  public SerializerInstantiationException(String msg, Throwable e) {
+    super(msg, e);
+  }
 }

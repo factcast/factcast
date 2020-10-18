@@ -15,36 +15,35 @@
  */
 package org.factcast.store.pgsql.registry;
 
-import org.springframework.scheduling.annotation.Scheduled;
-
 import com.google.common.base.Stopwatch;
-
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+import org.springframework.scheduling.annotation.Scheduled;
 
 @Value
 @Slf4j
 public class ScheduledRegistryRefresher {
 
-    SchemaRegistry registry;
+  SchemaRegistry registry;
 
-    @Scheduled(
-            cron = "${factcast.store.pgsql.schemaStoreRefreshCron:*/60 * * * * *}")
-    @SchedulerLock(name = "registryRefresh", lockAtMostFor = "3m")
-    public void refresh() {
+  @Scheduled(cron = "${factcast.store.pgsql.schemaStoreRefreshCron:*/60 * * * * *}")
+  @SchedulerLock(name = "registryRefresh", lockAtMostFor = "3m")
+  public void refresh() {
 
-        // yes, i know the time is recorded via micrometer already, but
-        // as a user, i'd like to see the overall time in the logs as well.
+    // yes, i know the time is recorded via micrometer already, but
+    // as a user, i'd like to see the overall time in the logs as well.
 
-        log.debug("Triggering refresh on " + registry.getClass().getSimpleName());
-        Stopwatch stopwatch = Stopwatch.createStarted();
-        try {
-            registry.refresh();
-        } finally {
-            stopwatch.stop();
-            log.debug("Refresh on {} took {}ms", registry.getClass().getSimpleName(),
-                    stopwatch.elapsed().toMillis());
-        }
+    log.debug("Triggering refresh on " + registry.getClass().getSimpleName());
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    try {
+      registry.refresh();
+    } finally {
+      stopwatch.stop();
+      log.debug(
+          "Refresh on {} took {}ms",
+          registry.getClass().getSimpleName(),
+          stopwatch.elapsed().toMillis());
     }
+  }
 }

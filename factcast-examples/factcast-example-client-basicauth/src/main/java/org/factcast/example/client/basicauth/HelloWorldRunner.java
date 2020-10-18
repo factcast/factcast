@@ -15,6 +15,8 @@
  */
 package org.factcast.example.client.basicauth;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -23,29 +25,25 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 @RequiredArgsConstructor
 @Component
 public class HelloWorldRunner implements CommandLineRunner {
 
-    @NonNull
-    private final FactCast fc;
+  @NonNull private final FactCast fc;
 
-    @Override
-    public void run(String... args) throws Exception {
+  @Override
+  public void run(String... args) throws Exception {
 
-        Fact fact = Fact.builder().ns("smoke").type("foo").build("{\"bla\":\"fasel\"}");
-        fc.publish(fact);
-        System.out.println("published " + fact);
+    Fact fact = Fact.builder().ns("smoke").type("foo").build("{\"bla\":\"fasel\"}");
+    fc.publish(fact);
+    System.out.println("published " + fact);
 
-        Subscription sub = fc.subscribe(SubscriptionRequest.catchup(FactSpec.ns("smoke"))
-                .fromScratch(),
-                System.out::println).awaitCatchup(5000);
+    Subscription sub =
+        fc.subscribe(
+                SubscriptionRequest.catchup(FactSpec.ns("smoke")).fromScratch(),
+                System.out::println)
+            .awaitCatchup(5000);
 
-        sub.close();
-
-    }
-
+    sub.close();
+  }
 }

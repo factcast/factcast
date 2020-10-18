@@ -15,27 +15,24 @@
  */
 package org.factcast.itests.factus.event;
 
+import com.google.common.collect.Sets;
 import java.util.Set;
 import java.util.UUID;
-
-import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.Specification;
-
-import com.google.common.collect.Sets;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Specification(ns = "test")
 public class UserDeleted implements EventObject {
-    UUID aggregateId;
+  UUID aggregateId;
 
-    @Override
-    public Set<UUID> aggregateIds() {
-        return Sets.newHashSet(aggregateId);
-    }
+  @Override
+  public Set<UUID> aggregateIds() {
+    return Sets.newHashSet(aggregateId);
+  }
 }

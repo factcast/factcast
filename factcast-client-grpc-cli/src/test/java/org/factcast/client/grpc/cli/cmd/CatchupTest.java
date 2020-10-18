@@ -22,7 +22,6 @@ import static org.mockito.Mockito.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 import org.factcast.client.grpc.cli.util.ConsoleFactObserver;
 import org.factcast.client.grpc.cli.util.Options;
 import org.factcast.core.FactCast;
@@ -37,38 +36,38 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class CatchupTest {
-    @Mock
-    FactStore fs;
+  @Mock FactStore fs;
 
-    FactCast fc;
+  FactCast fc;
 
-    @Test
-    void testCatchup() {
-        String ns = "foo";
-        UUID startId = new UUID(0, 1);
-        Catchup cmd = new Catchup(ns, startId);
+  @Test
+  void testCatchup() {
+    String ns = "foo";
+    UUID startId = new UUID(0, 1);
+    Catchup cmd = new Catchup(ns, startId);
 
-        fc = spy(FactCast.from(fs));
-        Options opt = new Options();
+    fc = spy(FactCast.from(fs));
+    Options opt = new Options();
 
-        when(fs.subscribe(any(), any(ConsoleFactObserver.class))).thenAnswer(invocation -> {
-            Object[] args = invocation.getArguments();
-            GenericObserver<?> o = (GenericObserver<?>) args[1];
-            o.onCatchup();
-            o.onComplete();
+    when(fs.subscribe(any(), any(ConsoleFactObserver.class)))
+        .thenAnswer(
+            invocation -> {
+              Object[] args = invocation.getArguments();
+              GenericObserver<?> o = (GenericObserver<?>) args[1];
+              o.onCatchup();
+              o.onComplete();
 
-            SubscriptionRequest r = (SubscriptionRequest) args[0];
+              SubscriptionRequest r = (SubscriptionRequest) args[0];
 
-            List<FactSpec> specs = new ArrayList<>(r.specs());
+              List<FactSpec> specs = new ArrayList<>(r.specs());
 
-            assertEquals(startId, r.startingAfter().orElse(null));
-            assertEquals(ns, specs.iterator().next().ns());
+              assertEquals(startId, r.startingAfter().orElse(null));
+              assertEquals(ns, specs.iterator().next().ns());
 
-            return null;
-        });
-        cmd.runWith(fc, opt);
+              return null;
+            });
+    cmd.runWith(fc, opt);
 
-        verify(fc).subscribeEphemeral(any(SubscriptionRequest.class), any(
-                ConsoleFactObserver.class));
-    }
+    verify(fc).subscribeEphemeral(any(SubscriptionRequest.class), any(ConsoleFactObserver.class));
+  }
 }

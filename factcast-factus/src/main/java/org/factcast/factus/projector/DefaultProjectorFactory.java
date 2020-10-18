@@ -15,17 +15,16 @@
  */
 package org.factcast.factus.projector;
 
+import lombok.RequiredArgsConstructor;
 import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.Projection;
-
-import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class DefaultProjectorFactory implements ProjectorFactory {
 
-    final EventSerializer deser;
+  final EventSerializer deser;
 
-    public <A extends Projection> Projector<A> create(A projection) {
-        return new DefaultProjector<>(deser, projection);
-    }
+  public <A extends Projection> Projector<A> create(A projection) {
+    return new DefaultProjector<>(deser, projection);
+  }
 }

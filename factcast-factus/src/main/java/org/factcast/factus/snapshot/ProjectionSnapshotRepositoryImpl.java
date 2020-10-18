@@ -18,49 +18,50 @@ package org.factcast.factus.snapshot;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-
+import lombok.NonNull;
+import lombok.val;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
 
-import lombok.NonNull;
-import lombok.val;
+public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository
+    implements ProjectionSnapshotRepository {
 
-public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository implements
-        ProjectionSnapshotRepository {
+  private static final UUID FAKE_UUID = new UUID(0, 0); // needed to maintain
 
-    private static final UUID FAKE_UUID = new UUID(0, 0); // needed to maintain
+  private final SnapshotSerializerSupplier serializerSupplier;
 
-    private SnapshotSerializerSupplier serializerSupplier;
+  public ProjectionSnapshotRepositoryImpl(
+      @NonNull SnapshotCache snapshotCache,
+      @NonNull SnapshotSerializerSupplier serializerSupplier) {
+    super(snapshotCache);
+    this.serializerSupplier = serializerSupplier;
+  }
+  // the PK.
 
-    public ProjectionSnapshotRepositoryImpl(@NonNull SnapshotCache snapshotCache,
-            @NonNull SnapshotSerializerSupplier serializerSupplier) {
-        super(snapshotCache);
-        this.serializerSupplier = serializerSupplier;
-    }
-    // the PK.
+  @Override
+  public Optional<Snapshot> findLatest(@NonNull Class<? extends SnapshotProjection> type) {
+    SnapshotId snapshotId =
+        new SnapshotId(
+            createKeyForType(type, () -> serializerSupplier.retrieveSerializer(type)), FAKE_UUID);
+    return snapshotCache
+        .getSnapshot(snapshotId)
+        .map(s -> new Snapshot(snapshotId, s.lastFact(), s.bytes(), s.compressed()));
+  }
 
-    @Override
-    public Optional<Snapshot> findLatest(
-            @NonNull Class<? extends SnapshotProjection> type) {
-        SnapshotId snapshotId = new SnapshotId(createKeyForType(type), FAKE_UUID);
-        return snapshotCache.getSnapshot(snapshotId)
-                .map(s -> new Snapshot(snapshotId, s.lastFact(), s.bytes(), s.compressed()));
-    }
+  @Override
+  public CompletableFuture<Void> put(SnapshotProjection projection, UUID state) {
+    // this is done before going async for exception escalation reasons:
+    Class<? extends SnapshotProjection> type = projection.getClass();
+    SnapshotSerializer ser = serializerSupplier.retrieveSerializer(type);
 
-    @Override
-    public CompletableFuture<Void> put(SnapshotProjection projection, UUID state) {
-        // this is done before going async for exception escalation reasons:
-        Class<? extends SnapshotProjection> type = projection.getClass();
-        SnapshotSerializer ser = serializerSupplier.retrieveSerializer(type);
-
-        return CompletableFuture.runAsync(() -> {
-            val id = new SnapshotId(createKeyForType(type), FAKE_UUID);
-            putBlocking(new Snapshot(id, state, ser.serialize(projection), ser
-                    .includesCompression()));
+    return CompletableFuture.runAsync(
+        () -> {
+          val id = new SnapshotId(createKeyForType(type, () -> ser), FAKE_UUID);
+          putBlocking(
+              new Snapshot(id, state, ser.serialize(projection), ser.includesCompression()));
         });
-    }
-
+  }
 }

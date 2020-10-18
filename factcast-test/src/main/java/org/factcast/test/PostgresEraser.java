@@ -17,30 +17,27 @@ package org.factcast.test;
 
 import java.sql.DriverManager;
 import java.util.Properties;
-
-import org.testcontainers.containers.PostgreSQLContainer;
-
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.val;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 @UtilityClass
 public class PostgresEraser {
-    @SneakyThrows
-    static void wipeAllFactCastDataDataFromPostgres(PostgreSQLContainer<?> pg) {
-        val url = pg.getJdbcUrl();
+  @SneakyThrows
+  static void wipeAllFactCastDataDataFromPostgres(PostgreSQLContainer<?> pg) {
+    val url = pg.getJdbcUrl();
 
-        Properties p = new Properties();
-        p.put("user", pg.getUsername());
-        p.put("password", pg.getPassword());
+    Properties p = new Properties();
+    p.put("user", pg.getUsername());
+    p.put("password", pg.getPassword());
 
-        try (
-                val con = DriverManager.getConnection(url.toString(), p);
-                val st = con.createStatement();) {
-            st.execute("TRUNCATE fact");
-            st.execute("TRUNCATE tokenstore");
-            st.execute("TRUNCATE transformationcache");
-            st.execute("TRUNCATE snapshot_cache");
-        }
+    try (val con = DriverManager.getConnection(url, p);
+        val st = con.createStatement()) {
+      st.execute("TRUNCATE fact");
+      st.execute("TRUNCATE tokenstore");
+      st.execute("TRUNCATE transformationcache");
+      st.execute("TRUNCATE snapshot_cache");
     }
+  }
 }

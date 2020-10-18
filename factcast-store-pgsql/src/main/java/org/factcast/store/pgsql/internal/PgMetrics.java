@@ -15,161 +15,154 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import java.util.function.Supplier;
-
-import org.factcast.store.pgsql.internal.PgMetrics.StoreMetrics.OP;
-
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer.Sample;
+import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.store.pgsql.internal.PgMetrics.StoreMetrics.OP;
 
 @Slf4j
 public class PgMetrics {
 
-    @NonNull
-    private final MeterRegistry registry;
+  @NonNull private final MeterRegistry registry;
 
-    public PgMetrics(@NonNull MeterRegistry registry) {
-        this.registry = registry;
+  public PgMetrics(@NonNull MeterRegistry registry) {
+    this.registry = registry;
 
-        /*
-         * Register all non-exceptional meters, so that an operational dashboard
-         * can visualize all possible operations dynamically without hardcoding
-         * them.
-         */
-        for (OP op : OP.values()) {
-            timer(op, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
-        }
+    /*
+     * Register all non-exceptional meters, so that an operational dashboard
+     * can visualize all possible operations dynamically without hardcoding
+     * them.
+     */
+    for (OP op : OP.values()) {
+      timer(op, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
     }
+  }
 
-    @NonNull
-    public Counter counter(@NonNull StoreMetrics.OP operation) {
-        Tags tags = forOperation(operation);
-        // ommitting the meter description here
-        return Counter.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
+  @NonNull
+  public Counter counter(@NonNull StoreMetrics.OP operation) {
+    Tags tags = forOperation(operation);
+    // ommitting the meter description here
+    return Counter.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
+  }
+
+  private Tags forOperation(@NonNull PgMetrics.StoreMetrics.OP operation) {
+    return Tags.of(
+        Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
+        Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()));
+  }
+
+  public void time(@NonNull OP operation, @NonNull Runnable r) {
+    Sample sample = Timer.start();
+    Exception exception = null;
+    try {
+      r.run();
+    } catch (Exception e) {
+      exception = e;
+      throw e;
+    } finally {
+      time(operation, sample, exception);
     }
+  }
 
-    private Tags forOperation(@NonNull PgMetrics.StoreMetrics.OP operation) {
-        return Tags.of(
-                Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
-                Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()));
+  public <T> T time(@NonNull OP operation, @NonNull Supplier<T> s) {
+    Sample sample = Timer.start();
+    Exception exception = null;
+    try {
+      return s.get();
+    } catch (Exception e) {
+      exception = e;
+      throw e;
+    } finally {
+      time(operation, sample, exception);
     }
+  }
 
-    public void time(@NonNull OP operation, @NonNull Runnable r) {
-        Sample sample = Timer.start();
-        Exception exception = null;
-        try {
-            r.run();
-        } catch (Exception e) {
-            exception = e;
-            throw e;
-        } finally {
-            time(operation, sample, exception);
-        }
+  public void time(@NonNull OP operation, @NonNull Sample sample, Exception e) {
+    try {
+      String exceptionTagValue = mapException(e);
+      sample.stop(timer(operation, exceptionTagValue));
+    } catch (Exception exception) {
+      log.warn("Failed timing operation!", exception);
     }
+  }
 
-    public <T> T time(@NonNull OP operation, @NonNull Supplier<T> s) {
-        Sample sample = Timer.start();
-        Exception exception = null;
-        try {
-            return s.get();
-        } catch (Exception e) {
-            exception = e;
-            throw e;
-        } finally {
-            time(operation, sample, exception);
-        }
+  @NonNull
+  public static String mapException(Exception e) {
+    if (e == null) {
+      return StoreMetrics.TAG_EXCEPTION_VALUE_NONE;
     }
+    return e.getClass().getSimpleName();
+  }
 
-    public void time(@NonNull OP operation, @NonNull Sample sample, Exception e) {
-        try {
-            String exceptionTagValue = mapException(e);
-            sample.stop(timer(operation, exceptionTagValue));
-        } catch (Exception exception) {
-            log.warn("Failed timing operation!", exception);
-        }
+  @NonNull
+  private Timer timer(@NonNull OP operation, @NonNull String exceptionTagValue) {
+    Tags tags =
+        Tags.of(
+            Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
+            Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()),
+            Tag.of(StoreMetrics.TAG_EXCEPTION_KEY, exceptionTagValue));
+    return Timer.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
+  }
+
+  @NonNull
+  public Timer timer(@NonNull OP operation) {
+    Tags tags = forOperation(operation);
+    return Timer.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
+  }
+
+  public static class StoreMetrics {
+
+    static final String METRIC_NAME = "factcast.store.operations";
+
+    static final String TAG_STORE_KEY = "store";
+
+    static final String TAG_STORE_VALUE = "pgsql";
+
+    static final String TAG_OPERATION_KEY = "operation";
+
+    static final String TAG_EXCEPTION_KEY = "exception";
+
+    static final String TAG_EXCEPTION_VALUE_NONE = "None";
+
+    public enum OP {
+      PUBLISH("publish"),
+
+      SUBSCRIBE_FOLLOW("subscribe-follow"),
+
+      SUBSCRIBE_CATCHUP("subscribe-catchup"),
+
+      FETCH_BY_ID("fetchById"),
+
+      SERIAL_OF("serialOf"),
+
+      ENUMERATE_NAMESPACES("enumerateNamespaces"),
+
+      ENUMERATE_TYPES("enumerateTypes"),
+
+      GET_STATE_FOR("getStateFor"),
+
+      PUBLISH_IF_UNCHANGED("publishIfUnchanged"),
+
+      GET_SNAPSHOT("getSnapshot"),
+
+      SET_SNAPSHOT("setSnapshot"),
+
+      CLEAR_SNAPSHOT("clearSnapshot"),
+
+      COMPACT_SNAPSHOT_CACHE("compactSnapshotCache"),
+
+      NOTIFY_ROUNDTRIP_LATENCY("notifyRoundTripLatency"),
+
+      MISSED_ROUNDTRIP("missedRoundtrip");
+
+      @NonNull @Getter final String op;
+
+      OP(@NonNull String op) {
+        this.op = op;
+      }
     }
-
-    @NonNull
-    public static String mapException(Exception e) {
-        if (e == null) {
-            return StoreMetrics.TAG_EXCEPTION_VALUE_NONE;
-        }
-        return e.getClass().getSimpleName();
-    }
-
-    @NonNull
-    private Timer timer(@NonNull OP operation, @NonNull String exceptionTagValue) {
-        Tags tags = Tags.of(
-                Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
-                Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()),
-                Tag.of(StoreMetrics.TAG_EXCEPTION_KEY, exceptionTagValue));
-        return Timer.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
-    }
-
-    @NonNull
-    public Timer timer(@NonNull OP operation) {
-        Tags tags = forOperation(operation);
-        return Timer.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
-    }
-
-    public static class StoreMetrics {
-
-        static final String METRIC_NAME = "factcast.store.operations";
-
-        static final String TAG_STORE_KEY = "store";
-
-        static final String TAG_STORE_VALUE = "pgsql";
-
-        static final String TAG_OPERATION_KEY = "operation";
-
-        static final String TAG_EXCEPTION_KEY = "exception";
-
-        static final String TAG_EXCEPTION_VALUE_NONE = "None";
-
-        public enum OP {
-
-            PUBLISH("publish"),
-
-            SUBSCRIBE_FOLLOW("subscribe-follow"),
-
-            SUBSCRIBE_CATCHUP("subscribe-catchup"),
-
-            FETCH_BY_ID("fetchById"),
-
-            SERIAL_OF("serialOf"),
-
-            ENUMERATE_NAMESPACES("enumerateNamespaces"),
-
-            ENUMERATE_TYPES("enumerateTypes"),
-
-            GET_STATE_FOR("getStateFor"),
-
-            PUBLISH_IF_UNCHANGED("publishIfUnchanged"),
-
-            GET_SNAPSHOT("getSnapshot"),
-
-            SET_SNAPSHOT("setSnapshot"),
-
-            CLEAR_SNAPSHOT("clearSnapshot"),
-
-            COMPACT_SNAPSHOT_CACHE("compactSnapshotCache"),
-
-            NOTIFY_ROUNDTRIP_LATENCY("notifyRoundTripLatency"),
-
-            MISSED_ROUNDTRIP("missedRoundtrip");
-
-            @NonNull
-            @Getter
-            final String op;
-
-            OP(@NonNull String op) {
-                this.op = op;
-            }
-
-        }
-
-    }
+  }
 }

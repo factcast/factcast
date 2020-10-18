@@ -19,18 +19,17 @@ import java.util.List;
 
 public class FactValidationException extends IllegalArgumentException {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    public FactValidationException(String msg) {
-        super(msg);
-    }
+  public FactValidationException(String msg) {
+    super(msg);
+  }
 
-    public FactValidationException(List<String> errors) {
-        super(render(errors));
-    }
+  public FactValidationException(List<String> errors) {
+    super(render(errors));
+  }
 
-    private static String render(List<String> errors) {
-        return "\n" + String.join("\n", errors);
-    }
-
+  private static String render(List<String> errors) {
+    return "\n" + String.join("\n", errors);
+  }
 }

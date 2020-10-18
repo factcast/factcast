@@ -18,7 +18,7 @@ package org.factcast.store.pgsql.registry.http;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.MalformedURLException;
-
+import lombok.NonNull;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
@@ -30,44 +30,31 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import lombok.NonNull;
-
 @ExtendWith(MockitoExtension.class)
 class HttpSchemaRegistryFactoryTest {
 
-    @InjectMocks
-    private HttpSchemaRegistryFactory underTest;
+  @InjectMocks private HttpSchemaRegistryFactory underTest;
+
+  @Test
+  void getProtocols() {
+    assertThat(underTest.getProtocols()).containsExactly("http", "https");
+  }
+
+  @Nested
+  class WhenCreatingInstance {
+    private final String FULL_URL = "https://xxx";
+
+    @Mock private @NonNull SchemaStore schemaStore;
+
+    @Mock private @NonNull TransformationStore transformationStore;
+
+    @Mock private @NonNull RegistryMetrics registryMetrics;
+
+    @Mock private @NonNull PgConfigurationProperties props;
 
     @Test
-    void getProtocols() {
-        assertThat(underTest.getProtocols())
-                .containsExactly("http", "https");
+    void createInstance() throws MalformedURLException {
+      underTest.createInstance(FULL_URL, schemaStore, transformationStore, registryMetrics, props);
     }
-
-    @Nested
-    class WhenCreatingInstance {
-        private final String FULL_URL = "https://xxx";
-
-        @Mock
-        private @NonNull SchemaStore schemaStore;
-
-        @Mock
-        private @NonNull TransformationStore transformationStore;
-
-        @Mock
-        private @NonNull RegistryMetrics registryMetrics;
-
-        @Mock
-        private @NonNull PgConfigurationProperties props;
-
-        @Test
-        void createInstance() throws MalformedURLException {
-            underTest.createInstance(FULL_URL,
-                    schemaStore,
-                    transformationStore,
-                    registryMetrics,
-                    props);
-        }
-
-    }
+  }
 }

@@ -15,6 +15,8 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
+import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
+import net.jpountz.lz4.LZ4Compressor;
 import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.client.grpc.codec.Lz4GrpcClientCodec;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
@@ -23,24 +25,24 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
-import net.jpountz.lz4.LZ4Compressor;
-
 /**
  * Configures optional LZ4 Codec
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-
 @Configuration
-@ConditionalOnClass({ LZ4Compressor.class, Lz4GrpcClientCodec.class, GrpcFactStore.class,
-        GrpcChannelFactory.class })
+@ConditionalOnClass({
+  LZ4Compressor.class,
+  Lz4GrpcClientCodec.class,
+  GrpcFactStore.class,
+  GrpcChannelFactory.class
+})
 @AutoConfigureBefore(GrpcFactStoreAutoConfiguration.class)
 public class LZ4ClientAutoConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean
-    public Lz4GrpcClientCodec snappyCodec() {
-        return new Lz4GrpcClientCodec();
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  public Lz4GrpcClientCodec snappyCodec() {
+    return new Lz4GrpcClientCodec();
+  }
 }

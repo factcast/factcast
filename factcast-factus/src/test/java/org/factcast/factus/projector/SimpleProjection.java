@@ -15,18 +15,16 @@
  */
 package org.factcast.factus.projector;
 
+import lombok.Getter;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
 
-import lombok.Getter;
-
 class SimpleProjection extends LocalManagedProjection {
 
-    @Getter
-    private SimpleEvent recordedEvent = null;
+  @Getter private SimpleEvent recordedEvent = null;
 
-    @Handler
-    void apply(SimpleEvent foo) {
-        this.recordedEvent = foo;
-    }
+  @Handler
+  void apply(SimpleEvent foo) {
+    this.recordedEvent = foo;
+  }
 }

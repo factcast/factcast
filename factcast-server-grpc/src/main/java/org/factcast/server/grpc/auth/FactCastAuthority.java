@@ -16,5 +16,5 @@
 package org.factcast.server.grpc.auth;
 
 public final class FactCastAuthority {
-    public static final String AUTHENTICATED = "ROLE_AUTHENTICATED";
+  public static final String AUTHENTICATED = "ROLE_AUTHENTICATED";
 }

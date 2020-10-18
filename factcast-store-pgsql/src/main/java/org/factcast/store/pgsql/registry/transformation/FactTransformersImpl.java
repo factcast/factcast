@@ -16,7 +16,8 @@
 package org.factcast.store.pgsql.registry.transformation;
 
 import java.util.OptionalInt;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformers;
@@ -25,40 +26,35 @@ import org.factcast.store.pgsql.internal.RequestedVersions;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.TimedOperation;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 @RequiredArgsConstructor
 public class FactTransformersImpl implements FactTransformers {
 
-    @NonNull
-    private final RequestedVersions requested;
+  @NonNull private final RequestedVersions requested;
 
-    @NonNull
-    private final FactTransformerService trans;
+  @NonNull private final FactTransformerService trans;
 
-    @NonNull
-    private final RegistryMetrics registryMetrics;
+  @NonNull private final RegistryMetrics registryMetrics;
 
-    @Override
-    public @NonNull Fact transformIfNecessary(@NonNull Fact e) throws TransformationException {
+  @Override
+  public @NonNull Fact transformIfNecessary(@NonNull Fact e) throws TransformationException {
 
-        String ns = e.ns();
-        String type = e.type();
+    String ns = e.ns();
+    String type = e.type();
 
-        if (type == null || requested.dontCare(ns, type) || requested.exactVersion(ns, type, e
-                .version())) {
-            return e;
-        } else {
-            OptionalInt max = requested.get(ns, type).stream().mapToInt(v -> v).max();
-            int targetVersion = max.orElseThrow(() -> new IllegalArgumentException(
-                    "No requested Version !? This must not happen."));
+    if (type == null
+        || requested.dontCare(ns, type)
+        || requested.exactVersion(ns, type, e.version())) {
+      return e;
+    } else {
+      OptionalInt max = requested.get(ns, type).stream().mapToInt(v -> v).max();
+      int targetVersion =
+          max.orElseThrow(
+              () -> new IllegalArgumentException("No requested Version !? This must not happen."));
 
-            return registryMetrics.timed(TimedOperation.TRANSFORMATION,
-                    TransformationException.class,
-                    () -> trans.transformIfNecessary(e, targetVersion));
-
-        }
+      return registryMetrics.timed(
+          TimedOperation.TRANSFORMATION,
+          TransformationException.class,
+          () -> trans.transformIfNecessary(e, targetVersion));
     }
-
+  }
 }

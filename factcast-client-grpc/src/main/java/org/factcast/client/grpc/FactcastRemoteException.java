@@ -15,37 +15,35 @@
  */
 package org.factcast.client.grpc;
 
-import java.lang.reflect.Constructor;
-import java.util.Objects;
-
 import io.grpc.Metadata;
 import io.grpc.StatusRuntimeException;
+import java.lang.reflect.Constructor;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class FactcastRemoteException {
 
-    public static RuntimeException from(StatusRuntimeException e) {
+  public static RuntimeException from(StatusRuntimeException e) {
 
-        try {
-            Metadata md = e.getTrailers();
-            assert md != null;
+    try {
+      Metadata md = e.getTrailers();
+      assert md != null;
 
-            byte[] msgBytes = md.get(Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER));
-            byte[] excBytes = md.get(Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER));
+      byte[] msgBytes = md.get(Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER));
+      byte[] excBytes = md.get(Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER));
 
-            if (excBytes != null) {
-                Class<?> exc = Class.forName(new String(excBytes));
-                Constructor<?> constructor = exc.getConstructor(String.class);
-                String msg = new String(Objects.requireNonNull(msgBytes));
-                return (RuntimeException) constructor.newInstance(msg);
-            }
+      if (excBytes != null) {
+        Class<?> exc = Class.forName(new String(excBytes));
+        Constructor<?> constructor = exc.getConstructor(String.class);
+        String msg = new String(Objects.requireNonNull(msgBytes));
+        return (RuntimeException) constructor.newInstance(msg);
+      }
 
-        } catch (Throwable ex) {
-            log.warn("Something went wrong materializing an exception", ex);
-            // but throw e anyway
-        }
-        return e;
+    } catch (Throwable ex) {
+      log.warn("Something went wrong materializing an exception", ex);
+      // but throw e anyway
     }
-
+    return e;
+  }
 }

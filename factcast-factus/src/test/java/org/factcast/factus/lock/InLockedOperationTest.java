@@ -25,30 +25,29 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class InLockedOperationTest {
 
-    @InjectMocks
-    private InLockedOperation underTest;
+  @InjectMocks private InLockedOperation underTest;
 
-    @Test
-    void initialIsFalse() {
-        InLockedOperation.assertNotInLockedOperation();
+  @Test
+  void initialIsFalse() {
+    InLockedOperation.assertNotInLockedOperation();
+  }
+
+  @Test
+  void failsIfLocked() {
+    try {
+      InLockedOperation.enterLockedOperation();
+      assertThrows(
+          IllegalStateException.class, () -> InLockedOperation.assertNotInLockedOperation());
+    } finally {
+      InLockedOperation.exitLockedOperation();
     }
+  }
 
-    @Test
-    void failsIfLocked() {
-        try {
-            InLockedOperation.enterLockedOperation();
-            assertThrows(IllegalStateException.class, () -> InLockedOperation
-                    .assertNotInLockedOperation());
-        } finally {
-            InLockedOperation.exitLockedOperation();
-        }
-    }
+  @Test
+  void doesNotFailIfUnLocked() {
+    InLockedOperation.enterLockedOperation();
+    InLockedOperation.exitLockedOperation();
 
-    @Test
-    void doesNotFailIfUnLocked() {
-        InLockedOperation.enterLockedOperation();
-        InLockedOperation.exitLockedOperation();
-
-        InLockedOperation.assertNotInLockedOperation();
-    }
+    InLockedOperation.assertNotInLockedOperation();
+  }
 }

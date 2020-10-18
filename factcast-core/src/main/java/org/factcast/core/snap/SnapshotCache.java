@@ -16,24 +16,22 @@
 package org.factcast.core.snap;
 
 import java.util.Optional;
-
 import lombok.NonNull;
 
 /**
- * Even though this functionality is available through factStore, we chose to
- * extract it from the factcast facade. Using factcast itself for snapshots is a
- * convenience feature - for heavy duty installations having a dedicated
- * implementation using your favorite K/V Store is suggested in order to lift
- * this load, as well as the data from factcast.
+ * Even though this functionality is available through factStore, we chose to extract it from the
+ * factcast facade. Using factcast itself for snapshots is a convenience feature - for heavy duty
+ * installations having a dedicated implementation using your favorite K/V Store is suggested in
+ * order to lift this load, as well as the data from factcast.
  */
 public interface SnapshotCache {
 
-    @NonNull
-    Optional<Snapshot> getSnapshot(@NonNull SnapshotId id);
+  @NonNull
+  Optional<Snapshot> getSnapshot(@NonNull SnapshotId id);
 
-    void setSnapshot(@NonNull Snapshot snapshot);
+  void setSnapshot(@NonNull Snapshot snapshot);
 
-    void clearSnapshot(@NonNull SnapshotId id);
+  void clearSnapshot(@NonNull SnapshotId id);
 
-    void compact(int retentionTimeInDays);
+  void compact(int retentionTimeInDays);
 }

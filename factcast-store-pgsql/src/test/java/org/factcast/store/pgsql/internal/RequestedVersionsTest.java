@@ -18,78 +18,76 @@ package org.factcast.store.pgsql.internal;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.Set;
-
 import org.junit.jupiter.api.*;
 
 public class RequestedVersionsTest {
 
-    final RequestedVersions uut = new RequestedVersions();
+  final RequestedVersions uut = new RequestedVersions();
 
-    @Test
-    public void testEmpty() {
-        Set<Integer> set = uut.get("foo", "bar");
+  @Test
+  public void testEmpty() {
+    Set<Integer> set = uut.get("foo", "bar");
 
-        assertThat(set).isNotNull().isEmpty();
-    }
+    assertThat(set).isNotNull().isEmpty();
+  }
 
-    @Test
-    public void testHappyPath() {
-        uut.add("foo", "bar", 1);
-        uut.add("foo", "bar", 2);
-        Set<Integer> set = uut.get("foo", "bar");
+  @Test
+  public void testHappyPath() {
+    uut.add("foo", "bar", 1);
+    uut.add("foo", "bar", 2);
+    Set<Integer> set = uut.get("foo", "bar");
 
-        assertThat(set).isNotEmpty().contains(1, 2).hasSize(2);
-    }
+    assertThat(set).isNotEmpty().contains(1, 2).hasSize(2);
+  }
 
-    @Test
-    public void testHappyPathMulti() {
-        uut.add("foo", "bar", 1);
-        uut.add("foo", "baz", 2);
-        assertThat(uut.get("foo", "bar")).isNotEmpty().contains(1).hasSize(1);
-        assertThat(uut.get("foo", "baz")).isNotEmpty().contains(2).hasSize(1);
-        assertThat(uut.get("foo", "boo")).isEmpty();
-    }
+  @Test
+  public void testHappyPathMulti() {
+    uut.add("foo", "bar", 1);
+    uut.add("foo", "baz", 2);
+    assertThat(uut.get("foo", "bar")).isNotEmpty().contains(1).hasSize(1);
+    assertThat(uut.get("foo", "baz")).isNotEmpty().contains(2).hasSize(1);
+    assertThat(uut.get("foo", "boo")).isEmpty();
+  }
 
-    @Test
-    public void testDontCare() {
-        assertThat(uut.dontCare("foo", "bar")).isTrue();
-    }
+  @Test
+  public void testDontCare() {
+    assertThat(uut.dontCare("foo", "bar")).isTrue();
+  }
 
-    @Test
-    public void testDontCare_byRequesting0() {
-        uut.add("foo", "bar", 0);
-        assertThat(uut.dontCare("foo", "bar")).isTrue();
-    }
+  @Test
+  public void testDontCare_byRequesting0() {
+    uut.add("foo", "bar", 0);
+    assertThat(uut.dontCare("foo", "bar")).isTrue();
+  }
 
-    @Test
-    public void testDontCare_negative() {
-        uut.add("foo", "bar", 7);
-        assertThat(uut.dontCare("foo", "bar")).isFalse();
-    }
+  @Test
+  public void testDontCare_negative() {
+    uut.add("foo", "bar", 7);
+    assertThat(uut.dontCare("foo", "bar")).isFalse();
+  }
 
-    @Test
-    public void testDontCare_byRequesting0NextToOthers() {
-        uut.add("foo", "bar", 3);
-        uut.add("foo", "bar", 0);
-        uut.add("foo", "bar", 1);
-        assertThat(uut.dontCare("foo", "bar")).isTrue();
-    }
+  @Test
+  public void testDontCare_byRequesting0NextToOthers() {
+    uut.add("foo", "bar", 3);
+    uut.add("foo", "bar", 0);
+    uut.add("foo", "bar", 1);
+    assertThat(uut.dontCare("foo", "bar")).isTrue();
+  }
 
-    @Test
-    public void testExactVersion() {
-        uut.add("foo", "bar", 3);
-        assertThat(uut.exactVersion("foo", "bar", 3)).isTrue();
-        assertThat(uut.exactVersion("foo", "bar", 1)).isFalse();
-    }
+  @Test
+  public void testExactVersion() {
+    uut.add("foo", "bar", 3);
+    assertThat(uut.exactVersion("foo", "bar", 3)).isTrue();
+    assertThat(uut.exactVersion("foo", "bar", 1)).isFalse();
+  }
 
-    @Test
-    public void testExactVersion_nextToOthers() {
-        uut.add("foo", "bar", 3);
-        uut.add("foo", "bar", 0);
-        uut.add("foo", "bar", 1);
-        assertThat(uut.exactVersion("foo", "bar", 3)).isTrue();
-        assertThat(uut.exactVersion("foo", "bar", 1)).isTrue();
-        assertThat(uut.exactVersion("foo", "bar", 5)).isFalse();
-    }
-
+  @Test
+  public void testExactVersion_nextToOthers() {
+    uut.add("foo", "bar", 3);
+    uut.add("foo", "bar", 0);
+    uut.add("foo", "bar", 1);
+    assertThat(uut.exactVersion("foo", "bar", 3)).isTrue();
+    assertThat(uut.exactVersion("foo", "bar", 1)).isTrue();
+    assertThat(uut.exactVersion("foo", "bar", 5)).isFalse();
+  }
 }

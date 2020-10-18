@@ -15,35 +15,34 @@
  */
 package org.factcast.store.pgsql.registry.http;
 
+import com.google.common.collect.Lists;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
-
+import lombok.NonNull;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.SchemaRegistryFactory;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 
-import com.google.common.collect.Lists;
-
-import lombok.NonNull;
-
 public class HttpSchemaRegistryFactory implements SchemaRegistryFactory<HttpSchemaRegistry> {
 
-    @Override
-    public List<String> getProtocols() {
-        return Lists.newArrayList("http", "https");
-    }
+  @Override
+  public List<String> getProtocols() {
+    return Lists.newArrayList("http", "https");
+  }
 
-    @Override
-    public HttpSchemaRegistry createInstance(@NonNull String fullUrl,
-            @NonNull SchemaStore schemaStore,
-            @NonNull TransformationStore transformationStore,
-            @NonNull RegistryMetrics registryMetrics,
-            @NonNull PgConfigurationProperties props) throws MalformedURLException {
+  @Override
+  public HttpSchemaRegistry createInstance(
+      @NonNull String fullUrl,
+      @NonNull SchemaStore schemaStore,
+      @NonNull TransformationStore transformationStore,
+      @NonNull RegistryMetrics registryMetrics,
+      @NonNull PgConfigurationProperties props)
+      throws MalformedURLException {
 
-        return new HttpSchemaRegistry(new URL(fullUrl + "/"),
-                schemaStore, transformationStore, registryMetrics, props);
-    }
+    return new HttpSchemaRegistry(
+        new URL(fullUrl + "/"), schemaStore, transformationStore, registryMetrics, props);
+  }
 }

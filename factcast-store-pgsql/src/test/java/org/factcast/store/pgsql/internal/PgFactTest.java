@@ -25,95 +25,93 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Set;
 import java.util.UUID;
-
 import org.junit.jupiter.api.Test;
 
 public class PgFactTest {
 
-    @Test
-    void testFrom() throws Exception {
-        ResultSet rs = mock(ResultSet.class);
-        when(rs.next()).thenReturn(true);
-        String ns = "ns";
-        String type = "type";
-        String aggId = UUID.randomUUID().toString();
-        String aggIdArr = "[\"" + aggId + "\"]";
-        String header = "{\"meta\":{\"foo\":\"1\",\"bar\":\"2\",\"baz\":\"3\"}}";
-        String payload = "{}";
-        int version = 7;
-        when(rs.getString(eq(PgConstants.ALIAS_ID))).thenReturn(aggId);
-        when(rs.getString(eq(PgConstants.ALIAS_NS))).thenReturn(ns);
-        when(rs.getString(eq(PgConstants.ALIAS_TYPE))).thenReturn(type);
-        when(rs.getString(eq(PgConstants.ALIAS_AGGID))).thenReturn(aggIdArr);
-        when(rs.getString(eq(PgConstants.COLUMN_HEADER))).thenReturn(header);
-        when(rs.getString(eq(PgConstants.COLUMN_PAYLOAD))).thenReturn(payload);
-        when(rs.getInt(eq(PgConstants.COLUMN_VERSION))).thenReturn(version);
-        when(rs.next()).thenReturn(true);
-        PgFact uut = (PgFact) PgFact.from(rs);
-        assertEquals(ns, uut.ns());
-        assertEquals(type, uut.type());
-        assertEquals(aggId, uut.aggIds().iterator().next().toString());
-        assertEquals(aggId, uut.id().toString());
-        assertEquals(header, uut.jsonHeader());
-        assertEquals(payload, uut.jsonPayload());
-        assertEquals("1", uut.meta("foo"));
-        assertEquals("2", uut.meta("bar"));
-        assertEquals("3", uut.meta("baz"));
-        assertEquals(7, uut.version());
-    }
+  @Test
+  void testFrom() throws Exception {
+    ResultSet rs = mock(ResultSet.class);
+    when(rs.next()).thenReturn(true);
+    String ns = "ns";
+    String type = "type";
+    String aggId = UUID.randomUUID().toString();
+    String aggIdArr = "[\"" + aggId + "\"]";
+    String header = "{\"meta\":{\"foo\":\"1\",\"bar\":\"2\",\"baz\":\"3\"}}";
+    String payload = "{}";
+    int version = 7;
+    when(rs.getString(eq(PgConstants.ALIAS_ID))).thenReturn(aggId);
+    when(rs.getString(eq(PgConstants.ALIAS_NS))).thenReturn(ns);
+    when(rs.getString(eq(PgConstants.ALIAS_TYPE))).thenReturn(type);
+    when(rs.getString(eq(PgConstants.ALIAS_AGGID))).thenReturn(aggIdArr);
+    when(rs.getString(eq(PgConstants.COLUMN_HEADER))).thenReturn(header);
+    when(rs.getString(eq(PgConstants.COLUMN_PAYLOAD))).thenReturn(payload);
+    when(rs.getInt(eq(PgConstants.COLUMN_VERSION))).thenReturn(version);
+    when(rs.next()).thenReturn(true);
+    PgFact uut = (PgFact) PgFact.from(rs);
+    assertEquals(ns, uut.ns());
+    assertEquals(type, uut.type());
+    assertEquals(aggId, uut.aggIds().iterator().next().toString());
+    assertEquals(aggId, uut.id().toString());
+    assertEquals(header, uut.jsonHeader());
+    assertEquals(payload, uut.jsonPayload());
+    assertEquals("1", uut.meta("foo"));
+    assertEquals("2", uut.meta("bar"));
+    assertEquals("3", uut.meta("baz"));
+    assertEquals(7, uut.version());
+  }
 
-    @Test
-    void testToUUIDArrayNull() {
-        Set<UUID> res = PgFact.toUUIDArray(null);
-        assertTrue(res.isEmpty());
-    }
+  @Test
+  void testToUUIDArrayNull() {
+    Set<UUID> res = PgFact.toUUIDArray(null);
+    assertTrue(res.isEmpty());
+  }
 
-    @Test
-    void testToUUIDArrayEmpty() {
-        Set<UUID> res = PgFact.toUUIDArray("[]");
-        assertTrue(res.isEmpty());
-    }
+  @Test
+  void testToUUIDArrayEmpty() {
+    Set<UUID> res = PgFact.toUUIDArray("[]");
+    assertTrue(res.isEmpty());
+  }
 
-    @Test
-    void testToUUIDArraySingle() {
-        UUID aggId1 = UUID.randomUUID();
-        Set<UUID> res = PgFact.toUUIDArray("[\"" + aggId1 + "\"]");
-        assertEquals(1, res.size());
-        assertTrue(res.contains(aggId1));
-    }
+  @Test
+  void testToUUIDArraySingle() {
+    UUID aggId1 = UUID.randomUUID();
+    Set<UUID> res = PgFact.toUUIDArray("[\"" + aggId1 + "\"]");
+    assertEquals(1, res.size());
+    assertTrue(res.contains(aggId1));
+  }
 
-    @Test
-    void testToUUIDArrayMutli() {
-        UUID aggId1 = UUID.randomUUID();
-        UUID aggId2 = UUID.randomUUID();
-        Set<UUID> res = PgFact.toUUIDArray("[\"" + aggId1 + "\",\"" + aggId2 + "\"]");
-        assertEquals(2, res.size());
-        assertTrue(res.contains(aggId1));
-        assertTrue(res.contains(aggId2));
-    }
+  @Test
+  void testToUUIDArrayMutli() {
+    UUID aggId1 = UUID.randomUUID();
+    UUID aggId2 = UUID.randomUUID();
+    Set<UUID> res = PgFact.toUUIDArray("[\"" + aggId1 + "\",\"" + aggId2 + "\"]");
+    assertEquals(2, res.size());
+    assertTrue(res.contains(aggId1));
+    assertTrue(res.contains(aggId2));
+  }
 
-    @Test
-    void testToString() throws SQLException {
-        ResultSet rs = mock(ResultSet.class);
-        when(rs.next()).thenReturn(true);
-        String ns = "ns";
-        String type = "type";
-        String aggId = UUID.randomUUID().toString();
-        String aggIdArr = "[\"" + aggId + "\"]";
-        String header = "{\"meta\":{\"foo\":\"1\",\"bar\":\"2\",\"baz\":\"3\"}}";
-        String payload = "{}";
-        int version = 7;
-        when(rs.getString(eq(PgConstants.ALIAS_ID))).thenReturn(aggId);
-        when(rs.getString(eq(PgConstants.ALIAS_NS))).thenReturn(ns);
-        when(rs.getString(eq(PgConstants.ALIAS_TYPE))).thenReturn(type);
-        when(rs.getString(eq(PgConstants.ALIAS_AGGID))).thenReturn(aggIdArr);
-        when(rs.getString(eq(PgConstants.COLUMN_HEADER))).thenReturn(header);
-        when(rs.getString(eq(PgConstants.COLUMN_PAYLOAD))).thenReturn(payload);
-        when(rs.getInt(eq(PgConstants.COLUMN_VERSION))).thenReturn(version);
-        when(rs.next()).thenReturn(true);
-        PgFact uut = (PgFact) PgFact.from(rs);
+  @Test
+  void testToString() throws SQLException {
+    ResultSet rs = mock(ResultSet.class);
+    when(rs.next()).thenReturn(true);
+    String ns = "ns";
+    String type = "type";
+    String aggId = UUID.randomUUID().toString();
+    String aggIdArr = "[\"" + aggId + "\"]";
+    String header = "{\"meta\":{\"foo\":\"1\",\"bar\":\"2\",\"baz\":\"3\"}}";
+    String payload = "{}";
+    int version = 7;
+    when(rs.getString(eq(PgConstants.ALIAS_ID))).thenReturn(aggId);
+    when(rs.getString(eq(PgConstants.ALIAS_NS))).thenReturn(ns);
+    when(rs.getString(eq(PgConstants.ALIAS_TYPE))).thenReturn(type);
+    when(rs.getString(eq(PgConstants.ALIAS_AGGID))).thenReturn(aggIdArr);
+    when(rs.getString(eq(PgConstants.COLUMN_HEADER))).thenReturn(header);
+    when(rs.getString(eq(PgConstants.COLUMN_PAYLOAD))).thenReturn(payload);
+    when(rs.getInt(eq(PgConstants.COLUMN_VERSION))).thenReturn(version);
+    when(rs.next()).thenReturn(true);
+    PgFact uut = (PgFact) PgFact.from(rs);
 
-        assertEquals("PgFact(id=" + uut.id() + ")", uut.toString());
-
-    }
+    assertEquals("PgFact(id=" + uut.id() + ")", uut.toString());
+  }
 }

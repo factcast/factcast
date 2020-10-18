@@ -22,79 +22,78 @@ import org.junit.jupiter.api.*;
 
 public class FactCastAccountTest {
 
-    private final FactCastAccount uut = new FactCastAccount("foo");
+  private final FactCastAccount uut = new FactCastAccount("foo");
 
-    @Test
-    public void testDefaultsToFalse() {
-        uut.initialize(mock(FactCastAccessConfiguration.class));
-        assertFalse(uut.canRead("foo"));
-        assertFalse(uut.canWrite("foo"));
-    }
+  @Test
+  public void testDefaultsToFalse() {
+    uut.initialize(mock(FactCastAccessConfiguration.class));
+    assertFalse(uut.canRead("foo"));
+    assertFalse(uut.canWrite("foo"));
+  }
 
-    @Test
-    public void testReadOnly() {
+  @Test
+  public void testReadOnly() {
 
-        FactCastRole readOnlyRole = new FactCastRole();
-        readOnlyRole.read().include().add("*");
-        uut.role(readOnlyRole);
+    FactCastRole readOnlyRole = new FactCastRole();
+    readOnlyRole.read().include().add("*");
+    uut.role(readOnlyRole);
 
-        assertTrue(uut.canRead("foo"));
-        assertFalse(uut.canWrite("foo"));
-    }
+    assertTrue(uut.canRead("foo"));
+    assertFalse(uut.canWrite("foo"));
+  }
 
-    @Test
-    public void testReadOnlyMultiRole() {
+  @Test
+  public void testReadOnlyMultiRole() {
 
-        FactCastRole other = new FactCastRole();
-        other.read().exclude().add("toBeExcluded");
+    FactCastRole other = new FactCastRole();
+    other.read().exclude().add("toBeExcluded");
 
-        FactCastRole readOnlyRole = new FactCastRole();
-        readOnlyRole.read().include().add("*");
-        uut.role(other);
-        uut.role(readOnlyRole);
+    FactCastRole readOnlyRole = new FactCastRole();
+    readOnlyRole.read().include().add("*");
+    uut.role(other);
+    uut.role(readOnlyRole);
 
-        assertTrue(uut.canRead("foo"));
-        assertFalse(uut.canWrite("foo"));
-    }
+    assertTrue(uut.canRead("foo"));
+    assertFalse(uut.canWrite("foo"));
+  }
 
-    @Test
-    public void testReadOnlyMultiRoleWithConflict() {
+  @Test
+  public void testReadOnlyMultiRoleWithConflict() {
 
-        FactCastRole role1 = new FactCastRole();
-        role1.read().include().add("foo");
+    FactCastRole role1 = new FactCastRole();
+    role1.read().include().add("foo");
 
-        FactCastRole role2 = new FactCastRole();
-        role2.read().exclude().add("foo");
+    FactCastRole role2 = new FactCastRole();
+    role2.read().exclude().add("foo");
 
-        uut.role(role1, role2);
+    uut.role(role1, role2);
 
-        // exclusion wins
-        assertFalse(uut.canRead("foo"));
-        assertFalse(uut.canWrite("foo"));
-    }
+    // exclusion wins
+    assertFalse(uut.canRead("foo"));
+    assertFalse(uut.canWrite("foo"));
+  }
 
-    @Test
-    public void testInilializationRuns() {
+  @Test
+  public void testInilializationRuns() {
 
-        FactCastRole role1 = new FactCastRole("r1");
-        role1.read().include().add("foo");
+    FactCastRole role1 = new FactCastRole("r1");
+    role1.read().include().add("foo");
 
-        FactCastRole role2 = new FactCastRole("r2");
-        role2.read().exclude().add("foo");
+    FactCastRole role2 = new FactCastRole("r2");
+    role2.read().exclude().add("foo");
 
-        uut.roleNames().add(role1.id());
-        uut.roleNames().add(role2.id());
+    uut.roleNames().add(role1.id());
+    uut.roleNames().add(role2.id());
 
-        FactCastAccessConfiguration cfg = new FactCastAccessConfiguration();
-        cfg.roles().add(role1);
-        cfg.roles().add(role2);
-        cfg.accounts().add(uut);
+    FactCastAccessConfiguration cfg = new FactCastAccessConfiguration();
+    cfg.roles().add(role1);
+    cfg.roles().add(role2);
+    cfg.accounts().add(uut);
 
-        cfg.initialize();
+    cfg.initialize();
 
-        // exclusion wins
-        assertTrue(uut.roles().contains(role1));
-        assertTrue(uut.roles().contains(role2));
-    }
-
+    // exclusion wins
+    assertTrue(uut.roles().contains(role1));
+    assertTrue(uut.roles().contains(role2));
+  }
 }

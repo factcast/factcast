@@ -16,19 +16,17 @@
 package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * StreamObserver impl that blocks if the Stream to the consumer is not in
- * writeable state to provide a basic backpressure alike property.
- * <p>
- * Note it the consumer stream is not writeable, the
- * {@link BlockingStreamObserver} will retry RETRY_COUNT (default 60) times
- * after WAIT_TIME (default 1000) millis
+ * StreamObserver impl that blocks if the Stream to the consumer is not in writeable state to
+ * provide a basic backpressure alike property.
+ *
+ * <p>Note it the consumer stream is not writeable, the {@link BlockingStreamObserver} will retry
+ * RETRY_COUNT (default 60) times after WAIT_TIME (default 1000) millis
  *
  * @param <T>
  * @author <uwe.schaefer@prisma-capacity.eu>
@@ -36,69 +34,67 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
-    private static final int RETRY_COUNT = 60;
+  private static final int RETRY_COUNT = 60;
 
-    private static final int WAIT_TIME = 1000;
+  private static final int WAIT_TIME = 1000;
 
-    private final ServerCallStreamObserver<T> delegate;
+  private final ServerCallStreamObserver<T> delegate;
 
-    private final Object lock = new Object();
+  private final Object lock = new Object();
 
-    private final String id;
+  private final String id;
 
-    BlockingStreamObserver(@NonNull String id, @NonNull ServerCallStreamObserver<T> delegate) {
-        this.id = id;
-        this.delegate = delegate;
-        this.delegate.setOnReadyHandler(this::wakeup);
-        this.delegate.setOnCancelHandler(this::wakeup);
+  BlockingStreamObserver(@NonNull String id, @NonNull ServerCallStreamObserver<T> delegate) {
+    this.id = id;
+    this.delegate = delegate;
+    this.delegate.setOnReadyHandler(this::wakeup);
+    this.delegate.setOnCancelHandler(this::wakeup);
+  }
+
+  @VisibleForTesting
+  void wakeup() {
+    synchronized (lock) {
+      // wake up our thread
+      lock.notifyAll();
     }
+  }
 
-    @VisibleForTesting
-    void wakeup() {
-        synchronized (lock) {
-            // wake up our thread
-            lock.notifyAll();
-        }
-    }
-
-    @Override
-    public void onNext(T value) {
-        if (!delegate.isCancelled()) {
-            synchronized (lock) {
-                if (!delegate.isReady()) {
-                    for (int i = 1; i <= RETRY_COUNT; i++) {
-                        log.trace("{} channel not ready. Slow client? Attempt: {}/{}", id, i,
-                                RETRY_COUNT);
-                        try {
-                            lock.wait(WAIT_TIME);
-                        } catch (InterruptedException meh) {
-                            // ignore
-                        }
-                        if (delegate.isReady()) {
-                            break;
-                        }
-                        if (delegate.isCancelled()) {
-                            // channel was cancelled.
-                            break;
-                        }
-                    }
-                    if (!delegate.isReady() && !delegate.isCancelled()) {
-                        throw new TransportLayerException("channel not coming back.");
-                    }
-                }
-                if (!delegate.isCancelled())
-                    delegate.onNext(value);
+  @Override
+  public void onNext(T value) {
+    if (!delegate.isCancelled()) {
+      synchronized (lock) {
+        if (!delegate.isReady()) {
+          for (int i = 1; i <= RETRY_COUNT; i++) {
+            log.trace("{} channel not ready. Slow client? Attempt: {}/{}", id, i, RETRY_COUNT);
+            try {
+              lock.wait(WAIT_TIME);
+            } catch (InterruptedException meh) {
+              // ignore
             }
+            if (delegate.isReady()) {
+              break;
+            }
+            if (delegate.isCancelled()) {
+              // channel was cancelled.
+              break;
+            }
+          }
+          if (!delegate.isReady() && !delegate.isCancelled()) {
+            throw new TransportLayerException("channel not coming back.");
+          }
         }
+        if (!delegate.isCancelled()) delegate.onNext(value);
+      }
     }
+  }
 
-    @Override
-    public void onError(Throwable t) {
-        delegate.onError(t);
-    }
+  @Override
+  public void onError(Throwable t) {
+    delegate.onError(t);
+  }
 
-    @Override
-    public void onCompleted() {
-        delegate.onCompleted();
-    }
+  @Override
+  public void onCompleted() {
+    delegate.onCompleted();
+  }
 }

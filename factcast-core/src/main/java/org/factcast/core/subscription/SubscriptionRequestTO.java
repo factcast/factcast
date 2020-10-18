@@ -15,24 +15,21 @@
  */
 package org.factcast.core.subscription;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.lang.management.ManagementFactory;
 import java.util.*;
-
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.util.FactCastJson;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import lombok.*;
-import lombok.experimental.FieldDefaults;
-
 /**
- * Implementation of {@link SubscriptionRequest}, that is supposed to be used
- * when transfered on the wire to a remote store (for instance via GRPC or REST)
+ * Implementation of {@link SubscriptionRequest}, that is supposed to be used when transfered on the
+ * wire to a remote store (for instance via GRPC or REST)
  *
- * Note that FactSpec.forMark() is silently added to the list of specifications,
- * if marks is true.
+ * <p>Note that FactSpec.forMark() is silently added to the list of specifications, if marks is
+ * true.
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
@@ -43,77 +40,70 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 public class SubscriptionRequestTO implements SubscriptionRequest {
 
-    private static final String PID = ManagementFactory.getRuntimeMXBean().getName();
+  private static final String PID = ManagementFactory.getRuntimeMXBean().getName();
 
-    @JsonProperty
-    long maxBatchDelayInMs = 0;
+  @JsonProperty long maxBatchDelayInMs = 0;
 
-    @JsonProperty
-    boolean continuous;
+  @JsonProperty boolean continuous;
 
-    @JsonProperty
-    boolean ephemeral;
+  @JsonProperty boolean ephemeral;
 
-    @JsonProperty
-    UUID startingAfter;
+  @JsonProperty UUID startingAfter;
 
-    @JsonProperty
-    String debugInfo;
+  @JsonProperty String debugInfo;
 
-    @JsonProperty
-    final List<FactSpec> specs = new LinkedList<>();
+  @JsonProperty final List<FactSpec> specs = new LinkedList<>();
 
-    @JsonProperty
-    String pid;
+  @JsonProperty String pid;
 
-    public boolean hasAnyScriptFilters() {
-        return specs.stream().anyMatch(s -> s.jsFilterScript() != null);
+  public boolean hasAnyScriptFilters() {
+    return specs.stream().anyMatch(s -> s.jsFilterScript() != null);
+  }
+
+  @Override
+  public java.util.Optional<UUID> startingAfter() {
+    return java.util.Optional.ofNullable(startingAfter);
+  }
+
+  // copy constr. from a SR
+  public SubscriptionRequestTO(SubscriptionRequest request) {
+    maxBatchDelayInMs = request.maxBatchDelayInMs();
+    continuous = request.continuous();
+    ephemeral = request.ephemeral();
+    startingAfter = request.startingAfter().orElse(null);
+    debugInfo = request.debugInfo();
+    specs.addAll(request.specs());
+    pid = PID;
+  }
+
+  // TODO now that forIDs is gone, maybe rename?
+  public static SubscriptionRequestTO forFacts(SubscriptionRequest request) {
+    return new SubscriptionRequestTO(request);
+  }
+
+  public void addSpecs(@NonNull List<FactSpec> factSpecs) {
+    checkArgument(!factSpecs.isEmpty());
+    specs.addAll(factSpecs);
+  }
+
+  private void checkArgument(boolean b) {
+    if (!b) {
+      throw new IllegalArgumentException();
     }
+  }
 
-    @Override
-    public java.util.Optional<UUID> startingAfter() {
-        return java.util.Optional.ofNullable(startingAfter);
-    }
+  @Override
+  public List<FactSpec> specs() {
+    ArrayList<FactSpec> l = new ArrayList<>(specs);
+    return Collections.unmodifiableList(l);
+  }
 
-    // copy constr. from a SR
-    public SubscriptionRequestTO(SubscriptionRequest request) {
-        maxBatchDelayInMs = request.maxBatchDelayInMs();
-        continuous = request.continuous();
-        ephemeral = request.ephemeral();
-        startingAfter = request.startingAfter().orElse(null);
-        debugInfo = request.debugInfo();
-        specs.addAll(request.specs());
-        pid = PID;
-    }
+  public String dump() {
+    return FactCastJson.writeValueAsString(this);
+  }
 
-    // TODO now that forIDs is gone, maybe rename?
-    public static SubscriptionRequestTO forFacts(SubscriptionRequest request) {
-        return new SubscriptionRequestTO(request);
-    }
-
-    public void addSpecs(@NonNull List<FactSpec> factSpecs) {
-        checkArgument(!factSpecs.isEmpty());
-        specs.addAll(factSpecs);
-    }
-
-    private void checkArgument(boolean b) {
-        if (!b) {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    @Override
-    public List<FactSpec> specs() {
-        ArrayList<FactSpec> l = new ArrayList<>(specs);
-        return Collections.unmodifiableList(l);
-    }
-
-    public String dump() {
-        return FactCastJson.writeValueAsString(this);
-    }
-
-    @Override
-    public String toString() {
-        return debugInfo;
-    }
+  @Override
+  public String toString() {
+    return debugInfo;
+  }
 }

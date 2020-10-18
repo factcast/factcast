@@ -17,6 +17,8 @@ package org.factcast.factus;
 
 import static org.mockito.Mockito.*;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
@@ -25,7 +27,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
-
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.batch.PublishBatch;
@@ -39,126 +43,116 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import lombok.val;
-
 @ExtendWith(MockitoExtension.class)
 class FactusTest {
 
-    private Factus underTest = spy(new Factus() {
-        @Override
-        public <T> T publish(@NonNull EventObject e, @NonNull Function<Fact, T> resultFn) {
-            return null;
-        }
+  private final Factus underTest =
+      spy(
+          new Factus() {
+            @Override
+            public <T> T publish(@NonNull EventObject e, @NonNull Function<Fact, T> resultFn) {
+              return null;
+            }
 
-        @Override
-        public <T> T publish(@NonNull List<EventObject> e,
-                @NonNull Function<List<Fact>, T> resultFn) {
-            return null;
-        }
+            @Override
+            public <T> T publish(
+                @NonNull List<EventObject> e, @NonNull Function<List<Fact>, T> resultFn) {
+              return null;
+            }
 
-        @Override
-        public @NonNull PublishBatch batch() {
-            return null;
-        }
+            @Override
+            public @NonNull PublishBatch batch() {
+              return null;
+            }
 
-        @Override
-        public <P extends SubscribedProjection> Subscription subscribeAndBlock(
+            @Override
+            public <P extends SubscribedProjection> Subscription subscribeAndBlock(
                 @NonNull P subscribedProjection) {
-            return null;
-        }
+              return null;
+            }
 
-        @Override
-        public <A extends Aggregate> Locked<A> withLockOn(@NonNull Class<A> aggregateClass,
-                UUID id) {
-            return null;
-        }
+            @Override
+            public <A extends Aggregate> Locked<A> withLockOn(
+                @NonNull Class<A> aggregateClass, UUID id) {
+              return null;
+            }
 
-        @Override
-        public <P extends SnapshotProjection> Locked<P> withLockOn(
+            @Override
+            public <P extends SnapshotProjection> Locked<P> withLockOn(
                 @NonNull Class<P> snapshotClass) {
-            return null;
-        }
+              return null;
+            }
 
-        @Override
-        public <M extends ManagedProjection> Locked<M> withLockOn(@NonNull M managed) {
-            return null;
-        }
+            @Override
+            public <M extends ManagedProjection> Locked<M> withLockOn(@NonNull M managed) {
+              return null;
+            }
 
-        @Override
-        public Fact toFact(@NonNull EventObject e) {
-            return null;
-        }
+            @Override
+            public Fact toFact(@NonNull EventObject e) {
+              return null;
+            }
 
-        @Override
-        public void close() throws IOException {
+            @Override
+            public void close() throws IOException {}
 
-        }
+            @Override
+            public <P extends SnapshotProjection> @NonNull P fetch(
+                @NonNull Class<P> projectionClass) {
+              return null;
+            }
 
-        @Override
-        public <P extends SnapshotProjection> @NonNull P fetch(@NonNull Class<P> projectionClass) {
-            return null;
-        }
+            @Override
+            public @NonNull <A extends Aggregate> Optional<A> find(
+                @NonNull Class<A> aggregateClass, @NonNull UUID aggregateId) {
+              return Optional.empty();
+            }
 
-        @Override
-        public @NonNull <A extends Aggregate> Optional<A> find(@NonNull Class<A> aggregateClass,
-                @NonNull UUID aggregateId) {
-            return Optional.empty();
-        }
+            @Override
+            public <P extends ManagedProjection> void update(
+                @NonNull P managedProjection, @NonNull Duration maxWaitTime)
+                throws TimeoutException {}
 
-        @Override
-        public <P extends ManagedProjection> void update(@NonNull P managedProjection,
-                @NonNull Duration maxWaitTime) throws TimeoutException {
+            @Override
+            public void publish(@NonNull Fact f) {}
+          });
 
-        }
+  @Test
+  void publishListEventObjects() {
+    List<EventObject> l = Lists.newArrayList(new EP(), new EP());
+    underTest.publish(l);
 
-        @Override
-        public void publish(@NonNull Fact f) {
+    verify(underTest).publish(same(l), any());
+  }
 
-        }
-    });
+  @Test
+  void voidSubscribe() {
+    val p = mock(SubscribedProjection.class);
+    underTest.subscribe(p);
 
-    @Test
-    void publishListEventObjects() {
-        List<EventObject> l = Lists.newArrayList(new EP(), new EP());
-        underTest.publish(l);
+    sleep(); // call is async, so we wait a bit
 
-        verify(underTest).publish(same(l), any());
+    verify(underTest).subscribeAndBlock(same(p));
+  }
+
+  static class SP implements SnapshotProjection {}
+
+  @Test
+  void withLockOnInstance() {
+    val p = new SP();
+    underTest.withLockOn(p);
+    verify(underTest).withLockOn(SP.class);
+  }
+
+  @SneakyThrows
+  private void sleep() {
+    Thread.sleep(100);
+  }
+
+  static class EP implements EventObject {
+    @Override
+    public Set<UUID> aggregateIds() {
+      return Sets.newHashSet();
     }
-
-    @Test
-    void voidSubscribe() {
-        val p = mock(SubscribedProjection.class);
-        underTest.subscribe(p);
-
-        sleep(); // call is async, so we wait a bit
-
-        verify(underTest).subscribeAndBlock(same(p));
-    }
-
-    static class SP implements SnapshotProjection {
-    }
-
-    @Test
-    void withLockOnInstance() {
-        val p = new SP();
-        underTest.withLockOn(p);
-        verify(underTest).withLockOn(SP.class);
-    }
-
-    @SneakyThrows
-    private void sleep() {
-        Thread.sleep(100);
-    }
-
-    static class EP implements EventObject {
-        @Override
-        public Set<UUID> aggregateIds() {
-            return Sets.newHashSet();
-        }
-    }
+  }
 }

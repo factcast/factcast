@@ -22,8 +22,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RedissonProjectionConfiguration {
-    @Bean
-    RedissonManagedUserNames redissonManagedUserNames(RedissonClient client) {
-        return new RedissonManagedUserNames(client);
-    }
+  @Bean
+  RedissonManagedUserNames redissonManagedUserNames(RedissonClient client) {
+    return new RedissonManagedUserNames(client);
+  }
 }

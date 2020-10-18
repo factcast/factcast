@@ -29,27 +29,23 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 
 @ExtendWith(MockitoExtension.class)
 public class PgLatestSerialFetcherTest {
-    @InjectMocks
-    PgLatestSerialFetcher uut;
+  @InjectMocks PgLatestSerialFetcher uut;
 
-    @Mock
-    JdbcTemplate jdbc;
+  @Mock JdbcTemplate jdbc;
 
-    @Mock
-    SqlRowSet rs;
+  @Mock SqlRowSet rs;
 
-    @Test
-    public void testRetrieveLatestSerRetuns0WhenExceptionThrown() {
-        when(jdbc.queryForRowSet(anyString())).thenThrow(UnsupportedOperationException.class);
-        assertEquals(0, uut.retrieveLatestSer());
-    }
+  @Test
+  public void testRetrieveLatestSerRetuns0WhenExceptionThrown() {
+    when(jdbc.queryForRowSet(anyString())).thenThrow(UnsupportedOperationException.class);
+    assertEquals(0, uut.retrieveLatestSer());
+  }
 
-    @Test
-    public void shouldReturn0IfNotFound() {
-        when(jdbc.queryForRowSet(anyString())).thenReturn(rs);
-        when(rs.next()).thenReturn(false);
+  @Test
+  public void shouldReturn0IfNotFound() {
+    when(jdbc.queryForRowSet(anyString())).thenReturn(rs);
+    when(rs.next()).thenReturn(false);
 
-        assertEquals(0, uut.retrieveLatestSer());
-    }
-
+    assertEquals(0, uut.retrieveLatestSer());
+  }
 }

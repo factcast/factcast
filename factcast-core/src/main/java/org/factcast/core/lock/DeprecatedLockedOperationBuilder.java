@@ -21,36 +21,32 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 @RequiredArgsConstructor
 public final class DeprecatedLockedOperationBuilder {
-    @NonNull
-    final FactStore store;
+  @NonNull final FactStore store;
 
-    final String ns;
+  final String ns;
 
-    public LockedOperationBuilder on(@NonNull UUID aggId, UUID... otherAggIds) {
-        LinkedList<UUID> ids = new LinkedList<>();
-        ids.add(aggId);
-        ids.addAll(Arrays.asList(otherAggIds));
-        return new LockedOperationBuilder(store, toFactSpecs(ids));
-    }
+  public LockedOperationBuilder on(@NonNull UUID aggId, UUID... otherAggIds) {
+    LinkedList<UUID> ids = new LinkedList<>();
+    ids.add(aggId);
+    ids.addAll(Arrays.asList(otherAggIds));
+    return new LockedOperationBuilder(store, toFactSpecs(ids));
+  }
 
-    @NonNull
-    private List<FactSpec> toFactSpecs(LinkedList<UUID> ids) {
-        return ids.stream().map(i -> FactSpec.ns(ns).aggId(i)).collect(Collectors.toList());
-    }
+  @NonNull
+  private List<FactSpec> toFactSpecs(LinkedList<UUID> ids) {
+    return ids.stream().map(i -> FactSpec.ns(ns).aggId(i)).collect(Collectors.toList());
+  }
 
-    public LockedOperationBuilder on(@NonNull Collection<UUID> aggIds) {
-        LinkedList<UUID> ids = new LinkedList<>();
-        ids.addAll(aggIds);
-        return new LockedOperationBuilder(store, toFactSpecs(ids));
-    }
-
+  public LockedOperationBuilder on(@NonNull Collection<UUID> aggIds) {
+    LinkedList<UUID> ids = new LinkedList<>();
+    ids.addAll(aggIds);
+    return new LockedOperationBuilder(store, toFactSpecs(ids));
+  }
 }

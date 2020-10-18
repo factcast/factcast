@@ -17,34 +17,33 @@ package org.factcast.store.pgsql.registry.classpath;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import lombok.val;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
 import org.junit.jupiter.api.*;
 
-import lombok.val;
-
 class ClasspathIndexFetcherTest {
 
-    @Test
-    void fetchIndex() {
-        val uut = new ClasspathIndexFetcher("/example-registry/");
-        val i = uut.fetchIndex();
-    }
+  @Test
+  void fetchIndex() {
+    val uut = new ClasspathIndexFetcher("/example-registry/");
+    val i = uut.fetchIndex();
+  }
 
-    @Test
-    void doesNotFetchTwice() {
+  @Test
+  void doesNotFetchTwice() {
 
-        val uut = new ClasspathIndexFetcher("/example-registry/");
-        assertTrue(uut.fetchIndex().isPresent());
-        assertFalse(uut.fetchIndex().isPresent());
-        assertFalse(uut.fetchIndex().isPresent());
+    val uut = new ClasspathIndexFetcher("/example-registry/");
+    assertTrue(uut.fetchIndex().isPresent());
+    assertFalse(uut.fetchIndex().isPresent());
+    assertFalse(uut.fetchIndex().isPresent());
+  }
 
-    }
-
-    @Test
-    void throwsOnNonExistingIndex() {
-        assertThrows(SchemaRegistryUnavailableException.class, () -> {
-            new ClasspathIndexFetcher("/not-there/").fetchIndex();
+  @Test
+  void throwsOnNonExistingIndex() {
+    assertThrows(
+        SchemaRegistryUnavailableException.class,
+        () -> {
+          new ClasspathIndexFetcher("/not-there/").fetchIndex();
         });
-    }
-
+  }
 }

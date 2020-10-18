@@ -18,60 +18,61 @@ package org.factcast.core.subscription.observer;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import lombok.NonNull;
 import org.factcast.core.TestFact;
 import org.factcast.core.TestHelper;
 import org.junit.jupiter.api.*;
 
-import lombok.NonNull;
-
 public class GenericObserverTest {
 
-    @Test
-    void testMap() {
-        GenericObserver<Integer> i = spy(new GenericObserver<Integer>() {
-            @Override
-            public void onNext(@NonNull Integer element) {
-            }
+  @Test
+  void testMap() {
+    GenericObserver<Integer> i =
+        spy(
+            new GenericObserver<Integer>() {
+              @Override
+              public void onNext(@NonNull Integer element) {}
+            });
+    FactObserver mapped = i.map(f -> 4);
+    verify(i, never()).onCatchup();
+    mapped.onCatchup();
+    verify(i).onCatchup();
+    verify(i, never()).onError(any());
+    mapped.onError(
+        new Throwable("ignore me") {
+
+          private static final long serialVersionUID = 1L;
+
+          @Override
+          public StackTraceElement[] getStackTrace() {
+            return new StackTraceElement[0];
+          }
         });
-        FactObserver mapped = i.map(f -> 4);
-        verify(i, never()).onCatchup();
-        mapped.onCatchup();
-        verify(i).onCatchup();
-        verify(i, never()).onError(any());
-        mapped.onError(new Throwable("ignore me") {
+    verify(i).onError(any());
+    verify(i, never()).onComplete();
+    mapped.onComplete();
+    verify(i).onComplete();
+    verify(i, never()).onNext(any());
+    mapped.onNext(new TestFact());
+    verify(i).onNext(4);
+  }
 
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public StackTraceElement[] getStackTrace() {
-                return new StackTraceElement[0];
-            }
+  @Test
+  void testMapNull() {
+    Assertions.assertThrows(
+        NullPointerException.class,
+        () -> {
+          GenericObserver<Integer> i = element -> {};
+          i.map(null);
         });
-        verify(i).onError(any());
-        verify(i, never()).onComplete();
-        mapped.onComplete();
-        verify(i).onComplete();
-        verify(i, never()).onNext(any());
-        mapped.onNext(new TestFact());
-        verify(i).onNext(4);
-    }
+  }
 
-    @Test
-    void testMapNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            GenericObserver<Integer> i = element -> {
-            };
-            i.map(null);
+  @Test
+  public void testOnErrorNullParameter() {
+    GenericObserver<Integer> uut = e -> {};
+    TestHelper.expectNPE(
+        () -> {
+          uut.onError(null);
         });
-    }
-
-    @Test
-    public void testOnErrorNullParameter() {
-        GenericObserver<Integer> uut = e -> {
-        };
-        TestHelper.expectNPE(() -> {
-            uut.onError(null);
-        });
-    }
-
+  }
 }

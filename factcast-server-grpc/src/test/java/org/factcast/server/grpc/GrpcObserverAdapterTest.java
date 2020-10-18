@@ -19,9 +19,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import io.grpc.stub.StreamObserver;
 import java.util.Arrays;
 import java.util.function.Function;
-
+import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
@@ -32,96 +33,89 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import io.grpc.stub.StreamObserver;
-import lombok.val;
-
-@SuppressWarnings({ "rawtypes", "unchecked" })
+@SuppressWarnings({"rawtypes", "unchecked"})
 @ExtendWith(MockitoExtension.class)
 public class GrpcObserverAdapterTest {
 
-    @Mock
-    private StreamObserver<MSG_Notification> observer;
+  @Mock private StreamObserver<MSG_Notification> observer;
 
-    @Mock
-    private Function<Fact, MSG_Notification> projection;
+  @Mock private Function<Fact, MSG_Notification> projection;
 
-    @Captor
-    private ArgumentCaptor<MSG_Notification> msg;
+  @Captor private ArgumentCaptor<MSG_Notification> msg;
 
-    @Test
-    void testNullsOnConstructor() {
-        String id = "id";
-        StreamObserver so = mock(StreamObserver.class);
-        Function p = mock(Function.class);
-        expectNPE(() -> new GrpcObserverAdapter(null, so, p));
-        expectNPE(() -> new GrpcObserverAdapter(null, null, p));
-        expectNPE(() -> new GrpcObserverAdapter(null, null, null));
-        expectNPE(() -> new GrpcObserverAdapter(id, so, null));
-        expectNPE(() -> new GrpcObserverAdapter(id, null, p));
-        expectNPE(() -> new GrpcObserverAdapter(id, null, null));
+  @Test
+  void testNullsOnConstructor() {
+    String id = "id";
+    StreamObserver so = mock(StreamObserver.class);
+    Function p = mock(Function.class);
+    expectNPE(() -> new GrpcObserverAdapter(null, so, p));
+    expectNPE(() -> new GrpcObserverAdapter(null, null, p));
+    expectNPE(() -> new GrpcObserverAdapter(null, null, null));
+    expectNPE(() -> new GrpcObserverAdapter(id, so, null));
+    expectNPE(() -> new GrpcObserverAdapter(id, null, p));
+    expectNPE(() -> new GrpcObserverAdapter(id, null, null));
+  }
+
+  @Test
+  void testOnComplete() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
+    uut.onComplete();
+    verify(observer).onCompleted();
+  }
+
+  @Test
+  void testOnCompleteWithException() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
+    doThrow(UnsupportedOperationException.class).when(observer).onCompleted();
+    uut.onComplete();
+    verify(observer).onCompleted();
+  }
+
+  @Test
+  void testOnCatchup() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
+    doNothing().when(observer).onNext(msg.capture());
+    verify(observer, never()).onNext(any());
+    uut.onCatchup();
+    verify(observer).onNext(any());
+    assertEquals(MSG_Notification.Type.Catchup, msg.getValue().getType());
+  }
+
+  @Test
+  void testOnError() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
+    verify(observer, never()).onNext(any());
+    uut.onError(new Exception());
+    verify(observer).onError(any());
+  }
+
+  @Test
+  void testOnNext() {
+    ProtoConverter conv = new ProtoConverter();
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, conv::createNotificationFor);
+    doNothing().when(observer).onNext(msg.capture());
+    verify(observer, never()).onNext(any());
+    Fact f = Fact.builder().ns("test").build("{}");
+    uut.onNext(f);
+    verify(observer).onNext(any());
+    assertEquals(MSG_Notification.Type.Fact, msg.getValue().getType());
+    assertEquals(f.id(), conv.fromProto(msg.getValue().getFact()).id());
+  }
+
+  public static void expectNPE(Runnable r) {
+    expect(r, NullPointerException.class, IllegalArgumentException.class);
+  }
+
+  public static void expect(Runnable r, Class<? extends Throwable>... ex) {
+    try {
+      r.run();
+      fail("expected " + Arrays.toString(ex));
+    } catch (Throwable actual) {
+
+      val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
+      if (!matches) {
+        fail("Wrong exception, expected " + Arrays.toString(ex) + " but got " + actual);
+      }
     }
-
-    @Test
-    void testOnComplete() {
-        GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
-        uut.onComplete();
-        verify(observer).onCompleted();
-    }
-
-    @Test
-    void testOnCompleteWithException() {
-        GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
-        doThrow(UnsupportedOperationException.class).when(observer).onCompleted();
-        uut.onComplete();
-        verify(observer).onCompleted();
-    }
-
-    @Test
-    void testOnCatchup() {
-        GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
-        doNothing().when(observer).onNext(msg.capture());
-        verify(observer, never()).onNext(any());
-        uut.onCatchup();
-        verify(observer).onNext(any());
-        assertEquals(MSG_Notification.Type.Catchup, msg.getValue().getType());
-    }
-
-    @Test
-    void testOnError() {
-        GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
-        verify(observer, never()).onNext(any());
-        uut.onError(new Exception());
-        verify(observer).onError(any());
-    }
-
-    @Test
-    void testOnNext() {
-        ProtoConverter conv = new ProtoConverter();
-        GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer,
-                conv::createNotificationFor);
-        doNothing().when(observer).onNext(msg.capture());
-        verify(observer, never()).onNext(any());
-        Fact f = Fact.builder().ns("test").build("{}");
-        uut.onNext(f);
-        verify(observer).onNext(any());
-        assertEquals(MSG_Notification.Type.Fact, msg.getValue().getType());
-        assertEquals(f.id(), conv.fromProto(msg.getValue().getFact()).id());
-    }
-
-    public static void expectNPE(Runnable r) {
-        expect(r, NullPointerException.class, IllegalArgumentException.class);
-    }
-
-    public static void expect(Runnable r, Class<? extends Throwable>... ex) {
-        try {
-            r.run();
-            fail("expected " + Arrays.toString(ex));
-        } catch (Throwable actual) {
-
-            val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
-            if (!matches) {
-                fail("Wrong exception, expected " + Arrays.toString(ex) + " but got " + actual);
-            }
-        }
-    }
+  }
 }

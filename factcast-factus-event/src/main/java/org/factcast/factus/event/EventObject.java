@@ -20,15 +20,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * EventObjects are expected to be annotated with @{@link Specification}.
- */
+/** EventObjects are expected to be annotated with @{@link Specification}. */
 public interface EventObject {
 
-    default Map<String, String> additionalMetaMap() {
-        return Collections.emptyMap();
-    }
+  default Map<String, String> additionalMetaMap() {
+    return Collections.emptyMap();
+  }
 
-    Set<UUID> aggregateIds();
-
+  Set<UUID> aggregateIds();
 }

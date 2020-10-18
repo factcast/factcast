@@ -15,66 +15,62 @@
  */
 package org.factcast.client.grpc.cli.util;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.factcast.client.grpc.cli.conv.Converters;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.JCommander.Builder;
-
+import java.util.Arrays;
+import java.util.List;
 import lombok.Getter;
+import org.factcast.client.grpc.cli.conv.Converters;
 
 @SuppressWarnings("ALL")
 public class Parser {
 
-    private static final String NEGOTIATION_SYSPROP_NAME = "grpc.client.factstore.negotiationType";
+  private static final String NEGOTIATION_SYSPROP_NAME = "grpc.client.factstore.negotiationType";
 
-    private static final String BASICAUTH_SYSPROP_NAME = "grpc.client.factstore.credentials";
+  private static final String BASICAUTH_SYSPROP_NAME = "grpc.client.factstore.credentials";
 
-    private static final String ADDRESS_SYSPROP_NAME = "grpc.client.factstore.address";
+  private static final String ADDRESS_SYSPROP_NAME = "grpc.client.factstore.address";
 
-    private final JCommander jc;
+  private final JCommander jc;
 
-    @Getter
-    final Options options = new Options();
+  @Getter final Options options = new Options();
 
-    public Parser(Command... commands) {
-        Builder builder = JCommander.newBuilder().addConverterInstanceFactory(Converters.factory());
-        builder.addObject(options);
-        builder.programName("fc-cli");
-        Arrays.asList(commands).forEach(builder::addCommand);
-        this.jc = builder.build();
+  public Parser(Command... commands) {
+    Builder builder = JCommander.newBuilder().addConverterInstanceFactory(Converters.factory());
+    builder.addObject(options);
+    builder.programName("fc-cli");
+    Arrays.asList(commands).forEach(builder::addCommand);
+    this.jc = builder.build();
+  }
+
+  public Command parse(String[] args) {
+    jc.parse(args);
+
+    JCommander parsedCommand = jc.getCommands().get(jc.getParsedCommand());
+    if (parsedCommand != null) {
+      init();
+      List<Object> objects = parsedCommand.getObjects();
+      return (Command) objects.get(0);
     }
+    jc.usage();
+    return null;
+  }
 
-    public Command parse(String[] args) {
-        jc.parse(args);
+  private void init() {
+    System.setProperty(ADDRESS_SYSPROP_NAME, options.address);
 
-        JCommander parsedCommand = jc.getCommands().get(jc.getParsedCommand());
-        if (parsedCommand != null) {
-            init();
-            List<Object> objects = parsedCommand.getObjects();
-            return (Command) objects.get(0);
-        }
-        jc.usage();
-        return null;
+    if (options.debug) {
+      System.setProperty("debug", Boolean.TRUE.toString());
     }
-
-    private void init() {
-        System.setProperty(ADDRESS_SYSPROP_NAME, options.address);
-
-        if (options.debug) {
-            System.setProperty("debug", Boolean.TRUE.toString());
-        }
-        if (options.notls) {
-            System.setProperty(NEGOTIATION_SYSPROP_NAME, "plaintext");
-        }
-        if (options.basicAuthCredentials != null) {
-            System.setProperty(BASICAUTH_SYSPROP_NAME, options.basicAuthCredentials);
-        }
+    if (options.notls) {
+      System.setProperty(NEGOTIATION_SYSPROP_NAME, "plaintext");
     }
-
-    public void usage() {
-        jc.usage();
+    if (options.basicAuthCredentials != null) {
+      System.setProperty(BASICAUTH_SYSPROP_NAME, options.basicAuthCredentials);
     }
+  }
+
+  public void usage() {
+    jc.usage();
+  }
 }

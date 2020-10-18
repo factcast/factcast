@@ -18,69 +18,59 @@ package org.factcast.store.pgsql.registry;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
-/**
- * Abstract super class for RegistryFileFetcher that operate on local files.
- */
+/** Abstract super class for RegistryFileFetcher that operate on local files. */
 @RequiredArgsConstructor
 public abstract class AbstractFileBasedRegistryFileFetcher implements RegistryFileFetcher {
 
-    @Override
-    public String fetchTransformation(@NonNull TransformationSource key) {
-        String subPath = key.ns() + "/" + key.type() + "/" + key.from() + "-" + key.to()
-                + "/transform.js";
-        return fetch(subPath);
+  @Override
+  public String fetchTransformation(@NonNull TransformationSource key) {
+    String subPath =
+        key.ns() + "/" + key.type() + "/" + key.from() + "-" + key.to() + "/transform.js";
+    return fetch(subPath);
+  }
 
+  @Override
+  public String fetchSchema(@NonNull SchemaSource key) {
+    String subPath = key.ns() + "/" + key.type() + "/" + key.version() + "/schema.json";
+    return fetch(subPath);
+  }
+
+  private @NonNull String fetch(String subPath) {
+    try {
+      File file = getFile(subPath);
+      if (file.exists()) {
+        return readFile(file);
+      } else {
+        throw new SchemaRegistryUnavailableException(
+            new FileNotFoundException("Resource " + subPath + " does not exist."));
+      }
+    } catch (IOException e) {
+      throw new SchemaRegistryUnavailableException(e);
     }
+  }
 
-    @Override
-    public String fetchSchema(@NonNull SchemaSource key) {
-        String subPath = key.ns() + "/" + key.type() + "/" + key.version()
-                + "/schema.json";
-        return fetch(subPath);
-    }
+  /**
+   * @param subPath the sub path of a file, relative to some context
+   * @return a File object pointing to the requested file
+   * @throws IOException in case of problems resolving the File object
+   */
+  protected abstract File getFile(String subPath) throws IOException;
 
-    private @NonNull String fetch(String subPath) {
-        try {
-            File file = getFile(subPath);
-            if (file.exists()) {
-                return readFile(file);
-            } else {
-                throw new SchemaRegistryUnavailableException(
-                        new FileNotFoundException("Resource "
-                                + subPath
-                                + " does not exist."));
-            }
-        } catch (IOException e) {
-            throw new SchemaRegistryUnavailableException(e);
-        }
-    }
-
-    /**
-     * @param subPath
-     *            the sub path of a file, relative to some context
-     * @return a File object pointing to the requested file
-     * @throws IOException
-     *             in case of problems resolving the File object
-     */
-    protected abstract File getFile(String subPath) throws IOException;
-
-    private static @NonNull String readFile(@NonNull File file)
-            throws IOException {
-        StringBuilder sb = new StringBuilder();
-        java.nio.file.Files.lines(file.toPath()).forEachOrdered(l -> {
-            if (sb.length() > 0) {
+  private static @NonNull String readFile(@NonNull File file) throws IOException {
+    StringBuilder sb = new StringBuilder();
+    java.nio.file.Files.lines(file.toPath())
+        .forEachOrdered(
+            l -> {
+              if (sb.length() > 0) {
                 sb.append("\n");
-            }
-            sb.append(l);
-        });
-        return sb.toString();
-    }
-
+              }
+              sb.append(l);
+            });
+    return sb.toString();
+  }
 }

@@ -21,9 +21,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
-import org.factcast.core.util.FactCastJson;
-
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -31,6 +28,7 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.SneakyThrows;
+import org.factcast.core.util.FactCastJson;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -40,50 +38,49 @@ import lombok.SneakyThrows;
 // TODO remove this class
 public class TestFact implements Fact {
 
-    UUID id = UUID.randomUUID();
+  UUID id = UUID.randomUUID();
 
-    Set<UUID> aggIds = new LinkedHashSet<>();
+  Set<UUID> aggIds = new LinkedHashSet<>();
 
-    String type = "test";
+  String type = "test";
 
-    int version = 1;
+  int version = 1;
 
-    String ns = "default";
+  String ns = "default";
 
-    String jsonPayload = "{}";
+  String jsonPayload = "{}";
 
-    Map<String, String> meta = new HashMap<>();
+  Map<String, String> meta = new HashMap<>();
 
-    @Override
-    public String meta(String key) {
-        return meta.get(key);
+  @Override
+  public String meta(String key) {
+    return meta.get(key);
+  }
+
+  public TestFact meta(String key, String value) {
+    meta.put(key, value);
+    return this;
+  }
+
+  @Override
+  @SneakyThrows
+  public String jsonHeader() {
+    return FactCastJson.writeValueAsString(this);
+  }
+
+  public TestFact aggId(@NonNull UUID aggId, UUID... otherAggIds) {
+    aggIds.add(aggId);
+    if (otherAggIds != null) {
+      aggIds.addAll(Arrays.asList(otherAggIds));
     }
+    return this;
+  }
 
-    public TestFact meta(String key, String value) {
-        meta.put(key, value);
-        return this;
-    }
+  private transient FactHeader header;
 
-    @Override
-    @SneakyThrows
-    public String jsonHeader() {
-        return FactCastJson.writeValueAsString(this);
-    }
-
-    public TestFact aggId(@NonNull UUID aggId, UUID... otherAggIds) {
-        aggIds.add(aggId);
-        if (otherAggIds != null) {
-            aggIds.addAll(Arrays.asList(otherAggIds));
-        }
-        return this;
-    }
-
-    private transient FactHeader header;
-
-    @Override
-    public @NonNull FactHeader header() {
-        if (header == null)
-            header = FactCastJson.readValue(FactHeader.class, jsonHeader());
-        return header;
-    }
+  @Override
+  public @NonNull FactHeader header() {
+    if (header == null) header = FactCastJson.readValue(FactHeader.class, jsonHeader());
+    return header;
+  }
 }

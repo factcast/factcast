@@ -15,26 +15,23 @@
  */
 package org.factcast.store.pgsql.registry;
 
+import com.github.fge.jsonschema.main.JsonSchema;
 import java.util.List;
 import java.util.Optional;
-
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 
-import com.github.fge.jsonschema.main.JsonSchema;
-
 public interface SchemaRegistry {
 
-    Optional<JsonSchema> get(SchemaKey key);
+  Optional<JsonSchema> get(SchemaKey key);
 
-    List<Transformation> get(TransformationKey key);
+  List<Transformation> get(TransformationKey key);
 
-    void fetchInitial();
+  void fetchInitial();
 
-    void refresh();
+  void refresh();
 
-    void register(TransformationStoreListener listener);
-
+  void register(TransformationStoreListener listener);
 }

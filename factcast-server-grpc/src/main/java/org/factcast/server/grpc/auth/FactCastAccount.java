@@ -15,16 +15,14 @@
  */
 package org.factcast.server.grpc.auth;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.annotations.VisibleForTesting;
-
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
@@ -34,80 +32,78 @@ import lombok.NonNull;
 @NoArgsConstructor
 @Data
 public class FactCastAccount {
-    public static final FactCastAccount GOD = new FactCastAccount("GODMODE") {
+  public static final FactCastAccount GOD =
+      new FactCastAccount("GODMODE") {
         @Override
         public boolean canRead(String ns) {
-            return true;
+          return true;
         }
 
         @Override
         public boolean canWrite(String ns) {
-            return true;
+          return true;
         }
-    };
+      };
 
-    @Getter
-    private String id;
+  @Getter private String id;
 
-    @JsonProperty("roles")
-    private final List<String> roleNames = new LinkedList<>();
+  @JsonProperty("roles")
+  private final List<String> roleNames = new LinkedList<>();
 
-    @VisibleForTesting
-    @Getter(value = AccessLevel.PROTECTED)
-    private List<FactCastRole> roles;
+  @VisibleForTesting
+  @Getter(value = AccessLevel.PROTECTED)
+  private List<FactCastRole> roles;
 
-    public void initialize(FactCastAccessConfiguration config) {
-        if (id == null)
-            throw new IllegalArgumentException("Account without 'id' found.");
+  public void initialize(FactCastAccessConfiguration config) {
+    if (id == null) throw new IllegalArgumentException("Account without 'id' found.");
 
-        roles = new LinkedList<>();
-        roleNames.forEach(n -> {
-            Optional<FactCastRole> r = config.findRoleById(n);
-            roles.add(r.orElseThrow(
-                    () -> new IllegalArgumentException("Unknown role '" + n
-                            + "'. Definition not found.")));
+    roles = new LinkedList<>();
+    roleNames.forEach(
+        n -> {
+          Optional<FactCastRole> r = config.findRoleById(n);
+          roles.add(
+              r.orElseThrow(
+                  () ->
+                      new IllegalArgumentException(
+                          "Unknown role '" + n + "'. Definition not found.")));
         });
-    }
+  }
 
-    public boolean canWrite(String ns) {
-        if (roles == null)
-            throw new IllegalStateException("Not yet initialized");
+  public boolean canWrite(String ns) {
+    if (roles == null) throw new IllegalStateException("Not yet initialized");
 
-        List<Boolean> results = roles.stream()
-                .map(r -> r.canWrite(ns))
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
-        if (results.contains(false))
-            return false;
-        return results.contains(true);
-    }
+    List<Boolean> results =
+        roles.stream()
+            .map(r -> r.canWrite(ns))
+            .filter(Objects::nonNull)
+            .distinct()
+            .collect(Collectors.toList());
+    if (results.contains(false)) return false;
+    return results.contains(true);
+  }
 
-    public boolean canRead(String ns) {
-        if (roles == null)
-            throw new IllegalStateException("Not yet initialized");
+  public boolean canRead(String ns) {
+    if (roles == null) throw new IllegalStateException("Not yet initialized");
 
-        List<Boolean> results = roles.stream()
-                .map(r -> r.canRead(ns))
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
-        if (results.contains(false))
-            return false;
-        return results.contains(true);
+    List<Boolean> results =
+        roles.stream()
+            .map(r -> r.canRead(ns))
+            .filter(Objects::nonNull)
+            .distinct()
+            .collect(Collectors.toList());
+    if (results.contains(false)) return false;
+    return results.contains(true);
+  }
 
-    }
+  @VisibleForTesting
+  protected FactCastAccount role(@NonNull FactCastRole... other) {
+    if (roles == null) roles = new LinkedList<>();
 
-    @VisibleForTesting
-    protected FactCastAccount role(@NonNull FactCastRole... other) {
-        if (roles == null)
-            roles = new LinkedList<>();
+    roles.addAll(Arrays.asList(other));
+    return this;
+  }
 
-        roles.addAll(Arrays.asList(other));
-        return this;
-    }
-
-    public FactCastAccount(@NonNull String id) {
-        this.id = id;
-    }
+  public FactCastAccount(@NonNull String id) {
+    this.id = id;
+  }
 }
