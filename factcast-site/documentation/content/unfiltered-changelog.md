@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.3.4](https://github.com/factcast/factcast/tree/0.3.4) (2020-10-14)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.3...0.3.4)
+
+**Fixed bugs:**
+
+- Unify naming \(SnapshotCache vs SnapshotRepository\) and fix Autoconfiguration for SnapshotCaches [\#1070](https://github.com/factcast/factcast/issues/1070)
+- Issue1070 autoconfiguration & name unification of snapshotCaches [\#1072](https://github.com/factcast/factcast/pull/1072) ([uweschaefer](https://github.com/uweschaefer))
+
+**Closed issues:**
+
+- Switch formatting to google format [\#1054](https://github.com/factcast/factcast/issues/1054)
+
+**Merged pull requests:**
+
+- \#1071: introduce RedisExtension that clears all keys in redis [\#1073](https://github.com/factcast/factcast/pull/1073) ([otbe](https://github.com/otbe))
+- Update dependency org.redisson:redisson-spring-boot-starter to v3.13.6 [\#1069](https://github.com/factcast/factcast/pull/1069) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.liquibase:liquibase-core to v4.1.1 [\#1068](https://github.com/factcast/factcast/pull/1068) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.postgresql:postgresql to v42.2.17 [\#1066](https://github.com/factcast/factcast/pull/1066) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.projectlombok:lombok to v1.18.14 [\#1065](https://github.com/factcast/factcast/pull/1065) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.karumi.kotlinsnapshot:core to v2.2.2 [\#1064](https://github.com/factcast/factcast/pull/1064) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.4.2 [\#1063](https://github.com/factcast/factcast/pull/1063) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency io.javalin:javalin to v3.11.0 [\#1062](https://github.com/factcast/factcast/pull/1062) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson.core:jackson-databind to v2.11.3 [\#1061](https://github.com/factcast/factcast/pull/1061) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson.core:jackson-core to v2.11.3 [\#1060](https://github.com/factcast/factcast/pull/1060) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson.core:jackson-annotations to v2.11.3 [\#1059](https://github.com/factcast/factcast/pull/1059) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.liquibase:liquibase-core to v4.1.0 [\#1058](https://github.com/factcast/factcast/pull/1058) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.redisson:redisson-spring-boot-starter to v3.13.5 [\#1057](https://github.com/factcast/factcast/pull/1057) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency io.mockk:mockk to v1.10.2 [\#1055](https://github.com/factcast/factcast/pull/1055) ([renovate[bot]](https://github.com/apps/renovate))
+- switch to google format [\#1056](https://github.com/factcast/factcast/pull/1056) ([uweschaefer](https://github.com/uweschaefer))
+
 ## [0.3.3](https://github.com/factcast/factcast/tree/0.3.3) (2020-09-25)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/0.3.2...0.3.3)
@@ -169,6 +200,7 @@
 
 **Merged pull requests:**
 
+- Update dependency com.github.vladimir-bukhtoyarov:bucket4j-core to v4.10.0 [\#939](https://github.com/factcast/factcast/pull/939) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.0.1 [\#936](https://github.com/factcast/factcast/pull/936) ([renovate[bot]](https://github.com/apps/renovate))
 - Issue930  [\#932](https://github.com/factcast/factcast/pull/932) ([uweschaefer](https://github.com/uweschaefer))
 - Issue905 [\#929](https://github.com/factcast/factcast/pull/929) ([uweschaefer](https://github.com/uweschaefer))
@@ -466,6 +498,7 @@
 
 - build\(deps\): bump jackson-databind from 2.9.10.1 to 2.9.10.3 in /factcast-bom [\#698](https://github.com/factcast/factcast/pull/698) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Fixed non-matching passwords for unauthenticated access [\#697](https://github.com/factcast/factcast/pull/697) ([otbe](https://github.com/otbe))
+- build\(deps\): bump jackson-annotations from 2.10.2 to 2.10.3 [\#693](https://github.com/factcast/factcast/pull/693) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 
 ## [factcast-0.2.0-M7](https://github.com/factcast/factcast/tree/factcast-0.2.0-M7) (2020-03-04)
 
@@ -535,7 +568,6 @@
 **Merged pull requests:**
 
 - build\(deps\): bump jackson-core from 2.10.2 to 2.10.3 [\#694](https://github.com/factcast/factcast/pull/694) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
-- build\(deps\): bump jackson-annotations from 2.10.2 to 2.10.3 [\#693](https://github.com/factcast/factcast/pull/693) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - \#691: updated ktlint dep [\#692](https://github.com/factcast/factcast/pull/692) ([uweschaefer](https://github.com/uweschaefer))
 - added javax.annotation dependency for Java11 compatibility [\#690](https://github.com/factcast/factcast/pull/690) ([uweschaefer](https://github.com/uweschaefer))
 - build\(deps\): bump spring-boot-dependencies from 2.2.4.RELEASE to 2.2.5.RELEASE [\#683](https://github.com/factcast/factcast/pull/683) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))

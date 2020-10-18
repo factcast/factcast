@@ -15,29 +15,23 @@
  */
 package org.factcast.test;
 
-import java.sql.DriverManager;
-import java.util.Properties;
-import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.val;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.redisson.Redisson;
+import org.redisson.config.Config;
+import org.testcontainers.containers.GenericContainer;
 
 @UtilityClass
-public class PostgresEraser {
-  @SneakyThrows
-  static void wipeAllFactCastDataDataFromPostgres(PostgreSQLContainer<?> pg) {
-    val url = pg.getJdbcUrl();
+public class RedisEraser {
 
-    Properties p = new Properties();
-    p.put("user", pg.getUsername());
-    p.put("password", pg.getPassword());
+  public static void wipeAllDataFromRedis(GenericContainer<?> redis) {
+    val config = new Config();
+    config
+        .useSingleServer()
+        .setAddress("redis://" + redis.getHost() + ":" + redis.getMappedPort(6379));
+    val client = Redisson.create(config);
 
-    try (val con = DriverManager.getConnection(url, p);
-        val st = con.createStatement(); ) {
-      st.execute("TRUNCATE fact");
-      st.execute("TRUNCATE tokenstore");
-      st.execute("TRUNCATE transformationcache");
-      st.execute("TRUNCATE snapshot_cache");
-    }
+    client.getKeys().flushall();
+    client.shutdown();
   }
 }

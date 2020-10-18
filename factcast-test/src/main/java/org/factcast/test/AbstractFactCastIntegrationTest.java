@@ -28,7 +28,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers(disabledWithoutDocker = true)
-@ExtendWith(FactCastExtension.class)
+@ExtendWith({FactCastExtension.class, RedisExtension.class})
 @Slf4j
 public class AbstractFactCastIntegrationTest {
 
@@ -36,7 +36,7 @@ public class AbstractFactCastIntegrationTest {
 
   @Container
   protected static final PostgreSQLContainer _postgres =
-      new PostgreSQLContainer<>("postgres:11.4")
+      new PostgreSQLContainer<>("postgres:11.5")
           .withDatabaseName("fc")
           .withUsername("fc")
           .withPassword("fc")
@@ -48,9 +48,9 @@ public class AbstractFactCastIntegrationTest {
       new GenericContainer<>("factcast/factcast:latest")
           .withExposedPorts(9090)
           .withFileSystemBind("./config", "/config/")
-          .withEnv("grpc.server.port", "9090")
-          .withEnv("factcast.security.enabled", "false")
-          .withEnv("spring.datasource.url", "jdbc:postgresql://db/fc?user=fc&password=fc")
+          .withEnv("grpc_server_port", "9090")
+          .withEnv("factcast_security_enabled", "false")
+          .withEnv("spring_datasource_url", "jdbc:postgresql://db/fc?user=fc&password=fc")
           .withNetwork(_docker_network)
           .dependsOn(_postgres)
           .withLogConsumer(new Slf4jLogConsumer(log))
@@ -59,7 +59,7 @@ public class AbstractFactCastIntegrationTest {
   @SuppressWarnings("rawtypes")
   @Container
   static final GenericContainer _redis =
-      new GenericContainer<>("redis:5.0.3-alpine").withExposedPorts(6379);
+      new GenericContainer<>("redis:5.0.9-alpine").withExposedPorts(6379);
 
   @BeforeAll
   public static void startContainers() throws InterruptedException {

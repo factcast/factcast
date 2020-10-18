@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.factcast.core.store.FactStore;
 
 @RequiredArgsConstructor
-public class FactCastSnapshotRepository implements SnapshotCache {
+public class FactCastSnapshotCache implements SnapshotCache {
 
   @NonNull final FactStore store;
 
