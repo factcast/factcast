@@ -26,13 +26,13 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
@@ -51,6 +51,7 @@ import org.factcast.factus.metrics.TimedOperation;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.projector.Projector;
 import org.factcast.factus.projector.ProjectorFactory;
+import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
@@ -136,7 +137,7 @@ public class DefaultFactus implements Factus {
         () ->
             managedProjection.withLock(
                 () ->
-                    catchupProjection(managedProjection, managedProjection.state(), maxWaitTime)));
+                    catchupProjection(managedProjection, managedProjection.state(), (x, y) -> {})));
   }
 
   @Override
@@ -195,7 +196,7 @@ public class DefaultFactus implements Factus {
             String ts = element.meta("_ts");
             // _ts might not be there in unit testing for instance.
             if (ts != null) {
-              val latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
+              long latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
               factusMetrics.timed(
                   TimedOperation.EVENT_PROCESSING_LATENCY,
                   Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getCanonicalName())),
@@ -244,7 +245,7 @@ public class DefaultFactus implements Factus {
           "Method confusion: UUID aggregateId is missing as a second parameter for aggregates");
     }
 
-    val ser = snapFactory.retrieveSerializer(projectionClass);
+    SnapshotSerializer ser = snapFactory.retrieveSerializer(projectionClass);
 
     Optional<Snapshot> latest = projectionSnapshotRepository.findLatest(projectionClass);
 
@@ -260,7 +261,14 @@ public class DefaultFactus implements Factus {
     // catchup
     UUID state =
         catchupProjection(
-            projection, latest.map(Snapshot::lastFact).orElse(null), FactusConstants.FOREVER);
+            projection,
+            latest.map(Snapshot::lastFact).orElse(null),
+            new IntervalSnapshotter<SnapshotProjection>(Duration.ofSeconds(30)) {
+              @Override
+              void createSnapshot(SnapshotProjection projection, UUID state) {
+                projectionSnapshotRepository.put(projection, state);
+              }
+            });
     if (state != null) {
       projectionSnapshotRepository.put(projection, state);
     }
@@ -280,7 +288,7 @@ public class DefaultFactus implements Factus {
   private <A extends Aggregate> Optional<A> doFind(Class<A> aggregateClass, UUID aggregateId) {
     assertNotClosed();
 
-    val ser = snapFactory.retrieveSerializer(aggregateClass);
+    SnapshotSerializer ser = snapFactory.retrieveSerializer(aggregateClass);
 
     Optional<Snapshot> latest = aggregateSnapshotRepository.findLatest(aggregateClass, aggregateId);
     Optional<A> optionalA = latest.map(as -> ser.deserialize(aggregateClass, as.bytes()));
@@ -289,7 +297,14 @@ public class DefaultFactus implements Factus {
 
     UUID state =
         catchupProjection(
-            aggregate, latest.map(Snapshot::lastFact).orElse(null), FactusConstants.FOREVER);
+            aggregate,
+            latest.map(Snapshot::lastFact).orElse(null),
+            new IntervalSnapshotter<Aggregate>(Duration.ofSeconds(30)) {
+              @Override
+              void createSnapshot(Aggregate projection, UUID state) {
+                aggregateSnapshotRepository.put(projection, state);
+              }
+            });
     if (state == null) {
       // nothing new
 
@@ -309,7 +324,7 @@ public class DefaultFactus implements Factus {
 
   @SneakyThrows
   private <P extends Projection> UUID catchupProjection(
-      @NonNull P projection, UUID stateOrNull, Duration maxWait) {
+      @NonNull P projection, UUID stateOrNull, BiConsumer<P, UUID> afterProcessing) {
     Projector<P> handler = ehFactory.create(projection);
     AtomicReference<UUID> factId = new AtomicReference<>();
     FactObserver fo =
@@ -320,6 +335,7 @@ public class DefaultFactus implements Factus {
                 () -> {
                   handler.apply(element);
                   factId.set(element.id());
+                  afterProcessing.accept(projection, element.id());
                 });
           }
 
@@ -341,7 +357,7 @@ public class DefaultFactus implements Factus {
 
     List<FactSpec> factSpecs = handler.createFactSpecs();
     fc.subscribe(SubscriptionRequest.catchup(factSpecs).fromNullable(stateOrNull), fo)
-        .awaitComplete(maxWait.toMillis());
+        .awaitComplete();
     return factId.get();
   }
 
@@ -389,7 +405,7 @@ public class DefaultFactus implements Factus {
 
   @Override
   public <M extends ManagedProjection> Locked<M> withLockOn(M managedProjection) {
-    val applier = ehFactory.create(managedProjection);
+    Projector<M> applier = ehFactory.create(managedProjection);
     List<FactSpec> specs = applier.createFactSpecs();
     return new Locked<>(fc, this, managedProjection, specs, factusMetrics);
   }
@@ -412,5 +428,28 @@ public class DefaultFactus implements Factus {
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
+  }
+
+  abstract static class IntervalSnapshotter<P extends SnapshotProjection>
+      implements BiConsumer<P, UUID> {
+
+    private final Duration duration;
+    private Instant nextSnapshot;
+
+    public IntervalSnapshotter(Duration duration) {
+      this.duration = duration;
+      nextSnapshot = Instant.now().plus(duration);
+    }
+
+    @Override
+    public void accept(P projection, UUID uuid) {
+      Instant now = Instant.now();
+      if (now.isAfter(nextSnapshot)) {
+        nextSnapshot = now.plus(duration);
+        createSnapshot(projection, uuid);
+      }
+    }
+
+    abstract void createSnapshot(P projection, UUID state);
   }
 }
