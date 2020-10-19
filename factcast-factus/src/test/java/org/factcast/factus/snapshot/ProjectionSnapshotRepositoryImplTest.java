@@ -68,6 +68,7 @@ class ProjectionSnapshotRepositoryImplTest {
       when(serializerSupplier.retrieveSerializer(any())).thenReturn(serializer);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void findLatest_exists() {
       // INIT
@@ -82,6 +83,8 @@ class ProjectionSnapshotRepositoryImplTest {
           // let's assume this is the serial id computed by the
           // serialiser
           .thenReturn(45L);
+
+      when(serializer.getId()).thenReturn("hubba");
 
       // RUN
       Optional<Snapshot> latest = underTest.findLatest(SomeSnapshotProjection.class);
@@ -99,9 +102,7 @@ class ProjectionSnapshotRepositoryImplTest {
 
       assertThat(idCaptor.getValue()).isNotNull();
 
-      assertThat(idCaptor.getValue().key())
-          .contains(":org.factcast.factus.serializer.SnapshotSerializer")
-          .endsWith(":45");
+      assertThat(idCaptor.getValue().key()).contains(":hubba").endsWith(":45");
     }
 
     @Test
@@ -119,6 +120,8 @@ class ProjectionSnapshotRepositoryImplTest {
           // serialiser
           .thenReturn(45L, 0L);
 
+      when(serializer.getId()).thenReturn("oink");
+
       // RUN
       underTest.findLatest(SomeSnapshotProjection.class);
       underTest.findLatest(SomeSnapshotProjection.class);
@@ -134,9 +137,7 @@ class ProjectionSnapshotRepositoryImplTest {
           .map(SnapshotId::key)
           .forEach(
               key -> {
-                assertThat(key)
-                    .contains(":org.factcast.factus.serializer.SnapshotSerializer")
-                    .endsWith(":45");
+                assertThat(key).contains(":oink").endsWith(":45");
               });
     }
 

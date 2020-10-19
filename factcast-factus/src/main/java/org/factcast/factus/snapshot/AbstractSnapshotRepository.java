@@ -93,7 +93,7 @@ abstract class AbstractSnapshotRepository {
             serialVersionUid = System.currentTimeMillis();
           }
 
-          return serializer.getClass().getCanonicalName() + KEY_DELIMITER + serialVersionUid;
+          return serializer.getId() + KEY_DELIMITER + serialVersionUid;
         });
   }
 
@@ -128,8 +128,10 @@ abstract class AbstractSnapshotRepository {
   }
 
   protected String keyPrefix() {
-    return getClass().getCanonicalName() + KEY_DELIMITER;
+    return getId() + KEY_DELIMITER;
   }
+
+  protected abstract String getId();
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   protected void recordSnapshotSize(
