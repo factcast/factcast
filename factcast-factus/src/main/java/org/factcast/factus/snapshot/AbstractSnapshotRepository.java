@@ -16,9 +16,12 @@
 package org.factcast.factus.snapshot;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -27,6 +30,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
+import org.factcast.factus.metrics.FactusMetrics;
+import org.factcast.factus.metrics.GaugedEvent;
+import org.factcast.factus.metrics.TagKeys;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.serializer.SnapshotSerializer;
@@ -37,6 +43,7 @@ abstract class AbstractSnapshotRepository {
   protected static final String KEY_DELIMITER = ":";
 
   protected final SnapshotCache snapshotCache;
+  private final FactusMetrics factusMetrics;
 
   private final Map<Class<? extends SnapshotProjection>, String> typeSerializerAndSerialUIdCache =
       new ConcurrentHashMap<>();
@@ -45,14 +52,13 @@ abstract class AbstractSnapshotRepository {
     snapshotCache.setSnapshot(snapshot);
   }
 
-  @VisibleForTesting
   protected String createKeyForType(
       @NonNull Class<? extends SnapshotProjection> type,
       @NonNull Supplier<SnapshotSerializer> serializerSupplier) {
     return createKeyForType(type, serializerSupplier, null);
   }
 
-  @VisibleForTesting
+  @SuppressWarnings("SameParameterValue")
   protected String createKeyForType(
       @NonNull Class<? extends SnapshotProjection> type,
       @NonNull Supplier<SnapshotSerializer> serializerSupplier,
@@ -123,5 +129,16 @@ abstract class AbstractSnapshotRepository {
 
   protected String keyPrefix() {
     return getClass().getCanonicalName() + KEY_DELIMITER;
+  }
+
+  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+  protected void recordSnapshotSize(
+      Optional<Snapshot> ret, Class<? extends SnapshotProjection> projectionClass) {
+    ret.ifPresent(
+        s ->
+            factusMetrics.record(
+                GaugedEvent.FETCH_SIZE,
+                Tags.of(Tag.of(TagKeys.CLASS, projectionClass.getCanonicalName())),
+                s.bytes().length));
   }
 }
