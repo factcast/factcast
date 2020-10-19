@@ -53,7 +53,6 @@ import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
-import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -64,7 +63,7 @@ import org.springframework.beans.factory.annotation.Value;
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
-public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
+public class GrpcFactStore implements FactStore {
 
   private final CompressionCodecs codecs = new CompressionCodecs();
 
@@ -122,6 +121,8 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
       blockingStub = blockingStub.withCallCredentials(basic);
       stub = stub.withCallCredentials(basic);
     }
+
+    initialize();
   }
 
   @Override
@@ -235,11 +236,6 @@ public class GrpcFactStore implements FactStore, SmartInitializingSingleton {
               blockingStub = MetadataUtils.attachHeaders(blockingStub.withCompression(c), meta);
               stub = MetadataUtils.attachHeaders(stub.withCompression(c), meta);
             });
-  }
-
-  @Override
-  public synchronized void afterSingletonsInstantiated() {
-    initialize();
   }
 
   @Override
