@@ -39,6 +39,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
+@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 @Configuration
 @ConditionalOnClass(Factus.class)
 @Generated
@@ -58,8 +59,8 @@ public class FactusAutoConfiguration {
         fc,
         new DefaultProjectorFactory(deserializer),
         eventConverter,
-        new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
-        new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSupplier),
+        new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSupplier, factusMetrics),
+        new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSupplier, factusMetrics),
         snapshotSerializerSupplier,
         factusMetrics);
   }
