@@ -30,6 +30,7 @@ import java.util.concurrent.CompletableFuture;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
+import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.AggregateUtil;
 import org.factcast.factus.serializer.OtherSnapSer;
@@ -53,6 +54,7 @@ class AggregateSnapshotRepositoryImplTest {
   @Mock private SnapshotSerializerSupplier snapshotSerializerSupplier;
 
   @Mock private SnapshotSerializer snapshotSerializer;
+  @Mock private FactusMetrics factusMetrics;
 
   @InjectMocks private AggregateSnapshotRepositoryImpl underTest;
 
