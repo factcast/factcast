@@ -230,7 +230,7 @@ public class DefaultFactus implements Factus {
   public <P extends SnapshotProjection> P fetch(Class<P> projectionClass) {
     return factusMetrics.timed(
         TimedOperation.FETCH_DURATION,
-        Tags.of(Tag.of(LOCKED, FALSE), Tag.of(CLASS, projectionClass.getCanonicalName())),
+        Tags.of(Tag.of(CLASS, projectionClass.getCanonicalName())),
         () -> dofetch(projectionClass));
   }
 
@@ -272,7 +272,7 @@ public class DefaultFactus implements Factus {
   public <A extends Aggregate> Optional<A> find(Class<A> aggregateClass, UUID aggregateId) {
     return factusMetrics.timed(
         TimedOperation.FIND_DURATION,
-        Tags.of(Tag.of(LOCKED, FALSE), Tag.of(CLASS, aggregateClass.getCanonicalName())),
+        Tags.of(Tag.of(CLASS, aggregateClass.getCanonicalName())),
         () -> doFind(aggregateClass, aggregateId));
   }
 
@@ -399,7 +399,7 @@ public class DefaultFactus implements Factus {
     A fresh =
         factusMetrics.timed(
             TimedOperation.FIND_DURATION,
-            Tags.of(Tag.of(LOCKED, TRUE), Tag.of(CLASS, aggregateClass.getCanonicalName())),
+            Tags.of(Tag.of(CLASS, aggregateClass.getCanonicalName())),
             () -> find(aggregateClass, id).orElse(instantiate(aggregateClass)));
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
