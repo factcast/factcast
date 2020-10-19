@@ -66,4 +66,9 @@ public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository
           putBlocking(new Snapshot(id, state, bytes, ser.includesCompression()));
         });
   }
+
+  @Override
+  protected String getId() {
+    return "ProjectionSnapshotRepositoryImpl";
+  }
 }
