@@ -1,4 +1,4 @@
-FROM openjdk:8u252-slim
+FROM openjdk:8-slim
 #FROM adoptopenjdk:8u252-b09-jre-openj9-0.20.0-bionic
 
 
