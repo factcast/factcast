@@ -23,32 +23,33 @@ import lombok.val;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
+import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
 
 public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository
     implements ProjectionSnapshotRepository {
 
-  private static final UUID FAKE_UUID = new UUID(0, 0); // needed to maintain
+  private static final UUID FAKE_UUID = new UUID(0, 0); // needed to maintain the PK.
 
   private final SnapshotSerializerSupplier serializerSupplier;
 
   public ProjectionSnapshotRepositoryImpl(
       @NonNull SnapshotCache snapshotCache,
-      @NonNull SnapshotSerializerSupplier serializerSupplier) {
-    super(snapshotCache);
+      @NonNull SnapshotSerializerSupplier serializerSupplier,
+      FactusMetrics factusMetrics) {
+    super(snapshotCache, factusMetrics);
     this.serializerSupplier = serializerSupplier;
   }
-  // the PK.
 
   @Override
   public Optional<Snapshot> findLatest(@NonNull Class<? extends SnapshotProjection> type) {
     SnapshotId snapshotId =
         new SnapshotId(
             createKeyForType(type, () -> serializerSupplier.retrieveSerializer(type)), FAKE_UUID);
-    return snapshotCache
-        .getSnapshot(snapshotId)
-        .map(s -> new Snapshot(snapshotId, s.lastFact(), s.bytes(), s.compressed()));
+    Optional<Snapshot> snapshot = snapshotCache.getSnapshot(snapshotId);
+    recordSnapshotSize(snapshot, type);
+    return snapshot.map(s -> new Snapshot(snapshotId, s.lastFact(), s.bytes(), s.compressed()));
   }
 
   @Override
@@ -56,12 +57,13 @@ public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository
     // this is done before going async for exception escalation reasons:
     Class<? extends SnapshotProjection> type = projection.getClass();
     SnapshotSerializer ser = serializerSupplier.retrieveSerializer(type);
+    // serialization needs to be sync, otherwise the underlying object might change during ser
+    byte[] bytes = ser.serialize(projection);
 
     return CompletableFuture.runAsync(
         () -> {
           val id = new SnapshotId(createKeyForType(type, () -> ser), FAKE_UUID);
-          putBlocking(
-              new Snapshot(id, state, ser.serialize(projection), ser.includesCompression()));
+          putBlocking(new Snapshot(id, state, bytes, ser.includesCompression()));
         });
   }
 }

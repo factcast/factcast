@@ -23,6 +23,7 @@ import lombok.val;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
+import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.AggregateUtil;
 import org.factcast.factus.serializer.SnapshotSerializer;
@@ -33,8 +34,10 @@ public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository
   private final SnapshotSerializerSupplier serializerSupplier;
 
   public AggregateSnapshotRepositoryImpl(
-      SnapshotCache snapshotCache, SnapshotSerializerSupplier serializerSupplier) {
-    super(snapshotCache);
+      SnapshotCache snapshotCache,
+      SnapshotSerializerSupplier serializerSupplier,
+      FactusMetrics factusMetrics) {
+    super(snapshotCache, factusMetrics);
     this.serializerSupplier = serializerSupplier;
   }
 
@@ -46,7 +49,9 @@ public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository
         new SnapshotId(
             createKeyForType(type, () -> serializerSupplier.retrieveSerializer(type)), aggregateId);
 
-    return snapshotCache.getSnapshot(snapshotId);
+    Optional<Snapshot> snapshot = snapshotCache.getSnapshot(snapshotId);
+    recordSnapshotSize(snapshot, type);
+    return snapshot;
   }
 
   @Override
@@ -54,13 +59,15 @@ public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository
     // this is done before going async for exception escalation reasons:
     Class<? extends Aggregate> type = aggregate.getClass();
     SnapshotSerializer ser = serializerSupplier.retrieveSerializer(type);
+    // serialization needs to be sync, otherwise the underlying object might change during ser
+    byte[] bytes = ser.serialize(aggregate);
 
     return CompletableFuture.runAsync(
         () -> {
           val id =
               new SnapshotId(
                   createKeyForType(type, () -> ser), AggregateUtil.aggregateId(aggregate));
-          putBlocking(new Snapshot(id, state, ser.serialize(aggregate), ser.includesCompression()));
+          putBlocking(new Snapshot(id, state, bytes, ser.includesCompression()));
         });
   }
 }
