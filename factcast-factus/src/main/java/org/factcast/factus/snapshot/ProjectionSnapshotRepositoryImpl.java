@@ -56,12 +56,13 @@ public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository
     // this is done before going async for exception escalation reasons:
     Class<? extends SnapshotProjection> type = projection.getClass();
     SnapshotSerializer ser = serializerSupplier.retrieveSerializer(type);
+    // serialization needs to be sync, otherwise the underlying object might change during ser
+    byte[] bytes = ser.serialize(projection);
 
     return CompletableFuture.runAsync(
         () -> {
           val id = new SnapshotId(createKeyForType(type, () -> ser), FAKE_UUID);
-          putBlocking(
-              new Snapshot(id, state, ser.serialize(projection), ser.includesCompression()));
+          putBlocking(new Snapshot(id, state, bytes, ser.includesCompression()));
         });
   }
 }
