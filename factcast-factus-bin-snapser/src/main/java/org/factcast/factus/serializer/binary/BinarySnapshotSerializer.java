@@ -87,6 +87,11 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
     return Hashing.sha512().hashUnencodedChars(schemaModifier.apply(schema)).asLong();
   }
 
+  @Override
+  public String getId() {
+    return "BinarySnapshotSerializer";
+  }
+
   private static ObjectMapper configure(ObjectMapper objectMapper) {
     return objectMapper
         .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
