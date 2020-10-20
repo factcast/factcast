@@ -25,6 +25,7 @@ import io.grpc.stub.StreamObserver;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -121,8 +122,6 @@ public class GrpcFactStore implements FactStore {
       blockingStub = blockingStub.withCallCredentials(basic);
       stub = stub.withCallCredentials(basic);
     }
-
-    initialize();
   }
 
   @Override
@@ -178,6 +177,7 @@ public class GrpcFactStore implements FactStore {
     return converter.fromProto(responseMessage);
   }
 
+  @PostConstruct
   public synchronized void initialize() {
     if (!initialized.getAndSet(true)) {
       log.debug("Invoking handshake");
