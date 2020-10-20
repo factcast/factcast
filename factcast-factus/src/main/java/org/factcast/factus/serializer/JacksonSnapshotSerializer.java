@@ -69,4 +69,9 @@ public class JacksonSnapshotSerializer implements SnapshotSerializer {
     String schema = objectMapper.writeValueAsString(jsonSchema);
     return Hashing.sha512().hashUnencodedChars(schemaModifier.apply(schema)).asLong();
   }
+
+  @Override
+  public String getId() {
+    return "JacksonSnapshotSerializer"; // do NOT change this to class.getSimpleName()
+  }
 }

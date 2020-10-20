@@ -37,4 +37,9 @@ public class OtherSnapSer implements SnapshotSerializer {
   public Long calculateProjectionSerial(Class<? extends SnapshotProjection> projectionClass) {
     return null;
   }
+
+  @Override
+  public String getId() {
+    return "OtherSnapSer";
+  }
 }
