@@ -45,4 +45,10 @@ public interface SnapshotSerializer {
    *     no other means of providing a hash is used)
    */
   Long calculateProjectionSerial(Class<? extends SnapshotProjection> projectionClass);
+
+  /**
+   * @return displayable name of the serializer. Make sure it is unique, as it is used as part of
+   *     the snapshot key
+   */
+  String getId();
 }
