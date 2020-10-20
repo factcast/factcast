@@ -85,6 +85,7 @@ class AggregateSnapshotRepositoryImplTest {
               new SnapshotId("some key", aggregateId), UUID.randomUUID(), new byte[0], false);
 
       when(snap.getSnapshot(any())).thenReturn(Optional.of(withSVUID));
+      when(snapshotSerializer.getId()).thenReturn("narf");
 
       // RUN
       Optional<Snapshot> result = underTest.findLatest(WithSVUID.class, aggregateId);
@@ -100,7 +101,7 @@ class AggregateSnapshotRepositoryImplTest {
       verify(snapshotSerializer, never()).calculateProjectionSerial(any());
 
       assertThat(idCaptor.getValue().key())
-          .contains(":org.factcast.factus.serializer.SnapshotSerializer")
+          .contains(":narf")
           // use value from serialVersionUID, not what serializer
           // would calculate
           .endsWith(":42");
@@ -120,6 +121,7 @@ class AggregateSnapshotRepositoryImplTest {
           // serialiser; will not be used as we used a class with
           // serialVersionUID field
           .thenReturn(500L);
+      when(snapshotSerializer.getId()).thenReturn("poit");
 
       // RUN
       Optional<Snapshot> result = underTest.findLatest(WithoutSVUID.class, aggregateId);
@@ -132,7 +134,7 @@ class AggregateSnapshotRepositoryImplTest {
       assertThat(idCaptor.getValue()).isNotNull();
 
       assertThat(idCaptor.getValue().key())
-          .contains(":org.factcast.factus.serializer.SnapshotSerializer")
+          .contains(":poit")
           // use value from serialVersionUID, not what serializer
           // would calculate
           .endsWith(":500");
@@ -153,6 +155,8 @@ class AggregateSnapshotRepositoryImplTest {
           // serialVersionUID field
           .thenReturn(500L);
 
+      when(snapshotSerializer.getId()).thenReturn("zort");
+
       // RUN
       underTest.findLatest(WithoutSVUID.class, aggregateId);
       underTest.findLatest(WithoutSVUID.class, aggregateId);
@@ -166,9 +170,7 @@ class AggregateSnapshotRepositoryImplTest {
           .map(SnapshotId::key)
           .forEach(
               key -> {
-                assertThat(key)
-                    .contains(":org.factcast.factus.serializer.SnapshotSerializer")
-                    .endsWith(":500");
+                assertThat(key).contains(":zort").endsWith(":500");
               });
     }
   }
