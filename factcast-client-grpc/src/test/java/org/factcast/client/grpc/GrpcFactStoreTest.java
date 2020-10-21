@@ -299,16 +299,6 @@ class GrpcFactStoreTest {
   }
 
   @Test
-  void testAfterSingletonsInstantiatedCallsInit() {
-    uut = spy(uut);
-    when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(1, 999, 0), new HashMap<>())));
-
-    uut.afterSingletonsInstantiated();
-    verify(uut).initialize();
-  }
-
-  @Test
   void testSubscribeNullParameters() {
     expectNPE(() -> uut.subscribe(null, mock(FactObserver.class)));
     expectNPE(() -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
