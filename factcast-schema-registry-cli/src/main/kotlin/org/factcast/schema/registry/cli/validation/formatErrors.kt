@@ -31,9 +31,9 @@ fun formatErrors(errors: List<ProjectError>): List<String> = errors.map {
             "No description found for ${it.descriptionPath}"
         is ProjectError.ValidationError ->
             """
-Example ${it.examplePath.fileName} failed validation:
+Example ${it.examplePath} failed validation:
 ${it.result.joinToString("\n") { result ->
-                "- ${result.message}"
+                "- ${result.asJson().get("instance").get("pointer").asText()}: ${result.message}"
             }}
                 """.trimIndent()
         is ProjectError.NoUpcastForVersion ->
