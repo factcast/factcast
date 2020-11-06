@@ -19,7 +19,7 @@ fun formatErrors(errors: List<ProjectError>): List<String> = errors.map {
     when (it) {
         is ProjectError.NoEvents -> "No events found for namespace ${it.namespacePath.fileName}"
         is ProjectError.NoEventVersions ->
-            "No event versions found for version ${it.eventVersionsPath.parent.parent.fileName}"
+            "No versions found for event ${it.eventVersionsPath}"
         is ProjectError.NoExamples -> "No examples found for event ${it.path.fileName} at ${it.path}"
         is ProjectError.NoNamespaces -> "No namespaces found at ${it.projectPath}"
         is ProjectError.NoSuchFile -> "Corrupted JSON at ${it.filePath}"
@@ -28,12 +28,12 @@ fun formatErrors(errors: List<ProjectError>): List<String> = errors.map {
         is ProjectError.WrongVersionFormat ->
             "Version ${it.version} is no number at ${it.path}"
         is ProjectError.NoDescription ->
-            "No description found for  ${it.descriptionPath}"
+            "No description found for ${it.descriptionPath}"
         is ProjectError.ValidationError ->
             """
-Example ${it.examplePath.fileName} failed validation:
+Example ${it.examplePath} failed validation:
 ${it.result.joinToString("\n") { result ->
-                "- ${result.message}"
+                "- ${result.asJson().get("instance").get("pointer").asText()}: ${result.message}"
             }}
                 """.trimIndent()
         is ProjectError.NoUpcastForVersion ->
