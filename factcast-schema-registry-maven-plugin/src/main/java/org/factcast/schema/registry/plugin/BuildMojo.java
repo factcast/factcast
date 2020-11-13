@@ -16,6 +16,8 @@
 package org.factcast.schema.registry.plugin;
 
 import java.io.File;
+import java.util.List;
+import javax.inject.Inject;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -29,6 +31,12 @@ public class BuildMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project.basedir}/src/main/resources", required = true)
   private File sourceDirectory;
 
+  @Parameter(property = "includedEvents")
+  private List<String> includedEvents;
+
+  @Inject WhiteListFileCreator whiteListFileCreator;
+  @Inject CliArgumentBuilder argumentBuilder;
+
   @Override
   public void execute() {
     if (!sourceDirectory.exists())
@@ -40,9 +48,9 @@ public class BuildMojo extends AbstractMojo {
       outputDirectory.mkdirs();
     }
 
+    File tempFile = whiteListFileCreator.create(includedEvents);
+
     org.factcast.schema.registry.cli.Application.main(
-        new String[] {
-          "build", "-p", sourceDirectory.getAbsolutePath(), "-o", outputDirectory.getAbsolutePath()
-        });
+        argumentBuilder.build(sourceDirectory, outputDirectory, tempFile));
   }
 }

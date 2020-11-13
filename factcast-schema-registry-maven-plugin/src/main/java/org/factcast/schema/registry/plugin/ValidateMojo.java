@@ -40,6 +40,7 @@ public class ValidateMojo extends AbstractMojo {
   private List<String> includedEvents;
 
   @Inject WhiteListFileCreator whiteListFileCreator;
+  @Inject CliArgumentBuilder argumentBuilder;
 
   @Override
   public void execute() {
@@ -51,8 +52,6 @@ public class ValidateMojo extends AbstractMojo {
     File tempFile = whiteListFileCreator.create(includedEvents);
 
     org.factcast.schema.registry.cli.Application.main(
-        new String[] {
-          "build", "-p", sourceDirectory.getAbsolutePath(), "-w", tempFile.getAbsolutePath()
-        });
+        argumentBuilder.build(sourceDirectory, tempFile));
   }
 }
