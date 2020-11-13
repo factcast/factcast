@@ -66,6 +66,11 @@
       <artifactId>factcast-schema-registry-cli</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -171,6 +176,7 @@
         <version>0.3.7-SNAPSHOT</version>
         <configuration>
           <sourceDirectory>/tmp/test/</sourceDirectory>
+          <outputDirectory>/tmp/t/</outputDirectory>
           <includedEvents>
             <includedEvent>/tmp/a.txt</includedEvent>
             <includedEvent>/tmp/b.txt</includedEvent>
