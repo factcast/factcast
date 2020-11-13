@@ -21,6 +21,7 @@ import java.util.List;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+/** Builds the command line arguments for the schema registry CLI */
 @Named
 @Singleton
 public class CliArgumentBuilder {

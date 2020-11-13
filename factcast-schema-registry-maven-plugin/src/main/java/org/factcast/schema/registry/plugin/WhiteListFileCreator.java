@@ -23,6 +23,10 @@ import java.util.List;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+/**
+ * Gets a list of to be white listed events and creates a temporary file with the events on
+ * individual lines.
+ */
 @Named
 @Singleton
 public class WhiteListFileCreator {
