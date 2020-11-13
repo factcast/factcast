@@ -20,8 +20,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
   <dependencies>
@@ -164,9 +164,25 @@
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-schema-registry-maven-plugin</artifactId>
+        <version>0.3.7-SNAPSHOT</version>
+        <configuration>
+          <sourceDirectory>/tmp/test/</sourceDirectory>
+          <includedEvents>
+            <includedEvent>/tmp/a.txt</includedEvent>
+            <includedEvent>/tmp/b.txt</includedEvent>
+          </includedEvents>
+
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 
+<!--  TODO still require?-->
   <profiles>
     <profile>
       <id>run-its</id>
@@ -202,6 +218,7 @@
               </execution>
             </executions>
           </plugin>
+
         </plugins>
       </build>
     </profile>

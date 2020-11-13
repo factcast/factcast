@@ -23,23 +23,18 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 @Mojo(name = "build", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
 public class BuildMojo extends AbstractMojo {
-  @Parameter(
-      defaultValue = "${project.build.directory}/registry",
-      property = "outputDir",
-      required = true)
+  @Parameter(defaultValue = "${project.build.directory}/registry", required = true)
   private File outputDirectory;
 
-  @Parameter(
-      defaultValue = "${project.basedir}/src/main/resources",
-      property = "sourceDir",
-      required = true)
+  @Parameter(defaultValue = "${project.basedir}/src/main/resources", required = true)
   private File sourceDirectory;
 
   @Override
   public void execute() {
     if (!sourceDirectory.exists())
       throw new IllegalArgumentException(
-          "Source directory (property 'sourceDir') does not exist: " + sourceDirectory.getPath());
+          "Source directory (property 'sourceDirectory') does not exist: "
+              + sourceDirectory.getPath());
 
     if (!outputDirectory.exists()) {
       outputDirectory.mkdirs();
