@@ -13,41 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.schema.registry.plugin;
+package org.factcast.schema.registry.plugin.mojo;
 
 import java.io.File;
-import java.util.List;
-import javax.inject.Inject;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
 
 @Mojo(name = "validate", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
-public class ValidateMojo extends AbstractMojo {
-
-  // rm -rf ~/.m2/repository/org/factcast/factcast-schema-registry-maven-plugin/0.3.7-SNAPSHOT/ &&
-  // mvn clean install && mvn
-  // org.factcast:factcast-schema-registry-maven-plugin:0.3.7-SNAPSHOT:validate
-
-  @Parameter(
-      defaultValue = "${project.basedir}/src/main/resources",
-      property = "sourceDir",
-      required = true)
-  private File sourceDirectory;
-
-  @Parameter(property = "includedEvents")
-  private List<String> includedEvents;
-
-  @Inject WhiteListFileCreator whiteListFileCreator;
-  @Inject CliArgumentBuilder argumentBuilder;
+public class ValidateMojo extends AbstractBaseMojo {
 
   @Override
   public void execute() {
-    if (!sourceDirectory.exists())
-      throw new IllegalArgumentException(
-          "Source directory (property 'sourceDirectory') does not exist: "
-              + sourceDirectory.getPath());
+    checkSourceDirectory();
 
     File tempFile = whiteListFileCreator.create(includedEvents);
 
