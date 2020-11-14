@@ -29,6 +29,6 @@ public class ValidateMojo extends AbstractBaseMojo {
     File tempFile = whiteListFileCreator.create(includedEvents);
 
     org.factcast.schema.registry.cli.Application.main(
-        argumentBuilder.build(sourceDirectory, tempFile));
+        argumentBuilder.build("validate", sourceDirectory, tempFile));
   }
 }

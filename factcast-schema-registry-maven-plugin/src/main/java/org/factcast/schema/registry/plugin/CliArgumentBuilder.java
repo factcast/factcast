@@ -26,13 +26,14 @@ import javax.inject.Singleton;
 @Singleton
 public class CliArgumentBuilder {
 
-  public String[] build(File sourceDirectory, File whiteListTempFile) {
-    return build(sourceDirectory, null, whiteListTempFile);
+  public String[] build(String command, File sourceDirectory, File whiteListTempFile) {
+    return build(command, sourceDirectory, null, whiteListTempFile);
   }
 
-  public String[] build(File sourceDirectory, File outputDirectory, File whiteListTempFile) {
+  public String[] build(
+      String command, File sourceDirectory, File outputDirectory, File whiteListTempFile) {
     List<String> argumentList = new ArrayList<>();
-    argumentList.add("build");
+    argumentList.add(command);
 
     argumentList.add("-p");
     argumentList.add(sourceDirectory.getAbsolutePath());

@@ -33,6 +33,6 @@ public class BuildMojo extends AbstractBaseMojo {
     File tempFile = whiteListFileCreator.create(includedEvents);
 
     org.factcast.schema.registry.cli.Application.main(
-        argumentBuilder.build(sourceDirectory, outputDirectory, tempFile));
+        argumentBuilder.build("build", sourceDirectory, outputDirectory, tempFile));
   }
 }
