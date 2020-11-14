@@ -24,10 +24,10 @@ import org.factcast.schema.registry.plugin.CliArgumentBuilder;
 import org.factcast.schema.registry.plugin.WhiteListFileCreator;
 
 public abstract class AbstractBaseMojo extends AbstractMojo {
-  @Parameter(defaultValue = "${project.build.directory}/registry", required = true)
+  @Parameter(defaultValue = "${project.build.directory}/registry")
   protected File outputDirectory;
 
-  @Parameter(defaultValue = "${project.basedir}/src/main/resources", required = true)
+  @Parameter(defaultValue = "${project.basedir}/src/main/resources")
   protected File sourceDirectory;
 
   @Parameter(property = "includedEvents")
