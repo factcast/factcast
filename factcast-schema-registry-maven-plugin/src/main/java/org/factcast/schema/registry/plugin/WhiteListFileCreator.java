@@ -16,12 +16,12 @@
 package org.factcast.schema.registry.plugin;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import lombok.SneakyThrows;
 
 /**
  * Gets a list of to be white listed events and creates a temporary file with the events on
@@ -37,27 +37,15 @@ public class WhiteListFileCreator {
     return tempFile;
   }
 
+  @SneakyThrows
   private File createTempFile() {
-    try {
-      File tempFile = Files.createTempFile("temp-event-whitelist", ".txt").toFile();
-      tempFile.deleteOnExit();
-      return tempFile;
-    } catch (IOException e) {
-      throw new TemporaryFileException(e);
-    }
+    File tempFile = Files.createTempFile("temp-event-whitelist", ".txt").toFile();
+    tempFile.deleteOnExit();
+    return tempFile;
   }
 
+  @SneakyThrows
   private void appendToFile(File file, String line) {
-    try {
-      Files.write(file.toPath(), (line + "\r\n").getBytes(), StandardOpenOption.APPEND);
-    } catch (IOException e) {
-      throw new TemporaryFileException(e);
-    }
-  }
-
-  class TemporaryFileException extends RuntimeException {
-    public TemporaryFileException(Exception e) {
-      super(e);
-    }
+    Files.write(file.toPath(), (line + "\r\n").getBytes(), StandardOpenOption.APPEND);
   }
 }
