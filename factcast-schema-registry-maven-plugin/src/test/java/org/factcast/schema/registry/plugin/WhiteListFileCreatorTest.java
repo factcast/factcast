@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 class WhiteListFileCreatorTest {
 
   @Test
-  public void eventsAreWrittenToTempFile() throws IOException {
+  void eventsAreWrittenToTempFile() throws IOException {
     File temporaryFile = new WhiteListFileCreator().create(Arrays.asList("event 1", "event 2"));
     List<String> temporaryFileContent = Files.readAllLines(temporaryFile.toPath());
 
@@ -38,7 +38,7 @@ class WhiteListFileCreatorTest {
   }
 
   @Test
-  public void emptyListGivesEmptyFile() throws IOException {
+  void emptyListGivesEmptyFile() throws IOException {
     File temporaryFile = new WhiteListFileCreator().create(new ArrayList<>());
     List<String> temporaryFileContent = Files.readAllLines(temporaryFile.toPath());
 
