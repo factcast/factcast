@@ -31,3 +31,7 @@ The following configuration options are supported:
 | `outputDirectory`    | `${project.build.directory}/registry`   | where to write results to                                                   | `<outputDirectory>/path/to/output_directory</outputDirectory>`                                                                                                                                                                            |
 | `includedEvents`     | if not present all events from the source dir are considered | list of events which the schema registry CLI should consider for processing | `<includedEvents><includedEvent>classification.*</includedEvent>     <includedEvent>organisations.UserCreated*</includedEvent><includedEvent>organisations.OrganisationCreatedV1.schema.json</includedEvent></includedEvents>` |
 
+Local Developer Test
+--------------------
+* temporarily add the config above to the plugins `pom.xml`
+* execute e.g. `rm -rf ~/.m2/repository/org/factcast/factcast-schema-registry-maven-plugin/0.3.7-SNAPSHOT/ && mvn clean install && mvn org.factcast:factcast-schema-registry-maven-plugin:0.3.7-SNAPSHOT:validate`

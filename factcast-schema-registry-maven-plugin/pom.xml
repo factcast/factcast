@@ -169,22 +169,6 @@
           </execution>
         </executions>
       </plugin>
-
-      <plugin>
-        <groupId>org.factcast</groupId>
-        <artifactId>factcast-schema-registry-maven-plugin</artifactId>
-        <version>0.3.7-SNAPSHOT</version>
-        <configuration>
-          <sourceDirectory>/tmp/test/</sourceDirectory>
-          <outputDirectory>/tmp/t/</outputDirectory>
-          <includedEvents>
-            <includedEvent>/tmp/a.txt</includedEvent>
-            <includedEvent>/tmp/b.txt</includedEvent>
-          </includedEvents>
-
-        </configuration>
-      </plugin>
-
     </plugins>
   </build>
 
