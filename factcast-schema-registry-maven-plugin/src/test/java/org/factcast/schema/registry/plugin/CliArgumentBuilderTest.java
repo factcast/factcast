@@ -47,7 +47,7 @@ class CliArgumentBuilderTest {
   }
 
   @Test
-  public void withEmptyWhiteList() {
+  void withEmptyWhiteList() {
     String[] builder = new CliArgumentBuilder().build("build", sourceDir, emptyWhiteList);
 
     assertEquals(3, builder.length);
@@ -57,7 +57,7 @@ class CliArgumentBuilderTest {
   }
 
   @Test
-  public void withWhiteList() {
+  void withWhiteList() {
     String[] builder = new CliArgumentBuilder().build("validate", sourceDir, whiteList);
 
     assertEquals(5, builder.length);
@@ -66,7 +66,7 @@ class CliArgumentBuilderTest {
   }
 
   @Test
-  public void withOutputDirAndEmptyWhiteList() {
+  void withOutputDirAndEmptyWhiteList() {
     String[] builder =
         new CliArgumentBuilder().build("build", sourceDir, outputDir, emptyWhiteList);
 
@@ -76,7 +76,7 @@ class CliArgumentBuilderTest {
   }
 
   @Test
-  public void withOutputDirAndWhiteList() {
+  void withOutputDirAndWhiteList() {
     String[] builder = new CliArgumentBuilder().build("build", sourceDir, outputDir, whiteList);
 
     assertEquals(7, builder.length);
