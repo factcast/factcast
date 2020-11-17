@@ -37,7 +37,7 @@ public class RedissonSnapshotCacheAutoConfiguration {
   @ConditionalOnMissingBean
   public SnapshotCache snapshotCache(
       RedissonClient redisson,
-      @Value("${factcast.redis.deleteSnapshotStaleForDays}:90") int retentionTimeInDays) {
+      @Value("${factcast.redis.deleteSnapshotStaleForDays:90}") int retentionTimeInDays) {
     return new RedissonSnapshotCache(redisson, retentionTimeInDays);
   }
 }
