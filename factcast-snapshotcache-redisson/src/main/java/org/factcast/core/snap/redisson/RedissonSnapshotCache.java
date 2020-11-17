@@ -42,7 +42,7 @@ public class RedissonSnapshotCache implements SnapshotCache {
 
   public RedissonSnapshotCache(
       @NonNull RedissonClient redisson,
-      @Value("${factcast.redis.deleteSnapshotStaleForDays}:90") int retentionTimeInDays) {
+      int retentionTimeInDays) {
     this.redisson = redisson;
     this.retentionTimeInDays = retentionTimeInDays;
     index = redisson.getMap(TS_INDEX);
