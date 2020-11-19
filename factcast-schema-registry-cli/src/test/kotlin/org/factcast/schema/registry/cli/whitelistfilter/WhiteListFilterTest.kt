@@ -139,7 +139,7 @@ class WhiteListFilterTest : StringSpec() {
                 .map { FileSystems.getDefault().getPathMatcher(it) }
 
         var namespaces = mutableListOf<NamespaceFolder>()
-        project.copy().namespaces.forEach { nameSpaceFolder ->
+        project.namespaces.forEach { nameSpaceFolder ->
 
             var eventFolders = mutableListOf<EventFolder>()
             nameSpaceFolder.eventFolders.forEach { eventFolder ->
