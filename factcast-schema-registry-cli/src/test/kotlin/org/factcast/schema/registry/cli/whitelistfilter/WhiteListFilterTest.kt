@@ -128,7 +128,12 @@ class WhiteListFilterTest : StringSpec() {
         }
     }
 
+    // returns a filtered ProjectFolder.
+    // the original structure is iterated, filtered and freshly rebuild from inside to outside
     private fun filterProject(project: ProjectFolder, whiteList: List<String>): ProjectFolder {
+        val whiteListPathMatchers = whiteList
+                .map { "glob:${project.path}${it}" }
+                .map { FileSystems.getDefault().getPathMatcher(it) }
 
         var namespaces = mutableListOf<NamespaceFolder>()
         project.copy().namespaces.forEach { nameSpaceFolder ->
@@ -138,12 +143,7 @@ class WhiteListFilterTest : StringSpec() {
 
                 var eventVersionFolders = mutableListOf<EventVersionFolder>()
                 eventFolder.versionFolders.forEach { eventVersionFolder ->
-                    if (whiteList.any { whiteListEntry ->
-                                val globPattern = "glob:" + project.path.toString() + whiteListEntry
-                                val matcher = FileSystems.getDefault().getPathMatcher(globPattern)
-                                Paths.get(project.path.toString(), eventVersionFolder.path.toString())
-                                matcher.matches(eventVersionFolder.path)
-                            }) {
+                    if (whiteListPathMatchers.any { pathMatcher -> pathMatcher.matches(eventVersionFolder.path) }) {
                         eventVersionFolders.add(eventVersionFolder)
                     }
                 }
