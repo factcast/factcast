@@ -9,7 +9,9 @@ import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import java.nio.file.FileSystems
 import java.nio.file.Paths
 
-class WhiteListFilterTest : StringSpec() {
+class WhiteListFilterServiceImplTest : StringSpec() {
+
+    val uut = WhiteListFilterServiceImpl()
 
     init {
         "oneEventInWhiteList" {
@@ -22,7 +24,7 @@ class WhiteListFilterTest : StringSpec() {
             )
 
             val whiteList = listOf("/shipping/OrderShipped/versions/1")
-            val filteredProject = filterProject(project, whiteList)
+            val filteredProject = uut.filter(project, whiteList)
 
             filteredProject.namespaces[0].eventFolders[0].versionFolders.size shouldBe 1
         }
@@ -38,7 +40,7 @@ class WhiteListFilterTest : StringSpec() {
             )
 
             val whiteList = listOf("/shipping/OrderShipped/versions/1")
-            val filteredProject = filterProject(project, whiteList)
+            val filteredProject = uut.filter(project, whiteList)
 
             filteredProject.namespaces[0].eventFolders[0].versionFolders.size shouldBe 1
             filteredProject.namespaces[0].eventFolders[0].versionFolders[0].path.endsWith("shipping/OrderShipped/versions/1") shouldBe true
@@ -69,7 +71,7 @@ class WhiteListFilterTest : StringSpec() {
                     "/ordering/OrderProcessed/versions/1",
                     "/shipping/OrderShipped/versions/1"
             )
-            val filteredProject = filterProject(project, whiteList)
+            val filteredProject = uut.filter(project, whiteList)
 
             filteredProject.namespaces[0].eventFolders[0].versionFolders.size shouldBe 1
             filteredProject.namespaces[0].eventFolders[0].versionFolders[0].path.endsWith("ordering/OrderReceived/versions/1") shouldBe true
@@ -90,7 +92,7 @@ class WhiteListFilterTest : StringSpec() {
                     )
             )
 
-            val filteredProject = filterProject(project, emptyList())
+            val filteredProject = uut.filter(project, emptyList())
             filteredProject.namespaces[0].eventFolders.size shouldBe 0
         }
 
@@ -121,7 +123,7 @@ class WhiteListFilterTest : StringSpec() {
                     "/shipping/**",
                     "/ordering/Order*/versions/1"
             )
-            val filteredProject = filterProject(project, whiteList)
+            val filteredProject = uut.filter(project, whiteList)
 
             filteredProject.namespaces[0].eventFolders[0].versionFolders.size shouldBe 1
             filteredProject.namespaces[1].eventFolders.size shouldBe 2
@@ -129,36 +131,6 @@ class WhiteListFilterTest : StringSpec() {
             filteredProject.namespaces[1].eventFolders[1].versionFolders.size shouldBe 1
             filteredProject.namespaces[1].eventFolders[1].versionFolders[0].path.endsWith("OrderProcessed/versions/1") shouldBe true
         }
-    }
-
-    // returns a filtered ProjectFolder.
-    // the original structure is iterated, filtered and freshly rebuild from inside to outside
-    private fun filterProject(project: ProjectFolder, whiteList: List<String>): ProjectFolder {
-        val whiteListPathMatchers = whiteList
-                .map { "glob:${project.path}${it}" }
-                .map { FileSystems.getDefault().getPathMatcher(it) }
-
-        var namespaces = mutableListOf<NamespaceFolder>()
-        project.namespaces.forEach { nameSpaceFolder ->
-
-            var eventFolders = mutableListOf<EventFolder>()
-            nameSpaceFolder.eventFolders.forEach { eventFolder ->
-
-                var eventVersionFolders = mutableListOf<EventVersionFolder>()
-                eventFolder.versionFolders.forEach { eventVersionFolder ->
-                    if (whiteListPathMatchers.any { pathMatcher -> pathMatcher.matches(eventVersionFolder.path) }) {
-                        eventVersionFolders.add(eventVersionFolder)
-                    }
-                }
-
-                if (eventVersionFolders.isEmpty()) return@forEach // if there is no version ignore the event completely
-                eventFolders.add(EventFolder(
-                        eventFolder.path, eventVersionFolders, eventFolder.description, eventFolder.transformationFolders))
-            }
-            namespaces.add(NamespaceFolder(nameSpaceFolder.path, eventFolders, nameSpaceFolder.description))
-        }
-
-        return ProjectFolder(project.path, project.description, namespaces)
     }
 
     private fun createProjectFolder(vararg namespaceFolders: NamespaceFolder) =
