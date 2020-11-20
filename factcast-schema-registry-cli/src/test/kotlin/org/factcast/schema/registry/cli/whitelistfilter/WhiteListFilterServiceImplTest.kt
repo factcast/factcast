@@ -2,11 +2,11 @@ package org.factcast.schema.registry.cli.whitelistfilter
 
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
-import java.nio.file.Paths
 import org.factcast.schema.registry.cli.project.structure.EventFolder
 import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
 import org.factcast.schema.registry.cli.project.structure.NamespaceFolder
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
+import java.nio.file.Paths
 
 class WhiteListFilterServiceImplTest : StringSpec() {
 
@@ -85,14 +85,21 @@ class WhiteListFilterServiceImplTest : StringSpec() {
         "specialCaseIfNoWhiteListEntryMatchesTheEventIsRemovedCompletely" {
             val project = createProjectFolder(
                     createNamespaceFolder("shipping",
+                            createEventFolder("shipping", "OrderReceived",
+                                    createEventVersionFolder("shipping", "OrderReceived", 1)
+                            ),
                             createEventFolder("shipping", "OrderShipped",
                                     createEventVersionFolder("shipping", "OrderShipped", 1)
                             )
                     )
             )
 
-            val filteredProject = uut.filter(project, emptyList())
-            filteredProject.namespaces[0].eventFolders.size shouldBe 0
+            val whiteList = listOf(
+                    "/shipping/OrderReceived/versions/1"
+            )
+
+            val filteredProject = uut.filter(project,whiteList)
+            filteredProject.namespaces[0].eventFolders.size shouldBe 1
         }
 
         "whiteListSupportsWildCards" {
@@ -130,6 +137,32 @@ class WhiteListFilterServiceImplTest : StringSpec() {
             filteredProject.namespaces[1].eventFolders[1].versionFolders.size shouldBe 1
             filteredProject.namespaces[1].eventFolders[1].versionFolders[0].path.endsWith("OrderProcessed/versions/1") shouldBe true
         }
+
+
+        "nonMentionedNameSpacesAreFiltered" {
+            val project = createProjectFolder(
+                    createNamespaceFolder("shipping",
+                            createEventFolder("shipping", "OrderShipped",
+                                    createEventVersionFolder("shipping", "OrderShipped", 1)
+                            )
+                    ),
+                    createNamespaceFolder("ordering",
+                            createEventFolder(
+                                    "ordering", "OrderReceived",
+                                    createEventVersionFolder("ordering", "OrderReceived", 1)
+                            )
+                    )
+            )
+
+            val whiteList = listOf(
+                    "/shipping/**"
+            )
+            val filteredProject = uut.filter(project, whiteList)
+
+            filteredProject.namespaces.size shouldBe 1
+            filteredProject.namespaces[0].path.endsWith("shipping") shouldBe true
+        }
+
     }
 
     private fun createProjectFolder(vararg namespaceFolders: NamespaceFolder) =

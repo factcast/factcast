@@ -49,6 +49,7 @@ class WhiteListFilterServiceImpl : WhiteListFilterService {
                 eventFolders.add(EventFolder(
                         eventFolder.path, eventVersionFolders, eventFolder.description, eventFolder.transformationFolders))
             }
+            if (eventFolders.isEmpty()) return@forEach // if there are no events ignore this namespace
             namespaces.add(NamespaceFolder(nameSpaceFolder.path, eventFolders, nameSpaceFolder.description))
         }
 
