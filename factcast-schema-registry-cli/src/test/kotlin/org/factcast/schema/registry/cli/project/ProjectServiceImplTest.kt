@@ -198,6 +198,7 @@ class ProjectServiceImplTest : StringSpec() {
             every { fs.listDirectories(dummyPath) } returns emptyList()
             every { fs.readToStrings(dummyPath.toFile()) } returns emptyList()
             every { whiteListService.filter(any(), any()) } returns filteredProjectFolder
+            every { filteredProjectFolder.namespaces} returns emptyList()
 
             val result = uut.detectProject(dummyPath, dummyPath)
             result shouldBeSameInstanceAs filteredProjectFolder
