@@ -2,12 +2,11 @@ package org.factcast.schema.registry.cli.whitelistfilter
 
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
+import java.nio.file.Paths
 import org.factcast.schema.registry.cli.project.structure.EventFolder
 import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
 import org.factcast.schema.registry.cli.project.structure.NamespaceFolder
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
-import java.nio.file.FileSystems
-import java.nio.file.Paths
 
 class WhiteListFilterServiceImplTest : StringSpec() {
 
@@ -106,17 +105,17 @@ class WhiteListFilterServiceImplTest : StringSpec() {
                     createNamespaceFolder("ordering",
                             createEventFolder(
                                     "ordering", "OrderReceived",
-                                    createEventVersionFolder("ordering", "OrderReceived", 1),
+                                    createEventVersionFolder("ordering", "OrderReceived", 1)
                             ),
                             createEventFolder(
                                     "ordering", "OrderProcessed",
-                                    createEventVersionFolder("ordering", "OrderProcessed", 1),
+                                    createEventVersionFolder("ordering", "OrderProcessed", 1)
                             ),
                             createEventFolder(
                                     "ordering", "OrderProcessed",
-                                    createEventVersionFolder("ordering", "OrderProcessed", 2),
+                                    createEventVersionFolder("ordering", "OrderProcessed", 2)
                             )
-                    ),
+                    )
             )
 
             val whiteList = listOf(
@@ -141,21 +140,21 @@ class WhiteListFilterServiceImplTest : StringSpec() {
 
     private fun createNamespaceFolder(namespaceName: String, vararg eventFolders: EventFolder) =
             NamespaceFolder(
-                    path = Paths.get("/registry/${namespaceName}"),
-                    description = Paths.get("/registry/${namespaceName}/index.md"),
+                    path = Paths.get("/registry/$namespaceName"),
+                    description = Paths.get("/registry/$namespaceName/index.md"),
                     eventFolders = eventFolders.asList())
 
     private fun createEventFolder(namespaceName: String, eventName: String, vararg versionFolders: EventVersionFolder) =
             EventFolder(
-                    path = Paths.get("/registry/${namespaceName}/${eventName}"),
-                    description = Paths.get("/registry/${namespaceName}/${eventName}/index.md"),
+                    path = Paths.get("/registry/$namespaceName/$eventName"),
+                    description = Paths.get("/registry/$namespaceName/$eventName/index.md"),
                     transformationFolders = emptyList(),
                     versionFolders = versionFolders.asList())
 
     private fun createEventVersionFolder(namespaceName: String, eventName: String, version: Int = 1) =
             EventVersionFolder(
-                    path = Paths.get("/registry/${namespaceName}/${eventName}/versions/${version}"),
-                    schema = Paths.get("/registry/${namespaceName}/${eventName}/versions/${version}/schema.json"),
-                    description = Paths.get("/registry/${namespaceName}/${eventName}/versions/${version}/index.md"),
-                    examples = listOf(Paths.get("/registry/${namespaceName}/${eventName}/versions/${version}/examples/simple.json")))
+                    path = Paths.get("/registry/$namespaceName/$eventName/versions/$version"),
+                    schema = Paths.get("/registry/$namespaceName/$eventName/versions/$version/schema.json"),
+                    description = Paths.get("/registry/$namespaceName/$eventName/versions/$version/index.md"),
+                    examples = listOf(Paths.get("/registry/$namespaceName/$eventName/versions/$version/examples/simple.json")))
 }
