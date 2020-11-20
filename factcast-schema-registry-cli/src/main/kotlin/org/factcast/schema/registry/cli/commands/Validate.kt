@@ -30,7 +30,7 @@ class Validate : Runnable {
     @Option(names = ["-p", "--base-path"], description = ["The directory where your source files live"])
     var basePath: String = Paths.get(".").toString()
 
-    @Option(names = ["-w", "--white-list"], description = ["Path to your whitelist file. If not present no filtering is applied."])
+    @Option(names = ["-w", "--white-list"], description = ["Path to an optional whitelist file."])
     var whiteList: String? = null
 
     @Inject
@@ -38,9 +38,9 @@ class Validate : Runnable {
 
     override fun run() {
         val sourceRoot = Paths.get(basePath).toAbsolutePath().normalize()
-        val whiteList = whiteList?.let { Paths.get(it).toAbsolutePath().normalize() }
+        val whiteListPath = whiteList?.let { Paths.get(it).toAbsolutePath().normalize() }
 
-        val exitCode = commandService.validate(sourceRoot, whiteList)
+        val exitCode = commandService.validate(sourceRoot, whiteListPath)
 
         if (exitCode != 0)
         exitProcess(exitCode)

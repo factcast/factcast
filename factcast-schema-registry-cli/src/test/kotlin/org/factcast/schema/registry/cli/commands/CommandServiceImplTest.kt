@@ -42,7 +42,7 @@ class CommandServiceImplTest : StringSpec() {
             every { validationService.validateProject(dummyProjectFolder) } returns Right(dummyProject)
             every { distributionCreatorService.createDistributable(dummyPath, dummyProject) } returns Unit
 
-            uut.build(dummyPath, dummyPath) shouldBe 0
+            uut.build(dummyPath, dummyPath, null) shouldBe 0
 
             verifyAll {
                 fs.deleteDirectory(dummyPath)
@@ -57,7 +57,7 @@ class CommandServiceImplTest : StringSpec() {
             every { projectService.detectProject(dummyPath, null) } returns dummyProjectFolder
             every { validationService.validateProject(dummyProjectFolder) } returns Left(emptyList())
 
-            uut.build(dummyPath, dummyPath) shouldBe 1
+            uut.build(dummyPath, dummyPath, null) shouldBe 1
 
             verifyAll {
                 fs.deleteDirectory(dummyPath)
@@ -72,7 +72,7 @@ class CommandServiceImplTest : StringSpec() {
             every { validationService.validateProject(dummyProjectFolder) } returns Right(dummyProject)
             every { distributionCreatorService.createDistributable(dummyPath, dummyProject) } throws IOException("")
 
-            uut.build(dummyPath, dummyPath) shouldBe 1
+            uut.build(dummyPath, dummyPath, null) shouldBe 1
 
             verifyAll {
                 fs.deleteDirectory(dummyPath)
@@ -86,7 +86,7 @@ class CommandServiceImplTest : StringSpec() {
             every { fs.deleteDirectory(dummyPath) } returns Unit
             every { projectService.detectProject(dummyPath, null) } throws InvalidPathException("", "")
 
-            uut.build(dummyPath, dummyPath) shouldBe 1
+            uut.build(dummyPath, dummyPath, null) shouldBe 1
 
             verifyAll {
                 fs.deleteDirectory(dummyPath)

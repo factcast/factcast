@@ -33,14 +33,18 @@ class Build : Runnable {
     @Option(names = ["-o", "--output"], description = ["Output directory of the registry"])
     var outputPath: String = Paths.get(".", "output").toString()
 
+    @Option(names = ["-w", "--white-list"], description = ["Path to an optional whitelist file."])
+    var whiteList: String? = null
+
     @Inject
     lateinit var commandService: CommandService
 
     override fun run() {
-        val outputRoot = Paths.get(outputPath).toAbsolutePath().normalize()
         val sourceRoot = Paths.get(basePath).toAbsolutePath().normalize()
+        val outputRoot = Paths.get(outputPath).toAbsolutePath().normalize()
+        val whiteListPath = whiteList?.let { Paths.get(it).toAbsolutePath().normalize() }
 
-        val exitCode = commandService.build(sourceRoot, outputRoot)
+        val exitCode = commandService.build(sourceRoot, outputRoot, whiteListPath)
 
         if (exitCode != 0)
         exitProcess(exitCode)
