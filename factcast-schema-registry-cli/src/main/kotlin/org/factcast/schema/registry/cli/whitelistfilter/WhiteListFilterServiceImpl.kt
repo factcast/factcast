@@ -17,44 +17,35 @@ package org.factcast.schema.registry.cli.whitelistfilter
 
 import java.nio.file.FileSystems
 import java.nio.file.Path
+import java.nio.file.PathMatcher
 import javax.inject.Singleton
 import org.factcast.schema.registry.cli.project.structure.EventFolder
-import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
 import org.factcast.schema.registry.cli.project.structure.NamespaceFolder
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 
 // returns a filtered ProjectFolder.
-// the original structure is iterated, filtered and freshly rebuild from inside to outside
 @Singleton
 class WhiteListFilterServiceImpl : WhiteListFilterService {
 
     override fun filter(project: ProjectFolder, whiteList: List<String>): ProjectFolder {
-        val whiteListPathMatchers = buildWhiteListPathMatchers(whiteList, project.path)
+        val whiteListMatchers = buildWhiteListPathMatchers(whiteList, project.path)
 
-        var namespaces = mutableListOf<NamespaceFolder>()
-        project.namespaces.forEach { nameSpaceFolder ->
-
-            var eventFolders = mutableListOf<EventFolder>()
-            nameSpaceFolder.eventFolders.forEach { eventFolder ->
-
-                var eventVersionFolders = mutableListOf<EventVersionFolder>()
-                eventFolder.versionFolders.forEach { eventVersionFolder ->
-
-                    if (whiteListPathMatchers.any { pathMatcher -> pathMatcher.matches(eventVersionFolder.path) }) {
-                        eventVersionFolders.add(eventVersionFolder)
-                    }
-                }
-
-                if (eventVersionFolders.isEmpty()) return@forEach // if there is no version ignore the event completely
-                eventFolders.add(EventFolder(
-                        eventFolder.path, eventVersionFolders, eventFolder.description, eventFolder.transformationFolders))
-            }
-            if (eventFolders.isEmpty()) return@forEach // if there are no events ignore this namespace
-            namespaces.add(NamespaceFolder(nameSpaceFolder.path, eventFolders, nameSpaceFolder.description))
-        }
-
-        return ProjectFolder(project.path, project.description, namespaces)
+        return project.namespaces
+                .map { filterNamespaceFolder(it, whiteListMatchers) }
+                .filter { it.eventFolders.isNotEmpty() } // when there are no events, we exclude this namespace entirely
+                .let { ProjectFolder(project.path, project.description, it) }
     }
+
+    private fun filterNamespaceFolder(ns: NamespaceFolder, whiteListMatchers: List<PathMatcher>) =
+            ns.eventFolders
+                    .map { filterEventFolder(it, whiteListMatchers) }
+                    .filter { it.versionFolders.isNotEmpty() } // when there are no versions, we exclude this event entirely
+                    .let { NamespaceFolder(ns.path, it, ns.description) }
+
+    private fun filterEventFolder(event: EventFolder, whiteListMatchers: List<PathMatcher>) =
+            event.versionFolders
+                    .filter { whiteListMatchers.any { matcher -> matcher.matches(it.path) } }
+                    .let { EventFolder(event.path, it, event.description, event.transformationFolders) }
 
     private fun buildWhiteListPathMatchers(whiteList: List<String>, projectPath: Path) =
             whiteList
