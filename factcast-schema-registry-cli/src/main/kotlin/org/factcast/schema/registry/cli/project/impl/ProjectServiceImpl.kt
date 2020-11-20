@@ -150,8 +150,9 @@ class ProjectServiceImpl(
             } ?: unfilteredProject
 
     private fun logProject(project: ProjectFolder) =
-            project.namespaces.flatMap { nameSpaceFolder -> nameSpaceFolder.eventFolders
-                    .flatMap { eventFolder -> eventFolder.versionFolders } }
-                    .forEach { logger.debug("Included event ${it.path}")
-            }
+            project.namespaces.flatMap { ns ->
+                ns.eventFolders.flatMap { folder ->
+                    folder.versionFolders
+                }
+            }.forEach { logger.debug("Included event ${it.path}") }
 }
