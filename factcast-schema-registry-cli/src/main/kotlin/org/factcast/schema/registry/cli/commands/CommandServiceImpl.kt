@@ -42,7 +42,7 @@ class CommandServiceImpl(
         logger.info("Output: $outputRoot")
         logger.info("")
 
-        val project = projectService.detectProject(sourceRoot)
+        val project = projectService.detectProject(sourceRoot, null)
 
         validationService
             .validateProject(project)
@@ -69,12 +69,12 @@ class CommandServiceImpl(
         1
     }
 
-    override fun validate(sourceRoot: Path) = try {
+    override fun validate(sourceRoot: Path, whiteList: Path?) = try {
         logger.info("Starting validating Factcast Schema Registry")
         logger.info("Input: $sourceRoot")
         logger.info("")
 
-        val project = projectService.detectProject(sourceRoot)
+        val project = projectService.detectProject(sourceRoot, null)
 
         validationService
             .validateProject(project)
