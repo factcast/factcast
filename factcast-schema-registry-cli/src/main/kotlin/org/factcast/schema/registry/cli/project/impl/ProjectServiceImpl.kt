@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import javax.inject.Singleton
+import mu.KotlinLogging
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.ProjectService
 import org.factcast.schema.registry.cli.project.structure.EventFolder
@@ -35,17 +36,17 @@ const val DESCRIPTION_FILE = "index.md"
 const val TRANSFORMATION_FILE = "transform.js"
 const val SCHEMA_FILE = "schema.json"
 
+private val logger = KotlinLogging.logger {}
+
 @Singleton
 class ProjectServiceImpl(
     private val fileSystem: FileSystemService,
     private val whiteListService: WhiteListFilterService
 ) : ProjectService {
     override fun detectProject(basePath: Path, whiteList: Path?): ProjectFolder {
-        val unfilteredProject = loadProject(basePath)
-
-        return whiteList?.let {
-            whiteListService.filter(unfilteredProject, fileSystem.readToStrings(whiteList.toFile()))
-        } ?: unfilteredProject
+        val project = filterProject(loadProject(basePath), whiteList)
+        logProject(project)
+        return project
     }
 
     fun loadProject(basePath: Path): ProjectFolder = ProjectFolder(
@@ -142,4 +143,15 @@ class ProjectServiceImpl(
             null
         }
     }
+
+    private fun filterProject(unfilteredProject: ProjectFolder, whiteList: Path?) =
+            whiteList?.let {
+                whiteListService.filter(unfilteredProject, fileSystem.readToStrings(whiteList.toFile()))
+            } ?: unfilteredProject
+
+    private fun logProject(project: ProjectFolder) =
+            project.namespaces.flatMap { nameSpaceFolder -> nameSpaceFolder.eventFolders
+                    .flatMap { eventFolder -> eventFolder.versionFolders } }
+                    .forEach { logger.debug("Included event ${it.path}")
+            }
 }
