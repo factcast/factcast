@@ -38,4 +38,13 @@ Here are some examples:
 | `/ordering/Order*/versions/1`        | matches version 1 of all events in the _ordering_ namespace starting with _Order_                      |
 | `/ordering/**`                       | all events from the ordering namespace                                                                 |
 
-To see which events where considered for validation or building set the log level to _DEBUG_.  TODO How?
+To see which events where considered for validation or building set the log level to _debug_.
+
+Logging
+-------
+The default application log level is _info_. To change the log level use the `log.level` property.
+
+Example:
+```
+java -Dlog.level=debug -jar fc-schema-cli.jar validate
+``` 
