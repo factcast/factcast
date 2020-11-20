@@ -37,3 +37,5 @@ Here are some examples:
 | `/ordering/OrderReceived/versions/1` | matches the _OrderReceived_ event version 1 in the _ordering_ namespace. Most specific wildcard entry. |
 | `/ordering/Order*/versions/1`        | matches version 1 of all events in the _ordering_ namespace starting with _Order_                      |
 | `/ordering/**`                       | all events from the ordering namespace                                                                 |
+
+To see which events where considered for validation or building set the log level to _DEBUG_.  TODO How?
