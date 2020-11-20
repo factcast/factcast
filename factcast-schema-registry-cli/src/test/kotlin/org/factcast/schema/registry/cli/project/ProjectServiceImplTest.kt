@@ -4,6 +4,7 @@ import io.kotlintest.TestCase
 import io.kotlintest.TestResult
 import io.kotlintest.matchers.collections.shouldHaveSize
 import io.kotlintest.matchers.types.shouldBeInstanceOf
+import io.kotlintest.matchers.types.shouldBeSameInstanceAs
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
 import io.mockk.clearAllMocks
@@ -12,6 +13,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import io.mockk.verifyAll
+import java.nio.file.NoSuchFileException
+import java.nio.file.Paths
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.impl.EXAMPLES_FOLDER
 import org.factcast.schema.registry.cli.project.impl.ProjectServiceImpl
@@ -19,8 +22,6 @@ import org.factcast.schema.registry.cli.project.impl.TRANSFORMATIONS_FOLDER
 import org.factcast.schema.registry.cli.project.impl.VERSIONS_FOLDER
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.whitelistfilter.WhiteListFilterService
-import java.nio.file.NoSuchFileException
-import java.nio.file.Paths
 
 class ProjectServiceImplTest : StringSpec() {
     val fs = mockk<FileSystemService>()
@@ -190,23 +191,25 @@ class ProjectServiceImplTest : StringSpec() {
             confirmVerified(fs)
         }
 
-//        "detectProject - RENAMEME" {
-//            every { fs.exists(any()) } returns true
-//            every { fs.listDirectories(dummyPath) } returns emptyList()
-//            every { whiteListService.filter(any(), )}
-//
-//
-//
-//            val result = uut.detectProject(dummyPath, null)
-//            result.shouldBeInstanceOf<ProjectFolder>()
-//            result.namespaces shouldHaveSize 0
-//
-//            verifyAll {
-//                fs.exists(any())
-//                fs.listDirectories(dummyPath)
-//            }
-//            confirmVerified(fs)
-//        }
+        "detectProject - filter is invoked when whitelist is supplied" {
+            val filteredProjectFolder = mockk<ProjectFolder>()
 
+            every { fs.exists(any()) } returns true
+            every { fs.listDirectories(dummyPath) } returns emptyList()
+            every { fs.readToStrings(dummyPath.toFile()) } returns emptyList()
+            every { whiteListService.filter(any(), any()) } returns filteredProjectFolder
+
+            val result = uut.detectProject(dummyPath, dummyPath)
+            result shouldBeSameInstanceAs filteredProjectFolder
+
+            verifyAll {
+                fs.exists(any())
+                fs.listDirectories(dummyPath)
+                fs.readToStrings(dummyPath.toFile())
+                whiteListService.filter(any(), any())
+            }
+            confirmVerified(fs)
+            confirmVerified(whiteListService)
+        }
     }
 }

@@ -22,8 +22,10 @@ import javax.inject.Singleton
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.ProjectService
 import org.factcast.schema.registry.cli.project.structure.EventFolder
+import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
 import org.factcast.schema.registry.cli.project.structure.NamespaceFolder
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
+import org.factcast.schema.registry.cli.project.structure.TransformationFolder
 import org.factcast.schema.registry.cli.whitelistfilter.WhiteListFilterService
 
 const val VERSIONS_FOLDER = "versions"
@@ -41,12 +43,9 @@ class ProjectServiceImpl(
     override fun detectProject(basePath: Path, whiteList: Path?): ProjectFolder {
         val unfilteredProject = loadProject(basePath)
 
-        return if (whiteList != null) {
-            val whiteListContent = fileSystem.readToString(whiteList.toFile()).lines()
-            whiteListService.filter(unfilteredProject, whiteListContent)
-        } else {
-            unfilteredProject
-        }
+        return whiteList?.let {
+            whiteListService.filter(unfilteredProject, fileSystem.readToStrings(whiteList.toFile()))
+        } ?: unfilteredProject
     }
 
     fun loadProject(basePath: Path): ProjectFolder = ProjectFolder(
