@@ -61,6 +61,12 @@ class FileSystemServiceImplTest : StringSpec() {
             uut.readToString(fixture("schema.json").toFile()) shouldContain "firstName"
         }
 
+        "readToStrings" {
+            val output = uut.readToStrings(fixture("schema.json").toFile())
+            output[1] shouldContain "additionalProperties"
+            output[7] shouldContain "required"
+        }
+
         "copyFile" {
             val outputPath = Paths.get(tmp.toString(), "schema.json")
 

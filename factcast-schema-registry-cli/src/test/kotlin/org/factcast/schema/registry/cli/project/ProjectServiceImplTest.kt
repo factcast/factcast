@@ -12,23 +12,25 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import io.mockk.verifyAll
-import java.nio.file.NoSuchFileException
-import java.nio.file.Paths
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.impl.EXAMPLES_FOLDER
 import org.factcast.schema.registry.cli.project.impl.ProjectServiceImpl
 import org.factcast.schema.registry.cli.project.impl.TRANSFORMATIONS_FOLDER
 import org.factcast.schema.registry.cli.project.impl.VERSIONS_FOLDER
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
+import org.factcast.schema.registry.cli.whitelistfilter.WhiteListFilterService
+import java.nio.file.NoSuchFileException
+import java.nio.file.Paths
 
 class ProjectServiceImplTest : StringSpec() {
     val fs = mockk<FileSystemService>()
+    val whiteListService = mockk<WhiteListFilterService>()
     val dummyPath = Paths.get(".")
     val examplesPath = dummyPath.resolve(EXAMPLES_FOLDER)
     val versionsPath = dummyPath.resolve(VERSIONS_FOLDER)
     val transfromationsPath = dummyPath.resolve(TRANSFORMATIONS_FOLDER)
 
-    val uut = ProjectServiceImpl(fs)
+    val uut = ProjectServiceImpl(fs, whiteListService)
 
     override fun afterTest(testCase: TestCase, result: TestResult) {
         clearAllMocks()
@@ -158,7 +160,7 @@ class ProjectServiceImplTest : StringSpec() {
             every { fs.exists(any()) } returns true
             every { fs.listDirectories(dummyPath) } returns emptyList()
 
-            val result = uut.detectProject(dummyPath)
+            val result = uut.detectProject(dummyPath, null)
             result.shouldBeInstanceOf<ProjectFolder>()
             result.namespaces shouldHaveSize 0
 
@@ -175,7 +177,7 @@ class ProjectServiceImplTest : StringSpec() {
             every { fs.listDirectories(versionsPath) } returns emptyList()
             every { fs.exists(any()) } returns true
 
-            val result = uut.detectProject(dummyPath)
+            val result = uut.detectProject(dummyPath, null)
             result.shouldBeInstanceOf<ProjectFolder>()
             result.namespaces shouldHaveSize 1
 
@@ -187,5 +189,24 @@ class ProjectServiceImplTest : StringSpec() {
             }
             confirmVerified(fs)
         }
+
+//        "detectProject - RENAMEME" {
+//            every { fs.exists(any()) } returns true
+//            every { fs.listDirectories(dummyPath) } returns emptyList()
+//            every { whiteListService.filter(any(), )}
+//
+//
+//
+//            val result = uut.detectProject(dummyPath, null)
+//            result.shouldBeInstanceOf<ProjectFolder>()
+//            result.namespaces shouldHaveSize 0
+//
+//            verifyAll {
+//                fs.exists(any())
+//                fs.listDirectories(dummyPath)
+//            }
+//            confirmVerified(fs)
+//        }
+
     }
 }

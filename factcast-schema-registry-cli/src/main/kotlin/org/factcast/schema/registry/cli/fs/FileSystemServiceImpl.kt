@@ -51,6 +51,9 @@ class FileSystemServiceImpl : FileSystemService {
     override fun readToString(filePath: File): String =
             FileUtils.readFileToString(filePath, Charset.defaultCharset())
 
+    override fun readToStrings(filePath: File): List<String> =
+        readToString(filePath).lines()
+
     override fun copyFile(from: File, to: File) {
         FileUtils.copyFile(from, to)
     }
