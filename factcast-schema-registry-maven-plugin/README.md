@@ -14,8 +14,9 @@ Example Configuration
         <sourceDirectory>/path/to/source/</sourceDirectory>
         <outputDirectory>/path/to/outpud/</outputDirectory>
         <includedEvents>
-            <includedEvent>classification.*</includedEvent>
-            <includedEvent>organisations.UserCreated*</includedEvent>
+            <includedEvent>/ordering/**</includedEvent>
+            <includedEvent>/shipping/ShippingStarted/versions/1</includedEvent>
+            <includedEvent>/shipping/ShippingInterupted/**</includedEvent>
         </includedEvents>
 </configuration>
 </plugin>
@@ -29,7 +30,7 @@ The following configuration options are supported:
 |----------------------|---------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `sourceDirectory`    | `${project.basedir}/src/main/resources` | location of the source schema registry                                      | `<sourceDirectory>/path/to/registry</sourceDirectory>`                                                                                                                                                                                    |
 | `outputDirectory`    | `${project.build.directory}/registry`   | where to write results to                                                   | `<outputDirectory>/path/to/output_directory</outputDirectory>`                                                                                                                                                                            |
-| `includedEvents`     | if not present all events from the source dir are considered | list of events which the schema registry CLI should consider for processing | `<includedEvents><includedEvent>classification.*</includedEvent>     <includedEvent>organisations.UserCreated*</includedEvent><includedEvent>organisations.OrganisationCreatedV1.schema.json</includedEvent></includedEvents>` |
+| `includedEvents`     | if not present all events from the source dir are considered | list of events which the schema registry CLI should consider for processing | `<includedEvents> <includedEvent>/ordering/**</includedEvent> <includedEvent>/shipping/ShippingStarted/versions/1</includedEvent> <includedEvent>/shipping/ShippingInterupted/**</includedEvent></includedEvents>` |
 
 Local Developer Test
 --------------------
