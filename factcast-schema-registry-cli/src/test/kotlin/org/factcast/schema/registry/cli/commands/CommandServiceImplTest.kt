@@ -38,15 +38,15 @@ class CommandServiceImplTest : StringSpec() {
     init {
         "build a proper project" {
             every { fs.deleteDirectory(dummyPath) } returns Unit
-            every { projectService.detectProject(dummyPath, null) } returns dummyProjectFolder
+            every { projectService.detectProject(dummyPath) } returns dummyProjectFolder
             every { validationService.validateProject(dummyProjectFolder) } returns Right(dummyProject)
             every { distributionCreatorService.createDistributable(dummyPath, dummyProject) } returns Unit
 
-            uut.build(dummyPath, dummyPath, null) shouldBe 0
+            uut.build(dummyPath, dummyPath) shouldBe 0
 
             verifyAll {
                 fs.deleteDirectory(dummyPath)
-                projectService.detectProject(dummyPath, null)
+                projectService.detectProject(dummyPath)
                 validationService.validateProject(dummyProjectFolder)
                 distributionCreatorService.createDistributable(dummyPath, dummyProject)
             }
@@ -54,29 +54,29 @@ class CommandServiceImplTest : StringSpec() {
 
         "build a broken project" {
             every { fs.deleteDirectory(dummyPath) } returns Unit
-            every { projectService.detectProject(dummyPath, null) } returns dummyProjectFolder
+            every { projectService.detectProject(dummyPath) } returns dummyProjectFolder
             every { validationService.validateProject(dummyProjectFolder) } returns Left(emptyList())
 
-            uut.build(dummyPath, dummyPath, null) shouldBe 1
+            uut.build(dummyPath, dummyPath) shouldBe 1
 
             verifyAll {
                 fs.deleteDirectory(dummyPath)
-                projectService.detectProject(dummyPath, null)
+                projectService.detectProject(dummyPath)
                 validationService.validateProject(dummyProjectFolder)
             }
         }
 
         "build a proper project but fail on creation" {
             every { fs.deleteDirectory(dummyPath) } returns Unit
-            every { projectService.detectProject(dummyPath, null) } returns dummyProjectFolder
+            every { projectService.detectProject(dummyPath) } returns dummyProjectFolder
             every { validationService.validateProject(dummyProjectFolder) } returns Right(dummyProject)
             every { distributionCreatorService.createDistributable(dummyPath, dummyProject) } throws IOException("")
 
-            uut.build(dummyPath, dummyPath, null) shouldBe 1
+            uut.build(dummyPath, dummyPath) shouldBe 1
 
             verifyAll {
                 fs.deleteDirectory(dummyPath)
-                projectService.detectProject(dummyPath, null)
+                projectService.detectProject(dummyPath)
                 validationService.validateProject(dummyProjectFolder)
                 distributionCreatorService.createDistributable(dummyPath, dummyProject)
             }
@@ -84,46 +84,46 @@ class CommandServiceImplTest : StringSpec() {
 
         "build a proper project but fail on wrong paths" {
             every { fs.deleteDirectory(dummyPath) } returns Unit
-            every { projectService.detectProject(dummyPath, null) } throws InvalidPathException("", "")
+            every { projectService.detectProject(dummyPath) } throws InvalidPathException("", "")
 
-            uut.build(dummyPath, dummyPath, null) shouldBe 1
+            uut.build(dummyPath, dummyPath) shouldBe 1
 
             verifyAll {
                 fs.deleteDirectory(dummyPath)
-                projectService.detectProject(dummyPath, null)
+                projectService.detectProject(dummyPath)
             }
         }
 
         "validate a proper project" {
-            every { projectService.detectProject(dummyPath, null) } returns dummyProjectFolder
+            every { projectService.detectProject(dummyPath) } returns dummyProjectFolder
             every { validationService.validateProject(dummyProjectFolder) } returns Right(dummyProject)
 
-            uut.validate(dummyPath, null) shouldBe 0
+            uut.validate(dummyPath) shouldBe 0
 
             verifyAll {
-                projectService.detectProject(dummyPath, null)
+                projectService.detectProject(dummyPath)
                 validationService.validateProject(dummyProjectFolder)
             }
         }
 
         "validate broken project" {
-            every { projectService.detectProject(dummyPath, null) } returns dummyProjectFolder
+            every { projectService.detectProject(dummyPath) } returns dummyProjectFolder
             every { validationService.validateProject(dummyProjectFolder) } returns Left(emptyList())
 
-            uut.validate(dummyPath, null) shouldBe 1
+            uut.validate(dummyPath) shouldBe 1
 
             verifyAll {
-                projectService.detectProject(dummyPath, null)
+                projectService.detectProject(dummyPath)
                 validationService.validateProject(dummyProjectFolder)
             }
         }
 
         "validate on wrong input path" {
-            every { projectService.detectProject(dummyPath, null) } throws InvalidPathException("", "")
+            every { projectService.detectProject(dummyPath) } throws InvalidPathException("", "")
 
-            uut.validate(dummyPath, null) shouldBe 1
+            uut.validate(dummyPath) shouldBe 1
 
-            verifyAll { projectService.detectProject(dummyPath, null) }
+            verifyAll { projectService.detectProject(dummyPath) }
         }
     }
 }
