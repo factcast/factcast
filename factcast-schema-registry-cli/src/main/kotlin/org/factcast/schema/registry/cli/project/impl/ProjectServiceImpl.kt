@@ -44,9 +44,9 @@ class ProjectServiceImpl(
     private val whiteListService: WhiteListFilterService
 ) : ProjectService {
     override fun detectProject(basePath: Path, whiteList: Path?): ProjectFolder {
-        val project = filterProject(loadProject(basePath), whiteList)
-        logProject(project)
-        return project
+        return loadProject(basePath)
+                .let { filterProject(it, whiteList) }
+                .also { logProject(it) }
     }
 
     fun loadProject(basePath: Path): ProjectFolder = ProjectFolder(
