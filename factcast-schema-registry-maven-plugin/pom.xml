@@ -172,12 +172,10 @@
     </plugins>
   </build>
 
-<!--  TODO still require?-->
   <profiles>
     <profile>
       <id>run-its</id>
       <build>
-
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
