@@ -161,7 +161,7 @@ class ProjectServiceImplTest : StringSpec() {
             every { fs.exists(any()) } returns true
             every { fs.listDirectories(dummyPath) } returns emptyList()
 
-            val result = uut.detectProject(dummyPath, null)
+            val result = uut.detectProject(dummyPath)
             result.shouldBeInstanceOf<ProjectFolder>()
             result.namespaces shouldHaveSize 0
 
@@ -178,7 +178,7 @@ class ProjectServiceImplTest : StringSpec() {
             every { fs.listDirectories(versionsPath) } returns emptyList()
             every { fs.exists(any()) } returns true
 
-            val result = uut.detectProject(dummyPath, null)
+            val result = uut.detectProject(dummyPath)
             result.shouldBeInstanceOf<ProjectFolder>()
             result.namespaces shouldHaveSize 1
 
