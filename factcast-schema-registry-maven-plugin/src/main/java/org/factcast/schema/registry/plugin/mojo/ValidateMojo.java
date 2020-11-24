@@ -15,7 +15,6 @@
  */
 package org.factcast.schema.registry.plugin.mojo;
 
-import java.io.File;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 
@@ -26,9 +25,7 @@ public class ValidateMojo extends AbstractBaseMojo {
   public void execute() {
     checkSourceDirectory();
 
-    File tempFile = whiteListFileCreator.create(includedEvents);
-
     org.factcast.schema.registry.cli.Application.main(
-        argumentBuilder.build("validate", sourceDirectory, tempFile));
+        argumentBuilder.build("validate", sourceDirectory, includedEvents));
   }
 }

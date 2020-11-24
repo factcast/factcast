@@ -19,33 +19,31 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import lombok.SneakyThrows;
 
 /**
  * Gets a list of to be white listed events and creates a temporary file with the events on
  * individual lines.
  */
-@Named
-@Singleton
 public class WhiteListFileCreator {
 
-  public File create(List<String> includedEvents) {
+  private WhiteListFileCreator() {}
+
+  public static File create(List<String> includedEvents) {
     File tempFile = createTempFile();
     includedEvents.forEach(event -> appendToFile(tempFile, event));
     return tempFile;
   }
 
   @SneakyThrows
-  private File createTempFile() {
+  private static File createTempFile() {
     File tempFile = Files.createTempFile("temp-event-whitelist", ".txt").toFile();
     tempFile.deleteOnExit();
     return tempFile;
   }
 
   @SneakyThrows
-  private void appendToFile(File file, String line) {
+  private static void appendToFile(File file, String line) {
     Files.write(file.toPath(), (line + "\r\n").getBytes(), StandardOpenOption.APPEND);
   }
 }

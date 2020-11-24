@@ -21,7 +21,6 @@ import javax.inject.Inject;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.factcast.schema.registry.plugin.CliArgumentBuilder;
-import org.factcast.schema.registry.plugin.WhiteListFileCreator;
 
 public abstract class AbstractBaseMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project.build.directory}/registry")
@@ -32,8 +31,6 @@ public abstract class AbstractBaseMojo extends AbstractMojo {
 
   @Parameter(property = "includedEvents")
   protected List<String> includedEvents;
-
-  @Inject protected WhiteListFileCreator whiteListFileCreator;
 
   @Inject protected CliArgumentBuilder argumentBuilder;
 
