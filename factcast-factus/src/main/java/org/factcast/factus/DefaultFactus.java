@@ -33,6 +33,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
@@ -356,8 +357,14 @@ public class DefaultFactus implements Factus {
         };
 
     List<FactSpec> factSpecs = handler.createFactSpecs();
-    fc.subscribe(SubscriptionRequest.catchup(factSpecs).fromNullable(stateOrNull), fo)
-        .awaitComplete();
+
+    // the sole purpose of this synchronization is to make sure that writes from the fact delivery
+    // thread are guaranteed to be visible when leaving the block
+    //
+    synchronized (projection) {
+      fc.subscribe(SubscriptionRequest.catchup(factSpecs).fromNullable(stateOrNull), fo)
+          .awaitComplete();
+    }
     return factId.get();
   }
 
