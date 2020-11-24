@@ -154,5 +154,5 @@ class ProjectServiceImpl(
                 ns.eventFolders.flatMap { folder ->
                     folder.versionFolders
                 }
-            }.forEach { logger.debug("Included event ${it.path}") }
+            }.forEach { logger.trace("Included event ${it.path}") }
 }

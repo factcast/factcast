@@ -40,7 +40,7 @@ class CommandServiceImpl(
         logger.info("Starting building Factcast Schema Registry")
         logger.info("Input: $sourceRoot")
         logger.info("Output: $outputRoot")
-        whiteList?.let { logger.info("White list: $whiteList") }
+        whiteList?.let { logger.trace("White list: $whiteList") }
         logger.info("")
 
         val project = projectService.detectProject(sourceRoot, whiteList)

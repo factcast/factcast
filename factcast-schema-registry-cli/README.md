@@ -42,9 +42,8 @@ To see which events where considered for validation or building set the log leve
 
 Logging
 -------
-The default application log level is _info_. To change the log level use the `log.level` property.
+The default application log level is _info_. More application details are available on _trace_ level. To change the log level use the `log.level` property as follows:
 
-Example:
 ```
-java -Dlog.level=debug -jar fc-schema-cli.jar validate
+java -Dlog.level=trace -jar fc-schema-cli.jar validate
 ``` 
