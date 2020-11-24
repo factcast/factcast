@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -323,10 +324,12 @@ public class DefaultFactus implements Factus {
   }
 
   @SneakyThrows
-  private <P extends Projection> UUID catchupProjection(
+  private <P extends BatchUpdatingProjection> UUID catchupProjection(
       @NonNull P projection, UUID stateOrNull, BiConsumer<P, UUID> afterProcessing) {
     Projector<P> handler = ehFactory.create(projection);
     AtomicReference<UUID> factId = new AtomicReference<>();
+    AtomicInteger factCount = new AtomicInteger(0);
+
     FactObserver fo =
         new FactObserver() {
           @Override
@@ -336,6 +339,7 @@ public class DefaultFactus implements Factus {
                   handler.apply(element);
                   factId.set(element.id());
                   afterProcessing.accept(projection, element.id());
+                  factCount.incrementAndGet();
                 });
           }
 
@@ -347,6 +351,7 @@ public class DefaultFactus implements Factus {
           @Override
           public void onCatchup() {
             projection.onCatchup();
+            projection.afterUpdate(factCount.get());
           }
 
           @Override

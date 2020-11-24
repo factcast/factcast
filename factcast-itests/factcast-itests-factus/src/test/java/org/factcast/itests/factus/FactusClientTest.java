@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.toList;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 import config.RedissonProjectionConfiguration;
 import java.util.HashSet;
@@ -29,6 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import lombok.Data;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -36,7 +38,10 @@ import org.factcast.core.Fact;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
+import org.factcast.factus.HandlerFor;
 import org.factcast.factus.lock.LockedOperationAbortedException;
+import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.itests.factus.event.TestAggregateIncremented;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
@@ -46,7 +51,7 @@ import org.factcast.itests.factus.proj.SubscribedUserNames;
 import org.factcast.itests.factus.proj.TestAggregate;
 import org.factcast.itests.factus.proj.UserCount;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -62,7 +67,7 @@ import org.springframework.test.context.ContextConfiguration;
 public class FactusClientTest extends AbstractFactCastIntegrationTest {
   private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
 
-  @Autowired Factus ec;
+  @Autowired Factus factus;
 
   @Autowired EventConverter eventConverter;
 
@@ -77,17 +82,17 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     UUID johnsId = randomUUID();
 
-    ec.publish(new UserCreated(johnsId, "John"));
+    factus.publish(new UserCreated(johnsId, "John"));
 
-    ec.publish(
+    factus.publish(
         asList(new UserCreated(randomUUID(), "Paul"), new UserCreated(randomUUID(), "George")));
 
-    String payload = ec.publish(new UserCreated(randomUUID(), "Ringo"), Fact::jsonPayload);
+    String payload = factus.publish(new UserCreated(randomUUID(), "Ringo"), Fact::jsonPayload);
 
     assertThatJson(payload).and(j -> j.node("userName").isEqualTo("Ringo"));
 
     List<String> morePayload =
-        ec.publish(
+        factus.publish(
             asList(new UserCreated(randomUUID(), "Mick"), new UserCreated(randomUUID(), "Keith")),
             list -> list.stream().map(Fact::jsonPayload).collect(toList()));
 
@@ -96,9 +101,9 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
         .anySatisfy(p -> assertThatJson(p).and(j -> j.node("userName").isEqualTo("Mick")))
         .anySatisfy(p -> assertThatJson(p).and(j -> j.node("userName").isEqualTo("Keith")));
 
-    ec.publish(eventConverter.toFact(new UserCreated(randomUUID(), "Brian")));
+    factus.publish(eventConverter.toFact(new UserCreated(randomUUID(), "Brian")));
 
-    ec.update(externalizedUserNames);
+    factus.update(externalizedUserNames);
 
     assertThat(externalizedUserNames.count()).isEqualTo(7);
     assertThat(externalizedUserNames.contains("John")).isTrue();
@@ -115,20 +120,20 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     subscribedUserNames.clear();
 
-    ec.publish(new UserCreated(randomUUID(), "preexisting"));
+    factus.publish(new UserCreated(randomUUID(), "preexisting"));
 
-    Subscription subscription = ec.subscribeAndBlock(subscribedUserNames);
+    Subscription subscription = factus.subscribeAndBlock(subscribedUserNames);
     // nothing in there yet, so catchup must be received
     subscription.awaitCatchup();
     assertThat(subscribedUserNames.names()).hasSize(1);
 
-    ec.publish(new UserCreated(randomUUID(), "Peter"));
+    factus.publish(new UserCreated(randomUUID(), "Peter"));
 
     Thread.sleep(WAIT_TIME_FOR_ASYNC_FACT_DELIVERY);
 
     assertThat(subscribedUserNames.names()).hasSize(2).contains("preexisting").contains("Peter");
 
-    ec.publish(new UserCreated(randomUUID(), "John"));
+    factus.publish(new UserCreated(randomUUID(), "John"));
     Thread.sleep(WAIT_TIME_FOR_ASYNC_FACT_DELIVERY);
 
     assertThat(subscribedUserNames.names())
@@ -141,9 +146,10 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   @Test
   public void simpleAggregateRoundtrip() throws Exception {
     UUID aggregateId = randomUUID();
-    assertThat(ec.find(TestAggregate.class, aggregateId)).isEmpty();
+    assertThat(factus.find(TestAggregate.class, aggregateId)).isEmpty();
 
-    ec.batch()
+    factus
+        .batch()
         // 8 increment events for test aggregate
         .add(new TestAggregateIncremented(aggregateId))
         .add(new TestAggregateIncremented(aggregateId))
@@ -157,7 +163,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
         .add(new TestAggregateIncremented(randomUUID()))
         .execute();
 
-    TestAggregate a = ec.fetch(TestAggregate.class, aggregateId);
+    TestAggregate a = factus.fetch(TestAggregate.class, aggregateId);
     // We started with magic number 42, incremented 8 times -> magic number
     // should be 50
     assertThat(a.magicNumber()).isEqualTo(50);
@@ -166,23 +172,24 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
         "now we're not expecting to see event processing due to the snapshot being up to "
             + "date");
 
-    TestAggregate b = ec.fetch(TestAggregate.class, aggregateId);
+    TestAggregate b = factus.fetch(TestAggregate.class, aggregateId);
     assertThat(b.magicNumber()).isEqualTo(50);
   }
 
   @Test
   public void simpleSnapshotProjectionRoundtrip() throws Exception {
-    assertThat(ec.fetch(SnapshotUserNames.class)).isNotNull();
+    assertThat(factus.fetch(SnapshotUserNames.class)).isNotNull();
 
     UUID johnsId = randomUUID();
-    ec.batch()
+    factus
+        .batch()
         .add(new UserCreated(johnsId, "John"))
         .add(new UserCreated(randomUUID(), "Paul"))
         .add(new UserCreated(randomUUID(), "George"))
         .add(new UserCreated(randomUUID(), "Ringo"))
         .execute();
 
-    val fabFour = ec.fetch(SnapshotUserNames.class);
+    val fabFour = factus.fetch(SnapshotUserNames.class);
     assertThat(fabFour.count()).isEqualTo(4);
     assertThat(fabFour.contains("John")).isTrue();
     assertThat(fabFour.contains("Paul")).isTrue();
@@ -190,9 +197,9 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     assertThat(fabFour.contains("Ringo")).isTrue();
 
     // sadly shot
-    ec.publish(new UserDeleted(johnsId));
+    factus.publish(new UserDeleted(johnsId));
 
-    val fabThree = ec.fetch(SnapshotUserNames.class);
+    val fabThree = factus.fetch(SnapshotUserNames.class);
     assertThat(fabThree.count()).isEqualTo(3);
     assertThat(fabThree.contains("John")).isFalse();
     assertThat(fabThree.contains("Paul")).isTrue();
@@ -209,14 +216,15 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @Test
   public void simpleProjectionLockingRoundtrip() throws Exception {
-    SnapshotUserNames emptyUserNames = ec.fetch(SnapshotUserNames.class);
+    SnapshotUserNames emptyUserNames = factus.fetch(SnapshotUserNames.class);
     assertThat(emptyUserNames).isNotNull();
     assertThat(emptyUserNames.count()).isEqualTo(0);
 
     UUID petersId = randomUUID();
     UserCreateCMD cmd = new UserCreateCMD("Peter", petersId);
 
-    ec.withLockOn(SnapshotUserNames.class)
+    factus
+        .withLockOn(SnapshotUserNames.class)
         .retries(5)
         .intervalMillis(50)
         .attempt(
@@ -228,11 +236,11 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
               }
             });
 
-    assertThat(ec.fetch(SnapshotUserNames.class).count()).isEqualTo(1);
+    assertThat(factus.fetch(SnapshotUserNames.class).count()).isEqualTo(1);
 
-    ec.publish(new UserDeleted(petersId));
+    factus.publish(new UserDeleted(petersId));
 
-    assertThat(ec.fetch(SnapshotUserNames.class).count()).isEqualTo(0);
+    assertThat(factus.fetch(SnapshotUserNames.class).count()).isEqualTo(0);
   }
 
   @Test
@@ -240,14 +248,15 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     assertThatThrownBy(
             () ->
-                ec.withLockOn(SnapshotUserNames.class)
+                factus
+                    .withLockOn(SnapshotUserNames.class)
                     .retries(5)
                     .intervalMillis(50)
                     .attempt(
                         (names, tx) -> {
                           // This must fail, as we didn't publish on the tx, but on
                           // factus
-                          ec.publish(new UserCreated(randomUUID(), "Peter"));
+                          factus.publish(new UserCreated(randomUUID(), "Peter"));
                         }))
         .isInstanceOf(LockedOperationAbortedException.class);
   }
@@ -258,24 +267,24 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     assertThat(userCount.state()).isNull();
     assertThat(userCount.count()).isEqualTo(0);
-    ec.update(userCount);
+    factus.update(userCount);
 
     int before = userCount.count();
 
     UUID one = randomUUID();
     UUID two = randomUUID();
-    ec.batch().add(new UserCreated(one, "One")).add(new UserCreated(two, "Two")).execute();
+    factus.batch().add(new UserCreated(one, "One")).add(new UserCreated(two, "Two")).execute();
 
     assertThat(userCount.count()).isEqualTo(before);
-    ec.update(userCount);
+    factus.update(userCount);
     assertThat(userCount.count()).isEqualTo(before + 2);
 
-    ec.publish(new UserDeleted(one));
-    ec.update(userCount);
+    factus.publish(new UserDeleted(one));
+    factus.update(userCount);
     assertThat(userCount.count()).isEqualTo(before + 1);
 
-    ec.publish(new UserDeleted(two));
-    ec.update(userCount);
+    factus.publish(new UserDeleted(two));
+    factus.update(userCount);
     assertThat(userCount.count()).isEqualTo(before);
   }
 
@@ -286,24 +295,24 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     assertThat(userCount.state()).isNull();
     assertThat(userCount.count()).isEqualTo(0);
-    ec.update(userCount);
+    factus.update(userCount);
 
     int before = userCount.count();
 
     UUID one = randomUUID();
     UUID two = randomUUID();
-    ec.batch().add(new UserCreated(one, "One")).add(new UserCreated(two, "Two")).execute();
+    factus.batch().add(new UserCreated(one, "One")).add(new UserCreated(two, "Two")).execute();
 
     assertThat(userCount.count()).isEqualTo(before);
-    ec.update(userCount);
+    factus.update(userCount);
     assertThat(userCount.count()).isEqualTo(before + 2);
 
-    ec.publish(new UserDeleted(one));
-    ec.update(userCount);
+    factus.publish(new UserDeleted(one));
+    factus.update(userCount);
     assertThat(userCount.count()).isEqualTo(before + 1);
 
-    ec.publish(new UserDeleted(two));
-    ec.update(userCount);
+    factus.publish(new UserDeleted(two));
+    factus.update(userCount);
     assertThat(userCount.count()).isEqualTo(before);
 
     // we start 10 threads that try to (in an isolated fashion) lock and
@@ -315,7 +324,8 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       futures.add(
           CompletableFuture.runAsync(
               () ->
-                  ec.withLockOn(userCount)
+                  factus
+                      .withLockOn(userCount)
                       .attempt(
                           (ta, tx) -> {
 
@@ -334,7 +344,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     waitForAllToTerminate(futures);
 
     // make sure business rule was properly applied
-    ec.update(userCount);
+    factus.update(userCount);
     assertThat(userCount.count()).isEqualTo(0);
   }
 
@@ -344,7 +354,8 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     externalizedUserNames.clear();
 
     UUID johnsId = randomUUID();
-    ec.batch()
+    factus
+        .batch()
         .add(new UserCreated(johnsId, "John"))
         .add(new UserCreated(randomUUID(), "Paul"))
         .add(new UserCreated(randomUUID(), "George"))
@@ -352,7 +363,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
         .execute();
 
     val fabFour = externalizedUserNames;
-    ec.update(fabFour);
+    factus.update(fabFour);
 
     assertThat(fabFour.count()).isEqualTo(4);
     assertThat(fabFour.contains("John")).isTrue();
@@ -361,13 +372,13 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     assertThat(fabFour.contains("Ringo")).isTrue();
 
     // sadly shot
-    ec.publish(new UserDeleted(johnsId));
+    factus.publish(new UserDeleted(johnsId));
 
     // publishing does not update a simple projection
     assertThat(fabFour.count()).isEqualTo(4);
 
     val fabThree = externalizedUserNames;
-    ec.update(fabThree);
+    factus.update(fabThree);
 
     assertThat(fabThree.count()).isEqualTo(3);
     assertThat(fabThree.contains("John")).isFalse();
@@ -379,17 +390,17 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   @Test
   public void simpleAggregateLockRoundtrip() throws Exception {
     UUID aggregateId = randomUUID();
-    assertThat(ec.find(TestAggregate.class, aggregateId)).isEmpty();
+    assertThat(factus.find(TestAggregate.class, aggregateId)).isEmpty();
 
-    ec.publish(new TestAggregateIncremented(aggregateId));
+    factus.publish(new TestAggregateIncremented(aggregateId));
 
-    Optional<TestAggregate> optAggregate = ec.find(TestAggregate.class, aggregateId);
+    Optional<TestAggregate> optAggregate = factus.find(TestAggregate.class, aggregateId);
     assertThat(optAggregate).isNotEmpty();
 
-    val aggregate = ec.fetch(TestAggregate.class, aggregateId);
+    val aggregate = factus.fetch(TestAggregate.class, aggregateId);
     assertThat(aggregate.magicNumber()).isEqualTo(43);
 
-    val a = ec.fetch(TestAggregate.class, aggregateId);
+    val a = factus.fetch(TestAggregate.class, aggregateId);
 
     // we start 10 threads that try to (in an isolated fashion) lock and
     // increase. Starting with magic number 43, we would end up 53, but
@@ -401,7 +412,8 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       futures.add(
           CompletableFuture.runAsync(
               () ->
-                  ec.withLockOn(a)
+                  factus
+                      .withLockOn(a)
                       .attempt(
                           (ta, tx) -> {
                             log.info(workerID);
@@ -427,7 +439,8 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       futures.add(
           CompletableFuture.runAsync(
               () ->
-                  ec.withLockOn(TestAggregate.class, aggregateId)
+                  factus
+                      .withLockOn(TestAggregate.class, aggregateId)
                       .attempt(
                           (ta, tx) -> {
                             log.info(workerID);
@@ -453,7 +466,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     // make sure business rule was properly applied (we have 50 instead of
     // 53)
-    assertThat(ec.fetch(TestAggregate.class, aggregateId).magicNumber()).isEqualTo(50);
+    assertThat(factus.fetch(TestAggregate.class, aggregateId).magicNumber()).isEqualTo(50);
   }
 
   private void waitForAllToTerminate(Set<CompletableFuture<Void>> futures) {
@@ -465,5 +478,113 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
             log.warn(e.getMessage());
           }
         });
+  }
+
+  @Data
+  static class SimpleAggregate extends Aggregate {
+    static final String ns = "ns";
+    static final String type = "foo";
+
+    private transient int factsConsumed = 0;
+
+    @Override
+    public void afterUpdate(int numberOfFactsAppliedDuringUpdate) {
+      this.factsConsumed = numberOfFactsAppliedDuringUpdate;
+    }
+
+    @HandlerFor(ns = ns, type = type)
+    void apply(Fact f) {}
+  }
+
+  @Data
+  static class SimpleManaged extends LocalManagedProjection {
+    static final String ns = "ns";
+    static final String type = "foo";
+
+    private transient int factsConsumed = 0;
+
+    @Override
+    public void afterUpdate(int numberOfFactsAppliedDuringUpdate) {
+      this.factsConsumed = numberOfFactsAppliedDuringUpdate;
+    }
+
+    @HandlerFor(ns = ns, type = type)
+    void apply(Fact f) {}
+  }
+
+  @Test
+  void afterUpdateOnSnapshotProjection() {
+    UUID aggId = UUID.randomUUID();
+    val f1 =
+        Fact.builder()
+            .aggId(aggId)
+            .ns(SimpleAggregate.ns)
+            .type(SimpleAggregate.type)
+            .buildWithoutPayload();
+    val f2 =
+        Fact.builder()
+            .aggId(aggId)
+            .ns(SimpleAggregate.ns)
+            .type(SimpleAggregate.type)
+            .buildWithoutPayload();
+    val f3 =
+        Fact.builder()
+            .aggId(aggId)
+            .ns(SimpleAggregate.ns)
+            .type(SimpleAggregate.type)
+            .buildWithoutPayload();
+
+    factus.publish(f1);
+    factus.publish(f2);
+
+    val a1 = factus.fetch(SimpleAggregate.class, aggId);
+    assertThat(a1.factsConsumed).isEqualTo(2);
+
+    val a2 = factus.fetch(SimpleAggregate.class, aggId);
+    assertThat(a2.factsConsumed).isEqualTo(0);
+
+    factus.publish(f3);
+
+    val a3 = factus.fetch(SimpleAggregate.class, aggId);
+    assertThat(a3.factsConsumed).isEqualTo(1);
+  }
+
+  @Test
+  void afterUpdateOnManagedProjection() {
+    UUID aggId = UUID.randomUUID();
+    val f1 =
+        Fact.builder()
+            .aggId(aggId)
+            .ns(SimpleManaged.ns)
+            .type(SimpleManaged.type)
+            .buildWithoutPayload();
+    val f2 =
+        Fact.builder()
+            .aggId(aggId)
+            .ns(SimpleManaged.ns)
+            .type(SimpleManaged.type)
+            .buildWithoutPayload();
+    val f3 =
+        Fact.builder()
+            .aggId(aggId)
+            .ns(SimpleManaged.ns)
+            .type(SimpleManaged.type)
+            .buildWithoutPayload();
+
+    factus.publish(f1);
+    factus.publish(f2);
+
+    val m = spy(new SimpleManaged());
+
+    factus.update(m);
+    verify(m).afterUpdate(2);
+
+    factus.update(m);
+    verify(m).afterUpdate(0);
+
+    factus.publish(f3);
+
+    factus.update(m);
+    verify(m).afterUpdate(1);
   }
 }
