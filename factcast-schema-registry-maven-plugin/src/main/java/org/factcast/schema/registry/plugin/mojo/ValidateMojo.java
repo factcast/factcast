@@ -17,6 +17,7 @@ package org.factcast.schema.registry.plugin.mojo;
 
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.factcast.schema.registry.plugin.CliArgumentBuilder;
 
 @Mojo(name = "validate", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
 public class ValidateMojo extends AbstractBaseMojo {
@@ -26,6 +27,6 @@ public class ValidateMojo extends AbstractBaseMojo {
     checkSourceDirectory();
 
     org.factcast.schema.registry.cli.Application.main(
-        argumentBuilder.build("validate", sourceDirectory, includedEvents));
+        CliArgumentBuilder.build("validate", sourceDirectory, includedEvents));
   }
 }

@@ -27,6 +27,7 @@ import java.util.List;
  */
 public class WhiteListFileCreator {
 
+  // Utility class
   private WhiteListFileCreator() {}
 
   public static File create(List<String> includedEvents) {
