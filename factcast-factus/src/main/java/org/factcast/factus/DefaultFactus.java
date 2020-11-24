@@ -346,12 +346,12 @@ public class DefaultFactus implements Factus {
           @Override
           public void onComplete() {
             projection.onComplete();
+            projection.afterUpdate(factCount.get());
           }
 
           @Override
           public void onCatchup() {
             projection.onCatchup();
-            projection.afterUpdate(factCount.get());
           }
 
           @Override
