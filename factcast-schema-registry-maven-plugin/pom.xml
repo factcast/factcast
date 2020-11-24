@@ -66,11 +66,6 @@
       <artifactId>factcast-schema-registry-cli</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
 
   <build>
