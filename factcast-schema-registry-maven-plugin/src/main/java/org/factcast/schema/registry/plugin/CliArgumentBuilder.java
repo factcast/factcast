@@ -22,11 +22,14 @@ import java.util.List;
 /** Builds the command line arguments for the schema registry CLI */
 public class CliArgumentBuilder {
 
-  public String[] build(String command, File sourceDirectory, List<String> includedEvents) {
+  // Utility class
+  private CliArgumentBuilder() {}
+
+  public static String[] build(String command, File sourceDirectory, List<String> includedEvents) {
     return build(command, sourceDirectory, null, includedEvents);
   }
 
-  public String[] build(
+  public static String[] build(
       String command, File sourceDirectory, File outputDirectory, List<String> includedEvents) {
     List<String> argumentList = new ArrayList<>();
     argumentList.add(command);

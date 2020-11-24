@@ -17,10 +17,8 @@ package org.factcast.schema.registry.plugin.mojo;
 
 import java.io.File;
 import java.util.List;
-import javax.inject.Inject;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.factcast.schema.registry.plugin.CliArgumentBuilder;
 
 public abstract class AbstractBaseMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project.build.directory}/registry")
@@ -31,8 +29,6 @@ public abstract class AbstractBaseMojo extends AbstractMojo {
 
   @Parameter(property = "includedEvents")
   protected List<String> includedEvents;
-
-  @Inject protected CliArgumentBuilder argumentBuilder;
 
   protected void checkSourceDirectory() {
     if (!sourceDirectory.exists())

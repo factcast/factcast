@@ -53,7 +53,7 @@ class CliArgumentBuilderTest {
 
   @Test
   void withEmptyWhiteList() {
-    String[] builder = new CliArgumentBuilder().build("build", sourceDir, Collections.emptyList());
+    String[] builder = CliArgumentBuilder.build("build", sourceDir, Collections.emptyList());
 
     assertEquals(3, builder.length);
     assertEquals("build", builder[0]);
@@ -63,7 +63,7 @@ class CliArgumentBuilderTest {
 
   @Test
   void withWhiteList() throws IOException {
-    String[] builder = new CliArgumentBuilder().build("validate", sourceDir, Arrays.asList("bar"));
+    String[] builder = CliArgumentBuilder.build("validate", sourceDir, Arrays.asList("bar"));
 
     assertEquals(5, builder.length);
     assertEquals("-w", builder[3]);
@@ -73,7 +73,7 @@ class CliArgumentBuilderTest {
   @Test
   void withOutputDirAndEmptyWhiteList() {
     String[] builder =
-        new CliArgumentBuilder().build("build", sourceDir, outputDir, Collections.emptyList());
+        CliArgumentBuilder.build("build", sourceDir, outputDir, Collections.emptyList());
 
     assertEquals(5, builder.length);
     assertEquals("-o", builder[3]);
@@ -83,7 +83,7 @@ class CliArgumentBuilderTest {
   @Test
   void withOutputDirAndWhiteList() throws IOException {
     String[] builder =
-        new CliArgumentBuilder().build("build", sourceDir, outputDir, Arrays.asList("bar"));
+        CliArgumentBuilder.build("build", sourceDir, outputDir, Arrays.asList("bar"));
 
     assertEquals(7, builder.length);
     assertEquals("-o", builder[3]);
