@@ -19,6 +19,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -48,7 +53,7 @@ class CliArgumentBuilderTest {
 
   @Test
   void withEmptyWhiteList() {
-    String[] builder = new CliArgumentBuilder().build("build", sourceDir, emptyWhiteList);
+    String[] builder = new CliArgumentBuilder().build("build", sourceDir, Collections.emptyList());
 
     assertEquals(3, builder.length);
     assertEquals("build", builder[0]);
@@ -57,18 +62,18 @@ class CliArgumentBuilderTest {
   }
 
   @Test
-  void withWhiteList() {
-    String[] builder = new CliArgumentBuilder().build("validate", sourceDir, whiteList);
+  void withWhiteList() throws IOException {
+    String[] builder = new CliArgumentBuilder().build("validate", sourceDir, Arrays.asList("bar"));
 
     assertEquals(5, builder.length);
     assertEquals("-w", builder[3]);
-    assertEquals("bar", builder[4]);
+    assertTrue(Files.readAllLines(Paths.get(builder[4])).contains("bar"));
   }
 
   @Test
   void withOutputDirAndEmptyWhiteList() {
     String[] builder =
-        new CliArgumentBuilder().build("build", sourceDir, outputDir, emptyWhiteList);
+        new CliArgumentBuilder().build("build", sourceDir, outputDir, Collections.emptyList());
 
     assertEquals(5, builder.length);
     assertEquals("-o", builder[3]);
@@ -76,13 +81,14 @@ class CliArgumentBuilderTest {
   }
 
   @Test
-  void withOutputDirAndWhiteList() {
-    String[] builder = new CliArgumentBuilder().build("build", sourceDir, outputDir, whiteList);
+  void withOutputDirAndWhiteList() throws IOException {
+    String[] builder =
+        new CliArgumentBuilder().build("build", sourceDir, outputDir, Arrays.asList("bar"));
 
     assertEquals(7, builder.length);
     assertEquals("-o", builder[3]);
     assertEquals("bazz", builder[4]);
     assertEquals("-w", builder[5]);
-    assertEquals("bar", builder[6]);
+    assertTrue(Files.readAllLines(Paths.get(builder[6])).contains("bar"));
   }
 }

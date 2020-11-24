@@ -29,7 +29,7 @@ class WhiteListFileCreatorTest {
 
   @Test
   void eventsAreWrittenToTempFile() throws IOException {
-    File temporaryFile = new WhiteListFileCreator().create(Arrays.asList("event 1", "event 2"));
+    File temporaryFile = WhiteListFileCreator.create(Arrays.asList("event 1", "event 2"));
     List<String> temporaryFileContent = Files.readAllLines(temporaryFile.toPath());
 
     assertEquals(2, temporaryFileContent.size());
@@ -39,7 +39,7 @@ class WhiteListFileCreatorTest {
 
   @Test
   void emptyListGivesEmptyFile() throws IOException {
-    File temporaryFile = new WhiteListFileCreator().create(new ArrayList<>());
+    File temporaryFile = WhiteListFileCreator.create(new ArrayList<>());
     List<String> temporaryFileContent = Files.readAllLines(temporaryFile.toPath());
 
     assertEquals(0, temporaryFileContent.size());

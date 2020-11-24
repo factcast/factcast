@@ -18,20 +18,16 @@ package org.factcast.schema.registry.plugin;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
 /** Builds the command line arguments for the schema registry CLI */
-@Named
-@Singleton
 public class CliArgumentBuilder {
 
-  public String[] build(String command, File sourceDirectory, File whiteListTempFile) {
-    return build(command, sourceDirectory, null, whiteListTempFile);
+  public String[] build(String command, File sourceDirectory, List<String> includedEvents) {
+    return build(command, sourceDirectory, null, includedEvents);
   }
 
   public String[] build(
-      String command, File sourceDirectory, File outputDirectory, File whiteListTempFile) {
+      String command, File sourceDirectory, File outputDirectory, List<String> includedEvents) {
     List<String> argumentList = new ArrayList<>();
     argumentList.add(command);
 
@@ -43,9 +39,10 @@ public class CliArgumentBuilder {
       argumentList.add(outputDirectory.getAbsolutePath());
     }
 
-    if (whiteListTempFile.length() > 0) {
+    if (!includedEvents.isEmpty()) {
+      File tempFile = WhiteListFileCreator.create(includedEvents);
       argumentList.add("-w");
-      argumentList.add(whiteListTempFile.getAbsolutePath());
+      argumentList.add(tempFile.getAbsolutePath());
     }
 
     String[] argumentListArr = new String[argumentList.size()];

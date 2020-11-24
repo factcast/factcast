@@ -15,7 +15,6 @@
  */
 package org.factcast.schema.registry.plugin.mojo;
 
-import java.io.File;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 
@@ -30,9 +29,7 @@ public class BuildMojo extends AbstractBaseMojo {
       outputDirectory.mkdirs();
     }
 
-    File tempFile = whiteListFileCreator.create(includedEvents);
-
     org.factcast.schema.registry.cli.Application.main(
-        argumentBuilder.build("build", sourceDirectory, outputDirectory, tempFile));
+        argumentBuilder.build("build", sourceDirectory, outputDirectory, includedEvents));
   }
 }
