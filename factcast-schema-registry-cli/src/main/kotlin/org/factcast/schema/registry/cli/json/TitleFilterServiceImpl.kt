@@ -24,12 +24,10 @@ class TitleFilterServiceImpl : TitleFilterService {
     override fun filter(input: JsonNode?): JsonNode? {
         val tree = input?.deepCopy<JsonNode?>()
 
-        val parents = tree?.findParents("title")
-        ?.map { it as ObjectNode }
+        tree?.findParents("title")
+                ?.map { it as ObjectNode }
+                ?.forEach { it.remove("title") }
 
-        parents?.forEach {
-            it.remove("title")
-        }
         return tree
     }
 }
