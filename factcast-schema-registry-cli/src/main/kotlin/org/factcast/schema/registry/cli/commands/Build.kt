@@ -36,6 +36,9 @@ class Build : Runnable {
     @Option(names = ["-w", "--white-list"], description = ["Path to an optional whitelist file."])
     var whiteList: String? = null
 
+    @Option(names = ["-s", "--schema-strip-titles"], description = ["Remove the 'title' attribute from JSON schema files"])
+    var schemaStripTitles: Boolean = false
+
     @Inject
     lateinit var commandService: CommandService
 
@@ -44,7 +47,7 @@ class Build : Runnable {
         val outputRoot = Paths.get(outputPath).toAbsolutePath().normalize()
         val whiteListPath = whiteList?.let { Paths.get(it).toAbsolutePath().normalize() }
 
-        val exitCode = commandService.build(sourceRoot, outputRoot, whiteListPath)
+        val exitCode = commandService.build(sourceRoot, outputRoot, whiteListPath, schemaStripTitles)
 
         if (exitCode != 0)
         exitProcess(exitCode)
