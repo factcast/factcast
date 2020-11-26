@@ -27,7 +27,6 @@ import org.factcast.core.snap.SnapshotId;
 import org.redisson.api.RBucket;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
@@ -40,9 +39,7 @@ public class RedissonSnapshotCache implements SnapshotCache {
   private final int retentionTimeInDays;
   private final RMap<String, Long> index;
 
-  public RedissonSnapshotCache(
-      @NonNull RedissonClient redisson,
-      int retentionTimeInDays) {
+  public RedissonSnapshotCache(@NonNull RedissonClient redisson, int retentionTimeInDays) {
     this.redisson = redisson;
     this.retentionTimeInDays = retentionTimeInDays;
     index = redisson.getMap(TS_INDEX);
