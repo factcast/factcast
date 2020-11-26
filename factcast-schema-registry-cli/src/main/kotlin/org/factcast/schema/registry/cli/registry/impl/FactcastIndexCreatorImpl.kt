@@ -59,7 +59,7 @@ class FactcastIndexCreatorImpl(
         project.mapEventVersions { namespace, event, version ->
             val outputPath = registryPath.resolve(getEventId(namespace, event, version))
 
-            fileSystemService.copyFile(version.schemaPath.toFile(), outputPath.toFile())
+            fileSystemService.copyJsonFilteringTitle(version.schemaPath.toFile(), outputPath.toFile())
         }
     }
 
