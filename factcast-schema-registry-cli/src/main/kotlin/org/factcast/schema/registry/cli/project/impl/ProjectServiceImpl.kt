@@ -144,15 +144,17 @@ class ProjectServiceImpl(
         }
     }
 
+    // TODO make it classic if != null
     private fun filterProject(unfilteredProject: ProjectFolder, whiteList: Path?) =
             whiteList?.let {
                 whiteListService.filter(unfilteredProject, fileSystem.readToStrings(whiteList.toFile()))
             } ?: unfilteredProject
 
+    // TODO move to ProjectFolder
     private fun logProject(project: ProjectFolder) =
             project.namespaces.flatMap { ns ->
                 ns.eventFolders.flatMap { folder ->
                     folder.versionFolders
                 }
-            }.forEach { logger.trace("Included event ${it.path}") }
+            }.forEach { logger.debug("Included event ${it.path}") }
 }
