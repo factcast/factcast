@@ -31,6 +31,7 @@ public class BuildMojo extends AbstractBaseMojo {
     }
 
     org.factcast.schema.registry.cli.Application.main(
-        CliArgumentBuilder.build("build", sourceDirectory, outputDirectory, includedEvents));
+        CliArgumentBuilder.build(
+            "build", sourceDirectory, outputDirectory, includedEvents, schemaStripTitles));
   }
 }

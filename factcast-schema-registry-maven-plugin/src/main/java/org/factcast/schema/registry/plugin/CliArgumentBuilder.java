@@ -26,11 +26,15 @@ public class CliArgumentBuilder {
   private CliArgumentBuilder() {}
 
   public static String[] build(String command, File sourceDirectory, List<String> includedEvents) {
-    return build(command, sourceDirectory, null, includedEvents);
+    return build(command, sourceDirectory, null, includedEvents, false);
   }
 
   public static String[] build(
-      String command, File sourceDirectory, File outputDirectory, List<String> includedEvents) {
+      String command,
+      File sourceDirectory,
+      File outputDirectory,
+      List<String> includedEvents,
+      boolean schemaStripTitles) {
     List<String> argumentList = new ArrayList<>();
     argumentList.add(command);
 
@@ -46,6 +50,10 @@ public class CliArgumentBuilder {
       File tempFile = WhiteListFileCreator.create(includedEvents);
       argumentList.add("-w");
       argumentList.add(tempFile.getAbsolutePath());
+    }
+
+    if (schemaStripTitles) {
+      argumentList.add("-s");
     }
 
     String[] argumentListArr = new String[argumentList.size()];

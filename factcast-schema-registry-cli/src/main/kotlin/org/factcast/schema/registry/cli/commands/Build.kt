@@ -36,7 +36,7 @@ class Build : Runnable {
     @Option(names = ["-w", "--white-list"], description = ["Path to an optional whitelist file."])
     var whiteList: String? = null
 
-    @Option(names = ["-s", "--schema-strip-titles"], description = ["Remove the 'title' attribute from JSON schema files"])
+    @Option(names = ["-s", "--schema-strip-titles"], description = ["Remove the 'title' attribute from JSON schema files. Optional."])
     var schemaStripTitles: Boolean = false
 
     @Inject
