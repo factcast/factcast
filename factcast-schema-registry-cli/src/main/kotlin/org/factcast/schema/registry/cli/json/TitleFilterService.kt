@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.schema.registry.cli.commands
+package org.factcast.schema.registry.cli.json
 
-import java.nio.file.Path
+import com.fasterxml.jackson.databind.JsonNode
 
-interface CommandService {
-    fun build(sourceRoot: Path, outputRoot: Path, whiteList: Path? = null, schemaStripTitles: Boolean = false): Int
-    fun validate(sourceRoot: Path, whiteList: Path? = null): Int
+interface TitleFilterService {
+    fun filter(input: JsonNode?): JsonNode?
 }

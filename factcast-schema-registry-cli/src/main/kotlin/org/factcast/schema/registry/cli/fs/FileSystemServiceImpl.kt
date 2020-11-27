@@ -26,9 +26,12 @@ import java.nio.file.Path
 import javax.inject.Singleton
 import kotlin.streams.toList
 import org.apache.commons.io.FileUtils
+import org.factcast.schema.registry.cli.json.TitleFilterService
 
 @Singleton
-class FileSystemServiceImpl : FileSystemService {
+class FileSystemServiceImpl(
+    val titleFilterService: TitleFilterService
+) : FileSystemService {
     override fun exists(path: Path) =
             Files.exists(path)
 
@@ -82,6 +85,12 @@ class FileSystemServiceImpl : FileSystemService {
         } else if (toString.startsWith("jar:")) {
                 copyJarResourcesRecursively(target.toFile(), urlConnection as JarURLConnection)
             } else throw IllegalStateException("not supported")
+    }
+
+    override fun copyJsonFilteringTitle(from: File, to: File) {
+        val jsonNode = this.readToJsonNode(from.toPath())
+        val filteredJsonNode = titleFilterService.filter(jsonNode)
+        this.writeToFile(to, filteredJsonNode.toString())
     }
 
     override fun copyDirectory(from: Path, to: Path) {
