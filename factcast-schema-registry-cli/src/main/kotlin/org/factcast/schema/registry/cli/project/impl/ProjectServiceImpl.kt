@@ -19,7 +19,6 @@ import com.google.common.annotations.VisibleForTesting
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import javax.inject.Singleton
-import mu.KotlinLogging
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.ProjectService
 import org.factcast.schema.registry.cli.project.structure.EventFolder
@@ -27,6 +26,7 @@ import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
 import org.factcast.schema.registry.cli.project.structure.NamespaceFolder
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.project.structure.TransformationFolder
+import org.factcast.schema.registry.cli.project.structure.log
 import org.factcast.schema.registry.cli.whitelistfilter.WhiteListFilterService
 
 const val VERSIONS_FOLDER = "versions"
@@ -36,8 +36,6 @@ const val DESCRIPTION_FILE = "index.md"
 const val TRANSFORMATION_FILE = "transform.js"
 const val SCHEMA_FILE = "schema.json"
 
-private val logger = KotlinLogging.logger {}
-
 @Singleton
 class ProjectServiceImpl(
     private val fileSystem: FileSystemService,
@@ -46,7 +44,7 @@ class ProjectServiceImpl(
     override fun detectProject(basePath: Path, whiteList: Path?): ProjectFolder {
         return loadProject(basePath)
                 .let { filterProject(it, whiteList) }
-                .also { logProject(it) }
+                .also { it.log() }
     }
 
     fun loadProject(basePath: Path): ProjectFolder = ProjectFolder(
@@ -144,17 +142,11 @@ class ProjectServiceImpl(
         }
     }
 
-    // TODO make it classic if != null
-    private fun filterProject(unfilteredProject: ProjectFolder, whiteList: Path?) =
-            whiteList?.let {
-                whiteListService.filter(unfilteredProject, fileSystem.readToStrings(whiteList.toFile()))
-            } ?: unfilteredProject
-
-    // TODO move to ProjectFolder
-    private fun logProject(project: ProjectFolder) =
-            project.namespaces.flatMap { ns ->
-                ns.eventFolders.flatMap { folder ->
-                    folder.versionFolders
-                }
-            }.forEach { logger.debug("Included event ${it.path}") }
+    private fun filterProject(unfilteredProject: ProjectFolder, whiteList: Path?): ProjectFolder {
+        return if (whiteList == null) {
+            unfilteredProject
+        } else {
+            whiteListService.filter(unfilteredProject, fileSystem.readToStrings(whiteList.toFile()))
+        }
+    }
 }
