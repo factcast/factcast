@@ -30,6 +30,8 @@ public abstract class AbstractBaseMojo extends AbstractMojo {
   @Parameter(property = "includedEvents")
   protected List<String> includedEvents;
 
+  @Parameter protected boolean schemaStripTitles;
+
   protected void checkSourceDirectory() {
     if (!sourceDirectory.exists())
       throw new IllegalArgumentException(
