@@ -73,7 +73,7 @@ class CliArgumentBuilderTest {
   @Test
   void withOutputDirAndEmptyWhiteList() {
     String[] builder =
-        CliArgumentBuilder.build("build", sourceDir, outputDir, Collections.emptyList());
+        CliArgumentBuilder.build("build", sourceDir, outputDir, Collections.emptyList(), false);
 
     assertEquals(5, builder.length);
     assertEquals("-o", builder[3]);
@@ -81,14 +81,15 @@ class CliArgumentBuilderTest {
   }
 
   @Test
-  void withOutputDirAndWhiteList() throws IOException {
+  void withAllArguments() throws IOException {
     String[] builder =
-        CliArgumentBuilder.build("build", sourceDir, outputDir, Arrays.asList("bar"));
+        CliArgumentBuilder.build("build", sourceDir, outputDir, Arrays.asList("bar"), true);
 
-    assertEquals(7, builder.length);
+    assertEquals(8, builder.length);
     assertEquals("-o", builder[3]);
     assertEquals("bazz", builder[4]);
     assertEquals("-w", builder[5]);
     assertTrue(Files.readAllLines(Paths.get(builder[6])).contains("bar"));
+    assertEquals("-s", builder[7]);
   }
 }
