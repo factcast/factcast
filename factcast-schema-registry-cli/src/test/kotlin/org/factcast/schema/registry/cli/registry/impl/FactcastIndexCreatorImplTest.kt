@@ -65,18 +65,29 @@ class FactcastIndexCreatorImplTest : StringSpec() {
         "copySchemes - should copy the schema for each version" {
             every { fs.copyFile(dummyPath.toFile(), any()) } returns Unit
 
-            uut.copySchemes(dummyPath, dummyProject)
+            uut.copySchemes(dummyPath, dummyProject, false)
 
-            verify {
+            verifyAll {
                 fs.copyFile(any(), match { it.path.endsWith(getEventId(namespace1, event1, version1)) })
-            }
-            verify {
                 fs.copyFile(any(), match { it.path.endsWith(getEventId(namespace1, event1, version2)) })
             }
             confirmVerified(fs)
         }
 
-        "copyTransformations - should copy the transromations for each version" {
+
+        "copySchemes - should copy the schema for each version with stripped title attribute" {
+            every { fs.copyJsonFilteringTitle(dummyPath.toFile(), any()) } returns Unit
+
+            uut.copySchemes(dummyPath, dummyProject, true)
+
+            verifyAll {
+                fs.copyJsonFilteringTitle(any(), match { it.path.endsWith(getEventId(namespace1, event1, version1)) })
+                fs.copyJsonFilteringTitle(any(), match { it.path.endsWith(getEventId(namespace1, event1, version2)) })
+            }
+            confirmVerified(fs)
+        }
+
+        "copyTransformations - should copy the transformations for each version" {
             every { fs.copyFile(dummyPath.toFile(), any()) } returns Unit
 
             uut.copyTransformations(dummyPath, dummyProject)

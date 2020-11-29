@@ -13,41 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.schema.registry.plugin;
+package org.factcast.schema.registry.plugin.mojo;
 
-import java.io.File;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
+import org.factcast.schema.registry.plugin.CliArgumentBuilder;
 
 @Mojo(name = "build", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
-public class BuildMojo extends AbstractMojo {
-  @Parameter(
-      defaultValue = "${project.build.directory}/registry",
-      property = "outputDir",
-      required = true)
-  private File outputDirectory;
-
-  @Parameter(
-      defaultValue = "${project.basedir}/src/main/resources",
-      property = "sourceDir",
-      required = true)
-  private File sourceDirectory;
+public class BuildMojo extends AbstractBaseMojo {
 
   @Override
   public void execute() {
-    if (!sourceDirectory.exists())
-      throw new IllegalArgumentException(
-          "Source directory (property 'sourceDir') does not exist: " + sourceDirectory.getPath());
+    checkSourceDirectory();
 
     if (!outputDirectory.exists()) {
       outputDirectory.mkdirs();
     }
 
     org.factcast.schema.registry.cli.Application.main(
-        new String[] {
-          "build", "-p", sourceDirectory.getAbsolutePath(), "-o", outputDirectory.getAbsolutePath()
-        });
+        CliArgumentBuilder.build(
+            "build", sourceDirectory, outputDirectory, includedEvents, schemaStripTitles));
   }
 }
