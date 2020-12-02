@@ -29,17 +29,24 @@ public class FactCastExtension implements Extension, BeforeEachCallback {
 
   @Override
   public void beforeEach(ExtensionContext extensionContext) throws Exception {
-    val pg =
-        findPG(
-            extensionContext
-                .getTestClass()
-                .orElseThrow(() -> new IllegalArgumentException("TestClass cannot be resolved")));
+    Class<?> testClass =
+        extensionContext
+            .getTestClass()
+            .orElseThrow(() -> new IllegalArgumentException("TestClass cannot be resolved"));
+
+    while (testClass.getEnclosingClass() != null) {
+      testClass = testClass.getEnclosingClass();
+    }
+
+    val pg = findPG(testClass);
+
     if (pg.isPresent()) {
+      log.debug("Wiping FactCast data from postgresql");
       PostgresEraser.wipeAllFactCastDataDataFromPostgres(pg.get());
     } else {
       log.warn(
-          "No static field of type {} found, so wiping data from Postgres was not possible."
-              + PostgreSQLContainer.class.getCanonicalName());
+          "No static field of type {} found, so wiping data from Postgres was not possible.",
+          PostgreSQLContainer.class.getCanonicalName());
     }
   }
 
