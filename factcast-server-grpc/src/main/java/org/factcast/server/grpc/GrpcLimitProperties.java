@@ -28,4 +28,6 @@ public class GrpcLimitProperties {
   private int initialNumberOfCatchupRequestsAllowedPerClient = 36000;
 
   private int numberOfCatchupRequestsAllowedPerClientPerMinute = 6000;
+
+  private boolean disabled = false;
 }
