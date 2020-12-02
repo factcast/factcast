@@ -16,6 +16,8 @@
 package org.factcast.test;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
@@ -62,11 +64,20 @@ public class AbstractFactCastIntegrationTest {
     init();
   }
 
+  @SuppressWarnings("rawtypes")
   @SneakyThrows
   private static void init() {
-    _postgres.start();
-    _redis.start();
+    List<GenericContainer> infra = Arrays.asList(_redis, _postgres);
+    infra.parallelStream().forEach(GenericContainer::start);
     _factcast.start();
+
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  _factcast.stop();
+                  infra.parallelStream().forEach(GenericContainer::stop);
+                }));
   }
 
   @BeforeAll
