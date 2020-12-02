@@ -76,7 +76,7 @@ public class AbstractFactCastIntegrationTest {
             new Thread(
                 () -> {
                   _factcast.stop();
-                  infra.parallelStream().forEach(GenericContainer::stop);
+                  // the rest can be shut down by ryuk
                 }));
   }
 
