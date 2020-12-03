@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties()
+@EnableConfigurationProperties(GrpcLimitProperties.class)
 public class FactCastGrpcServerConfiguration {
 
   @Bean
@@ -38,10 +38,5 @@ public class FactCastGrpcServerConfiguration {
   @Bean
   public GrpcExceptionInterceptor grpcExceptionInterceptor() {
     return new GrpcExceptionInterceptor();
-  }
-
-  @Bean
-  public GrpcLimitProperties grpcLimitProperties() {
-    return new GrpcLimitProperties();
   }
 }
