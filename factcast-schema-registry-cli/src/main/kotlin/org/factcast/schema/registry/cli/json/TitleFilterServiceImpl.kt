@@ -13,11 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.schema.registry.cli.commands
+package org.factcast.schema.registry.cli.json
 
-import java.nio.file.Path
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
+import javax.inject.Singleton
 
-interface CommandService {
-    fun build(sourceRoot: Path, outputRoot: Path, whiteList: Path? = null, schemaStripTitles: Boolean = false): Int
-    fun validate(sourceRoot: Path, whiteList: Path? = null): Int
+@Singleton
+class TitleFilterServiceImpl : TitleFilterService {
+    override fun filter(input: JsonNode?): JsonNode? {
+        val tree = input?.deepCopy<JsonNode?>()
+
+        tree?.findParents("title")
+                ?.map { it as ObjectNode }
+                ?.forEach { it.remove("title") }
+
+        return tree
+    }
 }

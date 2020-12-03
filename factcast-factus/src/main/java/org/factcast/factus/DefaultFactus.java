@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -185,6 +186,8 @@ public class DefaultFactus implements Factus {
     Projector<P> handler = ehFactory.create(subscribedProjection);
     FactObserver fo =
         new FactObserver() {
+          final AtomicBoolean caughtUp = new AtomicBoolean(false);
+
           @Override
           public void onNext(@NonNull Fact element) {
             subscribedProjection.executeUpdate(
@@ -193,19 +196,22 @@ public class DefaultFactus implements Factus {
                   subscribedProjection.state(element.id());
                 });
 
-            String ts = element.meta("_ts");
-            // _ts might not be there in unit testing for instance.
-            if (ts != null) {
-              long latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
-              factusMetrics.timed(
-                  TimedOperation.EVENT_PROCESSING_LATENCY,
-                  Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getCanonicalName())),
-                  latency);
+            if (caughtUp.get()) {
+              String ts = element.meta("_ts");
+              // _ts might not be there in unit testing for instance.
+              if (ts != null) {
+                long latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
+                factusMetrics.timed(
+                    TimedOperation.EVENT_PROCESSING_LATENCY,
+                    Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getCanonicalName())),
+                    latency);
+              }
             }
           }
 
           @Override
           public void onCatchup() {
+            caughtUp.set(true);
             subscribedProjection.onCatchup();
           }
 
@@ -323,10 +329,12 @@ public class DefaultFactus implements Factus {
   }
 
   @SneakyThrows
-  private <P extends Projection> UUID catchupProjection(
+  private <P extends BatchUpdatingProjection> UUID catchupProjection(
       @NonNull P projection, UUID stateOrNull, BiConsumer<P, UUID> afterProcessing) {
     Projector<P> handler = ehFactory.create(projection);
     AtomicReference<UUID> factId = new AtomicReference<>();
+    AtomicInteger factCount = new AtomicInteger(0);
+
     FactObserver fo =
         new FactObserver() {
           @Override
@@ -336,12 +344,14 @@ public class DefaultFactus implements Factus {
                   handler.apply(element);
                   factId.set(element.id());
                   afterProcessing.accept(projection, element.id());
+                  factCount.incrementAndGet();
                 });
           }
 
           @Override
           public void onComplete() {
             projection.onComplete();
+            projection.afterUpdate(factCount.get());
           }
 
           @Override
@@ -356,8 +366,14 @@ public class DefaultFactus implements Factus {
         };
 
     List<FactSpec> factSpecs = handler.createFactSpecs();
-    fc.subscribe(SubscriptionRequest.catchup(factSpecs).fromNullable(stateOrNull), fo)
-        .awaitComplete();
+
+    // the sole purpose of this synchronization is to make sure that writes from the fact delivery
+    // thread are guaranteed to be visible when leaving the block
+    //
+    synchronized (projection) {
+      fc.subscribe(SubscriptionRequest.catchup(factSpecs).fromNullable(stateOrNull), fo)
+          .awaitComplete();
+    }
     return factId.get();
   }
 

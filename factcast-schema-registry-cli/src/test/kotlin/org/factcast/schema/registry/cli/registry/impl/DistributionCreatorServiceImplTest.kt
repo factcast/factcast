@@ -1,5 +1,6 @@
 package org.factcast.schema.registry.cli.registry.impl
 
+import io.kotlintest.matchers.match
 import io.kotlintest.specs.StringSpec
 import io.mockk.confirmVerified
 import io.mockk.every

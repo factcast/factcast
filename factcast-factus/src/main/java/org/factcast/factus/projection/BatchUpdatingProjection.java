@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.schema.registry.cli.commands
+package org.factcast.factus.projection;
 
-import java.nio.file.Path
-
-interface CommandService {
-    fun build(sourceRoot: Path, outputRoot: Path, whiteList: Path? = null, schemaStripTitles: Boolean = false): Int
-    fun validate(sourceRoot: Path, whiteList: Path? = null): Int
+public interface BatchUpdatingProjection extends Projection {
+  default void afterUpdate(int numberOfFactsAppliedDuringUpdate) {}
 }
