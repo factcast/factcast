@@ -5,7 +5,9 @@
     </encoder>
   </appender>
 
-  <logger name="org.factcast.schema.registry.cli" level="INFO" />
+  <property name="log.level" value="${log.level:-INFO}" />
+
+  <logger name="org.factcast.schema.registry.cli" level="${log.level}" />
 
   <root level="ERROR">
     <appender-ref ref="STDOUT" />
