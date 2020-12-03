@@ -28,6 +28,8 @@ import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.Locked;
 import org.factcast.factus.projection.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Factus is a high-level API that should make building EDA with FactCast from java more convenient.
@@ -35,6 +37,7 @@ import org.factcast.factus.projection.*;
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
 
+  Logger LOGGER = LoggerFactory.getLogger(Factus.class);
   //// Publishing
 
   /** publishes a single event immediately */
@@ -81,7 +84,14 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
    * trying to subscribe" and forget)
    */
   default <P extends SubscribedProjection> void subscribe(@NonNull P subscribedProjection) {
-    CompletableFuture.runAsync(() -> subscribeAndBlock(subscribedProjection));
+    CompletableFuture.runAsync(
+        () -> {
+          try {
+            subscribeAndBlock(subscribedProjection);
+          } catch (Exception e) {
+            LOGGER.error("Error subscribing to {}", subscribedProjection.getClass(), e);
+          }
+        });
   }
 
   // Locking
