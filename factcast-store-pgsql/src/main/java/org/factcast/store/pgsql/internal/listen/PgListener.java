@@ -94,9 +94,11 @@ public class PgListener implements InitializingBean, DisposableBean {
             PGNotification[] notifications = receiveNotifications(pc);
             informSubscriberOfChannelNotifications(notifications);
           }
-        } catch (SQLException e) {
-          log.warn("While waiting for Notifications", e);
-          sleep();
+        } catch (Exception e) {
+          if (running.get()) {
+            log.warn("While waiting for Notifications", e);
+            sleep();
+          }
         }
       }
     }
@@ -137,6 +139,7 @@ public class PgListener implements InitializingBean, DisposableBean {
   // check if the database connection is still healthy
   @VisibleForTesting
   protected PGNotification[] receiveNotifications(PgConnection pc) throws SQLException {
+
     PGNotification[] notifications =
         pc.getNotifications(props.getFactNotificationBlockingWaitTimeInMillis());
     if (notifications == null) {
