@@ -170,14 +170,14 @@ public class PgListenerTest {
 
   @Test
   public void notificationLoopHandlesSqlException() throws SQLException {
-    when(pgConnectionSupplier.get()).thenThrow(SQLException.class, RuntimeException.class);
+    when(pgConnectionSupplier.get()).thenThrow(SQLException.class, RuntimeException.class, Error.class);
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     PgListener.NotificationReceiverLoop notificationReceiverLoop =
         pgListener.new NotificationReceiverLoop();
 
-    Assertions.assertThrows(RuntimeException.class, notificationReceiverLoop::run);
-    verify(pgConnectionSupplier, times(2)).get();
+    Assertions.assertThrows(Error.class, notificationReceiverLoop::run);
+    verify(pgConnectionSupplier, times(3)).get();
   }
 
   // tests the whole thread
