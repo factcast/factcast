@@ -34,7 +34,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
@@ -187,6 +186,8 @@ public class DefaultFactus implements Factus {
     Projector<P> handler = ehFactory.create(subscribedProjection);
     FactObserver fo =
         new FactObserver() {
+          final AtomicBoolean caughtUp = new AtomicBoolean(false);
+
           @Override
           public void onNext(@NonNull Fact element) {
             subscribedProjection.executeUpdate(
@@ -195,19 +196,22 @@ public class DefaultFactus implements Factus {
                   subscribedProjection.state(element.id());
                 });
 
-            String ts = element.meta("_ts");
-            // _ts might not be there in unit testing for instance.
-            if (ts != null) {
-              long latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
-              factusMetrics.timed(
-                  TimedOperation.EVENT_PROCESSING_LATENCY,
-                  Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getCanonicalName())),
-                  latency);
+            if (caughtUp.get()) {
+              String ts = element.meta("_ts");
+              // _ts might not be there in unit testing for instance.
+              if (ts != null) {
+                long latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
+                factusMetrics.timed(
+                    TimedOperation.EVENT_PROCESSING_LATENCY,
+                    Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getCanonicalName())),
+                    latency);
+              }
             }
           }
 
           @Override
           public void onCatchup() {
+            caughtUp.set(true);
             subscribedProjection.onCatchup();
           }
 
