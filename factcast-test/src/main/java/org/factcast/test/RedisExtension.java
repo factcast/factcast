@@ -24,6 +24,7 @@ import org.junit.jupiter.api.extension.Extension;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.ModifierSupport;
 import org.junit.platform.commons.util.ReflectionUtils;
+import org.junit.platform.commons.util.ReflectionUtils.HierarchyTraversalMode;
 import org.testcontainers.containers.GenericContainer;
 
 @Slf4j
@@ -31,27 +32,33 @@ public class RedisExtension implements Extension, BeforeEachCallback {
 
   @Override
   public void beforeEach(ExtensionContext extensionContext) throws Exception {
-    val redis =
-        findRedis(
-            extensionContext
-                .getTestClass()
-                .orElseThrow(() -> new IllegalArgumentException("TestClass cannot be resolved")));
+
+    Class<?> testClass =
+        extensionContext
+            .getTestClass()
+            .orElseThrow(() -> new IllegalArgumentException("TestClass cannot be resolved"));
+
+    while (testClass.getEnclosingClass() != null) {
+      testClass = testClass.getEnclosingClass();
+    }
+
+    val redis = findRedis(testClass);
 
     if (redis.isPresent()) {
+      log.debug("Wiping Redis");
       RedisEraser.wipeAllDataFromRedis(redis.get());
     } else {
       log.warn(
-          "No static field of type {} found, so wiping data from Redis was not possible."
-              + GenericContainer.class.getCanonicalName());
+          "No static field of type {} found, so wiping data from Redis was not possible.",
+          GenericContainer.class.getCanonicalName());
     }
   }
 
   private Optional<? extends GenericContainer<?>> findRedis(Class<?> testClass) {
     return ReflectionUtils.findFields(
-            testClass,
-            RedisExtension::isRedisContainer,
-            ReflectionUtils.HierarchyTraversalMode.TOP_DOWN)
+            testClass, RedisExtension::isRedisContainer, HierarchyTraversalMode.TOP_DOWN)
         .stream()
+        .filter(c -> GenericContainer.class.isAssignableFrom(c.getType()))
         .map(
             f -> {
               try {
@@ -69,7 +76,7 @@ public class RedisExtension implements Extension, BeforeEachCallback {
     try {
       return ModifierSupport.isStatic(f)
           && GenericContainer.class.isAssignableFrom(f.getType())
-          && ((GenericContainer<?>) f.get(null)).getDockerImageName().contains("redis");
+          && ((GenericContainer<?>) f.get(null)).getDockerImageName().contains("redis:");
     } catch (IllegalAccessException ex) {
       return false;
     }

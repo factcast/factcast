@@ -16,6 +16,7 @@
 package org.factcast.test;
 
 import java.time.Duration;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
@@ -24,7 +25,6 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers(disabledWithoutDocker = true)
@@ -34,7 +34,6 @@ public class AbstractFactCastIntegrationTest {
 
   protected static final Network _docker_network = Network.newNetwork();
 
-  @Container
   protected static final PostgreSQLContainer _postgres =
       new PostgreSQLContainer<>("postgres:11.5")
           .withDatabaseName("fc")
@@ -43,13 +42,13 @@ public class AbstractFactCastIntegrationTest {
           .withNetworkAliases("db")
           .withNetwork(_docker_network);
 
-  @Container
   protected static final GenericContainer _factcast =
       new GenericContainer<>("factcast/factcast:latest")
           .withExposedPorts(9090)
           .withFileSystemBind("./config", "/config/")
           .withEnv("grpc_server_port", "9090")
           .withEnv("factcast_security_enabled", "false")
+          .withEnv("factcast_grpc_bandwidth_disabled", "true")
           .withEnv("spring_datasource_url", "jdbc:postgresql://db/fc?user=fc&password=fc")
           .withNetwork(_docker_network)
           .dependsOn(_postgres)
@@ -57,9 +56,27 @@ public class AbstractFactCastIntegrationTest {
           .waitingFor(new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
 
   @SuppressWarnings("rawtypes")
-  @Container
-  static final GenericContainer _redis =
+  protected static final GenericContainer _redis =
       new GenericContainer<>("redis:5.0.9-alpine").withExposedPorts(6379);
+
+  static {
+    init();
+  }
+
+  @SneakyThrows
+  private static void init() {
+    _postgres.start();
+    _redis.start();
+    _factcast.start();
+
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  _factcast.stop();
+                  // the rest cann be killed by ryuk in any order
+                }));
+  }
 
   @BeforeAll
   public static void startContainers() throws InterruptedException {
