@@ -34,9 +34,9 @@ class FactcastIndexCreatorImpl(
     private val om: ObjectMapper,
     private val indexFileCalculator: IndexFileCalculator
 ) : FactcastIndexCreator {
-    override fun createFactcastIndex(contentBase: Path, project: Project) {
+    override fun createFactcastIndex(contentBase: Path, project: Project, schemaStripTitles: Boolean) {
         createIndexFile(contentBase, project)
-        copySchemes(contentBase, project)
+        copySchemes(contentBase, project, schemaStripTitles)
         copyTransformations(contentBase, project)
     }
 
@@ -55,11 +55,13 @@ class FactcastIndexCreatorImpl(
     }
 
     @VisibleForTesting
-    fun copySchemes(registryPath: Path, project: Project) {
+    fun copySchemes(registryPath: Path, project: Project, schemaStripTitles: Boolean) {
         project.mapEventVersions { namespace, event, version ->
             val outputPath = registryPath.resolve(getEventId(namespace, event, version))
-
-            fileSystemService.copyFile(version.schemaPath.toFile(), outputPath.toFile())
+            if (schemaStripTitles)
+                fileSystemService.copyJsonFilteringTitle(version.schemaPath.toFile(), outputPath.toFile())
+            else
+                fileSystemService.copyFile(version.schemaPath.toFile(), outputPath.toFile())
         }
     }
 

@@ -65,7 +65,7 @@ class RedissonSnapshotCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = new RedissonSnapshotCache(redisson);
+      underTest = new RedissonSnapshotCache(redisson, 90);
     }
 
     @Test
@@ -89,7 +89,7 @@ class RedissonSnapshotCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = new RedissonSnapshotCache(redisson);
+      underTest = new RedissonSnapshotCache(redisson, 90);
     }
 
     @Test
@@ -112,7 +112,7 @@ class RedissonSnapshotCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = new RedissonSnapshotCache(redisson);
+      underTest = new RedissonSnapshotCache(redisson, 90);
     }
 
     @Test
