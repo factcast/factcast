@@ -139,17 +139,13 @@ public class PgListener implements InitializingBean, DisposableBean {
   // check if the database connection is still healthy
   @VisibleForTesting
   protected PGNotification[] receiveNotifications(PgConnection pc) throws SQLException {
-    try {
-      PGNotification[] notifications =
-          pc.getNotifications(props.getFactNotificationBlockingWaitTimeInMillis());
-      if (notifications == null) {
-        notifications = checkDatabaseConnectionHealthy(pc);
-      }
-      return notifications;
-    } catch (Exception e) {
-      if (running.get()) throw e;
-      else return new PGNotification[0];
+
+    PGNotification[] notifications =
+        pc.getNotifications(props.getFactNotificationBlockingWaitTimeInMillis());
+    if (notifications == null) {
+      notifications = checkDatabaseConnectionHealthy(pc);
     }
+    return notifications;
   }
 
   // sends a roundtrip notification to database and expects to receive at
