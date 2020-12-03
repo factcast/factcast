@@ -17,10 +17,13 @@ package org.factcast.server.grpc;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-@ConfigurationProperties(prefix = "factcast.grpc.bandwith")
+@Configuration
+@ConfigurationProperties(prefix = "factcast.grpc.bandwidth")
 @Data
 public class GrpcLimitProperties {
+
   private int initialNumberOfFollowRequestsAllowedPerClient = 50;
 
   private int numberOfFollowRequestsAllowedPerClientPerMinute = 5;
@@ -28,4 +31,35 @@ public class GrpcLimitProperties {
   private int initialNumberOfCatchupRequestsAllowedPerClient = 36000;
 
   private int numberOfCatchupRequestsAllowedPerClientPerMinute = 6000;
+
+  private boolean disabled = false;
+
+  // Spring needs classic setters
+  public void setInitialNumberOfFollowRequestsAllowedPerClient(
+      int initialNumberOfFollowRequestsAllowedPerClient) {
+    this.initialNumberOfFollowRequestsAllowedPerClient =
+        initialNumberOfFollowRequestsAllowedPerClient;
+  }
+
+  public void setNumberOfFollowRequestsAllowedPerClientPerMinute(
+      int numberOfFollowRequestsAllowedPerClientPerMinute) {
+    this.numberOfFollowRequestsAllowedPerClientPerMinute =
+        numberOfFollowRequestsAllowedPerClientPerMinute;
+  }
+
+  public void setInitialNumberOfCatchupRequestsAllowedPerClient(
+      int initialNumberOfCatchupRequestsAllowedPerClient) {
+    this.initialNumberOfCatchupRequestsAllowedPerClient =
+        initialNumberOfCatchupRequestsAllowedPerClient;
+  }
+
+  public void setNumberOfCatchupRequestsAllowedPerClientPerMinute(
+      int numberOfCatchupRequestsAllowedPerClientPerMinute) {
+    this.numberOfCatchupRequestsAllowedPerClientPerMinute =
+        numberOfCatchupRequestsAllowedPerClientPerMinute;
+  }
+
+  public void setDisabled(boolean disabled) {
+    this.disabled = disabled;
+  }
 }
