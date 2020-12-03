@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.hash.Hashing;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Bucket4j;
@@ -31,6 +32,7 @@ import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -129,7 +131,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
   public void subscribe(
       MSG_SubscriptionRequest request, StreamObserver<MSG_Notification> responseObserver) {
     SubscriptionRequestTO req = converter.fromProto(request);
-    if (subscriptionRequestAccepted(req)) {
+    if (grpcLimitProperties.disabled() || subscriptionRequestAccepted(req)) {
 
       enableResponseCompression(responseObserver);
 
@@ -171,7 +173,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
   private final LoadingCache<String, Bucket> subscriptionTrail =
       CacheBuilder.newBuilder()
-          .maximumSize(1000000)
+          .maximumSize(100000)
           .expireAfterWrite(3, TimeUnit.MINUTES)
           .build(
               new CacheLoader<String, Bucket>() {
@@ -209,13 +211,20 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
   private boolean subscriptionRequestAccepted(SubscriptionRequestTO request) {
     // if the client progresses, it is considered a different request
-    String requestFingerprint = request.pid() + "|" + (request.startingAfter().orElse(null));
+    String requestFingerprint =
+        request.pid()
+            + "|"
+            + Hashing.murmur3_32()
+                .hashBytes(request.specs().toString().getBytes(StandardCharsets.UTF_8))
+            + "|"
+            + (request.startingAfter().map(UUID::toString).orElse("-"));
+    if (request.continuous()) {
+      requestFingerprint = requestFingerprint + "|con";
+    } else {
+      requestFingerprint = requestFingerprint + "|cat";
+    }
+
     try {
-      if (request.continuous()) {
-        requestFingerprint = requestFingerprint + "|con";
-      } else {
-        requestFingerprint = requestFingerprint + "|cat";
-      }
       if (subscriptionTrail.get(requestFingerprint).tryConsume(1)) {
         return true;
       } else {
@@ -528,8 +537,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
       Optional<Snapshot> snapshot = store.getSnapshot(id);
 
-      if (snapshot.isPresent() && !snapshot.get().compressed())
+      if (snapshot.isPresent() && !snapshot.get().compressed()) {
         enableResponseCompression(responseObserver);
+      }
 
       responseObserver.onNext(converter.toProtoSnapshot(snapshot));
       responseObserver.onCompleted();
