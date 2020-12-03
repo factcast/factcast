@@ -44,7 +44,7 @@ public interface SnapshotSerializer {
    * changes to the projection where made that were relevant for deserialization.
    *
    * <p>This method is only used if no other means of providing a hash is used. Alternatives are
-   * using the @ProjectionSerial annotation or defining a final static long field called
+   * using the ProjectionMetaData annotation or defining a final static long field called
    * serialVersionUID.
    *
    * <p>Note, that the serial will be cached per class
@@ -78,7 +78,7 @@ Only snapshots that have the same "serial" than the class in its current state w
 
 There are 3 ways to provide a serial:
 
-1. adding `@ProjectionMetaData(hash = 1L)` to the projection class will set the serial to 1
+1. adding `@ProjectionMetaData(serial = 1L)` to the projection class will set the serial to 1
 2. adding `private static final serialVersionUID = 1L` to the projection class will set the serial to 1
 3. let the serial be calculated by the SnapshotSerializer.
 
