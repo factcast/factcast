@@ -18,7 +18,8 @@ package org.factcast.factus.projection;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class ManagedProjection implements Projection, StateAware, WriterTokenAware {
+public abstract class ManagedProjection
+    implements BatchUpdatingProjection, StateAware, WriterTokenAware {
 
   public final void withLock(Runnable runnable) {
     try {

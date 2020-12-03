@@ -89,13 +89,13 @@ Further details can be found here : `net.devh.boot.grpc.client.config.GrpcChanne
 
 |Property|Description|Proposed value|
 |:--|:--|:--|
-|`grpc.server.permit-keep-alive-without-calls`|  Configures whether clients are allowed to send keep-alive HTTP/2 PINGs even if there are no outstanding RPCs on the connection. Defaults to false.| true |
+|`grpc.server.permit-keep-alive-without-calls` |  Configures whether clients are allowed to send keep-alive HTTP/2 PINGs even if there are no outstanding RPCs on the connection. Defaults to false.| true |
 |`grpc.server.permit-keep-alive-time`          | Specifies the most aggressive keep-alive time in seconds clients are permitted to configure. Defaults to 5min. | 100 |
 |`factcast.grpc.bandwith.numberOfFollowRequestsAllowedPerClientPerMinute` | after the given number of follow requests from the same client per minute, subscriptions are rejected with RESOURCE_EXHAUSTED | 5 |
 |`factcast.grpc.bandwith.initialNumberOfFollowRequestsAllowedPerClient` | ramp-up to compensate for client startup| 50 |
 |`factcast.grpc.bandwith.numberOfCatchupRequestsAllowedPerClientPerMinute` | after the given number of catchup requests from the same client per minute, subscriptions are rejected with RESOURCE_EXHAUSTED| 6000 |
 |`factcast.grpc.bandwith.initialNumberOfCatchupRequestsAllowedPerClient` | ramp-up to compensate for client startup | 36000 |
-
+|`factcast.grpc.bandwith.disabled` | completely disables checking if set to true | false |
 
 #### gRPC Server recommended settings
 

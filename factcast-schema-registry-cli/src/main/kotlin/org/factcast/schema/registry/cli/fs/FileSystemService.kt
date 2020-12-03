@@ -26,10 +26,12 @@ interface FileSystemService {
     fun ensureDirectories(outputPath: Path)
     fun writeToFile(filePath: File, body: String)
     fun readToString(filePath: File): String
+    fun readToStrings(filePath: File): List<String>
     fun copyDirectory(from: Path, to: Path)
     fun copyFile(from: File, to: File)
     fun readToJsonNode(path: Path): JsonNode?
     fun deleteDirectory(path: Path)
     fun readToBytes(file: Path): ByteArray
     fun copyFromClasspath(source: String, target: Path)
+    fun copyJsonFilteringTitle(from: File, to: File)
 }

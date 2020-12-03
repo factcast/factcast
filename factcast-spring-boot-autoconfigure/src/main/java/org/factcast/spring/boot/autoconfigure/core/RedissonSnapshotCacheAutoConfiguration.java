@@ -19,6 +19,7 @@ import lombok.Generated;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.redisson.RedissonSnapshotCache;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -34,7 +35,9 @@ public class RedissonSnapshotCacheAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public SnapshotCache snapshotCache(RedissonClient redisson) {
-    return new RedissonSnapshotCache(redisson);
+  public SnapshotCache snapshotCache(
+      RedissonClient redisson,
+      @Value("${factcast.redis.deleteSnapshotStaleForDays:90}") int retentionTimeInDays) {
+    return new RedissonSnapshotCache(redisson, retentionTimeInDays);
   }
 }
