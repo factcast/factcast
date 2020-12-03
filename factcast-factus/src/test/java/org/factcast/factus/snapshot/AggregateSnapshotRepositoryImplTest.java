@@ -15,13 +15,10 @@
  */
 package org.factcast.factus.snapshot;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -36,10 +33,8 @@ import org.factcast.factus.projection.AggregateUtil;
 import org.factcast.factus.serializer.OtherSnapSer;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -248,7 +243,7 @@ class AggregateSnapshotRepositoryImplTest {
     private static final long serialVersionUID = 42L;
   }
 
-  @ProjectionMetaData(hash = 43)
+  @ProjectionMetaData(serial = 43)
   public static class WithAnnotation extends Aggregate {
     private static final long serialVersionUID = 42L;
   }

@@ -110,7 +110,7 @@ abstract class AbstractSnapshotRepository {
           // 1st: @ProjectionMetaData
           ProjectionMetaData annotation = t.getAnnotation(ProjectionMetaData.class);
           if (annotation != null) {
-            return annotation.hash();
+            return annotation.serial();
           }
 
           // 2nd: static serialVersionUID
