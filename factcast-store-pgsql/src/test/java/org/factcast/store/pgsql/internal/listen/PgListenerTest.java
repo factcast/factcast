@@ -170,7 +170,8 @@ public class PgListenerTest {
 
   @Test
   public void notificationLoopHandlesSqlException() throws SQLException {
-    when(pgConnectionSupplier.get()).thenThrow(SQLException.class, RuntimeException.class, Error.class);
+    when(pgConnectionSupplier.get())
+        .thenThrow(SQLException.class, RuntimeException.class, Error.class);
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     PgListener.NotificationReceiverLoop notificationReceiverLoop =
