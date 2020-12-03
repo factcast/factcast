@@ -17,8 +17,10 @@ package org.factcast.server.grpc;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-@ConfigurationProperties(prefix = "factcast.grpc.bandwith")
+@Configuration
+@ConfigurationProperties(prefix = "factcast.grpc.bandwidth")
 @Data
 public class GrpcLimitProperties {
   private int initialNumberOfFollowRequestsAllowedPerClient = 50;
