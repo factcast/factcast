@@ -29,7 +29,9 @@ data class TransformationFolder(
 
     @get:NotNull(message = NO_TRANSFORMATION_FILE)
     val transformation: Path?
-) : Folder
+) : Folder {
+    override fun getChildren(): List<Folder> = emptyList()
+}
 
 /**
  * This is an unsafe call. It assumes that some properties are non-null that were marked as nullable.

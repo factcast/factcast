@@ -17,8 +17,17 @@ package org.factcast.schema.registry.cli.project.structure
 
 import io.micronaut.core.annotation.Introspected
 import java.nio.file.Path
+import org.factcast.schema.registry.cli.whitelistfilter.WhiteList
 
 @Introspected
 interface Folder {
     val path: Path
+
+    fun getChildren(): List<Folder>
+
+    fun containedIn(whiteList: WhiteList): Boolean {
+        if (whiteList.matches(path)) return true
+
+        return getChildren().any { it.containedIn(whiteList) }
+    }
 }
