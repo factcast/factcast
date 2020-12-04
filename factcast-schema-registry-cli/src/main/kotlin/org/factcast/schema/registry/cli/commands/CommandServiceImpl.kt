@@ -34,15 +34,16 @@ class CommandServiceImpl(
     private val projectService: ProjectService,
     private val distributionCreatorService: DistributionCreatorService
 ) : CommandService {
-    override fun build(sourceRoot: Path, outputRoot: Path) = try {
+    override fun build(sourceRoot: Path, outputRoot: Path, whiteList: Path?, schemaStripTitles: Boolean) = try {
         fileSystemService.deleteDirectory(outputRoot)
 
         logger.info("Starting building Factcast Schema Registry")
         logger.info("Input: $sourceRoot")
         logger.info("Output: $outputRoot")
+        whiteList?.let { logger.info("White list: $whiteList") }
         logger.info("")
 
-        val project = projectService.detectProject(sourceRoot)
+        val project = projectService.detectProject(sourceRoot, whiteList)
 
         validationService
             .validateProject(project)
@@ -52,7 +53,7 @@ class CommandServiceImpl(
                 1
             }, {
                 try {
-                    distributionCreatorService.createDistributable(outputRoot, it)
+                    distributionCreatorService.createDistributable(outputRoot, it, schemaStripTitles)
 
                     logger.info("Build finished!")
 
@@ -69,12 +70,13 @@ class CommandServiceImpl(
         1
     }
 
-    override fun validate(sourceRoot: Path) = try {
+    override fun validate(sourceRoot: Path, whiteList: Path?) = try {
         logger.info("Starting validating Factcast Schema Registry")
         logger.info("Input: $sourceRoot")
+        whiteList?.let { logger.info("White list: $whiteList") }
         logger.info("")
 
-        val project = projectService.detectProject(sourceRoot)
+        val project = projectService.detectProject(sourceRoot, whiteList)
 
         validationService
             .validateProject(project)

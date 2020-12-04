@@ -304,13 +304,59 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
+  void testSubscribeExhaustNotTriggeredWithDifferentRequests() {
+    uut =
+        new FactStoreGrpcService(
+            backend,
+            new GrpcLimitProperties()
+                .initialNumberOfCatchupRequestsAllowedPerClient(3)
+                .numberOfCatchupRequestsAllowedPerClientPerMinute(1)
+                .initialNumberOfFollowRequestsAllowedPerClient(3)
+                .numberOfFollowRequestsAllowedPerClientPerMinute(3));
+    when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
+
+    // must not throw exception
+    for (int i = 0; i < 10; i++) {
+      SubscriptionRequest req =
+          SubscriptionRequest.catchup(FactSpec.ns("foo").aggId(UUID.randomUUID())).fromNowOn();
+      uut.subscribe(
+          new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req).continuous(true)),
+          mock(ServerCallStreamObserver.class));
+    }
+  }
+
+  @Test
+  void testSubscribeExhaustCheckDisabledp() {
+    uut =
+        new FactStoreGrpcService(
+            backend,
+            new GrpcLimitProperties()
+                .initialNumberOfCatchupRequestsAllowedPerClient(3)
+                .numberOfCatchupRequestsAllowedPerClientPerMinute(1)
+                .initialNumberOfFollowRequestsAllowedPerClient(3)
+                .numberOfFollowRequestsAllowedPerClientPerMinute(1)
+                .disabled(true));
+    SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
+    when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
+
+    // must not throw exception
+    for (int i = 0; i < 10; i++) {
+      uut.subscribe(
+          new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req).continuous(true)),
+          mock(ServerCallStreamObserver.class));
+    }
+  }
+
+  @Test
   void testSubscribeExhaustCatchup() {
     uut =
         new FactStoreGrpcService(
             backend,
             new GrpcLimitProperties()
                 .initialNumberOfCatchupRequestsAllowedPerClient(3)
-                .numberOfCatchupRequestsAllowedPerClientPerMinute(1));
+                .numberOfCatchupRequestsAllowedPerClientPerMinute(1)
+                .initialNumberOfFollowRequestsAllowedPerClient(3)
+                .numberOfFollowRequestsAllowedPerClientPerMinute(1));
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
     when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
 
@@ -321,7 +367,7 @@ public class FactStoreGrpcServiceTest {
               for (int i = 0; i < 10; i++) {
                 uut.subscribe(
                     new ProtoConverter()
-                        .toProto(SubscriptionRequestTO.forFacts(req).continuous(false)),
+                        .toProto(SubscriptionRequestTO.forFacts(req).continuous(true)),
                     mock(ServerCallStreamObserver.class));
               }
             });

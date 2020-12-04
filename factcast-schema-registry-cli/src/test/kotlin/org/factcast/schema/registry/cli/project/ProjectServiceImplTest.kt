@@ -4,6 +4,7 @@ import io.kotlintest.TestCase
 import io.kotlintest.TestResult
 import io.kotlintest.matchers.collections.shouldHaveSize
 import io.kotlintest.matchers.types.shouldBeInstanceOf
+import io.kotlintest.matchers.types.shouldBeSameInstanceAs
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
 import io.mockk.clearAllMocks
@@ -20,15 +21,17 @@ import org.factcast.schema.registry.cli.project.impl.ProjectServiceImpl
 import org.factcast.schema.registry.cli.project.impl.TRANSFORMATIONS_FOLDER
 import org.factcast.schema.registry.cli.project.impl.VERSIONS_FOLDER
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
+import org.factcast.schema.registry.cli.whitelistfilter.WhiteListFilterService
 
 class ProjectServiceImplTest : StringSpec() {
     val fs = mockk<FileSystemService>()
+    val whiteListService = mockk<WhiteListFilterService>()
     val dummyPath = Paths.get(".")
     val examplesPath = dummyPath.resolve(EXAMPLES_FOLDER)
     val versionsPath = dummyPath.resolve(VERSIONS_FOLDER)
     val transfromationsPath = dummyPath.resolve(TRANSFORMATIONS_FOLDER)
 
-    val uut = ProjectServiceImpl(fs)
+    val uut = ProjectServiceImpl(fs, whiteListService)
 
     override fun afterTest(testCase: TestCase, result: TestResult) {
         clearAllMocks()
@@ -186,6 +189,28 @@ class ProjectServiceImplTest : StringSpec() {
                 fs.exists(any())
             }
             confirmVerified(fs)
+        }
+
+        "detectProject - filter is invoked when whitelist is supplied" {
+            val filteredProjectFolder = mockk<ProjectFolder>()
+
+            every { fs.exists(any()) } returns true
+            every { fs.listDirectories(dummyPath) } returns emptyList()
+            every { fs.readToStrings(dummyPath.toFile()) } returns emptyList()
+            every { whiteListService.filter(any(), any()) } returns filteredProjectFolder
+            every { filteredProjectFolder.namespaces} returns emptyList()
+
+            val result = uut.detectProject(dummyPath, dummyPath)
+            result shouldBeSameInstanceAs filteredProjectFolder
+
+            verifyAll {
+                fs.exists(any())
+                fs.listDirectories(dummyPath)
+                fs.readToStrings(dummyPath.toFile())
+                whiteListService.filter(any(), any())
+            }
+            confirmVerified(fs)
+            confirmVerified(whiteListService)
         }
     }
 }

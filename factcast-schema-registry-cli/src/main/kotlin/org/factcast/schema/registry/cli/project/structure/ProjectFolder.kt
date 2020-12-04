@@ -20,9 +20,12 @@ import java.nio.file.Path
 import javax.validation.Valid
 import javax.validation.constraints.NotEmpty
 import javax.validation.constraints.NotNull
+import mu.KotlinLogging
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.validation.NO_DESCRIPTION
 import org.factcast.schema.registry.cli.validation.NO_NAMESPACES
+
+private val logger = KotlinLogging.logger {}
 
 @Introspected
 data class ProjectFolder(
@@ -34,7 +37,9 @@ data class ProjectFolder(
     @field:Valid
     @field:NotEmpty(message = NO_NAMESPACES)
     val namespaces: List<NamespaceFolder>
-) : Folder
+) : Folder {
+    override fun getChildren(): List<Folder> = namespaces
+}
 
 /**
  * This is an unsafe call. It assumes that some properties are non-null that were marked as nullable.
@@ -44,3 +49,10 @@ fun ProjectFolder.toProject() =
     Project(
         description, namespaces.map(NamespaceFolder::toNamespace)
     )
+
+fun ProjectFolder.log() =
+        namespaces.flatMap { ns ->
+            ns.eventFolders.flatMap { folder ->
+                folder.versionFolders
+            }
+        }.forEach { logger.debug("Included event ${it.path}") }

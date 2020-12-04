@@ -37,7 +37,9 @@ data class EventFolder(
 
     @get:Valid
     val transformationFolders: List<TransformationFolder>
-) : Folder
+) : Folder {
+    override fun getChildren(): List<Folder> = versionFolders
+}
 
 /**
  * This is an unsafe call. It assumes that some properties are non-null that were marked as nullable.
