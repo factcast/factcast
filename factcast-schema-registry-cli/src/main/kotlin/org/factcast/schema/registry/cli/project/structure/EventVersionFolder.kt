@@ -39,7 +39,9 @@ data class EventVersionFolder(
 
     @get:NotEmpty(message = NO_EXAMPLES)
     val examples: List<Path>
-) : Folder
+) : Folder {
+    override fun getChildren(): List<Folder> = emptyList()
+}
 
 /**
  * This is an unsafe call. It assumes that some properties are non-null that were marked as nullable.
