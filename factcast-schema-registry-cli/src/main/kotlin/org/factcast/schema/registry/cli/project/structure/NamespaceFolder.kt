@@ -34,7 +34,9 @@ data class NamespaceFolder(
 
     @field:NotNull(message = NO_DESCRIPTION)
     val description: Path?
-) : Folder
+) : Folder {
+    override fun getChildren(): List<Folder> = eventFolders
+}
 
 /**
  * This is an unsafe call. It assumes that some properties are non-null that were marked as nullable.

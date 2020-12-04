@@ -27,7 +27,6 @@ import org.factcast.core.snap.SnapshotId;
 import org.redisson.api.RBucket;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
@@ -37,10 +36,12 @@ public class RedissonSnapshotCache implements SnapshotCache {
 
   final RedissonClient redisson;
 
+  private final int retentionTimeInDays;
   private final RMap<String, Long> index;
 
-  public RedissonSnapshotCache(@NonNull RedissonClient redisson) {
+  public RedissonSnapshotCache(@NonNull RedissonClient redisson, int retentionTimeInDays) {
     this.redisson = redisson;
+    this.retentionTimeInDays = retentionTimeInDays;
     index = redisson.getMap(TS_INDEX);
   }
 
@@ -65,9 +66,12 @@ public class RedissonSnapshotCache implements SnapshotCache {
   }
 
   @Scheduled(cron = "${factcast.redis.snapshotCacheCompactCron:0 0 0 * * *}")
+  public void compactTrigger() {
+    compact(retentionTimeInDays);
+  }
+
   @Override
-  public void compact(
-      @Value("${factcast.redis.deleteSnapshotStaleForDays}:90") int retentionTimeInDays) {
+  public void compact(int retentionTimeInDays) {
     Duration daysAgo = Duration.ofDays(retentionTimeInDays);
     long threshold = Instant.now().minus(daysAgo).toEpochMilli();
     removeEntriesUntouchedSince(threshold);
