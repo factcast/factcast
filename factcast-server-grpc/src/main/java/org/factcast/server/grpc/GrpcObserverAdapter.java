@@ -15,8 +15,10 @@
  */
 package org.factcast.server.grpc;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.grpc.stub.StreamObserver;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
  *
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
 @RequiredArgsConstructor
 class GrpcObserverAdapter implements FactObserver {
@@ -39,11 +42,19 @@ class GrpcObserverAdapter implements FactObserver {
   @NonNull final String id;
 
   @NonNull final StreamObserver<MSG_Notification> observer;
+  @NonNull final int catchupBatchSize;
 
-  @NonNull final Function<Fact, MSG_Notification> projection;
+  @VisibleForTesting
+  GrpcObserverAdapter(String id, StreamObserver<MSG_Notification> observer) {
+    this(id, observer, 1);
+  }
+
+  private final ArrayList<Fact> stagedFacts = new ArrayList<Fact>();
+  private final AtomicBoolean caughtUp = new AtomicBoolean(false);
 
   @Override
   public void onComplete() {
+    flush();
     log.debug("{} onComplete – sending complete notification", id);
     observer.onNext(converter.createCompleteNotification());
     tryComplete();
@@ -51,6 +62,7 @@ class GrpcObserverAdapter implements FactObserver {
 
   @Override
   public void onError(Throwable e) {
+    flush();
     log.info("{} onError – sending Error notification {}", id, e.getMessage());
     observer.onError(e);
     tryComplete();
@@ -66,12 +78,26 @@ class GrpcObserverAdapter implements FactObserver {
 
   @Override
   public void onCatchup() {
+    flush();
     log.debug("{} onCatchup – sending catchup notification", id);
     observer.onNext(converter.createCatchupNotification());
+    caughtUp.set(true);
+  }
+
+  private void flush() {
+    // yes, it is threadsafe
+    if (!stagedFacts.isEmpty()) {
+      log.debug("{} flushing batch of {} facts", id, stagedFacts.size());
+      observer.onNext(converter.createNotificationFor(stagedFacts));
+      stagedFacts.clear();
+    }
   }
 
   @Override
   public void onNext(Fact element) {
-    observer.onNext(projection.apply(element));
+    if (catchupBatchSize > 1 && !caughtUp.get()) {
+      if (stagedFacts.size() >= catchupBatchSize) flush();
+      stagedFacts.add(element);
+    } else observer.onNext(converter.createNotificationFor(element));
   }
 }

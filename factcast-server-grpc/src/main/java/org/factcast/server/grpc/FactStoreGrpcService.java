@@ -150,9 +150,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         Subscription sub =
             store.subscribe(
                 req,
-                // this is probably the place in insert batching
                 new GrpcObserverAdapter(
-                    req.toString(), resp, f -> converter.createNotificationFor(f)));
+                    req.toString(), resp, grpcRequestMetadata.catchupBatch().orElse(1)));
 
         ((ServerCallStreamObserver<MSG_Notification>) responseObserver)
             .setOnCancelHandler(

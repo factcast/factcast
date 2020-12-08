@@ -44,28 +44,15 @@ public class GrpcObserverAdapterTest {
   @Captor private ArgumentCaptor<MSG_Notification> msg;
 
   @Test
-  void testNullsOnConstructor() {
-    String id = "id";
-    StreamObserver so = mock(StreamObserver.class);
-    Function p = mock(Function.class);
-    expectNPE(() -> new GrpcObserverAdapter(null, so, p));
-    expectNPE(() -> new GrpcObserverAdapter(null, null, p));
-    expectNPE(() -> new GrpcObserverAdapter(null, null, null));
-    expectNPE(() -> new GrpcObserverAdapter(id, so, null));
-    expectNPE(() -> new GrpcObserverAdapter(id, null, p));
-    expectNPE(() -> new GrpcObserverAdapter(id, null, null));
-  }
-
-  @Test
   void testOnComplete() {
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
     uut.onComplete();
     verify(observer).onCompleted();
   }
 
   @Test
   void testOnCompleteWithException() {
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
     doThrow(UnsupportedOperationException.class).when(observer).onCompleted();
     uut.onComplete();
     verify(observer).onCompleted();
@@ -73,7 +60,7 @@ public class GrpcObserverAdapterTest {
 
   @Test
   void testOnCatchup() {
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
     doNothing().when(observer).onNext(msg.capture());
     verify(observer, never()).onNext(any());
     uut.onCatchup();
@@ -83,7 +70,7 @@ public class GrpcObserverAdapterTest {
 
   @Test
   void testOnError() {
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, projection);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
     verify(observer, never()).onNext(any());
     uut.onError(new Exception());
     verify(observer).onError(any());
@@ -92,7 +79,7 @@ public class GrpcObserverAdapterTest {
   @Test
   void testOnNext() {
     ProtoConverter conv = new ProtoConverter();
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, conv::createNotificationFor);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
     doNothing().when(observer).onNext(msg.capture());
     verify(observer, never()).onNext(any());
     Fact f = Fact.builder().ns("test").build("{}");

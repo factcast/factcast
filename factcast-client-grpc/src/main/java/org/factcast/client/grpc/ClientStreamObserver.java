@@ -16,9 +16,11 @@
 package org.factcast.client.grpc;
 
 import io.grpc.stub.StreamObserver;
+import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.Fact;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.TransformationException;
@@ -57,6 +59,19 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
       case Fact:
         try {
           subscription.notifyElement(converter.fromProto(f.getFact()));
+        } catch (TransformationException e) {
+          // cannot happen on client side...
+          onError(e);
+        }
+        break;
+      case Facts:
+        try {
+          List<? extends Fact> facts = converter.fromProto(f.getFacts());
+
+          for (Fact fact : facts) {
+            subscription.notifyElement(fact);
+          }
+
         } catch (TransformationException e) {
           // cannot happen on client side...
           onError(e);
