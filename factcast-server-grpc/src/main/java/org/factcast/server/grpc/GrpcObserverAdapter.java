@@ -87,7 +87,7 @@ class GrpcObserverAdapter implements FactObserver {
   private void flush() {
     // yes, it is threadsafe
     if (!stagedFacts.isEmpty()) {
-      log.debug("{} flushing batch of {} facts", id, stagedFacts.size());
+      log.trace("{} flushing batch of {} facts", id, stagedFacts.size());
       observer.onNext(converter.createNotificationFor(stagedFacts));
       stagedFacts.clear();
     }
