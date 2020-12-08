@@ -87,6 +87,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
   static final AtomicLong subscriptionIdStore = new AtomicLong();
 
   final FactStore store;
+  final GrpcRequestMetadata grpcRequestMetadata;
 
   final GrpcLimitProperties grpcLimitProperties;
 
@@ -95,13 +96,14 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
   final ProtoConverter converter = new ProtoConverter();
 
   @VisibleForTesting
-  protected FactStoreGrpcService(FactStore store) {
-    this(store, new GrpcLimitProperties());
+  protected FactStoreGrpcService(FactStore store, GrpcRequestMetadata grpcRequestMetadata) {
+    this(store, grpcRequestMetadata, new GrpcLimitProperties());
   }
 
   @Override
   @Secured(FactCastAuthority.AUTHENTICATED)
   public void publish(@NonNull MSG_Facts request, StreamObserver<MSG_Empty> responseObserver) {
+
     List<Fact> facts =
         request.getFactList().stream().map(converter::fromProto).collect(Collectors.toList());
 
@@ -148,6 +150,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         Subscription sub =
             store.subscribe(
                 req,
+                // this is probably the place in insert batching
                 new GrpcObserverAdapter(
                     req.toString(), resp, f -> converter.createNotificationFor(f)));
 
