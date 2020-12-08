@@ -15,15 +15,8 @@
  */
 package org.factcast.factus.projection;
 
-import java.time.Duration;
-import lombok.NonNull;
-import org.factcast.factus.FactusConstants;
-
-public interface WriterTokenAware {
-  default WriterToken acquireWriteToken() {
-    return acquireWriteToken(FactusConstants.FOREVER);
+public interface WriterToken extends AutoCloseable {
+  default boolean isValid() {
+    return true;
   }
-
-  /** might return null if token cannot be acquired */
-  WriterToken acquireWriteToken(@NonNull Duration maxWait);
 }
