@@ -64,6 +64,13 @@ public class ProtoConverter {
     return builder.build();
   }
 
+  public MSG_Notification createNotificationFor(List<Fact> stagedFacts) {
+    MSG_Notification.Builder builder =
+        MSG_Notification.newBuilder().setType(MSG_Notification.Type.Facts);
+    builder.setFacts(toProto(stagedFacts));
+    return builder.build();
+  }
+
   @NonNull
   public MSG_Notification createNotificationFor(@NonNull UUID id) {
     MSG_Notification.Builder builder =

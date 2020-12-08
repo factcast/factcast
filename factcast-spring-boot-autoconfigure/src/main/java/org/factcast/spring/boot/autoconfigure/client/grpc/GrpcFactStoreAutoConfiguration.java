@@ -42,7 +42,9 @@ public class GrpcFactStoreAutoConfiguration {
   @ConditionalOnMissingBean(FactStore.class)
   public FactStore factStore(
       GrpcChannelFactory af,
-      @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials) {
+      // we need a new namespace for those client properties
+      @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
+      @Value("${grpc.client.factstore.batch:1}") int catchupBatchSize) {
     org.factcast.client.grpc.FactCastGrpcChannelFactory f =
         new org.factcast.client.grpc.FactCastGrpcChannelFactory() {
 
@@ -61,6 +63,6 @@ public class GrpcFactStoreAutoConfiguration {
             af.close();
           }
         };
-    return new GrpcFactStore(f, credentials);
+    return new GrpcFactStore(f, credentials, catchupBatchSize);
   }
 }

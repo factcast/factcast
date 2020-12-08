@@ -21,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -55,5 +57,10 @@ public class HelloWorldRunner implements CommandLineRunner {
 
     val uc3 = fc.fetchByIdAndVersion(id, 3);
     System.out.println(uc3.get().jsonPayload());
+
+    fc.subscribe(
+            SubscriptionRequest.catchup(FactSpec.ns("users")).fromScratch(),
+            element -> System.out.println(element))
+        .awaitCatchup();
   }
 }

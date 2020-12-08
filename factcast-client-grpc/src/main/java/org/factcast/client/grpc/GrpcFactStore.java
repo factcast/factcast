@@ -77,6 +77,7 @@ public class GrpcFactStore implements FactStore {
   private RemoteFactStoreStub stub;
 
   private RemoteFactStoreStub rawStub;
+  private int catchupBatchSize;
 
   private RemoteFactStoreBlockingStub rawBlockingStub;
 
@@ -88,8 +89,19 @@ public class GrpcFactStore implements FactStore {
   @Generated
   public GrpcFactStore(
       FactCastGrpcChannelFactory channelFactory,
-      @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials) {
-    this(channelFactory.createChannel(CHANNEL_NAME), credentials);
+      @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
+      @Value("${grpc.client.factstore.batch:1}") int catchupBatchSize) {
+    this(channelFactory.createChannel(CHANNEL_NAME), credentials, catchupBatchSize);
+  }
+
+  @Generated
+  @VisibleForTesting
+  GrpcFactStore(Channel channel, Optional<String> credentials, int catchupBatchSize) {
+    this(
+        RemoteFactStoreGrpc.newBlockingStub(channel),
+        RemoteFactStoreGrpc.newStub(channel),
+        credentials,
+        catchupBatchSize);
   }
 
   @Generated
@@ -98,15 +110,18 @@ public class GrpcFactStore implements FactStore {
     this(
         RemoteFactStoreGrpc.newBlockingStub(channel),
         RemoteFactStoreGrpc.newStub(channel),
-        credentials);
+        credentials,
+        1);
   }
 
   private GrpcFactStore(
       RemoteFactStoreBlockingStub newBlockingStub,
       RemoteFactStoreStub newStub,
-      Optional<String> credentials) {
+      Optional<String> credentials,
+      int catchupBatchSize) {
     rawBlockingStub = newBlockingStub;
     rawStub = newStub;
+    this.catchupBatchSize = catchupBatchSize;
 
     // initially use the raw ones...
     blockingStub = rawBlockingStub;
@@ -231,7 +246,8 @@ public class GrpcFactStore implements FactStore {
               // to request compressed messages from server
               Metadata meta = new Metadata();
               meta.put(Headers.MESSAGE_COMPRESSION, c);
-              // TODO meta.put(Headers.CATCHUP_BATCHSIZE,"50");
+              if (catchupBatchSize > 1)
+                meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
               rawBlockingStub = blockingStub;
               rawStub = stub;
               blockingStub = MetadataUtils.attachHeaders(blockingStub.withCompression(c), meta);
