@@ -49,6 +49,7 @@ import org.factcast.factus.lock.Locked;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.projection.ManagedProjection;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.projection.SubscribedProjection;
@@ -90,6 +91,19 @@ class DefaultFactusTest {
   @Captor ArgumentCaptor<FactObserver> factObserverCaptor;
 
   @Mock List<Specification> specs;
+
+  @Test
+  void testClassName() {
+
+    assertThat(DefaultFactus.getClassName(SimpleProjection.class))
+        .isEqualTo("org.factcast.factus.SimpleProjection");
+
+    assertThat(DefaultFactus.getClassName(PersonAggregate.class))
+        .isEqualTo("org.factcast.factus.PersonAggregate");
+
+    assertThat(DefaultFactus.getClassName(new LocalManagedProjection() {}.getClass()))
+        .isEqualTo("org.factcast.factus.DefaultFactusTest$1");
+  }
 
   @Test
   void testToFact() {

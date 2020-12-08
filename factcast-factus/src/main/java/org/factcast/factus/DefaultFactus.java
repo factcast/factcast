@@ -34,6 +34,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
@@ -134,7 +135,7 @@ public class DefaultFactus implements Factus {
     log.trace("updating managed projection {}", managedProjection.getClass());
     factusMetrics.timed(
         TimedOperation.MANAGED_PROJECTION_UPDATE_DURATION,
-        Tags.of(Tag.of(CLASS, managedProjection.getClass().getCanonicalName())),
+        Tags.of(Tag.of(CLASS, getClassName(managedProjection.getClass()))),
         () ->
             managedProjection.withLock(
                 () ->
@@ -203,7 +204,7 @@ public class DefaultFactus implements Factus {
                 long latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
                 factusMetrics.timed(
                     TimedOperation.EVENT_PROCESSING_LATENCY,
-                    Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getCanonicalName())),
+                    Tags.of(Tag.of(CLASS, getClassName(subscribedProjection.getClass()))),
                     latency);
               }
             }
@@ -237,7 +238,7 @@ public class DefaultFactus implements Factus {
   public <P extends SnapshotProjection> P fetch(Class<P> projectionClass) {
     return factusMetrics.timed(
         TimedOperation.FETCH_DURATION,
-        Tags.of(Tag.of(CLASS, projectionClass.getCanonicalName())),
+        Tags.of(Tag.of(CLASS, getClassName(projectionClass))),
         () -> dofetch(projectionClass));
   }
 
@@ -286,7 +287,7 @@ public class DefaultFactus implements Factus {
   public <A extends Aggregate> Optional<A> find(Class<A> aggregateClass, UUID aggregateId) {
     return factusMetrics.timed(
         TimedOperation.FIND_DURATION,
-        Tags.of(Tag.of(CLASS, aggregateClass.getCanonicalName())),
+        Tags.of(Tag.of(CLASS, getClassName(aggregateClass))),
         () -> doFind(aggregateClass, aggregateId));
   }
 
@@ -408,7 +409,7 @@ public class DefaultFactus implements Factus {
           c.close();
         } catch (Exception e) {
           // needs to be swallowed
-          log.warn("While closing {} of type {}:", c, c.getClass().getCanonicalName(), e);
+          log.warn("While closing {} of type {}:", c, getClassName(c.getClass()), e);
         }
       }
     }
@@ -431,11 +432,20 @@ public class DefaultFactus implements Factus {
     A fresh =
         factusMetrics.timed(
             TimedOperation.FIND_DURATION,
-            Tags.of(Tag.of(CLASS, aggregateClass.getCanonicalName())),
+            Tags.of(Tag.of(CLASS, getClassName(aggregateClass))),
             () -> find(aggregateClass, id).orElse(instantiate(aggregateClass)));
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
+  }
+
+  @VisibleForTesting
+  static String getClassName(Class<?> clazz) {
+    if (clazz.getCanonicalName() != null) {
+      return clazz.getCanonicalName();
+    } else {
+      return clazz.getTypeName();
+    }
   }
 
   @Override
