@@ -49,9 +49,9 @@ src="https://img.shields.io/docker/v/factcast/factcast?label=dockerhub"></a>
 <a href="https://dependabot.com" rel="nofollow"><img class="inline" src="https://camo.githubusercontent.com/9067c86d33741a2fa11586e87089c65cdda10ec3/68747470733a2f2f6170692e646570656e6461626f742e636f6d2f6261646765732f7374617475733f686f73743d676974687562267265706f3d66616374636173742f6661637463617374" alt="Dependabot Status" data-canonical-src="https://api.dependabot.com/badges/status?host=github&amp;repo=factcast/factcast" style="max-width:100%;"></a>
 {{< /rawhtml >}}
 
-### Current Version: 0.3.3
+### Recommended Version: 0.3.7
 
-see changelog
+see [changelog](/changelog)
 
 ## Important Releases 
 
