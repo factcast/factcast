@@ -87,13 +87,13 @@ class GrpcFactStoreTest {
 
   @Test
   void configureCompressionChooseGzipIfAvail() {
-    uut.configureCompression(" gzip,lz3,lz4, lz99");
+    uut.configureCompressionAndMetaData(" gzip,lz3,lz4, lz99");
     verify(stub).withCompression("gzip");
   }
 
   @Test
   void configureCompressionSkipCompression() {
-    uut.configureCompression("zip,lz3,lz4, lz99");
+    uut.configureCompressionAndMetaData("zip,lz3,lz4, lz99");
     verifyNoMoreInteractions(stub);
   }
 

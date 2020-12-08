@@ -192,7 +192,7 @@ public class GrpcFactStore implements FactStore {
       }
       logProtocolVersion(serverProtocolVersion);
       logServerVersion(serverProperties);
-      configureCompression(serverProperties.get(Capabilities.CODECS.toString()));
+      configureCompressionAndMetaData(serverProperties.get(Capabilities.CODECS.toString()));
     }
   }
 
@@ -221,7 +221,7 @@ public class GrpcFactStore implements FactStore {
   }
 
   @VisibleForTesting
-  void configureCompression(String codecListFromServer) {
+  void configureCompressionAndMetaData(String codecListFromServer) {
     codecs
         .selectFrom(codecListFromServer)
         .ifPresent(
@@ -231,6 +231,7 @@ public class GrpcFactStore implements FactStore {
               // to request compressed messages from server
               Metadata meta = new Metadata();
               meta.put(Headers.MESSAGE_COMPRESSION, c);
+              // TODO meta.put(Headers.CATCHUP_BATCHSIZE,"50");
               rawBlockingStub = blockingStub;
               rawStub = stub;
               blockingStub = MetadataUtils.attachHeaders(blockingStub.withCompression(c), meta);
