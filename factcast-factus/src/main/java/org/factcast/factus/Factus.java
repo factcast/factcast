@@ -23,6 +23,7 @@ import java.util.function.Function;
 import lombok.NonNull;
 import lombok.val;
 import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
@@ -118,4 +119,10 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
 
   // conversion
   Fact toFact(@NonNull EventObject e);
+
+  LockedOnSpecs<? extends Projection> withLockOn(@NonNull FactSpec spec);
+
+  LockedOnSpecs<? extends Projection> withLockOn(@NonNull FactSpec spec, FactSpec... additional);
+
+  LockedOnSpecs<? extends Projection> withLockOn(@NonNull List<FactSpec> specs);
 }

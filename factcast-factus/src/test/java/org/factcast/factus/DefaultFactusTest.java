@@ -385,7 +385,7 @@ class DefaultFactusTest {
 
       assertThat(locked.fc()).isEqualTo(fc);
 
-      assertThat(locked.projection()).isEqualTo(managedProjection);
+      assertThat(locked.projectionOrNull()).isEqualTo(managedProjection);
 
       // this is important; if they are not the specs for the given
       // projection,
