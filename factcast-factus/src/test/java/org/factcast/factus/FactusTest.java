@@ -31,6 +31,7 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
@@ -90,6 +91,21 @@ class FactusTest {
 
             @Override
             public Fact toFact(@NonNull EventObject e) {
+              return null;
+            }
+
+            @Override
+            public LockedOnSpecs withLockOn(@NonNull FactSpec spec) {
+              return null;
+            }
+
+            @Override
+            public LockedOnSpecs withLockOn(@NonNull FactSpec spec, FactSpec... additional) {
+              return null;
+            }
+
+            @Override
+            public LockedOnSpecs withLockOn(@NonNull List<FactSpec> specs) {
               return null;
             }
 
