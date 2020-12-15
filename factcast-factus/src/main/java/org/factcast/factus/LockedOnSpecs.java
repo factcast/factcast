@@ -20,6 +20,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -28,16 +30,13 @@ import org.factcast.factus.lock.RetryableTransaction;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.projection.Projection;
 
-public class LockedOnSpecs<I extends Projection> {
-  private final Locked<I> delegate;
+@RequiredArgsConstructor
+public class LockedOnSpecs {
 
-  public LockedOnSpecs(
-      @NonNull FactCast fc,
-      @NonNull Factus factus,
-      @NonNull List<FactSpec> specs,
-      @NonNull FactusMetrics metrics) {
-    this.delegate = new Locked<>(fc, factus, null, specs, metrics);
-  }
+  @NonNull FactCast fc;
+  @NonNull Factus factus;
+  @NonNull List<FactSpec> specs;
+  @NonNull FactusMetrics metrics;
 
   public void attempt(Consumer<RetryableTransaction> tx) {
     attempt(tx, result -> null);
@@ -52,8 +51,10 @@ public class LockedOnSpecs<I extends Projection> {
         });
   }
 
-  @SuppressWarnings("UnusedReturnValue")
-  public <R> R attempt(Consumer<RetryableTransaction> consumer, Function<List<Fact>, R> resultFn) {
+  @SuppressWarnings({"UnusedReturnValue", "rawtypes"})
+  public <R, I extends Projection> R attempt(
+      Consumer<RetryableTransaction> consumer, Function<List<Fact>, R> resultFn) {
+    val delegate = new Locked<I>(fc, factus, null, specs, metrics);
     BiConsumer<I, RetryableTransaction> biConsumer = (x, tx) -> consumer.accept(tx);
     return delegate.attempt(biConsumer, resultFn);
   }

@@ -120,9 +120,9 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   // conversion
   Fact toFact(@NonNull EventObject e);
 
-  LockedOnSpecs<? extends Projection> withLockOn(@NonNull FactSpec spec);
+  LockedOnSpecs withLockOn(@NonNull FactSpec spec);
 
-  LockedOnSpecs<? extends Projection> withLockOn(@NonNull FactSpec spec, FactSpec... additional);
+  LockedOnSpecs withLockOn(@NonNull FactSpec spec, FactSpec... additional);
 
-  LockedOnSpecs<? extends Projection> withLockOn(@NonNull List<FactSpec> specs);
+  LockedOnSpecs withLockOn(@NonNull List<FactSpec> specs);
 }
