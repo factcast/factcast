@@ -56,7 +56,7 @@ public class FactusAutoConfiguration {
       EventConverter eventConverter,
       SnapshotSerializerSupplier snapshotSerializerSupplier,
       FactusMetrics factusMetrics,
-      DefaultProjectorFactory projectorFactory) {
+      ProjectorFactory projectorFactory) {
     return new DefaultFactus(
         fc,
         projectorFactory,
