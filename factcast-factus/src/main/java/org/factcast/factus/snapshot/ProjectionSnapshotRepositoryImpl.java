@@ -54,6 +54,9 @@ public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository
 
   @Override
   public CompletableFuture<Void> put(SnapshotProjection projection, UUID state) {
+
+    projection.beforeSnapshot();
+
     // this is done before going async for exception escalation reasons:
     Class<? extends SnapshotProjection> type = projection.getClass();
     SnapshotSerializer ser = serializerSupplier.retrieveSerializer(type);
