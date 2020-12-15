@@ -54,15 +54,22 @@ public class FactusAutoConfiguration {
       EventSerializer deserializer,
       EventConverter eventConverter,
       SnapshotSerializerSupplier snapshotSerializerSupplier,
-      FactusMetrics factusMetrics) {
+      FactusMetrics factusMetrics,
+      DefaultProjectorFactory projectorFactory) {
     return new DefaultFactus(
         fc,
-        new DefaultProjectorFactory(deserializer),
+        projectorFactory,
         eventConverter,
         new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSupplier, factusMetrics),
         new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSupplier, factusMetrics),
         snapshotSerializerSupplier,
         factusMetrics);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public DefaultProjectorFactory projectorFactory(EventSerializer ser) {
+    return new DefaultProjectorFactory(ser);
   }
 
   @Bean
