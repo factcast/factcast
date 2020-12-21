@@ -56,9 +56,13 @@ public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository
 
   @Override
   public CompletableFuture<Void> put(Aggregate aggregate, UUID state) {
+
+    aggregate.onBeforeSnapshot();
+
     // this is done before going async for exception escalation reasons:
     Class<? extends Aggregate> type = aggregate.getClass();
     SnapshotSerializer ser = serializerSupplier.retrieveSerializer(type);
+
     // serialization needs to be sync, otherwise the underlying object might change during ser
     byte[] bytes = ser.serialize(aggregate);
 
