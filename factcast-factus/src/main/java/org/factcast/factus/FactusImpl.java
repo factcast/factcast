@@ -18,6 +18,7 @@ package org.factcast.factus;
 import static org.factcast.factus.metrics.TagKeys.*;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.lang.reflect.Constructor;
@@ -28,7 +29,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +63,7 @@ import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 /** Single entry point to the factus API. */
 @RequiredArgsConstructor
 @Slf4j
-public class DefaultFactus implements Factus {
+public class FactusImpl implements Factus {
   final FactCast fc;
 
   final ProjectorFactory ehFactory;
@@ -267,6 +270,7 @@ public class DefaultFactus implements Factus {
     if (latest.isPresent()) {
       Snapshot snap = latest.get();
       projection = ser.deserialize(projectionClass, snap.bytes());
+      projection.onAfterRestore();
     } else {
       log.trace("Creating initial projection version for {}", projectionClass);
       projection = instantiate(projectionClass);
@@ -280,10 +284,12 @@ public class DefaultFactus implements Factus {
             new IntervalSnapshotter<SnapshotProjection>(Duration.ofSeconds(30)) {
               @Override
               void createSnapshot(SnapshotProjection projection, UUID state) {
+                projection.onBeforeSnapshot();
                 projectionSnapshotRepository.put(projection, state);
               }
             });
     if (state != null) {
+      projection.onBeforeSnapshot();
       projectionSnapshotRepository.put(projection, state);
     }
     return projection;
@@ -305,7 +311,11 @@ public class DefaultFactus implements Factus {
     SnapshotSerializer ser = snapFactory.retrieveSerializer(aggregateClass);
 
     Optional<Snapshot> latest = aggregateSnapshotRepository.findLatest(aggregateClass, aggregateId);
-    Optional<A> optionalA = latest.map(as -> ser.deserialize(aggregateClass, as.bytes()));
+    Optional<A> optionalA =
+        latest
+            .map(as -> ser.deserialize(aggregateClass, as.bytes()))
+            .map(peek(Aggregate::onAfterRestore));
+
     // noinspection
     A aggregate = optionalA.orElseGet(() -> this.initial(aggregateClass, aggregateId));
 
@@ -316,6 +326,7 @@ public class DefaultFactus implements Factus {
             new IntervalSnapshotter<Aggregate>(Duration.ofSeconds(30)) {
               @Override
               void createSnapshot(Aggregate projection, UUID state) {
+                projection.onBeforeSnapshot();
                 aggregateSnapshotRepository.put(projection, state);
               }
             });
@@ -331,6 +342,7 @@ public class DefaultFactus implements Factus {
       }
     } else {
       // concurrency control decided to be irrelevant here
+      aggregate.onBeforeSnapshot();
       aggregateSnapshotRepository.putBlocking(aggregate, state);
       return Optional.of(aggregate);
     }
@@ -454,6 +466,25 @@ public class DefaultFactus implements Factus {
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
   }
 
+  @Override
+  public LockedOnSpecs withLockOn(@NonNull FactSpec spec) {
+    return withLockOn(Collections.singletonList(spec));
+  }
+
+  @Override
+  public LockedOnSpecs withLockOn(@NonNull FactSpec spec, FactSpec... additional) {
+    LinkedList<FactSpec> l = new LinkedList<>();
+    l.add(spec);
+    if (additional != null) l.addAll(Arrays.asList(additional));
+    return withLockOn(l);
+  }
+
+  @Override
+  public LockedOnSpecs withLockOn(@NonNull List<FactSpec> specs) {
+    Preconditions.checkArgument(!specs.isEmpty(), "Argument specs must not be empty");
+    return new LockedOnSpecs(fc, this, specs, factusMetrics);
+  }
+
   abstract static class IntervalSnapshotter<P extends SnapshotProjection>
       implements BiConsumer<P, UUID> {
 
@@ -475,5 +506,12 @@ public class DefaultFactus implements Factus {
     }
 
     abstract void createSnapshot(P projection, UUID state);
+  }
+
+  private <T> UnaryOperator<T> peek(Consumer<T> c) {
+    return x -> {
+      c.accept(x);
+      return x;
+    };
   }
 }

@@ -21,12 +21,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.SnapshotCache;
-import org.factcast.factus.DefaultFactus;
 import org.factcast.factus.Factus;
+import org.factcast.factus.FactusImpl;
 import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.projector.DefaultProjectorFactory;
+import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.serializer.DefaultSnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
@@ -54,15 +55,22 @@ public class FactusAutoConfiguration {
       EventSerializer deserializer,
       EventConverter eventConverter,
       SnapshotSerializerSupplier snapshotSerializerSupplier,
-      FactusMetrics factusMetrics) {
-    return new DefaultFactus(
+      FactusMetrics factusMetrics,
+      ProjectorFactory projectorFactory) {
+    return new FactusImpl(
         fc,
-        new DefaultProjectorFactory(deserializer),
+        projectorFactory,
         eventConverter,
         new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSupplier, factusMetrics),
         new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSupplier, factusMetrics),
         snapshotSerializerSupplier,
         factusMetrics);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public ProjectorFactory projectorFactory(EventSerializer ser) {
+    return new DefaultProjectorFactory(ser);
   }
 
   @Bean
