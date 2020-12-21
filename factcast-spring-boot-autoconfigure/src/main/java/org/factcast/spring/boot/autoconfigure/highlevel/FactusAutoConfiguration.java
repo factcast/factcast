@@ -27,6 +27,7 @@ import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.projector.DefaultProjectorFactory;
+import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.serializer.DefaultSnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
@@ -54,15 +55,22 @@ public class FactusAutoConfiguration {
       EventSerializer deserializer,
       EventConverter eventConverter,
       SnapshotSerializerSupplier snapshotSerializerSupplier,
-      FactusMetrics factusMetrics) {
+      FactusMetrics factusMetrics,
+      ProjectorFactory projectorFactory) {
     return new FactusImpl(
         fc,
-        new DefaultProjectorFactory(deserializer),
+        projectorFactory,
         eventConverter,
         new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSupplier, factusMetrics),
         new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSupplier, factusMetrics),
         snapshotSerializerSupplier,
         factusMetrics);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public ProjectorFactory projectorFactory(EventSerializer ser) {
+    return new DefaultProjectorFactory(ser);
   }
 
   @Bean
