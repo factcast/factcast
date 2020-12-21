@@ -260,7 +260,7 @@ public class FactusImpl implements Factus {
     if (latest.isPresent()) {
       Snapshot snap = latest.get();
       projection = ser.deserialize(projectionClass, snap.bytes());
-      projection.afterRestore();
+      projection.onAfterRestore();
     } else {
       log.trace("Creating initial projection version for {}", projectionClass);
       projection = instantiate(projectionClass);
@@ -274,12 +274,12 @@ public class FactusImpl implements Factus {
             new IntervalSnapshotter<SnapshotProjection>(Duration.ofSeconds(30)) {
               @Override
               void createSnapshot(SnapshotProjection projection, UUID state) {
-                projection.beforeSnapshot();
+                projection.onBeforeSnapshot();
                 projectionSnapshotRepository.put(projection, state);
               }
             });
     if (state != null) {
-      projection.beforeSnapshot();
+      projection.onBeforeSnapshot();
       projectionSnapshotRepository.put(projection, state);
     }
     return projection;
@@ -306,7 +306,7 @@ public class FactusImpl implements Factus {
             .map(as -> ser.deserialize(aggregateClass, as.bytes()))
             .map(
                 s -> {
-                  s.afterRestore();
+                  s.onAfterRestore();
                   return s;
                 });
     // noinspection
@@ -319,7 +319,7 @@ public class FactusImpl implements Factus {
             new IntervalSnapshotter<Aggregate>(Duration.ofSeconds(30)) {
               @Override
               void createSnapshot(Aggregate projection, UUID state) {
-                projection.beforeSnapshot();
+                projection.onBeforeSnapshot();
                 aggregateSnapshotRepository.put(projection, state);
               }
             });
@@ -335,7 +335,7 @@ public class FactusImpl implements Factus {
       }
     } else {
       // concurrency control decided to be irrelevant here
-      aggregate.beforeSnapshot();
+      aggregate.onBeforeSnapshot();
       aggregateSnapshotRepository.putBlocking(aggregate, state);
       return Optional.of(aggregate);
     }

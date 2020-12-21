@@ -965,7 +965,7 @@ class FactusImplTest {
           .extracting("name", "processed")
           .containsExactly("Fred", 1);
 
-      verify(personAggregateResult.get()).afterRestore();
+      verify(personAggregateResult.get()).onAfterRestore();
     }
 
     @Test
@@ -990,7 +990,7 @@ class FactusImplTest {
       SomeSnapshotProjection p = underTest.fetch(SomeSnapshotProjection.class);
 
       // ASSERT
-      verify(p).afterRestore();
+      verify(p).onAfterRestore();
     }
 
     @Test
@@ -1053,7 +1053,7 @@ class FactusImplTest {
           .extracting("name", "processed")
           .containsExactly("Barney", 2);
 
-      verify(personAggregate).beforeSnapshot();
+      verify(personAggregate).onBeforeSnapshot();
     }
 
     @Test
@@ -1102,7 +1102,7 @@ class FactusImplTest {
       // RUN
       SomeSnapshotProjection personAggregateResult = underTest.fetch(SomeSnapshotProjection.class);
 
-      verify(p).beforeSnapshot();
+      verify(p).onBeforeSnapshot();
     }
 
     @Test
