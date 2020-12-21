@@ -21,8 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.SnapshotCache;
-import org.factcast.factus.DefaultFactus;
 import org.factcast.factus.Factus;
+import org.factcast.factus.FactusImpl;
 import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
@@ -55,7 +55,7 @@ public class FactusAutoConfiguration {
       EventConverter eventConverter,
       SnapshotSerializerSupplier snapshotSerializerSupplier,
       FactusMetrics factusMetrics) {
-    return new DefaultFactus(
+    return new FactusImpl(
         fc,
         new DefaultProjectorFactory(deserializer),
         eventConverter,
