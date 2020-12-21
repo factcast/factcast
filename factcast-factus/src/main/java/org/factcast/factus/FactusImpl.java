@@ -18,6 +18,7 @@ package org.factcast.factus;
 import static org.factcast.factus.metrics.TagKeys.*;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.lang.reflect.Constructor;
@@ -456,6 +457,25 @@ public class FactusImpl implements Factus {
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
+  }
+
+  @Override
+  public LockedOnSpecs withLockOn(@NonNull FactSpec spec) {
+    return withLockOn(Collections.singletonList(spec));
+  }
+
+  @Override
+  public LockedOnSpecs withLockOn(@NonNull FactSpec spec, FactSpec... additional) {
+    LinkedList<FactSpec> l = new LinkedList<>();
+    l.add(spec);
+    if (additional != null) l.addAll(Arrays.asList(additional));
+    return withLockOn(l);
+  }
+
+  @Override
+  public LockedOnSpecs withLockOn(@NonNull List<FactSpec> specs) {
+    Preconditions.checkArgument(!specs.isEmpty(), "Argument specs must not be empty");
+    return new LockedOnSpecs(fc, this, specs, factusMetrics);
   }
 
   abstract static class IntervalSnapshotter<P extends SnapshotProjection>
