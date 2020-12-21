@@ -3,9 +3,90 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 
 # Changelog
 
+## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2020-12-07)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.7...upcoming)
+
+**Merged pull requests:**
+
+- \#1105: swallow exception while shutting down [\#1116](https://github.com/factcast/factcast/pull/1116) ([uweschaefer](https://github.com/uweschaefer))
+- Issue1092 whitelist improvement [\#1103](https://github.com/factcast/factcast/pull/1103) ([samba2](https://github.com/samba2))
+
+## [0.3.7](https://github.com/factcast/factcast/tree/0.3.7) (2020-12-03)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.6...0.3.7)
+
+**Implemented enhancements:**
+
+- \#1098: added synchronization on catchup [\#1100](https://github.com/factcast/factcast/pull/1100) ([uweschaefer](https://github.com/uweschaefer))
+- \#1090: afterUpdate callback in Snapshot/Managed-projection [\#1099](https://github.com/factcast/factcast/pull/1099) ([uweschaefer](https://github.com/uweschaefer))
+- Fixes \#827 and improves other error message [\#1091](https://github.com/factcast/factcast/pull/1091) ([samba2](https://github.com/samba2))
+
+**Fixed bugs:**
+
+- set liberal limits in integrationTest [\#1114](https://github.com/factcast/factcast/issues/1114)
+- \#1114: Bandwitdth protection: better fingerprinting, switch to disable… [\#1115](https://github.com/factcast/factcast/pull/1115) ([uweschaefer](https://github.com/uweschaefer))
+
+**Closed issues:**
+
+- schema-registry-cli: Enrich validation result output. [\#827](https://github.com/factcast/factcast/issues/827)
+- Suppress metrics for time diff on subscribed projections before catchup. [\#1109](https://github.com/factcast/factcast/issues/1109)
+- Suppress error logging in PgListener when shutting down [\#1105](https://github.com/factcast/factcast/issues/1105)
+- make sure the update of snapshot projections is wrapped in synchronized in order make 100% sure that state is synced to heap before projection instance goes public   [\#1098](https://github.com/factcast/factcast/issues/1098)
+- Factus: Change locking of local projections to synchronize on a private mutex rather than the projection itself  [\#1094](https://github.com/factcast/factcast/issues/1094)
+
+**Merged pull requests:**
+
+- \#1114: static containers and shutdown hook [\#1119](https://github.com/factcast/factcast/pull/1119) ([uweschaefer](https://github.com/uweschaefer))
+- \#1040: unified naming [\#1118](https://github.com/factcast/factcast/pull/1118) ([uweschaefer](https://github.com/uweschaefer))
+- Log errors that happen while trying to subscribe [\#1113](https://github.com/factcast/factcast/pull/1113) ([BernhardBln](https://github.com/BernhardBln))
+- Issue1092 whitelist [\#1097](https://github.com/factcast/factcast/pull/1097) ([samba2](https://github.com/samba2))
+- Fixed Scheduled [\#1096](https://github.com/factcast/factcast/pull/1096) ([BernhardBln](https://github.com/BernhardBln))
+- \#1109: skip publishing time diff metrics while catching up [\#1117](https://github.com/factcast/factcast/pull/1117) ([uweschaefer](https://github.com/uweschaefer))
+
+## [0.3.6](https://github.com/factcast/factcast/tree/0.3.6) (2020-10-21)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.5...0.3.6)
+
+**Implemented enhancements:**
+
+- Use an explicit getId\(\) call instead of class.getCanonicalName\(\) to avoid conflicts when dealing with anonymous classes. [\#1084](https://github.com/factcast/factcast/issues/1084)
+- Use an explicit getId\(\) call instead of class.getCanonicalName\(\) to avoid conflicts when dealing with anonymous classes. [\#1085](https://github.com/factcast/factcast/pull/1085) ([uweschaefer](https://github.com/uweschaefer))
+
+**Fixed bugs:**
+
+- GrpcFactStore: handshake happens too late \(Other beans could already use it\) [\#1086](https://github.com/factcast/factcast/issues/1086)
+- \#1086\_grpcfactstore--handshake-happe: initialize on construction [\#1087](https://github.com/factcast/factcast/pull/1087) ([uweschaefer](https://github.com/uweschaefer))
+
+**Merged pull requests:**
+
+
+## [0.3.5](https://github.com/factcast/factcast/tree/0.3.5) (2020-10-19)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.4...0.3.5)
+
+**Implemented enhancements:**
+
+- Factus: When fetching SnapshotProjections takes a significant time, persist intermediate snapshots now and then in case another thread also fetches, or the fetching is interrupted before it ends. [\#1075](https://github.com/factcast/factcast/issues/1075)
+- \#1075 Factus: When fetching SnapshotProjections takes a significant time, persist intermediate snapshots now and then in case another thread also fetches, or the fetching is interrupted before it ends. [\#1082](https://github.com/factcast/factcast/pull/1082) ([uweschaefer](https://github.com/uweschaefer))
+
+**Closed issues:**
+
+- Move metric collection regarding snapshots to snapshotcache [\#1080](https://github.com/factcast/factcast/issues/1080)
+
+**Merged pull requests:**
+
+- \#1080 Move metric collection regarding snapshots to snapshotcache [\#1081](https://github.com/factcast/factcast/pull/1081) ([uweschaefer](https://github.com/uweschaefer))
+- adjusted docs regarding automatic projection serial calculation [\#1079](https://github.com/factcast/factcast/pull/1079) ([uweschaefer](https://github.com/uweschaefer))
+- JSON serialiser now calculates hash over schema [\#1050](https://github.com/factcast/factcast/pull/1050) ([BernhardBln](https://github.com/BernhardBln))
+
 ## [0.3.4](https://github.com/factcast/factcast/tree/0.3.4) (2020-10-14)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/0.3.3...0.3.4)
+
+**Implemented enhancements:**
+
+- clear local redis in integration test [\#1071](https://github.com/factcast/factcast/issues/1071)
 
 **Fixed bugs:**
 
@@ -15,6 +96,7 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 **Closed issues:**
 
 - Switch formatting to google format [\#1054](https://github.com/factcast/factcast/issues/1054)
+- Factus snapshot deserialization is a fatal error although it doesn't have to [\#1040](https://github.com/factcast/factcast/issues/1040)
 
 **Merged pull requests:**
 

@@ -26,7 +26,7 @@ import org.factcast.factus.event.Specification;
 @Data
 @AllArgsConstructor
 @Specification(ns = "name_test")
-class NameEvent implements EventObject {
+public class NameEvent implements EventObject {
   @Override
   public Set<UUID> aggregateIds() {
     return Collections.emptySet();
