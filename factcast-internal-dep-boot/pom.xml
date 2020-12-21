@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.3.7-SNAPSHOT</version>
+    <version>0.3.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-internal-dep-boot</artifactId>
@@ -12,7 +12,7 @@
   <properties>
     <spring-boot.version>2.3.4.RELEASE</spring-boot.version>
     <spring-cloud.version>Hoxton.SR8</spring-cloud.version>
-    <spring-grpc.version>2.9.0.RELEASE</spring-grpc.version>
+    <spring-grpc.version>2.10.1.RELEASE</spring-grpc.version>
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
   <dependencyManagement>

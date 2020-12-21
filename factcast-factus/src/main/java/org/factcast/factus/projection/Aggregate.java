@@ -15,6 +15,7 @@
  */
 package org.factcast.factus.projection;
 
+import java.util.Objects;
 import java.util.UUID;
 import lombok.*;
 
@@ -27,15 +28,30 @@ import lombok.*;
 public abstract class Aggregate implements SnapshotProjection {
 
   // is protected in order to be able to wrap it into a domain-specific ID in
-  // the
-  // implementing class, think "PersonId".
+  // the implementing class, think "PersonId".
   //
   // Also this is the reason, why this thing is called "aggregateId" rather
   // than "id".
   @Getter(value = AccessLevel.PROTECTED)
   // the setter has package level access in order to be used from
-  // AggregateUtil,
-  // while not spoiling the public interface.
+  // AggregateUtil, while not spoiling the public interface.
   @Setter(value = AccessLevel.PROTECTED)
   private UUID aggregateId;
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Aggregate aggregate = (Aggregate) o;
+    return Objects.equals(aggregateId, aggregate.aggregateId);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(aggregateId);
+  }
 }

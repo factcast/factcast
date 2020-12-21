@@ -18,6 +18,7 @@ package org.factcast.factus;
 import static org.factcast.factus.metrics.TagKeys.*;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.lang.reflect.Constructor;
@@ -34,7 +35,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
@@ -187,6 +187,8 @@ public class DefaultFactus implements Factus {
     Projector<P> handler = ehFactory.create(subscribedProjection);
     FactObserver fo =
         new FactObserver() {
+          final AtomicBoolean caughtUp = new AtomicBoolean(false);
+
           @Override
           public void onNext(@NonNull Fact element) {
             subscribedProjection.executeUpdate(
@@ -195,19 +197,22 @@ public class DefaultFactus implements Factus {
                   subscribedProjection.state(element.id());
                 });
 
-            String ts = element.meta("_ts");
-            // _ts might not be there in unit testing for instance.
-            if (ts != null) {
-              long latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
-              factusMetrics.timed(
-                  TimedOperation.EVENT_PROCESSING_LATENCY,
-                  Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getCanonicalName())),
-                  latency);
+            if (caughtUp.get()) {
+              String ts = element.meta("_ts");
+              // _ts might not be there in unit testing for instance.
+              if (ts != null) {
+                long latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
+                factusMetrics.timed(
+                    TimedOperation.EVENT_PROCESSING_LATENCY,
+                    Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getCanonicalName())),
+                    latency);
+              }
             }
           }
 
           @Override
           public void onCatchup() {
+            caughtUp.set(true);
             subscribedProjection.onCatchup();
           }
 
@@ -440,6 +445,25 @@ public class DefaultFactus implements Factus {
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
+  }
+
+  @Override
+  public LockedOnSpecs withLockOn(@NonNull FactSpec spec) {
+    return withLockOn(Collections.singletonList(spec));
+  }
+
+  @Override
+  public LockedOnSpecs withLockOn(@NonNull FactSpec spec, FactSpec... additional) {
+    LinkedList<FactSpec> l = new LinkedList<>();
+    l.add(spec);
+    if (additional != null) l.addAll(Arrays.asList(additional));
+    return withLockOn(l);
+  }
+
+  @Override
+  public LockedOnSpecs withLockOn(@NonNull List<FactSpec> specs) {
+    Preconditions.checkArgument(!specs.isEmpty(), "Argument specs must not be empty");
+    return new LockedOnSpecs(fc, this, specs, factusMetrics);
   }
 
   abstract static class IntervalSnapshotter<P extends SnapshotProjection>

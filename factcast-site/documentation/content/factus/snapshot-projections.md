@@ -42,10 +42,6 @@ public class UserNames implements SnapshotProjection {
 
 This projection is interested in `UserCreated` and `UserDeleted` EventObjects and can be serialized by the `SnapshotSerializer`.
 
-**Attention** - when the projection class is changed (e.g. a field is renamed or its type is changed), there will be a problem with deserialization.
-For now, this can be solved by letting the projection implement Serializable and declare a `static long serialVersionUID` that is changed when fields change.
-There will be a better solution for this problem soon.
-
 If you have worked with FactCast before, you'll know what needs to be done (if you haven't, just skip this section and be happy not to be bothered by this anymore):
 1. create an instance of the projection class, or get a Snapshot from somewhere
 1. create a list of FactSpecs (FactSpecifications) including the Specifications from `UserCreated` and `UserDeleted`
