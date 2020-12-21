@@ -54,7 +54,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
-      <version>1.14.3</version>
+      <version>${testcontainers.version}</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -83,7 +83,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.14.3</version>
+      <version>${testcontainers.version}</version>
     </dependency>
     <dependency>
       <!-- only for dependency and build order analysis -->
