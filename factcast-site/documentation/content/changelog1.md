@@ -47,8 +47,8 @@
 
 **Implemented enhancements:**
 
-- Use an explicit getId\(\) call instead of class.getCanonicalName\(\) to avoid conflicts when dealing with anonymous classes. [\#1084](https://github.com/factcast/factcast/issues/1084)
-- Use an explicit getId\(\) call instead of class.getCanonicalName\(\) to avoid conflicts when dealing with anonymous classes. [\#1085](https://github.com/factcast/factcast/pull/1085) ([uweschaefer](https://github.com/uweschaefer))
+- Use an explicit getId\(\) call instead of class.getName\(\) to avoid conflicts when dealing with anonymous classes. [\#1084](https://github.com/factcast/factcast/issues/1084)
+- Use an explicit getId\(\) call instead of class.getName\(\) to avoid conflicts when dealing with anonymous classes. [\#1085](https://github.com/factcast/factcast/pull/1085) ([uweschaefer](https://github.com/uweschaefer))
 
 **Fixed bugs:**
 

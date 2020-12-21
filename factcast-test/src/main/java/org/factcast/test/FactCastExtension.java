@@ -46,7 +46,7 @@ public class FactCastExtension implements Extension, BeforeEachCallback {
     } else {
       log.warn(
           "No static field of type {} found, so wiping data from Postgres was not possible.",
-          PostgreSQLContainer.class.getCanonicalName());
+          PostgreSQLContainer.class.getName());
     }
   }
 

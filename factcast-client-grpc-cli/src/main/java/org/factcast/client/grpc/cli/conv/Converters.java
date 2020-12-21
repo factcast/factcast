@@ -52,7 +52,7 @@ public class Converters {
         return l.apply(value);
       } catch (Exception e) {
         throw new ParameterException(
-            getErrorString(value, clazz.getCanonicalName()) + " : " + e.getMessage());
+            getErrorString(value, clazz.getName()) + " : " + e.getMessage());
       }
     }
   }
