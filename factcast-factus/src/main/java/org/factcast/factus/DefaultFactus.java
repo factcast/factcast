@@ -150,7 +150,7 @@ public class DefaultFactus implements Factus {
 
     Duration interval = Duration.ofMinutes(5); // TODO should be a property?
     while (!closed.get()) {
-      WriterToken token = subscribedProjection.acquireWriteToken(interval);
+      WriterToken token = subscribedProjection.acquireWriterToken(interval);
       if (token != null) {
         log.info("Acquired writer token for {}", subscribedProjection.getClass());
         Subscription subscription = doSubscribe(subscribedProjection, token);

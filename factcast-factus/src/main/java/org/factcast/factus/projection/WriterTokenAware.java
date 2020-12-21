@@ -20,10 +20,29 @@ import lombok.NonNull;
 import org.factcast.factus.FactusConstants;
 
 public interface WriterTokenAware {
+  /**
+   * this is deprecated. please implement acquireWriterToken instead
+   *
+   * @return
+   */
+  @Deprecated
   default WriterToken acquireWriteToken() {
-    return acquireWriteToken(FactusConstants.FOREVER);
+    return acquireWriterToken(FactusConstants.FOREVER);
   }
 
-  /** might return null if token cannot be acquired */
-  WriterToken acquireWriteToken(@NonNull Duration maxWait);
+  default WriterToken acquireWriterToken() {
+    return acquireWriterToken(FactusConstants.FOREVER);
+  }
+
+  /**
+   * might return null if token cannot be acquired
+   *
+   * <p>this is deprecated. please implement acquireWriterToken instead
+   */
+  @Deprecated
+  AutoCloseable acquireWriteToken(@NonNull Duration maxWait);
+
+  default WriterToken acquireWriterToken(@NonNull Duration maxWait) {
+    return WriterToken.simple(acquireWriteToken(maxWait));
+  }
 }
