@@ -1,4 +1,5 @@
-+++ draft = false title = "Snapshot Projections"
++++ draft = false 
+title = "Snapshot Projections"
 description = ""
 
 creatordisplayname = "Uwe Schaefer"
@@ -98,3 +99,4 @@ There are plenty of methods that you can override in order to hook into the life
 * executeUpdate(Runnable) - will be called to update the state of a projection. The runnable includes applying the Fact/Event and also updating the state of the projection, in case you want to do something like introduce transactionality here. 
 
 This is not meant to be an exhaustive list. Look at the interfaces/classes you implement/extend and their javadoc.
+

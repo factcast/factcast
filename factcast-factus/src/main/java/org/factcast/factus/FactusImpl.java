@@ -29,7 +29,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -304,11 +306,8 @@ public class FactusImpl implements Factus {
     Optional<A> optionalA =
         latest
             .map(as -> ser.deserialize(aggregateClass, as.bytes()))
-            .map(
-                s -> {
-                  s.onAfterRestore();
-                  return s;
-                });
+            .map(peek(Aggregate::onAfterRestore));
+
     // noinspection
     A aggregate = optionalA.orElseGet(() -> this.initial(aggregateClass, aggregateId));
 
@@ -499,5 +498,12 @@ public class FactusImpl implements Factus {
     }
 
     abstract void createSnapshot(P projection, UUID state);
+  }
+
+  private <T> UnaryOperator<T> peek(Consumer<T> c) {
+    return x -> {
+      c.accept(x);
+      return x;
+    };
   }
 }
