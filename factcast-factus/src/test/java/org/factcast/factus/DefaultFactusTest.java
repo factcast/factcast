@@ -722,7 +722,7 @@ class DefaultFactusTest {
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
       Projector<SubscribedProjection> eventApplier = mock(Projector.class);
 
-      when(subscribedProjection.acquireWriteToken(any())).thenReturn(mock(AutoCloseable.class));
+      when(subscribedProjection.acquireWriteToken(any())).thenReturn(() -> {});
 
       // make sure updates get executed
       doAnswer(
@@ -796,7 +796,7 @@ class DefaultFactusTest {
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
       Projector<SubscribedProjection> eventApplier = mock(Projector.class);
 
-      when(subscribedProjection.acquireWriteToken(any())).thenReturn(mock(AutoCloseable.class));
+      when(subscribedProjection.acquireWriteToken(any())).thenReturn(() -> {});
 
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
