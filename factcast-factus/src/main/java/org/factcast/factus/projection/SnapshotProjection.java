@@ -20,4 +20,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public interface SnapshotProjection extends BatchUpdatingProjection {
   default void beforeSnapshot() {}
+
+  default void afterRestore() {}
 }
