@@ -37,4 +37,8 @@ class LocalWriteToken {
     }
     return null;
   }
+
+  public boolean isValid() {
+    return lock.isLocked();
+  }
 }
