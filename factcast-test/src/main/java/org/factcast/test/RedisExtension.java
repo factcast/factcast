@@ -19,9 +19,7 @@ import java.lang.reflect.Field;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
-import org.junit.jupiter.api.extension.Extension;
-import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.support.ModifierSupport;
 import org.junit.platform.commons.util.ReflectionUtils;
 import org.junit.platform.commons.util.ReflectionUtils.HierarchyTraversalMode;
@@ -50,7 +48,7 @@ public class RedisExtension implements Extension, BeforeEachCallback {
     } else {
       log.warn(
           "No static field of type {} found, so wiping data from Redis was not possible.",
-          GenericContainer.class.getCanonicalName());
+          GenericContainer.class.getName());
     }
   }
 

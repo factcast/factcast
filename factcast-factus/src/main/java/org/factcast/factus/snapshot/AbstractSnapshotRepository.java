@@ -66,7 +66,7 @@ abstract class AbstractSnapshotRepository {
 
     String classLevelKey =
         keyPrefix()
-            + type.getCanonicalName()
+            + type.getName()
             + KEY_DELIMITER
             + serializerAndSerialUId(type, serializerSupplier);
 
@@ -88,7 +88,7 @@ abstract class AbstractSnapshotRepository {
           if (serialVersionUid == null) {
             log.error(
                 "Cannot determine serial for class "
-                    + t.getCanonicalName()
+                    + t.getName()
                     + ". Falling back to currentTimeMillis to avoid deserialization errors. However this *WILL* flood your SnapshotCache with useless Snapshots, so please provide a serial for this class.");
             serialVersionUid = System.currentTimeMillis();
           }
@@ -140,7 +140,7 @@ abstract class AbstractSnapshotRepository {
         s ->
             factusMetrics.record(
                 GaugedEvent.FETCH_SIZE,
-                Tags.of(Tag.of(TagKeys.CLASS, projectionClass.getCanonicalName())),
+                Tags.of(Tag.of(TagKeys.CLASS, projectionClass.getName())),
                 s.bytes().length));
   }
 }
