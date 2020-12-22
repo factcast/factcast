@@ -33,7 +33,7 @@ class LocalWriteToken {
         return lock::unlock;
       }
     } catch (InterruptedException e) {
-      log.warn("while trying to aquire write token", e);
+      log.warn("while trying to acquire write token", e);
     }
     return null;
   }

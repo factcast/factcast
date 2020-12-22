@@ -47,4 +47,4 @@ So calling `factus.fetch(User.class)` would not make any sense. Here Factus offe
 
 As you can see, `find` returns the user as an Optional (being empty if there never was **any** EventObject published regarding that User), whereas `fetch` returns the User unwrapped and fails if there is no Fact for that user found.
 
-All the rules from SnapshotProjections apply: The User instance is (together with its id) stored as a snapshot at the end of the operation.
+All the rules from SnapshotProjections apply: The User instance is (together with its id) stored as a snapshot at the end of the operation. You also have the beforeSnapshot() and afterRestore() in case you want to hook into the lifecycle (see SnapshotProjection)

@@ -199,8 +199,8 @@ class AggregateSnapshotRepositoryImplTest {
               WithoutSVUID.class,
               () -> snapshotSerializerSupplier.retrieveSerializer(WithoutSVUID.class));
 
-      assertThat(with).contains(WithSVUID.class.getCanonicalName()).contains(":42");
-      assertThat(without).contains(WithoutSVUID.class.getCanonicalName()).contains(":0");
+      assertThat(with).contains(WithSVUID.class.getName()).contains(":42");
+      assertThat(without).contains(WithoutSVUID.class.getName()).contains(":0");
     }
   }
 

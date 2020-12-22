@@ -15,16 +15,12 @@
  */
 package org.factcast.factus.lock;
 
-import static org.factcast.factus.metrics.TagKeys.CLASS;
+import static org.factcast.factus.metrics.TagKeys.*;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -34,7 +30,6 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.lock.Attempt;
@@ -45,22 +40,20 @@ import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.metrics.CountedEvent;
 import org.factcast.factus.metrics.FactusMetrics;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.AggregateUtil;
-import org.factcast.factus.projection.ManagedProjection;
-import org.factcast.factus.projection.Projection;
-import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.projection.*;
 
 @RequiredArgsConstructor
 @Slf4j
 @Data
 @SuppressWarnings("unused")
 public class Locked<I extends Projection> {
+  private static final String MANUAL_FACT_SPECS = "manualFactSpecs";
+
   @NonNull private final FactCast fc;
 
   @NonNull private final Factus factus;
 
-  private final I projection;
+  private final I projectionOrNull;
 
   @NonNull private final List<FactSpec> specs;
 
@@ -94,17 +87,27 @@ public class Locked<I extends Projection> {
               .attempt(
                   () -> {
                     try {
-                      factusMetrics.count(
-                          CountedEvent.TRANSACTION_ATTEMPTS,
-                          Tags.of(Tag.of(CLASS, projection.getClass().getCanonicalName())));
-                      val p = update(projection);
+                      I updatedProjection = null;
+
+                      if (projectionOrNull != null) {
+                        factusMetrics.count(
+                            CountedEvent.TRANSACTION_ATTEMPTS,
+                            Tags.of(Tag.of(CLASS, projectionOrNull.getClass().getName())));
+                        updatedProjection = update(projectionOrNull);
+                      } else {
+
+                        factusMetrics.count(
+                            CountedEvent.TRANSACTION_ATTEMPTS,
+                            Tags.of(Tag.of(CLASS, MANUAL_FACT_SPECS)));
+                      }
+
                       List<Supplier<Fact>> toPublish =
                           Collections.synchronizedList(new LinkedList<>());
                       RetryableTransaction txWithLockOnSpecs = createTransaction(factus, toPublish);
 
                       try {
                         InLockedOperation.enterLockedOperation();
-                        tx.accept(p, txWithLockOnSpecs);
+                        tx.accept(updatedProjection, txWithLockOnSpecs);
                         return Attempt.publish(
                             toPublish.stream().map(Supplier::get).collect(Collectors.toList()));
                       } finally {
@@ -120,15 +123,23 @@ public class Locked<I extends Projection> {
       return resultFn.apply(result.publishedFacts());
 
     } catch (AttemptAbortedException e) {
-      factusMetrics.count(
-          CountedEvent.TRANSACTION_ABORT,
-          Tags.of(Tag.of(CLASS, projection.getClass().getCanonicalName())));
+      if (projectionOrNull != null)
+        factusMetrics.count(
+            CountedEvent.TRANSACTION_ABORT,
+            Tags.of(Tag.of(CLASS, projectionOrNull.getClass().getName())));
+      else
+        factusMetrics.count(
+            CountedEvent.TRANSACTION_ABORT, Tags.of(Tag.of(CLASS, MANUAL_FACT_SPECS)));
+
       throw LockedOperationAbortedException.wrap(e);
     }
   }
 
   @SuppressWarnings("unchecked")
   private I update(I projection) {
+
+    if (projection == null) return null;
+
     if (projection instanceof Aggregate) {
       Class<? extends Aggregate> projectionClass =
           (Class<? extends Aggregate>) projection.getClass();

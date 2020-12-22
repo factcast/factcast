@@ -21,7 +21,7 @@ import org.factcast.factus.projection.Aggregate;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-class PersonAggregate extends Aggregate {
+public class PersonAggregate extends Aggregate {
 
   private String name = "";
 
