@@ -16,6 +16,8 @@
 package org.factcast.test;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
@@ -27,6 +29,7 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+@SuppressWarnings("rawtypes")
 @Testcontainers(disabledWithoutDocker = true)
 @ExtendWith({FactCastExtension.class, RedisExtension.class})
 @Slf4j
@@ -63,19 +66,15 @@ public class AbstractFactCastIntegrationTest {
     init();
   }
 
+  @SuppressWarnings("rawtypes")
   @SneakyThrows
   private static void init() {
-    _postgres.start();
-    _redis.start();
+    List<GenericContainer> infra = Arrays.asList(_redis, _postgres);
+    infra.parallelStream().forEach(GenericContainer::start);
     _factcast.start();
 
-    Runtime.getRuntime()
-        .addShutdownHook(
-            new Thread(
-                () -> {
-                  _factcast.stop();
-                  // the rest cann be killed by ryuk in any order
-                }));
+    // the rest can be shut down by ryuk
+    Runtime.getRuntime().addShutdownHook(new Thread(_factcast::stop));
   }
 
   @BeforeAll
