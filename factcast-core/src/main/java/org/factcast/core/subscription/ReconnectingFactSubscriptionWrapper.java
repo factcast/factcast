@@ -18,11 +18,7 @@ package org.factcast.core.subscription;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -247,7 +243,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
   }
 
   private boolean isServerException(@NonNull Throwable exception) {
-    return exception.getClass().getCanonicalName().startsWith("org.factcast");
+    return exception.getClass().getName().startsWith("org.factcast");
   }
 
   private synchronized void initiateReconnect() {

@@ -21,6 +21,6 @@ public enum Capabilities {
 
   @Override
   public String toString() {
-    return getClass().getCanonicalName() + "." + name();
+    return getClass().getName() + "." + name();
   }
 }
