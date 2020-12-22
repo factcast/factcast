@@ -137,7 +137,7 @@ public class FactusImpl implements Factus {
     log.trace("updating managed projection {}", managedProjection.getClass());
     factusMetrics.timed(
         TimedOperation.MANAGED_PROJECTION_UPDATE_DURATION,
-        Tags.of(Tag.of(CLASS, managedProjection.getClass().getCanonicalName())),
+        Tags.of(Tag.of(CLASS, managedProjection.getClass().getName())),
         () ->
             managedProjection.withLock(
                 () ->
@@ -206,7 +206,7 @@ public class FactusImpl implements Factus {
                 long latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
                 factusMetrics.timed(
                     TimedOperation.EVENT_PROCESSING_LATENCY,
-                    Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getCanonicalName())),
+                    Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getName())),
                     latency);
               }
             }
@@ -240,7 +240,7 @@ public class FactusImpl implements Factus {
   public <P extends SnapshotProjection> P fetch(Class<P> projectionClass) {
     return factusMetrics.timed(
         TimedOperation.FETCH_DURATION,
-        Tags.of(Tag.of(CLASS, projectionClass.getCanonicalName())),
+        Tags.of(Tag.of(CLASS, projectionClass.getName())),
         () -> dofetch(projectionClass));
   }
 
@@ -292,7 +292,7 @@ public class FactusImpl implements Factus {
   public <A extends Aggregate> Optional<A> find(Class<A> aggregateClass, UUID aggregateId) {
     return factusMetrics.timed(
         TimedOperation.FIND_DURATION,
-        Tags.of(Tag.of(CLASS, aggregateClass.getCanonicalName())),
+        Tags.of(Tag.of(CLASS, aggregateClass.getName())),
         () -> doFind(aggregateClass, aggregateId));
   }
 
@@ -420,7 +420,7 @@ public class FactusImpl implements Factus {
           c.close();
         } catch (Exception e) {
           // needs to be swallowed
-          log.warn("While closing {} of type {}:", c, c.getClass().getCanonicalName(), e);
+          log.warn("While closing {} of type {}:", c, c.getClass().getName(), e);
         }
       }
     }
@@ -443,7 +443,7 @@ public class FactusImpl implements Factus {
     A fresh =
         factusMetrics.timed(
             TimedOperation.FIND_DURATION,
-            Tags.of(Tag.of(CLASS, aggregateClass.getCanonicalName())),
+            Tags.of(Tag.of(CLASS, aggregateClass.getName())),
             () -> find(aggregateClass, id).orElse(instantiate(aggregateClass)));
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();

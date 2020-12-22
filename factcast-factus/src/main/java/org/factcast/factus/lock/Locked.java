@@ -126,7 +126,7 @@ public class Locked<I extends Projection> {
       if (projectionOrNull != null)
         factusMetrics.count(
             CountedEvent.TRANSACTION_ABORT,
-            Tags.of(Tag.of(CLASS, projectionOrNull.getClass().getCanonicalName())));
+            Tags.of(Tag.of(CLASS, projectionOrNull.getClass().getName())));
       else
         factusMetrics.count(
             CountedEvent.TRANSACTION_ABORT, Tags.of(Tag.of(CLASS, MANUAL_FACT_SPECS)));
