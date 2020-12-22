@@ -68,8 +68,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
 
   private static Class<? extends Projection> getRelevantClass(
       @NonNull Class<? extends Projection> c) {
-    while (c.getCanonicalName().contains("$$EnhancerBySpring")
-        || c.getCanonicalName().contains("CGLIB")) {
+    while (c.getName().contains("$$EnhancerBySpring") || c.getName().contains("CGLIB")) {
       c = (Class<? extends Projection>) c.getSuperclass();
     }
     return c;
@@ -336,7 +335,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
       }
 
       // exclude MockitoMocks
-      return !m.getDeclaringClass().getCanonicalName().contains("$MockitoMock");
+      return !m.getDeclaringClass().getName().contains("$MockitoMock");
     }
     return false;
   }
