@@ -51,19 +51,19 @@ public class RequestedVersionsTest {
 
   @Test
   public void testDontCare() {
-    assertThat(uut.dontCare("foo", "bar")).isTrue();
+    assertThat(uut.matches("foo", "bar", 4)).isTrue();
   }
 
   @Test
   public void testDontCare_byRequesting0() {
     uut.add("foo", "bar", 0);
-    assertThat(uut.dontCare("foo", "bar")).isTrue();
+    assertThat(uut.matches("foo", "bar", 4)).isTrue();
   }
 
   @Test
   public void testDontCare_negative() {
     uut.add("foo", "bar", 7);
-    assertThat(uut.dontCare("foo", "bar")).isFalse();
+    assertThat(uut.matches("foo", "bar", 10)).isFalse();
   }
 
   @Test
@@ -71,23 +71,23 @@ public class RequestedVersionsTest {
     uut.add("foo", "bar", 3);
     uut.add("foo", "bar", 0);
     uut.add("foo", "bar", 1);
-    assertThat(uut.dontCare("foo", "bar")).isTrue();
+    assertThat(uut.matches("foo", "bar", 7)).isTrue();
   }
 
   @Test
   public void testExactVersion() {
     uut.add("foo", "bar", 3);
-    assertThat(uut.exactVersion("foo", "bar", 3)).isTrue();
-    assertThat(uut.exactVersion("foo", "bar", 1)).isFalse();
+    assertThat(uut.matches("foo", "bar", 3)).isTrue();
+    assertThat(uut.matches("foo", "bar", 1)).isFalse();
   }
 
   @Test
   public void testExactVersion_nextToOthers() {
     uut.add("foo", "bar", 3);
-    uut.add("foo", "bar", 0);
+    uut.add("foo", "bar", 2);
     uut.add("foo", "bar", 1);
-    assertThat(uut.exactVersion("foo", "bar", 3)).isTrue();
-    assertThat(uut.exactVersion("foo", "bar", 1)).isTrue();
-    assertThat(uut.exactVersion("foo", "bar", 5)).isFalse();
+    assertThat(uut.matches("foo", "bar", 3)).isTrue();
+    assertThat(uut.matches("foo", "bar", 1)).isTrue();
+    assertThat(uut.matches("foo", "bar", 5)).isFalse();
   }
 }

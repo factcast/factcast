@@ -66,6 +66,8 @@ public class PgPagedCatchup implements PgCatchup {
 
       PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request);
       val numberOfFactsToCatchUp = prep.prepareCatchup(serial);
+      val skipTesting = postQueryMatcher.canBeSkipped();
+
       if (numberOfFactsToCatchUp > 0) {
         try {
           PgCatchUpFetchPage fetch = new PgCatchUpFetchPage(jdbc, props.getPageSize(), request);
@@ -75,7 +77,7 @@ public class PgPagedCatchup implements PgCatchup {
 
             for (Fact f : facts) {
               UUID factId = f.id();
-              if (postQueryMatcher.test(f)) {
+              if (skipTesting || postQueryMatcher.test(f)) {
                 try {
                   subscription.notifyElement(f);
                 } catch (MissingTransformationInformation | TransformationException e) {
