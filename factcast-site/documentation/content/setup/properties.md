@@ -19,7 +19,7 @@ Properties you can use to configure FactCast:
 
 ### Schemaregistry
 
-| Property-Name        | Semantics           | Default   
+| Property        | Description           | Default   
 | ------------- |:-------------|:-----|
 | factcast.store.pgsql.schemaRegistryUrl            | if a schemaRegistryUrl is defined, FactCast goes into validating mode. The only protocols allowed here are *'http', 'https', 'classpath' and 'file'. Note that http(s) and file always require two slashes after the colon, e.g. 'https://someserver/...' or 'file:///root/folder/...'.*|  
 | factcast.store.pgsql.persistentRegistry           | if fetched Schema and Transformation Documents are persisted into Postgres | false 
@@ -31,7 +31,7 @@ Properties you can use to configure FactCast:
 
 ### Transformation-Registry
 
-| Property-Name        | Semantics           | Default   
+| Property        | Description           | Default   
 | ------------- |:-------------|:-----|
 | factcast.store.pgsql.persistentTransformationCache                    | if Transformed Fact payloads are persistently cached into Postgres| false 
 | factcast.store.pgsql.inMemTransformationCacheCapacity                 | when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum value here is 1000. | 1_000_000 
@@ -42,7 +42,7 @@ Properties you can use to configure FactCast:
 
 ### Performance / Reliability
 
-| Property-Name        | Semantics           | Default   
+| Property        | Description           | Default   
 | ------------- |:-------------|:-----|
 |factcast.store.pgsql.factNotificationBlockingWaitTimeInMillis| Controls how long to block waiting for new notifications from the database (Postgres LISTEN/ NOTIFY mechanism). When this time exceeds the notifications is repeated | 15000 (15sec)
 |factcast.store.pgsql.factNotificationMaxRoundTripLatencyInMillis| When Factcast did not receive any notifications after factNotificationBlockingWaitTimeInMillis milliseconds it validates the health of the database connection. For this purpose it sends an internal notification to the database and waits for the given time to receive back an answer. If the time is exceeded the database connection is renewed | 200
@@ -52,7 +52,7 @@ ___
 
 ### Snapshots
 
-| Property-Name        | Semantics           | Default   
+| Property        | Description           | Default   
 | ------------- |:-------------|:-----|
 | factcast.store.pgsql.deleteSnapshotStaleForDays |   min number of days a snapshot is kept even though it is not read anymore | 90  
 | factcast.store.pgsql.snapshotCacheCompactCron             |defines the cron schedule for compacting the snapshot cache | `0 0 0 * * *` (at midnight)
@@ -66,11 +66,11 @@ Properties you can use to configure gRPC:
 
 #### gRPC Client
 
-| Property-Name        | Semantics           | Default  | Example |
+| Property        | Description           | Default  | Example |
 | ------------- |:-------------|:-----|:-----|
 |grpc.client.factstore.credentials|Credentials in the form of username:secret|none|myUserName:mySecretPassword
-|grpc.client.factcast.address| the address(es) fo the factcast server| none |static://localhost:9090 |
-|grpc.client.factcast.negotiationType| Usage of TLS or Plaintext? | TLS | PLAINTEXT |
+|grpc.client.factstore.address| the address(es) fo the factcast server| none |static://localhost:9090 |
+|grpc.client.factstore.negotiationType| Usage of TLS or Plaintext? | TLS | PLAINTEXT |
 |grpc.client.factstore.enable-keep-alive| Configures whether keepAlive should be enabled. Recommended for long running (follow) subscriptions | false | true|
 |grpc.client.factstore.keep-alive-time|The default delay before sending keepAlives. Defaults to 60s. Please note that shorter intervals increase the network burden for the server.||300|
 |grpc.client.factstore.keep-alive-without-calls|Configures whether keepAlive will be performed when there are no outstanding RPCs on a connection.|false|true
@@ -85,17 +85,23 @@ grpc.client.factstore.keep-alive-without-calls=true
 
 Further details can be found here : `net.devh.boot.grpc.client.config.GrpcChannelProperties`.
 
+#### FactCast client specific
+
+| Property        | Description           | Default  | Example |
+| ------------- |:-------------|:-----|:-----|
+|factcast.grpc.client.catchup-batchsize|Request a batchsize in catchup phase. Produces larger message and better compression. Remember that this setting increases the memory requirements, as well as the individual message size so depending on you Fact-payload size, and this setting, you may wan to increase the allowed max-in/out limits of GRPC (defaulting to ~4mb per message). Our tests have shown that values >100 seem to have an insignificant impact - your mileage may vary. Setting is valid since 0.3.9.|50|100
+
 #### grpc Server
 
-|Property|Description|Proposed value|
-|:--|:--|:--|
-|`grpc.server.permit-keep-alive-without-calls` |  Configures whether clients are allowed to send keep-alive HTTP/2 PINGs even if there are no outstanding RPCs on the connection. Defaults to false.| true |
-|`grpc.server.permit-keep-alive-time`          | Specifies the most aggressive keep-alive time in seconds clients are permitted to configure. Defaults to 5min. | 100 |
-|`factcast.grpc.bandwith.numberOfFollowRequestsAllowedPerClientPerMinute` | after the given number of follow requests from the same client per minute, subscriptions are rejected with RESOURCE_EXHAUSTED | 5 |
-|`factcast.grpc.bandwith.initialNumberOfFollowRequestsAllowedPerClient` | ramp-up to compensate for client startup| 50 |
-|`factcast.grpc.bandwith.numberOfCatchupRequestsAllowedPerClientPerMinute` | after the given number of catchup requests from the same client per minute, subscriptions are rejected with RESOURCE_EXHAUSTED| 6000 |
-|`factcast.grpc.bandwith.initialNumberOfCatchupRequestsAllowedPerClient` | ramp-up to compensate for client startup | 36000 |
-|`factcast.grpc.bandwith.disabled` | completely disables checking if set to true | false |
+| Property        | Description           | Default  | Example |
+| ------------- |:-------------|:-----|:-----|
+|`grpc.server.permit-keep-alive-without-calls` | Configures whether clients are allowed to send keep-alive HTTP/2 PINGs even if there are no outstanding RPCs on the connection| false | true |
+|`grpc.server.permit-keep-alive-time`          | Specifies the most aggressive keep-alive time in seconds clients are permitted to configure. Defaults to 5min. | 300 | 100 |
+|`factcast.grpc.bandwith.numberOfFollowRequestsAllowedPerClientPerMinute` | after the given number of follow requests from the same client per minute, subscriptions are rejected with RESOURCE_EXHAUSTED | 5 | 5|
+|`factcast.grpc.bandwith.initialNumberOfFollowRequestsAllowedPerClient` | ramp-up to compensate for client startup| 50 | 50 |
+|`factcast.grpc.bandwith.numberOfCatchupRequestsAllowedPerClientPerMinute` | after the given number of catchup requests from the same client per minute, subscriptions are rejected with RESOURCE_EXHAUSTED| 6000 | 6000 |
+|`factcast.grpc.bandwith.initialNumberOfCatchupRequestsAllowedPerClient` | ramp-up to compensate for client startup |36000 | 36000 |
+|`factcast.grpc.bandwith.disabled` | completely disables checking if set to true | false | true |
 
 #### gRPC Server recommended settings
 
@@ -107,7 +113,7 @@ grpc.server.permit-keep-alive-time=100
 
 ### Testing
 
-| Property-Name        | Semantics           | Default   
+| Property        | Semantics           | Default   
 | ------------- |:-------------|:-----|
 |factcast.store.pgsql.integrationTestMode| when set to true, disables all non-essential memory-internal caches, timing might differ to production of course. | false
 
