@@ -213,10 +213,10 @@ public class FactusImpl implements Factus {
                       Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getName())),
                       latency);
                 }
-              } else {
-                // token is no longer valid
-                throw new IllegalStateException("WriterToken is no longer valid.");
               }
+            } else {
+              // token is no longer valid
+              throw new IllegalStateException("WriterToken is no longer valid.");
             }
           }
 
@@ -316,8 +316,7 @@ public class FactusImpl implements Factus {
             .map(as -> ser.deserialize(aggregateClass, as.bytes()))
             .map(peek(Aggregate::onAfterRestore));
 
-    // noinspection
-    A aggregate = optionalA.orElseGet(() -> this.initial(aggregateClass, aggregateId));
+    A aggregate = optionalA.orElseGet(() -> initial(aggregateClass, aggregateId));
 
     UUID state =
         catchupProjection(
@@ -419,7 +418,7 @@ public class FactusImpl implements Factus {
 
   @Override
   public void close() {
-    if (this.closed.getAndSet(true)) {
+    if (closed.getAndSet(true)) {
       log.warn("close is being called more than once!?");
     } else {
       ArrayList<AutoCloseable> closeables = new ArrayList<>(managedObjects);
@@ -475,7 +474,9 @@ public class FactusImpl implements Factus {
   public LockedOnSpecs withLockOn(@NonNull FactSpec spec, FactSpec... additional) {
     LinkedList<FactSpec> l = new LinkedList<>();
     l.add(spec);
-    if (additional != null) l.addAll(Arrays.asList(additional));
+    if (additional != null) {
+      l.addAll(Arrays.asList(additional));
+    }
     return withLockOn(l);
   }
 
