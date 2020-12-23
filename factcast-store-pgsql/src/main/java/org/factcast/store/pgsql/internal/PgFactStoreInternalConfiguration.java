@@ -68,16 +68,18 @@ public class PgFactStoreInternalConfiguration {
   @Bean
   @ConditionalOnMissingBean(EventBus.class)
   public EventBus eventBus() {
-    return new AsyncEventBus(this.getClass().getSimpleName(), Executors.newCachedThreadPool());
+    return new AsyncEventBus(getClass().getSimpleName(), Executors.newCachedThreadPool());
   }
 
   @Bean
   public PgCatchupFactory pgCatchupFactory(
-      PgConfigurationProperties props, JdbcTemplate jdbc, PgFactIdToSerialMapper serMapper) {
+      PgConfigurationProperties props,
+      PgConnectionSupplier supp,
+      PgFactIdToSerialMapper serMapper) {
     // noinspection SwitchStatementWithTooFewBranches
     switch (props.getCatchupStrategy()) {
       case PAGED:
-        return new PgPagedCatchUpFactory(jdbc, props, serMapper);
+        return new PgPagedCatchUpFactory(supp, props, serMapper);
       default:
         throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
     }
