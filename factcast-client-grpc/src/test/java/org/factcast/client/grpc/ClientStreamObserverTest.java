@@ -20,7 +20,9 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.UUID;
+import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -63,6 +65,16 @@ class ClientStreamObserverTest {
     MSG_Notification n = converter.createNotificationFor(f);
     uut.onNext(n);
     verify(factObserver).onNext(eq(f));
+  }
+
+  @Test
+  void testOnNextList() {
+    Fact f1 = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+    Fact f2 = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+    ArrayList<Fact> stagedFacts = Lists.newArrayList(f1, f2);
+    MSG_Notification n = converter.createNotificationFor(stagedFacts);
+    uut.onNext(n);
+    verify(factObserver, times(2)).onNext(any(Fact.class));
   }
 
   @Test
