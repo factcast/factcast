@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus;
+package org.factcast.client.grpc;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.factcast.factus.projection.Aggregate;
+import lombok.experimental.Accessors;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-@EqualsAndHashCode(callSuper = true)
+@Configuration
+@ConfigurationProperties(prefix = "factcast.grpc.client")
 @Data
-public class PersonAggregate extends Aggregate {
+@Accessors(fluent = false)
+public class FactCastGrpcClientProperties {
 
-  private String name = "";
-
-  private int processed = 0;
-
-  @Handler
-  void process(NameEvent event) {
-    this.name = event.name();
-    this.processed++;
-  }
+  private int catchupBatchsize = 50;
 }

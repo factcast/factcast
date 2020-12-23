@@ -27,14 +27,18 @@ class LocalWriteToken {
 
   private final ReentrantLock lock = new ReentrantLock(true);
 
-  public AutoCloseable acquireWriteToken(@NonNull Duration maxWait) {
+  public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
     try {
       if (lock.tryLock(maxWait.toMillis(), TimeUnit.MILLISECONDS)) {
         return lock::unlock;
       }
     } catch (InterruptedException e) {
-      log.warn("while trying to aquire write token", e);
+      log.warn("while trying to acquire write token", e);
     }
     return null;
+  }
+
+  public boolean isValid() {
+    return lock.isLocked();
   }
 }

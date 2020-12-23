@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus;
+package org.factcast.factus.projection;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.factcast.factus.projection.Aggregate;
+public interface WriterToken extends AutoCloseable {
+  static WriterToken simple(AutoCloseable acquireWriteToken) {
+    return () -> acquireWriteToken.close();
+  }
 
-@EqualsAndHashCode(callSuper = true)
-@Data
-public class PersonAggregate extends Aggregate {
-
-  private String name = "";
-
-  private int processed = 0;
-
-  @Handler
-  void process(NameEvent event) {
-    this.name = event.name();
-    this.processed++;
+  default boolean isValid() {
+    return true;
   }
 }

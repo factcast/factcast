@@ -19,14 +19,18 @@ import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import java.util.List;
 import java.util.Optional;
+import lombok.NonNull;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
+import org.factcast.client.grpc.FactCastGrpcClientProperties;
 import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.store.FactStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 /**
  * Provides a GrpcFactStore as a FactStore implementation.
@@ -36,15 +40,17 @@ import org.springframework.context.annotation.Configuration;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Configuration
 @ConditionalOnClass({GrpcFactStore.class, GrpcChannelFactory.class})
+@Import(FactCastGrpcClientProperties.class)
+@EnableConfigurationProperties
 public class GrpcFactStoreAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean(FactStore.class)
   public FactStore factStore(
-      GrpcChannelFactory af,
+      @NonNull GrpcChannelFactory af,
       // we need a new namespace for those client properties
-      @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
-      @Value("${grpc.client.factstore.batch:1}") int catchupBatchSize) {
+      @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
+      @NonNull FactCastGrpcClientProperties properties) {
     org.factcast.client.grpc.FactCastGrpcChannelFactory f =
         new org.factcast.client.grpc.FactCastGrpcChannelFactory() {
 
@@ -63,6 +69,6 @@ public class GrpcFactStoreAutoConfiguration {
             af.close();
           }
         };
-    return new GrpcFactStore(f, credentials, catchupBatchSize);
+    return new GrpcFactStore(f, credentials, properties);
   }
 }

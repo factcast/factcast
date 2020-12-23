@@ -24,6 +24,5 @@ public interface WriterTokenAware {
     return acquireWriteToken(FactusConstants.FOREVER);
   }
 
-  /** might return null if token cannot be acquired */
-  AutoCloseable acquireWriteToken(@NonNull Duration maxWait);
+  WriterToken acquireWriteToken(@NonNull Duration maxWait);
 }

@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.util.UUID;
 import lombok.NonNull;
 import org.factcast.factus.projection.ManagedProjection;
+import org.factcast.factus.projection.WriterToken;
 import org.redisson.api.RBucket;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -28,10 +29,12 @@ public abstract class AbstractRedisManagedProjection extends ManagedProjection {
   private final RBucket<UUID> stateBucket;
 
   private final RLock lock;
+  private final RedissonClient redisson;
 
-  public AbstractRedisManagedProjection(RedissonClient redisson) {
+  public AbstractRedisManagedProjection(@NonNull RedissonClient redisson) {
     stateBucket = redisson.getBucket("state_tracking_" + getClass().getSimpleName());
     lock = redisson.getLock("lock_" + getClass().getName());
+    this.redisson = redisson;
   }
 
   @Override
@@ -45,8 +48,8 @@ public abstract class AbstractRedisManagedProjection extends ManagedProjection {
   }
 
   @Override
-  public AutoCloseable acquireWriteToken(@NonNull Duration maxWait) {
+  public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
     lock.lock();
-    return lock::unlock;
+    return new RedisWriterToken(redisson, lock);
   }
 }
