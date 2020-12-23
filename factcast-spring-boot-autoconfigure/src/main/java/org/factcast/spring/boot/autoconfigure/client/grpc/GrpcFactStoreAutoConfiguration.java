@@ -47,9 +47,9 @@ public class GrpcFactStoreAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean(FactStore.class)
   public FactStore factStore(
-      GrpcChannelFactory af,
+      @NonNull GrpcChannelFactory af,
       // we need a new namespace for those client properties
-      @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
+      @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties) {
     org.factcast.client.grpc.FactCastGrpcChannelFactory f =
         new org.factcast.client.grpc.FactCastGrpcChannelFactory() {
