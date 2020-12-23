@@ -153,10 +153,10 @@ public class FactusImpl implements Factus {
 
     Duration interval = Duration.ofMinutes(5); // TODO should be a property?
     while (!closed.get()) {
-      AutoCloseable token = subscribedProjection.acquireWriteToken(interval);
+      WriterToken token = subscribedProjection.acquireWriteToken(interval);
       if (token != null) {
         log.info("Acquired writer token for {}", subscribedProjection.getClass());
-        Subscription subscription = doSubscribe(subscribedProjection);
+        Subscription subscription = doSubscribe(subscribedProjection, token);
         // close token & subscription on shutdown
         managedObjects.add(
             new AutoCloseable() {
@@ -185,7 +185,8 @@ public class FactusImpl implements Factus {
   }
 
   @SneakyThrows
-  private <P extends SubscribedProjection> Subscription doSubscribe(P subscribedProjection) {
+  private <P extends SubscribedProjection> Subscription doSubscribe(
+      @NonNull P subscribedProjection, @NonNull WriterToken token) {
     Projector<P> handler = ehFactory.create(subscribedProjection);
     FactObserver fo =
         new FactObserver() {
@@ -193,22 +194,29 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onNext(@NonNull Fact element) {
-            subscribedProjection.executeUpdate(
-                () -> {
-                  handler.apply(element);
-                  subscribedProjection.state(element.id());
-                });
 
-            if (caughtUp.get()) {
-              String ts = element.meta("_ts");
-              // _ts might not be there in unit testing for instance.
-              if (ts != null) {
-                long latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
-                factusMetrics.timed(
-                    TimedOperation.EVENT_PROCESSING_LATENCY,
-                    Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getName())),
-                    latency);
+            if (token.isValid()) {
+
+              subscribedProjection.executeUpdate(
+                  () -> {
+                    handler.apply(element);
+                    subscribedProjection.state(element.id());
+                  });
+
+              if (caughtUp.get()) {
+                String ts = element.meta("_ts");
+                // _ts might not be there in unit testing for instance.
+                if (ts != null) {
+                  long latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
+                  factusMetrics.timed(
+                      TimedOperation.EVENT_PROCESSING_LATENCY,
+                      Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getName())),
+                      latency);
+                }
               }
+            } else {
+              // token is no longer valid
+              throw new IllegalStateException("WriterToken is no longer valid.");
             }
           }
 
@@ -308,8 +316,7 @@ public class FactusImpl implements Factus {
             .map(as -> ser.deserialize(aggregateClass, as.bytes()))
             .map(peek(Aggregate::onAfterRestore));
 
-    // noinspection
-    A aggregate = optionalA.orElseGet(() -> this.initial(aggregateClass, aggregateId));
+    A aggregate = optionalA.orElseGet(() -> initial(aggregateClass, aggregateId));
 
     UUID state =
         catchupProjection(
@@ -411,7 +418,7 @@ public class FactusImpl implements Factus {
 
   @Override
   public void close() {
-    if (this.closed.getAndSet(true)) {
+    if (closed.getAndSet(true)) {
       log.warn("close is being called more than once!?");
     } else {
       ArrayList<AutoCloseable> closeables = new ArrayList<>(managedObjects);
@@ -467,7 +474,9 @@ public class FactusImpl implements Factus {
   public LockedOnSpecs withLockOn(@NonNull FactSpec spec, FactSpec... additional) {
     LinkedList<FactSpec> l = new LinkedList<>();
     l.add(spec);
-    if (additional != null) l.addAll(Arrays.asList(additional));
+    if (additional != null) {
+      l.addAll(Arrays.asList(additional));
+    }
     return withLockOn(l);
   }
 
