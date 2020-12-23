@@ -15,19 +15,23 @@
  */
 package org.factcast.server.grpc;
 
+import net.devh.boot.grpc.server.scope.GrpcRequestScope;
 import org.factcast.core.store.FactStore;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 
 @Configuration
 @EnableConfigurationProperties(GrpcLimitProperties.class)
 public class FactCastGrpcServerConfiguration {
 
   @Bean
-  public FactStoreGrpcService factStoreGrpcService(FactStore store, GrpcLimitProperties props) {
-    return new FactStoreGrpcService(store, props);
+  public FactStoreGrpcService factStoreGrpcService(
+      FactStore store, GrpcRequestMetadata grpcMetaData, GrpcLimitProperties props) {
+    return new FactStoreGrpcService(store, grpcMetaData, props);
   }
 
   @Bean
@@ -38,5 +42,19 @@ public class FactCastGrpcServerConfiguration {
   @Bean
   public GrpcExceptionInterceptor grpcExceptionInterceptor() {
     return new GrpcExceptionInterceptor();
+  }
+
+  @Bean
+  public GrpcRequestMetadataInterceptor grpcRequestMetadataInterceptor(
+      GrpcRequestMetadata grpcMetaData) {
+    return new GrpcRequestMetadataInterceptor(grpcMetaData);
+  }
+
+  @Bean
+  @Scope(
+      scopeName = GrpcRequestScope.GRPC_REQUEST_SCOPE_NAME,
+      proxyMode = ScopedProxyMode.TARGET_CLASS)
+  GrpcRequestMetadata grpcMetaData() {
+    return new GrpcRequestMetadata();
   }
 }

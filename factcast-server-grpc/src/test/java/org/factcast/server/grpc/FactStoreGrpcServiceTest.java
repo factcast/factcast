@@ -66,6 +66,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 public class FactStoreGrpcServiceTest {
 
   @Mock FactStore backend;
+  @Mock GrpcRequestMetadata meta;
 
   @InjectMocks FactStoreGrpcService uut;
 
@@ -79,7 +80,7 @@ public class FactStoreGrpcServiceTest {
 
   @BeforeEach
   void setUp() {
-    uut = new FactStoreGrpcService(backend);
+    uut = new FactStoreGrpcService(backend, meta);
 
     SecurityContextHolder.setContext(
         new SecurityContext() {
@@ -103,7 +104,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void currentTime() {
     val store = mock(FactStore.class);
-    val uut = new FactStoreGrpcService(store);
+    val uut = new FactStoreGrpcService(store, meta);
     when(store.currentTime()).thenReturn(101L);
     StreamObserver<MSG_CurrentDatabaseTime> stream = mock(StreamObserver.class);
 
@@ -128,7 +129,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchById() {
     val store = mock(FactStore.class);
-    val uut = new FactStoreGrpcService(store);
+    val uut = new FactStoreGrpcService(store, meta);
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).buildWithoutPayload();
     val expected = Optional.of(fact);
     when(store.fetchById(fact.id())).thenReturn(expected);
@@ -144,7 +145,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchByIEmpty() {
     val store = mock(FactStore.class);
-    val uut = new FactStoreGrpcService(store);
+    val uut = new FactStoreGrpcService(store, meta);
 
     Optional<Fact> expected = Optional.empty();
     UUID id = UUID.randomUUID();
@@ -161,7 +162,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchByIdThrowingException() {
     val store = mock(FactStore.class);
-    val uut = new FactStoreGrpcService(store);
+    val uut = new FactStoreGrpcService(store, meta);
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).buildWithoutPayload();
     when(store.fetchById(fact.id())).thenThrow(IllegalMonitorStateException.class);
     StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
@@ -177,7 +178,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchByIdAndVersion() throws TransformationException {
     val store = mock(FactStore.class);
-    val uut = new FactStoreGrpcService(store);
+    val uut = new FactStoreGrpcService(store, meta);
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).buildWithoutPayload();
     val expected = Optional.of(fact);
     when(store.fetchByIdAndVersion(fact.id(), 1)).thenReturn(expected);
@@ -193,7 +194,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchByIdAndVersionEmpty() throws TransformationException {
     val store = mock(FactStore.class);
-    val uut = new FactStoreGrpcService(store);
+    val uut = new FactStoreGrpcService(store, meta);
     Optional<Fact> expected = Optional.empty();
     @NonNull UUID id = UUID.randomUUID();
     when(store.fetchByIdAndVersion(id, 1)).thenReturn(expected);
@@ -282,6 +283,7 @@ public class FactStoreGrpcServiceTest {
     uut =
         new FactStoreGrpcService(
             backend,
+            meta,
             new GrpcLimitProperties()
                 .initialNumberOfFollowRequestsAllowedPerClient(3)
                 .numberOfFollowRequestsAllowedPerClientPerMinute(1));
@@ -308,6 +310,7 @@ public class FactStoreGrpcServiceTest {
     uut =
         new FactStoreGrpcService(
             backend,
+            meta,
             new GrpcLimitProperties()
                 .initialNumberOfCatchupRequestsAllowedPerClient(3)
                 .numberOfCatchupRequestsAllowedPerClientPerMinute(1)
@@ -330,6 +333,7 @@ public class FactStoreGrpcServiceTest {
     uut =
         new FactStoreGrpcService(
             backend,
+            meta,
             new GrpcLimitProperties()
                 .initialNumberOfCatchupRequestsAllowedPerClient(3)
                 .numberOfCatchupRequestsAllowedPerClientPerMinute(1)
@@ -352,6 +356,7 @@ public class FactStoreGrpcServiceTest {
     uut =
         new FactStoreGrpcService(
             backend,
+            meta,
             new GrpcLimitProperties()
                 .initialNumberOfCatchupRequestsAllowedPerClient(3)
                 .numberOfCatchupRequestsAllowedPerClientPerMinute(1)
@@ -377,7 +382,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   public void testSerialOf() {
-    uut = new FactStoreGrpcService(backend);
+    uut = new FactStoreGrpcService(backend, meta);
 
     StreamObserver so = mock(StreamObserver.class);
     assertThrows(NullPointerException.class, () -> uut.serialOf(null, so));
@@ -395,7 +400,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   public void testSerialOfThrows() {
-    uut = new FactStoreGrpcService(backend);
+    uut = new FactStoreGrpcService(backend, meta);
 
     StreamObserver so = mock(StreamObserver.class);
     when(backend.serialOf(any(UUID.class))).thenThrow(UnsupportedOperationException.class);
@@ -407,7 +412,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   public void testEnumerateNamespaces() {
-    uut = new FactStoreGrpcService(backend);
+    uut = new FactStoreGrpcService(backend, meta);
     StreamObserver so = mock(StreamObserver.class);
     when(backend.enumerateNamespaces()).thenReturn(Sets.newHashSet("foo", "bar"));
 
@@ -420,7 +425,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   public void testEnumerateNamespacesThrows() {
-    uut = new FactStoreGrpcService(backend);
+    uut = new FactStoreGrpcService(backend, meta);
     StreamObserver so = mock(StreamObserver.class);
     when(backend.enumerateNamespaces()).thenThrow(UnsupportedOperationException.class);
 
@@ -430,7 +435,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   public void testEnumerateTypes() {
-    uut = new FactStoreGrpcService(backend);
+    uut = new FactStoreGrpcService(backend, meta);
     StreamObserver so = mock(StreamObserver.class);
 
     when(backend.enumerateTypes(eq("ns"))).thenReturn(Sets.newHashSet("foo", "bar"));
@@ -444,7 +449,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   public void testEnumerateTypesThrows() {
-    uut = new FactStoreGrpcService(backend);
+    uut = new FactStoreGrpcService(backend, meta);
     StreamObserver so = mock(StreamObserver.class);
     when(backend.enumerateTypes(eq("ns"))).thenThrow(UnsupportedOperationException.class);
 
