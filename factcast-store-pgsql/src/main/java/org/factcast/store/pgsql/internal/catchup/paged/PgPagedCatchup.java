@@ -62,6 +62,7 @@ public class PgPagedCatchup implements PgCatchup {
       val jdbc = new JdbcTemplate(ds);
 
       jdbc.execute("CREATE TEMPORARY TABLE catchup(ser bigint primary key)");
+      jdbc.execute("CREATE INDEX catchup_tmp_idx1 ON catchup(ser)"); // improves perf on sorting?
 
       PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request);
       val numberOfFactsToCatchUp = prep.prepareCatchup(serial);
