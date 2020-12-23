@@ -51,55 +51,56 @@ import org.junit.jupiter.api.extension.*;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "ResultOfMethodCallIgnored"})
 @ExtendWith(MockitoExtension.class)
 class GrpcFactStoreTest {
 
-  @InjectMocks private GrpcFactStore uut;
+  @InjectMocks GrpcFactStore uut;
+
+  @Mock FactCastGrpcClientProperties properties;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  private RemoteFactStoreBlockingStub blockingStub;
+  RemoteFactStoreBlockingStub blockingStub;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  private RemoteFactStoreStub stub;
+  RemoteFactStoreStub stub;
 
-  @Mock private FactCastGrpcChannelFactory factory;
+  @Mock FactCastGrpcChannelFactory factory;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  private SubscriptionRequestTO req;
+  SubscriptionRequestTO req;
 
-  private final ProtoConverter conv = new ProtoConverter();
+  final ProtoConverter conv = new ProtoConverter();
 
-  @Captor private ArgumentCaptor<MSG_Facts> factsCap;
+  @Captor ArgumentCaptor<MSG_Facts> factsCap;
 
   @Mock public Optional<String> credentials;
 
   @Test
   void testPublish() {
     when(blockingStub.publish(factsCap.capture())).thenReturn(MSG_Empty.newBuilder().build());
-    final TestFact fact = new TestFact();
+    TestFact fact = new TestFact();
     uut.publish(Collections.singletonList(fact));
     verify(blockingStub).publish(any());
-    final MSG_Facts pfacts = factsCap.getValue();
+    MSG_Facts pfacts = factsCap.getValue();
     Fact published = conv.fromProto(pfacts.getFact(0));
     assertEquals(fact.id(), published.id());
   }
 
   @Test
   void configureCompressionChooseGzipIfAvail() {
-    uut.configureCompression(" gzip,lz3,lz4, lz99");
+    uut.configureCompressionAndMetaData(" gzip,lz3,lz4, lz99");
     verify(stub).withCompression("gzip");
   }
 
   @Test
   void configureCompressionSkipCompression() {
-    uut.configureCompression("zip,lz3,lz4, lz99");
+    uut.configureCompressionAndMetaData("zip,lz3,lz4, lz99");
     verifyNoMoreInteractions(stub);
   }
 
   @Test
   void fetchById() {
-    final TestFact fact = new TestFact();
+    TestFact fact = new TestFact();
     val uuid = fact.id();
     val conv = new ProtoConverter();
     val id = conv.toProto(uuid);
@@ -114,7 +115,7 @@ class GrpcFactStoreTest {
 
   @Test
   void fetchByIdAndVersion() {
-    final TestFact fact = new TestFact();
+    TestFact fact = new TestFact();
     val uuid = fact.id();
     val conv = new ProtoConverter();
     val id = conv.toProto(uuid, 100);
@@ -129,7 +130,7 @@ class GrpcFactStoreTest {
 
   @Test
   void fetchByIdThrowsRetryable() {
-    final TestFact fact = new TestFact();
+    TestFact fact = new TestFact();
     val uuid = fact.id();
     val id = conv.toProto(uuid);
     when(blockingStub.fetchById(eq(id))).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
@@ -139,7 +140,7 @@ class GrpcFactStoreTest {
 
   @Test
   void fetchByIdAndVersionThrowsRetryable() {
-    final TestFact fact = new TestFact();
+    TestFact fact = new TestFact();
     val uuid = fact.id();
     val id = conv.toProto(uuid, 100);
     when(blockingStub.fetchByIdAndVersion(eq(id)))
@@ -151,7 +152,7 @@ class GrpcFactStoreTest {
 
   static class SomeException extends RuntimeException {
 
-    private static final long serialVersionUID = 1L;
+    static final long serialVersionUID = 1L;
   }
 
   @Test

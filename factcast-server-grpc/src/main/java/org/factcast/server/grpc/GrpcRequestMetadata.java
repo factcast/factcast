@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.grpc.api;
+package org.factcast.server.grpc;
 
 import io.grpc.Metadata;
+import java.util.Objects;
+import java.util.OptionalInt;
+import java.util.stream.Stream;
+import lombok.Data;
+import org.factcast.grpc.api.Headers;
 
-public class Headers {
-  private static final String GRPC_COMPRESSION_HEADER = "fc-msgcomp";
+@Data
+public class GrpcRequestMetadata {
+  Metadata headers;
 
-  private static final String GRPC_CATCHUP_BATCHSIZE = "fc-cbat";
-
-  public static final Metadata.Key<String> MESSAGE_COMPRESSION =
-      Metadata.Key.of(Headers.GRPC_COMPRESSION_HEADER, Metadata.ASCII_STRING_MARSHALLER);
-
-  public static final Metadata.Key<String> CATCHUP_BATCHSIZE =
-      Metadata.Key.of(Headers.GRPC_CATCHUP_BATCHSIZE, Metadata.ASCII_STRING_MARSHALLER);
+  OptionalInt catchupBatch() {
+    return Stream.of(headers.get(Headers.CATCHUP_BATCHSIZE))
+        .filter(Objects::nonNull)
+        .mapToInt(Integer::parseInt)
+        .findFirst();
+  }
 }

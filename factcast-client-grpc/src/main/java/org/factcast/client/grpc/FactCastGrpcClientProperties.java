@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.grpc.api;
+package org.factcast.client.grpc;
 
-import io.grpc.Metadata;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-public class Headers {
-  private static final String GRPC_COMPRESSION_HEADER = "fc-msgcomp";
+@Configuration
+@ConfigurationProperties(prefix = "factcast.grpc.client")
+@Data
+@Accessors(fluent = false)
+public class FactCastGrpcClientProperties {
 
-  private static final String GRPC_CATCHUP_BATCHSIZE = "fc-cbat";
-
-  public static final Metadata.Key<String> MESSAGE_COMPRESSION =
-      Metadata.Key.of(Headers.GRPC_COMPRESSION_HEADER, Metadata.ASCII_STRING_MARSHALLER);
-
-  public static final Metadata.Key<String> CATCHUP_BATCHSIZE =
-      Metadata.Key.of(Headers.GRPC_CATCHUP_BATCHSIZE, Metadata.ASCII_STRING_MARSHALLER);
+  private int catchupBatchsize = 50;
 }

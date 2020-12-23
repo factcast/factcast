@@ -77,6 +77,7 @@ public class GrpcFactStore implements FactStore {
   private RemoteFactStoreStub stub;
 
   private RemoteFactStoreStub rawStub;
+  private int catchupBatchSize;
 
   private RemoteFactStoreBlockingStub rawBlockingStub;
 
@@ -87,26 +88,43 @@ public class GrpcFactStore implements FactStore {
   @Autowired
   @Generated
   public GrpcFactStore(
-      FactCastGrpcChannelFactory channelFactory,
-      @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials) {
-    this(channelFactory.createChannel(CHANNEL_NAME), credentials);
+      @NonNull FactCastGrpcChannelFactory channelFactory,
+      @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
+      @NonNull FactCastGrpcClientProperties properties) {
+    this(channelFactory.createChannel(CHANNEL_NAME), credentials, properties);
   }
 
   @Generated
   @VisibleForTesting
-  GrpcFactStore(Channel channel, Optional<String> credentials) {
+  GrpcFactStore(
+      @NonNull Channel channel,
+      @NonNull Optional<String> credentials,
+      @NonNull FactCastGrpcClientProperties properties) {
     this(
         RemoteFactStoreGrpc.newBlockingStub(channel),
         RemoteFactStoreGrpc.newStub(channel),
-        credentials);
+        credentials,
+        properties);
+  }
+
+  @Generated
+  @VisibleForTesting
+  GrpcFactStore(@NonNull Channel channel, @NonNull Optional<String> credentials) {
+    this(
+        RemoteFactStoreGrpc.newBlockingStub(channel),
+        RemoteFactStoreGrpc.newStub(channel),
+        credentials,
+        new FactCastGrpcClientProperties());
   }
 
   private GrpcFactStore(
-      RemoteFactStoreBlockingStub newBlockingStub,
-      RemoteFactStoreStub newStub,
-      Optional<String> credentials) {
+      @NonNull RemoteFactStoreBlockingStub newBlockingStub,
+      @NonNull RemoteFactStoreStub newStub,
+      @NonNull Optional<String> credentials,
+      @NonNull FactCastGrpcClientProperties properties) {
     rawBlockingStub = newBlockingStub;
     rawStub = newStub;
+    catchupBatchSize = properties.getCatchupBatchsize();
 
     // initially use the raw ones...
     blockingStub = rawBlockingStub;
@@ -160,7 +178,7 @@ public class GrpcFactStore implements FactStore {
   }
 
   @VisibleForTesting
-  void cancel(final ClientCall<MSG_SubscriptionRequest, MSG_Notification> call) {
+  void cancel(ClientCall<MSG_SubscriptionRequest, MSG_Notification> call) {
     // cancel does not need to be retried.
     call.cancel("Client is no longer interested", null);
   }
@@ -192,7 +210,7 @@ public class GrpcFactStore implements FactStore {
       }
       logProtocolVersion(serverProtocolVersion);
       logServerVersion(serverProperties);
-      configureCompression(serverProperties.get(Capabilities.CODECS.toString()));
+      configureCompressionAndMetaData(serverProperties.get(Capabilities.CODECS.toString()));
     }
   }
 
@@ -221,7 +239,7 @@ public class GrpcFactStore implements FactStore {
   }
 
   @VisibleForTesting
-  void configureCompression(String codecListFromServer) {
+  void configureCompressionAndMetaData(String codecListFromServer) {
     codecs
         .selectFrom(codecListFromServer)
         .ifPresent(
@@ -231,6 +249,9 @@ public class GrpcFactStore implements FactStore {
               // to request compressed messages from server
               Metadata meta = new Metadata();
               meta.put(Headers.MESSAGE_COMPRESSION, c);
+              if (catchupBatchSize > 1) {
+                meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
+              }
               rawBlockingStub = blockingStub;
               rawStub = stub;
               blockingStub = MetadataUtils.attachHeaders(blockingStub.withCompression(c), meta);
