@@ -69,8 +69,9 @@ public class PgPagedCatchup implements PgCatchup {
       if (numberOfFactsToCatchUp > 0) {
         try {
           PgCatchUpFetchPage fetch = new PgCatchUpFetchPage(jdbc, props.getPageSize(), request);
-          while (true) {
-            List<Fact> facts = fetch.fetchFacts(serial);
+          List<Fact> facts;
+          do {
+            facts = fetch.fetchFacts(serial);
 
             for (Fact f : facts) {
               UUID factId = f.id();
@@ -98,12 +99,8 @@ public class PgPagedCatchup implements PgCatchup {
                 log.trace("{} filtered id={}", request, factId);
               }
             }
+          } while (!facts.isEmpty());
 
-            if (facts.isEmpty()) {
-              // we have reached the end
-              break;
-            }
-          }
         } catch (Exception e) {
           log.error("While fetching ", e);
         }
