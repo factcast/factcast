@@ -48,10 +48,7 @@ import org.factcast.factus.lock.InLockedOperation;
 import org.factcast.factus.lock.Locked;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.ManagedProjection;
-import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.projection.SubscribedProjection;
+import org.factcast.factus.projection.*;
 import org.factcast.factus.projector.DefaultProjector;
 import org.factcast.factus.projector.Projector;
 import org.factcast.factus.projector.ProjectorFactory;
@@ -81,7 +78,8 @@ class FactusImplTest {
 
   @Mock private AtomicBoolean closed;
 
-  @Mock private AutoCloseable autoCloseable;
+  @Mock(lenient = true)
+  private WriterToken token;
 
   @Spy private final FactusMetrics factusMetrics = new FactusMetricsImpl(new SimpleMeterRegistry());
 
@@ -90,6 +88,11 @@ class FactusImplTest {
   @Captor ArgumentCaptor<FactObserver> factObserverCaptor;
 
   @Mock List<Specification> specs;
+
+  @BeforeEach
+  void setup() {
+    when(token.isValid()).thenReturn(true);
+  }
 
   @Test
   void testToFact() {
@@ -470,7 +473,6 @@ class FactusImplTest {
     class SimpleAggregate extends Aggregate {}
 
     @Test
-    @SuppressWarnings("unchecked")
     void fetchWithNoEvents() {
       // INIT
       mockSnapFactory();
@@ -492,7 +494,6 @@ class FactusImplTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void fetchWithNoEventsButSnapshot() {
       // INIT
       mockSnapFactory();
@@ -716,7 +717,6 @@ class FactusImplTest {
     @Captor ArgumentCaptor<FactObserver> factObserverArgumentCaptor;
 
     @Test
-    @SuppressWarnings("unchecked")
     void subscribe() throws Exception {
       // INIT
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
@@ -790,7 +790,6 @@ class FactusImplTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void closeSubscribed() throws Exception {
       // INIT
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
@@ -895,7 +894,6 @@ class FactusImplTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void findWithNoEventsButSnapshot() {
       // INIT
       mockSnapFactory();
@@ -931,7 +929,6 @@ class FactusImplTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void callsAfterRestoreOnAggregateWhenUsingSnapshot() {
       // INIT
       mockSnapFactory();
@@ -969,7 +966,6 @@ class FactusImplTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void callsAfterRestoreOnProjectionWhenUsingSnapshot() {
       // INIT
       mockSnapFactory();
@@ -994,7 +990,6 @@ class FactusImplTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void callsBeforeSnapshotOnAggregate() {
       // INIT
       mockSnapFactory();
@@ -1057,7 +1052,6 @@ class FactusImplTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void callsBeforeSnapshotOnProjection() {
       // INIT
       mockSnapFactory();
@@ -1106,7 +1100,6 @@ class FactusImplTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void findWithEventsAndSnapshot() {
       // INIT
       mockSnapFactory();
@@ -1169,7 +1162,6 @@ class FactusImplTest {
     @Captor ArgumentCaptor<PersonAggregate> personAggregateCaptor;
 
     @Test
-    @SuppressWarnings("unchecked")
     void findWithEventsButNoSnapshot() {
       // INIT
       mockSnapFactory();
