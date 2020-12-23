@@ -16,9 +16,7 @@
 package org.factcast.core.subscription.observer;
 
 import java.util.function.Function;
-import lombok.AccessLevel;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.slf4j.LoggerFactory;
 
@@ -47,12 +45,16 @@ public interface GenericObserver<I> {
     return new ObserverBridge<>(this, projection);
   }
 
-  @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
   class ObserverBridge<I> implements FactObserver {
 
     private final GenericObserver<I> delegate;
 
     private final Function<Fact, I> project;
+
+    protected ObserverBridge(GenericObserver<I> delegate, Function<Fact, I> project) {
+      this.delegate = delegate;
+      this.project = project;
+    }
 
     @Override
     public void onNext(@NonNull Fact from) {

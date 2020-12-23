@@ -32,25 +32,34 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
  *
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
 @RequiredArgsConstructor
 class GrpcObserverAdapter implements FactObserver {
 
-  final ProtoConverter converter = new ProtoConverter();
+  private final ProtoConverter converter = new ProtoConverter();
 
-  @NonNull final String id;
+  @NonNull private final String id;
 
-  @NonNull final StreamObserver<MSG_Notification> observer;
-  @NonNull final int catchupBatchSize;
+  @NonNull private final StreamObserver<MSG_Notification> observer;
+  @NonNull private final int catchupBatchSize;
 
   @VisibleForTesting
   GrpcObserverAdapter(String id, StreamObserver<MSG_Notification> observer) {
     this(id, observer, 1);
   }
 
-  private final ArrayList<Fact> stagedFacts = new ArrayList<Fact>();
+  private final ArrayList<Fact> stagedFacts;
   private final AtomicBoolean caughtUp = new AtomicBoolean(false);
+
+  public GrpcObserverAdapter(
+      @NonNull String id,
+      @NonNull StreamObserver<MSG_Notification> observer,
+      @NonNull int catchupBatchSize) {
+    this.id = id;
+    this.observer = observer;
+    this.catchupBatchSize = catchupBatchSize;
+    stagedFacts = new ArrayList<>(catchupBatchSize);
+  }
 
   @Override
   public void onComplete() {
@@ -96,8 +105,12 @@ class GrpcObserverAdapter implements FactObserver {
   @Override
   public void onNext(Fact element) {
     if (catchupBatchSize > 1 && !caughtUp.get()) {
-      if (stagedFacts.size() >= catchupBatchSize) flush();
+      if (stagedFacts.size() >= catchupBatchSize) {
+        flush();
+      }
       stagedFacts.add(element);
-    } else observer.onNext(converter.createNotificationFor(element));
+    } else {
+      observer.onNext(converter.createNotificationFor(element));
+    }
   }
 }
