@@ -22,22 +22,19 @@ import java.util.Set;
 import lombok.NonNull;
 
 public class RequestedVersions {
-  private final Map<String, Set<Integer>> c = new HashMap<>();
+  private final Map<String, Map<String, Set<Integer>>> c = new HashMap<>();
 
   public void add(@NonNull String ns, @NonNull String type, int version) {
     get(ns, type).add(version);
   }
 
   public Set<Integer> get(@NonNull String ns, String type) {
-    return c.computeIfAbsent(ns + ":" + type, k -> new HashSet<>());
+    return c.computeIfAbsent(ns, key -> new HashMap<>())
+        .computeIfAbsent(type, k -> new HashSet<>());
   }
 
-  public boolean dontCare(@NonNull String ns, String type) {
+  public boolean matches(@NonNull String ns, String type, int version) {
     Set<Integer> set = get(ns, type);
-    return set.isEmpty() || set.contains(0);
-  }
-
-  public boolean exactVersion(@NonNull String ns, String type, int version) {
-    return get(ns, type).contains(version);
+    return set.isEmpty() || set.contains(0) || set.contains(version);
   }
 }

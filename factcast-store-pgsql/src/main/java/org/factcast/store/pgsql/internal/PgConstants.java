@@ -29,8 +29,6 @@ import lombok.experimental.FieldDefaults;
 @Generated
 public class PgConstants {
 
-  public static final String NEXT_FROM_CATCHUP_SEQ = "SELECT nextval('catchup_seq')";
-
   public static final String CURRENT_TIME_MILLIS = "SELECT TRUNC(EXTRACT(EPOCH FROM now()) * 1000)";
 
   public static final String TABLE_CATCHUP = "catchup";
@@ -126,8 +124,6 @@ public class PgConstants {
           + //
           TABLE_CATCHUP
           + "   WHERE ( "
-          + COLUMN_CID
-          + "=? AND "
           + COLUMN_SER
           + //
 
@@ -150,9 +146,6 @@ public class PgConstants {
           + COLUMN_HEADER
           + //
           " @> cast (? as jsonb) ORDER BY ser DESC LIMIT 1";
-
-  public static final String DELETE_CATCH_BY_CID = //
-      "DELETE FROM " + TABLE_CATCHUP + " WHERE cid=?";
 
   public static final String SELECT_BY_HEADER_JSON =
       "SELECT " + COLUMN_SER + " FROM " + TABLE_FACT + " WHERE " + COLUMN_HEADER + " @> ?::jsonb";
