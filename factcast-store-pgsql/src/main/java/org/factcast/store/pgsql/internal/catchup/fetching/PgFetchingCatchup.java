@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.internal.catchup.paged;
+package org.factcast.store.pgsql.internal.catchup.fetching;
 
-import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -29,22 +29,24 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
-import org.factcast.store.pgsql.internal.catchup.PgCatchUpPrepare;
 import org.factcast.store.pgsql.internal.catchup.PgCatchup;
 import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
+import org.factcast.store.pgsql.internal.query.PgQueryBuilder;
+import org.factcast.store.pgsql.internal.rowmapper.PgFactExtractor;
 import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @Slf4j
 @RequiredArgsConstructor
-public class PgPagedCatchup implements PgCatchup {
+public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final PgConnectionSupplier connectionSupplier;
 
   @NonNull final PgConfigurationProperties props;
 
-  @NonNull final SubscriptionRequestTO request;
+  @NonNull final SubscriptionRequestTO req;
 
   @NonNull final PgPostQueryMatcher postQueryMatcher;
 
@@ -59,53 +61,41 @@ public class PgPagedCatchup implements PgCatchup {
     SingleConnectionDataSource ds = new SingleConnectionDataSource(connectionSupplier.get(), true);
     try {
       val jdbc = new JdbcTemplate(ds);
-
-      jdbc.execute("CREATE TEMPORARY TABLE catchup(ser bigint primary key)");
-      jdbc.execute("CREATE INDEX catchup_tmp_idx1 ON catchup(ser)"); // improves perf on sorting?
-
-      PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request);
-      val numberOfFactsToCatchUp = prep.prepareCatchup(serial);
       val skipTesting = postQueryMatcher.canBeSkipped();
 
-      if (numberOfFactsToCatchUp > 0) {
-        try {
-          PgCatchUpFetchPage fetch = new PgCatchUpFetchPage(jdbc, props.getPageSize(), request);
-          List<Fact> facts;
-          do {
-            facts = fetch.fetchFacts(serial);
-
-            for (Fact f : facts) {
-              UUID factId = f.id();
-              if (skipTesting || postQueryMatcher.test(f)) {
-                try {
-                  subscription.notifyElement(f);
-                } catch (MissingTransformationInformation | TransformationException e) {
-                  log.warn("{} transformation error: {}", request, e.getMessage());
-                  subscription.notifyError(e);
-                  throw e;
-                } catch (Throwable e) {
-                  // debug level, because it happens regularly
-                  // on
-                  // disconnecting clients.
-                  log.debug("{} exception from subscription: {}", request, e.getMessage());
+      PgQueryBuilder b = new PgQueryBuilder(req.specs());
+      val extractor = new PgFactExtractor(serial);
+      AtomicInteger rowIndex = new AtomicInteger(0);
+      jdbc.query(
+          b.fetchSQL(),
+          b.createStatementSetter(serial),
+          (RowCallbackHandler)
+              rs -> {
+                Fact f = extractor.mapRow(rs, rowIndex.incrementAndGet());
+                UUID factId = f.id();
+                if (skipTesting || postQueryMatcher.test(f)) {
                   try {
-                    subscription.close();
-                  } catch (Exception e1) {
-                    log.warn(
-                        "{} exception while closing subscription: {}", request, e1.getMessage());
+                    subscription.notifyElement(f);
+                  } catch (MissingTransformationInformation | TransformationException e) {
+                    log.warn("{} transformation error: {}", req, e.getMessage());
+                    subscription.notifyError(e);
+                    throw e;
+                  } catch (Throwable e) {
+                    // debug level, because it happens regularly
+                    // on
+                    // disconnecting clients.
+                    log.debug("{} exception from subscription: {}", req, e.getMessage());
+                    try {
+                      subscription.close();
+                    } catch (Exception e1) {
+                      log.warn("{} exception while closing subscription: {}", req, e1.getMessage());
+                    }
+                    throw e;
                   }
-                  throw e;
+                } else {
+                  log.trace("{} filtered id={}", req, factId);
                 }
-              } else {
-                log.trace("{} filtered id={}", request, factId);
-              }
-            }
-          } while (!facts.isEmpty());
-
-        } catch (Exception e) {
-          log.error("While fetching ", e);
-        }
-      }
+              });
     } finally {
       ds.destroy();
     }

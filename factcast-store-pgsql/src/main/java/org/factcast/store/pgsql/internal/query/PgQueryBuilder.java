@@ -155,4 +155,8 @@ public class PgQueryBuilder {
     log.trace("{} catchupSQL={}", factSpecs, sql);
     return sql;
   }
+
+  public String fetchSQL() {
+    return null;
+  }
 }
