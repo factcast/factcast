@@ -39,7 +39,7 @@ public class PgQueryBuilder {
   final @NonNull List<FactSpec> factSpecs;
 
   public PgQueryBuilder(@NonNull List<FactSpec> specs) {
-    this.factSpecs = specs;
+    factSpecs = specs;
   }
 
   public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
@@ -104,7 +104,7 @@ public class PgQueryBuilder {
   }
 
   public String createSQL() {
-    final String sql =
+    String sql =
         "SELECT "
             + PgConstants.PROJECTION_FACT
             + " FROM "
@@ -119,7 +119,7 @@ public class PgQueryBuilder {
   }
 
   public String createStateSQL() {
-    final String sql =
+    String sql =
         "SELECT "
             + PgConstants.COLUMN_SER
             + " FROM "
@@ -133,21 +133,15 @@ public class PgQueryBuilder {
     return sql;
   }
 
-  public String catchupSQL(long clientId) {
-    final String sql = //
+  public String catchupSQL() {
+    String sql = //
         "INSERT INTO "
             + PgConstants.TABLE_CATCHUP
             + " ("
-            + PgConstants.COLUMN_CID
-            + ","
             + PgConstants.COLUMN_SER
-            + //
-            ") "
+            + ") "
             + "(SELECT "
-            + clientId
-            + ","
-            + //
-            PgConstants.COLUMN_SER
+            + PgConstants.COLUMN_SER
             + " FROM "
             + //
             PgConstants.TABLE_FACT

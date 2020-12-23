@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.query.PgQueryBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
@@ -44,9 +43,8 @@ public class PgCatchUpPrepare {
   @SuppressWarnings("ConstantConditions")
   public long prepareCatchup(AtomicLong serial) {
     PgQueryBuilder b = new PgQueryBuilder(req.specs());
-    long clientId = jdbc.queryForObject(PgConstants.NEXT_FROM_CATCHUP_SEQ, Long.class);
-    String catchupSQL = b.catchupSQL(clientId);
-    // noinspection ConstantConditions
+
+    String catchupSQL = b.catchupSQL();
     return jdbc.execute(
         catchupSQL,
         (PreparedStatementCallback<Long>)
@@ -55,16 +53,15 @@ public class PgCatchUpPrepare {
               try {
                 Stopwatch sw = Stopwatch.createStarted();
                 b.createStatementSetter(serial).setValues(ps);
-                int numberOfFactsToCatchup = ps.executeUpdate();
+                long numberOfFactsToCatchup = ps.executeUpdate();
                 sw.stop();
                 if (numberOfFactsToCatchup > 0) {
                   log.debug(
-                      "{} prepared {} facts for cid={} in {}ms",
+                      "{} prepared {} facts in {}ms",
                       req,
                       numberOfFactsToCatchup,
-                      clientId,
                       sw.elapsed(TimeUnit.MILLISECONDS));
-                  return clientId;
+                  return numberOfFactsToCatchup;
                 } else {
                   log.debug("{} nothing to catch up", req);
                   return 0L;
