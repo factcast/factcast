@@ -15,8 +15,10 @@
  */
 package org.factcast.server.grpc;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.grpc.stub.StreamObserver;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,16 +36,34 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 @RequiredArgsConstructor
 class GrpcObserverAdapter implements FactObserver {
 
-  final ProtoConverter converter = new ProtoConverter();
+  private final ProtoConverter converter = new ProtoConverter();
 
-  @NonNull final String id;
+  @NonNull private final String id;
 
-  @NonNull final StreamObserver<MSG_Notification> observer;
+  @NonNull private final StreamObserver<MSG_Notification> observer;
+  @NonNull private final int catchupBatchSize;
 
-  @NonNull final Function<Fact, MSG_Notification> projection;
+  @VisibleForTesting
+  GrpcObserverAdapter(String id, StreamObserver<MSG_Notification> observer) {
+    this(id, observer, 1);
+  }
+
+  private final ArrayList<Fact> stagedFacts;
+  private final AtomicBoolean caughtUp = new AtomicBoolean(false);
+
+  public GrpcObserverAdapter(
+      @NonNull String id,
+      @NonNull StreamObserver<MSG_Notification> observer,
+      @NonNull int catchupBatchSize) {
+    this.id = id;
+    this.observer = observer;
+    this.catchupBatchSize = catchupBatchSize;
+    stagedFacts = new ArrayList<>(catchupBatchSize);
+  }
 
   @Override
   public void onComplete() {
+    flush();
     log.debug("{} onComplete – sending complete notification", id);
     observer.onNext(converter.createCompleteNotification());
     tryComplete();
@@ -51,6 +71,7 @@ class GrpcObserverAdapter implements FactObserver {
 
   @Override
   public void onError(Throwable e) {
+    flush();
     log.info("{} onError – sending Error notification {}", id, e.getMessage());
     observer.onError(e);
     tryComplete();
@@ -66,12 +87,30 @@ class GrpcObserverAdapter implements FactObserver {
 
   @Override
   public void onCatchup() {
+    flush();
     log.debug("{} onCatchup – sending catchup notification", id);
     observer.onNext(converter.createCatchupNotification());
+    caughtUp.set(true);
+  }
+
+  private void flush() {
+    // yes, it is threadsafe
+    if (!stagedFacts.isEmpty()) {
+      log.trace("{} flushing batch of {} facts", id, stagedFacts.size());
+      observer.onNext(converter.createNotificationFor(stagedFacts));
+      stagedFacts.clear();
+    }
   }
 
   @Override
   public void onNext(Fact element) {
-    observer.onNext(projection.apply(element));
+    if (catchupBatchSize > 1 && !caughtUp.get()) {
+      if (stagedFacts.size() >= catchupBatchSize) {
+        flush();
+      }
+      stagedFacts.add(element);
+    } else {
+      observer.onNext(converter.createNotificationFor(element));
+    }
   }
 }

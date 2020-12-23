@@ -33,6 +33,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
 import org.junit.jupiter.api.*;
 
 public class ProtoConverterTest {
@@ -182,7 +183,7 @@ public class ProtoConverterTest {
 
   @Test
   void testCreateNotificationForFact() {
-    final TestFact probe = new TestFact().ns("123");
+    TestFact probe = new TestFact().ns("123");
     MSG_Notification n = uut.createNotificationFor(probe);
     assertNotNull(n);
     assertEquals(MSG_Notification.Type.Fact, n.getType());
@@ -190,8 +191,19 @@ public class ProtoConverterTest {
   }
 
   @Test
+  void testCreateNotificationForList() {
+    TestFact probe1 = new TestFact().ns("123");
+    TestFact probe2 = new TestFact().ns("456");
+    MSG_Notification n = uut.createNotificationFor(Lists.newArrayList(probe1, probe2));
+    assertNotNull(n);
+    assertEquals(Type.Facts, n.getType());
+    assertEquals(probe1.ns(), uut.fromProto(n.getFacts().getFact(0)).ns());
+    assertEquals(probe2.ns(), uut.fromProto(n.getFacts().getFact(1)).ns());
+  }
+
+  @Test
   void testCreateNotificationForUUID() {
-    final UUID probe = UUID.randomUUID();
+    UUID probe = UUID.randomUUID();
     MSG_Notification n = uut.createNotificationFor(probe);
     assertNotNull(n);
     assertEquals(MSG_Notification.Type.Id, n.getType());
