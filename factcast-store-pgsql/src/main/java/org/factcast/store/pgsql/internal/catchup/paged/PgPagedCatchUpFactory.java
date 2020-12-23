@@ -24,15 +24,15 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
+import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 @RequiredArgsConstructor
 // no code in here, just generated @nonnull checks
 @Generated
 public class PgPagedCatchUpFactory implements PgCatchupFactory {
 
-  @NonNull final JdbcTemplate jdbc;
+  @NonNull final PgConnectionSupplier connectionSupplier;
 
   @NonNull final PgConfigurationProperties props;
 
@@ -44,6 +44,7 @@ public class PgPagedCatchUpFactory implements PgCatchupFactory {
       @NonNull PgPostQueryMatcher postQueryMatcher,
       @NonNull SubscriptionImpl subscription,
       @NonNull AtomicLong serial) {
-    return new PgPagedCatchup(jdbc, props, request, postQueryMatcher, subscription, serial);
+    return new PgPagedCatchup(
+        connectionSupplier, props, request, postQueryMatcher, subscription, serial);
   }
 }

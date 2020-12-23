@@ -40,10 +40,9 @@ public class FactTransformersImpl implements FactTransformers {
 
     String ns = e.ns();
     String type = e.type();
+    int version = e.version();
 
-    if (type == null
-        || requested.dontCare(ns, type)
-        || requested.exactVersion(ns, type, e.version())) {
+    if (type == null || requested.matches(ns, type, version)) {
       return e;
     } else {
       OptionalInt max = requested.get(ns, type).stream().mapToInt(v -> v).max();
