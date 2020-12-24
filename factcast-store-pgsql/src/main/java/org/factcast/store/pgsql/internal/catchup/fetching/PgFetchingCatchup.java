@@ -15,7 +15,7 @@
  */
 package org.factcast.store.pgsql.internal.catchup.fetching;
 
-import java.util.UUID;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +35,7 @@ import org.factcast.store.pgsql.internal.rowmapper.PgFactExtractor;
 import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @Slf4j
@@ -65,45 +66,54 @@ public class PgFetchingCatchup implements PgCatchup {
 
     try {
       val jdbc = new JdbcTemplate(ds);
-      jdbc.setFetchSize(props.getPageSize());
-      val skipTesting = postQueryMatcher.canBeSkipped();
-
-      PgQueryBuilder b = new PgQueryBuilder(req.specs());
-      val extractor = new PgFactExtractor(serial);
-      String catchupSQL = b.fetchingSQL();
-      jdbc.query(
-          catchupSQL,
-          b.createStatementSetter(serial),
-          rs -> {
-            Fact f = extractor.mapRow(rs, 0); // does not use the rowNum anyway
-            UUID factId = f.id();
-            if (skipTesting || postQueryMatcher.test(f)) {
-              try {
-                subscription.notifyElement(f);
-              } catch (MissingTransformationInformation | TransformationException e) {
-                log.warn("{} transformation error: {}", req, e.getMessage());
-                subscription.notifyError(e);
-                throw e;
-              } catch (Throwable e) {
-                // debug level, because it happens regularly
-                // on
-                // disconnecting clients.
-                log.debug("{} exception from subscription: {}", req, e.getMessage());
-                try {
-                  subscription.close();
-                } catch (Exception e1) {
-                  log.warn("{} exception while closing subscription: {}", req, e1.getMessage());
-                }
-                throw e;
-              }
-            } else {
-              log.trace("{} filtered id={}", req, factId);
-            }
-          });
+      fetch(jdbc);
     } catch (Exception e) {
       log.error("while fetching", e);
     } finally {
       ds.destroy();
     }
+  }
+
+  @VisibleForTesting
+  void fetch(JdbcTemplate jdbc) {
+    jdbc.setFetchSize(props.getPageSize());
+    val skipTesting = postQueryMatcher.canBeSkipped();
+
+    PgQueryBuilder b = new PgQueryBuilder(req.specs());
+    val extractor = new PgFactExtractor(serial);
+    String catchupSQL = b.fetchingSQL();
+    jdbc.query(
+        catchupSQL,
+        b.createStatementSetter(serial),
+        createRowCallbackHandler(skipTesting, extractor));
+  }
+
+  @VisibleForTesting
+  RowCallbackHandler createRowCallbackHandler(boolean skipTesting, PgFactExtractor extractor) {
+    return rs -> {
+      Fact f = extractor.mapRow(rs, 0); // does not use the rowNum anyway
+      if (skipTesting || postQueryMatcher.test(f)) {
+        try {
+          subscription.notifyElement(f);
+        } catch (MissingTransformationInformation | TransformationException e) {
+          log.warn("{} transformation error: {}", req, e.getMessage());
+          subscription.notifyError(e);
+          throw e;
+        } catch (Throwable e) {
+          // debug level, because it happens regularly
+          // on
+          // disconnecting clients.
+          log.debug("{} exception from subscription: {}", req, e.getMessage());
+          try {
+            subscription.close();
+          } catch (Exception e1) {
+            log.warn("{} exception while closing subscription: {}", req, e1.getMessage());
+          }
+          throw e;
+        }
+      } else {
+        log.trace("{} filtered id={}", req, f.id());
+      }
+    };
   }
 }
