@@ -15,9 +15,7 @@
  */
 package org.factcast.core.subscription.observer;
 
-import java.util.function.Function;
 import lombok.NonNull;
-import org.factcast.core.Fact;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -39,41 +37,5 @@ public interface GenericObserver<I> {
 
   default void onError(@NonNull Throwable exception) {
     LoggerFactory.getLogger(GenericObserver.class).warn("Unhandled onError:", exception);
-  }
-
-  default FactObserver map(@NonNull Function<Fact, I> projection) {
-    return new ObserverBridge<>(this, projection);
-  }
-
-  class ObserverBridge<I> implements FactObserver {
-
-    private final GenericObserver<I> delegate;
-
-    private final Function<Fact, I> project;
-
-    protected ObserverBridge(GenericObserver<I> delegate, Function<Fact, I> project) {
-      this.delegate = delegate;
-      this.project = project;
-    }
-
-    @Override
-    public void onNext(@NonNull Fact from) {
-      delegate.onNext(project.apply(from));
-    }
-
-    @Override
-    public void onCatchup() {
-      delegate.onCatchup();
-    }
-
-    @Override
-    public void onError(@NonNull Throwable exception) {
-      delegate.onError(exception);
-    }
-
-    @Override
-    public void onComplete() {
-      delegate.onComplete();
-    }
   }
 }

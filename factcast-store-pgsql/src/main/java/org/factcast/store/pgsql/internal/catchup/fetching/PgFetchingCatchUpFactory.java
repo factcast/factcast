@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.internal.catchup.paged;
+package org.factcast.store.pgsql.internal.catchup.fetching;
 
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Generated;
@@ -29,19 +29,19 @@ import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
 @RequiredArgsConstructor
 // no code in here, just generated @nonnull checks
 @Generated
-public class PgPagedCatchUpFactory implements PgCatchupFactory {
+public class PgFetchingCatchUpFactory implements PgCatchupFactory {
 
   @NonNull final PgConnectionSupplier connectionSupplier;
 
   @NonNull final PgConfigurationProperties props;
 
   @Override
-  public PgPagedCatchup create(
+  public PgFetchingCatchup create(
       @NonNull SubscriptionRequestTO request,
       @NonNull PgPostQueryMatcher postQueryMatcher,
       @NonNull SubscriptionImpl subscription,
       @NonNull AtomicLong serial) {
-    return new PgPagedCatchup(
+    return new PgFetchingCatchup(
         connectionSupplier, props, request, postQueryMatcher, subscription, serial);
   }
 }

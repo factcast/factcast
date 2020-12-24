@@ -17,7 +17,7 @@ package org.factcast.core.subscription;
 
 import lombok.NonNull;
 
-public class TransformationException extends Exception {
+public class TransformationException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 
