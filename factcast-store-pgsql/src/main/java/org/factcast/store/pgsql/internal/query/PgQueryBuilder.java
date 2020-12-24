@@ -148,10 +148,7 @@ public class PgQueryBuilder {
             + " WHERE ("
             + createWhereClause()
             + //
-            ")"
-            + " ORDER BY "
-            + PgConstants.COLUMN_SER
-            + " ASC)";
+            "))";
     log.trace("{} catchupSQL={}", factSpecs, sql);
     return sql;
   }
