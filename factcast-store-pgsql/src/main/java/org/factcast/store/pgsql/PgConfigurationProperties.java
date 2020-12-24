@@ -48,16 +48,9 @@ public class PgConfigurationProperties
   @Autowired private ApplicationContext appContext;
 
   /** defines the number of Facts being retrieved with one Page Query for PageStrategy.PAGED */
-  int pageSize = 1000;
-
-  /** The capacity of the queue for PageStrategy.QUEUED */
-  int queueSize = 1000;
-
+  int pageSize = 50;
   /** Defines the Strategy used for Paging in the Catchup Phase. */
   CatchupStrategy catchupStrategy = CatchupStrategy.getDefault();
-
-  /** Fetch Size used when filling the Queue, defaults to 4 (25% of the queue-size) */
-  int queueFetchRatio = 4;
 
   /**
    * Optional URL to a Schema Registry. If this is null, validation will be disabled and a warning
@@ -139,10 +132,6 @@ public class PgConfigurationProperties
    * to prevent side-effects.
    */
   boolean integrationTestMode = false;
-
-  public int getFetchSize() {
-    return getQueueSize() / queueFetchRatio;
-  }
 
   @Override
   public void onApplicationEvent(@Nonnull ApplicationReadyEvent event) {

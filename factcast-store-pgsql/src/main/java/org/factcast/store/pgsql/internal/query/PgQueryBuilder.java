@@ -152,4 +152,19 @@ public class PgQueryBuilder {
     log.trace("{} catchupSQL={}", factSpecs, sql);
     return sql;
   }
+
+  public String fetchingSQL() {
+    String sql =
+        "SELECT "
+            + PgConstants.PROJECTION_FACT
+            + " FROM "
+            + //
+            PgConstants.TABLE_FACT
+            + " WHERE ("
+            + createWhereClause()
+            + //
+            ") ORDER BY ser ASC";
+    log.trace("{} fetchingSQL={}", factSpecs, sql);
+    return sql;
+  }
 }

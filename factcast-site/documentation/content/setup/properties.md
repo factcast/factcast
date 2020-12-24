@@ -47,6 +47,9 @@ Properties you can use to configure FactCast:
 |factcast.store.pgsql.factNotificationBlockingWaitTimeInMillis| Controls how long to block waiting for new notifications from the database (Postgres LISTEN/ NOTIFY mechanism). When this time exceeds the notifications is repeated | 15000 (15sec)
 |factcast.store.pgsql.factNotificationMaxRoundTripLatencyInMillis| When Factcast did not receive any notifications after factNotificationBlockingWaitTimeInMillis milliseconds it validates the health of the database connection. For this purpose it sends an internal notification to the database and waits for the given time to receive back an answer. If the time is exceeded the database connection is renewed | 200
 |factcast.store.pgsql.factNotificationNewConnectionWaitTimeInMillis| how much time to wait between invalidating and acquiring a new connection. note: This parameter is only applied in the part of Factcast which deals with receiving and forwarding database notifications | 100
+|factcast.store.pgsql.page-size| How many Facts to fetch from the database in one go. Higher values mean more memory usage. | 50
+|factcast.store.pgsql.catchup-strategy| FETCHING uses database cursors where PAGED uses separate queries on TEMPORARY tables. FETCHING tends to be faster. | FETCHING
+
 
 ___
 
