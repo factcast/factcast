@@ -47,7 +47,10 @@ public class PgConfigurationProperties
 
   @Autowired private ApplicationContext appContext;
 
-  /** defines the number of Facts being retrieved with one Page Query for PageStrategy.PAGED */
+  /**
+   * defines the number of Facts being retrieved with one Page Query for PageStrategy.PAGED, or
+   * respectively the fetchSize when using PageStrategy.FETCHING
+   */
   int pageSize = 50;
   /** Defines the Strategy used for Paging in the Catchup Phase. */
   CatchupStrategy catchupStrategy = CatchupStrategy.getDefault();

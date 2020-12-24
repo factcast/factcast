@@ -25,7 +25,6 @@ import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
-import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 
 @RequiredArgsConstructor
 // no code in here, just generated @nonnull checks
@@ -35,8 +34,6 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory {
   @NonNull final PgConnectionSupplier connectionSupplier;
 
   @NonNull final PgConfigurationProperties props;
-
-  @NonNull final PgFactIdToSerialMapper serMapper;
 
   @Override
   public PgFetchingCatchup create(
