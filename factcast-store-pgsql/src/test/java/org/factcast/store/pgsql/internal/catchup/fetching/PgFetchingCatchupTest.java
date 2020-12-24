@@ -15,6 +15,7 @@
  */
 package org.factcast.store.pgsql.internal.catchup.fetching;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.sql.ResultSet;
@@ -145,10 +146,10 @@ class PgFetchingCatchupTest {
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
       when(postQueryMatcher.test(testFact)).thenReturn(true);
       doThrow(TransformationException.class).when(subscription).notifyElement(testFact);
-      try {
-        cbh.processRow(rs);
-      } catch (Exception ignore) {
-      }
+      assertThatThrownBy(
+          () -> {
+            cbh.processRow(rs);
+          });
 
       verify(subscription).notifyError(any());
     }
@@ -162,10 +163,11 @@ class PgFetchingCatchupTest {
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
       when(postQueryMatcher.test(testFact)).thenReturn(true);
       doThrow(RuntimeException.class).when(subscription).notifyElement(testFact);
-      try {
-        cbh.processRow(rs);
-      } catch (Exception ignore) {
-      }
+
+      assertThatThrownBy(
+          () -> {
+            cbh.processRow(rs);
+          });
 
       verify(subscription).close();
     }
