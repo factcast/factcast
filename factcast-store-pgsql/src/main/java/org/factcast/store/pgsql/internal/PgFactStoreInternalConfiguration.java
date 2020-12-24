@@ -31,6 +31,7 @@ import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
+import org.factcast.store.pgsql.internal.catchup.fetching.PgFetchingCatchUpFactory;
 import org.factcast.store.pgsql.internal.catchup.paged.PgPagedCatchUpFactory;
 import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
 import org.factcast.store.pgsql.internal.listen.PgConnectionTester;
@@ -80,6 +81,8 @@ public class PgFactStoreInternalConfiguration {
     switch (props.getCatchupStrategy()) {
       case PAGED:
         return new PgPagedCatchUpFactory(supp, props, serMapper);
+      case FETCHING:
+        return new PgFetchingCatchUpFactory(supp, props, serMapper);
       default:
         throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
     }

@@ -21,10 +21,11 @@ package org.factcast.store.pgsql;
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
 public enum CatchupStrategy {
-  PAGED;
+  PAGED,
+  FETCHING;
 
   @SuppressWarnings("SameReturnValue")
   public static CatchupStrategy getDefault() {
-    return PAGED;
+    return FETCHING;
   }
 }
