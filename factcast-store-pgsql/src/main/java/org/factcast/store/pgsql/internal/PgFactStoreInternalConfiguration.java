@@ -80,9 +80,9 @@ public class PgFactStoreInternalConfiguration {
     // noinspection SwitchStatementWithTooFewBranches
     switch (props.getCatchupStrategy()) {
       case PAGED:
-        return new PgPagedCatchUpFactory(supp, props, serMapper);
+        return new PgPagedCatchUpFactory(supp, props);
       case FETCHING:
-        return new PgFetchingCatchUpFactory(supp, props, serMapper);
+        return new PgFetchingCatchUpFactory(supp, props);
       default:
         throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
     }
