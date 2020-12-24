@@ -29,7 +29,6 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
-import org.factcast.store.pgsql.internal.catchup.PgCatchUpFetchPage;
 import org.factcast.store.pgsql.internal.catchup.PgCatchUpPrepare;
 import org.factcast.store.pgsql.internal.catchup.PgCatchup;
 import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
