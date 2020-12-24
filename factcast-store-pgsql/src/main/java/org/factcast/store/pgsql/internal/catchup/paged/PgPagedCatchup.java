@@ -61,11 +61,14 @@ public class PgPagedCatchup implements PgCatchup {
     try {
       val jdbc = new JdbcTemplate(ds);
 
-      jdbc.execute("CREATE TEMPORARY TABLE catchup(ser bigint primary key)");
-      jdbc.execute("CREATE INDEX catchup_tmp_idx1 ON catchup(ser)"); // improves perf on sorting?
+      jdbc.execute("CREATE TEMPORARY TABLE catchup(ser bigint)");
 
       PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request);
+      // first collect all the sers
       val numberOfFactsToCatchUp = prep.prepareCatchup(serial);
+      // and AFTERWARDs create the inmem index
+      jdbc.execute("CREATE INDEX catchup_tmp_idx1 ON catchup(ser ASC)"); // improves perf on sorting
+
       val skipTesting = postQueryMatcher.canBeSkipped();
 
       if (numberOfFactsToCatchUp > 0) {
