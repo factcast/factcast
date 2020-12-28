@@ -46,6 +46,7 @@ import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.event.Specification;
 import org.factcast.factus.lock.InLockedOperation;
 import org.factcast.factus.lock.Locked;
+import org.factcast.factus.lock.LockedOnSpecs;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.projection.*;
@@ -366,6 +367,64 @@ class FactusImplTest {
 
   @Nested
   class WhenConditionallyPublishing {
+
+    @Test
+    void withLockOnSingleSpec() {
+      // INIT
+      @NonNull FactSpec spec = FactSpec.ns("ns").type("type");
+
+      // RUN
+      LockedOnSpecs locked = underTest.withLockOn(spec);
+
+      // ASSERT
+
+      assertThat(locked.factus()).isEqualTo(underTest);
+
+      assertThat(locked.fc()).isEqualTo(fc);
+
+      // this is important; if they are not the specs for the given
+      // projection,
+      // the lock would be broken
+      assertThat(locked.specs()).hasSize(1).containsExactly(spec);
+    }
+
+    @Test
+    void withLockOnSpecs() {
+      // INIT
+      FactSpec spec1 = FactSpec.ns("ns").type("type1");
+      FactSpec spec2 = FactSpec.ns("ns").type("type2");
+
+      // RUN
+      LockedOnSpecs locked = underTest.withLockOn(spec1, spec2);
+
+      // ASSERT
+      assertThat(locked.factus()).isEqualTo(underTest);
+      assertThat(locked.fc()).isEqualTo(fc);
+
+      // this is important; if they are not the specs for the given
+      // projection,
+      // the lock would be broken
+      assertThat(locked.specs()).hasSize(2).containsExactlyInAnyOrder(spec1, spec2);
+    }
+
+    @Test
+    void withLockOnListOfSpecs() {
+      // INIT
+      FactSpec spec1 = FactSpec.ns("ns").type("type1");
+      FactSpec spec2 = FactSpec.ns("ns").type("type2");
+
+      // RUN
+      LockedOnSpecs locked = underTest.withLockOn(Lists.newArrayList(spec1, spec2));
+
+      // ASSERT
+      assertThat(locked.factus()).isEqualTo(underTest);
+      assertThat(locked.fc()).isEqualTo(fc);
+
+      // this is important; if they are not the specs for the given
+      // projection,
+      // the lock would be broken
+      assertThat(locked.specs()).hasSize(2).containsExactlyInAnyOrder(spec1, spec2);
+    }
 
     @Test
     void withLockOnManagedProjection() {
