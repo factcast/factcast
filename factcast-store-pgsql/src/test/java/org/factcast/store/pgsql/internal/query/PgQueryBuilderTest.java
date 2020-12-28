@@ -15,19 +15,146 @@
  */
 package org.factcast.store.pgsql.internal.query;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.List;
+import java.sql.PreparedStatement;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.val;
+import org.assertj.core.util.Lists;
+import org.factcast.core.spec.FactSpec;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class PgQueryBuilderTest {
+@ExtendWith(MockitoExtension.class)
+class PgQueryBuilderTest {
 
-  @Test
-  public void testPGQueryBuilder() {
-    assertThrows(NullPointerException.class, () -> new PgQueryBuilder(null));
+  @Nested
+  class WhenCreatingStatementSetter {
+    @Mock private @NonNull AtomicLong serial;
 
-    PgQueryBuilder uut = new PgQueryBuilder(mock(List.class));
-    assertThrows(NullPointerException.class, () -> uut.createStatementSetter(null));
+    @BeforeEach
+    void setup() {}
+
+    @SneakyThrows
+    @Test
+    void happyPath() {
+      Mockito.when(serial.get()).thenReturn(120L);
+      val spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
+      val spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
+      val spec3 = FactSpec.ns("ns3");
+      val specs = Lists.newArrayList(spec1, spec2, spec3);
+      val underTest = new PgQueryBuilder(specs);
+      val setter = underTest.createStatementSetter(serial);
+      val ps = mock(PreparedStatement.class);
+
+      setter.setValues(ps);
+
+      int index = 0;
+      // first spec
+      verify(ps).setString(++index, "{\"ns\": \"ns1\"}");
+      verify(ps).setString(++index, "{\"type\": \"t1\"}");
+      verify(ps).setString(++index, "{\"aggIds\": [\"00000000-0000-0000-0000-000000000001\"]}");
+      verify(ps).setString(++index, "{\"meta\":{\"foo\":\"bar\"}}");
+      verify(ps).setString(++index, "{\"meta\":{\"foo\":[\"bar\"]}}");
+
+      // 2nd spec
+      verify(ps).setString(++index, "{\"ns\": \"ns2\"}");
+      verify(ps).setString(++index, "{\"type\": \"t2\"}");
+      verify(ps).setString(++index, "{\"meta\":{\"foo\":\"bar\"}}");
+      verify(ps).setString(++index, "{\"meta\":{\"foo\":[\"bar\"]}}");
+      // 3rd spec
+      verify(ps).setString(++index, "{\"ns\": \"ns3\"}");
+
+      // ser>?
+      verify(ps).setLong(++index, 120);
+      verifyNoMoreInteractions(ps);
+    }
+  }
+
+  @Nested
+  class WhenCreatingSQL {
+    @BeforeEach
+    void setup() {}
+
+    @Test
+    void happyPath() {
+      val spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
+      val spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
+      val specs = Lists.newArrayList(spec1, spec2);
+      val underTest = new PgQueryBuilder(specs);
+      val sql = underTest.createSQL();
+
+      // projection
+      assertThat(sql)
+          .startsWith(
+              "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds,"
+                  + " header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact");
+
+      // where clause for two specs
+      val expectedSpec1 =
+          "(header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb ))";
+      val expectedSpec2 =
+          "(header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb ))"; // no aggid
+      assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
+      assertThat(sql).endsWith("AND ser>? ORDER BY ser ASC");
+    }
+  }
+
+  @Nested
+  class WhenCreatingStateSQL {
+    @BeforeEach
+    void setup() {}
+
+    @Test
+    void happyPath() {
+      val spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
+      val spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
+      val specs = Lists.newArrayList(spec1, spec2);
+      val underTest = new PgQueryBuilder(specs);
+      val sql = underTest.createStateSQL();
+
+      // projection
+      assertThat(sql).startsWith("SELECT ser FROM fact");
+
+      // where clause for two specs
+      val expectedSpec1 =
+          "(header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb ))";
+      val expectedSpec2 =
+          "(header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb ))"; // no aggid
+      assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
+      assertThat(sql).endsWith(" ORDER BY ser DESC LIMIT 1");
+    }
+  }
+
+  @Nested
+  class WhenCatchupingSQL {
+    @BeforeEach
+    void setup() {}
+
+    @Test
+    void happyPath() {
+      val spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
+      val spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
+      val specs = Lists.newArrayList(spec1, spec2);
+      val underTest = new PgQueryBuilder(specs);
+      val sql = underTest.catchupSQL();
+
+      // projection
+      assertThat(sql).startsWith("INSERT INTO catchup (ser) (SELECT ser FROM fact");
+
+      // where clause for two specs
+      val expectedSpec1 =
+          "(header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb ))";
+      val expectedSpec2 =
+          "(header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb ))"; // no aggid
+      assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
+    }
   }
 }
