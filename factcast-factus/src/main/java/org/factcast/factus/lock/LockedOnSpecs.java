@@ -13,30 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus;
+package org.factcast.factus.lock;
 
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.factus.lock.Locked;
-import org.factcast.factus.lock.RetryableTransaction;
+import org.factcast.factus.Factus;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.projection.Projection;
 
 @RequiredArgsConstructor
+@Getter
 public class LockedOnSpecs {
 
-  @NonNull FactCast fc;
-  @NonNull Factus factus;
-  @NonNull List<FactSpec> specs;
-  @NonNull FactusMetrics metrics;
+  @NonNull final FactCast fc;
+  @NonNull final Factus factus;
+  @NonNull final List<FactSpec> specs;
+  @NonNull final FactusMetrics metrics;
 
   public void attempt(Consumer<RetryableTransaction> tx) {
     attempt(tx, result -> null);
