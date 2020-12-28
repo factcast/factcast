@@ -36,6 +36,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.Locked;
+import org.factcast.factus.lock.LockedOnSpecs;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.ManagedProjection;
 import org.factcast.factus.projection.SnapshotProjection;
@@ -91,11 +92,6 @@ class FactusTest {
 
             @Override
             public Fact toFact(@NonNull EventObject e) {
-              return null;
-            }
-
-            @Override
-            public LockedOnSpecs withLockOn(@NonNull FactSpec spec) {
               return null;
             }
 

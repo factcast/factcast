@@ -56,9 +56,8 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
 
   @VisibleForTesting
   public DefaultProjector(EventSerializer ctx, Projection p) {
-    this.projection = p;
-    this.dispatchInfo =
-        cache.computeIfAbsent(getRelevantClass(p), c -> discoverDispatchInfo(ctx, p));
+    projection = p;
+    dispatchInfo = cache.computeIfAbsent(getRelevantClass(p), c -> discoverDispatchInfo(ctx, p));
   }
 
   private static Class<? extends Projection> getRelevantClass(@NonNull Projection p) {
@@ -66,6 +65,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
     return getRelevantClass(c);
   }
 
+  @SuppressWarnings("unchecked")
   private static Class<? extends Projection> getRelevantClass(
       @NonNull Class<? extends Projection> c) {
     while (c.getName().contains("$$EnhancerBySpring") || c.getName().contains("CGLIB")) {
@@ -74,6 +74,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
     return c;
   }
 
+  @Override
   public void apply(@NonNull Fact f) {
     log.trace("Dispatching fact {}", f.id());
     val coords = FactSpecCoordinates.from(f);
@@ -93,6 +94,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
     }
   }
 
+  @Override
   public List<FactSpec> createFactSpecs() {
     List<FactSpec> discovered =
         dispatchInfo.values().stream().map(d -> d.spec.copy()).collect(Collectors.toList());

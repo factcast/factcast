@@ -17,7 +17,7 @@ package org.factcast.factus.projection;
 
 public interface WriterToken extends AutoCloseable {
   static WriterToken simple(AutoCloseable acquireWriteToken) {
-    return () -> acquireWriteToken.close();
+    return acquireWriteToken::close;
   }
 
   default boolean isValid() {

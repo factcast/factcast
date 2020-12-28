@@ -15,10 +15,10 @@
  */
 package org.factcast.factus.projection;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 class AggregateUtilTest {
 
@@ -32,5 +32,16 @@ class AggregateUtilTest {
     // this not
     assertThatThrownBy(() -> AggregateUtil.aggregateId(aggregate, UUID.randomUUID()))
         .hasMessageContaining("aggregateId is already set");
+  }
+
+  @Test
+  void aggregateIdIsSet() {
+    Aggregate aggregate = new Aggregate() {};
+
+    // this should work
+    UUID id = UUID.randomUUID();
+    AggregateUtil.aggregateId(aggregate, id);
+
+    assertThat(aggregate.aggregateId()).isEqualTo(id);
   }
 }
