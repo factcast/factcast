@@ -28,6 +28,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.Locked;
+import org.factcast.factus.lock.LockedOnSpecs;
 import org.factcast.factus.projection.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,11 +43,13 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   //// Publishing
 
   /** publishes a single event immediately */
+  @Override
   default void publish(@NonNull EventObject eventPojo) {
     publish(eventPojo, f -> null);
   }
 
   /** publishes a list of events immediately in an atomic manner (all or none) */
+  @Override
   default void publish(@NonNull List<EventObject> eventPojos) {
     publish(eventPojos, f -> null);
   }
@@ -120,9 +123,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   // conversion
   Fact toFact(@NonNull EventObject e);
 
-  LockedOnSpecs withLockOn(@NonNull FactSpec spec);
-
-  LockedOnSpecs withLockOn(@NonNull FactSpec spec, FactSpec... additional);
+  LockedOnSpecs withLockOn(@NonNull FactSpec spec, @NonNull FactSpec... additional);
 
   LockedOnSpecs withLockOn(@NonNull List<FactSpec> specs);
 }

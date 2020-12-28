@@ -50,6 +50,7 @@ import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.InLockedOperation;
 import org.factcast.factus.lock.Locked;
+import org.factcast.factus.lock.LockedOnSpecs;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.TimedOperation;
 import org.factcast.factus.projection.*;
@@ -466,12 +467,7 @@ public class FactusImpl implements Factus {
   }
 
   @Override
-  public LockedOnSpecs withLockOn(@NonNull FactSpec spec) {
-    return withLockOn(Collections.singletonList(spec));
-  }
-
-  @Override
-  public LockedOnSpecs withLockOn(@NonNull FactSpec spec, FactSpec... additional) {
+  public LockedOnSpecs withLockOn(@NonNull FactSpec spec, @NonNull FactSpec... additional) {
     LinkedList<FactSpec> l = new LinkedList<>();
     l.add(spec);
     if (additional != null) {
