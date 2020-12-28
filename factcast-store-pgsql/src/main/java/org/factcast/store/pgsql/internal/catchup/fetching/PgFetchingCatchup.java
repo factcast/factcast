@@ -81,7 +81,7 @@ public class PgFetchingCatchup implements PgCatchup {
 
     PgQueryBuilder b = new PgQueryBuilder(req.specs());
     val extractor = new PgFactExtractor(serial);
-    String catchupSQL = b.fetchingSQL();
+    String catchupSQL = b.createSQL();
     jdbc.query(
         catchupSQL,
         b.createStatementSetter(serial),

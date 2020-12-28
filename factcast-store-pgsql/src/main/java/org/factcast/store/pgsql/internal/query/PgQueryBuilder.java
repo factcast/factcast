@@ -50,12 +50,12 @@ public class PgQueryBuilder {
 
         String ns = spec.ns();
         if (ns != null && !"*".equals(ns)) {
-          p.setString(++count, "{\"ns\": \"" + spec.ns() + "\" }");
+          p.setString(++count, "{\"ns\": \"" + spec.ns() + "\"}");
         }
 
         String type = spec.type();
         if (type != null) {
-          p.setString(++count, "{\"type\": \"" + type + "\" }");
+          p.setString(++count, "{\"type\": \"" + type + "\"}");
         }
         // version is intentionally not used here
         UUID agg = spec.aggId();
@@ -64,7 +64,7 @@ public class PgQueryBuilder {
         }
         Map<String, String> meta = spec.meta();
         for (Entry<String, String> e : meta.entrySet()) {
-          p.setString(++count, "{\"meta\":{\"" + e.getKey() + "\":\"" + e.getValue() + "\" }}");
+          p.setString(++count, "{\"meta\":{\"" + e.getKey() + "\":\"" + e.getValue() + "\"}}");
         }
       }
       p.setLong(++count, serial.get());
@@ -76,27 +76,28 @@ public class PgQueryBuilder {
     factSpecs.forEach(
         spec -> {
           StringBuilder sb = new StringBuilder();
-          sb.append("( 1=1 ");
+          sb.append("(1=1");
 
           String ns = spec.ns();
           if (ns != null && !"*".equals(ns)) {
-            sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
+            sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
           }
 
           String type = spec.type();
           if (type != null) {
-            sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
+            sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
           }
 
           UUID agg = spec.aggId();
           if (agg != null) {
-            sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb ");
+            sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
           }
           Map<String, String> meta = spec.meta();
           meta.forEach(
               (key, value) ->
-                  sb.append("AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb "));
-          sb.append(") ");
+                  sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb"));
+
+          sb.append(")");
           predicates.add(sb.toString());
         });
     String predicatesAsString = String.join(" OR ", predicates);
@@ -150,21 +151,6 @@ public class PgQueryBuilder {
             + //
             "))";
     log.trace("{} catchupSQL={}", factSpecs, sql);
-    return sql;
-  }
-
-  public String fetchingSQL() {
-    String sql =
-        "SELECT "
-            + PgConstants.PROJECTION_FACT
-            + " FROM "
-            + //
-            PgConstants.TABLE_FACT
-            + " WHERE ("
-            + createWhereClause()
-            + //
-            ") ORDER BY ser ASC";
-    log.trace("{} fetchingSQL={}", factSpecs, sql);
     return sql;
   }
 }
