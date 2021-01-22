@@ -15,7 +15,11 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.Timer.Sample;
 import java.util.function.Supplier;
 import lombok.Getter;
@@ -42,16 +46,17 @@ public class PgMetrics {
   }
 
   @NonNull
-  public Counter counter(@NonNull StoreMetrics.OP operation) {
-    Tags tags = forOperation(operation);
+  public Counter counter(@NonNull OP operation) {
+    Tags tags = forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
     // ommitting the meter description here
-    return Counter.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
+    return Counter.builder(StoreMetrics.COUNTER_METRIC_NAME).tags(tags).register(registry);
   }
 
-  private Tags forOperation(@NonNull PgMetrics.StoreMetrics.OP operation) {
+  private Tags forOperation(@NonNull OP operation, @NonNull String exceptionTagValue) {
     return Tags.of(
         Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
-        Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()));
+        Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()),
+        Tag.of(StoreMetrics.TAG_EXCEPTION_KEY, exceptionTagValue));
   }
 
   public void time(@NonNull OP operation, @NonNull Runnable r) {
@@ -80,7 +85,7 @@ public class PgMetrics {
     }
   }
 
-  public void time(@NonNull OP operation, @NonNull Sample sample, Exception e) {
+  private void time(@NonNull OP operation, @NonNull Sample sample, Exception e) {
     try {
       String exceptionTagValue = mapException(e);
       sample.stop(timer(operation, exceptionTagValue));
@@ -90,7 +95,7 @@ public class PgMetrics {
   }
 
   @NonNull
-  public static String mapException(Exception e) {
+  private static String mapException(Exception e) {
     if (e == null) {
       return StoreMetrics.TAG_EXCEPTION_VALUE_NONE;
     }
@@ -99,23 +104,20 @@ public class PgMetrics {
 
   @NonNull
   private Timer timer(@NonNull OP operation, @NonNull String exceptionTagValue) {
-    Tags tags =
-        Tags.of(
-            Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
-            Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()),
-            Tag.of(StoreMetrics.TAG_EXCEPTION_KEY, exceptionTagValue));
-    return Timer.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
+    Tags tags = forOperation(operation, exceptionTagValue);
+    return Timer.builder(StoreMetrics.DURATION_METRIC_NAME).tags(tags).register(registry);
   }
 
   @NonNull
   public Timer timer(@NonNull OP operation) {
-    Tags tags = forOperation(operation);
-    return Timer.builder(StoreMetrics.METRIC_NAME).tags(tags).register(registry);
+    return timer(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
   }
 
   public static class StoreMetrics {
 
-    static final String METRIC_NAME = "factcast.store.operations";
+    static final String DURATION_METRIC_NAME = "factcast.store.operations.duration";
+
+    static final String COUNTER_METRIC_NAME = "factcast.store.operations";
 
     static final String TAG_STORE_KEY = "store";
 
