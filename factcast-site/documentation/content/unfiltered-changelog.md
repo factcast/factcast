@@ -1,5 +1,28 @@
 # Changelog
 
+## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2021-02-03)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.9.1...upcoming)
+
+**Merged pull requests:**
+
+- authenticate-against-dockerhub [\#1168](https://github.com/factcast/factcast/pull/1168) ([uweschaefer](https://github.com/uweschaefer))
+
+## [0.3.9.1](https://github.com/factcast/factcast/tree/0.3.9.1) (2021-02-03)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.9...0.3.9.1)
+
+**Closed issues:**
+
+- add factcast-test to bom [\#1164](https://github.com/factcast/factcast/issues/1164)
+- Document all metrics \(Server and Client\) [\#1155](https://github.com/factcast/factcast/issues/1155)
+- incompatible dependencies grpc-\* [\#1166](https://github.com/factcast/factcast/issues/1166)
+
+**Merged pull requests:**
+
+- \#1166: fixed grpc dependencies to 1.31.1 [\#1167](https://github.com/factcast/factcast/pull/1167) ([uweschaefer](https://github.com/uweschaefer))
+- add factcast-test to pom [\#1165](https://github.com/factcast/factcast/pull/1165) ([StephanPraetsch](https://github.com/StephanPraetsch))
+
 ## [0.3.9](https://github.com/factcast/factcast/tree/0.3.9) (2021-01-30)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/0.3.8...0.3.9)
@@ -304,7 +327,6 @@
 - Issue950 add metrics to roundtrip testing [\#951](https://github.com/factcast/factcast/pull/951) ([uweschaefer](https://github.com/uweschaefer))
 - Update dependency com.squareup.okhttp3:okhttp to v4.8.0 [\#949](https://github.com/factcast/factcast/pull/949) ([renovate[bot]](https://github.com/apps/renovate))
 - Update mockito.version to v3.4.0 [\#948](https://github.com/factcast/factcast/pull/948) ([renovate[bot]](https://github.com/apps/renovate))
-- Update dependency io.micronaut:micronaut-validation to v1.3.7 [\#947](https://github.com/factcast/factcast/pull/947) ([renovate[bot]](https://github.com/apps/renovate))
 - Issue941 - Implement Keepalive roundtrip to detect stale postgres listeners [\#943](https://github.com/factcast/factcast/pull/943) ([samba2](https://github.com/samba2))
 - Foo 1527 more unit tests [\#999](https://github.com/factcast/factcast/pull/999) ([BernhardBln](https://github.com/BernhardBln))
 
@@ -394,6 +416,7 @@
 - \#877: added gh action workflow [\#916](https://github.com/factcast/factcast/pull/916) ([uweschaefer](https://github.com/uweschaefer))
 - \#888: FactSpec.from for multiple classes [\#915](https://github.com/factcast/factcast/pull/915) ([uweschaefer](https://github.com/uweschaefer))
 - Update dependency com.spotify:dockerfile-maven-plugin to v1.4.13 [\#914](https://github.com/factcast/factcast/pull/914) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson.core:jackson-databind to v2.11.1 [\#904](https://github.com/factcast/factcast/pull/904) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency org.apache.maven.plugins:maven-surefire-plugin to v3.0.0-M5 [\#893](https://github.com/factcast/factcast/pull/893) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency org.apache.maven.plugins:maven-failsafe-plugin to v3.0.0-M5 [\#892](https://github.com/factcast/factcast/pull/892) ([renovate[bot]](https://github.com/apps/renovate))
 - \#917: moved to openjdk8 as a base for the docker image [\#918](https://github.com/factcast/factcast/pull/918) ([uweschaefer](https://github.com/uweschaefer))
@@ -412,7 +435,6 @@
 
 - Issue910 add Timestamp to server generated fields in metadata of a fact [\#911](https://github.com/factcast/factcast/pull/911) ([uweschaefer](https://github.com/uweschaefer))
 - Update dependency org.xerial.snappy:snappy-java to v1.1.7.6 [\#906](https://github.com/factcast/factcast/pull/906) ([renovate[bot]](https://github.com/apps/renovate))
-- Update dependency com.fasterxml.jackson.core:jackson-databind to v2.11.1 [\#904](https://github.com/factcast/factcast/pull/904) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency com.fasterxml.jackson.core:jackson-core to v2.11.1 [\#900](https://github.com/factcast/factcast/pull/900) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency com.fasterxml.jackson.core:jackson-annotations to v2.11.1 [\#899](https://github.com/factcast/factcast/pull/899) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency io.github.microutils:kotlin-logging to v1.8.0.1 [\#898](https://github.com/factcast/factcast/pull/898) ([renovate[bot]](https://github.com/apps/renovate))
@@ -623,7 +645,6 @@
 
 - Add autoconfiguration for FactValidatorConfiguration [\#701](https://github.com/factcast/factcast/pull/701) ([otbe](https://github.com/otbe))
 - build\(deps\): bump spring-cloud-dependencies from Hoxton.SR2 to Hoxton.SR3 [\#699](https://github.com/factcast/factcast/pull/699) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
-- build\(deps\): bump jackson-databind from 2.9.10.1 to 2.9.10.3 in /factcast-bom [\#698](https://github.com/factcast/factcast/pull/698) ([dependabot[bot]](https://github.com/apps/dependabot))
 
 ## [factcast-0.2.0-M8](https://github.com/factcast/factcast/tree/factcast-0.2.0-M8) (2020-03-04)
 
@@ -704,6 +725,7 @@
 
 **Merged pull requests:**
 
+- build\(deps\): bump jackson-databind from 2.9.10.1 to 2.9.10.3 in /factcast-bom [\#698](https://github.com/factcast/factcast/pull/698) ([dependabot[bot]](https://github.com/apps/dependabot))
 - build\(deps\): bump jackson-core from 2.10.2 to 2.10.3 [\#694](https://github.com/factcast/factcast/pull/694) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - build\(deps\): bump jackson-annotations from 2.10.2 to 2.10.3 [\#693](https://github.com/factcast/factcast/pull/693) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - \#691: updated ktlint dep [\#692](https://github.com/factcast/factcast/pull/692) ([uweschaefer](https://github.com/uweschaefer))

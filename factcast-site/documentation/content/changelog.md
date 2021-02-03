@@ -3,6 +3,29 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 
 # Changelog
 
+## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2021-02-03)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.9.1...upcoming)
+
+**Merged pull requests:**
+
+- authenticate-against-dockerhub [\#1168](https://github.com/factcast/factcast/pull/1168) ([uweschaefer](https://github.com/uweschaefer))
+
+## [0.3.9.1](https://github.com/factcast/factcast/tree/0.3.9.1) (2021-02-03)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.9...0.3.9.1)
+
+**Closed issues:**
+
+- add factcast-test to bom [\#1164](https://github.com/factcast/factcast/issues/1164)
+- Document all metrics \(Server and Client\) [\#1155](https://github.com/factcast/factcast/issues/1155)
+- incompatible dependencies grpc-\* [\#1166](https://github.com/factcast/factcast/issues/1166)
+
+**Merged pull requests:**
+
+- \#1166: fixed grpc dependencies to 1.31.1 [\#1167](https://github.com/factcast/factcast/pull/1167) ([uweschaefer](https://github.com/uweschaefer))
+- add factcast-test to pom [\#1165](https://github.com/factcast/factcast/pull/1165) ([StephanPraetsch](https://github.com/StephanPraetsch))
+
 ## [0.3.9](https://github.com/factcast/factcast/tree/0.3.9) (2021-01-30)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/0.3.8...0.3.9)
@@ -408,7 +431,6 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 **Merged pull requests:**
 
 - Add autoconfiguration for FactValidatorConfiguration [\#701](https://github.com/factcast/factcast/pull/701) ([otbe](https://github.com/otbe))
-- build\(deps\): bump jackson-databind from 2.9.10.1 to 2.9.10.3 in /factcast-bom [\#698](https://github.com/factcast/factcast/pull/698) ([dependabot[bot]](https://github.com/apps/dependabot))
 
 ## [factcast-0.2.0-M8](https://github.com/factcast/factcast/tree/factcast-0.2.0-M8) (2020-03-04)
 
@@ -486,6 +508,7 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 
 **Merged pull requests:**
 
+- build\(deps\): bump jackson-databind from 2.9.10.1 to 2.9.10.3 in /factcast-bom [\#698](https://github.com/factcast/factcast/pull/698) ([dependabot[bot]](https://github.com/apps/dependabot))
 - \#691: updated ktlint dep [\#692](https://github.com/factcast/factcast/pull/692) ([uweschaefer](https://github.com/uweschaefer))
 - added javax.annotation dependency for Java11 compatibility [\#690](https://github.com/factcast/factcast/pull/690) ([uweschaefer](https://github.com/uweschaefer))
 - Extend Security configuration to assign roles to namespaces [\#672](https://github.com/factcast/factcast/pull/672) ([uweschaefer](https://github.com/uweschaefer))
