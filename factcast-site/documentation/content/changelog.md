@@ -3,12 +3,54 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 
 # Changelog
 
-## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2020-12-07)
+## [0.3.9](https://github.com/factcast/factcast/tree/0.3.9) (2021-01-30)
 
-[Full Changelog](https://github.com/factcast/factcast/compare/0.3.7...upcoming)
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.8...0.3.9)
+
+**Implemented enhancements:**
+
+- Add batch Notification type [\#1111](https://github.com/factcast/factcast/issues/1111)
+- Verify and test QUEUE catchup strategy [\#1110](https://github.com/factcast/factcast/issues/1110)
+- Check if lock is still held in subscribed projections [\#1108](https://github.com/factcast/factcast/issues/1108)
+
+**Closed issues:**
+
+- Introduce FETCHING catchup Strategy [\#1136](https://github.com/factcast/factcast/issues/1136)
+- Consider the impact of multimaps for header.meta [\#1128](https://github.com/factcast/factcast/issues/1128)
+- Add missing cleanup of 'catchup' table [\#1106](https://github.com/factcast/factcast/issues/1106)
+- IllegalArgumentException with micrometer-registry-prometheus [\#1142](https://github.com/factcast/factcast/issues/1142)
 
 **Merged pull requests:**
 
+- \#1142: ensure metrics have the same tags [\#1143](https://github.com/factcast/factcast/pull/1143) ([Mortinke](https://github.com/Mortinke))
+- more coverage [\#1140](https://github.com/factcast/factcast/pull/1140) ([uweschaefer](https://github.com/uweschaefer))
+- more coverage [\#1139](https://github.com/factcast/factcast/pull/1139) ([uweschaefer](https://github.com/uweschaefer))
+- \#1136: FETCHING strategy as default [\#1137](https://github.com/factcast/factcast/pull/1137) ([uweschaefer](https://github.com/uweschaefer))
+- minor perf improvements [\#1135](https://github.com/factcast/factcast/pull/1135) ([uweschaefer](https://github.com/uweschaefer))
+- \#1107: switched to temp table [\#1134](https://github.com/factcast/factcast/pull/1134) ([uweschaefer](https://github.com/uweschaefer))
+- fix npe on class name usage [\#1133](https://github.com/factcast/factcast/pull/1133) ([uweschaefer](https://github.com/uweschaefer))
+- Issue1102 speedup integration tests by reusing containers [\#1132](https://github.com/factcast/factcast/pull/1132) ([uweschaefer](https://github.com/uweschaefer))
+- Cleanup beforeSnapshot/ afterRestore [\#1131](https://github.com/factcast/factcast/pull/1131) ([uweschaefer](https://github.com/uweschaefer))
+- Issue1111 Batch notification [\#1125](https://github.com/factcast/factcast/pull/1125) ([uweschaefer](https://github.com/uweschaefer))
+- \#1108: lock liveness test [\#1124](https://github.com/factcast/factcast/pull/1124) ([uweschaefer](https://github.com/uweschaefer))
+
+## [0.3.8](https://github.com/factcast/factcast/tree/0.3.8) (2020-12-15)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.7...0.3.8)
+
+**Implemented enhancements:**
+
+- Factus: lock on a list of FactSpecs \(as avail in factcast interface\) [\#1129](https://github.com/factcast/factcast/issues/1129)
+
+**Closed issues:**
+
+- Introduce callbacks for "beforeSnapshot" and "beforeHandle" & "afterHandle" [\#1123](https://github.com/factcast/factcast/issues/1123)
+- Add hashcode/equals to aggregate defaulting to the id [\#1121](https://github.com/factcast/factcast/issues/1121)
+
+**Merged pull requests:**
+
+- \#1129: Locking on specs only - some tests missing, but should be released asap [\#1130](https://github.com/factcast/factcast/pull/1130) ([uweschaefer](https://github.com/uweschaefer))
+- \#1121 added hashcode/equals to aggregates [\#1122](https://github.com/factcast/factcast/pull/1122) ([uweschaefer](https://github.com/uweschaefer))
 - \#1105: swallow exception while shutting down [\#1116](https://github.com/factcast/factcast/pull/1116) ([uweschaefer](https://github.com/uweschaefer))
 - Issue1092 whitelist improvement [\#1103](https://github.com/factcast/factcast/pull/1103) ([samba2](https://github.com/samba2))
 
@@ -18,6 +60,9 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 
 **Implemented enhancements:**
 
+- Explore use of temp tables instead of catchup table [\#1107](https://github.com/factcast/factcast/issues/1107)
+- Tweak AbstractIntegrationTest to reuse containers between classes in order to reduce build/test-time [\#1102](https://github.com/factcast/factcast/issues/1102)
+- Implement callbacks & and interface for before/after update/catchup of projections [\#1090](https://github.com/factcast/factcast/issues/1090)
 - \#1098: added synchronization on catchup [\#1100](https://github.com/factcast/factcast/pull/1100) ([uweschaefer](https://github.com/uweschaefer))
 - \#1090: afterUpdate callback in Snapshot/Managed-projection [\#1099](https://github.com/factcast/factcast/pull/1099) ([uweschaefer](https://github.com/uweschaefer))
 - Fixes \#827 and improves other error message [\#1091](https://github.com/factcast/factcast/pull/1091) ([samba2](https://github.com/samba2))
@@ -34,6 +79,7 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 - Suppress error logging in PgListener when shutting down [\#1105](https://github.com/factcast/factcast/issues/1105)
 - make sure the update of snapshot projections is wrapped in synchronized in order make 100% sure that state is synced to heap before projection instance goes public   [\#1098](https://github.com/factcast/factcast/issues/1098)
 - Factus: Change locking of local projections to synchronize on a private mutex rather than the projection itself  [\#1094](https://github.com/factcast/factcast/issues/1094)
+- Add whitelisting capability for schema registry [\#1092](https://github.com/factcast/factcast/issues/1092)
 
 **Merged pull requests:**
 
@@ -289,7 +335,6 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 **Closed issues:**
 
 - Factcast throws Exception \(on publish\) if validation is disabled [\#880](https://github.com/factcast/factcast/issues/880)
-- Action Required: Fix Renovate Configuration [\#871](https://github.com/factcast/factcast/issues/871)
 - replace LZ4 impl with commons-compress  [\#861](https://github.com/factcast/factcast/issues/861)
 
 **Merged pull requests:**
@@ -363,6 +408,7 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 **Merged pull requests:**
 
 - Add autoconfiguration for FactValidatorConfiguration [\#701](https://github.com/factcast/factcast/pull/701) ([otbe](https://github.com/otbe))
+- build\(deps\): bump jackson-databind from 2.9.10.1 to 2.9.10.3 in /factcast-bom [\#698](https://github.com/factcast/factcast/pull/698) ([dependabot[bot]](https://github.com/apps/dependabot))
 
 ## [factcast-0.2.0-M8](https://github.com/factcast/factcast/tree/factcast-0.2.0-M8) (2020-03-04)
 
@@ -374,7 +420,6 @@ This changelog is filtered. All automatically created PRs regarding dependency u
 
 **Merged pull requests:**
 
-- build\(deps\): bump jackson-databind from 2.9.10.1 to 2.9.10.3 in /factcast-bom [\#698](https://github.com/factcast/factcast/pull/698) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Fixed non-matching passwords for unauthenticated access [\#697](https://github.com/factcast/factcast/pull/697) ([otbe](https://github.com/otbe))
 
 ## [factcast-0.2.0-M7](https://github.com/factcast/factcast/tree/factcast-0.2.0-M7) (2020-03-04)
