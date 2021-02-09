@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.PgMetrics;
-import org.factcast.store.pgsql.internal.PgMetrics.StoreMetrics.OP;
+import org.factcast.store.pgsql.internal.StoreMetrics.OP;
 import org.postgresql.PGNotification;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.beans.factory.DisposableBean;

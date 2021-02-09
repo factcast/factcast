@@ -16,7 +16,7 @@
 package org.factcast.store.pgsql.internal;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.factcast.store.pgsql.internal.PgMetrics.StoreMetrics.OP.*;
+import static org.factcast.store.pgsql.internal.StoreMetrics.OP.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Optional;
