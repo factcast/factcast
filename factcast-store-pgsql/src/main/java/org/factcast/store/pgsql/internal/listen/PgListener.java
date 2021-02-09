@@ -170,9 +170,7 @@ public class PgListener implements InitializingBean, DisposableBean {
               + "'");
     } else {
       // return since there might have also received channel notifications
-      pgMetrics
-          .timer(OP.NOTIFY_ROUNDTRIP_LATENCY)
-          .record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+      pgMetrics.timer(OP.NOTIFY_ROUNDTRIP).record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
       return notifications;
     }
   }
@@ -186,7 +184,7 @@ public class PgListener implements InitializingBean, DisposableBean {
   }
 
   @VisibleForTesting
-  protected void postEvent(final String name) {
+  protected void postEvent(String name) {
     if (running.get()) {
       eventBus.post(new FactInsertionEvent(name));
     }
@@ -207,7 +205,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @Override
   public void destroy() {
-    this.running.set(false);
+    running.set(false);
     if (listenerThread != null) {
       listenerThread.interrupt();
     }

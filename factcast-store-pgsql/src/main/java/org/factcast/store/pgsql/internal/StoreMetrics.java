@@ -21,6 +21,8 @@ import lombok.NonNull;
 public class StoreMetrics {
 
   public enum OP {
+
+    // grpc calls
     PUBLISH("publish"),
 
     SUBSCRIBE_FOLLOW("subscribe-follow"),
@@ -45,9 +47,11 @@ public class StoreMetrics {
 
     CLEAR_SNAPSHOT("clearSnapshot"),
 
+    // other
+
     COMPACT_SNAPSHOT_CACHE("compactSnapshotCache"),
 
-    NOTIFY_ROUNDTRIP_LATENCY("notifyDatabaseRoundTripLatency"),
+    NOTIFY_ROUNDTRIP_LATENCY("notifyDatabaseRoundTrip"),
 
     MISSED_ROUNDTRIP("missedDatabaseRoundtrip");
 
