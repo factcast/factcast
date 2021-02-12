@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.PgMetrics;
+import org.factcast.store.pgsql.internal.StoreMetrics.EVENT;
 import org.factcast.store.pgsql.internal.StoreMetrics.OP;
 import org.postgresql.PGNotification;
 import org.postgresql.jdbc.PgConnection;
@@ -163,14 +164,16 @@ public class PgListener implements InitializingBean, DisposableBean {
     if (notifications == null) {
       // missed the notifications from the DB, something is fishy
       // here....
-      pgMetrics.counter(OP.MISSED_ROUNDTRIP).increment();
+      pgMetrics.counter(EVENT.MISSED_ROUNDTRIP).increment();
       throw new SQLException(
           "Missed roundtrip notification from channel '"
               + PgConstants.ROUNDTRIP_CHANNEL_NAME
               + "'");
     } else {
       // return since there might have also received channel notifications
-      pgMetrics.timer(OP.NOTIFY_ROUNDTRIP).record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+      pgMetrics
+          .timer(OP.NOTIFY_ROUNDTRIP)
+          .record((System.nanoTime() - start), TimeUnit.NANOSECONDS);
       return notifications;
     }
   }

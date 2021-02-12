@@ -25,9 +25,9 @@ import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.Fact;
-import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.TimedOperation;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetricsOperation;
 import org.joda.time.DateTime;
 
 public class InMemTransformationCache implements TransformationCache {
@@ -66,15 +66,15 @@ public class InMemTransformationCache implements TransformationCache {
     cached.ifPresent(faat -> faat.accessTime(System.currentTimeMillis()));
     registryMetrics.count(
         cached.isPresent()
-            ? MetricEvent.TRANSFORMATION_CACHE_HIT
-            : MetricEvent.TRANSFORMATION_CACHE_MISS);
+            ? RegistryMetricsEvent.TRANSFORMATION_CACHE_HIT
+            : RegistryMetricsEvent.TRANSFORMATION_CACHE_MISS);
     return cached.map(FactAndAccessTime::fact);
   }
 
   @Override
   public void compact(@NonNull DateTime thresholdDate) {
     registryMetrics.timed(
-        TimedOperation.COMPACT_TRANSFORMATION_CACHE,
+        RegistryMetricsOperation.COMPACT_TRANSFORMATION_CACHE,
         () -> {
           HashSet<Entry<String, FactAndAccessTime>> copyOfEntries;
           synchronized (cache) {
@@ -84,7 +84,9 @@ public class InMemTransformationCache implements TransformationCache {
           copyOfEntries.forEach(
               e -> {
                 FactAndAccessTime faat = e.getValue();
-                if (thresholdDate.isAfter(faat.accessTime)) cache.remove(e.getKey());
+                if (thresholdDate.isAfter(faat.accessTime)) {
+                  cache.remove(e.getKey());
+                }
               });
         });
   }

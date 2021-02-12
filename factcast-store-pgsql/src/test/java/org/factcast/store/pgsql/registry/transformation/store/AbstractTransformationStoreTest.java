@@ -25,14 +25,9 @@ import io.micrometer.core.instrument.Tags;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.transformation.Transformation;
-import org.factcast.store.pgsql.registry.transformation.TransformationConflictException;
-import org.factcast.store.pgsql.registry.transformation.TransformationKey;
-import org.factcast.store.pgsql.registry.transformation.TransformationSource;
-import org.factcast.store.pgsql.registry.transformation.TransformationStore;
-import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.transformation.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.function.*;
 import org.mockito.Spy;
@@ -44,7 +39,7 @@ public abstract class AbstractTransformationStoreTest {
 
   @BeforeEach
   public void init() {
-    this.uut = createUUT();
+    uut = createUUT();
   }
 
   protected abstract TransformationStore createUUT();
@@ -99,7 +94,7 @@ public abstract class AbstractTransformationStoreTest {
 
     verify(registryMetrics)
         .count(
-            MetricEvent.TRANSFORMATION_CONFLICT,
+            RegistryMetricsEvent.TRANSFORMATION_CONFLICT,
             Tags.of(Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, conflicting.id())));
   }
 

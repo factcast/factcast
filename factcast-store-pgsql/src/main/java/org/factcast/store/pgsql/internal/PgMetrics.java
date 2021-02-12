@@ -41,16 +41,16 @@ public class PgMetrics {
   }
 
   @NonNull
-  public Counter counter(@NonNull OP operation) {
+  public Counter counter(@NonNull StoreMetrics.EVENT operation) {
     Tags tags = forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
     // ommitting the meter description here
     return Counter.builder(StoreMetrics.COUNTER_METRIC_NAME).tags(tags).register(registry);
   }
 
-  private Tags forOperation(@NonNull OP operation, @NonNull String exceptionTagValue) {
+  private Tags forOperation(@NonNull MetricName operation, @NonNull String exceptionTagValue) {
     return Tags.of(
         Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
-        Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()),
+        Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.getName()),
         Tag.of(StoreMetrics.TAG_EXCEPTION_KEY, exceptionTagValue));
   }
 

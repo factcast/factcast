@@ -32,8 +32,8 @@ import org.factcast.core.Fact;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.http.ValidationConstants;
-import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 
 @RequiredArgsConstructor
@@ -48,13 +48,13 @@ public class FactValidator {
   private final RegistryMetrics registryMetrics;
 
   public List<FactValidationError> validate(Fact fact) {
-    if (props.isValidationEnabled())
+    if (props.isValidationEnabled()) {
       if (isValidateable(fact)) {
         return doValidate(fact);
       } else {
         if (!props.isAllowUnvalidatedPublish()) {
           registryMetrics.count(
-              MetricEvent.FACT_VALIDATION_FAILED,
+              RegistryMetricsEvent.FACT_VALIDATION_FAILED,
               Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, SchemaKey.from(fact).toString()));
 
           return Lists.newArrayList(
@@ -62,6 +62,7 @@ public class FactValidator {
                   "Fact is not validatable. (usually lacks necessary information like namespace, type or version)"));
         }
       }
+    }
 
     return VALIDATION_OK;
   }
@@ -76,8 +77,9 @@ public class FactValidator {
       try {
         JsonNode toValidate = ValidationConstants.JACKSON.readTree(fact.jsonPayload());
         report = jsonSchema.validate(toValidate);
-        if (report.isSuccess()) return VALIDATION_OK;
-        else {
+        if (report.isSuccess()) {
+          return VALIDATION_OK;
+        } else {
           List<FactValidationError> ret = new LinkedList<>();
 
           report.forEach(
@@ -86,7 +88,7 @@ public class FactValidator {
               });
 
           registryMetrics.count(
-              MetricEvent.FACT_VALIDATION_FAILED,
+              RegistryMetricsEvent.FACT_VALIDATION_FAILED,
               Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
 
           return ret;
@@ -98,12 +100,15 @@ public class FactValidator {
     } else {
       if (!props.isAllowUnvalidatedPublish()) {
         registryMetrics.count(
-            MetricEvent.SCHEMA_MISSING, Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
+            RegistryMetricsEvent.SCHEMA_MISSING,
+            Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
 
         return Lists.newArrayList(
             new FactValidationError(
                 "Fact is not validatable. The schema for " + key + " is missing."));
-      } else return VALIDATION_OK;
+      } else {
+        return VALIDATION_OK;
+      }
     }
   }
 

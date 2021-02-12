@@ -26,9 +26,9 @@ import okhttp3.Request;
 import okhttp3.Response;
 import org.factcast.store.pgsql.registry.RegistryFileFetchException;
 import org.factcast.store.pgsql.registry.RegistryFileFetcher;
-import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.TimedOperation;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetricsOperation;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 
@@ -67,7 +67,9 @@ public class HttpRegistryFileFetcher implements RegistryFileFetcher {
     log.debug("Fetching Transformation {}", key.id());
 
     return registryMetrics.timed(
-        TimedOperation.FETCH_REGISTRY_FILE, RegistryFileFetchException.class, () -> fetch(url));
+        RegistryMetricsOperation.FETCH_REGISTRY_FILE,
+        RegistryFileFetchException.class,
+        () -> fetch(url));
   }
 
   @Override
@@ -78,7 +80,9 @@ public class HttpRegistryFileFetcher implements RegistryFileFetcher {
     log.debug("Fetching Schema {}", key.id());
 
     return registryMetrics.timed(
-        TimedOperation.FETCH_REGISTRY_FILE, RegistryFileFetchException.class, () -> fetch(url));
+        RegistryMetricsOperation.FETCH_REGISTRY_FILE,
+        RegistryFileFetchException.class,
+        () -> fetch(url));
   }
 
   private String fetch(URL url) throws RegistryFileFetchException {
@@ -88,7 +92,7 @@ public class HttpRegistryFileFetcher implements RegistryFileFetcher {
 
       if (response.code() != ValidationConstants.HTTP_OK) {
         registryMetrics.count(
-            MetricEvent.REGISTRY_FILE_FETCH_FAILED,
+            RegistryMetricsEvent.REGISTRY_FILE_FETCH_FAILED,
             Tags.of(RegistryMetrics.TAG_STATUS_CODE_KEY, String.valueOf(response.code())));
 
         throw new RegistryFileFetchException(url, response.code(), response.message());
