@@ -21,13 +21,9 @@ import java.util.List;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.transformation.SingleTransformation;
-import org.factcast.store.pgsql.registry.transformation.Transformation;
-import org.factcast.store.pgsql.registry.transformation.TransformationConflictException;
-import org.factcast.store.pgsql.registry.transformation.TransformationKey;
-import org.factcast.store.pgsql.registry.transformation.TransformationSource;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.transformation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @RequiredArgsConstructor
@@ -74,7 +70,7 @@ public class PgTransformationStoreImpl extends AbstractTransformationStore {
         return true;
       } else {
         registryMetrics.count(
-            MetricEvent.TRANSFORMATION_CONFLICT,
+            RegistryMetricsEvent.TRANSFORMATION_CONFLICT,
             Tags.of(Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
 
         throw new TransformationConflictException(

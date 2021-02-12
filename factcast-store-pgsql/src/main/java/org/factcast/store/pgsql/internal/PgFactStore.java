@@ -129,7 +129,7 @@ public class PgFactStore extends AbstractFactStore {
             lock.aquireExclusiveTXLock();
 
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
-            final int numberOfFactsToPublish = factsToPublish.size();
+            int numberOfFactsToPublish = factsToPublish.size();
             log.trace(
                 "Inserting {} fact(s){}",
                 numberOfFactsToPublish,
@@ -148,7 +148,7 @@ public class PgFactStore extends AbstractFactStore {
                 copiedListOfFacts,
                 BATCH_SIZE,
                 (statement, fact) -> {
-                  final String idMatch = "{\"id\":\"" + fact.id() + "\"}";
+                  String idMatch = "{\"id\":\"" + fact.id() + "\"}";
                   statement.setString(1, idMatch);
                 });
 

@@ -27,8 +27,8 @@ import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
 import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChain;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
@@ -49,7 +49,9 @@ public class FactTransformerServiceImpl implements FactTransformerService {
   public Fact transformIfNecessary(Fact e, int targetVersion) throws TransformationException {
 
     int sourceVersion = e.version();
-    if (sourceVersion == targetVersion || targetVersion == 0) return e;
+    if (sourceVersion == targetVersion || targetVersion == 0) {
+      return e;
+    }
 
     TransformationKey key = TransformationKey.of(e.ns(), e.type());
     TransformationChain chain = chains.get(key, sourceVersion, targetVersion);
@@ -57,8 +59,9 @@ public class FactTransformerServiceImpl implements FactTransformerService {
     String chainId = chain.id();
 
     Optional<Fact> cached = cache.find(e.id(), targetVersion, chainId);
-    if (cached.isPresent()) return cached.get();
-    else {
+    if (cached.isPresent()) {
+      return cached.get();
+    } else {
       try {
         JsonNode input = FactCastJson.readTree(e.jsonPayload());
         JsonNode header = FactCastJson.readTree(e.jsonHeader());
@@ -70,7 +73,7 @@ public class FactTransformerServiceImpl implements FactTransformerService {
         return transformed;
       } catch (JsonProcessingException e1) {
         registryMetrics.count(
-            MetricEvent.TRANSFORMATION_FAILED,
+            RegistryMetricsEvent.TRANSFORMATION_FAILED,
             Tags.of(
                 Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
                 Tag.of("version", String.valueOf(targetVersion))));

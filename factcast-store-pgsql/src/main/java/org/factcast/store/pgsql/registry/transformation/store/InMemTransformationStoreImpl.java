@@ -25,13 +25,9 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.collections4.ListUtils;
-import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.transformation.SingleTransformation;
-import org.factcast.store.pgsql.registry.transformation.Transformation;
-import org.factcast.store.pgsql.registry.transformation.TransformationConflictException;
-import org.factcast.store.pgsql.registry.transformation.TransformationKey;
-import org.factcast.store.pgsql.registry.transformation.TransformationSource;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.transformation.*;
 
 @RequiredArgsConstructor
 public class InMemTransformationStoreImpl extends AbstractTransformationStore {
@@ -69,17 +65,20 @@ public class InMemTransformationStoreImpl extends AbstractTransformationStore {
       throws TransformationConflictException {
     synchronized (mutex) {
       String hash = id2hashMap.get(source.id());
-      if (hash != null)
-        if (hash.equals(source.hash())) return true;
-        else {
+      if (hash != null) {
+        if (hash.equals(source.hash())) {
+          return true;
+        } else {
           registryMetrics.count(
-              MetricEvent.TRANSFORMATION_CONFLICT,
+              RegistryMetricsEvent.TRANSFORMATION_CONFLICT,
               Tags.of(Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
 
           throw new TransformationConflictException(
               "TransformationSource at " + source + " does not match the stored hash " + hash);
         }
-      else return false;
+      } else {
+        return false;
+      }
     }
   }
 

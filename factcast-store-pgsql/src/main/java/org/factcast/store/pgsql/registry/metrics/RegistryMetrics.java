@@ -23,29 +23,37 @@ public interface RegistryMetrics {
 
   String TAG_IDENTITY_KEY = "id";
 
-  void timed(TimedOperation operation, Runnable fn);
+  void timed(RegistryMetricsOperation operation, Runnable fn);
 
-  void timed(TimedOperation operation, Tags tags, Runnable fn);
-
-  <E extends Exception> void timed(
-      TimedOperation operation, Class<E> exceptionClass, RunnableWithException<E> fn) throws E;
+  void timed(RegistryMetricsOperation operation, Tags tags, Runnable fn);
 
   <E extends Exception> void timed(
-      TimedOperation operation, Class<E> exceptionClass, Tags tags, RunnableWithException<E> fn)
+      RegistryMetricsOperation operation, Class<E> exceptionClass, RunnableWithException<E> fn)
       throws E;
 
-  <T> T timed(TimedOperation operation, Supplier<T> fn);
-
-  <T> T timed(TimedOperation operation, Tags tags, Supplier<T> fn);
-
-  <R, E extends Exception> R timed(
-      TimedOperation operation, Class<E> exceptionClass, SupplierWithException<R, E> fn) throws E;
-
-  <R, E extends Exception> R timed(
-      TimedOperation operation, Class<E> exceptionClass, Tags tags, SupplierWithException<R, E> fn)
+  <E extends Exception> void timed(
+      RegistryMetricsOperation operation,
+      Class<E> exceptionClass,
+      Tags tags,
+      RunnableWithException<E> fn)
       throws E;
 
-  void count(MetricEvent event);
+  <T> T timed(RegistryMetricsOperation operation, Supplier<T> fn);
 
-  void count(MetricEvent event, Tags tags);
+  <T> T timed(RegistryMetricsOperation operation, Tags tags, Supplier<T> fn);
+
+  <R, E extends Exception> R timed(
+      RegistryMetricsOperation operation, Class<E> exceptionClass, SupplierWithException<R, E> fn)
+      throws E;
+
+  <R, E extends Exception> R timed(
+      RegistryMetricsOperation operation,
+      Class<E> exceptionClass,
+      Tags tags,
+      SupplierWithException<R, E> fn)
+      throws E;
+
+  void count(RegistryMetricsEvent event);
+
+  void count(RegistryMetricsEvent event, Tags tags);
 }

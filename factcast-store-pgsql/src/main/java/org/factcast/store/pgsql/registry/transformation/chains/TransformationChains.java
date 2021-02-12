@@ -33,8 +33,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Value;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
-import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
@@ -58,7 +58,7 @@ public class TransformationChains implements TransformationStoreListener {
   }
 
   public TransformationChains(SchemaRegistry r, RegistryMetrics registryMetrics) {
-    this.registry = r;
+    registry = r;
     this.registryMetrics = registryMetrics;
     r.register(this);
   }
@@ -79,7 +79,7 @@ public class TransformationChains implements TransformationStoreListener {
   public TransformationChain get(TransformationKey key, int from, int to)
       throws MissingTransformationInformation {
 
-    final Map<VersionPath, TransformationChain> chainsPerKey;
+    Map<VersionPath, TransformationChain> chainsPerKey;
 
     synchronized (cache) {
       // sync is necessary, because we don't want to end up with two
@@ -103,7 +103,7 @@ public class TransformationChains implements TransformationStoreListener {
     List<Transformation> all = registry.get(key);
     if (all.isEmpty()) {
       registryMetrics.count(
-          MetricEvent.MISSING_TRANSFORMATION_INFO,
+          RegistryMetricsEvent.MISSING_TRANSFORMATION_INFO,
           Tags.of(
               Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
               Tag.of("from", String.valueOf(from)),
@@ -136,7 +136,7 @@ public class TransformationChains implements TransformationStoreListener {
         || Iterables.getLast(path).toVersion() != to
         || Iterables.getFirst(path, null).fromVersion() != from) {
       registryMetrics.count(
-          MetricEvent.MISSING_TRANSFORMATION_INFO,
+          RegistryMetricsEvent.MISSING_TRANSFORMATION_INFO,
           Tags.of(
               Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
               Tag.of("from", String.valueOf(from)),

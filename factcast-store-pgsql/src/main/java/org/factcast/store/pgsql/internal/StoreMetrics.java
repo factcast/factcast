@@ -15,14 +15,25 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import lombok.Getter;
 import lombok.NonNull;
 
 public class StoreMetrics {
 
-  public enum OP {
+  static final String DURATION_METRIC_NAME = "factcast.store.operations.duration";
 
-    // grpc calls
+  static final String COUNTER_METRIC_NAME = "factcast.store.operations.count";
+
+  static final String TAG_STORE_KEY = "store";
+
+  static final String TAG_STORE_VALUE = "pgsql";
+
+  static final String TAG_OPERATION_KEY = "operation";
+
+  static final String TAG_EXCEPTION_KEY = "exception";
+
+  static final String TAG_EXCEPTION_VALUE_NONE = "None";
+
+  public enum OP implements MetricName {
     PUBLISH("publish"),
 
     SUBSCRIBE_FOLLOW("subscribe-follow"),
@@ -47,32 +58,34 @@ public class StoreMetrics {
 
     CLEAR_SNAPSHOT("clearSnapshot"),
 
-    // other
-
     COMPACT_SNAPSHOT_CACHE("compactSnapshotCache"),
 
-    NOTIFY_ROUNDTRIP_LATENCY("notifyDatabaseRoundTrip"),
+    NOTIFY_ROUNDTRIP("notifyRoundTripLatency");
 
-    MISSED_ROUNDTRIP("missedDatabaseRoundtrip");
-
-    @NonNull @Getter final String op;
+    @NonNull final String name;
 
     OP(@NonNull String op) {
-      this.op = op;
+      name = op;
+    }
+
+    @Override
+    public String getName() {
+      return name;
     }
   }
 
-  static final String DURATION_METRIC_NAME = "factcast.store.operations.duration";
+  public enum EVENT implements MetricName {
+    MISSED_ROUNDTRIP("missedRoundtrip");
 
-  static final String COUNTER_METRIC_NAME = "factcast.store.operations.count";
+    @NonNull final String name;
 
-  static final String TAG_STORE_KEY = "store";
+    EVENT(@NonNull String op) {
+      name = op;
+    }
 
-  static final String TAG_STORE_VALUE = "pgsql";
-
-  static final String TAG_OPERATION_KEY = "operation";
-
-  static final String TAG_EXCEPTION_KEY = "exception";
-
-  static final String TAG_EXCEPTION_VALUE_NONE = "None";
+    @Override
+    public String getName() {
+      return name;
+    }
+  }
 }

@@ -18,21 +18,15 @@ package org.factcast.store.pgsql.registry.metrics;
 import lombok.Getter;
 import lombok.NonNull;
 
-public enum MetricEvent {
-  TRANSFORMATION_CACHE_HIT("transformation_cache_hit"),
-  TRANSFORMATION_CACHE_MISS("transformation_cache_miss"),
-  MISSING_TRANSFORMATION_INFO("missing_transformation_information"),
-  TRANSFORMATION_CONFLICT("transformation_conflict"),
-  REGISTRY_FILE_FETCH_FAILED("registry_file_fetch_failed"),
-  SCHEMA_REGISTRY_UNAVAILABLE("schema_registry_unavailable"),
-  TRANSFORMATION_FAILED("transformation_failed"),
-  SCHEMA_CONFLICT("schema_conflict"),
-  FACT_VALIDATION_FAILED("fact_validation_failed"),
-  SCHEMA_MISSING("schema_missing");
+public enum RegistryMetricsOperation {
+  REFRESH_REGISTRY("refreshRegistry"),
+  COMPACT_TRANSFORMATION_CACHE("compactTransformationCache"),
+  TRANSFORMATION("transformEvent"),
+  FETCH_REGISTRY_FILE("fetchRegistryFile");
 
-  @NonNull @Getter final String event;
+  @NonNull @Getter final String op;
 
-  MetricEvent(@NonNull String event) {
-    this.event = event;
+  RegistryMetricsOperation(@NonNull String op) {
+    this.op = op;
   }
 }

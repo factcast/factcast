@@ -26,10 +26,10 @@ import okhttp3.OkHttpClient;
 import org.factcast.core.TestHelper;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.RegistryFileFetchException;
-import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetricsOperation;
 import org.factcast.store.pgsql.registry.metrics.SupplierWithException;
-import org.factcast.store.pgsql.registry.metrics.TimedOperation;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.junit.jupiter.api.*;
@@ -79,12 +79,12 @@ public class HttpRegistryFileFetcherTest {
 
       verify(registryMetrics)
           .timed(
-              eq(TimedOperation.FETCH_REGISTRY_FILE),
+              eq(RegistryMetricsOperation.FETCH_REGISTRY_FILE),
               eq(RegistryFileFetchException.class),
               any(SupplierWithException.class));
       verify(registryMetrics)
           .count(
-              MetricEvent.REGISTRY_FILE_FETCH_FAILED,
+              RegistryMetricsEvent.REGISTRY_FILE_FETCH_FAILED,
               Tags.of(RegistryMetrics.TAG_STATUS_CODE_KEY, "404"));
     }
   }
@@ -133,7 +133,7 @@ public class HttpRegistryFileFetcherTest {
 
       verify(registryMetrics)
           .timed(
-              eq(TimedOperation.FETCH_REGISTRY_FILE),
+              eq(RegistryMetricsOperation.FETCH_REGISTRY_FILE),
               eq(RegistryFileFetchException.class),
               any(SupplierWithException.class));
     }

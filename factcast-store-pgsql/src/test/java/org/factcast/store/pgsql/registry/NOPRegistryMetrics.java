@@ -22,54 +22,62 @@ import org.factcast.store.pgsql.registry.metrics.*;
 public class NOPRegistryMetrics implements RegistryMetrics {
 
   @Override
-  public void timed(TimedOperation operation, Runnable fn) {
+  public void timed(RegistryMetricsOperation operation, Runnable fn) {
     fn.run();
   }
 
   @Override
-  public void timed(TimedOperation operation, Tags tags, Runnable fn) {
-    fn.run();
-  }
-
-  @Override
-  public <E extends Exception> void timed(
-      TimedOperation operation, Class<E> exceptionClass, RunnableWithException<E> fn) throws E {
+  public void timed(RegistryMetricsOperation operation, Tags tags, Runnable fn) {
     fn.run();
   }
 
   @Override
   public <E extends Exception> void timed(
-      TimedOperation operation, Class<E> exceptionClass, Tags tags, RunnableWithException<E> fn)
+      RegistryMetricsOperation operation, Class<E> exceptionClass, RunnableWithException<E> fn)
       throws E {
     fn.run();
   }
 
   @Override
-  public <T> T timed(TimedOperation operation, Supplier<T> fn) {
+  public <E extends Exception> void timed(
+      RegistryMetricsOperation operation,
+      Class<E> exceptionClass,
+      Tags tags,
+      RunnableWithException<E> fn)
+      throws E {
+    fn.run();
+  }
+
+  @Override
+  public <T> T timed(RegistryMetricsOperation operation, Supplier<T> fn) {
     return fn.get();
   }
 
   @Override
-  public <T> T timed(TimedOperation operation, Tags tags, Supplier<T> fn) {
+  public <T> T timed(RegistryMetricsOperation operation, Tags tags, Supplier<T> fn) {
     return fn.get();
   }
 
   @Override
   public <R, E extends Exception> R timed(
-      TimedOperation operation, Class<E> exceptionClass, SupplierWithException<R, E> fn) throws E {
-    return fn.get();
-  }
-
-  @Override
-  public <R, E extends Exception> R timed(
-      TimedOperation operation, Class<E> exceptionClass, Tags tags, SupplierWithException<R, E> fn)
+      RegistryMetricsOperation operation, Class<E> exceptionClass, SupplierWithException<R, E> fn)
       throws E {
     return fn.get();
   }
 
   @Override
-  public void count(MetricEvent event) {}
+  public <R, E extends Exception> R timed(
+      RegistryMetricsOperation operation,
+      Class<E> exceptionClass,
+      Tags tags,
+      SupplierWithException<R, E> fn)
+      throws E {
+    return fn.get();
+  }
 
   @Override
-  public void count(MetricEvent event, Tags tags) {}
+  public void count(RegistryMetricsEvent event) {}
+
+  @Override
+  public void count(RegistryMetricsEvent event, Tags tags) {}
 }
