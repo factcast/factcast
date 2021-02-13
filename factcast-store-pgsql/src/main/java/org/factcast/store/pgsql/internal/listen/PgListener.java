@@ -142,7 +142,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
     PGNotification[] notifications =
         pc.getNotifications(props.getFactNotificationBlockingWaitTimeInMillis());
-    if (notifications == null) {
+    if (notifications == null || notifications.length == 0) {
       notifications = checkDatabaseConnectionHealthy(pc);
     }
     return notifications;
