@@ -160,7 +160,7 @@ public class PgListener implements InitializingBean, DisposableBean {
     connection.prepareCall(PgConstants.NOTIFY_ROUNDTRIP).execute();
     PGNotification[] notifications =
         connection.getNotifications(props.getFactNotificationMaxRoundTripLatencyInMillis());
-    if (notifications == null) {
+    if (notifications == null || notifications.length == 0) {
       // missed the notifications from the DB, something is fishy
       // here....
       pgMetrics.counter(OP.MISSED_ROUNDTRIP).increment();

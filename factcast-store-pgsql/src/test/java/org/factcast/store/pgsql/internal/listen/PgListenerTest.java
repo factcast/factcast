@@ -196,9 +196,9 @@ public class PgListenerTest {
             },
             new PGNotification[] {new Notification(PgConstants.CHANNEL_NAME, 2)}, //
             new PGNotification[] {new Notification(PgConstants.CHANNEL_NAME, 3)},
-            null,
-            null,
-            null);
+            new PGNotification[] {},
+            new PGNotification[] {},
+            new PGNotification[] {});
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.listen();
