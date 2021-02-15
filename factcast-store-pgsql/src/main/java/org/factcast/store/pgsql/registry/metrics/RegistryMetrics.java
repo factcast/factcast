@@ -17,43 +17,67 @@ package org.factcast.store.pgsql.registry.metrics;
 
 import io.micrometer.core.instrument.Tags;
 import java.util.function.Supplier;
+import lombok.Getter;
+import lombok.NonNull;
 
 public interface RegistryMetrics {
   String TAG_STATUS_CODE_KEY = "code";
 
   String TAG_IDENTITY_KEY = "id";
 
-  void timed(RegistryMetricsOperation operation, Runnable fn);
+  void timed(OP operation, Runnable fn);
 
-  void timed(RegistryMetricsOperation operation, Tags tags, Runnable fn);
-
-  <E extends Exception> void timed(
-      RegistryMetricsOperation operation, Class<E> exceptionClass, RunnableWithException<E> fn)
-      throws E;
+  void timed(OP operation, Tags tags, Runnable fn);
 
   <E extends Exception> void timed(
-      RegistryMetricsOperation operation,
-      Class<E> exceptionClass,
-      Tags tags,
-      RunnableWithException<E> fn)
-      throws E;
+      OP operation, Class<E> exceptionClass, RunnableWithException<E> fn) throws E;
 
-  <T> T timed(RegistryMetricsOperation operation, Supplier<T> fn);
+  <E extends Exception> void timed(
+      OP operation, Class<E> exceptionClass, Tags tags, RunnableWithException<E> fn) throws E;
 
-  <T> T timed(RegistryMetricsOperation operation, Tags tags, Supplier<T> fn);
+  <T> T timed(OP operation, Supplier<T> fn);
 
-  <R, E extends Exception> R timed(
-      RegistryMetricsOperation operation, Class<E> exceptionClass, SupplierWithException<R, E> fn)
-      throws E;
+  <T> T timed(OP operation, Tags tags, Supplier<T> fn);
 
   <R, E extends Exception> R timed(
-      RegistryMetricsOperation operation,
-      Class<E> exceptionClass,
-      Tags tags,
-      SupplierWithException<R, E> fn)
-      throws E;
+      OP operation, Class<E> exceptionClass, SupplierWithException<R, E> fn) throws E;
 
-  void count(RegistryMetricsEvent event);
+  <R, E extends Exception> R timed(
+      OP operation, Class<E> exceptionClass, Tags tags, SupplierWithException<R, E> fn) throws E;
 
-  void count(RegistryMetricsEvent event, Tags tags);
+  void count(EVENT event);
+
+  void count(EVENT event, Tags tags);
+
+  enum OP {
+    REFRESH_REGISTRY("refreshRegistry"),
+    COMPACT_TRANSFORMATION_CACHE("compactTransformationCache"),
+    TRANSFORMATION("transformEvent"),
+    FETCH_REGISTRY_FILE("fetchRegistryFile");
+
+    @NonNull @Getter final String op;
+
+    OP(@NonNull String op) {
+      this.op = op;
+    }
+  }
+
+  enum EVENT {
+    TRANSFORMATION_CACHE_HIT("transformationCache-hit"),
+    TRANSFORMATION_CACHE_MISS("transformationCache-miss"),
+    MISSING_TRANSFORMATION_INFO("missingTransformationInformation"),
+    TRANSFORMATION_CONFLICT("transformationConflict"),
+    REGISTRY_FILE_FETCH_FAILED("registryFileFetchFailed"),
+    SCHEMA_REGISTRY_UNAVAILABLE("schemaRegistryUnavailable"),
+    TRANSFORMATION_FAILED("transformationFailed"),
+    SCHEMA_CONFLICT("schemaConflict"),
+    FACT_VALIDATION_FAILED("factValidationFailed"),
+    SCHEMA_MISSING("schemaMissing");
+
+    @NonNull @Getter final String event;
+
+    EVENT(@NonNull String event) {
+      this.event = event;
+    }
+  }
 }

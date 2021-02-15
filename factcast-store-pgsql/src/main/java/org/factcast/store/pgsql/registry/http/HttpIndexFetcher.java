@@ -30,7 +30,7 @@ import org.factcast.store.pgsql.registry.IndexFetcher;
 import org.factcast.store.pgsql.registry.RegistryIndex;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 
 /**
  * fetches the index (using if-modified-since)
@@ -99,7 +99,7 @@ public class HttpIndexFetcher implements IndexFetcher {
 
         } else {
           registryMetrics.count(
-              RegistryMetricsEvent.SCHEMA_REGISTRY_UNAVAILABLE,
+              EVENT.SCHEMA_REGISTRY_UNAVAILABLE,
               Tags.of(RegistryMetrics.TAG_STATUS_CODE_KEY, String.valueOf(response.code())));
 
           throw new SchemaRegistryUnavailableException(
@@ -107,7 +107,7 @@ public class HttpIndexFetcher implements IndexFetcher {
         }
       }
     } catch (Exception e) {
-      registryMetrics.count(RegistryMetricsEvent.SCHEMA_REGISTRY_UNAVAILABLE);
+      registryMetrics.count(EVENT.SCHEMA_REGISTRY_UNAVAILABLE);
 
       throw new SchemaRegistryUnavailableException(e);
     }

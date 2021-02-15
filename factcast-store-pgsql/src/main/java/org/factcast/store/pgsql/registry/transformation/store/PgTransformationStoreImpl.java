@@ -22,7 +22,7 @@ import java.util.Optional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.pgsql.registry.transformation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -70,7 +70,7 @@ public class PgTransformationStoreImpl extends AbstractTransformationStore {
         return true;
       } else {
         registryMetrics.count(
-            RegistryMetricsEvent.TRANSFORMATION_CONFLICT,
+            EVENT.TRANSFORMATION_CONFLICT,
             Tags.of(Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, source.id())));
 
         throw new TransformationConflictException(

@@ -15,12 +15,22 @@
  */
 package org.factcast.example.client.spring.boot2.hello;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
 
-@Specification(ns = "Users", version = 3)
+@Specification(ns = "users", type = "UserCreated", version = 3)
 @ToString
-public class UserCreated {
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+public class UserCreated implements EventObject {
   String lastName;
 
   String firstName;
@@ -28,4 +38,9 @@ public class UserCreated {
   String salutation;
 
   String displayName;
+
+  @Override
+  public Set<UUID> aggregateIds() {
+    return Collections.emptySet();
+  }
 }

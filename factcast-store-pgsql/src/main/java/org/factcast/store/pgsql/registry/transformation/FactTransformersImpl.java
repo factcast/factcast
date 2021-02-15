@@ -24,7 +24,7 @@ import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.pgsql.internal.RequestedVersions;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsOperation;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.OP;
 
 @RequiredArgsConstructor
 public class FactTransformersImpl implements FactTransformers {
@@ -51,7 +51,7 @@ public class FactTransformersImpl implements FactTransformers {
               () -> new IllegalArgumentException("No requested Version !? This must not happen."));
 
       return registryMetrics.timed(
-          RegistryMetricsOperation.TRANSFORMATION,
+          OP.TRANSFORMATION,
           TransformationException.class,
           () -> trans.transformIfNecessary(e, targetVersion));
     }

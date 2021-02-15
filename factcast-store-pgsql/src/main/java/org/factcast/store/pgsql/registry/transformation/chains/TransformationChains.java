@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 import lombok.Value;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
 import org.factcast.store.pgsql.registry.transformation.TransformationStoreListener;
@@ -103,7 +103,7 @@ public class TransformationChains implements TransformationStoreListener {
     List<Transformation> all = registry.get(key);
     if (all.isEmpty()) {
       registryMetrics.count(
-          RegistryMetricsEvent.MISSING_TRANSFORMATION_INFO,
+          EVENT.MISSING_TRANSFORMATION_INFO,
           Tags.of(
               Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
               Tag.of("from", String.valueOf(from)),
@@ -136,7 +136,7 @@ public class TransformationChains implements TransformationStoreListener {
         || Iterables.getLast(path).toVersion() != to
         || Iterables.getFirst(path, null).fromVersion() != from) {
       registryMetrics.count(
-          RegistryMetricsEvent.MISSING_TRANSFORMATION_INFO,
+          EVENT.MISSING_TRANSFORMATION_INFO,
           Tags.of(
               Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
               Tag.of("from", String.valueOf(from)),

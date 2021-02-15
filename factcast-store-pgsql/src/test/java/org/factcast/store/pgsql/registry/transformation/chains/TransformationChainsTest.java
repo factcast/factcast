@@ -28,7 +28,7 @@ import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.pgsql.registry.transformation.SingleTransformation;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
@@ -83,7 +83,7 @@ public class TransformationChainsTest {
     assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 1, 7));
     verify(registryMetrics)
         .count(
-            eq(RegistryMetricsEvent.MISSING_TRANSFORMATION_INFO),
+            eq(EVENT.MISSING_TRANSFORMATION_INFO),
             eq(
                 Tags.of(
                     Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
@@ -163,7 +163,7 @@ public class TransformationChainsTest {
     assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 2, 99));
     verify(registryMetrics)
         .count(
-            eq(RegistryMetricsEvent.MISSING_TRANSFORMATION_INFO),
+            eq(EVENT.MISSING_TRANSFORMATION_INFO),
             eq(
                 Tags.of(
                     Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
@@ -195,7 +195,7 @@ public class TransformationChainsTest {
     assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 2, 99));
     verify(registryMetrics)
         .count(
-            eq(RegistryMetricsEvent.MISSING_TRANSFORMATION_INFO),
+            eq(EVENT.MISSING_TRANSFORMATION_INFO),
             eq(
                 Tags.of(
                     Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),

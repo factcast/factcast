@@ -33,7 +33,7 @@ import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.http.ValidationConstants;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 
 @RequiredArgsConstructor
@@ -54,7 +54,7 @@ public class FactValidator {
       } else {
         if (!props.isAllowUnvalidatedPublish()) {
           registryMetrics.count(
-              RegistryMetricsEvent.FACT_VALIDATION_FAILED,
+              EVENT.FACT_VALIDATION_FAILED,
               Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, SchemaKey.from(fact).toString()));
 
           return Lists.newArrayList(
@@ -88,7 +88,7 @@ public class FactValidator {
               });
 
           registryMetrics.count(
-              RegistryMetricsEvent.FACT_VALIDATION_FAILED,
+              EVENT.FACT_VALIDATION_FAILED,
               Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
 
           return ret;
@@ -100,8 +100,7 @@ public class FactValidator {
     } else {
       if (!props.isAllowUnvalidatedPublish()) {
         registryMetrics.count(
-            RegistryMetricsEvent.SCHEMA_MISSING,
-            Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
+            EVENT.SCHEMA_MISSING, Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
 
         return Lists.newArrayList(
             new FactValidationError(

@@ -20,12 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -59,37 +54,34 @@ public class WithOptimisticLock {
       // fetch current state
       // TODO
       StateToken token = store.stateFor(factSpecs);
-      try {
 
-        // execute the business logic
-        // in case an AttemptAbortedException is thrown, just pass it
-        // through
-        IntermediatePublishResult r = runAndWrapException(operation);
+      // execute the business logic
+      // in case an AttemptAbortedException is thrown, just pass it
+      // through
+      IntermediatePublishResult r = runAndWrapException(operation);
 
-        List<Fact> factsToPublish = r.factsToPublish();
-        if (factsToPublish == null || factsToPublish.isEmpty()) {
-          throw new IllegalArgumentException(
-              "Attempt exited without abort, but does not publish any facts.");
-        }
-        // try to publish
-        if (store.publishIfUnchanged(r.factsToPublish(), Optional.of(token))) {
-
-          // publishing worked
-          // now run the 'andThen' operation
-          try {
-            r.andThen().ifPresent(Runnable::run);
-          } catch (Throwable e) {
-            throw new ExceptionAfterPublish(factsToPublish, e);
-          }
-
-          // and return the lastFactId for reference
-          return new PublishingResult(factsToPublish);
-
-        } else {
-          sleep();
-        }
-      } finally {
+      List<Fact> factsToPublish = r.factsToPublish();
+      if (factsToPublish == null || factsToPublish.isEmpty()) {
         store.invalidate(token);
+        throw new IllegalArgumentException(
+            "Attempt exited without abort, but does not publish any facts.");
+      }
+      // try to publish
+      if (store.publishIfUnchanged(r.factsToPublish(), Optional.of(token))) {
+
+        // publishing worked
+        // now run the 'andThen' operation
+        try {
+          r.andThen().ifPresent(Runnable::run);
+        } catch (Throwable e) {
+          throw new ExceptionAfterPublish(factsToPublish, e);
+        }
+
+        // and return the lastFactId for reference
+        return new PublishingResult(factsToPublish);
+
+      } else {
+        sleep();
       }
     }
 

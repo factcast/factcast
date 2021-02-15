@@ -28,7 +28,7 @@ import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.http.ValidationConstants;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
@@ -58,7 +58,7 @@ public class FactValidatorTest {
     Fact probeFact = Fact.builder().ns("foo").type("bar").buildWithoutPayload();
     assertThat(uut.validate(probeFact)).isNotEmpty();
 
-    verify(registryMetrics).count(eq(RegistryMetricsEvent.FACT_VALIDATION_FAILED), any(Tags.class));
+    verify(registryMetrics).count(eq(EVENT.FACT_VALIDATION_FAILED), any(Tags.class));
   }
 
   @Test
@@ -88,7 +88,7 @@ public class FactValidatorTest {
     Fact probeFact = Fact.builder().ns("foo").type("bar").version(8).buildWithoutPayload();
     assertThat(uut.validate(probeFact)).isNotEmpty();
 
-    verify(registryMetrics).count(eq(RegistryMetricsEvent.SCHEMA_MISSING), any(Tags.class));
+    verify(registryMetrics).count(eq(EVENT.SCHEMA_MISSING), any(Tags.class));
   }
 
   @Test
@@ -168,7 +168,7 @@ public class FactValidatorTest {
     Fact probeFact = Fact.builder().ns("foo").type("bar").version(1).build("{}");
     assertThat(uut.validate(probeFact)).isNotEmpty();
 
-    verify(registryMetrics).count(eq(RegistryMetricsEvent.FACT_VALIDATION_FAILED), any(Tags.class));
+    verify(registryMetrics).count(eq(EVENT.FACT_VALIDATION_FAILED), any(Tags.class));
   }
 
   @Test

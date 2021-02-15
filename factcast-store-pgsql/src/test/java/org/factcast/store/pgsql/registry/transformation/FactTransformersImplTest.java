@@ -29,7 +29,7 @@ import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.internal.RequestedVersions;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsOperation;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.OP;
 import org.factcast.store.pgsql.registry.metrics.SupplierWithException;
 import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChain;
@@ -135,8 +135,6 @@ public class FactTransformersImplTest {
 
     verify(cache).find(eq(probe.id()), eq(33), eq(chainId));
 
-    verify(registryMetrics)
-        .timed(
-            eq(RegistryMetricsOperation.TRANSFORMATION), any(), any(SupplierWithException.class));
+    verify(registryMetrics).timed(eq(OP.TRANSFORMATION), any(), any(SupplierWithException.class));
   }
 }

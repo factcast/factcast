@@ -22,7 +22,7 @@ import java.util.Optional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
@@ -57,8 +57,7 @@ public class InMemSchemaStoreImpl implements SchemaStore {
           return true;
         } else {
           registryMetrics.count(
-              RegistryMetricsEvent.SCHEMA_CONFLICT,
-              Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, source.id()));
+              EVENT.SCHEMA_CONFLICT, Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, source.id()));
 
           throw new SchemaConflictException(
               "SchemaSource at " + source + " does not match the stored hash " + hash);
