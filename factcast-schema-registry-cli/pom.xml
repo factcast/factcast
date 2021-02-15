@@ -32,6 +32,13 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-internal-dep</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-bom</artifactId>
         <version>${kotlin.version}</version>
@@ -106,7 +113,6 @@
     <dependency>
       <groupId>com.github.java-json-tools</groupId>
       <artifactId>json-schema-validator</artifactId>
-      <version>2.2.14</version>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
@@ -163,7 +169,6 @@
   </dependencies>
 
   <build>
-
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
