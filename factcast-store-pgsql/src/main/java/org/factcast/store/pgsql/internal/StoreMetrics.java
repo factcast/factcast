@@ -19,7 +19,7 @@ import lombok.NonNull;
 
 public class StoreMetrics {
 
-  static final String DURATION_METRIC_NAME = "factcast.store.duration";
+  static final String DURATION_METRIC_NAME = "factcast.store.timer";
 
   static final String COUNTER_METRIC_NAME = "factcast.store.meter";
 
