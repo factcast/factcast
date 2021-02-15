@@ -23,7 +23,7 @@ import lombok.val;
 import org.springframework.beans.factory.InitializingBean;
 
 public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
-  public static final String METRIC_NAME_TIMINGS = "factcast.registry.duration";
+  public static final String METRIC_NAME_TIMINGS = "factcast.registry.timer";
 
   public static final String METRIC_NAME_COUNTS = "factcast.registry.meter";
 

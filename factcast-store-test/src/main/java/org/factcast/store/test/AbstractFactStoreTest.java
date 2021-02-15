@@ -1258,6 +1258,20 @@ public abstract class AbstractFactStoreTest {
     verify(store, times(0)).invalidate(any());
   }
 
+  @Test
+  void shouldReleaseTokenOnEmptyPublications() throws Exception {
+
+    UUID agg1 = UUID.randomUUID();
+
+    try {
+      uut.lock(NS).on(agg1).attempt(() -> null);
+    } catch (AttemptAbortedException expected) {
+    }
+
+    verify(store, times(1)).stateFor(any());
+    verify(store, times(1)).invalidate(any());
+  }
+
   static class ToListObserver implements FactObserver {
     @Getter private List<Fact> list = new LinkedList<>();
 

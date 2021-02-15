@@ -36,13 +36,13 @@ We're focussing on *Server* metrics here.
 
 At the time of writing, there are four namespaces exposed:
 
-* `factcast.store.duration`
+* `factcast.store.timer`
 * `factcast.store.meter`
-* `factcast.registry.duration`
+* `factcast.registry.timer`
 * `factcast.registry.meter`
 
 Depending on your micrometer binding, you may see a slightly different spelling in your data (like '
-factcast_store_operations_duration`, if your datasource has a special meaning for the '.'-character)
+factcast_store_timer`, if your datasource has a special meaning for the '.'-character)
 
 Furthermore, metrics in operations are automatically tagged with 
 
