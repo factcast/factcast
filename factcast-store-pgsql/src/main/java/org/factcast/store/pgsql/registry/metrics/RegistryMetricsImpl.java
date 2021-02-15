@@ -20,8 +20,9 @@ import io.micrometer.core.instrument.*;
 import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.val;
+import org.springframework.beans.factory.InitializingBean;
 
-public class RegistryMetricsImpl implements RegistryMetrics {
+public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
   public static final String METRIC_NAME_TIMINGS = "factcast.registry.duration";
 
   public static final String METRIC_NAME_COUNTS = "factcast.registry.meter";
@@ -32,17 +33,6 @@ public class RegistryMetricsImpl implements RegistryMetrics {
 
   public RegistryMetricsImpl(MeterRegistry meterRegistry) {
     this.meterRegistry = meterRegistry;
-    /*
-     * Register all non-exceptional meters, so that an operational dashboard
-     * can visualize all possible operations dynamically without hardcoding
-     * them.
-     */
-    for (RegistryMetrics.OP op : RegistryMetrics.OP.values()) {
-      timer(op, null);
-    }
-    for (RegistryMetrics.EVENT e : RegistryMetrics.EVENT.values()) {
-      count(e);
-    }
   }
 
   private Counter counter(@NonNull EVENT op, Tags tags) {
@@ -131,11 +121,27 @@ public class RegistryMetricsImpl implements RegistryMetrics {
 
   @Override
   public void count(@NonNull EVENT event, Tags tags) {
-    counter(event, tags).increment();
+    Counter counter = counter(event, tags);
+    counter.increment();
   }
 
   @Override
   public void count(@NonNull EVENT event) {
-    count(event, null);
+    count(event, Tags.empty());
+  }
+
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    /*
+     * Register all non-exceptional meters, so that an operational dashboard
+     * can visualize all possible operations dynamically without hardcoding
+     * them.
+     */
+    for (RegistryMetrics.OP op : RegistryMetrics.OP.values()) {
+      timer(op, Tags.empty());
+    }
+    for (RegistryMetrics.EVENT e : RegistryMetrics.EVENT.values()) {
+      count(e);
+    }
   }
 }

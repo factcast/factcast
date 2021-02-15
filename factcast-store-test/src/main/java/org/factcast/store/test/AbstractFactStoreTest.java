@@ -1246,14 +1246,16 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void shouldReleaseTokenOnPublish() throws Exception {
+  void shouldNotReleaseTokenOnPublish() throws Exception {
+
+    // token is already released by publishIfUnchanged
 
     UUID agg1 = UUID.randomUUID();
 
     uut.lock(NS).on(agg1).attempt(() -> Attempt.publish(fact(agg1)));
 
     verify(store, times(1)).stateFor(any());
-    verify(store, times(1)).invalidate(any());
+    verify(store, times(0)).invalidate(any());
   }
 
   static class ToListObserver implements FactObserver {
