@@ -26,8 +26,8 @@ import lombok.NonNull;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.Fact;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsOperation;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.OP;
 import org.joda.time.DateTime;
 
 public class InMemTransformationCache implements TransformationCache {
@@ -65,16 +65,14 @@ public class InMemTransformationCache implements TransformationCache {
     }
     cached.ifPresent(faat -> faat.accessTime(System.currentTimeMillis()));
     registryMetrics.count(
-        cached.isPresent()
-            ? RegistryMetricsEvent.TRANSFORMATION_CACHE_HIT
-            : RegistryMetricsEvent.TRANSFORMATION_CACHE_MISS);
+        cached.isPresent() ? EVENT.TRANSFORMATION_CACHE_HIT : EVENT.TRANSFORMATION_CACHE_MISS);
     return cached.map(FactAndAccessTime::fact);
   }
 
   @Override
   public void compact(@NonNull DateTime thresholdDate) {
     registryMetrics.timed(
-        RegistryMetricsOperation.COMPACT_TRANSFORMATION_CACHE,
+        OP.COMPACT_TRANSFORMATION_CACHE,
         () -> {
           HashSet<Entry<String, FactAndAccessTime>> copyOfEntries;
           synchronized (cache) {

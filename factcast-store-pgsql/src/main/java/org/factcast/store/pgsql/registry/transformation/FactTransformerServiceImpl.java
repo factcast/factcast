@@ -28,7 +28,7 @@ import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChain;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
@@ -73,7 +73,7 @@ public class FactTransformerServiceImpl implements FactTransformerService {
         return transformed;
       } catch (JsonProcessingException e1) {
         registryMetrics.count(
-            RegistryMetricsEvent.TRANSFORMATION_FAILED,
+            EVENT.TRANSFORMATION_FAILED,
             Tags.of(
                 Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
                 Tag.of("version", String.valueOf(targetVersion))));

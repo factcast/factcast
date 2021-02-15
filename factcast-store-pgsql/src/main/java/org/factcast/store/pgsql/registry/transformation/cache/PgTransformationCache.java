@@ -22,8 +22,8 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsOperation;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.OP;
 import org.joda.time.DateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -61,7 +61,7 @@ public class PgTransformationCache implements TransformationCache {
             }));
 
     if (facts.isEmpty()) {
-      registryMetrics.count(RegistryMetricsEvent.TRANSFORMATION_CACHE_MISS);
+      registryMetrics.count(EVENT.TRANSFORMATION_CACHE_MISS);
 
       return Optional.empty();
     }
@@ -69,7 +69,7 @@ public class PgTransformationCache implements TransformationCache {
     jdbcTemplate.update(
         "UPDATE transformationcache SET last_access=now() WHERE cache_key = ?", cacheKey);
 
-    registryMetrics.count(RegistryMetricsEvent.TRANSFORMATION_CACHE_HIT);
+    registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
 
     return Optional.of(facts.get(0));
   }
@@ -77,7 +77,7 @@ public class PgTransformationCache implements TransformationCache {
   @Override
   public void compact(@NonNull DateTime thresholdDate) {
     registryMetrics.timed(
-        RegistryMetricsOperation.COMPACT_TRANSFORMATION_CACHE,
+        OP.COMPACT_TRANSFORMATION_CACHE,
         () -> {
           jdbcTemplate.update(
               "DELETE FROM transformationcache WHERE last_access < ?", thresholdDate.toDate());

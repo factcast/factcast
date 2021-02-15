@@ -24,7 +24,7 @@ import io.micrometer.core.instrument.Tags;
 import java.util.Optional;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
@@ -95,7 +95,7 @@ public abstract class AbstractSchemaStoreTest {
           uut.contains(conflicting);
         });
 
-    verify(registryMetrics).count(eq(RegistryMetricsEvent.SCHEMA_CONFLICT), any(Tags.class));
+    verify(registryMetrics).count(eq(EVENT.SCHEMA_CONFLICT), any(Tags.class));
   }
 
   @Test

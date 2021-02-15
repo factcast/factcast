@@ -19,9 +19,9 @@ import lombok.NonNull;
 
 public class StoreMetrics {
 
-  static final String DURATION_METRIC_NAME = "factcast.store.operations.duration";
+  static final String DURATION_METRIC_NAME = "factcast.store.duration";
 
-  static final String COUNTER_METRIC_NAME = "factcast.store.operations.count";
+  static final String COUNTER_METRIC_NAME = "factcast.store.meter";
 
   static final String TAG_STORE_KEY = "store";
 
@@ -60,6 +60,8 @@ public class StoreMetrics {
 
     COMPACT_SNAPSHOT_CACHE("compactSnapshotCache"),
 
+    INVALIDATE_STATE_TOKEN("invalidateStateToken"),
+
     NOTIFY_ROUNDTRIP("notifyRoundTripLatency");
 
     @NonNull final String name;
@@ -79,8 +81,8 @@ public class StoreMetrics {
 
     @NonNull final String name;
 
-    EVENT(@NonNull String op) {
-      name = op;
+    EVENT(@NonNull String event) {
+      name = event;
     }
 
     @Override

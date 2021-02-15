@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.RegistryMetricsEvent;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.pgsql.registry.transformation.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.function.*;
@@ -94,7 +94,7 @@ public abstract class AbstractTransformationStoreTest {
 
     verify(registryMetrics)
         .count(
-            RegistryMetricsEvent.TRANSFORMATION_CONFLICT,
+            EVENT.TRANSFORMATION_CONFLICT,
             Tags.of(Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, conflicting.id())));
   }
 
