@@ -22,26 +22,15 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.pgsql.internal.StoreMetrics.EVENT;
 import org.factcast.store.pgsql.internal.StoreMetrics.OP;
+import org.springframework.beans.factory.InitializingBean;
 
 @Slf4j
-public class PgMetrics {
+public class PgMetrics implements InitializingBean {
 
   @NonNull private final MeterRegistry registry;
 
   public PgMetrics(@NonNull MeterRegistry registry) {
     this.registry = registry;
-
-    /*
-     * Register all non-exceptional meters, so that an operational dashboard
-     * can visualize all possible operations dynamically without hardcoding
-     * them.
-     */
-    for (OP op : OP.values()) {
-      timer(op, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
-    }
-    for (EVENT e : EVENT.values()) {
-      counter(e);
-    }
   }
 
   @NonNull
@@ -110,5 +99,20 @@ public class PgMetrics {
   @NonNull
   public Timer timer(@NonNull OP operation) {
     return timer(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+  }
+
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    /*
+     * Register all non-exceptional meters, so that an operational dashboard
+     * can visualize all possible operations dynamically without hardcoding
+     * them.
+     */
+    for (OP op : OP.values()) {
+      timer(op, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+    }
+    for (EVENT e : EVENT.values()) {
+      counter(e);
+    }
   }
 }

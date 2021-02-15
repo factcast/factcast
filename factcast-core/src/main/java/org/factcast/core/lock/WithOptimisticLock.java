@@ -51,37 +51,48 @@ public class WithOptimisticLock {
       throws AttemptAbortedException, OptimisticRetriesExceededException, ExceptionAfterPublish {
     while (++count <= retry) {
 
+      boolean publishIfUnchanged = false;
+
       // fetch current state
-      // TODO
       StateToken token = store.stateFor(factSpecs);
 
-      // execute the business logic
-      // in case an AttemptAbortedException is thrown, just pass it
-      // through
-      IntermediatePublishResult r = runAndWrapException(operation);
+      try {
 
-      List<Fact> factsToPublish = r.factsToPublish();
-      if (factsToPublish == null || factsToPublish.isEmpty()) {
-        store.invalidate(token);
-        throw new IllegalArgumentException(
-            "Attempt exited without abort, but does not publish any facts.");
-      }
-      // try to publish
-      if (store.publishIfUnchanged(r.factsToPublish(), Optional.of(token))) {
+        // execute the business logic
+        // in case an AttemptAbortedException is thrown, just pass it
+        // through
+        IntermediatePublishResult r = runAndWrapException(operation);
 
-        // publishing worked
-        // now run the 'andThen' operation
-        try {
-          r.andThen().ifPresent(Runnable::run);
-        } catch (Throwable e) {
-          throw new ExceptionAfterPublish(factsToPublish, e);
+        List<Fact> factsToPublish = r.factsToPublish();
+        if (factsToPublish == null || factsToPublish.isEmpty()) {
+          throw new IllegalArgumentException(
+              "Attempt exited without abort, but does not publish any facts.");
         }
 
-        // and return the lastFactId for reference
-        return new PublishingResult(factsToPublish);
+        // from here on, we know the server takes care of invalidation
+        publishIfUnchanged = true;
 
-      } else {
-        sleep();
+        // try to publish
+        if (store.publishIfUnchanged(r.factsToPublish(), Optional.of(token))) {
+
+          // publishing worked
+          // now run the 'andThen' operation
+          try {
+            r.andThen().ifPresent(Runnable::run);
+          } catch (Throwable e) {
+            throw new ExceptionAfterPublish(factsToPublish, e);
+          }
+
+          // and return the lastFactId for reference
+          return new PublishingResult(factsToPublish);
+
+        } else {
+          sleep();
+        }
+      } finally {
+        if (!publishIfUnchanged) {
+          store.invalidate(token);
+        }
       }
     }
 
