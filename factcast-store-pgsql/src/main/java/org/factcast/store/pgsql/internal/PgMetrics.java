@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Timer.Sample;
 import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.store.pgsql.internal.StoreMetrics.EVENT;
 import org.factcast.store.pgsql.internal.StoreMetrics.OP;
 
 @Slf4j
@@ -38,12 +39,15 @@ public class PgMetrics {
     for (OP op : OP.values()) {
       timer(op, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
     }
+    for (EVENT e : EVENT.values()) {
+      counter(e);
+    }
   }
 
   @NonNull
   public Counter counter(@NonNull StoreMetrics.EVENT operation) {
     Tags tags = forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
-    // ommitting the meter description here
+    // omitting the meter description here
     return Counter.builder(StoreMetrics.COUNTER_METRIC_NAME).tags(tags).register(registry);
   }
 
