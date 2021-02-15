@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2021 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.snap;
+package org.factcast.example.server;
 
-import java.io.Serializable;
-import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
-import lombok.Value;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
 
-@AllArgsConstructor
-@Value(staticConstructor = "of")
-public class SnapshotId implements Serializable {
-  private static final long serialVersionUID = -3207528229703207635L;
-  @NonNull String key;
+@Component
+public class TestCLI implements CommandLineRunner {
 
-  @NonNull UUID uuid; // semantically optional, might be constant if not needed
-  // (SnapshotProjections)
+  @Autowired MeterRegistry reg;
+
+  @Override
+  public void run(String... args) throws Exception {
+    reg.counter("buh", "meintag", "meinvalue").increment();
+  }
 }

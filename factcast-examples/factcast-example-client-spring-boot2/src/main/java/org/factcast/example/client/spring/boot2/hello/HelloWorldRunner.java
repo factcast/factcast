@@ -15,13 +15,17 @@
  */
 package org.factcast.example.client.spring.boot2.hello;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -31,6 +35,8 @@ import org.springframework.stereotype.Component;
 public class HelloWorldRunner implements CommandLineRunner {
 
   @NonNull private final FactCast fc;
+
+  @NonNull FactStore store;
 
   @Override
   public void run(String... args) throws Exception {
@@ -62,5 +68,14 @@ public class HelloWorldRunner implements CommandLineRunner {
             SubscriptionRequest.catchup(FactSpec.ns("users")).fromScratch(),
             element -> System.out.println(element))
         .awaitCatchup();
+
+    SnapshotId sid = new SnapshotId("foo", UUID.randomUUID());
+    @NonNull
+    Snapshot snap =
+        new Snapshot(sid, UUID.randomUUID(), "foo".getBytes(StandardCharsets.UTF_8), true);
+    store.setSnapshot(snap);
+    store.getSnapshot(sid);
+    store.clearSnapshot(sid);
+    store.currentTime();
   }
 }
