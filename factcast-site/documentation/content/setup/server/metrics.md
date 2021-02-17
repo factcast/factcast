@@ -108,7 +108,8 @@ At the **time of writing (0.3.10)**, the registry events that are counted are:
 
 ### gRPC Metrics
 
-If you're looking for remote calls and their execution times (including marshalling/demarshalling from protobuf), you can have a look at the metrics automatically added by the [gRPC library](https://yidongnan.github.io/grpc-spring-boot-starter/en/).
+If you're looking for remote calls and their execution times (including marshalling/demarshalling from protobuf), you can have a look at the metrics automatically added by the [gRPC library](https://yidongnan.github.io/grpc-spring-boot-starter/en/)
+that we use.
 The relevant namespaces are:
 
 * `grpcServerRequestsReceived` and
