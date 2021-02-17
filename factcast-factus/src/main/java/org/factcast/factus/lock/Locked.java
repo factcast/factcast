@@ -77,7 +77,8 @@ public class Locked<I extends Projection> {
   }
 
   @SuppressWarnings("UnusedReturnValue")
-  public <R> R attempt(BiConsumer<I, RetryableTransaction> tx, Function<List<Fact>, R> resultFn) {
+  public <R> R attempt(
+      BiConsumer<I, RetryableTransaction> bodyToExecute, Function<List<Fact>, R> resultFn) {
     try {
       PublishingResult result =
           fc.lock(specs)
@@ -107,7 +108,7 @@ public class Locked<I extends Projection> {
 
                       try {
                         InLockedOperation.enterLockedOperation();
-                        tx.accept(updatedProjection, txWithLockOnSpecs);
+                        bodyToExecute.accept(updatedProjection, txWithLockOnSpecs);
                         return Attempt.publish(
                             toPublish.stream().map(Supplier::get).collect(Collectors.toList()));
                       } finally {
@@ -123,13 +124,14 @@ public class Locked<I extends Projection> {
       return resultFn.apply(result.publishedFacts());
 
     } catch (AttemptAbortedException e) {
-      if (projectionOrNull != null)
+      if (projectionOrNull != null) {
         factusMetrics.count(
             CountedEvent.TRANSACTION_ABORT,
             Tags.of(Tag.of(CLASS, projectionOrNull.getClass().getName())));
-      else
+      } else {
         factusMetrics.count(
             CountedEvent.TRANSACTION_ABORT, Tags.of(Tag.of(CLASS, MANUAL_FACT_SPECS)));
+      }
 
       throw LockedOperationAbortedException.wrap(e);
     }
@@ -138,7 +140,9 @@ public class Locked<I extends Projection> {
   @SuppressWarnings("unchecked")
   private I update(I projection) {
 
-    if (projection == null) return null;
+    if (projection == null) {
+      return null;
+    }
 
     if (projection instanceof Aggregate) {
       Class<? extends Aggregate> projectionClass =

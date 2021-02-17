@@ -9,90 +9,90 @@ package org.factcast.grpc.api.gen;
 	defines a UUID with most & least significant bits
 */
 message MSG_UUID {
-	int64 msb = 1;
-	int64 lsb = 2;
+  int64 msb = 1;
+  int64 lsb = 2;
 }
 message MSG_UUID_AND_VERSION {
-	int64 msb = 1;
-	int64 lsb = 2;
-	int32 ver = 3;
+  int64 msb = 1;
+  int64 lsb = 2;
+  int32 ver = 3;
 }
 message MSG_UUIDs {
-	repeated MSG_UUID uuids = 1;
+  repeated MSG_UUID uuids = 1;
 }
 
 message MSG_OptionalSerial {
-	bool present = 1;
-	uint64 serial = 2;
+  bool present = 1;
+  uint64 serial = 2;
 }
 /**
 	A Notification as returned as a stream member from subscribe.
 	Type acts as descriminator. Either a Fact, ID, or one of the signals Catchup/Complete/Error.
 */
 message MSG_Notification{
-	enum Type {
-		Fact = 0;
-		Id = 1;
-		Catchup = 2;
-		Complete = 3;
-		Facts = 4;
-	}
+  enum Type {
+    Fact = 0;
+    Id = 1;
+    Catchup = 2;
+    Complete = 3;
+    Facts = 4;
+  }
 
-	Type type = 1;
-	MSG_Fact fact = 2;
-	MSG_UUID id = 3;
-	MSG_Facts facts = 4;
+  Type type = 1;
+  MSG_Fact fact = 2;
+  MSG_UUID id = 3;
+  MSG_Facts facts = 4;
 }
 
 /**
 	A jackson-serialized Subscription request
 */
 message MSG_SubscriptionRequest {
-	string json =1;
+  string json = 1;
 }
 /**
 	A jackson-serialized list of factSpecs
 */
 message MSG_FactSpecsJson {
-	string json =1;
+  string json = 1;
 }
 /**
 	Optional Fact as returned from fetchById
 	fact is only set, if present is true
 */
 message MSG_OptionalFact{
-	bool present = 1;
-	MSG_Fact fact = 2;
+  bool present = 1;
+  MSG_Fact fact = 2;
 }
 
 message MSG_OptionalUuid{
-	bool present = 1;
-	MSG_UUID uuid = 2;
+  bool present = 1;
+  MSG_UUID uuid = 2;
 }
 
 /**
 	Fact defined by header & payload
-*/	
+*/
 message MSG_Fact {
-	string header = 1;
-	string payload = 2;
+  string header = 1;
+  string payload = 2;
 }
 
 /**
 	List of Facts to publish atomically
 */
 message MSG_Facts {
-	repeated MSG_Fact fact = 1;
+  repeated MSG_Fact fact = 1;
 }
 
 message MSG_ConditionalPublishRequest{
-	MSG_Facts facts = 1;
-	bool tokenPresent = 2;
-	MSG_UUID token = 3;
+  MSG_Facts facts = 1;
+  bool tokenPresent = 2;
+  MSG_UUID token = 3;
 }
 
 message MSG_ConditionalPublishResult{
-	bool success =1;
+  bool success = 1;
 }
 
 /**
@@ -102,18 +102,18 @@ message MSG_Empty {
 }
 
 message MSG_ServerProtocolVersion {
-  int32 major=1;
-  int32 minor=2;
-  int32 patch=3;
+  int32 major = 1;
+  int32 minor = 2;
+  int32 patch = 3;
 }
 
 message MSG_ServerProperties {
-  map<string, string> property=1;
+  map<string, string> property = 1;
 }
 
 message MSG_ServerConfig {
-  MSG_ServerProtocolVersion version= 1;
-  MSG_ServerProperties properties= 2;
+  MSG_ServerProtocolVersion version = 1;
+  MSG_ServerProperties properties = 2;
 }
 
 message MSG_StringSet {
@@ -134,39 +134,39 @@ message MSG_CurrentDatabaseTime {
 }
 
 message MSG_SnapshotId{
-	string key = 1;
-	MSG_OptionalUuid uuid = 2; // useful in case of aggregates, unused when dealing with projections
+  string key = 1;
+  MSG_OptionalUuid uuid = 2; // useful in case of aggregates, unused when dealing with projections
 }
 
 message MSG_Snapshot{
-	MSG_SnapshotId id = 1;
-	MSG_UUID factId = 2;
-	bytes data = 3;
-	bool compressed = 4;
+  MSG_SnapshotId id = 1;
+  MSG_UUID factId = 2;
+  bytes data = 3;
+  bool compressed = 4;
 }
 message MSG_OptionalSnapshot{
-	bool present = 1;
-	MSG_Snapshot snapshot = 2;
+  bool present = 1;
+  MSG_Snapshot snapshot = 2;
 }
 
 service RemoteFactStore {
-	rpc subscribe (MSG_SubscriptionRequest) returns (stream MSG_Notification) {}
-	rpc fetchById (MSG_UUID) returns (MSG_OptionalFact) {}
-	rpc publish (MSG_Facts) returns (MSG_Empty) {}
-	rpc serialOf (MSG_UUID) returns (MSG_OptionalSerial) {}
-	rpc handshake (MSG_Empty) returns (MSG_ServerConfig) {}
-	rpc enumerateNamespaces (MSG_Empty) returns (MSG_StringSet) {}
-	rpc enumerateTypes (MSG_String) returns (MSG_StringSet) {}
+  rpc subscribe (MSG_SubscriptionRequest) returns (stream MSG_Notification) {}
+  rpc fetchById (MSG_UUID) returns (MSG_OptionalFact) {}
+  rpc publish (MSG_Facts) returns (MSG_Empty) {}
+  rpc serialOf (MSG_UUID) returns (MSG_OptionalSerial) {}
+  rpc handshake (MSG_Empty) returns (MSG_ServerConfig) {}
+  rpc enumerateNamespaces (MSG_Empty) returns (MSG_StringSet) {}
+  rpc enumerateTypes (MSG_String) returns (MSG_StringSet) {}
 
-	rpc publishConditional (MSG_ConditionalPublishRequest) returns (MSG_ConditionalPublishResult) {}
-	rpc invalidate (MSG_UUID) returns (MSG_Empty) {}
-	rpc stateFor (MSG_StateForRequest) returns (MSG_UUID) {} // will be replaced
-	rpc currentTime(MSG_Empty) returns (MSG_CurrentDatabaseTime) {}
-	// 1.2
-	rpc fetchByIdAndVersion (MSG_UUID_AND_VERSION) returns (MSG_OptionalFact) {}
-	// 1.3
-	rpc clearSnapshot (MSG_SnapshotId) returns (MSG_Empty) {}
-	rpc setSnapshot (MSG_Snapshot) returns (MSG_Empty) {}
-	rpc getSnapshot (MSG_SnapshotId) returns (MSG_OptionalSnapshot) {}
-	rpc stateForSpecsJson (MSG_FactSpecsJson) returns (MSG_UUID) {}
+  rpc publishConditional (MSG_ConditionalPublishRequest) returns (MSG_ConditionalPublishResult) {}
+  rpc invalidate (MSG_UUID) returns (MSG_Empty) {}
+  rpc stateFor (MSG_StateForRequest) returns (MSG_UUID) {} // will be replaced
+  rpc currentTime(MSG_Empty) returns (MSG_CurrentDatabaseTime) {}
+  // 1.2
+  rpc fetchByIdAndVersion (MSG_UUID_AND_VERSION) returns (MSG_OptionalFact) {}
+  // 1.3
+  rpc clearSnapshot (MSG_SnapshotId) returns (MSG_Empty) {}
+  rpc setSnapshot (MSG_Snapshot) returns (MSG_Empty) {}
+  rpc getSnapshot (MSG_SnapshotId) returns (MSG_OptionalSnapshot) {}
+  rpc stateForSpecsJson (MSG_FactSpecsJson) returns (MSG_UUID) {}
 }

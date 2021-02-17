@@ -17,11 +17,14 @@ package org.factcast.core.snap;
 
 import java.io.Serializable;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 
-@Value
+@AllArgsConstructor
+@Value(staticConstructor = "of")
 public class SnapshotId implements Serializable {
+  private static final long serialVersionUID = -3207528229703207635L;
   @NonNull String key;
 
   @NonNull UUID uuid; // semantically optional, might be constant if not needed

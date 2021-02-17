@@ -159,8 +159,8 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public PgTokenStore pgTokenStore(JdbcTemplate jdbcTemplate) {
-    return new PgTokenStore(jdbcTemplate);
+  public PgTokenStore pgTokenStore(JdbcTemplate jdbcTemplate, PgMetrics metrics) {
+    return new PgTokenStore(jdbcTemplate, metrics);
   }
 
   @Bean

@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.factcast.store.pgsql.internal.PgMetrics;
-import org.factcast.store.pgsql.internal.PgMetrics.StoreMetrics.OP;
+import org.factcast.store.pgsql.internal.StoreMetrics.OP;
 import org.joda.time.DateTime;
 import org.springframework.scheduling.annotation.Scheduled;
 

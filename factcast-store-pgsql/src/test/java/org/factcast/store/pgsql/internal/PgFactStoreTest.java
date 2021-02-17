@@ -16,7 +16,6 @@
 package org.factcast.store.pgsql.internal;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.factcast.store.pgsql.internal.PgMetrics.StoreMetrics.OP.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Optional;
@@ -26,6 +25,7 @@ import lombok.val;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.store.FactStore;
+import org.factcast.store.pgsql.internal.StoreMetrics.OP;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.store.test.IntegrationTest;
 import org.junit.jupiter.api.*;
@@ -56,14 +56,14 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
     Optional<Snapshot> snapshot = store.getSnapshot(new SnapshotId("xxx", UUID.randomUUID()));
     assertThat(snapshot).isEmpty();
 
-    verify(metrics).time(same(GET_SNAPSHOT), any(Supplier.class));
+    verify(metrics).time(same(OP.GET_SNAPSHOT), any(Supplier.class));
   }
 
   @Test
   void testClearSnapshotMetered() {
     val id = new SnapshotId("xxx", UUID.randomUUID());
     store.clearSnapshot(id);
-    verify(metrics).time(same(CLEAR_SNAPSHOT), any(Runnable.class));
+    verify(metrics).time(same(OP.CLEAR_SNAPSHOT), any(Runnable.class));
   }
 
   @Test
@@ -72,6 +72,6 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
     val snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
     store.setSnapshot(snap);
 
-    verify(metrics).time(same(SET_SNAPSHOT), any(Runnable.class));
+    verify(metrics).time(same(OP.SET_SNAPSHOT), any(Runnable.class));
   }
 }

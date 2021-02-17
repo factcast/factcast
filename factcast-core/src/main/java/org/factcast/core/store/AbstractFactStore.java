@@ -15,7 +15,8 @@
  */
 package org.factcast.core.store;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
@@ -61,6 +62,7 @@ public abstract class AbstractFactStore implements FactStore {
   }
 
   // TODO needed?
+  @Override
   public StateToken stateFor(@NonNull List<FactSpec> specs) {
     State state = getStateFor(specs);
     return tokenStore.create(state);

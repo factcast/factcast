@@ -15,47 +15,35 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer.Sample;
 import java.util.function.Supplier;
-import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.store.pgsql.internal.PgMetrics.StoreMetrics.OP;
+import org.factcast.store.pgsql.internal.StoreMetrics.EVENT;
+import org.factcast.store.pgsql.internal.StoreMetrics.OP;
+import org.springframework.beans.factory.InitializingBean;
 
 @Slf4j
-public class PgMetrics {
+public class PgMetrics implements InitializingBean {
 
   @NonNull private final MeterRegistry registry;
 
   public PgMetrics(@NonNull MeterRegistry registry) {
     this.registry = registry;
-
-    /*
-     * Register all non-exceptional meters, so that an operational dashboard
-     * can visualize all possible operations dynamically without hardcoding
-     * them.
-     */
-    for (OP op : OP.values()) {
-      timer(op, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
-    }
   }
 
   @NonNull
-  public Counter counter(@NonNull OP operation) {
+  public Counter counter(@NonNull StoreMetrics.EVENT operation) {
     Tags tags = forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
-    // ommitting the meter description here
+    // omitting the meter description here
     return Counter.builder(StoreMetrics.COUNTER_METRIC_NAME).tags(tags).register(registry);
   }
 
-  private Tags forOperation(@NonNull OP operation, @NonNull String exceptionTagValue) {
+  private Tags forOperation(@NonNull MetricName operation, @NonNull String exceptionTagValue) {
     return Tags.of(
         Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
-        Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.op()),
+        Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.getName()),
         Tag.of(StoreMetrics.TAG_EXCEPTION_KEY, exceptionTagValue));
   }
 
@@ -113,58 +101,18 @@ public class PgMetrics {
     return timer(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
   }
 
-  public static class StoreMetrics {
-
-    static final String DURATION_METRIC_NAME = "factcast.store.operations.duration";
-
-    static final String COUNTER_METRIC_NAME = "factcast.store.operations";
-
-    static final String TAG_STORE_KEY = "store";
-
-    static final String TAG_STORE_VALUE = "pgsql";
-
-    static final String TAG_OPERATION_KEY = "operation";
-
-    static final String TAG_EXCEPTION_KEY = "exception";
-
-    static final String TAG_EXCEPTION_VALUE_NONE = "None";
-
-    public enum OP {
-      PUBLISH("publish"),
-
-      SUBSCRIBE_FOLLOW("subscribe-follow"),
-
-      SUBSCRIBE_CATCHUP("subscribe-catchup"),
-
-      FETCH_BY_ID("fetchById"),
-
-      SERIAL_OF("serialOf"),
-
-      ENUMERATE_NAMESPACES("enumerateNamespaces"),
-
-      ENUMERATE_TYPES("enumerateTypes"),
-
-      GET_STATE_FOR("getStateFor"),
-
-      PUBLISH_IF_UNCHANGED("publishIfUnchanged"),
-
-      GET_SNAPSHOT("getSnapshot"),
-
-      SET_SNAPSHOT("setSnapshot"),
-
-      CLEAR_SNAPSHOT("clearSnapshot"),
-
-      COMPACT_SNAPSHOT_CACHE("compactSnapshotCache"),
-
-      NOTIFY_ROUNDTRIP_LATENCY("notifyRoundTripLatency"),
-
-      MISSED_ROUNDTRIP("missedRoundtrip");
-
-      @NonNull @Getter final String op;
-
-      OP(@NonNull String op) {
-        this.op = op;
-      }
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    /*
+     * Register all non-exceptional meters, so that an operational dashboard
+     * can visualize all possible operations dynamically without hardcoding
+     * them.
+     */
+    for (OP op : OP.values()) {
+      timer(op, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+    }
+    for (EVENT e : EVENT.values()) {
+      counter(e);
     }
   }
 }
