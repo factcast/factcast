@@ -28,8 +28,8 @@ import okhttp3.OkHttpClient;
 import org.factcast.core.TestHelper;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
-import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.junit.jupiter.api.*;
 
 public class HttpIndexFetcherTest {
@@ -86,7 +86,7 @@ public class HttpIndexFetcherTest {
 
       verify(registryMetrics)
           .count(
-              MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE,
+              EVENT.SCHEMA_REGISTRY_UNAVAILABLE,
               Tags.of(RegistryMetrics.TAG_STATUS_CODE_KEY, "404"));
     }
   }

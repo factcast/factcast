@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.factcast.store.pgsql.registry.http.ValidationConstants;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.TimedOperation;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.OP;
 import org.factcast.store.pgsql.registry.transformation.*;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
@@ -96,7 +96,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   public void refresh() {
     synchronized (mutex) {
       registryMetrics.timed(
-          TimedOperation.REFRESH_REGISTRY,
+          OP.REFRESH_REGISTRY,
           () -> {
             Optional<RegistryIndex> fetchIndex = indexFetcher.fetchIndex();
             fetchIndex.ifPresent(this::process);

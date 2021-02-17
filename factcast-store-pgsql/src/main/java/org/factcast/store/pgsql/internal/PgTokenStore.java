@@ -23,6 +23,7 @@ import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.store.pgsql.internal.StoreMetrics.OP;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -30,6 +31,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class PgTokenStore implements TokenStore {
 
   final JdbcTemplate tpl;
+  final PgMetrics metrics;
 
   @Override
   public @NonNull StateToken create(@NonNull State state) {
@@ -42,7 +44,11 @@ public class PgTokenStore implements TokenStore {
 
   @Override
   public void invalidate(@NonNull StateToken token) {
-    tpl.update(PgConstants.DELETE_TOKEN, token.uuid());
+    metrics.time(
+        OP.INVALIDATE_STATE_TOKEN,
+        () -> {
+          tpl.update(PgConstants.DELETE_TOKEN, token.uuid());
+        });
   }
 
   @Override

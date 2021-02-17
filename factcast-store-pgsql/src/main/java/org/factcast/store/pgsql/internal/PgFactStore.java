@@ -36,7 +36,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.store.pgsql.internal.PgMetrics.StoreMetrics.OP;
+import org.factcast.store.pgsql.internal.StoreMetrics.OP;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
 import org.factcast.store.pgsql.internal.query.PgQueryBuilder;
 import org.factcast.store.pgsql.internal.snapcache.PgSnapshotCache;
@@ -129,7 +129,7 @@ public class PgFactStore extends AbstractFactStore {
             lock.aquireExclusiveTXLock();
 
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
-            final int numberOfFactsToPublish = factsToPublish.size();
+            int numberOfFactsToPublish = factsToPublish.size();
             log.trace(
                 "Inserting {} fact(s){}",
                 numberOfFactsToPublish,
@@ -148,7 +148,7 @@ public class PgFactStore extends AbstractFactStore {
                 copiedListOfFacts,
                 BATCH_SIZE,
                 (statement, fact) -> {
-                  final String idMatch = "{\"id\":\"" + fact.id() + "\"}";
+                  String idMatch = "{\"id\":\"" + fact.id() + "\"}";
                   statement.setString(1, idMatch);
                 });
 

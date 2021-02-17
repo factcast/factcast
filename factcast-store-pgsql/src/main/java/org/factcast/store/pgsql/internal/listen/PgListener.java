@@ -30,7 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.PgMetrics;
-import org.factcast.store.pgsql.internal.PgMetrics.StoreMetrics.OP;
+import org.factcast.store.pgsql.internal.StoreMetrics.EVENT;
+import org.factcast.store.pgsql.internal.StoreMetrics.OP;
 import org.postgresql.PGNotification;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.beans.factory.DisposableBean;
@@ -163,7 +164,7 @@ public class PgListener implements InitializingBean, DisposableBean {
     if (notifications == null || notifications.length == 0) {
       // missed the notifications from the DB, something is fishy
       // here....
-      pgMetrics.counter(OP.MISSED_ROUNDTRIP).increment();
+      pgMetrics.counter(EVENT.MISSED_ROUNDTRIP).increment();
       throw new SQLException(
           "Missed roundtrip notification from channel '"
               + PgConstants.ROUNDTRIP_CHANNEL_NAME
@@ -171,8 +172,8 @@ public class PgListener implements InitializingBean, DisposableBean {
     } else {
       // return since there might have also received channel notifications
       pgMetrics
-          .timer(OP.NOTIFY_ROUNDTRIP_LATENCY)
-          .record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+          .timer(OP.NOTIFY_ROUNDTRIP)
+          .record((System.nanoTime() - start), TimeUnit.NANOSECONDS);
       return notifications;
     }
   }
@@ -186,7 +187,7 @@ public class PgListener implements InitializingBean, DisposableBean {
   }
 
   @VisibleForTesting
-  protected void postEvent(final String name) {
+  protected void postEvent(String name) {
     if (running.get()) {
       eventBus.post(new FactInsertionEvent(name));
     }
@@ -207,7 +208,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @Override
   public void destroy() {
-    this.running.set(false);
+    running.set(false);
     if (listenerThread != null) {
       listenerThread.interrupt();
     }

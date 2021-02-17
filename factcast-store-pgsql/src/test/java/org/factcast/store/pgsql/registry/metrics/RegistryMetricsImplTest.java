@@ -19,12 +19,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
 import java.util.function.Supplier;
 import lombok.val;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -50,7 +51,7 @@ class RegistryMetricsImplTest {
 
   @Test
   void testTimerCreation() {
-    uut.timed(TimedOperation.COMPACT_TRANSFORMATION_CACHE, () -> {});
+    uut.timed(RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE, () -> {});
 
     verify(meterRegistry)
         .timer(
@@ -58,12 +59,12 @@ class RegistryMetricsImplTest {
             Tags.of(
                 Tag.of(
                     RegistryMetricsImpl.TAG_NAME_KEY,
-                    TimedOperation.COMPACT_TRANSFORMATION_CACHE.op())));
+                    RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE.op())));
   }
 
   @Test
   void testCounterCreation() {
-    uut.count(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE);
+    uut.count(RegistryMetrics.EVENT.SCHEMA_REGISTRY_UNAVAILABLE);
 
     verify(meterRegistry)
         .counter(
@@ -71,12 +72,12 @@ class RegistryMetricsImplTest {
             Tags.of(
                 Tag.of(
                     RegistryMetricsImpl.TAG_NAME_KEY,
-                    MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE.event())));
+                    RegistryMetrics.EVENT.SCHEMA_REGISTRY_UNAVAILABLE.event())));
   }
 
   @Test
   void testTimerRunnable() {
-    uut.timed(TimedOperation.COMPACT_TRANSFORMATION_CACHE, () -> {});
+    uut.timed(RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE, () -> {});
 
     verify(timer).record(any(Runnable.class));
   }
@@ -84,7 +85,7 @@ class RegistryMetricsImplTest {
   @Test
   void testTimerRunnableAndTags() {
     val customTag = Tag.of("foo", "bar");
-    uut.timed(TimedOperation.COMPACT_TRANSFORMATION_CACHE, Tags.of(customTag), () -> {});
+    uut.timed(RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE, Tags.of(customTag), () -> {});
 
     verify(timer).record(any(Runnable.class));
     verify(meterRegistry)
@@ -94,13 +95,13 @@ class RegistryMetricsImplTest {
                 customTag,
                 Tag.of(
                     RegistryMetricsImpl.TAG_NAME_KEY,
-                    TimedOperation.COMPACT_TRANSFORMATION_CACHE.op())));
+                    RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE.op())));
   }
 
   @Test
   void testTimerRunnableWithExceptions() {
     uut.timed(
-        TimedOperation.COMPACT_TRANSFORMATION_CACHE, IllegalArgumentException.class, () -> {});
+        RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE, IllegalArgumentException.class, () -> {});
 
     verify(timer).record(any(Duration.class));
   }
@@ -110,7 +111,7 @@ class RegistryMetricsImplTest {
     val customTag = Tag.of("foo", "bar");
 
     uut.timed(
-        TimedOperation.COMPACT_TRANSFORMATION_CACHE,
+        RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE,
         IllegalArgumentException.class,
         Tags.of(customTag),
         () -> {});
@@ -123,7 +124,7 @@ class RegistryMetricsImplTest {
                 customTag,
                 Tag.of(
                     RegistryMetricsImpl.TAG_NAME_KEY,
-                    TimedOperation.COMPACT_TRANSFORMATION_CACHE.op())));
+                    RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE.op())));
   }
 
   @Test
@@ -134,7 +135,7 @@ class RegistryMetricsImplTest {
         .thenAnswer(invocation -> invocation.getArgument(0, Supplier.class).get());
 
     val result =
-        uut.timed(TimedOperation.COMPACT_TRANSFORMATION_CACHE, Tags.of(customTag), () -> 5);
+        uut.timed(RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE, Tags.of(customTag), () -> 5);
 
     assertEquals(5, result);
 
@@ -146,14 +147,16 @@ class RegistryMetricsImplTest {
                 customTag,
                 Tag.of(
                     RegistryMetricsImpl.TAG_NAME_KEY,
-                    TimedOperation.COMPACT_TRANSFORMATION_CACHE.op())));
+                    RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE.op())));
   }
 
   @Test
   void testTimerSupplierWithException() {
     val result =
         uut.timed(
-            TimedOperation.COMPACT_TRANSFORMATION_CACHE, IllegalArgumentException.class, () -> 5);
+            RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE,
+            IllegalArgumentException.class,
+            () -> 5);
 
     assertEquals(5, result);
 
@@ -166,7 +169,7 @@ class RegistryMetricsImplTest {
     when(timer.record(any(Supplier.class)))
         .thenAnswer(invocation -> invocation.getArgument(0, Supplier.class).get());
 
-    val result = uut.timed(TimedOperation.COMPACT_TRANSFORMATION_CACHE, () -> 5);
+    val result = uut.timed(RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE, () -> 5);
 
     assertEquals(5, result);
 
@@ -175,7 +178,7 @@ class RegistryMetricsImplTest {
 
   @Test
   void testCounter() {
-    uut.count(MetricEvent.MISSING_TRANSFORMATION_INFO);
+    uut.count(RegistryMetrics.EVENT.MISSING_TRANSFORMATION_INFO);
 
     verify(counter).increment();
   }
@@ -184,7 +187,7 @@ class RegistryMetricsImplTest {
   void testCounterWithTags() {
     val customTag = Tag.of("foo", "bar");
 
-    uut.count(MetricEvent.MISSING_TRANSFORMATION_INFO, Tags.of(customTag));
+    uut.count(RegistryMetrics.EVENT.MISSING_TRANSFORMATION_INFO, Tags.of(customTag));
 
     verify(counter).increment();
     verify(meterRegistry)
@@ -194,6 +197,6 @@ class RegistryMetricsImplTest {
                 customTag,
                 Tag.of(
                     RegistryMetricsImpl.TAG_NAME_KEY,
-                    MetricEvent.MISSING_TRANSFORMATION_INFO.event())));
+                    RegistryMetrics.EVENT.MISSING_TRANSFORMATION_INFO.event())));
   }
 }

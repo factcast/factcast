@@ -30,7 +30,7 @@ import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.RegistryIndex;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.TimedOperation;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.OP;
 import org.factcast.store.pgsql.registry.transformation.*;
 import org.factcast.store.pgsql.registry.transformation.store.InMemTransformationStoreImpl;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
@@ -136,7 +136,7 @@ public class HttpSchemaRegistryTest {
     assertEquals(2, transformationStore.get(TransformationKey.of("ns", "type")).size());
     assertEquals(1, transformationStore.get(TransformationKey.of("ns", "type2")).size());
 
-    verify(registryMetrics).timed(eq(TimedOperation.REFRESH_REGISTRY), any(Runnable.class));
+    verify(registryMetrics).timed(eq(OP.REFRESH_REGISTRY), any(Runnable.class));
   }
 
   @Test

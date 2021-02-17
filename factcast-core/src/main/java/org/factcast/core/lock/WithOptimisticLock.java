@@ -20,12 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -56,9 +51,11 @@ public class WithOptimisticLock {
       throws AttemptAbortedException, OptimisticRetriesExceededException, ExceptionAfterPublish {
     while (++count <= retry) {
 
+      boolean publishIfUnchanged = false;
+
       // fetch current state
-      // TODO
       StateToken token = store.stateFor(factSpecs);
+
       try {
 
         // execute the business logic
@@ -71,6 +68,10 @@ public class WithOptimisticLock {
           throw new IllegalArgumentException(
               "Attempt exited without abort, but does not publish any facts.");
         }
+
+        // from here on, we know the server takes care of invalidation
+        publishIfUnchanged = true;
+
         // try to publish
         if (store.publishIfUnchanged(r.factsToPublish(), Optional.of(token))) {
 
@@ -89,7 +90,9 @@ public class WithOptimisticLock {
           sleep();
         }
       } finally {
-        store.invalidate(token);
+        if (!publishIfUnchanged) {
+          store.invalidate(token);
+        }
       }
     }
 

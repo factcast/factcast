@@ -29,8 +29,8 @@ import okhttp3.Response;
 import org.factcast.store.pgsql.registry.IndexFetcher;
 import org.factcast.store.pgsql.registry.RegistryIndex;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
-import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 
 /**
  * fetches the index (using if-modified-since)
@@ -54,7 +54,7 @@ public class HttpIndexFetcher implements IndexFetcher {
       @NonNull OkHttpClient client,
       @NonNull RegistryMetrics registryMetrics) {
     this.client = client;
-    this.schemaRegistryUrl = baseUrl;
+    schemaRegistryUrl = baseUrl;
     this.registryMetrics = registryMetrics;
   }
 
@@ -90,8 +90,8 @@ public class HttpIndexFetcher implements IndexFetcher {
           return Optional.empty();
         } else if (response.code() == ValidationConstants.HTTP_OK) {
 
-          this.etag = response.header(ValidationConstants.HTTPHEADER_E_TAG);
-          this.since = response.header(ValidationConstants.HTTPHEADER_LAST_MODIFIED);
+          etag = response.header(ValidationConstants.HTTPHEADER_E_TAG);
+          since = response.header(ValidationConstants.HTTPHEADER_LAST_MODIFIED);
 
           RegistryIndex readValue =
               ValidationConstants.JACKSON.readValue(responseBodyAsText, RegistryIndex.class);
@@ -99,7 +99,7 @@ public class HttpIndexFetcher implements IndexFetcher {
 
         } else {
           registryMetrics.count(
-              MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE,
+              EVENT.SCHEMA_REGISTRY_UNAVAILABLE,
               Tags.of(RegistryMetrics.TAG_STATUS_CODE_KEY, String.valueOf(response.code())));
 
           throw new SchemaRegistryUnavailableException(
@@ -107,7 +107,7 @@ public class HttpIndexFetcher implements IndexFetcher {
         }
       }
     } catch (Exception e) {
-      registryMetrics.count(MetricEvent.SCHEMA_REGISTRY_UNAVAILABLE);
+      registryMetrics.count(EVENT.SCHEMA_REGISTRY_UNAVAILABLE);
 
       throw new SchemaRegistryUnavailableException(e);
     }

@@ -23,8 +23,8 @@ import java.util.Optional;
 import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
-import org.factcast.store.pgsql.registry.metrics.MetricEvent;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.function.*;
@@ -37,7 +37,7 @@ public abstract class AbstractTransformationCacheTest {
 
   @BeforeEach
   public void init() {
-    this.uut = createUUT();
+    uut = createUUT();
   }
 
   protected abstract TransformationCache createUUT();
@@ -48,7 +48,7 @@ public abstract class AbstractTransformationCacheTest {
 
     assertThat(fact.isPresent()).isFalse();
 
-    verify(registryMetrics).count(MetricEvent.TRANSFORMATION_CACHE_MISS);
+    verify(registryMetrics).count(EVENT.TRANSFORMATION_CACHE_MISS);
   }
 
   @Test
@@ -62,7 +62,7 @@ public abstract class AbstractTransformationCacheTest {
 
     assertThat(found.isPresent()).isTrue();
     assertEquals(fact, found.get());
-    verify(registryMetrics).count(MetricEvent.TRANSFORMATION_CACHE_HIT);
+    verify(registryMetrics).count(EVENT.TRANSFORMATION_CACHE_HIT);
   }
 
   @Test
