@@ -55,14 +55,14 @@ Furthermore, metrics in operations are automatically tagged with
 There are a bunch of metrics already emitted in the server. There are different kinds of metrics used:
 
 * Timers (collecting durations of code execution)
-* Meters (collecting metric events, for example occurrences of errors)
+* Meters (collecting metric events, for example, occurrences of errors)
 
-As this list is constantly growing, we cannot guarantee
-completeness of the documentation. If you want to see the current list of operations, please look
+As this list is continuously growing, we cannot guarantee
+the documentation's completeness. If you want to see the current list of operations, please look
 at [StoreMetrics.java](https://github.com/factcast/factcast/blob/issue1163/factcast-store-pgsql/src/main/java/org/factcast/store/pgsql/internal/StoreMetrics.java)
 .
 
-At the **time of writing (0.3.10)** the store operations that are counted/measured are:
+At the **time of writing (0.3.10)**, the store operations that are counted/measured are:
 
 | operation | duration  |
 |---|---|
@@ -82,7 +82,7 @@ At the **time of writing (0.3.10)** the store operations that are counted/measur
 |    notifyDatabaseRoundTrip | x |
 |    missedDatabaseRoundtrip | x |  
 
-At the **time of writing (0.3.10)** the registry operations that are counted/measured are:
+At the **time of writing (0.3.10)**, the registry operations that are counted/measured are:
 
 | operation |  duration  |
 |---|---|
@@ -91,7 +91,7 @@ At the **time of writing (0.3.10)** the registry operations that are counted/mea
 | transformEvent | x  |
 | tchRegistryFile | x |
 
-At the **time of writing (0.3.10)** the registry events that are counted are:
+At the **time of writing (0.3.10)**, the registry events that are counted are:
 
 | event | meter  |
 |---|---|
@@ -108,13 +108,11 @@ At the **time of writing (0.3.10)** the registry events that are counted are:
 
 ### gRPC Metrics
 
-If you're just looking for remote calls and want to see their execution times (including marshalling/demarshalling from protobuf), you can have a look at the metrics automatically added by the [gRPC library](https://yidongnan.github.io/grpc-spring-boot-starter/en/) we use.
+If you're looking for remote calls and their execution times (including marshalling/demarshalling from protobuf), you can have a look at the metrics automatically added by the [gRPC library](https://yidongnan.github.io/grpc-spring-boot-starter/en/).
 The relevant namespaces are:
 
 * `grpcServerRequestsReceived` and
 * `grpcServerResponsesSent`
 
-However, since those only focus on service methods as defined in the [protocol buffer specs](https://github.com/factcast/factcast/blob/master/factcast-grpc-api/src/main/proto/FactStore.proto), and not everything we want to measure is triggered by a remote call, we had to introduce other metrics as well.
-When comparing - for instance durations - of gRPC vs the factcast.store.duration' you will find a subtle difference. The reason for this is that instead of including the gRPC overhead, we chose to just measure the actual invocations on the FactStore/TokenStore implementation.
-
-You may want to focus at one or the other, depending on your needs.
+These automatically added metrics only focus on service methods defined in the [protocol buffer specs](https://github.com/factcast/factcast/blob/master/factcast-grpc-api/src/main/proto/FactStore.proto). 
+Since a gRPC remote call triggers not everything we want to measure, we introduced additional metrics. When comparing, for instance, the automatically added durations of gRPC vs. the 'factcast.store.duration', you will find a subtle difference. The reason for this is that instead of including the gRPC overhead, we chose to only measure the actual invocations on the FactStore/TokenStore implementation. Depending on your needs, you may want to focus on one or the other.
