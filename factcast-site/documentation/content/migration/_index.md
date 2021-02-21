@@ -12,6 +12,13 @@ identifier = "migration"
 weight = 99
 +++
 
+## Upgrading to 0.3.10
+
+0.3.10 changes the namespaces of the metrics. Also some metric names have
+been changed for consistency reasons. If you created dashboards for example based on those
+names, please be prepared to update them accordingly. 
+You can find the current metric names [here](/setup/server/metrics).
+
 ## Upgrading to 0.3.0
 
 There is a new module for use in projects that provide 'EventObjects' but do not want to depend on factcast-core, which is called "factcast-factus-event".
