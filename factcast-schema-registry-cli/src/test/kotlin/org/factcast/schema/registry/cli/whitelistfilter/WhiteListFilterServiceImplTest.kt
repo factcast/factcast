@@ -164,7 +164,6 @@ class WhiteListFilterServiceImplTest : StringSpec() {
             filteredProject.namespaces[0].path.endsWith("shipping") shouldBe true
         }
 
-        // TODO make me pass
         "nonWhitelistedEventIsFullyFilteredOutIncludingTransformationFolder " {
             val project = createProjectFolder(
                     createNamespaceFolder("shipping",

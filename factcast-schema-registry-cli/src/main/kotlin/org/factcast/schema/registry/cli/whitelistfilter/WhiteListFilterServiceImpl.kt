@@ -17,8 +17,10 @@ package org.factcast.schema.registry.cli.whitelistfilter
 
 import javax.inject.Singleton
 import org.factcast.schema.registry.cli.project.structure.EventFolder
+import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
 import org.factcast.schema.registry.cli.project.structure.NamespaceFolder
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
+import org.factcast.schema.registry.cli.project.structure.TransformationFolder
 
 // returns a filtered ProjectFolder.
 @Singleton
@@ -39,8 +41,23 @@ class WhiteListFilterServiceImpl : WhiteListFilterService {
                     .map { filterEventFolder(it, whiteList) }
                     .let { NamespaceFolder(ns.path, it, ns.description) }
 
-    private fun filterEventFolder(event: EventFolder, whiteList: WhiteList) =
-            event.versionFolders
-                    .filter { it.containedIn(whiteList) }
-                    .let { EventFolder(event.path, it, event.description, event.transformationFolders) }
+    private fun filterEventFolder(event: EventFolder, whiteList: WhiteList): EventFolder {
+        val filteredVersionsFolder = event.versionFolders
+                .filter { it.containedIn(whiteList) }
+
+        val filteredTransformationFolders = event.transformationFolders
+                .filter {
+                    val (fromVersion, toVersion) = determineTransformationVersions(it)
+                    eventVersionsContainsVersion(filteredVersionsFolder, fromVersion) &&
+                            eventVersionsContainsVersion(filteredVersionsFolder, toVersion)
+                }
+
+        return EventFolder(event.path, filteredVersionsFolder, event.description, filteredTransformationFolders)
+    }
+
+    private fun determineTransformationVersions(it: TransformationFolder) =
+            it.path.fileName.toString().split("-")
+
+    private fun eventVersionsContainsVersion(eventVersions: List<EventVersionFolder>, version: String): Boolean =
+            eventVersions.any { it.path.fileName.toString() == version }
 }
