@@ -94,16 +94,22 @@ public class PgFactStream {
       SubscriptionRequest request, SubscriptionImpl subscription, PgSynchronizedQuery query) {
     if (request.ephemeral()) {
       // just fast forward to the latest event publish by now
-      this.serial.set(fetcher.retrieveLatestSer());
+      serial.set(fetcher.retrieveLatestSer());
     } else {
-      catchup(postQueryMatcher);
+      try {
+        catchup(postQueryMatcher);
+      } catch (Throwable e) {
+        // might help to find networking issues while catching up
+        log.error("While catching up: ", e);
+        subscription.notifyError(e);
+      }
     }
     // propagate catchup
     if (isConnected()) {
       log.trace("{} signaling catchup", request);
       subscription.notifyCatchup();
     }
-    if (isConnected())
+    if (isConnected()) {
       if (request.continuous()) {
         log.debug("{} entering follow mode", request);
         long delayInMs;
@@ -135,6 +141,7 @@ public class PgFactStream {
         subscription.notifyComplete();
         log.debug("Completed {}", request);
       }
+    }
   }
 
   private void catchup(PgPostQueryMatcher postQueryMatcher) {
@@ -179,7 +186,7 @@ public class PgFactStream {
               "ResultSet already closed. We should not have got here. THIS IS A BUG!");
         }
         Fact f = PgFact.from(rs);
-        final UUID factId = f.id();
+        UUID factId = f.id();
         if (postQueryMatcher.test(f)) {
           try {
             subscription.notifyElement(f);
