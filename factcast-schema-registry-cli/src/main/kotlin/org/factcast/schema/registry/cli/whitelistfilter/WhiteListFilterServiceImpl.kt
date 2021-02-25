@@ -51,11 +51,8 @@ class WhiteListFilterServiceImpl : WhiteListFilterService {
                         val (fromVersion, toVersion) = determineTransformationVersions(it)
                         eventVersionsContainsVersion(filteredVersionsFolder, fromVersion) &&
                                 eventVersionsContainsVersion(filteredVersionsFolder, toVersion)
-                    // hack: if splitting fails then pass on erroneous transformation the later validation step which will bring a proper error message.
-                    // TODO: whitelist filtering should happen *after* the validation of the project structure.
-                    // see CommandServiceImpl.build(..), right before call to distributionCreatorService.createDistributable()
                     } catch (e: IndexOutOfBoundsException) {
-                        true
+                        true // on parse error, ignore transformation from white listing
                     }
                 }
 
