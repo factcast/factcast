@@ -87,12 +87,17 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
     }
 
     try {
+      log.trace("invoking {}", f.id());
       dispatch.invoke(projection, f);
+      log.trace("returned without Exception {}", f.id());
       if (projection instanceof StateAware) {
         ((StateAware) projection).state(f.id());
       }
 
     } catch (InvocationTargetException | IllegalAccessException e) {
+      log.trace("returned with Exception {}: {}", f.id(), e);
+      // pass along and potentially rethrow
+      projection.onError(e);
       throw new IllegalArgumentException(e);
     } catch (Throwable e) {
       // pass along and potentially rethrow
