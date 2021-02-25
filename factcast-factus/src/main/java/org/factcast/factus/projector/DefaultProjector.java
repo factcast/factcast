@@ -78,9 +78,12 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
   public void apply(@NonNull Fact f) {
     log.trace("Dispatching fact {}", f.id());
     val coords = FactSpecCoordinates.from(f);
+    log.trace("Dispatching fact {} - coords: {}", f.id(), coords);
     val dispatch = dispatchInfo.get(coords);
     if (dispatch == null) {
-      throw new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
+      val ihd = new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
+      projection.onError(ihd);
+      throw ihd;
     }
 
     try {
@@ -91,6 +94,10 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
 
     } catch (InvocationTargetException | IllegalAccessException e) {
       throw new IllegalArgumentException(e);
+    } catch (Throwable e) {
+      // pass along and potentially rethrow
+      projection.onError(e);
+      throw e;
     }
   }
 
@@ -134,7 +141,12 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
 
     void invoke(Projection projection, Fact f)
         throws InvocationTargetException, IllegalAccessException {
-      dispatchMethod.invoke(objectResolver.apply(projection), parameterTransformer.apply(f));
+      log.trace("Entering Dispatcher.invoke for {}", f.id());
+      Object targetObject = objectResolver.apply(projection);
+      log.trace("Target: {}", targetObject);
+      Object[] parameters = parameterTransformer.apply(f);
+      log.trace("Params: {}", Arrays.toString(parameters));
+      dispatchMethod.invoke(targetObject, parameters);
     }
   }
 
