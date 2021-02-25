@@ -6,6 +6,7 @@ import org.factcast.schema.registry.cli.project.structure.EventFolder
 import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
 import org.factcast.schema.registry.cli.project.structure.NamespaceFolder
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
+import org.factcast.schema.registry.cli.project.structure.TransformationFolder
 import java.nio.file.Paths
 
 class WhiteListFilterServiceImplTest : StringSpec() {
@@ -163,7 +164,47 @@ class WhiteListFilterServiceImplTest : StringSpec() {
             filteredProject.namespaces[0].path.endsWith("shipping") shouldBe true
         }
 
+        "nonWhitelistedEventIsFullyFilteredOutIncludingTransformationFolder " {
+            val project = createProjectFolder(
+                    createNamespaceFolder("shipping",
+                            createEventFolder("shipping", "OrderShipped",
+                                    createEventVersionFolder("shipping", "OrderShipped", 1),
+                                    createEventVersionFolder("shipping", "OrderShipped", 2),
+                                    transformationFolder = listOf(createTransformationFolder("shipping", "OrderShipped", "1-2"))
+                            )
+                    )
+            )
+
+            val whiteList = listOf("/shipping/OrderShipped/versions/1")
+            val filteredProject = uut.filter(project, whiteList)
+
+            filteredProject.namespaces[0].eventFolders[0].versionFolders.size shouldBe 1
+            filteredProject.namespaces[0].eventFolders[0].transformationFolders.size shouldBe 0
+        }
+
+        "whiteListedEventsPassTheFilterIncludingTheTransformationFolder" {
+            val project = createProjectFolder(
+                    createNamespaceFolder("shipping",
+                            createEventFolder("shipping", "OrderShipped",
+                                    createEventVersionFolder("shipping", "OrderShipped", 1),
+                                    createEventVersionFolder("shipping", "OrderShipped", 2),
+                                    transformationFolder = listOf(createTransformationFolder("shipping", "OrderShipped", "1-2"))
+                            )
+                    )
+            )
+
+            val whiteList = listOf(
+                    "/shipping/OrderShipped/versions/1",
+                    "/shipping/OrderShipped/versions/2"
+            )
+            val filteredProject = uut.filter(project, whiteList)
+
+            filteredProject.namespaces[0].eventFolders[0].versionFolders.size shouldBe 2
+            filteredProject.namespaces[0].eventFolders[0].transformationFolders.size shouldBe 1
+        }
+
     }
+
 
     private fun createProjectFolder(vararg namespaceFolders: NamespaceFolder) =
             ProjectFolder(
@@ -177,11 +218,15 @@ class WhiteListFilterServiceImplTest : StringSpec() {
                     description = Paths.get("/registry/$namespaceName/index.md"),
                     eventFolders = eventFolders.asList())
 
-    private fun createEventFolder(namespaceName: String, eventName: String, vararg versionFolders: EventVersionFolder) =
+    private fun createEventFolder(
+            namespaceName: String,
+            eventName: String,
+            vararg versionFolders: EventVersionFolder,
+            transformationFolder: List<TransformationFolder> = emptyList()) =
             EventFolder(
                     path = Paths.get("/registry/$namespaceName/$eventName"),
                     description = Paths.get("/registry/$namespaceName/$eventName/index.md"),
-                    transformationFolders = emptyList(),
+                    transformationFolders = transformationFolder,
                     versionFolders = versionFolders.asList())
 
     private fun createEventVersionFolder(namespaceName: String, eventName: String, version: Int = 1) =
@@ -190,4 +235,9 @@ class WhiteListFilterServiceImplTest : StringSpec() {
                     schema = Paths.get("/registry/$namespaceName/$eventName/versions/$version/schema.json"),
                     description = Paths.get("/registry/$namespaceName/$eventName/versions/$version/index.md"),
                     examples = listOf(Paths.get("/registry/$namespaceName/$eventName/versions/$version/examples/simple.json")))
+
+    private fun createTransformationFolder(namespaceName: String, eventName: String, transformationName: String) =
+            TransformationFolder(
+                    path = Paths.get("/registry/$namespaceName/$eventName/transformations/$transformationName"),
+                    transformation = null)
 }
