@@ -77,6 +77,7 @@ public class PgFetchingCatchup implements PgCatchup {
   @VisibleForTesting
   void fetch(JdbcTemplate jdbc) {
     jdbc.setFetchSize(props.getPageSize());
+    jdbc.setQueryTimeout(0); // disable query timeout
     val skipTesting = postQueryMatcher.canBeSkipped();
 
     PgQueryBuilder b = new PgQueryBuilder(req.specs());
