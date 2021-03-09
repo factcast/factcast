@@ -84,7 +84,7 @@
     <mockito.version>3.8.0</mockito.version>
     <lombok.version>1.18.18</lombok.version>
     <etc>${session.executionRootDirectory}/src/etc</etc>
-    <testcontainers.version>1.15.1</testcontainers.version>
+    <testcontainers.version>1.15.2</testcontainers.version>
   </properties>
   <dependencies>
     <dependency>
