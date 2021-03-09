@@ -12,7 +12,7 @@
   <properties>
     <spring-boot.version>2.3.4.RELEASE</spring-boot.version>
     <spring-cloud.version>Hoxton.SR8</spring-cloud.version>
-    <spring-grpc.version>2.10.1.RELEASE</spring-grpc.version>
+    <spring-grpc.version>2.11.0.RELEASE</spring-grpc.version>
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
   <dependencyManagement>

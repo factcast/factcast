@@ -81,10 +81,10 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <assertj.version>3.19.0</assertj.version>
-    <mockito.version>3.5.15</mockito.version>
+    <mockito.version>3.8.0</mockito.version>
     <lombok.version>1.18.18</lombok.version>
     <etc>${session.executionRootDirectory}/src/etc</etc>
-    <testcontainers.version>1.15.1</testcontainers.version>
+    <testcontainers.version>1.15.2</testcontainers.version>
   </properties>
   <dependencies>
     <dependency>
@@ -154,7 +154,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.7.0</version>
+        <version>5.7.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
