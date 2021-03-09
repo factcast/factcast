@@ -9,7 +9,7 @@
   </parent>
   <artifactId>factcast-docker</artifactId>
   <properties>
-    <spring-boot.version>2.3.4.RELEASE</spring-boot.version>
+    <spring-boot.version>2.4.3</spring-boot.version>
     <docker.image.prefix>factcast</docker.image.prefix>
   </properties>
   <dependencyManagement>
