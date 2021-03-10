@@ -10,7 +10,7 @@
   <artifactId>factcast-bom</artifactId>
   <packaging>pom</packaging>
   <properties>
-    <jackson.version>${jackson.version}</jackson.version>
+    <jackson.version>2.12.2</jackson.version>
   </properties>
   <dependencyManagement>
     <dependencies>
