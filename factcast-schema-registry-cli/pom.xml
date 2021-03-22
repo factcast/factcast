@@ -9,7 +9,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <properties>
-    <kotlin.version>1.4.31</kotlin.version>
+    <kotlin.version>1.4.32</kotlin.version>
     <arrow.version>0.10.5</arrow.version>
     <micronaut.version>1.3.1</micronaut.version>
     <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
