@@ -16,6 +16,7 @@
 package org.factcast.factus.metrics;
 
 import static org.factcast.factus.metrics.TagKeys.*;
+
 import com.google.common.base.Stopwatch;
 import io.micrometer.core.instrument.*;
 import java.util.concurrent.TimeUnit;

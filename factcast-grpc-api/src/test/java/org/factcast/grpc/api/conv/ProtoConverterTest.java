@@ -17,6 +17,7 @@ package org.factcast.grpc.api.conv;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import java.util.*;
