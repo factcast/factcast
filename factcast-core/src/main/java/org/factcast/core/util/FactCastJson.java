@@ -110,9 +110,10 @@ public final class FactCastJson {
   @SneakyThrows
   @Generated
   public static String writeValueAsPrettyString(Object o) {
-    return objectMapper.writer(new DefaultPrettyPrinter()
-            .withObjectIndenter(new DefaultIndenter().withLinefeed("\n")))
-            .writeValueAsString(o);
+    return objectMapper
+        .writer(
+            new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter().withLinefeed("\n")))
+        .writeValueAsString(o);
   }
 
   public static String addSerToHeader(long ser, String jsonHeader) {
