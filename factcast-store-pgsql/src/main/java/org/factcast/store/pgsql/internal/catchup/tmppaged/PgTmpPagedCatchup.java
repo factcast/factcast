@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.internal.catchup.paged;
+package org.factcast.store.pgsql.internal.catchup.tmppaged;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,7 +37,7 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @Slf4j
 @RequiredArgsConstructor
-public class PgPagedCatchup implements PgCatchup {
+public class PgTmpPagedCatchup implements PgCatchup {
 
   @NonNull final PgConnectionSupplier connectionSupplier;
 
@@ -71,7 +71,8 @@ public class PgPagedCatchup implements PgCatchup {
 
       if (numberOfFactsToCatchUp > 0) {
         try {
-          PgCatchUpFetchPage fetch = new PgCatchUpFetchPage(jdbc, props.getPageSize(), request);
+          PgCatchUpFetchTmpPage fetch =
+              new PgCatchUpFetchTmpPage(jdbc, props.getPageSize(), request);
           List<Fact> facts;
           do {
             facts = fetch.fetchFacts(serial);
