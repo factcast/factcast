@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
@@ -108,7 +110,9 @@ public final class FactCastJson {
   @SneakyThrows
   @Generated
   public static String writeValueAsPrettyString(Object o) {
-    return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
+    return objectMapper.writer(new DefaultPrettyPrinter()
+            .withObjectIndenter(new DefaultIndenter().withLinefeed("\n")))
+            .writeValueAsString(o);
   }
 
   public static String addSerToHeader(long ser, String jsonHeader) {
