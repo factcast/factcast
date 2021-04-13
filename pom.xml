@@ -77,14 +77,30 @@
     <spotless-maven-plugin.version>2.9.0</spotless-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.6</jacoco-maven-plugin.version>
     <spring-boot-maven-plugin.version>2.4.3</spring-boot-maven-plugin.version>
-    <maven.version>3.6.3</maven.version>
+    <maven.version>3.8.1</maven.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+    <spotless-maven-plugin.version>2.10.1</spotless-maven-plugin.version>
+    <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
+    <jacoco-maven-plugin.version>0.8.6</jacoco-maven-plugin.version>
+    <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <assertj.version>3.19.0</assertj.version>
-    <mockito.version>3.8.0</mockito.version>
-    <lombok.version>1.18.18</lombok.version>
+    <jackson.version>2.12.3</jackson.version>
+    <mockito.version>3.9.0</mockito.version>
+    <junit-jupiter.version>5.7.1</junit-jupiter.version>
+    <lombok.version>1.18.20</lombok.version>
+    <slf4j-api.version>1.7.30</slf4j-api.version>
     <etc>${session.executionRootDirectory}/src/etc</etc>
+    <spring-boot.version>2.3.4.RELEASE</spring-boot.version>
+    <spring-cloud.version>Hoxton.SR8</spring-cloud.version>
+    <spring-grpc.version>2.11.0.RELEASE</spring-grpc.version>
+    <grpc.version>1.30.2</grpc.version>
+    <spring-boot-maven-plugin.version>2.3.4.RELEASE</spring-boot-maven-plugin.version>
     <testcontainers.version>1.15.2</testcontainers.version>
+    <arrow.version>0.10.5</arrow.version>
+    <micronaut.version>1.3.1</micronaut.version>
+    <kotlin.version>1.4.32</kotlin.version>
+    <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
   </properties>
   <dependencies>
     <dependency>
@@ -178,7 +194,7 @@
       <plugin>
         <groupId>com.amashchenko.maven.plugin</groupId>
         <artifactId>gitflow-maven-plugin</artifactId>
-        <version>1.15.1</version>
+        <version>1.16.0</version>
         <configuration>
           <gitFlowConfig>
             <developmentBranch>master</developmentBranch>
