@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.pgsql.internal.catchup.paged;
+package org.factcast.store.pgsql.internal.catchup.tmppaged;
 
 import com.google.common.base.Stopwatch;
 import java.util.List;
@@ -31,7 +31,7 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 
 @Slf4j
 @RequiredArgsConstructor
-public class PgCatchUpFetchPage {
+public class PgCatchUpFetchTmpPage {
 
   @NonNull final JdbcTemplate jdbc;
 
