@@ -21,6 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.NonNull;
@@ -46,7 +47,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
   private final Projection projection;
 
   private static final Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>>
-      cache = new HashMap<>();
+      cache = new ConcurrentHashMap<>();
 
   interface TargetObjectResolver extends Function<Projection, Object> {}
 
