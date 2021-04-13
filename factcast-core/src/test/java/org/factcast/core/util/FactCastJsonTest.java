@@ -15,18 +15,10 @@
  */
 package org.factcast.core.util;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.core.TestHelper.expectNPE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
+import static org.assertj.core.api.Assertions.*;
+import static org.factcast.core.TestHelper.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -45,10 +37,8 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.val;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.io.*;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
@@ -60,7 +50,7 @@ public class FactCastJsonTest {
 
   @Test
   void testCopy() {
-    final Foo foo = new Foo("bar", "baz");
+    Foo foo = new Foo("bar", "baz");
     Foo copy = FactCastJson.copy(foo);
     assertNotSame(foo, copy);
     assertNotEquals(foo, copy);
@@ -177,20 +167,20 @@ public class FactCastJsonTest {
 
   @Test
   void testAddSerToHeader() {
-    val newHeader = FactCastJson.addSerToHeader(33, "{}");
+    String newHeader = FactCastJson.addSerToHeader(33, "{}");
     assertEquals("{\"meta\":{\"_ser\":33}}", newHeader);
-    val updatedHeader = FactCastJson.addSerToHeader(77, newHeader);
+    String updatedHeader = FactCastJson.addSerToHeader(77, newHeader);
     assertEquals("{\"meta\":{\"_ser\":77}}", updatedHeader);
 
-    val updatedHeaderWithoutSerAttribute =
+    String updatedHeaderWithoutSerAttribute =
         FactCastJson.addSerToHeader(78, "{\"meta\":{\"foo\":\"bar\"}}");
     assertEquals("{\"meta\":{\"foo\":\"bar\",\"_ser\":78}}", updatedHeaderWithoutSerAttribute);
   }
 
   @Test
   void testToPrettyString() {
-    val someJson = "{\"meta\":{\"foo\":\"bar\",\"_ser\":78}}";
-    val pretty = FactCastJson.toPrettyString(someJson);
+    String someJson = "{\"meta\":{\"foo\":\"bar\",\"_ser\":78}}";
+    String pretty = FactCastJson.toPrettyString(someJson);
     assertEquals(
         "{\n"
             + "  \"meta\" : {\n"
@@ -204,9 +194,9 @@ public class FactCastJsonTest {
   @Test
   void testValueToTree() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
-      val probe = UUID.randomUUID();
+      UUID probe = UUID.randomUUID();
       FactCastJson.valueToTree(probe);
 
       Mockito.verify(om).valueToTree(ArgumentMatchers.same(probe));
@@ -216,7 +206,7 @@ public class FactCastJsonTest {
   @Test
   void testReadTree() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
       String probe = UUID.randomUUID().toString();
       FactCastJson.readTree(probe);
@@ -228,7 +218,7 @@ public class FactCastJsonTest {
   @Test
   void convertValue() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
       String probe = UUID.randomUUID().toString();
       FactCastJson.convertValue(probe, Integer.class);
@@ -240,7 +230,7 @@ public class FactCastJsonTest {
   @Test
   void toJsonNode() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
       Map<String, Object> probe = new HashMap<>();
       FactCastJson.toJsonNode(probe);
@@ -252,7 +242,7 @@ public class FactCastJsonTest {
   @Test
   void writeValueAsBytes() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
       Map<String, Object> probe = new HashMap<>();
       FactCastJson.writeValueAsBytes(probe);
@@ -264,7 +254,7 @@ public class FactCastJsonTest {
   @Test
   void readValueFromBytes() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
       ObjectReader or = mock(ObjectReader.class);
       when(om.readerFor(String.class)).thenReturn(or);
@@ -280,7 +270,7 @@ public class FactCastJsonTest {
   @Test
   void writeValueAsString() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
       UUID probe = UUID.randomUUID();
       FactCastJson.writeValueAsString(probe);
@@ -292,7 +282,7 @@ public class FactCastJsonTest {
   @Test
   void objectMapper() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (val reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
       assertSame(om, FactCastJson.mapper());
     }

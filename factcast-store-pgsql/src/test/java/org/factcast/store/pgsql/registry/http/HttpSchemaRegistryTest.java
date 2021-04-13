@@ -15,32 +15,32 @@
  */
 package org.factcast.store.pgsql.registry.http;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import lombok.val;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.RegistryIndex;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.OP;
-import org.factcast.store.pgsql.registry.transformation.*;
+import org.factcast.store.pgsql.registry.transformation.TransformationConflictException;
+import org.factcast.store.pgsql.registry.transformation.TransformationKey;
+import org.factcast.store.pgsql.registry.transformation.TransformationSource;
+import org.factcast.store.pgsql.registry.transformation.TransformationStore;
 import org.factcast.store.pgsql.registry.transformation.store.InMemTransformationStoreImpl;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 import org.factcast.store.pgsql.registry.validation.schema.store.InMemSchemaStoreImpl;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -142,7 +142,7 @@ public class HttpSchemaRegistryTest {
   @Test
   public void testAllowReplaceFalseForSchemes()
       throws InterruptedException, ExecutionException, IOException {
-    val testSource = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
+    SchemaSource testSource = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
     index.schemes(Lists.newArrayList(testSource));
 
     HttpSchemaRegistry uut =
@@ -163,7 +163,7 @@ public class HttpSchemaRegistryTest {
   @Test
   public void testAllowReplaceTrueForSchemes()
       throws InterruptedException, ExecutionException, IOException {
-    val testSource = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
+    SchemaSource testSource = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
     index.schemes(Lists.newArrayList(testSource));
 
     when(fileFetcher.fetchSchema(any())).thenReturn("{}").thenReturn("{\"foo\":\"bar\"}");
@@ -189,7 +189,8 @@ public class HttpSchemaRegistryTest {
   @Test
   public void testAllowReplaceFalseForTransformations()
       throws InterruptedException, ExecutionException, IOException {
-    val testSource = new TransformationSource("http://foo/1", "hash", "ns", "type", 1, 2);
+    TransformationSource testSource =
+        new TransformationSource("http://foo/1", "hash", "ns", "type", 1, 2);
     index.transformations(Lists.newArrayList(testSource));
 
     HttpSchemaRegistry uut =
@@ -210,7 +211,8 @@ public class HttpSchemaRegistryTest {
   @Test
   public void testAllowReplaceTrueForTransformations()
       throws InterruptedException, ExecutionException, IOException {
-    val testSource = new TransformationSource("http://foo/1", "hash", "ns", "type", 1, 2);
+    TransformationSource testSource =
+        new TransformationSource("http://foo/1", "hash", "ns", "type", 1, 2);
     index.transformations(Lists.newArrayList(testSource));
 
     when(fileFetcher.fetchTransformation(any())).thenReturn("").thenReturn("bar");

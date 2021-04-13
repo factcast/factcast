@@ -17,13 +17,11 @@ package org.factcast.store.pgsql.registry.http;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
 import io.micrometer.core.instrument.Tags;
 import java.net.URL;
 import java.util.Date;
 import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
-import lombok.val;
 import okhttp3.OkHttpClient;
 import org.factcast.core.TestHelper;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
@@ -77,7 +75,7 @@ public class HttpIndexFetcherTest {
 
       s.get("/registry/index.json", ctx -> ctx.res.setStatus(404));
 
-      val registryMetrics = mock(RegistryMetrics.class);
+      RegistryMetrics registryMetrics = mock(RegistryMetrics.class);
 
       URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
       uut = new HttpIndexFetcher(baseUrl, registryMetrics);

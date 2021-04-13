@@ -19,7 +19,6 @@ import com.google.common.base.Stopwatch;
 import io.micrometer.core.instrument.*;
 import java.util.function.Supplier;
 import lombok.NonNull;
-import lombok.val;
 import org.springframework.beans.factory.InitializingBean;
 
 public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
@@ -36,13 +35,13 @@ public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
   }
 
   private Counter counter(@NonNull EVENT op, Tags tags) {
-    val t = Tags.of(Tag.of(TAG_NAME_KEY, op.event())).and(tags);
+    Tags t = Tags.of(Tag.of(TAG_NAME_KEY, op.event())).and(tags);
 
     return meterRegistry.counter(METRIC_NAME_COUNTS, t);
   }
 
   private Timer timer(@NonNull OP op, Tags tags) {
-    val t = Tags.of(Tag.of(TAG_NAME_KEY, op.op())).and(tags);
+    Tags t = Tags.of(Tag.of(TAG_NAME_KEY, op.op())).and(tags);
 
     return meterRegistry.timer(METRIC_NAME_TIMINGS, t);
   }
@@ -99,8 +98,8 @@ public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
       Tags tags,
       @NonNull SupplierWithException<R, E> fn)
       throws E {
-    val timer = timer(operation, tags);
-    val sw = Stopwatch.createStarted();
+    Timer timer = timer(operation, tags);
+    Stopwatch sw = Stopwatch.createStarted();
 
     try {
       return fn.get();

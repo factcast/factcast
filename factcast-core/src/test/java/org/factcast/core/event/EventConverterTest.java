@@ -16,10 +16,8 @@
 package org.factcast.core.event;
 
 import static org.assertj.core.api.Assertions.*;
-
 import java.util.*;
 import lombok.NonNull;
-import lombok.val;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.event.Specification;
@@ -59,7 +57,7 @@ class EventConverterTest {
   static class E2 extends E {
     @Override
     public Map<String, String> additionalMetaMap() {
-      val m = new HashMap<String, String>();
+      HashMap<String, String> m = new HashMap<>();
       m.put(null, "foo");
       return m;
     }

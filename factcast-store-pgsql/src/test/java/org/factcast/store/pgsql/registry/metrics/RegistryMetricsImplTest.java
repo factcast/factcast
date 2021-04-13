@@ -17,13 +17,12 @@ package org.factcast.store.pgsql.registry.metrics;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import java.time.Duration;
 import java.util.function.Supplier;
-import lombok.val;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.OP;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
@@ -84,7 +83,7 @@ class RegistryMetricsImplTest {
 
   @Test
   void testTimerRunnableAndTags() {
-    val customTag = Tag.of("foo", "bar");
+    Tag customTag = Tag.of("foo", "bar");
     uut.timed(RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE, Tags.of(customTag), () -> {});
 
     verify(timer).record(any(Runnable.class));
@@ -108,7 +107,7 @@ class RegistryMetricsImplTest {
 
   @Test
   void testTimerRunnableWithExceptionsAndTags() {
-    val customTag = Tag.of("foo", "bar");
+    Tag customTag = Tag.of("foo", "bar");
 
     uut.timed(
         RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE,
@@ -129,13 +128,12 @@ class RegistryMetricsImplTest {
 
   @Test
   void testTimerSupplier() {
-    val customTag = Tag.of("foo", "bar");
+    Tag customTag = Tag.of("foo", "bar");
 
     when(timer.record(any(Supplier.class)))
         .thenAnswer(invocation -> invocation.getArgument(0, Supplier.class).get());
 
-    val result =
-        uut.timed(RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE, Tags.of(customTag), () -> 5);
+    Integer result = uut.timed(OP.COMPACT_TRANSFORMATION_CACHE, Tags.of(customTag), () -> 5);
 
     assertEquals(5, result);
 
@@ -152,11 +150,8 @@ class RegistryMetricsImplTest {
 
   @Test
   void testTimerSupplierWithException() {
-    val result =
-        uut.timed(
-            RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE,
-            IllegalArgumentException.class,
-            () -> 5);
+    Integer result =
+        uut.timed(OP.COMPACT_TRANSFORMATION_CACHE, IllegalArgumentException.class, () -> 5);
 
     assertEquals(5, result);
 
@@ -169,7 +164,7 @@ class RegistryMetricsImplTest {
     when(timer.record(any(Supplier.class)))
         .thenAnswer(invocation -> invocation.getArgument(0, Supplier.class).get());
 
-    val result = uut.timed(RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE, () -> 5);
+    Integer result = uut.timed(OP.COMPACT_TRANSFORMATION_CACHE, () -> 5);
 
     assertEquals(5, result);
 
@@ -185,7 +180,7 @@ class RegistryMetricsImplTest {
 
   @Test
   void testCounterWithTags() {
-    val customTag = Tag.of("foo", "bar");
+    Tag customTag = Tag.of("foo", "bar");
 
     uut.count(RegistryMetrics.EVENT.MISSING_TRANSFORMATION_INFO, Tags.of(customTag));
 

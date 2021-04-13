@@ -16,11 +16,9 @@
 package org.factcast.core;
 
 import static org.junit.jupiter.api.Assertions.*;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import java.io.*;
 import java.util.UUID;
-import lombok.val;
 import org.junit.jupiter.api.*;
 
 public class DefaultFactTest {
@@ -92,9 +90,9 @@ public class DefaultFactTest {
 
   @Test
   void testJsonHeader() {
-    final UUID id = UUID.randomUUID();
-    final UUID aid = UUID.randomUUID();
-    final String header =
+    UUID id = UUID.randomUUID();
+    UUID aid = UUID.randomUUID();
+    String header =
         "{\"id\":\""
             + id
             + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggIds\":[\""
@@ -106,9 +104,9 @@ public class DefaultFactTest {
 
   @Test
   void testEqualityBasedOnId() {
-    final UUID id = UUID.randomUUID();
-    final UUID aid = UUID.randomUUID();
-    final String header =
+    UUID id = UUID.randomUUID();
+    UUID aid = UUID.randomUUID();
+    String header =
         "{\"id\":\""
             + id
             + "\",\"ns\":\"narf\",\"type\":\"foo\",\"aggIds\":[\""
@@ -124,8 +122,8 @@ public class DefaultFactTest {
 
   @Test
   void testCopyAttributes() throws Exception {
-    final UUID id = UUID.randomUUID();
-    final UUID aid = UUID.randomUUID();
+    UUID id = UUID.randomUUID();
+    UUID aid = UUID.randomUUID();
     Fact f =
         DefaultFact.of(
             "{\"id\":\""
@@ -224,7 +222,7 @@ public class DefaultFactTest {
   void testHeader() {
     FactHeader fh = new FactHeader();
     fh.id(UUID.randomUUID()).ns("foo");
-    val f = new DefaultFact(fh, "{}");
+    DefaultFact f = new DefaultFact(fh, "{}");
     assertSame(fh, f.header());
   }
 }

@@ -15,7 +15,8 @@
  */
 package org.factcast.core.spec;
 
-import lombok.*;
+import lombok.NonNull;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.factus.event.Specification;
@@ -25,7 +26,9 @@ import org.factcast.factus.event.Specification;
 public class FactSpecCoordinates {
 
   FactSpecCoordinates(String ns, String type, int version) {
-    if (ns.trim().isEmpty()) throw new IllegalArgumentException("Namespace must not be empty");
+    if (ns.trim().isEmpty()) {
+      throw new IllegalArgumentException("Namespace must not be empty");
+    }
 
     this.ns = ns;
     this.type = type;
@@ -50,15 +53,16 @@ public class FactSpecCoordinates {
 
     String defaultType = clazz.getSimpleName();
 
-    val spec = clazz.getAnnotation(Specification.class);
+    Specification spec = clazz.getAnnotation(Specification.class);
     if (spec == null) {
       throw new IllegalArgumentException(
           "@" + Specification.class.getSimpleName() + " missing on " + clazz);
     }
 
     String _ns = spec.ns();
-    if (_ns.trim().isEmpty())
+    if (_ns.trim().isEmpty()) {
       throw new IllegalArgumentException("Empty namespace encountered on class " + clazz);
+    }
 
     String _type = spec.type();
     if (_type.trim().isEmpty()) {

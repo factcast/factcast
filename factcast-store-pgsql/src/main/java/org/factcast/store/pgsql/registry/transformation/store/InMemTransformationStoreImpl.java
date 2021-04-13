@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.apache.commons.collections4.ListUtils;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
@@ -43,8 +42,8 @@ public class InMemTransformationStoreImpl extends AbstractTransformationStore {
     synchronized (mutex) {
       id2hashMap.put(source.id(), source.hash());
       List<Transformation> transformations = get(source.toKey());
-      val t = SingleTransformation.of(source, transformation);
-      val index =
+      Transformation t = SingleTransformation.of(source, transformation);
+      int index =
           ListUtils.indexOf(
               transformations,
               e ->

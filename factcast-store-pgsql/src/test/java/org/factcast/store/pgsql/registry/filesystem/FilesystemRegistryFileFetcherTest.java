@@ -15,13 +15,11 @@
  */
 package org.factcast.store.pgsql.registry.filesystem;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
+import static org.junit.jupiter.api.Assertions.*;
 import java.io.IOException;
-import lombok.val;
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.core.io.ClassPathResource;
 
 class FilesystemRegistryFileFetcherTest {
@@ -31,7 +29,7 @@ class FilesystemRegistryFileFetcherTest {
     // INIT
     String path = new ClassPathResource("/example-registry/").getFile().getAbsolutePath();
 
-    val uut = new FilesystemRegistryFileFetcher(path);
+    FilesystemRegistryFileFetcher uut = new FilesystemRegistryFileFetcher(path);
 
     // RUN
     String transformation =
@@ -47,10 +45,10 @@ class FilesystemRegistryFileFetcherTest {
     // INIT
     String path = new ClassPathResource("/example-registry/").getFile().getAbsolutePath();
 
-    val uut = new FilesystemRegistryFileFetcher(path);
+    FilesystemRegistryFileFetcher uut = new FilesystemRegistryFileFetcher(path);
 
     // RUN
-    val s = uut.fetchSchema(new SchemaSource("x", "xxx", "ns", "type", 1));
+    String s = uut.fetchSchema(new SchemaSource("x", "xxx", "ns", "type", 1));
 
     // ASSERT
     assertEquals(

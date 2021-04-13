@@ -22,7 +22,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -58,17 +57,17 @@ public class PgPagedCatchup implements PgCatchup {
 
     SingleConnectionDataSource ds = new SingleConnectionDataSource(connectionSupplier.get(), true);
     try {
-      val jdbc = new JdbcTemplate(ds);
+      JdbcTemplate jdbc = new JdbcTemplate(ds);
 
       jdbc.execute("CREATE TEMPORARY TABLE catchup(ser bigint)");
 
       PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request);
       // first collect all the sers
-      val numberOfFactsToCatchUp = prep.prepareCatchup(serial);
+      long numberOfFactsToCatchUp = prep.prepareCatchup(serial);
       // and AFTERWARDs create the inmem index
       jdbc.execute("CREATE INDEX catchup_tmp_idx1 ON catchup(ser ASC)"); // improves perf on sorting
 
-      val skipTesting = postQueryMatcher.canBeSkipped();
+      boolean skipTesting = postQueryMatcher.canBeSkipped();
 
       if (numberOfFactsToCatchUp > 0) {
         try {

@@ -21,7 +21,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -65,7 +64,7 @@ public class PgFetchingCatchup implements PgCatchup {
     SingleConnectionDataSource ds = new SingleConnectionDataSource(connection, true);
 
     try {
-      val jdbc = new JdbcTemplate(ds);
+      JdbcTemplate jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
     } catch (Exception e) {
       log.error("while fetching", e);
@@ -77,10 +76,10 @@ public class PgFetchingCatchup implements PgCatchup {
   @VisibleForTesting
   void fetch(JdbcTemplate jdbc) {
     jdbc.setFetchSize(props.getPageSize());
-    val skipTesting = postQueryMatcher.canBeSkipped();
+    boolean skipTesting = postQueryMatcher.canBeSkipped();
 
     PgQueryBuilder b = new PgQueryBuilder(req.specs());
-    val extractor = new PgFactExtractor(serial);
+    PgFactExtractor extractor = new PgFactExtractor(serial);
     String catchupSQL = b.createSQL();
     jdbc.query(
         catchupSQL,
