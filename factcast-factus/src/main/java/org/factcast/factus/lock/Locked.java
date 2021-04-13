@@ -16,7 +16,6 @@
 package org.factcast.factus.lock;
 
 import static org.factcast.factus.metrics.TagKeys.*;
-
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
