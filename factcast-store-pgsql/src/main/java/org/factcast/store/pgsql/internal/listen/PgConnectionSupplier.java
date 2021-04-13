@@ -24,7 +24,6 @@ import java.util.Properties;
 import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.postgresql.jdbc.PgConnection;
 
@@ -81,7 +80,7 @@ public class PgConnectionSupplier {
                   .split(connectionProperties);
           // the sockettimeout is explicitly set to 0 due to the long lifetime of the connection for
           // NOTIFY/LISTEN and CURSOR usage reasons.
-          val socketTimeout = singleConnectionProperties.get("socketTimeout");
+          String socketTimeout = singleConnectionProperties.get("socketTimeout");
           if (socketTimeout != null && !"0".equals(socketTimeout)) {
             log.info("Supressed JDBC SocketTimeout parameter for long running connections");
           }
