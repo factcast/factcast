@@ -16,6 +16,7 @@
 package org.factcast.factus;
 
 import static org.mockito.Mockito.*;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.io.IOException;

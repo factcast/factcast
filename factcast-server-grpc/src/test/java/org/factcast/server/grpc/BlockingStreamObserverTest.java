@@ -18,6 +18,7 @@ package org.factcast.server.grpc;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+
 import io.grpc.stub.ServerCallStreamObserver;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;

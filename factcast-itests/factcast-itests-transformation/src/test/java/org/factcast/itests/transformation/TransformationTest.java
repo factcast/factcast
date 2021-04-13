@@ -16,6 +16,7 @@
 package org.factcast.itests.transformation;
 
 import static org.junit.jupiter.api.Assertions.*;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.UUID;
 import org.factcast.core.Fact;

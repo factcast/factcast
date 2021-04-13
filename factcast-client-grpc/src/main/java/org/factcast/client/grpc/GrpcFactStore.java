@@ -16,6 +16,7 @@
 package org.factcast.client.grpc;
 
 import static io.grpc.stub.ClientCalls.*;
+
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.*;
 import io.grpc.Status.Code;
