@@ -16,7 +16,6 @@
 package org.factcast.client.grpc;
 
 import static io.grpc.stub.ClientCalls.*;
-
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.*;
 import io.grpc.Status.Code;
@@ -29,7 +28,6 @@ import javax.annotation.PostConstruct;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
@@ -395,17 +393,17 @@ public class GrpcFactStore implements FactStore {
 
   @Override
   public void setSnapshot(@NonNull Snapshot snapshot) {
-    val id = snapshot.id();
-    val bytes = snapshot.bytes();
-    val alreadyCompressed = snapshot.compressed();
-    val state = snapshot.lastFact();
+    @NonNull SnapshotId id = snapshot.id();
+    @NonNull byte[] bytes = snapshot.bytes();
+    boolean alreadyCompressed = snapshot.compressed();
+    UUID state = snapshot.lastFact();
 
     log.trace("sending snapshot {} to remote store ({}kb)", id, bytes.length / 1024);
 
     RemoteFactStoreBlockingStub stubToUse = alreadyCompressed ? rawBlockingStub : blockingStub;
 
     try {
-      val empty = stubToUse.setSnapshot(converter.toProto(id, state, bytes, alreadyCompressed));
+      stubToUse.setSnapshot(converter.toProto(id, state, bytes, alreadyCompressed));
     } catch (StatusRuntimeException e) {
       throw wrapRetryable(e);
     }
@@ -415,7 +413,7 @@ public class GrpcFactStore implements FactStore {
   public void clearSnapshot(@NonNull SnapshotId id) {
     log.trace("clearing snapshot {} in remote store", id);
     try {
-      val empty = blockingStub.clearSnapshot(converter.toProto(id));
+      blockingStub.clearSnapshot(converter.toProto(id));
     } catch (StatusRuntimeException e) {
       throw wrapRetryable(e);
     }

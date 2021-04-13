@@ -17,12 +17,10 @@ package org.factcast.grpc.api.conv;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
-
 import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import java.util.*;
 import lombok.NonNull;
-import lombok.val;
 import org.assertj.core.util.Lists;
 import org.assertj.core.util.Maps;
 import org.factcast.core.Fact;
@@ -32,6 +30,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
+import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
 import org.junit.jupiter.api.*;
@@ -537,8 +536,9 @@ public class ProtoConverterTest {
 
   @Test
   public void testFromProtoMSG_UUID_AND_VERSION() {
-    val msg = MSG_UUID_AND_VERSION.newBuilder().setLsb(1).setMsb(2).setVer(99).build();
-    val actual = uut.fromProto(msg);
+    MSG_UUID_AND_VERSION msg =
+        MSG_UUID_AND_VERSION.newBuilder().setLsb(1).setMsb(2).setVer(99).build();
+    @NonNull IdAndVersion actual = uut.fromProto(msg);
     assertNotNull(actual);
     assertThat(actual.uuid()).isEqualTo(new UUID(2, 1));
     assertThat(actual.version()).isEqualTo(99);
@@ -546,7 +546,7 @@ public class ProtoConverterTest {
 
   @Test
   public void testToProtoMSG_UUID_AND_VERSION() {
-    val actual = uut.toProto(new UUID(2, 1), 99);
+    @NonNull FactStoreProto.MSG_UUID_AND_VERSION actual = uut.toProto(new UUID(2, 1), 99);
     assertNotNull(actual);
     assertThat(actual.getLsb()).isEqualTo(1);
     assertThat(actual.getMsb()).isEqualTo(2);
@@ -594,7 +594,7 @@ public class ProtoConverterTest {
 
   @Test
   void fromProtoMSG_OptionalSnapshotEmpty() {
-    val os = MSG_OptionalSnapshot.newBuilder().setPresent(false).build();
+    MSG_OptionalSnapshot os = MSG_OptionalSnapshot.newBuilder().setPresent(false).build();
 
     Optional<Snapshot> snapshot = uut.fromProto(os);
     assertThat(snapshot).isEmpty();
@@ -607,7 +607,8 @@ public class ProtoConverterTest {
 
     MSG_Snapshot snap = uut.toProto(snapId, factId, "huhu".getBytes(Charsets.UTF_8), false);
 
-    val os = MSG_OptionalSnapshot.newBuilder().setPresent(true).setSnapshot(snap).build();
+    MSG_OptionalSnapshot os =
+        MSG_OptionalSnapshot.newBuilder().setPresent(true).setSnapshot(snap).build();
 
     Optional<Snapshot> snapshot = uut.fromProto(os);
     assertThat(snapshot).isPresent();
@@ -657,7 +658,7 @@ public class ProtoConverterTest {
   void fromProtoMSG_FactSpecsJson() {
     FactSpec f1 = FactSpec.ns("foo").type("bar").version(1);
     FactSpec f2 = FactSpec.ns("x").type("y").version(2);
-    val l = Lists.newArrayList(f1, f2);
+    ArrayList<FactSpec> l = Lists.newArrayList(f1, f2);
     MSG_FactSpecsJson m = uut.toProtoFactSpecs(l);
     List<FactSpec> factSpecs = uut.fromProto(m);
     assertThat(factSpecs).isNotEmpty().hasSize(2).contains(f1).contains(f2);
@@ -665,7 +666,7 @@ public class ProtoConverterTest {
 
   @Test
   void fromProtoMSG_OptionalUuidEmpty() {
-    val msg = MSG_OptionalUuid.newBuilder().setPresent(false).build();
+    MSG_OptionalUuid msg = MSG_OptionalUuid.newBuilder().setPresent(false).build();
     assertThat(uut.fromProto(msg)).isNull();
   }
 

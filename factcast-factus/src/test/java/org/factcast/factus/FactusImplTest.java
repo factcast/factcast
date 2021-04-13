@@ -20,7 +20,6 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-
 import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
@@ -28,7 +27,10 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
@@ -1276,7 +1278,7 @@ class FactusImplTest {
     void happyPath() {
       AtomicInteger calls = new AtomicInteger(0);
       Duration wait = Duration.ofSeconds(3);
-      val uut =
+      IntervalSnapshotter<SnapshotProjection> uut =
           new IntervalSnapshotter<SnapshotProjection>(wait) {
             @Override
             void createSnapshot(SnapshotProjection projection, UUID state) {

@@ -16,7 +16,6 @@
 package org.factcast.factus;
 
 import static org.mockito.Mockito.*;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.io.IOException;
@@ -29,7 +28,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
@@ -139,7 +137,7 @@ class FactusTest {
 
   @Test
   void voidSubscribe() {
-    val p = mock(SubscribedProjection.class);
+    SubscribedProjection p = mock(SubscribedProjection.class);
     underTest.subscribe(p);
 
     sleep(); // call is async, so we wait a bit
@@ -151,7 +149,7 @@ class FactusTest {
 
   @Test
   void withLockOnInstance() {
-    val p = new SP();
+    SP p = new SP();
     underTest.withLockOn(p);
     verify(underTest).withLockOn(SP.class);
   }

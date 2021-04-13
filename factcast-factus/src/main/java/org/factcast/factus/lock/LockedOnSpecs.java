@@ -22,7 +22,6 @@ import java.util.function.Function;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -55,7 +54,7 @@ public class LockedOnSpecs {
   @SuppressWarnings({"UnusedReturnValue", "rawtypes"})
   public <R, I extends Projection> R attempt(
       Consumer<RetryableTransaction> consumer, Function<List<Fact>, R> resultFn) {
-    val delegate = new Locked<I>(fc, factus, null, specs, metrics);
+    Locked<I> delegate = new Locked<>(fc, factus, null, specs, metrics);
     BiConsumer<I, RetryableTransaction> biConsumer = (x, tx) -> consumer.accept(tx);
     return delegate.attempt(biConsumer, resultFn);
   }

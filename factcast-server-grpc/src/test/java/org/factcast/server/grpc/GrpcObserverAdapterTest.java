@@ -18,11 +18,9 @@ package org.factcast.server.grpc;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-
 import io.grpc.stub.StreamObserver;
 import java.util.Arrays;
 import java.util.function.Function;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
@@ -99,7 +97,7 @@ public class GrpcObserverAdapterTest {
       fail("expected " + Arrays.toString(ex));
     } catch (Throwable actual) {
 
-      val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
+      boolean matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
       if (!matches) {
         fail("Wrong exception, expected " + Arrays.toString(ex) + " but got " + actual);
       }

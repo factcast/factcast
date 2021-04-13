@@ -19,7 +19,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import lombok.NonNull;
-import lombok.val;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
@@ -65,7 +64,7 @@ public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository
 
     return CompletableFuture.runAsync(
         () -> {
-          val id = new SnapshotId(createKeyForType(type, () -> ser), FAKE_UUID);
+          SnapshotId id = new SnapshotId(createKeyForType(type, () -> ser), FAKE_UUID);
           putBlocking(new Snapshot(id, state, bytes, ser.includesCompression()));
         });
   }

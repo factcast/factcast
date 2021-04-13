@@ -18,12 +18,10 @@ package org.factcast.server.grpc;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-
 import io.grpc.stub.ServerCallStreamObserver;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import lombok.val;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
@@ -110,7 +108,7 @@ public class BlockingStreamObserverTest {
       fail("expected " + Arrays.toString(ex));
     } catch (Throwable actual) {
 
-      val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
+      boolean matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
       if (!matches) {
         fail("Wrong exception, expected " + Arrays.toString(ex) + " but got " + actual);
       }

@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactHeader;
 import org.factcast.core.spec.FactSpec;
@@ -78,11 +77,12 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
   @Override
   public void apply(@NonNull Fact f) {
     log.trace("Dispatching fact {}", f.id());
-    val coords = FactSpecCoordinates.from(f);
+    FactSpecCoordinates coords = FactSpecCoordinates.from(f);
     log.trace("Dispatching fact {} - coords: {}", f.id(), coords);
-    val dispatch = dispatchInfo.get(coords);
+    Dispatcher dispatch = dispatchInfo.get(coords);
     if (dispatch == null) {
-      val ihd = new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
+      InvalidHandlerDefinition ihd =
+          new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
       projection.onError(ihd);
       throw ihd;
     }
@@ -119,7 +119,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
       }
     }
 
-    val ret = projection.postprocess(discovered);
+    @NonNull List<FactSpec> ret = projection.postprocess(discovered);
     if (ret == null || ret.isEmpty()) {
       throw new InvalidHandlerDefinition(
           "No FactSpecs discovered from "
@@ -178,7 +178,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
                             createParameterTransformer(deserializer, m),
                             fs,
                             deserializer);
-                    val before = map.put(key, dispatcher);
+                    Dispatcher before = map.put(key, dispatcher);
                     if (before != null) {
                       throw new InvalidHandlerDefinition(
                           "Duplicate Handler method found for spec '"
