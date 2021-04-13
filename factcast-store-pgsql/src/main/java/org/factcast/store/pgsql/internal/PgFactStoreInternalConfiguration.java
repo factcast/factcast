@@ -32,7 +32,7 @@ import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.catchup.fetching.PgFetchingCatchUpFactory;
-import org.factcast.store.pgsql.internal.catchup.paged.PgPagedCatchUpFactory;
+import org.factcast.store.pgsql.internal.catchup.tmppaged.PgTmpPagedCatchUpFactory;
 import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
 import org.factcast.store.pgsql.internal.listen.PgConnectionTester;
 import org.factcast.store.pgsql.internal.listen.PgListener;
@@ -80,7 +80,7 @@ public class PgFactStoreInternalConfiguration {
     // noinspection SwitchStatementWithTooFewBranches
     switch (props.getCatchupStrategy()) {
       case PAGED:
-        return new PgPagedCatchUpFactory(supp, props);
+        return new PgTmpPagedCatchUpFactory(supp, props);
       case FETCHING:
         return new PgFetchingCatchUpFactory(supp, props);
       default:
