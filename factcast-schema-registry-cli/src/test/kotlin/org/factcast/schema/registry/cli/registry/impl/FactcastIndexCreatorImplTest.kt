@@ -57,7 +57,7 @@ class FactcastIndexCreatorImplTest : StringSpec() {
             verifyAll {
                 indexFileCalculator.calculateIndex(dummyProject)
                 fs.ensureDirectories(dummyPath)
-                om.writeValue(match<File> { it.path.endsWith("index.json") }, index)
+                om.writeValue(match<File> { it.path.platformIndependent().endsWith("index.json") }, index)
             }
             confirmVerified(indexFileCalculator, fs, om)
         }
@@ -68,12 +68,11 @@ class FactcastIndexCreatorImplTest : StringSpec() {
             uut.copySchemes(dummyPath, dummyProject, false)
 
             verifyAll {
-                fs.copyFile(any(), match { it.path.endsWith(getEventId(namespace1, event1, version1)) })
-                fs.copyFile(any(), match { it.path.endsWith(getEventId(namespace1, event1, version2)) })
+                fs.copyFile(any(), match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version1)) })
+                fs.copyFile(any(), match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version2)) })
             }
             confirmVerified(fs)
         }
-
 
         "copySchemes - should copy the schema for each version with stripped title attribute" {
             every { fs.copyJsonFilteringTitle(dummyPath.toFile(), any()) } returns Unit
@@ -81,8 +80,8 @@ class FactcastIndexCreatorImplTest : StringSpec() {
             uut.copySchemes(dummyPath, dummyProject, true)
 
             verifyAll {
-                fs.copyJsonFilteringTitle(any(), match { it.path.endsWith(getEventId(namespace1, event1, version1)) })
-                fs.copyJsonFilteringTitle(any(), match { it.path.endsWith(getEventId(namespace1, event1, version2)) })
+                fs.copyJsonFilteringTitle(any(), match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version1)) })
+                fs.copyJsonFilteringTitle(any(), match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version2)) })
             }
             confirmVerified(fs)
         }
@@ -93,12 +92,14 @@ class FactcastIndexCreatorImplTest : StringSpec() {
             uut.copyTransformations(dummyPath, dummyProject)
 
             verify {
-                fs.copyFile(any(), match { it.path.endsWith(getTransformationId(namespace1, event1, 1, 2)) })
+                fs.copyFile(any(), match { it.path.platformIndependent().endsWith(getTransformationId(namespace1, event1, 1, 2)) })
             }
             verify {
-                fs.copyFile(any(), match { it.path.endsWith(getTransformationId(namespace1, event1, 2, 1)) })
+                fs.copyFile(any(), match { it.path.platformIndependent().endsWith(getTransformationId(namespace1, event1, 2, 1)) })
             }
             confirmVerified(fs)
         }
     }
 }
+
+fun String.platformIndependent() = this.replace(File.separator, "/")
