@@ -15,21 +15,15 @@
  */
 package org.factcast.store.pgsql.internal.listen;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+import static org.mockito.MockitoAnnotations.*;
 import java.sql.SQLException;
 import java.util.Properties;
 import javax.sql.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 
 public class PgConnectionSupplierTest {
@@ -76,13 +70,23 @@ public class PgConnectionSupplierTest {
   }
 
   @Test
-  void test_socketTimeout() {
+  void test_socketTimeoutIsOverriddenBy0() {
     // given
     setupConnectionProperties("socketTimeout=30;connectTimeout=20;loginTimeout=10;");
     // when
     Properties connectionProperties = uut.buildPgConnectionProperties(ds);
     // then
-    assertEquals("30", connectionProperties.get("socketTimeout"));
+    assertEquals("0", connectionProperties.get("socketTimeout"));
+  }
+
+  @Test
+  void test_noPredefinedSocketTimeout() {
+    // given
+    setupConnectionProperties("connectTimeout=20;loginTimeout=10;");
+    // when
+    Properties connectionProperties = uut.buildPgConnectionProperties(ds);
+    // then
+    assertEquals("0", connectionProperties.get("socketTimeout"));
   }
 
   @Test
