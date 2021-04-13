@@ -10,7 +10,7 @@
   <artifactId>factcast-internal-dep</artifactId>
   <packaging>pom</packaging>
   <properties>
-    <grpc.version>1.36.0</grpc.version>
+    <grpc.version>1.37.0</grpc.version>
     <slf4j-api.version>1.7.30</slf4j-api.version>
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
