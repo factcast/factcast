@@ -16,6 +16,7 @@
 package org.factcast.store.pgsql.registry.classpath;
 
 import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.Optional;
 import org.factcast.store.pgsql.registry.RegistryIndex;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;

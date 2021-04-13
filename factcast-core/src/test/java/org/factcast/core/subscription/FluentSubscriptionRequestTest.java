@@ -16,6 +16,7 @@
 package org.factcast.core.subscription;
 
 import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.LinkedList;
 import org.factcast.core.spec.FactSpec;
 import org.junit.jupiter.api.*;

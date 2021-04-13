@@ -16,6 +16,7 @@
 package org.factcast.core;
 
 import static org.junit.jupiter.api.Assertions.*;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import java.io.*;
 import java.util.UUID;

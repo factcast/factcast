@@ -16,6 +16,7 @@
 package org.factcast.store.pgsql.registry.classpath;
 
 import static org.junit.jupiter.api.Assertions.*;
+
 import org.factcast.store.pgsql.registry.transformation.TransformationSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.junit.jupiter.api.*;

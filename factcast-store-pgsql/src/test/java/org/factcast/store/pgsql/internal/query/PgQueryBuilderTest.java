@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.internal.query;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 import java.sql.PreparedStatement;
 import java.util.List;
 import java.util.UUID;

@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.registry.http;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 import io.micrometer.core.instrument.Tags;
 import java.net.URL;
 import java.util.Date;

@@ -16,6 +16,7 @@
 package org.factcast.core.event;
 
 import static org.assertj.core.api.Assertions.*;
+
 import java.util.*;
 import lombok.NonNull;
 import org.factcast.factus.event.EventObject;

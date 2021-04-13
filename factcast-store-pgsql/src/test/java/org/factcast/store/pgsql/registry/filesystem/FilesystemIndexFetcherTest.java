@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.registry.filesystem;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
+
 import java.io.IOException;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
 import org.junit.jupiter.api.*;

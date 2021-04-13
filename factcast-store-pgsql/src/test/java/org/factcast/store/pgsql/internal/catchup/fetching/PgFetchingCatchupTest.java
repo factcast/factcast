@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.internal.catchup.fetching;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 import java.sql.ResultSet;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;

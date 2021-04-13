@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.registry.validation;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 import com.github.fge.jsonschema.main.JsonSchema;
 import io.micrometer.core.instrument.Tags;
 import java.util.Optional;
