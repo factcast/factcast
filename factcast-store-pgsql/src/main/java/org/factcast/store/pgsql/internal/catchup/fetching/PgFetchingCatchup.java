@@ -76,7 +76,9 @@ public class PgFetchingCatchup implements PgCatchup {
   @VisibleForTesting
   void fetch(JdbcTemplate jdbc) {
     jdbc.setFetchSize(props.getPageSize());
+    jdbc.setQueryTimeout(0); // disable query timeout
     boolean skipTesting = postQueryMatcher.canBeSkipped();
+
 
     PgQueryBuilder b = new PgQueryBuilder(req.specs());
     PgFactExtractor extractor = new PgFactExtractor(serial);
