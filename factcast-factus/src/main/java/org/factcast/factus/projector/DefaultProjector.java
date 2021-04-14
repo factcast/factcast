@@ -79,7 +79,6 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
   public void apply(@NonNull Fact f) {
     log.trace("Dispatching fact {}", f.id());
     val coords = FactSpecCoordinates.from(f);
-    log.trace("Dispatching fact {} - coords: {}", f.id(), coords);
     val dispatch = dispatchInfo.get(coords);
     if (dispatch == null) {
       val ihd = new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
@@ -88,9 +87,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
     }
 
     try {
-      log.trace("invoking {}", f.id());
       dispatch.invoke(projection, f);
-      log.trace("returned without Exception {}", f.id());
       if (projection instanceof StateAware) {
         ((StateAware) projection).state(f.id());
       }
