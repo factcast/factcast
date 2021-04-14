@@ -31,10 +31,12 @@ import org.postgresql.jdbc.PgConnection;
 public class PgConnectionSupplier {
 
   @NonNull @VisibleForTesting protected final org.apache.tomcat.jdbc.pool.DataSource ds;
+  @NonNull @VisibleForTesting Properties props;
 
   public PgConnectionSupplier(DataSource dataSource) {
     if (org.apache.tomcat.jdbc.pool.DataSource.class.isAssignableFrom(dataSource.getClass())) {
-      this.ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
+      ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
+      props = buildPgConnectionProperties(ds);
     } else {
       throw new IllegalArgumentException(
           "expected "
@@ -46,28 +48,28 @@ public class PgConnectionSupplier {
 
   public PgConnection get() throws SQLException {
     try {
-      return (PgConnection)
-          DriverManager.getDriver(ds.getUrl())
-              .connect(ds.getUrl(), buildPgConnectionProperties(ds));
+      return (PgConnection) DriverManager.getDriver(ds.getUrl()).connect(ds.getUrl(), props);
     } catch (SQLException e) {
-      final String msg = "Cannot acquire Connection from DriverManager: " + ds.getUrl();
+      String msg = "Cannot acquire Connection from DriverManager: " + ds.getUrl();
       log.error(msg, e);
       throw e;
     }
   }
 
   private void setProperty(Properties dbp, String propertyName, String value) {
-    if (value != null) dbp.setProperty(propertyName, value);
+    if (value != null) {
+      dbp.setProperty(propertyName, value);
+    }
   }
 
   @VisibleForTesting
   Properties buildPgConnectionProperties(org.apache.tomcat.jdbc.pool.DataSource ds) {
     Properties dbp = new Properties();
-    final PoolConfiguration poolProperties = ds.getPoolProperties();
+    PoolConfiguration poolProperties = ds.getPoolProperties();
     if (poolProperties != null) {
       setProperty(dbp, "user", poolProperties.getUsername());
       setProperty(dbp, "password", poolProperties.getPassword());
-      final String connectionProperties = poolProperties.getConnectionProperties();
+      String connectionProperties = poolProperties.getConnectionProperties();
       if (connectionProperties != null) {
         try {
           @SuppressWarnings("UnstableApiUsage")
@@ -76,7 +78,14 @@ public class PgConnectionSupplier {
                   .omitEmptyStrings()
                   .withKeyValueSeparator("=")
                   .split(connectionProperties);
-          setProperty(dbp, "socketTimeout", singleConnectionProperties.get("socketTimeout"));
+          // the sockettimeout is explicitly set to 0 due to the long lifetime of the connection for
+          // NOTIFY/LISTEN and CURSOR usage reasons.
+          String socketTimeout = singleConnectionProperties.get("socketTimeout");
+          if (socketTimeout != null && !"0".equals(socketTimeout)) {
+            log.info("Supressed JDBC SocketTimeout parameter for long running connections");
+          }
+
+          setProperty(dbp, "socketTimeout", "0");
           setProperty(dbp, "connectTimeout", singleConnectionProperties.get("connectTimeout"));
           setProperty(dbp, "loginTimeout", singleConnectionProperties.get("loginTimeout"));
         } catch (IllegalArgumentException e) {
