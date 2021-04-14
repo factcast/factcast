@@ -85,8 +85,15 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
           if (delegate.isReady()) {
             delegate.onNext(value);
           } else {
+
+            // no longer ready. has it been canceled in the meantime?
             if (!isCancelled(delegate)) {
+              // still not (or no longer) ready, but not canceled... something fishy is going on
+              // here.
               throw new TransportLayerException(id + " channel not coming back.");
+            } else {
+              // ok fine, it was cancelled, this fact was logged, we can quietly exit...
+              return;
             }
           }
         }
