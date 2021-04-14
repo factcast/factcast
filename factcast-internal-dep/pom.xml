@@ -10,7 +10,7 @@
   <artifactId>factcast-internal-dep</artifactId>
   <packaging>pom</packaging>
   <properties>
-    <grpc.version>1.31.1</grpc.version>
+    <grpc.version>1.36.0</grpc.version>
     <slf4j-api.version>1.7.30</slf4j-api.version>
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
@@ -36,7 +36,7 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>29.0-jre</version>
+        <version>30.1.1-jre</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>

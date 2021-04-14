@@ -15,10 +15,10 @@
  */
 package org.factcast.schema.registry.cli.whitelistfilter
 
+import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.PathMatcher
-import java.nio.file.Paths
 
 class WhiteList(val projectPath: Path, whiteList: List<String>) {
 
@@ -33,5 +33,5 @@ class WhiteList(val projectPath: Path, whiteList: List<String>) {
                     .map { FileSystems.getDefault().getPathMatcher(it) }
 
     private fun buildGlobPattern(whiteListEntry: String) =
-            "glob:" + Paths.get(projectPath.toString(), whiteListEntry)
+            "glob:" + projectPath.toString().replace(File.separator, "/") + whiteListEntry
 }
