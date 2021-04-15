@@ -6,7 +6,7 @@ import io.kotlintest.specs.StringSpec
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verifyAll
+import io.mockk.verify
 import org.factcast.schema.registry.cli.fixture
 import org.factcast.schema.registry.cli.registry.index.FileBasedTransformation
 import org.factcast.schema.registry.cli.utils.ChecksumService
@@ -28,52 +28,34 @@ class IndexFileCalculator2ImplTest : StringSpec() {
             val index = uut.calculateIndex(testDistribution)
 
             index.schemes shouldHaveSize 3
-            val firstSchema = index.schemes[0]
-            firstSchema.id shouldBe "namespace1/EventA/1/schema.json"
-            firstSchema.ns shouldBe "namespace1"
-            firstSchema.type shouldBe "EventA"
-            firstSchema.version shouldBe 1
-            firstSchema.hash shouldBe "foo"
-
-            // TODO how to verify just a few?
-            verifyAll {
-                checksumService.createMd5Hash(Path.of(testDistribution.toString(), "/namespace1/EventA/1/schema.json"))
-                checksumService.createMd5Hash(Path.of(testDistribution.toString(), "/namespace1/EventB/1/schema.json"))
-                checksumService.createMd5Hash(Path.of(testDistribution.toString(), "/namespace1/EventB/1/schema.json"))
-            }
-
             index.transformations shouldHaveSize 2
-            val firstTransformation = index.transformations[0] as FileBasedTransformation
-            firstTransformation.id shouldBe "namespace2/EventB/1-2/transform.js"
-            firstTransformation.ns shouldBe "namespace2"
-            firstTransformation.type shouldBe "EventB"
-            firstTransformation.from shouldBe 1
-            firstTransformation.to shouldBe 2
-            firstTransformation.hash shouldBe "foo"
 
+            verify(exactly = 5) { checksumService.createMd5Hash(any()) }
             confirmVerified(checksumService)
         }
 
+        "map to schema" {
+            every { checksumService.createMd5Hash(any()) } returns "foo"
 
-//        "calculateIndex" {
-//            every { checksumService.createMd5Hash(any()) } returns "foo"
-//            every { missingTransformationCalculator.calculateDowncastTransformations(any()) } returns listOf(
-//                Pair(
-//                    version2,
-//                    version1
-//                )
-//            )
-//
-//            val index = uut.calculateIndex(dummyProject)
-//
-//            index.schemes shouldHaveSize 2
-//            verify(exactly = 3) { checksumService.createMd5Hash(dummyPath) }
-//
-//            index.transformations shouldHaveSize 2
-//            index.transformations.any { it.id.startsWith("synthetic") } shouldBe true
-//            verify { missingTransformationCalculator.calculateDowncastTransformations(event1) }
-//
-//            confirmVerified(checksumService, missingTransformationCalculator)
-//        }
+            val schema = uut.toSchema(Path.of("foo", "bar", "namespace1", "EventA", "1", "schema.json"))
+            schema.id shouldBe "namespace1/EventA/1/schema.json"
+            schema.ns shouldBe "namespace1"
+            schema.type shouldBe "EventA"
+            schema.version shouldBe 1
+            schema.hash shouldBe "foo"
+        }
+
+        "map to file based transformation" {
+            every { checksumService.createMd5Hash(any()) } returns "foo"
+
+            val transformation = uut.toFileBasedTransformation(Path.of("foo", "bar", "namespace2", "EventB", "1-2", "transform.js"))
+
+            transformation.id shouldBe "namespace2/EventB/1-2/transform.js"
+            transformation.ns shouldBe "namespace2"
+            transformation.type shouldBe "EventB"
+            transformation.from shouldBe 1
+            transformation.to shouldBe 2
+            transformation.hash shouldBe "foo"
+        }
     }
 }
