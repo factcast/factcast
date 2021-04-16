@@ -17,6 +17,8 @@ package org.factcast.schema.registry.cli.registry.impl
 
 import javax.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Project
+import org.factcast.schema.registry.cli.fs.FileSystemService
+import org.factcast.schema.registry.cli.json.TitleFilterService
 import org.factcast.schema.registry.cli.registry.IndexFileCalculator
 import org.factcast.schema.registry.cli.registry.getEventId
 import org.factcast.schema.registry.cli.registry.getTransformationId
@@ -29,11 +31,15 @@ import org.factcast.schema.registry.cli.utils.mapEventTransformations
 import org.factcast.schema.registry.cli.utils.mapEventVersions
 import org.factcast.schema.registry.cli.utils.mapEvents
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
+import java.lang.IllegalStateException
+import java.nio.file.Path
 
 @Singleton
 class IndexFileCalculatorImpl(
     private val checksumService: ChecksumService,
-    private val missingTransformationCalculator: MissingTransformationCalculator
+    private val missingTransformationCalculator: MissingTransformationCalculator,
+    private val fileSystemService: FileSystemService,
+    private val titleFilterService: TitleFilterService
 ) : IndexFileCalculator {
     override fun calculateIndex(project: Project): Index {
         val schemas = project
@@ -46,7 +52,7 @@ class IndexFileCalculatorImpl(
                     namespace.name,
                     event.type,
                     version.version,
-                    checksumService.createMd5Hash(version.schemaPath)
+                    createTitleFilteredMd5Hash(version.schemaPath)
                 )
             }
 
@@ -91,5 +97,11 @@ class IndexFileCalculatorImpl(
             }.flatten()
 
         return Index(schemas, transformations.plus(syntheticTransformations))
+    }
+
+    private fun createTitleFilteredMd5Hash(filePath: Path): String {
+        val filteredJsonNode = titleFilterService.filter(
+                fileSystemService.readToJsonNode(filePath)) ?: throw IllegalStateException("Filtering $filePath failed.")
+        return checksumService.createMd5Hash(filteredJsonNode)
     }
 }
