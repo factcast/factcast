@@ -19,6 +19,7 @@ import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.json.TitleFilterService
 import org.factcast.schema.registry.cli.utils.ChecksumService
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
+import java.nio.file.Path
 
 class IndexFileCalculatorImplTest : StringSpec() {
     val checksumService = mockk<ChecksumService>()
@@ -39,8 +40,31 @@ class IndexFileCalculatorImplTest : StringSpec() {
             fileSystemService, titleFilterService )
 
     init {
-        "calculateIndex" {
+        "calculateIndex without filtering" {
+            every { checksumService.createMd5Hash(any<Path>()) } returns "foo"
+            every { missingTransformationCalculator.calculateDowncastTransformations(any()) } returns listOf(
+                    Pair(
+                            version2,
+                            version1
+                    )
+            )
+
+            val index = uut.calculateIndex(dummyProject, false)
+
+            index.schemes shouldHaveSize 2
+            verify(exactly = 3) { checksumService.createMd5Hash(any<Path>()) }
+
+            index.transformations shouldHaveSize 2
+            index.transformations.any { it.id.startsWith("synthetic") } shouldBe true
+            verify { missingTransformationCalculator.calculateDowncastTransformations(event1) }
+
+            confirmVerified(checksumService, missingTransformationCalculator, fileSystemService, titleFilterService)
+        }
+
+
+        "calculateIndex with stripped titles" {
             every { checksumService.createMd5Hash(any<JsonNode>()) } returns "foo"
+            every { checksumService.createMd5Hash(any<Path>()) } returns "foo"
             every { fileSystemService.readToJsonNode(any())} returns dummyJson
             every { titleFilterService.filter(any())} returns dummyJson
             every { missingTransformationCalculator.calculateDowncastTransformations(any()) } returns listOf(
@@ -50,15 +74,16 @@ class IndexFileCalculatorImplTest : StringSpec() {
                 )
             )
 
-            val index = uut.calculateIndex(dummyProject)
+            val index = uut.calculateIndex(dummyProject, true)
 
             index.schemes shouldHaveSize 2
-            verify(exactly = 3) { fileSystemService.readToJsonNode(dummyPath) }
-            verify(exactly = 3) { titleFilterService.filter(any()) }
-            verify(exactly = 3) { checksumService.createMd5Hash(any<JsonNode>()) }
+            verify(exactly = 2) { fileSystemService.readToJsonNode(dummyPath) }
+            verify(exactly = 2) { titleFilterService.filter(any()) }
+            verify(exactly = 2) { checksumService.createMd5Hash(any<JsonNode>()) }
 
             index.transformations shouldHaveSize 2
             index.transformations.any { it.id.startsWith("synthetic") } shouldBe true
+            verify { checksumService.createMd5Hash(any<Path>()) }
             verify { missingTransformationCalculator.calculateDowncastTransformations(event1) }
 
             confirmVerified(checksumService, missingTransformationCalculator, fileSystemService, titleFilterService)
