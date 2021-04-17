@@ -61,29 +61,68 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
   @Override
   public void onNext(T value) {
-    if (!delegate.isCancelled()) {
+    if (!isCancelled(delegate)) {
       synchronized (lock) {
         if (!delegate.isReady()) {
-          for (int i = 1; i <= RETRY_COUNT; i++) {
-            log.trace("{} channel not ready. Slow client? Attempt: {}/{}", id, i, RETRY_COUNT);
-            try {
-              lock.wait(WAIT_TIME);
-            } catch (InterruptedException meh) {
-              // ignore
+          // delegate is not ready, lets be patient
+          waitForDelegate();
+
+          if (isCancelled(delegate)) {
+            return;
+          } else {
+            if (!delegate.isReady()) {
+              throw new TransportLayerException(
+                  id
+                      + " channel not coming back after waiting "
+                      + (WAIT_TIME * RETRY_COUNT)
+                      + "msec");
             }
-            if (delegate.isReady()) {
-              break;
-            }
-            if (delegate.isCancelled()) {
-              // channel was cancelled.
-              break;
-            }
-          }
-          if (!delegate.isReady() && !delegate.isCancelled()) {
-            throw new TransportLayerException("channel not coming back.");
           }
         }
-        if (!delegate.isCancelled()) delegate.onNext(value);
+
+        // what about now?
+        if (!isCancelled(delegate)) {
+          if (delegate.isReady()) {
+            delegate.onNext(value);
+          } else {
+
+            // no longer ready. has it been canceled in the meantime?
+            if (!isCancelled(delegate)) {
+              // still not (or no longer) ready, but not canceled... something fishy is going on
+              // here.
+              throw new TransportLayerException(id + " channel not coming back.");
+            } else {
+              // ok fine, it was cancelled, this fact was logged, we can quietly exit...
+              return;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private boolean isCancelled(ServerCallStreamObserver<T> delegate) {
+    if (delegate.isCancelled()) {
+      log.debug("{} channel cancelled by the client", id);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  private void waitForDelegate() {
+    for (int i = 1; i <= RETRY_COUNT; i++) {
+
+      log.trace("{} channel not ready. Slow client? Attempt: {}/{}", id, i, RETRY_COUNT);
+      try {
+        lock.wait(WAIT_TIME);
+      } catch (InterruptedException meh) {
+        // ignore
+      }
+
+      // if something changed in the meantime
+      if (delegate.isReady() || delegate.isCancelled()) {
+        break;
       }
     }
   }
