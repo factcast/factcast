@@ -88,11 +88,6 @@
   </properties>
   <dependencies>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>1.7.30</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>annotations</artifactId>
       <version>3.0.1u2</version>
@@ -344,11 +339,11 @@
             <licenseHeader>
               <file>file://${etc}/header.txt</file>
             </licenseHeader>
-            <trimTrailingWhitespace/>
-            <removeUnusedImports/>
+            <trimTrailingWhitespace />
+            <removeUnusedImports />
             <googleJavaFormat>
               <version>1.7</version> <!-- optional -->
-              <style>GOOGLE</style>  <!-- or AOSP (optional) -->
+              <style>GOOGLE</style> <!-- or AOSP (optional) -->
             </googleJavaFormat>
             <includes>
               <include>/src/main/java/**/*.java
@@ -361,7 +356,7 @@
             <licenseHeader>
               <file>file://${etc}/header.txt</file>
             </licenseHeader>
-            <trimTrailingWhitespace/>
+            <trimTrailingWhitespace />
             <ktlint>
               <!-- Optional, available versions: https://github.com/shyiko/ktlint/releases -->
               <version>0.36.0</version>
@@ -405,7 +400,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute/>
+                    <execute />
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -418,7 +413,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute/>
+                    <execute />
                   </action>
                 </pluginExecution>
               </pluginExecutions>
@@ -586,4 +581,3 @@
     </profile>
   </profiles>
 </project>
-
