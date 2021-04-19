@@ -48,14 +48,14 @@ class FactcastIndexCreatorImplTest : StringSpec() {
     init {
         "createIndexFile - should create a valid index file" {
             val index = Index(emptyList(), emptyList())
-            every { indexFileCalculator.calculateIndex(dummyProject) } returns index
+            every { indexFileCalculator.calculateIndex(dummyProject, true) } returns index
             every { fs.ensureDirectories(dummyPath) } returns Unit
             every { om.writeValue(any<File>(), index) } returns Unit
 
-            uut.createIndexFile(dummyPath, dummyProject)
+            uut.createIndexFile(dummyPath, dummyProject, true)
 
             verifyAll {
-                indexFileCalculator.calculateIndex(dummyProject)
+                indexFileCalculator.calculateIndex(dummyProject, true)
                 fs.ensureDirectories(dummyPath)
                 om.writeValue(match<File> { it.path.platformIndependent().endsWith("index.json") }, index)
             }
