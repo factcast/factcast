@@ -9,12 +9,12 @@ Synopsis
 --------
 ### Validation
 ```
-java -jar fc-schema-cli.jar validate [-p dir] [-w file] 
+java -jar fc-schema-cli.jar validate [-p dir] [-w file] [-s]
 ```
 
 ### Building
 ```
-java -jar fc-schema-cli.jar build [-p dir] [-o dir] [-w file] 
+java -jar fc-schema-cli.jar build [-p dir] [-o dir] [-w file] [-s]
 ```
 
 Options
@@ -23,7 +23,8 @@ Options
 |--------------|----------------|----------------------------------------------------------------------------------------|
 | `-p`         | `--base-path`  | Directory where your source files live. Defaults to the current directory.             |
 | `-o`         | `--output`     | Output directory of the registry. If omitted creates `output` in the current directory. |
-| `-w`         | `--white-list` | Path to an whitelist file. Optional.                                                   |
+| `-w`         | `--white-list` | Path to an whitelist file. Optional.  |
+| `-s`         | `--schema-strip-titles` |  Remove the 'title' attribute from JSON schema files |                         
 
 Whitelisting
 ------------

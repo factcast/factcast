@@ -15,8 +15,10 @@
  */
 package org.factcast.schema.registry.cli.utils
 
+import com.fasterxml.jackson.databind.JsonNode
 import java.nio.file.Path
 
 interface ChecksumService {
+    fun createMd5Hash(json: JsonNode): String
     fun createMd5Hash(file: Path): String
 }

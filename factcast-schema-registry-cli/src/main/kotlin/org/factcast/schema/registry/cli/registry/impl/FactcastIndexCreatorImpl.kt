@@ -35,7 +35,7 @@ class FactcastIndexCreatorImpl(
     private val indexFileCalculator: IndexFileCalculator
 ) : FactcastIndexCreator {
     override fun createFactcastIndex(contentBase: Path, project: Project, schemaStripTitles: Boolean) {
-        createIndexFile(contentBase, project)
+        createIndexFile(contentBase, project, schemaStripTitles)
         copySchemes(contentBase, project, schemaStripTitles)
         copyTransformations(contentBase, project)
     }
@@ -66,8 +66,8 @@ class FactcastIndexCreatorImpl(
     }
 
     @VisibleForTesting
-    fun createIndexFile(contentBase: Path, project: Project) {
-        val index = indexFileCalculator.calculateIndex(project)
+    fun createIndexFile(contentBase: Path, project: Project, schemaStripTitles: Boolean) {
+        val index = indexFileCalculator.calculateIndex(project, schemaStripTitles)
         val path = contentBase.resolve("index.json")
 
         fileSystemService.ensureDirectories(contentBase)
