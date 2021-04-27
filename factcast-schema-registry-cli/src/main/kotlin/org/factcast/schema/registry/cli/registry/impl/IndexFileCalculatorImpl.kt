@@ -17,7 +17,6 @@ package org.factcast.schema.registry.cli.registry.impl
 
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.fs.FileSystemService
-import org.factcast.schema.registry.cli.json.TitleFilterService
 import org.factcast.schema.registry.cli.registry.IndexFileCalculator
 import org.factcast.schema.registry.cli.registry.getEventId
 import org.factcast.schema.registry.cli.registry.getTransformationId
@@ -26,6 +25,7 @@ import org.factcast.schema.registry.cli.registry.index.Index
 import org.factcast.schema.registry.cli.registry.index.Schema
 import org.factcast.schema.registry.cli.registry.index.SyntheticTransformation
 import org.factcast.schema.registry.cli.utils.ChecksumService
+import org.factcast.schema.registry.cli.utils.filterTitleFromJson
 import org.factcast.schema.registry.cli.utils.mapEventTransformations
 import org.factcast.schema.registry.cli.utils.mapEventVersions
 import org.factcast.schema.registry.cli.utils.mapEvents
@@ -37,8 +37,7 @@ import javax.inject.Singleton
 class IndexFileCalculatorImpl(
         private val checksumService: ChecksumService,
         private val missingTransformationCalculator: MissingTransformationCalculator,
-        private val fileSystemService: FileSystemService,
-        private val titleFilterService: TitleFilterService
+        private val fileSystemService: FileSystemService
 ) : IndexFileCalculator {
     override fun calculateIndex(project: Project, schemaStripTitles: Boolean): Index {
         val schemas = project
@@ -105,8 +104,6 @@ class IndexFileCalculatorImpl(
     private fun createTitleFilteredMd5Hash(filePath: Path): String {
         val jsonNode = fileSystemService.readToJsonNode(filePath)
                 ?: throw IllegalStateException("Loading JSON from $filePath failed")
-        val filteredJsonNode = titleFilterService.filter(
-                jsonNode)
-        return checksumService.createMd5Hash(filteredJsonNode)
+        return checksumService.createMd5Hash(filterTitleFromJson(jsonNode))
     }
 }
