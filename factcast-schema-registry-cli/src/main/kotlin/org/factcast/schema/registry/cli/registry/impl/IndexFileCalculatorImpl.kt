@@ -15,6 +15,8 @@
  */
 package org.factcast.schema.registry.cli.registry.impl
 
+import java.nio.file.Path
+import javax.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.registry.IndexFileCalculator
@@ -30,14 +32,12 @@ import org.factcast.schema.registry.cli.utils.mapEventTransformations
 import org.factcast.schema.registry.cli.utils.mapEventVersions
 import org.factcast.schema.registry.cli.utils.mapEvents
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
-import java.nio.file.Path
-import javax.inject.Singleton
 
 @Singleton
 class IndexFileCalculatorImpl(
-        private val checksumService: ChecksumService,
-        private val missingTransformationCalculator: MissingTransformationCalculator,
-        private val fileSystemService: FileSystemService
+    private val checksumService: ChecksumService,
+    private val missingTransformationCalculator: MissingTransformationCalculator,
+    private val fileSystemService: FileSystemService
 ) : IndexFileCalculator {
     override fun calculateIndex(project: Project, schemaStripTitles: Boolean): Index {
         val schemas = project
