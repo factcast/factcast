@@ -1,13 +1,13 @@
-package org.factcast.schema.registry.cli.json
+package org.factcast.schema.registry.cli.utils
 
 import com.fasterxml.jackson.databind.ObjectMapper
+
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
 
 
-class TitleFilterServiceImplTest : StringSpec() {
+class FilterTitleFromJsonTest : StringSpec() {
 
-    val uut = TitleFilterServiceImpl()
     val objectMapper = ObjectMapper()
 
     init {
@@ -25,7 +25,7 @@ class TitleFilterServiceImplTest : StringSpec() {
             """.trimIndent()
             val unfiltered = objectMapper.readTree(inputJson)
 
-            val filtered = uut.filter(unfiltered)
+            val filtered = filterTitleFromJson(unfiltered)
 
             filtered?.findParents("title")?.size shouldBe 0
         }
@@ -42,7 +42,7 @@ class TitleFilterServiceImplTest : StringSpec() {
             """.trimIndent()
 
             val unfiltered = objectMapper.readTree(inputJson)
-            unfiltered shouldBe uut.filter(unfiltered)
+            unfiltered shouldBe filterTitleFromJson(unfiltered)
         }
     }
 }
