@@ -9,6 +9,7 @@ import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.nio.file.Path
 import java.nio.file.Paths
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Namespace
@@ -18,7 +19,6 @@ import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.utils.ChecksumService
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
-import java.nio.file.Path
 
 class IndexFileCalculatorImplTest : StringSpec() {
     val checksumService = mockk<ChecksumService>()
@@ -35,7 +35,7 @@ class IndexFileCalculatorImplTest : StringSpec() {
     val dummyProject = Project(null, listOf(namespace1))
 
     val uut = IndexFileCalculatorImpl(checksumService, missingTransformationCalculator,
-            fileSystemService )
+            fileSystemService)
 
     init {
         "calculateIndex without filtering" {
@@ -59,11 +59,10 @@ class IndexFileCalculatorImplTest : StringSpec() {
             confirmVerified(checksumService, missingTransformationCalculator, fileSystemService)
         }
 
-
         "calculateIndex with stripped titles" {
             every { checksumService.createMd5Hash(any<JsonNode>()) } returns "foo"
             every { checksumService.createMd5Hash(any<Path>()) } returns "foo"
-            every { fileSystemService.readToJsonNode(any())} returns dummyJson
+            every { fileSystemService.readToJsonNode(any()) } returns dummyJson
             every { missingTransformationCalculator.calculateDowncastTransformations(any()) } returns listOf(
                 Pair(
                     version2,

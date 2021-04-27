@@ -24,8 +24,9 @@ import org.factcast.schema.registry.cli.fs.FileSystemService
 
 @Singleton
 class ChecksumServiceImpl(
-        private val fileSystemService: FileSystemService,
-        private val om : ObjectMapper) : ChecksumService {
+    private val fileSystemService: FileSystemService,
+    private val om: ObjectMapper
+) : ChecksumService {
 
     override fun createMd5Hash(json: JsonNode): String {
         return createMd5Hash(om.writeValueAsBytes(json))

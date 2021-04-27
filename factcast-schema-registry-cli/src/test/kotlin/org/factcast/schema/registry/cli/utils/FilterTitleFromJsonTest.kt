@@ -1,10 +1,8 @@
 package org.factcast.schema.registry.cli.utils
 
 import com.fasterxml.jackson.databind.ObjectMapper
-
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
-
 
 class FilterTitleFromJsonTest : StringSpec() {
 
