@@ -18,5 +18,5 @@ package org.factcast.schema.registry.cli.json
 import com.fasterxml.jackson.databind.JsonNode
 
 interface TitleFilterService {
-    fun filter(input: JsonNode?): JsonNode?
+    fun filter(input: JsonNode): JsonNode
 }

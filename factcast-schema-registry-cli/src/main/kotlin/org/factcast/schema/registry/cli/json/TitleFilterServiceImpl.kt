@@ -21,13 +21,14 @@ import javax.inject.Singleton
 
 @Singleton
 class TitleFilterServiceImpl : TitleFilterService {
-    override fun filter(input: JsonNode?): JsonNode? {
-        val tree = input?.deepCopy<JsonNode?>()
+    override fun filter(input: JsonNode): JsonNode {
+        val tree = input.deepCopy<JsonNode>()
 
-        tree?.findParents("title")
+        tree.findParents("title")
                 ?.map { it as ObjectNode }
                 ?.forEach { it.remove("title") }
 
         return tree
     }
+
 }

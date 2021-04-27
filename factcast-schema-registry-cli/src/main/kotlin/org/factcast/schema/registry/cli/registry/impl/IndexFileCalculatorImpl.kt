@@ -103,9 +103,10 @@ class IndexFileCalculatorImpl(
                 else checksumService.createMd5Hash(filePath)
 
     private fun createTitleFilteredMd5Hash(filePath: Path): String {
+        val jsonNode = fileSystemService.readToJsonNode(filePath)
+                ?: throw IllegalStateException("Loading JSON from $filePath failed")
         val filteredJsonNode = titleFilterService.filter(
-                fileSystemService.readToJsonNode(filePath))
-                ?: throw IllegalStateException("Filtering $filePath failed.")
+                jsonNode)
         return checksumService.createMd5Hash(filteredJsonNode)
     }
 }

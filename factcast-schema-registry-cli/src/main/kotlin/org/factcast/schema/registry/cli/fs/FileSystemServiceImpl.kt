@@ -89,6 +89,7 @@ class FileSystemServiceImpl(
 
     override fun copyJsonFilteringTitle(from: File, to: File) {
         val jsonNode = this.readToJsonNode(from.toPath())
+                ?: throw IllegalStateException("Loading JSON from $from failed")
         val filteredJsonNode = titleFilterService.filter(jsonNode)
         this.writeToFile(to, filteredJsonNode.toString())
     }
