@@ -23,7 +23,7 @@ class FilterTitleFromJsonTest : StringSpec() {
             """.trimIndent()
             val unfiltered = objectMapper.readTree(inputJson)
 
-            val filtered = filterTitleFromJson(unfiltered)
+            val filtered = filterTitleFrom(unfiltered)
 
             filtered?.findParents("title")?.size shouldBe 0
         }
@@ -40,7 +40,7 @@ class FilterTitleFromJsonTest : StringSpec() {
             """.trimIndent()
 
             val unfiltered = objectMapper.readTree(inputJson)
-            unfiltered shouldBe filterTitleFromJson(unfiltered)
+            unfiltered shouldBe filterTitleFrom(unfiltered)
         }
     }
 }

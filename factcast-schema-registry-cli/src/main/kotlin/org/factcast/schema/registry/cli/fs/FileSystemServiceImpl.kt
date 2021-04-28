@@ -26,7 +26,7 @@ import java.nio.file.Path
 import javax.inject.Singleton
 import kotlin.streams.toList
 import org.apache.commons.io.FileUtils
-import org.factcast.schema.registry.cli.utils.filterTitleFromJson
+import org.factcast.schema.registry.cli.utils.filterTitleFrom
 
 @Singleton
 class FileSystemServiceImpl() : FileSystemService {
@@ -88,7 +88,7 @@ class FileSystemServiceImpl() : FileSystemService {
     override fun copyJsonFilteringTitle(from: File, to: File) {
         val jsonNode = this.readToJsonNode(from.toPath())
                 ?: throw IllegalStateException("Loading JSON from $from failed")
-        val filteredJsonNode = filterTitleFromJson(jsonNode)
+        val filteredJsonNode = filterTitleFrom(jsonNode)
         this.writeToFile(to, filteredJsonNode.toString())
     }
 
