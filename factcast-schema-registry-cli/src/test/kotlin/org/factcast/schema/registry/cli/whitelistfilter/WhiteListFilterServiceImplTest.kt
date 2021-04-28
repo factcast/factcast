@@ -2,12 +2,12 @@ package org.factcast.schema.registry.cli.whitelistfilter
 
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
+import java.nio.file.Paths
 import org.factcast.schema.registry.cli.project.structure.EventFolder
 import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
 import org.factcast.schema.registry.cli.project.structure.NamespaceFolder
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.project.structure.TransformationFolder
-import java.nio.file.Paths
 
 class WhiteListFilterServiceImplTest : StringSpec() {
 
@@ -99,7 +99,7 @@ class WhiteListFilterServiceImplTest : StringSpec() {
                     "/shipping/OrderReceived/versions/1"
             )
 
-            val filteredProject = uut.filter(project,whiteList)
+            val filteredProject = uut.filter(project, whiteList)
             filteredProject.namespaces[0].eventFolders.size shouldBe 1
         }
 
@@ -138,7 +138,6 @@ class WhiteListFilterServiceImplTest : StringSpec() {
             filteredProject.namespaces[1].eventFolders[1].versionFolders.size shouldBe 1
             filteredProject.namespaces[1].eventFolders[1].versionFolders[0].path.endsWith("OrderProcessed/versions/1") shouldBe true
         }
-
 
         "nonMentionedNameSpacesAreFiltered" {
             val project = createProjectFolder(
@@ -202,9 +201,7 @@ class WhiteListFilterServiceImplTest : StringSpec() {
             filteredProject.namespaces[0].eventFolders[0].versionFolders.size shouldBe 2
             filteredProject.namespaces[0].eventFolders[0].transformationFolders.size shouldBe 1
         }
-
     }
-
 
     private fun createProjectFolder(vararg namespaceFolders: NamespaceFolder) =
             ProjectFolder(
@@ -219,10 +216,11 @@ class WhiteListFilterServiceImplTest : StringSpec() {
                     eventFolders = eventFolders.asList())
 
     private fun createEventFolder(
-            namespaceName: String,
-            eventName: String,
-            vararg versionFolders: EventVersionFolder,
-            transformationFolder: List<TransformationFolder> = emptyList()) =
+        namespaceName: String,
+        eventName: String,
+        vararg versionFolders: EventVersionFolder,
+        transformationFolder: List<TransformationFolder> = emptyList()
+    ) =
             EventFolder(
                     path = Paths.get("/registry/$namespaceName/$eventName"),
                     description = Paths.get("/registry/$namespaceName/$eventName/index.md"),
