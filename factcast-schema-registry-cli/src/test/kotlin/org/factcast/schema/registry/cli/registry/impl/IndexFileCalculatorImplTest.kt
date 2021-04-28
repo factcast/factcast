@@ -9,6 +9,7 @@ import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.nio.file.Path
 import java.nio.file.Paths
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Namespace
@@ -16,16 +17,13 @@ import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.fs.FileSystemService
-import org.factcast.schema.registry.cli.json.TitleFilterService
 import org.factcast.schema.registry.cli.utils.ChecksumService
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
-import java.nio.file.Path
 
 class IndexFileCalculatorImplTest : StringSpec() {
     val checksumService = mockk<ChecksumService>()
     val missingTransformationCalculator = mockk<MissingTransformationCalculator>()
     val fileSystemService = mockk<FileSystemService>()
-    val titleFilterService = mockk<TitleFilterService>()
 
     val dummyPath = Paths.get(".")
     val dummyJson = JsonNodeFactory.instance.objectNode()
@@ -37,7 +35,7 @@ class IndexFileCalculatorImplTest : StringSpec() {
     val dummyProject = Project(null, listOf(namespace1))
 
     val uut = IndexFileCalculatorImpl(checksumService, missingTransformationCalculator,
-            fileSystemService, titleFilterService )
+            fileSystemService)
 
     init {
         "calculateIndex without filtering" {
@@ -58,15 +56,13 @@ class IndexFileCalculatorImplTest : StringSpec() {
             index.transformations.any { it.id.startsWith("synthetic") } shouldBe true
             verify { missingTransformationCalculator.calculateDowncastTransformations(event1) }
 
-            confirmVerified(checksumService, missingTransformationCalculator, fileSystemService, titleFilterService)
+            confirmVerified(checksumService, missingTransformationCalculator, fileSystemService)
         }
-
 
         "calculateIndex with stripped titles" {
             every { checksumService.createMd5Hash(any<JsonNode>()) } returns "foo"
             every { checksumService.createMd5Hash(any<Path>()) } returns "foo"
-            every { fileSystemService.readToJsonNode(any())} returns dummyJson
-            every { titleFilterService.filter(any())} returns dummyJson
+            every { fileSystemService.readToJsonNode(any()) } returns dummyJson
             every { missingTransformationCalculator.calculateDowncastTransformations(any()) } returns listOf(
                 Pair(
                     version2,
@@ -78,7 +74,6 @@ class IndexFileCalculatorImplTest : StringSpec() {
 
             index.schemes shouldHaveSize 2
             verify(exactly = 2) { fileSystemService.readToJsonNode(dummyPath) }
-            verify(exactly = 2) { titleFilterService.filter(any()) }
             verify(exactly = 2) { checksumService.createMd5Hash(any<JsonNode>()) }
 
             index.transformations shouldHaveSize 2
@@ -86,7 +81,7 @@ class IndexFileCalculatorImplTest : StringSpec() {
             verify { checksumService.createMd5Hash(any<Path>()) }
             verify { missingTransformationCalculator.calculateDowncastTransformations(event1) }
 
-            confirmVerified(checksumService, missingTransformationCalculator, fileSystemService, titleFilterService)
+            confirmVerified(checksumService, missingTransformationCalculator, fileSystemService)
         }
     }
 }

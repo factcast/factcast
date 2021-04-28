@@ -15,9 +15,10 @@
  */
 package org.factcast.schema.registry.cli.registry.impl
 
+import java.nio.file.Path
+import javax.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.fs.FileSystemService
-import org.factcast.schema.registry.cli.json.TitleFilterService
 import org.factcast.schema.registry.cli.registry.IndexFileCalculator
 import org.factcast.schema.registry.cli.registry.getEventId
 import org.factcast.schema.registry.cli.registry.getTransformationId
@@ -26,19 +27,17 @@ import org.factcast.schema.registry.cli.registry.index.Index
 import org.factcast.schema.registry.cli.registry.index.Schema
 import org.factcast.schema.registry.cli.registry.index.SyntheticTransformation
 import org.factcast.schema.registry.cli.utils.ChecksumService
+import org.factcast.schema.registry.cli.utils.filterTitleFrom
 import org.factcast.schema.registry.cli.utils.mapEventTransformations
 import org.factcast.schema.registry.cli.utils.mapEventVersions
 import org.factcast.schema.registry.cli.utils.mapEvents
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
-import java.nio.file.Path
-import javax.inject.Singleton
 
 @Singleton
 class IndexFileCalculatorImpl(
-        private val checksumService: ChecksumService,
-        private val missingTransformationCalculator: MissingTransformationCalculator,
-        private val fileSystemService: FileSystemService,
-        private val titleFilterService: TitleFilterService
+    private val checksumService: ChecksumService,
+    private val missingTransformationCalculator: MissingTransformationCalculator,
+    private val fileSystemService: FileSystemService
 ) : IndexFileCalculator {
     override fun calculateIndex(project: Project, schemaStripTitles: Boolean): Index {
         val schemas = project
@@ -103,9 +102,8 @@ class IndexFileCalculatorImpl(
                 else checksumService.createMd5Hash(filePath)
 
     private fun createTitleFilteredMd5Hash(filePath: Path): String {
-        val filteredJsonNode = titleFilterService.filter(
-                fileSystemService.readToJsonNode(filePath))
-                ?: throw IllegalStateException("Filtering $filePath failed.")
-        return checksumService.createMd5Hash(filteredJsonNode)
+        val jsonNode = fileSystemService.readToJsonNode(filePath)
+                ?: throw IllegalStateException("Loading JSON from $filePath failed")
+        return checksumService.createMd5Hash(filterTitleFrom(jsonNode))
     }
 }
