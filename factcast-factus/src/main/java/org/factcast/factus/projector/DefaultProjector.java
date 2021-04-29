@@ -76,14 +76,18 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
   }
 
   @Override
+  try{
   public void apply(@NonNull Fact f) {
     log.trace("Dispatching fact {}", f.id());
     val coords = FactSpecCoordinates.from(f);
     val dispatch = dispatchInfo.get(coords);
+  }
+    catch(InvalidHandlerDefinition e) {
     if (dispatch == null) {
       val ihd = new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
       projection.onError(ihd);
       throw ihd;
+    }
     }
 
     try {
