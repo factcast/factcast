@@ -77,7 +77,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
 
   @Override
   try{
-  public void apply(@NonNull Fact f) {
+  public void apply(@NonNull Fact f ) throws InvalidHandlerDefinition {
     log.trace("Dispatching fact {}", f.id());
     val coords = FactSpecCoordinates.from(f);
     val dispatch = dispatchInfo.get(coords);
