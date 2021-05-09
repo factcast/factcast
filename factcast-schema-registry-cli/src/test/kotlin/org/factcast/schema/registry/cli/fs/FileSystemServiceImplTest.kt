@@ -6,21 +6,17 @@ import io.kotlintest.TestResult
 import io.kotlintest.matchers.collections.shouldContain
 import io.kotlintest.matchers.collections.shouldHaveSize
 import io.kotlintest.matchers.string.shouldContain
+import io.kotlintest.matchers.string.shouldNotContain
 import io.kotlintest.matchers.types.shouldBeInstanceOf
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verifyAll
 import java.nio.file.Files
 import java.nio.file.Paths
 import org.factcast.schema.registry.cli.fixture
-import org.factcast.schema.registry.cli.json.TitleFilterService
 
 class FileSystemServiceImplTest : StringSpec() {
     var tmp = Files.createTempDirectory("fc-test")
-    val titleFilterService = mockk<TitleFilterService>()
-    val uut = FileSystemServiceImpl(titleFilterService)
+    val uut = FileSystemServiceImpl()
 
     override fun afterTest(testCase: TestCase, result: TestResult) {
         try {
@@ -69,7 +65,7 @@ class FileSystemServiceImplTest : StringSpec() {
         "readToStrings" {
             val output = uut.readToStrings(fixture("schema.json").toFile())
             output[1] shouldContain "additionalProperties"
-            output[7] shouldContain "required"
+            output[8] shouldContain "required"
         }
 
         "copyFile" {
@@ -111,17 +107,14 @@ class FileSystemServiceImplTest : StringSpec() {
 
         "copyJsonFilteringTitle" {
             val outputPath = Paths.get(tmp.toString(), "test.txt")
-            every { titleFilterService.filter(any()) } returns mockk()
 
             uut.copyJsonFilteringTitle(
                     fixture("schema.json").toFile(),
                     outputPath.toFile()
             )
 
-            verifyAll {
-                titleFilterService.filter(any())
-            }
             uut.exists(outputPath) shouldBe true
+            uut.readToString(outputPath.toFile()) shouldNotContain "title"
         }
     }
 }

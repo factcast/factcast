@@ -60,7 +60,7 @@
     <dependency>
       <groupId>org.liquibase</groupId>
       <artifactId>liquibase-core</artifactId>
-      <version>4.3.3</version><!--$NO-MVN-MAN-VER$ -->
+      <version>4.3.5</version><!--$NO-MVN-MAN-VER$ -->
       <exclusions>
         <exclusion>
           <groupId>ch.qos.logback</groupId>
@@ -71,7 +71,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.2.19</version><!--$NO-MVN-MAN-VER$ -->
+      <version>42.2.20</version><!--$NO-MVN-MAN-VER$ -->
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -128,7 +128,7 @@
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>3.13.5</version>
+      <version>3.13.6</version>
       <scope>test</scope>
     </dependency>
     <dependency>

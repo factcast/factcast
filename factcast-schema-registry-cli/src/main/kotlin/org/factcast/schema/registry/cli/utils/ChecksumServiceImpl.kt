@@ -15,14 +15,28 @@
  */
 package org.factcast.schema.registry.cli.utils
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import java.nio.file.Path
 import javax.inject.Singleton
 import org.apache.commons.codec.digest.DigestUtils
 import org.factcast.schema.registry.cli.fs.FileSystemService
 
 @Singleton
-class ChecksumServiceImpl(private val fileSystemService: FileSystemService) : ChecksumService {
+class ChecksumServiceImpl(
+    private val fileSystemService: FileSystemService,
+    private val om: ObjectMapper
+) : ChecksumService {
+
+    override fun createMd5Hash(json: JsonNode): String {
+        return createMd5Hash(om.writeValueAsBytes(json))
+    }
+
     override fun createMd5Hash(file: Path): String {
-        return DigestUtils.md5Hex(fileSystemService.readToBytes(file))
+        return createMd5Hash(fileSystemService.readToBytes(file))
+    }
+
+    private fun createMd5Hash(byteArray: ByteArray): String {
+        return DigestUtils.md5Hex(byteArray)
     }
 }
