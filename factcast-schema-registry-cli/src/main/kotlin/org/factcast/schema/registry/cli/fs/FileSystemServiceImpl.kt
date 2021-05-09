@@ -26,12 +26,10 @@ import java.nio.file.Path
 import javax.inject.Singleton
 import kotlin.streams.toList
 import org.apache.commons.io.FileUtils
-import org.factcast.schema.registry.cli.json.TitleFilterService
+import org.factcast.schema.registry.cli.utils.filterTitleFrom
 
 @Singleton
-class FileSystemServiceImpl(
-    val titleFilterService: TitleFilterService
-) : FileSystemService {
+class FileSystemServiceImpl() : FileSystemService {
     override fun exists(path: Path) =
             Files.exists(path)
 
@@ -89,7 +87,8 @@ class FileSystemServiceImpl(
 
     override fun copyJsonFilteringTitle(from: File, to: File) {
         val jsonNode = this.readToJsonNode(from.toPath())
-        val filteredJsonNode = titleFilterService.filter(jsonNode)
+                ?: throw IllegalStateException("Loading JSON from $from failed")
+        val filteredJsonNode = filterTitleFrom(jsonNode)
         this.writeToFile(to, filteredJsonNode.toString())
     }
 
