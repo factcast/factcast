@@ -16,6 +16,7 @@
 package org.factcast.store.pgsql.registry.validation.schema.store;
 
 import static org.mockito.Mockito.*;
+
 import java.util.Collections;
 import lombok.val;
 import org.factcast.store.pgsql.internal.PgTestConfiguration;
