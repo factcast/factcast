@@ -16,6 +16,7 @@
 package org.factcast.store.pgsql.registry.validation.schema.store;
 
 import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
