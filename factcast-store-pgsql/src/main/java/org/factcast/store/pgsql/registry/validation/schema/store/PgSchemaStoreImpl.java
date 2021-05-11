@@ -17,9 +17,11 @@ package org.factcast.store.pgsql.registry.validation.schema.store;
 
 import io.micrometer.core.instrument.Tags;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
@@ -32,6 +34,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @RequiredArgsConstructor
 public class PgSchemaStoreImpl implements SchemaStore {
 
+  private final Map<SchemaKey, String> nearCache = new LRUMap<>(500);
+
   @NonNull private final JdbcTemplate jdbcTemplate;
 
   @NonNull private final RegistryMetrics registryMetrics;
@@ -39,6 +43,7 @@ public class PgSchemaStoreImpl implements SchemaStore {
   @Override
   public void register(@NonNull SchemaSource key, @NonNull String schema)
       throws SchemaConflictException {
+    nearCache.put(key.toKey(), schema);
     jdbcTemplate.update(
         "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,?) "
             + "ON CONFLICT ON CONSTRAINT schemastore_pkey DO "
@@ -61,6 +66,9 @@ public class PgSchemaStoreImpl implements SchemaStore {
 
   @Override
   public boolean contains(@NonNull SchemaSource key) throws SchemaConflictException {
+
+    // note: contains MUST always go to the DB in order to be able to detect hashing conflicts
+
     List<String> hashes =
         jdbcTemplate.queryForList(
             "SELECT hash FROM schemastore WHERE id=?", String.class, key.id());
@@ -80,17 +88,23 @@ public class PgSchemaStoreImpl implements SchemaStore {
 
   @Override
   public synchronized Optional<String> get(@NonNull SchemaKey key) {
-    List<String> schema =
-        jdbcTemplate.queryForList(
-            "SELECT jsonschema FROM schemastore WHERE ns=? AND type=? AND version=? ",
-            String.class,
-            key.ns(),
-            key.type(),
-            key.version());
-    if (!schema.isEmpty()) {
-      return Optional.of(schema.get(0));
-    } else {
-      return Optional.empty();
-    }
+    return Optional.ofNullable(
+        nearCache.computeIfAbsent(
+            key,
+            k -> {
+              List<String> schema =
+                  jdbcTemplate.queryForList(
+                      "SELECT jsonschema FROM schemastore WHERE ns=? AND type=? AND version=? ",
+                      String.class,
+                      key.ns(),
+                      key.type(),
+                      key.version());
+
+              if (!schema.isEmpty()) {
+                return schema.get(0);
+              } else {
+                return (String) null;
+              }
+            }));
   }
 }
