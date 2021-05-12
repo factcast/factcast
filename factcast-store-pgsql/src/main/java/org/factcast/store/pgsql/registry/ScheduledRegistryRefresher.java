@@ -16,19 +16,19 @@
 package org.factcast.store.pgsql.registry;
 
 import com.google.common.base.Stopwatch;
-import lombok.Value;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 
-@Value
+@RequiredArgsConstructor
 @Slf4j
 public class ScheduledRegistryRefresher {
 
-  SchemaRegistry registry;
+  private final SchemaRegistry registry;
 
-  @Scheduled(cron = "${factcast.store.pgsql.schemaStoreRefreshCron:*/60 * * * * *}")
-  @SchedulerLock(name = "registryRefresh", lockAtMostFor = "3m")
+  @Scheduled(cron = "${factcast.store.pgsql.schemaStoreRefreshCron:*/10 * * * * *}")
+  @SchedulerLock(name = "registryRefresh", lockAtMostFor = "10m")
   public void refresh() {
 
     // yes, i know the time is recorded via micrometer already, but
