@@ -62,7 +62,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Configuration
 @EnableTransactionManagement
 @EnableScheduling
-@EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_SCHEDULER)
+@EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_METHOD)
 @Import({SchemaRegistryConfiguration.class, PgSnapshotCacheConfiguration.class})
 public class PgFactStoreInternalConfiguration {
 
