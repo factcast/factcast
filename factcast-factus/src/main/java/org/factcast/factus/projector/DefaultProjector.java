@@ -345,7 +345,8 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
       }
 
       if (Modifier.isPublic(m.getModifiers())) {
-        if (!Warning.PUBLIC_HANDLER_METHOD.isSuppressed(m.getAnnotation(SuppressFactusWarnings.class)))
+        if (!Warning.PUBLIC_HANDLER_METHOD.isSuppressed(
+            m.getAnnotation(SuppressFactusWarnings.class)))
           log.warn("Handler methods should not be public: " + m);
       }
 
