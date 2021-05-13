@@ -19,12 +19,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.store.pgsql.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -33,28 +36,46 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ContextConfiguration(classes = {PgTestConfiguration.class})
+@ContextConfiguration(classes = {PgTestConfiguration.class, PgSchedLockTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 public class PgSchedLockTest {
 
-  @Autowired JdbcTemplate tpl;
+  static final CountDownLatch latch = new CountDownLatch(1);
 
-  final CountDownLatch latch = new CountDownLatch(1);
+  static AtomicReference<SqlRowSet> rs = new AtomicReference<>();
 
-  SqlRowSet rs;
+  @Test
+  public void schedLockEffectiveWithScheduledMethod() throws InterruptedException {
+
+    // wait for the intercepted bean to finish it's work (and release the lock
+
+    latch.await(5, TimeUnit.SECONDS);
+
+    // and make sure it had one when executing the scheduled method
+    assertTrue(rs.get().next(), "Lock should have been found");
+  }
+}
+
+class PgSchedLockTestConfiguration {
+  @Bean
+  public BeanToIntercept bean(JdbcTemplate tpl) {
+    return new BeanToIntercept(tpl);
+  }
+}
+
+@RequiredArgsConstructor
+@Slf4j
+class BeanToIntercept {
+  final JdbcTemplate tpl;
 
   @Scheduled(initialDelay = 1000, fixedDelay = 1000)
   @SchedulerLock(name = "hubba")
   public void scheduled() throws InterruptedException {
-    rs = tpl.queryForRowSet("select * from shedlock");
-    latch.countDown();
-  }
+    log.info("hubba");
 
-  @Test
-  public void schedLockEffectiveWithScheduledMethod() throws InterruptedException {
-    latch.await(5, TimeUnit.SECONDS);
-    assertTrue(rs.next(), "Lock should have been found");
+    PgSchedLockTest.rs.set(tpl.queryForRowSet("select * from shedlock"));
+    PgSchedLockTest.latch.countDown();
   }
 }

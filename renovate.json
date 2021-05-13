@@ -26,6 +26,14 @@
       ],
       "enabled": false,
       "recreateClosed": false
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true
     }
   ],
   "labels": [
