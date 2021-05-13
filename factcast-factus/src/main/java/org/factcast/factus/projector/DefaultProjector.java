@@ -34,7 +34,6 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.factus.Handler;
 import org.factcast.factus.HandlerFor;
-import org.factcast.factus.SuppressFactusWarnings;
 import org.factcast.factus.SuppressFactusWarnings.Warning;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
@@ -345,7 +344,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
       }
 
       if (Modifier.isPublic(m.getModifiers())) {
-        if (!Warning.PUBLIC_HANDLER_METHOD.isSuppressed(m.getAnnotation(SuppressFactusWarnings.class)))
+        if (!Warning.PUBLIC_HANDLER_METHOD.isSuppressedOn(m))
           log.warn("Handler methods should not be public: " + m);
       }
 
