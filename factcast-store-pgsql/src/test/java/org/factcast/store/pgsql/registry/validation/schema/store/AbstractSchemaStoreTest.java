@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-
 import io.micrometer.core.instrument.Tags;
 import java.util.Optional;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
@@ -108,10 +107,10 @@ public abstract class AbstractSchemaStoreTest {
     s.version(5);
 
     uut.register(s, "{}");
-    uut.register(s, "{{}}");
+    uut.register(s, "{\"a\":1}");
 
     assertThat(uut.contains(s)).isTrue();
-    assertThat(uut.get(s.toKey())).isPresent().hasValue("{{}}");
+    assertThat(uut.get(s.toKey())).isPresent().hasValue("{\"a\":1}");
   }
 
   @Test
