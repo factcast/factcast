@@ -12,7 +12,7 @@ import lombok.NonNull;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD, ElementType.TYPE})
 public @interface SuppressFactusWarnings {
-  Warning[] warning();
+  Warning[] value();
 
   String note() default "";
 
@@ -21,8 +21,11 @@ public @interface SuppressFactusWarnings {
     PUBLIC_HANDLER_METHOD;
 
     public boolean isSuppressed(SuppressFactusWarnings annotation) {
-      if (annotation == null) return false;
-      else return Arrays.stream(annotation.warning()).anyMatch(w -> w == ALL || w == this);
+      if (annotation == null) {
+        return false;
+      } else {
+        return Arrays.stream(annotation.value()).anyMatch(w -> w == ALL || w == this);
+      }
     }
 
     public boolean isSuppressedOn(@NonNull Class<?> c) {
