@@ -37,8 +37,9 @@ public class FactValidatorConfiguration {
       @NonNull PgConfigurationProperties props,
       @NonNull RegistryMetrics registryMetrics,
       @Autowired(required = false) SpringLiquibase unused) {
-    if (props.isValidationEnabled() && props.isPersistentRegistry())
+    if (props.isValidationEnabled() && props.isPersistentRegistry()) {
       return new PgSchemaStoreImpl(jdbcTemplate, registryMetrics);
+    }
 
     // otherwise
     return new InMemSchemaStoreImpl(registryMetrics);
@@ -49,12 +50,16 @@ public class FactValidatorConfiguration {
       PgConfigurationProperties props,
       SchemaRegistry registry,
       @NonNull RegistryMetrics registryMetrics) {
-    if (props.isValidationEnabled()) return new FactValidator(props, registry, registryMetrics);
-    else return null;
+    if (props.isValidationEnabled()) {
+      return new FactValidator(props, registry, registryMetrics);
+    }
+    else {
+      return null;
+    }
   }
 
   @Bean
-  @ConditionalOnProperty(name = "factcast.store.pgsql.schemaRegistryUrl")
+  @ConditionalOnProperty(name = "factcast.store.pgsql.schema-registry-url")
   public FactValidationAspect factValidationAspect(
       PgConfigurationProperties props, FactValidator v) {
     return new FactValidationAspect(v);
