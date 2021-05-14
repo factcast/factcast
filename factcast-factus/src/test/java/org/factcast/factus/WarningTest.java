@@ -1,6 +1,7 @@
 package org.factcast.factus;
 
 import static org.assertj.core.api.Assertions.*;
+
 import org.factcast.factus.SuppressFactusWarnings.Warning;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
