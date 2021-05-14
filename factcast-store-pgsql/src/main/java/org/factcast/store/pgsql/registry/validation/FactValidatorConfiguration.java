@@ -52,8 +52,7 @@ public class FactValidatorConfiguration {
       @NonNull RegistryMetrics registryMetrics) {
     if (props.isValidationEnabled()) {
       return new FactValidator(props, registry, registryMetrics);
-    }
-    else {
+    } else {
       return null;
     }
   }
