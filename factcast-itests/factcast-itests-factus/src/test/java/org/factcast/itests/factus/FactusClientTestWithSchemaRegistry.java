@@ -151,13 +151,13 @@ public class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrat
     UUID aggId = UUID.randomUUID();
 
     // RUN
-    ec.publish(new org.factcast.itests.factus.event.versioned.v2.UserCreated(aggId, "foo", "MR"));
+    ec.publish(new org.factcast.itests.factus.event.versioned.v2.UserCreated(aggId, "foo", "Mr"));
 
     // ASSERT
     // this should work anyways:
     UserV2 userV2 = ec.fetch(UserV2.class, aggId);
     assertThat(userV2.userName()).isEqualTo("foo");
-    assertThat(userV2.salutation()).isEqualTo("MR");
+    assertThat(userV2.salutation()).isEqualTo("Mr");
 
     UserV1 userV1 = ec.fetch(UserV1.class, aggId);
     assertThat(userV1.userName()).isEqualTo("foo");
