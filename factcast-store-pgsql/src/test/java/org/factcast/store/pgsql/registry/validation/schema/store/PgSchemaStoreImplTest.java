@@ -81,7 +81,7 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
     uut.register(source, "foo");
     verify(mockTpl)
         .update(
-            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,?) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? WHERE schemastore.id=?",
+            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
             "id",
             "hash",
             "ns",
