@@ -38,7 +38,7 @@ public class PgTransformationCache implements TransformationCache {
     String cacheKey = CacheKey.of(fact, transformationChainId);
 
     jdbcTemplate.update(
-        "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ?, ?)",
+        "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? :: JSONB)",
         cacheKey,
         fact.jsonHeader(),
         fact.jsonPayload());

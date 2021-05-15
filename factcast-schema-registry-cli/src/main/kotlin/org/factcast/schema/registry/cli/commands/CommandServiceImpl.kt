@@ -85,15 +85,15 @@ class CommandServiceImpl(
                 logger.info("")
                 logger.error("Validation failed!")
 
-                1
+                 1
             }, {
                 logger.info("Project seems to be valid!")
 
-                0
+                 0
             })
     } catch (e: IllegalArgumentException) {
         logger.error(e) { "Invalid paths" }
 
-        1
+         1
     }
 }
