@@ -24,7 +24,7 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
-      </dependency>
+    </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-core</artifactId>
@@ -37,7 +37,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <version>5.7.1</version>
+      <version>${junit-jupiter.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

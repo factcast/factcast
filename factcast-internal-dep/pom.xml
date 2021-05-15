@@ -10,8 +10,6 @@
   <artifactId>factcast-internal-dep</artifactId>
   <packaging>pom</packaging>
   <properties>
-    <grpc.version>1.36.0</grpc.version>
-    <slf4j.version>1.7.30</slf4j.version>
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
   <dependencyManagement>
@@ -41,12 +39,12 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>${slf4j.version}</version>
+        <version>${slf4j-api.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-simple</artifactId>
-        <version>${slf4j.version}</version>
+        <version>${slf4j-api.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
