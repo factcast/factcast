@@ -42,7 +42,6 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
@@ -445,7 +444,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     try {
       enableResponseCompression(responseObserver);
 
-      val fetchById = o.get();
+      Optional<Fact> fetchById = o.get();
       if (fetchById.isPresent()) {
         assertCanRead(fetchById.get().ns());
       }

@@ -22,7 +22,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -358,7 +357,7 @@ public class ProtoConverter {
 
   public MSG_Snapshot toProto(
       @NonNull SnapshotId id, @NonNull UUID state, @NonNull byte[] bytes, boolean compressed) {
-    val ret =
+    MSG_Snapshot.Builder ret =
         MSG_Snapshot.newBuilder()
             .setId(toProto(id))
             .setFactId(toProto(state))

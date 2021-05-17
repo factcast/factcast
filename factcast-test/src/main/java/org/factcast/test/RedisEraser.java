@@ -16,8 +16,8 @@
 package org.factcast.test;
 
 import lombok.experimental.UtilityClass;
-import lombok.val;
 import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 import org.testcontainers.containers.GenericContainer;
 
@@ -25,11 +25,11 @@ import org.testcontainers.containers.GenericContainer;
 public class RedisEraser {
 
   public static void wipeAllDataFromRedis(GenericContainer<?> redis) {
-    val config = new Config();
+    Config config = new Config();
     config
         .useSingleServer()
         .setAddress("redis://" + redis.getHost() + ":" + redis.getMappedPort(6379));
-    val client = Redisson.create(config);
+    RedissonClient client = Redisson.create(config);
 
     client.getKeys().flushall();
     client.shutdown();

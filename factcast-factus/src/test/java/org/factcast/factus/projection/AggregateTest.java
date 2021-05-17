@@ -20,7 +20,6 @@ import static org.mockito.Mockito.*;
 
 import java.util.Objects;
 import java.util.UUID;
-import lombok.val;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,18 +29,18 @@ class AggregateTest {
 
   @Test
   void hashOfId() {
-    val a = new TestAggregate();
+    TestAggregate a = new TestAggregate();
     UUID id = spy(UUID.randomUUID());
     a.aggregateId(id);
 
-    val result = a.hashCode();
+    int result = a.hashCode();
     assertEquals(Objects.hash(id), result);
   }
 
   @Test
   void equals() {
-    val a = new TestAggregate();
-    val b = new TestAggregate();
+    TestAggregate a = new TestAggregate();
+    TestAggregate b = new TestAggregate();
     a.aggregateId(UUID.randomUUID());
     b.aggregateId(UUID.randomUUID());
 

@@ -18,7 +18,6 @@ package org.factcast.test;
 import java.lang.reflect.Field;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.support.ModifierSupport;
 import org.junit.platform.commons.util.ReflectionUtils;
@@ -40,7 +39,7 @@ public class RedisExtension implements Extension, BeforeEachCallback {
       testClass = testClass.getEnclosingClass();
     }
 
-    val redis = findRedis(testClass);
+    Optional<? extends GenericContainer<?>> redis = findRedis(testClass);
 
     if (redis.isPresent()) {
       log.debug("Wiping Redis");

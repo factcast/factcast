@@ -19,7 +19,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
-import lombok.val;
 import org.factcast.factus.projection.WriterToken;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -32,7 +31,7 @@ public class RedisWriterToken implements WriterToken {
   public RedisWriterToken(@NonNull RedissonClient redisson, @NonNull RLock lock) {
     this.lock = lock;
     liveness = new AtomicBoolean(lock.isLocked());
-    val watchDogTimeout = redisson.getConfig().getLockWatchdogTimeout();
+    long watchDogTimeout = redisson.getConfig().getLockWatchdogTimeout();
     TimerTask timerTask =
         new TimerTask() {
           @Override

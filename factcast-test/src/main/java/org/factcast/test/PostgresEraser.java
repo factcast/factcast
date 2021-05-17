@@ -15,25 +15,26 @@
  */
 package org.factcast.test;
 
+import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.Properties;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
-import lombok.val;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 @UtilityClass
 public class PostgresEraser {
   @SneakyThrows
   static void wipeAllFactCastDataDataFromPostgres(PostgreSQLContainer<?> pg) {
-    val url = pg.getJdbcUrl();
+    String url = pg.getJdbcUrl();
 
     Properties p = new Properties();
     p.put("user", pg.getUsername());
     p.put("password", pg.getPassword());
 
-    try (val con = DriverManager.getConnection(url, p);
-        val st = con.createStatement()) {
+    try (Connection con = DriverManager.getConnection(url, p);
+        Statement st = con.createStatement()) {
       st.execute("TRUNCATE fact");
       st.execute("TRUNCATE tokenstore");
       st.execute("TRUNCATE transformationcache");
