@@ -31,7 +31,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SuppressWarnings("rawtypes")
 @Testcontainers(disabledWithoutDocker = true)
-@ExtendWith({FactCastExtension.class, RedisExtension.class})
+@ExtendWith({FactCastExtension.class})
 @Slf4j
 public class AbstractFactCastIntegrationTest {
 
