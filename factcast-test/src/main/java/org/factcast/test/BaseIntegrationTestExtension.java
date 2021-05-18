@@ -74,10 +74,14 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
 
     try (val con = DriverManager.getConnection(url, p);
         val st = con.createStatement()) {
-      st.execute("TRUNCATE fact");
-      st.execute("TRUNCATE tokenstore");
-      st.execute("TRUNCATE transformationcache");
-      st.execute("TRUNCATE snapshot_cache");
+      st.execute(
+          "DO $$ DECLARE\n"
+              + "    r RECORD;\n"
+              + "BEGIN\n"
+              + "    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()) LOOP\n"
+              + "        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || '';\n"
+              + "    END LOOP;\n"
+              + "END $$;");
     }
   }
 }
