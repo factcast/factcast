@@ -16,12 +16,17 @@
 package org.factcast.factus.projector;
 
 import java.util.List;
+import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.projection.Projection;
 
 public interface Projector<A extends Projection> {
-  void apply(Fact element);
+  void apply(@NonNull Fact element);
+
+  default void apply(@NonNull Iterable<Fact> facts) {
+    facts.forEach(this::apply);
+  }
 
   List<FactSpec> createFactSpecs();
 }

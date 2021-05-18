@@ -20,7 +20,6 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-
 import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
@@ -949,7 +948,8 @@ class FactusImplTest {
 
       verify(fc).subscribe(any(), any());
 
-      verify(projector, never()).apply(any());
+      verify(projector, never()).apply(any(Fact.class));
+      verify(projector, never()).apply(any(List.class));
     }
 
     @Test
