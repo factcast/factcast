@@ -22,6 +22,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -33,7 +34,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers(disabledWithoutDocker = true)
 @ExtendWith({FactCastExtension.class})
 @Slf4j
-public class AbstractFactCastIntegrationTest {
+public class AbstractFactCastIntegrationTest implements PostgresContainerTest {
 
   protected static final Network _docker_network = Network.newNetwork();
 
@@ -55,12 +56,13 @@ public class AbstractFactCastIntegrationTest {
           .withEnv("spring_datasource_url", "jdbc:postgresql://db/fc?user=fc&password=fc")
           .withNetwork(_docker_network)
           .dependsOn(_postgres)
-          .withLogConsumer(new Slf4jLogConsumer(log))
+          .withLogConsumer(
+              new Slf4jLogConsumer(LoggerFactory.getLogger(AbstractFactCastIntegrationTest.class)))
           .waitingFor(new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
-
-  @SuppressWarnings("rawtypes")
-  protected static final GenericContainer _redis =
-      new GenericContainer<>("redis:5.0.9-alpine").withExposedPorts(6379);
+  //
+  //  @SuppressWarnings("rawtypes")
+  //  protected static final GenericContainer _redis =
+  //      new GenericContainer<>("redis:5.0.9-alpine").withExposedPorts(6379);
 
   static {
     init();
@@ -68,8 +70,8 @@ public class AbstractFactCastIntegrationTest {
 
   @SuppressWarnings("rawtypes")
   @SneakyThrows
-  private static void init() {
-    List<GenericContainer> infra = Arrays.asList(_redis, _postgres);
+  protected static void init() {
+    List<GenericContainer> infra = Arrays.asList(_postgres);
     infra.parallelStream().forEach(GenericContainer::start);
     _factcast.start();
 
@@ -82,7 +84,12 @@ public class AbstractFactCastIntegrationTest {
     String address = "static://" + _factcast.getHost() + ":" + _factcast.getMappedPort(9090);
     System.setProperty("grpc.client.factstore.address", address);
 
-    System.setProperty("spring.redis.host", _redis.getHost());
-    System.setProperty("spring.redis.port", String.valueOf(_redis.getMappedPort(6379)));
+    //    System.setProperty("spring.redis.host", _redis.getHost());
+    //    System.setProperty("spring.redis.port", String.valueOf(_redis.getMappedPort(6379)));
+  }
+
+  @Override
+  public PostgreSQLContainer getPostgresContainer() {
+    return _postgres;
   }
 }

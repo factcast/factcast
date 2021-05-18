@@ -16,18 +16,16 @@
 package org.factcast.itests.factus;
 
 import org.factcast.core.snap.SnapshotCache;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class})
-public class RedissonCastSnapshotCacheTest extends SnapshotCacheTest {
+public class RedissonSnapshotCacheTest extends SnapshotCacheTest {
 
   @Autowired
-  public RedissonCastSnapshotCacheTest(SnapshotCache repository) {
+  public RedissonSnapshotCacheTest(SnapshotCache repository) {
     super(repository);
   }
 }

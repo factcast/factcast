@@ -17,19 +17,18 @@ package org.factcast.itests.factus;
 
 import static java.util.UUID.*;
 import static org.assertj.core.api.Assertions.*;
-
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
-import org.factcast.test.AbstractFactCastIntegrationTest;
+import org.factcast.test.redis.AbstractFactCastRedisIntegrationTest;
 import org.junit.jupiter.api.*;
 
 @Slf4j
 @RequiredArgsConstructor
-public abstract class SnapshotCacheTest extends AbstractFactCastIntegrationTest {
+public abstract class SnapshotCacheTest extends AbstractFactCastRedisIntegrationTest {
 
   final SnapshotCache repository;
 
