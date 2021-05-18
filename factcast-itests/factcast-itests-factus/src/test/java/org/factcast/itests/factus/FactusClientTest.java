@@ -15,20 +15,14 @@
  */
 package org.factcast.itests.factus;
 
-import static java.util.Arrays.asList;
-import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.toList;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static java.util.Arrays.*;
+import static java.util.UUID.*;
+import static java.util.stream.Collectors.*;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
 import config.RedissonProjectionConfiguration;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import lombok.Data;
 import lombok.Value;
@@ -45,11 +39,7 @@ import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.itests.factus.event.TestAggregateIncremented;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
-import org.factcast.itests.factus.proj.RedissonManagedUserNames;
-import org.factcast.itests.factus.proj.SnapshotUserNames;
-import org.factcast.itests.factus.proj.SubscribedUserNames;
-import org.factcast.itests.factus.proj.TestAggregate;
-import org.factcast.itests.factus.proj.UserCount;
+import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,6 +62,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   @Autowired EventConverter eventConverter;
 
   @Autowired RedissonManagedUserNames externalizedUserNames;
+  @Autowired TxRedissonManagedUserNames transactionalExternalizedUserNames;
 
   @Autowired SubscribedUserNames subscribedUserNames;
 
@@ -113,6 +104,26 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     assertThat(externalizedUserNames.contains("Mick")).isTrue();
     assertThat(externalizedUserNames.contains("Keith")).isTrue();
     assertThat(externalizedUserNames.contains("Brian")).isTrue();
+  }
+
+  @Test
+  public void txBatchProcessing() {
+    factus.publish(
+        asList(
+            new UserCreated(randomUUID(), "Paul"),
+            new UserCreated(randomUUID(), "John"),
+            new UserCreated(randomUUID(), "Ringo"),
+            new UserCreated(randomUUID(), "Terry"),
+            new UserCreated(randomUUID(), "George")));
+
+    factus.update(transactionalExternalizedUserNames);
+
+    assertThat(transactionalExternalizedUserNames.count()).isEqualTo(5);
+    assertThat(transactionalExternalizedUserNames.contains("John")).isTrue();
+    assertThat(transactionalExternalizedUserNames.contains("Paul")).isTrue();
+    assertThat(transactionalExternalizedUserNames.contains("George")).isTrue();
+    assertThat(transactionalExternalizedUserNames.contains("Ringo")).isTrue();
+    assertThat(transactionalExternalizedUserNames.contains("Terry")).isTrue();
   }
 
   @Test
@@ -489,7 +500,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     @Override
     public void afterUpdate(int numberOfFactsAppliedDuringUpdate) {
-      this.factsConsumed = numberOfFactsAppliedDuringUpdate;
+      factsConsumed = numberOfFactsAppliedDuringUpdate;
     }
 
     @HandlerFor(ns = ns, type = type)
@@ -505,7 +516,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     @Override
     public void afterUpdate(int numberOfFactsAppliedDuringUpdate) {
-      this.factsConsumed = numberOfFactsAppliedDuringUpdate;
+      factsConsumed = numberOfFactsAppliedDuringUpdate;
     }
 
     @HandlerFor(ns = ns, type = type)

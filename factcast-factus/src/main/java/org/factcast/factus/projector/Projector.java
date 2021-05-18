@@ -29,4 +29,6 @@ public interface Projector<A extends Projection> {
   }
 
   List<FactSpec> createFactSpecs();
+
+  void onCatchup();
 }

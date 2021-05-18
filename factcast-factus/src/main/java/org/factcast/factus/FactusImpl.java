@@ -16,7 +16,6 @@
 package org.factcast.factus;
 
 import static org.factcast.factus.metrics.TagKeys.*;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.Tag;
@@ -359,6 +358,7 @@ public class FactusImpl implements Factus {
         new FactObserver() {
           @Override
           public void onNext(@NonNull Fact element) {
+            // TODO remove execUpdate?
             projection.executeUpdate(
                 () -> {
                   handler.apply(element);
@@ -378,6 +378,7 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onCatchup() {
+            handler.onCatchup();
             projection.onCatchup();
           }
 

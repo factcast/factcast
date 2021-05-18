@@ -4,23 +4,23 @@ import com.google.common.collect.ImmutableList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ServiceLoader;
-import java.util.function.Function;
-import org.factcast.core.Fact;
+import javax.annotation.Nullable;
 import org.factcast.factus.projection.Projection;
 
 public interface ProjectorPlugin {
 
   List<ProjectorPlugin> discovered =
       ImmutableList.sortedCopyOf(
-          Comparator.comparing(ProjectorPlugin::weight), ServiceLoader.load(ProjectorPlugin.class));
+          Comparator.comparing(ProjectorPlugin::order), ServiceLoader.load(ProjectorPlugin.class));
 
-  int weight();
-
-  boolean appliesTo(Class<? extends Projection> projectionClazz);
-
-  static List<ProjectorPlugin> discover() {
-    return discovered;
+  default int order() {
+    return 0;
   }
 
-  Function<Fact, Object> parameterTransformerFor(Class<?> type);
+  /**
+   * @param p
+   * @return null if not applicable to projection p
+   */
+  @Nullable
+  ProjectorLens lensFor(Projection p);
 }
