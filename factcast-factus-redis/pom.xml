@@ -31,7 +31,7 @@
 
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-core</artifactId>
+      <artifactId>factcast-factus</artifactId>
       <version>${project.version}</version>
     </dependency>
 

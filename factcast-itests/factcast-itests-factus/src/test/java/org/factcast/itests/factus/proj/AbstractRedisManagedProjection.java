@@ -29,7 +29,7 @@ public abstract class AbstractRedisManagedProjection extends ManagedProjection {
   private final RBucket<UUID> stateBucket;
 
   private final RLock lock;
-  private final RedissonClient redisson;
+  protected final RedissonClient redisson;
 
   public AbstractRedisManagedProjection(@NonNull RedissonClient redisson) {
     stateBucket = redisson.getBucket("state_tracking_" + getClass().getSimpleName());

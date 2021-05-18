@@ -49,7 +49,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       dispatcherCache = new ConcurrentHashMap<>();
   private final Projection projection;
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
-  private final List<ProjectorPlugin> plugins = new LinkedList<>();
+  private final List<ProjectorLens> lenses;
 
   interface TargetObjectResolver extends Function<Projection, Object> {}
 
@@ -58,19 +58,18 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   @VisibleForTesting
   public ProjectorImpl(EventSerializer ctx, Projection p) {
     projection = p;
+    lenses =
+        ProjectorPlugin.discovered.stream()
+            .map(plugin -> plugin.lensFor(p))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+
     dispatchInfo =
         dispatcherCache.computeIfAbsent(
             ReflectionTools.getRelevantClass(p), c -> discoverDispatchInfo(ctx, p));
 
     Class<? extends Projection> projectionClass = p.getClass();
     // TODO worthwhile caching per projectionClass?
-    ProjectorPlugin.discover()
-        .forEach(
-            plugin -> {
-              if (plugin.appliesTo(projectionClass)) {
-                plugins.add(plugin);
-              }
-            });
   }
 
   private ParameterTransformer createParameterTransformer(EventSerializer ctx, Method m) {
@@ -108,9 +107,10 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       return Fact::id;
     }
 
-    for (ProjectorPlugin p : plugins) {
+    for (ProjectorLens p : lenses) {
       val transformerOrNull = p.parameterTransformerFor(type);
       if (transformerOrNull != null) {
+        // first one wins
         return transformerOrNull;
       }
     }
@@ -136,7 +136,11 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     }
 
     try {
+      lenses.forEach(l -> l.beforeApply(projection, f));
       dispatch.invoke(projection, f);
+      lenses.forEach(l -> l.afterApply(projection, f));
+
+      // TODO find solution for state
       if (projection instanceof StateAware) {
         ((StateAware) projection).state(f.id());
       }
@@ -219,6 +223,13 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
               + ". Either add handler methods or implement postprocess(List<FactSpec)");
     }
     return Collections.unmodifiableList(ret);
+  }
+
+  @Override
+  public void onCatchup() {
+    for (ProjectorLens lens : lenses) {
+      lens.onCatchup(projection);
+    }
   }
 
   @VisibleForTesting
