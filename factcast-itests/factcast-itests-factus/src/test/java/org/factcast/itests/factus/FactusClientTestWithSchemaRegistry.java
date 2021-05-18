@@ -16,6 +16,7 @@
 package org.factcast.itests.factus;
 
 import static org.assertj.core.api.Assertions.*;
+
 import config.RedissonProjectionConfiguration;
 import java.io.File;
 import java.io.IOException;
