@@ -17,6 +17,7 @@ package org.factcast.factus.projector;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.UUID;
