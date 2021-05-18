@@ -16,7 +16,6 @@
 package org.factcast.itests.factus;
 
 import static org.assertj.core.api.Assertions.*;
-
 import config.RedissonProjectionConfiguration;
 import java.io.File;
 import java.io.IOException;
@@ -33,6 +32,8 @@ import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactCastExtension;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -64,19 +65,20 @@ public class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrat
   private static String oldAddress;
 
   static {
+    Logger l = LoggerFactory.getLogger(FactusClientTestWithSchemaRegistry.class);
     try {
-      folderForSchemas = Files.createTempDirectory("test_schemas").toAbsolutePath();
 
-      log.info("Created temporary schema directory: {}", folderForSchemas);
+      folderForSchemas = Files.createTempDirectory("test_schemas").toAbsolutePath();
+      l.info("Created temporary schema directory: {}", folderForSchemas);
 
       File registry = new ClassPathResource("example-registry").getFile();
 
-      log.info("Copying schema files into temporary schema directory: {}", registry);
+      l.info("Copying schema files into temporary schema directory: {}", registry);
       FileUtils.copyDirectory(registry, folderForSchemas.toFile());
 
     } catch (IOException e) {
       // this is unexpected but kind of fatal
-      log.error("Error creating schema directory", e);
+      l.error("Error creating schema directory", e);
     }
   }
 
@@ -107,7 +109,9 @@ public class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrat
           .withEnv("FACTCAST_STORE_PGSQL_SCHEMA_REGISTRY_URL", "file:///schemata")
           .withNetwork(_docker_network)
           .dependsOn(_postgres)
-          .withLogConsumer(new Slf4jLogConsumer(log))
+          .withLogConsumer(
+              new Slf4jLogConsumer(
+                  LoggerFactory.getLogger(FactusClientTestWithSchemaRegistry.class)))
           .waitingFor(new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
 
   @SuppressWarnings("rawtypes")
