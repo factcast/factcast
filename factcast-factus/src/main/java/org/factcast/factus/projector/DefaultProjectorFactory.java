@@ -24,7 +24,8 @@ public class DefaultProjectorFactory implements ProjectorFactory {
 
   final EventSerializer deser;
 
+  @Override
   public <A extends Projection> Projector<A> create(A projection) {
-    return new DefaultProjector<>(deser, projection);
+    return new ProjectorImpl<>(deser, projection);
   }
 }
