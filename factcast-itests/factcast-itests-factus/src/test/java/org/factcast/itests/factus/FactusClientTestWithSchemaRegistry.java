@@ -15,8 +15,7 @@
  */
 package org.factcast.itests.factus;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+import static org.assertj.core.api.Assertions.*;
 import config.RedissonProjectionConfiguration;
 import java.io.File;
 import java.io.IOException;
@@ -31,10 +30,8 @@ import org.factcast.itests.factus.proj.UserV1;
 import org.factcast.itests.factus.proj.UserV2;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactCastExtension;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -63,6 +60,7 @@ public class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrat
   protected static final Network _docker_network = Network.newNetwork();
 
   private static Path folderForSchemas;
+  private static String oldAddress;
 
   static {
     try {
@@ -112,17 +110,18 @@ public class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrat
           .waitingFor(new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
 
   @SuppressWarnings("rawtypes")
-  @Container
-  static final GenericContainer _redis =
-      new GenericContainer<>("redis:5.0.3-alpine").withExposedPorts(6379);
-
   @BeforeAll
   public static void startContainers() throws InterruptedException {
     String address = "static://" + _factcast.getHost() + ":" + _factcast.getMappedPort(9090);
+    oldAddress = System.getProperty("grpc.client.factstore.address");
     System.setProperty("grpc.client.factstore.address", address);
+  }
 
-    System.setProperty("spring.redis.host", _redis.getHost());
-    System.setProperty("spring.redis.port", String.valueOf(_redis.getMappedPort(6379)));
+  @AfterAll
+  public static void stopContainers() throws InterruptedException {
+    _factcast.stop();
+    _postgres.stop();
+    System.setProperty("grpc.client.factstore.address", oldAddress    );
   }
 
   @Autowired Factus ec;
