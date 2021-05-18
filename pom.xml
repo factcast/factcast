@@ -91,6 +91,7 @@
     <junit-jupiter.version>5.7.2</junit-jupiter.version>
     <lombok.version>1.18.20</lombok.version>
     <slf4j-api.version>1.7.30</slf4j-api.version>
+    <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
     <spring-boot.version>2.4.5</spring-boot.version>
     <spring-cloud.version>Hoxton.SR8</spring-cloud.version>
