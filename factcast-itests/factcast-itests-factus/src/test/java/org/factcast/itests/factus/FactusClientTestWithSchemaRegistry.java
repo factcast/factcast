@@ -121,7 +121,7 @@ public class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrat
   public static void stopContainers() throws InterruptedException {
     _factcast.stop();
     _postgres.stop();
-    System.setProperty("grpc.client.factstore.address", oldAddress    );
+    System.setProperty("grpc.client.factstore.address", oldAddress);
   }
 
   @Autowired Factus ec;
