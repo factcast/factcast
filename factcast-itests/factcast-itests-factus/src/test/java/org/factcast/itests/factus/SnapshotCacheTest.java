@@ -23,12 +23,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
-import org.factcast.test.redis.AbstractFactCastRedisIntegrationTest;
+import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.*;
 
 @Slf4j
 @RequiredArgsConstructor
-public abstract class SnapshotCacheTest extends AbstractFactCastRedisIntegrationTest {
+public abstract class SnapshotCacheTest extends AbstractFactCastIntegrationTest {
 
   final SnapshotCache repository;
 
