@@ -39,7 +39,12 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-test</artifactId>
+      <artifactId>factcast-test-redis</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-test-redis</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

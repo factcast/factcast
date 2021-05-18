@@ -7,7 +7,7 @@
     <version>0.3.14-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>factcast-redis-test</artifactId>
+  <artifactId>factcast-test-redis</artifactId>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -28,7 +28,7 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-factus</artifactId>
+      <artifactId>factcast-test</artifactId>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
