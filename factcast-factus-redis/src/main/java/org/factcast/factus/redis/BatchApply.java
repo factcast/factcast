@@ -7,14 +7,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-// TODO maybe rename/move to @Batch ?
 public @interface BatchApply {
-  //
-  //  /**
-  //   * try to apply up to batchSize number of events before committing (only) during catchup
-  // phase.
-  //   */
-  //  boolean batch() default false;
 
   /**
    * TODO : try to apply up to batchSize number of events before committing during catchup phase. if
