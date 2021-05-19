@@ -50,9 +50,9 @@ import org.factcast.factus.lock.LockedOnSpecs;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.projection.*;
-import org.factcast.factus.projector.DefaultProjector;
 import org.factcast.factus.projector.Projector;
 import org.factcast.factus.projector.ProjectorFactory;
+import org.factcast.factus.projector.ProjectorImpl;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
@@ -336,7 +336,7 @@ class FactusImplTest {
 
       ManagedProjection m = Mockito.spy(new SimpleProjection());
       Projector<ManagedProjection> ea =
-          Mockito.spy(new DefaultProjector<>(mock(EventSerializer.class), m));
+          Mockito.spy(new ProjectorImpl<>(mock(EventSerializer.class), m));
       when(ehFactory.create(m)).thenReturn(ea);
       ArgumentCaptor<FactObserver> observer = ArgumentCaptor.forClass(FactObserver.class);
 
