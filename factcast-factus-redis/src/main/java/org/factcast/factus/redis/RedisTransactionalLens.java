@@ -1,43 +1,42 @@
 package org.factcast.factus.redis;
 
+import io.micrometer.core.lang.Nullable;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projector.ProjectorLens;
 import org.redisson.api.RTransaction;
-import org.redisson.api.RedissonClient;
-import org.redisson.api.TransactionOptions;
 
-@RequiredArgsConstructor
 @Slf4j
 public class RedisTransactionalLens implements ProjectorLens {
 
-  @NonNull private final RedissonClient redisson;
-  @NonNull private final RedisTransactional redisTransactional;
+  @NonNull private final RedissonTXManager tx;
+  @Nullable private final BatchApply redisTransactional;
 
-  private final AtomicReference<RTransaction> tx = new AtomicReference<>();
   private final AtomicInteger count = new AtomicInteger();
+  private int batchSize = 1;
+
+  public RedisTransactionalLens(@NonNull RedissonTXManager tx, BatchApply batchApply) {
+    this.tx = tx;
+    redisTransactional = batchApply;
+    if (batchApply != null) {
+      if (batchApply.size() < 1) {
+        // TODO resolve default from properties?
+        batchSize = 50;
+      } else {
+        batchSize = batchApply.size();
+      }
+    }
+  }
 
   @Override
   public Function<Fact, Object> parameterTransformerFor(Class<?> type) {
     if (RTransaction.class.equals(type)) {
-      return f ->
-          tx.updateAndGet(
-              t -> {
-                if (t == null) {
-                  log.trace("Creating tx, batch size=" + redisTransactional.size());
-                  return redisson.createTransaction(TransactionOptions.defaults());
-                } else {
-                  return t;
-                }
-              });
+      return f -> tx.getOrCreate();
     }
-
     return null;
   }
 
@@ -52,10 +51,13 @@ public class RedisTransactionalLens implements ProjectorLens {
     }
   }
 
+  public void afterExceptionalApply(Projection p, Fact f, RuntimeException e) {
+    tx.rollback();
+  }
+
   private void commit() {
-    log.trace("Committing tx, operations=" + count.getAndSet(0));
-    tx.get().commit();
-    tx.set(null);
+    log.trace("Committing tx, number of operations=" + count.getAndSet(0));
+    tx.commit();
   }
 
   @Override
@@ -64,6 +66,6 @@ public class RedisTransactionalLens implements ProjectorLens {
   }
 
   private boolean shouldCommit() {
-    return count.incrementAndGet() >= redisTransactional.size();
+    return count.incrementAndGet() >= batchSize;
   }
 }

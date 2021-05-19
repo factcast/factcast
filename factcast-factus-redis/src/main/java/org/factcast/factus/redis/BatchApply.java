@@ -7,7 +7,8 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface RedisTransactional {
+// TODO maybe rename/move to @Batch ?
+public @interface BatchApply {
   //
   //  /**
   //   * try to apply up to batchSize number of events before committing (only) during catchup
@@ -16,10 +17,10 @@ public @interface RedisTransactional {
   //  boolean batch() default false;
 
   /**
-   * try to apply up to batchSize number of events before committing during catchup phase. if set to
-   * 0 defaults to factcast.grpc.client.catchupBatchsize (which in turn defaults to 50)
+   * TODO : try to apply up to batchSize number of events before committing during catchup phase. if
+   * set to 0 defaults to factcast.grpc.client.catchupBatchsize (which in turn defaults to 50)
    */
-  int size() default 1;
+  int size() default 50;
 
   //  /** commit prematurely if timeoutInMs is exceeded (reduces batch size), defaults to 5 seconds
   // */
