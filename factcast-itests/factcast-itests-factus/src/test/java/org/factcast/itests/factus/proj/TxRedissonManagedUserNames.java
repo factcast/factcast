@@ -21,7 +21,8 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Handler;
-import org.factcast.factus.redis.RedisTransactional;
+import org.factcast.factus.redis.AbstractRedisProjection;
+import org.factcast.factus.redis.BatchApply;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.redisson.api.RMap;
@@ -29,8 +30,8 @@ import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 
 @Slf4j
-@RedisTransactional(size = 2)
-public class TxRedissonManagedUserNames extends AbstractRedisManagedProjection {
+@BatchApply(size = 2)
+public class TxRedissonManagedUserNames extends AbstractRedisProjection {
 
   @Getter private final RMap<UUID, String> userNames;
 

@@ -15,8 +15,6 @@
  */
 package config;
 
-import lombok.val;
-import org.factcast.factus.redis.RedisTransactionalPlugin;
 import org.factcast.itests.factus.proj.RedissonManagedUserNames;
 import org.factcast.itests.factus.proj.TxRedissonManagedUserNames;
 import org.redisson.api.RedissonClient;
@@ -33,12 +31,5 @@ public class RedissonProjectionConfiguration {
   @Bean
   TxRedissonManagedUserNames txRedissonManagedUserNames(RedissonClient client) {
     return new TxRedissonManagedUserNames(client);
-  }
-
-  @Bean
-  RedisTransactionalPlugin redisTransactionalPlugin(RedissonClient client) {
-    val plug = new RedisTransactionalPlugin();
-    RedisTransactionalPlugin.initialize(client);
-    return plug;
   }
 }

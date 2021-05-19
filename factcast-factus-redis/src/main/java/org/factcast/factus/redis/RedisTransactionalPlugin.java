@@ -1,28 +1,23 @@
 package org.factcast.factus.redis;
 
+import javax.annotation.Nullable;
+import lombok.val;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projector.ProjectorLens;
-import org.redisson.api.RedissonClient;
+import org.factcast.factus.projector.ProjectorPlugin;
 
-public class RedisTransactionalPlugin extends AnnotationEnabledProjectorPlugin<RedisTransactional> {
+public class RedisTransactionalPlugin // extends AnnotationEnabledProjectorPlugin<BatchApply> {
+implements ProjectorPlugin {
 
-  private static RedissonClient redisson;
-
-  public RedisTransactionalPlugin() {
-    super(RedisTransactional.class);
-  }
-
-  // TODO find a better way,
-  public static void initialize(RedissonClient redisson) {
-    RedisTransactionalPlugin.redisson = redisson;
-  }
-
+  @Nullable
   @Override
-  protected ProjectorLens createLens(RedisTransactional redisTransactional, Projection p) {
-    if (redisson == null) {
-      throw new IllegalStateException(
-          "RedisTransactionalPlugin is not yet initialized. Please call RedisTransactionalPlugin::initialize before using @RedisTransactional");
+  public ProjectorLens lensFor(Projection p) {
+    if (p instanceof AbstractRedisProjection) {
+      val rp = (AbstractRedisProjection) p;
+      return new RedisTransactionalLens(
+          rp.redissonTXManager(), p.getClass().getAnnotation(BatchApply.class));
+    } else {
+      return null;
     }
-    return new RedisTransactionalLens(redisson, redisTransactional);
   }
 }

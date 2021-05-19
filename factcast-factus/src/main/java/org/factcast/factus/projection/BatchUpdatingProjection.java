@@ -16,5 +16,6 @@
 package org.factcast.factus.projection;
 
 public interface BatchUpdatingProjection extends Projection {
+  // TODO is this used anywhere?
   default void afterUpdate(int numberOfFactsAppliedDuringUpdate) {}
 }

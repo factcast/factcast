@@ -27,7 +27,6 @@ import org.factcast.core.snap.SnapshotId;
 import org.redisson.api.RBucket;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
-import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
 public class RedissonSnapshotCache implements SnapshotCache {
@@ -65,7 +64,8 @@ public class RedissonSnapshotCache implements SnapshotCache {
     redisson.getBucket(createKeyFor(id)).delete();
   }
 
-  @Scheduled(cron = "${factcast.redis.snapshotCacheCompactCron:0 0 0 * * *}")
+  /// TODO important ! cschedule from outside
+  // @Scheduled(cron = "${factcast.redis.snapshotCacheCompactCron:0 0 0 * * *}")
   public void compactTrigger() {
     compact(retentionTimeInDays);
   }
