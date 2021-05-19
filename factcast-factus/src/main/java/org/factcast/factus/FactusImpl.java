@@ -33,6 +33,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -141,8 +142,7 @@ public class FactusImpl implements Factus {
         Tags.of(Tag.of(CLASS, managedProjection.getClass().getName())),
         () ->
             managedProjection.withLock(
-                () ->
-                    catchupProjection(managedProjection, managedProjection.state(), (x, y) -> {})));
+                () -> catchupProjection(managedProjection, managedProjection.state(), null)));
   }
 
   @Override
@@ -350,7 +350,7 @@ public class FactusImpl implements Factus {
 
   @SneakyThrows
   private <P extends BatchUpdatingProjection> UUID catchupProjection(
-      @NonNull P projection, UUID stateOrNull, BiConsumer<P, UUID> afterProcessing) {
+      @NonNull P projection, UUID stateOrNull, @Nullable BiConsumer<P, UUID> afterProcessing) {
     Projector<P> handler = ehFactory.create(projection);
     AtomicReference<UUID> factId = new AtomicReference<>();
     AtomicInteger factCount = new AtomicInteger(0);
@@ -363,7 +363,9 @@ public class FactusImpl implements Factus {
                 () -> {
                   handler.apply(element);
                   factId.set(element.id());
-                  afterProcessing.accept(projection, element.id());
+                  if (afterProcessing != null) {
+                    afterProcessing.accept(projection, element.id());
+                  }
                   factCount.incrementAndGet();
                 });
           }

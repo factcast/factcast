@@ -43,21 +43,15 @@ import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.StateAware;
 
 @Slf4j
-public class DefaultProjector<A extends Projection> implements Projector<A> {
-
-  private final Projection projection;
+public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   private static final Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>>
       cache = new ConcurrentHashMap<>();
-
-  interface TargetObjectResolver extends Function<Projection, Object> {}
-
-  interface ParameterTransformer extends Function<Fact, Object[]> {}
-
+  private final Projection projection;
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
 
   @VisibleForTesting
-  public DefaultProjector(EventSerializer ctx, Projection p) {
+  public ProjectorImpl(EventSerializer ctx, Projection p) {
     projection = p;
     dispatchInfo = cache.computeIfAbsent(getRelevantClass(p), c -> discoverDispatchInfo(ctx, p));
   }
@@ -76,84 +70,6 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
     return c;
   }
 
-  @Override
-  public void apply(@NonNull Fact f) {
-    log.trace("Dispatching fact {}", f.id());
-    val coords = FactSpecCoordinates.from(f);
-    val dispatch = dispatchInfo.get(coords);
-    if (dispatch == null) {
-      val ihd = new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
-      projection.onError(ihd);
-      throw ihd;
-    }
-
-    try {
-      dispatch.invoke(projection, f);
-      if (projection instanceof StateAware) {
-        ((StateAware) projection).state(f.id());
-      }
-
-    } catch (InvocationTargetException | IllegalAccessException e) {
-      log.trace("returned with Exception {}: {}", f.id(), e);
-      // pass along and potentially rethrow
-      projection.onError(e);
-      throw new IllegalArgumentException(e);
-    } catch (Throwable e) {
-      // pass along and potentially rethrow
-      projection.onError(e);
-      throw e;
-    }
-  }
-
-  @Override
-  public List<FactSpec> createFactSpecs() {
-    List<FactSpec> discovered =
-        dispatchInfo.values().stream().map(d -> d.spec.copy()).collect(Collectors.toList());
-
-    if (projection instanceof Aggregate) {
-      UUID aggId = AggregateUtil.aggregateId((Aggregate) projection);
-      for (FactSpec factSpec : discovered) {
-        factSpec.aggId(aggId);
-      }
-    }
-
-    val ret = projection.postprocess(discovered);
-    if (ret == null || ret.isEmpty()) {
-      throw new InvalidHandlerDefinition(
-          "No FactSpecs discovered from "
-              + projection.getClass()
-              + ". Either add handler methods or implement postprocess(List<FactSpec)");
-    }
-    return Collections.unmodifiableList(ret);
-  }
-
-  // --------------------------------------------------------
-
-  @Value
-  @VisibleForTesting
-  static class Dispatcher {
-
-    Method dispatchMethod;
-
-    TargetObjectResolver objectResolver;
-
-    ParameterTransformer parameterTransformer;
-
-    FactSpec spec;
-
-    EventSerializer deserializer;
-
-    void invoke(Projection projection, Fact f)
-        throws InvocationTargetException, IllegalAccessException {
-      log.trace("Entering Dispatcher.invoke for {}", f.id());
-      Object targetObject = objectResolver.apply(projection);
-      log.trace("Target: {}", targetObject);
-      Object[] parameters = parameterTransformer.apply(f);
-      log.trace("Params: {}", Arrays.toString(parameters));
-      dispatchMethod.invoke(targetObject, parameters);
-    }
-  }
-
   private static Map<FactSpecCoordinates, Dispatcher> discoverDispatchInfo(
       EventSerializer deserializer, Projection p) {
     Map<FactSpecCoordinates, Dispatcher> map = new HashMap<>();
@@ -163,7 +79,7 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
         callTarget -> {
           Set<Method> methods = collectMethods(callTarget.clazz);
           methods.stream()
-              .filter(DefaultProjector::isEventHandlerMethod)
+              .filter(ProjectorImpl::isEventHandlerMethod)
               .forEach(
                   m -> {
                     FactSpec fs = discoverFactSpec(m);
@@ -254,6 +170,8 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
     };
   }
 
+  // --------------------------------------------------------
+
   @SuppressWarnings("unchecked")
   private static Function<Fact, Object> createSingleParameterTransformer(
       Method m, EventSerializer deserializer, Class<?> type) {
@@ -275,13 +193,6 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
 
     throw new InvalidHandlerDefinition(
         "Don't know how resolve " + type + " from a Fact for a parameter to method:\n " + m);
-  }
-
-  @Value
-  static class CallTarget {
-    Class<?> clazz;
-
-    TargetObjectResolver resolver;
   }
 
   private static Collection<CallTarget> getRelevantClasses(Projection p) {
@@ -344,8 +255,9 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
       }
 
       if (Modifier.isPublic(m.getModifiers())) {
-        if (!Warning.PUBLIC_HANDLER_METHOD.isSuppressedOn(m))
+        if (!Warning.PUBLIC_HANDLER_METHOD.isSuppressedOn(m)) {
           log.warn("Handler methods should not be public: " + m);
+        }
       }
 
       for (Class<?> type : m.getParameterTypes()) {
@@ -357,5 +269,90 @@ public class DefaultProjector<A extends Projection> implements Projector<A> {
       return !m.getDeclaringClass().getName().contains("$MockitoMock");
     }
     return false;
+  }
+
+  @Override
+  public void apply(@NonNull Fact f) {
+    log.trace("Dispatching fact {}", f.id());
+    val coords = FactSpecCoordinates.from(f);
+    val dispatch = dispatchInfo.get(coords);
+    if (dispatch == null) {
+      val ihd = new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
+      projection.onError(ihd);
+      throw ihd;
+    }
+
+    try {
+      dispatch.invoke(projection, f);
+      if (projection instanceof StateAware) {
+        ((StateAware) projection).state(f.id());
+      }
+
+    } catch (InvocationTargetException | IllegalAccessException e) {
+      log.trace("returned with Exception {}: {}", f.id(), e);
+      // pass along and potentially rethrow
+      projection.onError(e);
+      throw new IllegalArgumentException(e);
+    } catch (Throwable e) {
+      // pass along and potentially rethrow
+      projection.onError(e);
+      throw e;
+    }
+  }
+
+  @Override
+  public List<FactSpec> createFactSpecs() {
+    List<FactSpec> discovered =
+        dispatchInfo.values().stream().map(d -> d.spec.copy()).collect(Collectors.toList());
+
+    if (projection instanceof Aggregate) {
+      UUID aggId = AggregateUtil.aggregateId((Aggregate) projection);
+      for (FactSpec factSpec : discovered) {
+        factSpec.aggId(aggId);
+      }
+    }
+
+    val ret = projection.postprocess(discovered);
+    if (ret == null || ret.isEmpty()) {
+      throw new InvalidHandlerDefinition(
+          "No FactSpecs discovered from "
+              + projection.getClass()
+              + ". Either add handler methods or implement postprocess(List<FactSpec)");
+    }
+    return Collections.unmodifiableList(ret);
+  }
+
+  interface TargetObjectResolver extends Function<Projection, Object> {}
+
+  interface ParameterTransformer extends Function<Fact, Object[]> {}
+
+  @Value
+  @VisibleForTesting
+  static class Dispatcher {
+
+    Method dispatchMethod;
+
+    TargetObjectResolver objectResolver;
+
+    ParameterTransformer parameterTransformer;
+
+    FactSpec spec;
+
+    EventSerializer deserializer;
+
+    void invoke(Projection projection, Fact f)
+        throws InvocationTargetException, IllegalAccessException {
+      Object targetObject = objectResolver.apply(projection);
+      log.trace("Entering Dispatcher.invoke for {} on {}", f.id(), targetObject);
+      Object[] parameters = parameterTransformer.apply(f);
+      dispatchMethod.invoke(targetObject, parameters);
+    }
+  }
+
+  @Value
+  static class CallTarget {
+    Class<?> clazz;
+
+    TargetObjectResolver resolver;
   }
 }

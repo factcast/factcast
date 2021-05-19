@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.test;
+package org.factcast.itests.factus;
 
-import lombok.experimental.UtilityClass;
-import lombok.val;
-import org.redisson.Redisson;
-import org.redisson.config.Config;
-import org.testcontainers.containers.GenericContainer;
+import org.factcast.core.snap.SnapshotCache;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
 
-@UtilityClass
-public class RedisEraser {
+@SpringBootTest
+@ContextConfiguration(classes = {Application.class})
+public class RedissonSnapshotCacheTest extends SnapshotCacheTest {
 
-  public static void wipeAllDataFromRedis(GenericContainer<?> redis) {
-    val config = new Config();
-    config
-        .useSingleServer()
-        .setAddress("redis://" + redis.getHost() + ":" + redis.getMappedPort(6379));
-    val client = Redisson.create(config);
-
-    client.getKeys().flushall();
-    client.shutdown();
+  @Autowired
+  public RedissonSnapshotCacheTest(SnapshotCache repository) {
+    super(repository);
   }
 }

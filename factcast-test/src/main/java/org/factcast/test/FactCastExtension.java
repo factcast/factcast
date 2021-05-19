@@ -15,61 +15,88 @@
  */
 package org.factcast.test;
 
-import java.lang.reflect.Field;
-import java.util.Optional;
+import com.google.common.collect.Lists;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.junit.jupiter.api.extension.*;
-import org.junit.platform.commons.support.ModifierSupport;
-import org.junit.platform.commons.util.ReflectionUtils;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.GenericContainer;
 
 @Slf4j
-public class FactCastExtension implements Extension, BeforeEachCallback {
+public class FactCastExtension
+    implements Extension,
+        BeforeEachCallback,
+        BeforeAllCallback,
+        AfterEachCallback,
+        AfterAllCallback {
+
+  private static boolean initialized = false;
+  private static final List<FactCastIntegrationTestExtension> extensions = new LinkedList<>();
+  private static final Map<String, GenericContainer<?>> containers = new ConcurrentHashMap<>();
+  private static List<FactCastIntegrationTestExtension> reverseExtensions;
 
   @Override
-  public void beforeEach(ExtensionContext extensionContext) throws Exception {
-    Class<?> testClass =
-        extensionContext
-            .getTestClass()
-            .orElseThrow(() -> new IllegalArgumentException("TestClass cannot be resolved"));
-
-    while (testClass.getEnclosingClass() != null) {
-      testClass = testClass.getEnclosingClass();
-    }
-
-    val pg = findPG(testClass);
-
-    if (pg.isPresent()) {
-      log.debug("Wiping FactCast data from postgresql");
-      PostgresEraser.wipeAllFactCastDataDataFromPostgres(pg.get());
-    } else {
-      log.warn(
-          "No static field of type {} found, so wiping data from Postgres was not possible.",
-          PostgreSQLContainer.class.getName());
+  public void beforeEach(ExtensionContext context) throws Exception {
+    for (FactCastIntegrationTestExtension e : extensions) {
+      e.beforeEach(context);
     }
   }
 
-  private Optional<? extends PostgreSQLContainer<?>> findPG(Class<?> testClass) {
-    return org.junit.platform.commons.util.ReflectionUtils.findFields(
-            testClass,
-            FactCastExtension::isPostgresContainer,
-            ReflectionUtils.HierarchyTraversalMode.TOP_DOWN)
-        .stream()
-        .map(
-            f -> {
-              try {
-                f.setAccessible(true);
-                return (PostgreSQLContainer<?>) f.get(null);
-              } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException(
-                    "Cannot get value from (supposedly static) field " + f);
-              }
-            })
-        .findAny();
+  @Override
+  public void afterAll(ExtensionContext context) throws Exception {
+    for (FactCastIntegrationTestExtension e : reverseExtensions) {
+      e.afterAll(context);
+    }
   }
 
-  private static boolean isPostgresContainer(Field f) {
-    return ModifierSupport.isStatic(f) && PostgreSQLContainer.class.isAssignableFrom(f.getType());
+  @Override
+  public void afterEach(ExtensionContext context) throws Exception {
+    for (FactCastIntegrationTestExtension e : reverseExtensions) {
+      e.afterEach(context);
+    }
+  }
+
+  @Override
+  public void beforeAll(ExtensionContext context) throws Exception {
+    synchronized (extensions) {
+      if (!initialized) {
+        initialize();
+        initialized = true;
+      }
+    }
+    for (FactCastIntegrationTestExtension e : extensions) {
+      e.beforeAll(context);
+    }
+  }
+
+  private void initialize() {
+    val discovered =
+        Lists.newArrayList(ServiceLoader.load(FactCastIntegrationTestExtension.class).iterator());
+    AtomicInteger count = new AtomicInteger(discovered.size());
+    while (!discovered.isEmpty()) {
+
+      for (FactCastIntegrationTestExtension e : discovered) {
+        if (e.initialize(containers)) {
+          extensions.add(e);
+        }
+      }
+
+      discovered.removeAll(extensions);
+      if (discovered.size() == count.getAndSet(discovered.size())) {
+        // fail
+
+        throw new IllegalStateException(
+            "Failed to initialize extensions:\n"
+                + discovered.stream()
+                    .map(f -> " " + f.getClass() + ": " + f.createUnableToInitializeMessage())
+                    .collect(Collectors.joining(",\n")));
+      }
+    }
+
+    reverseExtensions = Lists.newArrayList(extensions);
+    Collections.reverse(reverseExtensions);
   }
 }

@@ -58,8 +58,7 @@ class DefaultProjectorTest {
 
       SimpleProjection projection = new SimpleProjection();
 
-      DefaultProjector<SimpleProjection> underTest =
-          new DefaultProjector<>(eventSerializer, projection);
+      ProjectorImpl<SimpleProjection> underTest = new ProjectorImpl<>(eventSerializer, projection);
 
       // RUN
       underTest.apply(fact);
@@ -105,8 +104,7 @@ class DefaultProjectorTest {
 
       ComplexProjection projection = new ComplexProjection();
 
-      DefaultProjector<ComplexProjection> underTest =
-          new DefaultProjector<>(eventSerializer, projection);
+      ProjectorImpl<ComplexProjection> underTest = new ProjectorImpl<>(eventSerializer, projection);
 
       // RUN
       underTest.apply(fact);
@@ -122,7 +120,7 @@ class DefaultProjectorTest {
     void applyWithStaticSubclass() {
       SimpleProjectionWithStaticSubclass projection = new SimpleProjectionWithStaticSubclass();
 
-      assertThatThrownBy(() -> new DefaultProjector<>(eventSerializer, projection))
+      assertThatThrownBy(() -> new ProjectorImpl<>(eventSerializer, projection))
           .isInstanceOf(InvalidHandlerDefinition.class);
     }
 
@@ -139,8 +137,7 @@ class DefaultProjectorTest {
       // SimpleEvent!
       ComplexProjection projection = new ComplexProjection();
 
-      DefaultProjector<SimpleProjection> underTest =
-          new DefaultProjector<>(eventSerializer, projection);
+      ProjectorImpl<SimpleProjection> underTest = new ProjectorImpl<>(eventSerializer, projection);
 
       // RUN / ASSERT
       assertThatThrownBy(() -> underTest.apply(fact))
@@ -158,8 +155,7 @@ class DefaultProjectorTest {
 
       ProjectionWithHandlerFor projection = new ProjectionWithHandlerFor();
 
-      DefaultProjector<SimpleProjection> underTest =
-          new DefaultProjector<>(eventSerializer, projection);
+      ProjectorImpl<SimpleProjection> underTest = new ProjectorImpl<>(eventSerializer, projection);
 
       assertThat(projection.factId()).isNull();
       assertThat(projection.fact()).isNull();
@@ -188,8 +184,7 @@ class DefaultProjectorTest {
       ComplexProjection projection = new ComplexProjection();
       projection.state(state);
 
-      DefaultProjector<ComplexAggregate> underTest =
-          new DefaultProjector<>(eventSerializer, projection);
+      ProjectorImpl<ComplexAggregate> underTest = new ProjectorImpl<>(eventSerializer, projection);
 
       // RUN
       List<FactSpec> factSpecs = underTest.createFactSpecs();
@@ -209,8 +204,7 @@ class DefaultProjectorTest {
       UUID aggregateId = UUID.randomUUID();
       ComplexAggregate aggregate = new ComplexAggregate(aggregateId);
 
-      DefaultProjector<ComplexAggregate> underTest =
-          new DefaultProjector<>(eventSerializer, aggregate);
+      ProjectorImpl<ComplexAggregate> underTest = new ProjectorImpl<>(eventSerializer, aggregate);
 
       // RUN
       List<FactSpec> factSpecs = underTest.createFactSpecs();
@@ -229,8 +223,8 @@ class DefaultProjectorTest {
       // INIT
       ProjectionWithHandlerFor projection = new ProjectionWithHandlerFor();
 
-      DefaultProjector<ProjectionWithHandlerFor> underTest =
-          new DefaultProjector<>(eventSerializer, projection);
+      ProjectorImpl<ProjectionWithHandlerFor> underTest =
+          new ProjectorImpl<>(eventSerializer, projection);
 
       // RUN
       List<FactSpec> factSpecs = underTest.createFactSpecs();
@@ -245,8 +239,8 @@ class DefaultProjectorTest {
     @Test
     void invalidPostprocessReturnsNull() {
       // INIT
-      DefaultProjector<Projection> underTest =
-          new DefaultProjector<>(eventSerializer, new PostProcessingProjection(null));
+      ProjectorImpl<Projection> underTest =
+          new ProjectorImpl<>(eventSerializer, new PostProcessingProjection(null));
 
       // RUN
       assertThatThrownBy(() -> underTest.createFactSpecs())
@@ -258,8 +252,8 @@ class DefaultProjectorTest {
     @Test
     void invalidPostprocessReturnsEmptyList() {
       // INIT
-      DefaultProjector<Projection> underTest =
-          new DefaultProjector<>(eventSerializer, new PostProcessingProjection(Lists.emptyList()));
+      ProjectorImpl<Projection> underTest =
+          new ProjectorImpl<>(eventSerializer, new PostProcessingProjection(Lists.emptyList()));
 
       // RUN
       assertThatThrownBy(() -> underTest.createFactSpecs())
@@ -275,7 +269,7 @@ class DefaultProjectorTest {
     void duplicateHandler() {
       // INIT / RUN
       assertThatThrownBy(
-              () -> new DefaultProjector<>(eventSerializer, new DuplicateHandlerProjection()))
+              () -> new ProjectorImpl<>(eventSerializer, new DuplicateHandlerProjection()))
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("Duplicate Handler method found for spec");
@@ -285,7 +279,7 @@ class DefaultProjectorTest {
     void duplicateArgumentHandler() {
       // INIT / RUN
       assertThatThrownBy(
-              () -> new DefaultProjector<>(eventSerializer, new DuplicateArgumentProjection()))
+              () -> new ProjectorImpl<>(eventSerializer, new DuplicateArgumentProjection()))
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("Multiple EventPojo Parameters");
@@ -294,8 +288,7 @@ class DefaultProjectorTest {
     @Test
     void handlerWithoutParamters() {
       // INIT / RUN
-      assertThatThrownBy(
-              () -> new DefaultProjector<>(eventSerializer, new HandlerWithoutParameters()))
+      assertThatThrownBy(() -> new ProjectorImpl<>(eventSerializer, new HandlerWithoutParameters()))
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("Handler methods must have at least one parameter");
@@ -305,7 +298,7 @@ class DefaultProjectorTest {
     void handlerWithoutEventObjectParameters() {
       // INIT / RUN
       assertThatThrownBy(
-              () -> new DefaultProjector<>(eventSerializer, new HandlerWithoutEventProjection()))
+              () -> new ProjectorImpl<>(eventSerializer, new HandlerWithoutEventProjection()))
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("Cannot introspect FactSpec from");
@@ -314,7 +307,7 @@ class DefaultProjectorTest {
     @Test
     void nonVoidEventHandler() {
       // INIT / RUN
-      assertThatThrownBy(() -> new DefaultProjector<>(eventSerializer, new NonVoidEventHandler()))
+      assertThatThrownBy(() -> new ProjectorImpl<>(eventSerializer, new NonVoidEventHandler()))
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("Handler methods must return void");
@@ -324,7 +317,7 @@ class DefaultProjectorTest {
     void unknownHandlerParamType() {
       // INIT / RUN
       assertThatThrownBy(
-              () -> new DefaultProjector<>(eventSerializer, new HandlerWithUnknownParameterType()))
+              () -> new ProjectorImpl<>(eventSerializer, new HandlerWithUnknownParameterType()))
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("Don't know how resolve");
@@ -333,7 +326,7 @@ class DefaultProjectorTest {
     @Test
     void noHandler() {
       // INIT / RUN
-      assertThatThrownBy(() -> new DefaultProjector<>(eventSerializer, new NoHandlerProjection()))
+      assertThatThrownBy(() -> new ProjectorImpl<>(eventSerializer, new NoHandlerProjection()))
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("No handler methods discovered on");
@@ -345,15 +338,14 @@ class DefaultProjectorTest {
 
     @Test
     void resolveTargetFromStaticClass() {
-      assertThat(DefaultProjector.resolveTargetObject(this, StaticClass.class))
+      assertThat(ProjectorImpl.resolveTargetObject(this, StaticClass.class))
           .isNotNull()
           .isInstanceOf(StaticClass.class);
     }
 
     @Test
     void resolveTargetFromNonStaticClass() {
-      assertThat(
-              DefaultProjector.resolveTargetObject(DefaultProjectorTest.this, NonStaticClass.class))
+      assertThat(ProjectorImpl.resolveTargetObject(DefaultProjectorTest.this, NonStaticClass.class))
           .isNotNull()
           .isInstanceOf(NonStaticClass.class);
     }
@@ -365,14 +357,14 @@ class DefaultProjectorTest {
     @Test
     void matchesHandlerMethods() throws NoSuchMethodException {
       Method realMethod = NonStaticClass.class.getDeclaredMethod("apply", SimpleEvent.class);
-      assertThat(DefaultProjector.isEventHandlerMethod(realMethod)).isTrue();
+      assertThat(ProjectorImpl.isEventHandlerMethod(realMethod)).isTrue();
     }
 
     @Test
     void ignoresMockitoMockProvidedMethods() throws NoSuchMethodException {
       Method realMethod =
           NonStaticClass$MockitoMock.class.getDeclaredMethod("apply", SimpleEvent.class);
-      assertThat(DefaultProjector.isEventHandlerMethod(realMethod)).isFalse();
+      assertThat(ProjectorImpl.isEventHandlerMethod(realMethod)).isFalse();
     }
   }
 
@@ -382,6 +374,7 @@ class DefaultProjectorTest {
   }
 
   class NonStaticClass$MockitoMock extends NonStaticClass {
+    @Override
     @Handler
     void apply(SimpleEvent e) {}
   }
