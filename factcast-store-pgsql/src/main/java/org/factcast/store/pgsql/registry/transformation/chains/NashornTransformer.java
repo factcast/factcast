@@ -16,6 +16,7 @@
 package org.factcast.store.pgsql.registry.transformation.chains;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.List;
 import java.util.Map;
 import javax.script.Compilable;
 import javax.script.Invocable;
@@ -23,6 +24,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
@@ -68,10 +70,30 @@ public class NashornTransformer implements Transformer {
         @SuppressWarnings("unchecked")
         Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
         invocable.invokeFunction("transform", jsonAsMap);
+        fixArrayTransformations(jsonAsMap);
         return FactCastJson.toJsonNode(jsonAsMap);
       } catch (NoSuchMethodException | ScriptException e) {
         throw new TransformationException(e);
       }
+    }
+  }
+
+  void fixArrayTransformations(Map<String, Object> input) {
+    // in order to keep memory footprint low and keep map order, replace in-place on demand
+    for (String key : input.keySet()) {
+      Object value = transformMapValue(input.get(key));
+      input.put(key, value);
+    }
+  }
+
+  private Object transformMapValue(Object input) {
+    if (input instanceof ScriptObjectMirror && ((ScriptObjectMirror) input).isArray()) {
+      return ((ScriptObjectMirror) input).to(List.class);
+    } else if (input instanceof Map) {
+      fixArrayTransformations((Map<String, Object>) input);
+      return input;
+    } else {
+      return input;
     }
   }
 }
