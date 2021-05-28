@@ -44,6 +44,27 @@ public class TransformationChainsTest {
   final TransformationKey key = TransformationKey.of("ns", "UserCreated");
 
   @Test
+  void testAddingNewArray() throws Exception {
+    ArrayList<Transformation> all = Lists.newArrayList();
+    all.add(SingleTransformation.of(key, 1, 2, "function transform(ev) {ev.arr = [1,2,3,'4']}"));
+    all.add(SingleTransformation.of(key, 2, 3, "function transform(ev) {ev.newField=true}"));
+
+    when(r.get(key)).thenReturn(all);
+
+    TransformationChain chain = uut.get(key, 1, 3);
+
+    assertEquals(1, chain.fromVersion());
+    assertEquals(3, chain.toVersion());
+    assertEquals(key, chain.key());
+    assertEquals("[1, 2, 3]", chain.id());
+    assertThat(chain.transformationCode()).isPresent();
+
+    JsonNode input = FactCastJson.readTree("{}");
+    JsonNode actual = new NashornTransformer().transform(chain, input);
+    assertThat(actual.toString()).isEqualTo("{\"arr\":[1,2,3,\"4\"],\"newField\":true}");
+  }
+
+  @Test
   void testStraightLine() throws Exception {
 
     ArrayList<Transformation> all = Lists.newArrayList();
