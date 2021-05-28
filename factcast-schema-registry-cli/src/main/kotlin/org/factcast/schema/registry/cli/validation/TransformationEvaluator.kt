@@ -17,6 +17,7 @@ package org.factcast.schema.registry.cli.validation
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import jdk.nashorn.api.scripting.ScriptObjectMirror
 import java.nio.file.Path
 import javax.inject.Singleton
 import org.factcast.schema.registry.cli.js.JsFunctionExecutor
@@ -31,6 +32,23 @@ class TransformationEvaluator(
 
         val result = jsFunctionExecutor.execute("transform", pathToTransformation, dataAsMap)
 
-        return om.valueToTree(result)
+        // when the transform script added an array to an object, it has the type ScriptObjectMirror with isArray=true
+        // but is internally a map of idx -> value
+        // Jackson transforms this into an object with index as key, not an array. So find and fix this:
+        val fixedResult = fixArrayTransformations(result)
+
+        return om.valueToTree(fixedResult)
+    }
+
+    fun fixArrayTransformations(data: Map<*, *>): Map<*, *> {
+        return data.mapValues {
+            if (it.value is ScriptObjectMirror && (it.value as ScriptObjectMirror).isArray) {
+                (it.value as ScriptObjectMirror).to(List::class.java)
+            } else if (it.value is Map<*, *>) {
+                fixArrayTransformations(it.value as Map<*, *>)
+            } else {
+                it.value
+            }
+        };
     }
 }
