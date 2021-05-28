@@ -16,20 +16,15 @@
 package org.factcast.store.pgsql.registry.transformation.chains;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-
 import javax.script.Compilable;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
-
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
@@ -92,8 +87,8 @@ public class NashornTransformer implements Transformer {
   }
 
   private Object transformMapValue(Object input) {
-    if (input instanceof ScriptObjectMirror && ((ScriptObjectMirror)input).isArray()) {
-      return ((ScriptObjectMirror)input).to(List.class);
+    if (input instanceof ScriptObjectMirror && ((ScriptObjectMirror) input).isArray()) {
+      return ((ScriptObjectMirror) input).to(List.class);
     } else if (input instanceof Map) {
       fixArrayTransformations((Map<String, Object>) input);
       return input;
