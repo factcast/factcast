@@ -16,7 +16,6 @@
 package org.factcast.factus;
 
 import static org.factcast.factus.metrics.TagKeys.*;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.Tag;
@@ -349,7 +348,7 @@ public class FactusImpl implements Factus {
   }
 
   @SneakyThrows
-  private <P extends BatchUpdatingProjection> UUID catchupProjection(
+  private <P extends Projection> UUID catchupProjection(
       @NonNull P projection, UUID stateOrNull, @Nullable BiConsumer<P, UUID> afterProcessing) {
     Projector<P> handler = ehFactory.create(projection);
     AtomicReference<UUID> factId = new AtomicReference<>();
@@ -374,7 +373,6 @@ public class FactusImpl implements Factus {
           @Override
           public void onComplete() {
             projection.onComplete();
-            projection.afterUpdate(factCount.get());
           }
 
           @Override

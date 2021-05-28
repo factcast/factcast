@@ -18,36 +18,35 @@ package org.factcast.itests.factus.proj;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Handler;
+import org.factcast.factus.projection.BatchApply;
 import org.factcast.factus.redis.AbstractRedisProjection;
-import org.factcast.factus.redis.BatchApply;
+import org.factcast.factus.redis.UUIDCodec;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.redisson.api.RMap;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.Codec;
+import org.redisson.codec.CompositeCodec;
+import org.redisson.codec.LZ4Codec;
+import org.redisson.codec.MarshallingCodec;
 
 @Slf4j
-@BatchApply(size = 2)
+@BatchApply(size = 3)
 public class TxRedissonManagedUserNames extends AbstractRedisProjection {
 
-  @Getter private final RMap<UUID, String> userNames;
+  private final Codec codec =
+      new CompositeCodec(UUIDCodec.INSTANCE, new LZ4Codec(new MarshallingCodec()));
 
   public TxRedissonManagedUserNames(RedissonClient redisson) {
     super(redisson);
-    userNames = redisson.getMap(getClass().getSimpleName());
   }
 
-  @Handler
-  void apply(UserCreated created, RTransaction tx) {
-    tx.getMap(getClass().getSimpleName()).put(created.aggregateId(), created.userName());
-  }
-
-  @Handler
-  void apply(UserDeleted deleted, RTransaction tx) {
-    tx.getMap(getClass().getSimpleName()).remove(deleted.aggregateId());
+  public RMap<UUID, String> userNames() {
+    return redisson.getMap(redisKey(), codec);
   }
 
   public int count() {
@@ -64,5 +63,39 @@ public class TxRedissonManagedUserNames extends AbstractRedisProjection {
 
   public void clear() {
     userNames().clear();
+  }
+
+  // ---- processing:
+
+  // variant 1
+  @SneakyThrows
+  @Handler
+  void apply(UserCreated created, RTransaction tx) {
+    //    redissonTxManager()
+    //        .join(
+    //            tx2 -> {
+    //              RMap<UUID, String> userNames = tx2.getMap(redisKey());
+    //              userNames.put(created.aggregateId(), created.userName());
+    //            });
+
+    RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
+    userNames.fastPut(created.aggregateId(), created.userName());
+  }
+
+  //  // variant 2
+  //  @Handler
+  //  void apply(UserDeleted deleted) {
+  //    RMap<UUID, String> userNames = redissonTXManager().getOrCreate().getMap(redisKey());
+  //    userNames.remove(deleted.aggregateId());
+  //  }
+
+  //  // variant 3
+  @Handler
+  void apply(UserDeleted deleted) {
+    redissonTxManager()
+        .join(
+            tx -> {
+              tx.getMap(redisKey(), codec).fastRemove(deleted.aggregateId());
+            });
   }
 }

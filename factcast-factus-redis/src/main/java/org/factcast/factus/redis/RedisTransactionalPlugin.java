@@ -12,10 +12,9 @@ implements ProjectorPlugin {
   @Nullable
   @Override
   public ProjectorLens lensFor(Projection p) {
-    if (p instanceof AbstractRedisProjection) {
-      val rp = (AbstractRedisProjection) p;
-      return new RedisTransactionalLens(
-          rp.redissonTXManager(), p.getClass().getAnnotation(BatchApply.class));
+    if (p instanceof RedisProjection) {
+      val rp = (RedisProjection) p;
+      return new RedisTransactionalLens(rp.redissonTxManager(), p);
     } else {
       return null;
     }

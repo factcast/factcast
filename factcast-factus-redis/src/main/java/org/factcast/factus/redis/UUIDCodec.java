@@ -30,6 +30,8 @@ public class UUIDCodec extends BaseCodec {
 
   private UUIDCodec() {}
 
+  public UUIDCodec(ClassLoader cl, UUIDCodec c) {}
+
   @Override
   public Decoder<Object> getValueDecoder() {
     return decoder;
