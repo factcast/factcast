@@ -20,12 +20,13 @@ import static java.util.UUID.*;
 import static java.util.stream.Collectors.*;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
+import com.google.common.base.Stopwatch;
 import config.RedissonProjectionConfiguration;
+import java.util.ArrayList;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import lombok.Data;
+import java.util.concurrent.TimeUnit;
+import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -34,6 +35,7 @@ import org.factcast.core.event.EventConverter;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.HandlerFor;
+import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.LockedOperationAbortedException;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.LocalManagedProjection;
@@ -43,6 +45,10 @@ import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.*;
+import org.redisson.api.RMap;
+import org.redisson.api.RTransaction;
+import org.redisson.api.RedissonClient;
+import org.redisson.api.TransactionOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -68,6 +74,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   @Autowired SubscribedUserNames subscribedUserNames;
 
   @Autowired UserCount userCount;
+  @Autowired RedissonClient redissonClient;
 
   @Test
   public void allWaysToPublish() {
@@ -107,24 +114,194 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     assertThat(externalizedUserNames.contains("Brian")).isTrue();
   }
 
+  @SneakyThrows
   @Test
-  public void txBatchProcessing() {
-    factus.publish(
-        asList(
-            new UserCreated(randomUUID(), "Paul"),
-            new UserCreated(randomUUID(), "John"),
-            new UserCreated(randomUUID(), "Ringo"),
-            new UserCreated(randomUUID(), "Terry"),
-            new UserCreated(randomUUID(), "George")));
+  public void reddisTxPerformance() {
+    int MAX = 100000;
 
-    factus.update(transactionalExternalizedUserNames);
+    {
+      RMap r = redissonClient.getMap("hubba");
 
-    assertThat(transactionalExternalizedUserNames.count()).isEqualTo(5);
-    assertThat(transactionalExternalizedUserNames.contains("John")).isTrue();
-    assertThat(transactionalExternalizedUserNames.contains("Paul")).isTrue();
-    assertThat(transactionalExternalizedUserNames.contains("George")).isTrue();
-    assertThat(transactionalExternalizedUserNames.contains("Ringo")).isTrue();
-    assertThat(transactionalExternalizedUserNames.contains("Terry")).isTrue();
+      measure(
+          "same rmap, no tx",
+          () -> {
+            for (int i = 0; i < MAX; i++) {
+              r.put("" + i, "" + i);
+            }
+          });
+    }
+
+    measure(
+        "new rmap, no tx",
+        () -> {
+          for (int i = 0; i < MAX; i++) {
+            redissonClient.getMap("bubba").put("" + i, "" + i);
+          }
+        });
+
+    RTransaction tx =
+        redissonClient.createTransaction(
+            TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
+    val r = tx.getMap("schubba");
+    measure(
+        "same rmap, one tx",
+        () -> {
+          for (int i = 0; i < MAX; i++) {
+            r.put("" + i, "" + i);
+          }
+        });
+
+    measure("commit", tx::commit);
+
+    val ntx =
+        redissonClient.createTransaction(
+            TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
+    measure(
+        "new rmap, one tx",
+        () -> {
+          for (int i = 0; i < MAX; i++) {
+            ntx.getMap("bubba").put("" + i, "" + i);
+          }
+        });
+
+    measure("commit", ntx::commit);
+
+    measure(
+        "new rmap, tx commit every 1000",
+        () -> {
+          RTransaction x =
+              redissonClient.createTransaction(
+                  TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
+
+          for (int i = 0; i < MAX; i++) {
+            x.getMap("bubba").put("" + i, "" + i);
+
+            if (i % 1000 == 0) {
+              x.commit();
+              x =
+                  redissonClient.createTransaction(
+                      TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
+            }
+          }
+          x.commit();
+        });
+
+    measure(
+        "new rmap, tx commit every 1000 async",
+        () -> {
+          RTransaction x =
+              redissonClient.createTransaction(
+                  TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
+
+          for (int i = 0; i < MAX; i++) {
+            x.getMap("bubba").put("" + i, "" + i);
+
+            if (i % 1000 == 0) {
+              x.commitAsync();
+              x =
+                  redissonClient.createTransaction(
+                      TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
+            }
+          }
+          x.commit();
+        });
+
+    measure(
+        "new rmap, tx commit every put",
+        () -> {
+          RTransaction x =
+              redissonClient.createTransaction(
+                  TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
+
+          for (int i = 0; i < MAX; i++) {
+            x.getMap("bubba").put("" + i, "" + i);
+
+            x.commit();
+            x =
+                redissonClient.createTransaction(
+                    TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
+          }
+        });
+  }
+
+  public void measure(String s, Runnable r) {
+    val sw = Stopwatch.createStarted();
+    r.run();
+    log.info("{} {}ms", s, sw.stop().elapsed().toMillis());
+  }
+
+  @SneakyThrows
+  @Test
+  public void txBatchProcessingPerformance() {
+
+    int MAX = 1;
+    val l = new ArrayList<EventObject>(MAX);
+    log.info("preparing {} Events ", MAX);
+    for (int i = 0; i < MAX; i++) {
+      l.add(new UserCreated(randomUUID(), "" + i));
+    }
+    log.info("publishing {} Events ", MAX);
+    factus.publish(l);
+    log.info("Cooldown of a sec");
+    Thread.sleep(1000);
+
+    {
+      val sw = Stopwatch.createStarted();
+      RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
+      factus.update(p);
+      log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+
+    {
+      val sw = Stopwatch.createStarted();
+      TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
+      factus.update(p);
+      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+
+    {
+      val sw = Stopwatch.createStarted();
+      TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
+      factus.update(p);
+      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+
+    {
+      val sw = Stopwatch.createStarted();
+      RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
+      factus.update(p);
+      log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+  }
+
+  @SneakyThrows
+  @Test
+  public void redissionDigger() {
+
+    RTransaction tx2 =
+        redissonClient.createTransaction(
+            TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
+
+    val tx = redissonClient.createBatch();
+
+    val r = tx.getMap("schubba");
+    measure(
+        "honk",
+        () -> {
+          r.putAsync("a", "b");
+          r.putAsync("a", "b");
+          r.putAsync("a", "b");
+
+          tx.execute();
+        });
   }
 
   @Test
@@ -492,36 +669,28 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
         });
   }
 
-  @Data
   static class SimpleAggregate extends Aggregate {
     static final String ns = "ns";
     static final String type = "foo";
 
-    private transient int factsConsumed = 0;
-
-    @Override
-    public void afterUpdate(int numberOfFactsAppliedDuringUpdate) {
-      factsConsumed = numberOfFactsAppliedDuringUpdate;
-    }
+    transient int factsConsumed = 0;
 
     @HandlerFor(ns = ns, type = type)
-    void apply(Fact f) {}
+    void apply(Fact f) {
+      factsConsumed++;
+    }
   }
 
-  @Data
   static class SimpleManaged extends LocalManagedProjection {
     static final String ns = "ns";
     static final String type = "foo";
 
-    private transient int factsConsumed = 0;
-
-    @Override
-    public void afterUpdate(int numberOfFactsAppliedDuringUpdate) {
-      factsConsumed = numberOfFactsAppliedDuringUpdate;
-    }
+    transient int factsConsumed = 0;
 
     @HandlerFor(ns = ns, type = type)
-    void apply(Fact f) {}
+    void apply(Fact f) {
+      factsConsumed++;
+    }
   }
 
   @Test
@@ -559,44 +728,5 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     val a3 = factus.fetch(SimpleAggregate.class, aggId);
     assertThat(a3.factsConsumed).isEqualTo(1);
-  }
-
-  @Test
-  void afterUpdateOnManagedProjection() {
-    UUID aggId = UUID.randomUUID();
-    val f1 =
-        Fact.builder()
-            .aggId(aggId)
-            .ns(SimpleManaged.ns)
-            .type(SimpleManaged.type)
-            .buildWithoutPayload();
-    val f2 =
-        Fact.builder()
-            .aggId(aggId)
-            .ns(SimpleManaged.ns)
-            .type(SimpleManaged.type)
-            .buildWithoutPayload();
-    val f3 =
-        Fact.builder()
-            .aggId(aggId)
-            .ns(SimpleManaged.ns)
-            .type(SimpleManaged.type)
-            .buildWithoutPayload();
-
-    factus.publish(f1);
-    factus.publish(f2);
-
-    val m = spy(new SimpleManaged());
-
-    factus.update(m);
-    verify(m).afterUpdate(2);
-
-    factus.update(m);
-    verify(m).afterUpdate(0);
-
-    factus.publish(f3);
-
-    factus.update(m);
-    verify(m).afterUpdate(1);
   }
 }

@@ -15,13 +15,15 @@
  */
 package org.factcast.schema.registry.cli.validation.validators.impl
 
-import javax.inject.Singleton
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.github.fge.jsonschema.main.JsonSchemaFactory
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.utils.SchemaService
 import org.factcast.schema.registry.cli.utils.mapEventVersions
 import org.factcast.schema.registry.cli.validation.ProjectError
 import org.factcast.schema.registry.cli.validation.validators.ExampleValidationService
+import javax.inject.Singleton
 
 @Singleton
 class ExampleValidationServiceImpl(
@@ -50,4 +52,27 @@ class ExampleValidationServiceImpl(
             })
         }
             .flatten()
+}
+
+
+fun main() {
+    val json = "{\"b\":[\"narf\"]}\n"
+    val schema = """
+        {
+            "additionalProperties" : true,
+            "properties" : {
+                "b" : {
+                    "type" : "array"
+                }
+            }
+        }      
+    """.trimIndent()
+    val om = ObjectMapper()
+
+    val s = JsonSchemaFactory.newBuilder().freeze()
+    val r = s.validator.validate(om.readTree(schema), om.readTree(json))
+
+    println(r.isSuccess)
+    println(r.forEach { m -> print(m) })
+
 }

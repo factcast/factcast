@@ -46,7 +46,6 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
   @Override
   public void onNext(MSG_Notification f) {
-    log.trace("observer got msg: {}", f);
     switch (f.getType()) {
       case Catchup:
         log.debug("received onCatchup signal");
@@ -58,6 +57,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
         break;
       case Fact:
         try {
+          log.debug("received single fact");
           subscription.notifyElement(converter.fromProto(f.getFact()));
         } catch (TransformationException e) {
           // cannot happen on client side...
@@ -67,6 +67,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
       case Facts:
         try {
           List<? extends Fact> facts = converter.fromProto(f.getFacts());
+          log.debug("received {} facts", facts.size());
 
           for (Fact fact : facts) {
             subscription.notifyElement(fact);

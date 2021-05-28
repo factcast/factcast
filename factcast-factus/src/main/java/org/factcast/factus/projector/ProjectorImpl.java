@@ -80,7 +80,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
       for (int i = 0; i < parameterTypes.length; i++) {
         Class<?> type = parameterTypes[i];
-        Function<Fact, Object> transformer = createSingleParameterTransformer(m, ctx, type);
+        val transformer = createSingleParameterTransformer(m, ctx, type);
         parameters[i] = transformer.apply(p);
       }
       return parameters;
@@ -88,7 +88,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   }
 
   @SuppressWarnings("unchecked")
-  private Function<Fact, Object> createSingleParameterTransformer(
+  private Function<Fact, ?> createSingleParameterTransformer(
       Method m, EventSerializer deserializer, Class<?> type) {
 
     if (EventObject.class.isAssignableFrom(type)) {
@@ -136,21 +136,41 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     }
 
     try {
-      lenses.forEach(l -> l.beforeApply(projection, f));
+      lenses.forEach(l -> l.beforeFactProcessing(f));
       dispatch.invoke(projection, f);
-      lenses.forEach(l -> l.afterApply(projection, f));
 
-      // TODO find solution for state
+      // maybe find a way to skip state setting within catchup phase when batching to make it even
+      // more efficient ? only if necessary
+
       if (projection instanceof StateAware) {
-        ((StateAware) projection).state(f.id());
+        boolean skipStateUodate = false;
+
+        boolean skip =
+            lenses.stream()
+                .map(ProjectorLens::skipStateUpdate)
+                .reduce(false, (r, lens) -> r || lens);
+
+        if (!skip) {
+          ((StateAware) projection).state(f.id());
+        }
       }
 
+      lenses.forEach(l -> l.afterFactProcessing(f));
+
     } catch (InvocationTargetException | IllegalAccessException e) {
-      log.trace("returned with Exception {}: {}", f.id(), e);
+      log.trace("returned with Exception {}:", f.id(), e);
+
+      // inform the lenses
+      lenses.forEach(l -> l.afterFactProcessingFailed(f, e));
+
       // pass along and potentially rethrow
       projection.onError(e);
       throw new IllegalArgumentException(e);
     } catch (Throwable e) {
+
+      // inform the lenses
+      lenses.forEach(l -> l.afterFactProcessingFailed(f, e));
+
       // pass along and potentially rethrow
       projection.onError(e);
       throw e;
@@ -271,21 +291,21 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   @VisibleForTesting
   static class Dispatcher {
 
-    Method dispatchMethod;
+    @NonNull Method dispatchMethod;
 
-    TargetObjectResolver objectResolver;
+    @NonNull TargetObjectResolver objectResolver;
 
-    ParameterTransformer parameterTransformer;
+    @NonNull ParameterTransformer parameterTransformer;
 
-    FactSpec spec;
+    @NonNull FactSpec spec;
 
-    EventSerializer deserializer;
+    @NonNull EventSerializer deserializer;
 
     void invoke(Projection projection, Fact f)
         throws InvocationTargetException, IllegalAccessException {
       Object targetObject = objectResolver.apply(projection);
-      log.trace("Entering Dispatcher.invoke for {} on {}", f.id(), targetObject);
       Object[] parameters = parameterTransformer.apply(f);
+      log.trace("param=" + Arrays.toString(parameters));
       dispatchMethod.invoke(targetObject, parameters);
     }
   }

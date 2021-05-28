@@ -24,7 +24,7 @@ import org.redisson.api.RBucket;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 
-public abstract class AbstractRedisManagedProjection extends ManagedProjection {
+public abstract class AbstractRedisManagedProjection implements ManagedProjection {
 
   private final RBucket<UUID> stateBucket;
 
