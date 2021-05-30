@@ -17,9 +17,9 @@ package org.factcast.schema.registry.cli.validation
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import jdk.nashorn.api.scripting.ScriptObjectMirror
 import java.nio.file.Path
 import javax.inject.Singleton
+import jdk.nashorn.api.scripting.ScriptObjectMirror
 import org.factcast.schema.registry.cli.js.JsFunctionExecutor
 
 @Singleton
@@ -49,6 +49,6 @@ class TransformationEvaluator(
             } else {
                 it.value
             }
-        };
+        }
     }
 }
