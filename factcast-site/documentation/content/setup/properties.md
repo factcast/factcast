@@ -24,7 +24,7 @@ Properties you can use to configure FactCast:
 | factcast.store.pgsql.schemaRegistryUrl            | if a schemaRegistryUrl is defined, FactCast goes into validating mode. The only protocols allowed here are *'http', 'https', 'classpath' and 'file'. Note that http(s) and file always require two slashes after the colon, e.g. 'https://someserver/...' or 'file:///root/folder/...'.*|  
 | factcast.store.pgsql.persistentRegistry           | if fetched Schema and Transformation Documents are persisted into Postgres | false 
 | factcast.store.pgsql.allowUnvalidatedPublish      | If validation is enabled, this controls if publishing facts, that are **not validatable** (due to missing meta-data or due to missing schema in the registry) are allowed to be published or should be rejected.  |  false 
-| factcast.store.pgsql.schemaStoreRefreshCron       | defines the cron schedule for refreshing the SchemaRegistry by querying for the latest remote changes | `*/10 * * * * *` (every 10 seconds) |
+| factcast.store.pgsql.schemaStoreRefreshCron       | defines the cron schedule for refreshing the SchemaRegistry by querying for the latest remote changes | `*/60 * * * * *` (every minute) |
 | factcast.store.pgsql.allowSchemaReplace|If a schema can be replaced by an updated version from the registry (not a good idea in production environments)|false
 
 ---
