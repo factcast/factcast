@@ -37,7 +37,6 @@ public class PgTransformationCache implements TransformationCache {
   public void put(@NonNull Fact fact, @NonNull String transformationChainId) {
     String cacheKey = CacheKey.of(fact, transformationChainId);
 
-
     // dup-keys can be ignored, in case another node just did the same
 
     jdbcTemplate.update(
