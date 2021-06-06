@@ -16,7 +16,6 @@
 package org.factcast.core.snap.redisson;
 
 import static org.assertj.core.api.Assertions.*;
-
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -129,26 +128,30 @@ class RedissonSnapshotCacheTest {
       Snapshot snap2 = new Snapshot(s2, UUID.randomUUID(), "foo".getBytes(), false);
 
       underTest.setSnapshot(snap1);
+      sleep(10);
       underTest.setSnapshot(snap2);
 
-      // assert all buckets have a ttl
+      {
+        // assert all buckets have a ttl
+        val ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
+        val ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
 
-      val ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
-      val ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
-
-      assertThat(ttl1).isGreaterThan(7775990000L);
-      assertThat(ttl2).isGreaterThan(7775990000L);
+        assertThat(ttl1).isGreaterThan(7775990000L);
+        assertThat(ttl2).isGreaterThan(7775990000L);
+        assertThat(ttl1).isLessThanOrEqualTo(ttl2);
+      }
 
       sleep(500);
 
-      underTest.getSnapshot(s2); // touches it
+      underTest.getSnapshot(s1); // touches it
 
       sleep(100); // wait fro async op
+      {
+        val ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
+        val ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
 
-      val ttl2refreshed = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
-      assertThat(ttl2refreshed).isGreaterThan(7775990000L);
-      assertThat(ttl2refreshed)
-          .isGreaterThan(redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive());
+        assertThat(ttl1).isGreaterThan(ttl2);
+      }
     }
 
     @SneakyThrows
