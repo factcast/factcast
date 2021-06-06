@@ -62,6 +62,11 @@ import org.springframework.test.context.ContextConfiguration;
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
 public class FactusClientTest extends AbstractFactCastIntegrationTest {
+
+  static {
+    System.setProperty("factcast.grpc.client.catchup-batchsize", "100");
+  }
+
   private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
 
   @Autowired Factus factus;
@@ -234,7 +239,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   @Test
   public void txBatchProcessingPerformance() {
 
-    int MAX = 1;
+    int MAX = 10001;
     val l = new ArrayList<EventObject>(MAX);
     log.info("preparing {} Events ", MAX);
     for (int i = 0; i < MAX; i++) {
@@ -253,32 +258,46 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       p.clear();
       p.state(new UUID(0, 0));
     }
-
-    {
-      val sw = Stopwatch.createStarted();
-      TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
-      factus.update(p);
-      Thread.sleep(100);
-      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
-      p.clear();
-      p.state(new UUID(0, 0));
-    }
-
-    {
-      val sw = Stopwatch.createStarted();
-      TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
-      factus.update(p);
-      Thread.sleep(100);
-      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
-      p.clear();
-      p.state(new UUID(0, 0));
-    }
-
     {
       val sw = Stopwatch.createStarted();
       RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
       factus.update(p);
       log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+    // ----------tx
+    {
+      val sw = Stopwatch.createStarted();
+      TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
+      factus.update(p);
+      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+
+    {
+      val sw = Stopwatch.createStarted();
+      TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
+      factus.update(p);
+      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+    // ------------ batch
+    {
+      val sw = Stopwatch.createStarted();
+      BatchRedissonManagedUserNames p = new BatchRedissonManagedUserNames(redissonClient);
+      factus.update(p);
+      log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+    {
+      val sw = Stopwatch.createStarted();
+      BatchRedissonManagedUserNames p = new BatchRedissonManagedUserNames(redissonClient);
+      factus.update(p);
+      log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
       p.state(new UUID(0, 0));
     }
