@@ -10,6 +10,7 @@ import org.factcast.core.Fact;
 import org.factcast.factus.projection.BatchApply;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projector.ProjectorLens;
+import org.redisson.api.RBatch;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 
@@ -52,13 +53,23 @@ public class RedisTransactionalLens implements ProjectorLens {
         return tx.getCurrentTransaction();
       };
     }
+
+    if (RBatch.class.equals(type)) {
+      return f -> {
+        RedissonBatchManager batch = RedissonBatchManager.get(client);
+        if (!batch.inBatch()) {
+          batch.startOrJoin();
+        }
+        return batch.getCurrentBatch();
+      };
+    }
     return null;
   }
 
   @Override
   public void beforeFactProcessing(Fact f) {
-    RedissonTxManager tx = RedissonTxManager.get(client);
-    tx.startOrJoin();
+    RedissonBatchManager batch = RedissonBatchManager.get(client);
+    batch.startOrJoin();
     if (batchSize > 1) {
       start.getAndUpdate(l -> l > 0 ? l : System.currentTimeMillis());
     }
@@ -90,20 +101,20 @@ public class RedisTransactionalLens implements ProjectorLens {
         f,
         justForInformation);
 
-    RedissonTxManager tx = RedissonTxManager.get(client);
-    tx.rollback();
+    RedissonBatchManager batch = RedissonBatchManager.get(client);
+    batch.discard();
   }
 
   private void commit() {
     if (batchSize > 1) {
       start.set(0);
       int processed = count.getAndSet(0);
-      log.trace("Committing tx on {}, number of facts processed={}", projectionName, processed);
+      log.trace("Committing batch on {}, number of facts processed={}", projectionName, processed);
     }
 
     // otherwise we can silently commit, not to flush the logs
-    RedissonTxManager tx = RedissonTxManager.get(client);
-    tx.commit();
+    RedissonBatchManager batch = RedissonBatchManager.get(client);
+    batch.execute();
   }
 
   @Override
