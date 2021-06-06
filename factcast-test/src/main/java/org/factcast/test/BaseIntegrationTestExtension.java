@@ -34,7 +34,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
             .withNetwork(_docker_network);
 
     _factcast =
-        new GenericContainer<>("factcast/factcast:latest")
+        new GenericContainer<>("factcast/factcast:0.3.9")
             .withExposedPorts(9090)
             .withFileSystemBind("./config", "/config/")
             .withEnv("grpc_server_port", "9090")

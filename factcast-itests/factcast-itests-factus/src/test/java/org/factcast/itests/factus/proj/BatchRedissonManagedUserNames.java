@@ -37,7 +37,7 @@ import org.redisson.codec.LZ4Codec;
 import org.redisson.codec.MarshallingCodec;
 
 @Slf4j
-@BatchApply(size = 3)
+@BatchApply(size = 50)
 public class BatchRedissonManagedUserNames extends AbstractRedisProjection {
 
   private final Codec codec =
