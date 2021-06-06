@@ -127,9 +127,6 @@ class RedissonSnapshotCacheTest {
       SnapshotId s2 = new SnapshotId("foo" + (i++), UUID.randomUUID());
       Snapshot snap2 = new Snapshot(s2, UUID.randomUUID(), "foo".getBytes(), false);
 
-      SnapshotId s3 = new SnapshotId("foo" + (i++), UUID.randomUUID());
-      Snapshot snap3 = new Snapshot(s3, UUID.randomUUID(), "foo".getBytes(), false);
-
       underTest.setSnapshot(snap1);
       underTest.setSnapshot(snap2);
 
@@ -150,7 +147,7 @@ class RedissonSnapshotCacheTest {
       val ttl2refreshed = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
       assertThat(ttl2refreshed).isGreaterThan(7775990000L);
       assertThat(ttl2refreshed)
-          .isGreaterThan(redisson.getBucket(underTest.createKeyFor(s3)).remainTimeToLive());
+          .isGreaterThan(redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive());
     }
 
     @SneakyThrows
