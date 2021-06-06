@@ -4,6 +4,7 @@ import lombok.NonNull;
 import lombok.val;
 import org.factcast.factus.projection.ManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
+import org.redisson.api.RedissonClient;
 
 public interface RedisProjection extends ManagedProjection {
 
@@ -36,5 +37,5 @@ public interface RedisProjection extends ManagedProjection {
   }
 
   @NonNull
-  RedissonTxManager redissonTxManager();
+  RedissonClient redisson();
 }

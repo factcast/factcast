@@ -1,8 +1,11 @@
 package org.factcast.factus.redis;
 
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.redisson.api.RTransaction;
@@ -11,36 +14,49 @@ import org.redisson.api.TransactionOptions;
 
 public class RedissonTxManager {
 
-  private final AtomicReference<RTransaction> tx = new AtomicReference<>();
+  private static final ThreadLocal<Map<RedissonClient, RedissonTxManager>> holder =
+      ThreadLocal.withInitial((Supplier<Map<RedissonClient, RedissonTxManager>>) HashMap::new);
+
+  public boolean inTransaction() {
+    return currentTx != null;
+  }
+
+  public static RedissonTxManager get(RedissonClient c) {
+    Map<RedissonClient, RedissonTxManager> map = getMap();
+    return map.computeIfAbsent(c, RedissonTxManager::new);
+  }
+
+  // TODO needed?
+  public static void destroy(RedissonClient c) {
+    Map<RedissonClient, RedissonTxManager> map = getMap();
+    map.remove(c);
+  }
+
+  private static Map<RedissonClient, RedissonTxManager> getMap() {
+    return holder.get();
+  }
+
+  // not atomicref needed here as this class is used threadbound anyway
+  private RTransaction currentTx;
   private final RedissonClient redisson;
 
-  public RedissonTxManager(@NonNull RedissonClient redisson) {
+  private RedissonTxManager(@NonNull RedissonClient redisson) {
     this.redisson = redisson;
   }
 
   @Nullable
-  public RTransaction get() {
-    System.out.println("get() " + tx.get());
-    return tx.get();
-  }
-
-  protected RTransaction createTransaction() {
-    // TODO check for timeout
-    RTransaction t = redisson.createTransaction(TransactionOptions.defaults());
-    System.out.println("createTransaction() " + t);
-    return t;
+  public RTransaction getCurrentTransaction() {
+    return currentTx;
   }
 
   public void join(Consumer<RTransaction> block) {
-    System.out.println("join() " + tx.get());
     startOrJoin();
-    System.out.println("join() after create " + tx.get());
-    block.accept(tx.get());
+    block.accept(currentTx);
   }
 
   public <R> R join(Function<RTransaction, R> block) {
     startOrJoin();
-    return block.apply(tx.get());
+    return block.apply(currentTx);
   }
 
   public void joinOrAutoCommit(Consumer<RTransaction> block) {
@@ -75,31 +91,24 @@ public class RedissonTxManager {
 
   /** @return true if tx was started, false if there was one running */
   public boolean startOrJoin() {
-    RTransaction t = tx.get();
-    System.out.println("entering startorjoin " + t);
-    new Exception().printStackTrace();
-
-    if (t == null) {
-      t = createTransaction();
-      tx.set(t);
+    if (currentTx == null) {
+      currentTx =
+          redisson.createTransaction(TransactionOptions.defaults().timeout(30, TimeUnit.SECONDS));
       return true;
     } else {
       return false;
     }
-
-    // return tx.getAndUpdate(t -> t == null ? createTransaction() : t) == null;
   }
 
   public void commit() {
-    System.out.println("commit() " + tx.get());
     startOrJoin();
-    System.out.println("commit() after create" + tx.get());
-    tx.getAndSet(null).commit();
-    System.out.println("commit() after commit " + tx.get());
+    currentTx.commit();
+    currentTx = null;
   }
 
   public void rollback() {
     startOrJoin();
-    tx.getAndSet(null).rollback();
+    currentTx.rollback();
+    currentTx = null;
   }
 }

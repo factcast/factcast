@@ -11,20 +11,21 @@ import org.factcast.factus.projection.BatchApply;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projector.ProjectorLens;
 import org.redisson.api.RTransaction;
+import org.redisson.api.RedissonClient;
 
 @Slf4j
 public class RedisTransactionalLens implements ProjectorLens {
-
-  @NonNull private final RedissonTxManager tx;
 
   private final AtomicInteger count = new AtomicInteger();
   private final AtomicLong start = new AtomicLong(0);
   private final Class<? extends Projection> projectionName;
   private int batchSize = 1;
   private long timeout = 0;
+  private final RedissonClient client;
 
-  public RedisTransactionalLens(@NonNull RedissonTxManager tx, Projection p) {
-    this.tx = tx;
+  public RedisTransactionalLens(@NonNull RedisProjection p) {
+    client = p.redisson();
+
     val annotation = p.getClass().getAnnotation(BatchApply.class);
     if (annotation != null) {
       batchSize = Math.max(1, annotation.size());
@@ -40,14 +41,15 @@ public class RedisTransactionalLens implements ProjectorLens {
         timeout);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public Function<Fact, ?> parameterTransformerFor(Class<?> type) {
     if (RTransaction.class.equals(type)) {
-      tx.startOrJoin();
       return f -> {
-        System.out.println("generated rtx as " + tx.get());
-        return tx.get();
+        RedissonTxManager tx = RedissonTxManager.get(client);
+        if (!tx.inTransaction()) {
+          tx.startOrJoin();
+        }
+        return tx.getCurrentTransaction();
       };
     }
     return null;
@@ -55,6 +57,7 @@ public class RedisTransactionalLens implements ProjectorLens {
 
   @Override
   public void beforeFactProcessing(Fact f) {
+    RedissonTxManager tx = RedissonTxManager.get(client);
     tx.startOrJoin();
     if (batchSize > 1) {
       start.getAndUpdate(l -> l > 0 ? l : System.currentTimeMillis());
@@ -87,6 +90,7 @@ public class RedisTransactionalLens implements ProjectorLens {
         f,
         justForInformation);
 
+    RedissonTxManager tx = RedissonTxManager.get(client);
     tx.rollback();
   }
 
@@ -98,6 +102,7 @@ public class RedisTransactionalLens implements ProjectorLens {
     }
 
     // otherwise we can silently commit, not to flush the logs
+    RedissonTxManager tx = RedissonTxManager.get(client);
     tx.commit();
   }
 

@@ -258,6 +258,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       val sw = Stopwatch.createStarted();
       TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
       factus.update(p);
+      Thread.sleep(100);
       log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
       p.state(new UUID(0, 0));
@@ -267,6 +268,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       val sw = Stopwatch.createStarted();
       TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
       factus.update(p);
+      Thread.sleep(100);
       log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
       p.state(new UUID(0, 0));
