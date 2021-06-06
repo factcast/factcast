@@ -12,43 +12,53 @@ import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 
 public class AbstractRedisProjection implements RedisProjection {
-
-  protected final RedissonClient redisson;
+  @Getter protected final RedissonClient redisson;
 
   private final RLock lock;
   private final String stateBucketName;
 
   @Getter private final String redisKey;
 
-  @Getter private final RedissonTxManager redissonTxManager;
-
   public AbstractRedisProjection(@NonNull RedissonClient redisson) {
-    // needs to be free from transactions, obviously
     this.redisson = redisson;
-    redissonTxManager = new RedissonTxManager(redisson);
 
     redisKey = createRedisKey();
-    lock = redisson.getLock(redisKey + "_lock");
     stateBucketName = redisKey + "_state_tracking";
+
+    // needs to be free from transactions, obviously
+    lock = redisson.getLock(redisKey + "_lock");
   }
 
-  private RBucket<UUID> stateBucket(RTransaction redisson) {
+  private RBucket<UUID> stateBucket(RTransaction tx) {
+    return tx.getBucket(stateBucketName, UUIDCodec.INSTANCE);
+  }
+
+  private RBucket<UUID> stateBucket() {
     return redisson.getBucket(stateBucketName, UUIDCodec.INSTANCE);
   }
 
   @Override
   public UUID state() {
-    return redissonTxManager.joinOrAutoCommit(
-        (Function<RTransaction, UUID>) tx -> stateBucket(tx).get());
+    RedissonTxManager man = RedissonTxManager.get(redisson);
+    if (man.inTransaction()) {
+      return man.join((Function<RTransaction, UUID>) tx -> stateBucket(tx).get());
+    } else {
+      return stateBucket().get();
+    }
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Override
   public void state(@NonNull UUID state) {
-
-    redissonTxManager.joinOrAutoCommit(
-        tx -> {
-          stateBucket(tx).set(state);
-        });
+    RedissonTxManager man = RedissonTxManager.get(redisson);
+    if (man.inTransaction()) {
+      man.join(
+          tx -> {
+            stateBucket(man.getCurrentTransaction()).set(state);
+          });
+    } else {
+      stateBucket().set(state);
+    }
   }
 
   @Override

@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.BatchApply;
 import org.factcast.factus.redis.AbstractRedisProjection;
+import org.factcast.factus.redis.RedissonTxManager;
 import org.factcast.factus.redis.UUIDCodec;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
@@ -92,10 +93,10 @@ public class TxRedissonManagedUserNames extends AbstractRedisProjection {
   //  // variant 3
   @Handler
   void apply(UserDeleted deleted) {
-    redissonTxManager()
-        .join(
-            tx -> {
-              tx.getMap(redisKey(), codec).fastRemove(deleted.aggregateId());
-            });
+    RedissonTxManager txm = RedissonTxManager.get(redisson);
+    txm.join(
+        tx -> {
+          tx.getMap(redisKey(), codec).fastRemove(deleted.aggregateId());
+        });
   }
 }

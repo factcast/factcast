@@ -95,24 +95,24 @@ class RedissonTxManagerTest {
     void createsIfNull() {
       when(redisson.createTransaction(any())).thenReturn(rtx);
 
-      assertThat(uut.get()).isNull();
+      assertThat(uut.getCurrentTransaction()).isNull();
       assertThat(uut.startOrJoin()).isEqualTo(true);
-      assertThat(uut.get()).isSameAs(rtx);
+      assertThat(uut.getCurrentTransaction()).isSameAs(rtx);
     }
 
     @Test
     void returnsIfNotNull() {
       when(redisson.createTransaction(any())).thenReturn(rtx, (RTransaction) null);
       // first time, it should create
-      assertThat(uut.get()).isNull();
+      assertThat(uut.getCurrentTransaction()).isNull();
       assertThat(uut.startOrJoin()).isEqualTo(true);
-      assertThat(uut.get()).isSameAs(rtx);
+      assertThat(uut.getCurrentTransaction()).isSameAs(rtx);
       verify(redisson).createTransaction(any());
 
       assertThat(uut.startOrJoin()).isEqualTo(false);
-      assertThat(uut.get()).isSameAs(rtx);
+      assertThat(uut.getCurrentTransaction()).isSameAs(rtx);
       assertThat(uut.startOrJoin()).isEqualTo(false);
-      assertThat(uut.get()).isSameAs(rtx);
+      assertThat(uut.getCurrentTransaction()).isSameAs(rtx);
 
       verifyNoMoreInteractions(redisson);
     }
