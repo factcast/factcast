@@ -27,7 +27,7 @@ public class ScheduledRegistryRefresher {
 
   private final SchemaRegistry registry;
 
-  @Scheduled(cron = "${factcast.store.pgsql.schemaStoreRefreshCron:*/10 * * * * *}")
+  @Scheduled(cron = "${factcast.store.pgsql.schemaStoreRefreshCron:*/60 * * * * *}")
   @SchedulerLock(name = "registryRefresh", lockAtMostFor = "10m")
   public void refresh() {
 
