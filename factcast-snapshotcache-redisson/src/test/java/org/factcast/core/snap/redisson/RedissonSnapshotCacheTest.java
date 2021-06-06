@@ -16,10 +16,10 @@
 package org.factcast.core.snap.redisson;
 
 import static org.assertj.core.api.Assertions.*;
-
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import lombok.val;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.junit.jupiter.api.*;
@@ -118,7 +118,7 @@ class RedissonSnapshotCacheTest {
     }
 
     @Test
-    void testCompactionThreashold() {
+    void testTTL() {
 
       int i = 1;
       SnapshotId s1 = new SnapshotId("foo" + (i++), UUID.randomUUID());
@@ -132,26 +132,25 @@ class RedissonSnapshotCacheTest {
 
       underTest.setSnapshot(snap1);
       underTest.setSnapshot(snap2);
-      underTest.setSnapshot(snap3);
+
+      // assert all buckets have a ttl
+
+      val ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
+      val ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
+
+      assertThat(ttl1).isGreaterThan(7775990000L);
+      assertThat(ttl2).isGreaterThan(7775990000L);
 
       sleep(500);
 
       underTest.getSnapshot(s2); // touches it
 
-      sleep(300); // wait for async op to complete
+      sleep(100); // wait fro async op
 
-      underTest.removeEntriesUntouchedSince(System.currentTimeMillis() - 500); // should
-      // leave
-      // snap2
-
-      sleep(300); // wait for async op to complete
-
-      assertThat(underTest.getSnapshot(s1)).isEmpty();
-      assertThat(underTest.getSnapshot(s3)).isEmpty();
-
-      assertThat(underTest.getSnapshot(s2)).isNotEmpty().hasValue(snap2);
-
-      return;
+      val ttl2refreshed = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
+      assertThat(ttl2refreshed).isGreaterThan(7775990000L);
+      assertThat(ttl2refreshed)
+          .isGreaterThan(redisson.getBucket(underTest.createKeyFor(s3)).remainTimeToLive());
     }
 
     @SneakyThrows

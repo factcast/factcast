@@ -104,7 +104,8 @@ public class RedissonSnapshotCache implements SnapshotCache {
   }
 
   @NonNull
-  private String createKeyFor(@NonNull SnapshotId id) {
+  @VisibleForTesting
+  String createKeyFor(@NonNull SnapshotId id) {
     return id.key() + id.uuid();
   }
 }
