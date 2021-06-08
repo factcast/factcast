@@ -21,10 +21,10 @@ import java.util.UUID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Handler;
-import org.factcast.factus.projection.BatchApply;
 import org.factcast.factus.redis.AbstractRedisProjection;
-import org.factcast.factus.redis.RedissonTxManager;
 import org.factcast.factus.redis.UUIDCodec;
+import org.factcast.factus.redis.tx.RedisTransactional;
+import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.redisson.api.RMap;
@@ -36,7 +36,7 @@ import org.redisson.codec.LZ4Codec;
 import org.redisson.codec.MarshallingCodec;
 
 @Slf4j
-@BatchApply(size = 50)
+@RedisTransactional(size = 50)
 public class TxRedissonManagedUserNames extends AbstractRedisProjection {
 
   private final Codec codec =

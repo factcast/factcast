@@ -1,6 +1,7 @@
 package org.factcast.factus.projector;
 
 import com.google.common.collect.ImmutableList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -22,5 +23,5 @@ public interface ProjectorPlugin {
    * @return null if not applicable to projection p
    */
   @Nullable
-  ProjectorLens lensFor(Projection p);
+  Collection<ProjectorLens> lensFor(Projection p);
 }

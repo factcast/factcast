@@ -1,4 +1,4 @@
-package org.factcast.factus.redis;
+package org.factcast.factus.redis.tx;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +25,8 @@ public class RedissonTxManager {
   public boolean inTransaction() {
     return currentTx != null;
   }
+
+  // TODO setTransactionOptions()
 
   // TODO needed?
   public static void destroy(RedissonClient c) {

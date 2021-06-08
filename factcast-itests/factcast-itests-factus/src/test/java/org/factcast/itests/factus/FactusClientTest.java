@@ -238,7 +238,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   @Test
   public void txBatchProcessingPerformance() {
 
-    int MAX = 10000;
+    int MAX = 10;
     val l = new ArrayList<EventObject>(MAX);
     log.info("preparing {} Events ", MAX);
     for (int i = 0; i < MAX; i++) {

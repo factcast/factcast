@@ -1,4 +1,4 @@
-package org.factcast.factus.redis;
+package org.factcast.factus.redis.batch;
 
 import java.util.HashMap;
 import java.util.Map;

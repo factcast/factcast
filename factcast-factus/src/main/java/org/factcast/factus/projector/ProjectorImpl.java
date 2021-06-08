@@ -62,6 +62,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
         ProjectorPlugin.discovered.stream()
             .map(plugin -> plugin.lensFor(p))
             .filter(Objects::nonNull)
+            .flatMap(Collection::stream)
+            .filter(Objects::nonNull)
             .collect(Collectors.toList());
 
     dispatchInfo =
