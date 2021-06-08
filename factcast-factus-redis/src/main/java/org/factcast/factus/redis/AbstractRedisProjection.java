@@ -6,6 +6,7 @@ import java.util.function.Function;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.factus.projection.WriterToken;
+import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.redisson.api.RBucket;
 import org.redisson.api.RLock;
 import org.redisson.api.RTransaction;

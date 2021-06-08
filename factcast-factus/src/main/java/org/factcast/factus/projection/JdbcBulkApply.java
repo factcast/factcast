@@ -7,7 +7,8 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface BatchApply {
+// TODO move
+public @interface JdbcBulkApply {
 
   /**
    * During catchup phase, try to apply up to batchSize number of events before committing. if set

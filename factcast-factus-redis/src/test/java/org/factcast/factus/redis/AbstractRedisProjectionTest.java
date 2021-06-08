@@ -1,6 +1,7 @@
 package org.factcast.factus.redis;
 
 import java.util.UUID;
+import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
