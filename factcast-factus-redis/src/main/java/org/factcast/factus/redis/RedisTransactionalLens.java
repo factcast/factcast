@@ -24,7 +24,7 @@ public class RedisTransactionalLens implements ProjectorLens {
   private long timeout = 0;
   private final RedissonClient client;
 
-  public RedisTransactionalLens(@NonNull RedisProjection p) {
+  RedisTransactionalLens(@NonNull RedisProjection p) {
     client = p.redisson();
 
     val annotation = p.getClass().getAnnotation(BatchApply.class);
@@ -47,20 +47,39 @@ public class RedisTransactionalLens implements ProjectorLens {
     if (RTransaction.class.equals(type)) {
       return f -> {
         RedissonTxManager tx = RedissonTxManager.get(client);
+
+        if (RedissonBatchManager.get(client).inBatch()) {
+          throw new IllegalStateException(
+              "You cannot mix Transactional and Batching behavior on projections. Offending: "
+                  + projectionName);
+        }
+
         if (!tx.inTransaction()) {
           tx.startOrJoin();
         }
-        return tx.getCurrentTransaction();
+
+        RTransaction curr = tx.getCurrentTransaction();
+        log.debug("pulling RTransaction pararmeter: " + curr);
+        return curr;
       };
     }
 
     if (RBatch.class.equals(type)) {
       return f -> {
         RedissonBatchManager batch = RedissonBatchManager.get(client);
+        if (RedissonTxManager.get(client).inTransaction()) {
+          throw new IllegalStateException(
+              "You cannot mix Transactional and Batching behavior on projections. Offending: "
+                  + projectionName);
+        }
+
         if (!batch.inBatch()) {
           batch.startOrJoin();
         }
-        return batch.getCurrentBatch();
+
+        RBatch rBatch = batch.getCurrentBatch();
+        log.debug("pulling RBatch pararmeter " + rBatch);
+        return rBatch;
       };
     }
     return null;
@@ -68,8 +87,6 @@ public class RedisTransactionalLens implements ProjectorLens {
 
   @Override
   public void beforeFactProcessing(Fact f) {
-    RedissonBatchManager batch = RedissonBatchManager.get(client);
-    batch.startOrJoin();
     if (batchSize > 1) {
       start.getAndUpdate(l -> l > 0 ? l : System.currentTimeMillis());
     }
@@ -78,12 +95,12 @@ public class RedisTransactionalLens implements ProjectorLens {
   @Override
   public void afterFactProcessing(Fact f) {
     count.incrementAndGet();
-    if (shouldCommit()) {
-      commit();
+    if (shouldFlush()) {
+      flush();
     }
   }
 
-  private boolean shouldCommit() {
+  private boolean shouldFlush() {
     return count.get() >= batchSize
         || ((timeout > 0) && (System.currentTimeMillis() - start.get() > timeout));
   }
@@ -101,25 +118,42 @@ public class RedisTransactionalLens implements ProjectorLens {
         f,
         justForInformation);
 
-    RedissonBatchManager batch = RedissonBatchManager.get(client);
-    batch.discard();
+    RedissonTxManager tx = RedissonTxManager.get(client);
+    if (tx.inTransaction()) {
+      RedissonTxManager.get(client).rollback();
+    }
+
+    RedissonBatchManager bm = RedissonBatchManager.get(client);
+    if (bm.inBatch()) {
+      bm.discard();
+    }
   }
 
-  private void commit() {
+  private void flush() {
+
     if (batchSize > 1) {
       start.set(0);
       int processed = count.getAndSet(0);
-      log.trace("Committing batch on {}, number of facts processed={}", projectionName, processed);
+      log.trace("Flushing on {}, number of facts processed={}", projectionName, processed);
     }
 
     // otherwise we can silently commit, not to flush the logs
-    RedissonBatchManager batch = RedissonBatchManager.get(client);
-    batch.execute();
+    RedissonTxManager tx = RedissonTxManager.get(client);
+    if (tx.inTransaction()) {
+      log.trace("commiting tx");
+      RedissonTxManager.get(client).commit();
+    }
+
+    RedissonBatchManager bm = RedissonBatchManager.get(client);
+    if (bm.inBatch()) {
+      log.trace("executing batch");
+      bm.execute();
+    }
   }
 
   @Override
   public void onCatchup(Projection p) {
-    commit();
+    flush();
     // disable batching from here on
     if (isBatching()) {
       log.debug("Disabling batching after catchup for {}", projectionName);
@@ -134,6 +168,6 @@ public class RedisTransactionalLens implements ProjectorLens {
 
   @Override
   public boolean skipStateUpdate() {
-    return isBatching() && !shouldCommit();
+    return isBatching() && !shouldFlush();
   }
 }

@@ -20,11 +20,10 @@ import static java.util.UUID.*;
 import static java.util.stream.Collectors.*;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
 import static org.assertj.core.api.Assertions.*;
-
 import com.google.common.base.Stopwatch;
 import config.RedissonProjectionConfiguration;
-import java.util.*;
 import java.util.ArrayList;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
@@ -63,12 +62,11 @@ import org.springframework.test.context.ContextConfiguration;
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
 public class FactusClientTest extends AbstractFactCastIntegrationTest {
+  private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
 
   static {
     System.setProperty("factcast.grpc.client.catchup-batchsize", "100");
   }
-
-  private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
 
   @Autowired Factus factus;
 
@@ -240,7 +238,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   @Test
   public void txBatchProcessingPerformance() {
 
-    int MAX = 1001;
+    int MAX = 10000;
     val l = new ArrayList<EventObject>(MAX);
     log.info("preparing {} Events ", MAX);
     for (int i = 0; i < MAX; i++) {
