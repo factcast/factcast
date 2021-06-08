@@ -17,13 +17,13 @@ public class RedissonTxManager {
   private static final ThreadLocal<Map<RedissonClient, RedissonTxManager>> holder =
       ThreadLocal.withInitial((Supplier<Map<RedissonClient, RedissonTxManager>>) HashMap::new);
 
-  public boolean inTransaction() {
-    return currentTx != null;
-  }
-
   public static RedissonTxManager get(RedissonClient c) {
     Map<RedissonClient, RedissonTxManager> map = getMap();
     return map.computeIfAbsent(c, RedissonTxManager::new);
+  }
+
+  public boolean inTransaction() {
+    return currentTx != null;
   }
 
   // TODO needed?
