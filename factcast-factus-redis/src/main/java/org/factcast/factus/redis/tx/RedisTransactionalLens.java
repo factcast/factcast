@@ -9,18 +9,23 @@ import org.factcast.factus.redis.AbstractRedisLens;
 import org.factcast.factus.redis.RedisProjection;
 import org.factcast.factus.redis.tx.RedisTransactional.Defaults;
 import org.redisson.api.RTransaction;
+import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
 
 @Slf4j
 public class RedisTransactionalLens extends AbstractRedisLens {
 
   private final TransactionOptions opts;
+  private final RedissonTxManager redissonTxManager;
 
-  public RedisTransactionalLens(@NonNull RedisProjection p) {
-    super(p);
+  public RedisTransactionalLens(@NonNull RedisProjection p, RedissonClient redissonClient) {
+    super(p, redissonClient);
 
     RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
     opts = Defaults.with(transactional);
+
+    redissonTxManager = RedissonTxManager.get(redissonClient);
+    redissonTxManager.options(opts);
 
     batchSize = Math.max(1, transactional.size());
     flushTimeout = calculateFlushTimeout(opts);
@@ -40,32 +45,27 @@ public class RedisTransactionalLens extends AbstractRedisLens {
 
   @Override
   public Function<Fact, ?> parameterTransformerFor(Class<?> type) {
-    RedissonTxManager man = RedissonTxManager.get(client);
-    man.options(opts);
     if (RTransaction.class.equals(type)) {
       return f -> {
-        RedissonTxManager tx = man;
-        tx.startOrJoin();
-        return tx.getCurrentTransaction();
+        redissonTxManager.startOrJoin();
+        return redissonTxManager.getCurrentTransaction();
       };
     }
     return null;
   }
 
   @Override
-  protected void doClear() {
-    RedissonTxManager tx = RedissonTxManager.get(client);
-    if (tx.inTransaction()) {
-      RedissonTxManager.get(client).rollback();
+  public void doClear() {
+    if (redissonTxManager.inTransaction()) {
+      redissonTxManager.rollback();
     }
   }
 
   @Override
-  protected void doFlush() {
+  public void doFlush() {
     // otherwise we can silently commit, not to "flush" the logs
-    RedissonTxManager tx = RedissonTxManager.get(client);
-    if (tx.inTransaction()) {
-      RedissonTxManager.get(client).commit();
+    if (redissonTxManager.inTransaction()) {
+      redissonTxManager.commit();
     }
   }
 }

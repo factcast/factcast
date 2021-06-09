@@ -17,33 +17,27 @@ public class RedissonBatchManager {
   private static final ThreadLocal<Map<RedissonClient, RedissonBatchManager>> holder =
       ThreadLocal.withInitial((Supplier<Map<RedissonClient, RedissonBatchManager>>) HashMap::new);
 
-  public boolean inBatch() {
-    return currentBatch != null;
-  }
-
-  public static RedissonBatchManager get(RedissonClient c) {
-    Map<RedissonClient, RedissonBatchManager> map = getMap();
-    return map.computeIfAbsent(c, RedissonBatchManager::new);
-  }
-
-  @Setter private BatchOptions options;
-
-  // TODO needed?
-  public static void destroy(RedissonClient c) {
-    Map<RedissonClient, RedissonBatchManager> map = getMap();
-    map.remove(c);
-  }
-
   private static Map<RedissonClient, RedissonBatchManager> getMap() {
     return holder.get();
   }
 
-  // not atomicref needed here as this class is used threadbound anyway
+  public static RedissonBatchManager get(@NonNull RedissonClient client) {
+    Map<RedissonClient, RedissonBatchManager> map = getMap();
+    return map.computeIfAbsent(client, RedissonBatchManager::new);
+  }
+
+  @Setter private BatchOptions options;
+
+  // no atomicref needed here as this class is used threadbound anyway
   private RBatch currentBatch;
   private final RedissonClient redisson;
 
-  private RedissonBatchManager(@NonNull RedissonClient redisson) {
+  RedissonBatchManager(@NonNull RedissonClient redisson) {
     this.redisson = redisson;
+  }
+
+  public boolean inBatch() {
+    return currentBatch != null;
   }
 
   @Nullable

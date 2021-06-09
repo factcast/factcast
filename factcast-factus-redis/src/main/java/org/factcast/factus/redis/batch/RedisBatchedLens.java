@@ -9,18 +9,20 @@ import org.factcast.factus.redis.RedisProjection;
 import org.factcast.factus.redis.batch.RedisBatched.Defaults;
 import org.redisson.api.BatchOptions;
 import org.redisson.api.RBatch;
+import org.redisson.api.RedissonClient;
 
 @Slf4j
 public class RedisBatchedLens extends AbstractRedisLens {
 
   private final BatchOptions opts;
+  private final RedissonBatchManager batchMan;
 
-  public RedisBatchedLens(@NonNull RedisProjection p) {
-    super(p);
+  public RedisBatchedLens(@NonNull RedisProjection p, RedissonClient redissonClient) {
+    super(p, redissonClient);
 
     RedisBatched batched = p.getClass().getAnnotation(RedisBatched.class);
     opts = Defaults.with(batched);
-    RedissonBatchManager.get(p.redisson()).options(opts);
+    batchMan = RedissonBatchManager.get(p.redisson()).options(opts);
 
     batchSize = Math.max(1, batched.size());
     flushTimeout = 1000 * 60; // one minute fix
@@ -49,18 +51,16 @@ public class RedisBatchedLens extends AbstractRedisLens {
 
   @Override
   protected void doClear() {
-    RedissonBatchManager bm = RedissonBatchManager.get(client);
-    if (bm.inBatch()) {
-      bm.discard();
+    if (batchMan.inBatch()) {
+      batchMan.discard();
     }
   }
 
   @Override
   protected void doFlush() {
     // otherwise we can silently commit, not to flush the logs
-    RedissonBatchManager bm = RedissonBatchManager.get(client);
-    if (bm.inBatch()) {
-      bm.execute();
+    if (batchMan.inBatch()) {
+      batchMan.execute();
     }
   }
 }
