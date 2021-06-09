@@ -2,6 +2,7 @@ package org.factcast.factus.redis;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.factus.projection.Projection;
