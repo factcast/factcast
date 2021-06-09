@@ -1,6 +1,7 @@
 package org.factcast.schema.registry.cli.registry.impl
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import io.kotlintest.matchers.collections.shouldHaveSize
 import io.kotlintest.shouldBe
@@ -18,6 +19,7 @@ import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.utils.ChecksumService
+import org.factcast.schema.registry.cli.utils.ChecksumServiceImpl
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
 
 class IndexFileCalculatorImplTest : StringSpec() {
@@ -64,10 +66,10 @@ class IndexFileCalculatorImplTest : StringSpec() {
             every { checksumService.createMd5Hash(any<Path>()) } returns "foo"
             every { fileSystemService.readToJsonNode(any()) } returns dummyJson
             every { missingTransformationCalculator.calculateDowncastTransformations(any()) } returns listOf(
-                Pair(
-                    version2,
-                    version1
-                )
+                    Pair(
+                            version2,
+                            version1
+                    )
             )
 
             val index = uut.calculateIndex(dummyProject, true)
@@ -82,6 +84,28 @@ class IndexFileCalculatorImplTest : StringSpec() {
             verify { missingTransformationCalculator.calculateDowncastTransformations(event1) }
 
             confirmVerified(checksumService, missingTransformationCalculator, fileSystemService)
+        }
+
+        "semantically identical JSON strings have same hash" {
+            val mapper = ObjectMapper();
+
+            val jsonWithSameHashCode = listOf(
+                    "{\"foo1\":\"bar1\", \"foo2\":\"bar2\"}",
+                    "{   \"foo1\"  :  \"bar1\",   \"foo2\"   :  \"bar2\"}   ",
+                    "{\"foo1\":\"bar1\", \"title\"  :\"some title\", \"foo2\":\"bar2\"}",
+                    "{   \"foo1\"   :  \"bar1\",  \"title\"  :  \"some title\",  \"foo2\"  :  \"bar2\"  }")
+
+            jsonWithSameHashCode.forEach { jsonString ->
+                val jsonNode = mapper.readTree(jsonString);
+                every { fileSystemService.readToJsonNode(any()) } returns jsonNode
+
+                val checksumService = ChecksumServiceImpl(fileSystemService, ObjectMapper())
+                val uut = IndexFileCalculatorImpl(checksumService, missingTransformationCalculator,
+                        fileSystemService)
+                val result = uut.createTitleFilteredMd5Hash(Path.of("some/file"))
+
+                result shouldBe "9250500f3449b8ca0a53566d16253321"
+            }
         }
     }
 }

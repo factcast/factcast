@@ -15,6 +15,7 @@
  */
 package org.factcast.schema.registry.cli.registry.impl
 
+import com.google.common.annotations.VisibleForTesting
 import java.nio.file.Path
 import javax.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Project
@@ -101,7 +102,9 @@ class IndexFileCalculatorImpl(
             if (schemaStripTitles) createTitleFilteredMd5Hash(filePath)
                 else checksumService.createMd5Hash(filePath)
 
-    private fun createTitleFilteredMd5Hash(filePath: Path): String {
+
+    @VisibleForTesting
+    fun createTitleFilteredMd5Hash(filePath: Path): String {
         val jsonNode = fileSystemService.readToJsonNode(filePath)
                 ?: throw IllegalStateException("Loading JSON from $filePath failed")
         return checksumService.createMd5Hash(filterTitleFrom(jsonNode))
