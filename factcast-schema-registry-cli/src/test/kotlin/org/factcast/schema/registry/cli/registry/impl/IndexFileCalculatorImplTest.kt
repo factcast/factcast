@@ -17,7 +17,9 @@ import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.domain.Version
+import org.factcast.schema.registry.cli.fixture
 import org.factcast.schema.registry.cli.fs.FileSystemService
+import org.factcast.schema.registry.cli.fs.FileSystemServiceImpl
 import org.factcast.schema.registry.cli.utils.ChecksumService
 import org.factcast.schema.registry.cli.utils.ChecksumServiceImpl
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
@@ -102,10 +104,30 @@ class IndexFileCalculatorImplTest : StringSpec() {
                 val checksumService = ChecksumServiceImpl(fileSystemService, ObjectMapper())
                 val uut = IndexFileCalculatorImpl(checksumService, missingTransformationCalculator,
                         fileSystemService)
-                val result = uut.createTitleFilteredMd5Hash(Path.of("some/file"))
+                val result = uut.createTitleFilteredMd5Hash(Paths.get("some/file"))
 
                 result shouldBe "9250500f3449b8ca0a53566d16253321"
             }
+        }
+
+        "schema hash differs when schemaStripTitle is enabled" {
+            val schemaPath = fixture("schema.json")
+            val dummyPath = Paths.get(".")
+            val version = Version(1, schemaPath, dummyPath, emptyList())
+            val event = Event("bar", dummyPath, listOf(version), emptyList())
+            val namespace = Namespace("foo", dummyPath, listOf(event))
+            val dummyProject = Project(null, listOf(namespace))
+
+            val fileSystemService = FileSystemServiceImpl()
+            val checksumService = ChecksumServiceImpl(fileSystemService, ObjectMapper())
+            val uut = IndexFileCalculatorImpl(checksumService, missingTransformationCalculator,
+                    fileSystemService)
+
+            val indexWithoutStrippedTitles = uut.calculateIndex(dummyProject, false)
+            val indexWithStrippedTitles = uut.calculateIndex(dummyProject, true)
+
+            indexWithoutStrippedTitles.schemes[0].hash shouldBe "f560b3a9a93014b6939f100ce187641b"
+            indexWithStrippedTitles.schemes[0].hash shouldBe "26e0e35414d1c5cecac62eb900b50efc"
         }
     }
 }
