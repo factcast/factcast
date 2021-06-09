@@ -7,6 +7,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import lombok.NonNull;
+import lombok.Setter;
+import org.redisson.api.BatchOptions;
 import org.redisson.api.RBatch;
 import org.redisson.api.RedissonClient;
 
@@ -23,6 +25,8 @@ public class RedissonBatchManager {
     Map<RedissonClient, RedissonBatchManager> map = getMap();
     return map.computeIfAbsent(c, RedissonBatchManager::new);
   }
+
+  @Setter private BatchOptions options;
 
   // TODO needed?
   public static void destroy(RedissonClient c) {
@@ -52,46 +56,15 @@ public class RedissonBatchManager {
     block.accept(currentBatch);
   }
 
-  // TODO does this make any sense?
   public <R> R join(Function<RBatch, R> block) {
     startOrJoin();
     return block.apply(currentBatch);
   }
 
-  public void joinOrAutoCommit(Consumer<RBatch> block) {
-    boolean commit = startOrJoin();
-    try {
-      join(block);
-    } catch (RuntimeException e) {
-      commit = false;
-      discard();
-      throw e;
-    } finally {
-      if (commit) {
-        execute();
-      }
-    }
-  }
-
-  public <R> R joinOrAutoCommit(Function<RBatch, R> block) {
-    boolean commit = startOrJoin();
-    try {
-      return join(block);
-    } catch (RuntimeException e) {
-      commit = false;
-      discard();
-      throw e;
-    } finally {
-      if (commit) {
-        execute();
-      }
-    }
-  }
-
   /** @return true if tx was started, false if there was one running */
   public boolean startOrJoin() {
     if (currentBatch == null) {
-      currentBatch = redisson.createBatch();
+      currentBatch = redisson.createBatch(options);
       return true;
     } else {
       return false;
