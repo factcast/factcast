@@ -1,7 +1,10 @@
 package org.factcast.factus.redis;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.factus.projection.Projection;
@@ -9,17 +12,18 @@ import org.factcast.factus.projector.ProjectorLens;
 import org.redisson.api.RedissonClient;
 
 @Slf4j
+@Getter(AccessLevel.PROTECTED)
 public abstract class AbstractRedisLens implements ProjectorLens {
-  private final AtomicInteger count = new AtomicInteger();
-  private final AtomicLong start = new AtomicLong(0);
+  final AtomicInteger count = new AtomicInteger();
+  final AtomicLong start = new AtomicLong(0);
   protected final Class<? extends Projection> projectionName;
   protected int batchSize = 1;
   protected long flushTimeout = 0;
   protected final RedissonClient client;
 
-  public AbstractRedisLens(RedisProjection projection) {
+  public AbstractRedisLens(RedisProjection projection, RedissonClient redissonClient) {
     projectionName = projection.getClass();
-    client = projection.redisson();
+    client = redissonClient;
   }
 
   @Override
@@ -37,7 +41,8 @@ public abstract class AbstractRedisLens implements ProjectorLens {
     }
   }
 
-  private boolean shouldFlush() {
+  @VisibleForTesting
+  protected boolean shouldFlush() {
     return count.get() >= batchSize
         || ((flushTimeout > 0) && (System.currentTimeMillis() - start.get() > flushTimeout));
   }
@@ -53,7 +58,8 @@ public abstract class AbstractRedisLens implements ProjectorLens {
     }
   }
 
-  private boolean isBatching() {
+  @VisibleForTesting
+  protected boolean isBatching() {
     return batchSize > 1;
   }
 
@@ -62,8 +68,7 @@ public abstract class AbstractRedisLens implements ProjectorLens {
     return isBatching() && !shouldFlush();
   }
 
-  void flush() {
-
+  protected void flush() {
     if (batchSize > 1) {
       start.set(0);
       int processed = count.getAndSet(0);

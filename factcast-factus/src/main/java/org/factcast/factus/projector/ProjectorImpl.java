@@ -47,7 +47,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   private static final Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>>
       dispatcherCache = new ConcurrentHashMap<>();
-  private EventSerializer serializer;
+  private final EventSerializer serializer;
   private final Projection projection;
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
   private final List<ProjectorLens> lenses;
@@ -71,9 +71,6 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     dispatchInfo =
         dispatcherCache.computeIfAbsent(
             ReflectionTools.getRelevantClass(p), c -> discoverDispatchInfo(ctx, p));
-
-    Class<? extends Projection> projectionClass = p.getClass();
-    // TODO worthwhile caching per projectionClass?
   }
 
   private ParameterTransformer createParameterTransformer(Method m) {

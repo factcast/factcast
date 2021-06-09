@@ -22,7 +22,11 @@ public class RedissonTxManager {
     return map.computeIfAbsent(c, RedissonTxManager::new);
   }
 
-  @Setter private TransactionOptions options;
+  private static Map<RedissonClient, RedissonTxManager> getMap() {
+    return holder.get();
+  }
+
+  @Setter private TransactionOptions options = RedisTransactional.Defaults.create();
 
   public boolean inTransaction() {
     return currentTx != null;
@@ -34,15 +38,11 @@ public class RedissonTxManager {
     map.remove(c);
   }
 
-  private static Map<RedissonClient, RedissonTxManager> getMap() {
-    return holder.get();
-  }
-
-  // not atomicref needed here as this class is used threadbound anyway
+  // no atomicref needed here as this class is used threadbound anyway
   private RTransaction currentTx;
   private final RedissonClient redisson;
 
-  private RedissonTxManager(@NonNull RedissonClient redisson) {
+  RedissonTxManager(@NonNull RedissonClient redisson) {
     this.redisson = redisson;
   }
 

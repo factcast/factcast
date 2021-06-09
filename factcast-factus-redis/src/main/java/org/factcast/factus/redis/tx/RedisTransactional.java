@@ -27,7 +27,7 @@ public @interface RedisTransactional {
     static final int retryAttempts = 5;
     static final long retryInterval = 3000;
 
-    private static TransactionOptions create() {
+    static TransactionOptions create() {
       return TransactionOptions.defaults()
           .timeout(timeout, TimeUnit.MILLISECONDS)
           .responseTimeout(responseTimeout, TimeUnit.MILLISECONDS)
@@ -42,7 +42,7 @@ public @interface RedisTransactional {
 
         long responseTimeout = transactional.responseTimeout();
         if (responseTimeout > 0) {
-          opts.timeout(responseTimeout, TimeUnit.MILLISECONDS);
+          opts.responseTimeout(responseTimeout, TimeUnit.MILLISECONDS);
         }
 
         int retryAttempts = transactional.retryAttempts();

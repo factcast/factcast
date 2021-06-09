@@ -25,7 +25,7 @@ public @interface RedisBatched {
     static final int retryAttempts = 5;
     static final long retryInterval = 3000;
 
-    private static BatchOptions create() {
+    public static BatchOptions create() {
       return BatchOptions.defaults()
           .responseTimeout(responseTimeout, TimeUnit.MILLISECONDS)
           .retryAttempts(retryAttempts)

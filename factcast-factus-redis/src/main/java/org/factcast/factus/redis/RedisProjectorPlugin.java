@@ -10,6 +10,7 @@ import org.factcast.factus.redis.batch.RedisBatched;
 import org.factcast.factus.redis.batch.RedisBatchedLens;
 import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.redis.tx.RedisTransactionalLens;
+import org.redisson.api.RedissonClient;
 
 public class RedisProjectorPlugin implements ProjectorPlugin {
 
@@ -31,13 +32,17 @@ public class RedisProjectorPlugin implements ProjectorPlugin {
                 + p.getClass().getName());
       }
 
+      RedisProjection redisProjection = (RedisProjection) p;
+      RedissonClient redissonClient = redisProjection.redisson();
+
       if (transactional != null) {
-        return Collections.singletonList(new RedisTransactionalLens((RedisProjection) p));
+        return Collections.singletonList(
+            new RedisTransactionalLens(redisProjection, redissonClient));
       }
 
       //noinspection SingleStatementInBlock
       if (batched != null) {
-        return Collections.singletonList(new RedisBatchedLens((RedisProjection) p));
+        return Collections.singletonList(new RedisBatchedLens(redisProjection, redissonClient));
       }
     }
 
