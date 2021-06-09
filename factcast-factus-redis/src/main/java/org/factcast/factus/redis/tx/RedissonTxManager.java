@@ -2,12 +2,12 @@ package org.factcast.factus.redis.tx;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import lombok.NonNull;
+import lombok.Setter;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
@@ -22,11 +22,11 @@ public class RedissonTxManager {
     return map.computeIfAbsent(c, RedissonTxManager::new);
   }
 
+  @Setter private TransactionOptions options;
+
   public boolean inTransaction() {
     return currentTx != null;
   }
-
-  // TODO setTransactionOptions()
 
   // TODO needed?
   public static void destroy(RedissonClient c) {
@@ -61,41 +61,40 @@ public class RedissonTxManager {
     return block.apply(currentTx);
   }
 
-  public void joinOrAutoCommit(Consumer<RTransaction> block) {
-    boolean commit = startOrJoin();
-    try {
-      join(block);
-    } catch (RuntimeException e) {
-      commit = false;
-      rollback();
-      throw e;
-    } finally {
-      if (commit) {
-        commit();
-      }
-    }
-  }
-
-  public <R> R joinOrAutoCommit(Function<RTransaction, R> block) {
-    boolean commit = startOrJoin();
-    try {
-      return join(block);
-    } catch (RuntimeException e) {
-      commit = false;
-      rollback();
-      throw e;
-    } finally {
-      if (commit) {
-        commit();
-      }
-    }
-  }
+  //  public void joinOrAutoCommit(Consumer<RTransaction> block) {
+  //    boolean commit = startOrJoin();
+  //    try {
+  //      join(block);
+  //    } catch (RuntimeException e) {
+  //      commit = false;
+  //      rollback();
+  //      throw e;
+  //    } finally {
+  //      if (commit) {
+  //        commit();
+  //      }
+  //    }
+  //  }
+  //
+  //  public <R> R joinOrAutoCommit(Function<RTransaction, R> block) {
+  //    boolean commit = startOrJoin();
+  //    try {
+  //      return join(block);
+  //    } catch (RuntimeException e) {
+  //      commit = false;
+  //      rollback();
+  //      throw e;
+  //    } finally {
+  //      if (commit) {
+  //        commit();
+  //      }
+  //    }
+  //  }
 
   /** @return true if tx was started, false if there was one running */
   public boolean startOrJoin() {
     if (currentTx == null) {
-      currentTx =
-          redisson.createTransaction(TransactionOptions.defaults().timeout(30, TimeUnit.SECONDS));
+      currentTx = redisson.createTransaction(options);
       return true;
     } else {
       return false;

@@ -6,11 +6,9 @@ import java.util.function.Function;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.factus.projection.WriterToken;
+import org.factcast.factus.redis.batch.RedissonBatchManager;
 import org.factcast.factus.redis.tx.RedissonTxManager;
-import org.redisson.api.RBucket;
-import org.redisson.api.RLock;
-import org.redisson.api.RTransaction;
-import org.redisson.api.RedissonClient;
+import org.redisson.api.*;
 
 public class AbstractRedisProjection implements RedisProjection {
   @Getter protected final RedissonClient redisson;
@@ -34,6 +32,10 @@ public class AbstractRedisProjection implements RedisProjection {
     return tx.getBucket(stateBucketName, UUIDCodec.INSTANCE);
   }
 
+  private RBucketAsync<UUID> stateBucket(RBatch b) {
+    return b.getBucket(stateBucketName, UUIDCodec.INSTANCE);
+  }
+
   private RBucket<UUID> stateBucket() {
     return redisson.getBucket(stateBucketName, UUIDCodec.INSTANCE);
   }
@@ -51,14 +53,22 @@ public class AbstractRedisProjection implements RedisProjection {
   @SuppressWarnings("ConstantConditions")
   @Override
   public void state(@NonNull UUID state) {
-    RedissonTxManager man = RedissonTxManager.get(redisson);
-    if (man.inTransaction()) {
-      man.join(
+    RedissonTxManager txMan = RedissonTxManager.get(redisson);
+    if (txMan.inTransaction()) {
+      txMan.join(
           tx -> {
-            stateBucket(man.getCurrentTransaction()).set(state);
+            stateBucket(txMan.getCurrentTransaction()).set(state);
           });
     } else {
-      stateBucket().set(state);
+      RedissonBatchManager bman = RedissonBatchManager.get(redisson);
+      if (bman.inBatch()) {
+        bman.join(
+            tx -> {
+              stateBucket(bman.getCurrentBatch()).setAsync(state);
+            });
+      } else {
+        stateBucket().set(state);
+      }
     }
   }
 

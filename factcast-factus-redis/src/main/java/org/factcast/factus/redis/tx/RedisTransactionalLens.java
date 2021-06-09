@@ -4,23 +4,25 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.function.Function;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.factus.redis.AbstractRedisLens;
 import org.factcast.factus.redis.RedisProjection;
+import org.factcast.factus.redis.tx.RedisTransactional.Defaults;
 import org.redisson.api.RTransaction;
 import org.redisson.api.TransactionOptions;
 
 @Slf4j
 public class RedisTransactionalLens extends AbstractRedisLens {
 
+  private final TransactionOptions opts;
+
   public RedisTransactionalLens(@NonNull RedisProjection p) {
     super(p);
 
-    RedisTransactional annotation = p.getClass().getAnnotation(RedisTransactional.class);
-    val opts = RedisTransactional.Defaults.with(annotation);
-    // TODO use opts
-    batchSize = Math.max(1, annotation.size());
+    RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
+    opts = Defaults.with(transactional);
+
+    batchSize = Math.max(1, transactional.size());
     flushTimeout = calculateFlushTimeout(opts);
     log.debug(
         "Created {} instance for {} with batchsize={},timeout={}",
@@ -38,9 +40,11 @@ public class RedisTransactionalLens extends AbstractRedisLens {
 
   @Override
   public Function<Fact, ?> parameterTransformerFor(Class<?> type) {
+    RedissonTxManager man = RedissonTxManager.get(client);
+    man.options(opts);
     if (RTransaction.class.equals(type)) {
       return f -> {
-        RedissonTxManager tx = RedissonTxManager.get(client);
+        RedissonTxManager tx = man;
         tx.startOrJoin();
         return tx.getCurrentTransaction();
       };

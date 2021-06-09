@@ -47,6 +47,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   private static final Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>>
       dispatcherCache = new ConcurrentHashMap<>();
+  private EventSerializer serializer;
   private final Projection projection;
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
   private final List<ProjectorLens> lenses;
@@ -57,6 +58,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   @VisibleForTesting
   public ProjectorImpl(EventSerializer ctx, Projection p) {
+    serializer = ctx;
     projection = p;
     lenses =
         ProjectorPlugin.discovered.stream()
@@ -74,7 +76,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     // TODO worthwhile caching per projectionClass?
   }
 
-  private ParameterTransformer createParameterTransformer(EventSerializer ctx, Method m) {
+  private ParameterTransformer createParameterTransformer(Method m) {
 
     Class<?>[] parameterTypes = m.getParameterTypes();
     return p -> {
@@ -82,7 +84,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
       for (int i = 0; i < parameterTypes.length; i++) {
         Class<?> type = parameterTypes[i];
-        val transformer = createSingleParameterTransformer(m, ctx, type);
+        val transformer = createSingleParameterTransformer(m, type);
         parameters[i] = transformer.apply(p);
       }
       return parameters;
@@ -90,11 +92,10 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   }
 
   @SuppressWarnings("unchecked")
-  private Function<Fact, ?> createSingleParameterTransformer(
-      Method m, EventSerializer deserializer, Class<?> type) {
+  private Function<Fact, ?> createSingleParameterTransformer(Method m, Class<?> type) {
 
     if (EventObject.class.isAssignableFrom(type)) {
-      return p -> deserializer.deserialize((Class<? extends EventObject>) type, p.jsonPayload());
+      return p -> serializer.deserialize((Class<? extends EventObject>) type, p.jsonPayload());
     }
 
     if (Fact.class == type) {
@@ -139,7 +140,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     try {
       lenses.forEach(l -> l.beforeFactProcessing(f));
-      dispatch.invoke(projection, f);
+      dispatch.invoke(projection, f, createParameterTransformer(dispatch.dispatchMethod));
 
       // maybe find a way to skip state setting within catchup phase when batching to make it even
       // more efficient ? only if necessary
@@ -195,12 +196,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                     FactSpecCoordinates key = FactSpecCoordinates.from(fs);
 
                     Dispatcher dispatcher =
-                        new Dispatcher(
-                            m,
-                            callTarget.resolver,
-                            createParameterTransformer(deserializer, m),
-                            fs,
-                            deserializer);
+                        new Dispatcher(m, callTarget.resolver, fs, deserializer);
                     val before = map.put(key, dispatcher);
                     if (before != null) {
                       throw new InvalidHandlerDefinition(
@@ -280,7 +276,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
       for (Class<?> type : m.getParameterTypes()) {
         // trigger transformer creation in order to fail fast
-        createSingleParameterTransformer(m, null, type);
+        createSingleParameterTransformer(m, type);
       }
 
       // exclude MockitoMocks
@@ -297,17 +293,16 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     @NonNull TargetObjectResolver objectResolver;
 
-    @NonNull ParameterTransformer parameterTransformer;
+    //    @NonNull ParameterTransformer parameterTransformer;
 
     @NonNull FactSpec spec;
 
     @NonNull EventSerializer deserializer;
 
-    void invoke(Projection projection, Fact f)
+    void invoke(Projection projection, Fact f, ParameterTransformer pt)
         throws InvocationTargetException, IllegalAccessException {
       Object targetObject = objectResolver.apply(projection);
-      Object[] parameters = parameterTransformer.apply(f);
-      log.trace("param=" + Arrays.toString(parameters));
+      Object[] parameters = pt.apply(f);
       dispatchMethod.invoke(targetObject, parameters);
     }
   }
