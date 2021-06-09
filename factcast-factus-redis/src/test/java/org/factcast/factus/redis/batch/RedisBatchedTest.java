@@ -1,6 +1,7 @@
 package org.factcast.factus.redis.batch;
 
 import static org.assertj.core.api.Assertions.*;
+
 import lombok.val;
 import org.factcast.factus.redis.batch.RedisBatched.Defaults;
 import org.junit.jupiter.api.*;

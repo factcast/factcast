@@ -1,6 +1,7 @@
 package org.factcast.factus.redis.tx;
 
 import static org.assertj.core.api.Assertions.*;
+
 import lombok.val;
 import org.factcast.factus.redis.tx.RedisTransactional.Defaults;
 import org.junit.jupiter.api.*;
