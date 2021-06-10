@@ -15,7 +15,7 @@ weight = 1050
 +++
 
 Like [the Factcast server]({{< ref "/setup/server/metrics.md" >}} "factcast server metrics"), also Factus makes use 
-of [micrometer.io](https://micrometer.io/) metrics. Currently the following metrics are provided:
+of [micrometer.io](https://micrometer.io/) metrics.
 
 ### Metric namespaces and their organization
 
@@ -30,29 +30,30 @@ factus_timings`, if your datasource has a special meaning for the '.'-character)
 
 The metrics are automatically tagged with 
 
-// TODO
 * the emitting class (`class` tag) 
+* the name of the metric (`name` tag)
 
-#### Existing Metrics
-At the time of writing (TODO add factus version) the following metrics are supported:
+### Existing Metrics
+At the time of writing (Factcast version 0.3.13) the following metrics are supported:
 
-Counted
-------
-  TRANSACTION_ATTEMPTS("transaction_attempts");   optimistic locking, how often retried. executed at the beginning of a transaction
-  TRANSACTION_ABORT("transaction_abort"),    how often was a transaction aborted
+#### Counted
+- `transaction_attempts` - how often was a transaction retried. See [Optimistic Locking]({{< ref "/factus/optimistic-locking.md" >}} 
+"factus optimistic locking") for more background
+- `transaction_abort` - how often was an attempted transaction aborted
 
-Gauged
-------
-fetch_size - size in bytes of the fetched Snapshot projection (including aggregate projection) 
+#### Gauged
+- `fetch_size` - size in bytes of a fetched [Snapshot projection]({{< ref "/factus/snapshot-projections.md" >}} 
+"factus snapshot projections") or [Aggregate projection]({{< ref "/factus/aggregates.md" >}} 
+"factus aggregates") 
   
-Timed
-------
-
-managed_projection_update_duration  - update duration in milliseconds
-  FETCH_DURATION("fetch_duration"),  - duration in milliseconds to fetch a snapshot projection
-  
-  TODO:
-    FIND_DURATION("find_duration"),
-    EVENT_PROCESSING_LATENCY("event_processing_latency");
+#### Timed
+- `managed_projection_update_duration`  - duration in milliseconds a [Managed Projection]({{< ref "/factus/managed-projection.md" >}} 
+"factus managed projection") took to update
+- `fetch_duration` - duration in milliseconds it took to fetch a [Snapshot projection]({{< ref "/factus/snapshot-projections.md" >}} 
+"factus snapshot projections")
+- `find_duration` - duration in milliseconds it took to find a specific [Aggregate]({{< ref "/factus/aggregates.md" >}} 
+"factus aggregates")
+- `event_processing_latency` - time difference between a fact was published and a consuming  
+[Subscribed projection]({{< ref "/factus/subscribed-projection.md" >}} "factus subscribed projection") was updated
   
  
