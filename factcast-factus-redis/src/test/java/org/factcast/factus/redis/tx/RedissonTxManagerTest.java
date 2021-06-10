@@ -1,11 +1,11 @@
-package org.factcast.factus.redis;
+package org.factcast.factus.redis.tx;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import org.factcast.factus.redis.tx.RedissonTxManager;
+import lombok.val;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
@@ -36,11 +36,81 @@ class RedissonTxManagerTest {
   }
 
   @Nested
+  class WhenCommiting {
+
+    @Test
+    void joins() {
+      when(redisson.createTransaction(any())).thenAnswer(i -> mock(RTransaction.class));
+      underTest.startOrJoin();
+      RTransaction curr = underTest.getCurrentTransaction();
+
+      underTest.commit();
+
+      verify(curr).commit();
+      assertThat(underTest.getCurrentTransaction()).isNull();
+    }
+
+    @Test
+    void skipsIfNoTxRunning() {
+      RTransaction curr = underTest.getCurrentTransaction();
+      assertThat(curr).isNull();
+      underTest.commit();
+
+      // no asserttion, does not throw exception, thats it
+    }
+  }
+
+  @Nested
+  class WhenRollingBack {
+
+    @Test
+    void joins() {
+      when(redisson.createTransaction(any())).thenAnswer(i -> mock(RTransaction.class));
+      underTest.startOrJoin();
+      RTransaction curr = underTest.getCurrentTransaction();
+
+      underTest.rollback();
+
+      verify(curr).rollback();
+      assertThat(underTest.getCurrentTransaction()).isNull();
+    }
+
+    @Test
+    void skipsIfNoTxRunning() {
+      RTransaction curr = underTest.getCurrentTransaction();
+      assertThat(curr).isNull();
+      underTest.rollback();
+
+      // no asserttion, does not throw exception, thats it
+    }
+  }
+
+  @Nested
   class WhenJoining {
     @Mock private Consumer<RTransaction> block;
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      when(redisson.createTransaction(any())).thenAnswer(i -> mock(RTransaction.class));
+    }
+
+    @Test
+    void startsIfNecessary() {
+      underTest.join(
+          tx -> {
+            assertThat(tx).isNotNull();
+          });
+    }
+
+    @Test
+    void keepsCurrent() {
+      underTest.startOrJoin();
+      val curr = underTest.getCurrentTransaction();
+      underTest.join(
+          tx -> {
+            assertThat(tx).isSameAs(curr);
+          });
+    }
   }
 
   @Nested
@@ -48,7 +118,29 @@ class RedissonTxManagerTest {
     @Mock private Function<RTransaction, ?> block;
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      when(redisson.createTransaction(any())).thenAnswer(i -> mock(RTransaction.class));
+    }
+
+    @Test
+    void startsIfNecessary() {
+      underTest.join(
+          tx -> {
+            assertThat(tx).isNotNull();
+            return 0;
+          });
+    }
+
+    @Test
+    void keepsCurrent() {
+      underTest.startOrJoin();
+      val curr = underTest.getCurrentTransaction();
+      underTest.join(
+          tx -> {
+            assertThat(tx).isSameAs(curr);
+            return 0;
+          });
+    }
   }
 
   @Nested

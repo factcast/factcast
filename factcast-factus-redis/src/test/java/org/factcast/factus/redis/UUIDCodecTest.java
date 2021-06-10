@@ -4,7 +4,6 @@
 package org.factcast.factus.redis;
 
 import static org.assertj.core.api.Assertions.*;
-
 import io.netty.buffer.Unpooled;
 import java.util.UUID;
 import lombok.SneakyThrows;
@@ -47,6 +46,14 @@ class UUIDCodecTest {
                 UUIDCodec.INSTANCE.getValueDecoder().decode(enc, null);
               })
           .isInstanceOf(IndexOutOfBoundsException.class);
+    }
+  }
+
+  @Nested
+  class WhenConstructing {
+    @Test
+    void justToCoverTheFrameworkConstructor() {
+      new UUIDCodec(UUID.class.getClassLoader(), new UUIDCodec());
     }
   }
 }
