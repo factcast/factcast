@@ -10,7 +10,7 @@ import org.factcast.factus.redis.batch.RedissonBatchManager;
 import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.redisson.api.*;
 
-public class AbstractRedisProjection implements RedisProjection {
+public class AbstractRedisManagedProjection implements RedisManagedProjection {
   @Getter protected final RedissonClient redisson;
 
   private final RLock lock;
@@ -18,7 +18,7 @@ public class AbstractRedisProjection implements RedisProjection {
 
   @Getter private final String redisKey;
 
-  public AbstractRedisProjection(@NonNull RedissonClient redisson) {
+  public AbstractRedisManagedProjection(@NonNull RedissonClient redisson) {
     this.redisson = redisson;
 
     redisKey = createRedisKey();

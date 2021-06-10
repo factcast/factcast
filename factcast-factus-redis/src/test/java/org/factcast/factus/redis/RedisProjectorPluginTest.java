@@ -58,27 +58,27 @@ class RedisProjectorPluginTest {
 
 @RedisTransactional
 @RedisBatched
-class DoubleFeature extends ARedisProjection {
+class DoubleFeature extends AbstractRedisManagedProjection {
   public DoubleFeature(@NonNull RedissonClient redisson) {
     super(redisson);
   }
 }
 
 @RedisTransactional
-class TX extends ARedisProjection {
+class TX extends AbstractRedisManagedProjection {
   public TX(@NonNull RedissonClient redisson) {
     super(redisson);
   }
 }
 
 @RedisBatched
-class BA extends ARedisProjection {
+class BA extends ARedisManagedProjection {
   public BA(@NonNull RedissonClient redisson) {
     super(redisson);
   }
 }
 
-class None extends ARedisProjection {
+class None extends ARedisManagedProjection {
   public None(@NonNull RedissonClient redisson) {
     super(redisson);
   }

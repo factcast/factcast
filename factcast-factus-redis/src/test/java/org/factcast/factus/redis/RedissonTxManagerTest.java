@@ -2,7 +2,6 @@ package org.factcast.factus.redis;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -24,14 +23,16 @@ class RedissonTxManagerTest {
 
   @Nested
   class WhenGetting {
-    @BeforeEach
-    void setup() {}
-  }
+    @Test
+    void noCurrentIfUnstarted() {
+      assertThat(underTest.getCurrentTransaction()).isNull();
+    }
 
-  @Nested
-  class WhenGettingOrCreate {
-    @BeforeEach
-    void setup() {}
+    @Test
+    void currentIfStarted() {
+      underTest.startOrJoin();
+      assertThat(underTest.getCurrentTransaction()).isNull();
+    }
   }
 
   @Nested
@@ -43,39 +44,7 @@ class RedissonTxManagerTest {
   }
 
   @Nested
-  class _WhenJoining {
-    @Mock private Function<RTransaction, ?> block;
-
-    @BeforeEach
-    void setup() {}
-  }
-
-  @Nested
-  class WhenJoiningOrAutoCommit {
-    @Mock private Consumer<RTransaction> block;
-
-    @BeforeEach
-    void setup() {}
-  }
-
-  @Nested
-  class _WhenJoiningOrAutoCommit {
-    @Mock private Function<RTransaction, ?> block;
-
-    @BeforeEach
-    void setup() {}
-  }
-
-  @Nested
-  class WhenJoiningOrAutoCommitAsync {
-    @Mock private Consumer<RTransaction> block;
-
-    @BeforeEach
-    void setup() {}
-  }
-
-  @Nested
-  class _WhenJoiningOrAutoCommitAsync {
+  class WhenJoiningFn {
     @Mock private Function<RTransaction, ?> block;
 
     @BeforeEach
@@ -118,19 +87,5 @@ class RedissonTxManagerTest {
 
       verifyNoMoreInteractions(redisson);
     }
-  }
-
-  @Nested
-  class WhenCommitting {
-    private final boolean ASYNC = true;
-
-    @BeforeEach
-    void setup() {}
-  }
-
-  @Nested
-  class WhenRollbacking {
-    @BeforeEach
-    void setup() {}
   }
 }

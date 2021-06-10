@@ -1,13 +1,13 @@
 package org.factcast.factus.redis.batch;
 
 import lombok.NonNull;
-import org.factcast.factus.redis.AbstractRedisProjection;
+import org.factcast.factus.redis.AbstractRedisManagedProjection;
 import org.redisson.api.RedissonClient;
 
 @RedisBatched
-class ARedisProjection extends AbstractRedisProjection {
+class ARedisManagedProjection extends AbstractRedisManagedProjection {
 
-  public ARedisProjection(@NonNull RedissonClient redisson) {
+  public ARedisManagedProjection(@NonNull RedissonClient redisson) {
     super(redisson);
   }
 }

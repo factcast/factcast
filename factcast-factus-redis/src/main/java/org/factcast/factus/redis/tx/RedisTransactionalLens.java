@@ -6,7 +6,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.factus.redis.AbstractRedisLens;
-import org.factcast.factus.redis.RedisProjection;
+import org.factcast.factus.redis.RedisManagedProjection;
 import org.factcast.factus.redis.tx.RedisTransactional.Defaults;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
@@ -18,16 +18,28 @@ public class RedisTransactionalLens extends AbstractRedisLens {
   private final TransactionOptions opts;
   private final RedissonTxManager redissonTxManager;
 
-  public RedisTransactionalLens(@NonNull RedisProjection p, RedissonClient redissonClient) {
-    super(p, redissonClient);
+  public RedisTransactionalLens(@NonNull RedisManagedProjection p, RedissonClient redissonClient) {
+    this(p, redissonClient, RedissonTxManager.get(redissonClient), createOpts(p));
+  }
 
+  @VisibleForTesting
+  static TransactionOptions createOpts(RedisManagedProjection p) {
     RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
-    opts = Defaults.with(transactional);
+    return Defaults.with(transactional);
+  }
 
-    redissonTxManager = RedissonTxManager.get(redissonClient);
-    redissonTxManager.options(opts);
+  @VisibleForTesting
+  RedisTransactionalLens(
+      @NonNull RedisManagedProjection p,
+      RedissonClient redissonClient,
+      RedissonTxManager txman,
+      TransactionOptions opts) {
+    super(p, redissonClient);
+    this.opts = opts;
+    redissonTxManager = txman;
+    txman.options(opts);
 
-    batchSize = Math.max(1, transactional.size());
+    batchSize = Math.max(1, getSize(p));
     flushTimeout = calculateFlushTimeout(opts);
     log.debug(
         "Created {} instance for {} with batchsize={},timeout={}",
@@ -38,9 +50,25 @@ public class RedisTransactionalLens extends AbstractRedisLens {
   }
 
   @VisibleForTesting
-  long calculateFlushTimeout(TransactionOptions opts) {
+  static int getSize(RedisManagedProjection p) {
+    RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
+    if (transactional == null) {
+      throw new IllegalStateException(
+          "Projection is expected to have an annotation @"
+              + RedisTransactional.class.getSimpleName());
+    }
+    return transactional.size();
+  }
+
+  @VisibleForTesting
+  static long calculateFlushTimeout(TransactionOptions opts) {
     // "best" guess
-    return Math.min(opts.getTimeout() / 10 * 8, Math.max(10, opts.getTimeout() - 300));
+    long flush = opts.getTimeout() / 10 * 8;
+    if (flush < 80) {
+      // disable batching altogether as it is too risky
+      flush = 0;
+    }
+    return flush;
   }
 
   @Override

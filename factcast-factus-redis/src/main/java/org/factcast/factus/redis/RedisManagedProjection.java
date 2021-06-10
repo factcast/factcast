@@ -6,7 +6,7 @@ import org.factcast.factus.projection.ManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.redisson.api.RedissonClient;
 
-public interface RedisProjection extends ManagedProjection {
+public interface RedisManagedProjection extends ManagedProjection {
 
   /**
    * opportunity to cache the created key
