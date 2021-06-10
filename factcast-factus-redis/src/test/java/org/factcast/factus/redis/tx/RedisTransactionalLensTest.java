@@ -2,6 +2,7 @@ package org.factcast.factus.redis.tx;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 import java.io.IOException;
 import java.time.Duration;
 import java.util.UUID;
