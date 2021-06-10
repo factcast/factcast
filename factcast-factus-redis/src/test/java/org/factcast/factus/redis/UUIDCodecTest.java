@@ -4,6 +4,7 @@
 package org.factcast.factus.redis;
 
 import static org.assertj.core.api.Assertions.*;
+
 import io.netty.buffer.Unpooled;
 import java.util.UUID;
 import lombok.SneakyThrows;
