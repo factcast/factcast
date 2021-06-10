@@ -16,7 +16,6 @@
 package org.factcast.core.snap.redisson;
 
 import static org.assertj.core.api.Assertions.*;
-
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -27,6 +26,7 @@ import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
+import org.redisson.spring.starter.RedissonAutoConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,7 +37,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
-@ContextConfiguration(classes = {RedisAutoConfiguration.class})
+@ContextConfiguration(classes = {RedissonAutoConfiguration.class, RedisAutoConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @Testcontainers
 class RedissonSnapshotCacheTest {
