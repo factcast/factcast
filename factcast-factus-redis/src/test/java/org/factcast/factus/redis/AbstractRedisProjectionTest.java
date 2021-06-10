@@ -1,6 +1,7 @@
 package org.factcast.factus.redis;
 
 import static org.assertj.core.api.Assertions.*;
+
 import java.time.Duration;
 import java.util.UUID;
 import lombok.NonNull;
