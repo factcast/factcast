@@ -32,12 +32,6 @@ public class RedissonTxManager {
     return currentTx != null;
   }
 
-  // TODO needed?
-  public static void destroy(RedissonClient c) {
-    Map<RedissonClient, RedissonTxManager> map = getMap();
-    map.remove(c);
-  }
-
   // no atomicref needed here as this class is used threadbound anyway
   private RTransaction currentTx;
   private final RedissonClient redisson;
@@ -60,36 +54,6 @@ public class RedissonTxManager {
     startOrJoin();
     return block.apply(currentTx);
   }
-
-  //  public void joinOrAutoCommit(Consumer<RTransaction> block) {
-  //    boolean commit = startOrJoin();
-  //    try {
-  //      join(block);
-  //    } catch (RuntimeException e) {
-  //      commit = false;
-  //      rollback();
-  //      throw e;
-  //    } finally {
-  //      if (commit) {
-  //        commit();
-  //      }
-  //    }
-  //  }
-  //
-  //  public <R> R joinOrAutoCommit(Function<RTransaction, R> block) {
-  //    boolean commit = startOrJoin();
-  //    try {
-  //      return join(block);
-  //    } catch (RuntimeException e) {
-  //      commit = false;
-  //      rollback();
-  //      throw e;
-  //    } finally {
-  //      if (commit) {
-  //        commit();
-  //      }
-  //    }
-  //  }
 
   /** @return true if tx was started, false if there was one running */
   public boolean startOrJoin() {
