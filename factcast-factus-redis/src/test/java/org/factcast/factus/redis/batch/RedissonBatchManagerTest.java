@@ -2,6 +2,7 @@ package org.factcast.factus.redis.batch;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 import lombok.val;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
