@@ -15,17 +15,10 @@ import org.redisson.api.TransactionOptions;
 @Slf4j
 public class RedisTransactionalLens extends AbstractRedisLens {
 
-  private final TransactionOptions opts;
   private final RedissonTxManager redissonTxManager;
 
   public RedisTransactionalLens(@NonNull RedisManagedProjection p, RedissonClient redissonClient) {
     this(p, redissonClient, RedissonTxManager.get(redissonClient), createOpts(p));
-  }
-
-  @VisibleForTesting
-  static TransactionOptions createOpts(RedisManagedProjection p) {
-    RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
-    return Defaults.with(transactional);
   }
 
   @VisibleForTesting
@@ -35,13 +28,13 @@ public class RedisTransactionalLens extends AbstractRedisLens {
       RedissonTxManager txman,
       TransactionOptions opts) {
     super(p, redissonClient);
-    this.opts = opts;
+
     redissonTxManager = txman;
     txman.options(opts);
 
     batchSize = Math.max(1, getSize(p));
     flushTimeout = calculateFlushTimeout(opts);
-    log.debug(
+    log.trace(
         "Created {} instance for {} with batchsize={},timeout={}",
         getClass().getSimpleName(),
         p,
@@ -54,10 +47,25 @@ public class RedisTransactionalLens extends AbstractRedisLens {
     RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
     if (transactional == null) {
       throw new IllegalStateException(
-          "Projection is expected to have an annotation @"
+          "Projection "
+              + p.getClass()
+              + " is expected to have an annotation @"
               + RedisTransactional.class.getSimpleName());
     }
     return transactional.size();
+  }
+
+  @VisibleForTesting
+  static TransactionOptions createOpts(RedisManagedProjection p) {
+    RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
+    if (transactional == null) {
+      throw new IllegalStateException(
+          "Projection "
+              + p.getClass()
+              + " is expected to have an annotation @"
+              + RedisTransactional.class.getSimpleName());
+    }
+    return Defaults.with(transactional);
   }
 
   @VisibleForTesting

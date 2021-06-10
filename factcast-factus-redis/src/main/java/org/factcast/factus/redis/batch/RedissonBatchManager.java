@@ -66,14 +66,16 @@ public class RedissonBatchManager {
   }
 
   public void execute() {
-    startOrJoin();
-    currentBatch.execute();
-    currentBatch = null;
+    if (currentBatch != null) {
+      currentBatch.execute();
+      currentBatch = null;
+    }
   }
 
   public void discard() {
-    startOrJoin();
-    currentBatch.discard();
-    currentBatch = null;
+    if (currentBatch != null) {
+      currentBatch.discard();
+      currentBatch = null;
+    }
   }
 }

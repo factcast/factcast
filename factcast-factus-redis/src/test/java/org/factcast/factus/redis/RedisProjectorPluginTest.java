@@ -2,7 +2,6 @@ package org.factcast.factus.redis;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.factus.projection.Projection;
@@ -73,13 +72,13 @@ class TX extends AbstractRedisManagedProjection {
 }
 
 @RedisBatched
-class BA extends ARedisManagedProjection {
+class BA extends ARedisTransactionalManagedProjection {
   public BA(@NonNull RedissonClient redisson) {
     super(redisson);
   }
 }
 
-class None extends ARedisManagedProjection {
+class None extends ARedisTransactionalManagedProjection {
   public None(@NonNull RedissonClient redisson) {
     super(redisson);
   }

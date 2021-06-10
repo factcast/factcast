@@ -28,7 +28,7 @@ public class UUIDCodec extends BaseCodec {
         return new UUID(buffer.getLong(), buffer.getLong());
       };
 
-  private UUIDCodec() {}
+  UUIDCodec() {}
 
   public UUIDCodec(ClassLoader cl, UUIDCodec c) {}
 

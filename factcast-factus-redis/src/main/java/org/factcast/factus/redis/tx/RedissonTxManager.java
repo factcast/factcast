@@ -66,14 +66,16 @@ public class RedissonTxManager {
   }
 
   public void commit() {
-    startOrJoin();
-    currentTx.commit();
-    currentTx = null;
+    if (currentTx != null) {
+      currentTx.commit();
+      currentTx = null;
+    }
   }
 
   public void rollback() {
-    startOrJoin();
-    currentTx.rollback();
-    currentTx = null;
+    if (currentTx != null) {
+      currentTx.rollback();
+      currentTx = null;
+    }
   }
 }
