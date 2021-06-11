@@ -4,8 +4,8 @@ title = "Metrics"
 description = ""
 
 
-creatordisplayname = "Uwe Schaefer"
-creatoremail = "uwe@codesmell.de"
+creatordisplayname = "Maik Toepfer"
+creatoremail = "maik.toepfer@prisma-capacity.eu"
 
 
 parent = "factus"
@@ -19,7 +19,7 @@ of [micrometer.io](https://micrometer.io/) metrics.
 
 ### Metric namespaces and their organization
 
-At the time of writing, there are four namespaces exposed:
+At the time of writing, there are three namespaces exposed:
 
 * `factus.timings`
 * `factus.counts`
@@ -53,7 +53,7 @@ At the time of writing (Factcast version 0.3.13) the following metrics are suppo
 "factus snapshot projections")
 - `find_duration` - duration in milliseconds it took to find a specific [Aggregate]({{< ref "/factus/aggregates.md" >}} 
 "factus aggregates")
-- `event_processing_latency` - time difference between a fact was published and a consuming  
+- `event_processing_latency` - time difference in milliseconds between a fact was published and a consuming  
 [Subscribed projection]({{< ref "/factus/subscribed-projection.md" >}} "factus subscribed projection") was updated
   
  
