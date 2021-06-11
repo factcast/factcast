@@ -16,6 +16,7 @@
 package org.factcast.core.snap.redisson;
 
 import static org.assertj.core.api.Assertions.*;
+
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.SneakyThrows;
