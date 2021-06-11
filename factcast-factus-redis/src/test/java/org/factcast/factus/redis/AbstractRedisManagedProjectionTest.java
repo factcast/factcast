@@ -2,6 +2,7 @@ package org.factcast.factus.redis;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.val;
@@ -196,7 +197,6 @@ class AbstractRedisManagedProjectionTest {
 
       verify(lock).lock();
       assertThat(wt).isNotNull().isInstanceOf(RedisWriterToken.class);
-
     }
   }
 
