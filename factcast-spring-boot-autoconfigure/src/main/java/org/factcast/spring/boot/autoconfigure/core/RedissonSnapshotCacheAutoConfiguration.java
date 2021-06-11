@@ -25,6 +25,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.Scheduled;
 
 @Configuration
 @ConditionalOnClass({RedissonSnapshotCache.class, RedissonClient.class})
@@ -39,5 +40,14 @@ public class RedissonSnapshotCacheAutoConfiguration {
       RedissonClient redisson,
       @Value("${factcast.redis.deleteSnapshotStaleForDays:90}") int retentionTimeInDays) {
     return new RedissonSnapshotCache(redisson, retentionTimeInDays);
+  }
+
+  @Deprecated
+  // needed for stale snapshots, can be removed at some point
+  @Scheduled(cron = "${factcast.redis.snapshotCacheCompactCron:0 0 0 * * *}")
+  public void compactTrigger(
+      SnapshotCache snapshotCache,
+      @Value("${factcast.redis.deleteSnapshotStaleForDays:90}") int retentionTimeInDays) {
+    snapshotCache.compact(retentionTimeInDays);
   }
 }

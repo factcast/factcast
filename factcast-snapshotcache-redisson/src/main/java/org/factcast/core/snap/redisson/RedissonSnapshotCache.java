@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.snap.Snapshot;
@@ -31,11 +32,12 @@ import org.redisson.api.RedissonClient;
 @Slf4j
 public class RedissonSnapshotCache implements SnapshotCache {
 
-  private static final String TS_INDEX = "SNAPCACHE_IDX";
-
   final RedissonClient redisson;
 
   private final int retentionTimeInDays;
+
+  // still needed to remove stale snapshots, can be removed at some point
+  private static final String TS_INDEX = "SNAPCACHE_IDX";
   private final RMap<String, Long> index;
 
   public RedissonSnapshotCache(@NonNull RedissonClient redisson, int retentionTimeInDays) {
@@ -48,15 +50,21 @@ public class RedissonSnapshotCache implements SnapshotCache {
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
     String key = createKeyFor(id);
     RBucket<Snapshot> bucket = redisson.getBucket(key);
-    index.putAsync(key, System.currentTimeMillis());
-    return Optional.ofNullable(bucket.get());
+
+    Optional<Snapshot> snapshot = Optional.ofNullable(bucket.get());
+    if (snapshot.isPresent()) {
+      // renew TTL
+      bucket.expireAsync(retentionTimeInDays, TimeUnit.DAYS);
+      // can be removed at some point
+      index.removeAsync(key, System.currentTimeMillis());
+    }
+    return snapshot;
   }
 
   @Override
   public void setSnapshot(@NonNull Snapshot snapshot) {
     String key = createKeyFor(snapshot.id());
-    index.putAsync(key, System.currentTimeMillis());
-    redisson.getBucket(key).set(snapshot);
+    redisson.getBucket(key).set(snapshot, retentionTimeInDays, TimeUnit.DAYS);
   }
 
   @Override
@@ -64,13 +72,8 @@ public class RedissonSnapshotCache implements SnapshotCache {
     redisson.getBucket(createKeyFor(id)).delete();
   }
 
-  /// TODO important ! cschedule from outside
-  // @Scheduled(cron = "${factcast.redis.snapshotCacheCompactCron:0 0 0 * * *}")
-  public void compactTrigger() {
-    compact(retentionTimeInDays);
-  }
-
   @Override
+  @Deprecated
   public void compact(int retentionTimeInDays) {
     Duration daysAgo = Duration.ofDays(retentionTimeInDays);
     long threshold = Instant.now().minus(daysAgo).toEpochMilli();
@@ -78,6 +81,7 @@ public class RedissonSnapshotCache implements SnapshotCache {
   }
 
   @VisibleForTesting
+  @Deprecated
   public void removeEntriesUntouchedSince(long threshold) {
     index
         .readAllEntrySet()
@@ -92,7 +96,8 @@ public class RedissonSnapshotCache implements SnapshotCache {
   }
 
   @NonNull
-  private String createKeyFor(@NonNull SnapshotId id) {
+  @VisibleForTesting
+  String createKeyFor(@NonNull SnapshotId id) {
     return id.key() + id.uuid();
   }
 }
