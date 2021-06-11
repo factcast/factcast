@@ -1,5 +1,6 @@
 package org.factcast.factus.redis;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.function.Function;
@@ -10,7 +11,7 @@ import org.factcast.factus.redis.batch.RedissonBatchManager;
 import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.redisson.api.*;
 
-public class AbstractRedisManagedProjection implements RedisManagedProjection {
+public abstract class AbstractRedisManagedProjection implements RedisManagedProjection {
   @Getter protected final RedissonClient redisson;
 
   private final RLock lock;
@@ -28,15 +29,18 @@ public class AbstractRedisManagedProjection implements RedisManagedProjection {
     lock = redisson.getLock(redisKey + "_lock");
   }
 
-  private RBucket<UUID> stateBucket(RTransaction tx) {
+  @VisibleForTesting
+  RBucket<UUID> stateBucket(RTransaction tx) {
     return tx.getBucket(stateBucketName, UUIDCodec.INSTANCE);
   }
 
-  private RBucketAsync<UUID> stateBucket(RBatch b) {
+  @VisibleForTesting
+  RBucketAsync<UUID> stateBucket(RBatch b) {
     return b.getBucket(stateBucketName, UUIDCodec.INSTANCE);
   }
 
-  private RBucket<UUID> stateBucket() {
+  @VisibleForTesting
+  RBucket<UUID> stateBucket() {
     return redisson.getBucket(stateBucketName, UUIDCodec.INSTANCE);
   }
 
@@ -48,6 +52,8 @@ public class AbstractRedisManagedProjection implements RedisManagedProjection {
     } else {
       return stateBucket().get();
     }
+    // note: were not trying to use a bucket from a running batch as it would require to execute the
+    // batch to get a result back.
   }
 
   @SuppressWarnings("ConstantConditions")
