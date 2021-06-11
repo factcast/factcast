@@ -2,6 +2,7 @@ package org.factcast.factus.redis;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 import java.time.Duration;
 import java.util.UUID;
 import lombok.NonNull;
