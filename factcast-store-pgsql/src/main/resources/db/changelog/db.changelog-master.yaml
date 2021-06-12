@@ -29,12 +29,12 @@ databaseChangeLog:
   - include:
       file: factcast/issue346/dropUniqueConstraintForIdent.sql
       relativeToChangelogFile: true
-# No longer necessary:
-#
-#    - include:
-#         file: factcast/issue601/addSerialForPG11Compatibility.sql
-#         relativeToChangelogFile: true
-#
+  # No longer necessary:
+  #
+  #    - include:
+  #         file: factcast/issue601/addSerialForPG11Compatibility.sql
+  #         relativeToChangelogFile: true
+  #
   - include:
       file: factcast/issue627/schemaStore.sql
       relativeToChangelogFile: true
@@ -53,3 +53,13 @@ databaseChangeLog:
   - include:
       file: factcast/issue1161/storage-setting.sql
       relativeToChangelogFile: true
+  - changeSet:
+      id: id_lookup_index
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - include:
+            file: factcast/issue1359/id_lookup_index.sql
+            relativeToChangelogFile: true
+
+
