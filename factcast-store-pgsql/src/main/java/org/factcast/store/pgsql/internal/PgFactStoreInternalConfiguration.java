@@ -42,6 +42,7 @@ import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.pgsql.internal.snapcache.PgSnapshotCache;
 import org.factcast.store.pgsql.internal.snapcache.PgSnapshotCacheConfiguration;
+import org.factcast.store.pgsql.internal.tail.PGTailIndexingConfiguration;
 import org.factcast.store.pgsql.registry.SchemaRegistryConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -63,7 +64,11 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 @EnableScheduling
 @EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_METHOD)
-@Import({SchemaRegistryConfiguration.class, PgSnapshotCacheConfiguration.class})
+@Import({
+  SchemaRegistryConfiguration.class,
+  PgSnapshotCacheConfiguration.class,
+  PGTailIndexingConfiguration.class
+})
 public class PgFactStoreInternalConfiguration {
 
   @Bean
