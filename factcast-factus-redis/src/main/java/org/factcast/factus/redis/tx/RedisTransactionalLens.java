@@ -6,7 +6,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.factus.redis.AbstractRedisLens;
-import org.factcast.factus.redis.RedisManagedProjection;
+import org.factcast.factus.redis.RedisProjection;
 import org.factcast.factus.redis.tx.RedisTransactional.Defaults;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
@@ -17,13 +17,13 @@ public class RedisTransactionalLens extends AbstractRedisLens {
 
   private final RedissonTxManager redissonTxManager;
 
-  public RedisTransactionalLens(@NonNull RedisManagedProjection p, RedissonClient redissonClient) {
+  public RedisTransactionalLens(@NonNull RedisProjection p, RedissonClient redissonClient) {
     this(p, redissonClient, RedissonTxManager.get(redissonClient), createOpts(p));
   }
 
   @VisibleForTesting
   RedisTransactionalLens(
-      @NonNull RedisManagedProjection p,
+      @NonNull RedisProjection p,
       RedissonClient redissonClient,
       RedissonTxManager txman,
       TransactionOptions opts) {
@@ -43,7 +43,7 @@ public class RedisTransactionalLens extends AbstractRedisLens {
   }
 
   @VisibleForTesting
-  static int getSize(RedisManagedProjection p) {
+  static int getSize(RedisProjection p) {
     RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
     if (transactional == null) {
       throw new IllegalStateException(
@@ -56,7 +56,7 @@ public class RedisTransactionalLens extends AbstractRedisLens {
   }
 
   @VisibleForTesting
-  static TransactionOptions createOpts(RedisManagedProjection p) {
+  static TransactionOptions createOpts(RedisProjection p) {
     RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
     if (transactional == null) {
       throw new IllegalStateException(

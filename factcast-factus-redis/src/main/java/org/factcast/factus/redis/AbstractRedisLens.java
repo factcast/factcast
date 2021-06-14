@@ -22,7 +22,7 @@ public abstract class AbstractRedisLens implements ProjectorLens {
   @Setter protected long flushTimeout = 0;
   protected final RedissonClient client;
 
-  public AbstractRedisLens(RedisManagedProjection projection, RedissonClient redissonClient) {
+  public AbstractRedisLens(RedisProjection projection, RedissonClient redissonClient) {
     projectionName = projection.getClass();
     client = redissonClient;
   }

@@ -7,7 +7,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.factus.redis.AbstractRedisLens;
-import org.factcast.factus.redis.RedisManagedProjection;
+import org.factcast.factus.redis.RedisProjection;
 import org.redisson.api.BatchOptions;
 import org.redisson.api.RBatch;
 import org.redisson.api.RedissonClient;
@@ -17,13 +17,13 @@ public class RedisBatchedLens extends AbstractRedisLens {
 
   private final RedissonBatchManager batchMan;
 
-  public RedisBatchedLens(@NonNull RedisManagedProjection p, RedissonClient redissonClient) {
+  public RedisBatchedLens(@NonNull RedisProjection p, RedissonClient redissonClient) {
 
     this(p, redissonClient, RedissonBatchManager.get(redissonClient), createOpts(p));
   }
 
   RedisBatchedLens(
-      @NonNull RedisManagedProjection p,
+      @NonNull RedisProjection p,
       RedissonClient redissonClient,
       RedissonBatchManager man,
       BatchOptions opts) {
@@ -43,7 +43,7 @@ public class RedisBatchedLens extends AbstractRedisLens {
   }
 
   @VisibleForTesting
-  static int getSize(RedisManagedProjection p) {
+  static int getSize(RedisProjection p) {
     RedisBatched annotation = p.getClass().getAnnotation(RedisBatched.class);
     if (annotation == null) {
       throw new IllegalStateException(
@@ -56,7 +56,7 @@ public class RedisBatchedLens extends AbstractRedisLens {
   }
 
   @VisibleForTesting
-  static BatchOptions createOpts(RedisManagedProjection p) {
+  static BatchOptions createOpts(RedisProjection p) {
     RedisBatched annotation = p.getClass().getAnnotation(RedisBatched.class);
     if (annotation == null) {
       throw new IllegalStateException(

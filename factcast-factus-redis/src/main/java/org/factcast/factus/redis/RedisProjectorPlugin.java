@@ -17,7 +17,7 @@ public class RedisProjectorPlugin implements ProjectorPlugin {
   @Nullable
   @Override
   public Collection<ProjectorLens> lensFor(Projection p) {
-    if (p instanceof RedisManagedProjection) {
+    if (p instanceof RedisProjection) {
 
       RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
       RedisBatched batched = p.getClass().getAnnotation(RedisBatched.class);
@@ -32,18 +32,17 @@ public class RedisProjectorPlugin implements ProjectorPlugin {
                 + p.getClass().getName());
       }
 
-      RedisManagedProjection redisManagedProjection = (RedisManagedProjection) p;
-      RedissonClient redissonClient = redisManagedProjection.redisson();
+      RedisProjection redisProjection = (RedisProjection) p;
+      RedissonClient redissonClient = redisProjection.redisson();
 
       if (transactional != null) {
         return Collections.singletonList(
-            new RedisTransactionalLens(redisManagedProjection, redissonClient));
+            new RedisTransactionalLens(redisProjection, redissonClient));
       }
 
       //noinspection SingleStatementInBlock
       if (batched != null) {
-        return Collections.singletonList(
-            new RedisBatchedLens(redisManagedProjection, redissonClient));
+        return Collections.singletonList(new RedisBatchedLens(redisProjection, redissonClient));
       }
     }
 
