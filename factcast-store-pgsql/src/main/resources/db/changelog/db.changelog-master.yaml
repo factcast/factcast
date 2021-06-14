@@ -61,3 +61,6 @@ databaseChangeLog:
         - include:
             file: factcast/issue1358/unique_index_using_uuids.sql
             relativeToChangelogFile: true
+
+
+
