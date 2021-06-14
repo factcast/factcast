@@ -217,8 +217,11 @@ public class PgConstants {
           + " FROM "
           + TABLE_FACT
           + " WHERE "
+          + " (("
           + COLUMN_HEADER
-          + " @> cast (? as jsonb)";
+          + "->>'"
+          + ALIAS_ID
+          + "')::uuid) = CAST(? as uuid)";
 
   public static final String SELECT_STATE_FROM_TOKEN =
       "SELECT " + COLUMN_STATE + " FROM " + TABLE_TOKENSTORE + " WHERE " + COLUMN_TOKEN + "=?";
