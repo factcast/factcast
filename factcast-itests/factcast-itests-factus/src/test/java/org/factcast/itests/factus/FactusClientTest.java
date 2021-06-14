@@ -20,11 +20,10 @@ import static java.util.UUID.*;
 import static java.util.stream.Collectors.*;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
 import static org.assertj.core.api.Assertions.*;
-
 import com.google.common.base.Stopwatch;
 import config.RedissonProjectionConfiguration;
-import java.util.*;
 import java.util.ArrayList;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
@@ -46,7 +45,6 @@ import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.*;
-import org.redisson.api.RMap;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
@@ -120,116 +118,6 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     assertThat(externalizedUserNames.contains("Brian")).isTrue();
   }
 
-  @SneakyThrows
-  @Test
-  public void reddisTxPerformance() {
-    int MAX = 100000;
-
-    {
-      RMap r = redissonClient.getMap("hubba");
-
-      measure(
-          "same rmap, no tx",
-          () -> {
-            for (int i = 0; i < MAX; i++) {
-              r.put("" + i, "" + i);
-            }
-          });
-    }
-
-    measure(
-        "new rmap, no tx",
-        () -> {
-          for (int i = 0; i < MAX; i++) {
-            redissonClient.getMap("bubba").put("" + i, "" + i);
-          }
-        });
-
-    RTransaction tx =
-        redissonClient.createTransaction(
-            TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
-    val r = tx.getMap("schubba");
-    measure(
-        "same rmap, one tx",
-        () -> {
-          for (int i = 0; i < MAX; i++) {
-            r.put("" + i, "" + i);
-          }
-        });
-
-    measure("commit", tx::commit);
-
-    val ntx =
-        redissonClient.createTransaction(
-            TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
-    measure(
-        "new rmap, one tx",
-        () -> {
-          for (int i = 0; i < MAX; i++) {
-            ntx.getMap("bubba").put("" + i, "" + i);
-          }
-        });
-
-    measure("commit", ntx::commit);
-
-    measure(
-        "new rmap, tx commit every 1000",
-        () -> {
-          RTransaction x =
-              redissonClient.createTransaction(
-                  TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
-
-          for (int i = 0; i < MAX; i++) {
-            x.getMap("bubba").put("" + i, "" + i);
-
-            if (i % 1000 == 0) {
-              x.commit();
-              x =
-                  redissonClient.createTransaction(
-                      TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
-            }
-          }
-          x.commit();
-        });
-
-    measure(
-        "new rmap, tx commit every 1000 async",
-        () -> {
-          RTransaction x =
-              redissonClient.createTransaction(
-                  TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
-
-          for (int i = 0; i < MAX; i++) {
-            x.getMap("bubba").put("" + i, "" + i);
-
-            if (i % 1000 == 0) {
-              x.commitAsync();
-              x =
-                  redissonClient.createTransaction(
-                      TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
-            }
-          }
-          x.commit();
-        });
-
-    measure(
-        "new rmap, tx commit every put",
-        () -> {
-          RTransaction x =
-              redissonClient.createTransaction(
-                  TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
-
-          for (int i = 0; i < MAX; i++) {
-            x.getMap("bubba").put("" + i, "" + i);
-
-            x.commit();
-            x =
-                redissonClient.createTransaction(
-                    TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
-          }
-        });
-  }
-
   public void measure(String s, Runnable r) {
     val sw = Stopwatch.createStarted();
     r.run();
@@ -238,6 +126,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @SneakyThrows
   @Test
+  @Disabled // TODO remove
   public void txBatchProcessingPerformance() {
 
     int MAX = 10000;

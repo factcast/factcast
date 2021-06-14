@@ -45,8 +45,8 @@ public class RedisWriterToken implements WriterToken {
 
   @Override
   public void close() throws Exception {
-    lock.unlock();
     timer.cancel();
+    lock.unlock();
   }
 
   @Override
