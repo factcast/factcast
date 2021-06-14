@@ -177,16 +177,14 @@ public class PgFactStore extends AbstractFactStore {
   }
 
   @Override
-  public @NonNull OptionalLong serialOf(@NonNull UUID l) {
+  public @NonNull OptionalLong serialOf(@NonNull UUID factId) {
     return metrics.time(
         OP.SERIAL_OF,
         () -> {
           try {
             Long res =
                 jdbcTemplate.queryForObject(
-                    PgConstants.SELECT_SER_BY_ID,
-                    new Object[] {"{\"id\":\"" + l + "\"}"},
-                    Long.class);
+                    PgConstants.SELECT_SER_BY_ID, new Object[] {factId}, Long.class);
 
             if (res != null && res > 0) {
               return OptionalLong.of(res);

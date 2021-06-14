@@ -19,11 +19,5 @@ public class TagKeys {
 
   public static final String CLASS = "class";
 
-  public static final String LOCKED = "locked";
-
-  public static final String TRUE = "true";
-
-  public static final String FALSE = "false";
-
   public static final String TAG_NAME = "name";
 }
