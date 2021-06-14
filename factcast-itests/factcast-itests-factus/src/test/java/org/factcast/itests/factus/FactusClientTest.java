@@ -20,11 +20,10 @@ import static java.util.UUID.*;
 import static java.util.stream.Collectors.*;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
 import static org.assertj.core.api.Assertions.*;
-
 import com.google.common.base.Stopwatch;
 import config.RedissonProjectionConfiguration;
-import java.util.*;
 import java.util.ArrayList;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
@@ -75,6 +74,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @Autowired RedissonManagedUserNames externalizedUserNames;
   @Autowired TxRedissonManagedUserNames transactionalExternalizedUserNames;
+  @Autowired TxRedissonSubscribedUserNames transactionalExternalizedSubscribedUserNames;
 
   @Autowired SubscribedUserNames subscribedUserNames;
 
@@ -284,6 +284,30 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       p.clear();
       p.state(new UUID(0, 0));
     }
+
+    // ------------ sub
+
+    // ----------tx
+    {
+      val sw = Stopwatch.createStarted();
+      TxRedissonSubscribedUserNames p = new TxRedissonSubscribedUserNames(redissonClient);
+      val sub = factus.subscribeAndBlock(p);
+      sub.awaitCatchup();
+      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+
+    {
+      val sw = Stopwatch.createStarted();
+      TxRedissonSubscribedUserNames p = new TxRedissonSubscribedUserNames(redissonClient);
+      val sub = factus.subscribeAndBlock(p);
+      sub.awaitCatchup();
+      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+
     // ------------ batch
     {
       val sw = Stopwatch.createStarted();
