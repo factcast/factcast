@@ -136,6 +136,22 @@ public class PgConfigurationProperties
    */
   boolean integrationTestMode = false;
 
+  /** tail indexing feature state */
+  boolean tailIndexingEnabled = true;
+
+  /**
+   * the number of tail indexes to keep. The higher the number, the slower the inserts. Probably 2
+   * or 3 is a good value unless you have a very high tail rebuild frequency and not permanently
+   * connected applications (like offline clients for instance)
+   */
+  int tailGenerationsToKeep = 3;
+
+  /**
+   * Minimum tail age in days. Tail rotation will be skipped, unless the age of the youngest
+   * existing tail is at least X day(s) old.
+   */
+  int minimumTailAgeInDays = 7;
+
   @Override
   public void onApplicationEvent(@Nonnull ApplicationReadyEvent event) {
     List<Entry<String, Object>> legacyProperties =

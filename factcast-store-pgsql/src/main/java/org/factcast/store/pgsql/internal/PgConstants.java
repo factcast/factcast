@@ -34,6 +34,11 @@ public class PgConstants {
   public static final String TABLE_CATCHUP = "catchup";
 
   public static final String TABLE_FACT = "fact";
+  public static final String LIST_FACT_INDEXES =
+      "select indexname from pg_indexes where tablename = '"
+          + TABLE_FACT
+          + "' and indexname like 'idx_fact_tail_%' order by indexname desc";
+  public static final String LAST_SERIAL_IN_LOG = "select COALESCE(max(ser),0) from fact";
 
   private static final String TABLE_TOKENSTORE = "tokenstore";
 
@@ -226,5 +231,22 @@ public class PgConstants {
 
   private static String fromHeader(String attributeName) {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
+  }
+
+  public static String createTailIndex(long epoch, long ser) {
+    return "create index concurrently idx_fact_tail_"
+        + epoch
+        + " on "
+        + TABLE_FACT
+        + " using GIN("
+        + COLUMN_HEADER
+        + ") WHERE "
+        + COLUMN_SER
+        + ">"
+        + ser;
+  }
+
+  public static String dropTailIndex(String indexName) {
+    return "drop index " + indexName;
   }
 }
