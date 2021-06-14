@@ -53,13 +53,6 @@ databaseChangeLog:
   - include:
       file: factcast/issue1161/storage-setting.sql
       relativeToChangelogFile: true
-  - changeSet:
-      id: id_lookup_index
-      runInTransaction: false
-      author: uweschaefer
-      changes:
-        - include:
-            file: factcast/issue1359/id_lookup_index.sql
-            relativeToChangelogFile: true
+
 
 
