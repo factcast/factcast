@@ -24,7 +24,6 @@ import org.factcast.factus.Handler;
 import org.factcast.factus.redis.AbstractRedisSubscribedProjection;
 import org.factcast.factus.redis.UUIDCodec;
 import org.factcast.factus.redis.tx.RedisTransactional;
-import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.redisson.api.RMap;
@@ -39,7 +38,7 @@ import org.redisson.codec.MarshallingCodec;
 @RedisTransactional(size = 50)
 public class TxRedissonSubscribedUserNames extends AbstractRedisSubscribedProjection {
 
-  private final Codec codec =
+  protected final Codec codec =
       new CompositeCodec(UUIDCodec.INSTANCE, new LZ4Codec(new MarshallingCodec()));
 
   public TxRedissonSubscribedUserNames(RedissonClient redisson) {
@@ -71,32 +70,13 @@ public class TxRedissonSubscribedUserNames extends AbstractRedisSubscribedProjec
   // variant 1
   @SneakyThrows
   @Handler
-  void apply(UserCreated created, RTransaction tx) {
-    //    redissonTxManager()
-    //        .join(
-    //            tx2 -> {
-    //              RMap<UUID, String> userNames = tx2.getMap(redisKey());
-    //              userNames.put(created.aggregateId(), created.userName());
-    //            });
-
+  protected void apply(UserCreated created, RTransaction tx) {
     RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
     userNames.fastPut(created.aggregateId(), created.userName());
   }
 
-  //  // variant 2
-  //  @Handler
-  //  void apply(UserDeleted deleted) {
-  //    RMap<UUID, String> userNames = redissonTXManager().getOrCreate().getMap(redisKey());
-  //    userNames.remove(deleted.aggregateId());
-  //  }
-
-  //  // variant 3
   @Handler
-  void apply(UserDeleted deleted) {
-    RedissonTxManager txm = RedissonTxManager.get(redisson);
-    txm.join(
-        tx -> {
-          tx.getMap(redisKey(), codec).fastRemove(deleted.aggregateId());
-        });
+  protected void apply(UserDeleted deleted, RTransaction tx) {
+    tx.getMap(redisKey(), codec).fastRemove(deleted.aggregateId());
   }
 }

@@ -139,12 +139,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       lenses.forEach(l -> l.beforeFactProcessing(f));
       dispatch.invoke(projection, f, createParameterTransformer(dispatch.dispatchMethod));
 
-      // maybe find a way to skip state setting within catchup phase when batching to make it even
-      // more efficient ? only if necessary
-
       if (projection instanceof StateAware) {
-        boolean skipStateUodate = false;
-
         boolean skip =
             lenses.stream()
                 .map(ProjectorLens::skipStateUpdate)
@@ -241,9 +236,14 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   }
 
   @Override
-  public void onCatchup() {
+  public void onCatchup(UUID idOfLastFactApplied) {
     for (ProjectorLens lens : lenses) {
       lens.onCatchup(projection);
+    }
+    if (projection instanceof StateAware) {
+      if (idOfLastFactApplied != null) {
+        ((StateAware) projection).state(idOfLastFactApplied);
+      }
     }
   }
 
@@ -288,7 +288,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     @NonNull Method dispatchMethod;
 
-    @NonNull TargetObjectResolver objectResolver;
+    @NonNull ProjectorImpl.TargetObjectResolver objectResolver;
 
     //    @NonNull ParameterTransformer parameterTransformer;
 

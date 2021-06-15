@@ -30,22 +30,39 @@ public abstract class AbstractRedisLens implements ProjectorLens {
   @Override
   public void beforeFactProcessing(Fact f) {
     if (batchSize > 1) {
-      start.getAndUpdate(l -> l > 0 ? l : System.currentTimeMillis());
+      long now = System.currentTimeMillis();
+      start.getAndUpdate(
+          l -> {
+            return l > 0 ? l : now;
+          });
     }
   }
 
   @Override
   public void afterFactProcessing(Fact f) {
-    count.incrementAndGet();
     if (shouldFlush()) {
       flush();
     }
+    count.incrementAndGet();
   }
 
   @VisibleForTesting
   public boolean shouldFlush() {
-    return count.get() >= batchSize
-        || ((flushTimeout > 0) && (System.currentTimeMillis() - start.get() > flushTimeout));
+    boolean bufferFull = count.get() >= batchSize;
+    boolean timedOut = timedOut();
+    if (timedOut) {
+      log.debug(
+          "Flushing due to timeout. (Bulk age: {}ms, Bulk timeout: {})",
+          System.currentTimeMillis() - start.get(),
+          flushTimeout);
+    }
+
+    return bufferFull || timedOut;
+  }
+
+  private boolean timedOut() {
+    long batchTime = System.currentTimeMillis() - start.get();
+    return (flushTimeout > 0) && (batchTime > flushTimeout);
   }
 
   @Override
@@ -66,7 +83,9 @@ public abstract class AbstractRedisLens implements ProjectorLens {
 
   @Override
   public boolean skipStateUpdate() {
-    return isBatching() && !shouldFlush();
+    boolean batching = isBatching();
+    boolean noFlushNecessary = !shouldFlush();
+    return batching && noFlushNecessary;
   }
 
   public void flush() {
