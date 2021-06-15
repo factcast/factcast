@@ -2,6 +2,7 @@ package org.factcast.itests.factus;
 
 import static java.util.UUID.*;
 import static org.assertj.core.api.Assertions.*;
+
 import config.RedissonProjectionConfiguration;
 import java.util.ArrayList;
 import java.util.UUID;
