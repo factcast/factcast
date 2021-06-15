@@ -15,11 +15,10 @@
  */
 package org.factcast.factus.redis;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
 import lombok.val;
 import org.factcast.factus.projection.WriterToken;
@@ -32,7 +31,8 @@ public class RedisWriterToken implements WriterToken {
   private final AtomicBoolean liveness;
 
   @VisibleForTesting
-  protected RedisWriterToken(@NonNull RedissonClient redisson, @NonNull RLock lock, @NonNull Timer timer) {
+  protected RedisWriterToken(
+      @NonNull RedissonClient redisson, @NonNull RLock lock, @NonNull Timer timer) {
     this.lock = lock;
     this.timer = timer;
     liveness = new AtomicBoolean(lock.isLocked());
@@ -50,7 +50,6 @@ public class RedisWriterToken implements WriterToken {
   public RedisWriterToken(@NonNull RedissonClient redisson, @NonNull RLock lock) {
     this(redisson, lock, new Timer());
   }
-
 
   @Override
   public void close() throws Exception {
