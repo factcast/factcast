@@ -16,7 +16,6 @@
 package org.factcast.factus;
 
 import static org.factcast.factus.metrics.TagKeys.*;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.Tag;
@@ -193,15 +192,19 @@ public class FactusImpl implements Factus {
         new FactObserver() {
           final AtomicBoolean caughtUp = new AtomicBoolean(false);
 
+          UUID lastFactIdApplied = null;
+
           @Override
           public void onNext(@NonNull Fact element) {
 
             if (token.isValid()) {
 
+              lastFactIdApplied = element.id();
+
               subscribedProjection.executeUpdate(
                   () -> {
                     handler.apply(element);
-                    subscribedProjection.state(element.id());
+                    // don NOT set state here, wil be handled by the apply call above
                   });
 
               if (caughtUp.get()) {
@@ -224,6 +227,7 @@ public class FactusImpl implements Factus {
           @Override
           public void onCatchup() {
             caughtUp.set(true);
+            handler.onCatchup(lastFactIdApplied);
             subscribedProjection.onCatchup();
           }
 
@@ -357,9 +361,13 @@ public class FactusImpl implements Factus {
 
     FactObserver fo =
         new FactObserver() {
+          @NonNull UUID id = null;
+
           @Override
           public void onNext(@NonNull Fact element) {
             // TODO remove execUpdate?
+
+            id = element.id();
             projection.executeUpdate(
                 () -> {
                   handler.apply(element);
@@ -378,7 +386,7 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onCatchup() {
-            handler.onCatchup();
+            handler.onCatchup(id);
             projection.onCatchup();
           }
 
