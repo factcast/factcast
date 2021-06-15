@@ -2,6 +2,7 @@ package org.factcast.itests.factus;
 
 import static java.util.UUID.*;
 import static org.assertj.core.api.Assertions.*;
+
 import config.RedissonProjectionConfiguration;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -14,6 +15,7 @@ import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.redis.batch.RedisBatched;
 import org.factcast.itests.factus.event.UserCreated;
+import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.BatchRedissonManagedUserNames;
 import org.factcast.itests.factus.proj.BatchRedissonSubscribedUserNames;
 import org.factcast.test.AbstractFactCastIntegrationTest;
@@ -35,6 +37,57 @@ public class RedisBatchingTest extends AbstractFactCastIntegrationTest {
   @Autowired Factus factus;
   @Autowired RedissonClient redissonClient;
   final int NUMBER_OF_EVENTS = 10;
+
+  @Nested
+  class MixedEvents {
+    @BeforeEach
+    public void setup() {
+      val l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
+      for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
+        UUID id = randomUUID();
+        l.add(new UserCreated(id, "" + i));
+        if (i > 0) {
+          l.add(new UserDeleted(id));
+        }
+      }
+      log.info("publishing {} Events ", NUMBER_OF_EVENTS);
+      factus.publish(l);
+    }
+
+    @SneakyThrows
+    @Test
+    public void mixedBatchManaged3() {
+      BatchRedissonManagedUserNamesSize3 p = new BatchRedissonManagedUserNamesSize3(redissonClient);
+      factus.update(p);
+      assertThat(p.userNames().size()).isEqualTo(1);
+    }
+
+    @SneakyThrows
+    @Test
+    public void mixedBatchManaged2() {
+      BatchRedissonManagedUserNamesSize2 p = new BatchRedissonManagedUserNamesSize2(redissonClient);
+      factus.update(p);
+      assertThat(p.userNames().size()).isEqualTo(1);
+    }
+
+    @SneakyThrows
+    @Test
+    public void mixedBatchSubscribed3() {
+      BatchRedissonSubscribedUserNamesSize3 p =
+          new BatchRedissonSubscribedUserNamesSize3(redissonClient);
+      factus.subscribeAndBlock(p).awaitCatchup();
+      assertThat(p.userNames().size()).isEqualTo(1);
+    }
+
+    @SneakyThrows
+    @Test
+    public void mixedBatchSubscribed2() {
+      BatchRedissonSubscribedUserNamesSize2 p =
+          new BatchRedissonSubscribedUserNamesSize2(redissonClient);
+      factus.subscribeAndBlock(p).awaitCatchup();
+      assertThat(p.userNames().size()).isEqualTo(1);
+    }
+  }
 
   @Nested
   class Managed {
