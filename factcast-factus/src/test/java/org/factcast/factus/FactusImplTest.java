@@ -775,8 +775,6 @@ class FactusImplTest {
     @Captor ArgumentCaptor<FactObserver> factObserverArgumentCaptor;
 
     @Test
-    @Disabled
-    // TODO fixme uwe
     void subscribe() throws Exception {
       // INIT
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
@@ -796,6 +794,13 @@ class FactusImplTest {
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
       when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
+      doAnswer(
+              i -> {
+                subscribedProjection.state(((Fact) (i.getArgument(0))).id());
+                return null;
+              })
+          .when(eventApplier)
+          .apply(any(Fact.class));
 
       Subscription subscription = mock(Subscription.class);
       when(fc.subscribe(any(), any())).thenReturn(subscription);
