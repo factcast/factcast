@@ -87,10 +87,10 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   public long targetSer() {
     return target.targetSer();
   }
-}
 
-@Data
-class HighWaterMark {
-  private UUID targetId = null;
-  private long targetSer = 0;
+  @Data
+  static class HighWaterMark {
+    private UUID targetId = null;
+    private long targetSer = 0;
+  }
 }
