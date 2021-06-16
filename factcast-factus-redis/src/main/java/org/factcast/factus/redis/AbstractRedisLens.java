@@ -18,7 +18,7 @@ public abstract class AbstractRedisLens implements ProjectorLens {
   final AtomicLong start = new AtomicLong(0);
   protected final Class<? extends Projection> projectionName;
 
-  @Setter protected int batchSize = 1;
+  @Setter protected int bulkSize = 1;
   @Setter protected long flushTimeout = 0;
   protected final RedissonClient client;
 
@@ -29,7 +29,7 @@ public abstract class AbstractRedisLens implements ProjectorLens {
 
   @Override
   public void beforeFactProcessing(Fact f) {
-    if (batchSize > 1) {
+    if (bulkSize > 1) {
       long now = System.currentTimeMillis();
       start.getAndUpdate(
           l -> {
@@ -48,7 +48,7 @@ public abstract class AbstractRedisLens implements ProjectorLens {
 
   @VisibleForTesting
   public boolean shouldFlush() {
-    boolean bufferFull = count.get() >= batchSize;
+    boolean bufferFull = count.get() >= bulkSize;
     boolean timedOut = timedOut();
     if (timedOut) {
       log.debug(
@@ -61,35 +61,34 @@ public abstract class AbstractRedisLens implements ProjectorLens {
   }
 
   private boolean timedOut() {
-    long batchTime = System.currentTimeMillis() - start.get();
-    return (flushTimeout > 0) && (batchTime > flushTimeout);
+    return (flushTimeout > 0) && (System.currentTimeMillis() - start.get() > flushTimeout);
   }
 
   @Override
   public void onCatchup(Projection p) {
     flush();
-    // disable batching from here on
-    if (isBatching()) {
-      log.debug("Disabling batching after catchup for {}", projectionName);
-      batchSize = 1;
+    // disable bulk applying from here on
+    if (isBulkApplying()) {
+      log.debug("Disabling bulk application after catchup for {}", projectionName);
+      bulkSize = 1;
       flushTimeout = 0;
     }
   }
 
   @VisibleForTesting
-  public boolean isBatching() {
-    return batchSize > 1;
+  public boolean isBulkApplying() {
+    return bulkSize > 1;
   }
 
   @Override
   public boolean skipStateUpdate() {
-    boolean batching = isBatching();
+    boolean bulk = isBulkApplying();
     boolean noFlushNecessary = !shouldFlush();
-    return batching && noFlushNecessary;
+    return bulk && noFlushNecessary;
   }
 
   public void flush() {
-    if (batchSize > 1) {
+    if (bulkSize > 1) {
       start.set(0);
       int processed = count.getAndSet(0);
       log.trace("Flushing on {}, number of facts processed={}", projectionName, processed);

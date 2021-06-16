@@ -38,6 +38,10 @@ public class RedisBatchingTest extends AbstractFactCastIntegrationTest {
   @Autowired RedissonClient redissonClient;
   final int NUMBER_OF_EVENTS = 10;
 
+
+  //TODO test rollback/discard behavior
+  //TODO read state during bulk update
+
   @Nested
   class MixedEvents {
     @BeforeEach

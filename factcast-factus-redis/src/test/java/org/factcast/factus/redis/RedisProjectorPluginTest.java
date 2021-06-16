@@ -65,21 +65,19 @@ class DoubleFeature extends AbstractRedisManagedProjection {
   }
 }
 
-@RedisTransactional
-class TX extends AbstractRedisManagedProjection {
+class TX extends ARedisTransactionalManagedProjection {
   public TX(@NonNull RedissonClient redisson) {
     super(redisson);
   }
 }
 
-@RedisBatched
-class BA extends ARedisTransactionalManagedProjection {
+class BA extends ARedisBatchedManagedProjection {
   public BA(@NonNull RedissonClient redisson) {
     super(redisson);
   }
 }
 
-class None extends ARedisTransactionalManagedProjection {
+class None extends AbstractRedisManagedProjection {
   public None(@NonNull RedissonClient redisson) {
     super(redisson);
   }

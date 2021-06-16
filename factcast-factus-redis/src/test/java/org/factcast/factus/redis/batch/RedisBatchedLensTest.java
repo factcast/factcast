@@ -38,7 +38,7 @@ class RedisBatchedLensTest {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       val underTest = new RedisBatchedLens(p, client);
 
-      underTest.batchSize(100);
+      underTest.bulkSize(100);
       underTest.start().set(0L);
 
       underTest.beforeFactProcessing(f);
@@ -92,10 +92,10 @@ class RedisBatchedLensTest {
 
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       val underTest = spy(new RedisBatchedLens(p, client));
-      assertThat(underTest.batchSize()).isNotEqualTo(1);
+      assertThat(underTest.bulkSize()).isNotEqualTo(1);
       underTest.onCatchup(p);
 
-      assertThat(underTest.batchSize()).isEqualTo(1);
+      assertThat(underTest.bulkSize()).isEqualTo(1);
     }
   }
 
@@ -110,12 +110,12 @@ class RedisBatchedLensTest {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       val underTest = spy(new RedisBatchedLens(p, client));
       when(underTest.shouldFlush()).thenReturn(false, false, true, true);
-      when(underTest.isBatching()).thenReturn(false, true, false, true);
+      when(underTest.isBulkApplying()).thenReturn(false, true, false, true);
 
       assertThat(underTest.skipStateUpdate()).isFalse();
       assertThat(underTest.skipStateUpdate()).isTrue();
       assertThat(underTest.skipStateUpdate()).isFalse();
-      assertThat(underTest.skipStateUpdate()).isTrue();
+      assertThat(underTest.skipStateUpdate()).isFalse();
     }
   }
 
