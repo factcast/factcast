@@ -51,6 +51,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   private final Projection projection;
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
   private final List<ProjectorLens> lenses;
+  private UUID lastStateSet = null;
 
   interface TargetObjectResolver extends Function<Projection, Object> {}
 
@@ -121,7 +122,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   @Override
   public void apply(@NonNull Fact f) {
-    log.trace("Dispatching fact {}", f.id());
+    UUID factId = f.id();
+    log.trace("Dispatching fact {}", factId);
     val coords = FactSpecCoordinates.from(f);
     Dispatcher dispatch = dispatchInfo.get(coords);
     if (dispatch == null) {
@@ -146,14 +148,15 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                 .reduce(false, (r, lens) -> r || lens);
 
         if (!skip) {
-          ((StateAware) projection).state(f.id());
+          ((StateAware) projection).state(factId);
+          lastStateSet = factId;
         }
       }
 
       lenses.forEach(l -> l.afterFactProcessing(f));
 
     } catch (InvocationTargetException | IllegalAccessException e) {
-      log.trace("returned with Exception {}:", f.id(), e);
+      log.trace("returned with Exception {}:", factId, e);
 
       // inform the lenses
       lenses.forEach(l -> l.afterFactProcessingFailed(f, e));
@@ -241,7 +244,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       lens.onCatchup(projection);
     }
     if (projection instanceof StateAware) {
-      if (idOfLastFactApplied != null) {
+      if (idOfLastFactApplied != null && (idOfLastFactApplied != lastStateSet)) {
         ((StateAware) projection).state(idOfLastFactApplied);
       }
     }

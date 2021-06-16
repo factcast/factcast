@@ -40,15 +40,25 @@ public abstract class AbstractRedisLens implements ProjectorLens {
 
   @Override
   public void afterFactProcessing(Fact f) {
+    count.incrementAndGet();
     if (shouldFlush()) {
       flush();
     }
-    count.incrementAndGet();
   }
 
   @VisibleForTesting
   public boolean shouldFlush() {
-    boolean bufferFull = count.get() >= bulkSize;
+    return shouldFlush(false);
+  }
+
+  @VisibleForTesting
+  public boolean shouldFlush(boolean addOne) {
+    int factsProcessed = count.get(); // +1 because the increment happens AFTER processing
+    if (addOne) {
+      factsProcessed++;
+    }
+
+    boolean bufferFull = factsProcessed >= bulkSize;
     boolean timedOut = timedOut();
     if (timedOut) {
       log.debug(
@@ -66,7 +76,9 @@ public abstract class AbstractRedisLens implements ProjectorLens {
 
   @Override
   public void onCatchup(Projection p) {
-    flush();
+    if (count.get() > 0) {
+      flush();
+    }
     // disable bulk applying from here on
     if (isBulkApplying()) {
       log.debug("Disabling bulk application after catchup for {}", projectionName);
@@ -83,7 +95,7 @@ public abstract class AbstractRedisLens implements ProjectorLens {
   @Override
   public boolean skipStateUpdate() {
     boolean bulk = isBulkApplying();
-    boolean noFlushNecessary = !shouldFlush();
+    boolean noFlushNecessary = !shouldFlush(true);
     return bulk && noFlushNecessary;
   }
 
@@ -115,4 +127,8 @@ public abstract class AbstractRedisLens implements ProjectorLens {
   protected abstract void doClear();
 
   protected abstract void doFlush();
+
+  void increaseCountForTesting() {
+    count.incrementAndGet();
+  }
 }
