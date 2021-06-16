@@ -177,6 +177,8 @@ public class PgFactStore extends AbstractFactStore {
   }
 
   @Override
+  // TODO add caching
+  // TODO add cache hit/miss metric
   public @NonNull OptionalLong serialOf(@NonNull UUID factId) {
     return metrics.time(
         OP.SERIAL_OF,
