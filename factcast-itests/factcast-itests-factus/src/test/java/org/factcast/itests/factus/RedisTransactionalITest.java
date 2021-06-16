@@ -82,25 +82,24 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
     }
 
-    // TODO
-    //    @SneakyThrows
-    //    @Test
-    //    public void rollsBack() {
-    //      BatchRedissonManagedUserNamesSizeBlowAt7th p =
-    //              new BatchRedissonManagedUserNamesSizeBlowAt7th(redissonClient);
-    //
-    //      assertThat(p.userNames()).isEmpty();
-    //
-    //      try {
-    //        factus.update(p);
-    //      } catch (Throwable expected) {
-    //        // ignore
-    //      }
-    //
-    //      // only first bulk (size = 5) should be executed
-    //      assertThat(p.userNames().size()).isEqualTo(5);
-    //      assertThat(p.stateModifications()).isEqualTo(1);
-    //    }
+    @SneakyThrows
+    @Test
+    public void rollsBack() {
+      TxRedissonManagedUserNamesSizeBlowAt7th p =
+          new TxRedissonManagedUserNamesSizeBlowAt7th(redissonClient);
+
+      assertThat(p.userNames()).isEmpty();
+
+      try {
+        factus.update(p);
+      } catch (Throwable expected) {
+        // ignore
+      }
+
+      // only first bulk (size = 5) should be executed
+      assertThat(p.userNames().size()).isEqualTo(5);
+      assertThat(p.stateModifications()).isEqualTo(1);
+    }
   }
 
   @Nested
@@ -147,112 +146,146 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
     }
 
-    // TODO
-    //    @SneakyThrows
-    //    @Test
-    //    public void rollsBack() {
-    //      BatchRedissonManagedUserNamesSizeBlowAt7th p =
-    //              new BatchRedissonManagedUserNamesSizeBlowAt7th(redissonClient);
-    //
-    //      assertThat(p.userNames()).isEmpty();
-    //
-    //      try {
-    //        factus.update(p);
-    //      } catch (Throwable expected) {
-    //        // ignore
-    //      }
-    //
-    //      // only first bulk (size = 5) should be executed
-    //      assertThat(p.userNames().size()).isEqualTo(5);
-    //      assertThat(p.stateModifications()).isEqualTo(1);
-    //    }
-  }
-}
+    @SneakyThrows
+    @Test
+    public void rollsBack() {
+      TxRedissonSubscribedUserNamesSizeBlowAt7th p =
+          new TxRedissonSubscribedUserNamesSizeBlowAt7th(redissonClient);
 
-class TrackingTxRedissonManagedUserNames extends TxRedissonManagedUserNames {
-  public TrackingTxRedissonManagedUserNames(RedissonClient redisson) {
-    super(redisson);
+      assertThat(p.userNames()).isEmpty();
+
+      try {
+        factus.subscribeAndBlock(p).awaitCatchup();
+      } catch (Throwable expected) {
+        // ignore
+      }
+
+      // only first bulk (size = 5) should be executed
+      assertThat(p.userNames().size()).isEqualTo(5);
+      assertThat(p.stateModifications()).isEqualTo(1);
+    }
   }
 
-  @Getter int stateModifications = 0;
+  static class TrackingTxRedissonManagedUserNames extends TxRedissonManagedUserNames {
+    public TrackingTxRedissonManagedUserNames(RedissonClient redisson) {
+      super(redisson);
+    }
 
-  @Override
-  public void state(@NonNull UUID state) {
-    stateModifications++;
-    super.state(state);
-  }
-}
+    @Getter int stateModifications = 0;
 
-class TrackingTxRedissonSubscribedUserNames extends TxRedissonSubscribedUserNames {
-  public TrackingTxRedissonSubscribedUserNames(RedissonClient redisson) {
-    super(redisson);
-  }
-
-  @Getter int stateModifications = 0;
-
-  @Override
-  public void state(@NonNull UUID state) {
-    stateModifications++;
-    super.state(state);
-  }
-}
-
-@RedisTransactional(size = 2)
-class TxRedissonManagedUserNamesSize2 extends TrackingTxRedissonManagedUserNames {
-  public TxRedissonManagedUserNamesSize2(RedissonClient redisson) {
-    super(redisson);
-  }
-}
-
-@RedisTransactional(size = 3)
-class TxRedissonManagedUserNamesSize3 extends TrackingTxRedissonManagedUserNames {
-  public TxRedissonManagedUserNamesSize3(RedissonClient redisson) {
-    super(redisson);
-  }
-}
-
-@RedisTransactional(size = 3000000, timeout = 1000) // will flush after 800ms
-class TxRedissonManagedUserNamesTimeout extends TrackingTxRedissonManagedUserNames {
-  public TxRedissonManagedUserNamesTimeout(RedissonClient redisson) {
-    super(redisson);
+    @Override
+    public void state(@NonNull UUID state) {
+      stateModifications++;
+      super.state(state);
+    }
   }
 
-  @Override
-  @SneakyThrows
-  protected void apply(UserCreated created, RTransaction tx) {
-    RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
-    userNames.fastPut(created.aggregateId(), created.userName());
+  static class TrackingTxRedissonSubscribedUserNames extends TxRedissonSubscribedUserNames {
+    public TrackingTxRedissonSubscribedUserNames(RedissonClient redisson) {
+      super(redisson);
+    }
 
-    Thread.sleep(100);
-  }
-}
+    @Getter int stateModifications = 0;
 
-@RedisTransactional(size = 2)
-class TxRedissonSubscribedUserNamesSize2 extends TrackingTxRedissonSubscribedUserNames {
-  public TxRedissonSubscribedUserNamesSize2(RedissonClient redisson) {
-    super(redisson);
-  }
-}
-
-@RedisTransactional(size = 3)
-class TxRedissonSubscribedUserNamesSize3 extends TrackingTxRedissonSubscribedUserNames {
-  public TxRedissonSubscribedUserNamesSize3(RedissonClient redisson) {
-    super(redisson);
-  }
-}
-
-@RedisTransactional(size = 3000000, timeout = 1000) // will flush after 800ms
-class TxRedissonSubscribedUserNamesTimeout extends TrackingTxRedissonSubscribedUserNames {
-  public TxRedissonSubscribedUserNamesTimeout(RedissonClient redisson) {
-    super(redisson);
+    @Override
+    public void state(@NonNull UUID state) {
+      stateModifications++;
+      super.state(state);
+    }
   }
 
-  @Override
-  @SneakyThrows
-  protected void apply(UserCreated created, RTransaction tx) {
-    RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
-    userNames.fastPut(created.aggregateId(), created.userName());
+  @RedisTransactional(size = 2)
+  static class TxRedissonManagedUserNamesSize2 extends TrackingTxRedissonManagedUserNames {
+    public TxRedissonManagedUserNamesSize2(RedissonClient redisson) {
+      super(redisson);
+    }
+  }
 
-    Thread.sleep(100);
+  @RedisTransactional(size = 3)
+  static class TxRedissonManagedUserNamesSize3 extends TrackingTxRedissonManagedUserNames {
+    public TxRedissonManagedUserNamesSize3(RedissonClient redisson) {
+      super(redisson);
+    }
+  }
+
+  @RedisTransactional(size = 3000000, timeout = 1000) // will flush after 800ms
+  static class TxRedissonManagedUserNamesTimeout extends TrackingTxRedissonManagedUserNames {
+    public TxRedissonManagedUserNamesTimeout(RedissonClient redisson) {
+      super(redisson);
+    }
+
+    @Override
+    @SneakyThrows
+    protected void apply(UserCreated created, RTransaction tx) {
+      RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
+      userNames.fastPut(created.aggregateId(), created.userName());
+
+      Thread.sleep(100);
+    }
+  }
+
+  @RedisTransactional(size = 2)
+  static class TxRedissonSubscribedUserNamesSize2 extends TrackingTxRedissonSubscribedUserNames {
+    public TxRedissonSubscribedUserNamesSize2(RedissonClient redisson) {
+      super(redisson);
+    }
+  }
+
+  @RedisTransactional(size = 3)
+  static class TxRedissonSubscribedUserNamesSize3 extends TrackingTxRedissonSubscribedUserNames {
+    public TxRedissonSubscribedUserNamesSize3(RedissonClient redisson) {
+      super(redisson);
+    }
+  }
+
+  @RedisTransactional(size = 3000000, timeout = 1000) // will flush after 800ms
+  static class TxRedissonSubscribedUserNamesTimeout extends TrackingTxRedissonSubscribedUserNames {
+    public TxRedissonSubscribedUserNamesTimeout(RedissonClient redisson) {
+      super(redisson);
+    }
+
+    @Override
+    @SneakyThrows
+    protected void apply(UserCreated created, RTransaction tx) {
+      RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
+      userNames.fastPut(created.aggregateId(), created.userName());
+
+      Thread.sleep(100);
+    }
+  }
+
+  @RedisTransactional(size = 5)
+  static class TxRedissonManagedUserNamesSizeBlowAt7th extends TrackingTxRedissonManagedUserNames {
+    private int count;
+
+    public TxRedissonManagedUserNamesSizeBlowAt7th(RedissonClient redisson) {
+      super(redisson);
+    }
+
+    @Override
+    protected void apply(UserCreated created, RTransaction tx) {
+      if (count++ == 8) { // blow the second bulk
+        throw new IllegalStateException("Bad luck");
+      }
+      super.apply(created, tx);
+    }
+  }
+
+  @RedisTransactional(size = 5)
+  static class TxRedissonSubscribedUserNamesSizeBlowAt7th
+      extends TrackingTxRedissonSubscribedUserNames {
+    private int count;
+
+    public TxRedissonSubscribedUserNamesSizeBlowAt7th(RedissonClient redisson) {
+      super(redisson);
+    }
+
+    @Override
+    protected void apply(UserCreated created, RTransaction tx) {
+      if (count++ == 8) { // blow the second bulk
+        throw new IllegalStateException("Bad luck");
+      }
+      super.apply(created, tx);
+    }
   }
 }

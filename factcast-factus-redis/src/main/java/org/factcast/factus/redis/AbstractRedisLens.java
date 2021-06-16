@@ -52,17 +52,18 @@ public abstract class AbstractRedisLens implements ProjectorLens {
   }
 
   @VisibleForTesting
-  public boolean shouldFlush(boolean addOne) {
-    int factsProcessed = count.get(); // +1 because the increment happens AFTER processing
-    if (addOne) {
+  public boolean shouldFlush(boolean withinProcessing) {
+    int factsProcessed = count.get();
+    if (withinProcessing) {
+      // +1 because the increment happens AFTER processing
       factsProcessed++;
     }
 
     boolean bufferFull = factsProcessed >= bulkSize;
     boolean timedOut = timedOut();
-    if (timedOut) {
-      log.debug(
-          "Flushing due to timeout. (Bulk age: {}ms, Bulk timeout: {})",
+    if (timedOut && !withinProcessing) {
+      log.trace(
+          "Bulk considered timed out. (Bulk age: {}ms, Bulk timeout: {})",
           System.currentTimeMillis() - start.get(),
           flushTimeout);
     }

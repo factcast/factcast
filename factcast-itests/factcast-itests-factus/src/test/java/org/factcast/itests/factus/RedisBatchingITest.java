@@ -39,9 +39,6 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
   @Autowired RedissonClient redissonClient;
   final int NUMBER_OF_EVENTS = 10;
 
-  // TODO test rollback/discard behavior
-  // TODO read state during bulk update
-
   @Nested
   class MixedEvents {
     @BeforeEach
@@ -198,101 +195,104 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
       assertThat(p.userNames().size()).isEqualTo(5);
     }
   }
-}
 
-class TrackingBatchRedissonManagedUserNames extends BatchRedissonManagedUserNames {
-  public TrackingBatchRedissonManagedUserNames(RedissonClient redisson) {
-    super(redisson);
-  }
-
-  @Getter int stateModifications = 0;
-
-  @Override
-  public void state(@NonNull UUID state) {
-    stateModifications++;
-    super.state(state);
-  }
-}
-
-class TrackingBatchRedissonSubscribedUserNames extends BatchRedissonSubscribedUserNames {
-  public TrackingBatchRedissonSubscribedUserNames(RedissonClient redisson) {
-    super(redisson);
-  }
-
-  @Getter int stateModifications = 0;
-
-  @Override
-  public void state(@NonNull UUID state) {
-    stateModifications++;
-    super.state(state);
-  }
-}
-
-@RedisBatched(size = 2)
-class BatchRedissonManagedUserNamesSize2 extends TrackingBatchRedissonManagedUserNames {
-  public BatchRedissonManagedUserNamesSize2(RedissonClient redisson) {
-    super(redisson);
-  }
-
-  @Override
-  public void state(@NonNull UUID state) {
-
-    super.state(state);
-  }
-}
-
-@RedisBatched(size = 3)
-class BatchRedissonManagedUserNamesSize3 extends TrackingBatchRedissonManagedUserNames {
-  public BatchRedissonManagedUserNamesSize3(RedissonClient redisson) {
-    super(redisson);
-  }
-}
-
-@RedisBatched(size = 2)
-class BatchRedissonSubscribedUserNamesSize2 extends TrackingBatchRedissonSubscribedUserNames {
-  public BatchRedissonSubscribedUserNamesSize2(RedissonClient redisson) {
-    super(redisson);
-  }
-}
-
-@RedisBatched(size = 3)
-class BatchRedissonSubscribedUserNamesSize3 extends TrackingBatchRedissonSubscribedUserNames {
-  public BatchRedissonSubscribedUserNamesSize3(RedissonClient redisson) {
-    super(redisson);
-  }
-}
-
-@RedisBatched(size = 5)
-class BatchRedissonManagedUserNamesSizeBlowAt7th extends TrackingBatchRedissonManagedUserNames {
-  private int count;
-
-  public BatchRedissonManagedUserNamesSizeBlowAt7th(RedissonClient redisson) {
-    super(redisson);
-  }
-
-  @Override
-  protected void apply(UserCreated created, RBatch tx) {
-    if (count++ == 8) { // blow the second bulk
-      throw new IllegalStateException("Bad luck");
+  static class TrackingBatchRedissonManagedUserNames extends BatchRedissonManagedUserNames {
+    public TrackingBatchRedissonManagedUserNames(RedissonClient redisson) {
+      super(redisson);
     }
-    super.apply(created, tx);
-  }
-}
 
-@RedisBatched(size = 5)
-class BatchRedissonSubscribedUserNamesSizeBlowAt7th
-    extends TrackingBatchRedissonSubscribedUserNames {
-  private int count;
+    @Getter int stateModifications = 0;
 
-  public BatchRedissonSubscribedUserNamesSizeBlowAt7th(RedissonClient redisson) {
-    super(redisson);
-  }
-
-  @Override
-  protected void apply(UserCreated created, RBatch tx) {
-    if (count++ == 8) { // blow the second bulk
-      throw new IllegalStateException("Bad luck");
+    @Override
+    public void state(@NonNull UUID state) {
+      stateModifications++;
+      super.state(state);
     }
-    super.apply(created, tx);
+  }
+
+  static class TrackingBatchRedissonSubscribedUserNames extends BatchRedissonSubscribedUserNames {
+    public TrackingBatchRedissonSubscribedUserNames(RedissonClient redisson) {
+      super(redisson);
+    }
+
+    @Getter int stateModifications = 0;
+
+    @Override
+    public void state(@NonNull UUID state) {
+      stateModifications++;
+      super.state(state);
+    }
+  }
+
+  @RedisBatched(size = 2)
+  static class BatchRedissonManagedUserNamesSize2 extends TrackingBatchRedissonManagedUserNames {
+    public BatchRedissonManagedUserNamesSize2(RedissonClient redisson) {
+      super(redisson);
+    }
+
+    @Override
+    public void state(@NonNull UUID state) {
+
+      super.state(state);
+    }
+  }
+
+  @RedisBatched(size = 3)
+  static class BatchRedissonManagedUserNamesSize3 extends TrackingBatchRedissonManagedUserNames {
+    public BatchRedissonManagedUserNamesSize3(RedissonClient redisson) {
+      super(redisson);
+    }
+  }
+
+  @RedisBatched(size = 2)
+  static class BatchRedissonSubscribedUserNamesSize2
+      extends TrackingBatchRedissonSubscribedUserNames {
+    public BatchRedissonSubscribedUserNamesSize2(RedissonClient redisson) {
+      super(redisson);
+    }
+  }
+
+  @RedisBatched(size = 3)
+  static class BatchRedissonSubscribedUserNamesSize3
+      extends TrackingBatchRedissonSubscribedUserNames {
+    public BatchRedissonSubscribedUserNamesSize3(RedissonClient redisson) {
+      super(redisson);
+    }
+  }
+
+  @RedisBatched(size = 5)
+  static class BatchRedissonManagedUserNamesSizeBlowAt7th
+      extends TrackingBatchRedissonManagedUserNames {
+    private int count;
+
+    public BatchRedissonManagedUserNamesSizeBlowAt7th(RedissonClient redisson) {
+      super(redisson);
+    }
+
+    @Override
+    protected void apply(UserCreated created, RBatch tx) {
+      if (count++ == 8) { // blow the second bulk
+        throw new IllegalStateException("Bad luck");
+      }
+      super.apply(created, tx);
+    }
+  }
+
+  @RedisBatched(size = 5)
+  static class BatchRedissonSubscribedUserNamesSizeBlowAt7th
+      extends TrackingBatchRedissonSubscribedUserNames {
+    private int count;
+
+    public BatchRedissonSubscribedUserNamesSizeBlowAt7th(RedissonClient redisson) {
+      super(redisson);
+    }
+
+    @Override
+    protected void apply(UserCreated created, RBatch tx) {
+      if (count++ == 8) { // blow the second bulk
+        throw new IllegalStateException("Bad luck");
+      }
+      super.apply(created, tx);
+    }
   }
 }
