@@ -81,6 +81,26 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
     }
+
+    // TODO
+    //    @SneakyThrows
+    //    @Test
+    //    public void rollsBack() {
+    //      BatchRedissonManagedUserNamesSizeBlowAt7th p =
+    //              new BatchRedissonManagedUserNamesSizeBlowAt7th(redissonClient);
+    //
+    //      assertThat(p.userNames()).isEmpty();
+    //
+    //      try {
+    //        factus.update(p);
+    //      } catch (Throwable expected) {
+    //        // ignore
+    //      }
+    //
+    //      // only first bulk (size = 5) should be executed
+    //      assertThat(p.userNames().size()).isEqualTo(5);
+    //      assertThat(p.stateModifications()).isEqualTo(1);
+    //    }
   }
 
   @Nested
@@ -126,6 +146,26 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
     }
+
+    // TODO
+    //    @SneakyThrows
+    //    @Test
+    //    public void rollsBack() {
+    //      BatchRedissonManagedUserNamesSizeBlowAt7th p =
+    //              new BatchRedissonManagedUserNamesSizeBlowAt7th(redissonClient);
+    //
+    //      assertThat(p.userNames()).isEmpty();
+    //
+    //      try {
+    //        factus.update(p);
+    //      } catch (Throwable expected) {
+    //        // ignore
+    //      }
+    //
+    //      // only first bulk (size = 5) should be executed
+    //      assertThat(p.userNames().size()).isEqualTo(5);
+    //      assertThat(p.stateModifications()).isEqualTo(1);
+    //    }
   }
 }
 
