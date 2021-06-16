@@ -15,6 +15,7 @@
  */
 package org.factcast.server.grpc;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.grpc.Metadata;
 import java.util.Objects;
 import java.util.OptionalInt;
@@ -31,5 +32,16 @@ public class GrpcRequestMetadata {
         .filter(Objects::nonNull)
         .mapToInt(Integer::parseInt)
         .findFirst();
+  }
+
+  boolean supportsFastForward() {
+    return headers.containsKey(Headers.FAST_FORWARD);
+  }
+
+  @VisibleForTesting
+  public static GrpcRequestMetadata forTest() {
+    GrpcRequestMetadata grpcRequestMetadata = new GrpcRequestMetadata();
+    grpcRequestMetadata.headers = new Metadata();
+    return grpcRequestMetadata;
   }
 }

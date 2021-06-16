@@ -9,7 +9,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class PGTailIndexingConfiguration {
 
   @Bean
-  public PGTailIndexManager pgTailIndexManager(JdbcTemplate jdbc, PgConfigurationProperties props) {
-    return new PGTailIndexManager(jdbc, props);
+  public PGTailIndexManagerImpl pgTailIndexManager(
+      JdbcTemplate jdbc, PgConfigurationProperties props) {
+    return new PGTailIndexManagerImpl(jdbc, props);
   }
 }

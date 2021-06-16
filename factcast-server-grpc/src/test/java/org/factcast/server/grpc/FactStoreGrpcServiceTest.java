@@ -39,6 +39,7 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
@@ -61,12 +62,14 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
 @ExtendWith(MockitoExtension.class)
 public class FactStoreGrpcServiceTest {
 
   @Mock FactStore backend;
   @Mock GrpcRequestMetadata meta;
+  @Mock FastForwardTarget ffwdTarget;
+  @Mock GrpcLimitProperties grpcLimitProperties;
 
   @InjectMocks FactStoreGrpcService uut;
 
@@ -91,7 +94,7 @@ public class FactStoreGrpcServiceTest {
 
           @Override
           public void setAuthentication(Authentication authentication) {
-            this.testToken = authentication;
+            testToken = authentication;
           }
 
           @Override
@@ -271,7 +274,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void testSubscribeFacts() {
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
-    when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
+    when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
     uut.subscribe(
         new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)),
         mock(ServerCallStreamObserver.class));
@@ -288,7 +291,7 @@ public class FactStoreGrpcServiceTest {
                 .initialNumberOfFollowRequestsAllowedPerClient(3)
                 .numberOfFollowRequestsAllowedPerClientPerMinute(1));
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
-    when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
+    when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
 
     val sre =
         assertThrows(
@@ -316,7 +319,7 @@ public class FactStoreGrpcServiceTest {
                 .numberOfCatchupRequestsAllowedPerClientPerMinute(1)
                 .initialNumberOfFollowRequestsAllowedPerClient(3)
                 .numberOfFollowRequestsAllowedPerClientPerMinute(3));
-    when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
+    when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
 
     // must not throw exception
     for (int i = 0; i < 10; i++) {
@@ -341,7 +344,7 @@ public class FactStoreGrpcServiceTest {
                 .numberOfFollowRequestsAllowedPerClientPerMinute(1)
                 .disabled(true));
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
-    when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
+    when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
 
     // must not throw exception
     for (int i = 0; i < 10; i++) {
@@ -363,7 +366,7 @@ public class FactStoreGrpcServiceTest {
                 .initialNumberOfFollowRequestsAllowedPerClient(3)
                 .numberOfFollowRequestsAllowedPerClientPerMinute(1));
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
-    when(backend.subscribe(this.reqCaptor.capture(), any())).thenReturn(null);
+    when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
 
     val sre =
         assertThrows(
@@ -480,7 +483,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   public void testRetrieveImplementationVersion() {
     uut = spy(uut);
-    when(uut.getProjectProperties()).thenReturn(this.getClass().getResource("/test.properties"));
+    when(uut.getProjectProperties()).thenReturn(getClass().getResource("/test.properties"));
     HashMap<String, String> map = new HashMap<>();
     uut.retrieveImplementationVersion(map);
 
@@ -490,8 +493,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   public void testRetrieveImplementationVersionEmptyPropertyFile() {
     uut = spy(uut);
-    when(uut.getProjectProperties())
-        .thenReturn(this.getClass().getResource("/no-version.properties"));
+    when(uut.getProjectProperties()).thenReturn(getClass().getResource("/no-version.properties"));
     HashMap<String, String> map = new HashMap<>();
     uut.retrieveImplementationVersion(map);
 
@@ -758,7 +760,7 @@ public class FactStoreGrpcServiceTest {
 
           @Override
           public void setAuthentication(Authentication authentication) {
-            this.testToken = authentication;
+            testToken = authentication;
           }
 
           @Override
@@ -785,7 +787,9 @@ public class FactStoreGrpcServiceTest {
     verify(obs).onCompleted();
   }
 
-  static class TestException extends RuntimeException {}
+  static class TestException extends RuntimeException {
+    private static final long serialVersionUID = -3012325109668741715L;
+  }
 
   @Test
   void clearSnapshotWithException() {
