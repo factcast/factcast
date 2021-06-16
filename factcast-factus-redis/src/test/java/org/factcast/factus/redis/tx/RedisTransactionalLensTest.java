@@ -80,10 +80,25 @@ class RedisTransactionalLensTest {
     void setup() {}
 
     @Test
-    void flushes() {
+    void doesNotUnnecessarilyflush() {
 
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       val underTest = spy(new RedisTransactionalLens(p, client));
+
+      underTest.onCatchup(p);
+
+      verify(underTest, never()).flush();
+    }
+
+    @Test
+    void flushesOnCacthupIfNecessary() {
+
+      RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
+      val underTest = spy(new RedisTransactionalLens(p, client));
+
+      // mark it dirty
+      underTest.afterFactProcessing(Fact.builder().id(UUID.randomUUID()).buildWithoutPayload());
+
       underTest.onCatchup(p);
 
       verify(underTest, times(1)).flush();
@@ -111,7 +126,7 @@ class RedisTransactionalLensTest {
 
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       val underTest = spy(new RedisTransactionalLens(p, client));
-      when(underTest.shouldFlush()).thenReturn(false, false, true, true);
+      when(underTest.shouldFlush(anyBoolean())).thenReturn(false, false, true, true);
       when(underTest.isBulkApplying()).thenReturn(false, true, false, true);
 
       assertThat(underTest.skipStateUpdate()).isFalse();

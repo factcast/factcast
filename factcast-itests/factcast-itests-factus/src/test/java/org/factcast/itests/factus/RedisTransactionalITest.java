@@ -34,7 +34,7 @@ import org.springframework.test.context.ContextConfiguration;
 @EnableAutoConfiguration
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 @Slf4j
-public class RedisTransactionalTest extends AbstractFactCastIntegrationTest {
+public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   @Autowired Factus factus;
   @Autowired RedissonClient redissonClient;
   final int NUMBER_OF_EVENTS = 10;
@@ -207,6 +207,7 @@ class TxRedissonSubscribedUserNamesTimeout extends TrackingTxRedissonSubscribedU
     super(redisson);
   }
 
+  @Override
   @SneakyThrows
   protected void apply(UserCreated created, RTransaction tx) {
     RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
