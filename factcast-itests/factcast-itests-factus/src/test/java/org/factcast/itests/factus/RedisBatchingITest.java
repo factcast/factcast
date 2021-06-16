@@ -164,8 +164,8 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
           new BatchRedissonSubscribedUserNamesSize3(redissonClient);
       factus.subscribeAndBlock(p).awaitCatchup();
 
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
+      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
     }
 
     @SneakyThrows
@@ -175,8 +175,27 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
           new BatchRedissonSubscribedUserNamesSize2(redissonClient);
       factus.subscribeAndBlock(p).awaitCatchup();
 
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
+      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+    }
+
+    @SneakyThrows
+    @Test
+    public void discardsFaultyBulk() {
+      BatchRedissonSubscribedUserNamesSizeBlowAt7th p =
+          new BatchRedissonSubscribedUserNamesSizeBlowAt7th(redissonClient);
+
+      assertThat(p.userNames()).isEmpty();
+
+      try {
+        factus.subscribeAndBlock(p).awaitCatchup();
+      } catch (Throwable expected) {
+        // ignore
+      }
+
+      // only first bulk (size = 5) should be executed
+      assertThat(p.stateModifications()).isEqualTo(1);
+      assertThat(p.userNames().size()).isEqualTo(5);
     }
   }
 }
@@ -201,6 +220,12 @@ class TrackingBatchRedissonSubscribedUserNames extends BatchRedissonSubscribedUs
   }
 
   @Getter int stateModifications = 0;
+
+  @Override
+  public void state(@NonNull UUID state) {
+    stateModifications++;
+    super.state(state);
+  }
 }
 
 @RedisBatched(size = 2)
@@ -211,8 +236,8 @@ class BatchRedissonManagedUserNamesSize2 extends TrackingBatchRedissonManagedUse
 
   @Override
   public void state(@NonNull UUID state) {
+
     super.state(state);
-    System.out.println(state);
   }
 }
 
@@ -242,6 +267,24 @@ class BatchRedissonManagedUserNamesSizeBlowAt7th extends TrackingBatchRedissonMa
   private int count;
 
   public BatchRedissonManagedUserNamesSizeBlowAt7th(RedissonClient redisson) {
+    super(redisson);
+  }
+
+  @Override
+  protected void apply(UserCreated created, RBatch tx) {
+    if (count++ == 8) { // blow the second bulk
+      throw new IllegalStateException("Bad luck");
+    }
+    super.apply(created, tx);
+  }
+}
+
+@RedisBatched(size = 5)
+class BatchRedissonSubscribedUserNamesSizeBlowAt7th
+    extends TrackingBatchRedissonSubscribedUserNames {
+  private int count;
+
+  public BatchRedissonSubscribedUserNamesSizeBlowAt7th(RedissonClient redisson) {
     super(redisson);
   }
 
