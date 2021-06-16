@@ -52,7 +52,7 @@ public class PGTailIndexManager {
     long youngestIndexTimestamp =
         Long.parseLong(indexes.get(0).substring("idx_fact_tail_".length()));
     Duration age = Duration.ofMillis(System.currentTimeMillis() - youngestIndexTimestamp);
-    Duration minAge = Duration.ofDays(props.getMinimumTailAgeInDays());
+    Duration minAge = props.getMinimumTailAgeInDays();
     return minAge.minus(age).isNegative();
   }
 

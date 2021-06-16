@@ -15,6 +15,7 @@
  */
 package org.factcast.store.pgsql;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -147,10 +148,10 @@ public class PgConfigurationProperties
   int tailGenerationsToKeep = 3;
 
   /**
-   * Minimum tail age in days. Tail rotation will be skipped, unless the age of the youngest
-   * existing tail is at least X day(s) old.
+   * Minimum tail age. Tail rotation will be skipped, unless the age of the youngest existing tail
+   * is at least this old. Defaults to 7 days
    */
-  int minimumTailAgeInDays = 7;
+  Duration minimumTailAgeInDays = Duration.ofDays(7);
 
   @Override
   public void onApplicationEvent(@Nonnull ApplicationReadyEvent event) {
