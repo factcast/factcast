@@ -32,13 +32,13 @@ public class RedisTransactionalLens extends AbstractRedisLens {
     redissonTxManager = txman;
     txman.options(opts);
 
-    batchSize = Math.max(1, getSize(p));
+    bulkSize = Math.max(1, getSize(p));
     flushTimeout = calculateFlushTimeout(opts);
     log.trace(
         "Created {} instance for {} with batchsize={},timeout={}",
         getClass().getSimpleName(),
         p,
-        batchSize,
+        bulkSize,
         flushTimeout);
   }
 

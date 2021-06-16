@@ -32,13 +32,13 @@ public class RedisBatchedLens extends AbstractRedisLens {
     batchMan = man;
     man.options(opts);
 
-    batchSize = Math.max(1, getSize(p));
+    bulkSize = Math.max(1, getSize(p));
     flushTimeout = Duration.ofSeconds(30).toMillis();
     log.trace(
         "Created {} instance for {} with batchsize={},timeout={}",
         getClass().getSimpleName(),
         p,
-        batchSize,
+        bulkSize,
         flushTimeout);
   }
 
