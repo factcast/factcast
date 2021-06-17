@@ -249,11 +249,19 @@ public class GrpcFactStore implements FactStore {
               // to request compressed messages from server
               Metadata meta = new Metadata();
               meta.put(Headers.MESSAGE_COMPRESSION, c);
+
+              // existence of this header will enable the fast forward feature
+              meta.put(Headers.FAST_FORWARD, "t");
+
+              // existence of this header will enable the on-the-wire-batching feature
               if (catchupBatchSize > 1) {
                 meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
               }
+
               rawBlockingStub = blockingStub;
               rawStub = stub;
+
+              // add compression info
               blockingStub = MetadataUtils.attachHeaders(blockingStub.withCompression(c), meta);
               stub = MetadataUtils.attachHeaders(stub.withCompression(c), meta);
             });
