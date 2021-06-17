@@ -11,7 +11,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class FastForwardTargetTest {
 
-  @InjectMocks private FastForwardTarget underTest;
 
   @Nested
   class WhenForingTest {
