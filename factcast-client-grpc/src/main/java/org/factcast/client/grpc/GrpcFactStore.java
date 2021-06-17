@@ -77,9 +77,9 @@ public class GrpcFactStore implements FactStore {
   private RemoteFactStoreStub stub;
 
   private RemoteFactStoreStub rawStub;
-  private int catchupBatchSize;
 
   private RemoteFactStoreBlockingStub rawBlockingStub;
+  private final FactCastGrpcClientProperties properties;
 
   private final ProtoConverter converter = new ProtoConverter();
 
@@ -124,7 +124,7 @@ public class GrpcFactStore implements FactStore {
       @NonNull FactCastGrpcClientProperties properties) {
     rawBlockingStub = newBlockingStub;
     rawStub = newStub;
-    catchupBatchSize = properties.getCatchupBatchsize();
+    this.properties = properties;
 
     // initially use the raw ones...
     blockingStub = rawBlockingStub;
@@ -251,9 +251,12 @@ public class GrpcFactStore implements FactStore {
               meta.put(Headers.MESSAGE_COMPRESSION, c);
 
               // existence of this header will enable the fast forward feature
-              meta.put(Headers.FAST_FORWARD, "t");
+              if (properties.isEnableFastForward()) {
+                meta.put(Headers.FAST_FORWARD, "true");
+              }
 
               // existence of this header will enable the on-the-wire-batching feature
+              int catchupBatchSize = properties.getCatchupBatchsize();
               if (catchupBatchSize > 1) {
                 meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
               }
