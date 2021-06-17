@@ -34,7 +34,7 @@ public class PgConstants {
   public static final String TABLE_CATCHUP = "catchup";
 
   public static final String TABLE_FACT = "fact";
-  private static final String TAIL_INDEX_NAME_PREFIX = "idx_fact_tail_";
+  public static final String TAIL_INDEX_NAME_PREFIX = "idx_fact_tail_";
   public static final String LIST_FACT_INDEXES =
       "select indexname from pg_indexes where tablename = '"
           + TABLE_FACT

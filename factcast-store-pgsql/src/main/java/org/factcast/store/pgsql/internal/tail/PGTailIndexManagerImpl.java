@@ -44,7 +44,8 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     refreshHighwaterMark();
   }
 
-  private void refreshHighwaterMark() {
+  @VisibleForTesting
+  void refreshHighwaterMark() {
     try {
       target =
           jdbc.queryForObject(
@@ -74,7 +75,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     long youngestIndexTimestamp =
         Long.parseLong(indexes.get(0).substring("idx_fact_tail_".length()));
     Duration age = Duration.ofMillis(System.currentTimeMillis() - youngestIndexTimestamp);
-    Duration minAge = props.getMinimumTailAgeInDays();
+    Duration minAge = props.getMinimumTailAge();
     return minAge.minus(age).isNegative();
   }
 

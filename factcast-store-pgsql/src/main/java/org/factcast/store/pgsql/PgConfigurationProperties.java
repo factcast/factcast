@@ -151,7 +151,7 @@ public class PgConfigurationProperties
    * Minimum tail age. Tail rotation will be skipped, unless the age of the youngest existing tail
    * is at least this old. Defaults to 7 days
    */
-  Duration minimumTailAgeInDays = Duration.ofDays(7);
+  Duration minimumTailAge = Duration.ofDays(7);
 
   @Override
   public void onApplicationEvent(@Nonnull ApplicationReadyEvent event) {
