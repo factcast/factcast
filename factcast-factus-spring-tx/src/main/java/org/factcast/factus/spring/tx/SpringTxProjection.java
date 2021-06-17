@@ -1,7 +1,5 @@
 package org.factcast.factus.spring.tx;
 
-import lombok.NonNull;
-import lombok.val;
 import org.factcast.factus.projection.Projection;
 import org.springframework.transaction.PlatformTransactionManager;
 

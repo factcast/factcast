@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projector.ProjectorLens;
-import org.redisson.api.RedissonClient;
 
 @Slf4j
 @Getter
