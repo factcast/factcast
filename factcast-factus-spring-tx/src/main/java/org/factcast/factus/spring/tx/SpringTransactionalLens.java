@@ -4,7 +4,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.function.Function;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.factus.projector.AbstractTransactionalLens;
 import org.factcast.factus.projector.ProjectorLens;
