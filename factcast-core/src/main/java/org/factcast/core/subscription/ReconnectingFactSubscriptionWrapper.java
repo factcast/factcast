@@ -179,8 +179,8 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
   public ReconnectingFactSubscriptionWrapper(
       @NonNull FactStore store, @NonNull SubscriptionRequestTO req, @NonNull FactObserver obs) {
     this.store = store;
-    this.originalObserver = obs;
-    this.originalRequest = req;
+    originalObserver = obs;
+    originalRequest = req;
 
     observer =
         new FactObserver() {
@@ -205,6 +205,11 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
           @Override
           public void onComplete() {
             originalObserver.onComplete();
+          }
+
+          @Override
+          public void onFastForward(UUID factIdToFfwdTo) {
+            originalObserver.onFastForward(factIdToFfwdTo);
           }
 
           @Override
