@@ -6,7 +6,7 @@ import java.util.function.Function;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.factus.redis.AbstractTransactionalLens;
+import org.factcast.factus.projector.AbstractTransactionalLens;
 import org.factcast.factus.redis.RedisProjection;
 import org.redisson.api.BatchOptions;
 import org.redisson.api.RBatch;
