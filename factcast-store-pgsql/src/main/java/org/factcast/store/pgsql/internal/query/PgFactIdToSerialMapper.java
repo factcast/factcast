@@ -43,22 +43,25 @@ public class PgFactIdToSerialMapper {
   // TODO add caching
   // TODO add cache hit/miss metric
   public long retrieve(UUID id) {
-    return metrics.time(
-        OP.SERIAL_OF,
-        () -> {
-          try {
-            if (id != null) {
+    if (id == null) {
+      return 0;
+    } else {
+      return metrics.time(
+          OP.SERIAL_OF,
+          () -> {
+            try {
+
               Long res =
                   jdbcTemplate.queryForObject(
                       PgConstants.SELECT_SER_BY_ID, new Object[] {id}, Long.class);
               if (res != null && res > 0) {
                 return res;
               }
+            } catch (EmptyResultDataAccessException ignore) {
+              // ignore
             }
-          } catch (EmptyResultDataAccessException ignore) {
-            // ignore
-          }
-          return 0L;
-        });
+            return 0L;
+          });
+    }
   }
 }
