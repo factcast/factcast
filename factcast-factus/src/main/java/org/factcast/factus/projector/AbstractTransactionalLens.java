@@ -1,4 +1,4 @@
-package org.factcast.factus.redis;
+package org.factcast.factus.projector;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -8,27 +8,28 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.factus.projection.Projection;
-import org.factcast.factus.projector.ProjectorLens;
-import org.redisson.api.RedissonClient;
 
 @Slf4j
 @Getter
-public abstract class AbstractRedisLens implements ProjectorLens {
+public abstract class AbstractTransactionalLens implements ProjectorLens {
   final AtomicInteger count = new AtomicInteger();
   final AtomicLong start = new AtomicLong(0);
   protected final Class<? extends Projection> projectionName;
 
   @Setter protected int bulkSize = 1;
   @Setter protected long flushTimeout = 0;
-  protected final RedissonClient client;
 
-  public AbstractRedisLens(RedisProjection projection, RedissonClient redissonClient) {
+  boolean flushCycle = false;
+
+  public AbstractTransactionalLens(Projection projection) {
     projectionName = projection.getClass();
-    client = redissonClient;
   }
 
   @Override
   public void beforeFactProcessing(Fact f) {
+    // reset the value for this cycle
+    flushCycle = false;
+
     if (bulkSize > 1) {
       long now = System.currentTimeMillis();
       start.getAndUpdate(
@@ -53,6 +54,12 @@ public abstract class AbstractRedisLens implements ProjectorLens {
 
   @VisibleForTesting
   public boolean shouldFlush(boolean withinProcessing) {
+
+    if (flushCycle) {
+      // it has been detected already that in this cycle, we're flushing
+      return true;
+    }
+
     int factsProcessed = count.get();
     if (withinProcessing) {
       // +1 because the increment happens AFTER processing
@@ -68,7 +75,8 @@ public abstract class AbstractRedisLens implements ProjectorLens {
           flushTimeout);
     }
 
-    return bufferFull || timedOut;
+    flushCycle = bufferFull || timedOut;
+    return flushCycle;
   }
 
   private boolean timedOut() {
