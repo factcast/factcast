@@ -67,8 +67,12 @@ public abstract class AbstractTransactionalLens implements ProjectorLens {
     }
 
     boolean bufferFull = factsProcessed >= bulkSize;
+    if (bufferFull) {
+      log.trace("Bulk considered full.");
+    }
+
     boolean timedOut = timedOut();
-    if (timedOut && !withinProcessing) {
+    if (timedOut) {
       log.trace(
           "Bulk considered timed out. (Bulk age: {}ms, Bulk timeout: {})",
           System.currentTimeMillis() - start.get(),
@@ -103,9 +107,7 @@ public abstract class AbstractTransactionalLens implements ProjectorLens {
 
   @Override
   public boolean skipStateUpdate() {
-    boolean bulk = isBulkApplying();
-    boolean noFlushNecessary = !shouldFlush(true);
-    return bulk && noFlushNecessary;
+    return isBulkApplying() && !shouldFlush(true);
   }
 
   public void flush() {
