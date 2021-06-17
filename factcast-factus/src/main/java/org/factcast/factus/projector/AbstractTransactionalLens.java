@@ -136,8 +136,4 @@ public abstract class AbstractTransactionalLens implements ProjectorLens {
   protected abstract void doClear();
 
   protected abstract void doFlush();
-
-  void increaseCountForTesting() {
-    count.incrementAndGet();
-  }
 }
