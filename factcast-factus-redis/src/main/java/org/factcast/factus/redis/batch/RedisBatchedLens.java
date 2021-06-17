@@ -6,28 +6,24 @@ import java.util.function.Function;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.factus.redis.AbstractRedisLens;
+import org.factcast.factus.redis.AbstractTransactionalLens;
 import org.factcast.factus.redis.RedisProjection;
 import org.redisson.api.BatchOptions;
 import org.redisson.api.RBatch;
 import org.redisson.api.RedissonClient;
 
 @Slf4j
-public class RedisBatchedLens extends AbstractRedisLens {
+public class RedisBatchedLens extends AbstractTransactionalLens {
 
   private final RedissonBatchManager batchMan;
 
   public RedisBatchedLens(@NonNull RedisProjection p, RedissonClient redissonClient) {
 
-    this(p, redissonClient, RedissonBatchManager.get(redissonClient), createOpts(p));
+    this(p, RedissonBatchManager.get(redissonClient), createOpts(p));
   }
 
-  RedisBatchedLens(
-      @NonNull RedisProjection p,
-      RedissonClient redissonClient,
-      RedissonBatchManager man,
-      BatchOptions opts) {
-    super(p, redissonClient);
+  RedisBatchedLens(@NonNull RedisProjection p, RedissonBatchManager man, BatchOptions opts) {
+    super(p);
 
     batchMan = man;
     man.options(opts);
