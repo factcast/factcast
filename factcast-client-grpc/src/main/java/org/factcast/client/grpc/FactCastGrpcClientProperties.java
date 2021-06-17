@@ -28,5 +28,5 @@ public class FactCastGrpcClientProperties {
 
   private int catchupBatchsize = 50;
 
-  private boolean enableFastForward=true;
+  private boolean enableFastForward = true;
 }
