@@ -5,13 +5,10 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.UUID;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
-import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class FastForwardTargetTest {
-
-  @InjectMocks private FastForwardTarget underTest;
 
   @Nested
   class WhenForingTest {
@@ -36,6 +33,4 @@ class FastForwardTargetTest {
           .isEqualTo(SER);
     }
   }
-
-
 }
