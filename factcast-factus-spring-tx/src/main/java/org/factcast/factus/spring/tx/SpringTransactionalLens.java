@@ -8,7 +8,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.factcast.core.Fact;
-import org.factcast.factus.redis.AbstractTransactionalLens;
+import org.factcast.factus.projector.AbstractTransactionalLens;
 import org.factcast.factus.projector.ProjectorLens;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;

@@ -1,4 +1,4 @@
-package org.factcast.factus.redis;
+package org.factcast.factus.projector;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -8,8 +8,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.factus.projection.Projection;
-import org.factcast.factus.projector.ProjectorLens;
-import org.redisson.api.RedissonClient;
 
 @Slf4j
 @Getter
@@ -21,12 +19,17 @@ public abstract class AbstractTransactionalLens implements ProjectorLens {
   @Setter protected int bulkSize = 1;
   @Setter protected long flushTimeout = 0;
 
+  boolean flushCycle = false;
+
   public AbstractTransactionalLens(Projection projection) {
     projectionName = projection.getClass();
   }
 
   @Override
   public void beforeFactProcessing(Fact f) {
+    // reset the value for this cycle
+    flushCycle = false;
+
     if (bulkSize > 1) {
       long now = System.currentTimeMillis();
       start.getAndUpdate(
@@ -51,6 +54,12 @@ public abstract class AbstractTransactionalLens implements ProjectorLens {
 
   @VisibleForTesting
   public boolean shouldFlush(boolean withinProcessing) {
+
+    if (flushCycle) {
+      // it has been detected already that in this cycle, we're flushing
+      return true;
+    }
+
     int factsProcessed = count.get();
     if (withinProcessing) {
       // +1 because the increment happens AFTER processing
@@ -58,15 +67,20 @@ public abstract class AbstractTransactionalLens implements ProjectorLens {
     }
 
     boolean bufferFull = factsProcessed >= bulkSize;
+    if (bufferFull) {
+      log.trace("Bulk considered full.");
+    }
+
     boolean timedOut = timedOut();
-    if (timedOut && !withinProcessing) {
+    if (timedOut) {
       log.trace(
           "Bulk considered timed out. (Bulk age: {}ms, Bulk timeout: {})",
           System.currentTimeMillis() - start.get(),
           flushTimeout);
     }
 
-    return bufferFull || timedOut;
+    flushCycle = bufferFull || timedOut;
+    return flushCycle;
   }
 
   private boolean timedOut() {
@@ -93,9 +107,7 @@ public abstract class AbstractTransactionalLens implements ProjectorLens {
 
   @Override
   public boolean skipStateUpdate() {
-    boolean bulk = isBulkApplying();
-    boolean noFlushNecessary = !shouldFlush(true);
-    return bulk && noFlushNecessary;
+    return isBulkApplying() && !shouldFlush(true);
   }
 
   public void flush() {
@@ -126,8 +138,4 @@ public abstract class AbstractTransactionalLens implements ProjectorLens {
   protected abstract void doClear();
 
   protected abstract void doFlush();
-
-  void increaseCountForTesting() {
-    count.incrementAndGet();
-  }
 }
