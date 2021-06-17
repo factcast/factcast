@@ -240,13 +240,14 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   @Override
   public void onCatchup(UUID idOfLastFactApplied) {
-    for (ProjectorLens lens : lenses) {
-      lens.onCatchup(projection);
-    }
     if (projection instanceof StateAware) {
       if (idOfLastFactApplied != null && (idOfLastFactApplied != lastStateSet)) {
         ((StateAware) projection).state(idOfLastFactApplied);
       }
+    }
+
+    for (ProjectorLens lens : lenses) {
+      lens.onCatchup(projection);
     }
   }
 
