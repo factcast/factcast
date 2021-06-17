@@ -15,16 +15,15 @@ public class SpringTxProjectorPlugin implements ProjectorPlugin {
   public Collection<ProjectorLens> lensFor(Projection p) {
     if (p instanceof SpringTxProjection) {
 
-      //      SpringTransactional transactional =
-      // p.getClass().getAnnotation(SpringTransactional.class);
-      //
-      //      if (transactional != null) {
-      //        throw new IllegalStateException(
-      //            "JdbcProjection cannot use both @"
-      //                + SpringTransactional.class.getSimpleName()
-      //                + ". Offending class:"
-      //                + p.getClass().getName());
-      //      }
+      SpringTransactional transactional = p.getClass().getAnnotation(SpringTransactional.class);
+
+      if (transactional == null) {
+        throw new IllegalStateException(
+            "SpringTxProjection must be annotated with @"
+                + SpringTransactional.class.getSimpleName()
+                + ". Offending class:"
+                + p.getClass().getName());
+      }
 
       SpringTxProjection jdbcProjection = (SpringTxProjection) p;
 
