@@ -36,6 +36,4 @@ class FastForwardTargetTest {
           .isEqualTo(SER);
     }
   }
-
-
 }
