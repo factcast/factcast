@@ -106,6 +106,7 @@ public class PgFactStoreInternalConfiguration {
       PgTokenStore tokenStore,
       FactTableWriteLock lock,
       FactTransformerService factTransformerService,
+      PgFactIdToSerialMapper pgFactIdToSerialMapper,
       PgSnapshotCache snapCache,
       PgMetrics pgMetrics) {
     return new PgFactStore(
@@ -114,6 +115,7 @@ public class PgFactStoreInternalConfiguration {
         tokenStore,
         lock,
         factTransformerService,
+        pgFactIdToSerialMapper,
         snapCache,
         pgMetrics);
   }
@@ -157,8 +159,9 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public PgFactIdToSerialMapper pgFactIdToSerialMapper(JdbcTemplate jdbcTemplate) {
-    return new PgFactIdToSerialMapper(jdbcTemplate);
+  public PgFactIdToSerialMapper pgFactIdToSerialMapper(
+      JdbcTemplate jdbcTemplate, PgMetrics metrics) {
+    return new PgFactIdToSerialMapper(jdbcTemplate, metrics);
   }
 
   @Bean
