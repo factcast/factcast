@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.function.Function;
+import lombok.NonNull;
 import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.FastForwardTarget;
@@ -168,6 +169,26 @@ public class GrpcObserverAdapterTest {
     verify(observer).onNext(any());
     assertEquals(MSG_Notification.Type.Fact, msg.getValue().getType());
     assertEquals(f.id(), conv.fromProto(msg.getValue().getFact()).id());
+  }
+
+  @Test
+  void testOnFastForwardIfSupported() {
+    ProtoConverter conv = new ProtoConverter();
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
+    UUID id = UUID.randomUUID();
+    uut.onFastForward(id);
+    verify(observer).onNext(eq(conv.createNotificationForFastForward(id)));
+  }
+
+  @Test
+  void skipsOnFastForwardIfUnsupported() {
+    ProtoConverter conv = new ProtoConverter();
+    @NonNull GrpcRequestMetadata meta = mock(GrpcRequestMetadata.class);
+    when(meta.supportsFastForward()).thenReturn(false);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, meta);
+    UUID id = UUID.randomUUID();
+    uut.onFastForward(id);
+    verify(observer, never()).onNext(any());
   }
 
   public static void expectNPE(Runnable r) {
