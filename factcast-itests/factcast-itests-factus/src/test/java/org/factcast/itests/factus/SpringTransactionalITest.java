@@ -170,56 +170,57 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
             + "    PRIMARY KEY (id)\n"
             + ");");
   }
-}
 
-@Slf4j
-abstract class AbstractTrackingUserProjection extends AbstractSpringTxManagedProjection {
-  private final JdbcTemplate jdbcTemplate;
-  @Getter private int stateModifications = 0;
+  @Slf4j
+  abstract static class AbstractTrackingUserProjection extends AbstractSpringTxManagedProjection {
+    private final JdbcTemplate jdbcTemplate;
+    @Getter private int stateModifications = 0;
 
-  @Getter private Set<String> txSeen = new HashSet<>();
+    @Getter private final Set<String> txSeen = new HashSet<>();
 
-  public AbstractTrackingUserProjection(
-      @NonNull PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
-    super(platformTransactionManager);
-    this.jdbcTemplate = jdbcTemplate;
-  }
-
-  @Handler
-  void apply(UserCreated e) {
-    assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
-
-    jdbcTemplate.update("INSERT INTO users (name,id) VALUES (?,?);", e.userName(), e.aggregateId());
-  }
-
-  @Override
-  public UUID state() {
-    try {
-      return jdbcTemplate.queryForObject(
-          "SELECT state FROM managed_projection WHERE name = ?", UUID.class, "foo");
-    } catch (IncorrectResultSizeDataAccessException e) {
-      // no state yet, just return null
-      return null;
+    public AbstractTrackingUserProjection(
+        @NonNull PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
+      super(platformTransactionManager);
+      this.jdbcTemplate = jdbcTemplate;
     }
-  }
 
-  @Override
-  public void state(@NonNull UUID state) {
-    log.debug("set state");
-    assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
-    stateModifications++;
+    @Handler
+    void apply(UserCreated e) {
+      assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
 
-    txSeen.add(jdbcTemplate.queryForObject("select txid_current()", String.class));
+      jdbcTemplate.update(
+          "INSERT INTO users (name,id) VALUES (?,?);", e.userName(), e.aggregateId());
+    }
 
-    jdbcTemplate.update(
-        "INSERT INTO managed_projection (name, state) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET state = ?",
-        "foo",
-        state,
-        state);
-  }
+    @Override
+    public UUID state() {
+      try {
+        return jdbcTemplate.queryForObject(
+            "SELECT state FROM managed_projection WHERE name = ?", UUID.class, "foo");
+      } catch (IncorrectResultSizeDataAccessException e) {
+        // no state yet, just return null
+        return null;
+      }
+    }
 
-  @Override
-  public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-    return () -> {};
+    @Override
+    public void state(@NonNull UUID state) {
+      log.debug("set state");
+      assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
+      stateModifications++;
+
+      txSeen.add(jdbcTemplate.queryForObject("select txid_current()", String.class));
+
+      jdbcTemplate.update(
+          "INSERT INTO managed_projection (name, state) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET state = ?",
+          "foo",
+          state,
+          state);
+    }
+
+    @Override
+    public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
+      return () -> {};
+    }
   }
 }
