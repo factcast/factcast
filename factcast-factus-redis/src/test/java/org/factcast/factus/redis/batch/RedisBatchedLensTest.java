@@ -169,7 +169,7 @@ class RedisBatchedLensTest {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       RedissonBatchManager tx = mock(RedissonBatchManager.class);
       when(tx.inBatch()).thenReturn(true);
-      val underTest = new RedisBatchedLens(p, client, tx, Defaults.create());
+      val underTest = new RedisBatchedLens(p, tx, Defaults.create());
 
       underTest.doClear();
 
@@ -187,7 +187,7 @@ class RedisBatchedLensTest {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       RedissonBatchManager tx = mock(RedissonBatchManager.class);
       when(tx.inBatch()).thenReturn(true);
-      val underTest = new RedisBatchedLens(p, client, tx, Defaults.create());
+      val underTest = new RedisBatchedLens(p, tx, Defaults.create());
 
       underTest.doFlush();
 
@@ -251,7 +251,7 @@ class RedisBatchedLensTest {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       RedissonBatchManager man = mock(RedissonBatchManager.class);
       when(man.getCurrentBatch()).thenReturn(current);
-      val underTest = new RedisBatchedLens(p, client, man, Defaults.create());
+      val underTest = new RedisBatchedLens(p, man, Defaults.create());
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(RBatch.class);
       assertThat(t).isNotNull();
@@ -262,7 +262,7 @@ class RedisBatchedLensTest {
     void returnsNullForOtherType() {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       RedissonBatchManager tx = mock(RedissonBatchManager.class);
-      val underTest = new RedisBatchedLens(p, client, tx, Defaults.create());
+      val underTest = new RedisBatchedLens(p, tx, Defaults.create());
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(Fact.class);
       assertThat(t).isNull();

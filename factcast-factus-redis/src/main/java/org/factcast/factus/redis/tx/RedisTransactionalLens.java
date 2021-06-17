@@ -5,7 +5,7 @@ import java.util.function.Function;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.factus.redis.AbstractRedisLens;
+import org.factcast.factus.projector.AbstractTransactionalLens;
 import org.factcast.factus.redis.RedisProjection;
 import org.factcast.factus.redis.tx.RedisTransactional.Defaults;
 import org.redisson.api.RTransaction;
@@ -13,21 +13,18 @@ import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
 
 @Slf4j
-public class RedisTransactionalLens extends AbstractRedisLens {
+public class RedisTransactionalLens extends AbstractTransactionalLens {
 
   private final RedissonTxManager redissonTxManager;
 
   public RedisTransactionalLens(@NonNull RedisProjection p, RedissonClient redissonClient) {
-    this(p, redissonClient, RedissonTxManager.get(redissonClient), createOpts(p));
+    this(p, RedissonTxManager.get(redissonClient), createOpts(p));
   }
 
   @VisibleForTesting
   RedisTransactionalLens(
-      @NonNull RedisProjection p,
-      RedissonClient redissonClient,
-      RedissonTxManager txman,
-      TransactionOptions opts) {
-    super(p, redissonClient);
+      @NonNull RedisProjection p, RedissonTxManager txman, TransactionOptions opts) {
+    super(p);
 
     redissonTxManager = txman;
     txman.options(opts);
