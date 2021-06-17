@@ -53,7 +53,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    public void batchesInTransaction3() {
+    public void bulkAppliesInTransaction3() {
       TxRedissonManagedUserNamesSize3 p = new TxRedissonManagedUserNamesSize3(redissonClient);
       factus.update(p);
 
@@ -63,7 +63,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    public void batchesInTransaction2() {
+    public void bulkAppliesInTransaction2() {
       TxRedissonManagedUserNamesSize2 p = new TxRedissonManagedUserNamesSize2(redissonClient) {};
       factus.update(p);
 
@@ -73,7 +73,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    public void batchesInTransactionTimeout() {
+    public void bulkAppliesInTransactionTimeout() {
       TxRedissonManagedUserNamesTimeout p =
           new TxRedissonManagedUserNamesTimeout(redissonClient) {};
       factus.update(p);
@@ -116,7 +116,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    public void batchesInTransaction3() {
+    public void bulkAppliesInTransaction3() {
       TxRedissonSubscribedUserNamesSize3 p = new TxRedissonSubscribedUserNamesSize3(redissonClient);
       factus.subscribeAndBlock(p).awaitCatchup();
 
@@ -126,7 +126,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    public void batchesInTransaction2() {
+    public void bulkAppliesInTransaction2() {
       TxRedissonSubscribedUserNamesSize2 p =
           new TxRedissonSubscribedUserNamesSize2(redissonClient) {};
       factus.subscribeAndBlock(p).awaitCatchup();
@@ -137,7 +137,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    public void batchesInTransactionTimeout() {
+    public void bulkAppliesInTransactionTimeout() {
       TxRedissonSubscribedUserNamesTimeout p =
           new TxRedissonSubscribedUserNamesTimeout(redissonClient) {};
       factus.subscribeAndBlock(p).awaitCatchup();
