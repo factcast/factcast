@@ -29,6 +29,7 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMo
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
+import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.catchup.fetching.PgFetchingCatchUpFactory;
@@ -124,14 +125,16 @@ public class PgFactStoreInternalConfiguration {
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       PgLatestSerialFetcher pgLatestSerialFetcher,
       PgCatchupFactory pgCatchupFactory,
-      FactTransformersFactory transformerFactory) {
+      FactTransformersFactory transformerFactory,
+      FastForwardTarget target) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
         pgFactIdToSerialMapper,
         pgLatestSerialFetcher,
         pgCatchupFactory,
-        transformerFactory);
+        transformerFactory,
+        target);
   }
 
   @Bean

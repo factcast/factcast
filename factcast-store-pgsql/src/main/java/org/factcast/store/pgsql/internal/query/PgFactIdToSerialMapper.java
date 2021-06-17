@@ -37,6 +37,7 @@ public class PgFactIdToSerialMapper {
    * @param id the FactId to look for
    * @return the corresponding SER, 0, if no Fact is found for the id given.
    */
+  // TODO update to projecting query approach
   public long retrieve(UUID id) {
     if (id != null) {
       try {

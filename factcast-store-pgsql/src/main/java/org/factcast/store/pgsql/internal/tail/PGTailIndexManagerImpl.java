@@ -11,6 +11,7 @@ import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 
@@ -44,11 +45,18 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   }
 
   private void refreshHighwaterMark() {
-    List<HighWaterMark> highwater =
-        jdbc.queryForList(PgConstants.HIGHWATER_MARK, HighWaterMark.class);
-    // needed to allow the result to be empty
-    if (!highwater.isEmpty()) {
-      target = highwater.get(0);
+    try {
+      target =
+          jdbc.queryForObject(
+              PgConstants.HIGHWATER_MARK,
+              (rs, rowNum) -> {
+                HighWaterMark ret = new HighWaterMark();
+                ret.targetId(rs.getObject("targetId", UUID.class));
+                ret.targetSer(rs.getLong("targetSer"));
+                return ret;
+              });
+    } catch (EmptyResultDataAccessException noFactsAtAll) {
+      // ignore
     }
   }
 

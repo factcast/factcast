@@ -42,6 +42,7 @@ public class GrpcRequestMetadata {
   public static GrpcRequestMetadata forTest() {
     GrpcRequestMetadata grpcRequestMetadata = new GrpcRequestMetadata();
     grpcRequestMetadata.headers = new Metadata();
+    grpcRequestMetadata.headers.put(Headers.FAST_FORWARD, "true");
     return grpcRequestMetadata;
   }
 }

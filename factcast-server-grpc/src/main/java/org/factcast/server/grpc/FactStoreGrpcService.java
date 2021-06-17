@@ -168,9 +168,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
         Subscription sub =
             store.subscribe(
-                req,
-                new GrpcObserverAdapter(
-                    req.toString(), resp, grpcRequestMetadata, startingAfterSerial, ffwdTarget));
+                req, new GrpcObserverAdapter(req.toString(), resp, grpcRequestMetadata));
 
         ((ServerCallStreamObserver<MSG_Notification>) responseObserver)
             .setOnCancelHandler(
