@@ -130,7 +130,7 @@ class RedisBatchedLensTest {
       assertThat(underTest.skipStateUpdate()).isFalse();
       assertThat(underTest.skipStateUpdate()).isTrue();
       assertThat(underTest.skipStateUpdate()).isFalse();
-      assertThat(underTest.skipStateUpdate()).isFalse();
+      assertThat(underTest.skipStateUpdate()).isTrue();
     }
   }
 
