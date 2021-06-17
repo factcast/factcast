@@ -57,8 +57,7 @@ public class SpringTransactionalLens extends AbstractTransactionalLens implement
 
   @Override
   protected void doFlush() {
-    val transaction = startOrJoin();
-    transactionManager.commit(transaction);
+    transactionManager.commit(startOrJoin());
 
     currentTx = null;
   }
