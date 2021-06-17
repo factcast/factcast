@@ -2,7 +2,9 @@ package org.factcast.factus.spring.tx;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.function.Function;
+
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.factcast.core.Fact;
@@ -18,18 +20,18 @@ public class SpringTransactionalLens extends AbstractTransactionalLens implement
 
   private final PlatformTransactionManager transactionManager;
 
-  private final TransactionDefinition definition;
-
-  private TransactionStatus currentTx;
+  private final SpringTxManager txManager;
 
   public SpringTransactionalLens(@NonNull SpringTxProjection jdbcProjection) {
     super(jdbcProjection);
 
+    val definition = creatDefinition(jdbcProjection);
+
     this.transactionManager = jdbcProjection.platformTransactionManager();
-    log.debug("Init");
-    bulkSize = Math.max(1, getSize(jdbcProjection));
-    definition = createOpts(jdbcProjection);
+    this.txManager = new SpringTxManager(transactionManager, definition);
+
     flushTimeout = calculateFlushTimeout(definition);
+    bulkSize = Math.max(1, getSize(jdbcProjection));
   }
 
   @Override
@@ -44,30 +46,18 @@ public class SpringTransactionalLens extends AbstractTransactionalLens implement
   public void beforeFactProcessing(Fact f) {
     super.beforeFactProcessing(f);
 
-    // starting a new tx
-    startOrJoin();
+    // starting a new tx or join a current one
+    txManager.startOrJoin();
   }
 
   @Override
   protected void doClear() {
-    transactionManager.rollback(startOrJoin());
-
-    currentTx = null;
+    txManager.rollback();
   }
 
   @Override
   protected void doFlush() {
-    transactionManager.commit(startOrJoin());
-
-    currentTx = null;
-  }
-
-  private TransactionStatus startOrJoin() {
-    if (currentTx == null) {
-      currentTx = transactionManager.getTransaction(definition);
-    }
-
-    return currentTx;
+    txManager.commit();
   }
 
   @VisibleForTesting
@@ -84,7 +74,7 @@ public class SpringTransactionalLens extends AbstractTransactionalLens implement
   }
 
   @VisibleForTesting
-  static TransactionDefinition createOpts(@NonNull SpringTxProjection p) {
+  static TransactionDefinition creatDefinition(@NonNull SpringTxProjection p) {
     SpringTransactional transactional = p.getClass().getAnnotation(SpringTransactional.class);
     if (transactional == null) {
       throw new IllegalStateException(
@@ -105,5 +95,40 @@ public class SpringTransactionalLens extends AbstractTransactionalLens implement
       flush = 0;
     }
     return flush;
+  }
+
+  @RequiredArgsConstructor
+  @Slf4j
+  static class SpringTxManager {
+    @NonNull private final PlatformTransactionManager transactionManager;
+    @NonNull private final TransactionDefinition definition;
+
+    private TransactionStatus currentTx;
+
+    public void startOrJoin() {
+      if (currentTx == null) {
+        currentTx = transactionManager.getTransaction(definition);
+      }
+    }
+
+    public void commit() {
+      if (currentTx != null) {
+        transactionManager.commit(currentTx);
+
+        currentTx = null;
+      } else {
+        log.warn("Trying to commit when no Transaction is in scope");
+      }
+    }
+
+    public void rollback() {
+      if (currentTx != null) {
+        transactionManager.rollback(currentTx);
+
+        currentTx = null;
+      } else {
+        log.warn("Trying to rollback when no Transaction is in scope");
+      }
+    }
   }
 }
