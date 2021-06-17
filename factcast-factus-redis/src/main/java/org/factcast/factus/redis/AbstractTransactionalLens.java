@@ -13,18 +13,16 @@ import org.redisson.api.RedissonClient;
 
 @Slf4j
 @Getter
-public abstract class AbstractRedisLens implements ProjectorLens {
+public abstract class AbstractTransactionalLens implements ProjectorLens {
   final AtomicInteger count = new AtomicInteger();
   final AtomicLong start = new AtomicLong(0);
   protected final Class<? extends Projection> projectionName;
 
   @Setter protected int bulkSize = 1;
   @Setter protected long flushTimeout = 0;
-  protected final RedissonClient client;
 
-  public AbstractRedisLens(RedisProjection projection, RedissonClient redissonClient) {
+  public AbstractTransactionalLens(Projection projection) {
     projectionName = projection.getClass();
-    client = redissonClient;
   }
 
   @Override
