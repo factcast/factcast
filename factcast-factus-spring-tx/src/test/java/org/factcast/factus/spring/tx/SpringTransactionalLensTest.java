@@ -1,25 +1,21 @@
 package org.factcast.factus.spring.tx;
 
-import jdk.nashorn.internal.runtime.URIUtils;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.time.Duration;
+import java.util.function.Function;
 import lombok.val;
 import org.factcast.core.Fact;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.config.TxNamespaceHandler;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import java.time.Duration;
-import java.util.function.Function;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SpringTransactionalLensTest {
