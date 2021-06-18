@@ -2,7 +2,6 @@ package org.factcast.factus.spring.tx;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.function.Function;
-
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
