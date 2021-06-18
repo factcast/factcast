@@ -114,7 +114,9 @@ public abstract class AbstractTransactionalLens implements ProjectorLens {
     if (bulkSize > 1) {
       start.set(0);
       int processed = count.getAndSet(0);
-      log.trace("Flushing on {}, number of facts processed={}", projectionName, processed);
+      if (processed > 0) {
+        log.trace("Flushing on {}, number of facts processed={}", projectionName, processed);
+      }
     }
     doFlush();
   }
