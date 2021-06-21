@@ -2,7 +2,7 @@ package org.factcast.factus.redis;
 
 import java.util.Collection;
 import java.util.Collections;
-import javax.annotation.Nullable;
+import lombok.NonNull;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projector.ProjectorLens;
 import org.factcast.factus.projector.ProjectorPlugin;
@@ -14,9 +14,8 @@ import org.redisson.api.RedissonClient;
 
 public class RedisProjectorPlugin implements ProjectorPlugin {
 
-  @Nullable
   @Override
-  public Collection<ProjectorLens> lensFor(Projection p) {
+  public Collection<ProjectorLens> lensFor(@NonNull Projection p) {
     if (p instanceof RedisProjection) {
 
       RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
