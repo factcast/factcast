@@ -32,12 +32,12 @@ abstract class AbstractRedisProjection implements RedisProjection, StateAware, W
   }
 
   @VisibleForTesting
-  RBucket<UUID> stateBucket(RTransaction tx) {
+  RBucket<UUID> stateBucket(@NonNull RTransaction tx) {
     return tx.getBucket(stateBucketName, UUIDCodec.INSTANCE);
   }
 
   @VisibleForTesting
-  RBucketAsync<UUID> stateBucket(RBatch b) {
+  RBucketAsync<UUID> stateBucket(@NonNull RBatch b) {
     return b.getBucket(stateBucketName, UUIDCodec.INSTANCE);
   }
 

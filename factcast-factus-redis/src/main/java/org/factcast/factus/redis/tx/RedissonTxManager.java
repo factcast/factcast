@@ -17,7 +17,7 @@ public class RedissonTxManager {
   private static final ThreadLocal<Map<RedissonClient, RedissonTxManager>> holder =
       ThreadLocal.withInitial((Supplier<Map<RedissonClient, RedissonTxManager>>) HashMap::new);
 
-  public static RedissonTxManager get(RedissonClient c) {
+  public static RedissonTxManager get(@NonNull RedissonClient c) {
     Map<RedissonClient, RedissonTxManager> map = getMap();
     return map.computeIfAbsent(c, RedissonTxManager::new);
   }

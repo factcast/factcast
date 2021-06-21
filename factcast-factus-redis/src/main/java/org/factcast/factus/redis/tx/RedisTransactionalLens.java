@@ -17,13 +17,16 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
 
   private final RedissonTxManager redissonTxManager;
 
-  public RedisTransactionalLens(@NonNull RedisProjection p, RedissonClient redissonClient) {
+  public RedisTransactionalLens(
+      @NonNull RedisProjection p, @NonNull RedissonClient redissonClient) {
     this(p, RedissonTxManager.get(redissonClient), createOpts(p));
   }
 
   @VisibleForTesting
   RedisTransactionalLens(
-      @NonNull RedisProjection p, RedissonTxManager txman, TransactionOptions opts) {
+      @NonNull RedisProjection p,
+      @NonNull RedissonTxManager txman,
+      @NonNull TransactionOptions opts) {
     super(p);
 
     redissonTxManager = txman;
@@ -40,7 +43,7 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
   }
 
   @VisibleForTesting
-  static int getSize(RedisProjection p) {
+  static int getSize(@NonNull RedisProjection p) {
     RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
     if (transactional == null) {
       throw new IllegalStateException(
@@ -53,7 +56,7 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
   }
 
   @VisibleForTesting
-  static TransactionOptions createOpts(RedisProjection p) {
+  static TransactionOptions createOpts(@NonNull RedisProjection p) {
     RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
     if (transactional == null) {
       throw new IllegalStateException(
@@ -66,7 +69,7 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
   }
 
   @VisibleForTesting
-  static long calculateFlushTimeout(TransactionOptions opts) {
+  static long calculateFlushTimeout(@NonNull TransactionOptions opts) {
     // "best" guess
     long flush = opts.getTimeout() / 10 * 8;
     if (flush < 80) {
@@ -77,7 +80,7 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
   }
 
   @Override
-  public Function<Fact, ?> parameterTransformerFor(Class<?> type) {
+  public Function<Fact, ?> parameterTransformerFor(@NonNull Class<?> type) {
     if (RTransaction.class.equals(type)) {
       return f -> {
         redissonTxManager.startOrJoin();

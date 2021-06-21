@@ -39,7 +39,7 @@ public class RedisBatchedLens extends AbstractTransactionalLens {
   }
 
   @VisibleForTesting
-  static int getSize(RedisProjection p) {
+  static int getSize(@NonNull RedisProjection p) {
     RedisBatched annotation = p.getClass().getAnnotation(RedisBatched.class);
     if (annotation == null) {
       throw new IllegalStateException(
@@ -52,7 +52,7 @@ public class RedisBatchedLens extends AbstractTransactionalLens {
   }
 
   @VisibleForTesting
-  static BatchOptions createOpts(RedisProjection p) {
+  static BatchOptions createOpts(@NonNull RedisProjection p) {
     RedisBatched annotation = p.getClass().getAnnotation(RedisBatched.class);
     if (annotation == null) {
       throw new IllegalStateException(
@@ -65,7 +65,7 @@ public class RedisBatchedLens extends AbstractTransactionalLens {
   }
 
   @Override
-  public Function<Fact, ?> parameterTransformerFor(Class<?> type) {
+  public Function<Fact, ?> parameterTransformerFor(@NonNull Class<?> type) {
     if (RBatch.class.equals(type)) {
       return f -> {
         batchMan.startOrJoin();
