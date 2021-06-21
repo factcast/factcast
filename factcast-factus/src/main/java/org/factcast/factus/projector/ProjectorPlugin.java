@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ServiceLoader;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.factus.projection.Projection;
 
@@ -23,6 +22,6 @@ public interface ProjectorPlugin {
    * @param p the projection in question
    * @return empty list if not applicable to p
    */
-  @Nullable
+  @NonNull
   Collection<ProjectorLens> lensFor(@NonNull Projection p);
 }

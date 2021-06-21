@@ -2,6 +2,7 @@ package org.factcast.factus.redis.batch;
 
 import java.lang.annotation.*;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import lombok.val;
 import org.redisson.api.BatchOptions;
 
@@ -30,7 +31,7 @@ public @interface RedisBatched {
           .retryInterval(retryInterval, TimeUnit.MILLISECONDS);
     }
 
-    public static BatchOptions with(RedisBatched batched) {
+    public static BatchOptions with(@Nullable RedisBatched batched) {
       val opts = create();
 
       if (batched != null) {
