@@ -1,15 +1,14 @@
 package org.factcast.factus.spring.tx;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
+import lombok.NonNull;
 import lombok.val;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
+@Inherited
 public @interface SpringTransactional {
   int size() default 50;
 
@@ -27,7 +26,7 @@ public @interface SpringTransactional {
       return definition;
     }
 
-    public static TransactionDefinition with(SpringTransactional transactional) {
+    public static TransactionDefinition with(@NonNull SpringTransactional transactional) {
       val opts = create();
 
       int timeout = transactional.timeout();

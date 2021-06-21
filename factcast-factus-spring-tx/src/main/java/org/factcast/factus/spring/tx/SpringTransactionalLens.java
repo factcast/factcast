@@ -24,7 +24,7 @@ public class SpringTransactionalLens extends AbstractTransactionalLens implement
     super(springTxProjection);
 
     this.txManager = txManager;
-    this.transactionManager = springTxProjection.platformTransactionManager();
+    transactionManager = springTxProjection.platformTransactionManager();
 
     flushTimeout = calculateFlushTimeout(definition);
     bulkSize = Math.max(1, getSize(springTxProjection));
@@ -39,7 +39,7 @@ public class SpringTransactionalLens extends AbstractTransactionalLens implement
   }
 
   @Override
-  public Function<Fact, ?> parameterTransformerFor(Class<?> type) {
+  public Function<Fact, ?> parameterTransformerFor(@NonNull Class<?> type) {
     if (TransactionTemplate.class.equals(type)) {
       return f -> new TransactionTemplate(transactionManager);
     }
@@ -47,10 +47,10 @@ public class SpringTransactionalLens extends AbstractTransactionalLens implement
   }
 
   @Override
-  public void beforeFactProcessing(Fact f) {
+  public void beforeFactProcessing(@NonNull Fact f) {
     super.beforeFactProcessing(f);
 
-    // starting a new tx or join a current one
+    // start a new tx or join a current one
     txManager.startOrJoin();
   }
 
@@ -65,7 +65,7 @@ public class SpringTransactionalLens extends AbstractTransactionalLens implement
   }
 
   @VisibleForTesting
-  static int getSize(SpringTxProjection p) {
+  static int getSize(@NonNull SpringTxProjection p) {
     SpringTransactional transactional = p.getClass().getAnnotation(SpringTransactional.class);
     if (transactional == null) {
       throw new IllegalStateException(
