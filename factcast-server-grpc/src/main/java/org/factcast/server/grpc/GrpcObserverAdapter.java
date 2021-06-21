@@ -72,7 +72,7 @@ class GrpcObserverAdapter implements FactObserver {
   }
 
   @Override
-  public void onError(Throwable e) {
+  public void onError(@NonNull Throwable e) {
     flush();
     log.info("{} onError – sending Error notification {}", id, e.getMessage());
     observer.onError(e);
@@ -106,7 +106,7 @@ class GrpcObserverAdapter implements FactObserver {
   }
 
   @Override
-  public void onNext(Fact element) {
+  public void onNext(@NonNull Fact element) {
     if (catchupBatchSize > 1 && !caughtUp.get()) {
       if (stagedFacts.size() >= catchupBatchSize) {
         flush();
@@ -118,7 +118,7 @@ class GrpcObserverAdapter implements FactObserver {
   }
 
   @Override
-  public void onFastForward(UUID factIdToFfwdTo) {
+  public void onFastForward(@NonNull UUID factIdToFfwdTo) {
     if (supportsFastForward) {
       // we have not sent any fact. check for ffwding
       observer.onNext(converter.createNotificationForFastForward(factIdToFfwdTo));

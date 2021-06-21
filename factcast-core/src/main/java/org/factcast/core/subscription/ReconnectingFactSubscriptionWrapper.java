@@ -208,7 +208,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
           }
 
           @Override
-          public void onFastForward(UUID factIdToFfwdTo) {
+          public void onFastForward(@NonNull UUID factIdToFfwdTo) {
             originalObserver.onFastForward(factIdToFfwdTo);
           }
 

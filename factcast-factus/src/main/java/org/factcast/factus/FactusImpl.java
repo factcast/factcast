@@ -238,7 +238,7 @@ public class FactusImpl implements Factus {
           }
 
           @Override
-          public void onFastForward(UUID factIdToFfwdTo) {
+          public void onFastForward(@NonNull UUID factIdToFfwdTo) {
             subscribedProjection.state(factIdToFfwdTo);
           }
         };
@@ -392,7 +392,7 @@ public class FactusImpl implements Factus {
           }
 
           @Override
-          public void onFastForward(UUID factIdToFfwdTo) {
+          public void onFastForward(@NonNull UUID factIdToFfwdTo) {
             if (projection instanceof StateAware) {
               ((StateAware) projection).state(factIdToFfwdTo);
             }
