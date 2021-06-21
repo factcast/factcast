@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.store.pgsql.PgConfigurationProperties;
@@ -62,12 +63,12 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   }
 
   @VisibleForTesting
-  void removeIndex(String indexName) {
+  void removeIndex(@NonNull String indexName) {
     jdbc.update(PgConstants.dropTailIndex(indexName));
   }
 
   @VisibleForTesting
-  boolean timeToCreateANewTail(List<String> indexes) {
+  boolean timeToCreateANewTail(@NonNull List<String> indexes) {
     if (indexes.isEmpty()) {
       return true;
     }

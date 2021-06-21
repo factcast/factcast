@@ -28,7 +28,7 @@ public interface GenericObserver<I> {
 
   void onNext(@NonNull I element);
 
-  default void onFastForward(UUID factIdToFfwdTo) {}
+  default void onFastForward(@NonNull UUID factIdToFfwdTo) {}
 
   default void onCatchup() {
     // implement if you are interested in that event
