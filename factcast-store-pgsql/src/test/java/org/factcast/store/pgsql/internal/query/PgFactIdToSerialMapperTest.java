@@ -18,6 +18,7 @@ package org.factcast.store.pgsql.internal.query;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.UUID;
 import java.util.function.Supplier;
 import lombok.val;
@@ -37,6 +38,7 @@ public class PgFactIdToSerialMapperTest {
 
   @Mock JdbcTemplate jdbc;
   @Mock PgMetrics metrics;
+  @Mock MeterRegistry registry;
 
   @Mock SqlRowSet rs;
   @InjectMocks PgFactIdToSerialMapper uut;

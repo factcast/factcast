@@ -23,9 +23,9 @@ public class StoreMetrics {
 
   static final String COUNTER_METRIC_NAME = "factcast.store.meter";
 
-  static final String TAG_STORE_KEY = "store";
+  public static final String TAG_STORE_KEY = "store";
 
-  static final String TAG_STORE_VALUE = "pgsql";
+  public static final String TAG_STORE_VALUE = "pgsql";
 
   static final String TAG_OPERATION_KEY = "operation";
 
