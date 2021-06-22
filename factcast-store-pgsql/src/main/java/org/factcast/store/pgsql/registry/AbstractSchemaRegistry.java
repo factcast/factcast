@@ -31,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.factcast.store.pgsql.registry.http.ValidationConstants;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.OP;
 import org.factcast.store.pgsql.registry.transformation.*;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
@@ -87,8 +88,14 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
     synchronized (mutex) {
       Stopwatch sw = Stopwatch.createStarted();
       log.info("Registry update started");
-      indexFetcher.fetchIndex().ifPresent(this::process);
-      log.info("Registry update finished in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
+      try {
+        indexFetcher.fetchIndex().ifPresent(this::process);
+        log.info("Registry update finished in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
+      } catch (Throwable e) {
+        log.warn("While fetching initial state of registry", e);
+        registryMetrics.count(EVENT.SCHEMA_UPDATE_FAILURE);
+        log.info("Registry update failed in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
+      }
     }
   }
 
@@ -98,8 +105,13 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
       registryMetrics.timed(
           OP.REFRESH_REGISTRY,
           () -> {
-            Optional<RegistryIndex> fetchIndex = indexFetcher.fetchIndex();
-            fetchIndex.ifPresent(this::process);
+            try {
+              Optional<RegistryIndex> fetchIndex = indexFetcher.fetchIndex();
+              fetchIndex.ifPresent(this::process);
+            } catch (Throwable e) {
+              registryMetrics.count(EVENT.SCHEMA_UPDATE_FAILURE);
+              throw e;
+            }
           });
     }
   }
@@ -115,8 +127,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
       int count = toFetch.size();
       log.info(
           "SchemaStore will be updated, {} {} to fetch.", count, count == 1 ? "schema" : "schemes");
-      toFetch
-          .parallelStream()
+      toFetch.parallelStream()
           .forEach(
               source -> {
                 try {
@@ -148,8 +159,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
           "TransformationStore will be updated, {} {} to fetch.",
           count,
           count == 1 ? "transformation" : "transformations");
-      toFetch
-          .parallelStream()
+      toFetch.parallelStream()
           .forEach(
               source -> {
                 try {
