@@ -1,0 +1,31 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "salutation": {
+      "type": "string",
+      "enum": [
+        "Mr",
+        "Mrs",
+        "NA"
+      ]
+    },
+    "displayName": {
+      "type": "string"
+    },
+    "age": {
+      "type": "int"
+    }
+  },
+  "required": [
+    "firstName",
+    "lastName",
+    "salutation",
+    "displayName"
+  ]
+}
