@@ -15,11 +15,19 @@
  */
 package org.factcast.store.pgsql.internal.query;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics;
+import java.time.Duration;
+import java.util.Collections;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.PgMetrics;
+import org.factcast.store.pgsql.internal.StoreMetrics;
 import org.factcast.store.pgsql.internal.StoreMetrics.OP;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -28,11 +36,22 @@ import org.springframework.jdbc.core.JdbcTemplate;
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-@RequiredArgsConstructor
-public class PgFactIdToSerialMapper {
+public class PgFactIdToSerialMapper implements InitializingBean {
 
-  final JdbcTemplate jdbcTemplate;
-  final PgMetrics metrics;
+  private static final long MAX_SIZE = 10_000;
+  private final JdbcTemplate jdbcTemplate;
+  private final PgMetrics metrics;
+  private MeterRegistry registry;
+
+  private final Cache<UUID, Long> cache;
+
+  public PgFactIdToSerialMapper(
+      JdbcTemplate jdbcTemplate, PgMetrics metrics, MeterRegistry registry) {
+    this.jdbcTemplate = jdbcTemplate;
+    this.metrics = metrics;
+    this.registry = registry;
+    cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(8)).softValues().build();
+  }
 
   /**
    * Fetches the SER of a particular Fact identified by id
@@ -40,28 +59,42 @@ public class PgFactIdToSerialMapper {
    * @param id the FactId to look for
    * @return the corresponding SER, 0, if no Fact is found for the id given.
    */
-  // TODO add caching
-  // TODO add cache hit/miss metric
   public long retrieve(UUID id) {
     if (id == null) {
       return 0;
-    } else {
-      return metrics.time(
-          OP.SERIAL_OF,
-          () -> {
-            try {
 
-              Long res =
-                  jdbcTemplate.queryForObject(
-                      PgConstants.SELECT_SER_BY_ID, new Object[] {id}, Long.class);
-              if (res != null && res > 0) {
-                return res;
+    } else {
+      Long cachedValue = cache.getIfPresent(id);
+      if (cachedValue != null && cachedValue > 0) {
+        return cachedValue;
+      } else {
+        return metrics.time(
+            OP.SERIAL_OF,
+            () -> {
+              try {
+                Long res =
+                    jdbcTemplate.queryForObject(
+                        PgConstants.SELECT_SER_BY_ID, new Object[] {id}, Long.class);
+                if (res != null && res > 0) {
+                  cache.put(id, res);
+                  return res;
+                }
+              } catch (EmptyResultDataAccessException ignore) {
+                // ignore
               }
-            } catch (EmptyResultDataAccessException ignore) {
-              // ignore
-            }
-            return 0L;
-          });
+              return 0L;
+            });
+      }
     }
+  }
+
+  // has been pulled out of constructor in order to allow easier unit testing
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    GuavaCacheMetrics.monitor(
+        registry,
+        cache,
+        "serialLookupCache",
+        Collections.singleton(Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE)));
   }
 }
