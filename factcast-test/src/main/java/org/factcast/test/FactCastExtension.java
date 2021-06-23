@@ -17,13 +17,11 @@ package org.factcast.test;
 
 import com.google.common.collect.Lists;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.junit.jupiter.api.extension.*;
-import org.testcontainers.containers.GenericContainer;
 
 @Slf4j
 public class FactCastExtension
