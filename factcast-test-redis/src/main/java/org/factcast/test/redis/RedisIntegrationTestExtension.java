@@ -1,9 +1,14 @@
 package org.factcast.test.redis;
 
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.sun.tools.javah.Gen;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.factcast.test.FactCastIntegrationTestExtension;
+import org.factcast.test.FactcastConfig;
 import org.junit.jupiter.api.extension.*;
 import org.redisson.Redisson;
 import org.redisson.config.Config;
@@ -13,33 +18,61 @@ import org.testcontainers.containers.GenericContainer;
 @Slf4j
 public class RedisIntegrationTestExtension implements FactCastIntegrationTestExtension {
 
-  private GenericContainer _redis;
-  private Config config;
-  private String url;
+  private final Map<RedisConfig.Config, GenericContainer> executions = new ConcurrentHashMap<>();
 
   @Override
-  public boolean initialize(Map<String, GenericContainer<?>> containers) {
+  public boolean initialize(ExtensionContext ctx) {
+    final RedisConfig.Config config = discoverConfig(ctx);
 
-    if (!containers.containsKey("factcast")) {
-      return false;
-    }
+    startOrReuse(config);
 
-    _redis = new GenericContainer<>("redis:5.0.9-alpine").withExposedPorts(6379);
-    _redis.start();
-    Runtime.getRuntime().addShutdownHook(new Thread(_redis::stop));
-    System.setProperty("spring.redis.host", _redis.getHost());
-    System.setProperty("spring.redis.port", String.valueOf(_redis.getMappedPort(6379)));
-    url = "redis://" + _redis.getHost() + ":" + _redis.getMappedPort(6379);
-    config = new Config().setThreads(1);
-    config.useSingleServer().setAddress(url);
     return true;
+  }
+
+  private void startOrReuse(RedisConfig.Config config) {
+    final GenericContainer container =
+        executions.computeIfAbsent(
+            config,
+            key -> {
+              GenericContainer redis =
+                  new GenericContainer<>("redis:" + config.redisVersion()).withExposedPorts(6379);
+              redis.start();
+
+              return redis;
+            });
+
+    System.setProperty("spring.redis.host", container.getHost());
+    System.setProperty("spring.redis.port", String.valueOf(container.getMappedPort(6379)));
+  }
+
+  @Override
+  public void beforeAll(ExtensionContext ctx) {
+    final RedisConfig.Config config = discoverConfig(ctx);
+    startOrReuse(config);
+
+    FactCastIntegrationTestExtension.super.beforeAll(ctx);
   }
 
   @Override
   public void beforeEach(ExtensionContext ctx) {
+    final RedisConfig.Config config = discoverConfig(ctx);
+    final GenericContainer container = executions.get(config);
+
+    val url = "redis://" + container.getHost() + ":" + container.getMappedPort(6379);
     log.trace("erasing redis state in between tests for {}", url);
-    val client = Redisson.create(config);
+
+    val clientConfig = new Config().setThreads(1);
+    clientConfig.useSingleServer().setAddress(url);
+
+    val client = Redisson.create(clientConfig);
     client.getKeys().flushdb();
     client.shutdown();
+  }
+
+  private RedisConfig.Config discoverConfig(ExtensionContext ctx) {
+    return ctx.getTestClass()
+        .flatMap(x -> Optional.ofNullable(x.getAnnotation(RedisConfig.class)))
+        .map(RedisConfig.Config::from)
+        .orElse(RedisConfig.Config.defaults());
   }
 }
