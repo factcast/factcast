@@ -1,8 +1,6 @@
 package org.factcast.test;
 
-import java.util.Map;
 import org.junit.jupiter.api.extension.*;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
 public interface FactCastIntegrationTestExtension {
