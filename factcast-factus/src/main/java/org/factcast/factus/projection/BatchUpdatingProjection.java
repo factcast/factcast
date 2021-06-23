@@ -15,6 +15,7 @@
  */
 package org.factcast.factus.projection;
 
+// TODO see if we can remove this
 public interface BatchUpdatingProjection extends Projection {
   default void afterUpdate(int numberOfFactsAppliedDuringUpdate) {}
 }

@@ -18,6 +18,8 @@ package org.factcast.store.pgsql.internal.query;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.factcast.store.pgsql.internal.PgConstants;
+import org.factcast.store.pgsql.internal.PgMetrics;
+import org.factcast.store.pgsql.internal.StoreMetrics.OP;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -30,6 +32,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class PgFactIdToSerialMapper {
 
   final JdbcTemplate jdbcTemplate;
+  final PgMetrics metrics;
 
   /**
    * Fetches the SER of a particular Fact identified by id
@@ -37,18 +40,28 @@ public class PgFactIdToSerialMapper {
    * @param id the FactId to look for
    * @return the corresponding SER, 0, if no Fact is found for the id given.
    */
+  // TODO add caching
+  // TODO add cache hit/miss metric
   public long retrieve(UUID id) {
-    if (id != null) {
-      try {
-        // throws EmptyResultDataAccessException if is not found!
-        // noinspection ConstantConditions
-        return jdbcTemplate.queryForObject(
-            PgConstants.SELECT_BY_HEADER_JSON,
-            new Object[] {"{\"id\":\"" + id + "\"}"},
-            Long.class);
-      } catch (EmptyResultDataAccessException ignored) {
-      }
+    if (id == null) {
+      return 0;
+    } else {
+      return metrics.time(
+          OP.SERIAL_OF,
+          () -> {
+            try {
+
+              Long res =
+                  jdbcTemplate.queryForObject(
+                      PgConstants.SELECT_SER_BY_ID, new Object[] {id}, Long.class);
+              if (res != null && res > 0) {
+                return res;
+              }
+            } catch (EmptyResultDataAccessException ignore) {
+              // ignore
+            }
+            return 0L;
+          });
     }
-    return 0;
   }
 }

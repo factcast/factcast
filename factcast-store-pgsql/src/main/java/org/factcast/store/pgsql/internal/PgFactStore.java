@@ -38,6 +38,7 @@ import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.pgsql.internal.StoreMetrics.OP;
 import org.factcast.store.pgsql.internal.lock.FactTableWriteLock;
+import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgQueryBuilder;
 import org.factcast.store.pgsql.internal.snapcache.PgSnapshotCache;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +69,7 @@ public class PgFactStore extends AbstractFactStore {
   @NonNull private final FactTableWriteLock lock;
 
   @NonNull private final FactTransformerService factTransformerService;
+  @NonNull private final PgFactIdToSerialMapper pgFactIdToSerialMapper;
 
   @NonNull private final PgMetrics metrics;
 
@@ -80,6 +82,7 @@ public class PgFactStore extends AbstractFactStore {
       @NonNull TokenStore tokenStore,
       @NonNull FactTableWriteLock lock,
       @NonNull FactTransformerService factTransformerService,
+      @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
       @NonNull PgSnapshotCache snapCache,
       @NonNull PgMetrics metrics) {
     super(tokenStore);
@@ -87,6 +90,7 @@ public class PgFactStore extends AbstractFactStore {
     this.jdbcTemplate = jdbcTemplate;
     this.subscriptionFactory = subscriptionFactory;
     this.lock = lock;
+    this.pgFactIdToSerialMapper = pgFactIdToSerialMapper;
     this.snapCache = snapCache;
     this.metrics = metrics;
     this.factTransformerService = factTransformerService;
@@ -94,6 +98,7 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Optional<Fact> fetchById(@NonNull UUID id) {
+    // replace on merge with faster version
     return metrics.time(
         OP.FETCH_BY_ID,
         () ->
@@ -178,23 +183,13 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull OptionalLong serialOf(@NonNull UUID factId) {
-    return metrics.time(
-        OP.SERIAL_OF,
-        () -> {
-          try {
-            Long res =
-                jdbcTemplate.queryForObject(
-                    PgConstants.SELECT_SER_BY_ID, new Object[] {factId}, Long.class);
 
-            if (res != null && res > 0) {
-              return OptionalLong.of(res);
-            }
-
-          } catch (EmptyResultDataAccessException ignore) {
-            // ignore
-          }
-          return OptionalLong.empty();
-        });
+    long serial = pgFactIdToSerialMapper.retrieve(factId);
+    if (serial == 0) {
+      return OptionalLong.empty();
+    } else {
+      return OptionalLong.of(serial);
+    }
   }
 
   @Override

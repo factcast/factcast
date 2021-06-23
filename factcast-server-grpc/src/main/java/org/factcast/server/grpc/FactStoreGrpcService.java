@@ -53,6 +53,7 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
@@ -86,18 +87,33 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
   static final AtomicLong subscriptionIdStore = new AtomicLong();
 
-  final FactStore store;
-  final GrpcRequestMetadata grpcRequestMetadata;
-
-  final GrpcLimitProperties grpcLimitProperties;
+  @NonNull final FactStore store;
+  @NonNull final GrpcRequestMetadata grpcRequestMetadata;
+  @NonNull final GrpcLimitProperties grpcLimitProperties;
+  @NonNull final FastForwardTarget ffwdTarget;
 
   final CompressionCodecs codecs = new CompressionCodecs();
 
   final ProtoConverter converter = new ProtoConverter();
 
   @VisibleForTesting
+  @Deprecated
   protected FactStoreGrpcService(FactStore store, GrpcRequestMetadata grpcRequestMetadata) {
-    this(store, grpcRequestMetadata, new GrpcLimitProperties());
+    this(store, grpcRequestMetadata, new GrpcLimitProperties(), FastForwardTarget.forTest());
+  }
+
+  @VisibleForTesting
+  @Deprecated
+  protected FactStoreGrpcService(
+      FactStore store, GrpcRequestMetadata grpcRequestMetadata, GrpcLimitProperties props) {
+    this(store, grpcRequestMetadata, props, FastForwardTarget.forTest());
+  }
+
+  @VisibleForTesting
+  @Deprecated
+  protected FactStoreGrpcService(
+      FactStore store, GrpcRequestMetadata grpcRequestMetadata, FastForwardTarget target) {
+    this(store, grpcRequestMetadata, new GrpcLimitProperties(), target);
   }
 
   @Override
@@ -149,9 +165,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
         Subscription sub =
             store.subscribe(
-                req,
-                new GrpcObserverAdapter(
-                    req.toString(), resp, grpcRequestMetadata.catchupBatch().orElse(1)));
+                req, new GrpcObserverAdapter(req.toString(), resp, grpcRequestMetadata));
 
         ((ServerCallStreamObserver<MSG_Notification>) responseObserver)
             .setOnCancelHandler(
