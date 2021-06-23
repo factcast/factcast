@@ -92,16 +92,11 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
 
   @Override
   public void doClear() {
-    if (redissonTxManager.inTransaction()) {
-      redissonTxManager.rollback();
-    }
+    redissonTxManager.rollback();
   }
 
   @Override
   public void doFlush() {
-    // otherwise we can silently commit, not to "flush" the logs
-    if (redissonTxManager.inTransaction()) {
-      redissonTxManager.commit();
-    }
+    redissonTxManager.commit();
   }
 }
