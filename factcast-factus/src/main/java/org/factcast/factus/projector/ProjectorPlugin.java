@@ -22,5 +22,6 @@ public interface ProjectorPlugin {
    * @param p the projection in question
    * @return empty list if not applicable to p
    */
+  @NonNull
   Collection<ProjectorLens> lensFor(@NonNull Projection p);
 }

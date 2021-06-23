@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.test.annotation.DirtiesContext;
@@ -54,7 +55,7 @@ import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 @ExtendWith(FactCastExtension.class)
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest
-@EnableAutoConfiguration
+@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @ContextConfiguration(classes = {Application.class, RedissonProjectionConfiguration.class})
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
@@ -103,9 +104,9 @@ public class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrat
       new GenericContainer<>("factcast/factcast:latest")
           .withExposedPorts(9090)
           .withFileSystemBind("./config", "/config/")
-          .withEnv("grpc.server.port", "9090")
-          .withEnv("factcast.security.enabled", "false")
-          .withEnv("spring.datasource.url", "jdbc:postgresql://db/fc?user=fc&password=fc")
+          .withEnv("grpc_server_port", "9090")
+          .withEnv("factcast_security_enabled", "false")
+          .withEnv("spring_datasource_url", "jdbc:postgresql://db/fc?user=fc&password=fc")
           .withFileSystemBind(folderForSchemas.toString(), "/schemata/")
           .withEnv("FACTCAST_STORE_PGSQL_SCHEMA_REGISTRY_URL", "file:///schemata")
           .withNetwork(_docker_network)
