@@ -15,22 +15,19 @@
  */
 package org.factcast.itests.factus;
 
-import static java.util.Arrays.asList;
-import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.toList;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static java.util.Arrays.*;
+import static java.util.UUID.*;
+import static java.util.stream.Collectors.*;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
+import static org.assertj.core.api.Assertions.*;
 
+import com.google.common.base.Stopwatch;
 import config.RedissonProjectionConfiguration;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
-import lombok.Data;
+import java.util.concurrent.TimeUnit;
+import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -39,19 +36,19 @@ import org.factcast.core.event.EventConverter;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.HandlerFor;
+import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.LockedOperationAbortedException;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.itests.factus.event.TestAggregateIncremented;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
-import org.factcast.itests.factus.proj.RedissonManagedUserNames;
-import org.factcast.itests.factus.proj.SnapshotUserNames;
-import org.factcast.itests.factus.proj.SubscribedUserNames;
-import org.factcast.itests.factus.proj.TestAggregate;
-import org.factcast.itests.factus.proj.UserCount;
+import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.*;
+import org.redisson.api.RTransaction;
+import org.redisson.api.RedissonClient;
+import org.redisson.api.TransactionOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -67,15 +64,22 @@ import org.springframework.test.context.ContextConfiguration;
 public class FactusClientTest extends AbstractFactCastIntegrationTest {
   private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
 
+  static {
+    System.setProperty("factcast.grpc.client.catchup-batchsize", "100");
+  }
+
   @Autowired Factus factus;
 
   @Autowired EventConverter eventConverter;
 
   @Autowired RedissonManagedUserNames externalizedUserNames;
+  @Autowired TxRedissonManagedUserNames transactionalExternalizedUserNames;
+  @Autowired TxRedissonSubscribedUserNames transactionalExternalizedSubscribedUserNames;
 
   @Autowired SubscribedUserNames subscribedUserNames;
 
   @Autowired UserCount userCount;
+  @Autowired RedissonClient redissonClient;
 
   @Test
   public void allWaysToPublish() {
@@ -113,6 +117,127 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     assertThat(externalizedUserNames.contains("Mick")).isTrue();
     assertThat(externalizedUserNames.contains("Keith")).isTrue();
     assertThat(externalizedUserNames.contains("Brian")).isTrue();
+  }
+
+  public void measure(String s, Runnable r) {
+    val sw = Stopwatch.createStarted();
+    r.run();
+    log.info("{} {}ms", s, sw.stop().elapsed().toMillis());
+  }
+
+  @SneakyThrows
+  @Test
+  @Disabled // TODO remove
+  public void txBatchProcessingPerformance() {
+
+    int MAX = 10000;
+    val l = new ArrayList<EventObject>(MAX);
+    log.info("preparing {} Events ", MAX);
+    for (int i = 0; i < MAX; i++) {
+      l.add(new UserCreated(randomUUID(), "" + i));
+    }
+    log.info("publishing {} Events ", MAX);
+    factus.publish(l);
+    log.info("Cooldown of a sec");
+    Thread.sleep(1000);
+
+    {
+      val sw = Stopwatch.createStarted();
+      RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
+      factus.update(p);
+      log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+    {
+      val sw = Stopwatch.createStarted();
+      RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
+      factus.update(p);
+      log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+    // ----------tx
+    {
+      val sw = Stopwatch.createStarted();
+      TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
+      factus.update(p);
+      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+
+    {
+      val sw = Stopwatch.createStarted();
+      TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
+      factus.update(p);
+      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+
+    // ------------ sub
+
+    // ----------tx
+    {
+      val sw = Stopwatch.createStarted();
+      TxRedissonSubscribedUserNames p = new TxRedissonSubscribedUserNames(redissonClient);
+      val sub = factus.subscribeAndBlock(p);
+      sub.awaitCatchup();
+      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+
+    {
+      val sw = Stopwatch.createStarted();
+      TxRedissonSubscribedUserNames p = new TxRedissonSubscribedUserNames(redissonClient);
+      val sub = factus.subscribeAndBlock(p);
+      sub.awaitCatchup();
+      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+
+    // ------------ batch
+    {
+      val sw = Stopwatch.createStarted();
+      BatchRedissonManagedUserNames p = new BatchRedissonManagedUserNames(redissonClient);
+      factus.update(p);
+      log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+    {
+      val sw = Stopwatch.createStarted();
+      BatchRedissonManagedUserNames p = new BatchRedissonManagedUserNames(redissonClient);
+      factus.update(p);
+      log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      p.clear();
+      p.state(new UUID(0, 0));
+    }
+  }
+
+  @SneakyThrows
+  @Test
+  public void redissionDigger() {
+
+    RTransaction tx2 =
+        redissonClient.createTransaction(
+            TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
+
+    val tx = redissonClient.createBatch();
+
+    val r = tx.getMap("schubba");
+    measure(
+        "honk",
+        () -> {
+          r.putAsync("a", "b");
+          r.putAsync("a", "b");
+          r.putAsync("a", "b");
+
+          tx.execute();
+        });
   }
 
   @Test
@@ -480,36 +605,28 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
         });
   }
 
-  @Data
   static class SimpleAggregate extends Aggregate {
     static final String ns = "ns";
     static final String type = "foo";
 
-    private transient int factsConsumed = 0;
-
-    @Override
-    public void afterUpdate(int numberOfFactsAppliedDuringUpdate) {
-      this.factsConsumed = numberOfFactsAppliedDuringUpdate;
-    }
+    transient int factsConsumed = 0;
 
     @HandlerFor(ns = ns, type = type)
-    void apply(Fact f) {}
+    void apply(Fact f) {
+      factsConsumed++;
+    }
   }
 
-  @Data
   static class SimpleManaged extends LocalManagedProjection {
     static final String ns = "ns";
     static final String type = "foo";
 
-    private transient int factsConsumed = 0;
-
-    @Override
-    public void afterUpdate(int numberOfFactsAppliedDuringUpdate) {
-      this.factsConsumed = numberOfFactsAppliedDuringUpdate;
-    }
+    transient int factsConsumed = 0;
 
     @HandlerFor(ns = ns, type = type)
-    void apply(Fact f) {}
+    void apply(Fact f) {
+      factsConsumed++;
+    }
   }
 
   @Test
@@ -547,44 +664,5 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     val a3 = factus.fetch(SimpleAggregate.class, aggId);
     assertThat(a3.factsConsumed).isEqualTo(1);
-  }
-
-  @Test
-  void afterUpdateOnManagedProjection() {
-    UUID aggId = UUID.randomUUID();
-    val f1 =
-        Fact.builder()
-            .aggId(aggId)
-            .ns(SimpleManaged.ns)
-            .type(SimpleManaged.type)
-            .buildWithoutPayload();
-    val f2 =
-        Fact.builder()
-            .aggId(aggId)
-            .ns(SimpleManaged.ns)
-            .type(SimpleManaged.type)
-            .buildWithoutPayload();
-    val f3 =
-        Fact.builder()
-            .aggId(aggId)
-            .ns(SimpleManaged.ns)
-            .type(SimpleManaged.type)
-            .buildWithoutPayload();
-
-    factus.publish(f1);
-    factus.publish(f2);
-
-    val m = spy(new SimpleManaged());
-
-    factus.update(m);
-    verify(m).afterUpdate(2);
-
-    factus.update(m);
-    verify(m).afterUpdate(0);
-
-    factus.publish(f3);
-
-    factus.update(m);
-    verify(m).afterUpdate(1);
   }
 }

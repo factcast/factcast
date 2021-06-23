@@ -15,13 +15,13 @@
  */
 package org.factcast.schema.registry.cli.validation.validators.impl
 
-import javax.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.utils.SchemaService
 import org.factcast.schema.registry.cli.utils.mapEventVersions
 import org.factcast.schema.registry.cli.validation.ProjectError
 import org.factcast.schema.registry.cli.validation.validators.ExampleValidationService
+import javax.inject.Singleton
 
 @Singleton
 class ExampleValidationServiceImpl(
