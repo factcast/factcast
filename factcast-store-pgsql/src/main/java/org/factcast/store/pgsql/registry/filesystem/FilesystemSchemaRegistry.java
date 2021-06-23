@@ -36,6 +36,6 @@ public class FilesystemSchemaRegistry extends AbstractSchemaRegistry {
         schemaStore,
         transformationStore,
         registryMetrics,
-        pgConfigurationProperties.isAllowSchemaReplace());
+        pgConfigurationProperties);
   }
 }
