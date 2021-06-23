@@ -105,6 +105,8 @@ At the **time of writing (0.3.10)**, the registry events that are counted are:
 |    schemaConflict | x | 
 |    factValidationFailed | x | 
 |    schemaMissing | x | 
+|    schemaUpdateFailure | x |
+
 
 ### gRPC Metrics
 

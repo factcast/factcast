@@ -72,7 +72,8 @@ public interface RegistryMetrics {
     TRANSFORMATION_FAILED("transformationFailed"),
     SCHEMA_CONFLICT("schemaConflict"),
     FACT_VALIDATION_FAILED("factValidationFailed"),
-    SCHEMA_MISSING("schemaMissing");
+    SCHEMA_MISSING("schemaMissing"),
+    SCHEMA_UPDATE_FAILURE("schemaUpdateFailure");
 
     @NonNull @Getter final String event;
 
