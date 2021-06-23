@@ -34,7 +34,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -144,19 +143,12 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
       ((ServerCallStreamObserver<MSG_Notification>) responseObserver)
           .setOnCancelHandler(
               () -> {
-                CompletableFuture.runAsync(
-                    () -> {
-                      log.debug(
-                          "got onCancel from stream, closing subscription {}", req.debugInfo());
-                      try {
-                        subRef.get().close();
-                      } catch (Exception e) {
-                        log.debug("While closing connection after canel", e);
-                      }
-                    });
-
-                throw new RequestCanceledByClientException(
-                    "The request was canceled by the client");
+                log.debug("got onCancel from stream, closing subscription {}", req.debugInfo());
+                try {
+                  subRef.get().close();
+                } catch (Exception e) {
+                  log.debug("While closing connection after cancel", e);
+                }
               });
 
       Subscription sub =

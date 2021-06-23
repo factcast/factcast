@@ -25,7 +25,6 @@ public class ServerExceptionHelper {
     if (e instanceof RuntimeException && e.getClass().getName().startsWith("org.factcast.core")) {
       return new StatusRuntimeException(Status.INTERNAL, addMetaData(meta, e));
     } else {
-
       return new StatusRuntimeException(Status.UNKNOWN, meta);
     }
   }

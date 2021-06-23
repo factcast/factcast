@@ -102,6 +102,7 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
       if (exception instanceof RequestCanceledByClientException) {
         // maybe we can even skip this close call?
         serverCall.close(Status.CANCELLED.withDescription(exception.getMessage()), metadata);
+        log.debug("Connection cancelled by client.");
         return;
       }
 

@@ -74,6 +74,7 @@ class GrpcObserverAdapter implements FactObserver {
     flush();
     log.info("{} onError – sending Error notification {}", id, e.getMessage());
     observer.onError(e);
+    // TODO see if needed, because onError is terminating anyway
     tryComplete();
   }
 
