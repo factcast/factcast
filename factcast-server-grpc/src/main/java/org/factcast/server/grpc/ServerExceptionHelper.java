@@ -19,17 +19,18 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
-public class FactcastRemoteException {
+public class ServerExceptionHelper {
 
-  public static Throwable of(Throwable e) {
+  public static StatusRuntimeException translate(Throwable e, Metadata meta) {
+    if (e instanceof RuntimeException && e.getClass().getName().startsWith("org.factcast.core")) {
+      return new StatusRuntimeException(Status.INTERNAL, addMetaData(meta, e));
+    } else {
 
-    if (e instanceof RuntimeException && e.getClass().getName().startsWith("org.factcast."))
-      return new StatusRuntimeException(Status.UNKNOWN, createMetaData(e));
-    else return new StatusRuntimeException(Status.UNKNOWN);
+      return new StatusRuntimeException(Status.UNKNOWN, meta);
+    }
   }
 
-  private static Metadata createMetaData(Throwable e) {
-    Metadata metadata = new Metadata();
+  private static Metadata addMetaData(Metadata metadata, Throwable e) {
     metadata.put(
         Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
     metadata.put(

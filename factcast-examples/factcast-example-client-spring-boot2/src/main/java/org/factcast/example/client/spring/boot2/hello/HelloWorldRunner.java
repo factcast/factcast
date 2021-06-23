@@ -42,7 +42,7 @@ public class HelloWorldRunner implements CommandLineRunner {
             .type("UserCreated")
             .version(1)
             .id(id)
-            .build("{\"firstName\":\"Horst\",\"lastName\":\"Lichter\"}");
+            .build("{\"first_BROKEN_Name\":\"Horst\",\"lastName\":\"Lichter\"}");
     fc.publish(fact);
     System.out.println("published " + fact);
 

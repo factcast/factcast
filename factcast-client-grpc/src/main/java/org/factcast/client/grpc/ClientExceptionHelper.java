@@ -16,34 +16,44 @@
 package org.factcast.client.grpc;
 
 import io.grpc.Metadata;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.lang.reflect.Constructor;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.store.RetryableException;
 
 @Slf4j
-public class FactcastRemoteException {
+public class ClientExceptionHelper {
 
   public static RuntimeException from(StatusRuntimeException e) {
 
-    try {
-      Metadata md = e.getTrailers();
-      assert md != null;
+    RuntimeException toReturn = e;
 
-      byte[] msgBytes = md.get(Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER));
-      byte[] excBytes = md.get(Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER));
+    Metadata md = e.getTrailers();
+    assert md != null;
 
-      if (excBytes != null) {
-        Class<?> exc = Class.forName(new String(excBytes));
+    byte[] msgBytes = md.get(Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER));
+    byte[] excBytes = md.get(Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER));
+
+    if (excBytes != null) {
+      String className = new String(excBytes);
+      try {
+        Class<?> exc = Class.forName(className);
         Constructor<?> constructor = exc.getConstructor(String.class);
         String msg = new String(Objects.requireNonNull(msgBytes));
-        return (RuntimeException) constructor.newInstance(msg);
+        toReturn = (RuntimeException) constructor.newInstance(msg);
+      } catch (Throwable ex) {
+        log.warn("Something went wrong materializing an exception of type {}", className, ex);
       }
-
-    } catch (Throwable ex) {
-      log.warn("Something went wrong materializing an exception", ex);
-      // but throw e anyway
+    } else {
+      // TODO otbe is that right?
+      Status status = e.getStatus();
+      if (status == Status.ABORTED || status == Status.UNAVAILABLE || status == Status.UNKNOWN) {
+        toReturn = new RetryableException(e);
+      }
     }
-    return e;
+
+    return toReturn;
   }
 }
