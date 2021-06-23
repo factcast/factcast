@@ -15,6 +15,7 @@
  */
 package org.factcast.store.pgsql.internal;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,6 +30,7 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
@@ -63,6 +65,7 @@ public class PgFactStream {
   final PgLatestSerialFetcher fetcher;
 
   final PgCatchupFactory pgCatchupFactory;
+  final FastForwardTarget ffwdTarget;
 
   CondensedQueryExecutor condensedExecutor;
 
@@ -93,7 +96,7 @@ public class PgFactStream {
   private void catchupAndFollow(
       SubscriptionRequest request, SubscriptionImpl subscription, PgSynchronizedQuery query) {
     if (request.ephemeral()) {
-      // just fast forward to the latest event publish by now
+      // just fast forward to the latest event published by now
       serial.set(fetcher.retrieveLatestSer());
     } else {
       try {
@@ -104,6 +107,31 @@ public class PgFactStream {
         subscription.notifyError(e);
       }
     }
+
+    long startedSer = 0;
+    UUID startedId = null;
+    if (request.startingAfter().isPresent()) {
+      startedId = request.startingAfter().get();
+      startedSer = idToSerMapper.retrieve(startedId);
+    }
+
+    // test for ffwd
+    if (isConnected()) {
+      if (!factsHaveBeenSent(startedSer, serial)) {
+        // we have not sent any fact. check for ffwding
+
+        UUID targetId = ffwdTarget.targetId();
+        long targetSer = ffwdTarget.targetSer();
+        long startSer = 0;
+
+        if (targetId != null && (!targetId.equals(startedId) && (targetSer > startedSer))) {
+          log.debug(
+              "{} no facts applied – sending ffwd notification to fact id {}", request, targetId);
+          subscription.notifyFastForward(targetId);
+        }
+      }
+    }
+
     // propagate catchup
     if (isConnected()) {
       log.trace("{} signaling catchup", request);
@@ -142,6 +170,17 @@ public class PgFactStream {
         log.debug("Completed {}", request);
       }
     }
+  }
+
+  @VisibleForTesting
+  boolean factsHaveBeenSent(long startedAt, AtomicLong serial) {
+
+    if (serial.get() == 0 || serial.get() == startedAt) {
+      // nothing has been sent out
+      return false;
+    }
+
+    return true;
   }
 
   private void catchup(PgPostQueryMatcher postQueryMatcher) {
