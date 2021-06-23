@@ -160,8 +160,8 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   public PgFactIdToSerialMapper pgFactIdToSerialMapper(
-      JdbcTemplate jdbcTemplate, PgMetrics metrics) {
-    return new PgFactIdToSerialMapper(jdbcTemplate, metrics);
+      JdbcTemplate jdbcTemplate, PgMetrics metrics, MeterRegistry registry) {
+    return new PgFactIdToSerialMapper(jdbcTemplate, metrics, registry);
   }
 
   @Bean
