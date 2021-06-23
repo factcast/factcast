@@ -15,7 +15,12 @@
  */
 package org.factcast.itests.exception.handling;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 import io.grpc.StatusRuntimeException;
+import java.util.Collections;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.factcast.core.Fact;
@@ -23,24 +28,13 @@ import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
 import org.factcast.core.lock.Attempt;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.TransformationException;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.factcast.test.FactCastExtension;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
-import java.util.Collections;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @EnableAutoConfiguration
