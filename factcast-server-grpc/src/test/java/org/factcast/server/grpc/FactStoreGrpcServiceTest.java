@@ -15,6 +15,8 @@
  */
 package org.factcast.server.grpc;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -117,13 +119,16 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void currentTimeWithException() {
-    when(backend.currentTime()).thenThrow(RuntimeException.class);
-    StreamObserver<MSG_CurrentDatabaseTime> stream = mock(StreamObserver.class);
+    assertThatThrownBy(
+            () -> {
+              when(backend.currentTime()).thenThrow(RuntimeException.class);
+              StreamObserver<MSG_CurrentDatabaseTime> stream = mock(StreamObserver.class);
 
-    uut.currentTime(MSG_Empty.getDefaultInstance(), stream);
+              uut.currentTime(MSG_Empty.getDefaultInstance(), stream);
 
-    verify(stream).onError(any(RuntimeException.class));
-    verifyNoMoreInteractions(stream);
+              verifyNoMoreInteractions(stream);
+            })
+        .isInstanceOf(RuntimeException.class);
   }
 
   @Test
@@ -161,18 +166,23 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void fetchByIdThrowingException() {
-    val store = mock(FactStore.class);
-    val uut = new FactStoreGrpcService(store, meta);
-    Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).buildWithoutPayload();
-    when(store.fetchById(fact.id())).thenThrow(IllegalMonitorStateException.class);
-    StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+    assertThatThrownBy(
+            () -> {
+              val store = mock(FactStore.class);
+              val uut = new FactStoreGrpcService(store, meta);
+              Fact fact =
+                  Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).buildWithoutPayload();
+              when(store.fetchById(fact.id())).thenThrow(IllegalMonitorStateException.class);
+              StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
 
-    uut.fetchById(new ProtoConverter().toProto(fact.id()), stream);
+              uut.fetchById(new ProtoConverter().toProto(fact.id()), stream);
 
-    verify(stream, never()).onNext(any());
-    verify(stream, never()).onCompleted();
-    verify(stream).onError(any(IllegalMonitorStateException.class));
-    verifyNoMoreInteractions(stream);
+              verify(stream, never()).onNext(any());
+              verify(stream, never()).onCompleted();
+
+              verifyNoMoreInteractions(stream);
+            })
+        .isInstanceOf(IllegalMonitorStateException.class);
   }
 
   @Test
@@ -425,12 +435,15 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   public void testEnumerateNamespacesThrows() {
-    uut = new FactStoreGrpcService(backend, meta);
-    StreamObserver so = mock(StreamObserver.class);
-    when(backend.enumerateNamespaces()).thenThrow(UnsupportedOperationException.class);
+    assertThatThrownBy(
+            () -> {
+              uut = new FactStoreGrpcService(backend, meta);
+              StreamObserver so = mock(StreamObserver.class);
+              when(backend.enumerateNamespaces()).thenThrow(UnsupportedOperationException.class);
 
-    uut.enumerateNamespaces(conv.empty(), so);
-    verify(so).onError(any(UnsupportedOperationException.class));
+              uut.enumerateNamespaces(conv.empty(), so);
+            })
+        .isInstanceOf(UnsupportedOperationException.class);
   }
 
   @Test
@@ -449,22 +462,28 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   public void testEnumerateTypesThrows() {
-    uut = new FactStoreGrpcService(backend, meta);
-    StreamObserver so = mock(StreamObserver.class);
-    when(backend.enumerateTypes(eq("ns"))).thenThrow(UnsupportedOperationException.class);
+    assertThatThrownBy(
+            () -> {
+              uut = new FactStoreGrpcService(backend, meta);
+              StreamObserver so = mock(StreamObserver.class);
+              when(backend.enumerateTypes(eq("ns"))).thenThrow(UnsupportedOperationException.class);
 
-    uut.enumerateTypes(conv.toProto("ns"), so);
-    verify(so).onError(any(UnsupportedOperationException.class));
+              uut.enumerateTypes(conv.toProto("ns"), so);
+            })
+        .isInstanceOf(UnsupportedOperationException.class);
   }
 
   @Test
   public void testPublishThrows() {
-    doThrow(UnsupportedOperationException.class).when(backend).publish(anyList());
-    List<Fact> toPublish = Lists.newArrayList(Fact.builder().build("{}"));
-    StreamObserver so = mock(StreamObserver.class);
+    assertThatThrownBy(
+            () -> {
+              doThrow(UnsupportedOperationException.class).when(backend).publish(anyList());
+              List<Fact> toPublish = Lists.newArrayList(Fact.builder().build("{}"));
+              StreamObserver so = mock(StreamObserver.class);
 
-    uut.publish(conv.toProto(toPublish), so);
-    verify(so).onError(any(UnsupportedOperationException.class));
+              uut.publish(conv.toProto(toPublish), so);
+            })
+        .isInstanceOf(UnsupportedOperationException.class);
   }
 
   @Test
@@ -529,10 +548,12 @@ public class FactStoreGrpcServiceTest {
       UUID id = UUID.randomUUID();
       MSG_UUID req = conv.toProto(id);
       StreamObserver o = mock(StreamObserver.class);
-      uut.invalidate(req, o);
-
+      assertThatThrownBy(
+              () -> {
+                uut.invalidate(req, o);
+              })
+          .isInstanceOf(StatusRuntimeException.class);
       verify(backend).invalidate(eq(new StateToken(id)));
-      verify(o).onError(any());
       verifyNoMoreInteractions(o);
     }
   }
@@ -562,10 +583,11 @@ public class FactStoreGrpcServiceTest {
       StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
       MSG_StateForRequest req = conv.toProto(sfr);
       StreamObserver o = mock(StreamObserver.class);
-
-      uut.stateFor(req, o);
-
-      verify(o).onError(any());
+      assertThatThrownBy(
+              () -> {
+                uut.stateFor(req, o);
+              })
+          .isInstanceOf(StatusRuntimeException.class);
       verifyNoMoreInteractions(o);
     }
   }
@@ -599,9 +621,11 @@ public class FactStoreGrpcServiceTest {
       MSG_ConditionalPublishRequest req = conv.toProto(sfr);
       StreamObserver o = mock(StreamObserver.class);
 
-      uut.publishConditional(req, o);
-
-      verify(o).onError(any());
+      assertThatThrownBy(
+              () -> {
+                uut.publishConditional(req, o);
+              })
+          .isInstanceOf(StatusRuntimeException.class);
       verifyNoMoreInteractions(o);
     }
   }
@@ -735,16 +759,20 @@ public class FactStoreGrpcServiceTest {
   @Test
   void invalidateStateTokenWithError() {
 
-    val id = UUID.randomUUID();
-    val req = conv.toProto(id);
-    val stateToken = new StateToken(id);
-    StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
-    doThrow(RuntimeException.class).when(backend).invalidate(any());
-    // ACT
-    uut.invalidate(req, obs);
+    assertThatThrownBy(
+            () -> {
+              val id = UUID.randomUUID();
+              val req = conv.toProto(id);
+              val stateToken = new StateToken(id);
+              StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
+              doThrow(RuntimeException.class).when(backend).invalidate(any());
+              // ACT
+              uut.invalidate(req, obs);
 
-    verify(backend).invalidate(eq(stateToken));
-    verify(obs).onError(any());
+              verify(backend).invalidate(eq(stateToken));
+              verifyNoMoreInteractions(obs);
+            })
+        .isInstanceOf(RuntimeException.class);
   }
 
   @Test
@@ -766,7 +794,7 @@ public class FactStoreGrpcServiceTest {
           }
         });
 
-    assertThrows(StatusException.class, () -> uut.getFactcastUser());
+    assertThrows(StatusRuntimeException.class, () -> uut.getFactcastUser());
   }
 
   @Test
@@ -790,16 +818,17 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void clearSnapshotWithException() {
+    assertThatThrownBy(
+            () -> {
+              val id = new SnapshotId("foo", UUID.randomUUID());
+              val req = conv.toProto(id);
+              StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
+              doThrow(TestException.class).when(backend).clearSnapshot(eq(id));
 
-    val id = new SnapshotId("foo", UUID.randomUUID());
-    val req = conv.toProto(id);
-    StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
-    doThrow(TestException.class).when(backend).clearSnapshot(eq(id));
-
-    // ACT
-    uut.clearSnapshot(req, obs);
-
-    verify(obs).onError(any(TestException.class));
+              // ACT
+              uut.clearSnapshot(req, obs);
+            })
+        .isInstanceOf(TestException.class);
   }
 
   @Test
@@ -837,17 +866,20 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void getSnapshotException() {
-    val id = new SnapshotId("foo", UUID.randomUUID());
-    val req = conv.toProto(id);
-    StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
-    Optional<Snapshot> optSnap = Optional.empty();
-    when(backend.getSnapshot(id)).thenThrow(TestException.class);
+    assertThatThrownBy(
+            () -> {
+              val id = new SnapshotId("foo", UUID.randomUUID());
+              val req = conv.toProto(id);
+              StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
+              Optional<Snapshot> optSnap = Optional.empty();
+              when(backend.getSnapshot(id)).thenThrow(TestException.class);
 
-    // ACT
-    uut.getSnapshot(req, obs);
+              // ACT
+              uut.getSnapshot(req, obs);
 
-    verify(backend).getSnapshot(eq(id));
-    verify(obs).onError(any(TestException.class));
+              verify(backend).getSnapshot(eq(id));
+            })
+        .isInstanceOf(TestException.class);
   }
 
   @Test
@@ -867,16 +899,20 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void setSnapshotWithException() {
-    val id = new SnapshotId("foo", UUID.randomUUID());
-    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-    val req = conv.toProto(snap);
-    StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
-    doThrow(TestException.class).when(backend).setSnapshot(any());
+    assertThatThrownBy(
+            () -> {
+              val id = new SnapshotId("foo", UUID.randomUUID());
+              Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+              val req = conv.toProto(snap);
+              StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
+              doThrow(TestException.class).when(backend).setSnapshot(any());
 
-    // ACT
-    uut.setSnapshot(req, obs);
+              // ACT
+              uut.setSnapshot(req, obs);
 
-    verify(backend).setSnapshot(snap);
-    verify(obs).onError(any(TestException.class));
+              verify(backend).setSnapshot(snap);
+              verifyNoMoreInteractions(obs);
+            })
+        .isInstanceOf(TestException.class);
   }
 }
