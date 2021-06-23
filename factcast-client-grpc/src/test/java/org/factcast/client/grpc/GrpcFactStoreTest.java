@@ -39,6 +39,7 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.Headers;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
@@ -96,6 +97,34 @@ class GrpcFactStoreTest {
   void configureCompressionSkipCompression() {
     uut.configureCompressionAndMetaData("zip,lz3,lz4, lz99");
     verifyNoMoreInteractions(stub);
+  }
+
+  @Test
+  void configureWithFastForwardEnabled() {
+    when(properties.isEnableFastForward()).thenReturn(true);
+    val meta = uut.prepareMetaData("lz4");
+    assertThat(meta.containsKey(Headers.FAST_FORWARD)).isTrue();
+  }
+
+  @Test
+  void configureWithFastForwardDisabled() {
+    when(properties.isEnableFastForward()).thenReturn(false);
+    val meta = uut.prepareMetaData("lz4");
+    assertThat(meta.containsKey(Headers.FAST_FORWARD)).isFalse();
+  }
+
+  @Test
+  void configureWithBatchSize1() {
+    when(properties.getCatchupBatchsize()).thenReturn(1);
+    val meta = uut.prepareMetaData("lz4");
+    assertThat(meta.containsKey(Headers.CATCHUP_BATCHSIZE)).isFalse();
+  }
+
+  @Test
+  void configureWithBatchSize10() {
+    when(properties.getCatchupBatchsize()).thenReturn(10);
+    val meta = uut.prepareMetaData("lz4");
+    assertThat(meta.get(Headers.CATCHUP_BATCHSIZE)).isEqualTo(String.valueOf(10));
   }
 
   @Test
@@ -310,50 +339,6 @@ class GrpcFactStoreTest {
   void testSerialOfNullParameters() {
     expectNPE(() -> uut.serialOf(null));
   }
-  //
-  // @Test
-  // public void
-  // testConfigureCompressionGZIPDisabledWhenServerReturnsNullCapability()
-  // throws Exception {
-  // uut.serverProperties(Maps.newHashMap(Capabilities.CODECS.toString(),
-  // null));
-  // assertFalse(uut.configureCompression(Capabilities.CODEC_GZIP));
-  // }
-  //
-  // @Test
-  // public void
-  // testConfigureCompressionGZIPDisabledWhenServerReturnsFalseCapability()
-  // throws Exception {
-  // uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.toString(),
-  // "false"));
-  // assertFalse(uut.configureCompression(Capabilities.CODEC_GZIP));
-  // }
-  //
-  // @Test
-  // public void
-  // testConfigureCompressionGZIPEnabledWhenServerReturnsCapability() throws
-  // Exception {
-  // uut.serverProperties(Maps.newHashMap(Capabilities.CODEC_GZIP.toString(),
-  // "true"));
-  // assertTrue(uut.configureCompression(Capabilities.CODEC_GZIP));
-  // }
-  //
-  // @Test
-  // public void testConfigureCompressionGZIP() throws Exception {
-  // uut = spy(uut);
-  // uut.serverProperties(new HashMap<>());
-  // uut.configureCompression();
-  // verify(uut).configureCompression(Capabilities.CODEC_GZIP);
-  // }
-  //
-  // @Test
-  // public void testConfigureCompressionLZ4() throws Exception {
-  // uut = spy(uut);
-  // uut.serverProperties(new HashMap<>());
-  // when(uut.configureCompression(Capabilities.CODEC_LZ4)).thenReturn(true);
-  // uut.configureCompression();
-  // verify(uut, never()).configureCompression(Capabilities.CODEC_GZIP);
-  // }
 
   @Test
   void testInvalidate() {

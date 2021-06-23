@@ -21,11 +21,16 @@ import static org.mockito.Mockito.*;
 
 import io.grpc.stub.StreamObserver;
 import java.util.Arrays;
+import java.util.OptionalInt;
+import java.util.UUID;
 import java.util.function.Function;
+import lombok.NonNull;
 import lombok.val;
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
@@ -33,7 +38,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 @ExtendWith(MockitoExtension.class)
 public class GrpcObserverAdapterTest {
 
@@ -69,6 +74,83 @@ public class GrpcObserverAdapterTest {
   }
 
   @Test
+  @Disabled // TODO uwe
+  void testOnCatchupWithFfwd() {
+
+    GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
+    when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(true);
+    when(mockGrpcRequestMetaData.catchupBatch()).thenReturn(OptionalInt.of(1));
+
+    FastForwardTarget ffwd = FastForwardTarget.of(new UUID(10, 10), 112);
+
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData);
+
+    doNothing().when(observer).onNext(msg.capture());
+    verify(observer, never()).onNext(any());
+    uut.onCatchup();
+    verify(observer, times(2)).onNext(any());
+    assertEquals(Type.Ffwd, msg.getAllValues().get(0).getType());
+    assertEquals(Type.Catchup, msg.getAllValues().get(1).getType());
+  }
+
+  @Test
+  @Disabled // TODO uwe
+  void testOnCatchupWithFfwd_noTarget() {
+
+    GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
+    when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(true);
+    when(mockGrpcRequestMetaData.catchupBatch()).thenReturn(OptionalInt.of(1));
+
+    FastForwardTarget ffwd = FastForwardTarget.of(null, 112);
+
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData);
+
+    doNothing().when(observer).onNext(msg.capture());
+    verify(observer, never()).onNext(any());
+    uut.onCatchup();
+    verify(observer, times(1)).onNext(any());
+    assertEquals(Type.Catchup, msg.getAllValues().get(0).getType());
+  }
+
+  @Test
+  @Disabled // TODO uwe
+  void testOnCatchupWithFfwd_noTargetSer() {
+
+    GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
+    when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(true);
+    when(mockGrpcRequestMetaData.catchupBatch()).thenReturn(OptionalInt.of(1));
+
+    FastForwardTarget ffwd = FastForwardTarget.of(new UUID(1, 1), 0);
+
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData);
+
+    doNothing().when(observer).onNext(msg.capture());
+    verify(observer, never()).onNext(any());
+    uut.onCatchup();
+    verify(observer, times(1)).onNext(any());
+    assertEquals(Type.Catchup, msg.getAllValues().get(0).getType());
+  }
+
+  @Test
+  @Disabled // TODO uwe
+  void testOnCatchupWithoutFfwd_disabled() {
+
+    GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
+    when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(false);
+    when(mockGrpcRequestMetaData.catchupBatch()).thenReturn(OptionalInt.of(1));
+
+    FastForwardTarget ffwd = FastForwardTarget.of(new UUID(10, 10), 112);
+
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData);
+
+    doNothing().when(observer).onNext(msg.capture());
+    verify(observer, never()).onNext(any());
+    uut.onCatchup();
+    verify(observer, times(1)).onNext(any());
+    assertEquals(Type.Catchup, msg.getAllValues().get(0).getType());
+  }
+
+  @Test
   void testOnError() {
     GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
     verify(observer, never()).onNext(any());
@@ -87,6 +169,26 @@ public class GrpcObserverAdapterTest {
     verify(observer).onNext(any());
     assertEquals(MSG_Notification.Type.Fact, msg.getValue().getType());
     assertEquals(f.id(), conv.fromProto(msg.getValue().getFact()).id());
+  }
+
+  @Test
+  void testOnFastForwardIfSupported() {
+    ProtoConverter conv = new ProtoConverter();
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
+    UUID id = UUID.randomUUID();
+    uut.onFastForward(id);
+    verify(observer).onNext(eq(conv.createNotificationForFastForward(id)));
+  }
+
+  @Test
+  void skipsOnFastForwardIfUnsupported() {
+    ProtoConverter conv = new ProtoConverter();
+    @NonNull GrpcRequestMetadata meta = mock(GrpcRequestMetadata.class);
+    when(meta.supportsFastForward()).thenReturn(false);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, meta);
+    UUID id = UUID.randomUUID();
+    uut.onFastForward(id);
+    verify(observer, never()).onNext(any());
   }
 
   public static void expectNPE(Runnable r) {
