@@ -23,7 +23,6 @@ import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
-import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.junit.Test;
@@ -153,27 +152,6 @@ public class TransformationTest {
     assertEquals(f.id(), found.id());
     assertEquals(3, found.version());
     assertEquals("Peter Peterson", getString(found, "displayName"));
-  }
-
-  @Test
-  public void failingTransformation() {
-
-    UUID id = UUID.randomUUID();
-    Fact f =
-        createTestFact(
-            id,
-            3,
-            "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER PETERSON\"}");
-
-    fc.publish(f);
-
-    try {
-      fc.fetchByIdAndVersion(id, 4).orElse(null);
-      fail("should have thrown");
-    } catch (TransformationException expected) {
-    } catch (Exception anyOther) {
-      fail("unexpected Exception", anyOther);
-    }
   }
 
   @Test
