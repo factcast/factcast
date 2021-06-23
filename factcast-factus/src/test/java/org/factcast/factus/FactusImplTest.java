@@ -795,6 +795,13 @@ class FactusImplTest {
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
       when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
+      doAnswer(
+              i -> {
+                subscribedProjection.state(((Fact) (i.getArgument(0))).id());
+                return null;
+              })
+          .when(eventApplier)
+          .apply(any(Fact.class));
 
       Subscription subscription = mock(Subscription.class);
       when(fc.subscribe(any(), any())).thenReturn(subscription);
@@ -949,7 +956,8 @@ class FactusImplTest {
 
       verify(fc).subscribe(any(), any());
 
-      verify(projector, never()).apply(any());
+      verify(projector, never()).apply(any(Fact.class));
+      verify(projector, never()).apply(any(List.class));
     }
 
     @Test

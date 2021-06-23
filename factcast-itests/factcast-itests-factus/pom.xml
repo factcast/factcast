@@ -47,7 +47,7 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-factus</artifactId>
+      <artifactId>factcast-factus-redis</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>

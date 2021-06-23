@@ -47,5 +47,12 @@
       <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.redisson</groupId>
+      <artifactId>redisson-spring-boot-starter</artifactId>
+      <version>${redisson-spring-boot-starter.version}</version>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 </project>
