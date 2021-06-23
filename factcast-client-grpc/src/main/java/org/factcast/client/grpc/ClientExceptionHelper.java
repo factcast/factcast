@@ -47,9 +47,12 @@ public class ClientExceptionHelper {
         log.warn("Something went wrong materializing an exception of type {}", className, ex);
       }
     } else {
-      // TODO otbe is that right?
       Status status = e.getStatus();
-      if (status == Status.ABORTED || status == Status.UNAVAILABLE || status == Status.UNKNOWN) {
+      if (status == Status.ABORTED
+          || status == Status.UNAVAILABLE
+          || status == Status.UNKNOWN
+          || status == Status.DEADLINE_EXCEEDED
+          || status == Status.RESOURCE_EXHAUSTED) {
         toReturn = new RetryableException(e);
       }
     }

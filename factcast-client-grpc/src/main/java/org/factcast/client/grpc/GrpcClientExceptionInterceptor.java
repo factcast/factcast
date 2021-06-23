@@ -19,7 +19,6 @@ import io.grpc.*;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.interceptor.GrpcGlobalClientInterceptor;
 
-// TODO delete
 @Slf4j
 @GrpcGlobalClientInterceptor
 public class GrpcClientExceptionInterceptor implements ClientInterceptor {
@@ -71,7 +70,6 @@ public class GrpcClientExceptionInterceptor implements ClientInterceptor {
       }
 
       private void handleException(RuntimeException ex) {
-        System.out.println("Handling " + ex);
         if (ex instanceof StatusRuntimeException) {
           throw ClientExceptionHelper.from((StatusRuntimeException) ex);
         } else {
