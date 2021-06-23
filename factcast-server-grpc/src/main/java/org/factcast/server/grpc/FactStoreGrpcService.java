@@ -163,9 +163,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
             new BlockingStreamObserver<>(
                 req.toString(), (ServerCallStreamObserver) responseObserver);
 
-        long startingAfterSerial =
-            req.startingAfter().map(id -> (Long) store.serialOf(id).orElse(0L)).orElse(0L);
-
         Subscription sub =
             store.subscribe(
                 req, new GrpcObserverAdapter(req.toString(), resp, grpcRequestMetadata));
