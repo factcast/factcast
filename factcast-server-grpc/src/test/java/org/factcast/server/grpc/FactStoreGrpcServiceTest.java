@@ -490,8 +490,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   public void testRetrieveImplementationVersionEmptyPropertyFile() {
     uut = spy(uut);
-    when(uut.getProjectProperties())
-        .thenReturn(getClass().getResource("/no-version.properties"));
+    when(uut.getProjectProperties()).thenReturn(getClass().getResource("/no-version.properties"));
     HashMap<String, String> map = new HashMap<>();
     uut.retrieveImplementationVersion(map);
 
