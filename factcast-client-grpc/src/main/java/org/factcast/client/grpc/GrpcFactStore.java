@@ -77,9 +77,9 @@ public class GrpcFactStore implements FactStore {
   private RemoteFactStoreStub stub;
 
   private RemoteFactStoreStub rawStub;
-  private int catchupBatchSize;
 
   private RemoteFactStoreBlockingStub rawBlockingStub;
+  private final FactCastGrpcClientProperties properties;
 
   private final ProtoConverter converter = new ProtoConverter();
 
@@ -124,7 +124,7 @@ public class GrpcFactStore implements FactStore {
       @NonNull FactCastGrpcClientProperties properties) {
     rawBlockingStub = newBlockingStub;
     rawStub = newStub;
-    catchupBatchSize = properties.getCatchupBatchsize();
+    this.properties = properties;
 
     // initially use the raw ones...
     blockingStub = rawBlockingStub;
@@ -247,16 +247,33 @@ public class GrpcFactStore implements FactStore {
               log.info("configuring Codec for sending {}", c);
               // configure compression used for sending messages and header
               // to request compressed messages from server
-              Metadata meta = new Metadata();
-              meta.put(Headers.MESSAGE_COMPRESSION, c);
-              if (catchupBatchSize > 1) {
-                meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
-              }
+              Metadata meta = prepareMetaData(c);
+
               rawBlockingStub = blockingStub;
               rawStub = stub;
+
+              // add compression info
               blockingStub = MetadataUtils.attachHeaders(blockingStub.withCompression(c), meta);
               stub = MetadataUtils.attachHeaders(stub.withCompression(c), meta);
             });
+  }
+
+  @VisibleForTesting
+  Metadata prepareMetaData(String c) {
+    Metadata meta = new Metadata();
+    meta.put(Headers.MESSAGE_COMPRESSION, c);
+
+    // existence of this header will enable the fast forward feature
+    if (properties.isEnableFastForward()) {
+      meta.put(Headers.FAST_FORWARD, "true");
+    }
+
+    // existence of this header will enable the on-the-wire-batching feature
+    int catchupBatchSize = properties.getCatchupBatchsize();
+    if (catchupBatchSize > 1) {
+      meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
+    }
+    return meta;
   }
 
   @Override

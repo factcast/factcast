@@ -23,6 +23,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
@@ -44,13 +45,20 @@ class PgSubscriptionFactory {
   final PgCatchupFactory catchupFactory;
 
   final FactTransformersFactory transformersFactory;
+  final FastForwardTarget target;
 
   public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
-    final SubscriptionImpl subscription =
+    SubscriptionImpl subscription =
         SubscriptionImpl.on(observer, transformersFactory.createFor(req));
     PgFactStream pgsub =
         new PgFactStream(
-            jdbcTemplate, eventBus, idToSerialMapper, subscription, fetcher, catchupFactory);
+            jdbcTemplate,
+            eventBus,
+            idToSerialMapper,
+            subscription,
+            fetcher,
+            catchupFactory,
+            target);
     CompletableFuture.runAsync(() -> pgsub.connect(req));
     return subscription.onClose(pgsub::close);
   }
