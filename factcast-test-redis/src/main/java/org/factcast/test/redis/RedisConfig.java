@@ -3,7 +3,6 @@ package org.factcast.test.redis;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.With;
-import org.factcast.test.FactcastConfig;
 
 import java.lang.annotation.*;
 
