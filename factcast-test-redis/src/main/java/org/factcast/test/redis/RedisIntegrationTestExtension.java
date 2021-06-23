@@ -3,7 +3,6 @@ package org.factcast.test.redis;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.factcast.test.FactCastIntegrationTestExtension;
