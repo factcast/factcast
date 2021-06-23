@@ -34,6 +34,13 @@ public class PgConstants {
   public static final String TABLE_CATCHUP = "catchup";
 
   public static final String TABLE_FACT = "fact";
+  public static final String TAIL_INDEX_NAME_PREFIX = "idx_fact_tail_";
+  public static final String LIST_FACT_INDEXES =
+      "select indexname from pg_indexes where tablename = '"
+          + TABLE_FACT
+          + "' and indexname like '"
+          + TAIL_INDEX_NAME_PREFIX
+          + "%' order by indexname desc";
 
   private static final String TABLE_TOKENSTORE = "tokenstore";
 
@@ -224,7 +231,41 @@ public class PgConstants {
   public static final String SELECT_NS_FROM_TOKEN =
       "SELECT " + COLUMN_NAMESPACE + " FROM " + TABLE_TOKENSTORE + " WHERE " + COLUMN_TOKEN + "=?";
 
+  public static final String LAST_SERIAL_IN_LOG = "select COALESCE(max(ser),0) from fact";
+  public static final String HIGHWATER_MARK =
+      "select ("
+          + COLUMN_HEADER
+          + "->>'"
+          + ALIAS_ID
+          + "')::uuid as targetId, ser as targetSer from "
+          + TABLE_FACT
+          + " where "
+          + COLUMN_SER
+          + "=(select max("
+          + COLUMN_SER
+          + ") from "
+          + TABLE_FACT
+          + ")";
+
   private static String fromHeader(String attributeName) {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
+  }
+
+  public static String createTailIndex(long epoch, long ser) {
+    return "create index concurrently "
+        + TAIL_INDEX_NAME_PREFIX
+        + epoch
+        + " on "
+        + TABLE_FACT
+        + " using GIN("
+        + COLUMN_HEADER
+        + ") WHERE "
+        + COLUMN_SER
+        + ">"
+        + ser;
+  }
+
+  public static String dropTailIndex(String indexName) {
+    return "drop index " + indexName;
   }
 }

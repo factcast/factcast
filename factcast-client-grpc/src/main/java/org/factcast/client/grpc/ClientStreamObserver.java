@@ -47,6 +47,10 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
   @Override
   public void onNext(MSG_Notification f) {
     switch (f.getType()) {
+      case Ffwd:
+        log.debug("received fastfoward signal");
+        subscription.notifyFastForward(converter.fromProto(f.getId()));
+        break;
       case Catchup:
         log.debug("received onCatchup signal");
         subscription.notifyCatchup();

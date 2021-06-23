@@ -15,7 +15,9 @@
  */
 package org.factcast.client.grpc.cli.util;
 
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -26,23 +28,30 @@ public class ConsoleFactObserver implements FactObserver {
 
   private final AtomicBoolean done = new AtomicBoolean(false);
 
-  public ConsoleFactObserver(Options opt) {
-    this.factRenderer = new FactRenderer(opt);
+  public ConsoleFactObserver(@NonNull Options opt) {
+    factRenderer = new FactRenderer(opt);
   }
 
   @Override
-  public synchronized void onNext(Fact f) {
+  public synchronized void onNext(@NonNull Fact f) {
     System.out.println(factRenderer.render(f));
   }
 
   @SneakyThrows
   public synchronized void awaitTermination() {
-    while (!done.get()) this.wait();
+    while (!done.get()) {
+      wait();
+    }
   }
 
   @Override
   public synchronized void onCatchup() {
     System.out.println("-> Signal: Catchup");
+  }
+
+  @Override
+  public void onFastForward(@NonNull UUID factIdToFfwdTo) {
+    System.out.println("-> Signal: Fast Forward to " + factIdToFfwdTo);
   }
 
   @Override
