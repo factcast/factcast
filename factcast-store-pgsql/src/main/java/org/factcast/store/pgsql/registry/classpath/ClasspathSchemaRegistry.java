@@ -36,7 +36,7 @@ public class ClasspathSchemaRegistry extends AbstractSchemaRegistry {
         schemaStore,
         transformationStore,
         registryMetrics,
-        pgConfigurationProperties.isAllowSchemaReplace());
+        pgConfigurationProperties);
   }
 
   @Override
