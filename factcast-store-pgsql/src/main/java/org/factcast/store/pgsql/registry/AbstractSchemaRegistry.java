@@ -110,7 +110,6 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
         log.info("Registry update failed in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
 
         if (!pgConfigurationProperties.isPersistentRegistry()) {
-          // TODO usr unit test
           // while starting with a stale registry might be ok, we cannot start with a non-existant
           // (empty) registry.
           throw new InitialRegistryFetchFailed("While fetching initial state of registry", e);
@@ -147,8 +146,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
       int count = toFetch.size();
       log.info(
           "SchemaStore will be updated, {} {} to fetch.", count, count == 1 ? "schema" : "schemes");
-      toFetch
-          .parallelStream()
+      toFetch.parallelStream()
           .forEach(
               source -> {
                 try {
@@ -180,8 +178,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
           "TransformationStore will be updated, {} {} to fetch.",
           count,
           count == 1 ? "transformation" : "transformations");
-      toFetch
-          .parallelStream()
+      toFetch.parallelStream()
           .forEach(
               source -> {
                 try {
