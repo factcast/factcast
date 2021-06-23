@@ -3,12 +3,9 @@ package org.factcast.test.redis;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.sun.tools.javah.Gen;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.factcast.test.FactCastIntegrationTestExtension;
-import org.factcast.test.FactcastConfig;
 import org.junit.jupiter.api.extension.*;
 import org.redisson.Redisson;
 import org.redisson.config.Config;

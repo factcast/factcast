@@ -1,11 +1,9 @@
 package org.factcast.test.redis;
 
+import java.lang.annotation.*;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.With;
-import org.factcast.test.FactcastConfig;
-
-import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
