@@ -26,9 +26,9 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.http.ValidationConstants;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
@@ -39,7 +39,6 @@ import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 
-@RequiredArgsConstructor
 @Slf4j
 public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   @NonNull protected final IndexFetcher indexFetcher;
@@ -51,8 +50,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   @NonNull protected final TransformationStore transformationStore;
 
   @NonNull protected final RegistryMetrics registryMetrics;
-
-  @NonNull protected final boolean isAllowSchemaReplace;
+  @NonNull protected final PgConfigurationProperties pgConfigurationProperties;
 
   protected final Object mutex = new Object();
 
@@ -82,6 +80,21 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
         }
       };
 
+  public AbstractSchemaRegistry(
+      @NonNull IndexFetcher indexFetcher,
+      @NonNull RegistryFileFetcher registryFileFetcher,
+      @NonNull SchemaStore schemaStore,
+      @NonNull TransformationStore transformationStore,
+      @NonNull RegistryMetrics registryMetrics,
+      @NonNull PgConfigurationProperties pgConfigurationProperties) {
+    this.indexFetcher = indexFetcher;
+    this.registryFileFetcher = registryFileFetcher;
+    this.schemaStore = schemaStore;
+    this.transformationStore = transformationStore;
+    this.registryMetrics = registryMetrics;
+    this.pgConfigurationProperties = pgConfigurationProperties;
+  }
+
   @Override
   public void fetchInitial() {
 
@@ -95,6 +108,13 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
         log.warn("While fetching initial state of registry", e);
         registryMetrics.count(EVENT.SCHEMA_UPDATE_FAILURE);
         log.info("Registry update failed in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
+
+        if (!pgConfigurationProperties.isPersistentRegistry()) {
+          // TODO usr unit test
+          // while starting with a stale registry might be ok, we cannot start with a non-existant
+          // (empty) registry.
+          throw new InitialRegistryFetchFailed("While fetching initial state of registry", e);
+        }
       }
     }
   }
@@ -127,8 +147,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
       int count = toFetch.size();
       log.info(
           "SchemaStore will be updated, {} {} to fetch.", count, count == 1 ? "schema" : "schemes");
-      toFetch
-          .parallelStream()
+      toFetch.parallelStream()
           .forEach(
               source -> {
                 try {
@@ -138,7 +157,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
                       schemaStore.register(source, schema);
                     }
                   } catch (SchemaConflictException e) {
-                    if (isAllowSchemaReplace) {
+                    if (pgConfigurationProperties.isAllowSchemaReplace()) {
                       schemaStore.register(source, schema);
                     } else {
                       throw e;
@@ -160,8 +179,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
           "TransformationStore will be updated, {} {} to fetch.",
           count,
           count == 1 ? "transformation" : "transformations");
-      toFetch
-          .parallelStream()
+      toFetch.parallelStream()
           .forEach(
               source -> {
                 try {
@@ -174,7 +192,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
                       transformationStore.store(source, transformationCode);
                     }
                   } catch (TransformationConflictException conflict) {
-                    if (isAllowSchemaReplace) {
+                    if (pgConfigurationProperties.isAllowSchemaReplace()) {
                       transformationStore.store(source, transformationCode);
                     } else {
                       throw conflict;
