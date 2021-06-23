@@ -16,6 +16,7 @@
 package org.factcast.core.subscription;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -117,6 +118,12 @@ public class SubscriptionImpl implements Subscription {
       if (!catchup.isDone()) {
         catchup.complete(null);
       }
+    }
+  }
+
+  public void notifyFastForward(@NonNull UUID factId) {
+    if (!closed.get()) {
+      observer.onFastForward(factId);
     }
   }
 
