@@ -35,7 +35,6 @@ public class FactCastExtension
 
   private static boolean initialized = false;
   private static final List<FactCastIntegrationTestExtension> extensions = new LinkedList<>();
-  private static final Map<String, GenericContainer<?>> containers = new ConcurrentHashMap<>();
   private static List<FactCastIntegrationTestExtension> reverseExtensions;
 
   @Override
@@ -63,7 +62,7 @@ public class FactCastExtension
   public void beforeAll(ExtensionContext context) throws Exception {
     synchronized (extensions) {
       if (!initialized) {
-        initialize();
+        initialize(context);
         initialized = true;
       }
     }
@@ -72,14 +71,14 @@ public class FactCastExtension
     }
   }
 
-  private void initialize() {
+  private void initialize(ExtensionContext context) {
     val discovered =
         Lists.newArrayList(ServiceLoader.load(FactCastIntegrationTestExtension.class).iterator());
     AtomicInteger count = new AtomicInteger(discovered.size());
     while (!discovered.isEmpty()) {
 
       for (FactCastIntegrationTestExtension e : discovered) {
-        if (e.initialize(containers)) {
+        if (e.initialize(context)) {
           extensions.add(e);
         }
       }

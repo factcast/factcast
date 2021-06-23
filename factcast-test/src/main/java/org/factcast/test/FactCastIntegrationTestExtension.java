@@ -10,7 +10,7 @@ public interface FactCastIntegrationTestExtension {
   Network _docker_network = Network.newNetwork();
 
   // returns true if successful, false if needed dependency is not yet available
-  default boolean initialize(Map<String, GenericContainer<?>> containers) {
+  default boolean initialize(ExtensionContext context) {
     return true;
   }
 
