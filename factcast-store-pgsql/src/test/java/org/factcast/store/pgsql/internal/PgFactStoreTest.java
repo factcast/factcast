@@ -18,14 +18,24 @@ package org.factcast.store.pgsql.internal;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import lombok.NonNull;
 import lombok.val;
+import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.pgsql.internal.StoreMetrics.OP;
+import org.factcast.store.pgsql.internal.tail.PGTailIndexManager;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.store.test.IntegrationTest;
 import org.junit.jupiter.api.*;
@@ -45,6 +55,8 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
   @Autowired FactStore fs;
 
   @Autowired PgMetrics metrics;
+
+  @Autowired PGTailIndexManager tailManager;
 
   @Override
   protected FactStore createStoreToTest() {
@@ -73,5 +85,107 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
     store.setSnapshot(snap);
 
     verify(metrics).time(same(OP.SET_SNAPSHOT), any(Runnable.class));
+  }
+
+  @Nested
+  class FastForward {
+    @NonNull UUID id = UUID.randomUUID();
+    @NonNull UUID id2 = UUID.randomUUID();
+    AtomicReference<UUID> fwd = new AtomicReference<>();
+
+    @NonNull
+    FactObserver obs =
+        new FactObserver() {
+
+          @Override
+          public void onNext(@NonNull Fact element) {
+            System.out.println("onNext " + element);
+          }
+
+          @Override
+          public void onCatchup() {
+            System.out.println("onCatchup");
+          }
+
+          @Override
+          public void onFastForward(UUID factIdToFfwdTo) {
+            fwd.set(factIdToFfwdTo);
+            System.out.println("ffwd " + factIdToFfwdTo);
+          }
+        };
+
+    @NonNull Collection<FactSpec> spec = Collections.singletonList(FactSpec.ns("ns1"));
+
+    @BeforeEach
+    void setup() {
+      store.publish(
+          Collections.singletonList(Fact.builder().id(id).ns("ns1").buildWithoutPayload()));
+      // have some more facts in the database
+      store.publish(
+          Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
+      // update the highwatermarks
+      tailManager.triggerTailCreation();
+    }
+
+    @Test
+    void testFfwdFromScratch() {
+
+      SubscriptionRequest scratch = SubscriptionRequest.catchup(spec).fromScratch();
+      store.subscribe(SubscriptionRequestTO.forFacts(scratch), obs).awaitCatchup();
+
+      // no ffwd because we found one.
+      assertThat(fwd.get()).isNull();
+
+      SubscriptionRequest tail = SubscriptionRequest.catchup(spec).from(id);
+      store.subscribe(SubscriptionRequestTO.forFacts(tail), obs).awaitCatchup();
+
+      // now, we expect a ffwd here
+      assertThat(fwd.get()).isNotNull();
+    }
+
+    @Test
+    void doesNotRewind() {
+
+      // now insert a fresh one
+      store.publish(
+          Collections.singletonList(Fact.builder().id(id2).ns("ns1").buildWithoutPayload()));
+
+      SubscriptionRequest newtail = SubscriptionRequest.catchup(spec).from(id);
+      store.subscribe(SubscriptionRequestTO.forFacts(newtail), obs).awaitCatchup();
+
+      // no ffwd because we got a new one (id2)
+      assertThat(fwd.get()).isNull();
+
+      ////
+
+      SubscriptionRequest emptyTail = SubscriptionRequest.catchup(spec).from(id2);
+      store.subscribe(SubscriptionRequestTO.forFacts(emptyTail), obs).awaitCatchup();
+
+      // still no ffwd because the ffwd target is smaller than id2
+      assertThat(fwd.get()).isNull();
+    }
+
+    @Test
+    void movedTarget() {
+      spec = Collections.singletonList(FactSpec.ns("noneOfThese"));
+
+      SubscriptionRequest mt = SubscriptionRequest.catchup(spec).fromScratch();
+      store.subscribe(SubscriptionRequestTO.forFacts(mt), obs).awaitCatchup();
+
+      // ffwd expected
+      assertThat(fwd.get()).isNotNull();
+      UUID first = fwd.get();
+
+      // publish unrelated stuff and update ffwd target
+      store.publish(
+          Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
+      tailManager.triggerTailCreation();
+
+      SubscriptionRequest further = SubscriptionRequest.catchup(spec).from(id2);
+      store.subscribe(SubscriptionRequestTO.forFacts(further), obs).awaitCatchup();
+
+      // now it should ffwd again to the last unrelated one
+      assertThat(fwd.get()).isNotNull().isNotEqualTo(first);
+    }
   }
 }

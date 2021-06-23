@@ -36,6 +36,7 @@ message MSG_Notification{
     Catchup = 2;
     Complete = 3;
     Facts = 4;
+    Ffwd = 5;
   }
 
   Type type = 1;
