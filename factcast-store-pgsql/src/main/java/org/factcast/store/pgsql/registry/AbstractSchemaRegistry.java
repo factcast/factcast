@@ -146,7 +146,8 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
       int count = toFetch.size();
       log.info(
           "SchemaStore will be updated, {} {} to fetch.", count, count == 1 ? "schema" : "schemes");
-      toFetch.parallelStream()
+      toFetch
+          .parallelStream()
           .forEach(
               source -> {
                 try {
@@ -178,7 +179,8 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
           "TransformationStore will be updated, {} {} to fetch.",
           count,
           count == 1 ? "transformation" : "transformations");
-      toFetch.parallelStream()
+      toFetch
+          .parallelStream()
           .forEach(
               source -> {
                 try {
