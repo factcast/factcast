@@ -98,7 +98,7 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Optional<Fact> fetchById(@NonNull UUID id) {
-    // TODO lets see if this approach is the fastest
+    // replace on merge with faster version
     return metrics.time(
         OP.FETCH_BY_ID,
         () ->
