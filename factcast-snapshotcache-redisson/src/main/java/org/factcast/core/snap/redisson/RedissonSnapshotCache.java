@@ -28,7 +28,6 @@ import org.factcast.core.snap.SnapshotId;
 import org.redisson.api.RBucket;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
-import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
 public class RedissonSnapshotCache implements SnapshotCache {
@@ -71,13 +70,6 @@ public class RedissonSnapshotCache implements SnapshotCache {
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
     redisson.getBucket(createKeyFor(id)).delete();
-  }
-
-  @Deprecated
-  // needed for stale snapshots, can be empty at some point
-  @Scheduled(cron = "${factcast.redis.snapshotCacheCompactCron:0 0 0 * * *}")
-  public void compactTrigger() {
-    compact(retentionTimeInDays);
   }
 
   @Override
