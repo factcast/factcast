@@ -31,30 +31,31 @@ public class ClientExceptionHelper {
     RuntimeException toReturn = e;
 
     Metadata md = e.getTrailers();
-    assert md != null;
+    if (md != null) {
 
-    byte[] msgBytes = md.get(Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER));
-    byte[] excBytes = md.get(Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER));
+      byte[] msgBytes = md.get(Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER));
+      byte[] excBytes = md.get(Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER));
 
-    if (excBytes != null) {
-      String className = new String(excBytes);
-      try {
-        Class<?> exc = Class.forName(className);
-        Constructor<?> constructor = exc.getConstructor(String.class);
-        String msg = new String(Objects.requireNonNull(msgBytes));
-        toReturn = (RuntimeException) constructor.newInstance(msg);
-      } catch (Throwable ex) {
-        log.warn("Something went wrong materializing an exception of type {}", className, ex);
+      if (excBytes != null) {
+        String className = new String(excBytes);
+        try {
+          Class<?> exc = Class.forName(className);
+          Constructor<?> constructor = exc.getConstructor(String.class);
+          String msg = new String(Objects.requireNonNull(msgBytes));
+          toReturn = (RuntimeException) constructor.newInstance(msg);
+        } catch (Throwable ex) {
+          log.warn("Something went wrong materializing an exception of type {}", className, ex);
+        }
       }
-    } else {
-      Status status = e.getStatus();
-      if (status == Status.ABORTED
-          || status == Status.UNAVAILABLE
-          || status == Status.UNKNOWN
-          || status == Status.DEADLINE_EXCEEDED
-          || status == Status.RESOURCE_EXHAUSTED) {
-        toReturn = new RetryableException(e);
-      }
+    }
+
+    Status status = e.getStatus();
+    if (status == Status.ABORTED
+        || status == Status.UNAVAILABLE
+        || status == Status.UNKNOWN
+        || status == Status.DEADLINE_EXCEEDED
+        || status == Status.RESOURCE_EXHAUSTED) {
+      toReturn = new RetryableException(e);
     }
 
     return toReturn;
