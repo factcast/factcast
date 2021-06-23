@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.internal;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Collections;
 import java.util.UUID;
 import org.factcast.core.Fact;
@@ -44,18 +45,20 @@ public class PgFactIdToSerMapperTest {
 
   @Autowired PgMetrics metrics;
 
+  @Autowired MeterRegistry registry;
+
   @Test
   void testRetrieve() {
     Fact m = Fact.builder().buildWithoutPayload();
     store.publish(Collections.singletonList(m));
-    long retrieve = new PgFactIdToSerialMapper(tpl, metrics).retrieve(m.id());
+    long retrieve = new PgFactIdToSerialMapper(tpl, metrics, registry).retrieve(m.id());
     assertTrue(retrieve > 0);
   }
 
   @Test
   void testRetrieveNonExistant() {
     try {
-      new PgFactIdToSerialMapper(tpl, metrics)
+      new PgFactIdToSerialMapper(tpl, metrics, registry)
           .retrieve(UUID.fromString("2b86d90e-2755-4f82-b86d-fd092b25ccc8"));
       fail();
     } catch (Throwable ignored) {
