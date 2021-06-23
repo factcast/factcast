@@ -118,6 +118,7 @@ public abstract class AbstractTransactionalLens implements ProjectorLens {
         log.trace("Flushing on {}, number of facts processed={}", projectionName, processed);
       }
     }
+    // otherwise we can silently commit, not to "flush" the logs
     doFlush();
   }
 

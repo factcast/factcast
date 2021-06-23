@@ -34,7 +34,7 @@ class ProjectionAccessorTest {
 
   class Agg extends Aggregate {}
 
-  private ProjectionAccessor underTest =
+  private final ProjectionAccessor underTest =
       new ProjectionAccessor() {
         @Override
         public <P extends SnapshotProjection> @NonNull P fetch(@NonNull Class<P> projectionClass) {

@@ -178,7 +178,7 @@ public class ProtoConverterTest {
   @Test
   void testCreateNotificationForIdNull() {
     Assertions.assertThrows(
-        NullPointerException.class, () -> uut.createNotificationFor((UUID) null));
+        NullPointerException.class, () -> uut.createNotificationForFactId((UUID) null));
   }
 
   @Test
@@ -204,9 +204,18 @@ public class ProtoConverterTest {
   @Test
   void testCreateNotificationForUUID() {
     UUID probe = UUID.randomUUID();
-    MSG_Notification n = uut.createNotificationFor(probe);
+    MSG_Notification n = uut.createNotificationForFactId(probe);
     assertNotNull(n);
     assertEquals(MSG_Notification.Type.Id, n.getType());
+    assertEquals(probe, uut.fromProto(n.getId()));
+  }
+
+  @Test
+  void testCreateNotificationForFastForward() {
+    UUID probe = UUID.randomUUID();
+    MSG_Notification n = uut.createNotificationForFastForward(probe);
+    assertNotNull(n);
+    assertEquals(Type.Ffwd, n.getType());
     assertEquals(probe, uut.fromProto(n.getId()));
   }
 

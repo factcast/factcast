@@ -72,9 +72,17 @@ public class ProtoConverter {
   }
 
   @NonNull
-  public MSG_Notification createNotificationFor(@NonNull UUID id) {
+  public MSG_Notification createNotificationForFactId(@NonNull UUID id) {
     MSG_Notification.Builder builder =
         MSG_Notification.newBuilder().setType(MSG_Notification.Type.Id);
+    builder.setId(toProto(id));
+    return builder.build();
+  }
+
+  @NonNull
+  public MSG_Notification createNotificationForFastForward(@NonNull UUID id) {
+    MSG_Notification.Builder builder =
+        MSG_Notification.newBuilder().setType(MSG_Notification.Type.Ffwd);
     builder.setId(toProto(id));
     return builder.build();
   }

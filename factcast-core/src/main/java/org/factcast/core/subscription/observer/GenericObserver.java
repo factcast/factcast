@@ -15,6 +15,7 @@
  */
 package org.factcast.core.subscription.observer;
 
+import java.util.UUID;
 import lombok.NonNull;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,8 @@ import org.slf4j.LoggerFactory;
 public interface GenericObserver<I> {
 
   void onNext(@NonNull I element);
+
+  default void onFastForward(@NonNull UUID factIdToFfwdTo) {}
 
   default void onCatchup() {
     // implement if you are interested in that event

@@ -241,6 +241,11 @@ public class FactusImpl implements Factus {
           public void onError(@NonNull Throwable exception) {
             subscribedProjection.onError(exception);
           }
+
+          @Override
+          public void onFastForward(@NonNull UUID factIdToFfwdTo) {
+            subscribedProjection.state(factIdToFfwdTo);
+          }
         };
 
     return fc.subscribe(
@@ -394,6 +399,13 @@ public class FactusImpl implements Factus {
           @Override
           public void onError(@NonNull Throwable exception) {
             projection.onError(exception);
+          }
+
+          @Override
+          public void onFastForward(@NonNull UUID factIdToFfwdTo) {
+            if (projection instanceof StateAware) {
+              ((StateAware) projection).state(factIdToFfwdTo);
+            }
           }
         };
 

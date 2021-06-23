@@ -170,7 +170,6 @@ class RedisTransactionalLensTest {
     void delegates() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       RedissonTxManager tx = mock(RedissonTxManager.class);
-      when(tx.inTransaction()).thenReturn(true);
       val underTest = new RedisTransactionalLens(p, tx, Defaults.create());
 
       underTest.doClear();
@@ -188,7 +187,6 @@ class RedisTransactionalLensTest {
     void delegates() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       RedissonTxManager tx = mock(RedissonTxManager.class);
-      when(tx.inTransaction()).thenReturn(true);
       val underTest = new RedisTransactionalLens(p, tx, Defaults.create());
 
       underTest.doFlush();
