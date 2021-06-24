@@ -24,4 +24,8 @@ public class TransformationException extends RuntimeException {
   public TransformationException(@NonNull Exception e) {
     super(e);
   }
+
+  public TransformationException(String message) {
+    super(message);
+  }
 }

@@ -15,12 +15,7 @@
  */
 package org.factcast.itests.exception.handling;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-
 import io.grpc.StatusRuntimeException;
-import java.util.Collections;
-import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.factcast.core.Fact;
@@ -30,15 +25,23 @@ import org.factcast.core.lock.Attempt;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
+import org.factcast.test.FactcastConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
+import java.util.Collections;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 @SpringBootTest
 @EnableAutoConfiguration
 @ContextConfiguration(classes = {Application.class})
+@FactcastConfig(factcastVersion = "latest")
 @Slf4j
 public class ExceptionHandlingV3 extends AbstractFactCastIntegrationTest {
 

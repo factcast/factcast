@@ -18,10 +18,11 @@ package org.factcast.client.grpc;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
-import java.lang.reflect.Constructor;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.store.RetryableException;
+
+import java.lang.reflect.Constructor;
+import java.util.Objects;
 
 @Slf4j
 public class ClientExceptionHelper {
@@ -50,11 +51,12 @@ public class ClientExceptionHelper {
     }
 
     Status status = e.getStatus();
-    if (status == Status.ABORTED
-        || status == Status.UNAVAILABLE
-        || status == Status.UNKNOWN
-        || status == Status.DEADLINE_EXCEEDED
-        || status == Status.RESOURCE_EXHAUSTED) {
+    if (toReturn == e
+        && (status == Status.ABORTED
+            || status == Status.UNAVAILABLE
+            || status == Status.UNKNOWN
+            || status == Status.DEADLINE_EXCEEDED
+            || status == Status.RESOURCE_EXHAUSTED)) {
       toReturn = new RetryableException(e);
     }
 
