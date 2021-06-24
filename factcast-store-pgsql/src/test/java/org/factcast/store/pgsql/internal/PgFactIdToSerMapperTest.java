@@ -15,17 +15,17 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Collections;
 import java.util.UUID;
-import org.factcast.core.*;
+import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.test.IntegrationTest;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -43,18 +43,22 @@ public class PgFactIdToSerMapperTest {
 
   @Autowired FactStore store;
 
+  @Autowired PgMetrics metrics;
+
+  @Autowired MeterRegistry registry;
+
   @Test
   void testRetrieve() {
     Fact m = Fact.builder().buildWithoutPayload();
     store.publish(Collections.singletonList(m));
-    long retrieve = new PgFactIdToSerialMapper(tpl).retrieve(m.id());
+    long retrieve = new PgFactIdToSerialMapper(tpl, metrics, registry).retrieve(m.id());
     assertTrue(retrieve > 0);
   }
 
   @Test
   void testRetrieveNonExistant() {
     try {
-      new PgFactIdToSerialMapper(tpl)
+      new PgFactIdToSerialMapper(tpl, metrics, registry)
           .retrieve(UUID.fromString("2b86d90e-2755-4f82-b86d-fd092b25ccc8"));
       fail();
     } catch (Throwable ignored) {

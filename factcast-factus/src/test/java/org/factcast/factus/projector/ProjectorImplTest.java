@@ -16,6 +16,7 @@
 package org.factcast.factus.projector;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -33,11 +34,13 @@ import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.Handler;
 import org.factcast.factus.HandlerFor;
 import org.factcast.factus.event.DefaultEventSerializer;
+import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.Projection;
+import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
 import org.junit.jupiter.api.*;
 
 /** Blackbox test, we are wiring real objects into the test class, no mocks. */
-class DefaultProjectorTest {
+class ProjectorImplTest {
 
   private final DefaultEventSerializer eventSerializer =
       new DefaultEventSerializer(FactCastJson.mapper());
@@ -338,14 +341,14 @@ class DefaultProjectorTest {
 
     @Test
     void resolveTargetFromStaticClass() {
-      assertThat(ProjectorImpl.resolveTargetObject(this, StaticClass.class))
+      assertThat(ReflectionTools.resolveTargetObject(this, StaticClass.class))
           .isNotNull()
           .isInstanceOf(StaticClass.class);
     }
 
     @Test
     void resolveTargetFromNonStaticClass() {
-      assertThat(ProjectorImpl.resolveTargetObject(DefaultProjectorTest.this, NonStaticClass.class))
+      assertThat(ReflectionTools.resolveTargetObject(ProjectorImplTest.this, NonStaticClass.class))
           .isNotNull()
           .isInstanceOf(NonStaticClass.class);
     }
@@ -354,21 +357,24 @@ class DefaultProjectorTest {
   @Nested
   class WhenTestingForHandlerMethods {
 
+    final ProjectorImpl<NonStaticClass> underTest =
+        new ProjectorImpl<>(mock(EventSerializer.class), new NonStaticClass());
+
     @Test
     void matchesHandlerMethods() throws NoSuchMethodException {
       Method realMethod = NonStaticClass.class.getDeclaredMethod("apply", SimpleEvent.class);
-      assertThat(ProjectorImpl.isEventHandlerMethod(realMethod)).isTrue();
+      assertThat(underTest.isEventHandlerMethod(realMethod)).isTrue();
     }
 
     @Test
     void ignoresMockitoMockProvidedMethods() throws NoSuchMethodException {
       Method realMethod =
           NonStaticClass$MockitoMock.class.getDeclaredMethod("apply", SimpleEvent.class);
-      assertThat(ProjectorImpl.isEventHandlerMethod(realMethod)).isFalse();
+      assertThat(underTest.isEventHandlerMethod(realMethod)).isFalse();
     }
   }
 
-  class NonStaticClass {
+  class NonStaticClass implements Projection {
     @Handler
     void apply(SimpleEvent e) {}
   }

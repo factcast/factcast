@@ -28,7 +28,7 @@ When it comes to metrics, you'll have to know what you're looking for. There are
 
 * **Server** metrics in FactCast Server as well as
 * **Client** metrics in the factcast client and additionally in the
-* factus client library. 
+* [factus client library]({{< ref "/factus/metrics.md" >}} "factus client library"). 
   
 We're focussing on *Server* metrics here.
 
@@ -105,6 +105,8 @@ At the **time of writing (0.3.10)**, the registry events that are counted are:
 |    schemaConflict | x | 
 |    factValidationFailed | x | 
 |    schemaMissing | x | 
+|    schemaUpdateFailure | x |
+
 
 ### gRPC Metrics
 

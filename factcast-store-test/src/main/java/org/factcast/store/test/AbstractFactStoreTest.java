@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
@@ -1276,7 +1277,7 @@ public abstract class AbstractFactStoreTest {
     @Getter private List<Fact> list = new LinkedList<>();
 
     @Override
-    public void onNext(Fact element) {
+    public void onNext(@NonNull Fact element) {
       list.add(element);
     }
   }
