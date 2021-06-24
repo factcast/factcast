@@ -168,10 +168,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
               });
 
       Subscription sub =
-          store.subscribe(
-              req,
-              new GrpcObserverAdapter(
-                  req.toString(), resp, grpcRequestMetadata));
+          store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp, grpcRequestMetadata));
       subRef.set(sub);
 
     } else {
