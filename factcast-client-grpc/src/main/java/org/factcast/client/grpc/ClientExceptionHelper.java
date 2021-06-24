@@ -18,11 +18,10 @@ package org.factcast.client.grpc;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
-import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.store.RetryableException;
-
 import java.lang.reflect.Constructor;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.store.RetryableException;
 
 @Slf4j
 public class ClientExceptionHelper {
