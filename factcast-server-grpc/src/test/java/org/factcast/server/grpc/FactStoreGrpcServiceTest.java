@@ -41,6 +41,7 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
@@ -63,12 +64,14 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
 @ExtendWith(MockitoExtension.class)
 public class FactStoreGrpcServiceTest {
 
   @Mock FactStore backend;
   @Mock GrpcRequestMetadata meta;
+  @Mock FastForwardTarget ffwdTarget;
+  @Mock GrpcLimitProperties grpcLimitProperties;
 
   @InjectMocks FactStoreGrpcService uut;
 

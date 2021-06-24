@@ -34,12 +34,13 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
             .withNetwork(_docker_network);
 
     _factcast =
-        new GenericContainer<>("factcast/factcast:latest")
+        new GenericContainer<>("factcast/factcast:0.3.9")
             .withExposedPorts(9090)
             .withFileSystemBind("./config", "/config/")
             .withEnv("grpc_server_port", "9090")
             .withEnv("factcast_security_enabled", "false")
             .withEnv("factcast_grpc_bandwidth_disabled", "true")
+            .withEnv("factcast_store_pgsql_integrationTestMode", "true")
             .withEnv("spring_datasource_url", "jdbc:postgresql://db/fc?user=fc&password=fc")
             .withNetwork(_docker_network)
             .dependsOn(_postgres)
