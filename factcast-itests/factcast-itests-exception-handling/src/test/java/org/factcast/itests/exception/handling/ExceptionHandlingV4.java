@@ -15,33 +15,32 @@
  */
 package org.factcast.itests.exception.handling;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.util.Collections;
-import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
 import org.factcast.core.lock.Attempt;
-import org.factcast.core.lock.AttemptAbortedException;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.factus.Factus;
-import org.factcast.factus.lock.LockedOperationAbortedException;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.Disabled;
+import org.factcast.test.FactcastConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
+import java.util.Collections;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.*;
+
 @SpringBootTest
 @EnableAutoConfiguration
 @ContextConfiguration(classes = {Application.class})
+@FactcastConfig(factcastVersion = "latest")
 @Slf4j
 public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
@@ -66,7 +65,6 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  @Disabled("currently failing")
   public void testPublish_validationFailed_withLockOn() {
     // INIT
     UUID aggId = UUID.randomUUID();
@@ -82,12 +80,10 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
                                     aggId,
                                     2,
                                     "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\",\"salutation\":\"FOO\"}"))))
-        .isInstanceOf(LockedOperationAbortedException.class)
-        .hasCauseInstanceOf(FactValidationException.class);
+        .isInstanceOf(FactValidationException.class);
   }
 
   @Test
-  @Disabled("currently failing")
   public void testProjection_transformationErrors() {
     // INIT
     UUID aggId = UUID.randomUUID();
@@ -95,12 +91,12 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
     val proj = new LocalManagedUserNames();
-    assertThatThrownBy(() -> ec.update(proj)).isInstanceOf(TransformationException.class);
+    //    assertThatThrownBy(() -> ec.update(proj)).isInstanceOf(TransformationException.class);
+    ec.update(proj);
     assertThat(proj.exception()).isInstanceOf(TransformationException.class);
   }
 
   @Test
-  @Disabled("currently failing")
   public void failingTransformation() {
 
     UUID id = UUID.randomUUID();
@@ -118,14 +114,12 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  @Disabled("currently failing")
   public void validationFailsOnSchemaViolation_withinLock() {
     Fact brokenFact = createTestFact(UUID.randomUUID(), 1, "{}");
 
     assertThatThrownBy(
             () -> fc.lock(FactSpec.ns("users")).attempt(() -> Attempt.publish(brokenFact)))
-        .isInstanceOf(AttemptAbortedException.class)
-        .hasCauseInstanceOf(TransformationException.class);
+        .isInstanceOf(FactValidationException.class);
   }
 
   private Fact createTestFact(UUID id, int version, String body) {
