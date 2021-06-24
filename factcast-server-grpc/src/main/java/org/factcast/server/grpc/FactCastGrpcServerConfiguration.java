@@ -17,6 +17,7 @@ package org.factcast.server.grpc;
 
 import net.devh.boot.grpc.server.scope.GrpcRequestScope;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -30,8 +31,11 @@ public class FactCastGrpcServerConfiguration {
 
   @Bean
   public FactStoreGrpcService factStoreGrpcService(
-      FactStore store, GrpcRequestMetadata grpcMetaData, GrpcLimitProperties props) {
-    return new FactStoreGrpcService(store, grpcMetaData, props);
+      FactStore store,
+      GrpcRequestMetadata grpcMetaData,
+      GrpcLimitProperties props,
+      FastForwardTarget target) {
+    return new FactStoreGrpcService(store, grpcMetaData, props, target);
   }
 
   @Bean

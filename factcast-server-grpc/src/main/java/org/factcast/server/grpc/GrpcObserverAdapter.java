@@ -18,9 +18,9 @@ package org.factcast.server.grpc;
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -33,7 +33,6 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @Slf4j
-@RequiredArgsConstructor
 class GrpcObserverAdapter implements FactObserver {
 
   private final ProtoConverter converter = new ProtoConverter();
@@ -44,20 +43,23 @@ class GrpcObserverAdapter implements FactObserver {
   @NonNull private final int catchupBatchSize;
 
   @VisibleForTesting
+  @Deprecated
   GrpcObserverAdapter(String id, StreamObserver<MSG_Notification> observer) {
-    this(id, observer, 1);
+    this(id, observer, GrpcRequestMetadata.forTest());
   }
 
   private final ArrayList<Fact> stagedFacts;
+  private final boolean supportsFastForward;
   private final AtomicBoolean caughtUp = new AtomicBoolean(false);
 
   public GrpcObserverAdapter(
       @NonNull String id,
       @NonNull StreamObserver<MSG_Notification> observer,
-      @NonNull int catchupBatchSize) {
+      @NonNull GrpcRequestMetadata meta) {
     this.id = id;
     this.observer = observer;
-    this.catchupBatchSize = catchupBatchSize;
+    catchupBatchSize = meta.catchupBatch().orElse(1);
+    supportsFastForward = meta.supportsFastForward();
     stagedFacts = new ArrayList<>(catchupBatchSize);
   }
 
@@ -70,7 +72,7 @@ class GrpcObserverAdapter implements FactObserver {
   }
 
   @Override
-  public void onError(Throwable e) {
+  public void onError(@NonNull Throwable e) {
     flush();
     log.info("{} onError – sending Error notification {}", id, e.getMessage());
     observer.onError(e);
@@ -89,6 +91,7 @@ class GrpcObserverAdapter implements FactObserver {
   @Override
   public void onCatchup() {
     flush();
+
     log.debug("{} onCatchup – sending catchup notification", id);
     observer.onNext(converter.createCatchupNotification());
     caughtUp.set(true);
@@ -104,7 +107,7 @@ class GrpcObserverAdapter implements FactObserver {
   }
 
   @Override
-  public void onNext(Fact element) {
+  public void onNext(@NonNull Fact element) {
     if (catchupBatchSize > 1 && !caughtUp.get()) {
       if (stagedFacts.size() >= catchupBatchSize) {
         flush();
@@ -112,6 +115,14 @@ class GrpcObserverAdapter implements FactObserver {
       stagedFacts.add(element);
     } else {
       observer.onNext(converter.createNotificationFor(element));
+    }
+  }
+
+  @Override
+  public void onFastForward(@NonNull UUID factIdToFfwdTo) {
+    if (supportsFastForward) {
+      // we have not sent any fact. check for ffwding
+      observer.onNext(converter.createNotificationForFastForward(factIdToFfwdTo));
     }
   }
 }

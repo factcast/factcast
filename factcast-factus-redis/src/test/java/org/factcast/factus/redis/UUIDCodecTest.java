@@ -49,4 +49,12 @@ class UUIDCodecTest {
           .isInstanceOf(IndexOutOfBoundsException.class);
     }
   }
+
+  @Nested
+  class WhenConstructing {
+    @Test
+    void justToCoverTheFrameworkConstructor() {
+      new UUIDCodec(UUID.class.getClassLoader(), new UUIDCodec());
+    }
+  }
 }

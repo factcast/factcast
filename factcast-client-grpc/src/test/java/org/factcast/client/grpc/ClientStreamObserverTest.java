@@ -68,6 +68,14 @@ class ClientStreamObserverTest {
   }
 
   @Test
+  void testFastForward() {
+    UUID id = UUID.randomUUID();
+    MSG_Notification n = converter.createNotificationForFastForward(id);
+    uut.onNext(n);
+    verify(factObserver).onFastForward(eq(id));
+  }
+
+  @Test
   void testOnNextList() {
     Fact f1 = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     Fact f2 = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");

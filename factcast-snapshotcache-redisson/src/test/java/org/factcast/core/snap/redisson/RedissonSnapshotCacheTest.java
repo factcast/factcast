@@ -39,7 +39,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
-@ContextConfiguration(classes = {RedisAutoConfiguration.class, RedissonAutoConfiguration.class})
+@ContextConfiguration(classes = {RedissonAutoConfiguration.class, RedisAutoConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @Testcontainers
 class RedissonSnapshotCacheTest {

@@ -26,11 +26,12 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.http.ValidationConstants;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
+import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.OP;
 import org.factcast.store.pgsql.registry.transformation.*;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictException;
@@ -38,7 +39,6 @@ import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
 
-@RequiredArgsConstructor
 @Slf4j
 public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   @NonNull protected final IndexFetcher indexFetcher;
@@ -50,8 +50,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   @NonNull protected final TransformationStore transformationStore;
 
   @NonNull protected final RegistryMetrics registryMetrics;
-
-  @NonNull protected final boolean isAllowSchemaReplace;
+  @NonNull protected final PgConfigurationProperties pgConfigurationProperties;
 
   protected final Object mutex = new Object();
 
@@ -81,14 +80,41 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
         }
       };
 
+  public AbstractSchemaRegistry(
+      @NonNull IndexFetcher indexFetcher,
+      @NonNull RegistryFileFetcher registryFileFetcher,
+      @NonNull SchemaStore schemaStore,
+      @NonNull TransformationStore transformationStore,
+      @NonNull RegistryMetrics registryMetrics,
+      @NonNull PgConfigurationProperties pgConfigurationProperties) {
+    this.indexFetcher = indexFetcher;
+    this.registryFileFetcher = registryFileFetcher;
+    this.schemaStore = schemaStore;
+    this.transformationStore = transformationStore;
+    this.registryMetrics = registryMetrics;
+    this.pgConfigurationProperties = pgConfigurationProperties;
+  }
+
   @Override
   public void fetchInitial() {
 
     synchronized (mutex) {
       Stopwatch sw = Stopwatch.createStarted();
       log.info("Registry update started");
-      indexFetcher.fetchIndex().ifPresent(this::process);
-      log.info("Registry update finished in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
+      try {
+        indexFetcher.fetchIndex().ifPresent(this::process);
+        log.info("Registry update finished in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
+      } catch (Throwable e) {
+        log.warn("While fetching initial state of registry", e);
+        registryMetrics.count(EVENT.SCHEMA_UPDATE_FAILURE);
+        log.info("Registry update failed in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
+
+        if (!pgConfigurationProperties.isPersistentRegistry()) {
+          // while starting with a stale registry might be ok, we cannot start with a non-existant
+          // (empty) registry.
+          throw new InitialRegistryFetchFailed("While fetching initial state of registry", e);
+        }
+      }
     }
   }
 
@@ -98,8 +124,13 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
       registryMetrics.timed(
           OP.REFRESH_REGISTRY,
           () -> {
-            Optional<RegistryIndex> fetchIndex = indexFetcher.fetchIndex();
-            fetchIndex.ifPresent(this::process);
+            try {
+              Optional<RegistryIndex> fetchIndex = indexFetcher.fetchIndex();
+              fetchIndex.ifPresent(this::process);
+            } catch (Throwable e) {
+              registryMetrics.count(EVENT.SCHEMA_UPDATE_FAILURE);
+              throw e;
+            }
           });
     }
   }
@@ -126,7 +157,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
                       schemaStore.register(source, schema);
                     }
                   } catch (SchemaConflictException e) {
-                    if (isAllowSchemaReplace) {
+                    if (pgConfigurationProperties.isAllowSchemaReplace()) {
                       schemaStore.register(source, schema);
                     } else {
                       throw e;
@@ -162,7 +193,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
                       transformationStore.store(source, transformationCode);
                     }
                   } catch (TransformationConflictException conflict) {
-                    if (isAllowSchemaReplace) {
+                    if (pgConfigurationProperties.isAllowSchemaReplace()) {
                       transformationStore.store(source, transformationCode);
                     } else {
                       throw conflict;

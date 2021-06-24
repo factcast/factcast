@@ -20,8 +20,10 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
+import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.subscription.observer.GenericObserver;
@@ -163,6 +165,23 @@ public class SubscriptionImplTest {
     verify(obs).onError(any());
     verify(obs).onCatchup();
     verify(obs).onNext(testFact);
+  }
+
+  @Test
+  void testOnFastForwardDelegatesIfNotClosed() throws TransformationException {
+    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    @NonNull UUID id = UUID.randomUUID();
+    on.notifyFastForward(id);
+    verify(obs).onFastForward(id);
+  }
+
+  @Test
+  void testOnFastForwardSkipsIfClosed() throws TransformationException {
+    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    @NonNull UUID id = UUID.randomUUID();
+    on.close();
+    on.notifyFastForward(id);
+    verify(obs, never()).onFastForward(id);
   }
 
   @Test
