@@ -54,7 +54,7 @@ databaseChangeLog:
       file: factcast/issue1161/storage-setting.sql
       relativeToChangelogFile: true
   - changeSet:
-      id: unique_index_using_uuids_
+      id: unique_index_using_uuids_to_reduce_space_requirements
       runInTransaction: false
       author: uweschaefer
       changes:
