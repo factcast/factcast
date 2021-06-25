@@ -69,7 +69,7 @@ public class SubscriptionImpl implements Subscription {
     } catch (InterruptedException e) {
       throw new SubscriptionCancelledException(e);
     } catch (ExecutionException e) {
-      throw new SubscriptionCancelledException(e.getCause());
+      throw ExceptionHelper.toRuntime(e.getCause());
     }
     return this;
   }
@@ -82,7 +82,7 @@ public class SubscriptionImpl implements Subscription {
     } catch (InterruptedException e) {
       throw new SubscriptionCancelledException(e);
     } catch (ExecutionException e) {
-      throw new SubscriptionCancelledException(e.getCause());
+      throw ExceptionHelper.toRuntime(e.getCause());
     }
     return this;
   }
