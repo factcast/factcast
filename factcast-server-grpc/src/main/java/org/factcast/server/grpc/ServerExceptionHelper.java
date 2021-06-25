@@ -23,7 +23,7 @@ public class ServerExceptionHelper {
 
   public static StatusRuntimeException translate(Throwable e, Metadata meta) {
     if (e instanceof RuntimeException && e.getClass().getName().startsWith("org.factcast.core")) {
-      return new StatusRuntimeException(Status.INTERNAL, addMetaData(meta, e));
+      return new StatusRuntimeException(Status.UNKNOWN, addMetaData(meta, e));
     } else {
       return new StatusRuntimeException(Status.UNKNOWN, meta);
     }
