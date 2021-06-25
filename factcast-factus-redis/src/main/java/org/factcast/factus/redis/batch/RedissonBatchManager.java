@@ -1,17 +1,16 @@
 package org.factcast.factus.redis.batch;
 
-import lombok.NonNull;
-import lombok.Setter;
-import org.redisson.api.BatchOptions;
-import org.redisson.api.RBatch;
-import org.redisson.api.RedissonClient;
-
-import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
+import lombok.NonNull;
+import lombok.Setter;
+import org.redisson.api.BatchOptions;
+import org.redisson.api.RBatch;
+import org.redisson.api.RedissonClient;
 
 public class RedissonBatchManager {
 
