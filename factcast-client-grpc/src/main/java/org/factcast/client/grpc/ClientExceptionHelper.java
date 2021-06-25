@@ -22,43 +22,48 @@ import java.lang.reflect.Constructor;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.store.RetryableException;
+import org.factcast.core.util.ExceptionHelper;
 
 @Slf4j
+// TODO usr test missing
 public class ClientExceptionHelper {
 
-  public static RuntimeException from(StatusRuntimeException e) {
+  public static RuntimeException from(Throwable e) {
 
-    RuntimeException toReturn = e;
+    Throwable toReturn = e;
+    if (e instanceof StatusRuntimeException) {
 
-    Metadata md = e.getTrailers();
-    if (md != null) {
+      StatusRuntimeException sre = (StatusRuntimeException) e;
 
-      byte[] msgBytes = md.get(Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER));
-      byte[] excBytes = md.get(Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER));
+      Metadata md = sre.getTrailers();
+      if (md != null) {
 
-      if (excBytes != null) {
-        String className = new String(excBytes);
-        try {
-          Class<?> exc = Class.forName(className);
-          Constructor<?> constructor = exc.getConstructor(String.class);
-          String msg = new String(Objects.requireNonNull(msgBytes));
-          toReturn = (RuntimeException) constructor.newInstance(msg);
-        } catch (Throwable ex) {
-          log.warn("Something went wrong materializing an exception of type {}", className, ex);
+        byte[] msgBytes = md.get(Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER));
+        byte[] excBytes = md.get(Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER));
+
+        if (excBytes != null) {
+          String className = new String(excBytes);
+          try {
+            Class<?> exc = Class.forName(className);
+            Constructor<?> constructor = exc.getConstructor(String.class);
+            String msg = new String(Objects.requireNonNull(msgBytes));
+            toReturn = (RuntimeException) constructor.newInstance(msg);
+          } catch (Throwable ex) {
+            log.warn("Something went wrong materializing an exception of type {}", className, ex);
+          }
         }
       }
-    }
 
-    Status status = e.getStatus();
-    if (toReturn == e
-        && (status == Status.ABORTED
-            || status == Status.UNAVAILABLE
-            || status == Status.UNKNOWN
-            || status == Status.DEADLINE_EXCEEDED
-            || status == Status.RESOURCE_EXHAUSTED)) {
-      toReturn = new RetryableException(e);
+      Status status = sre.getStatus();
+      if (toReturn == e
+          && (status == Status.ABORTED
+              || status == Status.UNAVAILABLE
+              || status == Status.UNKNOWN
+              || status == Status.DEADLINE_EXCEEDED
+              || status == Status.RESOURCE_EXHAUSTED)) {
+        toReturn = new RetryableException(sre);
+      }
     }
-
-    return toReturn;
+    return ExceptionHelper.toRuntime(toReturn);
   }
 }
