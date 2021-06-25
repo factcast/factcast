@@ -1,16 +1,17 @@
 package org.factcast.factus.redis.tx;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.Setter;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
+
+import javax.annotation.Nullable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class RedissonTxManager {
 
@@ -67,15 +68,21 @@ public class RedissonTxManager {
 
   public void commit() {
     if (currentTx != null) {
-      currentTx.commit();
-      currentTx = null;
+      try {
+        currentTx.commit();
+      } finally {
+        currentTx = null;
+      }
     }
   }
 
   public void rollback() {
     if (currentTx != null) {
-      currentTx.rollback();
-      currentTx = null;
+      try {
+        currentTx.rollback();
+      } finally {
+        currentTx = null;
+      }
     }
   }
 }
