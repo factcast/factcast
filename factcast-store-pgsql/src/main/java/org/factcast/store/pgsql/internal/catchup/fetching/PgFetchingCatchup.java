@@ -67,8 +67,6 @@ public class PgFetchingCatchup implements PgCatchup {
     try {
       val jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
-    } catch (Exception e) {
-      log.error("while fetching", e);
     } finally {
       ds.destroy();
     }
