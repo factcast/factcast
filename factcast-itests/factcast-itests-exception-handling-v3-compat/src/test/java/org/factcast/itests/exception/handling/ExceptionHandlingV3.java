@@ -36,6 +36,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
+/** client version 0.3.9 against latest factcast */
 @SpringBootTest
 @EnableAutoConfiguration
 @ContextConfiguration(classes = {Application.class})
