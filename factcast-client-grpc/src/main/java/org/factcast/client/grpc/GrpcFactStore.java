@@ -384,11 +384,7 @@ public class GrpcFactStore implements FactStore {
         () -> {
           MSG_OptionalFact fetchById;
           fetchById = blockingStub.fetchById(converter.toProto(id));
-          if (!fetchById.getPresent()) {
-            return Optional.empty();
-          } else {
-            return converter.fromProto(fetchById);
-          }
+          return converter.fromProto(fetchById);
         });
   }
 
