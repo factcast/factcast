@@ -159,28 +159,26 @@ public class GrpcFactStore implements FactStore {
 
   // instead of using aspects
   // GrpcGlobalClientInterceptor was tested but did not work as expected
-  private void runAndHandle(@NonNull Runnable block) {
+  @VisibleForTesting
+  void runAndHandle(@NonNull Runnable block) {
     try {
       block.run();
     } catch (StatusRuntimeException e) {
-      throw refine(e);
+      throw ClientExceptionHelper.from(e);
     }
   }
 
   // instead of using aspects
   // GrpcGlobalClientInterceptor was tested but did not work as expected
-  private <T> T callAndHandle(@NonNull Callable<T> block) {
+  @VisibleForTesting
+  <T> T callAndHandle(@NonNull Callable<T> block) {
     try {
       return block.call();
     } catch (StatusRuntimeException e) {
-      throw refine(e);
+      throw ClientExceptionHelper.from(e);
     } catch (Exception e) {
       throw ExceptionHelper.toRuntime(e);
     }
-  }
-
-  private RuntimeException refine(StatusRuntimeException e) {
-    throw ClientExceptionHelper.from(e);
   }
 
   @Override
