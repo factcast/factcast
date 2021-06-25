@@ -22,7 +22,7 @@ public @interface FactcastConfig {
     String postgresVersion;
     String configDir;
 
-    static final String FACTCAST_VERSION = "0.3.9";
+    static final String FACTCAST_VERSION = "latest";
     static final String POSTGRES_VERSION = "11.5";
     static final String CONFIG_DIR = "./config";
 
