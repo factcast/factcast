@@ -25,7 +25,6 @@ import org.factcast.core.store.RetryableException;
 import org.factcast.core.util.ExceptionHelper;
 
 @Slf4j
-// TODO usr test missing
 public class ClientExceptionHelper {
 
   public static RuntimeException from(Throwable e) {
