@@ -57,6 +57,6 @@ public class HttpSchemaRegistry extends AbstractSchemaRegistry {
         schemaStore,
         transformationStore,
         registryMetrics,
-        properties.isAllowSchemaReplace());
+        properties);
   }
 }

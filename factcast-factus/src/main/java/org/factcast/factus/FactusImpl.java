@@ -193,15 +193,19 @@ public class FactusImpl implements Factus {
         new FactObserver() {
           final AtomicBoolean caughtUp = new AtomicBoolean(false);
 
+          UUID lastFactIdApplied = null;
+
           @Override
           public void onNext(@NonNull Fact element) {
 
             if (token.isValid()) {
 
+              lastFactIdApplied = element.id();
+
               subscribedProjection.executeUpdate(
                   () -> {
                     handler.apply(element);
-                    subscribedProjection.state(element.id());
+                    // don NOT set state here, wil be handled by the apply call above
                   });
 
               if (caughtUp.get()) {
@@ -224,6 +228,7 @@ public class FactusImpl implements Factus {
           @Override
           public void onCatchup() {
             caughtUp.set(true);
+            handler.onCatchup(lastFactIdApplied);
             subscribedProjection.onCatchup();
           }
 
@@ -354,7 +359,7 @@ public class FactusImpl implements Factus {
   }
 
   @SneakyThrows
-  private <P extends BatchUpdatingProjection> UUID catchupProjection(
+  private <P extends Projection> UUID catchupProjection(
       @NonNull P projection, UUID stateOrNull, @Nullable BiConsumer<P, UUID> afterProcessing) {
     Projector<P> handler = ehFactory.create(projection);
     AtomicReference<UUID> factId = new AtomicReference<>();
@@ -362,8 +367,13 @@ public class FactusImpl implements Factus {
 
     FactObserver fo =
         new FactObserver() {
+          @NonNull UUID id = null;
+
           @Override
           public void onNext(@NonNull Fact element) {
+            // TODO remove execUpdate?
+
+            id = element.id();
             projection.executeUpdate(
                 () -> {
                   handler.apply(element);
@@ -378,11 +388,11 @@ public class FactusImpl implements Factus {
           @Override
           public void onComplete() {
             projection.onComplete();
-            projection.afterUpdate(factCount.get());
           }
 
           @Override
           public void onCatchup() {
+            handler.onCatchup(id);
             projection.onCatchup();
           }
 
