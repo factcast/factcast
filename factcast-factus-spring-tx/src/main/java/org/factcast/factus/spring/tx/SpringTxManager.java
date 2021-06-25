@@ -24,9 +24,11 @@ class SpringTxManager {
 
   public void commit() {
     if (currentTx != null) {
-      transactionManager.commit(currentTx);
-
-      currentTx = null;
+      try {
+        transactionManager.commit(currentTx);
+      } finally {
+        currentTx = null;
+      }
     } else {
       log.warn("Trying to commit when no Transaction is in scope");
     }
@@ -34,9 +36,11 @@ class SpringTxManager {
 
   public void rollback() {
     if (currentTx != null) {
-      transactionManager.rollback(currentTx);
-
-      currentTx = null;
+      try {
+        transactionManager.rollback(currentTx);
+      } finally {
+        currentTx = null;
+      }
     } else {
       log.warn("Trying to rollback when no Transaction is in scope");
     }

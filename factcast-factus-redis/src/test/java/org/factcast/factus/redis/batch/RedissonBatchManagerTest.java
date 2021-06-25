@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import lombok.val;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -34,16 +36,28 @@ class RedissonBatchManagerTest {
 
   @Nested
   class WhenCommiting {
+    @Mock RBatch batch;
 
     @Test
     void joins() {
-      when(redisson.createBatch(any())).thenAnswer(i -> mock(RBatch.class));
+      when(redisson.createBatch(any())).thenReturn(batch);
       underTest.startOrJoin();
-      RBatch curr = underTest.getCurrentBatch();
 
       underTest.execute();
 
-      verify(curr).execute();
+      verify(batch).execute();
+      assertThat(underTest.getCurrentBatch()).isNull();
+    }
+
+    @Test
+    void execute_exception() {
+      when(redisson.createBatch(any())).thenReturn(batch);
+      doThrow(new IllegalStateException("foo")).when(batch).execute();
+      underTest.startOrJoin();
+
+      assertThatThrownBy(() -> underTest.execute()).isInstanceOf(IllegalStateException.class);
+
+      verify(batch).execute();
       assertThat(underTest.getCurrentBatch()).isNull();
     }
 
@@ -59,16 +73,28 @@ class RedissonBatchManagerTest {
 
   @Nested
   class WhenRollingBack {
+    @Mock RBatch batch;
 
     @Test
     void joins() {
-      when(redisson.createBatch(any())).thenAnswer(i -> mock(RBatch.class));
+      when(redisson.createBatch(any())).thenReturn(batch);
       underTest.startOrJoin();
-      RBatch curr = underTest.getCurrentBatch();
 
       underTest.discard();
 
-      verify(curr).discard();
+      verify(batch).discard();
+      assertThat(underTest.getCurrentBatch()).isNull();
+    }
+
+    @Test
+    void discard_exception() {
+      when(redisson.createBatch(any())).thenReturn(batch);
+      doThrow(new IllegalStateException("foo")).when(batch).discard();
+      underTest.startOrJoin();
+
+      assertThatThrownBy(() -> underTest.discard()).isInstanceOf(IllegalStateException.class);
+
+      verify(batch).discard();
       assertThat(underTest.getCurrentBatch()).isNull();
     }
 
