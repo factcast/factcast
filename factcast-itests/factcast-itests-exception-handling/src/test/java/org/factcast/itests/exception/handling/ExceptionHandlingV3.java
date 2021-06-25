@@ -30,8 +30,7 @@ import org.factcast.core.lock.Attempt;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.factcast.test.FactcastConfig;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,7 +39,6 @@ import org.springframework.test.context.ContextConfiguration;
 @SpringBootTest
 @EnableAutoConfiguration
 @ContextConfiguration(classes = {Application.class})
-@FactcastConfig(factcastVersion = "latest")
 @Slf4j
 public class ExceptionHandlingV3 extends AbstractFactCastIntegrationTest {
 

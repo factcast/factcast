@@ -16,6 +16,7 @@
 package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.grpc.Metadata;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -50,7 +51,9 @@ class GrpcObserverAdapter implements FactObserver {
 
   private final ArrayList<Fact> stagedFacts;
   private final boolean supportsFastForward;
+
   private final AtomicBoolean caughtUp = new AtomicBoolean(false);
+  @NonNull private Metadata meta;
 
   public GrpcObserverAdapter(
       @NonNull String id,
@@ -58,6 +61,7 @@ class GrpcObserverAdapter implements FactObserver {
       @NonNull GrpcRequestMetadata meta) {
     this.id = id;
     this.observer = observer;
+    this.meta = meta.headers();
     catchupBatchSize = meta.catchupBatch().orElse(1);
     supportsFastForward = meta.supportsFastForward();
     stagedFacts = new ArrayList<>(catchupBatchSize);
@@ -75,9 +79,7 @@ class GrpcObserverAdapter implements FactObserver {
   public void onError(@NonNull Throwable e) {
     flush();
     log.info("{} onError – sending Error notification {}", id, e.getMessage());
-    observer.onError(e);
-    // TODO see if needed, because onError is terminating anyway
-    tryComplete();
+    observer.onError(ServerExceptionHelper.translate(e, meta));
   }
 
   private void tryComplete() {
@@ -121,6 +123,7 @@ class GrpcObserverAdapter implements FactObserver {
   @Override
   public void onFastForward(@NonNull UUID factIdToFfwdTo) {
     if (supportsFastForward) {
+      log.debug("{} sending ffwd notification to fact id {}", id, factIdToFfwdTo);
       // we have not sent any fact. check for ffwding
       observer.onNext(converter.createNotificationForFastForward(factIdToFfwdTo));
     }
