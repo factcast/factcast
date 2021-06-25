@@ -43,7 +43,7 @@
         <dependency>
             <groupId>org.factcast</groupId>
             <artifactId>factcast-client-grpc</artifactId>
-            <version>0.3.9</version>
+            <version>0.3.13</version>
         </dependency>
         <dependency>
             <groupId>org.factcast</groupId>
