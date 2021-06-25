@@ -1,10 +1,9 @@
 package org.factcast.test;
 
+import java.lang.annotation.*;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.With;
-
-import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
