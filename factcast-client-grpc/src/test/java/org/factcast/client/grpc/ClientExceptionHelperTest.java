@@ -61,5 +61,22 @@ class ClientExceptionHelperTest {
           .extracting(Throwable::getCause)
           .isSameAs(ex);
     }
+
+    @Test
+    void ignoresNonReconstructableException() {
+      val e = new MissesRequiredContructorException(1);
+      val metadata = new Metadata();
+      metadata.put(
+          Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
+      metadata.put(
+          Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER),
+          e.getClass().getName().getBytes());
+      val ex = new StatusRuntimeException(Status.UNKNOWN, metadata);
+
+      assertThat(ClientExceptionHelper.from(ex))
+          .isInstanceOf(RetryableException.class)
+          .extracting(Throwable::getCause)
+          .isInstanceOf(StatusRuntimeException.class);
+    }
   }
 }

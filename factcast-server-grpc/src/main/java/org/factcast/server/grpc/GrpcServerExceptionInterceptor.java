@@ -15,6 +15,7 @@
  */
 package org.factcast.server.grpc;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.grpc.*;
 import io.grpc.Status.Code;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,7 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
     return new ExceptionHandlingServerCallListener<>(listener, serverCall, metadata);
   }
 
-  private static class ExceptionHandlingServerCallListener<ReqT, RespT>
+  static class ExceptionHandlingServerCallListener<ReqT, RespT>
       extends ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> {
     private final ServerCall<ReqT, RespT> serverCall;
 
@@ -96,7 +97,8 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
       }
     }
 
-    private void handleException(
+    @VisibleForTesting
+    void handleException(
         RuntimeException exception, ServerCall<ReqT, RespT> serverCall, Metadata metadata) {
 
       if (exception instanceof RequestCanceledByClientException) {
@@ -116,7 +118,7 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
       StatusRuntimeException sre = ServerExceptionHelper.translate(exception, metadata);
 
       if (sre.getStatus().getCode().equals(Code.UNKNOWN)) {
-        log.warn("Exception falling through: ", exception);
+        log.debug("Exception falling through: ", exception);
       }
 
       serverCall.close(sre.getStatus(), sre.getTrailers());
