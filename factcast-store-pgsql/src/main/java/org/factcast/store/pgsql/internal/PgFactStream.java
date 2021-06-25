@@ -31,6 +31,7 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.util.ExceptionHelper;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
@@ -103,7 +104,7 @@ public class PgFactStream {
         catchup(postQueryMatcher);
       } catch (Throwable e) {
         // might help to find networking issues while catching up
-        log.error("While catching up: ", e);
+        log.warn("While catching up: ", e);
         subscription.notifyError(e);
       }
     }
@@ -125,8 +126,8 @@ public class PgFactStream {
         long startSer = 0;
 
         if (targetId != null && (!targetId.equals(startedId) && (targetSer > startedSer))) {
-          log.debug(
-              "{} no facts applied – sending ffwd notification to fact id {}", request, targetId);
+          log.trace(
+              "{} no facts applied – offering ffwd notification to fact id {}", request, targetId);
           subscription.notifyFastForward(targetId);
         }
       }
@@ -233,7 +234,8 @@ public class PgFactStream {
           } catch (MissingTransformationInformation | TransformationException e) {
             log.warn("{} transformation error: {}", request, e.getMessage());
             subscription.notifyError(e);
-            throw new RuntimeException(e);
+            // will vanish, because this is called from a timer.
+            throw e;
           } catch (Throwable e) {
             // debug level, because it happens regularly on
             // disconnecting clients.
@@ -248,7 +250,7 @@ public class PgFactStream {
             // close result set in order to release DB resources as
             // early as possible
             rs.close();
-            throw e;
+            throw ExceptionHelper.toRuntime(e);
           }
         } else {
           // TODO add sid

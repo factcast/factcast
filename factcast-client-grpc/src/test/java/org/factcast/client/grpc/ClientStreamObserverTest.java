@@ -15,15 +15,21 @@
  */
 package org.factcast.client.grpc;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import io.grpc.Metadata;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
+import lombok.val;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
+import org.factcast.core.FactValidationException;
 import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -32,6 +38,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -123,5 +130,25 @@ class ClientStreamObserverTest {
   void testOnError() {
     uut.onError(new IOException());
     verify(factObserver).onError(any());
+  }
+
+  @Test
+  void translatesException() {
+
+    val e = new FactValidationException("disappointed");
+    val metadata = new Metadata();
+    metadata.put(
+        Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
+    metadata.put(
+        Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER),
+        e.getClass().getName().getBytes());
+
+    val ex = new StatusRuntimeException(Status.UNKNOWN, metadata);
+
+    uut.onError(ex);
+
+    ArgumentCaptor<Throwable> ecap = ArgumentCaptor.forClass(Throwable.class);
+    verify(factObserver).onError(ecap.capture());
+    assertThat(ecap.getValue()).isInstanceOf(FactValidationException.class);
   }
 }

@@ -23,14 +23,15 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Sets;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
+import io.grpc.*;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import lombok.NonNull;
 import lombok.val;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
+import org.factcast.core.FactValidationException;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
@@ -38,6 +39,7 @@ import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.Headers;
 import org.factcast.grpc.api.StateForRequest;
@@ -75,6 +77,10 @@ class GrpcFactStoreTest {
   @Captor ArgumentCaptor<MSG_Facts> factsCap;
 
   @Mock public Optional<String> credentials;
+  @Mock private CompressionCodecs codecs;
+  @Mock private ProtoConverter converter;
+  @Mock private AtomicBoolean initialized;
+  @InjectMocks private GrpcFactStore underTest;
 
   @Test
   void testPublish() {
@@ -519,5 +525,99 @@ class GrpcFactStoreTest {
     uut.clearSnapshot(id);
 
     verify(blockingStub).clearSnapshot(conv.toProto(id));
+  }
+
+  @Nested
+  class RunAndHandle {
+    @Mock private @NonNull Runnable block;
+
+    @Test
+    void skipsNonSRE() {
+      RuntimeException damn = new RuntimeException("damn");
+      doThrow(damn).when(block).run();
+      assertThatThrownBy(
+              () -> {
+                underTest.runAndHandle(block);
+              })
+          .isSameAs(damn);
+    }
+
+    @Test
+    void happyPath() {
+      underTest.runAndHandle(block);
+      verify(block).run();
+    }
+
+    @Test
+    void translatesSRE() {
+
+      String msg = "wrong";
+      val e = new FactValidationException(msg);
+      val metadata = new Metadata();
+      metadata.put(
+          Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
+      metadata.put(
+          Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER),
+          e.getClass().getName().getBytes());
+
+      doThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription("crap"), metadata))
+          .when(block)
+          .run();
+      assertThatThrownBy(
+              () -> {
+                underTest.runAndHandle(block);
+              })
+          .isNotSameAs(e)
+          .isInstanceOf(FactValidationException.class)
+          .extracting(Throwable::getMessage)
+          .isEqualTo(msg);
+    }
+  }
+
+  @Nested
+  class CallAndHandle {
+    @Mock private @NonNull Callable<?> block;
+
+    @Test
+    void skipsNonSRE() throws Exception {
+      RuntimeException damn = new RuntimeException("damn");
+      when(block.call()).thenThrow(damn);
+      assertThatThrownBy(
+              () -> {
+                underTest.callAndHandle(block);
+              })
+          .isSameAs(damn);
+    }
+
+    @Test
+    void happyPath() throws Exception {
+      underTest.callAndHandle(block);
+      verify(block).call();
+    }
+
+    @Test
+    void translatesSRE() throws Exception {
+
+      String msg = "wrong";
+      val e = new FactValidationException(msg);
+      val metadata = new Metadata();
+      metadata.put(
+          Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
+      metadata.put(
+          Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER),
+          e.getClass().getName().getBytes());
+
+      when(block.call())
+          .thenThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription("crap"), metadata));
+
+      assertThatThrownBy(
+              () -> {
+                underTest.callAndHandle(block);
+              })
+          .isNotSameAs(e)
+          .isInstanceOf(FactValidationException.class)
+          .extracting(Throwable::getMessage)
+          .isEqualTo(msg);
+    }
   }
 }
