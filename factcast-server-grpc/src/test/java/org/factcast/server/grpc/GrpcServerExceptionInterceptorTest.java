@@ -64,6 +64,11 @@ class GrpcServerExceptionInterceptorTest {
 
         verify(uut).handleException(same(ex), any(), any());
       }
+
+      @Test
+      void happyPath() {
+        underTest.onMessage(null);
+      }
     }
 
     @Nested
@@ -79,6 +84,11 @@ class GrpcServerExceptionInterceptorTest {
         assertThatThrownBy(uut::onReady).isInstanceOf(ArrayIndexOutOfBoundsException.class);
 
         verify(uut).handleException(same(ex), any(), any());
+      }
+
+      @Test
+      void happyPath() {
+        underTest.onReady();
       }
     }
 
@@ -96,6 +106,11 @@ class GrpcServerExceptionInterceptorTest {
 
         verify(uut).handleException(same(ex), any(), any());
       }
+
+      @Test
+      void happyPath() {
+        underTest.onCancel();
+      }
     }
 
     @Nested
@@ -112,6 +127,11 @@ class GrpcServerExceptionInterceptorTest {
 
         verify(uut).handleException(same(ex), any(), any());
       }
+
+      @Test
+      void happyPath() {
+        underTest.onComplete();
+      }
     }
 
     @Nested
@@ -127,6 +147,11 @@ class GrpcServerExceptionInterceptorTest {
         assertThatThrownBy(uut::onHalfClose).isInstanceOf(ArrayIndexOutOfBoundsException.class);
 
         verify(uut).handleException(same(ex), any(), any());
+      }
+
+      @Test
+      void happyPath() {
+        underTest.onHalfClose();
       }
     }
 
