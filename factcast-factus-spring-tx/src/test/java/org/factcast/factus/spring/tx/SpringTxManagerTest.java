@@ -1,9 +1,5 @@
 package org.factcast.factus.spring.tx;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import lombok.NonNull;
 import lombok.val;
 import org.junit.jupiter.api.Nested;
@@ -15,6 +11,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SpringTxManagerTest {
@@ -67,6 +66,23 @@ class SpringTxManagerTest {
     }
 
     @Test
+    void testCommit_happyCase_exception() {
+      when(transactionManager.getTransaction(definition)).thenReturn(status);
+      doThrow(new IllegalStateException("foo")).when(transactionManager).commit(status);
+
+      uut.startOrJoin();
+
+      assertThat(uut.getCurrentTx()).isNotNull();
+
+      assertThatThrownBy(() -> uut.commit()).isInstanceOf(IllegalStateException.class);
+
+      assertThat(uut.getCurrentTx()).isNull();
+
+      verify(transactionManager, times(1)).getTransaction(definition);
+      verify(transactionManager).commit(status);
+    }
+
+    @Test
     void testCommit_noTx() {
       uut.commit();
 
@@ -85,6 +101,23 @@ class SpringTxManagerTest {
       assertThat(uut.getCurrentTx()).isNotNull();
 
       uut.rollback();
+
+      assertThat(uut.getCurrentTx()).isNull();
+
+      verify(transactionManager, times(1)).getTransaction(definition);
+      verify(transactionManager).rollback(status);
+    }
+
+    @Test
+    void testRollback_happyCase_exception() {
+      when(transactionManager.getTransaction(definition)).thenReturn(status);
+      doThrow(new IllegalStateException("foo")).when(transactionManager).rollback(status);
+
+      uut.startOrJoin();
+
+      assertThat(uut.getCurrentTx()).isNotNull();
+
+      assertThatThrownBy(() -> uut.rollback()).isInstanceOf(IllegalStateException.class);
 
       assertThat(uut.getCurrentTx()).isNull();
 

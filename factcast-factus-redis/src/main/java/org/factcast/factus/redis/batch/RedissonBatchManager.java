@@ -1,16 +1,17 @@
 package org.factcast.factus.redis.batch;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.Setter;
 import org.redisson.api.BatchOptions;
 import org.redisson.api.RBatch;
 import org.redisson.api.RedissonClient;
+
+import javax.annotation.Nullable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class RedissonBatchManager {
 
@@ -67,15 +68,21 @@ public class RedissonBatchManager {
 
   public void execute() {
     if (currentBatch != null) {
-      currentBatch.execute();
-      currentBatch = null;
+      try {
+        currentBatch.execute();
+      } finally {
+        currentBatch = null;
+      }
     }
   }
 
   public void discard() {
     if (currentBatch != null) {
-      currentBatch.discard();
-      currentBatch = null;
+      try {
+        currentBatch.discard();
+      } finally {
+        currentBatch = null;
+      }
     }
   }
 }

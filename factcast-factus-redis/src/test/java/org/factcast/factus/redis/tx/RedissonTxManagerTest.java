@@ -1,19 +1,22 @@
 package org.factcast.factus.redis.tx;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import lombok.val;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
+
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RedissonTxManagerTest {
@@ -38,16 +41,28 @@ class RedissonTxManagerTest {
 
   @Nested
   class WhenCommiting {
+    @Mock RTransaction tx;
 
     @Test
     void joins() {
-      when(redisson.createTransaction(any())).thenAnswer(i -> mock(RTransaction.class));
+      when(redisson.createTransaction(any())).thenReturn(tx);
       underTest.startOrJoin();
-      RTransaction curr = underTest.getCurrentTransaction();
 
       underTest.commit();
 
-      verify(curr).commit();
+      verify(tx).commit();
+      assertThat(underTest.getCurrentTransaction()).isNull();
+    }
+
+    @Test
+    void commit_exception() {
+      when(redisson.createTransaction(any())).thenReturn(tx);
+      doThrow(new IllegalStateException("foo")).when(tx).commit();
+      underTest.startOrJoin();
+
+      assertThatThrownBy(() -> underTest.commit()).isInstanceOf(IllegalStateException.class);
+
+      verify(tx).commit();
       assertThat(underTest.getCurrentTransaction()).isNull();
     }
 
@@ -63,16 +78,28 @@ class RedissonTxManagerTest {
 
   @Nested
   class WhenRollingBack {
+    @Mock RTransaction tx;
 
     @Test
     void joins() {
-      when(redisson.createTransaction(any())).thenAnswer(i -> mock(RTransaction.class));
+      when(redisson.createTransaction(any())).thenReturn(tx);
       underTest.startOrJoin();
-      RTransaction curr = underTest.getCurrentTransaction();
 
       underTest.rollback();
 
-      verify(curr).rollback();
+      verify(tx).rollback();
+      assertThat(underTest.getCurrentTransaction()).isNull();
+    }
+
+    @Test
+    void rollback_exception() {
+      when(redisson.createTransaction(any())).thenReturn(tx);
+      doThrow(new IllegalStateException("foo")).when(tx).rollback();
+      underTest.startOrJoin();
+
+      assertThatThrownBy(() -> underTest.rollback()).isInstanceOf(IllegalStateException.class);
+
+      verify(tx).rollback();
       assertThat(underTest.getCurrentTransaction()).isNull();
     }
 
