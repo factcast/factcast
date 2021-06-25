@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.GenericObserver;
+import org.factcast.core.util.ExceptionHelper;
 
 /**
  * Implements a subscription and offers notifyX methods for the Fact Supplier to write to.
@@ -68,7 +69,7 @@ public class SubscriptionImpl implements Subscription {
     } catch (InterruptedException e) {
       throw new SubscriptionCancelledException(e);
     } catch (ExecutionException e) {
-      throw new SubscriptionCancelledException(e.getCause());
+      throw ExceptionHelper.toRuntime(e.getCause());
     }
     return this;
   }
@@ -81,7 +82,7 @@ public class SubscriptionImpl implements Subscription {
     } catch (InterruptedException e) {
       throw new SubscriptionCancelledException(e);
     } catch (ExecutionException e) {
-      throw new SubscriptionCancelledException(e.getCause());
+      throw ExceptionHelper.toRuntime(e.getCause());
     }
     return this;
   }
@@ -93,7 +94,7 @@ public class SubscriptionImpl implements Subscription {
     } catch (InterruptedException e) {
       throw new SubscriptionCancelledException(e);
     } catch (ExecutionException e) {
-      throw new SubscriptionCancelledException(e.getCause());
+      throw ExceptionHelper.toRuntime(e.getCause());
     }
     return this;
   }
@@ -106,7 +107,7 @@ public class SubscriptionImpl implements Subscription {
     } catch (InterruptedException e) {
       throw new SubscriptionCancelledException(e);
     } catch (ExecutionException e) {
-      throw new SubscriptionCancelledException(e.getCause());
+      throw ExceptionHelper.toRuntime(e.getCause());
     }
     return this;
   }
@@ -142,6 +143,7 @@ public class SubscriptionImpl implements Subscription {
   }
 
   public void notifyError(Throwable e) {
+
     if (!closed.get()) {
       if (!catchup.isDone()) {
         catchup.completeExceptionally(e);

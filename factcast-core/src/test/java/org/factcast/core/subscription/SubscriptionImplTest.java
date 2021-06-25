@@ -187,7 +187,7 @@ public class SubscriptionImplTest {
   @Test
   void testOnErrorCompletesFutureCatchup() {
     Assertions.assertThrows(
-        SubscriptionCancelledException.class,
+        Throwable.class,
         () -> {
           SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
           verify(obs, never()).onError(any());
@@ -200,7 +200,7 @@ public class SubscriptionImplTest {
   @Test
   void testOnErrorCompletesFutureComplete() {
     Assertions.assertThrows(
-        SubscriptionCancelledException.class,
+        Throwable.class,
         () -> {
           SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
           verify(obs, never()).onError(any());
