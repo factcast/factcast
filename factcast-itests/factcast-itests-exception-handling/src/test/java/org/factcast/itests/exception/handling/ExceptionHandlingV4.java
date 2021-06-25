@@ -30,7 +30,7 @@ import org.factcast.core.subscription.TransformationException;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastConfig;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -90,9 +90,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
     val proj = new LocalManagedUserNames();
-    //    assertThatThrownBy(() -> ec.update(proj)).isInstanceOf(TransformationException.class);
-    ec.update(proj);
-    assertThat(proj.exception()).isInstanceOf(TransformationException.class);
+    assertThatThrownBy(() -> ec.update(proj)).isInstanceOf(TransformationException.class);
   }
 
   @Test
