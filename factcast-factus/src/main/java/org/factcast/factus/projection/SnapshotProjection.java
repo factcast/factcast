@@ -18,7 +18,7 @@ package org.factcast.factus.projection;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder(alphabetic = true)
-public interface SnapshotProjection extends BatchUpdatingProjection {
+public interface SnapshotProjection extends Projection {
   default void onBeforeSnapshot() {}
 
   default void onAfterRestore() {}
