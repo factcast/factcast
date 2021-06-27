@@ -46,6 +46,7 @@ class PgSubscriptionFactory {
 
   final FactTransformersFactory transformersFactory;
   final FastForwardTarget target;
+  final PgMetrics metrics;
 
   public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
     SubscriptionImpl subscription =
@@ -58,7 +59,8 @@ class PgSubscriptionFactory {
             subscription,
             fetcher,
             catchupFactory,
-            target);
+            target,
+            metrics);
     CompletableFuture.runAsync(() -> pgsub.connect(req));
     return subscription.onClose(pgsub::close);
   }

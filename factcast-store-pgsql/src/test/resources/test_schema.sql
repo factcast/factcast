@@ -1,15 +1,14 @@
 #
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 DROP TRIGGER IF EXISTS tr_fact_insert ON fact;
 DROP SEQUENCE IF EXISTS catchup_seq;
-
 DROP TABLE IF EXISTS fact CASCADE;
 DROP TABLE IF EXISTS catchup CASCADE;
-
 DROP TABLE IF EXISTS schemastore cascade;
+DROP TABLE IF EXISTS tokenstore cascade;
 DROP TABLE IF EXISTS transformationstore cascade;
 DROP TABLE IF EXISTS transformationcache cascade;
-
-#
 
 CREATE TABLE fact (
  ser SERIAL PRIMARY KEY,
@@ -19,8 +18,6 @@ CREATE TABLE fact (
 
 );
 
-CREATE UNIQUE INDEX idx_fact_unique_id ON fact( (header->'id') );
-CREATE INDEX idx_fact_header ON fact USING GIN(header jsonb_path_ops);
 #
 
 CREATE OR REPLACE FUNCTION notifyFactInsert() RETURNS trigger AS $$
@@ -43,17 +40,15 @@ create table catchup (
  ser bigint, 
  ts timestamp
 ); 
-create index idx_catchup_cid_ser on catchup(cid,ser); 
 
 #
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS tokenstore (
 	token 	UUID 		PRIMARY KEY 		DEFAULT uuid_generate_v4(),
 	ns	 	varchar 	,
 	state 	JSONB 		NOT NULL,
 	ts	 	TIMESTAMP 						DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS idx_tokenstore_ts ON tokenstore(ts);
 
  CREATE TABLE IF NOT EXISTS schemastore(
 	id 				varchar(2048)  PRIMARY KEY, 
@@ -66,8 +61,6 @@ CREATE INDEX IF NOT EXISTS idx_tokenstore_ts ON tokenstore(ts);
 	UNIQUE(ns,type,version)	
 );
 
-CREATE INDEX IF NOT EXISTS idx_schemastore on schemastore(ns,type,version);
-
 CREATE TABLE transformationstore(
     id 				varchar(2048) PRIMARY KEY,
     hash 			varchar(32),
@@ -77,8 +70,6 @@ CREATE TABLE transformationstore(
     to_version       int NOT NULL,
     transformation 	text
 );
-
-CREATE INDEX IF NOT EXISTS idx_transformationstore on transformationstore(ns,type);
 
  CREATE TABLE IF NOT EXISTS transformationcache(
 	cache_key 		varchar(2048) PRIMARY KEY,
@@ -114,4 +105,18 @@ create table IF NOT EXISTS snapshot_cache (
 
     primary key (uuid,cache_key)
 );
+
+
+ALTER TABLE ONLY public.catchup
+    ADD CONSTRAINT catchup_pkey PRIMARY KEY (cid, ser);
+
+CREATE INDEX idx_fact_header ON public.fact USING gin (header jsonb_path_ops);
+CREATE INDEX idx_fact_tail_1624544325018 ON public.fact USING gin (header) WHERE (ser > 0);
+CREATE UNIQUE INDEX idx_fact_unique_uuid ON public.fact USING btree ((((header ->> 'id'::text))::uuid));
+CREATE INDEX idx_schemastore ON public.schemastore USING btree (ns, type, version);
+CREATE INDEX idx_tokenstore_ts ON public.tokenstore USING btree (ts);
+CREATE INDEX idx_transformationstore ON public.transformationstore USING btree (ns, type);
+CREATE INDEX index_for_enum ON public.fact USING btree (((header ->> 'ns'::text)), ((header -> 'type'::text)));
+CREATE INDEX transformationcache_last_access ON public.transformationcache USING btree (last_access);
+
 

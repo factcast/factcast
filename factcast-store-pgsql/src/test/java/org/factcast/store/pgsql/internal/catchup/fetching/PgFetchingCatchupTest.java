@@ -29,6 +29,7 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.pgsql.PgConfigurationProperties;
+import org.factcast.store.pgsql.internal.PgMetrics;
 import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
 import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
 import org.factcast.store.pgsql.internal.rowmapper.PgFactExtractor;
@@ -46,13 +47,14 @@ import org.springframework.jdbc.core.RowCallbackHandler;
 @ExtendWith(MockitoExtension.class)
 class PgFetchingCatchupTest {
 
-  @Mock private @NonNull PgConnectionSupplier connectionSupplier;
-  @Mock private @NonNull PgConfigurationProperties props;
-  @Mock private @NonNull SubscriptionRequestTO req;
-  @Mock private @NonNull PgPostQueryMatcher postQueryMatcher;
-  @Mock private @NonNull SubscriptionImpl subscription;
-  @Mock private @NonNull AtomicLong serial;
-  @InjectMocks private PgFetchingCatchup underTest;
+  @Mock @NonNull PgConnectionSupplier connectionSupplier;
+  @Mock @NonNull PgConfigurationProperties props;
+  @Mock @NonNull SubscriptionRequestTO req;
+  @Mock @NonNull PgPostQueryMatcher postQueryMatcher;
+  @Mock @NonNull SubscriptionImpl subscription;
+  @Mock @NonNull AtomicLong serial;
+  @Mock @NonNull PgMetrics metrics;
+  @InjectMocks PgFetchingCatchup underTest;
 
   @Nested
   class WhenRunning {
@@ -77,7 +79,7 @@ class PgFetchingCatchupTest {
 
   @Nested
   class WhenFetching {
-    @Mock private @NonNull JdbcTemplate jdbc;
+    @Mock @NonNull JdbcTemplate jdbc;
 
     @BeforeEach
     void setup() {
@@ -96,8 +98,8 @@ class PgFetchingCatchupTest {
 
   @Nested
   class WhenCreatingRowCallbackHandler {
-    private final boolean SKIP_TESTING = true;
-    @Mock private PgFactExtractor extractor;
+    final boolean SKIP_TESTING = true;
+    @Mock PgFactExtractor extractor;
 
     @BeforeEach
     void setup() {}
