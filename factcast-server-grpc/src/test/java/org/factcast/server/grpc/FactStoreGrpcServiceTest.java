@@ -16,8 +16,8 @@
 package org.factcast.server.grpc;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -342,7 +342,7 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  void testSubscribeExhaustCheckDisabledp() {
+  void testSubscribeExhaustCheckDisabled() {
     uut =
         new FactStoreGrpcService(
             backend,

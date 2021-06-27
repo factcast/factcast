@@ -94,7 +94,8 @@ public class PgFactStream {
     log.trace("{} setting starting point to SER={}", request, startingSerial);
   }
 
-  private void catchupAndFollow(
+  @VisibleForTesting
+  void catchupAndFollow(
       SubscriptionRequest request, SubscriptionImpl subscription, PgSynchronizedQuery query) {
     if (request.ephemeral()) {
       // just fast forward to the latest event published by now
@@ -109,29 +110,7 @@ public class PgFactStream {
       }
     }
 
-    long startedSer = 0;
-    UUID startedId = null;
-    if (request.startingAfter().isPresent()) {
-      startedId = request.startingAfter().get();
-      startedSer = idToSerMapper.retrieve(startedId);
-    }
-
-    // test for ffwd
-    if (isConnected()) {
-      if (!factsHaveBeenSent(startedSer, serial)) {
-        // we have not sent any fact. check for ffwding
-
-        UUID targetId = ffwdTarget.targetId();
-        long targetSer = ffwdTarget.targetSer();
-        long startSer = 0;
-
-        if (targetId != null && (!targetId.equals(startedId) && (targetSer > startedSer))) {
-          log.trace(
-              "{} no facts applied – offering ffwd notification to fact id {}", request, targetId);
-          subscription.notifyFastForward(targetId);
-        }
-      }
-    }
+    fastForward(request, subscription);
 
     // propagate catchup
     if (isConnected()) {
@@ -174,8 +153,31 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  boolean factsHaveBeenSent(long startedAt, AtomicLong serial) {
+  void fastForward(SubscriptionRequest request, SubscriptionImpl subscription) {
+    if (isConnected()) {
 
+      long startedSer = 0;
+      UUID startedId = null;
+      if (request.startingAfter().isPresent()) {
+        startedId = request.startingAfter().get();
+        startedSer = idToSerMapper.retrieve(startedId); // should be cached anyway
+      }
+
+      if (!factsHaveBeenSent(startedSer, serial)) {
+        // we have not sent any fact. check for ffwding
+
+        UUID targetId = ffwdTarget.targetId();
+        long targetSer = ffwdTarget.targetSer();
+
+        if (targetId != null && (!targetId.equals(startedId) && (targetSer > startedSer))) {
+          subscription.notifyFastForward(targetId);
+        }
+      }
+    }
+  }
+
+  @VisibleForTesting
+  boolean factsHaveBeenSent(long startedAt, AtomicLong serial) {
     if (serial.get() == 0 || serial.get() == startedAt) {
       // nothing has been sent out
       return false;

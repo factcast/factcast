@@ -40,7 +40,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +54,10 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.grpc.api.*;
+import org.factcast.grpc.api.Capabilities;
+import org.factcast.grpc.api.CompressionCodecs;
+import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.IdAndVersion;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
@@ -134,8 +136,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
   }
 
   private String clientId() {
-    String id = grpcRequestMetadata.headers().get(Headers.CONSUMER_ID);
-    return id != null ? id + "|" : "";
+    return grpcRequestMetadata.consumerId().orElse("");
   }
 
   @Override
@@ -152,7 +153,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
       assertCanRead(namespaces);
 
-      resetDebugInfo(req, grpcRequestMetadata.headers().get(Headers.CONSUMER_ID));
+      resetDebugInfo(req, grpcRequestMetadata);
       BlockingStreamObserver<MSG_Notification> resp =
           new BlockingStreamObserver<>(req.toString(), (ServerCallStreamObserver) responseObserver);
 
@@ -285,7 +286,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     HashMap<String, String> properties = new HashMap<>();
     retrieveImplementationVersion(properties);
 
-    String name = grpcRequestMetadata.headers().get(Headers.CONSUMER_ID);
+    String name = grpcRequestMetadata.consumerId().orElse("");
     properties.put(Capabilities.CODECS.toString(), codecs.available());
     log.info("{}handshake properties: {} ", clientId(), properties);
     return properties;
@@ -320,9 +321,11 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         "/META-INF/maven/org.factcast/factcast-server-grpc/pom.properties");
   }
 
-  private void resetDebugInfo(SubscriptionRequestTO req, @Nullable String consumerIdOrNull) {
+  private void resetDebugInfo(SubscriptionRequestTO req, GrpcRequestMetadata meta) {
     String newId = "grpc-sub#" + subscriptionIdStore.incrementAndGet();
-    if (consumerIdOrNull != null) newId = consumerIdOrNull + "|" + newId;
+    if (meta != null) {
+      newId = meta.consumerId().map(id -> id + "|").orElse("") + newId;
+    }
     log.debug("{}subscribing {} for {} defined as {}", clientId(), newId, req, req.dump());
     req.debugInfo(newId);
   }

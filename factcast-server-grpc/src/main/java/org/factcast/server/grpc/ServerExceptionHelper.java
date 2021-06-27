@@ -21,13 +21,14 @@ import io.grpc.StatusRuntimeException;
 
 public class ServerExceptionHelper {
 
-  public static StatusRuntimeException translate(Throwable e, Metadata meta) {
-
+  public static StatusRuntimeException translate(Throwable e) {
+    Metadata meta = new Metadata();
     if (e instanceof StatusRuntimeException) // prevent double wrap
     {
       return (StatusRuntimeException) e;
     } else if (e instanceof RuntimeException
         && e.getClass().getName().startsWith("org.factcast.core")) {
+
       return new StatusRuntimeException(Status.UNKNOWN, addMetaData(meta, e));
     } else {
       return new StatusRuntimeException(Status.UNKNOWN, meta);
