@@ -76,8 +76,6 @@ public class PgFetchingCatchup implements PgCatchup {
     }
   }
 
-
-
   @VisibleForTesting
   void fetch(JdbcTemplate jdbc) {
     jdbc.setFetchSize(props.getPageSize());
