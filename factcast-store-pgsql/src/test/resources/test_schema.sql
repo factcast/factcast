@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS fact CASCADE;
 DROP TABLE IF EXISTS catchup CASCADE;
 DROP TABLE IF EXISTS schemastore cascade;
 DROP TABLE IF EXISTS tokenstore cascade;
+DROP TABLE IF EXISTS snapshot_cache cascade;
 DROP TABLE IF EXISTS transformationstore cascade;
 DROP TABLE IF EXISTS transformationcache cascade;
 
@@ -110,13 +111,13 @@ create table IF NOT EXISTS snapshot_cache (
 ALTER TABLE ONLY public.catchup
     ADD CONSTRAINT catchup_pkey PRIMARY KEY (cid, ser);
 
-CREATE INDEX idx_fact_header ON public.fact USING gin (header jsonb_path_ops);
-CREATE INDEX idx_fact_tail_1624544325018 ON public.fact USING gin (header) WHERE (ser > 0);
 CREATE UNIQUE INDEX idx_fact_unique_uuid ON public.fact USING btree ((((header ->> 'id'::text))::uuid));
+CREATE INDEX idx_fact_header ON public.fact USING gin (header jsonb_path_ops);
 CREATE INDEX idx_schemastore ON public.schemastore USING btree (ns, type, version);
 CREATE INDEX idx_tokenstore_ts ON public.tokenstore USING btree (ts);
 CREATE INDEX idx_transformationstore ON public.transformationstore USING btree (ns, type);
 CREATE INDEX index_for_enum ON public.fact USING btree (((header ->> 'ns'::text)), ((header -> 'type'::text)));
 CREATE INDEX transformationcache_last_access ON public.transformationcache USING btree (last_access);
+CREATE INDEX snapshot_cache_last_access ON snapshot_cache USING BTREE (last_access);
 
 
