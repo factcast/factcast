@@ -17,8 +17,8 @@ package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.factcast.core.TestHelper.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -231,9 +231,9 @@ class GrpcFactStoreTest {
   }
 
   @Test
-  void testInitializePropagatesRetryableExceptionOnUnavailableStatus() {
+  void testInitializePropagatesIncompatibleProtocolVersionsOnUnavailableStatus() {
     when(blockingStub.handshake(any())).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-    assertThrows(RetryableException.class, () -> uut.initialize());
+    assertThrows(IncompatibleProtocolVersions.class, () -> uut.initialize());
   }
 
   @Test
@@ -277,6 +277,7 @@ class GrpcFactStoreTest {
 
   @Test
   void testCompatibleProtocolVersion() {
+    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(1, 1, 0), new HashMap<>())));
     uut.initialize();
@@ -284,13 +285,15 @@ class GrpcFactStoreTest {
 
   @Test
   void testIncompatibleProtocolVersion() {
+    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(99, 0, 0), new HashMap<>())));
     Assertions.assertThrows(IncompatibleProtocolVersions.class, () -> uut.initialize());
   }
 
   @Test
-  void testInitializationExecutesOnlyOnce() {
+  void testInitializationExecutesHandshakeOnlyOnce() {
+    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(1, 1, 0), new HashMap<>())));
     uut.initialize();
