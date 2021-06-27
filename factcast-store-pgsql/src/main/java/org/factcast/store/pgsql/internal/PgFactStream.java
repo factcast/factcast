@@ -168,7 +168,7 @@ public class PgFactStream {
         condensedExecutor.trigger();
       } else {
         subscription.notifyComplete();
-        log.debug("Completed {}", request);
+        log.debug("{} completed", request);
       }
     }
   }
