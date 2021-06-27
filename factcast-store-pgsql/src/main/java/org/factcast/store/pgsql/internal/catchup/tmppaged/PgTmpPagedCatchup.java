@@ -107,7 +107,7 @@ public class PgTmpPagedCatchup implements PgCatchup {
           } while (!facts.isEmpty());
 
         } catch (Exception e) {
-          log.error("While fetching ", e);
+          log.error(request + " While fetching ", e);
         }
       }
     } finally {
