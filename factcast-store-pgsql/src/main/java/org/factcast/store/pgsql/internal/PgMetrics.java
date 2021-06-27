@@ -37,7 +37,13 @@ public class PgMetrics implements InitializingBean {
   public Counter counter(@NonNull StoreMetrics.EVENT operation) {
     Tags tags = forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
     // omitting the meter description here
-    return Counter.builder(StoreMetrics.COUNTER_METRIC_NAME).tags(tags).register(registry);
+    return Counter.builder(StoreMetrics.METER_METRIC_NAME).tags(tags).register(registry);
+  }
+
+  @NonNull
+  public void measure(@NonNull StoreMetrics.VALUE operation, Number value) {
+    Tags tags = forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+    registry.gauge(StoreMetrics.METER_METRIC_NAME, tags, value);
   }
 
   private Tags forOperation(@NonNull MetricName operation, @NonNull String exceptionTagValue) {

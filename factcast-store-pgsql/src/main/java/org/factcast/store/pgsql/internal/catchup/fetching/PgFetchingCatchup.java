@@ -27,7 +27,9 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.pgsql.PgConfigurationProperties;
+import org.factcast.store.pgsql.internal.PgMetrics;
 import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
+import org.factcast.store.pgsql.internal.StoreMetrics.EVENT;
 import org.factcast.store.pgsql.internal.catchup.PgCatchup;
 import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
 import org.factcast.store.pgsql.internal.query.PgQueryBuilder;
@@ -54,6 +56,8 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final AtomicLong serial;
 
+  @NonNull final PgMetrics metrics;
+
   @SneakyThrows
   @Override
   public void run() {
@@ -71,6 +75,8 @@ public class PgFetchingCatchup implements PgCatchup {
       ds.destroy();
     }
   }
+
+
 
   @VisibleForTesting
   void fetch(JdbcTemplate jdbc) {
@@ -94,6 +100,7 @@ public class PgFetchingCatchup implements PgCatchup {
       if (skipTesting || postQueryMatcher.test(f)) {
         try {
           subscription.notifyElement(f);
+          metrics.counter(EVENT.CATCHUP_FACT);
         } catch (MissingTransformationInformation | TransformationException e) {
           log.warn("{} transformation error: {}", req, e.getMessage());
           subscription.notifyError(e);
