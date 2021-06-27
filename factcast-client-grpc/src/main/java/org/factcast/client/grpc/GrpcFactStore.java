@@ -121,7 +121,7 @@ public class GrpcFactStore implements FactStore {
         RemoteFactStoreGrpc.newStub(channel),
         credentials,
         new FactCastGrpcClientProperties(),
-        "test");
+        null);
   }
 
   private GrpcFactStore(
