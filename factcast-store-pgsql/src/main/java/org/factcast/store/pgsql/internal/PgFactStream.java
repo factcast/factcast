@@ -232,6 +232,8 @@ public class PgFactStream {
         case WARN:
           log.warn("{} CatchupTransformationRatio: {}%, ({}/{})", request, ratio, transf, sum);
           break;
+        default:
+          throw new IllegalArgumentException("switch fall-through. THIS IS A BUG! " + level);
       }
     }
   }
