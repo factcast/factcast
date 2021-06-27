@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,10 +55,7 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.grpc.api.Capabilities;
-import org.factcast.grpc.api.CompressionCodecs;
-import org.factcast.grpc.api.ConditionalPublishRequest;
-import org.factcast.grpc.api.StateForRequest;
+import org.factcast.grpc.api.*;
 import org.factcast.grpc.api.conv.IdAndVersion;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
@@ -129,11 +127,15 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     assertCanWrite(namespaces);
 
     final int size = facts.size();
-    log.debug("publish {} fact{}", size, size > 1 ? "s" : "");
-    log.trace("publish {}", facts);
+    log.debug("{}publish {} fact{}", clientId(), size, size > 1 ? "s" : "");
     store.publish(facts);
     responseObserver.onNext(MSG_Empty.getDefaultInstance());
     responseObserver.onCompleted();
+  }
+
+  private String clientId() {
+    String id = grpcRequestMetadata.headers().get(Headers.CONSUMER_ID);
+    return id != null ? id + "|" : "";
   }
 
   @Override
@@ -150,7 +152,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
       assertCanRead(namespaces);
 
-      resetDebugInfo(req);
+      resetDebugInfo(req, grpcRequestMetadata.headers().get(Headers.CONSUMER_ID));
       BlockingStreamObserver<MSG_Notification> resp =
           new BlockingStreamObserver<>(req.toString(), (ServerCallStreamObserver) responseObserver);
 
@@ -159,11 +161,14 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
       ((ServerCallStreamObserver<MSG_Notification>) responseObserver)
           .setOnCancelHandler(
               () -> {
-                log.debug("got onCancel from stream, closing subscription {}", req.debugInfo());
+                log.debug(
+                    "{}got onCancel from stream, closing subscription {}",
+                    clientId(),
+                    req.debugInfo());
                 try {
                   subRef.get().close();
                 } catch (Exception e) {
-                  log.debug("While closing connection after cancel", e);
+                  log.debug("{}While closing connection after cancel", clientId(), e);
                 }
               });
 
@@ -182,7 +187,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
           .setOnCancelHandler(
               () -> {
                 throw new RequestCanceledByClientException(
-                    "The request was canceled by the client");
+                    clientId() + "The request was canceled by the client");
               });
   }
 
@@ -197,7 +202,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                 public Bucket load(String key) throws Exception {
                   if (key.endsWith("con")) {
 
-                    log.trace("Creating new bucket4j for continous subscription: {}", key);
+                    log.trace(
+                        "{}Creating new bucket4j for continous subscription: {}", clientId(), key);
 
                     Refill refill =
                         Refill.intervally(
@@ -210,7 +216,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                     return Bucket4j.builder().addLimit(limit).build();
                   } else {
 
-                    log.trace("Creating new bucket4j for catchup subscription: {}", key);
+                    log.trace(
+                        "{}Creating new bucket4j for catchup subscription: {}", clientId(), key);
 
                     Refill refill =
                         Refill.intervally(
@@ -245,7 +252,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         return true;
       } else {
         log.warn(
-            "Client exhausts resources by excessivly (re-)subscribing: fingerprint: {}",
+            "{}Client exhausts resources by excessivly (re-)subscribing: fingerprint: {}",
+            clientId(),
             requestFingerprint);
         return false;
       }
@@ -260,7 +268,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     if (responseObserver instanceof ServerCallStreamObserver) {
       ServerCallStreamObserver obs = (ServerCallStreamObserver) responseObserver;
       obs.setMessageCompression(true);
-      log.trace("enabled response compression");
+      log.trace("{}enabled response compression", clientId());
     }
   }
 
@@ -276,8 +284,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
   private Map<String, String> collectProperties() {
     HashMap<String, String> properties = new HashMap<>();
     retrieveImplementationVersion(properties);
+
+    String name = grpcRequestMetadata.headers().get(Headers.CONSUMER_ID);
     properties.put(Capabilities.CODECS.toString(), codecs.available());
-    log.info("handshake properties: {} ", properties);
+    log.info("{}handshake properties: {} ", clientId(), properties);
     return properties;
   }
 
@@ -310,9 +320,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         "/META-INF/maven/org.factcast/factcast-server-grpc/pom.properties");
   }
 
-  private void resetDebugInfo(SubscriptionRequestTO req) {
+  private void resetDebugInfo(SubscriptionRequestTO req, @Nullable String consumerIdOrNull) {
     String newId = "grpc-sub#" + subscriptionIdStore.incrementAndGet();
-    log.debug("subscribing {} for {} defined as {}", newId, req, req.dump());
+    if (consumerIdOrNull != null) newId = consumerIdOrNull + "|" + newId;
+    log.debug("{}subscribing {} for {} defined as {}", clientId(), newId, req, req.dump());
     req.debugInfo(newId);
   }
 
@@ -404,7 +415,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
       responseObserver.onError(
           // change type in order to transport?
           new IllegalArgumentException(
-              "Cannot determine state for empty list of fact specifications"));
+              clientId() + "Cannot determine state for empty list of fact specifications"));
     }
   }
 
@@ -434,13 +445,17 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     initialize(responseObserver);
 
     UUID fromProto = converter.fromProto(request);
-    log.trace("fetchById {}", fromProto);
+    log.trace("{}fetchById {}", clientId(), fromProto);
 
     doFetchById(
         responseObserver,
         () -> {
           Optional<Fact> fetchById = store.fetchById(fromProto);
-          log.trace("fetchById({}) was {}found", fromProto, fetchById.map(f -> "").orElse("NOT "));
+          log.trace(
+              "{}fetchById({}) was {}found",
+              clientId(),
+              fromProto,
+              fetchById.map(f -> "").orElse("NOT "));
           return fetchById;
         });
   }
@@ -465,14 +480,18 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     initialize(responseObserver);
 
     IdAndVersion fromProto = converter.fromProto(request);
-    log.trace("fetchById {} in version {}", fromProto.uuid(), fromProto.version());
+    log.trace("{}fetchById {} in version {}", clientId(), fromProto.uuid(), fromProto.version());
 
     doFetchById(
         responseObserver,
         () -> {
           Optional<Fact> fetchById =
               store.fetchByIdAndVersion(fromProto.uuid(), fromProto.version());
-          log.trace("fetchById({}) was found", fromProto, fetchById.map(f -> "").orElse("NOT "));
+          log.trace(
+              "{}fetchById({}) was found",
+              clientId(),
+              fromProto,
+              fetchById.map(f -> "").orElse("NOT "));
 
           return fetchById;
         });
@@ -485,20 +504,14 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     FactCastUser user = getFactcastUser();
     if (!user.canRead(ns)) {
 
-      log.error("Not allowed to read from namespace '" + ns + "'");
+      log.error("{}Not allowed to read from namespace '{}'", clientId(), ns);
       throw new StatusRuntimeException(Status.PERMISSION_DENIED, new Metadata());
     }
   }
 
   @VisibleForTesting
   protected void assertCanRead(List<@NonNull String> namespaces) throws StatusRuntimeException {
-    FactCastUser user = getFactcastUser();
-    for (String ns : namespaces) {
-      if (!user.canRead(ns)) {
-        log.error("Not allowed to read from namespace '" + ns + "'");
-        throw new StatusRuntimeException(Status.PERMISSION_DENIED, new Metadata());
-      }
-    }
+    namespaces.forEach(this::assertCanRead);
   }
 
   @VisibleForTesting
@@ -506,7 +519,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     FactCastUser user = getFactcastUser();
     for (String ns : namespaces) {
       if (!user.canWrite(ns)) {
-        log.error("Not allowed to write to namespace '" + ns + "'");
+        log.error("{}Not allowed to write to namespace '{}'", clientId(), ns);
         throw new StatusRuntimeException(Status.PERMISSION_DENIED, new Metadata());
       }
     }
@@ -516,7 +529,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     SecurityContext ctx = SecurityContextHolder.getContext();
     Object authentication = ctx.getAuthentication().getPrincipal();
     if (authentication == null) {
-      log.error("Authentication is unavailable");
+      log.error("{}Authentication is unavailable", clientId());
       throw new StatusRuntimeException(Status.PERMISSION_DENIED, new Metadata());
     }
     return (FactCastUser) authentication;
