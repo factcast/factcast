@@ -74,27 +74,6 @@ public class GrpcObserverAdapterTest {
   }
 
   @Test
-  @Disabled // TODO uwe
-  void testOnCatchupWithFfwd() {
-
-    GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
-    when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(true);
-    when(mockGrpcRequestMetaData.catchupBatch()).thenReturn(OptionalInt.of(1));
-
-    FastForwardTarget ffwd = FastForwardTarget.of(new UUID(10, 10), 112);
-
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData);
-
-    doNothing().when(observer).onNext(msg.capture());
-    verify(observer, never()).onNext(any());
-    uut.onCatchup();
-    verify(observer, times(2)).onNext(any());
-    assertEquals(Type.Ffwd, msg.getAllValues().get(0).getType());
-    assertEquals(Type.Catchup, msg.getAllValues().get(1).getType());
-  }
-
-  @Test
-  @Disabled // TODO uwe
   void testOnCatchupWithFfwd_noTarget() {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
@@ -113,7 +92,6 @@ public class GrpcObserverAdapterTest {
   }
 
   @Test
-  @Disabled // TODO uwe
   void testOnCatchupWithFfwd_noTargetSer() {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
@@ -132,7 +110,6 @@ public class GrpcObserverAdapterTest {
   }
 
   @Test
-  @Disabled // TODO uwe
   void testOnCatchupWithoutFfwd_disabled() {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
