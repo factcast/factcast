@@ -92,7 +92,7 @@ Further details can be found here : `net.devh.boot.grpc.client.config.GrpcChanne
 
 | Property        | Description           | Default  | Example |
 | ------------- |:-------------|:-----|:-----|
-|factcast.grpc.client.id|Server-side logging mentions this id if set in order to help with debugging. If this property is not set, it falls back to the value of spring.application.name|${spring.application.name}|myClient
+|factcast.grpc.client.id|Server-side logging mentions this optional id if set in order to help with debugging. If this property is not set, it falls back to the value of spring.application.name|${spring.application.name}|myClient
 |factcast.grpc.client.catchup-batchsize|Request a batchsize in catchup phase. Produces larger message and better compression. Remember that this setting increases the memory requirements, as well as the individual message size so depending on you Fact-payload size, and this setting, you may want to increase the allowed max-in/out limits of GRPC (defaulting to ~4mb per message). Our tests have shown that values >100 seem to have an insignificant impact - your mileage may vary. Setting is valid since 0.3.9.|50|100
 |factcast.grpc.client.enable-fast-forward|If the server supports it, enables fast forwarding. This is supposed to speedup frequent queries that cluster around the end of the global Fact-Stream and thus can use dedicated temporary rolling indexes.|true|false
 
