@@ -28,6 +28,7 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.pgsql.PgConfigurationProperties;
+import org.factcast.store.pgsql.internal.PgMetrics;
 import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
 import org.factcast.store.pgsql.internal.catchup.PgCatchUpPrepare;
 import org.factcast.store.pgsql.internal.catchup.PgCatchup;
@@ -51,6 +52,7 @@ public class PgTmpPagedCatchup implements PgCatchup {
   @NonNull final SubscriptionImpl subscription;
 
   @NonNull final AtomicLong serial;
+  @NonNull final PgMetrics metrics;
 
   @SneakyThrows
   @Override

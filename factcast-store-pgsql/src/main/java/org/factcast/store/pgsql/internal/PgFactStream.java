@@ -32,6 +32,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.core.util.ExceptionHelper;
+import org.factcast.store.pgsql.internal.StoreMetrics.VALUE;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
@@ -67,6 +68,7 @@ public class PgFactStream {
 
   final PgCatchupFactory pgCatchupFactory;
   final FastForwardTarget ffwdTarget;
+  final PgMetrics metrics;
 
   CondensedQueryExecutor condensedExecutor;
 
@@ -76,7 +78,7 @@ public class PgFactStream {
 
   void connect(@NonNull SubscriptionRequestTO request) {
     this.request = request;
-    log.debug("{} connecting subscription {}", request, request.dump());
+    log.debug("{} connect subscription {}", request, request.dump());
     postQueryMatcher = new PgPostQueryMatcher(request);
     PgQueryBuilder q = new PgQueryBuilder(request.specs());
     initializeSerialToStartAfter();
@@ -103,9 +105,10 @@ public class PgFactStream {
     } else {
       try {
         catchup(postQueryMatcher);
+        logCatchupTransformationStats();
       } catch (Throwable e) {
         // might help to find networking issues while catching up
-        log.warn("While catching up: ", e);
+        log.warn("{} While catching up: ", request, e);
         subscription.notifyError(e);
       }
     }
@@ -186,15 +189,63 @@ public class PgFactStream {
     return true;
   }
 
-  private void catchup(PgPostQueryMatcher postQueryMatcher) {
+  @VisibleForTesting
+  void catchup(PgPostQueryMatcher postQueryMatcher) {
     if (isConnected()) {
       log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial.get());
-      pgCatchupFactory.create(request, postQueryMatcher, subscription, serial).run();
+      pgCatchupFactory.create(request, postQueryMatcher, subscription, serial, metrics).run();
     }
     if (isConnected()) {
       log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
-      pgCatchupFactory.create(request, postQueryMatcher, subscription, serial).run();
+      pgCatchupFactory.create(request, postQueryMatcher, subscription, serial, metrics).run();
     }
+  }
+
+  @VisibleForTesting
+  enum RatioLogLevel {
+    DEBUG,
+    INFO,
+    WARN
+  }
+
+  @VisibleForTesting
+  void logCatchupTransformationStats() {
+    if (subscription.factsTransformed().get() > 0) {
+      long sum = subscription.factsTransformed().get() + subscription.factsNotTransformed().get();
+      long transf = subscription.factsTransformed().get();
+      long ratio = Math.round(100.0 / sum * transf);
+      RatioLogLevel level = calculateLogLevel(sum, ratio);
+
+      switch (level) {
+        case DEBUG:
+          log.debug("{} CatchupTransformationRatio: {}%, ({}/{})", request, ratio, transf, sum);
+          break;
+        case INFO:
+          log.info("{} CatchupTransformationRatio: {}%, ({}/{})", request, ratio, transf, sum);
+          break;
+        case WARN:
+          log.warn("{} CatchupTransformationRatio: {}%, ({}/{})", request, ratio, transf, sum);
+          break;
+        default:
+          throw new IllegalArgumentException("switch fall-through. THIS IS A BUG! " + level);
+      }
+    }
+  }
+
+  @VisibleForTesting
+  RatioLogLevel calculateLogLevel(long sum, long ratio) {
+    // only bother sending metrics or raising the level if we did some significant catchup
+    RatioLogLevel level = RatioLogLevel.DEBUG;
+    if (sum >= 50) {
+      metrics.distributionSummary(VALUE.CATCHUP_TRANSFORMATION_RATIO).record(ratio);
+
+      if (ratio >= 20.0) {
+        level = RatioLogLevel.WARN;
+      } else if (ratio >= 10.0) {
+        level = RatioLogLevel.INFO;
+      }
+    }
+    return level;
   }
 
   private boolean isConnected() {

@@ -22,6 +22,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +52,9 @@ public class SubscriptionImpl implements Subscription {
   final CompletableFuture<Void> catchup = new CompletableFuture<>();
 
   final CompletableFuture<Void> complete = new CompletableFuture<>();
+
+  @Getter final AtomicLong factsNotTransformed = new AtomicLong(0);
+  @Getter final AtomicLong factsTransformed = new AtomicLong(0);
 
   @Override
   public void close() {
@@ -167,7 +172,13 @@ public class SubscriptionImpl implements Subscription {
 
   public void notifyElement(@NonNull Fact e) throws TransformationException {
     if (!closed.get()) {
-      observer.onNext(transformers.transformIfNecessary(e));
+      Fact transformed = transformers.transformIfNecessary(e);
+      if (transformed == e) {
+        factsNotTransformed.incrementAndGet();
+      } else {
+        factsTransformed.incrementAndGet();
+      }
+      observer.onNext(transformed);
     }
   }
 

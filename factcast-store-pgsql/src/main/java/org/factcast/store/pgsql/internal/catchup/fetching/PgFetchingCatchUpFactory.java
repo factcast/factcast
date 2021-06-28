@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.pgsql.PgConfigurationProperties;
+import org.factcast.store.pgsql.internal.PgMetrics;
 import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
@@ -40,8 +41,9 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory {
       @NonNull SubscriptionRequestTO request,
       @NonNull PgPostQueryMatcher postQueryMatcher,
       @NonNull SubscriptionImpl subscription,
-      @NonNull AtomicLong serial) {
+      @NonNull AtomicLong serial,
+      @NonNull PgMetrics metrics) {
     return new PgFetchingCatchup(
-        connectionSupplier, props, request, postQueryMatcher, subscription, serial);
+        connectionSupplier, props, request, postQueryMatcher, subscription, serial, metrics);
   }
 }
