@@ -180,21 +180,21 @@ public class PgFactStreamTest {
 
   @Test
   void debugLevelIfLowRatio() {
-    when(metrics.measurement(any())).thenReturn(distributionSummary);
+    when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     assertThat(uut.calculateLogLevel(1000, 5)).isSameAs(RatioLogLevel.DEBUG);
     verify(distributionSummary).record(5);
   }
 
   @Test
   void infoLevelIfRatioSignificant() {
-    when(metrics.measurement(any())).thenReturn(distributionSummary);
+    when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     assertThat(uut.calculateLogLevel(1000, 10)).isSameAs(RatioLogLevel.INFO);
     verify(distributionSummary).record(10);
   }
 
   @Test
   void warnLevelIfRatioTooHigh() {
-    when(metrics.measurement(any())).thenReturn(distributionSummary);
+    when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     assertThat(uut.calculateLogLevel(1000, 20)).isSameAs(RatioLogLevel.WARN);
     verify(distributionSummary).record(20);
   }
@@ -203,7 +203,7 @@ public class PgFactStreamTest {
   void logsWarnLevel() {
     val logger = Slf4jHelper.replaceLogger(uut);
 
-    when(metrics.measurement(any())).thenReturn(distributionSummary);
+    when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(50L));
     when(sub.factsNotTransformed()).thenReturn(new AtomicLong(50L));
 
@@ -217,7 +217,7 @@ public class PgFactStreamTest {
   void logsInfoLevel() {
     val logger = Slf4jHelper.replaceLogger(uut);
 
-    when(metrics.measurement(any())).thenReturn(distributionSummary);
+    when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(10L));
     when(sub.factsNotTransformed()).thenReturn(new AtomicLong(90L));
 
@@ -231,7 +231,7 @@ public class PgFactStreamTest {
   void logsDebugLevel() {
     val logger = Slf4jHelper.replaceLogger(uut);
 
-    when(metrics.measurement(any())).thenReturn(distributionSummary);
+    when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(1L));
     when(sub.factsNotTransformed()).thenReturn(new AtomicLong(90L));
 

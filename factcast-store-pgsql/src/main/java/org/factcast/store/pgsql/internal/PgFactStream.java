@@ -238,7 +238,7 @@ public class PgFactStream {
     // only bother sending metrics or raising the level if we did some significant catchup
     RatioLogLevel level = RatioLogLevel.DEBUG;
     if (sum >= 50) {
-      metrics.measurement(VALUE.CATCHUP_TRANSFORMATION_RATIO).record(ratio);
+      metrics.distributionSummary(VALUE.CATCHUP_TRANSFORMATION_RATIO).record(ratio);
 
       if (ratio >= 20.0) {
         level = RatioLogLevel.WARN;
