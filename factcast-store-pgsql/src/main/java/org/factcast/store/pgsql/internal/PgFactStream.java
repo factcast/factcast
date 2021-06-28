@@ -96,7 +96,8 @@ public class PgFactStream {
     log.trace("{} setting starting point to SER={}", request, startingSerial);
   }
 
-  private void catchupAndFollow(
+  @VisibleForTesting
+  void catchupAndFollow(
       SubscriptionRequest request, SubscriptionImpl subscription, PgSynchronizedQuery query) {
     if (request.ephemeral()) {
       // just fast forward to the latest event published by now
@@ -187,7 +188,8 @@ public class PgFactStream {
     return true;
   }
 
-  private void catchup(PgPostQueryMatcher postQueryMatcher) {
+  @VisibleForTesting
+  void catchup(PgPostQueryMatcher postQueryMatcher) {
     if (isConnected()) {
       log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial.get());
       pgCatchupFactory.create(request, postQueryMatcher, subscription, serial, metrics).run();
@@ -198,29 +200,20 @@ public class PgFactStream {
     }
   }
 
-  private enum RatioLogLevel {
+  @VisibleForTesting
+  enum RatioLogLevel {
     DEBUG,
     INFO,
     WARN
   }
 
-  public void logCatchupTransformationStats() {
+  @VisibleForTesting
+  void logCatchupTransformationStats() {
     if (subscription.factsTransformed().get() > 0) {
       long sum = subscription.factsTransformed().get() + subscription.factsNotTransformed().get();
       long transf = subscription.factsTransformed().get();
       long ratio = Math.round(100.0 / sum * transf);
-      RatioLogLevel level = RatioLogLevel.DEBUG;
-
-      // only bother sending metrics or raising the level if we did some significant catchup
-      if (sum >= 50) {
-        metrics.measure(VALUE.CATCHUP_TRANSFORMATION_RATIO, ratio);
-
-        if (ratio > 20.0) {
-          level = RatioLogLevel.WARN;
-        } else if (ratio > 10.0) {
-          level = RatioLogLevel.INFO;
-        }
-      }
+      RatioLogLevel level = calculateLogLevel(sum, ratio);
 
       switch (level) {
         case DEBUG:
@@ -236,6 +229,22 @@ public class PgFactStream {
           throw new IllegalArgumentException("switch fall-through. THIS IS A BUG! " + level);
       }
     }
+  }
+
+  @VisibleForTesting
+  RatioLogLevel calculateLogLevel(long sum, long ratio) {
+    // only bother sending metrics or raising the level if we did some significant catchup
+    RatioLogLevel level = RatioLogLevel.DEBUG;
+    if (sum >= 50) {
+      metrics.measure(VALUE.CATCHUP_TRANSFORMATION_RATIO, ratio);
+
+      if (ratio >= 20.0) {
+        level = RatioLogLevel.WARN;
+      } else if (ratio >= 10.0) {
+        level = RatioLogLevel.INFO;
+      }
+    }
+    return level;
   }
 
   private boolean isConnected() {
