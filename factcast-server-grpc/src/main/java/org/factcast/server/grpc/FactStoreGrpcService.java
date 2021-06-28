@@ -136,7 +136,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
   }
 
   private String clientId() {
-    return grpcRequestMetadata.consumerId().orElse("");
+    return grpcRequestMetadata.clientId().orElse("");
   }
 
   @Override
@@ -286,7 +286,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     HashMap<String, String> properties = new HashMap<>();
     retrieveImplementationVersion(properties);
 
-    String name = grpcRequestMetadata.consumerId().orElse("");
+    String name = grpcRequestMetadata.clientId().orElse("");
     properties.put(Capabilities.CODECS.toString(), codecs.available());
     log.info("{}handshake properties: {} ", clientId(), properties);
     return properties;
@@ -324,7 +324,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
   private void resetDebugInfo(SubscriptionRequestTO req, GrpcRequestMetadata meta) {
     String newId = "grpc-sub#" + subscriptionIdStore.incrementAndGet();
     if (meta != null) {
-      newId = meta.consumerId().map(id -> id + "|").orElse("") + newId;
+      newId = meta.clientId().map(id -> id + "|").orElse("") + newId;
     }
     log.debug("{}subscribing {} for {} defined as {}", clientId(), newId, req, req.dump());
     req.debugInfo(newId);
