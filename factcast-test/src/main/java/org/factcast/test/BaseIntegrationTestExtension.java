@@ -6,8 +6,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.*;
+import lombok.SneakyThrows;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.junit.jupiter.api.extension.*;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -18,23 +20,23 @@ import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 @SuppressWarnings("rawtypes")
 @Slf4j
 public class BaseIntegrationTestExtension implements FactCastIntegrationTestExtension {
-  private final Map<FactcastConfig.Config, Containers> executions = new ConcurrentHashMap<>();
+  private final Map<FactcastTestConfig.Config, Containers> executions = new ConcurrentHashMap<>();
 
   @Override
   public boolean initialize(ExtensionContext ctx) {
-    final FactcastConfig.Config config = discoverConfig(ctx);
+    FactcastTestConfig.Config config = discoverConfig(ctx);
 
     startOrReuse(config);
 
     return true;
   }
 
-  private void startOrReuse(FactcastConfig.Config config) {
-    final Containers containers =
+  private void startOrReuse(FactcastTestConfig.Config config) {
+    Containers containers =
         executions.computeIfAbsent(
             config,
             key -> {
-              final String dbName = "db" + config.hashCode();
+              String dbName = "db" + config.hashCode();
 
               PostgreSQLContainer db =
                   new PostgreSQLContainer<>("postgres:" + config.postgresVersion())
@@ -76,27 +78,27 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
 
   @Override
   public void beforeAll(ExtensionContext ctx) {
-    final FactcastConfig.Config config = discoverConfig(ctx);
+    FactcastTestConfig.Config config = discoverConfig(ctx);
     startOrReuse(config);
 
     FactCastIntegrationTestExtension.super.beforeAll(ctx);
   }
 
-  private FactcastConfig.Config discoverConfig(ExtensionContext ctx) {
+  private FactcastTestConfig.Config discoverConfig(ExtensionContext ctx) {
     return ctx.getTestClass()
-        .flatMap(x -> Optional.ofNullable(x.getAnnotation(FactcastConfig.class)))
-        .map(FactcastConfig.Config::from)
-        .orElse(FactcastConfig.Config.defaults());
+        .flatMap(x -> Optional.ofNullable(x.getAnnotation(FactcastTestConfig.class)))
+        .map(FactcastTestConfig.Config::from)
+        .orElse(FactcastTestConfig.Config.defaults());
   }
 
   @SneakyThrows
   @Override
   public void beforeEach(ExtensionContext ctx) {
-    final FactcastConfig.Config config = discoverConfig(ctx);
-    final Containers containers = executions.get(config);
+    FactcastTestConfig.Config config = discoverConfig(ctx);
+    Containers containers = executions.get(config);
 
-    final PostgreSQLContainer pg = containers.db;
-    final String url = pg.getJdbcUrl();
+    PostgreSQLContainer pg = containers.db;
+    String url = pg.getJdbcUrl();
     Properties p = new Properties();
     p.put("user", pg.getUsername());
     p.put("password", pg.getPassword());

@@ -19,15 +19,23 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.concurrent.atomic.AtomicLong;
+import lombok.val;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.pgsql.internal.PgFactStream.RatioLogLevel;
+import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
+import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
+import org.factcast.test.Slf4jHelper;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
+import slf4jtest.LogLevel;
 
 @ExtendWith(MockitoExtension.class)
 public class PgFactStreamTest {
@@ -37,6 +45,10 @@ public class PgFactStreamTest {
   @Mock PgSynchronizedQuery query;
   @Mock FastForwardTarget ffwdTarget;
   @Mock PgMetrics metrics;
+  @Mock SubscriptionRequestTO reqTo;
+  @Mock PgFactIdToSerialMapper id2ser;
+  @Mock JdbcTemplate jdbc;
+  @Mock PgLatestSerialFetcher fetcher;
   @InjectMocks PgFactStream uut;
 
   @Test
@@ -75,5 +87,39 @@ public class PgFactStreamTest {
   @Test
   void warnLevelIfRatioTooHigh() {
     assertThat(uut.calculateLogLevel(1000, 20)).isSameAs(RatioLogLevel.WARN);
+  }
+
+  @Test
+  void logsWarnLevel() {
+    val logger = Slf4jHelper.replaceLogger(uut);
+
+    when(sub.factsTransformed()).thenReturn(new AtomicLong(50L));
+    when(sub.factsNotTransformed()).thenReturn(new AtomicLong(50L));
+
+    uut.logCatchupTransformationStats();
+
+    assertThat(logger.contains(LogLevel.WarnLevel, "CatchupTransformationRatio")).isTrue();
+  }
+
+  @Test
+  void logsInfoLevel() {
+    val logger = Slf4jHelper.replaceLogger(uut);
+    when(sub.factsTransformed()).thenReturn(new AtomicLong(10L));
+    when(sub.factsNotTransformed()).thenReturn(new AtomicLong(90L));
+
+    uut.logCatchupTransformationStats();
+
+    assertThat(logger.contains(LogLevel.InfoLevel, "CatchupTransformationRatio")).isTrue();
+  }
+
+  @Test
+  void logsDebugLevel() {
+    val logger = Slf4jHelper.replaceLogger(uut);
+    when(sub.factsTransformed()).thenReturn(new AtomicLong(1L));
+    when(sub.factsNotTransformed()).thenReturn(new AtomicLong(90L));
+
+    uut.logCatchupTransformationStats();
+
+    assertThat(logger.contains(LogLevel.DebugLevel, "CatchupTransformationRatio")).isTrue();
   }
 }
