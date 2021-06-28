@@ -51,7 +51,7 @@ public class GrpcRequestMetadata {
   public Optional<String> consumerId() {
     Optional<String> ret = Optional.empty();
     if (headers != null) {
-      return Optional.ofNullable(headers.get(Headers.CONSUMER_ID));
+      return Optional.ofNullable(headers.get(Headers.CLIENT_ID));
     }
     return ret;
   }
