@@ -21,11 +21,15 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
+import org.factcast.store.pgsql.internal.PgMetrics;
 import org.joda.time.DateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+@Slf4j
 @RequiredArgsConstructor
 public class PgSnapshotCache {
   private static final String SELECT_SNAPSHOT =
@@ -41,6 +45,7 @@ public class PgSnapshotCache {
       "UPDATE snapshot_cache set last_access=now() WHERE uuid=? AND cache_key=?";
 
   final JdbcTemplate jdbcTemplate;
+  final PgMetrics metrics;
 
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
 
@@ -79,6 +84,10 @@ public class PgSnapshotCache {
   }
 
   public void compact(@NonNull DateTime thresholdDate) {
-    jdbcTemplate.update("DELETE FROM snapshot_cache WHERE last_access < ?", thresholdDate.toDate());
+    val deleted =
+        jdbcTemplate.update(
+            "DELETE FROM snapshot_cache WHERE last_access < ?", thresholdDate.toDate());
+    // TODO usr add gauge
+    log.debug("compaction removed {} stale snapshots from the snapshot_cache", deleted);
   }
 }
