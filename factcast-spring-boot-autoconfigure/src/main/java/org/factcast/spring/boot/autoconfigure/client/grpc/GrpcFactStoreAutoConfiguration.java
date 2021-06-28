@@ -19,6 +19,7 @@ import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 import org.factcast.client.grpc.FactCastGrpcClientProperties;
@@ -50,7 +51,8 @@ public class GrpcFactStoreAutoConfiguration {
       @NonNull GrpcChannelFactory af,
       // we need a new namespace for those client properties
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
-      @NonNull FactCastGrpcClientProperties properties) {
+      @NonNull FactCastGrpcClientProperties properties,
+      @Nullable @Value("${spring.application.name:#{null}}") String applicationName) {
     org.factcast.client.grpc.FactCastGrpcChannelFactory f =
         new org.factcast.client.grpc.FactCastGrpcChannelFactory() {
 
@@ -69,6 +71,15 @@ public class GrpcFactStoreAutoConfiguration {
             af.close();
           }
         };
-    return new GrpcFactStore(f, credentials, properties);
+
+    String id = properties.getId();
+    if (id == null) {
+      // fall back to applicationName if set
+      if (applicationName != null && !applicationName.trim().isEmpty()) {
+        id = applicationName;
+      }
+    }
+
+    return new GrpcFactStore(f, credentials, properties, id);
   }
 }
