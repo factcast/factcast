@@ -21,7 +21,7 @@ public class StoreMetrics {
 
   static final String DURATION_METRIC_NAME = "factcast.store.timer";
 
-  static final String COUNTER_METRIC_NAME = "factcast.store.meter";
+  static final String METER_METRIC_NAME = "factcast.store.meter";
 
   public static final String TAG_STORE_KEY = "store";
 
@@ -77,12 +77,28 @@ public class StoreMetrics {
   }
 
   public enum EVENT implements MetricName {
-    MISSED_ROUNDTRIP("missedRoundtrip");
+    MISSED_ROUNDTRIP("missedRoundtrip"),
+    CATCHUP_FACT("catchupFact");
 
     @NonNull final String name;
 
     EVENT(@NonNull String event) {
       name = event;
+    }
+
+    @Override
+    public String getName() {
+      return name;
+    }
+  }
+
+  public enum VALUE implements MetricName {
+    CATCHUP_TRANSFORMATION_RATIO("catchupTransformationRatio");
+
+    @NonNull final String name;
+
+    VALUE(@NonNull String v) {
+      name = v;
     }
 
     @Override
