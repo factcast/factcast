@@ -103,7 +103,7 @@
     <kotlin.version>1.5.20</kotlin.version>
     <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
     <redisson.version>3.15.6</redisson.version>
-    <redisson-spring-boot-starter.version>3.15.6</redisson-spring-boot-starter.version>
+    <redisson-spring-boot-starter.version>3.16.0</redisson-spring-boot-starter.version>
   </properties>
   <dependencies>
     <dependency>
