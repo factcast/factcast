@@ -26,6 +26,7 @@ import lombok.val;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.store.pgsql.internal.PgMetrics;
+import org.factcast.store.pgsql.internal.StoreMetrics.VALUE;
 import org.joda.time.DateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -87,7 +88,7 @@ public class PgSnapshotCache {
     val deleted =
         jdbcTemplate.update(
             "DELETE FROM snapshot_cache WHERE last_access < ?", thresholdDate.toDate());
-    // TODO usr add gauge
+    metrics.measure(VALUE.SNAPSHOTS_COMPACTED, deleted);
     log.debug("compaction removed {} stale snapshots from the snapshot_cache", deleted);
   }
 }
