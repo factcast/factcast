@@ -231,9 +231,9 @@ class GrpcFactStoreTest {
   }
 
   @Test
-  void testInitializePropagatesRetryableExceptionOnUnavailableStatus() {
+  void testInitializePropagatesIncompatibleProtocolVersionsOnUnavailableStatus() {
     when(blockingStub.handshake(any())).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-    assertThrows(RetryableException.class, () -> uut.initialize());
+    assertThrows(IncompatibleProtocolVersions.class, () -> uut.initialize());
   }
 
   @Test
@@ -277,6 +277,7 @@ class GrpcFactStoreTest {
 
   @Test
   void testCompatibleProtocolVersion() {
+    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(1, 1, 0), new HashMap<>())));
     uut.initialize();
@@ -284,13 +285,15 @@ class GrpcFactStoreTest {
 
   @Test
   void testIncompatibleProtocolVersion() {
+    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(99, 0, 0), new HashMap<>())));
     Assertions.assertThrows(IncompatibleProtocolVersions.class, () -> uut.initialize());
   }
 
   @Test
-  void testInitializationExecutesOnlyOnce() {
+  void testInitializationExecutesHandshakeOnlyOnce() {
+    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(1, 1, 0), new HashMap<>())));
     uut.initialize();
@@ -525,6 +528,31 @@ class GrpcFactStoreTest {
     uut.clearSnapshot(id);
 
     verify(blockingStub).clearSnapshot(conv.toProto(id));
+  }
+
+  @Test
+  void testAddClientIdToMetaIfExists() {
+    Metadata meta = mock(Metadata.class);
+    uut =
+        new GrpcFactStore(
+            mock(Channel.class),
+            Optional.of("foo:bar"),
+            new FactCastGrpcClientProperties(),
+            "gurke");
+
+    uut.addClientIdTo(meta);
+
+    verify(meta).put(same(Headers.CLIENT_ID), eq("gurke"));
+  }
+
+  @Test
+  void testAddClientIdToMetaDoesNotUseNull() {
+    Metadata meta = mock(Metadata.class);
+    uut = new GrpcFactStore(mock(Channel.class), Optional.of("foo:bar"));
+
+    uut.addClientIdTo(meta);
+
+    verifyNoInteractions(meta);
   }
 
   @Nested
