@@ -43,7 +43,7 @@ public class PgMetrics implements InitializingBean {
   }
 
   @NonNull
-  public DistributionSummary measurement(@NonNull StoreMetrics.VALUE operation) {
+  public DistributionSummary distributionSummary(@NonNull StoreMetrics.VALUE operation) {
     Tags tags = forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
     return DistributionSummary.builder(StoreMetrics.METER_METRIC_NAME)
         .tags(tags)
@@ -124,9 +124,8 @@ public class PgMetrics implements InitializingBean {
     for (EVENT e : EVENT.values()) {
       counter(e);
     }
-
     for (VALUE e : VALUE.values()) {
-      measurement(e);
+      distributionSummary(e);
     }
   }
 }
