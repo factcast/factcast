@@ -64,6 +64,28 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+  - changeSet:
+      id: transformationcache_last_access_index
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1354/transformationcache_last_access_index.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+  - changeSet:
+      id: snapshotcache_last_access_index
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1354/snapshotcache_last_access_index.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
 
 
 

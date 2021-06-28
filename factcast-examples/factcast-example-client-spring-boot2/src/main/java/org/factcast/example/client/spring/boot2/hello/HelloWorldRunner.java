@@ -42,7 +42,7 @@ public class HelloWorldRunner implements CommandLineRunner {
             .type("UserCreated")
             .version(1)
             .id(id)
-            .build("{\"first_BROKEN_Name\":\"Horst\",\"lastName\":\"Lichter\"}");
+            .build("{\"firstName\":\"Horst\",\"lastName\":\"Lichter\"}");
     fc.publish(fact);
     System.out.println("published " + fact);
 
@@ -59,7 +59,14 @@ public class HelloWorldRunner implements CommandLineRunner {
     System.out.println(uc3.get().jsonPayload());
 
     fc.subscribe(
-            SubscriptionRequest.catchup(FactSpec.ns("users")).fromScratch(),
+            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(3))
+                .fromScratch(),
+            element -> System.out.println(element))
+        .awaitCatchup();
+
+    fc.subscribe(
+            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(1))
+                .fromScratch(),
             element -> System.out.println(element))
         .awaitCatchup();
   }
