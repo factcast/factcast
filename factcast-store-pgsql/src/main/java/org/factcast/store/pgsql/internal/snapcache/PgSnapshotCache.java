@@ -88,7 +88,7 @@ public class PgSnapshotCache {
     val deleted =
         jdbcTemplate.update(
             "DELETE FROM snapshot_cache WHERE last_access < ?", thresholdDate.toDate());
-    metrics.measure(VALUE.SNAPSHOTS_COMPACTED, deleted);
+    metrics.distributionSummary(VALUE.SNAPSHOTS_COMPACTED).record(deleted);
     log.debug("compaction removed {} stale snapshots from the snapshot_cache", deleted);
   }
 }
