@@ -67,7 +67,7 @@ public class PgCatchUpPrepare {
                   return 0L;
                 }
               } catch (SQLException ex) {
-                log.error("While trying to prepare catchup", ex);
+                log.error(req + " While trying to prepare catchup", ex);
                 throw ex;
               }
             });
