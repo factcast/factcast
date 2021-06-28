@@ -18,13 +18,15 @@ package org.factcast.server.grpc;
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.Metadata;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Stream;
-import lombok.Data;
+import lombok.AccessLevel;
+import lombok.Setter;
 import org.factcast.grpc.api.Headers;
 
-@Data
 public class GrpcRequestMetadata {
+  @Setter(AccessLevel.PROTECTED)
   Metadata headers;
 
   OptionalInt catchupBatch() {
@@ -44,5 +46,9 @@ public class GrpcRequestMetadata {
     grpcRequestMetadata.headers = new Metadata();
     grpcRequestMetadata.headers.put(Headers.FAST_FORWARD, "true");
     return grpcRequestMetadata;
+  }
+
+  public Optional<String> clientId() {
+    return Optional.ofNullable(headers).map(headers -> headers.get(Headers.CLIENT_ID));
   }
 }
