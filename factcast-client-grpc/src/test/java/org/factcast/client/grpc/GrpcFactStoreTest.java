@@ -17,8 +17,8 @@ package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.factcast.core.TestHelper.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -528,6 +528,31 @@ class GrpcFactStoreTest {
     uut.clearSnapshot(id);
 
     verify(blockingStub).clearSnapshot(conv.toProto(id));
+  }
+
+  @Test
+  void testAddClientIdToMetaIfExists() {
+    Metadata meta = mock(Metadata.class);
+    uut =
+        new GrpcFactStore(
+            mock(Channel.class),
+            Optional.of("foo:bar"),
+            new FactCastGrpcClientProperties(),
+            "gurke");
+
+    uut.addClientIdTo(meta);
+
+    verify(meta).put(same(Headers.CLIENT_ID), eq("gurke"));
+  }
+
+  @Test
+  void testAddClientIdToMetaDoesNotUseNull() {
+    Metadata meta = mock(Metadata.class);
+    uut = new GrpcFactStore(mock(Channel.class), Optional.of("foo:bar"));
+
+    uut.addClientIdTo(meta);
+
+    verifyNoInteractions(meta);
   }
 
   @Nested

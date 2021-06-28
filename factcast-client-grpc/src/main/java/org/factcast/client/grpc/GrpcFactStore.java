@@ -83,7 +83,7 @@ public class GrpcFactStore implements FactStore {
 
   private RemoteFactStoreBlockingStub rawBlockingStub;
   private final FactCastGrpcClientProperties properties;
-  @Nullable private String consumerId;
+  @Nullable private final String clientId;
 
   private final ProtoConverter converter = new ProtoConverter();
 
@@ -95,8 +95,8 @@ public class GrpcFactStore implements FactStore {
       @NonNull FactCastGrpcChannelFactory channelFactory,
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
-      @Nullable String consumerId) {
-    this(channelFactory.createChannel(CHANNEL_NAME), credentials, properties, consumerId);
+      @Nullable String clientId) {
+    this(channelFactory.createChannel(CHANNEL_NAME), credentials, properties, clientId);
   }
 
   @Generated
@@ -104,13 +104,13 @@ public class GrpcFactStore implements FactStore {
       @NonNull Channel channel,
       @NonNull Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
-      String consumerId) {
+      String clientId) {
     this(
         RemoteFactStoreGrpc.newBlockingStub(channel),
         RemoteFactStoreGrpc.newStub(channel),
         credentials,
         properties,
-        consumerId);
+        clientId);
   }
 
   @Generated
@@ -129,11 +129,11 @@ public class GrpcFactStore implements FactStore {
       @NonNull RemoteFactStoreStub newStub,
       @NonNull Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
-      @Nullable String consumerId) {
+      @Nullable String clientId) {
     rawBlockingStub = newBlockingStub;
     rawStub = newStub;
     this.properties = properties;
-    this.consumerId = consumerId;
+    this.clientId = clientId;
 
     // initially use the raw ones...
     blockingStub = rawBlockingStub;
@@ -235,9 +235,7 @@ public class GrpcFactStore implements FactStore {
       ProtocolVersion serverProtocolVersion;
       try {
         Metadata metadata = new Metadata();
-        if (consumerId != null) {
-          metadata.put(Headers.CONSUMER_ID, consumerId);
-        }
+        addClientIdTo(metadata);
         MSG_ServerConfig handshake =
             MetadataUtils.attachHeaders(blockingStub, metadata).handshake(converter.empty());
         ServerConfig cfg = converter.fromProto(handshake);
@@ -312,11 +310,16 @@ public class GrpcFactStore implements FactStore {
       meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
     }
 
-    if (consumerId != null) {
-      meta.put(Headers.CONSUMER_ID, consumerId);
-    }
+    addClientIdTo(meta);
 
     return meta;
+  }
+
+  @VisibleForTesting
+  void addClientIdTo(@NonNull Metadata meta) {
+    if (clientId != null) {
+      meta.put(Headers.CLIENT_ID, clientId);
+    }
   }
 
   @Override

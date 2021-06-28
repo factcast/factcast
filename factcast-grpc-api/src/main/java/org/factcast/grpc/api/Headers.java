@@ -25,7 +25,7 @@ public class Headers {
 
   private static final String GRPC_FAST_FORWARD = "fc-ffwd";
 
-  private static final String GRPC_CONSUMER_ID = "fc-id";
+  private static final String GRPC_CLIENT_ID = "fc-id";
 
   public static final Metadata.Key<String> MESSAGE_COMPRESSION =
       Metadata.Key.of(Headers.GRPC_COMPRESSION_HEADER, Metadata.ASCII_STRING_MARSHALLER);
@@ -36,6 +36,6 @@ public class Headers {
   public static final Metadata.Key<String> FAST_FORWARD =
       Metadata.Key.of(Headers.GRPC_FAST_FORWARD, Metadata.ASCII_STRING_MARSHALLER);
 
-  public static final Metadata.Key<String> CONSUMER_ID =
-      Metadata.Key.of(Headers.GRPC_CONSUMER_ID, Metadata.ASCII_STRING_MARSHALLER);
+  public static final Metadata.Key<String> CLIENT_ID =
+      Metadata.Key.of(Headers.GRPC_CLIENT_ID, Metadata.ASCII_STRING_MARSHALLER);
 }
