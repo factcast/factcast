@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import lombok.Generated;
 import lombok.NonNull;
@@ -82,6 +83,7 @@ public class GrpcFactStore implements FactStore {
 
   private RemoteFactStoreBlockingStub rawBlockingStub;
   private final FactCastGrpcClientProperties properties;
+  @Nullable private final String clientId;
 
   private final ProtoConverter converter = new ProtoConverter();
 
@@ -92,21 +94,23 @@ public class GrpcFactStore implements FactStore {
   public GrpcFactStore(
       @NonNull FactCastGrpcChannelFactory channelFactory,
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
-      @NonNull FactCastGrpcClientProperties properties) {
-    this(channelFactory.createChannel(CHANNEL_NAME), credentials, properties);
+      @NonNull FactCastGrpcClientProperties properties,
+      @Nullable String clientId) {
+    this(channelFactory.createChannel(CHANNEL_NAME), credentials, properties, clientId);
   }
 
   @Generated
-  @VisibleForTesting
   GrpcFactStore(
       @NonNull Channel channel,
       @NonNull Optional<String> credentials,
-      @NonNull FactCastGrpcClientProperties properties) {
+      @NonNull FactCastGrpcClientProperties properties,
+      String clientId) {
     this(
         RemoteFactStoreGrpc.newBlockingStub(channel),
         RemoteFactStoreGrpc.newStub(channel),
         credentials,
-        properties);
+        properties,
+        clientId);
   }
 
   @Generated
@@ -116,17 +120,20 @@ public class GrpcFactStore implements FactStore {
         RemoteFactStoreGrpc.newBlockingStub(channel),
         RemoteFactStoreGrpc.newStub(channel),
         credentials,
-        new FactCastGrpcClientProperties());
+        new FactCastGrpcClientProperties(),
+        null);
   }
 
   private GrpcFactStore(
       @NonNull RemoteFactStoreBlockingStub newBlockingStub,
       @NonNull RemoteFactStoreStub newStub,
       @NonNull Optional<String> credentials,
-      @NonNull FactCastGrpcClientProperties properties) {
+      @NonNull FactCastGrpcClientProperties properties,
+      @Nullable String clientId) {
     rawBlockingStub = newBlockingStub;
     rawStub = newStub;
     this.properties = properties;
+    this.clientId = clientId;
 
     // initially use the raw ones...
     blockingStub = rawBlockingStub;
@@ -227,7 +234,11 @@ public class GrpcFactStore implements FactStore {
       Map<String, String> serverProperties;
       ProtocolVersion serverProtocolVersion;
       try {
-        ServerConfig cfg = converter.fromProto(blockingStub.handshake(converter.empty()));
+        Metadata metadata = new Metadata();
+        addClientIdTo(metadata);
+        MSG_ServerConfig handshake =
+            MetadataUtils.attachHeaders(blockingStub, metadata).handshake(converter.empty());
+        ServerConfig cfg = converter.fromProto(handshake);
         serverProtocolVersion = cfg.version();
         serverProperties = cfg.properties();
       } catch (StatusRuntimeException e) {
@@ -298,7 +309,17 @@ public class GrpcFactStore implements FactStore {
     if (catchupBatchSize > 1) {
       meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
     }
+
+    addClientIdTo(meta);
+
     return meta;
+  }
+
+  @VisibleForTesting
+  void addClientIdTo(@NonNull Metadata meta) {
+    if (clientId != null) {
+      meta.put(Headers.CLIENT_ID, clientId);
+    }
   }
 
   @Override
