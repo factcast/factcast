@@ -113,29 +113,7 @@ public class PgFactStream {
       }
     }
 
-    long startedSer = 0;
-    UUID startedId = null;
-    if (request.startingAfter().isPresent()) {
-      startedId = request.startingAfter().get();
-      startedSer = idToSerMapper.retrieve(startedId);
-    }
-
-    // test for ffwd
-    if (isConnected()) {
-      if (!factsHaveBeenSent(startedSer, serial)) {
-        // we have not sent any fact. check for ffwding
-
-        UUID targetId = ffwdTarget.targetId();
-        long targetSer = ffwdTarget.targetSer();
-        long startSer = 0;
-
-        if (targetId != null && (!targetId.equals(startedId) && (targetSer > startedSer))) {
-          log.trace(
-              "{} no facts applied – offering ffwd notification to fact id {}", request, targetId);
-          subscription.notifyFastForward(targetId);
-        }
-      }
-    }
+    fastForward(request, subscription);
 
     // propagate catchup
     if (isConnected()) {
@@ -172,14 +150,37 @@ public class PgFactStream {
         condensedExecutor.trigger();
       } else {
         subscription.notifyComplete();
-        log.debug("Completed {}", request);
+        log.debug("{} completed", request);
+      }
+    }
+  }
+
+  @VisibleForTesting
+  void fastForward(SubscriptionRequest request, SubscriptionImpl subscription) {
+    if (isConnected()) {
+
+      long startedSer = 0;
+      UUID startedId = null;
+      if (request.startingAfter().isPresent()) {
+        startedId = request.startingAfter().get();
+        startedSer = idToSerMapper.retrieve(startedId); // should be cached anyway
+      }
+
+      if (!factsHaveBeenSent(startedSer, serial)) {
+        // we have not sent any fact. check for ffwding
+
+        UUID targetId = ffwdTarget.targetId();
+        long targetSer = ffwdTarget.targetSer();
+
+        if (targetId != null && (!targetId.equals(startedId) && (targetSer > startedSer))) {
+          subscription.notifyFastForward(targetId);
+        }
       }
     }
   }
 
   @VisibleForTesting
   boolean factsHaveBeenSent(long startedAt, AtomicLong serial) {
-
     if (serial.get() == 0 || serial.get() == startedAt) {
       // nothing has been sent out
       return false;
@@ -236,7 +237,7 @@ public class PgFactStream {
     // only bother sending metrics or raising the level if we did some significant catchup
     RatioLogLevel level = RatioLogLevel.DEBUG;
     if (sum >= 50) {
-      metrics.measure(VALUE.CATCHUP_TRANSFORMATION_RATIO, ratio);
+      metrics.distributionSummary(VALUE.CATCHUP_TRANSFORMATION_RATIO).record(ratio);
 
       if (ratio >= 20.0) {
         level = RatioLogLevel.WARN;

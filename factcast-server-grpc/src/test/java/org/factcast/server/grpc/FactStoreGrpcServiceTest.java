@@ -342,7 +342,7 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  void testSubscribeExhaustCheckDisabledp() {
+  void testSubscribeExhaustCheckDisabled() {
     uut =
         new FactStoreGrpcService(
             backend,
