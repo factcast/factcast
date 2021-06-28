@@ -17,14 +17,13 @@ package org.factcast.store.pgsql.internal;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer.Sample;
+import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.pgsql.internal.StoreMetrics.EVENT;
 import org.factcast.store.pgsql.internal.StoreMetrics.OP;
 import org.factcast.store.pgsql.internal.StoreMetrics.VALUE;
 import org.springframework.beans.factory.InitializingBean;
-
-import java.util.function.Supplier;
 
 @Slf4j
 public class PgMetrics implements InitializingBean {
