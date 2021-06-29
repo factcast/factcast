@@ -1,45 +1,31 @@
-/*
- * Copyright © 2017-2020 factcast.org
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.factcast.factus.snapshot;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-import java.time.Duration;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.AggregateUtil;
-import org.factcast.factus.serializer.OtherSnapSer;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Duration;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AggregateSnapshotRepositoryImplTest {
@@ -67,7 +53,8 @@ class AggregateSnapshotRepositoryImplTest {
 
     @Test
     void findNone() {
-      Optional<Snapshot> result = underTest.findLatest(WithSVUID.class, aggregateId);
+      when(snapshotSerializer.getId()).thenReturn("narf");
+      Optional<Snapshot> result = underTest.findLatest(WithAnnotation.class, aggregateId);
 
       assertThat(result).isEmpty();
     }
@@ -83,7 +70,7 @@ class AggregateSnapshotRepositoryImplTest {
       when(snapshotSerializer.getId()).thenReturn("narf");
 
       // RUN
-      Optional<Snapshot> result = underTest.findLatest(WithSVUID.class, aggregateId);
+      Optional<Snapshot> result = underTest.findLatest(WithAnnotation.class, aggregateId);
 
       // ASSERT
       assertThat(result).isPresent().get().extracting("id.uuid").isEqualTo(aggregateId);
@@ -95,11 +82,7 @@ class AggregateSnapshotRepositoryImplTest {
       // never calculate hash, as it is given
       verify(snapshotSerializer, never()).calculateProjectionSerial(any());
 
-      assertThat(idCaptor.getValue().key())
-          .contains(":narf")
-          // use value from serialVersionUID, not what serializer
-          // would calculate
-          .endsWith(":42");
+      assertThat(idCaptor.getValue().key()).contains("_43_").endsWith("_narf");
     }
 
     @Test
@@ -111,15 +94,10 @@ class AggregateSnapshotRepositoryImplTest {
 
       when(snap.getSnapshot(any())).thenReturn(Optional.of(withoutSVUID));
 
-      when(snapshotSerializer.calculateProjectionSerial(WithoutSVUID.class))
-          // let's assume this is the serial id computed by the
-          // serialiser; will not be used as we used a class with
-          // serialVersionUID field
-          .thenReturn(500L);
       when(snapshotSerializer.getId()).thenReturn("poit");
 
       // RUN
-      Optional<Snapshot> result = underTest.findLatest(WithoutSVUID.class, aggregateId);
+      Optional<Snapshot> result = underTest.findLatest(WithAnnotation.class, aggregateId);
 
       // ASSERT
       assertThat(result).isPresent().get().extracting("id.uuid").isEqualTo(aggregateId);
@@ -128,11 +106,7 @@ class AggregateSnapshotRepositoryImplTest {
 
       assertThat(idCaptor.getValue()).isNotNull();
 
-      assertThat(idCaptor.getValue().key())
-          .contains(":poit")
-          // use value from serialVersionUID, not what serializer
-          // would calculate
-          .endsWith(":500");
+      assertThat(idCaptor.getValue().key()).contains("_43_").endsWith("_poit");
     }
 
     @Test
@@ -143,18 +117,11 @@ class AggregateSnapshotRepositoryImplTest {
               new SnapshotId("some key", aggregateId), UUID.randomUUID(), new byte[0], false);
 
       when(snap.getSnapshot(any())).thenReturn(Optional.of(withoutSVUID));
-
-      when(snapshotSerializer.calculateProjectionSerial(WithoutSVUID.class))
-          // let's assume this is the serial id computed by the
-          // serialiser; will not be used as we used a class with
-          // serialVersionUID field
-          .thenReturn(500L);
-
       when(snapshotSerializer.getId()).thenReturn("zort");
 
       // RUN
-      underTest.findLatest(WithoutSVUID.class, aggregateId);
-      underTest.findLatest(WithoutSVUID.class, aggregateId);
+      underTest.findLatest(WithAnnotation.class, aggregateId);
+      underTest.findLatest(WithAnnotation.class, aggregateId);
 
       // ASSERT
       verify(snap, times(2)).getSnapshot(idCaptor.capture());
@@ -165,20 +132,8 @@ class AggregateSnapshotRepositoryImplTest {
           .map(SnapshotId::key)
           .forEach(
               key -> {
-                assertThat(key).contains(":zort").endsWith(":500");
+                assertThat(key).contains("_43_").endsWith("_zort");
               });
-    }
-  }
-
-  @Nested
-  class WhenGettingSerialVersionUid {
-
-    @Test
-    void retrievesExistingSVUID() {
-      assertEquals(Long.valueOf(42), underTest.getSerialVersionUid(WithSVUID.class, () -> null));
-      assertEquals(
-          Long.valueOf(43), underTest.getSerialVersionUid(WithAnnotation.class, () -> null));
-      assertNull(underTest.getSerialVersionUid(WithoutSVUID.class, OtherSnapSer::new));
     }
   }
 
@@ -187,20 +142,15 @@ class AggregateSnapshotRepositoryImplTest {
 
     @Test
     void createsKeyIncludingSerialVersionUid() {
-
+      when(snapshotSerializer.getId()).thenReturn("narf");
       when(snapshotSerializerSupplier.retrieveSerializer(any())).thenReturn(snapshotSerializer);
 
       String with =
           underTest.createKeyForType(
-              WithSVUID.class,
-              () -> snapshotSerializerSupplier.retrieveSerializer(WithSVUID.class));
-      String without =
-          underTest.createKeyForType(
-              WithoutSVUID.class,
-              () -> snapshotSerializerSupplier.retrieveSerializer(WithoutSVUID.class));
+              WithAnnotation.class,
+              () -> snapshotSerializerSupplier.retrieveSerializer(WithAnnotation.class));
 
-      assertThat(with).contains(WithSVUID.class.getName()).contains(":42");
-      assertThat(without).contains(WithoutSVUID.class.getName()).contains(":0");
+      assertThat(with).isEqualTo("WithAnnotation_43_AggregateSnapshotRepositoryImpl_narf");
     }
   }
 
@@ -208,7 +158,7 @@ class AggregateSnapshotRepositoryImplTest {
   class WhenPutting {
     private final UUID STATE = UUID.randomUUID();
 
-    private final WithoutSVUID aggregate = new WithoutSVUID();
+    private final WithAnnotation aggregate = new WithAnnotation();
 
     @Captor private ArgumentCaptor<Snapshot> snapshotCaptor;
 
@@ -219,6 +169,7 @@ class AggregateSnapshotRepositoryImplTest {
 
       when(snapshotSerializer.serialize(aggregate)).thenReturn("foo".getBytes());
       when(snapshotSerializer.includesCompression()).thenReturn(true);
+      when(snapshotSerializer.getId()).thenReturn("narf");
 
       AggregateUtil.aggregateId(aggregate, UUID.randomUUID());
 
@@ -239,14 +190,6 @@ class AggregateSnapshotRepositoryImplTest {
     }
   }
 
-  public static class WithSVUID extends Aggregate {
-    private static final long serialVersionUID = 42L;
-  }
-
   @ProjectionMetaData(serial = 43)
-  public static class WithAnnotation extends Aggregate {
-    private static final long serialVersionUID = 42L;
-  }
-
-  public static class WithoutSVUID extends Aggregate {}
+  public static class WithAnnotation extends Aggregate {}
 }

@@ -15,13 +15,32 @@
  */
 package org.factcast.factus.serializer;
 
+import lombok.NonNull;
+import lombok.experimental.UtilityClass;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Optional;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ProjectionMetaData {
+  String name() default "";
+
   long serial();
+
+  @UtilityClass
+  class Resolver {
+    public static ProjectionMetaData resolveFor(@NonNull Class<?> clazz) {
+      return Optional.ofNullable(clazz.getAnnotation(ProjectionMetaData.class))
+          .orElseThrow(
+              () ->
+                  new IllegalStateException(
+                      clazz.getName()
+                          + " must be annotated by "
+                          + ProjectionMetaData.class.getName()));
+    }
+  }
 }
