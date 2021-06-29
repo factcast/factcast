@@ -50,6 +50,7 @@ class GrpcObserverAdapter implements FactObserver {
 
   private final ArrayList<Fact> stagedFacts;
   private final boolean supportsFastForward;
+
   private final AtomicBoolean caughtUp = new AtomicBoolean(false);
 
   public GrpcObserverAdapter(
@@ -75,8 +76,7 @@ class GrpcObserverAdapter implements FactObserver {
   public void onError(@NonNull Throwable e) {
     flush();
     log.info("{} onError – sending Error notification {}", id, e.getMessage());
-    observer.onError(e);
-    tryComplete();
+    observer.onError(ServerExceptionHelper.translate(e));
   }
 
   private void tryComplete() {
@@ -90,7 +90,6 @@ class GrpcObserverAdapter implements FactObserver {
   @Override
   public void onCatchup() {
     flush();
-
     log.debug("{} onCatchup – sending catchup notification", id);
     observer.onNext(converter.createCatchupNotification());
     caughtUp.set(true);
@@ -120,6 +119,7 @@ class GrpcObserverAdapter implements FactObserver {
   @Override
   public void onFastForward(@NonNull UUID factIdToFfwdTo) {
     if (supportsFastForward) {
+      log.debug("{} sending ffwd notification to fact id {}", id, factIdToFfwdTo);
       // we have not sent any fact. check for ffwding
       observer.onNext(converter.createNotificationForFastForward(factIdToFfwdTo));
     }

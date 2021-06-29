@@ -15,18 +15,16 @@
  */
 package org.factcast.server.grpc;
 
-import io.grpc.ForwardingServerCallListener;
-import io.grpc.Metadata;
-import io.grpc.ServerCall;
-import io.grpc.ServerCallHandler;
-import io.grpc.ServerInterceptor;
-import io.grpc.Status;
+import com.google.common.annotations.VisibleForTesting;
+import io.grpc.*;
+import io.grpc.Status.Code;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
-import org.factcast.core.FactValidationException;
 
+@Slf4j
 @GrpcGlobalServerInterceptor
-public class GrpcExceptionInterceptor implements ServerInterceptor {
-
+public class GrpcServerExceptionInterceptor implements ServerInterceptor {
   @Override
   public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
       ServerCall<ReqT, RespT> serverCall,
@@ -36,7 +34,7 @@ public class GrpcExceptionInterceptor implements ServerInterceptor {
     return new ExceptionHandlingServerCallListener<>(listener, serverCall, metadata);
   }
 
-  private static class ExceptionHandlingServerCallListener<ReqT, RespT>
+  static class ExceptionHandlingServerCallListener<ReqT, RespT>
       extends ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> {
     private final ServerCall<ReqT, RespT> serverCall;
 
@@ -69,13 +67,61 @@ public class GrpcExceptionInterceptor implements ServerInterceptor {
       }
     }
 
-    private void handleException(
-        RuntimeException exception, ServerCall<ReqT, RespT> serverCall, Metadata metadata) {
-      if (exception instanceof FactValidationException) {
-        serverCall.close(Status.INVALID_ARGUMENT.withDescription(exception.getMessage()), metadata);
-      } else {
-        serverCall.close(Status.UNKNOWN, metadata);
+    @Override
+    public void onCancel() {
+      try {
+        super.onCancel();
+      } catch (RuntimeException ex) {
+        handleException(ex, serverCall, metadata);
+        throw ex;
       }
+    }
+
+    @Override
+    public void onComplete() {
+      try {
+        super.onComplete();
+      } catch (RuntimeException ex) {
+        handleException(ex, serverCall, metadata);
+        throw ex;
+      }
+    }
+
+    @Override
+    public void onMessage(ReqT message) {
+      try {
+        super.onMessage(message);
+      } catch (RuntimeException ex) {
+        handleException(ex, serverCall, metadata);
+        throw ex;
+      }
+    }
+
+    @VisibleForTesting
+    void handleException(
+        RuntimeException exception, ServerCall<ReqT, RespT> serverCall, Metadata metadata) {
+
+      if (exception instanceof RequestCanceledByClientException) {
+        // maybe we can even skip this close call?
+        serverCall.close(Status.CANCELLED.withDescription(exception.getMessage()), metadata);
+        log.debug("Connection cancelled by client.");
+        return;
+      }
+
+      // in case someone knows exactly what status to throw
+      if (exception instanceof StatusRuntimeException) {
+        val e = (StatusRuntimeException) exception;
+        serverCall.close(e.getStatus(), metadata);
+        return;
+      }
+
+      StatusRuntimeException sre = ServerExceptionHelper.translate(exception);
+
+      if (sre.getStatus().getCode().equals(Code.UNKNOWN)) {
+        log.debug("Exception falling through: ", exception);
+      }
+
+      serverCall.close(sre.getStatus(), sre.getTrailers());
     }
   }
 }

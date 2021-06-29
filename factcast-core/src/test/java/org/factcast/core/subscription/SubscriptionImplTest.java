@@ -15,6 +15,7 @@
  */
 package org.factcast.core.subscription;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.factcast.core.TestHelper.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -107,6 +108,8 @@ public class SubscriptionImplTest {
   }
 
   final Fact testFact = new TestFact();
+  final Fact transformedTestFact =
+      new TestFact().id(testFact.id()); // just a different instance than testfact
 
   @Test
   void testOn() throws TransformationException {
@@ -122,6 +125,29 @@ public class SubscriptionImplTest {
     verify(obs).onComplete();
     // subsequent calls will be ignored, as this subscription was completed.
     // creating a new one...
+  }
+
+  @Test
+  void testOnElementIncrementsCounters() throws TransformationException {
+    SubscriptionImpl on = SubscriptionImpl.on(obs, factTransformers);
+    verify(obs, never()).onNext(any());
+    when(factTransformers.transformIfNecessary(testFact))
+        .thenReturn(testFact, testFact, transformedTestFact);
+
+    on.notifyElement(testFact);
+    verify(obs).onNext(testFact);
+    assertThat(on.factsTransformed().get()).isEqualTo(0);
+    assertThat(on.factsNotTransformed().get()).isEqualTo(1);
+
+    on.notifyElement(testFact);
+    verify(obs, times(2)).onNext(testFact);
+    assertThat(on.factsTransformed().get()).isEqualTo(0);
+    assertThat(on.factsNotTransformed().get()).isEqualTo(2);
+
+    on.notifyElement(testFact);
+    verify(obs, times(3)).onNext(testFact);
+    assertThat(on.factsTransformed().get()).isEqualTo(1);
+    assertThat(on.factsNotTransformed().get()).isEqualTo(2);
   }
 
   @Test
@@ -187,7 +213,7 @@ public class SubscriptionImplTest {
   @Test
   void testOnErrorCompletesFutureCatchup() {
     Assertions.assertThrows(
-        SubscriptionCancelledException.class,
+        Throwable.class,
         () -> {
           SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
           verify(obs, never()).onError(any());
@@ -200,7 +226,7 @@ public class SubscriptionImplTest {
   @Test
   void testOnErrorCompletesFutureComplete() {
     Assertions.assertThrows(
-        SubscriptionCancelledException.class,
+        Throwable.class,
         () -> {
           SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
           verify(obs, never()).onError(any());

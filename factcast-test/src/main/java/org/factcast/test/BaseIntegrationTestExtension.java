@@ -3,8 +3,11 @@ package org.factcast.test;
 import java.sql.DriverManager;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.SneakyThrows;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.junit.jupiter.api.extension.*;
@@ -17,56 +20,85 @@ import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 @SuppressWarnings("rawtypes")
 @Slf4j
 public class BaseIntegrationTestExtension implements FactCastIntegrationTestExtension {
-  private PostgreSQLContainer _postgres;
-
-  @SuppressWarnings("FieldCanBeLocal")
-  private GenericContainer _factcast;
+  private final Map<FactcastTestConfig.Config, Containers> executions = new ConcurrentHashMap<>();
 
   @Override
-  public boolean initialize(Map<String, GenericContainer<?>> containers) {
+  public boolean initialize(ExtensionContext ctx) {
+    FactcastTestConfig.Config config = discoverConfig(ctx);
 
-    _postgres =
-        new PostgreSQLContainer<>("postgres:11.5")
-            .withDatabaseName("fc")
-            .withUsername("fc")
-            .withPassword("fc")
-            .withNetworkAliases("db")
-            .withNetwork(_docker_network);
-
-    _factcast =
-        new GenericContainer<>("factcast/factcast:0.3.9")
-            .withExposedPorts(9090)
-            .withFileSystemBind("./config", "/config/")
-            .withEnv("grpc_server_port", "9090")
-            .withEnv("factcast_security_enabled", "false")
-            .withEnv("factcast_grpc_bandwidth_disabled", "true")
-            .withEnv("factcast_store_pgsql_integrationTestMode", "true")
-            .withEnv("spring_datasource_url", "jdbc:postgresql://db/fc?user=fc&password=fc")
-            .withNetwork(_docker_network)
-            .dependsOn(_postgres)
-            .withLogConsumer(
-                new Slf4jLogConsumer(
-                    LoggerFactory.getLogger(AbstractFactCastIntegrationTest.class)))
-            .waitingFor(new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
-    //
-
-    _postgres.start();
-    _factcast.start();
-
-    containers.put("postgres", _postgres);
-    containers.put("factcast", _factcast);
-
-    String address = "static://" + _factcast.getHost() + ":" + _factcast.getMappedPort(9090);
-    System.setProperty("grpc.client.factstore.address", address);
+    startOrReuse(config);
 
     return true;
+  }
+
+  private void startOrReuse(FactcastTestConfig.Config config) {
+    Containers containers =
+        executions.computeIfAbsent(
+            config,
+            key -> {
+              String dbName = "db" + config.hashCode();
+
+              PostgreSQLContainer db =
+                  new PostgreSQLContainer<>("postgres:" + config.postgresVersion())
+                      .withDatabaseName("fc")
+                      .withUsername("fc")
+                      .withPassword("fc")
+                      .withNetworkAliases(dbName)
+                      .withNetwork(_docker_network);
+
+              GenericContainer fc =
+                  new GenericContainer<>("factcast/factcast:" + config.factcastVersion())
+                      .withExposedPorts(9090)
+                      .withFileSystemBind(config.configDir(), "/config/")
+                      .withEnv("grpc_server_port", "9090")
+                      .withEnv("factcast_security_enabled", "false")
+                      .withEnv("factcast_grpc_bandwidth_disabled", "true")
+                      .withEnv("factcast_store_pgsql_integrationTestMode", "true")
+                      .withEnv(
+                          "spring_datasource_url",
+                          "jdbc:postgresql://" + dbName + "/fc?user=fc&password=fc")
+                      .withNetwork(_docker_network)
+                      .dependsOn(db)
+                      .withLogConsumer(
+                          new Slf4jLogConsumer(
+                              LoggerFactory.getLogger(AbstractFactCastIntegrationTest.class)))
+                      .waitingFor(
+                          new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
+
+              db.start();
+              fc.start();
+
+              return new Containers(db, fc);
+            });
+
+    String address =
+        "static://" + containers.fc.getHost() + ":" + containers.fc.getMappedPort(9090);
+    System.setProperty("grpc.client.factstore.address", address);
+  }
+
+  @Override
+  public void beforeAll(ExtensionContext ctx) {
+    FactcastTestConfig.Config config = discoverConfig(ctx);
+    startOrReuse(config);
+
+    FactCastIntegrationTestExtension.super.beforeAll(ctx);
+  }
+
+  private FactcastTestConfig.Config discoverConfig(ExtensionContext ctx) {
+    return ctx.getTestClass()
+        .flatMap(x -> Optional.ofNullable(x.getAnnotation(FactcastTestConfig.class)))
+        .map(FactcastTestConfig.Config::from)
+        .orElse(FactcastTestConfig.Config.defaults());
   }
 
   @SneakyThrows
   @Override
   public void beforeEach(ExtensionContext ctx) {
-    val pg = _postgres;
-    val url = pg.getJdbcUrl();
+    FactcastTestConfig.Config config = discoverConfig(ctx);
+    Containers containers = executions.get(config);
+
+    PostgreSQLContainer pg = containers.db;
+    String url = pg.getJdbcUrl();
     Properties p = new Properties();
     p.put("user", pg.getUsername());
     p.put("password", pg.getPassword());
@@ -87,5 +119,11 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
               + "    END LOOP;\n"
               + "END $$;");
     }
+  }
+
+  @Value
+  static class Containers {
+    PostgreSQLContainer db;
+    GenericContainer fc;
   }
 }

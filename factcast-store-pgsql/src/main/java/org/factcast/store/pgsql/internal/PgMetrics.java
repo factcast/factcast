@@ -22,6 +22,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.pgsql.internal.StoreMetrics.EVENT;
 import org.factcast.store.pgsql.internal.StoreMetrics.OP;
+import org.factcast.store.pgsql.internal.StoreMetrics.VALUE;
 import org.springframework.beans.factory.InitializingBean;
 
 @Slf4j
@@ -37,7 +38,15 @@ public class PgMetrics implements InitializingBean {
   public Counter counter(@NonNull StoreMetrics.EVENT operation) {
     Tags tags = forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
     // omitting the meter description here
-    return Counter.builder(StoreMetrics.COUNTER_METRIC_NAME).tags(tags).register(registry);
+    return Counter.builder(StoreMetrics.METER_METRIC_NAME).tags(tags).register(registry);
+  }
+
+  @NonNull
+  public DistributionSummary distributionSummary(@NonNull StoreMetrics.VALUE operation) {
+    Tags tags = forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+    return DistributionSummary.builder(StoreMetrics.METER_METRIC_NAME)
+        .tags(tags)
+        .register(registry);
   }
 
   private Tags forOperation(@NonNull MetricName operation, @NonNull String exceptionTagValue) {
@@ -113,6 +122,9 @@ public class PgMetrics implements InitializingBean {
     }
     for (EVENT e : EVENT.values()) {
       counter(e);
+    }
+    for (VALUE e : VALUE.values()) {
+      distributionSummary(e);
     }
   }
 }

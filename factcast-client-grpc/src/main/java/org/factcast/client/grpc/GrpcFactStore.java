@@ -23,8 +23,10 @@ import io.grpc.Status.Code;
 import io.grpc.stub.MetadataUtils;
 import io.grpc.stub.StreamObserver;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import lombok.Generated;
 import lombok.NonNull;
@@ -42,6 +44,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.util.ExceptionHelper;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
@@ -80,6 +83,7 @@ public class GrpcFactStore implements FactStore {
 
   private RemoteFactStoreBlockingStub rawBlockingStub;
   private final FactCastGrpcClientProperties properties;
+  @Nullable private final String clientId;
 
   private final ProtoConverter converter = new ProtoConverter();
 
@@ -90,21 +94,23 @@ public class GrpcFactStore implements FactStore {
   public GrpcFactStore(
       @NonNull FactCastGrpcChannelFactory channelFactory,
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
-      @NonNull FactCastGrpcClientProperties properties) {
-    this(channelFactory.createChannel(CHANNEL_NAME), credentials, properties);
+      @NonNull FactCastGrpcClientProperties properties,
+      @Nullable String clientId) {
+    this(channelFactory.createChannel(CHANNEL_NAME), credentials, properties, clientId);
   }
 
   @Generated
-  @VisibleForTesting
   GrpcFactStore(
       @NonNull Channel channel,
       @NonNull Optional<String> credentials,
-      @NonNull FactCastGrpcClientProperties properties) {
+      @NonNull FactCastGrpcClientProperties properties,
+      String clientId) {
     this(
         RemoteFactStoreGrpc.newBlockingStub(channel),
         RemoteFactStoreGrpc.newStub(channel),
         credentials,
-        properties);
+        properties,
+        clientId);
   }
 
   @Generated
@@ -114,17 +120,20 @@ public class GrpcFactStore implements FactStore {
         RemoteFactStoreGrpc.newBlockingStub(channel),
         RemoteFactStoreGrpc.newStub(channel),
         credentials,
-        new FactCastGrpcClientProperties());
+        new FactCastGrpcClientProperties(),
+        null);
   }
 
   private GrpcFactStore(
       @NonNull RemoteFactStoreBlockingStub newBlockingStub,
       @NonNull RemoteFactStoreStub newStub,
       @NonNull Optional<String> credentials,
-      @NonNull FactCastGrpcClientProperties properties) {
+      @NonNull FactCastGrpcClientProperties properties,
+      @Nullable String clientId) {
     rawBlockingStub = newBlockingStub;
     rawStub = newStub;
     this.properties = properties;
+    this.clientId = clientId;
 
     // initially use the raw ones...
     blockingStub = rawBlockingStub;
@@ -144,37 +153,57 @@ public class GrpcFactStore implements FactStore {
 
   @Override
   public void publish(@NonNull List<? extends Fact> factsToPublish) {
-    log.trace("publishing {} facts to remote store", factsToPublish.size());
-    List<MSG_Fact> mf =
-        factsToPublish.stream().map(converter::toProto).collect(Collectors.toList());
-    MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
+    runAndHandle(
+        () -> {
+          log.trace("publishing {} facts to remote store", factsToPublish.size());
+          List<MSG_Fact> mf =
+              factsToPublish.stream().map(converter::toProto).collect(Collectors.toList());
+          MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
+
+          blockingStub.publish(mfs);
+        });
+  }
+
+  // instead of using aspects
+  // GrpcGlobalClientInterceptor was tested but did not work as expected
+  @VisibleForTesting
+  void runAndHandle(@NonNull Runnable block) {
     try {
-      blockingStub.publish(mfs);
+      block.run();
     } catch (StatusRuntimeException e) {
-      if (e.getStatus().equals(Status.UNKNOWN)) {
-        throw FactcastRemoteException.from(e);
-      } else {
-        throw wrapRetryable(e);
-      }
+      throw ClientExceptionHelper.from(e);
+    }
+  }
+
+  // instead of using aspects
+  // GrpcGlobalClientInterceptor was tested but did not work as expected
+  @VisibleForTesting
+  <T> T callAndHandle(@NonNull Callable<T> block) {
+    try {
+      return block.call();
+    } catch (StatusRuntimeException e) {
+      throw ClientExceptionHelper.from(e);
+    } catch (Exception e) {
+      throw ExceptionHelper.toRuntime(e);
     }
   }
 
   @Override
   public Subscription subscribe(
       @NonNull SubscriptionRequestTO req, @NonNull FactObserver observer) {
-    SubscriptionImpl subscription = SubscriptionImpl.on(observer);
-    StreamObserver<FactStoreProto.MSG_Notification> responseObserver =
-        new ClientStreamObserver(subscription);
-    ClientCall<MSG_SubscriptionRequest, MSG_Notification> call =
-        stub.getChannel()
-            .newCall(
-                RemoteFactStoreGrpc.getSubscribeMethod(), stub.getCallOptions().withWaitForReady());
-    try {
-      asyncServerStreamingCall(call, converter.toProto(req), responseObserver);
-    } catch (StatusRuntimeException e) {
-      throw wrapRetryable(e);
-    }
-    return subscription.onClose(() -> cancel(call));
+    return callAndHandle(
+        () -> {
+          SubscriptionImpl subscription = SubscriptionImpl.on(observer);
+          StreamObserver<FactStoreProto.MSG_Notification> responseObserver =
+              new ClientStreamObserver(subscription);
+          ClientCall<MSG_SubscriptionRequest, MSG_Notification> call =
+              stub.getChannel()
+                  .newCall(
+                      RemoteFactStoreGrpc.getSubscribeMethod(),
+                      stub.getCallOptions().withWaitForReady());
+          asyncServerStreamingCall(call, converter.toProto(req), responseObserver);
+          return subscription.onClose(() -> cancel(call));
+        });
   }
 
   @VisibleForTesting
@@ -185,14 +214,17 @@ public class GrpcFactStore implements FactStore {
 
   @Override
   public OptionalLong serialOf(@NonNull UUID l) {
-    MSG_UUID protoMessage = converter.toProto(l);
-    MSG_OptionalSerial responseMessage;
-    try {
-      responseMessage = blockingStub.serialOf(protoMessage);
-    } catch (StatusRuntimeException e) {
-      throw wrapRetryable(e);
-    }
-    return converter.fromProto(responseMessage);
+    return callAndHandle(
+        () -> {
+          MSG_UUID protoMessage = converter.toProto(l);
+          MSG_OptionalSerial responseMessage;
+          try {
+            responseMessage = blockingStub.serialOf(protoMessage);
+          } catch (StatusRuntimeException e) {
+            throw wrapRetryable(e);
+          }
+          return converter.fromProto(responseMessage);
+        });
   }
 
   @PostConstruct
@@ -202,7 +234,11 @@ public class GrpcFactStore implements FactStore {
       Map<String, String> serverProperties;
       ProtocolVersion serverProtocolVersion;
       try {
-        ServerConfig cfg = converter.fromProto(blockingStub.handshake(converter.empty()));
+        Metadata metadata = new Metadata();
+        addClientIdTo(metadata);
+        MSG_ServerConfig handshake =
+            MetadataUtils.attachHeaders(blockingStub, metadata).handshake(converter.empty());
+        ServerConfig cfg = converter.fromProto(handshake);
         serverProtocolVersion = cfg.version();
         serverProperties = cfg.properties();
       } catch (StatusRuntimeException e) {
@@ -273,35 +309,39 @@ public class GrpcFactStore implements FactStore {
     if (catchupBatchSize > 1) {
       meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
     }
+
+    addClientIdTo(meta);
+
     return meta;
+  }
+
+  @VisibleForTesting
+  void addClientIdTo(@NonNull Metadata meta) {
+    if (clientId != null) {
+      meta.put(Headers.CLIENT_ID, clientId);
+    }
   }
 
   @Override
   public Set<String> enumerateNamespaces() {
-    MSG_Empty empty = converter.empty();
-    MSG_StringSet resp;
-    try {
-      resp = blockingStub.enumerateNamespaces(empty);
-    } catch (StatusRuntimeException e) {
-      throw wrapRetryable(e);
-    }
-    return converter.fromProto(resp);
+    return callAndHandle(
+        () -> {
+          MSG_Empty empty = converter.empty();
+          return converter.fromProto(blockingStub.enumerateNamespaces(empty));
+        });
   }
 
   @Override
   public Set<String> enumerateTypes(String ns) {
-    MSG_String ns_message = converter.toProto(ns);
-    MSG_StringSet resp;
-    try {
-      resp = blockingStub.enumerateTypes(ns_message);
-    } catch (StatusRuntimeException e) {
-      throw wrapRetryable(e);
-    }
-    return converter.fromProto(resp);
+    return callAndHandle(
+        () -> {
+          return converter.fromProto(blockingStub.enumerateTypes(converter.toProto(ns)));
+        });
   }
 
   @VisibleForTesting
   static RuntimeException wrapRetryable(StatusRuntimeException e) {
+    // TODO
     if (e.getStatus().getCode() == Code.UNAVAILABLE) {
       return new RetryableException(e);
     } else {
@@ -313,128 +353,109 @@ public class GrpcFactStore implements FactStore {
   public boolean publishIfUnchanged(
       @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> token) {
 
-    ConditionalPublishRequest req =
-        new ConditionalPublishRequest(factsToPublish, token.map(StateToken::uuid).orElse(null));
-    MSG_ConditionalPublishRequest msg = converter.toProto(req);
-    try {
-
-      MSG_ConditionalPublishResult r = blockingStub.publishConditional(msg);
-      return r.getSuccess();
-    } catch (StatusRuntimeException e) {
-      throw wrapRetryable(e);
-    }
+    return callAndHandle(
+        () -> {
+          ConditionalPublishRequest req =
+              new ConditionalPublishRequest(
+                  factsToPublish, token.map(StateToken::uuid).orElse(null));
+          MSG_ConditionalPublishRequest msg = converter.toProto(req);
+          MSG_ConditionalPublishResult r = blockingStub.publishConditional(msg);
+          return r.getSuccess();
+        });
   }
 
   @Override
   public @NonNull StateToken stateFor(List<FactSpec> specs) {
-    MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
-    try {
-      MSG_UUID result = blockingStub.stateForSpecsJson(msg);
-      return new StateToken(converter.fromProto(result));
-    } catch (StatusRuntimeException e) {
-      throw wrapRetryable(e);
-    }
+    return callAndHandle(
+        () -> {
+          MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
+          MSG_UUID result = blockingStub.stateForSpecsJson(msg);
+          return new StateToken(converter.fromProto(result));
+        });
   }
 
   @Override
   public void invalidate(@NonNull StateToken token) {
-    MSG_UUID msg = converter.toProto(token.uuid());
-    try {
-      blockingStub.invalidate(msg);
-    } catch (StatusRuntimeException e) {
-      throw wrapRetryable(e);
-    }
+    runAndHandle(
+        () -> {
+          MSG_UUID msg = converter.toProto(token.uuid());
+          //noinspection ResultOfMethodCallIgnored
+          blockingStub.invalidate(msg);
+        });
   }
 
   @Override
   public long currentTime() {
-
-    MSG_Empty empty = converter.empty();
-    MSG_CurrentDatabaseTime resp;
-    try {
-      resp = blockingStub.currentTime(empty);
-    } catch (StatusRuntimeException e) {
-      throw wrapRetryable(e);
-    }
-    return converter.fromProto(resp);
+    return callAndHandle(
+        () -> {
+          MSG_Empty empty = converter.empty();
+          MSG_CurrentDatabaseTime resp;
+          resp = blockingStub.currentTime(empty);
+          return converter.fromProto(resp);
+        });
   }
 
   @Override
   public Optional<Fact> fetchById(UUID id) {
     log.trace("fetching {} from remote store", id);
 
-    MSG_OptionalFact fetchById;
-    try {
-      fetchById = blockingStub.fetchById(converter.toProto(id));
-    } catch (StatusRuntimeException e) {
-      throw wrapRetryable(e);
-    }
-    if (!fetchById.getPresent()) {
-      return Optional.empty();
-    } else {
-      return converter.fromProto(fetchById);
-    }
+    return callAndHandle(
+        () -> {
+          MSG_OptionalFact fetchById;
+          fetchById = blockingStub.fetchById(converter.toProto(id));
+          return converter.fromProto(fetchById);
+        });
   }
 
   @Override
   public Optional<Fact> fetchByIdAndVersion(UUID id, int versionExpected) {
     log.trace("fetching {} from remote store as version {}", id, versionExpected);
-
-    MSG_OptionalFact fetchById;
-    try {
-      fetchById = blockingStub.fetchByIdAndVersion(converter.toProto(id, versionExpected));
-    } catch (StatusRuntimeException e) {
-      throw wrapRetryable(e);
-    }
-    if (!fetchById.getPresent()) {
-      return Optional.empty();
-    } else {
-      return converter.fromProto(fetchById);
-    }
+    return callAndHandle(
+        () -> {
+          MSG_OptionalFact fetchById;
+          fetchById = blockingStub.fetchByIdAndVersion(converter.toProto(id, versionExpected));
+          return converter.fromProto(fetchById);
+        });
   }
 
   @Override
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
     log.trace("fetching snapshot {} from remote store", id);
-
-    MSG_OptionalSnapshot snap;
-    try {
-      snap = blockingStub.getSnapshot(converter.toProto(id));
-    } catch (StatusRuntimeException e) {
-      throw wrapRetryable(e);
-    }
-    if (!snap.getPresent()) {
-      return Optional.empty();
-    } else {
-      return converter.fromProto(snap);
-    }
+    return callAndHandle(
+        () -> {
+          MSG_OptionalSnapshot snap;
+          snap = blockingStub.getSnapshot(converter.toProto(id));
+          return converter.fromProto(snap);
+        });
   }
 
   @Override
   public void setSnapshot(@NonNull Snapshot snapshot) {
-    val id = snapshot.id();
-    val bytes = snapshot.bytes();
-    val alreadyCompressed = snapshot.compressed();
-    val state = snapshot.lastFact();
+    runAndHandle(
+        () -> {
+          val id = snapshot.id();
+          val bytes = snapshot.bytes();
+          val alreadyCompressed = snapshot.compressed();
+          val state = snapshot.lastFact();
 
-    log.trace("sending snapshot {} to remote store ({}kb)", id, bytes.length / 1024);
+          log.trace("sending snapshot {} to remote store ({}kb)", id, bytes.length / 1024);
 
-    RemoteFactStoreBlockingStub stubToUse = alreadyCompressed ? rawBlockingStub : blockingStub;
+          RemoteFactStoreBlockingStub stubToUse =
+              alreadyCompressed ? rawBlockingStub : blockingStub;
 
-    try {
-      val empty = stubToUse.setSnapshot(converter.toProto(id, state, bytes, alreadyCompressed));
-    } catch (StatusRuntimeException e) {
-      throw wrapRetryable(e);
-    }
+          //noinspection ResultOfMethodCallIgnored
+          stubToUse.setSnapshot(converter.toProto(id, state, bytes, alreadyCompressed));
+        });
   }
 
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
     log.trace("clearing snapshot {} in remote store", id);
-    try {
-      val empty = blockingStub.clearSnapshot(converter.toProto(id));
-    } catch (StatusRuntimeException e) {
-      throw wrapRetryable(e);
-    }
+
+    runAndHandle(
+        () -> {
+          //noinspection ResultOfMethodCallIgnored
+          blockingStub.clearSnapshot(converter.toProto(id));
+        });
   }
 }

@@ -15,26 +15,19 @@
  */
 package org.factcast.factus.projection;
 
-import org.slf4j.LoggerFactory;
+import org.factcast.core.util.ExceptionHelper;
 
 public interface ManagedProjection extends Projection, StateAware, WriterTokenAware {
 
   default void withLock(Runnable runnable) {
-    try {
-      try (AutoCloseable token = acquireWriteToken()) {
-        if (token == null) {
-          throw new IllegalStateException("cannot acquire write token");
-        } else {
-          runnable.run();
-        }
+    try (AutoCloseable token = acquireWriteToken()) {
+      if (token == null) {
+        throw new IllegalStateException("cannot acquire write token");
+      } else {
+        runnable.run();
       }
-    } catch (RuntimeException e) {
-      // assuming coming from runnable.run()
-      LoggerFactory.getLogger(ManagedProjection.class).warn("While executing with lock:", e);
     } catch (Exception e) {
-      // assuming coming from AutoCloseable.close()
-      LoggerFactory.getLogger(ManagedProjection.class)
-          .warn("While trying to release write token:", e);
+      throw ExceptionHelper.toRuntime(e);
     }
   }
 }

@@ -31,6 +31,8 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.util.ExceptionHelper;
+import org.factcast.store.pgsql.internal.StoreMetrics.VALUE;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
@@ -66,6 +68,7 @@ public class PgFactStream {
 
   final PgCatchupFactory pgCatchupFactory;
   final FastForwardTarget ffwdTarget;
+  final PgMetrics metrics;
 
   CondensedQueryExecutor condensedExecutor;
 
@@ -75,7 +78,7 @@ public class PgFactStream {
 
   void connect(@NonNull SubscriptionRequestTO request) {
     this.request = request;
-    log.debug("{} connecting subscription {}", request, request.dump());
+    log.debug("{} connect subscription {}", request, request.dump());
     postQueryMatcher = new PgPostQueryMatcher(request);
     PgQueryBuilder q = new PgQueryBuilder(request.specs());
     initializeSerialToStartAfter();
@@ -93,7 +96,8 @@ public class PgFactStream {
     log.trace("{} setting starting point to SER={}", request, startingSerial);
   }
 
-  private void catchupAndFollow(
+  @VisibleForTesting
+  void catchupAndFollow(
       SubscriptionRequest request, SubscriptionImpl subscription, PgSynchronizedQuery query) {
     if (request.ephemeral()) {
       // just fast forward to the latest event published by now
@@ -101,36 +105,15 @@ public class PgFactStream {
     } else {
       try {
         catchup(postQueryMatcher);
+        logCatchupTransformationStats();
       } catch (Throwable e) {
         // might help to find networking issues while catching up
-        log.error("While catching up: ", e);
+        log.warn("{} While catching up: ", request, e);
         subscription.notifyError(e);
       }
     }
 
-    long startedSer = 0;
-    UUID startedId = null;
-    if (request.startingAfter().isPresent()) {
-      startedId = request.startingAfter().get();
-      startedSer = idToSerMapper.retrieve(startedId);
-    }
-
-    // test for ffwd
-    if (isConnected()) {
-      if (!factsHaveBeenSent(startedSer, serial)) {
-        // we have not sent any fact. check for ffwding
-
-        UUID targetId = ffwdTarget.targetId();
-        long targetSer = ffwdTarget.targetSer();
-        long startSer = 0;
-
-        if (targetId != null && (!targetId.equals(startedId) && (targetSer > startedSer))) {
-          log.debug(
-              "{} no facts applied – sending ffwd notification to fact id {}", request, targetId);
-          subscription.notifyFastForward(targetId);
-        }
-      }
-    }
+    fastForward(request, subscription);
 
     // propagate catchup
     if (isConnected()) {
@@ -167,14 +150,37 @@ public class PgFactStream {
         condensedExecutor.trigger();
       } else {
         subscription.notifyComplete();
-        log.debug("Completed {}", request);
+        log.debug("{} completed", request);
+      }
+    }
+  }
+
+  @VisibleForTesting
+  void fastForward(SubscriptionRequest request, SubscriptionImpl subscription) {
+    if (isConnected()) {
+
+      long startedSer = 0;
+      UUID startedId = null;
+      if (request.startingAfter().isPresent()) {
+        startedId = request.startingAfter().get();
+        startedSer = idToSerMapper.retrieve(startedId); // should be cached anyway
+      }
+
+      if (!factsHaveBeenSent(startedSer, serial)) {
+        // we have not sent any fact. check for ffwding
+
+        UUID targetId = ffwdTarget.targetId();
+        long targetSer = ffwdTarget.targetSer();
+
+        if (targetId != null && (!targetId.equals(startedId) && (targetSer > startedSer))) {
+          subscription.notifyFastForward(targetId);
+        }
       }
     }
   }
 
   @VisibleForTesting
   boolean factsHaveBeenSent(long startedAt, AtomicLong serial) {
-
     if (serial.get() == 0 || serial.get() == startedAt) {
       // nothing has been sent out
       return false;
@@ -183,15 +189,63 @@ public class PgFactStream {
     return true;
   }
 
-  private void catchup(PgPostQueryMatcher postQueryMatcher) {
+  @VisibleForTesting
+  void catchup(PgPostQueryMatcher postQueryMatcher) {
     if (isConnected()) {
       log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial.get());
-      pgCatchupFactory.create(request, postQueryMatcher, subscription, serial).run();
+      pgCatchupFactory.create(request, postQueryMatcher, subscription, serial, metrics).run();
     }
     if (isConnected()) {
       log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
-      pgCatchupFactory.create(request, postQueryMatcher, subscription, serial).run();
+      pgCatchupFactory.create(request, postQueryMatcher, subscription, serial, metrics).run();
     }
+  }
+
+  @VisibleForTesting
+  enum RatioLogLevel {
+    DEBUG,
+    INFO,
+    WARN
+  }
+
+  @VisibleForTesting
+  void logCatchupTransformationStats() {
+    if (subscription.factsTransformed().get() > 0) {
+      long sum = subscription.factsTransformed().get() + subscription.factsNotTransformed().get();
+      long transf = subscription.factsTransformed().get();
+      long ratio = Math.round(100.0 / sum * transf);
+      RatioLogLevel level = calculateLogLevel(sum, ratio);
+
+      switch (level) {
+        case DEBUG:
+          log.debug("{} CatchupTransformationRatio: {}%, ({}/{})", request, ratio, transf, sum);
+          break;
+        case INFO:
+          log.info("{} CatchupTransformationRatio: {}%, ({}/{})", request, ratio, transf, sum);
+          break;
+        case WARN:
+          log.warn("{} CatchupTransformationRatio: {}%, ({}/{})", request, ratio, transf, sum);
+          break;
+        default:
+          throw new IllegalArgumentException("switch fall-through. THIS IS A BUG! " + level);
+      }
+    }
+  }
+
+  @VisibleForTesting
+  RatioLogLevel calculateLogLevel(long sum, long ratio) {
+    // only bother sending metrics or raising the level if we did some significant catchup
+    RatioLogLevel level = RatioLogLevel.DEBUG;
+    if (sum >= 50) {
+      metrics.distributionSummary(VALUE.CATCHUP_TRANSFORMATION_RATIO).record(ratio);
+
+      if (ratio >= 20.0) {
+        level = RatioLogLevel.WARN;
+      } else if (ratio >= 10.0) {
+        level = RatioLogLevel.INFO;
+      }
+    }
+    return level;
   }
 
   private boolean isConnected() {
@@ -233,7 +287,8 @@ public class PgFactStream {
           } catch (MissingTransformationInformation | TransformationException e) {
             log.warn("{} transformation error: {}", request, e.getMessage());
             subscription.notifyError(e);
-            throw new RuntimeException(e);
+            // will vanish, because this is called from a timer.
+            throw e;
           } catch (Throwable e) {
             // debug level, because it happens regularly on
             // disconnecting clients.
@@ -248,7 +303,7 @@ public class PgFactStream {
             // close result set in order to release DB resources as
             // early as possible
             rs.close();
-            throw e;
+            throw ExceptionHelper.toRuntime(e);
           }
         } else {
           // TODO add sid
