@@ -1,8 +1,8 @@
 package org.factcast.factus.serializer;
 
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
 
 public class ProjectionMetaDataTest {
   @Test

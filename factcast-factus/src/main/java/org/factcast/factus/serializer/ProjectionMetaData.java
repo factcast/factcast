@@ -15,14 +15,13 @@
  */
 package org.factcast.factus.serializer;
 
-import lombok.NonNull;
-import lombok.experimental.UtilityClass;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Optional;
+import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

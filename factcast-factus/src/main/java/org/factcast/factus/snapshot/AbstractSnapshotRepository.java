@@ -17,6 +17,9 @@ package org.factcast.factus.snapshot;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,10 +31,6 @@ import org.factcast.factus.metrics.TagKeys;
 import org.factcast.factus.projection.ScopedName;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
-
-import java.util.Optional;
-import java.util.UUID;
-import java.util.function.Supplier;
 
 @RequiredArgsConstructor
 @Slf4j

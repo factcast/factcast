@@ -1,5 +1,9 @@
 package org.factcast.factus.redis;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.UUID;
 import lombok.NonNull;
 import lombok.val;
 import org.factcast.factus.redis.batch.RedissonBatchManager;
@@ -13,11 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.*;
 import org.redisson.config.Config;
-
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AbstractRedisManagedProjectionTest {
