@@ -1,5 +1,8 @@
 package org.factcast.factus.redis;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.factus.projection.Projection;
@@ -16,9 +19,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RedissonClient;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RedisProjectorPluginTest {

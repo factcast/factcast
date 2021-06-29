@@ -1,6 +1,9 @@
 package org.factcast.factus.redis;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.time.Duration;
+import java.util.UUID;
+import java.util.function.Function;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.factus.projection.Named;
@@ -10,10 +13,6 @@ import org.factcast.factus.projection.WriterTokenAware;
 import org.factcast.factus.redis.batch.RedissonBatchManager;
 import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.redisson.api.*;
-
-import java.time.Duration;
-import java.util.UUID;
-import java.util.function.Function;
 
 abstract class AbstractRedisProjection
     implements RedisProjection, StateAware, WriterTokenAware, Named {
