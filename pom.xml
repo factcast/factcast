@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.4.0-I4-SNAPSHOT</version>
+  <version>0.4.0-I5-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
