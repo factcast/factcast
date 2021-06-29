@@ -15,33 +15,29 @@
  */
 package org.factcast.factus.snapshot;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotCache;
+import org.factcast.core.snap.SnapshotId;
+import org.factcast.factus.metrics.FactusMetrics;
+import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.ProjectionMetaData;
+import org.factcast.factus.serializer.SnapshotSerializer;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotCache;
-import org.factcast.core.snap.SnapshotId;
-import org.factcast.factus.metrics.FactusMetrics;
-import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.serializer.SnapshotSerializer;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectionSnapshotRepositoryImplTest {
@@ -79,11 +75,6 @@ class ProjectionSnapshotRepositoryImplTest {
       when(snapshotCache.getSnapshot(any()))
           .thenReturn(Optional.of(new Snapshot(id, lastFact, bytes, true)));
 
-      when(serializer.calculateProjectionSerial(SomeSnapshotProjection.class))
-          // let's assume this is the serial id computed by the
-          // serialiser
-          .thenReturn(45L);
-
       when(serializer.getId()).thenReturn("hubba");
 
       // RUN
@@ -102,7 +93,7 @@ class ProjectionSnapshotRepositoryImplTest {
 
       assertThat(idCaptor.getValue()).isNotNull();
 
-      assertThat(idCaptor.getValue().key()).contains(":hubba").endsWith(":45");
+      assertThat(idCaptor.getValue().key()).contains("_1_").endsWith("_hubba");
     }
 
     @Test
@@ -115,11 +106,6 @@ class ProjectionSnapshotRepositoryImplTest {
       when(snapshotCache.getSnapshot(any()))
           .thenReturn(Optional.of(new Snapshot(id, lastFact, bytes, true)));
 
-      when(serializer.calculateProjectionSerial(SomeSnapshotProjection.class))
-          // let's assume this is the serial id computed by the
-          // serialiser
-          .thenReturn(45L, 0L);
-
       when(serializer.getId()).thenReturn("oink");
 
       // RUN
@@ -129,21 +115,20 @@ class ProjectionSnapshotRepositoryImplTest {
       // ASSERT
       verify(snapshotCache, times(2)).getSnapshot(idCaptor.capture());
 
-      verify(serializer, times(1)).calculateProjectionSerial(any());
-
       assertThat(idCaptor.getAllValues()).hasSize(2);
 
       idCaptor.getAllValues().stream()
           .map(SnapshotId::key)
           .forEach(
               key -> {
-                assertThat(key).contains(":oink").endsWith(":45");
+                assertThat(key).contains("_1_").endsWith("_oink");
               });
     }
 
     @Test
     void findLatest_doesNotExist() {
       // INIT
+      when(serializer.getId()).thenReturn("oink");
       when(snapshotCache.getSnapshot(any())).thenReturn(Optional.empty());
       // RUN
       Optional<Snapshot> latest = underTest.findLatest(SomeSnapshotProjection.class);
@@ -157,13 +142,14 @@ class ProjectionSnapshotRepositoryImplTest {
   class WhenPutting {
     private final UUID STATE = UUID.randomUUID();
 
-    @Mock private SnapshotProjection projection;
+    @Spy private SnapshotProjection projection = new SomeSnapshotProjection();
 
     @Captor private ArgumentCaptor<Snapshot> snapshotCaptor;
 
     @Test
     void put() {
       // INIT
+      when(serializer.getId()).thenReturn("oink");
       when(serializerSupplier.retrieveSerializer(any())).thenReturn(serializer);
 
       when(serializer.serialize(projection)).thenReturn("foo".getBytes());
@@ -186,5 +172,6 @@ class ProjectionSnapshotRepositoryImplTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   static class SomeSnapshotProjection implements SnapshotProjection {}
 }
