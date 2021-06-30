@@ -15,14 +15,13 @@
  */
 package org.factcast.itests.factus.proj;
 
+import java.util.UUID;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.redis.AbstractRedisManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
-
-import java.util.UUID;
 
 @Slf4j
 @ProjectionMetaData(serial = 1)
