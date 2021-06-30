@@ -15,15 +15,13 @@
  */
 package org.factcast.itests.factus.proj;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Handler;
 import org.factcast.factus.redis.AbstractRedisManagedProjection;
 import org.factcast.factus.redis.UUIDCodec;
 import org.factcast.factus.redis.batch.RedisBatched;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.redisson.api.RBatch;
@@ -35,7 +33,12 @@ import org.redisson.codec.CompositeCodec;
 import org.redisson.codec.LZ4Codec;
 import org.redisson.codec.MarshallingCodec;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 @Slf4j
+@ProjectionMetaData(serial = 1)
 @RedisBatched
 public class BatchRedissonManagedUserNames extends AbstractRedisManagedProjection {
 

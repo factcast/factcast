@@ -15,6 +15,6 @@ public class ClassUtils {
       c = c.getSuperclass();
     }
 
-    return c.getSimpleName();
+    return c.getName();
   }
 }

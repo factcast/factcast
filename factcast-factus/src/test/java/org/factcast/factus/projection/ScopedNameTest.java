@@ -1,10 +1,10 @@
 package org.factcast.factus.projection;
 
-import static org.assertj.core.api.Assertions.*;
-
 import lombok.val;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.*;
 
 class ScopedNameTest {
 
@@ -12,7 +12,8 @@ class ScopedNameTest {
   void forClass() {
     assertThatThrownBy(() -> ScopedName.forClass(MissingAnnotation.class))
         .isInstanceOf(IllegalStateException.class);
-    assertThat(ScopedName.forClass(WithoutName.class).toString()).isEqualTo("WithoutName_2");
+    assertThat(ScopedName.forClass(WithoutName.class).toString())
+        .isEqualTo("org.factcast.factus.projection.ScopedNameTest$WithoutName_2");
     assertThat(ScopedName.forClass(Complete.class).toString()).isEqualTo("hugo_3");
   }
 
