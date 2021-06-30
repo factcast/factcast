@@ -1,6 +1,11 @@
 package org.factcast.itests.factus;
 
+import static java.util.UUID.*;
+import static org.assertj.core.api.Assertions.*;
+
 import config.RedissonProjectionConfiguration;
+import java.util.ArrayList;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -27,12 +32,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
-
-import java.util.ArrayList;
-import java.util.UUID;
-
-import static java.util.UUID.*;
-import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class, RedissonProjectionConfiguration.class})

@@ -1,10 +1,10 @@
 package org.factcast.factus.projection;
 
+import static org.assertj.core.api.Assertions.*;
+
 import lombok.val;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.*;
 
 class ScopedNameTest {
 
