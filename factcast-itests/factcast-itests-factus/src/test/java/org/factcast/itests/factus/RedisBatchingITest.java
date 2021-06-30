@@ -1,11 +1,6 @@
 package org.factcast.itests.factus;
 
-import static java.util.UUID.*;
-import static org.assertj.core.api.Assertions.*;
-
 import config.RedissonProjectionConfiguration;
-import java.util.ArrayList;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -14,12 +9,15 @@ import lombok.val;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.redis.batch.RedisBatched;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.BatchRedissonManagedUserNames;
 import org.factcast.itests.factus.proj.BatchRedissonSubscribedUserNames;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.redisson.api.RBatch;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +27,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
+
+import java.util.ArrayList;
+import java.util.UUID;
+
+import static java.util.UUID.*;
+import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class, RedissonProjectionConfiguration.class})
@@ -225,6 +229,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisBatched(size = 2)
   static class BatchRedissonManagedUserNamesSize2 extends TrackingBatchRedissonManagedUserNames {
     public BatchRedissonManagedUserNamesSize2(RedissonClient redisson) {
@@ -238,6 +243,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisBatched(size = 3)
   static class BatchRedissonManagedUserNamesSize3 extends TrackingBatchRedissonManagedUserNames {
     public BatchRedissonManagedUserNamesSize3(RedissonClient redisson) {
@@ -245,6 +251,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisBatched(size = 2)
   static class BatchRedissonSubscribedUserNamesSize2
       extends TrackingBatchRedissonSubscribedUserNames {
@@ -253,6 +260,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisBatched(size = 3)
   static class BatchRedissonSubscribedUserNamesSize3
       extends TrackingBatchRedissonSubscribedUserNames {
@@ -261,6 +269,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisBatched(size = 5)
   static class BatchRedissonManagedUserNamesSizeBlowAt7th
       extends TrackingBatchRedissonManagedUserNames {
@@ -279,6 +288,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisBatched(size = 5)
   static class BatchRedissonSubscribedUserNamesSizeBlowAt7th
       extends TrackingBatchRedissonSubscribedUserNames {
