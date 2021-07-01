@@ -4,20 +4,20 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.github.fge.jsonschema.core.exceptions.ProcessingException
 import com.github.fge.jsonschema.main.JsonSchema
 import com.github.fge.jsonschema.main.JsonSchemaFactory
-import io.kotlintest.TestCase
-import io.kotlintest.TestResult
-import io.kotlintest.assertions.arrow.either.shouldBeLeft
-import io.kotlintest.assertions.arrow.either.shouldBeRight
-import io.kotlintest.matchers.types.shouldBeInstanceOf
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.arrow.either.shouldBeLeft
+import io.kotest.assertions.arrow.either.shouldBeRight
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.core.test.TestCase
+import io.kotest.core.test.TestResult
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifyAll
-import java.nio.file.Paths
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.validation.ProjectError
+import java.nio.file.Paths
 
 class SchemaServiceImplTest : StringSpec() {
     val fs = mockk<FileSystemService>()
