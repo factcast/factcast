@@ -14,7 +14,7 @@ import org.factcast.schema.registry.cli.fixture
 import org.factcast.schema.registry.cli.fs.FileSystemService
 
 @MicronautTest
-class TransformationIntTest(private val uut: TransformationEvaluator, private val fs: FileSystemService) :
+class TransformationEvaluatorIntTest(private val uut: TransformationEvaluator, private val fs: FileSystemService) :
     StringSpec() {
 
     val ns = mockk<Namespace>()
