@@ -1,28 +1,18 @@
 package org.factcast.schema.registry.cli.registry.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.kotlintest.TestCase
-import io.kotlintest.TestResult
-import io.kotlintest.specs.StringSpec
-import io.mockk.clearAllMocks
-import io.mockk.confirmVerified
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
-import io.mockk.verifyAll
-import java.io.File
-import java.nio.file.Paths
-import org.factcast.schema.registry.cli.domain.Event
-import org.factcast.schema.registry.cli.domain.Example
-import org.factcast.schema.registry.cli.domain.Namespace
-import org.factcast.schema.registry.cli.domain.Project
-import org.factcast.schema.registry.cli.domain.Transformation
-import org.factcast.schema.registry.cli.domain.Version
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.core.test.TestCase
+import io.kotest.core.test.TestResult
+import io.mockk.*
+import org.factcast.schema.registry.cli.domain.*
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.registry.IndexFileCalculator
 import org.factcast.schema.registry.cli.registry.getEventId
 import org.factcast.schema.registry.cli.registry.getTransformationId
 import org.factcast.schema.registry.cli.registry.index.Index
+import java.io.File
+import java.nio.file.Paths
 
 class FactcastIndexCreatorImplTest : StringSpec() {
     val indexFileCalculator = mockk<IndexFileCalculator>()
@@ -68,8 +58,12 @@ class FactcastIndexCreatorImplTest : StringSpec() {
             uut.copySchemes(dummyPath, dummyProject, false)
 
             verifyAll {
-                fs.copyFile(any(), match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version1)) })
-                fs.copyFile(any(), match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version2)) })
+                fs.copyFile(
+                    any(),
+                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version1)) })
+                fs.copyFile(
+                    any(),
+                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version2)) })
             }
             confirmVerified(fs)
         }
@@ -80,8 +74,12 @@ class FactcastIndexCreatorImplTest : StringSpec() {
             uut.copySchemes(dummyPath, dummyProject, true)
 
             verifyAll {
-                fs.copyJsonFilteringTitle(any(), match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version1)) })
-                fs.copyJsonFilteringTitle(any(), match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version2)) })
+                fs.copyJsonFilteringTitle(
+                    any(),
+                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version1)) })
+                fs.copyJsonFilteringTitle(
+                    any(),
+                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version2)) })
             }
             confirmVerified(fs)
         }
@@ -92,10 +90,14 @@ class FactcastIndexCreatorImplTest : StringSpec() {
             uut.copyTransformations(dummyPath, dummyProject)
 
             verify {
-                fs.copyFile(any(), match { it.path.platformIndependent().endsWith(getTransformationId(namespace1, event1, 1, 2)) })
+                fs.copyFile(
+                    any(),
+                    match { it.path.platformIndependent().endsWith(getTransformationId(namespace1, event1, 1, 2)) })
             }
             verify {
-                fs.copyFile(any(), match { it.path.platformIndependent().endsWith(getTransformationId(namespace1, event1, 2, 1)) })
+                fs.copyFile(
+                    any(),
+                    match { it.path.platformIndependent().endsWith(getTransformationId(namespace1, event1, 2, 1)) })
             }
             confirmVerified(fs)
         }
