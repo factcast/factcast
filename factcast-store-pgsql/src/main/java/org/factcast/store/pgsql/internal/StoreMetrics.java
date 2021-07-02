@@ -93,7 +93,8 @@ public class StoreMetrics {
   }
 
   public enum VALUE implements MetricName {
-    CATCHUP_TRANSFORMATION_RATIO("catchupTransformationRatio");
+    CATCHUP_TRANSFORMATION_RATIO("catchupTransformationRatio"),
+    SNAPSHOTS_COMPACTED("snapshotsCompacted");
 
     @NonNull final String name;
 
