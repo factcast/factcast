@@ -24,7 +24,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   private HighWaterMark target = new HighWaterMark();
 
   @Override
-  @Scheduled(cron = "* * */1 * * *")
+  @Scheduled(cron = "0 0 */1 * * *")
   @SchedulerLock(name = "triggerTailCreation", lockAtMostFor = "120m")
   public void triggerTailCreation() {
 
