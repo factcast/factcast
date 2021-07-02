@@ -51,11 +51,13 @@ class TransformationEvaluatorTest : StringSpec() {
 
             result shouldBe resultData
 
-            chainSlot.captured.fromVersion() shouldBe 1
-            chainSlot.captured.toVersion() shouldBe 2
-            chainSlot.captured.id() shouldBe "no-real-meaning"
-            chainSlot.captured.key().ns() shouldBe "ns"
-            chainSlot.captured.key().type() shouldBe "type"
+            chainSlot.captured.run {
+                fromVersion() shouldBe 1
+                toVersion() shouldBe 2
+                id() shouldBe "no-real-meaning"
+                key().ns() shouldBe "ns"
+                key().type() shouldBe "type"
+            }
 
             verify {
                 fs.readToString(transformation.transformationPath.toFile())
