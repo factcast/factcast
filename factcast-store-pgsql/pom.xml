@@ -76,7 +76,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.2.22</version><!--$NO-MVN-MAN-VER$ -->
+      <version>42.2.23</version><!--$NO-MVN-MAN-VER$ -->
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
