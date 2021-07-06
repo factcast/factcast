@@ -8,7 +8,7 @@ import lombok.With;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Inherited
-public @interface FactcastConfig {
+public @interface FactcastTestConfig {
   String factcastVersion() default Config.FACTCAST_VERSION;
 
   String postgresVersion() default Config.POSTGRES_VERSION;
@@ -30,7 +30,7 @@ public @interface FactcastConfig {
       return new Config(FACTCAST_VERSION, POSTGRES_VERSION, CONFIG_DIR);
     }
 
-    static Config from(@NonNull FactcastConfig e) {
+    static Config from(@NonNull FactcastTestConfig e) {
       return defaults()
           .withConfigDir(e.configDir())
           .withFactcastVersion(e.factcastVersion())
