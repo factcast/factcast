@@ -54,13 +54,35 @@ databaseChangeLog:
       file: factcast/issue1161/storage-setting.sql
       relativeToChangelogFile: true
   - changeSet:
-      id: unique_index_using_uuids_to_reduce_space_requirements
+      id: unique_index_using_uuids_to_reduce_space_requirements_gracefully
       runInTransaction: false
       author: uweschaefer
       changes:
         - sqlFile:
             encoding: utf8
             path: factcast/issue1358/unique_index_using_uuids.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+  - changeSet:
+      id: transformationcache_last_access_index
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1354/transformationcache_last_access_index.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+  - changeSet:
+      id: snapshotcache_last_access_index
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1354/snapshotcache_last_access_index.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true

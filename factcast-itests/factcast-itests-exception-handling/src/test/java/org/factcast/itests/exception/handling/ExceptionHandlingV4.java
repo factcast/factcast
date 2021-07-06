@@ -29,7 +29,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.factcast.test.FactcastConfig;
+import org.factcast.test.FactcastTestConfig;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -39,7 +39,7 @@ import org.springframework.test.context.ContextConfiguration;
 @SpringBootTest
 @EnableAutoConfiguration
 @ContextConfiguration(classes = {Application.class})
-@FactcastConfig(factcastVersion = "latest")
+@FactcastTestConfig(factcastVersion = "latest")
 @Slf4j
 public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 

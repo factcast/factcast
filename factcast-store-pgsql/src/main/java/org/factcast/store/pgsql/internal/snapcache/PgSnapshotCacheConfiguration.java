@@ -24,8 +24,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @Configuration
 public class PgSnapshotCacheConfiguration {
   @Bean
-  public PgSnapshotCache pgSnapshotCache(JdbcTemplate jdbcTemplate) {
-    return new PgSnapshotCache(jdbcTemplate);
+  public PgSnapshotCache pgSnapshotCache(JdbcTemplate jdbcTemplate, PgMetrics metrics) {
+    return new PgSnapshotCache(jdbcTemplate, metrics);
   }
 
   @Bean

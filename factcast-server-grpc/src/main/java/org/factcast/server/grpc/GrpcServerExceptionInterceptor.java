@@ -115,7 +115,7 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
         return;
       }
 
-      StatusRuntimeException sre = ServerExceptionHelper.translate(exception, metadata);
+      StatusRuntimeException sre = ServerExceptionHelper.translate(exception);
 
       if (sre.getStatus().getCode().equals(Code.UNKNOWN)) {
         log.debug("Exception falling through: ", exception);

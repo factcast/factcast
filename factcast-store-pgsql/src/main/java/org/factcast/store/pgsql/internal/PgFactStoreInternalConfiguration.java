@@ -128,7 +128,8 @@ public class PgFactStoreInternalConfiguration {
       PgLatestSerialFetcher pgLatestSerialFetcher,
       PgCatchupFactory pgCatchupFactory,
       FactTransformersFactory transformerFactory,
-      FastForwardTarget target) {
+      FastForwardTarget target,
+      PgMetrics metrics) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
@@ -136,7 +137,8 @@ public class PgFactStoreInternalConfiguration {
         pgLatestSerialFetcher,
         pgCatchupFactory,
         transformerFactory,
-        target);
+        target,
+        metrics);
   }
 
   @Bean
