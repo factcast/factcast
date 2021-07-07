@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Tags;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,7 @@ abstract class AbstractSnapshotRepository {
     snapshotCache.setSnapshot(snapshot);
   }
 
+  @NonNull
   protected String createKeyForType(
       @NonNull Class<? extends SnapshotProjection> type,
       @NonNull Supplier<SnapshotSerializer> serializerSupplier) {
@@ -49,10 +51,11 @@ abstract class AbstractSnapshotRepository {
   }
 
   @SuppressWarnings("SameParameterValue")
+  @NonNull
   protected String createKeyForType(
       @NonNull Class<? extends SnapshotProjection> type,
       @NonNull Supplier<SnapshotSerializer> serializerSupplier,
-      UUID optionalUUID) {
+      @Nullable UUID optionalUUID) {
 
     ScopedName classLevelKey =
         ScopedName.forClass(type).with(getId()).with(serializerId(serializerSupplier));
@@ -64,15 +67,18 @@ abstract class AbstractSnapshotRepository {
     return classLevelKey.toString();
   }
 
-  private String serializerId(Supplier<SnapshotSerializer> serializerSupplier) {
+  @NonNull
+  private String serializerId(@NonNull Supplier<SnapshotSerializer> serializerSupplier) {
     return serializerSupplier.get().getId();
   }
 
+  @NonNull
   protected abstract String getId();
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   protected void recordSnapshotSize(
-      Optional<Snapshot> ret, Class<? extends SnapshotProjection> projectionClass) {
+      @NonNull Optional<Snapshot> ret,
+      @NonNull Class<? extends SnapshotProjection> projectionClass) {
     ret.ifPresent(
         s ->
             factusMetrics.record(
