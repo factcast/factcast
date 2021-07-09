@@ -12,7 +12,7 @@ public class ScopedName {
 
   private final String key;
 
-  public static ScopedName forClass(Class<?> clazz) {
+  public static ScopedName from(Class<?> clazz) {
     val metaData = ProjectionMetaData.Resolver.resolveFor(clazz);
 
     String name = metaData.name();
@@ -23,10 +23,14 @@ public class ScopedName {
     return ScopedName.of(name + NAME_SEPARATOR + metaData.serial());
   }
 
-  public ScopedName with(@NonNull String addition) {
-    return ScopedName.of(key + NAME_SEPARATOR + addition);
+  public ScopedName with(@NonNull String postfix) {
+    if (postfix.trim().isEmpty()) {
+      throw new IllegalArgumentException("postfix must not be empty");
+    }
+    return ScopedName.of(key + NAME_SEPARATOR + postfix);
   }
 
+  @Override
   public String toString() {
     return key;
   }
