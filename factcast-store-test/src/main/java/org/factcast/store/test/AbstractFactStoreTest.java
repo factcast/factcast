@@ -16,8 +16,8 @@
 package org.factcast.store.test;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -1228,8 +1228,12 @@ public abstract class AbstractFactStoreTest {
     List<Fact> all = catchup();
     assertThat(all).hasSize(4);
     assertThat(all.get(all.size() - 1).id()).isEqualTo(expected);
-    assertThat(ret.publishedFacts().stream().map(Fact::id).collect(Collectors.toList()))
-        .contains(expected);
+    assertThat(
+            ret.publishedFacts().stream()
+                .map(Fact::id)
+                .collect(Collectors.toList())
+                .contains(expected))
+        .isTrue();
   }
 
   @Test
