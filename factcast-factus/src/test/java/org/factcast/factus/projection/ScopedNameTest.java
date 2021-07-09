@@ -4,17 +4,17 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.val;
 import org.factcast.factus.serializer.ProjectionMetaData;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 class ScopedNameTest {
 
   @Test
-  void forClass() {
-    assertThatThrownBy(() -> ScopedName.forClass(MissingAnnotation.class))
+  void from() {
+    assertThatThrownBy(() -> ScopedName.from(MissingAnnotation.class))
         .isInstanceOf(IllegalStateException.class);
-    assertThat(ScopedName.forClass(WithoutName.class).toString())
+    assertThat(ScopedName.from(WithoutName.class).toString())
         .isEqualTo("org.factcast.factus.projection.ScopedNameTest$WithoutName_2");
-    assertThat(ScopedName.forClass(Complete.class).toString()).isEqualTo("hugo_3");
+    assertThat(ScopedName.from(Complete.class).toString()).isEqualTo("hugo_3");
   }
 
   @Test
