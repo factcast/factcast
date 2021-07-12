@@ -2,17 +2,16 @@ package org.factcast.factus.serializer;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class ProjectionMetaDataTest {
   @Test
   void testResolver() {
-    assertThat(ProjectionMetaData.Resolver.resolveFor(With.class))
+    assertThat(ProjectionMetaData.Resolver.resolveFor(With.class).get())
         .extracting(ProjectionMetaData::name, ProjectionMetaData::serial)
         .containsExactly("foo", 1L);
 
-    assertThatThrownBy(() -> ProjectionMetaData.Resolver.resolveFor(Without.class))
-        .isInstanceOf(IllegalStateException.class);
+    assertThat(ProjectionMetaData.Resolver.resolveFor(Without.class)).isEmpty();
   }
 
   @ProjectionMetaData(name = "foo", serial = 1)
