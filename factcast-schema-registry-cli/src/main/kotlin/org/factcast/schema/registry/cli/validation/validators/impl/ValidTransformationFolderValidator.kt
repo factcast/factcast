@@ -28,7 +28,7 @@ class ValidTransformationFolderValidator : ConstraintValidator<ValidTransformati
         value: Path?,
         annotationMetadata: AnnotationValue<ValidTransformationFolder>,
         context: ConstraintValidatorContext
-    ) = value == null || try {
+    ) = (value == null || Regex("[0-9]+-[0-9]+").matches(value.fileName.toString()))
         val splitted = value.fileName.toString().split("-")
 
         if (splitted.size != 2) {
