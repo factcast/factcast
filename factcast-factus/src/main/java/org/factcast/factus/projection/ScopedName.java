@@ -12,8 +12,15 @@ public class ScopedName {
 
   private final String key;
 
-  public static ScopedName from(Class<?> clazz) {
-    val metaData = ProjectionMetaData.Resolver.resolveFor(clazz);
+  public static ScopedName fromProjectionMetaData(Class<?> clazz) {
+    val metaData =
+        ProjectionMetaData.Resolver.resolveFor(clazz)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        clazz.getName()
+                            + " must be annotated by "
+                            + ProjectionMetaData.class.getName()));
 
     String name = metaData.name();
     if (name.isEmpty()) {
@@ -21,6 +28,10 @@ public class ScopedName {
     }
 
     return ScopedName.of(name + NAME_SEPARATOR + metaData.serial());
+  }
+
+  public static ScopedName of(@NonNull String name, long serial) {
+    return ScopedName.of(name + NAME_SEPARATOR + serial);
   }
 
   public ScopedName with(@NonNull String postfix) {

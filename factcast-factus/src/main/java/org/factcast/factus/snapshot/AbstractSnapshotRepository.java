@@ -58,7 +58,9 @@ abstract class AbstractSnapshotRepository {
       @Nullable UUID optionalUUID) {
 
     ScopedName classLevelKey =
-        ScopedName.from(type).with(getId()).with(serializerId(serializerSupplier));
+        ScopedName.fromProjectionMetaData(type)
+            .with(getId())
+            .with(serializerId(serializerSupplier));
 
     if (optionalUUID != null) {
       classLevelKey = classLevelKey.with(optionalUUID.toString());

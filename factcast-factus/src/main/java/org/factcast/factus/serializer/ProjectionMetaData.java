@@ -32,14 +32,8 @@ public @interface ProjectionMetaData {
 
   @UtilityClass
   class Resolver {
-    public static ProjectionMetaData resolveFor(@NonNull Class<?> clazz) {
-      return Optional.ofNullable(clazz.getAnnotation(ProjectionMetaData.class))
-          .orElseThrow(
-              () ->
-                  new IllegalStateException(
-                      clazz.getName()
-                          + " must be annotated by "
-                          + ProjectionMetaData.class.getName()));
+    public static Optional<ProjectionMetaData> resolveFor(@NonNull Class<?> clazz) {
+      return Optional.ofNullable(clazz.getAnnotation(ProjectionMetaData.class));
     }
   }
 }

@@ -9,12 +9,17 @@ import org.junit.jupiter.api.*;
 class ScopedNameTest {
 
   @Test
-  void from() {
-    assertThatThrownBy(() -> ScopedName.from(MissingAnnotation.class))
+  void fromProjectionMetaData() {
+    assertThatThrownBy(() -> ScopedName.fromProjectionMetaData(MissingAnnotation.class))
         .isInstanceOf(IllegalStateException.class);
-    assertThat(ScopedName.from(WithoutName.class).toString())
+    assertThat(ScopedName.fromProjectionMetaData(WithoutName.class).toString())
         .isEqualTo("org.factcast.factus.projection.ScopedNameTest$WithoutName_2");
-    assertThat(ScopedName.from(Complete.class).toString()).isEqualTo("hugo_3");
+    assertThat(ScopedName.fromProjectionMetaData(Complete.class).toString()).isEqualTo("hugo_3");
+  }
+
+  @Test
+  void of() {
+    assertThat(ScopedName.of("foo", 2)).extracting(ScopedName::toString).isEqualTo("foo_2");
   }
 
   @Test
