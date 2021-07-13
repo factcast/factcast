@@ -1,18 +1,18 @@
 package org.factcast.schema.registry.cli.fs
 
 import com.fasterxml.jackson.databind.JsonNode
-import io.kotlintest.TestCase
-import io.kotlintest.TestResult
-import io.kotlintest.matchers.collections.shouldContain
-import io.kotlintest.matchers.collections.shouldHaveSize
-import io.kotlintest.matchers.string.shouldContain
-import io.kotlintest.matchers.string.shouldNotContain
-import io.kotlintest.matchers.types.shouldBeInstanceOf
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.core.test.TestCase
+import io.kotest.core.test.TestResult
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.types.shouldBeInstanceOf
+import org.factcast.schema.registry.cli.fixture
 import java.nio.file.Files
 import java.nio.file.Paths
-import org.factcast.schema.registry.cli.fixture
 
 class FileSystemServiceImplTest : StringSpec() {
     var tmp = Files.createTempDirectory("fc-test")
@@ -109,8 +109,8 @@ class FileSystemServiceImplTest : StringSpec() {
             val outputPath = Paths.get(tmp.toString(), "test.txt")
 
             uut.copyJsonFilteringTitle(
-                    fixture("schema.json").toFile(),
-                    outputPath.toFile()
+                fixture("schema.json").toFile(),
+                outputPath.toFile()
             )
 
             uut.exists(outputPath) shouldBe true

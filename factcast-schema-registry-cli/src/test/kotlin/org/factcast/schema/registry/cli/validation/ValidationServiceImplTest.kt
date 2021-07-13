@@ -1,24 +1,24 @@
 package org.factcast.schema.registry.cli.validation
 
 import arrow.core.Either
-import io.kotlintest.TestCase
-import io.kotlintest.TestResult
-import io.kotlintest.assertions.arrow.either.shouldBeLeft
-import io.kotlintest.assertions.arrow.either.shouldBeRight
-import io.kotlintest.matchers.collections.shouldHaveSize
-import io.kotlintest.matchers.types.shouldBeInstanceOf
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.arrow.either.shouldBeLeft
+import io.kotest.assertions.arrow.either.shouldBeRight
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.core.test.TestCase
+import io.kotest.core.test.TestResult
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifyAll
-import java.nio.file.Paths
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.validation.validators.ExampleValidationService
 import org.factcast.schema.registry.cli.validation.validators.ProjectStructureValidationService
 import org.factcast.schema.registry.cli.validation.validators.TransformationValidationService
+import java.nio.file.Paths
 
 class ValidationServiceImplTest : StringSpec() {
     val validateExamplesServiceMock = mockk<ExampleValidationService>()

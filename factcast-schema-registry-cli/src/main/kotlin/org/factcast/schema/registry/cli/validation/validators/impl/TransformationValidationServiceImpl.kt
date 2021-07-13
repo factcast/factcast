@@ -16,7 +16,6 @@
 package org.factcast.schema.registry.cli.validation.validators.impl
 
 import com.google.common.annotations.VisibleForTesting
-import javax.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.utils.SchemaService
@@ -26,6 +25,7 @@ import org.factcast.schema.registry.cli.validation.MissingTransformationCalculat
 import org.factcast.schema.registry.cli.validation.ProjectError
 import org.factcast.schema.registry.cli.validation.TransformationEvaluator
 import org.factcast.schema.registry.cli.validation.validators.TransformationValidationService
+import javax.inject.Singleton
 
 @Singleton
 class TransformationValidationServiceImpl(
@@ -46,7 +46,7 @@ class TransformationValidationServiceImpl(
     }
 
     @VisibleForTesting
-    fun calculateValidationErrors(project: Project) = project.mapEventTransformations { _, event, transformation ->
+    fun calculateValidationErrors(project: Project) = project.mapEventTransformations { ns, event, transformation ->
         val fromVersion = event.versions.find { it.version == transformation.from }
         val toVersion = event.versions.find { it.version == transformation.to }
 
@@ -68,7 +68,7 @@ class TransformationValidationServiceImpl(
             .fold({ listOf(it) }, { schema ->
                 examples.mapNotNull {
                     val transformationResult =
-                        transformationEvaluator.evaluate(transformation.transformationPath, it)
+                        transformationEvaluator.evaluate(ns, event, transformation, it)
 
                     val validationResult = schema.validate(
                         transformationResult

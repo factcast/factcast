@@ -18,5 +18,5 @@ package org.factcast.schema.registry.cli.whitelistfilter
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 
 interface WhiteListFilterService {
-    fun filter(project: ProjectFolder, whiteList: List<String>): ProjectFolder
+    fun filter(project: ProjectFolder, whiteListEntries: List<String>): ProjectFolder
 }

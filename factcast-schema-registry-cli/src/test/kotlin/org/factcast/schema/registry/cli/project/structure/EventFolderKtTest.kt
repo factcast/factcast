@@ -1,7 +1,7 @@
 package org.factcast.schema.registry.cli.project.structure
 
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 import java.nio.file.Paths
 
 class EventFolderKtTest : StringSpec() {

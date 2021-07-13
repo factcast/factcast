@@ -16,15 +16,13 @@
 package org.factcast.schema.registry.cli.validation
 
 import arrow.core.Either
-import arrow.core.Left
-import arrow.core.Right
 import arrow.core.flatMap
-import javax.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.validation.validators.ExampleValidationService
 import org.factcast.schema.registry.cli.validation.validators.ProjectStructureValidationService
 import org.factcast.schema.registry.cli.validation.validators.TransformationValidationService
+import javax.inject.Singleton
 
 @Singleton
 class ValidationServiceImpl(
@@ -40,9 +38,9 @@ class ValidationServiceImpl(
                     .plus(transformationValidationService.validateTransformations(it))
 
                 if (errors.isEmpty()) {
-                    Right(it)
+                    Either.Right(it)
                 } else {
-                    Left(errors)
+                    Either.Left(errors)
                 }
             }
     }

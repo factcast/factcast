@@ -1,20 +1,13 @@
 package org.factcast.schema.registry.cli.project
 
-import io.kotlintest.TestCase
-import io.kotlintest.TestResult
-import io.kotlintest.matchers.collections.shouldHaveSize
-import io.kotlintest.matchers.types.shouldBeInstanceOf
-import io.kotlintest.matchers.types.shouldBeSameInstanceAs
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
-import io.mockk.clearAllMocks
-import io.mockk.confirmVerified
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
-import io.mockk.verifyAll
-import java.nio.file.NoSuchFileException
-import java.nio.file.Paths
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.core.test.TestCase
+import io.kotest.core.test.TestResult
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldBeSameInstanceAs
+import io.mockk.*
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.impl.EXAMPLES_FOLDER
 import org.factcast.schema.registry.cli.project.impl.ProjectServiceImpl
@@ -22,6 +15,8 @@ import org.factcast.schema.registry.cli.project.impl.TRANSFORMATIONS_FOLDER
 import org.factcast.schema.registry.cli.project.impl.VERSIONS_FOLDER
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.whitelistfilter.WhiteListFilterService
+import java.nio.file.NoSuchFileException
+import java.nio.file.Paths
 
 class ProjectServiceImplTest : StringSpec() {
     val fs = mockk<FileSystemService>()

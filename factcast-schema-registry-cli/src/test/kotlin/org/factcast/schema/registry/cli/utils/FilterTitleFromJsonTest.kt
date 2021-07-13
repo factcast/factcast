@@ -1,8 +1,8 @@
 package org.factcast.schema.registry.cli.utils
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 
 class FilterTitleFromJsonTest : StringSpec() {
 
@@ -25,7 +25,7 @@ class FilterTitleFromJsonTest : StringSpec() {
 
             val filtered = filterTitleFrom(unfiltered)
 
-            filtered?.findParents("title")?.size shouldBe 0
+            filtered.findParents("title")?.size shouldBe 0
         }
 
         "no content change if title is missing" {

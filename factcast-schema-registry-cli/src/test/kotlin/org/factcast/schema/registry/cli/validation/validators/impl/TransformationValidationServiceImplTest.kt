@@ -1,33 +1,24 @@
 package org.factcast.schema.registry.cli.validation.validators.impl
 
-import arrow.core.Left
-import arrow.core.Right
+import arrow.core.Either
 import com.fasterxml.jackson.databind.JsonNode
 import com.github.fge.jsonschema.core.report.ProcessingReport
 import com.github.fge.jsonschema.main.JsonSchema
-import io.kotlintest.TestCase
-import io.kotlintest.TestResult
-import io.kotlintest.matchers.collections.shouldHaveSize
-import io.kotlintest.matchers.types.shouldBeInstanceOf
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
-import io.mockk.clearAllMocks
-import io.mockk.confirmVerified
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
-import java.nio.file.Paths
-import org.factcast.schema.registry.cli.domain.Event
-import org.factcast.schema.registry.cli.domain.Example
-import org.factcast.schema.registry.cli.domain.Namespace
-import org.factcast.schema.registry.cli.domain.Project
-import org.factcast.schema.registry.cli.domain.Transformation
-import org.factcast.schema.registry.cli.domain.Version
+
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.core.test.TestCase
+import io.kotest.core.test.TestResult
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.*
+import org.factcast.schema.registry.cli.domain.*
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.utils.SchemaService
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
 import org.factcast.schema.registry.cli.validation.ProjectError
 import org.factcast.schema.registry.cli.validation.TransformationEvaluator
+import java.nio.file.Paths
 
 class TransformationValidationServiceImplTest : StringSpec() {
     val missingTransformationCalculator = mockk<MissingTransformationCalculator>()
@@ -110,7 +101,7 @@ class TransformationValidationServiceImplTest : StringSpec() {
             val dummyProject = Project(null, listOf(namespace))
 
             every { fs.readToJsonNode(dummyPath) } returns jsonNodeMock
-            every { schemaService.loadSchema(dummyPath) } returns Left(ProjectError.NoSchema(dummyPath))
+            every { schemaService.loadSchema(dummyPath) } returns Either.Left(ProjectError.NoSchema(dummyPath))
 
             val result = uut.calculateValidationErrors(dummyProject)
 
@@ -128,8 +119,15 @@ class TransformationValidationServiceImplTest : StringSpec() {
             val dummyProject = Project(null, listOf(namespace))
 
             every { fs.readToJsonNode(dummyPath) } returns jsonNodeMock
-            every { schemaService.loadSchema(dummyPath) } returns Right(schemaMock)
-            every { transformationEvaluator.evaluate(dummyPath, jsonNodeMock) } returns jsonNodeMock
+            every { schemaService.loadSchema(dummyPath) } returns Either.Right(schemaMock)
+            every {
+                transformationEvaluator.evaluate(
+                    namespace,
+                    event1,
+                    transformation1to2,
+                    jsonNodeMock
+                )
+            } returns jsonNodeMock
             every { schemaMock.validate(jsonNodeMock) } returns processingResultMock
             every { processingResultMock.isSuccess } returns false
 
@@ -138,7 +136,7 @@ class TransformationValidationServiceImplTest : StringSpec() {
             result shouldHaveSize 1
             result[0].shouldBeInstanceOf<ProjectError.TransformationValidationError>()
 
-            verify { transformationEvaluator.evaluate(dummyPath, jsonNodeMock) }
+            verify { transformationEvaluator.evaluate(namespace, event1, transformation1to2, jsonNodeMock) }
             verify { schemaMock.validate(jsonNodeMock) }
             verify { schemaService.loadSchema(dummyPath) }
             confirmVerified(transformationEvaluator, schemaMock)
@@ -149,8 +147,15 @@ class TransformationValidationServiceImplTest : StringSpec() {
             val dummyProject = Project(null, listOf(namespace))
 
             every { fs.readToJsonNode(dummyPath) } returns jsonNodeMock
-            every { schemaService.loadSchema(dummyPath) } returns Right(schemaMock)
-            every { transformationEvaluator.evaluate(dummyPath, jsonNodeMock) } returns jsonNodeMock
+            every { schemaService.loadSchema(dummyPath) } returns Either.Right(schemaMock)
+            every {
+                transformationEvaluator.evaluate(
+                    namespace,
+                    event1,
+                    transformation1to2,
+                    jsonNodeMock
+                )
+            } returns jsonNodeMock
             every { schemaMock.validate(jsonNodeMock) } returns processingResultMock
             every { processingResultMock.isSuccess } returns true
 
@@ -158,7 +163,7 @@ class TransformationValidationServiceImplTest : StringSpec() {
 
             result shouldHaveSize 0
 
-            verify { transformationEvaluator.evaluate(dummyPath, jsonNodeMock) }
+            verify { transformationEvaluator.evaluate(namespace, event1, transformation1to2, jsonNodeMock) }
             verify { schemaMock.validate(jsonNodeMock) }
             verify { schemaService.loadSchema(dummyPath) }
             confirmVerified(transformationEvaluator, schemaMock)
@@ -169,7 +174,7 @@ class TransformationValidationServiceImplTest : StringSpec() {
             val dummyProject = Project(null, listOf(namespace))
 
             every { fs.readToJsonNode(dummyPath) } returns jsonNodeMock
-            every { schemaService.loadSchema(dummyPath) } returns Left(ProjectError.NoSchema(dummyPath))
+            every { schemaService.loadSchema(dummyPath) } returns Either.Left(ProjectError.NoSchema(dummyPath))
             every { missingTransformationCalculator.calculateDowncastTransformations(event1) } returns listOf(
                 Pair(version2, version1)
             )
@@ -193,7 +198,7 @@ class TransformationValidationServiceImplTest : StringSpec() {
             val dummyProject = Project(null, listOf(namespace))
 
             every { fs.readToJsonNode(dummyPath) } returns jsonNodeMock
-            every { schemaService.loadSchema(dummyPath) } returns Right(schemaMock)
+            every { schemaService.loadSchema(dummyPath) } returns Either.Right(schemaMock)
             every { schemaMock.validate(jsonNodeMock) } returns processingResultMock
             every { processingResultMock.isSuccess } returns false
             every { missingTransformationCalculator.calculateDowncastTransformations(event1) } returns listOf(
@@ -216,7 +221,7 @@ class TransformationValidationServiceImplTest : StringSpec() {
             val dummyProject = Project(null, listOf(namespace))
 
             every { fs.readToJsonNode(dummyPath) } returns jsonNodeMock
-            every { schemaService.loadSchema(dummyPath) } returns Right(schemaMock)
+            every { schemaService.loadSchema(dummyPath) } returns Either.Right(schemaMock)
             every { schemaMock.validate(jsonNodeMock) } returns processingResultMock
             every { processingResultMock.isSuccess } returns true
             every { missingTransformationCalculator.calculateDowncastTransformations(event1) } returns listOf(

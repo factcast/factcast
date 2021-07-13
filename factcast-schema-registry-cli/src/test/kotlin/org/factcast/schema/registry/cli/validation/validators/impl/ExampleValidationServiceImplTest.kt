@@ -1,30 +1,21 @@
 package org.factcast.schema.registry.cli.validation.validators.impl
 
-import arrow.core.Left
-import arrow.core.Right
+import arrow.core.Either
 import com.fasterxml.jackson.databind.JsonNode
 import com.github.fge.jsonschema.core.report.ProcessingReport
 import com.github.fge.jsonschema.main.JsonSchema
-import io.kotlintest.TestCase
-import io.kotlintest.TestResult
-import io.kotlintest.matchers.collections.shouldHaveSingleElement
-import io.kotlintest.matchers.collections.shouldHaveSize
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
-import io.mockk.clearAllMocks
-import io.mockk.confirmVerified
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
-import java.nio.file.Paths
-import org.factcast.schema.registry.cli.domain.Event
-import org.factcast.schema.registry.cli.domain.Example
-import org.factcast.schema.registry.cli.domain.Namespace
-import org.factcast.schema.registry.cli.domain.Project
-import org.factcast.schema.registry.cli.domain.Version
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.core.test.TestCase
+import io.kotest.core.test.TestResult
+import io.kotest.matchers.collections.shouldHaveSingleElement
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
+import io.mockk.*
+import org.factcast.schema.registry.cli.domain.*
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.utils.SchemaService
 import org.factcast.schema.registry.cli.validation.ProjectError
+import java.nio.file.Paths
 
 class ExampleValidationServiceImplTest : StringSpec() {
     val fs = mockk<FileSystemService>()
@@ -51,7 +42,7 @@ class ExampleValidationServiceImplTest : StringSpec() {
     init {
         "should fail on schema error" {
             val error = ProjectError.NoSchema(dummyPath)
-            every { schemaService.loadSchema(dummyPath) } returns Left(error)
+            every { schemaService.loadSchema(dummyPath) } returns Either.Left(error)
 
             uut.validateExamples(dummyProject) shouldHaveSingleElement error
 
@@ -60,7 +51,7 @@ class ExampleValidationServiceImplTest : StringSpec() {
         }
 
         "should fail on missing/corrupted example" {
-            every { schemaService.loadSchema(dummyPath) } returns Right(mockSchema)
+            every { schemaService.loadSchema(dummyPath) } returns Either.Right(mockSchema)
             every { fs.readToJsonNode(dummyPath) } returns null
 
             val result = uut.validateExamples(dummyProject)
@@ -74,7 +65,7 @@ class ExampleValidationServiceImplTest : StringSpec() {
         }
 
         "should fail on example validation error against schema" {
-            every { schemaService.loadSchema(dummyPath) } returns Right(mockSchema)
+            every { schemaService.loadSchema(dummyPath) } returns Either.Right(mockSchema)
             every { fs.readToJsonNode(dummyPath) } returns mockJsonNode
             every { mockSchema.validate(mockJsonNode) } returns mockProcessingReport
             every { mockProcessingReport.isSuccess } returns false
@@ -91,7 +82,7 @@ class ExampleValidationServiceImplTest : StringSpec() {
         }
 
         "should succeed example validation" {
-            every { schemaService.loadSchema(dummyPath) } returns Right(mockSchema)
+            every { schemaService.loadSchema(dummyPath) } returns Either.Right(mockSchema)
             every { fs.readToJsonNode(dummyPath) } returns mockJsonNode
             every { mockSchema.validate(mockJsonNode) } returns mockProcessingReport
             every { mockProcessingReport.isSuccess } returns true

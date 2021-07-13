@@ -1,44 +1,20 @@
 package org.factcast.schema.registry.cli.validation.validators.impl
 
-import io.kotlintest.Spec
-import io.kotlintest.assertions.arrow.either.shouldBeLeft
-import io.kotlintest.assertions.arrow.either.shouldBeRight
-import io.kotlintest.matchers.collections.shouldHaveSize
-import io.kotlintest.matchers.types.shouldBeInstanceOf
-import io.kotlintest.specs.StringSpec
-import io.micronaut.context.ApplicationContext
-import io.micronaut.validation.validator.Validator
-import java.nio.file.Paths
+import io.kotest.assertions.arrow.either.shouldBeLeft
+import io.kotest.assertions.arrow.either.shouldBeRight
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.types.shouldBeInstanceOf
+import io.micronaut.test.extensions.kotest.annotation.MicronautTest
 import org.factcast.schema.registry.cli.domain.Project
-import org.factcast.schema.registry.cli.project.structure.EventFolder
-import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
-import org.factcast.schema.registry.cli.project.structure.NamespaceFolder
-import org.factcast.schema.registry.cli.project.structure.ProjectFolder
-import org.factcast.schema.registry.cli.project.structure.TransformationFolder
+import org.factcast.schema.registry.cli.project.structure.*
 import org.factcast.schema.registry.cli.validation.ProjectError
 import org.factcast.schema.registry.cli.validation.validators.ProjectStructureValidationService
+import java.nio.file.Paths
 
-class ProjectStructureValidationServiceImplTest : StringSpec() {
+@MicronautTest
+class ProjectStructureValidationServiceIntTest(private val uut: ProjectStructureValidationService) : StringSpec() {
     val dummyPath = Paths.get(".")
-    lateinit var context: ApplicationContext
-    lateinit var uut: ProjectStructureValidationService
-
-    override fun beforeSpec(spec: Spec) {
-        super.beforeSpec(spec)
-
-        // Probably we should use MicronautTest here but the kotlintest extension is currently broken
-        // so we create our own application context in order to get a Validator
-        context = ApplicationContext.run()
-
-        val validator = context.getBean(Validator::class.java)
-        uut = ProjectStructureValidationServiceImpl(validator)
-    }
-
-    override fun afterSpec(spec: Spec) {
-        super.afterSpec(spec)
-
-        context.stop()
-    }
 
     init {
         "validateProjectStructure - Projectfolder" {

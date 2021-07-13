@@ -1,24 +1,23 @@
 package org.factcast.schema.registry.cli.commands
 
-import arrow.core.Left
-import arrow.core.Right
-import io.kotlintest.TestCase
-import io.kotlintest.TestResult
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import arrow.core.Either
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.core.test.TestCase
+import io.kotest.core.test.TestResult
+import io.kotest.matchers.shouldBe
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifyAll
-import java.io.IOException
-import java.nio.file.InvalidPathException
-import java.nio.file.Paths
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.ProjectService
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.registry.DistributionCreatorService
 import org.factcast.schema.registry.cli.validation.ValidationService
+import java.io.IOException
+import java.nio.file.InvalidPathException
+import java.nio.file.Paths
 
 class CommandServiceImplTest : StringSpec() {
     val fs = mockk<FileSystemService>()
@@ -39,7 +38,7 @@ class CommandServiceImplTest : StringSpec() {
         "build a proper project" {
             every { fs.deleteDirectory(dummyPath) } returns Unit
             every { projectService.detectProject(dummyPath) } returns dummyProjectFolder
-            every { validationService.validateProject(dummyProjectFolder) } returns Right(dummyProject)
+            every { validationService.validateProject(dummyProjectFolder) } returns Either.Right(dummyProject)
             every { distributionCreatorService.createDistributable(dummyPath, dummyProject) } returns Unit
 
             uut.build(dummyPath, dummyPath) shouldBe 0
@@ -55,7 +54,7 @@ class CommandServiceImplTest : StringSpec() {
         "build a broken project" {
             every { fs.deleteDirectory(dummyPath) } returns Unit
             every { projectService.detectProject(dummyPath) } returns dummyProjectFolder
-            every { validationService.validateProject(dummyProjectFolder) } returns Left(emptyList())
+            every { validationService.validateProject(dummyProjectFolder) } returns Either.Left(emptyList())
 
             uut.build(dummyPath, dummyPath) shouldBe 1
 
@@ -69,7 +68,7 @@ class CommandServiceImplTest : StringSpec() {
         "build a proper project but fail on creation" {
             every { fs.deleteDirectory(dummyPath) } returns Unit
             every { projectService.detectProject(dummyPath) } returns dummyProjectFolder
-            every { validationService.validateProject(dummyProjectFolder) } returns Right(dummyProject)
+            every { validationService.validateProject(dummyProjectFolder) } returns Either.Right(dummyProject)
             every { distributionCreatorService.createDistributable(dummyPath, dummyProject) } throws IOException("")
 
             uut.build(dummyPath, dummyPath) shouldBe 1
@@ -96,7 +95,7 @@ class CommandServiceImplTest : StringSpec() {
 
         "validate a proper project" {
             every { projectService.detectProject(dummyPath) } returns dummyProjectFolder
-            every { validationService.validateProject(dummyProjectFolder) } returns Right(dummyProject)
+            every { validationService.validateProject(dummyProjectFolder) } returns Either.Right(dummyProject)
 
             uut.validate(dummyPath) shouldBe 0
 
@@ -108,7 +107,7 @@ class CommandServiceImplTest : StringSpec() {
 
         "validate broken project" {
             every { projectService.detectProject(dummyPath) } returns dummyProjectFolder
-            every { validationService.validateProject(dummyProjectFolder) } returns Left(emptyList())
+            every { validationService.validateProject(dummyProjectFolder) } returns Either.Left(emptyList())
 
             uut.validate(dummyPath) shouldBe 1
 

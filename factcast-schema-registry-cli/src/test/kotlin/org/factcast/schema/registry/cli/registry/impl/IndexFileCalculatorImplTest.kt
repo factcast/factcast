@@ -3,26 +3,22 @@ package org.factcast.schema.registry.cli.registry.impl
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
-import io.kotlintest.matchers.collections.shouldHaveSize
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import java.nio.file.Path
-import java.nio.file.Paths
-import org.factcast.schema.registry.cli.domain.Event
-import org.factcast.schema.registry.cli.domain.Namespace
-import org.factcast.schema.registry.cli.domain.Project
-import org.factcast.schema.registry.cli.domain.Transformation
-import org.factcast.schema.registry.cli.domain.Version
+import org.factcast.schema.registry.cli.domain.*
 import org.factcast.schema.registry.cli.fixture
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.fs.FileSystemServiceImpl
 import org.factcast.schema.registry.cli.utils.ChecksumService
 import org.factcast.schema.registry.cli.utils.ChecksumServiceImpl
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
+import java.nio.file.Path
+import java.nio.file.Paths
 
 class IndexFileCalculatorImplTest : StringSpec() {
     val checksumService = mockk<ChecksumService>()
@@ -38,17 +34,19 @@ class IndexFileCalculatorImplTest : StringSpec() {
     val namespace1 = Namespace("foo", dummyPath, listOf(event1))
     val dummyProject = Project(null, listOf(namespace1))
 
-    val uut = IndexFileCalculatorImpl(checksumService, missingTransformationCalculator,
-            fileSystemService)
+    val uut = IndexFileCalculatorImpl(
+        checksumService, missingTransformationCalculator,
+        fileSystemService
+    )
 
     init {
         "calculateIndex without filtering" {
             every { checksumService.createMd5Hash(any<Path>()) } returns "foo"
             every { missingTransformationCalculator.calculateDowncastTransformations(any()) } returns listOf(
-                    Pair(
-                            version2,
-                            version1
-                    )
+                Pair(
+                    version2,
+                    version1
+                )
             )
 
             val index = uut.calculateIndex(dummyProject, false)
@@ -68,10 +66,10 @@ class IndexFileCalculatorImplTest : StringSpec() {
             every { checksumService.createMd5Hash(any<Path>()) } returns "foo"
             every { fileSystemService.readToJsonNode(any()) } returns dummyJson
             every { missingTransformationCalculator.calculateDowncastTransformations(any()) } returns listOf(
-                    Pair(
-                            version2,
-                            version1
-                    )
+                Pair(
+                    version2,
+                    version1
+                )
             )
 
             val index = uut.calculateIndex(dummyProject, true)
@@ -92,18 +90,21 @@ class IndexFileCalculatorImplTest : StringSpec() {
             val mapper = ObjectMapper();
 
             val jsonWithSameHashCode = listOf(
-                    "{\"foo1\":\"bar1\", \"foo2\":\"bar2\"}",
-                    "{   \"foo1\"  :  \"bar1\",   \"foo2\"   :  \"bar2\"}   ",
-                    "{\"foo1\":\"bar1\", \"title\"  :\"some title\", \"foo2\":\"bar2\"}",
-                    "{   \"foo1\"   :  \"bar1\",  \"title\"  :  \"some title\",  \"foo2\"  :  \"bar2\"  }")
+                "{\"foo1\":\"bar1\", \"foo2\":\"bar2\"}",
+                "{   \"foo1\"  :  \"bar1\",   \"foo2\"   :  \"bar2\"}   ",
+                "{\"foo1\":\"bar1\", \"title\"  :\"some title\", \"foo2\":\"bar2\"}",
+                "{   \"foo1\"   :  \"bar1\",  \"title\"  :  \"some title\",  \"foo2\"  :  \"bar2\"  }"
+            )
 
             jsonWithSameHashCode.forEach { jsonString ->
                 val jsonNode = mapper.readTree(jsonString);
                 every { fileSystemService.readToJsonNode(any()) } returns jsonNode
 
                 val checksumService = ChecksumServiceImpl(fileSystemService, ObjectMapper())
-                val uut = IndexFileCalculatorImpl(checksumService, missingTransformationCalculator,
-                        fileSystemService)
+                val uut = IndexFileCalculatorImpl(
+                    checksumService, missingTransformationCalculator,
+                    fileSystemService
+                )
                 val result = uut.createTitleFilteredMd5Hash(Paths.get("some/file"))
 
                 result shouldBe "9250500f3449b8ca0a53566d16253321"
@@ -120,8 +121,10 @@ class IndexFileCalculatorImplTest : StringSpec() {
 
             val fileSystemService = FileSystemServiceImpl()
             val checksumService = ChecksumServiceImpl(fileSystemService, ObjectMapper())
-            val uut = IndexFileCalculatorImpl(checksumService, missingTransformationCalculator,
-                    fileSystemService)
+            val uut = IndexFileCalculatorImpl(
+                checksumService, missingTransformationCalculator,
+                fileSystemService
+            )
 
             val indexWithoutStrippedTitles = uut.calculateIndex(dummyProject, false)
             val indexWithStrippedTitles = uut.calculateIndex(dummyProject, true)
