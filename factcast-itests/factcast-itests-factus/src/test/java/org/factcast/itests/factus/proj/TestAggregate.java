@@ -18,8 +18,10 @@ package org.factcast.itests.factus.proj;
 import lombok.Getter;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.TestAggregateIncremented;
 
+@ProjectionMetaData(serial = 1)
 public class TestAggregate extends Aggregate {
 
   @Getter int magicNumber = 42;

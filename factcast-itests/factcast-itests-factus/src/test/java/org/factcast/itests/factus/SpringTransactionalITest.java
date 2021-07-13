@@ -4,7 +4,10 @@ import static java.util.UUID.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -14,6 +17,7 @@ import org.factcast.factus.Factus;
 import org.factcast.factus.Handler;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.WriterToken;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.spring.tx.AbstractSpringTxManagedProjection;
 import org.factcast.factus.spring.tx.AbstractSpringTxSubscribedProjection;
 import org.factcast.factus.spring.tx.SpringTransactional;
@@ -140,6 +144,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(p.txSeen()).hasSize(1);
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 3)
     class BulkSize3Projection extends AbstractTrackingUserProjection {
       public BulkSize3Projection(
@@ -149,6 +154,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 5)
     class BulkSize5Projection extends AbstractTrackingUserProjection {
       public BulkSize5Projection(
@@ -158,6 +164,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 20)
     class BulkSize20Projection extends AbstractTrackingUserProjection {
       public BulkSize20Projection(
@@ -167,6 +174,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 10)
     class BulkSize10Projection extends AbstractTrackingUserProjection {
       public BulkSize10Projection(
@@ -176,6 +184,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 3000000, timeout = 1000) // will flush after 800ms
     class SpringTxProjectionTimeout extends AbstractTrackingUserProjection {
       public SpringTxProjectionTimeout(
@@ -192,6 +201,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 5)
     class SpringTxProjectionSizeBlowAt7th extends AbstractTrackingUserProjection {
       private int count;
@@ -284,6 +294,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(p.txSeen()).hasSize(1);
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 3)
     class BulkSize3Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize3Projection(
@@ -293,6 +304,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 5)
     class BulkSize5Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize5Projection(
@@ -302,6 +314,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 20)
     class BulkSize20Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize20Projection(
@@ -311,6 +324,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 10)
     class BulkSize10Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize10Projection(
@@ -320,6 +334,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 3000000, timeout = 1000) // will flush after 800ms
     class SpringTxProjectionTimeout extends AbstractTrackingUserSubscribedProjection {
       public SpringTxProjectionTimeout(
@@ -336,6 +351,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 5)
     class SpringTxProjectionSizeBlowAt7th extends AbstractTrackingUserSubscribedProjection {
       private int count;
@@ -407,7 +423,9 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     public UUID state() {
       try {
         return jdbcTemplate.queryForObject(
-            "SELECT state FROM managed_projection WHERE name = ?", UUID.class, "foo");
+            "SELECT state FROM managed_projection WHERE name = ?",
+            UUID.class,
+            getScopedName().toString());
       } catch (IncorrectResultSizeDataAccessException e) {
         // no state yet, just return null
         return null;
@@ -424,7 +442,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
       jdbcTemplate.update(
           "INSERT INTO managed_projection (name, state) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET state = ?",
-          "foo",
+          getScopedName().toString(),
           state,
           state);
     }
@@ -461,7 +479,9 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     public UUID state() {
       try {
         return jdbcTemplate.queryForObject(
-            "SELECT state FROM managed_projection WHERE name = ?", UUID.class, "foo");
+            "SELECT state FROM managed_projection WHERE name = ?",
+            UUID.class,
+            getScopedName().toString());
       } catch (IncorrectResultSizeDataAccessException e) {
         // no state yet, just return null
         return null;
@@ -478,7 +498,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
       jdbcTemplate.update(
           "INSERT INTO managed_projection (name, state) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET state = ?",
-          "foo",
+          getScopedName().toString(),
           state,
           state);
     }

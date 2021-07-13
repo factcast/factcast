@@ -3,16 +3,15 @@ package org.factcast.factus.redis;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.time.Duration;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.val;
-import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.redis.batch.RedissonBatchManager;
 import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.factcast.factus.serializer.ProjectionMetaData;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -202,28 +201,16 @@ class AbstractRedisManagedProjectionTest {
   }
 
   @Nested
-  class WhenCreatingRedisKey {
+  class MissingProjectionMetaDataAnnotation {
+
     @Test
     void happyPath() {
-      assertThat(new Foo().createRedisKey()).isEqualTo("Foo");
-    }
-
-    @Test
-    void filtersCgLib() {
-      assertThat(new Foo$$EnhancerByCGLIB().createRedisKey()).isEqualTo("Foo");
-    }
-
-    @Test
-    void filtersSpring() {
-      assertThat(new Foo$$EnhancerBySpring().createRedisKey()).isEqualTo("Bar");
-    }
-
-    @Test
-    void usesSerial() {
-      assertThat(new BarWithVersion().createRedisKey()).isEqualTo("BarWithVersion:112");
+      assertThatThrownBy(() -> new MissingAnntoationTestProjection(redisson))
+          .isInstanceOf(IllegalStateException.class);
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   static class TestProjection extends AbstractRedisManagedProjection {
 
     public TestProjection(@NonNull RedissonClient redisson) {
@@ -231,32 +218,10 @@ class AbstractRedisManagedProjectionTest {
     }
   }
 
-  class Foo implements RedisManagedProjection {
-    @Override
-    public @NonNull RedissonClient redisson() {
-      return null;
-    }
+  static class MissingAnntoationTestProjection extends AbstractRedisManagedProjection {
 
-    @Override
-    public UUID state() {
-      return null;
-    }
-
-    @Override
-    public void state(@NonNull UUID state) {}
-
-    @Override
-    public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-      return null;
+    public MissingAnntoationTestProjection(@NonNull RedissonClient redisson) {
+      super(redisson);
     }
   }
-
-  class Bar extends Foo {}
-
-  class Foo$$EnhancerByCGLIB extends Foo {}
-
-  class Foo$$EnhancerBySpring extends Bar {}
-
-  @ProjectionMetaData(serial = 112)
-  class BarWithVersion extends Foo {}
 }

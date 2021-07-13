@@ -14,11 +14,14 @@ import lombok.val;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.redis.tx.RedisTransactional;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.proj.TxRedissonManagedUserNames;
 import org.factcast.itests.factus.proj.TxRedissonSubscribedUserNames;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.redisson.api.RMap;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
@@ -65,7 +68,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     @SneakyThrows
     @Test
     public void bulkAppliesInTransaction2() {
-      TxRedissonManagedUserNamesSize2 p = new TxRedissonManagedUserNamesSize2(redissonClient) {};
+      TxRedissonManagedUserNamesSize2 p = new TxRedissonManagedUserNamesSize2(redissonClient);
       factus.update(p);
 
       assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
@@ -75,8 +78,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     @SneakyThrows
     @Test
     public void bulkAppliesInTransactionTimeout() {
-      TxRedissonManagedUserNamesTimeout p =
-          new TxRedissonManagedUserNamesTimeout(redissonClient) {};
+      TxRedissonManagedUserNamesTimeout p = new TxRedissonManagedUserNamesTimeout(redissonClient);
       factus.update(p);
 
       assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
@@ -128,8 +130,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     @SneakyThrows
     @Test
     public void bulkAppliesInTransaction2() {
-      TxRedissonSubscribedUserNamesSize2 p =
-          new TxRedissonSubscribedUserNamesSize2(redissonClient) {};
+      TxRedissonSubscribedUserNamesSize2 p = new TxRedissonSubscribedUserNamesSize2(redissonClient);
       factus.subscribeAndBlock(p).awaitCatchup();
 
       assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
@@ -140,7 +141,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     @Test
     public void bulkAppliesInTransactionTimeout() {
       TxRedissonSubscribedUserNamesTimeout p =
-          new TxRedissonSubscribedUserNamesTimeout(redissonClient) {};
+          new TxRedissonSubscribedUserNamesTimeout(redissonClient);
       factus.subscribeAndBlock(p).awaitCatchup();
 
       assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
@@ -195,6 +196,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisTransactional(size = 2)
   static class TxRedissonManagedUserNamesSize2 extends TrackingTxRedissonManagedUserNames {
     public TxRedissonManagedUserNamesSize2(RedissonClient redisson) {
@@ -202,6 +204,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisTransactional(size = 3)
   static class TxRedissonManagedUserNamesSize3 extends TrackingTxRedissonManagedUserNames {
     public TxRedissonManagedUserNamesSize3(RedissonClient redisson) {
@@ -209,6 +212,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisTransactional(size = 3000000, timeout = 1000) // will flush after 800ms
   static class TxRedissonManagedUserNamesTimeout extends TrackingTxRedissonManagedUserNames {
     public TxRedissonManagedUserNamesTimeout(RedissonClient redisson) {
@@ -225,6 +229,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisTransactional(size = 2)
   static class TxRedissonSubscribedUserNamesSize2 extends TrackingTxRedissonSubscribedUserNames {
     public TxRedissonSubscribedUserNamesSize2(RedissonClient redisson) {
@@ -232,6 +237,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisTransactional(size = 3)
   static class TxRedissonSubscribedUserNamesSize3 extends TrackingTxRedissonSubscribedUserNames {
     public TxRedissonSubscribedUserNamesSize3(RedissonClient redisson) {
@@ -239,6 +245,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisTransactional(size = 3000000, timeout = 1000) // will flush after 800ms
   static class TxRedissonSubscribedUserNamesTimeout extends TrackingTxRedissonSubscribedUserNames {
     public TxRedissonSubscribedUserNamesTimeout(RedissonClient redisson) {
@@ -255,6 +262,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisTransactional(size = 5)
   static class TxRedissonManagedUserNamesSizeBlowAt7th extends TrackingTxRedissonManagedUserNames {
     private int count;
@@ -272,6 +280,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisTransactional(size = 5)
   static class TxRedissonSubscribedUserNamesSizeBlowAt7th
       extends TrackingTxRedissonSubscribedUserNames {
