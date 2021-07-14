@@ -66,7 +66,7 @@ abstract class AbstractSnapshotRepository {
       classLevelKey = classLevelKey.with(optionalUUID.toString());
     }
 
-    return classLevelKey.toString();
+    return classLevelKey.asString();
   }
 
   @NonNull

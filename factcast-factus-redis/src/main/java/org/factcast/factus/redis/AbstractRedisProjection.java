@@ -26,7 +26,7 @@ abstract class AbstractRedisProjection
   public AbstractRedisProjection(@NonNull RedissonClient redisson) {
     this.redisson = redisson;
 
-    redisKey = getScopedName().toString();
+    redisKey = getScopedName().asString();
     stateBucketName = redisKey + "_state_tracking";
 
     // needs to be free from transactions, obviously
