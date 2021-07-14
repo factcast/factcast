@@ -11,8 +11,10 @@ import org.factcast.factus.redis.batch.RedisBatched;
 import org.factcast.factus.redis.batch.RedisBatchedLens;
 import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.redis.tx.RedisTransactionalLens;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.factcast.factus.serializer.ProjectionMetaData;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -65,18 +67,21 @@ class DoubleFeature extends AbstractRedisManagedProjection {
   }
 }
 
+@ProjectionMetaData(serial = 1)
 class TX extends ARedisTransactionalManagedProjection {
   public TX(@NonNull RedissonClient redisson) {
     super(redisson);
   }
 }
 
+@ProjectionMetaData(serial = 1)
 class BA extends ARedisBatchedManagedProjection {
   public BA(@NonNull RedissonClient redisson) {
     super(redisson);
   }
 }
 
+@ProjectionMetaData(serial = 1)
 class None extends AbstractRedisManagedProjection {
   public None(@NonNull RedissonClient redisson) {
     super(redisson);
