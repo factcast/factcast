@@ -2,11 +2,13 @@ package org.factcast.factus.projection;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.val;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.utils.ClassUtils;
 
 @RequiredArgsConstructor(staticName = "of")
+@ToString(of = "key")
 public class ScopedName {
   private static final String NAME_SEPARATOR = "_";
 
@@ -41,8 +43,7 @@ public class ScopedName {
     return ScopedName.of(key + NAME_SEPARATOR + postfix);
   }
 
-  @Override
-  public String toString() {
+  public String asString() {
     return key;
   }
 }

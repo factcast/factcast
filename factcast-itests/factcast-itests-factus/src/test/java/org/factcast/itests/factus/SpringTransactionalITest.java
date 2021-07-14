@@ -23,9 +23,7 @@ import org.factcast.factus.spring.tx.AbstractSpringTxSubscribedProjection;
 import org.factcast.factus.spring.tx.SpringTransactional;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -425,7 +423,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
         return jdbcTemplate.queryForObject(
             "SELECT state FROM managed_projection WHERE name = ?",
             UUID.class,
-            getScopedName().toString());
+            getScopedName().asString());
       } catch (IncorrectResultSizeDataAccessException e) {
         // no state yet, just return null
         return null;
@@ -442,7 +440,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
       jdbcTemplate.update(
           "INSERT INTO managed_projection (name, state) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET state = ?",
-          getScopedName().toString(),
+          getScopedName().asString(),
           state,
           state);
     }
@@ -481,7 +479,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
         return jdbcTemplate.queryForObject(
             "SELECT state FROM managed_projection WHERE name = ?",
             UUID.class,
-            getScopedName().toString());
+            getScopedName().asString());
       } catch (IncorrectResultSizeDataAccessException e) {
         // no state yet, just return null
         return null;
@@ -498,7 +496,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
       jdbcTemplate.update(
           "INSERT INTO managed_projection (name, state) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET state = ?",
-          getScopedName().toString(),
+          getScopedName().asString(),
           state,
           state);
     }

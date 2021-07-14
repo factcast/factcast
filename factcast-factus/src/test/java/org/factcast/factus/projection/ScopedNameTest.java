@@ -12,14 +12,22 @@ class ScopedNameTest {
   void fromProjectionMetaData() {
     assertThatThrownBy(() -> ScopedName.fromProjectionMetaData(MissingAnnotation.class))
         .isInstanceOf(IllegalStateException.class);
-    assertThat(ScopedName.fromProjectionMetaData(WithoutName.class).toString())
+    assertThat(ScopedName.fromProjectionMetaData(WithoutName.class).asString())
         .isEqualTo("org.factcast.factus.projection.ScopedNameTest$WithoutName_2");
-    assertThat(ScopedName.fromProjectionMetaData(Complete.class).toString()).isEqualTo("hugo_3");
+    assertThat(ScopedName.fromProjectionMetaData(Complete.class).asString()).isEqualTo("hugo_3");
   }
 
   @Test
   void of() {
-    assertThat(ScopedName.of("foo", 2)).extracting(ScopedName::toString).isEqualTo("foo_2");
+    assertThat(ScopedName.of("foo", 2)).extracting(ScopedName::asString).isEqualTo("foo_2");
+  }
+
+  @Test
+  void asStringVsToString() {
+    val n = ScopedName.of("foo", 2);
+
+    assertThat(n.asString()).isEqualTo("foo_2");
+    assertThat(n.toString()).isEqualTo("ScopedName(key=foo_2)");
   }
 
   @Test
@@ -28,8 +36,8 @@ class ScopedNameTest {
     val s2 = s.with("bar");
 
     assertThat(s).isNotSameAs(s2);
-    assertThat(s.toString()).isEqualTo("foo");
-    assertThat(s2.toString()).isEqualTo("foo_bar");
+    assertThat(s.asString()).isEqualTo("foo");
+    assertThat(s2.asString()).isEqualTo("foo_bar");
   }
 
   @ProjectionMetaData(serial = 2)
