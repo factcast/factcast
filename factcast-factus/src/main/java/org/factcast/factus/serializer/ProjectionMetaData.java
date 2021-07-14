@@ -19,9 +19,21 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Optional;
+import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ProjectionMetaData {
+  String name() default "";
+
   long serial();
+
+  @UtilityClass
+  class Resolver {
+    public static Optional<ProjectionMetaData> resolveFor(@NonNull Class<?> clazz) {
+      return Optional.ofNullable(clazz.getAnnotation(ProjectionMetaData.class));
+    }
+  }
 }

@@ -40,12 +40,14 @@ import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.LockedOperationAbortedException;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.LocalManagedProjection;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.TestAggregateIncremented;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
@@ -606,6 +608,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
         });
   }
 
+  @ProjectionMetaData(serial = 1)
   static class SimpleAggregate extends Aggregate {
     static final String ns = "ns";
     static final String type = "foo";

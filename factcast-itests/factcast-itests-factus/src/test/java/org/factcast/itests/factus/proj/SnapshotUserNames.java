@@ -20,7 +20,9 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
 import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.ProjectionMetaData;
 
+@ProjectionMetaData(serial = 1)
 public class SnapshotUserNames implements SnapshotProjection, UserNames {
   @Getter private final Map<UUID, String> userNames = new HashMap<>();
 }
