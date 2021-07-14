@@ -40,6 +40,16 @@ class ScopedNameTest {
     assertThat(s2.asString()).isEqualTo("foo_bar");
   }
 
+  @Test
+  void testWitherRefusesEmpty() {
+    val s = ScopedName.of("foo");
+    assertThatThrownBy(
+            () -> {
+              s.with(" ");
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
   @ProjectionMetaData(serial = 2)
   static class WithoutName {}
 
