@@ -90,7 +90,7 @@
     <mockito.version>3.11.2</mockito.version>
     <junit-jupiter.version>5.7.2</junit-jupiter.version>
     <lombok.version>1.18.20</lombok.version>
-    <slf4j-api.version>1.7.31</slf4j-api.version>
+    <slf4j-api.version>1.7.32</slf4j-api.version>
     <etc>${session.executionRootDirectory}/src/etc</etc>
     <spring-boot.version>2.5.2</spring-boot.version>
     <spring-cloud.version>Hoxton.SR8</spring-cloud.version>
