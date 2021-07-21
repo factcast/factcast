@@ -46,7 +46,7 @@ public class PgSchemaStoreImpl implements SchemaStore {
     nearCache.put(key.toKey(), schema);
     jdbcTemplate.update(
         "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) "
-            + "ON CONFLICT ON CONSTRAINT schemastore_ns_type_version_key DO "
+            + "ON CONFLICT ON CONSTRAINT schemastore_pkey DO "
             + "UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
         // INSERT
         key.id(),
