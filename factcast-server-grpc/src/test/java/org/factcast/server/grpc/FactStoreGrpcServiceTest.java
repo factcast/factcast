@@ -16,8 +16,8 @@
 package org.factcast.server.grpc;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -917,5 +917,19 @@ public class FactStoreGrpcServiceTest {
               verifyNoMoreInteractions(obs);
             })
         .isInstanceOf(TestException.class);
+  }
+
+  @Test
+  void testHeaderSourceTagging() {
+    Fact f = Fact.builder().ns("x").meta("foo", "bar").buildWithoutPayload();
+    f = uut.tagFact(f, "theSourceApplication");
+    assertThat(f.meta("source")).isEqualTo("theSourceApplication");
+  }
+
+  @Test
+  void testHeaderSourceTaggingOverwrites() {
+    Fact f = Fact.builder().ns("x").meta("source", "before").buildWithoutPayload();
+    f = uut.tagFact(f, "after");
+    assertThat(f.meta("source")).isEqualTo("after");
   }
 }
