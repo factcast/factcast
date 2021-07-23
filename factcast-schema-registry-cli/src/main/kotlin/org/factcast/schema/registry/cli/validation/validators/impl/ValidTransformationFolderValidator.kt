@@ -18,9 +18,9 @@ package org.factcast.schema.registry.cli.validation.validators.impl
 import io.micronaut.core.annotation.AnnotationValue
 import io.micronaut.validation.validator.constraints.ConstraintValidator
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext
+import org.factcast.schema.registry.cli.validation.validators.ValidTransformationFolder
 import java.nio.file.Path
 import javax.inject.Singleton
-import org.factcast.schema.registry.cli.validation.validators.ValidTransformationFolder
 
 @Singleton
 class ValidTransformationFolderValidator : ConstraintValidator<ValidTransformationFolder, Path> {
@@ -28,20 +28,5 @@ class ValidTransformationFolderValidator : ConstraintValidator<ValidTransformati
         value: Path?,
         annotationMetadata: AnnotationValue<ValidTransformationFolder>,
         context: ConstraintValidatorContext
-    ) = value != null && try {
-        val splitted = value.fileName.toString().split("-")
-
-        if (splitted.size != 2) {
-            false
-        } else {
-            val (from, to) = splitted
-
-            from.toInt()
-            to.toInt()
-
-            true
-        }
-    } catch (e: NumberFormatException) {
-        false
-    }
+    ) = (value == null || Regex("[0-9]+-[0-9]+").matches(value.fileName.toString()))
 }
