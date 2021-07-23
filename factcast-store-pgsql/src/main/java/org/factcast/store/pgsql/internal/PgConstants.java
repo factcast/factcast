@@ -259,7 +259,7 @@ public class PgConstants {
         + TABLE_FACT
         + " using GIN("
         + COLUMN_HEADER
-        + " json_path_ops) WHERE "
+        + " jsonb_path_ops) WHERE "
         + COLUMN_SER
         + ">"
         + ser;
