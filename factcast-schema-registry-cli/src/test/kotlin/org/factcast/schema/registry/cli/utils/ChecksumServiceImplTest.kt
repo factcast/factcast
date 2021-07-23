@@ -2,13 +2,13 @@ package org.factcast.schema.registry.cli.utils
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifyAll
-import java.nio.file.Paths
 import org.factcast.schema.registry.cli.fs.FileSystemService
+import java.nio.file.Paths
 
 class ChecksumServiceImplTest : StringSpec() {
     private val fs = mockk<FileSystemService>()

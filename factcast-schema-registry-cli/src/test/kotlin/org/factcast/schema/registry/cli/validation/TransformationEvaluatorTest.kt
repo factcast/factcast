@@ -1,93 +1,68 @@
 package org.factcast.schema.registry.cli.validation
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verifyAll
-import jdk.nashorn.api.scripting.ScriptObjectMirror
-import java.nio.file.Paths
-import org.factcast.schema.registry.cli.js.JsFunctionExecutorImpl
+import io.mockk.slot
+import io.mockk.verify
+import org.factcast.schema.registry.cli.domain.Event
+import org.factcast.schema.registry.cli.domain.Namespace
+import org.factcast.schema.registry.cli.domain.Transformation
+import org.factcast.schema.registry.cli.fs.FileSystemService
+import org.factcast.store.pgsql.registry.transformation.chains.TransformationChain
+import org.factcast.store.pgsql.registry.transformation.chains.Transformer
+import java.io.File
 
 class TransformationEvaluatorTest : StringSpec() {
 
     val dummyData = mockk<JsonNode>()
     val resultData = mockk<JsonNode>()
 
-    val dummyPath = Paths.get(".")
-    val om = mockk<ObjectMapper>(relaxed = true)
-    val executor = mockk<JsFunctionExecutorImpl>(relaxed = true)
 
-    val scriptObjectMirror = mockk<ScriptObjectMirror>()
+    val transformer = mockk<Transformer>(relaxed = true)
+    val fs = mockk<FileSystemService>(relaxed = true)
+    val ns = mockk<Namespace>()
+    val event = mockk<Event>()
+    val transformation = mockk<Transformation>(relaxed = true)
+    val dummyFile = mockk<File>()
+    val dummyTransformation = "function(e) {return  e}"
 
-    val uut = TransformationEvaluator(executor, om)
+    val uut = TransformationEvaluator(transformer, fs)
 
     init {
         "evaluate" {
-            val resultMap = mapOf("foo" to "baz")
-            val inputMap = mapOf("foo" to "bar")
+            val chainSlot = slot<TransformationChain>()
+
+            every { ns.name } returns "ns"
+            every { event.type } returns "type"
+            every { transformation.from } returns 1
+            every { transformation.to } returns 2
+            every { transformation.transformationPath.toFile() } returns dummyFile
 
             every {
-                executor.execute("transform", dummyPath, inputMap)
-            } returns resultMap
+                fs.readToString(transformation.transformationPath.toFile())
+            } returns dummyTransformation
 
-            every { om.treeToValue(dummyData, any<Class<Any>>()) } returns inputMap
-            every { om.valueToTree<JsonNode>(resultMap) } returns resultData
+            every { transformer.transform(capture(chainSlot), eq(dummyData)) } returns resultData;
 
-            val result = uut.evaluate(dummyPath, dummyData)
+            val result = uut.evaluate(ns, event, transformation, dummyData)
 
             result shouldBe resultData
 
-            verifyAll {
-                executor.execute("transform", dummyPath, any<Map<String, Any>>())
-                om.treeToValue(dummyData, any<Class<Any>>())
-                om.valueToTree<JsonNode>(resultMap)
+            chainSlot.captured.run {
+                fromVersion() shouldBe 1
+                toVersion() shouldBe 2
+                id() shouldBe "no-real-meaning"
+                key().ns() shouldBe "ns"
+                key().type() shouldBe "type"
             }
-        }
 
-        "checkMapFixNoNewArray" {
-            val inputMap = mapOf(
-                    "normalValue" to "asdf",
-                    "intValue" to 1,
-                    "nestedMap" to mapOf("a" to "b"),
-                    "existingArray" to listOf(1,2,3)
-            )
-            // no changes
-            val expectedResultMap = mapOf(
-                    "normalValue" to "asdf",
-                    "intValue" to 1,
-                    "nestedMap" to mapOf("a" to "b"),
-                    "existingArray" to listOf(1,2,3)
-            )
-
-            val fixedMap = uut.fixArrayTransformations(inputMap)
-
-            fixedMap shouldBe expectedResultMap
-        }
-
-        "checkMapFixNewArrayTurnsToList" {
-            val inputMap = mapOf(
-                    "normalValue" to "asdf",
-                    "intValue" to 1,
-                    "nestedMap" to mapOf("a" to "b"),
-                    "newArray" to scriptObjectMirror
-            )
-
-            every { scriptObjectMirror.isArray } returns true
-            every { scriptObjectMirror.to(any<Class<List<*>>>()) } returns listOf(1,2,3)
-
-            val expectedResultMap = mapOf(
-                    "normalValue" to "asdf",
-                    "intValue" to 1,
-                    "nestedMap" to mapOf("a" to "b"),
-                    "newArray" to listOf(1,2,3)
-            )
-
-            val fixedMap = uut.fixArrayTransformations(inputMap)
-
-            fixedMap shouldBe expectedResultMap
+            verify {
+                fs.readToString(transformation.transformationPath.toFile())
+                transformer.transform(any(), eq(dummyData));
+            }
         }
     }
 }
