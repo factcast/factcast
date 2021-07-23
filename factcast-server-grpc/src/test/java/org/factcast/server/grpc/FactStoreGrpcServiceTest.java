@@ -922,14 +922,14 @@ public class FactStoreGrpcServiceTest {
   @Test
   void testHeaderSourceTagging() {
     Fact f = Fact.builder().ns("x").meta("foo", "bar").buildWithoutPayload();
-    f = uut.tagFact(f, "theSourceApplication");
+    f = uut.tagFactSource(f, "theSourceApplication");
     assertThat(f.meta("source")).isEqualTo("theSourceApplication");
   }
 
   @Test
   void testHeaderSourceTaggingOverwrites() {
     Fact f = Fact.builder().ns("x").meta("source", "before").buildWithoutPayload();
-    f = uut.tagFact(f, "after");
+    f = uut.tagFactSource(f, "after");
     assertThat(f.meta("source")).isEqualTo("after");
   }
 }
