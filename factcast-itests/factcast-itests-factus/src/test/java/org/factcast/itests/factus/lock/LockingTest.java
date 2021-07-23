@@ -32,9 +32,10 @@ import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
 import org.factcast.itests.factus.Application;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
@@ -42,7 +43,7 @@ import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class, RedissonProjectionConfiguration.class})
-@EnableAutoConfiguration
+@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
 public class LockingTest extends AbstractFactCastIntegrationTest {

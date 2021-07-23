@@ -28,12 +28,12 @@
     <dependency>
       <groupId>net.javacrumbs.shedlock</groupId>
       <artifactId>shedlock-spring</artifactId>
-      <version>4.24.0</version>
+      <version>4.25.0</version>
     </dependency>
     <dependency>
       <groupId>net.javacrumbs.shedlock</groupId>
       <artifactId>shedlock-provider-jdbc-template</artifactId>
-      <version>4.24.0</version>
+      <version>4.25.0</version>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -65,7 +65,7 @@
     <dependency>
       <groupId>org.liquibase</groupId>
       <artifactId>liquibase-core</artifactId>
-      <version>4.4.1</version><!--$NO-MVN-MAN-VER$ -->
+      <version>4.4.2</version><!--$NO-MVN-MAN-VER$ -->
       <exclusions>
         <exclusion>
           <groupId>ch.qos.logback</groupId>
@@ -139,7 +139,7 @@
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>3.13.9</version>
+      <version>3.13.10</version>
       <scope>test</scope>
     </dependency>
     <dependency>

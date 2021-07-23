@@ -24,6 +24,7 @@ import org.factcast.factus.Handler;
 import org.factcast.factus.redis.AbstractRedisSubscribedProjection;
 import org.factcast.factus.redis.UUIDCodec;
 import org.factcast.factus.redis.tx.RedisTransactional;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.redisson.api.RMap;
@@ -35,6 +36,7 @@ import org.redisson.codec.LZ4Codec;
 import org.redisson.codec.MarshallingCodec;
 
 @Slf4j
+@ProjectionMetaData(serial = 1)
 @RedisTransactional(size = 50)
 public class TxRedissonSubscribedUserNames extends AbstractRedisSubscribedProjection {
 
