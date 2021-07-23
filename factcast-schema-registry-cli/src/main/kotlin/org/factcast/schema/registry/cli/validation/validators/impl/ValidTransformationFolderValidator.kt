@@ -29,19 +29,4 @@ class ValidTransformationFolderValidator : ConstraintValidator<ValidTransformati
         annotationMetadata: AnnotationValue<ValidTransformationFolder>,
         context: ConstraintValidatorContext
     ) = (value == null || Regex("[0-9]+-[0-9]+").matches(value.fileName.toString()))
-        val splitted = value.fileName.toString().split("-")
-
-        if (splitted.size != 2) {
-            false
-        } else {
-            val (from, to) = splitted
-
-            from.toInt()
-            to.toInt()
-
-            true
-        }
-    } catch (e: NumberFormatException) {
-        false
-    }
 }

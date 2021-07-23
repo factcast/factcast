@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import lombok.Getter;
 import lombok.NonNull;
+import org.factcast.factus.projection.Named;
 import org.factcast.factus.projection.StateAware;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.WriterTokenAware;
@@ -13,7 +14,8 @@ import org.factcast.factus.redis.batch.RedissonBatchManager;
 import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.redisson.api.*;
 
-abstract class AbstractRedisProjection implements RedisProjection, StateAware, WriterTokenAware {
+abstract class AbstractRedisProjection
+    implements RedisProjection, StateAware, WriterTokenAware, Named {
   @Getter protected final RedissonClient redisson;
 
   private final RLock lock;
@@ -24,7 +26,7 @@ abstract class AbstractRedisProjection implements RedisProjection, StateAware, W
   public AbstractRedisProjection(@NonNull RedissonClient redisson) {
     this.redisson = redisson;
 
-    redisKey = createRedisKey();
+    redisKey = getScopedName().asString();
     stateBucketName = redisKey + "_state_tracking";
 
     // needs to be free from transactions, obviously
