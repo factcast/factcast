@@ -86,6 +86,8 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
-
+  - include:
+      file: factcast/issue1435/stats_index.sql
+      relativeToChangelogFile: true
 
 
