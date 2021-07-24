@@ -16,8 +16,8 @@
 package org.factcast.server.grpc;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -803,7 +803,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void clearSnapshot() {
 
-    val id = new SnapshotId("foo", UUID.randomUUID());
+    val id = SnapshotId.of("foo", UUID.randomUUID());
     val req = conv.toProto(id);
     StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
 
@@ -823,7 +823,7 @@ public class FactStoreGrpcServiceTest {
   void clearSnapshotWithException() {
     assertThatThrownBy(
             () -> {
-              val id = new SnapshotId("foo", UUID.randomUUID());
+              val id = SnapshotId.of("foo", UUID.randomUUID());
               val req = conv.toProto(id);
               StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
               doThrow(TestException.class).when(backend).clearSnapshot(eq(id));
@@ -836,7 +836,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void getSnapshot() {
-    val id = new SnapshotId("foo", UUID.randomUUID());
+    val id = SnapshotId.of("foo", UUID.randomUUID());
     val req = conv.toProto(id);
     StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
     Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
@@ -853,7 +853,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void getSnapshotEmpty() {
-    val id = new SnapshotId("foo", UUID.randomUUID());
+    val id = SnapshotId.of("foo", UUID.randomUUID());
     val req = conv.toProto(id);
     StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
     Optional<Snapshot> optSnap = Optional.empty();
@@ -871,7 +871,7 @@ public class FactStoreGrpcServiceTest {
   void getSnapshotException() {
     assertThatThrownBy(
             () -> {
-              val id = new SnapshotId("foo", UUID.randomUUID());
+              val id = SnapshotId.of("foo", UUID.randomUUID());
               val req = conv.toProto(id);
               StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
               Optional<Snapshot> optSnap = Optional.empty();
@@ -887,7 +887,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void setSnapshot() {
-    val id = new SnapshotId("foo", UUID.randomUUID());
+    val id = SnapshotId.of("foo", UUID.randomUUID());
     Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
     val req = conv.toProto(snap);
     StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
@@ -904,7 +904,7 @@ public class FactStoreGrpcServiceTest {
   void setSnapshotWithException() {
     assertThatThrownBy(
             () -> {
-              val id = new SnapshotId("foo", UUID.randomUUID());
+              val id = SnapshotId.of("foo", UUID.randomUUID());
               Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
               val req = conv.toProto(snap);
               StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
