@@ -15,6 +15,7 @@
  */
 package org.factcast.store.pgsql.internal.listen;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -27,9 +28,8 @@ import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.PgMetrics;
 import org.factcast.store.pgsql.internal.listen.PgListener.FactInsertionEvent;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -145,7 +145,7 @@ public class PgListenerTest {
   public void subscribersAreOnlyInformedAboutNewFactsInDatabase() {
     PGNotification[] receivedNotifications =
         new PGNotification[] {
-          new Notification("some notification", 1), new Notification("fact_insert", 1)
+          new Notification("some notification", 1, "{}"), new Notification("fact_insert", 1, "{}")
         };
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
@@ -159,7 +159,8 @@ public class PgListenerTest {
   public void otherNotificationsAreIgnored() {
     PGNotification[] receivedNotifications =
         new PGNotification[] {
-          new Notification("some notification", 1), new Notification("some other notification", 1)
+          new Notification("some notification", 1, "{}"),
+          new Notification("some other notification", 1, "{}")
         };
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
@@ -190,12 +191,15 @@ public class PgListenerTest {
     when(conn.getNotifications(anyInt()))
         .thenReturn(
             new PGNotification[] { //
-              new Notification(PgConstants.CHANNEL_NAME, 1), //
-              new Notification(PgConstants.CHANNEL_NAME, 1), //
-              new Notification(PgConstants.CHANNEL_NAME, 1)
+              new Notification(PgConstants.CHANNEL_NAME, 1, "{}"), //
+              new Notification(PgConstants.CHANNEL_NAME, 1, "{}"), //
+              new Notification(
+                  PgConstants.CHANNEL_NAME,
+                  1,
+                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theType\"}}")
             },
-            new PGNotification[] {new Notification(PgConstants.CHANNEL_NAME, 2)}, //
-            new PGNotification[] {new Notification(PgConstants.CHANNEL_NAME, 3)},
+            new PGNotification[] {new Notification(PgConstants.CHANNEL_NAME, 2, "{}")}, //
+            new PGNotification[] {new Notification(PgConstants.CHANNEL_NAME, 3, "{}")},
             new PGNotification[] {},
             new PGNotification[] {},
             new PGNotification[] {});
@@ -216,7 +220,9 @@ public class PgListenerTest {
 
     // in total there are only 3 notifies
     long totalNotifyCount = allEvents.stream().filter(f -> f.name().equals("fact_insert")).count();
-    assertEquals(3, totalNotifyCount);
+
+    assertEquals(5, totalNotifyCount); // rather than one per array, we now get one per notification
+    assertThat(allEvents).contains(new FactInsertionEvent("fact_insert","namespace","theType"));
   }
 
   @Test
