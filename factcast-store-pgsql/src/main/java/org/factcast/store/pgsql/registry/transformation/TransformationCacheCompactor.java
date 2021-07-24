@@ -19,7 +19,7 @@ import com.google.common.base.Stopwatch;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.core.SchedulerLock;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
 import org.joda.time.DateTime;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -32,7 +32,7 @@ public class TransformationCacheCompactor {
   final int days;
 
   @Scheduled(cron = "${factcast.store.pgsql.transformationCacheCompactCron:0 0 0 * * *}")
-  @SchedulerLock(name = "transformationCacheCompact", lockAtMostFor = 1000 * 60 * 60)
+  @SchedulerLock(name = "transformationCacheCompact", lockAtMostFor = "PT1h")
   public void compact() {
 
     // yes, i know the time is recorded via micrometer already, but
