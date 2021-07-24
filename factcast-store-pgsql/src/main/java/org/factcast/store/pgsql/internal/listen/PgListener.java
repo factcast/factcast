@@ -139,34 +139,35 @@ public class PgListener implements InitializingBean, DisposableBean {
               String name = n.getName();
               switch (name) {
                 case PgConstants.CHANNEL_FACT_INSERT:
-                  {
-                    String json = n.getParameter();
+                  String json = n.getParameter();
 
-                    try {
-                      JsonNode root = FactCastJson.readTree(json);
-                      JsonNode header = root.get("header");
+                  try {
+                    JsonNode root = FactCastJson.readTree(json);
+                    JsonNode header = root.get("header");
 
-                      String ns = header.get("ns").asText();
-                      String type = header.get("type").asText();
+                    String ns = header.get("ns").asText();
+                    String type = header.get("type").asText();
 
-                      log.trace(
-                          "notifying consumers for '{}' with ns={}, type={}",
-                          PgConstants.CHANNEL_FACT_INSERT,
-                          ns,
-                          type);
-                      postEvent(PgConstants.CHANNEL_FACT_INSERT, ns, type);
+                    log.trace(
+                        "notifying consumers for '{}' with ns={}, type={}",
+                        PgConstants.CHANNEL_FACT_INSERT,
+                        ns,
+                        type);
+                    postEvent(PgConstants.CHANNEL_FACT_INSERT, ns, type);
 
-                    } catch (JsonProcessingException | NullPointerException e) {
-                      // unparseable, probably longer than 8k ?
-                      // fall back to informingAllSubscribers
-                      log.trace("notifying consumers for '{}'", PgConstants.CHANNEL_FACT_INSERT);
-                      postEvent(PgConstants.CHANNEL_FACT_INSERT);
-                    }
+                  } catch (JsonProcessingException | NullPointerException e) {
+                    // unparseable, probably longer than 8k ?
+                    // fall back to informingAllSubscribers
+                    log.trace("notifying consumers for '{}'", PgConstants.CHANNEL_FACT_INSERT);
+                    postEvent(PgConstants.CHANNEL_FACT_INSERT);
                   }
+                  break;
                 case PgConstants.CHANNEL_SCHEDULED_POLL:
-                  {
-                    // just swallow it.
-                  }
+                  // just swallow it.
+                  break;
+                default:
+                  log.debug("Ignored notification from unknown channel: {}", name);
+                  break;
               }
             });
   }
