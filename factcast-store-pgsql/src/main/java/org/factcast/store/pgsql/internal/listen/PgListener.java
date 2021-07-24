@@ -67,7 +67,6 @@ public class PgListener implements InitializingBean, DisposableBean {
   private Thread listenerThread;
 
   private final CountDownLatch countDownLatch = new CountDownLatch(1);
-  public static final String CHANNEL_SCHEDULED_POLL = "scheduled-poll";
 
   @VisibleForTesting
   protected void listen() {
@@ -129,7 +128,7 @@ public class PgListener implements InitializingBean, DisposableBean {
   // make sure subscribers did not miss anything while we reconnected
   @VisibleForTesting
   protected void informSubscribersAboutFreshConnection() {
-    postEvent(CHANNEL_SCHEDULED_POLL);
+    postEvent(PgConstants.CHANNEL_SCHEDULED_POLL);
   }
 
   @VisibleForTesting
@@ -139,7 +138,7 @@ public class PgListener implements InitializingBean, DisposableBean {
             n -> {
               String name = n.getName();
               switch (name) {
-                case PgConstants.CHANNEL_NAME:
+                case PgConstants.CHANNEL_FACT_INSERT:
                   {
                     String json = n.getParameter();
 
@@ -152,19 +151,19 @@ public class PgListener implements InitializingBean, DisposableBean {
 
                       log.trace(
                           "notifying consumers for '{}' with ns={}, type={}",
-                          PgConstants.CHANNEL_NAME,
+                          PgConstants.CHANNEL_FACT_INSERT,
                           ns,
                           type);
-                      postEvent(PgConstants.CHANNEL_NAME, ns, type);
+                      postEvent(PgConstants.CHANNEL_FACT_INSERT, ns, type);
 
                     } catch (JsonProcessingException | NullPointerException e) {
                       // unparseable, probably longer than 8k ?
                       // fall back to informingAllSubscribers
-                      log.trace("notifying consumers for '{}'", PgConstants.CHANNEL_NAME);
-                      postEvent(PgConstants.CHANNEL_NAME);
+                      log.trace("notifying consumers for '{}'", PgConstants.CHANNEL_FACT_INSERT);
+                      postEvent(PgConstants.CHANNEL_FACT_INSERT);
                     }
                   }
-                case CHANNEL_SCHEDULED_POLL:
+                case PgConstants.CHANNEL_SCHEDULED_POLL:
                   {
                     // just swallow it.
                   }
@@ -203,9 +202,7 @@ public class PgListener implements InitializingBean, DisposableBean {
       // here....
       pgMetrics.counter(EVENT.MISSED_ROUNDTRIP).increment();
       throw new SQLException(
-          "Missed roundtrip notification from channel '"
-              + PgConstants.ROUNDTRIP_CHANNEL_NAME
-              + "'");
+          "Missed roundtrip notification from channel '" + PgConstants.CHANNEL_ROUNDTRIP + "'");
     } else {
       // return since there might have also received channel notifications
       pgMetrics
