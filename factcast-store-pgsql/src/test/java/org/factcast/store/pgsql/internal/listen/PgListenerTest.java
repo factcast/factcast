@@ -191,15 +191,15 @@ public class PgListenerTest {
     when(conn.getNotifications(anyInt()))
         .thenReturn(
             new PGNotification[] { //
-              new Notification(PgConstants.CHANNEL_NAME, 1, "{}"), //
-              new Notification(PgConstants.CHANNEL_NAME, 1, "{}"), //
+              new Notification(PgConstants.CHANNEL_FACT_INSERT, 1, "{}"), //
+              new Notification(PgConstants.CHANNEL_FACT_INSERT, 1, "{}"), //
               new Notification(
-                  PgConstants.CHANNEL_NAME,
+                  PgConstants.CHANNEL_FACT_INSERT,
                   1,
                   "{\"header\":{\"ns\":\"namespace\",\"type\":\"theType\"}}")
             },
-            new PGNotification[] {new Notification(PgConstants.CHANNEL_NAME, 2, "{}")}, //
-            new PGNotification[] {new Notification(PgConstants.CHANNEL_NAME, 3, "{}")},
+            new PGNotification[] {new Notification(PgConstants.CHANNEL_FACT_INSERT, 2, "{}")}, //
+            new PGNotification[] {new Notification(PgConstants.CHANNEL_FACT_INSERT, 3, "{}")},
             new PGNotification[] {},
             new PGNotification[] {},
             new PGNotification[] {});
@@ -222,7 +222,7 @@ public class PgListenerTest {
     long totalNotifyCount = allEvents.stream().filter(f -> f.name().equals("fact_insert")).count();
 
     assertEquals(5, totalNotifyCount); // rather than one per array, we now get one per notification
-    assertThat(allEvents).contains(new FactInsertionEvent("fact_insert","namespace","theType"));
+    assertThat(allEvents).contains(new FactInsertionEvent("fact_insert", "namespace", "theType"));
   }
 
   @Test

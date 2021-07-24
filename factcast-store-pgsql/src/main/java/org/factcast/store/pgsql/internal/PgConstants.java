@@ -44,7 +44,11 @@ public class PgConstants {
 
   private static final String TABLE_TOKENSTORE = "tokenstore";
 
-  public static final String CHANNEL_NAME = "fact_insert";
+  public static final String CHANNEL_FACT_INSERT = "fact_insert";
+  public static final String CHANNEL_SCHEDULED_POLL = "scheduled-poll";
+  public static final String CHANNEL_ROUNDTRIP =
+      "roundtrip_channel_"
+          + Math.abs(new Random().nextLong()); // using the pid lead to a sql exception
 
   public static final String COLUMN_PAYLOAD = "payload";
 
@@ -157,15 +161,11 @@ public class PgConstants {
   public static final String SELECT_BY_HEADER_JSON =
       "SELECT " + COLUMN_SER + " FROM " + TABLE_FACT + " WHERE " + COLUMN_HEADER + " @> ?::jsonb";
 
-  public static final String LISTEN_SQL = "LISTEN " + CHANNEL_NAME;
+  public static final String LISTEN_SQL = "LISTEN " + CHANNEL_FACT_INSERT;
 
-  public static final String ROUNDTRIP_CHANNEL_NAME =
-      "roundtrip_channel_"
-          + Math.abs(new Random().nextLong()); // using the pid lead to a sql exception
+  public static final String NOTIFY_ROUNDTRIP = "NOTIFY " + CHANNEL_ROUNDTRIP;
 
-  public static final String NOTIFY_ROUNDTRIP = "NOTIFY " + ROUNDTRIP_CHANNEL_NAME;
-
-  public static final String LISTEN_ROUNDTRIP_CHANNEL_SQL = "LISTEN " + ROUNDTRIP_CHANNEL_NAME;
+  public static final String LISTEN_ROUNDTRIP_CHANNEL_SQL = "LISTEN " + CHANNEL_ROUNDTRIP;
 
   public static final String UPDATE_FACT_SERIALS =
       "update "
