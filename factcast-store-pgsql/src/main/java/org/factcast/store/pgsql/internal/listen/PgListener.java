@@ -15,6 +15,8 @@
  */
 package org.factcast.store.pgsql.internal.listen;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import java.sql.PreparedStatement;
@@ -23,10 +25,12 @@ import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import lombok.Getter;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.PgMetrics;
@@ -63,6 +67,7 @@ public class PgListener implements InitializingBean, DisposableBean {
   private Thread listenerThread;
 
   private final CountDownLatch countDownLatch = new CountDownLatch(1);
+  public static final String CHANNEL_SCHEDULED_POLL = "scheduled-poll";
 
   @VisibleForTesting
   protected void listen() {
@@ -124,15 +129,47 @@ public class PgListener implements InitializingBean, DisposableBean {
   // make sure subscribers did not miss anything while we reconnected
   @VisibleForTesting
   protected void informSubscribersAboutFreshConnection() {
-    postEvent("scheduled-poll");
+    postEvent(CHANNEL_SCHEDULED_POLL);
   }
 
   @VisibleForTesting
   protected void informSubscriberOfChannelNotifications(PGNotification[] notifications) {
-    if (Arrays.stream(notifications).anyMatch(n -> PgConstants.CHANNEL_NAME.equals(n.getName()))) {
-      log.trace("notifying consumers for '{}'", PgConstants.CHANNEL_NAME);
-      postEvent(PgConstants.CHANNEL_NAME);
-    }
+    Arrays.stream(notifications)
+        .forEachOrdered(
+            n -> {
+              String name = n.getName();
+              switch (name) {
+                case PgConstants.CHANNEL_NAME:
+                  {
+                    String json = n.getParameter();
+
+                    try {
+                      JsonNode root = FactCastJson.readTree(json);
+                      JsonNode header = root.get("header");
+
+                      String ns = header.get("ns").asText();
+                      String type = header.get("type").asText();
+
+                      log.trace(
+                          "notifying consumers for '{}' with ns={}, type={}",
+                          PgConstants.CHANNEL_NAME,
+                          ns,
+                          type);
+                      postEvent(PgConstants.CHANNEL_NAME, ns, type);
+
+                    } catch (JsonProcessingException | NullPointerException e) {
+                      // unparseable, probably longer than 8k ?
+                      // fall back to informingAllSubscribers
+                      log.trace("notifying consumers for '{}'", PgConstants.CHANNEL_NAME);
+                      postEvent(PgConstants.CHANNEL_NAME);
+                    }
+                  }
+                case CHANNEL_SCHEDULED_POLL:
+                  {
+                    // just swallow it.
+                  }
+              }
+            });
   }
 
   // try to receive Postgres notifications until timeout is over. In case we
@@ -188,17 +225,21 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @VisibleForTesting
   protected void postEvent(String name) {
+    postEvent(name, null, null);
+  }
+
+  @VisibleForTesting
+  protected void postEvent(@NonNull String name, @Nullable String ns, @Nullable String type) {
     if (running.get()) {
-      eventBus.post(new FactInsertionEvent(name));
+      eventBus.post(new FactInsertionEvent(name, ns, type));
     }
   }
 
-  @RequiredArgsConstructor
+  @Value
   public static class FactInsertionEvent {
-
-    @SuppressWarnings("unused")
-    @Getter
-    final String name;
+    String name;
+    String ns;
+    String type;
   }
 
   @Override
