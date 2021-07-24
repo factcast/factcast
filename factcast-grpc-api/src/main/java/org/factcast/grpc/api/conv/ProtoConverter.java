@@ -349,7 +349,7 @@ public class ProtoConverter {
   }
 
   public SnapshotId fromProto(@NonNull MSG_SnapshotId id) {
-    return new SnapshotId(id.getKey(), fromProto(id.getUuid()));
+    return SnapshotId.of(id.getKey(), fromProto(id.getUuid()));
   }
 
   public UUID fromProto(@NonNull MSG_OptionalUuid uuid) {

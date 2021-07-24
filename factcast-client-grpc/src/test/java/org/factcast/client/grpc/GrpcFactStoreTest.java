@@ -17,8 +17,8 @@ package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.factcast.core.TestHelper.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -465,7 +465,7 @@ class GrpcFactStoreTest {
 
   @Test
   void getSnapshotEmpty() {
-    SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
     when(blockingStub.getSnapshot(eq(conv.toProto(id))))
         .thenReturn(conv.toProtoSnapshot(Optional.empty()));
     assertThat(uut.getSnapshot(id)).isEmpty();
@@ -473,7 +473,7 @@ class GrpcFactStoreTest {
 
   @Test
   void getSnapshotException() {
-    SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
     when(blockingStub.getSnapshot(eq(conv.toProto(id))))
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
 
@@ -482,7 +482,7 @@ class GrpcFactStoreTest {
 
   @Test
   void getSnapshot() {
-    SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
     val snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
     when(blockingStub.getSnapshot(eq(conv.toProto(id))))
         .thenReturn(conv.toProtoSnapshot(Optional.of(snap)));
@@ -492,7 +492,7 @@ class GrpcFactStoreTest {
 
   @Test
   void setSnapshotException() {
-    SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
     val snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
     when(blockingStub.setSnapshot(eq(conv.toProto(snap))))
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
@@ -502,7 +502,7 @@ class GrpcFactStoreTest {
 
   @Test
   void setSnapshot() {
-    SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
     val snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
     when(blockingStub.setSnapshot(eq(conv.toProto(snap)))).thenReturn(conv.empty());
 
@@ -513,7 +513,7 @@ class GrpcFactStoreTest {
 
   @Test
   void clearSnapshotException() {
-    SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
     when(blockingStub.clearSnapshot(eq(conv.toProto(id))))
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
 
@@ -522,7 +522,7 @@ class GrpcFactStoreTest {
 
   @Test
   void clearSnapshot() {
-    SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
     when(blockingStub.clearSnapshot(eq(conv.toProto(id)))).thenReturn(conv.empty());
 
     uut.clearSnapshot(id);
