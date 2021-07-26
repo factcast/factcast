@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.registry.validation.schema.store;
 
 import static org.mockito.Mockito.*;
 
+import java.sql.SQLException;
 import java.util.Collections;
 import lombok.val;
 import org.factcast.store.pgsql.internal.PgTestConfiguration;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
@@ -99,6 +101,48 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
     // now fetch again - should be answered from the near cache
 
     uut.get(source.toKey());
+    verifyNoMoreInteractions(mockTpl);
+  }
+
+  @Test
+  void retriesOnWrongConstrainConflict() {
+    val uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
+
+    SchemaSource source = new SchemaSource().hash("hash").id("id").ns("ns").type("type");
+
+    when(mockTpl.update(
+            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
+            "id",
+            "hash",
+            "ns",
+            "type",
+            0,
+            "foo",
+            "hash",
+            "ns",
+            "type",
+            0,
+            "foo",
+            "id"))
+        .thenThrow(new DataAccessException("oh my", new SQLException("bad things happened")) {
+          private static final long serialVersionUID = 6190462075599395409L;
+        });
+    uut.register(source, "foo");
+    verify(mockTpl)
+        .update(
+            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) ON CONFLICT ON CONSTRAINT schemastore_ns_type_version_key DO UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
+            "id",
+            "hash",
+            "ns",
+            "type",
+            0,
+            "foo",
+            "hash",
+            "ns",
+            "type",
+            0,
+            "foo",
+            "id");
     verifyNoMoreInteractions(mockTpl);
   }
 }
