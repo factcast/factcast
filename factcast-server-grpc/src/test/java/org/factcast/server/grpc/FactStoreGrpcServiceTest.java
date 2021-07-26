@@ -16,8 +16,8 @@
 package org.factcast.server.grpc;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -72,6 +72,7 @@ public class FactStoreGrpcServiceTest {
   @Mock GrpcRequestMetadata meta;
   @Mock FastForwardTarget ffwdTarget;
   @Mock GrpcLimitProperties grpcLimitProperties;
+  @Mock GrpcRequestMetadata grpcRequestMetadata;
 
   @InjectMocks FactStoreGrpcService uut;
 
@@ -279,6 +280,28 @@ public class FactStoreGrpcServiceTest {
     assertEquals(2, facts.size());
     assertEquals(f1.id(), facts.get(0).id());
     assertEquals(f2.id(), facts.get(1).id());
+  }
+
+  @Test
+  void testPublishTagging() {
+    String clientId = "someApplication";
+    when(grpcRequestMetadata.clientId()).thenReturn(Optional.of(clientId));
+    doNothing().when(backend).publish(acFactList.capture());
+
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+
+    Fact f1 = Fact.builder().ns("test").build("{}");
+    MSG_Fact msg1 = conv.toProto(f1);
+    Builder b = MSG_Facts.newBuilder();
+    b.addAllFact(Arrays.asList(msg1));
+    MSG_Facts r = b.build();
+    uut.publish(r, mock(StreamObserver.class));
+    verify(backend).publish(acFactList.capture());
+    List<Fact> facts = acFactList.getValue();
+    assertFalse(facts.isEmpty());
+    assertEquals(1, facts.size());
+    assertEquals(f1.id(), facts.get(0).id());
+    assertEquals(clientId, facts.get(0).meta("source"));
   }
 
   @Test
@@ -634,6 +657,32 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
+  public void testSourceTaggingPublishConditional() {
+    String clientId = "someApplication";
+    when(grpcRequestMetadata.clientId()).thenReturn(Optional.of(clientId));
+
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+
+    UUID id = UUID.randomUUID();
+
+    Fact f = Fact.builder().ns("foo").type("bar").buildWithoutPayload();
+
+    ConditionalPublishRequest sfr = new ConditionalPublishRequest(Lists.newArrayList(f), id);
+    MSG_ConditionalPublishRequest req = conv.toProto(sfr);
+    StreamObserver o = mock(StreamObserver.class);
+    when(backend.publishIfUnchanged(acFactList.capture(), eq(Optional.of(new StateToken(id)))))
+        .thenReturn(true);
+
+    uut.publishConditional(req, o);
+
+    Fact fact = acFactList.getAllValues().get(0).get(0);
+    assertThat(fact.meta("source")).isEqualTo(clientId);
+
+    verify(o).onNext(eq(conv.toProto(true)));
+    verify(o).onCompleted();
+  }
+
+  @Test
   public void testAssertCanReadString() {
 
     FactCastAccount account = mock(FactCastAccount.class);
@@ -931,5 +980,13 @@ public class FactStoreGrpcServiceTest {
     Fact f = Fact.builder().ns("x").meta("source", "before").buildWithoutPayload();
     f = uut.tagFactSource(f, "after");
     assertThat(f.meta("source")).isEqualTo("after");
+  }
+
+  @Test
+  void testHeaderSourceTaggingWithBrokenHeader() {
+    Fact f = spy(Fact.builder().buildWithoutPayload());
+    when(f.jsonHeader()).thenReturn("{borken");
+    Fact f1 = uut.tagFactSource(f, "after");
+    assertSame(f, f1);
   }
 }
