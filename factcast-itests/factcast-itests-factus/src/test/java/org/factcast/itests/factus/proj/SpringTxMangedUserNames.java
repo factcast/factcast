@@ -17,8 +17,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
-@ProjectionMetaData(serial = 1)
 @Slf4j
+@ProjectionMetaData(serial = 1)
 @SpringTransactional
 public class SpringTxMangedUserNames extends AbstractSpringTxManagedProjection {
 
