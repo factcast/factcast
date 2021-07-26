@@ -100,7 +100,7 @@
     <spring-boot-maven-plugin.version>2.5.3</spring-boot-maven-plugin.version>
     <testcontainers.version>1.16.0</testcontainers.version>
     <arrow.version>0.12.1</arrow.version>
-    <micronaut.version>2.5.9</micronaut.version>
+    <micronaut.version>2.5.11</micronaut.version>
     <kotlin.version>1.5.20</kotlin.version>
         <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
         <kotest.version>4.6.1</kotest.version>
