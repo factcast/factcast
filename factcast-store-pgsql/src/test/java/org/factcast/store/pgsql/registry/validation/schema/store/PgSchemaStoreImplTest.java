@@ -124,9 +124,10 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
             0,
             "foo",
             "id"))
-        .thenThrow(new DataAccessException("oh my", new SQLException("bad things happened")) {
-          private static final long serialVersionUID = 6190462075599395409L;
-        });
+        .thenThrow(
+            new DataAccessException("oh my", new SQLException("bad things happened")) {
+              private static final long serialVersionUID = 6190462075599395409L;
+            });
     uut.register(source, "foo");
     verify(mockTpl)
         .update(
