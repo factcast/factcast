@@ -15,7 +15,7 @@ public @interface SpringTransactional {
   int timeout() default Defaults.timeout;
 
   class Defaults {
-    static final int timeout = 30000;
+    static final int timeout = 30;
 
     public static DefaultTransactionDefinition create() {
       val definition = new DefaultTransactionDefinition();
