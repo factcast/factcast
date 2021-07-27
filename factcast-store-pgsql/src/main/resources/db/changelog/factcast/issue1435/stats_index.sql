@@ -1,3 +1,4 @@
+DROP VIEW IF EXISTS stats_index;
 CREATE VIEW stats_index AS
 SELECT t.schemaname,
        t.tablename,
@@ -8,7 +9,16 @@ SELECT t.schemaname,
        CASE WHEN i.indisunique THEN 'Y' ELSE 'N' END  AS "unique",
        psai.idx_scan                                  AS number_of_scans,
        psai.idx_tup_read                              AS tuples_read,
-       psai.idx_tup_fetch                             AS tuples_fetched
+       psai.idx_tup_fetch                             AS tuples_fetched,
+       CASE
+           WHEN i.indisvalid THEN 'Y'
+           ELSE
+               CASE
+                   WHEN i is null THEN '-'
+                   ELSE
+                       'N' END
+           END
+                                                      AS "valid"
 FROM pg_tables t
          LEFT JOIN pg_class c ON t.tablename = c.relname
          LEFT JOIN pg_index i ON c.oid = i.indrelid
