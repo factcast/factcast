@@ -18,6 +18,8 @@ package org.factcast.server.grpc;
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
@@ -41,40 +43,71 @@ class GrpcObserverAdapter implements FactObserver {
 
   @NonNull private final StreamObserver<MSG_Notification> observer;
   @NonNull private final int catchupBatchSize;
+  private final ServerKeepalive keepalive;
 
   @VisibleForTesting
   @Deprecated
-  GrpcObserverAdapter(String id, StreamObserver<MSG_Notification> observer) {
-    this(id, observer, GrpcRequestMetadata.forTest());
+  GrpcObserverAdapter(@NonNull String id, @NonNull StreamObserver<MSG_Notification> observer) {
+    this(id, observer, 0);
+  }
+
+  @VisibleForTesting
+  GrpcObserverAdapter(
+      @NonNull String id, @NonNull StreamObserver<MSG_Notification> observer, long keepalive) {
+    this(id, observer, GrpcRequestMetadata.forTest(), keepalive);
+  }
+
+  @VisibleForTesting
+  GrpcObserverAdapter(
+      @NonNull String id,
+      @NonNull StreamObserver<MSG_Notification> observer,
+      @NonNull GrpcRequestMetadata meta) {
+    this(id, observer, meta, 0);
   }
 
   private final ArrayList<Fact> stagedFacts;
   private final boolean supportsFastForward;
+  private long keepaliveInMilliseconds;
 
   private final AtomicBoolean caughtUp = new AtomicBoolean(false);
 
   public GrpcObserverAdapter(
       @NonNull String id,
       @NonNull StreamObserver<MSG_Notification> observer,
-      @NonNull GrpcRequestMetadata meta) {
+      @NonNull GrpcRequestMetadata meta,
+      long keepaliveInMilliseconds) {
     this.id = id;
     this.observer = observer;
     catchupBatchSize = meta.catchupBatch().orElse(1);
     supportsFastForward = meta.supportsFastForward();
+    this.keepaliveInMilliseconds = keepaliveInMilliseconds;
     stagedFacts = new ArrayList<>(catchupBatchSize);
+    if (keepaliveInMilliseconds > 0) {
+      keepalive = new ServerKeepalive();
+    } else {
+      keepalive = null;
+    }
   }
 
   @Override
   public void onComplete() {
     flush();
+    disableKeepalive();
     log.debug("{} onComplete – sending complete notification", id);
     observer.onNext(converter.createCompleteNotification());
     tryComplete();
   }
 
+  private void disableKeepalive() {
+    if (keepalive != null) {
+      keepalive.shutdown();
+    }
+  }
+
   @Override
   public void onError(@NonNull Throwable e) {
     flush();
+    disableKeepalive();
     log.info("{} onError – sending Error notification {}", id, e.getMessage());
     observer.onError(ServerExceptionHelper.translate(e));
   }
@@ -122,6 +155,34 @@ class GrpcObserverAdapter implements FactObserver {
       log.debug("{} sending ffwd notification to fact id {}", id, factIdToFfwdTo);
       // we have not sent any fact. check for ffwding
       observer.onNext(converter.createNotificationForFastForward(factIdToFfwdTo));
+    }
+  }
+
+  public void shutdown() {
+    disableKeepalive();
+  }
+
+  class ServerKeepalive extends TimerTask {
+    private final Timer t;
+
+    ServerKeepalive() {
+      t = new Timer();
+      reschedule();
+    }
+
+    private void reschedule() {
+      t.schedule(this, keepaliveInMilliseconds);
+    }
+
+    @Override
+    public void run() {
+      observer.onNext(converter.createKeepaliveNotification());
+      reschedule();
+    }
+
+    void shutdown() {
+      cancel();
+      t.cancel();
     }
   }
 }

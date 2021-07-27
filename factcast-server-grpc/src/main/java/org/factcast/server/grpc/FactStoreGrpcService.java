@@ -183,6 +183,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
       AtomicReference<Subscription> subRef = new AtomicReference();
 
+      GrpcObserverAdapter observer =
+          new GrpcObserverAdapter(
+              req.toString(), resp, grpcRequestMetadata, req.keepaliveIntervalInMs());
+
       ((ServerCallStreamObserver<MSG_Notification>) responseObserver)
           .setOnCancelHandler(
               () -> {
@@ -195,10 +199,14 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
                 } catch (Exception e) {
                   log.debug("{}While closing connection after cancel", clientIdPrefix(), e);
                 }
+                try {
+                  observer.shutdown();
+                } catch (Exception e) {
+                  log.debug("{}While closing connection after cancel", clientIdPrefix(), e);
+                }
               });
 
-      Subscription sub =
-          store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp, grpcRequestMetadata));
+      Subscription sub = store.subscribe(req, observer);
       subRef.set(sub);
 
     } else {

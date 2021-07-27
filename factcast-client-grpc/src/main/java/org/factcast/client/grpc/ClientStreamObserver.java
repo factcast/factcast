@@ -52,13 +52,13 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
   @VisibleForTesting
   @Getter(AccessLevel.PACKAGE)
-  private final KeepaliveMonitor keepAlive;
+  private final ClientKeepalive keepAlive;
 
   public ClientStreamObserver(@NonNull SubscriptionImpl subscription, long keepAliveInterval) {
     this.subscription = subscription;
 
     if (keepAliveInterval != 0L) {
-      keepAlive = new KeepaliveMonitor(keepAliveInterval);
+      keepAlive = new ClientKeepalive(keepAliveInterval);
     } else {
       keepAlive = null;
     }
@@ -136,12 +136,12 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
     subscription.notifyComplete();
   }
 
-  class KeepaliveMonitor extends TimerTask {
+  class ClientKeepalive extends TimerTask {
     private final Timer t = new Timer();
     private final long interval;
     private final long gracePeriod;
 
-    KeepaliveMonitor(long interval) {
+    ClientKeepalive(long interval) {
       this.interval = interval;
       gracePeriod =
           interval * 2 + 200; // 2 times the interval and 200ms extra for potential network i/o
@@ -149,7 +149,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
     }
 
     void reschedule() {
-      t.schedule(this, interval, interval);
+      t.schedule(this, interval);
     }
 
     @Override
@@ -159,6 +159,8 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
       if (System.currentTimeMillis() - last > gracePeriod) {
         onError(new StaleSubscriptionDetected(last, gracePeriod));
+      } else {
+        reschedule();
       }
     }
 

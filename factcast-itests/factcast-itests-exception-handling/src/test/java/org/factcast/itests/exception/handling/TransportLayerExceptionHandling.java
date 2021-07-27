@@ -13,30 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.example.client.spring.boot2.hello;
+package org.factcast.itests.exception.handling;
 
-import com.google.common.collect.Lists;
 import java.util.UUID;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.SpecBuilder;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
+import org.factcast.factus.Factus;
+import org.factcast.test.AbstractFactCastIntegrationTest;
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
 
-@RequiredArgsConstructor
-@Component
-public class HelloWorldRunner implements CommandLineRunner {
+@SpringBootTest
+@EnableAutoConfiguration
+@ContextConfiguration(classes = {Application.class})
+@Slf4j
+public class TransportLayerExceptionHandling extends AbstractFactCastIntegrationTest {
 
-  @NonNull private final FactCast ec;
+  @Autowired Factus ec;
 
-  @Override
-  public void run(String... args) throws Exception {
+  @Autowired FactCast fc;
 
+  @Test
+  public void test() throws InterruptedException {
     ec.publish(
         createTestFact(
             UUID.randomUUID(), 1, "{\"firstName\":\"Peter1\",\"lastName\":\"Zwegert\"}"));
@@ -70,10 +77,18 @@ public class HelloWorldRunner implements CommandLineRunner {
             System.out.println("onErr " + exception);
           }
         };
-    SpecBuilder follow =
-        SubscriptionRequest.follow(Lists.newArrayList(FactSpec.ns("users").type("UserCreated")));
-    SubscriptionRequest request = follow.fromScratch();
-    ec.subscribe(request, obs).awaitComplete();
+    fc.subscribe(
+            SubscriptionRequest.follow(Lists.newArrayList(FactSpec.ns("users").type("UserCreated")))
+                .fromScratch(),
+            obs)
+        .awaitCatchup();
+    System.out.println("cuuuuuuuu");
+
+    Thread.sleep(1000);
+
+    ec.publish(
+        createTestFact(
+            UUID.randomUUID(), 1, "{\"firstName\":\"Peter3\",\"lastName\":\"Zwegert\"}"));
   }
 
   private Fact createTestFact(UUID id, int version, String body) {
