@@ -154,10 +154,9 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
     @Override
     public void run() {
-      // TOOD detect stale subscription & notify keepalive error
       val last = lastNotification.get();
 
-      if (System.currentTimeMillis() - last > gracePeriod) {
+      if (last == 0 || System.currentTimeMillis() - last > gracePeriod) {
         onError(new StaleSubscriptionDetected(last, gracePeriod));
       } else {
         reschedule();
