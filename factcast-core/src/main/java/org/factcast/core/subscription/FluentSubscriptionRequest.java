@@ -37,15 +37,17 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
   boolean ephemeral = false;
 
-  long maxBatchDelayInMs = 10;
+  boolean marks = true;
 
-  long keepaliveIntervalInMs = 20000;
+  long maxBatchDelayInMs = 0;
 
   boolean continuous;
 
   UUID startingAfter;
 
   final List<FactSpec> specs = new LinkedList<>();
+
+  boolean idOnly = false;
 
   final String debugInfo;
 
@@ -97,7 +99,6 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
       return toBuild;
     }
 
-    @Override
     public SubscriptionRequest fromNullable(UUID id) {
       toBuild.startingAfter = id;
       return toBuild;
@@ -116,36 +117,15 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     }
 
     public SpecBuilder catchup(Collection<FactSpec> specification) {
-      if (specification.isEmpty()) {
+      if (specification.isEmpty())
         throw new IllegalArgumentException("At least one FactSpec is needed for a subscription");
-      }
       specification.forEach(this::catchup);
       return this;
     }
 
-    public SpecBuilder maxBatchDelayInMs(long msec) {
-      if (msec < 10) {
-        throw new IllegalArgumentException("The minimum maxBatchDelayInMs is 10msec");
-      }
-
-      toBuild.maxBatchDelayInMs = msec;
-      return this;
-    }
-
-    public SpecBuilder keepaliveIntervalInMs(long msec) {
-      if (msec > 0 && msec < 3000) {
-        throw new IllegalArgumentException(
-            "The minimum keepaliveIntervalInMs is 3000ms. To disable keepalive, set it to 0.");
-      }
-
-      toBuild.keepaliveIntervalInMs = msec;
-      return this;
-    }
-
     public SpecBuilder follow(Collection<FactSpec> specification) {
-      if (specification.isEmpty()) {
+      if (specification.isEmpty())
         throw new IllegalArgumentException("At least one FactSpec is needed for a subscription");
-      }
       specification.forEach(this::follow);
       return this;
     }
