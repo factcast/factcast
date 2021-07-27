@@ -23,6 +23,7 @@ import static org.mockito.Mockito.*;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
@@ -154,10 +155,9 @@ public abstract class AbstractTransformationStoreTest {
 
     TransformationSource source = new TransformationSource("xx", "hash", "ns", "type", 1, 2);
     uut.store(source, "");
-
-    ((AbstractTransformationStore) uut)
-        .executorService()
-        .awaitTermination(200, TimeUnit.MILLISECONDS);
+    ExecutorService es = ((AbstractTransformationStore) uut).executorService();
+    es.shutdown();
+    es.awaitTermination(1000, TimeUnit.MILLISECONDS);
 
     TransformationKey key = source.toKey();
     verify(l).notifyFor(eq(key));
@@ -172,9 +172,9 @@ public abstract class AbstractTransformationStoreTest {
     TransformationSource source = new TransformationSource("xx", "hash", "ns", "type", 1, 2);
     uut.store(source, "");
 
-    ((AbstractTransformationStore) uut)
-        .executorService()
-        .awaitTermination(200, TimeUnit.MILLISECONDS);
+    ExecutorService es = ((AbstractTransformationStore) uut).executorService();
+    es.shutdown();
+    es.awaitTermination(1000, TimeUnit.MILLISECONDS);
 
     verify(l, never()).notifyFor(any());
   }
