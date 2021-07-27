@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.Collections;
 import java.util.UUID;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.factcast.core.Fact;
@@ -26,7 +27,10 @@ import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
 import org.factcast.core.lock.Attempt;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
@@ -117,6 +121,39 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     assertThatThrownBy(
             () -> fc.lock(FactSpec.ns("users")).attempt(() -> Attempt.publish(brokenFact)))
         .isInstanceOf(FactValidationException.class);
+  }
+
+  @Test
+  public void killMe() {
+    fc.publish(
+        createTestFact(UUID.randomUUID(), 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
+
+    FactObserver obs =
+        new FactObserver() {
+          @Override
+          public void onNext(@NonNull Fact element) {
+            System.out.println(element);
+          }
+
+          @Override
+          public void onError(@NonNull Throwable exception) {
+            System.out.println("onErr " + exception);
+          }
+
+          @Override
+          public void onComplete() {
+            System.out.println("complete");
+          }
+
+          @Override
+          public void onCatchup() {
+            System.out.println("catchup");
+          }
+        };
+    //should never return
+    Subscription users =
+        fc.subscribe(SubscriptionRequest.follow(FactSpec.ns("users")).fromScratch(), obs)
+            .awaitComplete();
   }
 
   private Fact createTestFact(UUID id, int version, String body) {

@@ -162,27 +162,31 @@ class GrpcObserverAdapter implements FactObserver {
     disableKeepalive();
   }
 
-  class ServerKeepalive extends TimerTask {
-    private final Timer t;
+  class ServerKeepalive {
+    private Timer t;
 
     ServerKeepalive() {
       t = new Timer();
       reschedule();
     }
 
-    private void reschedule() {
-      t.schedule(this, keepaliveInMilliseconds);
+    private synchronized void reschedule() {
+      if (t != null) {
+        t.schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                observer.onNext(converter.createKeepaliveNotification());
+                reschedule();
+              }
+            },
+            keepaliveInMilliseconds);
+      }
     }
 
-    @Override
-    public void run() {
-      observer.onNext(converter.createKeepaliveNotification());
-      reschedule();
-    }
-
-    void shutdown() {
-      cancel();
+    synchronized void shutdown() {
       t.cancel();
+      t = null;
     }
   }
 }
