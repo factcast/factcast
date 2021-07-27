@@ -15,6 +15,10 @@
  */
 package org.factcast.server.grpc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -54,6 +58,7 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.util.FactCastJson;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
@@ -129,10 +134,29 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
     assertCanWrite(namespaces);
 
     final int size = facts.size();
+
+    val clientId = grpcRequestMetadata.clientId();
+    if (clientId.isPresent()) {
+      val id = clientId.get();
+      facts = facts.stream().map(f -> tagFactSource(f, id)).collect(Collectors.toList());
+    }
     log.debug("{}publish {} fact{}", clientIdPrefix(), size, size > 1 ? "s" : "");
     store.publish(facts);
     responseObserver.onNext(MSG_Empty.getDefaultInstance());
     responseObserver.onCompleted();
+  }
+
+  @VisibleForTesting
+  Fact tagFactSource(@NonNull Fact f, @NonNull String source) {
+    try {
+      JsonNode h = FactCastJson.readTree(f.jsonHeader());
+      ObjectNode meta = (ObjectNode) h.get("meta");
+      meta.set("source", TextNode.valueOf(source));
+      return Fact.of(h.toString(), f.jsonPayload());
+    } catch (JsonProcessingException e) {
+      // skip it - this will break later anyway....
+      return f;
+    }
   }
 
   private String clientIdPrefix() {
@@ -382,11 +406,19 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     ConditionalPublishRequest req = converter.fromProto(request);
 
+    List<? extends Fact> facts = req.facts();
+
     List<@NonNull String> namespaces =
-        req.facts().stream().map(Fact::ns).distinct().collect(Collectors.toList());
+        facts.stream().map(Fact::ns).distinct().collect(Collectors.toList());
     assertCanWrite(namespaces);
 
-    boolean result = store.publishIfUnchanged(req.facts(), req.token());
+    val clientId = grpcRequestMetadata.clientId();
+    if (clientId.isPresent()) {
+      val id = clientId.get();
+      facts = facts.stream().map(f -> tagFactSource(f, id)).collect(Collectors.toList());
+    }
+
+    boolean result = store.publishIfUnchanged(facts, req.token());
     responseObserver.onNext(converter.toProto(result));
     responseObserver.onCompleted();
   }
