@@ -166,7 +166,7 @@ class GrpcObserverAdapter implements FactObserver {
     private Timer t;
 
     ServerKeepalive() {
-      t = new Timer();
+      t = new Timer("server-keepalive-" + System.currentTimeMillis(), true);
       reschedule();
     }
 

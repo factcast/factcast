@@ -137,7 +137,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
   }
 
   class ClientKeepalive {
-    private final Timer t = new Timer();
+    private final Timer t = new Timer("client-keepalive-" + System.currentTimeMillis(), true);
     private final long interval;
     private final long gracePeriod;
 
