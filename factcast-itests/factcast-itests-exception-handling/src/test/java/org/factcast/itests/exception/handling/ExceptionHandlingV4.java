@@ -124,6 +124,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
   }
 
   @Test
+  @Disabled
   public void killMe() {
     fc.publish(
         createTestFact(UUID.randomUUID(), 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
@@ -150,7 +151,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
             System.out.println("catchup");
           }
         };
-    //should never return
+    // should never return
     Subscription users =
         fc.subscribe(SubscriptionRequest.follow(FactSpec.ns("users")).fromScratch(), obs)
             .awaitComplete();
