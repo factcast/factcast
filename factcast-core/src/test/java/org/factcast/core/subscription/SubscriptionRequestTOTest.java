@@ -15,14 +15,11 @@
  */
 package org.factcast.core.subscription;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Collections;
 import org.factcast.core.spec.FactSpec;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class SubscriptionRequestTOTest {
 
@@ -50,7 +47,7 @@ public class SubscriptionRequestTOTest {
 
   @Test
   void testSpecsContainMarkSpec() {
-    final FactSpec s = FactSpec.ns("foo");
+    FactSpec s = FactSpec.ns("foo");
     SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
     SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
     assertEquals(1, uut.specs().size());
@@ -59,7 +56,7 @@ public class SubscriptionRequestTOTest {
 
   @Test
   void testHasAnyScriptFilters() {
-    final FactSpec s = FactSpec.ns("foo");
+    FactSpec s = FactSpec.ns("foo");
     SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
     SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
     assertFalse(uut.hasAnyScriptFilters());
@@ -74,7 +71,7 @@ public class SubscriptionRequestTOTest {
     Assertions.assertThrows(
         NullPointerException.class,
         () -> {
-          final FactSpec s = FactSpec.ns("foo");
+          FactSpec s = FactSpec.ns("foo");
           SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
           SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
           uut.addSpecs(null);
@@ -86,7 +83,7 @@ public class SubscriptionRequestTOTest {
     Assertions.assertThrows(
         IllegalArgumentException.class,
         () -> {
-          final FactSpec s = FactSpec.ns("foo");
+          FactSpec s = FactSpec.ns("foo");
           SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
           SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
           uut.addSpecs(Collections.emptyList());
@@ -95,17 +92,17 @@ public class SubscriptionRequestTOTest {
 
   @Test
   void testMaxDelay() {
-    final FactSpec s = FactSpec.ns("foo");
+    FactSpec s = FactSpec.ns("foo");
     SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
     SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
-    assertEquals(0, uut.maxBatchDelayInMs());
+    assertEquals(10, uut.maxBatchDelayInMs());
     uut.maxBatchDelayInMs(7);
     assertEquals(7, uut.maxBatchDelayInMs());
   }
 
   @Test
   void testAddSpecs() {
-    final FactSpec s = FactSpec.ns("foo");
+    FactSpec s = FactSpec.ns("foo");
     SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
     SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
     assertEquals(1, uut.specs().size());
