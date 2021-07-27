@@ -28,6 +28,7 @@ import org.factcast.store.pgsql.registry.validation.schema.SchemaConflictExcepti
 import org.factcast.store.pgsql.registry.validation.schema.SchemaKey;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaSource;
 import org.factcast.store.pgsql.registry.validation.schema.SchemaStore;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /** @author uwe */
@@ -44,24 +45,51 @@ public class PgSchemaStoreImpl implements SchemaStore {
   public void register(@NonNull SchemaSource key, @NonNull String schema)
       throws SchemaConflictException {
     nearCache.put(key.toKey(), schema);
-    jdbcTemplate.update(
-        "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) "
-            + "ON CONFLICT ON CONSTRAINT schemastore_pkey DO "
-            + "UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
-        // INSERT
-        key.id(),
-        key.hash(),
-        key.ns(),
-        key.type(),
-        key.version(),
-        schema,
-        // UPDATE
-        key.hash(),
-        key.ns(),
-        key.type(),
-        key.version(),
-        schema,
-        key.id());
+
+    try {
+      jdbcTemplate.update(
+          "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) "
+              + "ON CONFLICT ON CONSTRAINT schemastore_pkey DO "
+              + "UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
+          // INSERT
+          key.id(),
+          key.hash(),
+          key.ns(),
+          key.type(),
+          key.version(),
+          schema,
+          // UPDATE
+          key.hash(),
+          key.ns(),
+          key.type(),
+          key.version(),
+          schema,
+          key.id());
+    } catch (DataAccessException exc) {
+      // unfortunately, you can only react on ONE constraint with on conflict:
+      // https://stackoverflow.com/questions/35888012/use-multiple-conflict-target-in-on-conflict-clause
+
+      // as we have seen conflicts on the triple ns.type,version as well (which is surprising,
+      // because pkey should complain first, we handle this situation by giving it another try here:
+      jdbcTemplate.update(
+          "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) "
+              + "ON CONFLICT ON CONSTRAINT schemastore_ns_type_version_key DO "
+              + "UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
+          // INSERT
+          key.id(),
+          key.hash(),
+          key.ns(),
+          key.type(),
+          key.version(),
+          schema,
+          // UPDATE
+          key.hash(),
+          key.ns(),
+          key.type(),
+          key.version(),
+          schema,
+          key.id());
+    }
   }
 
   @Override
