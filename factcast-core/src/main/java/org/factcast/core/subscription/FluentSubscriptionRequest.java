@@ -123,7 +123,8 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
       return this;
     }
 
-    public SpecBuilder maxBatchDelayInMs(long msec) {
+    @Override
+    public SpecBuilder withMaxBatchDelayInMs(long msec) {
       if (msec < 10) {
         throw new IllegalArgumentException("The minimum maxBatchDelayInMs is 10msec");
       }
@@ -132,7 +133,8 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
       return this;
     }
 
-    public SpecBuilder keepaliveIntervalInMs(long msec) {
+    @Override
+    public SpecBuilder withKeepaliveIntervalInMs(long msec) {
       if (msec > 0 && msec < 3000) {
         throw new IllegalArgumentException(
             "The minimum keepaliveIntervalInMs is 3000ms. To disable keepalive, set it to 0.");

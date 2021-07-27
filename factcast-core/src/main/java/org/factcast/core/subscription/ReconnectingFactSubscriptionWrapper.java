@@ -248,6 +248,12 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
   }
 
   private boolean isServerException(@NonNull Throwable exception) {
+
+    if (exception instanceof StaleSubscriptionDetected) {
+      // assume connection problem
+      return false;
+    }
+
     return exception.getClass().getName().startsWith("org.factcast");
   }
 

@@ -1,5 +1,8 @@
-package org.factcast.client.grpc;
+package org.factcast.core.subscription;
 
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
 public class StaleSubscriptionDetected extends RuntimeException {
   private static final long serialVersionUID = 5303452267477397256L;
 

@@ -33,6 +33,7 @@ import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
 import org.factcast.core.subscription.FactTransformers;
+import org.factcast.core.subscription.StaleSubscriptionDetected;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;

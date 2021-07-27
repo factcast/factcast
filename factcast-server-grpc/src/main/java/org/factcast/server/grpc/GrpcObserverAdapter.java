@@ -67,7 +67,7 @@ class GrpcObserverAdapter implements FactObserver {
 
   private final ArrayList<Fact> stagedFacts;
   private final boolean supportsFastForward;
-  private long keepaliveInMilliseconds;
+  private final long keepaliveInMilliseconds;
 
   private final AtomicBoolean caughtUp = new AtomicBoolean(false);
 
