@@ -32,5 +32,5 @@ sequenceDiagram
 *Changes to the external datastore run in a transaction* 
 
 To enable atomic writes, Factus supports transactions for the following external data stores:
+- [Relational Databases]({{< ref "spring_transaction.md" >}})
 - Redis
-- Postgres

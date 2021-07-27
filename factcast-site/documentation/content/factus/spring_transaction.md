@@ -14,11 +14,14 @@ weight = 1021
 
 +++
 
-TODO mention Postgres here - probably not. It's DB independent 
-TODO wording - "Fact position" instead of state
-TODO are there Spring transactional subscribed projs possible? should we document them as well ?
+- TODO mention Postgres here - probably not. It's DB independent 
+- TODO wording - "Fact position" instead of state
+- TODO wording: "application transaction" > "transactional projections"
+- TODO are there Spring transactional subscribed projs possible? should we document them as well ?
+- TODO: I don't see a bean providing the PlatformTransactionManager 
+- TODO: understand shared transaction between PlatformTransactionManager and JDBC template
 
-A Spring based managed projection has three ingredients:
+A transactional projection for relational databases has three ingredients:
 - it is annotated with `@SpringTransactional`
 - it extends the abstract class `AbstractSpringTxManagedProjection`
 - it provides the serial number of the projection via the `@ProjectionMetaData` annotation
@@ -39,9 +42,9 @@ public class ExampleSpringTxManagedProjection extends AbstractSpringTxManagedPro
 ```
 
 Transactionality is provided by the Spring [`PlatformTransactionManager`](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/PlatformTransactionManager.html)
-and is injected via the constructor. To register the `PlatformTransactionManager` for Factus, the parent constructor has to be invoked.
+which is injected via the constructor. To register the `PlatformTransactionManager` in Factus, the parent constructor has to be invoked.
 
-To let the managed projection communicate with the external database, additionally a `JdbcTemplate` is injected.
+To let the projection communicate with the external database, additionally a `JdbcTemplate` is injected.
 
 
 Providing Required Methods
@@ -51,12 +54,12 @@ The parent class `AbstractSpringTxManagedProjection` requires the following meth
 
 |   Method Signature                                 | Description |
 |----------------------------------------------------|------------------------------|
-|`public UUID state();`| read the last position in the Fact stream from the database |
+|`public UUID state();`               | read the last position in the Fact stream from the database |
 |`public void state(@NonNull UUID state);` | write the current position of the Fact stream to the database |
-|`public WriterToken acquireWriteToken(@NonNull Duration maxWait)`| TODO empty implementation -  (only used for subscribed projections?)|
+|`public WriterToken acquireWriteToken(@NonNull Duration maxWait)`   | TODO empty implementation -  (only used for subscribed projections?)|
 
 The first two methods tell Factus how to read and write the Fact stream's position 
-(a single UUID value) from the database. Since this is a single value you could get away with 
+(a single UUID value) from the database. Since this is a single value, you could get away with 
 one table (e.g. `example_spring_tx_managed_projection_state`) possessing one UUID column.
 
 However, to prepare for more than one transactional projection, we recommend the use of a single table
@@ -78,73 +81,93 @@ Provided that the table `managed_projection` exists, here is an example of how t
 @Override
 public void state(@NonNull UUID state) {
     jdbcTemplate.update(
-            "INSERT INTO managed_projection (name, state) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET state = ?",
+            "INSERT INTO managed_projection (name, state) VALUES (?, ?) " +
+             "ON CONFLICT (name) DO UPDATE SET state = ?",
             getScopedName().asString(),
             state,
             state);
 }
 ``` 
 
-
-
 For convenience an UPSERT statement (Postgres syntax) is used which INSERTs the UUID the first time 
 and subsequently only UPDATEs the value. 
 
-To avoid hard-coding a unique name for the table `managed_projection`, the helper method `getScopedName()` is used.
-This method is inherited from the base class `AbstractSpringTxManagedProjection` and for 
-our previous example projection `ExampleSpringTxManagedProjection` would generate the name 
-`package.path.to.projection.ExampleSpringTxManagedProjection_1`. The suffix `_1` indicates 
-the serial number of the projection.      
+To avoid hard-coding a unique name for the projection, the helper method `getScopedName()` is used.
+This method is inherited from the base class `AbstractSpringTxManagedProjection`
 
-  
+For our previous example projection `ExampleSpringTxManagedProjection` the generated name is 
+`package.path.to.projection.ExampleSpringTxManagedProjection_1`. 
+The suffix `_1` indicates the serial number of the projection.      
 
 
 ### Reading The Fact Position
 
-```java
-    @Override
-    public UUID state() {
-        try {
-            return jdbcTemplate.queryForObject(
-                    "SELECT state FROM managed_projection WHERE name = ?",
-                    UUID.class,
-                    getScopedName().asString());
-        } catch (IncorrectResultSizeDataAccessException e) {
-            // no state yet, just return null
-            return null;
-        }
-    }
+Building up on the previous example, here is how to read the Fact position: 
 
-    @Override
-    public void state(@NonNull UUID state) {
-        jdbcTemplate.update(
-                "INSERT INTO managed_projection (name, state) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET state = ?",
-                getScopedName().asString(),
-                state,
-                state);
+```java
+@Override
+public UUID state() {
+    try {
+        return jdbcTemplate.queryForObject(
+                "SELECT state FROM managed_projection WHERE name = ?",
+                UUID.class,
+                getScopedName().asString());
+    } catch (IncorrectResultSizeDataAccessException e) {
+        // no state yet, just return null
+        return null;
     }
+}
+``` 
+
+In case no state exists yet, `null` is returned. 
+
+
+Applying Events
+----------------
+
+As explained [in the introduction to transactional projections]({{< ref "application_transaction.md" >}})
+when receiving an event, two write operations towards the relational database happen:
+
+1. the projection is updated
+2. the Fact stream position is persisted
+
+The latter step was already discussed in the previous sections. 
+What is left, is to actually handle the received events and update the projection.
+
+As the concrete structure of your database tables depend on your use-case, here is an example projection which
+handles *UserCreated* and *UserDeleted* events. The projection data is persisted in the table `users`:
+
+```sql
+CREATE TABLE users (
+    name varchar(255), 
+    id UUID, 
+    PRIMARY KEY (id));
+```
+
+When processing the *UserCreated* event, we add a new row to the `users` tables, filled with event data: 
+
+```java
+@Handler
+void apply(UserCreated e) {
+    jdbcTemplate.update(
+            "INSERT INTO users (name, id) VALUES (?,?);", e.userName(), e.aggregateId());
+}
+```
+
+When handling the *UserDeleted* event we do the opposite and remove the appropriate row:
+
+```java
+@Handler
+void apply(UserDeleted e) {
+    jdbcTemplate.update("DELETE FROM users where id = ?", e.aggregateId());
+}
 ``` 
 
 
- 
+Full Example
+------------
 
-This could be a single table with just one UUID column - 
-however, to allow for multi
+To study the full example see
+- [the transactional projection code](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/SpringTxMangedUserNames.java) and
+- [the logic working with this projection](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/SpringTxManagedUserNamesITest.java).    
 
-### Storing The Stream Position In The Database
-
-
-
-
-### Reading The Latest Position
-
-Reading and writing the Fact stream position requires one   
-
-
-
-
-
-
-TODO: I don't see a bean providing the PlatformTransactionManager 
-
-- only managed projections ?
