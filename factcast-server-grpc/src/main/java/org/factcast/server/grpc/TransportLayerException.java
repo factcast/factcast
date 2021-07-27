@@ -21,11 +21,11 @@ package org.factcast.server.grpc;
  *
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
-class TransportLayerException extends RuntimeException {
+public class TransportLayerException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 
-  TransportLayerException(@SuppressWarnings("SameParameterValue") String msg) {
+  public TransportLayerException(@SuppressWarnings("SameParameterValue") String msg) {
     super(msg);
   }
 }
