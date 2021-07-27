@@ -195,7 +195,7 @@ public class GrpcFactStore implements FactStore {
         () -> {
           SubscriptionImpl subscription = SubscriptionImpl.on(observer);
           StreamObserver<FactStoreProto.MSG_Notification> responseObserver =
-              new ClientStreamObserver(subscription, req.keepaliveIntervalInMs());
+              new ClientStreamObserver(subscription);
           ClientCall<MSG_SubscriptionRequest, MSG_Notification> call =
               stub.getChannel()
                   .newCall(
