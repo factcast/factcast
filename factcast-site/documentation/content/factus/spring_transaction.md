@@ -20,11 +20,20 @@ weight = 1021
 - TODO are there Spring transactional subscribed projs possible? should we document them as well ?
 - TODO: I don't see a bean providing the PlatformTransactionManager 
 - TODO: understand shared transaction between PlatformTransactionManager and JDBC template
+--------------------
 
-A transactional projection for relational databases has three ingredients:
+Transactional projections for relational databases are available for 
+- [managed projections]({{< ref "managed-projection.md" >}})  and for 
+- [subscribed projections]({{< ref "subscribed-projection.md" >}}).
+
+Generally such a projection has three ingredients:
 - it is annotated with `@SpringTransactional`
-- it extends the abstract class `AbstractSpringTxManagedProjection`
+- it extends either 
+    - the class `AbstractSpringTxManagedProjection` or 
+    - the class `AbstractSpringTxSubscribedProjection`
 - it provides the serial number of the projection via the `@ProjectionMetaData` annotation
+
+Here is an example:
 
 ```java
 @ProjectionMetaData(serial = 1)
@@ -41,22 +50,22 @@ public class ExampleSpringTxManagedProjection extends AbstractSpringTxManagedPro
     ...
 ```
 
+Since we decided to use a managed projection, we extended the `AbstractSpringTxManagedProjection` class.
 Transactionality is provided by the Spring [`PlatformTransactionManager`](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/PlatformTransactionManager.html)
-which is injected via the constructor. To register the `PlatformTransactionManager` in Factus, the parent constructor has to be invoked.
-
+which is injected via the constructor. To register the `PlatformTransactionManager` in Factus, the parent constructor has to be invoked. 
 To let the projection communicate with the external database, additionally a `JdbcTemplate` is injected.
-
 
 Providing Required Methods
 --------------------------
 
-The parent class `AbstractSpringTxManagedProjection` requires the following methods to be implemented:
+The two possible abstract base classes, `AbstractSpringTxManagedProjection` or `AbstractSpringTxSubscribedProjection`, 
+both require the following methods to be implemented:
 
 |   Method Signature                                 | Description |
 |----------------------------------------------------|------------------------------|
 |`public UUID state();`               | read the last position in the Fact stream from the database |
 |`public void state(@NonNull UUID state);` | write the current position of the Fact stream to the database |
-|`public WriterToken acquireWriteToken(@NonNull Duration maxWait)`   | TODO empty implementation -  (only used for subscribed projections?)|
+|`public WriterToken acquireWriteToken(@NonNull Duration maxWait)`   | TODO empty implementation - why ? no external global lock available? |
 
 The first two methods tell Factus how to read and write the Fact stream's position 
 (a single UUID value) from the database. Since this is a single value, you could get away with 
@@ -66,7 +75,7 @@ However, to prepare for more than one transactional projection, we recommend the
 containing the Fact stream position of multiple projections:
 
 ```sql
-CREATE TABLE managed_projection (
+CREATE TABLE projection (
     name varchar(255),
     state UUID, 
     PRIMARY KEY (name));
@@ -75,13 +84,13 @@ CREATE TABLE managed_projection (
 
 ### Writing The Fact Position
 
-Provided that the table `managed_projection` exists, here is an example of how to write the Fact position: 
+Provided that the table `projection` exists, here is an example of how to write the Fact position: 
 
 ```java
 @Override
 public void state(@NonNull UUID state) {
     jdbcTemplate.update(
-            "INSERT INTO managed_projection (name, state) VALUES (?, ?) " +
+            "INSERT INTO projection (name, state) VALUES (?, ?) " +
              "ON CONFLICT (name) DO UPDATE SET state = ?",
             getScopedName().asString(),
             state,
@@ -93,7 +102,7 @@ For convenience an UPSERT statement (Postgres syntax) is used which INSERTs the 
 and subsequently only UPDATEs the value. 
 
 To avoid hard-coding a unique name for the projection, the helper method `getScopedName()` is used.
-This method is inherited from the base class `AbstractSpringTxManagedProjection`
+This method is inherited from the abstract base class.
 
 For our previous example projection `ExampleSpringTxManagedProjection` the generated name is 
 `package.path.to.projection.ExampleSpringTxManagedProjection_1`. 
@@ -109,7 +118,7 @@ Building up on the previous example, here is how to read the Fact position:
 public UUID state() {
     try {
         return jdbcTemplate.queryForObject(
-                "SELECT state FROM managed_projection WHERE name = ?",
+                "SELECT state FROM projection WHERE name = ?",
                 UUID.class,
                 getScopedName().asString());
     } catch (IncorrectResultSizeDataAccessException e) {
@@ -150,7 +159,9 @@ When processing the *UserCreated* event, we add a new row to the `users` tables,
 @Handler
 void apply(UserCreated e) {
     jdbcTemplate.update(
-            "INSERT INTO users (name, id) VALUES (?,?);", e.userName(), e.aggregateId());
+            "INSERT INTO users (name, id) VALUES (?,?);", 
+            e.userName(), 
+            e.aggregateId());
 }
 ```
 
@@ -164,10 +175,20 @@ void apply(UserDeleted e) {
 ``` 
 
 
+### Tuning The Transaction
+
+For fine-tuning the `@SpringTransactional` annotation provides two optional configuration parameters:
+
+| Parameter Name   |  Description            | Default Value  |
+|------------------|-------------------------|----------------|
+| `size`           | local batch size        |  50            |
+| `timeout`        | transaction timeout in seconds | 30      |
+
+
 Full Example
 ------------
 
 To study the full example see
-- [the transactional projection code](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/SpringTxMangedUserNames.java) and
-- [the logic working with this projection](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/SpringTxManagedUserNamesITest.java).    
-
+- [the transactional projection code](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/SpringTxMangedUserNames.java),
+- [the logic working with this projection](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/SpringTxManagedUserNamesITest.java) and    
+- [the Factus integration tests](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/SpringTransactionalITest.java) including managed- and subscribed projections.
