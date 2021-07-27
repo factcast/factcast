@@ -136,7 +136,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
     subscription.notifyComplete();
   }
 
-  class ClientKeepalive extends TimerTask {
+  class ClientKeepalive {
     private final Timer t = new Timer();
     private final long interval;
     private final long gracePeriod;
@@ -149,22 +149,23 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
     }
 
     void reschedule() {
-      t.schedule(this, interval);
-    }
+      t.schedule(
+          new TimerTask() {
+            @Override
+            public void run() {
+              val last = lastNotification.get();
 
-    @Override
-    public void run() {
-      val last = lastNotification.get();
-
-      if (last == 0 || System.currentTimeMillis() - last > gracePeriod) {
-        onError(new StaleSubscriptionDetected(last, gracePeriod));
-      } else {
-        reschedule();
-      }
+              if (last == 0 || System.currentTimeMillis() - last > gracePeriod) {
+                onError(new StaleSubscriptionDetected(last, gracePeriod));
+              } else {
+                reschedule();
+              }
+            }
+          },
+          interval);
     }
 
     void shutdown() {
-      cancel(); // this timertask
       t.cancel(); // the timer and related threads altogether
     }
   }
