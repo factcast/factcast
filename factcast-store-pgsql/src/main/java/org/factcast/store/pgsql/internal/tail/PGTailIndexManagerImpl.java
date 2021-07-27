@@ -24,7 +24,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   private HighWaterMark target = new HighWaterMark();
 
   @Override
-  @Scheduled(cron = "0 0 */1 * * *")
+  @Scheduled(cron = "${factcast.store.pgsql.tailManagementCron:0 0 0 * * *}")
   @SchedulerLock(name = "triggerTailCreation", lockAtMostFor = "120m")
   public void triggerTailCreation() {
 
