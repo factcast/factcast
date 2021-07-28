@@ -152,6 +152,6 @@ public class ReconnectingFactSubscriptionWrapperTest {
     assertThat(uut.isServerException(new MissingTransformationInformationException(""))).isTrue();
     // important because it needs to reconnect, which only happens if it is NOT categorized as
     // serverException
-    assertThat(uut.isServerException(new StaleSubscriptionDetected())).isFalse();
+    assertThat(uut.isServerException(new StaleSubscriptionDetectedException())).isFalse();
   }
 }

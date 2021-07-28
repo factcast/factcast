@@ -251,7 +251,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
   @VisibleForTesting
   boolean isServerException(@NonNull Throwable exception) {
 
-    if (exception instanceof StaleSubscriptionDetected) {
+    if (exception instanceof StaleSubscriptionDetectedException) {
       // assume connection problem
       return false;
     }

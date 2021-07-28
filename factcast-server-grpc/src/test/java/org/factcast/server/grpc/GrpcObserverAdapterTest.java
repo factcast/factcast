@@ -15,6 +15,8 @@
  */
 package org.factcast.server.grpc;
 
+import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -166,6 +168,18 @@ public class GrpcObserverAdapterTest {
     UUID id = UUID.randomUUID();
     uut.onFastForward(id);
     verify(observer, never()).onNext(any());
+  }
+
+  @Test
+  void createKeepAliveMonitor() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 300);
+    assertThat(uut.keepalive()).isNotNull();
+  }
+
+  @Test
+  void doesNotCreateKeepAliveMonitorIfUnnecessary() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 0);
+    assertThat(uut.keepalive()).isNull();
   }
 
   public static void expectNPE(Runnable r) {
