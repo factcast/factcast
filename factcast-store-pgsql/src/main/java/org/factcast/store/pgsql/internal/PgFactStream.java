@@ -30,7 +30,6 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.core.util.ExceptionHelper;
 import org.factcast.store.pgsql.internal.StoreMetrics.VALUE;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
@@ -278,7 +277,7 @@ public class PgFactStream {
             log.trace("{} notifyElement called with id={}", request, factId);
           } catch (Throwable e) {
             rs.close();
-            throw ExceptionHelper.toRuntime(e);
+            subscription.notifyError(e);
           }
         } else {
           // TODO add sid
