@@ -18,7 +18,7 @@ package org.factcast.store.pgsql.internal.snapcache;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.core.SchedulerLock;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.store.pgsql.internal.PgMetrics;
 import org.factcast.store.pgsql.internal.StoreMetrics.OP;
 import org.joda.time.DateTime;
@@ -35,7 +35,7 @@ public class PgSnapshotCacheCompactor {
   final int days;
 
   @Scheduled(cron = "${factcast.store.pgsql.snapshotCacheCompactCron:0 0 0 * * *}")
-  @SchedulerLock(name = "snapshotCacheCompact", lockAtMostFor = 1000 * 60 * 60)
+  @SchedulerLock(name = "snapshotCacheCompact", lockAtMostFor = "PT1h")
   public void compact() {
     pgMetrics.time(OP.COMPACT_SNAPSHOT_CACHE, () -> cache.compact(DateTime.now().minusDays(days)));
   }

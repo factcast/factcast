@@ -142,7 +142,8 @@ public class PgFactStream {
               delayInMs,
               request.maxBatchDelayInMs());
         }
-        condensedExecutor = new CondensedQueryExecutor(delayInMs, query, this::isConnected);
+        condensedExecutor =
+            new CondensedQueryExecutor(delayInMs, query, this::isConnected, request.specs());
         eventBus.register(condensedExecutor);
         // catchup phase 3 – make sure, we did not miss any fact due to
         // slow registration

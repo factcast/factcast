@@ -45,7 +45,7 @@ public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository
   @Override
   public Optional<Snapshot> findLatest(@NonNull Class<? extends SnapshotProjection> type) {
     SnapshotId snapshotId =
-        new SnapshotId(
+        SnapshotId.of(
             createKeyForType(type, () -> serializerSupplier.retrieveSerializer(type)), FAKE_UUID);
     Optional<Snapshot> snapshot = snapshotCache.getSnapshot(snapshotId);
     recordSnapshotSize(snapshot, type);
@@ -65,7 +65,7 @@ public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository
 
     return CompletableFuture.runAsync(
         () -> {
-          val id = new SnapshotId(createKeyForType(type, () -> ser), FAKE_UUID);
+          val id = SnapshotId.of(createKeyForType(type, () -> ser), FAKE_UUID);
           putBlocking(new Snapshot(id, state, bytes, ser.includesCompression()));
         });
   }

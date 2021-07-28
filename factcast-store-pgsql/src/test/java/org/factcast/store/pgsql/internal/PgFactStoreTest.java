@@ -65,7 +65,7 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
 
   @Test
   void testGetSnapshotMetered() {
-    Optional<Snapshot> snapshot = store.getSnapshot(new SnapshotId("xxx", UUID.randomUUID()));
+    Optional<Snapshot> snapshot = store.getSnapshot(SnapshotId.of("xxx", UUID.randomUUID()));
     assertThat(snapshot).isEmpty();
 
     verify(metrics).time(same(OP.GET_SNAPSHOT), any(Supplier.class));
@@ -73,14 +73,14 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
 
   @Test
   void testClearSnapshotMetered() {
-    val id = new SnapshotId("xxx", UUID.randomUUID());
+    val id = SnapshotId.of("xxx", UUID.randomUUID());
     store.clearSnapshot(id);
     verify(metrics).time(same(OP.CLEAR_SNAPSHOT), any(Runnable.class));
   }
 
   @Test
   void testSetSnapshotMetered() {
-    val id = new SnapshotId("xxx", UUID.randomUUID());
+    val id = SnapshotId.of("xxx", UUID.randomUUID());
     val snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
     store.setSnapshot(snap);
 
