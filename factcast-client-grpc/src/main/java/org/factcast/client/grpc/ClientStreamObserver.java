@@ -92,8 +92,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
   @Override
   public void onError(Throwable t) {
-    RuntimeException translated = ClientExceptionHelper.from(t);
-    subscription.notifyError(translated);
+    subscription.notifyError(ClientExceptionHelper.from(t));
   }
 
   @Override

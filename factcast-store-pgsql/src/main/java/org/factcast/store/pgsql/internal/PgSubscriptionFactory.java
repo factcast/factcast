@@ -18,20 +18,20 @@ package org.factcast.store.pgsql.internal;
 import com.google.common.eventbus.EventBus;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
-import org.factcast.core.subscription.FactTransformersFactory;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 // TODO integrate with PGQuery
 @SuppressWarnings("UnstableApiUsage")
 @RequiredArgsConstructor
+@Slf4j
 class PgSubscriptionFactory {
 
   final JdbcTemplate jdbcTemplate;
@@ -61,7 +61,22 @@ class PgSubscriptionFactory {
             catchupFactory,
             target,
             metrics);
-    CompletableFuture.runAsync(() -> pgsub.connect(req));
-    return subscription.onClose(pgsub::close);
+
+    // when closing the subscription, also close the PgFactStream
+    subscription.onClose(pgsub::close);
+    CompletableFuture.runAsync(
+        () -> {
+          try {
+            pgsub.connect(req);
+          } catch (MissingTransformationInformation | TransformationException e) {
+            log.warn("{} transformation error: {}", req, e.getMessage());
+            subscription.notifyError(e);
+          } catch (Throwable e) {
+            // TODO unify err handling
+            subscription.notifyError(e);
+          }
+        });
+
+    return subscription;
   }
 }

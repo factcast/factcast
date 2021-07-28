@@ -26,14 +26,11 @@ import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgMetrics;
 import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
-import org.factcast.store.pgsql.internal.catchup.PgCatchUpPrepare;
 import org.factcast.store.pgsql.internal.catchup.PgCatchup;
 import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
-import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
@@ -73,44 +70,20 @@ public class PgTmpPagedCatchup implements PgCatchup {
       val skipTesting = postQueryMatcher.canBeSkipped();
 
       if (numberOfFactsToCatchUp > 0) {
-        try {
-          PgCatchUpFetchTmpPage fetch =
-              new PgCatchUpFetchTmpPage(jdbc, props.getPageSize(), request);
-          List<Fact> facts;
-          do {
-            facts = fetch.fetchFacts(serial);
+        PgCatchUpFetchTmpPage fetch = new PgCatchUpFetchTmpPage(jdbc, props.getPageSize(), request);
+        List<Fact> facts;
+        do {
+          facts = fetch.fetchFacts(serial);
 
-            for (Fact f : facts) {
-              UUID factId = f.id();
-              if (skipTesting || postQueryMatcher.test(f)) {
-                try {
-                  subscription.notifyElement(f);
-                } catch (MissingTransformationInformation | TransformationException e) {
-                  log.warn("{} transformation error: {}", request, e.getMessage());
-                  subscription.notifyError(e);
-                  throw e;
-                } catch (Throwable e) {
-                  // debug level, because it happens regularly
-                  // on
-                  // disconnecting clients.
-                  log.debug("{} exception from subscription: {}", request, e.getMessage());
-                  try {
-                    subscription.close();
-                  } catch (Exception e1) {
-                    log.warn(
-                        "{} exception while closing subscription: {}", request, e1.getMessage());
-                  }
-                  throw e;
-                }
-              } else {
-                log.trace("{} filtered id={}", request, factId);
-              }
+          for (Fact f : facts) {
+            UUID factId = f.id();
+            if (skipTesting || postQueryMatcher.test(f)) {
+              subscription.notifyElement(f);
+            } else {
+              log.trace("{} filtered id={}", request, factId);
             }
-          } while (!facts.isEmpty());
-
-        } catch (Exception e) {
-          log.error(request + " While fetching ", e);
-        }
+          }
+        } while (!facts.isEmpty());
       }
     } finally {
       ds.destroy();

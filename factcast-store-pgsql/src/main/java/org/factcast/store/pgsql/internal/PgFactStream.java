@@ -29,7 +29,6 @@ import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.store.pgsql.internal.StoreMetrics.VALUE;
@@ -37,7 +36,6 @@ import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.pgsql.internal.query.PgQueryBuilder;
-import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -103,14 +101,8 @@ public class PgFactStream {
       // just fast forward to the latest event published by now
       serial.set(fetcher.retrieveLatestSer());
     } else {
-      try {
-        catchup(postQueryMatcher);
-        logCatchupTransformationStats();
-      } catch (Throwable e) {
-        // might help to find networking issues while catching up
-        log.warn("{} While catching up: ", request, e);
-        subscription.notifyError(e);
-      }
+      catchup(postQueryMatcher);
+      logCatchupTransformationStats();
     }
 
     fastForward(request, subscription);
@@ -284,24 +276,7 @@ public class PgFactStream {
           try {
             subscription.notifyElement(f);
             log.trace("{} notifyElement called with id={}", request, factId);
-          } catch (MissingTransformationInformation | TransformationException e) {
-            log.warn("{} transformation error: {}", request, e.getMessage());
-            subscription.notifyError(e);
-            // will vanish, because this is called from a timer.
-            throw e;
           } catch (Throwable e) {
-            // debug level, because it happens regularly on
-            // disconnecting clients.
-            // TODO add sid
-            log.debug("{} exception from subscription: {}", request, e.getMessage());
-            try {
-              subscription.close();
-            } catch (Exception e1) {
-              // TODO add sid
-              log.warn("{} exception while closing subscription: {}", request, e1.getMessage());
-            }
-            // close result set in order to release DB resources as
-            // early as possible
             rs.close();
             throw ExceptionHelper.toRuntime(e);
           }
