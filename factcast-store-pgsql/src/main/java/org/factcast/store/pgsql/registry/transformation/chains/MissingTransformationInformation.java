@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription;
+package org.factcast.store.pgsql.registry.transformation.chains;
 
 /** TODO RT or not RT ? */
-public class MissingTransformationInformationException extends TransformationException {
+public class MissingTransformationInformation extends RuntimeException {
   private static final long serialVersionUID = 1L;
 
-  public MissingTransformationInformationException(String string) {
+  public MissingTransformationInformation(String string) {
     super(string);
   }
 }

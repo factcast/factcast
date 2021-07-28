@@ -24,7 +24,6 @@ import com.google.common.collect.Lists;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.ArrayList;
-import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
@@ -102,7 +101,7 @@ public class TransformationChainsTest {
 
     when(r.get(key)).thenReturn(all);
 
-    assertThrows(MissingTransformationInformationException.class, () -> uut.get(key, 1, 7));
+    assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 1, 7));
     verify(registryMetrics)
         .count(
             eq(EVENT.MISSING_TRANSFORMATION_INFO),
@@ -182,7 +181,7 @@ public class TransformationChainsTest {
 
     when(r.get(key)).thenReturn(all);
 
-    assertThrows(MissingTransformationInformationException.class, () -> uut.get(key, 2, 99));
+    assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 2, 99));
     verify(registryMetrics)
         .count(
             eq(EVENT.MISSING_TRANSFORMATION_INFO),
@@ -214,7 +213,7 @@ public class TransformationChainsTest {
     ArrayList<Transformation> all = Lists.newArrayList();
     when(r.get(key)).thenReturn(all);
 
-    assertThrows(MissingTransformationInformationException.class, () -> uut.get(key, 2, 99));
+    assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 2, 99));
     verify(registryMetrics)
         .count(
             eq(EVENT.MISSING_TRANSFORMATION_INFO),
