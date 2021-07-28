@@ -22,6 +22,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -43,6 +45,9 @@ class GrpcObserverAdapter implements FactObserver {
 
   @NonNull private final StreamObserver<MSG_Notification> observer;
   @NonNull private final int catchupBatchSize;
+
+  @Getter(AccessLevel.PROTECTED)
+  @VisibleForTesting
   private final ServerKeepalive keepalive;
 
   @VisibleForTesting
@@ -170,7 +175,8 @@ class GrpcObserverAdapter implements FactObserver {
       reschedule();
     }
 
-    private synchronized void reschedule() {
+    @VisibleForTesting
+    synchronized void reschedule() {
       if (t != null) {
         t.schedule(
             new TimerTask() {
@@ -184,6 +190,7 @@ class GrpcObserverAdapter implements FactObserver {
       }
     }
 
+    @VisibleForTesting
     synchronized void shutdown() {
       t.cancel();
       t = null;
