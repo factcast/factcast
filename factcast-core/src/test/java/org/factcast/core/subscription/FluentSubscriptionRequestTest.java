@@ -137,13 +137,18 @@ public class FluentSubscriptionRequestTest {
   }
 
   @Test
-  void setMaxBatchDelayInMs_invalid() {
+  void setMaxBatchDelayInMs_lowerBound() {
     assertThatThrownBy(
             () -> {
               SubscriptionRequest.catchup(FactSpec.ns("foo"))
-                  .withMaxBatchDelayInMs(-1)
+                  .withMaxBatchDelayInMs(1)
                   .fromScratch();
             })
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void setMaxBatchDelayInMs_lowerBoundOk() {
+    SubscriptionRequest.catchup(FactSpec.ns("foo")).withMaxBatchDelayInMs(10).fromScratch();
   }
 }
