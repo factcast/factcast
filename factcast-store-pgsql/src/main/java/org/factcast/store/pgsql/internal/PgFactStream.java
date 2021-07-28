@@ -37,6 +37,7 @@ import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.pgsql.internal.query.PgQueryBuilder;
+import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -284,7 +285,7 @@ public class PgFactStream {
           try {
             subscription.notifyElement(f);
             log.trace("{} notifyElement called with id={}", request, factId);
-          } catch (TransformationException e) {
+          } catch (MissingTransformationInformation | TransformationException e) {
             log.warn("{} transformation error: {}", request, e.getMessage());
             subscription.notifyError(e);
             // will vanish, because this is called from a timer.
