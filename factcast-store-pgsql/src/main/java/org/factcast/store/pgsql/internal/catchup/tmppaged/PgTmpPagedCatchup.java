@@ -33,6 +33,7 @@ import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
 import org.factcast.store.pgsql.internal.catchup.PgCatchUpPrepare;
 import org.factcast.store.pgsql.internal.catchup.PgCatchup;
 import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
+import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
@@ -84,7 +85,7 @@ public class PgTmpPagedCatchup implements PgCatchup {
               if (skipTesting || postQueryMatcher.test(f)) {
                 try {
                   subscription.notifyElement(f);
-                } catch (TransformationException e) {
+                } catch (MissingTransformationInformation | TransformationException e) {
                   log.warn("{} transformation error: {}", request, e.getMessage());
                   subscription.notifyError(e);
                   throw e;

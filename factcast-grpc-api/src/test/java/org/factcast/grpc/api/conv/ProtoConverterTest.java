@@ -163,13 +163,6 @@ public class ProtoConverterTest {
   }
 
   @Test
-  void testCreateKeepaliveNotification() {
-    MSG_Notification n = uut.createKeepaliveNotification();
-    assertNotNull(n);
-    assertEquals(Type.KeepAlive, n.getType());
-  }
-
-  @Test
   void testCreateCompleteNotification() {
     MSG_Notification n = uut.createCompleteNotification();
     assertNotNull(n);

@@ -15,8 +15,6 @@
  */
 package org.factcast.server.grpc;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -168,42 +166,6 @@ public class GrpcObserverAdapterTest {
     UUID id = UUID.randomUUID();
     uut.onFastForward(id);
     verify(observer, never()).onNext(any());
-  }
-
-  @Test
-  void createKeepAliveMonitor() {
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 300);
-    assertThat(uut.keepalive()).isNotNull();
-  }
-
-  @Test
-  void doesNotCreateKeepAliveMonitorIfUnnecessary() {
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 0);
-    assertThat(uut.keepalive()).isNull();
-  }
-
-  @Test
-  void shutdownDelegates() {
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 3000);
-    uut.shutdown();
-
-    // if keepalive is shutdown, reschedule should throw illegalstateexceptions
-    assertThatThrownBy(
-            () -> {
-              uut.keepalive().reschedule();
-            })
-        .isInstanceOf(IllegalStateException.class);
-  }
-
-  @Test
-  void shutdownIgnoredWhenNoKeepalive() {
-    assertThatNoException()
-        .isThrownBy(
-            () -> {
-              GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 0);
-              uut.shutdown();
-            });
-    // should no
   }
 
   public static void expectNPE(Runnable r) {
