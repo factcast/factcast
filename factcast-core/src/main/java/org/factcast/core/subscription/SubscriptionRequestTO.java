@@ -42,7 +42,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 
   private static final String PID = ManagementFactory.getRuntimeMXBean().getName();
 
-  @JsonProperty long maxBatchDelayInMs = 0;
+  @JsonProperty long maxBatchDelayInMs = 20;
 
   @JsonProperty long keepaliveIntervalInMs = 0;
 
