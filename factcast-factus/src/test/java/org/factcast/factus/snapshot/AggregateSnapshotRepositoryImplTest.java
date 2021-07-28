@@ -16,10 +16,8 @@ import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.AggregateUtil;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -63,7 +61,7 @@ class AggregateSnapshotRepositoryImplTest {
       // INIT
       Snapshot withSVUID =
           new Snapshot(
-              new SnapshotId("some key", aggregateId), UUID.randomUUID(), new byte[0], false);
+              SnapshotId.of("some key", aggregateId), UUID.randomUUID(), new byte[0], false);
 
       when(snap.getSnapshot(any())).thenReturn(Optional.of(withSVUID));
       when(snapshotSerializer.getId()).thenReturn("narf");
@@ -89,7 +87,7 @@ class AggregateSnapshotRepositoryImplTest {
       // INIT
       Snapshot withoutSVUID =
           new Snapshot(
-              new SnapshotId("some key", aggregateId), UUID.randomUUID(), new byte[0], false);
+              SnapshotId.of("some key", aggregateId), UUID.randomUUID(), new byte[0], false);
 
       when(snap.getSnapshot(any())).thenReturn(Optional.of(withoutSVUID));
 
@@ -113,7 +111,7 @@ class AggregateSnapshotRepositoryImplTest {
       // INIT
       Snapshot withoutSVUID =
           new Snapshot(
-              new SnapshotId("some key", aggregateId), UUID.randomUUID(), new byte[0], false);
+              SnapshotId.of("some key", aggregateId), UUID.randomUUID(), new byte[0], false);
 
       when(snap.getSnapshot(any())).thenReturn(Optional.of(withoutSVUID));
       when(snapshotSerializer.getId()).thenReturn("zort");
