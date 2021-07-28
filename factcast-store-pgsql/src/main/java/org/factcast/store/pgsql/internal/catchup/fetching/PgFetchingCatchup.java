@@ -25,7 +25,6 @@ import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgMetrics;
 import org.factcast.store.pgsql.internal.PgPostQueryMatcher;
@@ -34,7 +33,6 @@ import org.factcast.store.pgsql.internal.catchup.PgCatchup;
 import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
 import org.factcast.store.pgsql.internal.query.PgQueryBuilder;
 import org.factcast.store.pgsql.internal.rowmapper.PgFactExtractor;
-import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -96,25 +94,8 @@ public class PgFetchingCatchup implements PgCatchup {
     return rs -> {
       Fact f = extractor.mapRow(rs, 0); // does not use the rowNum anyway
       if (skipTesting || postQueryMatcher.test(f)) {
-        try {
-          subscription.notifyElement(f);
-          metrics.counter(EVENT.CATCHUP_FACT);
-        } catch (MissingTransformationInformation | TransformationException e) {
-          log.warn("{} transformation error: {}", req, e.getMessage());
-          subscription.notifyError(e);
-          throw e;
-        } catch (Throwable e) {
-          // debug level, because it happens regularly
-          // on
-          // disconnecting clients.
-          log.debug("{} exception from subscription: {}", req, e.getMessage());
-          try {
-            subscription.close();
-          } catch (Exception e1) {
-            log.warn("{} exception while closing subscription: {}", req, e1.getMessage());
-          }
-          throw e;
-        }
+        subscription.notifyElement(f);
+        metrics.counter(EVENT.CATCHUP_FACT);
       } else {
         log.trace("{} filtered id={}", req, f.id());
       }
