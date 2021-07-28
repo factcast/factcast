@@ -1,14 +1,13 @@
 package org.factcast.itests.exception.handling;
 
+import java.time.Duration;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.factus.HandlerFor;
 import org.factcast.factus.projection.SubscribedProjection;
 import org.factcast.factus.projection.WriterToken;
-
-import java.time.Duration;
-import java.util.UUID;
 
 public class SubscribedUserNames implements SubscribedProjection {
   @Getter private Throwable exception;
