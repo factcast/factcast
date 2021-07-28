@@ -15,10 +15,8 @@
  */
 package org.factcast.itests.exception.handling;
 
-import static org.assertj.core.api.Assertions.*;
-
-import java.util.Collections;
-import java.util.UUID;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.factcast.core.Fact;
@@ -26,15 +24,23 @@ import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
 import org.factcast.core.lock.Attempt;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
+
+import java.util.Collections;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @EnableAutoConfiguration
@@ -117,6 +123,100 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     assertThatThrownBy(
             () -> fc.lock(FactSpec.ns("users")).attempt(() -> Attempt.publish(brokenFact)))
         .isInstanceOf(FactValidationException.class);
+  }
+
+  @Test
+  @SneakyThrows
+  public void testSubscription_transformationErrors_catchup() {
+    // INIT
+    UUID aggId = UUID.randomUUID();
+
+    ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
+
+    val proj = new SubscribedUserNames();
+    ec.subscribe(proj);
+
+    Thread.sleep(1000);
+
+    assertThat(proj.exception()).isInstanceOf(TransformationException.class);
+  }
+
+  @Test
+  @SneakyThrows
+  public void testSubscription_transformationErrors_follow() {
+    // INIT
+    UUID aggId = UUID.randomUUID();
+
+    val proj = new SubscribedUserNames();
+    ec.subscribe(proj);
+
+    Thread.sleep(1000);
+
+    ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
+
+    Thread.sleep(1000);
+
+    assertThat(proj.exception()).isInstanceOf(TransformationException.class);
+  }
+
+  @Test
+  @SneakyThrows
+  public void testSubscriptionFC_transformationErrors_catchup() {
+    // INIT
+    UUID aggId = UUID.randomUUID();
+
+    fc.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
+
+    AtomicReference<Throwable> e = new AtomicReference<>();
+
+    fc.subscribe(
+        SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(2))
+            .fromScratch(),
+        new FactObserver() {
+          @Override
+          public void onNext(@NonNull Fact element) {}
+
+          @Override
+          public void onError(@NonNull Throwable exception) {
+            e.set(exception);
+            FactObserver.super.onError(exception);
+          }
+        });
+
+    Thread.sleep(1000);
+
+    assertThat(e.get()).isInstanceOf(TransformationException.class);
+  }
+
+  @Test
+  @SneakyThrows
+  public void testSubscriptionFC_transformationErrors_follow() {
+    // INIT
+    UUID aggId = UUID.randomUUID();
+
+    AtomicReference<Throwable> e = new AtomicReference<>();
+
+    fc.subscribe(
+        SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(2))
+            .fromScratch(),
+        new FactObserver() {
+          @Override
+          public void onNext(@NonNull Fact element) {}
+
+          @Override
+          public void onError(@NonNull Throwable exception) {
+            e.set(exception);
+            FactObserver.super.onError(exception);
+          }
+        });
+
+    Thread.sleep(1000);
+
+    fc.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
+
+    Thread.sleep(1000);
+
+    assertThat(e.get()).isInstanceOf(TransformationException.class);
   }
 
   private Fact createTestFact(UUID id, int version, String body) {
