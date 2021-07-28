@@ -41,6 +41,7 @@ class GrpcObserverAdapter implements FactObserver {
 
   @NonNull private final StreamObserver<MSG_Notification> observer;
   @NonNull private final int catchupBatchSize;
+  private ServerErrorHandler serverErrorHandler;
 
   @VisibleForTesting
   @Deprecated
@@ -75,7 +76,7 @@ class GrpcObserverAdapter implements FactObserver {
   @Override
   public void onError(@NonNull Throwable e) {
     flush();
-    log.info("{} onError – sending Error notification {}", id, e.getMessage());
+    serverErrorHandler.log(e, id);
     observer.onError(ServerExceptionHelper.translate(e));
   }
 
