@@ -193,7 +193,6 @@ class GrpcObserverAdapter implements FactObserver {
     @VisibleForTesting
     synchronized void shutdown() {
       t.cancel();
-      t = null;
     }
   }
 }
