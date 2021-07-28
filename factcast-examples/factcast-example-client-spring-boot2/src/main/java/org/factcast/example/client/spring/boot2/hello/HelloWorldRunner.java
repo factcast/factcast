@@ -15,16 +15,14 @@
  */
 package org.factcast.example.client.spring.boot2.hello;
 
-import com.google.common.collect.Lists;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.SpecBuilder;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.observer.FactObserver;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -32,51 +30,44 @@ import org.springframework.stereotype.Component;
 @Component
 public class HelloWorldRunner implements CommandLineRunner {
 
-  @NonNull private final FactCast ec;
+  @NonNull private final FactCast fc;
 
   @Override
   public void run(String... args) throws Exception {
 
-    ec.publish(
-        createTestFact(
-            UUID.randomUUID(), 1, "{\"firstName\":\"Peter1\",\"lastName\":\"Zwegert\"}"));
-    ec.publish(
-        createTestFact(
-            UUID.randomUUID(), 1, "{\"firstName\":\"Peter2\",\"lastName\":\"Zwegert\"}"));
-    ec.publish(
-        createTestFact(
-            UUID.randomUUID(), 1, "{\"firstName\":\"Peter3\",\"lastName\":\"Zwegert\"}"));
+    val id = UUID.randomUUID();
+    Fact fact =
+        Fact.builder()
+            .ns("users")
+            .type("UserCreated")
+            .version(1)
+            .id(id)
+            .build("{\"firstName\":\"Horst\",\"lastName\":\"Lichter\"}");
+    fc.publish(fact);
+    System.out.println("published " + fact);
 
-    @NonNull
-    FactObserver obs =
-        new FactObserver() {
-          @Override
-          public void onNext(@NonNull Fact element) {
-            System.out.println(element);
-          }
+    val uc = fc.fetchById(id);
+    System.out.println(uc.get().jsonPayload());
 
-          @Override
-          public void onCatchup() {
-            System.out.println("cu");
-          }
+    val uc1 = fc.fetchByIdAndVersion(id, 1);
+    System.out.println(uc1.get().jsonPayload());
 
-          @Override
-          public void onComplete() {
-            System.out.println("compl");
-          }
+    val uc2 = fc.fetchByIdAndVersion(id, 2);
+    System.out.println(uc2.get().jsonPayload());
 
-          @Override
-          public void onError(@NonNull Throwable exception) {
-            System.out.println("onErr " + exception);
-          }
-        };
-    SpecBuilder follow =
-        SubscriptionRequest.follow(Lists.newArrayList(FactSpec.ns("users").type("UserCreated")));
-    SubscriptionRequest request = follow.fromScratch();
-    ec.subscribe(request, obs).awaitComplete();
-  }
+    val uc3 = fc.fetchByIdAndVersion(id, 3);
+    System.out.println(uc3.get().jsonPayload());
 
-  private Fact createTestFact(UUID id, int version, String body) {
-    return Fact.builder().ns("users").type("UserCreated").id(id).version(version).build(body);
+    fc.subscribe(
+            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(3))
+                .fromScratch(),
+            element -> System.out.println(element))
+        .awaitCatchup();
+
+    fc.subscribe(
+            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(1))
+                .fromScratch(),
+            element -> System.out.println(element))
+        .awaitCatchup();
   }
 }
