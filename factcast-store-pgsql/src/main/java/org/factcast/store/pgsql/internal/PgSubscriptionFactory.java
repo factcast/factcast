@@ -72,7 +72,6 @@ class PgSubscriptionFactory {
             log.warn("{} transformation error: {}", req, e.getMessage());
             subscription.notifyError(e);
           } catch (Throwable e) {
-            // TODO unify err handling
             subscription.notifyError(e);
           }
         });
