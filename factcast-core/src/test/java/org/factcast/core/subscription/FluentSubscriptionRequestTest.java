@@ -15,14 +15,31 @@
  */
 package org.factcast.core.subscription;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.LinkedList;
+import java.util.UUID;
 import lombok.val;
 import org.factcast.core.spec.FactSpec;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class FluentSubscriptionRequestTest {
+
+  private static final boolean EPHEMERAL = true;
+  private static final long MAX_BATCH_DELAY_IN_MS = 58;
+  private static final long KEEPALIVE_INTERVAL_IN_MS = 89;
+  private static final boolean CONTINUOUS = true;
+  private static final UUID STARTING_AFTER = UUID.randomUUID();
+  private static final String DEBUG_INFO = "DEBUG_INFO";
+  private static final String PID = "PID";
+  @Mock private FactSpec factSpec;
+  @InjectMocks private FluentSubscriptionRequest underTest;
 
   @Test
   void testFromSubscription() {
@@ -71,7 +88,7 @@ public class FluentSubscriptionRequestTest {
   void testDebugInfo() {
     String debugInfo = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch().debugInfo();
     assertNotNull(debugInfo);
-    assertTrue(debugInfo.contains(this.getClass().getSimpleName()));
+    assertTrue(debugInfo.contains(getClass().getSimpleName()));
     // method name
     assertTrue(debugInfo.contains("testDebugInfo"));
   }
@@ -90,5 +107,43 @@ public class FluentSubscriptionRequestTest {
     assertThrows(
         IllegalArgumentException.class,
         () -> SubscriptionRequest.follow(l).fromScratch().debugInfo());
+  }
+
+  @Test
+  void setMaxBatchDelayInMs() {
+    SubscriptionRequest r =
+        SubscriptionRequest.catchup(FactSpec.ns("foo")).withMaxBatchDelayInMs(21).fromScratch();
+    assertEquals(r.maxBatchDelayInMs(), 21);
+  }
+
+  @Test
+  void setKeepaliveIntervalInMs() {
+    SubscriptionRequest r =
+        SubscriptionRequest.catchup(FactSpec.ns("foo"))
+            .withKeepaliveIntervalInMs(4444)
+            .fromScratch();
+    assertEquals(r.keepaliveIntervalInMs(), 4444);
+  }
+
+  @Test
+  void setKeepaliveIntervalInMs_lowerBound() {
+    assertThatThrownBy(
+            () -> {
+              SubscriptionRequest.catchup(FactSpec.ns("foo"))
+                  .withKeepaliveIntervalInMs(4)
+                  .fromScratch();
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void setMaxBatchDelayInMs_invalid() {
+    assertThatThrownBy(
+            () -> {
+              SubscriptionRequest.catchup(FactSpec.ns("foo"))
+                  .withMaxBatchDelayInMs(-1)
+                  .fromScratch();
+            })
+        .isInstanceOf(IllegalArgumentException.class);
   }
 }
