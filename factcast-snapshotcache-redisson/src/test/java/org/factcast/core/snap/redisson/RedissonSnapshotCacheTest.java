@@ -73,12 +73,12 @@ class RedissonSnapshotCacheTest {
 
     @Test
     void testGetNull() {
-      assertThat(underTest.getSnapshot(new SnapshotId("foo", UUID.randomUUID()))).isEmpty();
+      assertThat(underTest.getSnapshot(SnapshotId.of("foo", UUID.randomUUID()))).isEmpty();
     }
 
     @Test
     void testGetPojo() {
-      SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+      SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
       Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
       underTest.setSnapshot(snap);
 
@@ -97,7 +97,7 @@ class RedissonSnapshotCacheTest {
 
     @Test
     void testClearPojo() {
-      SnapshotId id = new SnapshotId("foo", UUID.randomUUID());
+      SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
       Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
       underTest.setSnapshot(snap);
 
@@ -122,10 +122,10 @@ class RedissonSnapshotCacheTest {
     void testTTL() {
 
       int i = 1;
-      SnapshotId s1 = new SnapshotId("foo" + (i++), UUID.randomUUID());
+      SnapshotId s1 = SnapshotId.of("foo" + (i++), UUID.randomUUID());
       Snapshot snap1 = new Snapshot(s1, UUID.randomUUID(), "foo".getBytes(), false);
 
-      SnapshotId s2 = new SnapshotId("foo" + (i++), UUID.randomUUID());
+      SnapshotId s2 = SnapshotId.of("foo" + (i++), UUID.randomUUID());
       Snapshot snap2 = new Snapshot(s2, UUID.randomUUID(), "foo".getBytes(), false);
 
       underTest.setSnapshot(snap1);
