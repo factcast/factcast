@@ -15,8 +15,8 @@
  */
 package org.factcast.server.grpc;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -180,6 +180,26 @@ public class GrpcObserverAdapterTest {
   void doesNotCreateKeepAliveMonitorIfUnnecessary() {
     GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 0);
     assertThat(uut.keepalive()).isNull();
+  }
+
+  @Test
+  void shutdownDelegates() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 3000);
+    uut.shutdown();
+
+    // if keepalive is shutdown, reschedule should throw illegalstateexceptions
+    assertThatThrownBy(
+            () -> {
+              uut.keepalive().reschedule();
+            })
+        .isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
+  void shutdownIgnoredWhenNoKeepalive() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 0);
+    uut.shutdown();
+    verify(uut.keepalive()).shutdown();
   }
 
   public static void expectNPE(Runnable r) {
