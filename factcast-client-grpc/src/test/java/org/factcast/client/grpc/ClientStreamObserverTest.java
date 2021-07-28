@@ -26,16 +26,11 @@ import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import lombok.SneakyThrows;
 import lombok.val;
 import org.assertj.core.util.Lists;
-import org.factcast.client.grpc.ClientStreamObserver.ClientKeepalive;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
 import org.factcast.core.subscription.FactTransformers;
-import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
@@ -63,12 +58,12 @@ class ClientStreamObserverTest {
     FactTransformers trans = new NullFactTransformer();
     SubscriptionImpl subscriptionImpl = new SubscriptionImpl(factObserver, trans);
     subscription = spy(subscriptionImpl);
-    uut = new ClientStreamObserver(subscription, 0L);
+    uut = new ClientStreamObserver(subscription);
   }
 
   @Test
   void testConstructorNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> new ClientStreamObserver(null, 0L));
+    Assertions.assertThrows(NullPointerException.class, () -> new ClientStreamObserver(null));
   }
 
   @Test
@@ -155,109 +150,5 @@ class ClientStreamObserverTest {
     ArgumentCaptor<Throwable> ecap = ArgumentCaptor.forClass(Throwable.class);
     verify(factObserver).onError(ecap.capture());
     assertThat(ecap.getValue()).isInstanceOf(FactValidationException.class);
-  }
-
-  @Test
-  void detectsStillbirth() throws InterruptedException {
-    CountDownLatch latch = new CountDownLatch(1);
-    uut =
-        new ClientStreamObserver(subscription, 10L) {
-          @Override
-          public void onError(Throwable t) {
-            super.onError(t);
-            latch.countDown();
-          }
-        };
-
-    boolean await = latch.await(300L, TimeUnit.MILLISECONDS);
-    assertThat(await).isTrue();
-
-    verify(subscription).notifyError(any(StaleSubscriptionDetectedException.class));
-  }
-
-  @Test
-  void detectsStaleness() throws InterruptedException {
-    CountDownLatch latch = new CountDownLatch(1);
-    uut =
-        spy(
-            new ClientStreamObserver(subscription, 10L) {
-              @Override
-              public void onError(Throwable t) {
-                super.onError(t);
-                latch.countDown();
-              }
-            });
-
-    uut.onNext(MSG_Notification.newBuilder().setType(Type.KeepAlive).build());
-
-    for (int i = 0; i < 10; i++) {
-      uut.onNext(MSG_Notification.newBuilder().setType(Type.KeepAlive).build());
-      Thread.sleep(10);
-    }
-
-    boolean await = latch.await(300L, TimeUnit.MILLISECONDS);
-    assertThat(await).isTrue();
-
-    verify(subscription).notifyError(any(StaleSubscriptionDetectedException.class));
-  }
-
-  @Test
-  void disablesKeepaliveCheckingOnError() throws InterruptedException {
-    CountDownLatch latch = new CountDownLatch(1);
-    uut = spy(new ClientStreamObserver(subscription, 10L));
-    uut.onError(new RuntimeException());
-    verify(uut).disableKeepalive();
-  }
-
-  @Test
-  void disablesKeepaliveCheckingOnComplete() throws InterruptedException {
-    CountDownLatch latch = new CountDownLatch(1);
-    uut = spy(new ClientStreamObserver(subscription, 10L));
-    uut.onCompleted();
-    verify(uut).disableKeepalive();
-  }
-
-  @Test
-  void detectsMissingKeepalives() throws InterruptedException {
-    CountDownLatch latch = new CountDownLatch(1);
-    uut = spy(new ClientStreamObserver(subscription, 10L));
-    int interval = 50;
-    ClientKeepalive clientKeepalive = uut.new ClientKeepalive(interval);
-    // wait for it
-    sleep(150);
-    verify(uut, never()).onError(any());
-
-    sleep(250);
-    // fails due to NO notification received during interval (50*2+200)
-    verify(uut, times(1)).onError(any(StaleSubscriptionDetectedException.class));
-  }
-
-  @Test
-  void detectSubscriptionStarvation() throws InterruptedException {
-    CountDownLatch latch = new CountDownLatch(1);
-    uut = spy(new ClientStreamObserver(subscription, 10L));
-    int interval = 50;
-    ClientKeepalive clientKeepalive = uut.new ClientKeepalive(interval);
-    // not yet
-    sleep(70);
-    verify(uut, never()).onError(any());
-
-    for (int i = 0; i < 10; i++) {
-      sleep(30);
-      // any notification will reset the time
-      uut.onNext(converter.createKeepaliveNotification());
-    }
-
-    // still fine because it is < (2*interval)+200 = 300
-    sleep(100);
-    verify(uut, never()).onError(any());
-
-    sleep(300);
-    verify(uut, times(1)).onError(any(StaleSubscriptionDetectedException.class));
-  }
-
-  @SneakyThrows
-  private void sleep(long i) {
-    Thread.sleep(i);
   }
 }

@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Value;
-import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
@@ -78,7 +77,7 @@ public class TransformationChains implements TransformationStoreListener {
   }
 
   public TransformationChain get(TransformationKey key, int from, int to)
-      throws MissingTransformationInformationException {
+      throws MissingTransformationInformation {
 
     Map<VersionPath, TransformationChain> chainsPerKey;
 
@@ -98,7 +97,7 @@ public class TransformationChains implements TransformationStoreListener {
 
   @SuppressWarnings("unchecked")
   private TransformationChain build(TransformationKey key, int from, int to)
-      throws MissingTransformationInformationException {
+      throws MissingTransformationInformation {
 
     GraphBuilder<Integer, Edge> builder = GraphBuilder.create();
     List<Transformation> all = registry.get(key);
@@ -110,7 +109,7 @@ public class TransformationChains implements TransformationStoreListener {
               Tag.of("from", String.valueOf(from)),
               Tag.of("to", String.valueOf(to))));
 
-      throw new MissingTransformationInformationException("No Transformations for " + key);
+      throw new MissingTransformationInformation("No Transformations for " + key);
     }
 
     // populate graph
@@ -143,7 +142,7 @@ public class TransformationChains implements TransformationStoreListener {
               Tag.of("from", String.valueOf(from)),
               Tag.of("to", String.valueOf(to))));
 
-      throw new MissingTransformationInformationException(
+      throw new MissingTransformationInformation(
           "Cannot reach version " + to + " from version " + from + " for " + key);
     }
     List<Transformation> steps = map(path, Edge::transformation);
