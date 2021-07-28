@@ -146,6 +146,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
       this.interval = interval;
       gracePeriod =
           interval * 2 + 200; // 2 times the interval and 200ms extra for potential network i/o
+      lastNotification.set(System.currentTimeMillis());
       reschedule();
     }
 
