@@ -197,9 +197,13 @@ public class GrpcObserverAdapterTest {
 
   @Test
   void shutdownIgnoredWhenNoKeepalive() {
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 0);
-    uut.shutdown();
-    verify(uut.keepalive()).shutdown();
+    assertThatNoException()
+        .isThrownBy(
+            () -> {
+              GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 0);
+              uut.shutdown();
+            });
+    // should no
   }
 
   public static void expectNPE(Runnable r) {
