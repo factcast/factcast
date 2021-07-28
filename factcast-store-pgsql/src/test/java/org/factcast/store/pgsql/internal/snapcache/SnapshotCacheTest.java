@@ -15,7 +15,7 @@
  */
 package org.factcast.store.pgsql.internal.snapcache;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.sql.Timestamp;
 import java.util.Date;
@@ -27,8 +27,8 @@ import org.factcast.core.snap.SnapshotId;
 import org.factcast.store.pgsql.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
 import org.joda.time.DateTime;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -50,7 +50,7 @@ class SnapshotCacheTest {
   @Test
   void getSnapshot_empty() {
     // RUN
-    Optional<Snapshot> snapshot = underTest.getSnapshot(new SnapshotId("xxx", UUID.randomUUID()));
+    Optional<Snapshot> snapshot = underTest.getSnapshot(SnapshotId.of("xxx", UUID.randomUUID()));
 
     // ASSERT
     assertThat(snapshot).isEmpty();
@@ -60,7 +60,7 @@ class SnapshotCacheTest {
   void getSnapshot_returnsSnapshotAndUpdatesTimestamp() throws InterruptedException {
     // INIT
     // put snapshot
-    SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
+    SnapshotId id = SnapshotId.of("xxx", UUID.randomUUID());
     UUID lastFact = UUID.randomUUID();
 
     underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
@@ -103,7 +103,7 @@ class SnapshotCacheTest {
   @Test
   void setSnapshot_insert() {
     // INIT
-    SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
+    SnapshotId id = SnapshotId.of("xxx", UUID.randomUUID());
     UUID lastFact = UUID.randomUUID();
 
     Optional<Snapshot> snapshot = underTest.getSnapshot(id);
@@ -131,7 +131,7 @@ class SnapshotCacheTest {
   @Test
   void setSnapshot_update() {
     // INIT
-    SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
+    SnapshotId id = SnapshotId.of("xxx", UUID.randomUUID());
     UUID lastFact = UUID.randomUUID();
 
     underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
@@ -155,7 +155,7 @@ class SnapshotCacheTest {
   @Test
   void clearSnapshot() {
     // INIT
-    SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
+    SnapshotId id = SnapshotId.of("xxx", UUID.randomUUID());
     UUID lastFact = UUID.randomUUID();
 
     underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
@@ -176,7 +176,7 @@ class SnapshotCacheTest {
   @Test
   void compact() {
     // INIT
-    SnapshotId id = new SnapshotId("xxx", UUID.randomUUID());
+    SnapshotId id = SnapshotId.of("xxx", UUID.randomUUID());
     UUID lastFact = UUID.randomUUID();
 
     underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
