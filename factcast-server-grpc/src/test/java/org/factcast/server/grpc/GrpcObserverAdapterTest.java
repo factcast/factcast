@@ -15,7 +15,17 @@
  */
 package org.factcast.server.grpc;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import io.grpc.stub.StreamObserver;
+import java.util.Arrays;
+import java.util.OptionalInt;
+import java.util.UUID;
+import java.util.function.Function;
 import lombok.NonNull;
 import lombok.val;
 import org.factcast.core.Fact;
@@ -29,17 +39,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Arrays;
-import java.util.OptionalInt;
-import java.util.UUID;
-import java.util.function.Function;
-
-import static org.assertj.core.api.Assertions.fail;
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 @ExtendWith(MockitoExtension.class)
