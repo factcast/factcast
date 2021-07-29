@@ -18,6 +18,12 @@ When processing events, a projection has two tasks:
 1. persist the changes resulting from the fact 
 2. store the current fact stream's position 
 
+TODO: mention the 2 annotations + the common config
+TODO: batching
+- share transaction between n operations  
+- local vs. remote batching deligated to underlying layer
+- skip state update
+
 When using an external datastore (e.g. Redis), Factus needs to ensure that these two tasks happen atomically:  
 either both tasks are executed or none. This prevents corrupted data in case e.g. the Redis cluster goes down in the wrong moment.  
 

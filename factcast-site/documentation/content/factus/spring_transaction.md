@@ -17,7 +17,6 @@ weight = 1021
 - TODO mention Postgres here - probably not. It's DB independent 
 - TODO wording - "Fact position" instead of state
 - TODO wording: "application transaction" > "transactional projections"
-- TODO are there Spring transactional subscribed projs possible? should we document them as well ?
 - TODO: I don't see a bean providing the PlatformTransactionManager 
 - TODO: understand shared transaction between PlatformTransactionManager and JDBC template
 --------------------
@@ -50,6 +49,8 @@ public class ExampleSpringTxManagedProjection extends AbstractSpringTxManagedPro
     ...
 ```
 
+TODO: expose the reposnible transaction platform manager for this proj.  "the rest of factus can use this for trans. management"
+
 Since we decided to use a managed projection, we extended the `AbstractSpringTxManagedProjection` class.
 Transactionality is provided by the Spring [`PlatformTransactionManager`](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/PlatformTransactionManager.html)
 which is injected via the constructor. To register the `PlatformTransactionManager` in Factus, the parent constructor has to be invoked. 
@@ -65,7 +66,7 @@ both require the following methods to be implemented:
 |----------------------------------------------------|------------------------------|
 |`public UUID state();`               | read the last position in the Fact stream from the database |
 |`public void state(@NonNull UUID state);` | write the current position of the Fact stream to the database |
-|`public WriterToken acquireWriteToken(@NonNull Duration maxWait)`   | TODO empty implementation - why ? no external global lock available? |
+|`public WriterToken acquireWriteToken(@NonNull Duration maxWait)`   | TODO reference common doc |
 
 The first two methods tell Factus how to read and write the Fact stream's position 
 (a single UUID value) from the database. Since this is a single value, you could get away with 
@@ -73,10 +74,10 @@ one table (e.g. `example_spring_tx_managed_projection_state`) possessing one UUI
 
 However, to prepare for more than one transactional projection, we recommend the use of a single table
 containing the Fact stream position of multiple projections:
-
+TODO fact_position
 ```sql
 CREATE TABLE projection (
-    name varchar(255),
+    name text,
     state UUID, 
     PRIMARY KEY (name));
 ```
