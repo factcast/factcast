@@ -65,7 +65,7 @@ public class SpringTxManagedUserNamesITest extends AbstractFactCastIntegrationTe
   private void createTables() {
     jdbcTemplate.execute("DROP TABLE IF EXISTS managed_projection;");
     jdbcTemplate.execute(
-        "CREATE TABLE managed_projection (\n"
+        "CREATE TABLE projection (\n"
             + "\n"
             + "    name  varchar(255),\n"
             + "    state UUID,\n"
