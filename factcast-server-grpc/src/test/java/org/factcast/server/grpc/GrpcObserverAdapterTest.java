@@ -15,15 +15,7 @@
  */
 package org.factcast.server.grpc;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 import io.grpc.stub.StreamObserver;
-import java.util.Arrays;
-import java.util.OptionalInt;
-import java.util.UUID;
-import java.util.function.Function;
 import lombok.NonNull;
 import lombok.val;
 import org.factcast.core.Fact;
@@ -37,6 +29,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Arrays;
+import java.util.OptionalInt;
+import java.util.UUID;
+import java.util.function.Function;
+
+import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 @ExtendWith(MockitoExtension.class)
@@ -145,7 +148,7 @@ public class GrpcObserverAdapterTest {
   @Test
   void testOnNext() {
     ProtoConverter conv = new ProtoConverter();
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
     doNothing().when(observer).onNext(msg.capture());
     verify(observer, never()).onNext(any());
     Fact f = Fact.builder().ns("test").build("{}");
@@ -158,7 +161,7 @@ public class GrpcObserverAdapterTest {
   @Test
   void testOnFastForwardIfSupported() {
     ProtoConverter conv = new ProtoConverter();
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
     UUID id = UUID.randomUUID();
     uut.onFastForward(id);
     verify(observer).onNext(eq(conv.createNotificationForFastForward(id)));
@@ -169,10 +172,46 @@ public class GrpcObserverAdapterTest {
     ProtoConverter conv = new ProtoConverter();
     @NonNull GrpcRequestMetadata meta = mock(GrpcRequestMetadata.class);
     when(meta.supportsFastForward()).thenReturn(false);
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, meta, serverExceptionLogger);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, meta);
     UUID id = UUID.randomUUID();
     uut.onFastForward(id);
     verify(observer, never()).onNext(any());
+  }
+
+  @Test
+  void createKeepAliveMonitor() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 300);
+    assertThat(uut.keepalive()).isNotNull();
+  }
+
+  @Test
+  void doesNotCreateKeepAliveMonitorIfUnnecessary() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 0);
+    assertThat(uut.keepalive()).isNull();
+  }
+
+  @Test
+  void shutdownDelegates() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 3000);
+    uut.shutdown();
+
+    // if keepalive is shutdown, reschedule should throw illegalstateexceptions
+    assertThatThrownBy(
+            () -> {
+              uut.keepalive().reschedule();
+            })
+        .isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
+  void shutdownIgnoredWhenNoKeepalive() {
+    assertThatNoException()
+        .isThrownBy(
+            () -> {
+              GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, 0);
+              uut.shutdown();
+            });
+    // should no
   }
 
   public static void expectNPE(Runnable r) {

@@ -42,7 +42,9 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 
   private static final String PID = ManagementFactory.getRuntimeMXBean().getName();
 
-  @JsonProperty long maxBatchDelayInMs = 0;
+  @JsonProperty long maxBatchDelayInMs = 20;
+
+  @JsonProperty long keepaliveIntervalInMs = 0;
 
   @JsonProperty boolean continuous;
 
@@ -68,6 +70,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
   // copy constr. from a SR
   public SubscriptionRequestTO(SubscriptionRequest request) {
     maxBatchDelayInMs = request.maxBatchDelayInMs();
+    keepaliveIntervalInMs = request.keepaliveIntervalInMs();
     continuous = request.continuous();
     ephemeral = request.ephemeral();
     startingAfter = request.startingAfter().orElse(null);

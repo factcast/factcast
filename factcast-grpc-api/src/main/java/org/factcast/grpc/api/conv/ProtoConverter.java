@@ -33,6 +33,7 @@ import org.factcast.core.util.FactCastJson;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact.Builder;
 
 /**
@@ -349,7 +350,7 @@ public class ProtoConverter {
   }
 
   public SnapshotId fromProto(@NonNull MSG_SnapshotId id) {
-    return new SnapshotId(id.getKey(), fromProto(id.getUuid()));
+    return SnapshotId.of(id.getKey(), fromProto(id.getUuid()));
   }
 
   public UUID fromProto(@NonNull MSG_OptionalUuid uuid) {
@@ -397,5 +398,9 @@ public class ProtoConverter {
 
   public MSG_FactSpecsJson toProtoFactSpecs(List<FactSpec> specs) {
     return MSG_FactSpecsJson.newBuilder().setJson(FactCastJson.writeValueAsString(specs)).build();
+  }
+
+  public MSG_Notification createKeepaliveNotification() {
+    return MSG_Notification.newBuilder().setType(Type.KeepAlive).build();
   }
 }
