@@ -17,15 +17,16 @@ package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.stub.StreamObserver;
-import java.util.ArrayList;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+
+import java.util.ArrayList;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * FactObserver implementation, that translates observer Events to transport layer messages.
@@ -45,8 +46,11 @@ class GrpcObserverAdapter implements FactObserver {
 
   @VisibleForTesting
   @Deprecated
-  GrpcObserverAdapter(String id, StreamObserver<MSG_Notification> observer) {
-    this(id, observer, GrpcRequestMetadata.forTest());
+  GrpcObserverAdapter(
+      String id,
+      StreamObserver<MSG_Notification> observer,
+      ServerExceptionLogger serverExceptionLogger) {
+    this(id, observer, GrpcRequestMetadata.forTest(), serverExceptionLogger);
   }
 
   private final ArrayList<Fact> stagedFacts;
@@ -57,12 +61,14 @@ class GrpcObserverAdapter implements FactObserver {
   public GrpcObserverAdapter(
       @NonNull String id,
       @NonNull StreamObserver<MSG_Notification> observer,
-      @NonNull GrpcRequestMetadata meta) {
+      @NonNull GrpcRequestMetadata meta,
+      @NonNull ServerExceptionLogger serverExceptionLogger) {
     this.id = id;
     this.observer = observer;
     catchupBatchSize = meta.catchupBatch().orElse(1);
     supportsFastForward = meta.supportsFastForward();
     stagedFacts = new ArrayList<>(catchupBatchSize);
+    this.serverExceptionLogger = serverExceptionLogger;
   }
 
   @Override

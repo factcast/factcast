@@ -15,15 +15,7 @@
  */
 package org.factcast.server.grpc;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 import io.grpc.stub.StreamObserver;
-import java.util.Arrays;
-import java.util.OptionalInt;
-import java.util.UUID;
-import java.util.function.Function;
 import lombok.NonNull;
 import lombok.val;
 import org.factcast.core.Fact;
@@ -31,12 +23,21 @@ import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Arrays;
+import java.util.OptionalInt;
+import java.util.UUID;
+import java.util.function.Function;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 @ExtendWith(MockitoExtension.class)
@@ -46,18 +47,20 @@ public class GrpcObserverAdapterTest {
 
   @Mock private Function<Fact, MSG_Notification> projection;
 
+  @Mock private ServerExceptionLogger serverExceptionLogger;
+
   @Captor private ArgumentCaptor<MSG_Notification> msg;
 
   @Test
   void testOnComplete() {
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
     uut.onComplete();
     verify(observer).onCompleted();
   }
 
   @Test
   void testOnCompleteWithException() {
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
     doThrow(UnsupportedOperationException.class).when(observer).onCompleted();
     uut.onComplete();
     verify(observer).onCompleted();
@@ -65,7 +68,7 @@ public class GrpcObserverAdapterTest {
 
   @Test
   void testOnCatchup() {
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
     doNothing().when(observer).onNext(msg.capture());
     verify(observer, never()).onNext(any());
     uut.onCatchup();
@@ -82,7 +85,8 @@ public class GrpcObserverAdapterTest {
 
     FastForwardTarget ffwd = FastForwardTarget.of(null, 112);
 
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData);
+    GrpcObserverAdapter uut =
+        new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData, serverExceptionLogger);
 
     doNothing().when(observer).onNext(msg.capture());
     verify(observer, never()).onNext(any());
@@ -100,7 +104,8 @@ public class GrpcObserverAdapterTest {
 
     FastForwardTarget ffwd = FastForwardTarget.of(new UUID(1, 1), 0);
 
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData);
+    GrpcObserverAdapter uut =
+        new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData, serverExceptionLogger);
 
     doNothing().when(observer).onNext(msg.capture());
     verify(observer, never()).onNext(any());
@@ -118,7 +123,8 @@ public class GrpcObserverAdapterTest {
 
     FastForwardTarget ffwd = FastForwardTarget.of(new UUID(10, 10), 112);
 
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData);
+    GrpcObserverAdapter uut =
+        new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData, serverExceptionLogger);
 
     doNothing().when(observer).onNext(msg.capture());
     verify(observer, never()).onNext(any());
@@ -129,16 +135,18 @@ public class GrpcObserverAdapterTest {
 
   @Test
   void testOnError() {
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
+    val exception = new Exception();
     verify(observer, never()).onNext(any());
-    uut.onError(new Exception());
+    uut.onError(exception);
     verify(observer).onError(any());
+    verify(serverExceptionLogger).log(exception, "foo");
   }
 
   @Test
   void testOnNext() {
     ProtoConverter conv = new ProtoConverter();
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
     doNothing().when(observer).onNext(msg.capture());
     verify(observer, never()).onNext(any());
     Fact f = Fact.builder().ns("test").build("{}");
@@ -151,7 +159,7 @@ public class GrpcObserverAdapterTest {
   @Test
   void testOnFastForwardIfSupported() {
     ProtoConverter conv = new ProtoConverter();
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
     UUID id = UUID.randomUUID();
     uut.onFastForward(id);
     verify(observer).onNext(eq(conv.createNotificationForFastForward(id)));
@@ -162,7 +170,7 @@ public class GrpcObserverAdapterTest {
     ProtoConverter conv = new ProtoConverter();
     @NonNull GrpcRequestMetadata meta = mock(GrpcRequestMetadata.class);
     when(meta.supportsFastForward()).thenReturn(false);
-    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, meta);
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, meta, serverExceptionLogger);
     UUID id = UUID.randomUUID();
     uut.onFastForward(id);
     verify(observer, never()).onNext(any());
