@@ -3,21 +3,15 @@ draft = false
 title = "Spring Transaction"
 description = ""
 
-
 creatordisplayname = "Maik Töpfer"
 creatoremail = "maik.toepfer@prisma-capacity.eu"
 
-
-parent = "factus-transactional-event-application"
+parent = "factus-transactional-projections"
 identifier = "spring-transaction"
 weight = 1021
 
 +++
 
-- TODO mention Postgres here - probably not. It's DB independent 
-- TODO wording - "Fact position" instead of state
-- TODO wording: "application transaction" > "transactional projections"
-- TODO: I don't see a bean providing the PlatformTransactionManager 
 - TODO: understand shared transaction between PlatformTransactionManager and JDBC template
 --------------------
 
@@ -49,12 +43,16 @@ public class ExampleSpringTxManagedProjection extends AbstractSpringTxManagedPro
     ...
 ```
 
-TODO: expose the reposnible transaction platform manager for this proj.  "the rest of factus can use this for trans. management"
-
 Since we decided to use a managed projection, we extended the `AbstractSpringTxManagedProjection` class.
-Transactionality is provided by the Spring [`PlatformTransactionManager`](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/PlatformTransactionManager.html)
-which is injected via the constructor. To register the `PlatformTransactionManager` in Factus, the parent constructor has to be invoked. 
+To configure transaction management, our managed projection exposes its responsible transaction manager to the rest of Factus. 
+To do so, a Spring [`PlatformTransactionManager`](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/PlatformTransactionManager.html)
+is injected via the constructor and `super(...)` is called.   
+
 To let the projection communicate with the external database, additionally a `JdbcTemplate` is injected.
+
+Note: As soon as your project uses the `spring-boot-starter-jdbc` dependency, 
+Spring Boot will [automatically provide](https://github.com/spring-projects/spring-boot/blob/main/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/jdbc/DataSourceTransactionManagerAutoConfiguration.java) 
+you with a [JDBC-aware PlatformTransactionManager](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/support/JdbcTransactionManager.html).  
 
 Providing Required Methods
 --------------------------
@@ -135,7 +133,7 @@ In case no state exists yet, `null` is returned.
 Applying Events
 ----------------
 
-As explained [in the introduction to transactional projections]({{< ref "application_transaction.md" >}})
+As explained [in the introduction to transactional projections]({{< ref "transactional_projections.md" >}})
 when receiving an event, two write operations towards the relational database happen:
 
 1. the projection is updated
@@ -174,16 +172,6 @@ void apply(UserDeleted e) {
     jdbcTemplate.update("DELETE FROM users where id = ?", e.aggregateId());
 }
 ``` 
-
-
-### Tuning The Transaction
-
-For fine-tuning the `@SpringTransactional` annotation provides two optional configuration parameters:
-
-| Parameter Name   |  Description            | Default Value  |
-|------------------|-------------------------|----------------|
-| `size`           | local batch size        |  50            |
-| `timeout`        | transaction timeout in seconds | 30      |
 
 
 Full Example

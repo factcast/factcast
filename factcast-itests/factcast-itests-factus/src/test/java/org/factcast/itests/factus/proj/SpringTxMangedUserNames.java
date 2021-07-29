@@ -50,7 +50,7 @@ public class SpringTxMangedUserNames extends AbstractSpringTxManagedProjection {
   public UUID state() {
     try {
       return jdbcTemplate.queryForObject(
-          "SELECT state FROM managed_projection WHERE name = ?",
+          "SELECT state FROM projection WHERE name = ?",
           UUID.class,
           getScopedName().asString());
     } catch (IncorrectResultSizeDataAccessException e) {
@@ -62,7 +62,7 @@ public class SpringTxMangedUserNames extends AbstractSpringTxManagedProjection {
   @Override
   public void state(@NonNull UUID state) {
     jdbcTemplate.update(
-        "INSERT INTO managed_projection (name, state) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET state = ?",
+        "INSERT INTO projection (name, state) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET state = ?",
         getScopedName().asString(),
         state,
         state);
