@@ -33,17 +33,6 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -75,6 +64,18 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
 /**
  * Service that provides access to an injected FactStore via GRPC.
  *
@@ -95,11 +96,14 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
   @NonNull final FactStore store;
   @NonNull final GrpcRequestMetadata grpcRequestMetadata;
   @NonNull final GrpcLimitProperties grpcLimitProperties;
+
   @NonNull final FastForwardTarget ffwdTarget;
 
   final CompressionCodecs codecs = new CompressionCodecs();
 
   final ProtoConverter converter = new ProtoConverter();
+
+  final ServerExceptionLogger serverExceptionLogger = new ServerExceptionLogger();
 
   @VisibleForTesting
   @Deprecated
@@ -198,7 +202,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
               });
 
       Subscription sub =
-          store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp, grpcRequestMetadata));
+          store.subscribe(
+              req,
+              new GrpcObserverAdapter(
+                  req.toString(), resp, grpcRequestMetadata, serverExceptionLogger));
       subRef.set(sub);
 
     } else {
