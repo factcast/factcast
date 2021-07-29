@@ -361,7 +361,7 @@ class FactusImplTest {
       // the prepared update happens on the projection and updates its
       // state.
       Mockito.verify(ea, times(2)).apply(any(Fact.class));
-      assertThat(m.state()).isEqualTo(f2.id());
+      assertThat(m.factStreamPosition()).isEqualTo(f2.id());
     }
   }
 
@@ -797,7 +797,7 @@ class FactusImplTest {
       when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
       doAnswer(
               i -> {
-                subscribedProjection.state(((Fact) (i.getArgument(0))).id());
+                subscribedProjection.factStreamPosition(((Fact) (i.getArgument(0))).id());
                 return null;
               })
           .when(eventApplier)
@@ -830,7 +830,7 @@ class FactusImplTest {
       verify(eventApplier).apply(mockedFact);
 
       // ... and the state should be updated as well
-      verify(subscribedProjection).state(factId);
+      verify(subscribedProjection).factStreamPosition(factId);
 
       // onCatchup()
       // assume onCatchup got called on the fact observer...

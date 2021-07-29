@@ -18,8 +18,8 @@ package org.factcast.factus.projection;
 import java.util.UUID;
 import lombok.NonNull;
 
-public interface StateAware {
-  UUID state();
+public interface FactStreamPositionAware {
+  UUID factStreamPosition();
 
-  void state(@NonNull UUID state);
+  void factStreamPosition(@NonNull UUID state);
 }

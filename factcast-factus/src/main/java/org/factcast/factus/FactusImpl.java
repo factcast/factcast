@@ -142,7 +142,9 @@ public class FactusImpl implements Factus {
         Tags.of(Tag.of(CLASS, managedProjection.getClass().getName())),
         () ->
             managedProjection.withLock(
-                () -> catchupProjection(managedProjection, managedProjection.state(), null)));
+                () ->
+                    catchupProjection(
+                        managedProjection, managedProjection.factStreamPosition(), null)));
   }
 
   @Override
@@ -244,13 +246,13 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onFastForward(@NonNull UUID factIdToFfwdTo) {
-            subscribedProjection.state(factIdToFfwdTo);
+            subscribedProjection.factStreamPosition(factIdToFfwdTo);
           }
         };
 
     return fc.subscribe(
         SubscriptionRequest.follow(handler.createFactSpecs())
-            .fromNullable(subscribedProjection.state()),
+            .fromNullable(subscribedProjection.factStreamPosition()),
         fo);
   }
 
@@ -403,8 +405,8 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onFastForward(@NonNull UUID factIdToFfwdTo) {
-            if (projection instanceof StateAware) {
-              ((StateAware) projection).state(factIdToFfwdTo);
+            if (projection instanceof FactStreamPositionAware) {
+              ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
             }
           }
         };

@@ -185,7 +185,7 @@ class ProjectorImplTest {
       UUID state = UUID.fromString("9258562c-e6aa-4855-a765-3b1f49a113d5");
 
       ComplexProjection projection = new ComplexProjection();
-      projection.state(state);
+      projection.factStreamPosition(state);
 
       ProjectorImpl<ComplexAggregate> underTest = new ProjectorImpl<>(eventSerializer, projection);
 
