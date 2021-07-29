@@ -1,5 +1,7 @@
 package org.factcast.store.pgsql.internal;
 
+import static org.mockito.Mockito.*;
+
 import com.google.common.eventbus.EventBus;
 import lombok.val;
 import org.factcast.core.subscription.FactTransformersFactory;
@@ -19,8 +21,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PgSubscriptionFactoryTest {
