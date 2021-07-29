@@ -1,5 +1,10 @@
 package org.factcast.server.grpc;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.io.IOException;
+import java.sql.SQLException;
 import lombok.val;
 import org.factcast.server.grpc.ServerExceptionLogger.Level;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,12 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.io.IOException;
-import java.sql.SQLException;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ServerExceptionLoggerTest {
