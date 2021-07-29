@@ -41,11 +41,8 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -236,28 +233,31 @@ class ClientStreamObserverTest {
   }
 
   @Test
-  @Disabled("this stuff is broken for unknown reasons 🥸")
   void detectSubscriptionStarvation() throws InterruptedException {
-    CountDownLatch latch = new CountDownLatch(1);
-    uut = spy(new ClientStreamObserver(subscription, 10L));
-    int interval = 50;
-    ClientKeepalive clientKeepalive = uut.new ClientKeepalive(interval);
-    // not yet
-    sleep(70);
-    verify(uut, never()).onError(any());
 
-    for (int i = 0; i < 10; i++) {
-      sleep(30);
+    long interval = 100L;
+    long grace = 2 * interval + 200;
+
+    uut = new ClientStreamObserver(subscription, interval);
+
+    sleep(interval / 2);
+    // not yet
+    verify(subscription, never()).notifyError(any());
+
+    // prolong interval
+    for (int i = 0; i < 5; i++) {
+      sleep(50);
       // any notification will reset the time
       uut.onNext(converter.createKeepaliveNotification());
     }
 
-    // still fine because it is < (2*interval)+200 = 300
-    sleep(100);
-    verify(uut, never()).onError(any());
+    sleep(200);
+    // still fine because it is < grace
+    verify(subscription, never()).notifyError(any());
 
-    sleep(300);
-    verify(uut, times(1)).onError(any(StaleSubscriptionDetectedException.class));
+    sleep(grace);
+    // now it should have triggered an error
+    verify(subscription, times(1)).notifyError(any(StaleSubscriptionDetectedException.class));
   }
 
   @SneakyThrows
