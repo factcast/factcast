@@ -34,7 +34,6 @@ import org.factcast.store.pgsql.internal.catchup.PgCatchup;
 import org.factcast.store.pgsql.internal.listen.PgConnectionSupplier;
 import org.factcast.store.pgsql.internal.query.PgQueryBuilder;
 import org.factcast.store.pgsql.internal.rowmapper.PgFactExtractor;
-import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -99,7 +98,7 @@ public class PgFetchingCatchup implements PgCatchup {
         try {
           subscription.notifyElement(f);
           metrics.counter(EVENT.CATCHUP_FACT);
-        } catch (MissingTransformationInformation | TransformationException e) {
+        } catch (TransformationException e) {
           log.warn("{} transformation error: {}", req, e.getMessage());
           subscription.notifyError(e);
           throw e;
