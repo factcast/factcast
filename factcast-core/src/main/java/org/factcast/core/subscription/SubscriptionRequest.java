@@ -33,6 +33,8 @@ public interface SubscriptionRequest {
 
   long maxBatchDelayInMs();
 
+  long keepaliveIntervalInMs();
+
   boolean continuous();
 
   boolean ephemeral();
