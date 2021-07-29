@@ -15,16 +15,8 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import com.google.common.eventbus.EventBus;
 import io.micrometer.core.instrument.DistributionSummary;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.val;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
@@ -43,6 +35,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import slf4jtest.LogLevel;
+
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class PgFactStreamTest {
@@ -239,4 +240,7 @@ public class PgFactStreamTest {
     assertThat(logger.contains(LogLevel.DebugLevel, "CatchupTransformationRatio")).isTrue();
     verify(distributionSummary).record(1);
   }
+
+  @Nested
+  class FactRowCallbackHandler {}
 }

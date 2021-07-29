@@ -41,6 +41,14 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
+import java.util.Collections;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.assertj.core.api.Assertions.*;
+
 @SpringBootTest
 @EnableAutoConfiguration
 @ContextConfiguration(classes = {Application.class})
@@ -132,10 +140,12 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
     ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
-    val proj = new SubscribedUserNames();
+    val catchupLatch = new CountDownLatch(1);
+    val errorLatch = new CountDownLatch(1);
+    val proj = new SubscribedUserNames(catchupLatch, errorLatch);
     ec.subscribe(proj);
 
-    Thread.sleep(1000);
+    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
 
     assertThat(proj.exception()).isInstanceOf(TransformationException.class);
   }
@@ -146,14 +156,16 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     // INIT
     UUID aggId = UUID.randomUUID();
 
-    val proj = new SubscribedUserNames();
+    val catchupLatch = new CountDownLatch(1);
+    val errorLatch = new CountDownLatch(1);
+    val proj = new SubscribedUserNames(catchupLatch, errorLatch);
     ec.subscribe(proj);
 
-    Thread.sleep(1000);
+    assertThat(catchupLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
 
     ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
-    Thread.sleep(1000);
+    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
 
     assertThat(proj.exception()).isInstanceOf(TransformationException.class);
   }
@@ -167,6 +179,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     fc.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
     AtomicReference<Throwable> e = new AtomicReference<>();
+    val errorLatch = new CountDownLatch(1);
 
     fc.subscribe(
         SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(2))
@@ -178,11 +191,12 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
           @Override
           public void onError(@NonNull Throwable exception) {
             e.set(exception);
+            errorLatch.countDown();
             FactObserver.super.onError(exception);
           }
         });
 
-    Thread.sleep(1000);
+    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
 
     assertThat(e.get()).isInstanceOf(TransformationException.class);
   }
@@ -194,6 +208,8 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     UUID aggId = UUID.randomUUID();
 
     AtomicReference<Throwable> e = new AtomicReference<>();
+    val errorLatch = new CountDownLatch(1);
+    val catchupLatch = new CountDownLatch(1);
 
     fc.subscribe(
         SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(2))
@@ -203,17 +219,24 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
           public void onNext(@NonNull Fact element) {}
 
           @Override
+          public void onCatchup() {
+            catchupLatch.countDown();
+            FactObserver.super.onCatchup();
+          }
+
+          @Override
           public void onError(@NonNull Throwable exception) {
             e.set(exception);
+            errorLatch.countDown();
             FactObserver.super.onError(exception);
           }
         });
 
-    Thread.sleep(1000);
+    assertThat(catchupLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
 
     fc.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
-    Thread.sleep(1000);
+    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
 
     assertThat(e.get()).isInstanceOf(TransformationException.class);
   }
