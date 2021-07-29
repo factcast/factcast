@@ -17,11 +17,6 @@ package org.factcast.store.pgsql.internal;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +33,13 @@ import org.factcast.store.pgsql.internal.query.PgQueryBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 /**
  * Creates and maintains a subscription.
@@ -81,7 +83,9 @@ public class PgFactStream {
     initializeSerialToStartAfter();
     String sql = q.createSQL();
     PreparedStatementSetter setter = q.createStatementSetter(serial);
-    RowCallbackHandler rsHandler = new FactRowCallbackHandler(subscription, postQueryMatcher);
+    RowCallbackHandler rsHandler =
+        new FactRowCallbackHandler(
+            subscription, postQueryMatcher, () -> isConnected(), serial, request);
     PgSynchronizedQuery query =
         new PgSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler, serial, fetcher);
     catchupAndFollow(request, subscription, query);
@@ -255,16 +259,22 @@ public class PgFactStream {
   }
 
   @RequiredArgsConstructor
-  private class FactRowCallbackHandler implements RowCallbackHandler {
+  static class FactRowCallbackHandler implements RowCallbackHandler {
 
     final SubscriptionImpl subscription;
 
     final PgPostQueryMatcher postQueryMatcher;
 
+    final Supplier<Boolean> isConnectedSupplier;
+
+    final AtomicLong serial;
+
+    final SubscriptionRequestTO request;
+
     @SuppressWarnings("NullableProblems")
     @Override
     public void processRow(ResultSet rs) throws SQLException {
-      if (isConnected()) {
+      if (isConnectedSupplier.get()) {
         if (rs.isClosed()) {
           throw new IllegalStateException(
               "ResultSet already closed. We should not have got here. THIS IS A BUG!");
