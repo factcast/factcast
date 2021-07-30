@@ -36,8 +36,12 @@ class IndexCheckTest {
 
       logger.contains("Detected invalid index: idx1");
       logger.contains("Detected invalid index: idx2");
-      assertThat(logger.lines().size()).isEqualTo(2);
-      assertThat(logger.lines().stream().allMatch(l -> l.level == LogLevel.WarnLevel)).isTrue();
+      assertThat(logger.lines().size()).isEqualTo(4);
+      assertThat(
+              logger.lines().stream()
+                  .filter(l -> l.level != LogLevel.DebugLevel)
+                  .allMatch(l -> l.level == LogLevel.WarnLevel))
+          .isTrue();
     }
 
     @Test
@@ -48,7 +52,8 @@ class IndexCheckTest {
       TestLogger logger = Slf4jHelper.replaceLogger(underTest);
       underTest.checkIndexes();
 
-      assertThat(logger.lines()).isEmpty();
+      assertThat(logger.lines().size()).isEqualTo(2);
+      assertThat(logger.lines().stream().filter(l -> l.level != LogLevel.DebugLevel)).isEmpty();
     }
   }
 }
