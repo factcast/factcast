@@ -19,9 +19,7 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.proj.TxRedissonManagedUserNames;
 import org.factcast.itests.factus.proj.TxRedissonSubscribedUserNames;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.redisson.api.RMap;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
@@ -176,9 +174,9 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     @Getter int stateModifications = 0;
 
     @Override
-    public void state(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID state) {
       stateModifications++;
-      super.state(state);
+      super.factStreamPosition(state);
     }
   }
 
@@ -190,9 +188,9 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     @Getter int stateModifications = 0;
 
     @Override
-    public void state(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID state) {
       stateModifications++;
-      super.state(state);
+      super.factStreamPosition(state);
     }
   }
 

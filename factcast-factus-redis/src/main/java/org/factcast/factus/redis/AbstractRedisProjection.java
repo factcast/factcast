@@ -6,8 +6,8 @@ import java.util.UUID;
 import java.util.function.Function;
 import lombok.Getter;
 import lombok.NonNull;
+import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.Named;
-import org.factcast.factus.projection.StateAware;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.WriterTokenAware;
 import org.factcast.factus.redis.batch.RedissonBatchManager;
@@ -15,7 +15,7 @@ import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.redisson.api.*;
 
 abstract class AbstractRedisProjection
-    implements RedisProjection, StateAware, WriterTokenAware, Named {
+    implements RedisProjection, FactStreamPositionAware, WriterTokenAware, Named {
   @Getter protected final RedissonClient redisson;
 
   private final RLock lock;
@@ -49,7 +49,7 @@ abstract class AbstractRedisProjection
   }
 
   @Override
-  public UUID state() {
+  public UUID factStreamPosition() {
     RedissonTxManager man = RedissonTxManager.get(redisson);
     if (man.inTransaction()) {
       return man.join((Function<RTransaction, UUID>) tx -> stateBucket(tx).get());
@@ -62,7 +62,7 @@ abstract class AbstractRedisProjection
 
   @SuppressWarnings("ConstantConditions")
   @Override
-  public void state(@NonNull UUID state) {
+  public void factStreamPosition(@NonNull UUID state) {
     RedissonTxManager txMan = RedissonTxManager.get(redisson);
     if (txMan.inTransaction()) {
       txMan.join(
