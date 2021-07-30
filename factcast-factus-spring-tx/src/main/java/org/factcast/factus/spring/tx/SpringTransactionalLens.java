@@ -26,7 +26,7 @@ public class SpringTransactionalLens extends AbstractTransactionalLens implement
     this.txManager = txManager;
     transactionManager = springTxProjection.platformTransactionManager();
 
-    flushTimeout = calculateFlushTimeout(definition);
+    flushTimeout = calculateFlushTimeout(definition.getTimeout() * 1000L);
     bulkSize = Math.max(1, getSize(springTxProjection));
   }
 
@@ -91,9 +91,9 @@ public class SpringTransactionalLens extends AbstractTransactionalLens implement
   }
 
   @VisibleForTesting
-  static long calculateFlushTimeout(@NonNull TransactionDefinition opts) {
+  static long calculateFlushTimeout(long timeoutInMs) {
     // "best" guess
-    long flush = opts.getTimeout() / 10 * 8;
+    long flush = timeoutInMs / 10 * 8;
     if (flush < 80) {
       // disable batching altogether as it is too risky
       flush = 0;
