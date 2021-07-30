@@ -1,4 +1,4 @@
-package org.factcast.grpc.api.conv;
+package org.factcast.core.subscription;
 
 import lombok.Value;
 

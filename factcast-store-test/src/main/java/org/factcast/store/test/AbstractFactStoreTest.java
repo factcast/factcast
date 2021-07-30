@@ -16,8 +16,8 @@
 package org.factcast.store.test;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -49,7 +49,7 @@ import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.test.annotation.DirtiesContext;
 
-@SuppressWarnings("all")
+@SuppressWarnings("deprecation")
 public abstract class AbstractFactStoreTest {
 
   static final FactSpec ANY = FactSpec.ns("default");
@@ -110,7 +110,7 @@ public abstract class AbstractFactStoreTest {
           Assertions.assertThrows(
               IllegalArgumentException.class,
               () -> {
-                final UUID id = UUID.randomUUID();
+                UUID id = UUID.randomUUID();
                 uut.publish(
                     Fact.of(
                         "{\"id\":\"" + id + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
@@ -509,8 +509,8 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          final UUID id = UUID.randomUUID();
-          final UUID aggId1 = UUID.randomUUID();
+          UUID id = UUID.randomUUID();
+          UUID aggId1 = UUID.randomUUID();
           uut.publish(
               Fact.of(
                   "{\"id\":\""
@@ -534,9 +534,9 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          final UUID id = UUID.randomUUID();
-          final UUID aggId1 = UUID.randomUUID();
-          final UUID aggId2 = UUID.randomUUID();
+          UUID id = UUID.randomUUID();
+          UUID aggId1 = UUID.randomUUID();
+          UUID aggId2 = UUID.randomUUID();
           uut.publish(
               Fact.of(
                   "{\"id\":\""
@@ -568,9 +568,9 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          final UUID id = UUID.randomUUID();
-          final UUID aggId1 = UUID.randomUUID();
-          final UUID aggId2 = UUID.randomUUID();
+          UUID id = UUID.randomUUID();
+          UUID aggId1 = UUID.randomUUID();
+          UUID aggId2 = UUID.randomUUID();
           uut.publish(
               Fact.of(
                   "{\"id\":\""
@@ -596,7 +596,7 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          final UUID id = UUID.randomUUID();
+          UUID id = UUID.randomUUID();
           TestFactObserver obs = new TestFactObserver();
           try (Subscription s =
               uut.subscribe(
@@ -622,8 +622,8 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          final UUID id = UUID.randomUUID();
-          final UUID id2 = UUID.randomUUID();
+          UUID id = UUID.randomUUID();
+          UUID id2 = UUID.randomUUID();
           assertFalse(uut.serialOf(id).isPresent());
           uut.publish(
               Fact.of(
