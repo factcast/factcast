@@ -42,6 +42,9 @@ public class ServerExceptionLogger {
       case ERROR:
         error(e, id);
         break;
+      case JUST_SEND_TO_CONSUMER:
+        // do not log
+        break;
       default:
         log.error("Unhandled case for log level from {} - falling back to ERROR", e.getClass());
         error(e, id);

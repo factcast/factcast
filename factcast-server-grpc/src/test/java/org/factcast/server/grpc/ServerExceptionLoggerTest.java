@@ -7,10 +7,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import lombok.val;
 import org.factcast.server.grpc.ServerExceptionLogger.Level;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -100,7 +98,7 @@ class ServerExceptionLoggerTest {
     }
 
     @Test
-    void testLog_anythingElse() {
+    void doesNotLogForJustSendToCLient() {
       val uut = spy(underTest);
       val e = new Exception();
 
@@ -108,9 +106,10 @@ class ServerExceptionLoggerTest {
 
       uut.log(e, "foo");
 
+      verify(uut).log(any(), any()); // we just did that
       verify(uut).resolveLevelFor(e);
-      verify(uut).log(any(), any());
 
+      // not logging happens
       verifyNoMoreInteractions(uut);
     }
   }
