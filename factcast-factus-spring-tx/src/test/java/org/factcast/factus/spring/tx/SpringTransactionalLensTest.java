@@ -1,5 +1,10 @@
 package org.factcast.factus.spring.tx;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.time.Duration;
+import java.util.function.Function;
 import lombok.val;
 import org.factcast.core.Fact;
 import org.junit.jupiter.api.Nested;
@@ -10,12 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import java.time.Duration;
-import java.util.function.Function;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SpringTransactionalLensTest {

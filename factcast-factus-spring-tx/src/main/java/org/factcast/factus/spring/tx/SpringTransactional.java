@@ -1,11 +1,10 @@
 package org.factcast.factus.spring.tx;
 
+import java.lang.annotation.*;
 import lombok.NonNull;
 import lombok.val;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-
-import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
