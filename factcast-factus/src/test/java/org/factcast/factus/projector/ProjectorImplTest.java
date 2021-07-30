@@ -35,6 +35,7 @@ import org.factcast.factus.Handler;
 import org.factcast.factus.HandlerFor;
 import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
+import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
 import org.junit.jupiter.api.*;
@@ -371,6 +372,45 @@ class ProjectorImplTest {
       Method realMethod =
           NonStaticClass$MockitoMock.class.getDeclaredMethod("apply", SimpleEvent.class);
       assertThat(underTest.isEventHandlerMethod(realMethod)).isFalse();
+    }
+  }
+
+  @Nested
+  class WhenTestingCatchingUp {
+
+    @Test
+    void setsFactStreamPosition() throws NoSuchMethodException {
+
+      LocalManagedProjection factStreamPositionAware =
+          spy(
+              new LocalManagedProjection() {
+                @Handler
+                void apply(SimpleEvent e) {}
+              });
+      ProjectorImpl<LocalManagedProjection> underTest =
+          new ProjectorImpl<>(mock(EventSerializer.class), factStreamPositionAware);
+
+      UUID id = UUID.randomUUID();
+      underTest.onCatchup(id);
+
+      verify(factStreamPositionAware).factStreamPosition(id);
+    }
+
+    @Test
+    void skipsSettingFactStreamPosition() throws NoSuchMethodException {
+      Projection notFactStreamPositionAware =
+          spy(
+              new Projection() {
+                @Handler
+                void apply(SimpleEvent e) {}
+              });
+      ProjectorImpl<Projection> underTest =
+          new ProjectorImpl<>(mock(EventSerializer.class), notFactStreamPositionAware);
+
+      UUID id = UUID.randomUUID();
+      underTest.onCatchup(id);
+
+      verifyNoInteractions(notFactStreamPositionAware);
     }
   }
 
