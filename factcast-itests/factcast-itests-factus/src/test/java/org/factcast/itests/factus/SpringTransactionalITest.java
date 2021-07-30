@@ -420,7 +420,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public UUID state() {
+    public UUID factStreamPosition() {
       try {
         return jdbcTemplate.queryForObject(
             "SELECT state FROM managed_projection WHERE name = ?",
@@ -433,7 +433,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void state(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID state) {
       log.debug("set state");
       assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
       stateModifications++;
@@ -476,7 +476,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public UUID state() {
+    public UUID factStreamPosition() {
       try {
         return jdbcTemplate.queryForObject(
             "SELECT state FROM managed_projection WHERE name = ?",
@@ -489,7 +489,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void state(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID state) {
       log.debug("set state");
       assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
       stateModifications++;

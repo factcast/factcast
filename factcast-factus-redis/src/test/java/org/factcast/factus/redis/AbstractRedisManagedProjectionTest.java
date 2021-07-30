@@ -86,7 +86,7 @@ class AbstractRedisManagedProjectionTest {
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
       when(bucket.get()).thenReturn(id);
 
-      val result = underTest.state();
+      val result = underTest.factStreamPosition();
 
       assertThat(result).isEqualTo(id);
     }
@@ -104,7 +104,7 @@ class AbstractRedisManagedProjectionTest {
       when(tx.getBucket(any(), any())).thenReturn(bucket);
       when(bucket.get()).thenReturn(id);
 
-      val result = underTest.state();
+      val result = underTest.factStreamPosition();
 
       assertThat(result).isEqualTo(id);
     }
@@ -122,7 +122,7 @@ class AbstractRedisManagedProjectionTest {
       RBucket<Object> bucket = mock(RBucket.class);
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
 
-      underTest.state(STATE);
+      underTest.factStreamPosition(STATE);
 
       verify(bucket).set(STATE);
     }
@@ -141,7 +141,7 @@ class AbstractRedisManagedProjectionTest {
       RBucket<Object> bucket = mock(RBucket.class);
       when(tx.getBucket(any(), any())).thenReturn(bucket);
 
-      underTest.state(STATE);
+      underTest.factStreamPosition(STATE);
 
       verify(bucket).set(STATE);
     }
@@ -161,7 +161,7 @@ class AbstractRedisManagedProjectionTest {
       RBucket<Object> bucket = mock(RBucket.class);
       when(batch.getBucket(any(), any())).thenReturn(bucket);
 
-      underTest.state(STATE);
+      underTest.factStreamPosition(STATE);
 
       verify(bucket).setAsync(STATE);
     }
@@ -174,7 +174,7 @@ class AbstractRedisManagedProjectionTest {
       RBucket<Object> bucket = mock(RBucket.class);
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
 
-      underTest.state(STATE);
+      underTest.factStreamPosition(STATE);
 
       verify(bucket).set(STATE);
     }

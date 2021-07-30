@@ -22,7 +22,7 @@ import lombok.experimental.Delegate;
  * synchronized in memory.
  */
 public abstract class LocalManagedProjection implements ManagedProjection {
-  @Delegate private final LocalState state = new LocalState();
+  @Delegate private final LocalFactStreamPosition state = new LocalFactStreamPosition();
 
   @Delegate private final LocalWriteToken lock = new LocalWriteToken();
 }
