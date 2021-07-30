@@ -15,12 +15,14 @@
  */
 package org.factcast.store.pgsql.internal;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.store.pgsql.internal.listen.PgListener.FactInsertionEvent;
 
 /**
@@ -37,29 +39,48 @@ class CondensedQueryExecutor {
   private final PgSynchronizedQuery target;
 
   private final Supplier<Boolean> connectionStateSupplier;
+  private final Set<String> interests;
 
   private Timer timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer", true);
 
   private final AtomicBoolean currentlyScheduled = new AtomicBoolean(false);
 
+  @VisibleForTesting
   CondensedQueryExecutor(
       long maxDelayInMillis,
-      PgSynchronizedQuery target,
-      Supplier<Boolean> connectionStateSupplier,
-      Timer timer) {
+      @NonNull PgSynchronizedQuery target,
+      @NonNull Supplier<Boolean> connectionStateSupplier,
+      @NonNull List<FactSpec> specs,
+      @NonNull Timer timer) {
     this.maxDelayInMillis = maxDelayInMillis;
     this.target = target;
     this.connectionStateSupplier = connectionStateSupplier;
     this.timer = timer;
+    interests = extractInterests(specs);
   }
 
   public CondensedQueryExecutor(
       long maxDelayInMillis,
-      PgSynchronizedQuery target,
-      Supplier<Boolean> connectionStateSupplier) {
+      @NonNull PgSynchronizedQuery target,
+      @NonNull Supplier<Boolean> connectionStateSupplier,
+      @NonNull List<FactSpec> specs) {
     this.maxDelayInMillis = maxDelayInMillis;
     this.target = target;
     this.connectionStateSupplier = connectionStateSupplier;
+    interests = extractInterests(specs);
+  }
+
+  private Set<String> extractInterests(List<FactSpec> specs) {
+    HashSet<String> set = new HashSet<>();
+    specs.forEach(
+        s -> {
+          if (s.type() == null) {
+            set.add(s.ns());
+          } else {
+            set.add(s.ns() + ":" + s.type());
+          }
+        });
+    return set;
   }
 
   public void trigger() {
@@ -74,7 +95,7 @@ class CondensedQueryExecutor {
               public void run() {
                 currentlyScheduled.set(false);
                 try {
-                  CondensedQueryExecutor.this.runTarget();
+                  runTarget();
                 } catch (Throwable e) {
                   log.error("Scheduled query failed, closing: {}", e.getMessage());
                 }
@@ -88,7 +109,28 @@ class CondensedQueryExecutor {
   // called by the EventBus
   @Subscribe
   public void onEvent(FactInsertionEvent ev) {
-    trigger();
+
+    String ns = ev.ns();
+    String type = ev.type();
+
+    // only trigger if necessary
+    if (mightMatch(ns, type)) {
+      trigger();
+    }
+  }
+
+  @VisibleForTesting
+  boolean mightMatch(String ns, String type) {
+    return ns == null
+        ||
+        // listens to this exact type
+        interests.contains(ns + ":" + type)
+        ||
+        // listens to the whole namespace
+        interests.contains(ns)
+        ||
+        // is a catchall
+        interests.contains("*");
   }
 
   @SuppressWarnings("WeakerAccess")

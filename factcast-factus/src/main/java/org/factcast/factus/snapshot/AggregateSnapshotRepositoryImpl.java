@@ -46,7 +46,7 @@ public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository
       @NonNull Class<? extends Aggregate> type, @NonNull UUID aggregateId) {
 
     SnapshotId snapshotId =
-        new SnapshotId(
+        SnapshotId.of(
             createKeyForType(type, () -> serializerSupplier.retrieveSerializer(type)), aggregateId);
 
     Optional<Snapshot> snapshot = snapshotCache.getSnapshot(snapshotId);
@@ -69,7 +69,7 @@ public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository
     return CompletableFuture.runAsync(
         () -> {
           val id =
-              new SnapshotId(
+              SnapshotId.of(
                   createKeyForType(type, () -> ser), AggregateUtil.aggregateId(aggregate));
           putBlocking(new Snapshot(id, state, bytes, ser.includesCompression()));
         });
