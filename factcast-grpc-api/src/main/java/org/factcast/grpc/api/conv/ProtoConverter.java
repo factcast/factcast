@@ -403,4 +403,8 @@ public class ProtoConverter {
   public MSG_Notification createKeepaliveNotification() {
     return MSG_Notification.newBuilder().setType(Type.KeepAlive).build();
   }
+
+  public FactStreamInfo fromProto(MSG_Info info) {
+    return new FactStreamInfo(info.getSerialStart(), info.getSerialHorizon());
+  }
 }
