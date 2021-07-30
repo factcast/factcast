@@ -17,6 +17,7 @@ package org.factcast.store.pgsql.registry.transformation;
 
 import liquibase.integration.spring.SpringLiquibase;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.pgsql.PgConfigurationProperties;
@@ -25,7 +26,7 @@ import org.factcast.store.pgsql.registry.metrics.RegistryMetrics;
 import org.factcast.store.pgsql.registry.transformation.cache.InMemTransformationCache;
 import org.factcast.store.pgsql.registry.transformation.cache.PgTransformationCache;
 import org.factcast.store.pgsql.registry.transformation.cache.TransformationCache;
-import org.factcast.store.pgsql.registry.transformation.chains.NashornTransformer;
+import org.factcast.store.pgsql.registry.transformation.chains.GraalJsTransformer;
 import org.factcast.store.pgsql.registry.transformation.chains.TransformationChains;
 import org.factcast.store.pgsql.registry.transformation.chains.Transformer;
 import org.factcast.store.pgsql.registry.transformation.store.InMemTransformationStoreImpl;
@@ -36,6 +37,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
+@Slf4j
 public class TransformationConfiguration {
   @Bean
   public TransformationStore transformationStore(
@@ -72,8 +74,7 @@ public class TransformationConfiguration {
 
   @Bean
   public Transformer transformer() {
-    // TODO should test for Graal here, as nashorn is deprecated
-    return new NashornTransformer();
+    return new GraalJsTransformer();
   }
 
   @Bean
