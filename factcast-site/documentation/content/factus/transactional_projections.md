@@ -43,10 +43,10 @@ Transactional projections are declared via specific annotations. Currently, supp
 
 These annotations share two common configuration parameters:
 
-| Parameter Name   |  Description            | Default Value  |
-|------------------|-------------------------|----------------|
-| `size`           | bulk size               |  50            |
-| `timeout`        | timeout in seconds until a transaction is interrupted and rolled back |   30   |
+| Parameter Name            |  Description            | Default Value  |
+|---------------------------|-------------------------|----------------|
+| `size`                    | bulk size               |  50            |
+| `timeoutInSeconds`        | timeout in seconds until a transaction is interrupted and rolled back |   30   |
 
 
 Bulk Processing
