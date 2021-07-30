@@ -49,7 +49,7 @@ Properties you can use to configure FactCast:
 |factcast.store.pgsql.factNotificationNewConnectionWaitTimeInMillis| how much time to wait between invalidating and acquiring a new connection. note: This parameter is only applied in the part of Factcast which deals with receiving and forwarding database notifications | 100
 |factcast.store.pgsql.page-size| How many Facts to fetch from the database in one go. Higher values mean more memory usage. | 50
 |factcast.store.pgsql.catchup-strategy| FETCHING uses database cursors where PAGED uses separate queries on TEMPORARY tables. FETCHING tends to be faster. | FETCHING
-
+|factcast.store.pgsql.indexCheckCron| Cron expression defining a routine check for index validity | 0 0 3 * * *
 
 ___
 

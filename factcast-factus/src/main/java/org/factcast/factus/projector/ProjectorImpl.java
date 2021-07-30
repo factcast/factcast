@@ -39,8 +39,8 @@ import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.AggregateUtil;
+import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.Projection;
-import org.factcast.factus.projection.StateAware;
 
 @Slf4j
 public class ProjectorImpl<A extends Projection> implements Projector<A> {
@@ -141,14 +141,14 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       lenses.forEach(l -> l.beforeFactProcessing(f));
       dispatch.invoke(projection, f, createParameterTransformer(dispatch.dispatchMethod));
 
-      if (projection instanceof StateAware) {
+      if (projection instanceof FactStreamPositionAware) {
         boolean skip =
             lenses.stream()
                 .map(ProjectorLens::skipStateUpdate)
                 .reduce(false, (r, lens) -> r || lens);
 
         if (!skip) {
-          ((StateAware) projection).state(factId);
+          ((FactStreamPositionAware) projection).factStreamPosition(factId);
           lastStateSet = factId;
         }
       }
@@ -242,9 +242,9 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   public void onCatchup(UUID idOfLastFactApplied) {
     // needs to be taken care if BEFORE delegating to the lenses as they might commit/execute and we
     // want that state in there.
-    if (projection instanceof StateAware) {
+    if (projection instanceof FactStreamPositionAware) {
       if (idOfLastFactApplied != null && (idOfLastFactApplied != lastStateSet)) {
-        ((StateAware) projection).state(idOfLastFactApplied);
+        ((FactStreamPositionAware) projection).factStreamPosition(idOfLastFactApplied);
       }
     }
 
