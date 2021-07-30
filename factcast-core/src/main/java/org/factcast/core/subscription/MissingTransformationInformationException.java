@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc;
+package org.factcast.core.subscription;
 
-/**
- * Signals an uncatched Exception in the Transport layer, normally leading to a subscription being
- * cancelled.
- *
- * @author <uwe.schaefer@prisma-capacity.eu>
- */
-public class TransportLayerException extends RuntimeException {
-
+/** TODO RT or not RT ? */
+public class MissingTransformationInformationException extends TransformationException {
   private static final long serialVersionUID = 1L;
 
-  public TransportLayerException(@SuppressWarnings("SameParameterValue") String msg) {
-    super(msg);
+  public MissingTransformationInformationException(String string) {
+    super(string);
   }
 }

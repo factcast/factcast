@@ -27,7 +27,14 @@ message MSG_OptionalSerial {
 }
 /**
 	A Notification as returned as a stream member from subscribe.
-	Type acts as descriminator. Either a Fact, ID, or one of the signals Catchup/Complete/Error.
+	Type acts as descriminator. Either a Fact or one of the signals Catchup/Complete/Error.
+
+	Updates:
+  * The functionality around id was removed but needs to stick here for compatibility
+	* Facts added for batching (more effective compression and overasll I/O)
+	* FastForward added to support in query speedup using tail indexes
+	* KeepAlive added for subscription level keepalive in order to detect stale subscriptions not possible/hard to detect with the means of grpc protocol.
+
 */
 message MSG_Notification{
   enum Type {
@@ -37,6 +44,7 @@ message MSG_Notification{
     Complete = 3;
     Facts = 4;
     Ffwd = 5;
+    KeepAlive = 6;
   }
 
   Type type = 1;

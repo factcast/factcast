@@ -37,7 +37,6 @@ import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.pgsql.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.pgsql.internal.query.PgQueryBuilder;
-import org.factcast.store.pgsql.registry.transformation.chains.MissingTransformationInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -143,7 +142,8 @@ public class PgFactStream {
               delayInMs,
               request.maxBatchDelayInMs());
         }
-        condensedExecutor = new CondensedQueryExecutor(delayInMs, query, this::isConnected);
+        condensedExecutor =
+            new CondensedQueryExecutor(delayInMs, query, this::isConnected, request.specs());
         eventBus.register(condensedExecutor);
         // catchup phase 3 – make sure, we did not miss any fact due to
         // slow registration
@@ -284,7 +284,7 @@ public class PgFactStream {
           try {
             subscription.notifyElement(f);
             log.trace("{} notifyElement called with id={}", request, factId);
-          } catch (MissingTransformationInformation | TransformationException e) {
+          } catch (TransformationException e) {
             log.warn("{} transformation error: {}", request, e.getMessage());
             subscription.notifyError(e);
             // will vanish, because this is called from a timer.
