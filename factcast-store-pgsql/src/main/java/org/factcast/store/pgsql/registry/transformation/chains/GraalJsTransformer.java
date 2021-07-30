@@ -39,7 +39,9 @@ public class GraalJsTransformer implements Transformer {
   private static final LRUMap<String, Invocable> warmEngines = new LRUMap<>(ENGINE_CACHE_CAPACITY);
 
   static {
-    //
+    // important property to enable nashorn compat mode within GraalJs
+    // this is necessary for the way we currently do event transformation (in place modification of
+    // event data)
     System.setProperty("polyglot.js.nashorn-compat", "true");
   }
 
