@@ -30,4 +30,9 @@ public interface SpecBuilder {
   SubscriptionRequest fromScratch();
 
   SubscriptionRequest fromNowOn();
+
+  // mutators
+  SpecBuilder withKeepaliveIntervalInMs(long msec);
+
+  SpecBuilder withMaxBatchDelayInMs(long msec);
 }
