@@ -134,26 +134,7 @@ class GrpcServerExceptionInterceptorTest {
       }
     }
 
-    @Nested
-    class onHalfClose {
 
-      @Test
-      void handlesException() {
-
-        ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
-        doThrow(ex).when(listener).onHalfClose();
-
-        Req msg = null;
-        assertThatThrownBy(uut::onHalfClose).isInstanceOf(ArrayIndexOutOfBoundsException.class);
-
-        verify(uut).handleException(same(ex), any(), any());
-      }
-
-      @Test
-      void happyPath() {
-        underTest.onHalfClose();
-      }
-    }
 
     @Nested
     class whenHandlingException {
