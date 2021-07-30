@@ -9,7 +9,7 @@ import lombok.val;
 import org.factcast.factus.Factus;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
-import org.factcast.itests.factus.proj.SpringTxMangedUserNames;
+import org.factcast.itests.factus.proj.SpringJdbcTransactionalProjectionExample;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 @SpringBootTest
 @Slf4j
-public class SpringTxManagedUserNamesITest extends AbstractFactCastIntegrationTest {
+public class SpringJdbcTransactionalProjectionExampleITest extends AbstractFactCastIntegrationTest {
 
   @Autowired JdbcTemplate jdbcTemplate;
 
@@ -55,7 +55,7 @@ public class SpringTxManagedUserNamesITest extends AbstractFactCastIntegrationTe
     log.info("Publishing test events");
     factus.publish(Arrays.asList(event1, event2, event3, event4));
 
-    val uut = new SpringTxMangedUserNames(platformTransactionManager, jdbcTemplate);
+    val uut = new SpringJdbcTransactionalProjectionExample.UserNames(platformTransactionManager, jdbcTemplate);
     factus.update(uut);
     val userNames = uut.getUserNames();
 
@@ -63,21 +63,21 @@ public class SpringTxManagedUserNamesITest extends AbstractFactCastIntegrationTe
   }
 
   private void createTables() {
-    jdbcTemplate.execute("DROP TABLE IF EXISTS managed_projection;");
+    jdbcTemplate.execute("DROP TABLE IF EXISTS fact_positions;");
     jdbcTemplate.execute(
-        "CREATE TABLE projection (\n"
+        "CREATE TABLE fact_positions (\n"
             + "\n"
-            + "    name  varchar(255),\n"
-            + "    state UUID,\n"
+            + "    projection_name TEXT,\n"
+            + "    fact_position UUID,\n"
             + "\n"
-            + "    PRIMARY KEY (name)\n"
+            + "    PRIMARY KEY (projection_name)\n"
             + ");");
 
     jdbcTemplate.execute("DROP TABLE IF EXISTS users;");
     jdbcTemplate.execute(
         "CREATE TABLE users (\n"
             + "\n"
-            + "    name  varchar(255),\n"
+            + "    name  TEXT,\n"
             + "    id UUID,\n"
             + "\n"
             + "    PRIMARY KEY (id)\n"

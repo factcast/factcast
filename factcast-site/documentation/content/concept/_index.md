@@ -21,7 +21,7 @@ In order to use `FactCast` effectively it is necessary to have an overview of th
 
 With `FactCast` you can *publish* `Facts` which will be written into a log. You can publish a single `Fact` as well as a list of `Facts` atomically (all-or-none).
 
-With optimistic locking you can use conditional publishing, which is based upon aggregates that do not change during the lifecycle of the lock (see [optimistic locking](/usage/java/optimistic_locking/)).
+With optimistic locking you can use conditional publishing, which is based upon aggregates that do not change during the lifecycle of the lock (see [optimistic locking]({{< ref "optimistic-locking.md" >}})).
 
 ### Read (subscribe)
 

@@ -15,9 +15,9 @@ When processing events, a projection has two tasks:
 1. persist the changes resulting from the Fact 
 2. store the current Fact stream position 
 
-When using an external datastore (e.g. Redis), Factus needs to ensure that these two tasks happen atomically:  
-either both tasks are executed or none. This prevents corrupted data in case e.g. the Redis cluster goes down in the wrong moment.
-Factus allows these atomic writes with *transactional projections*.  
+When using an external datastore (e.g. Redis), Factus needs to ensure that these two tasks happen atomically:  either both 
+tasks are executed or none. This prevents corrupted data in case e.g. the Redis cluster goes down in the wrong moment.
+Factus offers atomic writes through *transactional projections*.  
 
 {{<mermaid>}}
 sequenceDiagram
@@ -45,31 +45,31 @@ These annotations share two common configuration parameters:
 
 | Parameter Name   |  Description            | Default Value  |
 |------------------|-------------------------|----------------|
-| `size`           | batch size              |  50            |
+| `size`           | bulk size               |  50            |
 | `timeout`        | timeout in seconds until a transaction is interrupted and rolled back |   30   |
 
 
-Batching
---------
-To improve event-processing performance, transactional projections support *batching*.
-In a batch, either all entries are written to the external datastore or none.
+Bulk Processing
+---------------
+To improve the throughput of processed events, transactional projections support *bulk processing*.
 
-With *batching*...   
+With *bulk processing*   
 
 - a transaction is shared between more than one operation.
 - the concrete underlying transaction mechanism (e.g. Spring Transaction Management) can optimize data transmission 
 by e.g. locally collecting a certain amount of operations before sending them over the wire.
 - skipping unnecessary Fact stream position updates is possible (see next section).
 
-The size of the batch is configured via the previously mentioned `size` value of the `@SpringTransactional` or `@RedisTransactional` annotation.
+The size of the bulk is configured via the previously mentioned `size` value of the `@SpringTransactional` or `@RedisTransactional` annotation.
  
+Note: Bulk processing only takes place [in the `catchup` phase]({{< ref "concept/_index.md">}}). 
 
 Skipping Fact Stream Position Updates
 -------------------------------------
 Skipping unnecessary updates of the Fact stream position reduces the writes to the external datastore, 
-thus improving event-processing performance.  
+thus improving event-processing throughput.  
 
-The concept is best explained with an example: Suppose we have three events which are processed by a transactional projection and the batch size set to "1". 
+The concept is best explained with an example: Suppose we have three events which are processed by a transactional projection and the bulk size set to "1". 
 Then, we see the following writes going to the external datastore:
 
 {{<mermaid>}}
@@ -83,10 +83,10 @@ sequenceDiagram
     Projection->>External Data Store: event 3: update projection
     Projection->>External Data Store: event 3: store Fact stream position
 {{</mermaid>}}
-*Processing three events with batch size "1" - each Fact stream position is written*  
+*Processing three events with bulk size "1" - each Fact stream position is written*  
 
 As initially explained, here, each update of the projection is accompanied by an update of the Fact stream position. 
-To minimize the writes to the necessary minimum, we now increase the batch size to "3":
+To minimize the writes to the necessary minimum, we now increase the bulk size to "3":
 
 {{<mermaid>}}
 sequenceDiagram
@@ -97,12 +97,12 @@ sequenceDiagram
     Projection->>External Data Store: event 3: update projection
     Projection->>External Data Store: event 3: store Fact stream position
 {{</mermaid>}}
-*Processing three events with batch size "3" - only the last Fact stream position written*  
+*Processing three events with bulk size "3" - only the last Fact stream position written*  
 
 This configuration change eliminates two unnecessary intermediate Fact stream position updates. 
-Remember, we are in a batch so it is "all or nothing". In terms of Fact stream position updates, we are just interested 
+Remember, we are in a bulk so it is "all or nothing". In terms of Fact stream position updates, we are just interested 
 in the last, most recent position.  
 
 Skipping unnecessary intermediate updates to the Fact stream position, noticeably reduces 
-the required writes to the external datastore. Provided a large enough batch size ("50" is a good default), 
-this significantly improves event-processing performance.
+the required writes to the external datastore. Provided a large enough bulk size ("50" is a good default), 
+this significantly improves event-processing throughput.
