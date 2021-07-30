@@ -43,8 +43,6 @@ public class ServerExceptionLogger {
         error(e, id);
         break;
       default:
-        break;
-      default:
         log.error("Unhandled case for log level from {} - falling back to ERROR", e.getClass());
         error(e, id);
         break;
