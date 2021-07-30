@@ -354,8 +354,6 @@ class FactusImplTest {
               });
       underTest.update(m);
 
-      // make sure m.executeUpdate is used
-      Mockito.verify(m, times(2)).executeUpdate(any());
       // make sure m.executeUpdate actually calls the updated passed so
       // that
       // the prepared update happens on the projection and updates its
@@ -710,14 +708,6 @@ class FactusImplTest {
       // prepare deserialiser for existing snapshot
       ConcatCodesProjection concatCodesProjection = mock(ConcatCodesProjection.class);
 
-      doAnswer(
-              inv -> {
-                runnableCaptor.getValue().run();
-                return Void.TYPE;
-              })
-          .when(concatCodesProjection)
-          .executeUpdate(runnableCaptor.capture());
-
       when(snapshotSerializer.deserialize(ConcatCodesProjection.class, "foo".getBytes()))
           .thenReturn(concatCodesProjection);
 
@@ -735,9 +725,6 @@ class FactusImplTest {
       // onNext(...)
       // now assume a new fact has been observed...
       factObserver.onNext(mockedFact);
-
-      // ... then make sure executeUpdate got called...
-      verify(concatCodesProjection).executeUpdate(any());
 
       // ... and then it should be applied to event projector
       verify(projector).apply(mockedFact);
@@ -783,15 +770,6 @@ class FactusImplTest {
 
       when(subscribedProjection.acquireWriteToken(any())).thenReturn(() -> {});
 
-      // make sure updates get executed
-      doAnswer(
-              inv -> {
-                inv.getArgument(0, Runnable.class).run();
-                return Void.TYPE;
-              })
-          .when(subscribedProjection)
-          .executeUpdate(any());
-
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
       when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
@@ -822,9 +800,6 @@ class FactusImplTest {
       // onNext(...)
       // now assume a new fact has been observed...
       factObserver.onNext(mockedFact);
-
-      // ... then make sure executeUpdate got called...
-      verify(subscribedProjection).executeUpdate(any());
 
       // ... and then it should be applied to event projector
       verify(eventApplier).apply(mockedFact);
