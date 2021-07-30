@@ -17,19 +17,18 @@ package org.factcast.store.pgsql.registry.transformation.chains;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
+import java.util.List;
+import java.util.Map;
+import javax.script.Compilable;
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 import lombok.val;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.graalvm.polyglot.Value;
-
-import javax.script.Compilable;
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import java.util.List;
-import java.util.Map;
 
 public class GraalJsTransformer implements Transformer {
 
