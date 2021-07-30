@@ -43,6 +43,7 @@ import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -66,20 +67,20 @@ import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 @RequiredArgsConstructor
 @Slf4j
 public class FactusImpl implements Factus {
-  final FactCast fc;
+  private static final long PROGRESS_INTERVAL = 1000; // TODO
+  private final FactCast fc;
 
-  final ProjectorFactory ehFactory;
+  private final ProjectorFactory ehFactory;
 
-  final EventConverter eventConverter;
+  private final EventConverter eventConverter;
 
-  final AggregateSnapshotRepository aggregateSnapshotRepository;
+  private final AggregateSnapshotRepository aggregateSnapshotRepository;
 
-  final ProjectionSnapshotRepository projectionSnapshotRepository;
+  private final ProjectionSnapshotRepository projectionSnapshotRepository;
 
-  final SnapshotSerializerSupplier snapFactory;
+  private final SnapshotSerializerSupplier snapFactory;
 
-  final FactusMetrics factusMetrics;
-
+  private final FactusMetrics factusMetrics;
   private final AtomicBoolean closed = new AtomicBoolean();
 
   private final Set<AutoCloseable> managedObjects = new HashSet<>();
@@ -191,6 +192,8 @@ public class FactusImpl implements Factus {
     Projector<P> handler = ehFactory.create(subscribedProjection);
     FactObserver fo =
         new FactObserver() {
+          FactStreamInfo info;
+          long lastProgress = System.currentTimeMillis();
           final AtomicBoolean caughtUp = new AtomicBoolean(false);
 
           UUID lastFactIdApplied = null;
@@ -218,7 +221,15 @@ public class FactusImpl implements Factus {
                       Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getName())),
                       latency);
                 }
+              } else {
+                // not yet caught up
+                if (info != null && System.currentTimeMillis() - lastProgress > PROGRESS_INTERVAL) {
+                  lastProgress = System.currentTimeMillis();
+                  subscribedProjection.catchupPercentage(
+                      info.calculatePercentage(element.serial()));
+                }
               }
+
             } else {
               // token is no longer valid
               throw new IllegalStateException("WriterToken is no longer valid.");
@@ -245,6 +256,12 @@ public class FactusImpl implements Factus {
           @Override
           public void onFastForward(@NonNull UUID factIdToFfwdTo) {
             subscribedProjection.state(factIdToFfwdTo);
+          }
+
+          @Override
+          public void onFactStreamInfo(FactStreamInfo info) {
+            log.debug("recieved info {}", info);
+            this.info = info;
           }
         };
 
@@ -367,6 +384,8 @@ public class FactusImpl implements Factus {
 
     FactObserver fo =
         new FactObserver() {
+          private long lastProgress = System.currentTimeMillis();
+          private FactStreamInfo info;
           @NonNull UUID id = null;
 
           @Override
@@ -383,6 +402,11 @@ public class FactusImpl implements Factus {
                   }
                   factCount.incrementAndGet();
                 });
+
+            if (info != null && System.currentTimeMillis() - lastProgress > PROGRESS_INTERVAL) {
+              lastProgress = System.currentTimeMillis();
+              projection.catchupPercentage(info.calculatePercentage(element.serial()));
+            }
           }
 
           @Override
@@ -406,6 +430,12 @@ public class FactusImpl implements Factus {
             if (projection instanceof StateAware) {
               ((StateAware) projection).state(factIdToFfwdTo);
             }
+          }
+
+          @Override
+          public void onFactStreamInfo(FactStreamInfo info) {
+            log.debug("received info {}", info);
+            this.info = info;
           }
         };
 

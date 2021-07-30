@@ -68,10 +68,10 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
     switch (f.getType()) {
       case Info:
+        log.trace("received info signal");
         // receive info message once at the very beginning of the stream
         FactStreamInfo factStreamInfo = converter.fromProto(f.getInfo());
-        // TODO what to do, what to do...
-        // TODO add capability to keep downwards comp.
+        subscription.notifyFactStreamInfo(factStreamInfo);
         break;
       case KeepAlive:
         log.trace("received keepalive signal");
