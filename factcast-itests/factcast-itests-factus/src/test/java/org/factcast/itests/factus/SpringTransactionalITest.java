@@ -1,13 +1,5 @@
 package org.factcast.itests.factus;
 
-import static java.util.UUID.*;
-import static org.assertj.core.api.Assertions.*;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -23,7 +15,9 @@ import org.factcast.factus.spring.tx.AbstractSpringTxSubscribedProjection;
 import org.factcast.factus.spring.tx.SpringTransactional;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,6 +28,15 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.testcontainers.containers.PostgreSQLContainer;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+import static java.util.UUID.*;
+import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class})
@@ -183,7 +186,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @ProjectionMetaData(serial = 1)
-    @SpringTransactional(size = 3000000, timeout = 1000) // will flush after 800ms
+    @SpringTransactional(size = 3000000, timeoutInSeconds = 1) // will flush after 800ms
     class SpringTxProjectionTimeout extends AbstractTrackingUserProjection {
       public SpringTxProjectionTimeout(
           PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
@@ -333,7 +336,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @ProjectionMetaData(serial = 1)
-    @SpringTransactional(size = 3000000, timeout = 1000) // will flush after 800ms
+    @SpringTransactional(size = 3000000, timeoutInSeconds = 1) // will flush after 800ms
     class SpringTxProjectionTimeout extends AbstractTrackingUserSubscribedProjection {
       public SpringTxProjectionTimeout(
           PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {

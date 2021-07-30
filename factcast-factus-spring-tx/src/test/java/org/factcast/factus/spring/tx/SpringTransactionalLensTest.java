@@ -1,10 +1,5 @@
 package org.factcast.factus.spring.tx;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import java.time.Duration;
-import java.util.function.Function;
 import lombok.val;
 import org.factcast.core.Fact;
 import org.junit.jupiter.api.Nested;
@@ -14,8 +9,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
+
+import java.time.Duration;
+import java.util.function.Function;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SpringTransactionalLensTest {
@@ -74,32 +74,33 @@ class SpringTransactionalLensTest {
   class WhenCalculatingFlushTimeout {
     @Test
     void is8of10() {
-      DefaultTransactionDefinition opts = new DefaultTransactionDefinition();
-      opts.setTimeout(1000);
-
-      long result = SpringTransactionalLens.calculateFlushTimeout(opts);
+      long result = SpringTransactionalLens.calculateFlushTimeout(1000);
 
       assertThat(result).isEqualTo(Duration.ofMillis(800).toMillis());
     }
 
     @Test
     void disableIfToSmall() {
-      DefaultTransactionDefinition opts = new DefaultTransactionDefinition();
-      opts.setTimeout(10);
-
-      long result = SpringTransactionalLens.calculateFlushTimeout(opts);
+      long result = SpringTransactionalLens.calculateFlushTimeout(10);
 
       assertThat(result).isEqualTo(0L);
     }
 
     @Test
     void edgeCase() {
-      DefaultTransactionDefinition opts = new DefaultTransactionDefinition();
-      opts.setTimeout(100);
-
-      long result = SpringTransactionalLens.calculateFlushTimeout(opts);
+      long result = SpringTransactionalLens.calculateFlushTimeout(100);
 
       assertThat(result).isEqualTo(Duration.ofMillis(80).toMillis());
+    }
+
+    @Test
+    void conversionToMs() {
+      when(definition.getTimeout()).thenReturn(1);
+
+      SpringTxManagedProjection p = new ASpringTxManagedProjection(transactionManager);
+      val uut = new SpringTransactionalLens(p, springTxManager, definition);
+
+      assertThat(uut.flushTimeout()).isEqualTo(800L);
     }
   }
 
