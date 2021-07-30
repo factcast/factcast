@@ -2,11 +2,12 @@ package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 // categorize and either skip, or log to a matching loglevel. Not the nicest code to write :D
@@ -42,7 +43,7 @@ public class ServerExceptionLogger {
       case ERROR:
         error(e, id);
         break;
-      case JUST_SEND_TO_CONSUMER:
+      default:
         break;
     }
   }
