@@ -16,27 +16,32 @@
 package org.factcast.store.pgsql.registry.transformation.chains;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import java.util.List;
-import java.util.Map;
-import javax.script.Compilable;
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
+import lombok.val;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
+import org.graalvm.polyglot.Value;
 
-public class NashornTransformer implements Transformer {
+import javax.script.Compilable;
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import java.util.List;
+import java.util.Map;
+
+public class GraalJsTransformer implements Transformer {
 
   private static final int ENGINE_CACHE_CAPACITY = 128;
 
-  private static final ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
-
+  private static final Object MUTEX = new Object();
   private static final LRUMap<String, Invocable> warmEngines = new LRUMap<>(ENGINE_CACHE_CAPACITY);
+
+  static {
+    //
+    System.setProperty("polyglot.js.nashorn-compat", "true");
+  }
 
   @Override
   public JsonNode transform(Transformation t, JsonNode input) throws TransformationException {
@@ -49,13 +54,14 @@ public class NashornTransformer implements Transformer {
       Invocable invocable = warmEngines.get(js);
       if (invocable == null) {
         ScriptEngine engine = null;
-        synchronized (scriptEngineManager) {
+
+        synchronized (MUTEX) {
           // no guarantee is found anywhere, that creating a
           // scriptEngine was
           // supposed to be threadsafe, so...
-          engine =
-              new NashornScriptEngineFactory().getScriptEngine(ClassLoader.getSystemClassLoader());
+          engine = GraalJSScriptEngine.create(null, null);
         }
+
         try {
           Compilable compilable = (Compilable) engine;
           compilable.compile(js).eval();
@@ -87,8 +93,9 @@ public class NashornTransformer implements Transformer {
   }
 
   private Object transformMapValue(Object input) {
-    if (input instanceof ScriptObjectMirror && ((ScriptObjectMirror) input).isArray()) {
-      return ((ScriptObjectMirror) input).to(List.class);
+    val value = Value.asValue(input);
+    if (value.hasArrayElements()) {
+      return value.as(List.class);
     } else if (input instanceof Map) {
       fixArrayTransformations((Map<String, Object>) input);
       return input;
