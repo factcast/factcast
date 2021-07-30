@@ -55,7 +55,9 @@ public class SpringJdbcTransactionalProjectionExampleITest extends AbstractFactC
     log.info("Publishing test events");
     factus.publish(Arrays.asList(event1, event2, event3, event4));
 
-    val uut = new SpringJdbcTransactionalProjectionExample.UserNames(platformTransactionManager, jdbcTemplate);
+    val uut =
+        new SpringJdbcTransactionalProjectionExample.UserNames(
+            platformTransactionManager, jdbcTemplate);
     factus.update(uut);
     val userNames = uut.getUserNames();
 
