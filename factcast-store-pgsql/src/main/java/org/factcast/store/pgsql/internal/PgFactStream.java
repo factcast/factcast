@@ -81,8 +81,7 @@ public class PgFactStream {
 
     if (request.streamInfo()) {
       FactStreamInfo factStreamInfo = new FactStreamInfo(serial.get(), fetcher.retrieveLatestSer());
-      // TODO
-
+      subscription.notifyFactStreamInfo(factStreamInfo);
     }
 
     String sql = q.createSQL();

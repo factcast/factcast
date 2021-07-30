@@ -73,6 +73,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
   public SubscriptionRequestTO(SubscriptionRequest request) {
     maxBatchDelayInMs = request.maxBatchDelayInMs();
     keepaliveIntervalInMs = request.keepaliveIntervalInMs();
+    streamInfo = request.streamInfo();
     continuous = request.continuous();
     ephemeral = request.ephemeral();
     startingAfter = request.startingAfter().orElse(null);
