@@ -18,7 +18,7 @@ public class IndexCheck {
     jdbc.queryForList(PgConstants.BROKEN_INDEX_NAMES, String.class)
         .forEach(
             s -> {
-              log.warn("Detected broken index: {}", s);
+              log.warn("Detected invalid index: {}", s);
             });
   }
 }
