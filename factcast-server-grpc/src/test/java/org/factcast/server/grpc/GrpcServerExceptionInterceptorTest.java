@@ -134,8 +134,6 @@ class GrpcServerExceptionInterceptorTest {
       }
     }
 
-
-
     @Nested
     class whenHandlingException {
 
