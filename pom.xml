@@ -83,29 +83,30 @@
         <maven.version>3.8.1</maven.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-    <spotless-maven-plugin.version>2.12.2</spotless-maven-plugin.version>
+        <spotless-maven-plugin.version>2.12.2</spotless-maven-plugin.version>
         <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
         <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
-    <assertj.version>3.20.2</assertj.version>
-    <jackson.version>2.12.4</jackson.version>
+        <assertj.version>3.20.2</assertj.version>
+        <jackson.version>2.12.4</jackson.version>
         <mockito.version>3.11.2</mockito.version>
         <junit-jupiter.version>5.7.2</junit-jupiter.version>
         <lombok.version>1.18.20</lombok.version>
-    <slf4j-api.version>1.7.32</slf4j-api.version>
+        <slf4j-api.version>1.7.32</slf4j-api.version>
         <etc>${session.executionRootDirectory}/src/etc</etc>
-    <spring-boot.version>2.5.3</spring-boot.version>
+        <spring-boot.version>2.5.3</spring-boot.version>
         <spring-cloud.version>Hoxton.SR8</spring-cloud.version>
         <spring-grpc.version>2.11.0.RELEASE</spring-grpc.version>
         <grpc.version>1.30.2</grpc.version>
-    <spring-boot-maven-plugin.version>2.5.3</spring-boot-maven-plugin.version>
-    <testcontainers.version>1.16.0</testcontainers.version>
-    <arrow.version>0.12.1</arrow.version>
-    <micronaut.version>2.5.11</micronaut.version>
-    <kotlin.version>1.5.20</kotlin.version>
+        <spring-boot-maven-plugin.version>2.5.3</spring-boot-maven-plugin.version>
+        <testcontainers.version>1.16.0</testcontainers.version>
+        <arrow.version>0.12.1</arrow.version>
+        <micronaut.version>2.5.11</micronaut.version>
+        <kotlin.version>1.5.20</kotlin.version>
         <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
         <kotest.version>4.6.1</kotest.version>
         <redisson.version>3.16.1</redisson.version>
         <redisson-spring-boot-starter.version>3.16.1</redisson-spring-boot-starter.version>
+        <graaljs.version>21.1.0</graaljs.version>
     </properties>
     <dependencies>
         <dependency>
