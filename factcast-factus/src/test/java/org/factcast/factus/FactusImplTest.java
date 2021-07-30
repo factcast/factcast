@@ -708,14 +708,6 @@ class FactusImplTest {
       // prepare deserialiser for existing snapshot
       ConcatCodesProjection concatCodesProjection = mock(ConcatCodesProjection.class);
 
-      //      doAnswer(
-      //              inv -> {
-      //                runnableCaptor.getValue().run();
-      //                return Void.TYPE;
-      //              })
-      //          .when(concatCodesProjection)
-      //          .executeUpdate(runnableCaptor.capture());
-
       when(snapshotSerializer.deserialize(ConcatCodesProjection.class, "foo".getBytes()))
           .thenReturn(concatCodesProjection);
 
@@ -777,15 +769,6 @@ class FactusImplTest {
       Projector<SubscribedProjection> eventApplier = mock(Projector.class);
 
       when(subscribedProjection.acquireWriteToken(any())).thenReturn(() -> {});
-
-      // make sure updates get executed
-      //      doAnswer(
-      //              inv -> {
-      //                inv.getArgument(0, Runnable.class).run();
-      //                return Void.TYPE;
-      //              })
-      //          .when(subscribedProjection)
-      //          .executeUpdate(any());
 
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
