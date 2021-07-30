@@ -31,6 +31,7 @@ import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.grpc.api.conv.FactStreamInfo;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
@@ -70,11 +71,16 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
     lastNotification.set(System.currentTimeMillis());
 
     switch (f.getType()) {
+      case Info:
+        // receive info message once at the very beginning of the stream
+        FactStreamInfo factStreamInfo = converter.fromProto(f.getInfo());
+        // TODO what to do, what to do...
+        // TODO add capability to keep downwards comp.
+        break;
       case KeepAlive:
         log.trace("received keepalive signal");
         // NOP, just used for the update of lastNotification
         break;
-
       case Catchup:
         log.trace("received onCatchup signal");
         subscription.notifyCatchup();
