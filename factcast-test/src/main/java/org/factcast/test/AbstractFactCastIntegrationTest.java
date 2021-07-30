@@ -16,6 +16,7 @@
 package org.factcast.test;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -23,6 +24,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers(disabledWithoutDocker = true)
 @ExtendWith({FactCastExtension.class})
 @Slf4j
+@Tag("integration")
 public class AbstractFactCastIntegrationTest {
 
   // all the magic will be handled by the extension, this class is left over for compatibility
