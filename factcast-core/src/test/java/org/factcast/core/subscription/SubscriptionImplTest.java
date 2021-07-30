@@ -27,7 +27,7 @@ import java.util.concurrent.TimeoutException;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
-import org.factcast.core.subscription.observer.GenericObserver;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
@@ -37,7 +37,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class SubscriptionImplTest {
 
-  @Mock private GenericObserver<Fact> observer;
+  @Mock private FactObserver observer;
 
   @Mock private FactTransformers factTransformers;
 
@@ -45,7 +45,7 @@ public class SubscriptionImplTest {
 
   @BeforeEach
   void setUp() {
-    obs = mock(GenericObserver.class);
+    obs = mock(FactObserver.class);
   }
 
   @Test
@@ -98,7 +98,7 @@ public class SubscriptionImplTest {
     l.await();
   }
 
-  private GenericObserver<Fact> obs;
+  private FactObserver obs;
 
   private final FactTransformers ft = e -> e;
 

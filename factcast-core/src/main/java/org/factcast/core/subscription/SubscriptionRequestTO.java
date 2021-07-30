@@ -46,6 +46,8 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 
   @JsonProperty long keepaliveIntervalInMs = 0;
 
+  @JsonProperty boolean streamInfo = false; // defaults to false if not set (backwards comp.)
+
   @JsonProperty boolean continuous;
 
   @JsonProperty boolean ephemeral;

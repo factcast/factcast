@@ -29,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.observer.GenericObserver;
 import org.factcast.core.util.ExceptionHelper;
 
 /**
@@ -41,7 +40,7 @@ import org.factcast.core.util.ExceptionHelper;
 @Slf4j
 public class SubscriptionImpl implements Subscription {
 
-  @NonNull final GenericObserver<Fact> observer;
+  @NonNull final FactObserver observer;
 
   @NonNull final FactTransformers transformers;
 
@@ -133,6 +132,12 @@ public class SubscriptionImpl implements Subscription {
     }
   }
 
+  public void notifyFactStreamInfo(@NonNull FactStreamInfo info) {
+    if (!closed.get()) {
+      observer.onFactStreamInfo(info);
+    }
+  }
+
   @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
   public void notifyComplete() {
     if (!closed.get()) {
@@ -187,8 +192,7 @@ public class SubscriptionImpl implements Subscription {
     return this;
   }
 
-  public static SubscriptionImpl on(
-      @NonNull GenericObserver<org.factcast.core.Fact> o, FactTransformers transformers) {
+  public static SubscriptionImpl on(@NonNull FactObserver o, FactTransformers transformers) {
     return new SubscriptionImpl(o, transformers);
   }
 

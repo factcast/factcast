@@ -26,10 +26,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.store.pgsql.internal.StoreMetrics.VALUE;
@@ -81,6 +78,13 @@ public class PgFactStream {
     postQueryMatcher = new PgPostQueryMatcher(request);
     PgQueryBuilder q = new PgQueryBuilder(request.specs());
     initializeSerialToStartAfter();
+
+    if (request.streamInfo()) {
+      FactStreamInfo factStreamInfo = new FactStreamInfo(serial.get(), fetcher.retrieveLatestSer());
+      // TODO
+
+    }
+
     String sql = q.createSQL();
     PreparedStatementSetter setter = q.createStatementSetter(serial);
     RowCallbackHandler rsHandler = new FactRowCallbackHandler(subscription, postQueryMatcher);
