@@ -12,15 +12,20 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 public @interface SpringTransactional {
   int size() default 50;
 
-  int timeout() default Defaults.timeout;
+  /**
+   * Due to the nature of the Spring Transaction handling this timeout is in seconds.
+   *
+   * @return
+   */
+  int timeoutInSeconds() default Defaults.timeoutInSeconds;
 
   class Defaults {
-    static final int timeout = 30000;
+    static final int timeoutInSeconds = 30;
 
     public static DefaultTransactionDefinition create() {
       val definition = new DefaultTransactionDefinition();
 
-      definition.setTimeout(timeout);
+      definition.setTimeout(timeoutInSeconds);
       definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
 
       return definition;
@@ -29,7 +34,7 @@ public @interface SpringTransactional {
     public static TransactionDefinition with(@NonNull SpringTransactional transactional) {
       val opts = create();
 
-      int timeout = transactional.timeout();
+      int timeout = transactional.timeoutInSeconds();
 
       if (timeout > 0) {
         opts.setTimeout(timeout);
