@@ -18,14 +18,14 @@ package org.factcast.factus.projection;
 import java.util.UUID;
 import lombok.NonNull;
 
-final class LocalState {
-  private UUID state = null;
+final class LocalFactStreamPosition {
+  private UUID factStreamPosition = null;
 
-  public final UUID state() {
-    return this.state;
+  public final UUID factStreamPosition() {
+    return factStreamPosition;
   }
 
-  public final void state(@NonNull UUID state) {
-    this.state = state;
+  public final void factStreamPosition(@NonNull UUID factStreamPosition) {
+    this.factStreamPosition = factStreamPosition;
   }
 }
