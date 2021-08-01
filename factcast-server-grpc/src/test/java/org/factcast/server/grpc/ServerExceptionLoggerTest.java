@@ -7,11 +7,14 @@ import java.io.IOException;
 import java.sql.SQLException;
 import lombok.val;
 import org.factcast.server.grpc.ServerExceptionLogger.Level;
+import org.factcast.test.Slf4jHelper;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import slf4jtest.LogLevel;
+import slf4jtest.TestLogger;
 
 @ExtendWith(MockitoExtension.class)
 class ServerExceptionLoggerTest {
@@ -114,9 +117,54 @@ class ServerExceptionLoggerTest {
     }
   }
 
-  @Nested
-  class WhenResolving {
-    @Test
-    void testResolve() {}
+  @Test
+  void testError() {
+    TestLogger logger = Slf4jHelper.replaceLogger(underTest);
+    RuntimeException e = new RuntimeException();
+    String id = "foo";
+    underTest.error(e, id);
+
+    assertThat(logger.lines().size()).isEqualTo(1);
+    assertThat(
+            logger.lines().stream()
+                .anyMatch(
+                    l ->
+                        l.level == LogLevel.ErrorLevel
+                            && l.text.startsWith(id + " onError – sending Error notification")))
+        .isTrue();
+  }
+
+  @Test
+  void testWarn() {
+    TestLogger logger = Slf4jHelper.replaceLogger(underTest);
+    RuntimeException e = new RuntimeException();
+    String id = "foo";
+    underTest.warn(e, id);
+
+    assertThat(logger.lines().size()).isEqualTo(1);
+    assertThat(
+            logger.lines().stream()
+                .anyMatch(
+                    l ->
+                        l.level == LogLevel.WarnLevel
+                            && l.text.startsWith(id + " onError – sending Error notification")))
+        .isTrue();
+  }
+
+  @Test
+  void testInfo() {
+    TestLogger logger = Slf4jHelper.replaceLogger(underTest);
+    RuntimeException e = new RuntimeException();
+    String id = "foo";
+    underTest.info(e, id);
+
+    assertThat(logger.lines().size()).isEqualTo(1);
+    assertThat(
+            logger.lines().stream()
+                .anyMatch(
+                    l ->
+                        l.level == LogLevel.InfoLevel
+                            && l.text.startsWith(id + " onError – sending Error notification")))
+        .isTrue();
   }
 }

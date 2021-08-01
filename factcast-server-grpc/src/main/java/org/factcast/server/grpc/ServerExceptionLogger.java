@@ -85,6 +85,6 @@ public class ServerExceptionLogger {
 
   @VisibleForTesting
   void error(Throwable e, String id) {
-    log.warn(EXCEPTION_MESSAGE, id, e.getMessage());
+    log.error(EXCEPTION_MESSAGE, id, e.getMessage());
   }
 }
