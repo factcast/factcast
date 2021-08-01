@@ -18,7 +18,7 @@ public class SubscribedUserNames implements SubscribedProjection {
 
   @Getter private Throwable exception;
 
-  private UUID state = null;
+  private UUID factStreamPosition = null;
 
   @HandlerFor(ns = "users", type = "UserCreated", version = 2)
   void apply(Fact f) {}
@@ -37,13 +37,13 @@ public class SubscribedUserNames implements SubscribedProjection {
   }
 
   @Override
-  public UUID state() {
-    return state;
+  public UUID factStreamPosition() {
+    return factStreamPosition;
   }
 
   @Override
-  public void state(@NonNull UUID state) {
-    this.state = state;
+  public void factStreamPosition(@NonNull UUID pos) {
+    factStreamPosition = pos;
   }
 
   @Override
