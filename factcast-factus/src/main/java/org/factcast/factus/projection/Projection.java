@@ -36,13 +36,4 @@ public interface Projection extends ProgressAware {
   default void onError(@NonNull Throwable exception) {
     LoggerFactory.getLogger(getClass()).warn("Unhandled onError:", exception);
   }
-
-  /**
-   * meant as an opportunity to do something around the actual update, like synchronizing on the
-   * object or start/commit a transaction. There is no assumption about the granularity of the
-   * update, so that it can potentially be used for batching etc as well.
-   */
-  default void executeUpdate(@NonNull Runnable update) {
-    update.run();
-  }
 }

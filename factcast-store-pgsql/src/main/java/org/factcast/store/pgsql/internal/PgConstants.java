@@ -41,6 +41,8 @@ public class PgConstants {
           + "' and indexname like '"
           + TAIL_INDEX_NAME_PREFIX
           + "%' order by indexname desc";
+  public static final String BROKEN_INDEX_NAMES =
+      "SELECT index_name FROM stats_index WHERE valid = 'N'";
 
   private static final String TABLE_TOKENSTORE = "tokenstore";
 

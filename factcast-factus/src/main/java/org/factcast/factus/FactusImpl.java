@@ -143,7 +143,9 @@ public class FactusImpl implements Factus {
         Tags.of(Tag.of(CLASS, managedProjection.getClass().getName())),
         () ->
             managedProjection.withLock(
-                () -> catchupProjection(managedProjection, managedProjection.state(), null)));
+                () ->
+                    catchupProjection(
+                        managedProjection, managedProjection.factStreamPosition(), null)));
   }
 
   @Override
@@ -205,11 +207,7 @@ public class FactusImpl implements Factus {
 
               lastFactIdApplied = element.id();
 
-              subscribedProjection.executeUpdate(
-                  () -> {
-                    handler.apply(element);
-                    // don NOT set state here, wil be handled by the apply call above
-                  });
+              handler.apply(element);
 
               if (caughtUp.get()) {
                 String ts = element.meta("_ts");
@@ -255,7 +253,7 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onFastForward(@NonNull UUID factIdToFfwdTo) {
-            subscribedProjection.state(factIdToFfwdTo);
+            subscribedProjection.factStreamPosition(factIdToFfwdTo);
           }
 
           @Override
@@ -267,7 +265,7 @@ public class FactusImpl implements Factus {
 
     return fc.subscribe(
         SubscriptionRequest.follow(handler.createFactSpecs())
-            .fromNullable(subscribedProjection.state()),
+            .fromNullable(subscribedProjection.factStreamPosition()),
         fo);
   }
 
@@ -390,18 +388,14 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onNext(@NonNull Fact element) {
-            // TODO remove execUpdate?
-
             id = element.id();
-            projection.executeUpdate(
-                () -> {
-                  handler.apply(element);
-                  factId.set(element.id());
-                  if (afterProcessing != null) {
-                    afterProcessing.accept(projection, element.id());
-                  }
-                  factCount.incrementAndGet();
-                });
+
+            handler.apply(element);
+            factId.set(element.id());
+            if (afterProcessing != null) {
+              afterProcessing.accept(projection, element.id());
+            }
+            factCount.incrementAndGet();
 
             if (info != null && System.currentTimeMillis() - lastProgress > PROGRESS_INTERVAL) {
               lastProgress = System.currentTimeMillis();
@@ -427,8 +421,8 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onFastForward(@NonNull UUID factIdToFfwdTo) {
-            if (projection instanceof StateAware) {
-              ((StateAware) projection).state(factIdToFfwdTo);
+            if (projection instanceof FactStreamPositionAware) {
+              ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
             }
           }
 
