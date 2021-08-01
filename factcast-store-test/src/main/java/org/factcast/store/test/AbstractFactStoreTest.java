@@ -16,8 +16,8 @@
 package org.factcast.store.test;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -379,6 +379,7 @@ public abstract class AbstractFactStoreTest {
           FactSpec REQ_FOO_BAR = FactSpec.ns("default").meta("foo", "bar");
           uut.subscribe(SubscriptionRequest.catchup(REQ_FOO_BAR).fromScratch(), observer)
               .awaitComplete();
+          verify(observer).onFactStreamInfo(any());
           verify(observer).onNext(any());
           verify(observer).onCatchup();
           verify(observer).onComplete();
@@ -409,6 +410,7 @@ public abstract class AbstractFactStoreTest {
               FactSpec.ns("default").jsFilterScript("function (h,e){ return (h.hit=='me')}");
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
+          verify(observer).onFactStreamInfo(any());
           verify(observer).onNext(any());
           verify(observer).onCatchup();
           verify(observer).onComplete();
@@ -439,6 +441,7 @@ public abstract class AbstractFactStoreTest {
               FactSpec.ns("default").jsFilterScript("function (h){ return (h.hit=='me')}");
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
+          verify(observer).onFactStreamInfo(any());
           verify(observer).onNext(any());
           verify(observer).onCatchup();
           verify(observer).onComplete();
@@ -468,6 +471,7 @@ public abstract class AbstractFactStoreTest {
           FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return true }");
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
+          verify(observer).onFactStreamInfo(any());
           verify(observer, times(2)).onNext(any());
           verify(observer).onCatchup();
           verify(observer).onComplete();
@@ -497,6 +501,7 @@ public abstract class AbstractFactStoreTest {
           FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return false }");
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
+          verify(observer).onFactStreamInfo(any());
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
