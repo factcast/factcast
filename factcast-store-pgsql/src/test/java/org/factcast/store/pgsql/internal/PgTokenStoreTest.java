@@ -15,7 +15,9 @@
  */
 package org.factcast.store.pgsql.internal;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.State;
@@ -25,7 +27,9 @@ import org.factcast.store.test.AbstractTokenStoreTest;
 import org.factcast.store.test.IntegrationTest;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
@@ -37,11 +41,13 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @IntegrationTest
 public class PgTokenStoreTest extends AbstractTokenStoreTest {
 
-  @Autowired PgTokenStore tokenStore;
+  @Autowired PgMetrics metrics;
+  @Autowired JdbcTemplate jdbc;
 
   @Override
   protected TokenStore createTokenStore() {
-    return tokenStore;
+    jdbc = Mockito.spy(jdbc);
+    return new PgTokenStore(jdbc, metrics);
   }
 
   @Test
@@ -59,5 +65,11 @@ public class PgTokenStoreTest extends AbstractTokenStoreTest {
     Assertions.assertThat(json)
         .isEqualTo(
             "{\"specs\":[{\"ns\":\"foo\",\"type\":null,\"version\":0,\"aggId\":\"00000000-0000-0000-0000-000000000001\",\"meta\":{},\"jsFilterScript\":null,\"filterScript\":null},{\"ns\":\"bar\",\"type\":\"someType\",\"version\":0,\"aggId\":null,\"meta\":{},\"jsFilterScript\":null,\"filterScript\":null}],\"serialOfLastMatchingFact\":99}");
+  }
+
+  @Test
+  void compaction() {
+    uut.compact();
+    Mockito.verify(jdbc).update(PgConstants.COMPACT_TOKEN);
   }
 }
