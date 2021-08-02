@@ -119,7 +119,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       val s = new SpringTxProjectionTimeout(platformTransactionManager, jdbcTemplate);
       factus.update(s);
 
-      assertThat(s.factStreamPositionModifications()).isEqualTo(2); // one for timeout, one for final flush
+      assertThat(s.factStreamPositionModifications())
+          .isEqualTo(2); // one for timeout, one for final flush
       assertThat(s.txSeen()).hasSize(2); // one for timeout, one for final flush
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
@@ -269,7 +270,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       val s = new SpringTxProjectionTimeout(platformTransactionManager, jdbcTemplate);
       factus.subscribeAndBlock(s).awaitCatchup();
 
-      assertThat(s.factStreamPositionModifications()).isEqualTo(2); // one for timeout, one for final flush
+      assertThat(s.factStreamPositionModifications())
+          .isEqualTo(2); // one for timeout, one for final flush
       assertThat(s.txSeen()).hasSize(2); // one for timeout, one for final flush
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
@@ -443,8 +445,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       jdbcTemplate.update(
           "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET fact_stream_position = ?",
           getScopedName().asString(),
-              factStreamPosition,
-              factStreamPosition);
+          factStreamPosition,
+          factStreamPosition);
     }
 
     @Override
@@ -497,11 +499,11 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       txSeen.add(jdbcTemplate.queryForObject("select txid_current()", String.class));
 
       jdbcTemplate.update(
-          "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) " +
-                  "ON CONFLICT (name) DO UPDATE SET fact_stream_position = ?",
+          "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) "
+              + "ON CONFLICT (name) DO UPDATE SET fact_stream_position = ?",
           getScopedName().asString(),
-              factStreamPosition,
-              factStreamPosition);
+          factStreamPosition,
+          factStreamPosition);
     }
 
     @Override
