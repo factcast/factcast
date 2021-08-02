@@ -244,6 +244,11 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
             reconnects.add(now);
             return reconnects.size() > ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION;
           }
+
+          @Override
+          public void onFactStreamInfo(FactStreamInfo info) {
+            originalObserver.onFactStreamInfo(info);
+          }
         };
     initiateReconnect();
   }

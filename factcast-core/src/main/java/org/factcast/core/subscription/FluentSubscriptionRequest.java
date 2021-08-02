@@ -41,6 +41,8 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
   long keepaliveIntervalInMs = 0;
 
+  boolean streamInfo;
+
   boolean continuous;
 
   UUID startingAfter;
@@ -53,6 +55,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
   FluentSubscriptionRequest() {
     debugInfo = createDebugInfo();
+    streamInfo = true;
   }
 
   private String createDebugInfo() {
