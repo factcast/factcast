@@ -23,9 +23,7 @@ import org.factcast.factus.spring.tx.AbstractSpringTxSubscribedProjection;
 import org.factcast.factus.spring.tx.SpringTransactional;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -491,8 +489,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void factStreamPosition(@NonNull UUID factStreamPosition) {
-      log.debug("set fact stream position");
+    public void factStreamPosition(@NonNull UUID state) {
+      log.debug("set state");
       assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
       factStreamPositionModifications++;
 
@@ -502,8 +500,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
           "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) "
               + "ON CONFLICT (name) DO UPDATE SET fact_stream_position = ?",
           getScopedName().asString(),
-          factStreamPosition,
-          factStreamPosition);
+          state,
+          state);
     }
 
     @Override
