@@ -1263,12 +1263,12 @@ class FactusImplTest {
       AtomicInteger calls = new AtomicInteger(0);
       Duration wait = Duration.ofSeconds(3);
       var uut =
-              new IntervalSnapshotter<>(wait) {
-                @Override
-                void createSnapshot(SnapshotProjection projection, UUID state) {
-                  calls.incrementAndGet();
-                }
-              };
+          new IntervalSnapshotter<>(wait) {
+            @Override
+            void createSnapshot(SnapshotProjection projection, UUID state) {
+              calls.incrementAndGet();
+            }
+          };
 
       uut.accept(null, UUID.randomUUID());
       uut.accept(null, UUID.randomUUID());

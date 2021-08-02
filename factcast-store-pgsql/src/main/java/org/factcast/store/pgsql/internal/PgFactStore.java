@@ -237,18 +237,17 @@ public class PgFactStore extends AbstractFactStore {
 
           try {
             ResultSetExtractor<Long> rch =
-                    new ResultSetExtractor<>() {
-                      @Override
-                      public Long extractData(ResultSet resultSet)
-                              throws SQLException, DataAccessException {
-                        if (!resultSet.next()) {
-                          return 0L;
-                        }
-                        else {
-                          return resultSet.getLong(1);
-                        }
-                      }
-                    };
+                new ResultSetExtractor<>() {
+                  @Override
+                  public Long extractData(ResultSet resultSet)
+                      throws SQLException, DataAccessException {
+                    if (!resultSet.next()) {
+                      return 0L;
+                    } else {
+                      return resultSet.getLong(1);
+                    }
+                  }
+                };
             long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
             return State.of(specs, lastSerial);
           } catch (EmptyResultDataAccessException lastSerialIs0Then) {
