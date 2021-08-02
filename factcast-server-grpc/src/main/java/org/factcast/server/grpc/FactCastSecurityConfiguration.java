@@ -156,7 +156,7 @@ public class FactCastSecurityConfiguration {
   UserDetailsService godModeUserDetailsService(
       FactcastSecurityProperties factcastSecurityProperties) {
 
-    if (!factcastSecurityProperties.enabled()) {
+    if (!factcastSecurityProperties.isEnabled()) {
       log.warn(
           "**** FactCast Security is disabled. This is discouraged for production environments. You have been warned. ****");
       return username -> new FactCastUser(FactCastAccount.GOD, "security_disabled");
