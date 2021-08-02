@@ -34,7 +34,7 @@ public interface FactObserver {
 
   default void onFastForward(@NonNull UUID factIdToFfwdTo) {}
 
-  default void onFactStreamInfo(FactStreamInfo info) {}
+  default void onFactStreamInfo(@NonNull FactStreamInfo info) {}
 
   default void onCatchup() {
     // implement if you are interested in that event
