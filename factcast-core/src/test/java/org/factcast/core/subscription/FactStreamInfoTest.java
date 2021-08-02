@@ -19,5 +19,13 @@ class FactStreamInfoTest {
       assertThat(new FactStreamInfo(START_SERIAL, HORIZON_SERIAL).calculatePercentage(1210))
           .isEqualTo(21);
     }
+
+    @Test
+    void handlesZeros() {
+      assertThat(new FactStreamInfo(START_SERIAL, HORIZON_SERIAL).calculatePercentage(START_SERIAL))
+          .isEqualTo(0);
+      assertThat(new FactStreamInfo(0, 1).calculatePercentage(0)).isEqualTo(0);
+      assertThat(new FactStreamInfo(100, 100).calculatePercentage(100)).isEqualTo(0);
+    }
   }
 }
