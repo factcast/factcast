@@ -16,15 +16,13 @@
 package org.factcast.schema.registry.cli.utils
 
 import arrow.core.Either
-import arrow.core.Left
-import arrow.core.Right
 import com.github.fge.jsonschema.core.exceptions.ProcessingException
 import com.github.fge.jsonschema.main.JsonSchema
 import com.github.fge.jsonschema.main.JsonSchemaFactory
-import java.nio.file.Path
-import javax.inject.Singleton
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.validation.ProjectError
+import java.nio.file.Path
+import javax.inject.Singleton
 
 @Singleton
 class SchemaServiceImpl(
@@ -32,12 +30,12 @@ class SchemaServiceImpl(
     private val jsonSchemaFactory: JsonSchemaFactory
 ) : SchemaService {
     override fun loadSchema(path: Path): Either<ProjectError, JsonSchema> {
-        val jsonNode = fileSystemService.readToJsonNode(path) ?: return Left(ProjectError.NoSuchFile(path))
+        val jsonNode = fileSystemService.readToJsonNode(path) ?: return Either.Left(ProjectError.NoSuchFile(path))
 
         return try {
-            Right(jsonSchemaFactory.getJsonSchema(jsonNode))
+            Either.Right(jsonSchemaFactory.getJsonSchema(jsonNode))
         } catch (e: ProcessingException) {
-            Left(ProjectError.CorruptedSchema(path))
+            Either.Left(ProjectError.CorruptedSchema(path))
         }
     }
 }

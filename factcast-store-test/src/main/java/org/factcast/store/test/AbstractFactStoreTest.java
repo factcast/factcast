@@ -16,8 +16,8 @@
 package org.factcast.store.test;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -49,7 +49,7 @@ import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.test.annotation.DirtiesContext;
 
-@SuppressWarnings("all")
+@SuppressWarnings("deprecation")
 public abstract class AbstractFactStoreTest {
 
   static final FactSpec ANY = FactSpec.ns("default");
@@ -67,21 +67,21 @@ public abstract class AbstractFactStoreTest {
   protected abstract FactStore createStoreToTest();
 
   @Test
-  public void testFetchById() throws Exception {
+  public void testFetchById() {
     UUID id = UUID.randomUUID();
     uut.fetchById(id);
     verify(store).fetchById(id);
   }
 
   @Test
-  public void testFetchByIdAndVersion() throws Exception {
+  public void testFetchByIdAndVersion() {
     UUID id = UUID.randomUUID();
     uut.fetchByIdAndVersion(id, 77);
     verify(store).fetchByIdAndVersion(id, 77);
   }
 
   @Test
-  public void testPublishNullParameter() throws Exception {
+  public void testPublishNullParameter() {
     assertThrows(NullPointerException.class, () -> createStoreToTest().publish(null));
   }
 
@@ -110,7 +110,7 @@ public abstract class AbstractFactStoreTest {
           Assertions.assertThrows(
               IllegalArgumentException.class,
               () -> {
-                final UUID id = UUID.randomUUID();
+                UUID id = UUID.randomUUID();
                 uut.publish(
                     Fact.of(
                         "{\"id\":\"" + id + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
@@ -379,6 +379,7 @@ public abstract class AbstractFactStoreTest {
           FactSpec REQ_FOO_BAR = FactSpec.ns("default").meta("foo", "bar");
           uut.subscribe(SubscriptionRequest.catchup(REQ_FOO_BAR).fromScratch(), observer)
               .awaitComplete();
+          verify(observer).onFactStreamInfo(any());
           verify(observer).onNext(any());
           verify(observer).onCatchup();
           verify(observer).onComplete();
@@ -409,6 +410,7 @@ public abstract class AbstractFactStoreTest {
               FactSpec.ns("default").jsFilterScript("function (h,e){ return (h.hit=='me')}");
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
+          verify(observer).onFactStreamInfo(any());
           verify(observer).onNext(any());
           verify(observer).onCatchup();
           verify(observer).onComplete();
@@ -439,6 +441,7 @@ public abstract class AbstractFactStoreTest {
               FactSpec.ns("default").jsFilterScript("function (h){ return (h.hit=='me')}");
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
+          verify(observer).onFactStreamInfo(any());
           verify(observer).onNext(any());
           verify(observer).onCatchup();
           verify(observer).onComplete();
@@ -468,6 +471,7 @@ public abstract class AbstractFactStoreTest {
           FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return true }");
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
+          verify(observer).onFactStreamInfo(any());
           verify(observer, times(2)).onNext(any());
           verify(observer).onCatchup();
           verify(observer).onComplete();
@@ -497,6 +501,7 @@ public abstract class AbstractFactStoreTest {
           FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return false }");
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
+          verify(observer).onFactStreamInfo(any());
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
@@ -509,8 +514,8 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          final UUID id = UUID.randomUUID();
-          final UUID aggId1 = UUID.randomUUID();
+          UUID id = UUID.randomUUID();
+          UUID aggId1 = UUID.randomUUID();
           uut.publish(
               Fact.of(
                   "{\"id\":\""
@@ -534,9 +539,9 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          final UUID id = UUID.randomUUID();
-          final UUID aggId1 = UUID.randomUUID();
-          final UUID aggId2 = UUID.randomUUID();
+          UUID id = UUID.randomUUID();
+          UUID aggId1 = UUID.randomUUID();
+          UUID aggId2 = UUID.randomUUID();
           uut.publish(
               Fact.of(
                   "{\"id\":\""
@@ -568,9 +573,9 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          final UUID id = UUID.randomUUID();
-          final UUID aggId1 = UUID.randomUUID();
-          final UUID aggId2 = UUID.randomUUID();
+          UUID id = UUID.randomUUID();
+          UUID aggId1 = UUID.randomUUID();
+          UUID aggId2 = UUID.randomUUID();
           uut.publish(
               Fact.of(
                   "{\"id\":\""
@@ -596,7 +601,7 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          final UUID id = UUID.randomUUID();
+          UUID id = UUID.randomUUID();
           TestFactObserver obs = new TestFactObserver();
           try (Subscription s =
               uut.subscribe(
@@ -622,8 +627,8 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          final UUID id = UUID.randomUUID();
-          final UUID id2 = UUID.randomUUID();
+          UUID id = UUID.randomUUID();
+          UUID id2 = UUID.randomUUID();
           assertFalse(uut.serialOf(id).isPresent());
           uut.publish(
               Fact.of(
@@ -1150,7 +1155,7 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void shouldPassCustomAbortedException() throws Exception {
+  void shouldPassCustomAbortedException() {
 
     UUID agg1 = UUID.randomUUID();
 
@@ -1190,7 +1195,7 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void shouldThrowRetriesExceededException() throws Exception {
+  void shouldThrowRetriesExceededException() {
 
     UUID agg1 = UUID.randomUUID();
 
@@ -1228,12 +1233,16 @@ public abstract class AbstractFactStoreTest {
     List<Fact> all = catchup();
     assertThat(all).hasSize(4);
     assertThat(all.get(all.size() - 1).id()).isEqualTo(expected);
-    assertThat(ret.publishedFacts().stream().map(Fact::id).collect(Collectors.toList()))
-        .contains(expected);
+    assertThat(
+            ret.publishedFacts().stream()
+                .map(Fact::id)
+                .collect(Collectors.toList())
+                .contains(expected))
+        .isTrue();
   }
 
   @Test
-  void shouldReleaseTokenOnAbort() throws Exception {
+  void shouldReleaseTokenOnAbort() {
 
     UUID agg1 = UUID.randomUUID();
 
@@ -1260,7 +1269,7 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void shouldReleaseTokenOnEmptyPublications() throws Exception {
+  void shouldReleaseTokenOnEmptyPublications() {
 
     UUID agg1 = UUID.randomUUID();
 
@@ -1304,7 +1313,7 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  public void nullContracts_publishIfUnchanged() throws Exception {
+  public void nullContracts_publishIfUnchanged() {
     assertThrows(
         NullPointerException.class, () -> store.publishIfUnchanged(Lists.emptyList(), null));
 

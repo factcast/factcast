@@ -19,7 +19,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,10 +59,26 @@ public class BlockingStreamObserverTest {
   }
 
   @Test
-  void testOnError() {
+  void testOnErrorDelegates() {
     verify(delegate, never()).onError(any());
     uut.onError(new Exception());
     verify(delegate).onError(any());
+  }
+
+  @Test
+  void testOnErrorDelegatesSreWithoutTransforming() {
+    StatusRuntimeException sre = new StatusRuntimeException(Status.NOT_FOUND);
+    verify(delegate, never()).onError(any());
+    uut.onError(sre);
+    verify(delegate).onError(sre);
+  }
+
+  @Test
+  void testOnErrorTranslatesToSre() {
+    Exception ioException = new IOException("i want to be wrapped");
+    verify(delegate, never()).onError(any());
+    uut.onError(ioException);
+    verify(delegate).onError(any(StatusRuntimeException.class));
   }
 
   @Test

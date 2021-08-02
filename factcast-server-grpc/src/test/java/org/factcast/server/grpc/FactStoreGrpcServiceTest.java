@@ -72,6 +72,7 @@ public class FactStoreGrpcServiceTest {
   @Mock GrpcRequestMetadata meta;
   @Mock FastForwardTarget ffwdTarget;
   @Mock GrpcLimitProperties grpcLimitProperties;
+  @Mock GrpcRequestMetadata grpcRequestMetadata;
 
   @InjectMocks FactStoreGrpcService uut;
 
@@ -279,6 +280,28 @@ public class FactStoreGrpcServiceTest {
     assertEquals(2, facts.size());
     assertEquals(f1.id(), facts.get(0).id());
     assertEquals(f2.id(), facts.get(1).id());
+  }
+
+  @Test
+  void testPublishTagging() {
+    String clientId = "someApplication";
+    when(grpcRequestMetadata.clientId()).thenReturn(Optional.of(clientId));
+    doNothing().when(backend).publish(acFactList.capture());
+
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+
+    Fact f1 = Fact.builder().ns("test").build("{}");
+    MSG_Fact msg1 = conv.toProto(f1);
+    Builder b = MSG_Facts.newBuilder();
+    b.addAllFact(Arrays.asList(msg1));
+    MSG_Facts r = b.build();
+    uut.publish(r, mock(StreamObserver.class));
+    verify(backend).publish(acFactList.capture());
+    List<Fact> facts = acFactList.getValue();
+    assertFalse(facts.isEmpty());
+    assertEquals(1, facts.size());
+    assertEquals(f1.id(), facts.get(0).id());
+    assertEquals(clientId, facts.get(0).meta("source"));
   }
 
   @Test
@@ -634,6 +657,32 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
+  public void testSourceTaggingPublishConditional() {
+    String clientId = "someApplication";
+    when(grpcRequestMetadata.clientId()).thenReturn(Optional.of(clientId));
+
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+
+    UUID id = UUID.randomUUID();
+
+    Fact f = Fact.builder().ns("foo").type("bar").buildWithoutPayload();
+
+    ConditionalPublishRequest sfr = new ConditionalPublishRequest(Lists.newArrayList(f), id);
+    MSG_ConditionalPublishRequest req = conv.toProto(sfr);
+    StreamObserver o = mock(StreamObserver.class);
+    when(backend.publishIfUnchanged(acFactList.capture(), eq(Optional.of(new StateToken(id)))))
+        .thenReturn(true);
+
+    uut.publishConditional(req, o);
+
+    Fact fact = acFactList.getAllValues().get(0).get(0);
+    assertThat(fact.meta("source")).isEqualTo(clientId);
+
+    verify(o).onNext(eq(conv.toProto(true)));
+    verify(o).onCompleted();
+  }
+
+  @Test
   public void testAssertCanReadString() {
 
     FactCastAccount account = mock(FactCastAccount.class);
@@ -803,7 +852,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void clearSnapshot() {
 
-    val id = new SnapshotId("foo", UUID.randomUUID());
+    val id = SnapshotId.of("foo", UUID.randomUUID());
     val req = conv.toProto(id);
     StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
 
@@ -823,7 +872,7 @@ public class FactStoreGrpcServiceTest {
   void clearSnapshotWithException() {
     assertThatThrownBy(
             () -> {
-              val id = new SnapshotId("foo", UUID.randomUUID());
+              val id = SnapshotId.of("foo", UUID.randomUUID());
               val req = conv.toProto(id);
               StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
               doThrow(TestException.class).when(backend).clearSnapshot(eq(id));
@@ -836,7 +885,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void getSnapshot() {
-    val id = new SnapshotId("foo", UUID.randomUUID());
+    val id = SnapshotId.of("foo", UUID.randomUUID());
     val req = conv.toProto(id);
     StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
     Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
@@ -853,7 +902,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void getSnapshotEmpty() {
-    val id = new SnapshotId("foo", UUID.randomUUID());
+    val id = SnapshotId.of("foo", UUID.randomUUID());
     val req = conv.toProto(id);
     StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
     Optional<Snapshot> optSnap = Optional.empty();
@@ -871,7 +920,7 @@ public class FactStoreGrpcServiceTest {
   void getSnapshotException() {
     assertThatThrownBy(
             () -> {
-              val id = new SnapshotId("foo", UUID.randomUUID());
+              val id = SnapshotId.of("foo", UUID.randomUUID());
               val req = conv.toProto(id);
               StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
               Optional<Snapshot> optSnap = Optional.empty();
@@ -887,7 +936,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void setSnapshot() {
-    val id = new SnapshotId("foo", UUID.randomUUID());
+    val id = SnapshotId.of("foo", UUID.randomUUID());
     Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
     val req = conv.toProto(snap);
     StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
@@ -904,7 +953,7 @@ public class FactStoreGrpcServiceTest {
   void setSnapshotWithException() {
     assertThatThrownBy(
             () -> {
-              val id = new SnapshotId("foo", UUID.randomUUID());
+              val id = SnapshotId.of("foo", UUID.randomUUID());
               Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
               val req = conv.toProto(snap);
               StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
@@ -917,5 +966,27 @@ public class FactStoreGrpcServiceTest {
               verifyNoMoreInteractions(obs);
             })
         .isInstanceOf(TestException.class);
+  }
+
+  @Test
+  void testHeaderSourceTagging() {
+    Fact f = Fact.builder().ns("x").meta("foo", "bar").buildWithoutPayload();
+    f = uut.tagFactSource(f, "theSourceApplication");
+    assertThat(f.meta("source")).isEqualTo("theSourceApplication");
+  }
+
+  @Test
+  void testHeaderSourceTaggingOverwrites() {
+    Fact f = Fact.builder().ns("x").meta("source", "before").buildWithoutPayload();
+    f = uut.tagFactSource(f, "after");
+    assertThat(f.meta("source")).isEqualTo("after");
+  }
+
+  @Test
+  void testHeaderSourceTaggingWithBrokenHeader() {
+    Fact f = spy(Fact.builder().buildWithoutPayload());
+    when(f.jsonHeader()).thenReturn("{borken");
+    Fact f1 = uut.tagFactSource(f, "after");
+    assertSame(f, f1);
   }
 }

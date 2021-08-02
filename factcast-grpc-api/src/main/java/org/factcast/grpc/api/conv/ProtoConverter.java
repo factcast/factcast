@@ -28,11 +28,13 @@ import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.StateToken;
+import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact.Builder;
 
 /**
@@ -349,7 +351,7 @@ public class ProtoConverter {
   }
 
   public SnapshotId fromProto(@NonNull MSG_SnapshotId id) {
-    return new SnapshotId(id.getKey(), fromProto(id.getUuid()));
+    return SnapshotId.of(id.getKey(), fromProto(id.getUuid()));
   }
 
   public UUID fromProto(@NonNull MSG_OptionalUuid uuid) {
@@ -397,5 +399,25 @@ public class ProtoConverter {
 
   public MSG_FactSpecsJson toProtoFactSpecs(List<FactSpec> specs) {
     return MSG_FactSpecsJson.newBuilder().setJson(FactCastJson.writeValueAsString(specs)).build();
+  }
+
+  public MSG_Notification createKeepaliveNotification() {
+    return MSG_Notification.newBuilder().setType(Type.KeepAlive).build();
+  }
+
+  public FactStreamInfo fromProto(MSG_Info info) {
+    return new FactStreamInfo(info.getSerialStart(), info.getSerialHorizon());
+  }
+
+  @NonNull
+  public MSG_Info toProto(@NonNull FactStreamInfo info) {
+    return MSG_Info.newBuilder()
+        .setSerialStart(info.startSerial())
+        .setSerialHorizon(info.horizonSerial())
+        .build();
+  }
+
+  public MSG_Notification createInfoNotification(FactStreamInfo info) {
+    return MSG_Notification.newBuilder().setType(Type.Info).setInfo(toProto(info)).build();
   }
 }

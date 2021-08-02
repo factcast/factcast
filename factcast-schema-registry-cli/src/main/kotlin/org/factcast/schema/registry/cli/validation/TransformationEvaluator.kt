@@ -16,39 +16,38 @@
 package org.factcast.schema.registry.cli.validation
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import jdk.nashorn.api.scripting.ScriptObjectMirror
-import java.nio.file.Path
+import org.factcast.schema.registry.cli.domain.Event
+import org.factcast.schema.registry.cli.domain.Namespace
+import org.factcast.schema.registry.cli.domain.Transformation
+import org.factcast.schema.registry.cli.fs.FileSystemService
+import org.factcast.store.registry.transformation.SingleTransformation
+import org.factcast.store.registry.transformation.TransformationKey
+import org.factcast.store.registry.transformation.chains.TransformationChain
+import org.factcast.store.registry.transformation.chains.Transformer
 import javax.inject.Singleton
-import org.factcast.schema.registry.cli.js.JsFunctionExecutor
 
 @Singleton
 class TransformationEvaluator(
-    private val jsFunctionExecutor: JsFunctionExecutor,
-    private val om: ObjectMapper
+    private val transformer: Transformer,
+    private val fs: FileSystemService
 ) {
-    fun evaluate(pathToTransformation: Path, data: JsonNode): JsonNode {
-        val dataAsMap = om.treeToValue(data, Map::class.java)
+    fun evaluate(ns: Namespace, event: Event, transformation: Transformation, data: JsonNode): JsonNode {
+        val key = TransformationKey.of(ns.name, event.type)
+        val singleTransformation =
+            SingleTransformation.of(
+                key,
+                transformation.from,
+                transformation.to,
+                fs.readToString(transformation.transformationPath.toFile())
+            )
+        val chain = TransformationChain.of(
+            key,
+            listOf(singleTransformation),
+            "no-real-meaning"
+        )
 
-        val result = jsFunctionExecutor.execute("transform", pathToTransformation, dataAsMap)
-
-        // when the transform script added an array to an object, it has the type ScriptObjectMirror with isArray=true
-        // but is internally a map of idx -> value
-        // Jackson transforms this into an object with index as key, not an array. So find and fix this:
-        val fixedResult = fixArrayTransformations(result)
-
-        return om.valueToTree(fixedResult)
+        return transformer.transform(chain, data)
     }
 
-    fun fixArrayTransformations(data: Map<*, *>): Map<*, *> {
-        return data.mapValues {
-            if (it.value is ScriptObjectMirror && (it.value as ScriptObjectMirror).isArray) {
-                (it.value as ScriptObjectMirror).to(List::class.java)
-            } else if (it.value is Map<*, *>) {
-                fixArrayTransformations(it.value as Map<*, *>)
-            } else {
-                it.value
-            }
-        };
-    }
+
 }

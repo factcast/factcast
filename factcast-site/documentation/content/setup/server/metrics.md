@@ -59,7 +59,7 @@ There are a bunch of metrics already emitted in the server. There are different 
 
 As this list is continuously growing, we cannot guarantee
 the documentation's completeness. If you want to see the current list of operations, please look
-at [StoreMetrics.java](https://github.com/factcast/factcast/blob/issue1163/factcast-store-pgsql/src/main/java/org/factcast/store/pgsql/internal/StoreMetrics.java)
+at [StoreMetrics.java](https://github.com/factcast/factcast/blob/issue1163/factcast-store/src/main/java/org/factcast/store/pgsql/internal/StoreMetrics.java)
 .
 
 At the **time of writing (0.3.10)**, the store operations that are counted/measured are:

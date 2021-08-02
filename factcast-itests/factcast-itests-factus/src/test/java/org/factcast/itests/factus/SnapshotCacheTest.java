@@ -35,7 +35,7 @@ public abstract class SnapshotCacheTest extends AbstractFactCastIntegrationTest 
 
   @Test
   public void simpleSnapshotRoundtrip() throws Exception {
-    SnapshotId id = new SnapshotId("test", randomUUID());
+    SnapshotId id = SnapshotId.of("test", randomUUID());
     // initially empty
     assertThat(repository.getSnapshot(id)).isEmpty();
 

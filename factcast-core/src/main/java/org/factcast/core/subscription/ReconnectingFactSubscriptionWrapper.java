@@ -15,6 +15,7 @@
  */
 package org.factcast.core.subscription;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -243,11 +244,23 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
             reconnects.add(now);
             return reconnects.size() > ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION;
           }
+
+          @Override
+          public void onFactStreamInfo(FactStreamInfo info) {
+            originalObserver.onFactStreamInfo(info);
+          }
         };
     initiateReconnect();
   }
 
-  private boolean isServerException(@NonNull Throwable exception) {
+  @VisibleForTesting
+  boolean isServerException(@NonNull Throwable exception) {
+
+    if (exception instanceof StaleSubscriptionDetectedException) {
+      // assume connection problem
+      return false;
+    }
+
     return exception.getClass().getName().startsWith("org.factcast");
   }
 

@@ -4,7 +4,10 @@ import static java.util.UUID.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -14,14 +17,13 @@ import org.factcast.factus.Factus;
 import org.factcast.factus.Handler;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.WriterToken;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.spring.tx.AbstractSpringTxManagedProjection;
 import org.factcast.factus.spring.tx.AbstractSpringTxSubscribedProjection;
 import org.factcast.factus.spring.tx.SpringTransactional;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -75,7 +77,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       val s = new BulkSize3Projection(platformTransactionManager, jdbcTemplate);
       factus.update(s);
 
-      assertThat(s.stateModifications()).isEqualTo(4);
+      assertThat(s.factStreamPositionModifications()).isEqualTo(4);
       assertThat(s.txSeen()).hasSize(4);
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
@@ -85,7 +87,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       val s = new BulkSize5Projection(platformTransactionManager, jdbcTemplate);
       factus.update(s);
 
-      assertThat(s.stateModifications()).isEqualTo(2);
+      assertThat(s.factStreamPositionModifications()).isEqualTo(2);
       assertThat(s.txSeen()).hasSize(2);
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
@@ -95,7 +97,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       val s = new BulkSize10Projection(platformTransactionManager, jdbcTemplate);
       factus.update(s);
 
-      assertThat(s.stateModifications()).isEqualTo(1);
+      assertThat(s.factStreamPositionModifications()).isEqualTo(1);
       assertThat(s.txSeen()).hasSize(1);
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
@@ -105,7 +107,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       val s = new BulkSize20Projection(platformTransactionManager, jdbcTemplate);
       factus.update(s);
 
-      assertThat(s.stateModifications()).isEqualTo(1);
+      assertThat(s.factStreamPositionModifications()).isEqualTo(1);
       assertThat(s.txSeen()).hasSize(1);
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
@@ -115,7 +117,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       val s = new SpringTxProjectionTimeout(platformTransactionManager, jdbcTemplate);
       factus.update(s);
 
-      assertThat(s.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
+      assertThat(s.factStreamPositionModifications())
+          .isEqualTo(2); // one for timeout, one for final flush
       assertThat(s.txSeen()).hasSize(2); // one for timeout, one for final flush
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
@@ -136,10 +139,11 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
       // only first bulk (size = 5) should be executed
       assertThat(getUsers()).isEqualTo(5);
-      assertThat(p.stateModifications()).isEqualTo(1);
+      assertThat(p.factStreamPositionModifications()).isEqualTo(1);
       assertThat(p.txSeen()).hasSize(1);
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 3)
     class BulkSize3Projection extends AbstractTrackingUserProjection {
       public BulkSize3Projection(
@@ -149,6 +153,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 5)
     class BulkSize5Projection extends AbstractTrackingUserProjection {
       public BulkSize5Projection(
@@ -158,6 +163,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 20)
     class BulkSize20Projection extends AbstractTrackingUserProjection {
       public BulkSize20Projection(
@@ -167,6 +173,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 10)
     class BulkSize10Projection extends AbstractTrackingUserProjection {
       public BulkSize10Projection(
@@ -176,7 +183,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @SpringTransactional(size = 3000000, timeout = 1000) // will flush after 800ms
+    @ProjectionMetaData(serial = 1)
+    @SpringTransactional(size = 3000000, timeoutInSeconds = 1) // will flush after 800ms
     class SpringTxProjectionTimeout extends AbstractTrackingUserProjection {
       public SpringTxProjectionTimeout(
           PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
@@ -192,6 +200,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 5)
     class SpringTxProjectionSizeBlowAt7th extends AbstractTrackingUserProjection {
       private int count;
@@ -219,7 +228,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       val s = new BulkSize3Projection(platformTransactionManager, jdbcTemplate);
       factus.subscribeAndBlock(s).awaitCatchup();
 
-      assertThat(s.stateModifications()).isEqualTo(4);
+      assertThat(s.factStreamPositionModifications()).isEqualTo(4);
       assertThat(s.txSeen()).hasSize(4);
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
@@ -229,7 +238,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       val s = new BulkSize5Projection(platformTransactionManager, jdbcTemplate);
       factus.subscribeAndBlock(s).awaitCatchup();
 
-      assertThat(s.stateModifications()).isEqualTo(2);
+      assertThat(s.factStreamPositionModifications()).isEqualTo(2);
       assertThat(s.txSeen()).hasSize(2);
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
@@ -239,7 +248,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       val s = new BulkSize10Projection(platformTransactionManager, jdbcTemplate);
       factus.subscribeAndBlock(s).awaitCatchup();
 
-      assertThat(s.stateModifications()).isEqualTo(1);
+      assertThat(s.factStreamPositionModifications()).isEqualTo(1);
       assertThat(s.txSeen()).hasSize(1);
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
@@ -249,7 +258,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       val s = new BulkSize20Projection(platformTransactionManager, jdbcTemplate);
       factus.subscribeAndBlock(s).awaitCatchup();
 
-      assertThat(s.stateModifications()).isEqualTo(1);
+      assertThat(s.factStreamPositionModifications()).isEqualTo(1);
       assertThat(s.txSeen()).hasSize(1);
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
@@ -259,7 +268,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       val s = new SpringTxProjectionTimeout(platformTransactionManager, jdbcTemplate);
       factus.subscribeAndBlock(s).awaitCatchup();
 
-      assertThat(s.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
+      assertThat(s.factStreamPositionModifications())
+          .isEqualTo(2); // one for timeout, one for final flush
       assertThat(s.txSeen()).hasSize(2); // one for timeout, one for final flush
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
@@ -280,10 +290,11 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
       // only first bulk (size = 5) should be executed
       assertThat(getUsers()).isEqualTo(5);
-      assertThat(p.stateModifications()).isEqualTo(1);
+      assertThat(p.factStreamPositionModifications()).isEqualTo(1);
       assertThat(p.txSeen()).hasSize(1);
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 3)
     class BulkSize3Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize3Projection(
@@ -293,6 +304,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 5)
     class BulkSize5Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize5Projection(
@@ -302,6 +314,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 20)
     class BulkSize20Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize20Projection(
@@ -311,6 +324,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 10)
     class BulkSize10Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize10Projection(
@@ -320,7 +334,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @SpringTransactional(size = 3000000, timeout = 1000) // will flush after 800ms
+    @ProjectionMetaData(serial = 1)
+    @SpringTransactional(size = 3000000, timeoutInSeconds = 1) // will flush after 800ms
     class SpringTxProjectionTimeout extends AbstractTrackingUserSubscribedProjection {
       public SpringTxProjectionTimeout(
           PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
@@ -336,6 +351,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @ProjectionMetaData(serial = 1)
     @SpringTransactional(size = 5)
     class SpringTxProjectionSizeBlowAt7th extends AbstractTrackingUserSubscribedProjection {
       private int count;
@@ -366,7 +382,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
         "CREATE TABLE managed_projection (\n"
             + "\n"
             + "    name  varchar(255),\n"
-            + "    state UUID,\n"
+            + "    fact_stream_position UUID,\n"
             + "\n"
             + "    PRIMARY KEY (name)\n"
             + ");");
@@ -385,7 +401,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   @Slf4j
   abstract static class AbstractTrackingUserProjection extends AbstractSpringTxManagedProjection {
     private final JdbcTemplate jdbcTemplate;
-    @Getter private int stateModifications = 0;
+    @Getter private int factStreamPositionModifications = 0;
 
     @Getter private final Set<String> txSeen = new HashSet<>();
 
@@ -404,29 +420,31 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public UUID state() {
+    public UUID factStreamPosition() {
       try {
         return jdbcTemplate.queryForObject(
-            "SELECT state FROM managed_projection WHERE name = ?", UUID.class, "foo");
+            "SELECT fact_stream_position FROM managed_projection WHERE name = ?",
+            UUID.class,
+            getScopedName().asString());
       } catch (IncorrectResultSizeDataAccessException e) {
-        // no state yet, just return null
+        // no position yet, just return null
         return null;
       }
     }
 
     @Override
-    public void state(@NonNull UUID state) {
-      log.debug("set state");
+    public void factStreamPosition(@NonNull UUID factStreamPosition) {
+      log.debug("set fact stream position");
       assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
-      stateModifications++;
+      factStreamPositionModifications++;
 
       txSeen.add(jdbcTemplate.queryForObject("select txid_current()", String.class));
 
       jdbcTemplate.update(
-          "INSERT INTO managed_projection (name, state) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET state = ?",
-          "foo",
-          state,
-          state);
+          "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET fact_stream_position = ?",
+          getScopedName().asString(),
+          factStreamPosition,
+          factStreamPosition);
     }
 
     @Override
@@ -439,7 +457,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   abstract static class AbstractTrackingUserSubscribedProjection
       extends AbstractSpringTxSubscribedProjection {
     private final JdbcTemplate jdbcTemplate;
-    @Getter private int stateModifications = 0;
+    @Getter private int factStreamPositionModifications = 0;
 
     @Getter private final Set<String> txSeen = new HashSet<>();
 
@@ -458,27 +476,30 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public UUID state() {
+    public UUID factStreamPosition() {
       try {
         return jdbcTemplate.queryForObject(
-            "SELECT state FROM managed_projection WHERE name = ?", UUID.class, "foo");
+            "SELECT fact_stream_position FROM managed_projection WHERE name = ?",
+            UUID.class,
+            getScopedName().asString());
       } catch (IncorrectResultSizeDataAccessException e) {
-        // no state yet, just return null
+        // no position yet, just return null
         return null;
       }
     }
 
     @Override
-    public void state(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID state) {
       log.debug("set state");
       assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
-      stateModifications++;
+      factStreamPositionModifications++;
 
       txSeen.add(jdbcTemplate.queryForObject("select txid_current()", String.class));
 
       jdbcTemplate.update(
-          "INSERT INTO managed_projection (name, state) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET state = ?",
-          "foo",
+          "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) "
+              + "ON CONFLICT (name) DO UPDATE SET fact_stream_position = ?",
+          getScopedName().asString(),
           state,
           state);
     }

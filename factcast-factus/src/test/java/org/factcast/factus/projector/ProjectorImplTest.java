@@ -35,6 +35,7 @@ import org.factcast.factus.Handler;
 import org.factcast.factus.HandlerFor;
 import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
+import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
 import org.junit.jupiter.api.*;
@@ -182,10 +183,10 @@ class ProjectorImplTest {
     @Test
     void createSimple() {
       // INIT
-      UUID state = UUID.fromString("9258562c-e6aa-4855-a765-3b1f49a113d5");
+      UUID factStreamPosition = UUID.fromString("9258562c-e6aa-4855-a765-3b1f49a113d5");
 
       ComplexProjection projection = new ComplexProjection();
-      projection.state(state);
+      projection.factStreamPosition(factStreamPosition);
 
       ProjectorImpl<ComplexAggregate> underTest = new ProjectorImpl<>(eventSerializer, projection);
 
@@ -334,6 +335,22 @@ class ProjectorImplTest {
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("No handler methods discovered on");
     }
+
+    @Test
+    void handlerWithUnspecificVersion() {
+      ProjectorImpl<Projection> p =
+          new ProjectorImpl<>(eventSerializer, new HandlerWithoutVersionProjection());
+
+      assertThatNoException()
+          .isThrownBy(
+              () -> {
+                Fact f1 = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
+                Fact f2 = Fact.builder().ns("ns").type("type").version(2).buildWithoutPayload();
+
+                p.apply(f1);
+                p.apply(f2);
+              });
+    }
   }
 
   @Nested
@@ -371,6 +388,45 @@ class ProjectorImplTest {
       Method realMethod =
           NonStaticClass$MockitoMock.class.getDeclaredMethod("apply", SimpleEvent.class);
       assertThat(underTest.isEventHandlerMethod(realMethod)).isFalse();
+    }
+  }
+
+  @Nested
+  class WhenTestingCatchingUp {
+
+    @Test
+    void setsFactStreamPosition() throws NoSuchMethodException {
+
+      LocalManagedProjection factStreamPositionAware =
+          spy(
+              new LocalManagedProjection() {
+                @Handler
+                void apply(SimpleEvent e) {}
+              });
+      ProjectorImpl<LocalManagedProjection> underTest =
+          new ProjectorImpl<>(mock(EventSerializer.class), factStreamPositionAware);
+
+      UUID id = UUID.randomUUID();
+      underTest.onCatchup(id);
+
+      verify(factStreamPositionAware).factStreamPosition(id);
+    }
+
+    @Test
+    void skipsSettingFactStreamPosition() throws NoSuchMethodException {
+      Projection notFactStreamPositionAware =
+          spy(
+              new Projection() {
+                @Handler
+                void apply(SimpleEvent e) {}
+              });
+      ProjectorImpl<Projection> underTest =
+          new ProjectorImpl<>(mock(EventSerializer.class), notFactStreamPositionAware);
+
+      UUID id = UUID.randomUUID();
+      underTest.onCatchup(id);
+
+      verifyNoInteractions(notFactStreamPositionAware);
     }
   }
 
@@ -487,5 +543,10 @@ class ProjectorImplTest {
     void handle(Object someObject) {
       // nothing
     }
+  }
+
+  static class HandlerWithoutVersionProjection implements Projection {
+    @HandlerFor(ns = "ns", type = "type")
+    void applyFactWithoutSpecificVersion(Fact f) {}
   }
 }

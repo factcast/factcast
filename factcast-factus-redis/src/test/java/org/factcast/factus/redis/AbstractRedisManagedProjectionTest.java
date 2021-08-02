@@ -3,16 +3,15 @@ package org.factcast.factus.redis;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.time.Duration;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.val;
-import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.redis.batch.RedissonBatchManager;
 import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.factcast.factus.serializer.ProjectionMetaData;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -87,7 +86,7 @@ class AbstractRedisManagedProjectionTest {
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
       when(bucket.get()).thenReturn(id);
 
-      val result = underTest.state();
+      val result = underTest.factStreamPosition();
 
       assertThat(result).isEqualTo(id);
     }
@@ -105,15 +104,15 @@ class AbstractRedisManagedProjectionTest {
       when(tx.getBucket(any(), any())).thenReturn(bucket);
       when(bucket.get()).thenReturn(id);
 
-      val result = underTest.state();
+      val result = underTest.factStreamPosition();
 
       assertThat(result).isEqualTo(id);
     }
   }
 
   @Nested
-  class WhenSettingState {
-    private final UUID STATE = UUID.randomUUID();
+  class WhenSettingFactStreamPosition {
+    private final UUID FACT_STREAM_POSITION = UUID.randomUUID();
 
     @Test
     void nonRunningTransaction() {
@@ -123,9 +122,9 @@ class AbstractRedisManagedProjectionTest {
       RBucket<Object> bucket = mock(RBucket.class);
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
 
-      underTest.state(STATE);
+      underTest.factStreamPosition(FACT_STREAM_POSITION);
 
-      verify(bucket).set(STATE);
+      verify(bucket).set(FACT_STREAM_POSITION);
     }
 
     @Test
@@ -142,9 +141,9 @@ class AbstractRedisManagedProjectionTest {
       RBucket<Object> bucket = mock(RBucket.class);
       when(tx.getBucket(any(), any())).thenReturn(bucket);
 
-      underTest.state(STATE);
+      underTest.factStreamPosition(FACT_STREAM_POSITION);
 
-      verify(bucket).set(STATE);
+      verify(bucket).set(FACT_STREAM_POSITION);
     }
 
     @Test
@@ -162,9 +161,9 @@ class AbstractRedisManagedProjectionTest {
       RBucket<Object> bucket = mock(RBucket.class);
       when(batch.getBucket(any(), any())).thenReturn(bucket);
 
-      underTest.state(STATE);
+      underTest.factStreamPosition(FACT_STREAM_POSITION);
 
-      verify(bucket).setAsync(STATE);
+      verify(bucket).setAsync(FACT_STREAM_POSITION);
     }
 
     @Test
@@ -175,9 +174,9 @@ class AbstractRedisManagedProjectionTest {
       RBucket<Object> bucket = mock(RBucket.class);
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
 
-      underTest.state(STATE);
+      underTest.factStreamPosition(FACT_STREAM_POSITION);
 
-      verify(bucket).set(STATE);
+      verify(bucket).set(FACT_STREAM_POSITION);
     }
   }
 
@@ -202,28 +201,16 @@ class AbstractRedisManagedProjectionTest {
   }
 
   @Nested
-  class WhenCreatingRedisKey {
+  class MissingProjectionMetaDataAnnotation {
+
     @Test
     void happyPath() {
-      assertThat(new Foo().createRedisKey()).isEqualTo("Foo");
-    }
-
-    @Test
-    void filtersCgLib() {
-      assertThat(new Foo$$EnhancerByCGLIB().createRedisKey()).isEqualTo("Foo");
-    }
-
-    @Test
-    void filtersSpring() {
-      assertThat(new Foo$$EnhancerBySpring().createRedisKey()).isEqualTo("Bar");
-    }
-
-    @Test
-    void usesSerial() {
-      assertThat(new BarWithVersion().createRedisKey()).isEqualTo("BarWithVersion:112");
+      assertThatThrownBy(() -> new MissingAnntoationTestProjection(redisson))
+          .isInstanceOf(IllegalStateException.class);
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   static class TestProjection extends AbstractRedisManagedProjection {
 
     public TestProjection(@NonNull RedissonClient redisson) {
@@ -231,32 +218,10 @@ class AbstractRedisManagedProjectionTest {
     }
   }
 
-  class Foo implements RedisManagedProjection {
-    @Override
-    public @NonNull RedissonClient redisson() {
-      return null;
-    }
+  static class MissingAnntoationTestProjection extends AbstractRedisManagedProjection {
 
-    @Override
-    public UUID state() {
-      return null;
-    }
-
-    @Override
-    public void state(@NonNull UUID state) {}
-
-    @Override
-    public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-      return null;
+    public MissingAnntoationTestProjection(@NonNull RedissonClient redisson) {
+      super(redisson);
     }
   }
-
-  class Bar extends Foo {}
-
-  class Foo$$EnhancerByCGLIB extends Foo {}
-
-  class Foo$$EnhancerBySpring extends Bar {}
-
-  @ProjectionMetaData(serial = 112)
-  class BarWithVersion extends Foo {}
 }

@@ -29,6 +29,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
@@ -160,6 +161,13 @@ public class ProtoConverterTest {
     MSG_Notification n = uut.createCatchupNotification();
     assertNotNull(n);
     assertEquals(MSG_Notification.Type.Catchup, n.getType());
+  }
+
+  @Test
+  void testCreateKeepaliveNotification() {
+    MSG_Notification n = uut.createKeepaliveNotification();
+    assertNotNull(n);
+    assertEquals(Type.KeepAlive, n.getType());
   }
 
   @Test
@@ -564,7 +572,7 @@ public class ProtoConverterTest {
 
   @Test
   void toProtoSnapshotId() {
-    SnapshotId snapId = new SnapshotId("test234", UUID.randomUUID());
+    SnapshotId snapId = SnapshotId.of("test234", UUID.randomUUID());
     MSG_SnapshotId msg_snapshotId = uut.toProto(snapId);
 
     assertThat(msg_snapshotId).isNotNull();
@@ -612,7 +620,7 @@ public class ProtoConverterTest {
   @Test
   void fromProtoMSG_OptionalSnapshot() {
     UUID factId = UUID.randomUUID();
-    SnapshotId snapId = new SnapshotId("test123", UUID.randomUUID());
+    SnapshotId snapId = SnapshotId.of("test123", UUID.randomUUID());
 
     MSG_Snapshot snap = uut.toProto(snapId, factId, "huhu".getBytes(Charsets.UTF_8), false);
 
@@ -636,7 +644,7 @@ public class ProtoConverterTest {
   @Test
   void toProtoSnapshotOptional() {
     UUID factId = UUID.randomUUID();
-    SnapshotId snapId = new SnapshotId("test123", UUID.randomUUID());
+    SnapshotId snapId = SnapshotId.of("test123", UUID.randomUUID());
     MSG_Snapshot snap = uut.toProto(snapId, factId, "huhu".getBytes(Charsets.UTF_8), false);
     MSG_OptionalSnapshot osnap =
         MSG_OptionalSnapshot.newBuilder().setPresent(true).setSnapshot(snap).build();
@@ -682,5 +690,22 @@ public class ProtoConverterTest {
   void toProtoOptionalUUIDNull() {
     MSG_OptionalUuid msg = uut.toProtoOptional(null);
     assertThat(msg.getPresent()).isFalse();
+  }
+
+  @Test
+  void fromProtoInfo() {
+    val msg = MSG_Info.newBuilder().setSerialStart(2).setSerialHorizon(3).build();
+    assertThat(uut.fromProto(msg).startSerial()).isEqualTo(2);
+    assertThat(uut.fromProto(msg).horizonSerial()).isEqualTo(3);
+  }
+
+  @Test
+  public void createInfoNotification() {
+    FactStreamInfo info = new FactStreamInfo(2, 3);
+    MSG_Notification msg = uut.createInfoNotification(info);
+
+    assertThat(msg.getType()).isEqualTo(Type.Info);
+    assertThat(msg.getInfo().getSerialStart()).isEqualTo(2);
+    assertThat(msg.getInfo().getSerialHorizon()).isEqualTo(3);
   }
 }

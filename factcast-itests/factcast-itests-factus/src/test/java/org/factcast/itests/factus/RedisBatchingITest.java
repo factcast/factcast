@@ -14,6 +14,7 @@ import lombok.val;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.redis.batch.RedisBatched;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.BatchRedissonManagedUserNames;
@@ -205,9 +206,9 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     @Getter int stateModifications = 0;
 
     @Override
-    public void state(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID factStreamPosition) {
       stateModifications++;
-      super.state(state);
+      super.factStreamPosition(factStreamPosition);
     }
   }
 
@@ -219,12 +220,13 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     @Getter int stateModifications = 0;
 
     @Override
-    public void state(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID factStreamPosition) {
       stateModifications++;
-      super.state(state);
+      super.factStreamPosition(factStreamPosition);
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisBatched(size = 2)
   static class BatchRedissonManagedUserNamesSize2 extends TrackingBatchRedissonManagedUserNames {
     public BatchRedissonManagedUserNamesSize2(RedissonClient redisson) {
@@ -232,12 +234,13 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void state(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID factStreamPosition) {
 
-      super.state(state);
+      super.factStreamPosition(factStreamPosition);
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisBatched(size = 3)
   static class BatchRedissonManagedUserNamesSize3 extends TrackingBatchRedissonManagedUserNames {
     public BatchRedissonManagedUserNamesSize3(RedissonClient redisson) {
@@ -245,6 +248,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisBatched(size = 2)
   static class BatchRedissonSubscribedUserNamesSize2
       extends TrackingBatchRedissonSubscribedUserNames {
@@ -253,6 +257,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisBatched(size = 3)
   static class BatchRedissonSubscribedUserNamesSize3
       extends TrackingBatchRedissonSubscribedUserNames {
@@ -261,6 +266,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisBatched(size = 5)
   static class BatchRedissonManagedUserNamesSizeBlowAt7th
       extends TrackingBatchRedissonManagedUserNames {
@@ -279,6 +285,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @ProjectionMetaData(serial = 1)
   @RedisBatched(size = 5)
   static class BatchRedissonSubscribedUserNamesSizeBlowAt7th
       extends TrackingBatchRedissonSubscribedUserNames {
