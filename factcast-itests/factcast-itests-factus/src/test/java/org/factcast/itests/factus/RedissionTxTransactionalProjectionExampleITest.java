@@ -22,28 +22,27 @@ import static org.assertj.core.api.Assertions.*;
 @SpringBootTest
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @Slf4j
-public class RedissionTxTransactionalProjectionExampleITest extends AbstractFactCastIntegrationTest {
+public class RedissionTxTransactionalProjectionExampleITest
+    extends AbstractFactCastIntegrationTest {
 
-    @Autowired
-    Factus factus;
+  @Autowired Factus factus;
 
-    @Autowired
-    RedissonClient redissonClient;
+  @Autowired RedissonClient redissonClient;
 
-    @Test
-    void renameMe() {
-        val event1 = new UserCreated(randomUUID(), "Peter");
-        val event2 = new UserCreated(randomUUID(), "Paul");
-        val event3 = new UserCreated(randomUUID(), "Klaus");
-        val event4 = new UserDeleted(event3.aggregateId());
+  @Test
+  void renameMe() {
+    val event1 = new UserCreated(randomUUID(), "Peter");
+    val event2 = new UserCreated(randomUUID(), "Paul");
+    val event3 = new UserCreated(randomUUID(), "Klaus");
+    val event4 = new UserDeleted(event3.aggregateId());
 
-        log.info("Publishing test events");
-        factus.publish(Arrays.asList(event1, event2, event3, event4));
+    log.info("Publishing test events");
+    factus.publish(Arrays.asList(event1, event2, event3, event4));
 
-        val uut = new RedissionTxTransactionalProjectionExample.UserNames(redissonClient);
-        factus.update(uut);
-        val userNames = uut.getUserNames();
+    val uut = new RedissionTxTransactionalProjectionExample.UserNames(redissonClient);
+    factus.update(uut);
+    val userNames = uut.getUserNames();
 
-        assertThat(userNames).containsExactlyInAnyOrder("Peter", "Paul");
-    }
+    assertThat(userNames).containsExactlyInAnyOrder("Peter", "Paul");
+  }
 }
