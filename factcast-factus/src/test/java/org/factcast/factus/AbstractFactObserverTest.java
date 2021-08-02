@@ -68,7 +68,7 @@ class AbstractFactObserverTest {
     @Test
     void reportsProgress() {
       underTest.onFactStreamInfo(new FactStreamInfo(0, 1000));
-      sleep(1); // make sure
+      sleep(100); // make sure
       Fact e = Fact.builder().ns("foo").meta("_ser", "1000").buildWithoutPayload();
       underTest.onNext(e);
 
