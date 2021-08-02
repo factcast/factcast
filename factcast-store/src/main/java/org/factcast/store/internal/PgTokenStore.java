@@ -19,17 +19,19 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.util.FactCastJson;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 
 @RequiredArgsConstructor
 public class PgTokenStore implements TokenStore {
 
-  final JdbcTemplate tpl;
+  final JdbcTemplate jdbc;
   final PgMetrics metrics;
 
   @Override
@@ -37,7 +39,7 @@ public class PgTokenStore implements TokenStore {
 
     String stateAsJson = FactCastJson.writeValueAsString(state);
     UUID queryForObject =
-        tpl.queryForObject(PgConstants.INSERT_TOKEN, new Object[] {stateAsJson}, UUID.class);
+        jdbc.queryForObject(PgConstants.INSERT_TOKEN, new Object[] {stateAsJson}, UUID.class);
     return new StateToken(queryForObject);
   }
 
@@ -46,7 +48,7 @@ public class PgTokenStore implements TokenStore {
     metrics.time(
         StoreMetrics.OP.INVALIDATE_STATE_TOKEN,
         () -> {
-          tpl.update(PgConstants.DELETE_TOKEN, token.uuid());
+          jdbc.update(PgConstants.DELETE_TOKEN, token.uuid());
         });
   }
 
@@ -54,11 +56,19 @@ public class PgTokenStore implements TokenStore {
   public @NonNull Optional<State> get(@NonNull StateToken token) {
     try {
       String state =
-          tpl.queryForObject(
+          jdbc.queryForObject(
               PgConstants.SELECT_STATE_FROM_TOKEN, new Object[] {token.uuid()}, String.class);
       return Optional.of(FactCastJson.readValue(State.class, state));
     } catch (EmptyResultDataAccessException e) {
       return Optional.empty();
     }
+  }
+
+  @Override
+  // not configurable due to cost expectation of this query
+  @Scheduled(cron = "0 0 4 * * *")
+  @SchedulerLock(name = "tokenStoreCompact", lockAtMostFor = "PT10m")
+  public void compact() {
+    jdbc.update(PgConstants.COMPACT_TOKEN);
   }
 }
