@@ -1,5 +1,6 @@
 +++
-draft = false title = "Boot gRPC BasicAuth"
+draft = false
+title = "Boot gRPC BasicAuth"
 description = ""
 date = "2019-05-17T09:42:24+02:00"
 weight = 170
