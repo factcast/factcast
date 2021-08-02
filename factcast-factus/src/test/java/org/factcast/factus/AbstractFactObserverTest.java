@@ -18,20 +18,20 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class ProgressFactObserverTest {
+class AbstractFactObserverTest {
   private static final long INTERVAL = 1;
   private static final long LAST_PROGRESS = 21;
   @Mock private ProgressAware target;
   @Mock private FactusMetrics metrics;
   @Mock private FactStreamInfo info;
   @Mock private Fact lastElement;
-  private ProgressFactObserver underTest;
+  private AbstractFactObserver underTest;
 
   @BeforeEach
   void setup() {
     underTest =
         Mockito.spy(
-            new ProgressFactObserver(target, INTERVAL, metrics) {
+            new AbstractFactObserver(target, INTERVAL, metrics) {
               @Override
               protected void onCatchupSignal() {}
 

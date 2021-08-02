@@ -20,7 +20,7 @@ import org.factcast.factus.projection.ProgressAware;
 
 @RequiredArgsConstructor
 @Slf4j
-abstract class ProgressFactObserver implements FactObserver {
+abstract class AbstractFactObserver implements FactObserver {
 
   private final ProgressAware target;
   private final long interval;
