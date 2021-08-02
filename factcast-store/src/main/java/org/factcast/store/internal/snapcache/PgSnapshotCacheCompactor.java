@@ -37,6 +37,8 @@ public class PgSnapshotCacheCompactor {
   @Scheduled(cron = "${factcast.store.snapshotCacheCompactCron:0 0 0 * * *}")
   @SchedulerLock(name = "snapshotCacheCompact", lockAtMostFor = "PT1h")
   public void compact() {
-    pgMetrics.time(StoreMetrics.OP.COMPACT_SNAPSHOT_CACHE, () -> cache.compact(DateTime.now().minusDays(days)));
+    pgMetrics.time(
+        StoreMetrics.OP.COMPACT_SNAPSHOT_CACHE,
+        () -> cache.compact(DateTime.now().minusDays(days)));
   }
 }

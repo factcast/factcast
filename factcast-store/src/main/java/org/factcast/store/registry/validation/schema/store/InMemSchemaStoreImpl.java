@@ -56,7 +56,8 @@ public class InMemSchemaStoreImpl implements SchemaStore {
           return true;
         } else {
           registryMetrics.count(
-              RegistryMetrics.EVENT.SCHEMA_CONFLICT, Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, source.id()));
+              RegistryMetrics.EVENT.SCHEMA_CONFLICT,
+              Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, source.id()));
 
           throw new SchemaConflictException(
               "SchemaSource at " + source + " does not match the stored hash " + hash);

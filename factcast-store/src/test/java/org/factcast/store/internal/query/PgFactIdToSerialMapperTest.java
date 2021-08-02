@@ -37,8 +37,7 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 public class PgFactIdToSerialMapperTest {
 
   @Mock JdbcTemplate jdbc;
-  @Mock
-  PgMetrics metrics;
+  @Mock PgMetrics metrics;
   @Mock MeterRegistry registry;
 
   @Mock SqlRowSet rs;
