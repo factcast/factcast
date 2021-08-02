@@ -312,7 +312,7 @@ class NonAnnotatedRedisManagedProjection implements RedisManagedProjection {
   }
 
   @Override
-  public void factStreamPosition(@NonNull UUID state) {}
+  public void factStreamPosition(@NonNull UUID factStreamPosition) {}
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
