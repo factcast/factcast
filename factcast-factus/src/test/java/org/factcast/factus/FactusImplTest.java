@@ -557,7 +557,7 @@ class FactusImplTest {
       // INIT
       mockSnapFactory();
 
-      SnapshotId id = new SnapshotId("key", UUID.randomUUID());
+      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
       Snapshot snapshot = new Snapshot(id, randomUUID(), "foo".getBytes(), false);
       when(projectionSnapshotRepository.findLatest(ConcatCodesProjection.class))
           .thenReturn(Optional.of(snapshot));
@@ -635,7 +635,7 @@ class FactusImplTest {
       // INIT
       mockSnapFactory();
 
-      SnapshotId id = new SnapshotId("key", UUID.randomUUID());
+      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
       Snapshot snapshot = new Snapshot(id, randomUUID(), "foo".getBytes(), false);
       when(projectionSnapshotRepository.findLatest(ConcatCodesProjection.class))
           .thenReturn(Optional.of(snapshot));
@@ -695,7 +695,7 @@ class FactusImplTest {
       // INIT
       mockSnapFactory();
 
-      SnapshotId id = new SnapshotId("key", UUID.randomUUID());
+      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
       Snapshot snapshot = new Snapshot(id, randomUUID(), "foo".getBytes(), false);
       when(projectionSnapshotRepository.findLatest(ConcatCodesProjection.class))
           .thenReturn(Optional.of(snapshot));
@@ -965,7 +965,7 @@ class FactusImplTest {
       // INIT
       mockSnapFactory();
 
-      SnapshotId id = new SnapshotId("key", UUID.randomUUID());
+      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
       Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
       when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
           .thenReturn(Optional.of(snapshot));
@@ -1000,7 +1000,7 @@ class FactusImplTest {
       // INIT
       mockSnapFactory();
 
-      SnapshotId id = new SnapshotId("key", UUID.randomUUID());
+      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
       Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
       when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
           .thenReturn(Optional.of(snapshot));
@@ -1037,7 +1037,7 @@ class FactusImplTest {
       // INIT
       mockSnapFactory();
 
-      SnapshotId id = new SnapshotId("key", UUID.randomUUID());
+      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
       Snapshot snapshot = new Snapshot(id, randomUUID(), "{}".getBytes(), false);
       when(projectionSnapshotRepository.findLatest(SomeSnapshotProjection.class))
           .thenReturn(Optional.of(snapshot));
@@ -1061,7 +1061,7 @@ class FactusImplTest {
       // INIT
       mockSnapFactory();
 
-      SnapshotId id = new SnapshotId("key", UUID.randomUUID());
+      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
       Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
       when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
           .thenReturn(Optional.of(snapshot));
@@ -1123,7 +1123,7 @@ class FactusImplTest {
       // INIT
       mockSnapFactory();
 
-      SnapshotId id = new SnapshotId("key", UUID.randomUUID());
+      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
       Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
       when(projectionSnapshotRepository.findLatest(SomeSnapshotProjection.class))
           .thenReturn(Optional.of(snapshot));
@@ -1171,7 +1171,7 @@ class FactusImplTest {
       // INIT
       mockSnapFactory();
 
-      SnapshotId id = new SnapshotId("key", UUID.randomUUID());
+      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
       Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
       when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
           .thenReturn(Optional.of(snapshot));

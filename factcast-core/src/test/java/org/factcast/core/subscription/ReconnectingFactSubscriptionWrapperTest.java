@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 import lombok.val;
@@ -140,5 +141,17 @@ public class ReconnectingFactSubscriptionWrapperTest {
 
     // non of them reach the original observer
     verify(obs, times(1)).onNext(any());
+  }
+
+  @Test
+  public void isServerException() throws Exception {
+    assertThat(uut.isServerException(new RuntimeException())).isFalse();
+    assertThat(uut.isServerException(new IllegalArgumentException())).isFalse();
+    assertThat(uut.isServerException(new IOException())).isFalse();
+    assertThat(uut.isServerException(new TransformationException(""))).isTrue();
+    assertThat(uut.isServerException(new MissingTransformationInformationException(""))).isTrue();
+    // important because it needs to reconnect, which only happens if it is NOT categorized as
+    // serverException
+    assertThat(uut.isServerException(new StaleSubscriptionDetectedException())).isFalse();
   }
 }
