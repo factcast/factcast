@@ -43,14 +43,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class FactTransformersImplTest {
 
-  @Mock
-  TransformationChains chains;
+  @Mock TransformationChains chains;
 
-  @Mock
-  Transformer trans;
+  @Mock Transformer trans;
 
-  @Mock
-  TransformationCache cache;
+  @Mock TransformationCache cache;
 
   @Mock TransformationChain chain;
 
@@ -137,6 +134,7 @@ public class FactTransformersImplTest {
 
     verify(cache).find(eq(probe.id()), eq(33), eq(chainId));
 
-    verify(registryMetrics).timed(eq(RegistryMetrics.OP.TRANSFORMATION), any(), any(SupplierWithException.class));
+    verify(registryMetrics)
+        .timed(eq(RegistryMetrics.OP.TRANSFORMATION), any(), any(SupplierWithException.class));
   }
 }

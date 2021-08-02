@@ -100,7 +100,8 @@ public class FactValidator {
     } else {
       if (!props.isAllowUnvalidatedPublish()) {
         registryMetrics.count(
-            RegistryMetrics.EVENT.SCHEMA_MISSING, Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
+            RegistryMetrics.EVENT.SCHEMA_MISSING,
+            Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
 
         return Lists.newArrayList(
             new FactValidationError(

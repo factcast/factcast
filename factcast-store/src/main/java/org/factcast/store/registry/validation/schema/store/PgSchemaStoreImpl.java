@@ -105,7 +105,8 @@ public class PgSchemaStoreImpl implements SchemaStore {
         return true;
       } else {
         registryMetrics.count(
-            RegistryMetrics.EVENT.SCHEMA_CONFLICT, Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.id()));
+            RegistryMetrics.EVENT.SCHEMA_CONFLICT,
+            Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.id()));
         throw new SchemaConflictException("Key " + key + " does not match the stored hash " + hash);
       }
     } else {

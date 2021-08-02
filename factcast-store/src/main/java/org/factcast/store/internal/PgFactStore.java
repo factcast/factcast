@@ -176,7 +176,8 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   public @NonNull Subscription subscribe(
       @NonNull SubscriptionRequestTO request, @NonNull FactObserver observer) {
-    StoreMetrics.OP operation = request.continuous() ? StoreMetrics.OP.SUBSCRIBE_FOLLOW : StoreMetrics.OP.SUBSCRIBE_CATCHUP;
+    StoreMetrics.OP operation =
+        request.continuous() ? StoreMetrics.OP.SUBSCRIBE_FOLLOW : StoreMetrics.OP.SUBSCRIBE_CATCHUP;
     return metrics.time(operation, () -> subscriptionFactory.subscribe(request, observer));
   }
 

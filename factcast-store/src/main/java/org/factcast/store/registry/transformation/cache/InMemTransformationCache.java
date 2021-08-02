@@ -63,7 +63,9 @@ public class InMemTransformationCache implements TransformationCache {
     }
     cached.ifPresent(faat -> faat.accessTime(System.currentTimeMillis()));
     registryMetrics.count(
-        cached.isPresent() ? RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT : RegistryMetrics.EVENT.TRANSFORMATION_CACHE_MISS);
+        cached.isPresent()
+            ? RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT
+            : RegistryMetrics.EVENT.TRANSFORMATION_CACHE_MISS);
     return cached.map(FactAndAccessTime::fact);
   }
 

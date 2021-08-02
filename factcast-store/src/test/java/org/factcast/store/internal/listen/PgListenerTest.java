@@ -223,7 +223,8 @@ public class PgListenerTest {
     long totalNotifyCount = allEvents.stream().filter(f -> f.name().equals("fact_insert")).count();
 
     assertEquals(5, totalNotifyCount); // rather than one per array, we now get one per notification
-    assertThat(allEvents).contains(new PgListener.FactInsertionEvent("fact_insert", "namespace", "theType"));
+    assertThat(allEvents)
+        .contains(new PgListener.FactInsertionEvent("fact_insert", "namespace", "theType"));
   }
 
   @Test

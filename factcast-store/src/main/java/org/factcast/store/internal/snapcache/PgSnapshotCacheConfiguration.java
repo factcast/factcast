@@ -30,7 +30,7 @@ public class PgSnapshotCacheConfiguration {
 
   @Bean
   public PgSnapshotCacheCompactor pgSnapshotCacheCompactor(
-          PgSnapshotCache cache, StoreConfigurationProperties props, PgMetrics pgMetrics) {
+      PgSnapshotCache cache, StoreConfigurationProperties props, PgMetrics pgMetrics) {
     return new PgSnapshotCacheCompactor(cache, pgMetrics, props.getDeleteSnapshotStaleForDays());
   }
 }
