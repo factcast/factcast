@@ -163,6 +163,13 @@ public class ProtoConverterTest {
   }
 
   @Test
+  void testCreateKeepaliveNotification() {
+    MSG_Notification n = uut.createKeepaliveNotification();
+    assertNotNull(n);
+    assertEquals(Type.KeepAlive, n.getType());
+  }
+
+  @Test
   void testCreateCompleteNotification() {
     MSG_Notification n = uut.createCompleteNotification();
     assertNotNull(n);
@@ -564,7 +571,7 @@ public class ProtoConverterTest {
 
   @Test
   void toProtoSnapshotId() {
-    SnapshotId snapId = new SnapshotId("test234", UUID.randomUUID());
+    SnapshotId snapId = SnapshotId.of("test234", UUID.randomUUID());
     MSG_SnapshotId msg_snapshotId = uut.toProto(snapId);
 
     assertThat(msg_snapshotId).isNotNull();
@@ -612,7 +619,7 @@ public class ProtoConverterTest {
   @Test
   void fromProtoMSG_OptionalSnapshot() {
     UUID factId = UUID.randomUUID();
-    SnapshotId snapId = new SnapshotId("test123", UUID.randomUUID());
+    SnapshotId snapId = SnapshotId.of("test123", UUID.randomUUID());
 
     MSG_Snapshot snap = uut.toProto(snapId, factId, "huhu".getBytes(Charsets.UTF_8), false);
 
@@ -636,7 +643,7 @@ public class ProtoConverterTest {
   @Test
   void toProtoSnapshotOptional() {
     UUID factId = UUID.randomUUID();
-    SnapshotId snapId = new SnapshotId("test123", UUID.randomUUID());
+    SnapshotId snapId = SnapshotId.of("test123", UUID.randomUUID());
     MSG_Snapshot snap = uut.toProto(snapId, factId, "huhu".getBytes(Charsets.UTF_8), false);
     MSG_OptionalSnapshot osnap =
         MSG_OptionalSnapshot.newBuilder().setPresent(true).setSnapshot(snap).build();

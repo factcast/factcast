@@ -24,6 +24,7 @@ import com.google.common.collect.Lists;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.ArrayList;
+import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
 import org.factcast.store.pgsql.registry.SchemaRegistry;
@@ -32,7 +33,7 @@ import org.factcast.store.pgsql.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.pgsql.registry.transformation.SingleTransformation;
 import org.factcast.store.pgsql.registry.transformation.Transformation;
 import org.factcast.store.pgsql.registry.transformation.TransformationKey;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 
 public class TransformationChainsTest {
   final SchemaRegistry r = mock(SchemaRegistry.class);
@@ -60,7 +61,7 @@ public class TransformationChainsTest {
     assertThat(chain.transformationCode()).isPresent();
 
     JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = new NashornTransformer().transform(chain, input);
+    JsonNode actual = new GraalJsTransformer().transform(chain, input);
     assertThat(actual.toString()).isEqualTo("{\"arr\":[1,2,3,\"4\"],\"newField\":true}");
   }
 
@@ -86,7 +87,7 @@ public class TransformationChainsTest {
     assertThat(chain.transformationCode()).isPresent();
 
     JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = new NashornTransformer().transform(chain, input);
+    JsonNode actual = new GraalJsTransformer().transform(chain, input);
     assertThat(actual.toString()).isEqualTo("{\"stage2\":true,\"stage3\":true,\"stage4\":true}");
   }
 
@@ -101,7 +102,7 @@ public class TransformationChainsTest {
 
     when(r.get(key)).thenReturn(all);
 
-    assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 1, 7));
+    assertThrows(MissingTransformationInformationException.class, () -> uut.get(key, 1, 7));
     verify(registryMetrics)
         .count(
             eq(EVENT.MISSING_TRANSFORMATION_INFO),
@@ -134,7 +135,7 @@ public class TransformationChainsTest {
     assertThat(chain.transformationCode()).isPresent();
 
     JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = new NashornTransformer().transform(chain, input);
+    JsonNode actual = new GraalJsTransformer().transform(chain, input);
     assertThat(actual.toString()).isEqualTo("{\"stage1\":true,\"stage6\":true}");
   }
 
@@ -163,7 +164,7 @@ public class TransformationChainsTest {
     assertThat(chain.transformationCode()).isPresent();
 
     JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = new NashornTransformer().transform(chain, input);
+    JsonNode actual = new GraalJsTransformer().transform(chain, input);
     assertThat(actual.toString())
         .isEqualTo("{\"stage1\":true,\"stage2\":true,\"stage5\":true,\"stage6\":true}");
   }
@@ -181,7 +182,7 @@ public class TransformationChainsTest {
 
     when(r.get(key)).thenReturn(all);
 
-    assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 2, 99));
+    assertThrows(MissingTransformationInformationException.class, () -> uut.get(key, 2, 99));
     verify(registryMetrics)
         .count(
             eq(EVENT.MISSING_TRANSFORMATION_INFO),
@@ -204,7 +205,7 @@ public class TransformationChainsTest {
     TransformationChain chain = uut.get(key, 3, 1);
 
     JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = new NashornTransformer().transform(chain, input);
+    JsonNode actual = new GraalJsTransformer().transform(chain, input);
     assertThat(actual.toString()).isEqualTo("{\"stage1\":true}");
   }
 
@@ -213,7 +214,7 @@ public class TransformationChainsTest {
     ArrayList<Transformation> all = Lists.newArrayList();
     when(r.get(key)).thenReturn(all);
 
-    assertThrows(MissingTransformationInformation.class, () -> uut.get(key, 2, 99));
+    assertThrows(MissingTransformationInformationException.class, () -> uut.get(key, 2, 99));
     verify(registryMetrics)
         .count(
             eq(EVENT.MISSING_TRANSFORMATION_INFO),

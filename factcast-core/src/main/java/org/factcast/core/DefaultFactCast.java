@@ -15,22 +15,14 @@
  */
 package org.factcast.core;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.lock.DeprecatedLockedOperationBuilder;
 import org.factcast.core.lock.LockedOperationBuilder;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.ReconnectingFactSubscriptionWrapper;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 
 /**
@@ -78,9 +70,12 @@ class DefaultFactCast implements FactCast {
   }
 
   @Override
+  @SuppressWarnings("deprecated")
   public DeprecatedLockedOperationBuilder lock(@NonNull String ns) {
-    if (ns.trim().isEmpty()) throw new IllegalArgumentException("Namespace must not be empty");
-    return new DeprecatedLockedOperationBuilder(this.store, ns);
+    if (ns.trim().isEmpty()) {
+      throw new IllegalArgumentException("Namespace must not be empty");
+    }
+    return new DeprecatedLockedOperationBuilder(store, ns);
   }
 
   @Override

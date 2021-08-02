@@ -183,22 +183,16 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
       AtomicReference<Subscription> subRef = new AtomicReference();
 
-      ((ServerCallStreamObserver<MSG_Notification>) responseObserver)
-          .setOnCancelHandler(
-              () -> {
-                log.debug(
-                    "{}got onCancel from stream, closing subscription {}",
-                    clientIdPrefix(),
-                    req.debugInfo());
-                try {
-                  subRef.get().close();
-                } catch (Exception e) {
-                  log.debug("{}While closing connection after cancel", clientIdPrefix(), e);
-                }
-              });
+      GrpcObserverAdapter observer =
+          new GrpcObserverAdapter(
+              req.toString(), resp, grpcRequestMetadata, req.keepaliveIntervalInMs());
 
-      Subscription sub =
-          store.subscribe(req, new GrpcObserverAdapter(req.toString(), resp, grpcRequestMetadata));
+      val cancelHandler = new OnCancelHandler(clientIdPrefix(), req, subRef, observer);
+
+      ((ServerCallStreamObserver<MSG_Notification>) responseObserver)
+          .setOnCancelHandler(cancelHandler::run);
+
+      Subscription sub = store.subscribe(req, observer);
       subRef.set(sub);
 
     } else {
