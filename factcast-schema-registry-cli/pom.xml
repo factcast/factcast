@@ -61,7 +61,7 @@
         </dependency>
         <dependency>
             <groupId>org.factcast</groupId>
-            <artifactId>factcast-store-pgsql</artifactId>
+            <artifactId>factcast-store</artifactId>
             <exclusions>
                 <exclusion>
                     <artifactId>liquibase-core</artifactId>
