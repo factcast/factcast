@@ -39,7 +39,7 @@ public class PgFactStoreConfiguration {
   }
 
   @Bean
-  PgConfigurationLegacyProperties pgConfigurationLegacyProperties() {
-    return new PgConfigurationLegacyProperties();
+  PgLegacyConfigurationProperties pgLegacyConfigurationProperties() {
+    return new PgLegacyConfigurationProperties();
   }
 }

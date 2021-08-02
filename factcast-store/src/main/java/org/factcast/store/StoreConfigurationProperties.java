@@ -33,7 +33,7 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   public static final String PROPERTIES_PREFIX = "factcast.store";
 
-  @Autowired private PgConfigurationLegacyProperties legacyProperties;
+  @Autowired private PgLegacyConfigurationProperties legacyProperties;
 
   /**
    * defines the number of Facts being retrieved with one Page Query for PageStrategy.PAGED, or

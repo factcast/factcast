@@ -34,14 +34,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @SuppressWarnings({"DefaultAnnotationParam", "OptionalUsedAsFieldOrParameterType"})
-@ConfigurationProperties(prefix = PgConfigurationLegacyProperties.LEGACY_PREFIX)
+@ConfigurationProperties(prefix = PgLegacyConfigurationProperties.LEGACY_PREFIX)
 @EqualsAndHashCode
 @ToString
-public class PgConfigurationLegacyProperties implements ApplicationListener<ApplicationReadyEvent> {
+public class PgLegacyConfigurationProperties implements ApplicationListener<ApplicationReadyEvent> {
 
   public static final String LEGACY_PREFIX = "factcast.store.pgsql";
   private static final Logger log =
-      org.slf4j.LoggerFactory.getLogger(PgConfigurationLegacyProperties.class);
+      org.slf4j.LoggerFactory.getLogger(PgLegacyConfigurationProperties.class);
 
   @Autowired private Environment env;
 
@@ -150,7 +150,7 @@ public class PgConfigurationLegacyProperties implements ApplicationListener<Appl
    */
   private Optional<Duration> minimumTailAge = Optional.empty();
 
-  public PgConfigurationLegacyProperties() {}
+  public PgLegacyConfigurationProperties() {}
 
   @Override
   public void onApplicationEvent(@Nonnull ApplicationReadyEvent event) {
@@ -180,107 +180,107 @@ public class PgConfigurationLegacyProperties implements ApplicationListener<Appl
     return map;
   }
 
-  public PgConfigurationLegacyProperties setEnv(Environment env) {
+  public PgLegacyConfigurationProperties setEnv(Environment env) {
     this.env = env;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setPageSize(Optional<Integer> pageSize) {
+  public PgLegacyConfigurationProperties setPageSize(Optional<Integer> pageSize) {
     this.pageSize = pageSize;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setCatchupStrategy(
+  public PgLegacyConfigurationProperties setCatchupStrategy(
       Optional<CatchupStrategy> catchupStrategy) {
     this.catchupStrategy = catchupStrategy;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setSchemaRegistryUrl(Optional<String> schemaRegistryUrl) {
+  public PgLegacyConfigurationProperties setSchemaRegistryUrl(Optional<String> schemaRegistryUrl) {
     this.schemaRegistryUrl = schemaRegistryUrl;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setPersistentRegistry(
+  public PgLegacyConfigurationProperties setPersistentRegistry(
       Optional<Boolean> persistentRegistry) {
     this.persistentRegistry = persistentRegistry;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setDeleteTransformationsStaleForDays(
+  public PgLegacyConfigurationProperties setDeleteTransformationsStaleForDays(
       Optional<Integer> deleteTransformationsStaleForDays) {
     this.deleteTransformationsStaleForDays = deleteTransformationsStaleForDays;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setDeleteSnapshotStaleForDays(
+  public PgLegacyConfigurationProperties setDeleteSnapshotStaleForDays(
       Optional<Integer> deleteSnapshotStaleForDays) {
     this.deleteSnapshotStaleForDays = deleteSnapshotStaleForDays;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setPersistentTransformationCache(
+  public PgLegacyConfigurationProperties setPersistentTransformationCache(
       Optional<Boolean> persistentTransformationCache) {
     this.persistentTransformationCache = persistentTransformationCache;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setInMemTransformationCacheCapacity(
+  public PgLegacyConfigurationProperties setInMemTransformationCacheCapacity(
       Optional<Integer> inMemTransformationCacheCapacity) {
     this.inMemTransformationCacheCapacity = inMemTransformationCacheCapacity;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setAllowUnvalidatedPublish(
+  public PgLegacyConfigurationProperties setAllowUnvalidatedPublish(
       Optional<Boolean> allowUnvalidatedPublish) {
     this.allowUnvalidatedPublish = allowUnvalidatedPublish;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setAllowSchemaReplace(
+  public PgLegacyConfigurationProperties setAllowSchemaReplace(
       Optional<Boolean> allowSchemaReplace) {
     this.allowSchemaReplace = allowSchemaReplace;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setFactNotificationBlockingWaitTimeInMillis(
+  public PgLegacyConfigurationProperties setFactNotificationBlockingWaitTimeInMillis(
       Optional<Integer> factNotificationBlockingWaitTimeInMillis) {
     this.factNotificationBlockingWaitTimeInMillis = factNotificationBlockingWaitTimeInMillis;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setFactNotificationMaxRoundTripLatencyInMillis(
+  public PgLegacyConfigurationProperties setFactNotificationMaxRoundTripLatencyInMillis(
       Optional<Integer> factNotificationMaxRoundTripLatencyInMillis) {
     this.factNotificationMaxRoundTripLatencyInMillis = factNotificationMaxRoundTripLatencyInMillis;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setFactNotificationNewConnectionWaitTimeInMillis(
+  public PgLegacyConfigurationProperties setFactNotificationNewConnectionWaitTimeInMillis(
       Optional<Integer> factNotificationNewConnectionWaitTimeInMillis) {
     this.factNotificationNewConnectionWaitTimeInMillis =
         factNotificationNewConnectionWaitTimeInMillis;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setIntegrationTestMode(
+  public PgLegacyConfigurationProperties setIntegrationTestMode(
       Optional<Boolean> integrationTestMode) {
     this.integrationTestMode = integrationTestMode;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setTailIndexingEnabled(
+  public PgLegacyConfigurationProperties setTailIndexingEnabled(
       Optional<Boolean> tailIndexingEnabled) {
     this.tailIndexingEnabled = tailIndexingEnabled;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setTailGenerationsToKeep(
+  public PgLegacyConfigurationProperties setTailGenerationsToKeep(
       Optional<Integer> tailGenerationsToKeep) {
     this.tailGenerationsToKeep = tailGenerationsToKeep;
     return this;
   }
 
-  public PgConfigurationLegacyProperties setMinimumTailAge(Optional<Duration> minimumTailAge) {
+  public PgLegacyConfigurationProperties setMinimumTailAge(Optional<Duration> minimumTailAge) {
     this.minimumTailAge = minimumTailAge;
     return this;
   }
