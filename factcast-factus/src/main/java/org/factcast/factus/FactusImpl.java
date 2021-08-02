@@ -43,7 +43,6 @@ import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -67,7 +66,10 @@ import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 @RequiredArgsConstructor
 @Slf4j
 public class FactusImpl implements Factus {
-  private static final long PROGRESS_INTERVAL = 1000; // TODO
+
+  // maybe configurable some day ?
+  public static final int PROGRESS_INTERVAL = 10000;
+
   private final FactCast fc;
 
   private final ProjectorFactory ehFactory;
@@ -81,6 +83,7 @@ public class FactusImpl implements Factus {
   private final SnapshotSerializerSupplier snapFactory;
 
   private final FactusMetrics factusMetrics;
+
   private final AtomicBoolean closed = new AtomicBoolean();
 
   private final Set<AutoCloseable> managedObjects = new HashSet<>();
@@ -193,41 +196,15 @@ public class FactusImpl implements Factus {
       @NonNull P subscribedProjection, @NonNull WriterToken token) {
     Projector<P> handler = ehFactory.create(subscribedProjection);
     FactObserver fo =
-        new FactObserver() {
-          FactStreamInfo info;
-          long lastProgress = System.currentTimeMillis();
-          final AtomicBoolean caughtUp = new AtomicBoolean(false);
+        new ProgressFactObserver(subscribedProjection, PROGRESS_INTERVAL, factusMetrics) {
 
           UUID lastFactIdApplied = null;
 
           @Override
-          public void onNext(@NonNull Fact element) {
-
+          public void onNextFact(@NonNull Fact element) {
             if (token.isValid()) {
-
               lastFactIdApplied = element.id();
-
               handler.apply(element);
-
-              if (caughtUp.get()) {
-                String ts = element.meta("_ts");
-                // _ts might not be there in unit testing for instance.
-                if (ts != null) {
-                  long latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
-                  factusMetrics.timed(
-                      TimedOperation.EVENT_PROCESSING_LATENCY,
-                      Tags.of(Tag.of(CLASS, subscribedProjection.getClass().getName())),
-                      latency);
-                }
-              } else {
-                // not yet caught up
-                if (info != null && System.currentTimeMillis() - lastProgress > PROGRESS_INTERVAL) {
-                  lastProgress = System.currentTimeMillis();
-                  subscribedProjection.catchupPercentage(
-                      info.calculatePercentage(element.serial()));
-                }
-              }
-
             } else {
               // token is no longer valid
               throw new IllegalStateException("WriterToken is no longer valid.");
@@ -235,8 +212,7 @@ public class FactusImpl implements Factus {
           }
 
           @Override
-          public void onCatchup() {
-            caughtUp.set(true);
+          public void onCatchupSignal() {
             handler.onCatchup(lastFactIdApplied);
             subscribedProjection.onCatchup();
           }
@@ -254,12 +230,6 @@ public class FactusImpl implements Factus {
           @Override
           public void onFastForward(@NonNull UUID factIdToFfwdTo) {
             subscribedProjection.factStreamPosition(factIdToFfwdTo);
-          }
-
-          @Override
-          public void onFactStreamInfo(FactStreamInfo info) {
-            log.debug("recieved info {}", info);
-            this.info = info;
           }
         };
 
@@ -381,26 +351,18 @@ public class FactusImpl implements Factus {
     AtomicInteger factCount = new AtomicInteger(0);
 
     FactObserver fo =
-        new FactObserver() {
-          private long lastProgress = System.currentTimeMillis();
-          private FactStreamInfo info;
+        new ProgressFactObserver(projection, PROGRESS_INTERVAL, factusMetrics) {
           @NonNull UUID id = null;
 
           @Override
-          public void onNext(@NonNull Fact element) {
+          public void onNextFact(@NonNull Fact element) {
             id = element.id();
-
             handler.apply(element);
-            factId.set(element.id());
+            factId.set(id);
             if (afterProcessing != null) {
-              afterProcessing.accept(projection, element.id());
+              afterProcessing.accept(projection, id);
             }
             factCount.incrementAndGet();
-
-            if (info != null && System.currentTimeMillis() - lastProgress > PROGRESS_INTERVAL) {
-              lastProgress = System.currentTimeMillis();
-              projection.catchupPercentage(info.calculatePercentage(element.serial()));
-            }
           }
 
           @Override
@@ -409,7 +371,7 @@ public class FactusImpl implements Factus {
           }
 
           @Override
-          public void onCatchup() {
+          public void onCatchupSignal() {
             handler.onCatchup(id);
             projection.onCatchup();
           }
@@ -424,12 +386,6 @@ public class FactusImpl implements Factus {
             if (projection instanceof FactStreamPositionAware) {
               ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
             }
-          }
-
-          @Override
-          public void onFactStreamInfo(FactStreamInfo info) {
-            log.debug("received info {}", info);
-            this.info = info;
           }
         };
 
