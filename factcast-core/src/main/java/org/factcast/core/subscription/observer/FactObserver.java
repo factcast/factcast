@@ -16,6 +16,7 @@
 package org.factcast.core.subscription.observer;
 
 import java.util.UUID;
+import lombok.Generated;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
@@ -26,6 +27,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
+@Generated // sneakily skip coverage generation
 public interface FactObserver {
 
   void onNext(@NonNull Fact element);
