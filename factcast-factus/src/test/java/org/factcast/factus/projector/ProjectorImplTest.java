@@ -335,6 +335,22 @@ class ProjectorImplTest {
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("No handler methods discovered on");
     }
+
+    @Test
+    void handlerWithUnspecificVersion() {
+      ProjectorImpl<Projection> p =
+          new ProjectorImpl<>(eventSerializer, new HandlerWithoutVersionProjection());
+
+      assertThatNoException()
+          .isThrownBy(
+              () -> {
+                Fact f1 = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
+                Fact f2 = Fact.builder().ns("ns").type("type").version(2).buildWithoutPayload();
+
+                p.apply(f1);
+                p.apply(f2);
+              });
+    }
   }
 
   @Nested
@@ -527,5 +543,10 @@ class ProjectorImplTest {
     void handle(Object someObject) {
       // nothing
     }
+  }
+
+  static class HandlerWithoutVersionProjection implements Projection {
+    @HandlerFor(ns = "ns", type = "type")
+    void applyFactWithoutSpecificVersion(Fact f) {}
   }
 }
