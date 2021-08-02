@@ -15,8 +15,8 @@
  */
 package org.factcast.server.grpc;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -29,12 +29,13 @@ import java.util.function.Function;
 import lombok.NonNull;
 import lombok.val;
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -75,6 +76,14 @@ public class GrpcObserverAdapterTest {
     uut.onCatchup();
     verify(observer).onNext(any());
     assertEquals(MSG_Notification.Type.Catchup, msg.getValue().getType());
+  }
+
+  @Test
+  void testFactStreamInfo() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
+    FactStreamInfo info = new FactStreamInfo(2, 3);
+    uut.onFactStreamInfo(info);
+    verify(observer).onNext(eq(new ProtoConverter().createInfoNotification(info)));
   }
 
   @Test

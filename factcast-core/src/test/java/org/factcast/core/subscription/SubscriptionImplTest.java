@@ -27,7 +27,7 @@ import java.util.concurrent.TimeoutException;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
-import org.factcast.core.subscription.observer.GenericObserver;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
@@ -37,7 +37,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class SubscriptionImplTest {
 
-  @Mock private GenericObserver<Fact> observer;
+  @Mock private FactObserver observer;
 
   @Mock private FactTransformers factTransformers;
 
@@ -45,7 +45,7 @@ public class SubscriptionImplTest {
 
   @BeforeEach
   void setUp() {
-    obs = mock(GenericObserver.class);
+    obs = mock(FactObserver.class);
   }
 
   @Test
@@ -98,7 +98,7 @@ public class SubscriptionImplTest {
     l.await();
   }
 
-  private GenericObserver<Fact> obs;
+  private FactObserver obs;
 
   private final FactTransformers ft = e -> e;
 
@@ -263,5 +263,23 @@ public class SubscriptionImplTest {
 
     // this must return without exceptions
     uut.notifyComplete();
+  }
+
+  @Test
+  void notifyInfoDelegatesIfNotClosed() {
+
+    FactStreamInfo fsi = new FactStreamInfo(1, 10);
+    uut.notifyFactStreamInfo(fsi);
+
+    verify(observer).onFactStreamInfo(eq(fsi));
+  }
+
+  @Test
+  void notifyInfoSkipsIfClosed() throws TransformationException {
+    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    @NonNull UUID id = UUID.randomUUID();
+    FactStreamInfo fsi = new FactStreamInfo(1, 10);
+    uut.notifyFactStreamInfo(fsi);
+    verify(obs, never()).onFactStreamInfo(any());
   }
 }

@@ -46,6 +46,8 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 
   @JsonProperty long keepaliveIntervalInMs = 0;
 
+  @JsonProperty boolean streamInfo = false; // defaults to false if not set (backwards comp.)
+
   @JsonProperty boolean continuous;
 
   @JsonProperty boolean ephemeral;
@@ -71,6 +73,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
   public SubscriptionRequestTO(SubscriptionRequest request) {
     maxBatchDelayInMs = request.maxBatchDelayInMs();
     keepaliveIntervalInMs = request.keepaliveIntervalInMs();
+    streamInfo = request.streamInfo();
     continuous = request.continuous();
     ephemeral = request.ephemeral();
     startingAfter = request.startingAfter().orElse(null);
