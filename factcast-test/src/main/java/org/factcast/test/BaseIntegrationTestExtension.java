@@ -105,7 +105,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
     log.trace("erasing postgres state in between tests for {}", url);
 
     try (var con = DriverManager.getConnection(url, p);
-         var st = con.createStatement()) {
+        var st = con.createStatement()) {
       st.execute(
           "DO $$ DECLARE\n"
               + "    r RECORD;\n"
