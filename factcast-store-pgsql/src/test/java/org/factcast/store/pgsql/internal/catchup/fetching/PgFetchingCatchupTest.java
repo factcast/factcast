@@ -148,30 +148,13 @@ class PgFetchingCatchupTest {
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
       when(postQueryMatcher.test(testFact)).thenReturn(true);
       doThrow(TransformationException.class).when(subscription).notifyElement(testFact);
+      // just test that it'll be escalated unchanged from the code,
+      // so that it can be handled in PgSubscriptionFactory
       assertThatThrownBy(
-          () -> {
-            cbh.processRow(rs);
-          });
-
-      verify(subscription).notifyError(any());
-    }
-
-    @SneakyThrows
-    @Test
-    void closesOnRTException() {
-      val cbh = underTest.createRowCallbackHandler(false, extractor);
-      ResultSet rs = mock(ResultSet.class);
-      Fact testFact = new TestFact();
-      when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      when(postQueryMatcher.test(testFact)).thenReturn(true);
-      doThrow(RuntimeException.class).when(subscription).notifyElement(testFact);
-
-      assertThatThrownBy(
-          () -> {
-            cbh.processRow(rs);
-          });
-
-      verify(subscription).close();
+              () -> {
+                cbh.processRow(rs);
+              })
+          .isInstanceOf(TransformationException.class);
     }
   }
 }

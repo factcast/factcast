@@ -17,7 +17,6 @@ package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.*;
-import io.grpc.Status.Code;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
@@ -45,16 +44,6 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
       super(listener);
       this.serverCall = serverCall;
       this.metadata = metadata;
-    }
-
-    @Override
-    public void onHalfClose() {
-      try {
-        super.onHalfClose();
-      } catch (RuntimeException ex) {
-        handleException(ex, serverCall, metadata);
-        throw ex;
-      }
     }
 
     @Override
@@ -116,11 +105,6 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
       }
 
       StatusRuntimeException sre = ServerExceptionHelper.translate(exception);
-
-      if (sre.getStatus().getCode().equals(Code.UNKNOWN)) {
-        log.debug("Exception falling through: ", exception);
-      }
-
       serverCall.close(sre.getStatus(), sre.getTrailers());
     }
   }
