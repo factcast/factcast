@@ -11,8 +11,8 @@ import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.fs.FileSystemService
-import org.factcast.store.pgsql.registry.transformation.chains.TransformationChain
-import org.factcast.store.pgsql.registry.transformation.chains.Transformer
+import org.factcast.store.registry.transformation.chains.TransformationChain
+import org.factcast.store.registry.transformation.chains.Transformer
 import java.io.File
 
 class TransformationEvaluatorTest : StringSpec() {
