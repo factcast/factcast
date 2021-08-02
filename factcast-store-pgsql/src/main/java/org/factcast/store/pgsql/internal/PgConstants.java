@@ -41,6 +41,8 @@ public class PgConstants {
           + "' and indexname like '"
           + TAIL_INDEX_NAME_PREFIX
           + "%' order by indexname desc";
+  public static final String BROKEN_INDEX_NAMES =
+      "SELECT index_name FROM stats_index WHERE valid = 'N'";
 
   private static final String TABLE_TOKENSTORE = "tokenstore";
 
@@ -103,6 +105,9 @@ public class PgConstants {
           + " ("
           + COLUMN_STATE
           + ") VALUES (cast (? as jsonb)) RETURNING token";
+
+  public static final String COMPACT_TOKEN =
+      "DELETE FROM " + TABLE_TOKENSTORE + " WHERE extract(month from age(ts))>1";
 
   public static final String DELETE_TOKEN = "DELETE FROM " + TABLE_TOKENSTORE + " WHERE token=?";
 

@@ -86,7 +86,7 @@ class AbstractRedisManagedProjectionTest {
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
       when(bucket.get()).thenReturn(id);
 
-      val result = underTest.state();
+      val result = underTest.factStreamPosition();
 
       assertThat(result).isEqualTo(id);
     }
@@ -104,15 +104,15 @@ class AbstractRedisManagedProjectionTest {
       when(tx.getBucket(any(), any())).thenReturn(bucket);
       when(bucket.get()).thenReturn(id);
 
-      val result = underTest.state();
+      val result = underTest.factStreamPosition();
 
       assertThat(result).isEqualTo(id);
     }
   }
 
   @Nested
-  class WhenSettingState {
-    private final UUID STATE = UUID.randomUUID();
+  class WhenSettingFactStreamPosition {
+    private final UUID FACT_STREAM_POSITION = UUID.randomUUID();
 
     @Test
     void nonRunningTransaction() {
@@ -122,9 +122,9 @@ class AbstractRedisManagedProjectionTest {
       RBucket<Object> bucket = mock(RBucket.class);
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
 
-      underTest.state(STATE);
+      underTest.factStreamPosition(FACT_STREAM_POSITION);
 
-      verify(bucket).set(STATE);
+      verify(bucket).set(FACT_STREAM_POSITION);
     }
 
     @Test
@@ -141,9 +141,9 @@ class AbstractRedisManagedProjectionTest {
       RBucket<Object> bucket = mock(RBucket.class);
       when(tx.getBucket(any(), any())).thenReturn(bucket);
 
-      underTest.state(STATE);
+      underTest.factStreamPosition(FACT_STREAM_POSITION);
 
-      verify(bucket).set(STATE);
+      verify(bucket).set(FACT_STREAM_POSITION);
     }
 
     @Test
@@ -161,9 +161,9 @@ class AbstractRedisManagedProjectionTest {
       RBucket<Object> bucket = mock(RBucket.class);
       when(batch.getBucket(any(), any())).thenReturn(bucket);
 
-      underTest.state(STATE);
+      underTest.factStreamPosition(FACT_STREAM_POSITION);
 
-      verify(bucket).setAsync(STATE);
+      verify(bucket).setAsync(FACT_STREAM_POSITION);
     }
 
     @Test
@@ -174,9 +174,9 @@ class AbstractRedisManagedProjectionTest {
       RBucket<Object> bucket = mock(RBucket.class);
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
 
-      underTest.state(STATE);
+      underTest.factStreamPosition(FACT_STREAM_POSITION);
 
-      verify(bucket).set(STATE);
+      verify(bucket).set(FACT_STREAM_POSITION);
     }
   }
 

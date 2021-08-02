@@ -20,9 +20,7 @@ import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.BatchRedissonManagedUserNames;
 import org.factcast.itests.factus.proj.BatchRedissonSubscribedUserNames;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.redisson.api.RBatch;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -208,9 +206,9 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     @Getter int stateModifications = 0;
 
     @Override
-    public void state(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID factStreamPosition) {
       stateModifications++;
-      super.state(state);
+      super.factStreamPosition(factStreamPosition);
     }
   }
 
@@ -222,9 +220,9 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     @Getter int stateModifications = 0;
 
     @Override
-    public void state(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID factStreamPosition) {
       stateModifications++;
-      super.state(state);
+      super.factStreamPosition(factStreamPosition);
     }
   }
 
@@ -236,9 +234,9 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void state(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID factStreamPosition) {
 
-      super.state(state);
+      super.factStreamPosition(factStreamPosition);
     }
   }
 

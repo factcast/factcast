@@ -148,7 +148,6 @@ public class SubscriptionImpl implements Subscription {
   }
 
   public void notifyError(Throwable e) {
-
     if (!closed.get()) {
       if (!catchup.isDone()) {
         catchup.completeExceptionally(e);
