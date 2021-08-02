@@ -7,7 +7,7 @@ creatordisplayname = "Maik Töpfer"
 creatoremail = "maik.toepfer@prisma-capacity.eu"
 
 parent = "factus-transactional-projections"
-identifier = "spring-transaction"
+identifier = "spring-transactional-projections"
 weight = 1021
 
 +++
