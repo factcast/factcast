@@ -22,7 +22,8 @@ import lombok.experimental.Delegate;
  * events/facts.
  */
 public abstract class LocalSubscribedProjection implements SubscribedProjection {
-  @Delegate private final LocalFactStreamPosition state = new LocalFactStreamPosition();
+  @Delegate
+  private final LocalFactStreamPosition factStreamPosition = new LocalFactStreamPosition();
 
   @Delegate private final LocalWriteToken lock = new LocalWriteToken();
 }
