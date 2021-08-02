@@ -46,8 +46,7 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
@@ -150,7 +149,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       factus.update(p);
       log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.state(new UUID(0, 0));
+      p.factStreamPosition(new UUID(0, 0));
     }
     {
       val sw = Stopwatch.createStarted();
@@ -158,7 +157,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       factus.update(p);
       log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.state(new UUID(0, 0));
+      p.factStreamPosition(new UUID(0, 0));
     }
     // ----------tx
     {
@@ -167,7 +166,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       factus.update(p);
       log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.state(new UUID(0, 0));
+      p.factStreamPosition(new UUID(0, 0));
     }
 
     {
@@ -176,7 +175,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       factus.update(p);
       log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.state(new UUID(0, 0));
+      p.factStreamPosition(new UUID(0, 0));
     }
 
     // ------------ sub
@@ -189,7 +188,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       sub.awaitCatchup();
       log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.state(new UUID(0, 0));
+      p.factStreamPosition(new UUID(0, 0));
     }
 
     {
@@ -199,7 +198,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       sub.awaitCatchup();
       log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.state(new UUID(0, 0));
+      p.factStreamPosition(new UUID(0, 0));
     }
 
     // ------------ batch
@@ -209,7 +208,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       factus.update(p);
       log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.state(new UUID(0, 0));
+      p.factStreamPosition(new UUID(0, 0));
     }
     {
       val sw = Stopwatch.createStarted();
@@ -217,7 +216,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       factus.update(p);
       log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.state(new UUID(0, 0));
+      p.factStreamPosition(new UUID(0, 0));
     }
   }
 
@@ -393,7 +392,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   public void simpleManagedProjectionRoundtrip() throws Exception {
     // lets consider userCount a springbean
 
-    assertThat(userCount.state()).isNull();
+    assertThat(userCount.factStreamPosition()).isNull();
     assertThat(userCount.count()).isEqualTo(0);
     factus.update(userCount);
 
@@ -421,7 +420,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     // lets consider userCount a springbean
     UserCount userCount = new UserCount();
 
-    assertThat(userCount.state()).isNull();
+    assertThat(userCount.factStreamPosition()).isNull();
     assertThat(userCount.count()).isEqualTo(0);
     factus.update(userCount);
 

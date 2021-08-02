@@ -19,6 +19,11 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.Collections;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.factcast.core.Fact;
@@ -26,11 +31,13 @@ import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
 import org.factcast.core.lock.Attempt;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -117,6 +124,115 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     assertThatThrownBy(
             () -> fc.lock(FactSpec.ns("users")).attempt(() -> Attempt.publish(brokenFact)))
         .isInstanceOf(FactValidationException.class);
+  }
+
+  @Test
+  @SneakyThrows
+  public void testSubscription_transformationErrors_catchup() {
+    // INIT
+    UUID aggId = UUID.randomUUID();
+
+    ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
+
+    val catchupLatch = new CountDownLatch(1);
+    val errorLatch = new CountDownLatch(1);
+    val proj = new SubscribedUserNames(catchupLatch, errorLatch);
+    ec.subscribe(proj);
+
+    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+
+    assertThat(proj.exception()).isInstanceOf(TransformationException.class);
+  }
+
+  @Test
+  @SneakyThrows
+  public void testSubscription_transformationErrors_follow() {
+    // INIT
+    UUID aggId = UUID.randomUUID();
+
+    val catchupLatch = new CountDownLatch(1);
+    val errorLatch = new CountDownLatch(1);
+    val proj = new SubscribedUserNames(catchupLatch, errorLatch);
+    ec.subscribe(proj);
+
+    assertThat(catchupLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+
+    ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
+
+    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+
+    assertThat(proj.exception()).isInstanceOf(TransformationException.class);
+  }
+
+  @Test
+  @SneakyThrows
+  public void testSubscriptionFC_transformationErrors_catchup() {
+    // INIT
+    UUID aggId = UUID.randomUUID();
+
+    fc.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
+
+    AtomicReference<Throwable> e = new AtomicReference<>();
+    val errorLatch = new CountDownLatch(1);
+
+    fc.subscribe(
+        SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(2))
+            .fromScratch(),
+        new FactObserver() {
+          @Override
+          public void onNext(@NonNull Fact element) {}
+
+          @Override
+          public void onError(@NonNull Throwable exception) {
+            e.set(exception);
+            errorLatch.countDown();
+            FactObserver.super.onError(exception);
+          }
+        });
+
+    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+
+    assertThat(e.get()).isInstanceOf(TransformationException.class);
+  }
+
+  @Test
+  @SneakyThrows
+  public void testSubscriptionFC_transformationErrors_follow() {
+    // INIT
+    UUID aggId = UUID.randomUUID();
+
+    AtomicReference<Throwable> e = new AtomicReference<>();
+    val errorLatch = new CountDownLatch(1);
+    val catchupLatch = new CountDownLatch(1);
+
+    fc.subscribe(
+        SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(2))
+            .fromScratch(),
+        new FactObserver() {
+          @Override
+          public void onNext(@NonNull Fact element) {}
+
+          @Override
+          public void onCatchup() {
+            catchupLatch.countDown();
+            FactObserver.super.onCatchup();
+          }
+
+          @Override
+          public void onError(@NonNull Throwable exception) {
+            e.set(exception);
+            errorLatch.countDown();
+            FactObserver.super.onError(exception);
+          }
+        });
+
+    assertThat(catchupLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+
+    fc.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
+
+    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+
+    assertThat(e.get()).isInstanceOf(TransformationException.class);
   }
 
   private Fact createTestFact(UUID id, int version, String body) {
