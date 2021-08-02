@@ -67,21 +67,21 @@ public abstract class AbstractFactStoreTest {
   protected abstract FactStore createStoreToTest();
 
   @Test
-  public void testFetchById() throws Exception {
+  public void testFetchById() {
     UUID id = UUID.randomUUID();
     uut.fetchById(id);
     verify(store).fetchById(id);
   }
 
   @Test
-  public void testFetchByIdAndVersion() throws Exception {
+  public void testFetchByIdAndVersion() {
     UUID id = UUID.randomUUID();
     uut.fetchByIdAndVersion(id, 77);
     verify(store).fetchByIdAndVersion(id, 77);
   }
 
   @Test
-  public void testPublishNullParameter() throws Exception {
+  public void testPublishNullParameter() {
     assertThrows(NullPointerException.class, () -> createStoreToTest().publish(null));
   }
 
@@ -1155,7 +1155,7 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void shouldPassCustomAbortedException() throws Exception {
+  void shouldPassCustomAbortedException() {
 
     UUID agg1 = UUID.randomUUID();
 
@@ -1195,7 +1195,7 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void shouldThrowRetriesExceededException() throws Exception {
+  void shouldThrowRetriesExceededException() {
 
     UUID agg1 = UUID.randomUUID();
 
@@ -1242,7 +1242,7 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void shouldReleaseTokenOnAbort() throws Exception {
+  void shouldReleaseTokenOnAbort() {
 
     UUID agg1 = UUID.randomUUID();
 
@@ -1269,7 +1269,7 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void shouldReleaseTokenOnEmptyPublications() throws Exception {
+  void shouldReleaseTokenOnEmptyPublications() {
 
     UUID agg1 = UUID.randomUUID();
 
@@ -1313,7 +1313,7 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  public void nullContracts_publishIfUnchanged() throws Exception {
+  public void nullContracts_publishIfUnchanged() {
     assertThrows(
         NullPointerException.class, () -> store.publishIfUnchanged(Lists.emptyList(), null));
 
