@@ -108,11 +108,11 @@ Two remarks:
 The two possible abstract base classes, `AbstractSpringTxManagedProjection` or `AbstractSpringTxSubscribedProjection`, 
 both require the following methods to be implemented:
 
-|   Method Signature                                 | Description |
-|----------------------------------------------------|------------------------------|
-|`public UUID state()`               | read the last position in the Fact stream from the database |
-|`public void state(@NonNull UUID state)` | write the current position of the Fact stream to the database |
-|`public WriterToken acquireWriteToken(@NonNull Duration maxWait)`   | coordinates write access to the projection, see [here]({{< ref "managed-projection.md" >}}) for details  |
+|   Method Signature                                                | Description                                                 |
+|-------------------------------------------------------------------|-------------------------------------------------------------|
+|`public UUID factStreamPosition()   `                              | read the last position in the Fact stream from the database |
+|`public void factStreamPosition(@NonNull UUID factStreamPosition)` | write the current position of the Fact stream to the database |
+|`public WriterToken acquireWriteToken(@NonNull Duration maxWait)`  | coordinates write access to the projection, see [here]({{< ref "managed-projection.md" >}}) for details  |
 
 The first two methods tell Factus how to read and write the Fact stream's position 
 (a single UUID value) from the database. Since this is a single value, you could get away with 
@@ -121,27 +121,27 @@ one table (e.g. `spring_jdbc_transactional_projection_example_fact_stream_positi
 However, to prepare for more than one transactional projection, we recommend the use of a single table
 containing the Fact stream position of multiple projections:
 ```sql
-CREATE TABLE fact_positions (
+CREATE TABLE fact_stream_positions (
     projection_name TEXT,
-    fact_position UUID, 
+    fact_stream_position UUID, 
     PRIMARY KEY (projection_name));
 ```
 
 
 ### Writing The Fact Position
 
-Provided the table `fact_position` exists, here is an example of how to write the Fact position: 
+Provided the table `fact_stream_positions` exists, here is an example of how to write the Fact position: 
 
 ```java
 @Override
-public void state(@NonNull UUID factPosition) {
+public void factStreamPosition(@NonNull UUID factStreamPosition) {
     jdbcTemplate.update(
-            "INSERT INTO fact_positions (projection_name, fact_position) " + 
+            "INSERT INTO fact_stream_positions (projection_name, fact_stream_position) " + 
             "VALUES (?, ?) " +
-            "ON CONFLICT (projection_name) DO UPDATE SET fact_position = ?",
+            "ON CONFLICT (projection_name) DO UPDATE SET fact_stream_position = ?",
             getScopedName().asString(),
-            factPosition,
-            factPosition);
+            factStreamPosition,
+            factStreamPosition);
 }
 ``` 
 
@@ -162,14 +162,14 @@ To read the last Fact stream position, we simply select the previously written v
 
 ```java
 @Override
-public UUID state() {
+public UUID factStreamPosition() {
     try {
         return jdbcTemplate.queryForObject(
-                "SELECT fact_position FROM fact_positions WHERE projection_name = ?",
+                "SELECT fact_stream_position FROM fact_stream_positions WHERE projection_name = ?",
                 UUID.class,
                 getScopedName().asString());
     } catch (IncorrectResultSizeDataAccessException e) {
-        // no state yet, just return null
+        // no position yet, just return null
         return null;
     }
 }

@@ -49,10 +49,10 @@ public class SpringJdbcTransactionalProjectionExample {
     }
 
     @Override
-    public UUID state() {
+    public UUID factStreamPosition() {
       try {
         return jdbcTemplate.queryForObject(
-            "SELECT fact_position FROM fact_positions WHERE projection_name = ?",
+            "SELECT fact_stream_position FROM fact_stream_positions WHERE projection_name = ?",
             UUID.class,
             getScopedName().asString());
       } catch (IncorrectResultSizeDataAccessException e) {
@@ -62,14 +62,14 @@ public class SpringJdbcTransactionalProjectionExample {
     }
 
     @Override
-    public void state(@NonNull UUID factPosition) {
+    public void factStreamPosition(@NonNull UUID factStreamPosition) {
       jdbcTemplate.update(
-          "INSERT INTO fact_positions (projection_name, fact_position) "
+          "INSERT INTO fact_stream_positions (projection_name, fact_stream_position) "
               + "VALUES (?, ?) "
-              + "ON CONFLICT (projection_name) DO UPDATE SET fact_position = ?",
+              + "ON CONFLICT (projection_name) DO UPDATE SET fact_stream_position = ?",
           getScopedName().asString(),
-          factPosition,
-          factPosition);
+          factStreamPosition,
+          factStreamPosition);
     }
 
     @Override
