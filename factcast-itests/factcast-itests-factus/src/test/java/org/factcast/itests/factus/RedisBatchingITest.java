@@ -206,9 +206,9 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     @Getter int stateModifications = 0;
 
     @Override
-    public void factStreamPosition(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID factStreamPosition) {
       stateModifications++;
-      super.factStreamPosition(state);
+      super.factStreamPosition(factStreamPosition);
     }
   }
 
@@ -220,9 +220,9 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     @Getter int stateModifications = 0;
 
     @Override
-    public void factStreamPosition(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID factStreamPosition) {
       stateModifications++;
-      super.factStreamPosition(state);
+      super.factStreamPosition(factStreamPosition);
     }
   }
 
@@ -234,9 +234,9 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void factStreamPosition(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID factStreamPosition) {
 
-      super.factStreamPosition(state);
+      super.factStreamPosition(factStreamPosition);
     }
   }
 
