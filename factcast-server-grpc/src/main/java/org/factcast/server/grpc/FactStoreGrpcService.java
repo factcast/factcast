@@ -95,11 +95,14 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
   @NonNull final FactStore store;
   @NonNull final GrpcRequestMetadata grpcRequestMetadata;
   @NonNull final GrpcLimitProperties grpcLimitProperties;
+
   @NonNull final FastForwardTarget ffwdTarget;
 
   final CompressionCodecs codecs = new CompressionCodecs();
 
   final ProtoConverter converter = new ProtoConverter();
+
+  final ServerExceptionLogger serverExceptionLogger = new ServerExceptionLogger();
 
   @VisibleForTesting
   @Deprecated
@@ -185,7 +188,11 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
       GrpcObserverAdapter observer =
           new GrpcObserverAdapter(
-              req.toString(), resp, grpcRequestMetadata, req.keepaliveIntervalInMs());
+              req.toString(),
+              resp,
+              grpcRequestMetadata,
+              serverExceptionLogger,
+              req.keepaliveIntervalInMs());
 
       val cancelHandler = new OnCancelHandler(clientIdPrefix(), req, subRef, observer);
 

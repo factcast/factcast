@@ -23,9 +23,7 @@ import org.factcast.factus.spring.tx.AbstractSpringTxSubscribedProjection;
 import org.factcast.factus.spring.tx.SpringTransactional;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -433,7 +431,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void factStreamPosition(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID position) {
       log.debug("set state");
       assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
       stateModifications++;
@@ -443,8 +441,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       jdbcTemplate.update(
           "INSERT INTO managed_projection (name, state) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET state = ?",
           getScopedName().asString(),
-          state,
-          state);
+          position,
+          position);
     }
 
     @Override
@@ -489,7 +487,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void factStreamPosition(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull UUID position) {
       log.debug("set state");
       assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
       stateModifications++;
@@ -499,8 +497,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       jdbcTemplate.update(
           "INSERT INTO managed_projection (name, state) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET state = ?",
           getScopedName().asString(),
-          state,
-          state);
+          position,
+          position);
     }
 
     @Override

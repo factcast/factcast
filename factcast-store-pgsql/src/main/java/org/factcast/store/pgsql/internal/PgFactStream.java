@@ -22,13 +22,13 @@ import java.sql.SQLException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.core.util.ExceptionHelper;
 import org.factcast.store.pgsql.internal.StoreMetrics.VALUE;
 import org.factcast.store.pgsql.internal.catchup.PgCatchupFactory;
 import org.factcast.store.pgsql.internal.query.PgFactIdToSerialMapper;
@@ -86,7 +86,9 @@ public class PgFactStream {
 
     String sql = q.createSQL();
     PreparedStatementSetter setter = q.createStatementSetter(serial);
-    RowCallbackHandler rsHandler = new FactRowCallbackHandler(subscription, postQueryMatcher);
+    RowCallbackHandler rsHandler =
+        new FactRowCallbackHandler(
+            subscription, postQueryMatcher, this::isConnected, serial, request);
     PgSynchronizedQuery query =
         new PgSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler, serial, fetcher);
     catchupAndFollow(request, subscription, query);
@@ -105,14 +107,8 @@ public class PgFactStream {
       // just fast forward to the latest event published by now
       serial.set(fetcher.retrieveLatestSer());
     } else {
-      try {
-        catchup(postQueryMatcher);
-        logCatchupTransformationStats();
-      } catch (Throwable e) {
-        // might help to find networking issues while catching up
-        log.warn("{} While catching up: ", request, e);
-        subscription.notifyError(e);
-      }
+      catchup(postQueryMatcher);
+      logCatchupTransformationStats();
     }
 
     fastForward(request, subscription);
@@ -267,16 +263,22 @@ public class PgFactStream {
   }
 
   @RequiredArgsConstructor
-  private class FactRowCallbackHandler implements RowCallbackHandler {
+  static class FactRowCallbackHandler implements RowCallbackHandler {
 
     final SubscriptionImpl subscription;
 
     final PgPostQueryMatcher postQueryMatcher;
 
+    final Supplier<Boolean> isConnectedSupplier;
+
+    final AtomicLong serial;
+
+    final SubscriptionRequestTO request;
+
     @SuppressWarnings("NullableProblems")
     @Override
     public void processRow(ResultSet rs) throws SQLException {
-      if (isConnected()) {
+      if (isConnectedSupplier.get()) {
         if (rs.isClosed()) {
           throw new IllegalStateException(
               "ResultSet already closed. We should not have got here. THIS IS A BUG!");
@@ -287,26 +289,9 @@ public class PgFactStream {
           try {
             subscription.notifyElement(f);
             log.trace("{} notifyElement called with id={}", request, factId);
-          } catch (TransformationException e) {
-            log.warn("{} transformation error: {}", request, e.getMessage());
-            subscription.notifyError(e);
-            // will vanish, because this is called from a timer.
-            throw e;
           } catch (Throwable e) {
-            // debug level, because it happens regularly on
-            // disconnecting clients.
-            // TODO add sid
-            log.debug("{} exception from subscription: {}", request, e.getMessage());
-            try {
-              subscription.close();
-            } catch (Exception e1) {
-              // TODO add sid
-              log.warn("{} exception while closing subscription: {}", request, e1.getMessage());
-            }
-            // close result set in order to release DB resources as
-            // early as possible
             rs.close();
-            throw ExceptionHelper.toRuntime(e);
+            subscription.notifyError(e);
           }
         } else {
           // TODO add sid

@@ -78,11 +78,13 @@ class PgSynchronizedQuery {
   // the synchronized here is crucial!
   @SuppressWarnings("SameReturnValue")
   public synchronized void run(boolean useIndex) {
-    // TODO recheck latest handling - looks broken
+    // TODO recheck latest handling - looks b0rken
     long latest = latestFetcher.retrieveLatestSer();
     transactionTemplate.execute(
         status -> {
-          if (!useIndex) jdbcTemplate.execute("SET LOCAL enable_bitmapscan=0;");
+          if (!useIndex) {
+            jdbcTemplate.execute("SET LOCAL enable_bitmapscan=0;");
+          }
           jdbcTemplate.query(sql, setter, rowHandler);
           return null;
         });
