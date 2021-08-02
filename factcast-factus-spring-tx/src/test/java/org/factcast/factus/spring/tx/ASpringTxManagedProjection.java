@@ -19,7 +19,7 @@ public class ASpringTxManagedProjection extends AbstractSpringTxManagedProjectio
   }
 
   @Override
-  public void factStreamPosition(@NonNull UUID state) {}
+  public void factStreamPosition(@NonNull UUID position) {}
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {

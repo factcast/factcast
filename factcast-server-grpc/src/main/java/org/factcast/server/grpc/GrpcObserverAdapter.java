@@ -46,30 +46,11 @@ class GrpcObserverAdapter implements FactObserver {
 
   @NonNull private final StreamObserver<MSG_Notification> observer;
   @NonNull private final int catchupBatchSize;
+  @NonNull private final ServerExceptionLogger serverExceptionLogger;
 
   @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
   private final ServerKeepalive keepalive;
-
-  @VisibleForTesting
-  @Deprecated
-  GrpcObserverAdapter(@NonNull String id, @NonNull StreamObserver<MSG_Notification> observer) {
-    this(id, observer, 0);
-  }
-
-  @VisibleForTesting
-  GrpcObserverAdapter(
-      @NonNull String id, @NonNull StreamObserver<MSG_Notification> observer, long keepalive) {
-    this(id, observer, GrpcRequestMetadata.forTest(), keepalive);
-  }
-
-  @VisibleForTesting
-  GrpcObserverAdapter(
-      @NonNull String id,
-      @NonNull StreamObserver<MSG_Notification> observer,
-      @NonNull GrpcRequestMetadata meta) {
-    this(id, observer, meta, 0);
-  }
 
   private final ArrayList<Fact> stagedFacts;
   private final boolean supportsFastForward;
@@ -81,6 +62,7 @@ class GrpcObserverAdapter implements FactObserver {
       @NonNull String id,
       @NonNull StreamObserver<MSG_Notification> observer,
       @NonNull GrpcRequestMetadata meta,
+      @NonNull ServerExceptionLogger serverExceptionLogger,
       long keepaliveInMilliseconds) {
     this.id = id;
     this.observer = observer;
@@ -88,11 +70,49 @@ class GrpcObserverAdapter implements FactObserver {
     supportsFastForward = meta.supportsFastForward();
     this.keepaliveInMilliseconds = keepaliveInMilliseconds;
     stagedFacts = new ArrayList<>(catchupBatchSize);
+    this.serverExceptionLogger = serverExceptionLogger;
     if (keepaliveInMilliseconds > 0) {
       keepalive = new ServerKeepalive();
     } else {
       keepalive = null;
     }
+  }
+
+  @VisibleForTesting
+  GrpcObserverAdapter(
+      @NonNull String id,
+      @NonNull StreamObserver<MSG_Notification> observer,
+      @NonNull ServerExceptionLogger serverExceptionLogger) {
+    this(id, observer, GrpcRequestMetadata.forTest(), serverExceptionLogger, 0);
+  }
+
+  @VisibleForTesting
+  @Deprecated
+  GrpcObserverAdapter(@NonNull String id, @NonNull StreamObserver<MSG_Notification> observer) {
+    this(id, observer, GrpcRequestMetadata.forTest(), new ServerExceptionLogger(), 0);
+  }
+
+  @VisibleForTesting
+  GrpcObserverAdapter(
+      @NonNull String id,
+      @NonNull StreamObserver<MSG_Notification> observer,
+      GrpcRequestMetadata meta) {
+    this(id, observer, meta, new ServerExceptionLogger(), 0);
+  }
+
+  @VisibleForTesting
+  GrpcObserverAdapter(
+      @NonNull String id, @NonNull StreamObserver<MSG_Notification> observer, long keepalive) {
+    this(id, observer, GrpcRequestMetadata.forTest(), new ServerExceptionLogger(), keepalive);
+  }
+
+  @VisibleForTesting
+  GrpcObserverAdapter(
+      @NonNull String id,
+      @NonNull StreamObserver<MSG_Notification> observer,
+      @NonNull GrpcRequestMetadata meta,
+      @NonNull ServerExceptionLogger serverExceptionLogger) {
+    this(id, observer, meta, serverExceptionLogger, 0);
   }
 
   @Override
@@ -114,7 +134,7 @@ class GrpcObserverAdapter implements FactObserver {
   public void onError(@NonNull Throwable e) {
     flush();
     disableKeepalive();
-    log.info("{} onError – sending Error notification {}", id, e.getMessage());
+    serverExceptionLogger.log(e, id);
     observer.onError(ServerExceptionHelper.translate(e));
   }
 

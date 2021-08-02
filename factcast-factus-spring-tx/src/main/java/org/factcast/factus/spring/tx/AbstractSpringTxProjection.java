@@ -27,7 +27,7 @@ abstract class AbstractSpringTxProjection
   public abstract UUID factStreamPosition();
 
   @Override
-  public abstract void factStreamPosition(@NonNull UUID state);
+  public abstract void factStreamPosition(@NonNull UUID position);
 
   @Override
   public abstract WriterToken acquireWriteToken(@NonNull Duration maxWait);

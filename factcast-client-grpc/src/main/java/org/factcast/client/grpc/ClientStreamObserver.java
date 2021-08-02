@@ -159,7 +159,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
             public void run() {
               val last = lastNotification.get();
 
-              if (last == 0 || System.currentTimeMillis() - last > gracePeriod) {
+              if (System.currentTimeMillis() - last > gracePeriod) {
                 onError(new StaleSubscriptionDetectedException(last, gracePeriod));
               } else {
                 reschedule();

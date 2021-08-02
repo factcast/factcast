@@ -21,5 +21,5 @@ import lombok.NonNull;
 public interface FactStreamPositionAware {
   UUID factStreamPosition();
 
-  void factStreamPosition(@NonNull UUID state);
+  void factStreamPosition(@NonNull UUID position);
 }
