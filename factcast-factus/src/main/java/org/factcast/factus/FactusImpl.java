@@ -196,7 +196,7 @@ public class FactusImpl implements Factus {
       @NonNull P subscribedProjection, @NonNull WriterToken token) {
     Projector<P> handler = ehFactory.create(subscribedProjection);
     FactObserver fo =
-        new ProgressFactObserver(subscribedProjection, PROGRESS_INTERVAL, factusMetrics) {
+        new AbstractFactObserver(subscribedProjection, PROGRESS_INTERVAL, factusMetrics) {
 
           UUID lastFactIdApplied = null;
 
@@ -351,7 +351,7 @@ public class FactusImpl implements Factus {
     AtomicInteger factCount = new AtomicInteger(0);
 
     FactObserver fo =
-        new ProgressFactObserver(projection, PROGRESS_INTERVAL, factusMetrics) {
+        new AbstractFactObserver(projection, PROGRESS_INTERVAL, factusMetrics) {
           @NonNull UUID id = null;
 
           @Override
