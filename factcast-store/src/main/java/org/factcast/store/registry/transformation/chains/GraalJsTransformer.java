@@ -42,6 +42,9 @@ public class GraalJsTransformer implements Transformer {
     // this is necessary for the way we currently do event transformation (in place modification of
     // event data)
     System.setProperty("polyglot.js.nashorn-compat", "true");
+
+    // we ignore this because we're not running on graal and its somehow expected
+    System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
   }
 
   @Override
