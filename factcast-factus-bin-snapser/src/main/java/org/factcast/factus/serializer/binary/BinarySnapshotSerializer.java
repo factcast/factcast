@@ -30,7 +30,6 @@ import java.util.function.Function;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.SneakyThrows;
-import lombok.val;
 import net.jpountz.lz4.LZ4BlockInputStream;
 import net.jpountz.lz4.LZ4BlockOutputStream;
 import org.factcast.factus.projection.SnapshotProjection;
@@ -57,7 +56,7 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
   @Override
   public byte[] serialize(@NonNull SnapshotProjection a) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    val os = new LZ4BlockOutputStream(baos, 8192);
+    var os = new LZ4BlockOutputStream(baos, 8192);
     omMessagePack.writeValue(os, a);
     os.close();
     return baos.toByteArray();

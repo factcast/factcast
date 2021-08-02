@@ -4,10 +4,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import lombok.NonNull;
-import lombok.val;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -37,7 +35,7 @@ class SpringTxManagerTest {
 
       assertThat(uut.getCurrentTx()).isNotNull();
 
-      val tx = uut.getCurrentTx();
+      var tx = uut.getCurrentTx();
 
       uut.startOrJoin();
 
@@ -142,7 +140,7 @@ class SpringTxManagerTest {
     }
 
     public TransactionStatus getCurrentTx() {
-      return this.currentTx;
+      return currentTx;
     }
   }
 }

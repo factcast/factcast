@@ -23,7 +23,6 @@ import javax.script.Compilable;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
-import lombok.val;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
@@ -94,7 +93,7 @@ public class GraalJsTransformer implements Transformer {
   }
 
   private Object transformMapValue(Object input) {
-    val value = Value.asValue(input);
+    var value = Value.asValue(input);
     if (value.hasArrayElements()) {
       return value.as(List.class);
     } else if (input instanceof Map) {

@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import lombok.val;
+
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.junit.jupiter.api.*;
@@ -134,8 +134,8 @@ class RedissonSnapshotCacheTest {
 
       {
         // assert all buckets have a ttl
-        val ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
-        val ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
+        final var ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
+        final var ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
 
         assertThat(ttl1).isGreaterThan(7775990000L);
         assertThat(ttl2).isGreaterThan(7775990000L);
@@ -148,8 +148,8 @@ class RedissonSnapshotCacheTest {
 
       sleep(100); // wait fro async op
       {
-        val ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
-        val ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
+        final var ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
+        final var ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
 
         assertThat(ttl1).isGreaterThan(ttl2);
       }

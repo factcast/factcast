@@ -25,7 +25,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import lombok.NonNull;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -73,15 +72,15 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
 
   @Test
   void testClearSnapshotMetered() {
-    val id = SnapshotId.of("xxx", UUID.randomUUID());
+    var id = SnapshotId.of("xxx", UUID.randomUUID());
     store.clearSnapshot(id);
     verify(metrics).time(same(OP.CLEAR_SNAPSHOT), any(Runnable.class));
   }
 
   @Test
   void testSetSnapshotMetered() {
-    val id = SnapshotId.of("xxx", UUID.randomUUID());
-    val snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+    var id = SnapshotId.of("xxx", UUID.randomUUID());
+    var snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
     store.setSnapshot(snap);
 
     verify(metrics).time(same(OP.SET_SNAPSHOT), any(Runnable.class));

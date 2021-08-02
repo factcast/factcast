@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import lombok.val;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -132,7 +132,7 @@ class RedissonTxManagerTest {
     @Test
     void keepsCurrent() {
       underTest.startOrJoin();
-      val curr = underTest.getCurrentTransaction();
+      final var curr = underTest.getCurrentTransaction();
       underTest.join(
           tx -> {
             assertThat(tx).isSameAs(curr);
@@ -161,7 +161,7 @@ class RedissonTxManagerTest {
     @Test
     void keepsCurrent() {
       underTest.startOrJoin();
-      val curr = underTest.getCurrentTransaction();
+      final var curr = underTest.getCurrentTransaction();
       underTest.join(
           tx -> {
             assertThat(tx).isSameAs(curr);

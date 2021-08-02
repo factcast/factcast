@@ -19,13 +19,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Set;
 import java.util.UUID;
-import lombok.val;
 import org.junit.jupiter.api.*;
 
 class EventObjectTest {
   @Test
   void defaultsToEmptyMap() {
-    val map =
+    var map =
         new EventObject() {
           @Override
           public Set<UUID> aggregateIds() {

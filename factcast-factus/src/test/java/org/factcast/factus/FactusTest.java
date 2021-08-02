@@ -29,7 +29,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
@@ -139,7 +138,7 @@ class FactusTest {
 
   @Test
   void voidSubscribe() {
-    val p = mock(SubscribedProjection.class);
+    var p = mock(SubscribedProjection.class);
     underTest.subscribe(p);
 
     sleep(); // call is async, so we wait a bit
@@ -151,7 +150,7 @@ class FactusTest {
 
   @Test
   void withLockOnInstance() {
-    val p = new SP();
+    var p = new SP();
     underTest.withLockOn(p);
     verify(underTest).withLockOn(SP.class);
   }

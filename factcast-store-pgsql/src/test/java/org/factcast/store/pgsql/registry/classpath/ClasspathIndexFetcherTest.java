@@ -17,7 +17,6 @@ package org.factcast.store.pgsql.registry.classpath;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import lombok.val;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
 import org.junit.jupiter.api.*;
 
@@ -25,14 +24,14 @@ class ClasspathIndexFetcherTest {
 
   @Test
   void fetchIndex() {
-    val uut = new ClasspathIndexFetcher("/example-registry/");
-    val i = uut.fetchIndex();
+    var uut = new ClasspathIndexFetcher("/example-registry/");
+    var i = uut.fetchIndex();
   }
 
   @Test
   void doesNotFetchTwice() {
 
-    val uut = new ClasspathIndexFetcher("/example-registry/");
+    var uut = new ClasspathIndexFetcher("/example-registry/");
     assertTrue(uut.fetchIndex().isPresent());
     assertFalse(uut.fetchIndex().isPresent());
     assertFalse(uut.fetchIndex().isPresent());

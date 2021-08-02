@@ -2,7 +2,6 @@ package org.factcast.factus.redis.tx;
 
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.val;
 import org.factcast.factus.redis.tx.RedisTransactional.Defaults;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
@@ -27,7 +26,7 @@ public class RedisTransactionalTest {
 
   @Test
   void responseTimeout() {
-    val t = Defaults.with(RB3.class.getAnnotation(RedisTransactional.class));
+    var t = Defaults.with(RB3.class.getAnnotation(RedisTransactional.class));
     TransactionOptions defaults = Defaults.create();
     assertThat(t).extracting(TransactionOptions::getTimeout).isEqualTo(defaults.getTimeout());
     assertThat(t).extracting(TransactionOptions::getResponseTimeout).isEqualTo(123L);
@@ -43,7 +42,7 @@ public class RedisTransactionalTest {
 
   @Test
   void timeout() {
-    val t = Defaults.with(RB6.class.getAnnotation(RedisTransactional.class));
+    var t = Defaults.with(RB6.class.getAnnotation(RedisTransactional.class));
     TransactionOptions defaults = Defaults.create();
     assertThat(t).extracting(TransactionOptions::getTimeout).isEqualTo(123L);
     assertThat(t)
@@ -61,7 +60,7 @@ public class RedisTransactionalTest {
 
   @Test
   void attempts() {
-    val t = Defaults.with(RB4.class.getAnnotation(RedisTransactional.class));
+    var t = Defaults.with(RB4.class.getAnnotation(RedisTransactional.class));
     TransactionOptions defaults = Defaults.create();
     assertThat(t).extracting(TransactionOptions::getTimeout).isEqualTo(defaults.getTimeout());
     assertThat(t)
@@ -75,7 +74,7 @@ public class RedisTransactionalTest {
 
   @Test
   void interval() {
-    val t = Defaults.with(RB5.class.getAnnotation(RedisTransactional.class));
+    var t = Defaults.with(RB5.class.getAnnotation(RedisTransactional.class));
     TransactionOptions defaults = Defaults.create();
     assertThat(t).extracting(TransactionOptions::getTimeout).isEqualTo(defaults.getTimeout());
     assertThat(t)

@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
+
 import org.factcast.test.FactCastIntegrationTestExtension;
 import org.junit.jupiter.api.extension.*;
 import org.redisson.Redisson;
@@ -55,13 +55,13 @@ public class RedisIntegrationTestExtension implements FactCastIntegrationTestExt
     final RedisConfig.Config config = discoverConfig(ctx);
     final GenericContainer container = executions.get(config);
 
-    val url = "redis://" + container.getHost() + ":" + container.getMappedPort(6379);
+    final var url = "redis://" + container.getHost() + ":" + container.getMappedPort(6379);
     log.trace("erasing redis state in between tests for {}", url);
 
-    val clientConfig = new Config().setThreads(1);
+    final var clientConfig = new Config().setThreads(1);
     clientConfig.useSingleServer().setAddress(url);
 
-    val client = Redisson.create(clientConfig);
+    final var client = Redisson.create(clientConfig);
     client.getKeys().flushdb();
     client.shutdown();
   }

@@ -9,7 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import lombok.NonNull;
-import lombok.val;
+
 import org.factcast.core.Fact;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.WriterToken;
@@ -38,7 +38,7 @@ class RedisTransactionalLensTest {
     @Test
     void resetsTimeIfBatching() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
-      val underTest = new RedisTransactionalLens(p, client);
+      final var underTest = new RedisTransactionalLens(p, client);
 
       underTest.bulkSize(100);
       underTest.start().set(0L);
@@ -62,10 +62,10 @@ class RedisTransactionalLensTest {
     @Test
     void counts() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
-      val underTest = spy(new RedisTransactionalLens(p, client));
+      final var underTest = spy(new RedisTransactionalLens(p, client));
       when(underTest.shouldFlush()).thenReturn(false);
 
-      val before = underTest.count().get();
+      final var before = underTest.count().get();
       underTest.afterFactProcessing(f);
 
       assertThat(underTest.count().get()).isEqualTo(before + 1);
@@ -83,7 +83,7 @@ class RedisTransactionalLensTest {
     void doesNotUnnecessarilyflush() {
 
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
-      val underTest = spy(new RedisTransactionalLens(p, client));
+      final var underTest = spy(new RedisTransactionalLens(p, client));
 
       underTest.onCatchup(p);
 
@@ -94,7 +94,7 @@ class RedisTransactionalLensTest {
     void flushesOnCacthupIfNecessary() {
 
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
-      val underTest = spy(new RedisTransactionalLens(p, client));
+      final var underTest = spy(new RedisTransactionalLens(p, client));
 
       // mark it dirty
       underTest.afterFactProcessing(Fact.builder().id(UUID.randomUUID()).buildWithoutPayload());
@@ -108,7 +108,7 @@ class RedisTransactionalLensTest {
     void disablesBatching() {
 
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
-      val underTest = spy(new RedisTransactionalLens(p, client));
+      final var underTest = spy(new RedisTransactionalLens(p, client));
       assertThat(underTest.bulkSize()).isNotEqualTo(1);
       underTest.onCatchup(p);
 
@@ -125,7 +125,7 @@ class RedisTransactionalLensTest {
     void calculatesStateSkipping() {
 
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
-      val underTest = spy(new RedisTransactionalLens(p, client));
+      final var underTest = spy(new RedisTransactionalLens(p, client));
       when(underTest.shouldFlush(anyBoolean())).thenReturn(false, false, true, true);
       when(underTest.isBulkApplying()).thenReturn(false, true, false, true);
 
@@ -144,7 +144,7 @@ class RedisTransactionalLensTest {
     @Test
     void resetsClock() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
-      val underTest = spy(new RedisTransactionalLens(p, client));
+      final var underTest = spy(new RedisTransactionalLens(p, client));
       underTest.start().set(System.currentTimeMillis());
 
       underTest.flush();
@@ -155,7 +155,7 @@ class RedisTransactionalLensTest {
     @Test
     void delegates() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
-      val underTest = spy(new RedisTransactionalLens(p, client));
+      final var underTest = spy(new RedisTransactionalLens(p, client));
       underTest.flush();
       verify(underTest).doFlush();
     }
@@ -170,7 +170,7 @@ class RedisTransactionalLensTest {
     void delegates() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       RedissonTxManager tx = mock(RedissonTxManager.class);
-      val underTest = new RedisTransactionalLens(p, tx, Defaults.create());
+      final var underTest = new RedisTransactionalLens(p, tx, Defaults.create());
 
       underTest.doClear();
 
@@ -187,7 +187,7 @@ class RedisTransactionalLensTest {
     void delegates() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       RedissonTxManager tx = mock(RedissonTxManager.class);
-      val underTest = new RedisTransactionalLens(p, tx, Defaults.create());
+      final var underTest = new RedisTransactionalLens(p, tx, Defaults.create());
 
       underTest.doFlush();
 
@@ -206,7 +206,7 @@ class RedisTransactionalLensTest {
     @Test
     void rollsback() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
-      val underTest = spy(new RedisTransactionalLens(p, client));
+      final var underTest = spy(new RedisTransactionalLens(p, client));
 
       underTest.afterFactProcessingFailed(f, new IOException("oh dear"));
 
@@ -281,7 +281,7 @@ class RedisTransactionalLensTest {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       RedissonTxManager tx = mock(RedissonTxManager.class);
       when(tx.getCurrentTransaction()).thenReturn(current);
-      val underTest = new RedisTransactionalLens(p, tx, Defaults.create());
+      final var underTest = new RedisTransactionalLens(p, tx, Defaults.create());
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(RTransaction.class);
       assertThat(t).isNotNull();
@@ -292,7 +292,7 @@ class RedisTransactionalLensTest {
     void returnsNullForOtherType() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       RedissonTxManager tx = mock(RedissonTxManager.class);
-      val underTest = new RedisTransactionalLens(p, tx, Defaults.create());
+      final var underTest = new RedisTransactionalLens(p, tx, Defaults.create());
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(Fact.class);
       assertThat(t).isNull();

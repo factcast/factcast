@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import lombok.SneakyThrows;
-import lombok.val;
+
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -203,7 +203,7 @@ public class PgFactStreamTest {
 
   @Test
   void logsWarnLevel() {
-    val logger = Slf4jHelper.replaceLogger(uut);
+    final var logger = Slf4jHelper.replaceLogger(uut);
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(50L));
@@ -217,7 +217,7 @@ public class PgFactStreamTest {
 
   @Test
   void logsInfoLevel() {
-    val logger = Slf4jHelper.replaceLogger(uut);
+    final var logger = Slf4jHelper.replaceLogger(uut);
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(10L));
@@ -231,7 +231,7 @@ public class PgFactStreamTest {
 
   @Test
   void logsDebugLevel() {
-    val logger = Slf4jHelper.replaceLogger(uut);
+    final var logger = Slf4jHelper.replaceLogger(uut);
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(1L));
@@ -314,7 +314,7 @@ public class PgFactStreamTest {
       when(rs.getString(PgConstants.COLUMN_PAYLOAD)).thenReturn("{}");
       when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(10L);
 
-      val exception = new IllegalArgumentException();
+      final var exception = new IllegalArgumentException();
       doThrow(exception).when(subscription).notifyElement(any());
 
       when(postQueryMatcher.test(any())).thenReturn(true);

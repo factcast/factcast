@@ -15,13 +15,12 @@
  */
 package org.factcast.store.pgsql.registry.filesystem;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
-import lombok.val;
 import org.factcast.store.pgsql.registry.SchemaRegistryUnavailableException;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.core.io.ClassPathResource;
 
 class FilesystemIndexFetcherTest {
@@ -32,7 +31,7 @@ class FilesystemIndexFetcherTest {
     String path = new ClassPathResource("/example-registry/").getFile().getAbsolutePath();
 
     // RUN / ASSERT
-    val uut = new FilesystemIndexFetcher(path);
+    var uut = new FilesystemIndexFetcher(path);
     assertThat(uut.fetchIndex()).isPresent();
   }
 

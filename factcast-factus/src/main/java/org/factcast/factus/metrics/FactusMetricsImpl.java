@@ -15,7 +15,7 @@
  */
 package org.factcast.factus.metrics;
 
-import static org.factcast.factus.metrics.TagKeys.TAG_NAME;
+import static org.factcast.factus.metrics.TagKeys.*;
 
 import com.google.common.base.Stopwatch;
 import io.micrometer.core.instrument.*;
@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import lombok.NonNull;
-import lombok.val;
 
 public class FactusMetricsImpl implements FactusMetrics {
   public static final String METRIC_NAME_TIMINGS = "factus.timings";
@@ -41,19 +40,19 @@ public class FactusMetricsImpl implements FactusMetrics {
   }
 
   private Counter counter(@NonNull CountedEvent op, Tags tags) {
-    val t = Tags.of(Tag.of(TAG_NAME, op.event())).and(tags);
+    var t = Tags.of(Tag.of(TAG_NAME, op.event())).and(tags);
 
     return meterRegistry.counter(METRIC_NAME_COUNTS, t);
   }
 
   private Timer timer(@NonNull TimedOperation op, Tags tags) {
-    val t = Tags.of(Tag.of(TAG_NAME, op.op())).and(tags);
+    var t = Tags.of(Tag.of(TAG_NAME, op.op())).and(tags);
 
     return meterRegistry.timer(METRIC_NAME_TIMINGS, t);
   }
 
   private AtomicLong gauge(@NonNull GaugedEvent op, Tags tags) {
-    val t = Tags.of(Tag.of(TAG_NAME, op.event())).and(tags);
+    var t = Tags.of(Tag.of(TAG_NAME, op.event())).and(tags);
     return meterRegistry.gauge(METRIC_NAME_GAUGES, t, new AtomicLong(0));
   }
 
@@ -101,8 +100,8 @@ public class FactusMetricsImpl implements FactusMetrics {
       Tags tags,
       @NonNull SupplierWithException<R, E> fn)
       throws E {
-    val timer = timer(operation, tags);
-    val sw = Stopwatch.createStarted();
+    var timer = timer(operation, tags);
+    var sw = Stopwatch.createStarted();
 
     try {
       return fn.get();
@@ -114,7 +113,7 @@ public class FactusMetricsImpl implements FactusMetrics {
 
   @Override
   public void timed(TimedOperation operation, Tags tags, long milliseconds) {
-    val timer = timer(operation, tags);
+    var timer = timer(operation, tags);
     timer.record(milliseconds, TimeUnit.MILLISECONDS);
   }
 
@@ -125,7 +124,7 @@ public class FactusMetricsImpl implements FactusMetrics {
 
   @Override
   public void record(@NonNull GaugedEvent event, Tags tags, long value) {
-    val g = gauge(event, tags);
+    var g = gauge(event, tags);
     g.set(value);
   }
 }
