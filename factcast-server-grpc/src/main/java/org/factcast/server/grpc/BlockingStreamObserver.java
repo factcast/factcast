@@ -16,6 +16,7 @@
 package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
@@ -129,7 +130,13 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
   @Override
   public void onError(Throwable t) {
-    delegate.onError(t);
+
+    if (t instanceof StatusRuntimeException) {
+      // prevent double wrap
+      delegate.onError(t);
+    } else {
+      delegate.onError(ServerExceptionHelper.translate(t));
+    }
   }
 
   @Override
