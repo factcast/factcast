@@ -11,9 +11,13 @@ identifier = "redis-transactional-projections"
 weight = 1021
 +++
 
-A *Redis transactional projection* is a [transactional projection]({{<ref "transactional_projections">}}) which provides classic transactionality  
-employing a [Redission RTransaction](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RTransaction.html).    
+A *Redis transactional projection* is a [transactional projection]({{<ref "transactional_projections">}}) 
+which provides atomic transactions through [Redission RTransaction](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RTransaction.html).
 
+Compared to a [Spring transactional projection]({{< ref "spring-transactional-projections.md">}}), a *Redis transactional projection* is more lightweight since
+- transactionallity is directly provided by `RTransaction`. There is no need to deal with Spring's `PlatformTransactionManager`   
+- the fact stream position is automatically managed (see example below)
+    
 Working with a *Redis transactional projection* is **synchronous**. To ensure permanent data consistency, the Redission client 
 constantly communicates with the Redis server. 
 
@@ -23,10 +27,48 @@ For this reason a *Redis transactional projection* is best used for projections 
  
 For a more performant alternative see [Redis batch projection]({{<ref "redis-batch-projection.md">}})
 
+
+Example
+-------
+
+Let's look at an example. The following code is a [managed projection]({{< ref "managed-projection.md">}}) which handles *UserCreated* and 
+*UserDeleted* events. It solved the same problem as the example we've seen in [Spring transactional projections]({{< ref "spring-transactional-projections.md">}}).
+However, this time we use Redis as our data store:   
+ 
+```java
+@ProjectionMetaData(serial = 1)
+@RedisTransactional
+public class UserNames extends AbstractRedisManagedProjection {
+
+    public UserNames(RedissonClient redisson) {
+        super(redisson);
+    }
+
+    public List<String> getUserNames() {
+        RMap<UUID, String> userNames = redisson.getMap(redisKey());
+        return new ArrayList<>(userNames.values());
+    }
+
+    @Handler
+    void apply(UserCreated e, RTransaction tx) {
+        RMap<UUID, String> userNames = tx.getMap(redisKey());
+        userNames.put(e.getAggregateId(), e.getUserName());
+    }
+
+    @Handler
+    void apply(UserDeleted e, RTransaction tx) {
+        tx.getMap(redisKey()).remove(e.getAggregateId());
+    }
+}
+```
+
+To provide the parent class `AbstractRedisManagedProjection` with an instance of the `RedissionClient`, we provide
+a dedicated constructor. Factus will use this instances to provide use with a valid?  Transaction.
+
 #####################################################
 
 
-
+- managed vs. subscribed
 
 - Leaner then Spring Transactional Projections. 
 - Works directly with Tx and Batch

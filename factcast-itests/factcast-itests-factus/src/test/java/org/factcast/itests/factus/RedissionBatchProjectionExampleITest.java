@@ -5,8 +5,7 @@ import lombok.val;
 import org.factcast.factus.Factus;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
-import org.factcast.itests.factus.proj.RedissionBatchTransactionalProjectionExample;
-import org.factcast.itests.factus.proj.RedissionTxTransactionalProjectionExample;
+import org.factcast.itests.factus.proj.RedissionBatchProjectionExample;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
@@ -23,7 +22,7 @@ import static org.assertj.core.api.Assertions.*;
 @SpringBootTest
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @Slf4j
-public class RedissionBatchTransactionalProjectionExampleITest extends AbstractFactCastIntegrationTest {
+public class RedissionBatchProjectionExampleITest extends AbstractFactCastIntegrationTest {
 
     @Autowired
     Factus factus;
@@ -32,7 +31,7 @@ public class RedissionBatchTransactionalProjectionExampleITest extends AbstractF
     RedissonClient redissonClient;
 
     @Test
-    void renameMe() {
+    void getNames() {
         val event1 = new UserCreated(randomUUID(), "Peter");
         val event2 = new UserCreated(randomUUID(), "Paul");
         val event3 = new UserCreated(randomUUID(), "Klaus");
@@ -41,7 +40,7 @@ public class RedissionBatchTransactionalProjectionExampleITest extends AbstractF
         log.info("Publishing test events");
         factus.publish(Arrays.asList(event1, event2, event3, event4));
 
-        val uut = new RedissionBatchTransactionalProjectionExample.UserNames(redissonClient);
+        val uut = new RedissionBatchProjectionExample.UserNames(redissonClient);
         factus.update(uut);
         val userNames = uut.getUserNames();
 
