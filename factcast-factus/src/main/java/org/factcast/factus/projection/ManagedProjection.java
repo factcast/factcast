@@ -17,7 +17,7 @@ package org.factcast.factus.projection;
 
 import org.factcast.core.util.ExceptionHelper;
 
-public interface ManagedProjection extends Projection, StateAware, WriterTokenAware {
+public interface ManagedProjection extends Projection, FactStreamPositionAware, WriterTokenAware {
 
   default void withLock(Runnable runnable) {
     try (AutoCloseable token = acquireWriteToken()) {
