@@ -44,7 +44,7 @@ abstract class AbstractFactObserver implements FactObserver {
     onNextFact(element);
 
     if (caughtUp) {
-      reportCatchupTime(element);
+      reportProcessingLatency(element);
     }
 
     // not yet caught up
@@ -68,7 +68,7 @@ abstract class AbstractFactObserver implements FactObserver {
   }
 
   @VisibleForTesting
-  void reportCatchupTime(@NonNull Fact element) {
+  void reportProcessingLatency(@NonNull Fact element) {
     String ts = element.meta("_ts");
     // _ts might not be there in unit testing for instance.
     if (ts != null) {
