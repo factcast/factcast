@@ -106,6 +106,9 @@ public class PgConstants {
           + COLUMN_STATE
           + ") VALUES (cast (? as jsonb)) RETURNING token";
 
+  public static final String COMPACT_TOKEN =
+      "DELETE FROM " + TABLE_TOKENSTORE + " WHERE extract(month from age(ts))>1";
+
   public static final String DELETE_TOKEN = "DELETE FROM " + TABLE_TOKENSTORE + " WHERE token=?";
 
   public static final String SELECT_BY_ID =
