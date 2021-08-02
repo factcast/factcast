@@ -264,4 +264,22 @@ public class SubscriptionImplTest {
     // this must return without exceptions
     uut.notifyComplete();
   }
+
+  @Test
+  void notifyInfoDelegatesIfNotClosed() {
+
+    FactStreamInfo fsi = new FactStreamInfo(1, 10);
+    uut.notifyFactStreamInfo(fsi);
+
+    verify(observer).onFactStreamInfo(eq(fsi));
+  }
+
+  @Test
+  void notifyInfoSkipsIfClosed() throws TransformationException {
+    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    @NonNull UUID id = UUID.randomUUID();
+    FactStreamInfo fsi = new FactStreamInfo(1, 10);
+    uut.notifyFactStreamInfo(fsi);
+    verify(obs, never()).onFactStreamInfo(any());
+  }
 }
