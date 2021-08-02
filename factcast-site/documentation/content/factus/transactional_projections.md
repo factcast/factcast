@@ -30,7 +30,7 @@ sequenceDiagram
 *In a Transactional Projection, the projection update and the update of the Fact stream position run inside a transaction* 
 
 Factus supports transactions for the following external data stores:
-- [data stores supported by Spring Transaction Management]({{< ref "spring_transaction.md" >}}) (e.g. databases via JDBC)
+- [data stores supported by Spring Transaction Management]({{< ref "spring_transactional_projections.md" >}}) (e.g. databases via JDBC)
 - Redis
 
 
