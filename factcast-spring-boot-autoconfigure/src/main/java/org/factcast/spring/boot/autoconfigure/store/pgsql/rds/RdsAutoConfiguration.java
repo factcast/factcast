@@ -16,8 +16,8 @@
 package org.factcast.spring.boot.autoconfigure.store.pgsql.rds;
 
 import lombok.Generated;
-import org.factcast.store.pgsql.rds.RdsConfiguration;
-import org.factcast.store.pgsql.rds.RdsDataSourceFactoryBeanPostProcessor;
+import org.factcast.store.rds.RdsConfiguration;
+import org.factcast.store.rds.RdsDataSourceFactoryBeanPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Configuration;

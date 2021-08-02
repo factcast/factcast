@@ -31,8 +31,8 @@
         <module>factcast-factus-bin-snapser</module>
         <module>factcast-client-grpc</module>
         <module>factcast-client-grpc-cli</module>
-        <module>factcast-store-pgsql</module>
-        <module>factcast-store-pgsql-rds</module>
+        <module>factcast-store</module>
+        <module>factcast-store-rds</module>
         <module>factcast-store-test</module>
         <module>factcast-core</module>
         <module>factcast-factus</module>
