@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.util.UUID;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.factus.projection.Projection;
 import org.junit.jupiter.api.*;
@@ -66,7 +65,7 @@ class AbstractTransactionalLensTest {
     void counts() {
       when(underTest.shouldFlush()).thenReturn(false);
 
-      val before = underTest.count().get();
+      var before = underTest.count().get();
       underTest.afterFactProcessing(f);
 
       assertThat(underTest.count().get()).isEqualTo(before + 1);

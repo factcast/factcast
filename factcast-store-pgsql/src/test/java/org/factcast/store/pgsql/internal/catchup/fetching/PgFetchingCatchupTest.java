@@ -22,7 +22,7 @@ import java.sql.ResultSet;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import lombok.val;
+
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -67,7 +67,7 @@ class PgFetchingCatchupTest {
       PgConnection con = mock(PgConnection.class);
       when(connectionSupplier.get()).thenReturn(con);
 
-      val uut = spy(underTest);
+      final var uut = spy(underTest);
       doNothing().when(uut).fetch(any());
 
       uut.run();
@@ -107,7 +107,7 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void skipsPostQueryMatching() {
-      val cbh = underTest.createRowCallbackHandler(true, extractor);
+      final var cbh = underTest.createRowCallbackHandler(true, extractor);
       cbh.processRow(mock(ResultSet.class));
 
       verifyNoInteractions(postQueryMatcher);
@@ -116,7 +116,7 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void filtersInPostQueryMatching() {
-      val cbh = underTest.createRowCallbackHandler(false, extractor);
+      final var cbh = underTest.createRowCallbackHandler(false, extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
@@ -129,7 +129,7 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void notifies() {
-      val cbh = underTest.createRowCallbackHandler(false, extractor);
+      final var cbh = underTest.createRowCallbackHandler(false, extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
@@ -142,7 +142,7 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void notifiesTransformationException() {
-      val cbh = underTest.createRowCallbackHandler(false, extractor);
+      final var cbh = underTest.createRowCallbackHandler(false, extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);

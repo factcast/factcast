@@ -23,7 +23,6 @@ import static org.mockito.Mockito.*;
 import com.google.common.eventbus.EventBus;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import lombok.val;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.internal.PgConstants;
 import org.factcast.store.pgsql.internal.PgMetrics;
@@ -210,7 +209,7 @@ public class PgListenerTest {
     pgListener.destroy();
 
     verify(eventBus, atLeastOnce()).post(factCaptor.capture());
-    val allEvents = factCaptor.getAllValues();
+    var allEvents = factCaptor.getAllValues();
 
     // first event is the general wakeup to the subscribers after startup
     assertEquals("scheduled-poll", allEvents.get(0).name());

@@ -18,7 +18,6 @@ package org.factcast.server.grpc;
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.*;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 
 @Slf4j
@@ -99,7 +98,7 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
 
       // in case someone knows exactly what status to throw
       if (exception instanceof StatusRuntimeException) {
-        val e = (StatusRuntimeException) exception;
+        var e = (StatusRuntimeException) exception;
         serverCall.close(e.getStatus(), metadata);
         return;
       }

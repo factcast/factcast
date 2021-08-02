@@ -2,7 +2,6 @@ package org.factcast.factus.projection;
 
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.val;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.junit.jupiter.api.*;
 
@@ -24,7 +23,7 @@ class ScopedNameTest {
 
   @Test
   void asStringVsToString() {
-    val n = ScopedName.of("foo", 2);
+    var n = ScopedName.of("foo", 2);
 
     assertThat(n.asString()).isEqualTo("foo_2");
     assertThat(n.toString()).isEqualTo("ScopedName(key=foo_2)");
@@ -32,8 +31,8 @@ class ScopedNameTest {
 
   @Test
   void testWither() {
-    val s = ScopedName.of("foo");
-    val s2 = s.with("bar");
+    var s = ScopedName.of("foo");
+    var s2 = s.with("bar");
 
     assertThat(s).isNotSameAs(s2);
     assertThat(s.asString()).isEqualTo("foo");
@@ -42,7 +41,7 @@ class ScopedNameTest {
 
   @Test
   void testWitherRefusesEmpty() {
-    val s = ScopedName.of("foo");
+    var s = ScopedName.of("foo");
     assertThatThrownBy(
             () -> {
               s.with(" ");

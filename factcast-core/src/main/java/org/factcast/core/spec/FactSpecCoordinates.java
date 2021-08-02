@@ -19,7 +19,6 @@ import lombok.NonNull;
 import lombok.Value;
 import lombok.With;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.factus.event.Specification;
 
@@ -56,7 +55,7 @@ public class FactSpecCoordinates {
 
     String defaultType = clazz.getSimpleName();
 
-    val spec = clazz.getAnnotation(Specification.class);
+    var spec = clazz.getAnnotation(Specification.class);
     if (spec == null) {
       throw new IllegalArgumentException(
           "@" + Specification.class.getSimpleName() + " missing on " + clazz);

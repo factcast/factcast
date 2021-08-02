@@ -5,7 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.UUID;
 import lombok.NonNull;
-import lombok.val;
+
 import org.factcast.factus.redis.batch.RedissonBatchManager;
 import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.factcast.factus.serializer.ProjectionMetaData;
@@ -86,7 +86,7 @@ class AbstractRedisManagedProjectionTest {
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
       when(bucket.get()).thenReturn(id);
 
-      val result = underTest.factStreamPosition();
+      final var result = underTest.factStreamPosition();
 
       assertThat(result).isEqualTo(id);
     }
@@ -104,7 +104,7 @@ class AbstractRedisManagedProjectionTest {
       when(tx.getBucket(any(), any())).thenReturn(bucket);
       when(bucket.get()).thenReturn(id);
 
-      val result = underTest.factStreamPosition();
+      final var result = underTest.factStreamPosition();
 
       assertThat(result).isEqualTo(id);
     }
@@ -193,7 +193,7 @@ class AbstractRedisManagedProjectionTest {
       when(config.getLockWatchdogTimeout()).thenReturn(1000L);
       AbstractRedisManagedProjection underTest = new TestProjection(redisson);
 
-      val wt = underTest.acquireWriteToken();
+      final var wt = underTest.acquireWriteToken();
 
       verify(lock).lock();
       assertThat(wt).isNotNull().isInstanceOf(RedisWriterToken.class);

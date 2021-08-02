@@ -25,7 +25,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.Subscription;
@@ -155,7 +154,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
           new TimerTask() {
             @Override
             public void run() {
-              val last = lastNotification.get();
+              var last = lastNotification.get();
 
               if (System.currentTimeMillis() - last > gracePeriod) {
                 onError(new StaleSubscriptionDetectedException(last, gracePeriod));

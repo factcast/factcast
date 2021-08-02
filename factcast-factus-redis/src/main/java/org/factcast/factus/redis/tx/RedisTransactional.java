@@ -3,7 +3,6 @@ package org.factcast.factus.redis.tx;
 import java.lang.annotation.*;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
-import lombok.val;
 import org.redisson.api.TransactionOptions;
 
 @Retention(RetentionPolicy.RUNTIME)
@@ -35,7 +34,7 @@ public @interface RedisTransactional {
     }
 
     public static TransactionOptions with(@Nullable RedisTransactional transactional) {
-      val opts = create();
+      var opts = create();
 
       if (transactional != null) {
 

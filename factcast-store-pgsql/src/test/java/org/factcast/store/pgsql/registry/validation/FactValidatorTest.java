@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 import com.github.fge.jsonschema.main.JsonSchema;
 import io.micrometer.core.instrument.Tags;
 import java.util.Optional;
-import lombok.val;
+
 import org.factcast.core.Fact;
 import org.factcast.store.pgsql.PgConfigurationProperties;
 import org.factcast.store.pgsql.registry.NOPRegistryMetrics;
@@ -48,7 +48,7 @@ public class FactValidatorTest {
 
   @Test
   public void testFailsToValidateIfNotValidatable() {
-    val registryMetrics = spy(new NOPRegistryMetrics());
+    final var registryMetrics = spy(new NOPRegistryMetrics());
 
     PgConfigurationProperties props = mock(PgConfigurationProperties.class);
     when(props.isValidationEnabled()).thenReturn(true);
@@ -76,7 +76,7 @@ public class FactValidatorTest {
 
   @Test
   public void testFailsToValidateIfValidatableButMissingSchema() throws Exception {
-    val registryMetrics = spy(new NOPRegistryMetrics());
+    final var registryMetrics = spy(new NOPRegistryMetrics());
 
     PgConfigurationProperties props = mock(PgConfigurationProperties.class);
     when(props.isValidationEnabled()).thenReturn(true);
@@ -140,7 +140,7 @@ public class FactValidatorTest {
 
   @Test
   public void testFailsToValidateWithMatchingSchemaButNonMatchingFact() throws Exception {
-    val registryMetrics = spy(new NOPRegistryMetrics());
+    final var registryMetrics = spy(new NOPRegistryMetrics());
 
     PgConfigurationProperties props = mock(PgConfigurationProperties.class);
     when(props.isValidationEnabled()).thenReturn(true);

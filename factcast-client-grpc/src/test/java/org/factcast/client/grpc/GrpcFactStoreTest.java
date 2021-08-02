@@ -17,8 +17,8 @@ package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.factcast.core.TestHelper.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -28,7 +28,6 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
-import lombok.val;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
@@ -108,42 +107,42 @@ class GrpcFactStoreTest {
   @Test
   void configureWithFastForwardEnabled() {
     when(properties.isEnableFastForward()).thenReturn(true);
-    val meta = uut.prepareMetaData("lz4");
+    var meta = uut.prepareMetaData("lz4");
     assertThat(meta.containsKey(Headers.FAST_FORWARD)).isTrue();
   }
 
   @Test
   void configureWithFastForwardDisabled() {
     when(properties.isEnableFastForward()).thenReturn(false);
-    val meta = uut.prepareMetaData("lz4");
+    var meta = uut.prepareMetaData("lz4");
     assertThat(meta.containsKey(Headers.FAST_FORWARD)).isFalse();
   }
 
   @Test
   void configureWithBatchSize1() {
     when(properties.getCatchupBatchsize()).thenReturn(1);
-    val meta = uut.prepareMetaData("lz4");
+    var meta = uut.prepareMetaData("lz4");
     assertThat(meta.containsKey(Headers.CATCHUP_BATCHSIZE)).isFalse();
   }
 
   @Test
   void configureWithBatchSize10() {
     when(properties.getCatchupBatchsize()).thenReturn(10);
-    val meta = uut.prepareMetaData("lz4");
+    var meta = uut.prepareMetaData("lz4");
     assertThat(meta.get(Headers.CATCHUP_BATCHSIZE)).isEqualTo(String.valueOf(10));
   }
 
   @Test
   void fetchById() {
     TestFact fact = new TestFact();
-    val uuid = fact.id();
-    val conv = new ProtoConverter();
-    val id = conv.toProto(uuid);
+    var uuid = fact.id();
+    var conv = new ProtoConverter();
+    var id = conv.toProto(uuid);
     when(blockingStub.fetchById(eq(id)))
         .thenReturn(
             MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
 
-    val result = uut.fetchById(fact.id());
+    var result = uut.fetchById(fact.id());
     assertThat(result).isPresent();
     assertThat(result.get().id()).isEqualTo(uuid);
   }
@@ -151,14 +150,14 @@ class GrpcFactStoreTest {
   @Test
   void fetchByIdAndVersion() {
     TestFact fact = new TestFact();
-    val uuid = fact.id();
-    val conv = new ProtoConverter();
-    val id = conv.toProto(uuid, 100);
+    var uuid = fact.id();
+    var conv = new ProtoConverter();
+    var id = conv.toProto(uuid, 100);
     when(blockingStub.fetchByIdAndVersion(eq(id)))
         .thenReturn(
             MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
 
-    val result = uut.fetchByIdAndVersion(fact.id(), 100);
+    var result = uut.fetchByIdAndVersion(fact.id(), 100);
     assertThat(result).isPresent();
     assertThat(result.get().id()).isEqualTo(uuid);
   }
@@ -166,8 +165,8 @@ class GrpcFactStoreTest {
   @Test
   void fetchByIdThrowsRetryable() {
     TestFact fact = new TestFact();
-    val uuid = fact.id();
-    val id = conv.toProto(uuid);
+    var uuid = fact.id();
+    var id = conv.toProto(uuid);
     when(blockingStub.fetchById(eq(id))).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
 
     assertThatThrownBy(() -> uut.fetchById(fact.id())).isInstanceOf(RetryableException.class);
@@ -176,8 +175,8 @@ class GrpcFactStoreTest {
   @Test
   void fetchByIdAndVersionThrowsRetryable() {
     TestFact fact = new TestFact();
-    val uuid = fact.id();
-    val id = conv.toProto(uuid, 100);
+    var uuid = fact.id();
+    var id = conv.toProto(uuid, 100);
     when(blockingStub.fetchByIdAndVersion(eq(id)))
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
 
@@ -380,7 +379,7 @@ class GrpcFactStoreTest {
     UUID id = new UUID(0, 1);
     StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
     when(blockingStub.stateFor(any())).thenReturn(conv.toProto(id));
-    val list = Arrays.asList(FactSpec.ns("foo").aggId(id));
+    var list = Arrays.asList(FactSpec.ns("foo").aggId(id));
     uut.stateFor(list);
     verify(blockingStub).stateForSpecsJson(conv.toProtoFactSpecs(list));
   }
@@ -483,7 +482,7 @@ class GrpcFactStoreTest {
   @Test
   void getSnapshot() {
     SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    val snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+    var snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
     when(blockingStub.getSnapshot(eq(conv.toProto(id))))
         .thenReturn(conv.toProtoSnapshot(Optional.of(snap)));
 
@@ -493,7 +492,7 @@ class GrpcFactStoreTest {
   @Test
   void setSnapshotException() {
     SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    val snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+    var snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
     when(blockingStub.setSnapshot(eq(conv.toProto(snap))))
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
 
@@ -503,7 +502,7 @@ class GrpcFactStoreTest {
   @Test
   void setSnapshot() {
     SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    val snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+    var snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
     when(blockingStub.setSnapshot(eq(conv.toProto(snap)))).thenReturn(conv.empty());
 
     uut.setSnapshot(snap);
@@ -580,8 +579,8 @@ class GrpcFactStoreTest {
     void translatesSRE() {
 
       String msg = "wrong";
-      val e = new FactValidationException(msg);
-      val metadata = new Metadata();
+      var e = new FactValidationException(msg);
+      var metadata = new Metadata();
       metadata.put(
           Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
       metadata.put(
@@ -627,8 +626,8 @@ class GrpcFactStoreTest {
     void translatesSRE() throws Exception {
 
       String msg = "wrong";
-      val e = new FactValidationException(msg);
-      val metadata = new Metadata();
+      var e = new FactValidationException(msg);
+      var metadata = new Metadata();
       metadata.put(
           Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
       metadata.put(

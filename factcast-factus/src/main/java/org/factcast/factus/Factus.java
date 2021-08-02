@@ -21,7 +21,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import lombok.NonNull;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
@@ -107,7 +106,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   @SuppressWarnings("unchecked")
   default <S extends SnapshotProjection> Locked<S> withLockOn(@NonNull S snapshotProjection) {
     if (snapshotProjection instanceof Aggregate) {
-      val aggregate = (Aggregate) snapshotProjection;
+      var aggregate = (Aggregate) snapshotProjection;
       return (Locked<S>) withLockOn(aggregate.getClass(), AggregateUtil.aggregateId(aggregate));
     } else {
       return (Locked<S>) withLockOn(snapshotProjection.getClass());

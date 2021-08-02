@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import io.grpc.*;
 import io.grpc.Status.Code;
-import lombok.val;
 import org.factcast.core.FactValidationException;
 import org.factcast.server.grpc.GrpcServerExceptionInterceptor.ExceptionHandlingServerCallListener;
 import org.junit.jupiter.api.*;
@@ -143,11 +142,11 @@ class GrpcServerExceptionInterceptorTest {
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
 
         String msg = "123";
-        val ex = new RequestCanceledByClientException(msg);
+        var ex = new RequestCanceledByClientException(msg);
 
         uut.handleException(ex, serverCall, metadata);
 
-        val cap = ArgumentCaptor.forClass(Status.class);
+        var cap = ArgumentCaptor.forClass(Status.class);
         verify(serverCall).close(cap.capture(), same(metadata));
 
         assertThat(cap.getValue().getCode()).isEqualTo(Code.CANCELLED);
@@ -159,10 +158,10 @@ class GrpcServerExceptionInterceptorTest {
 
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
         String msg = "456";
-        val ex = new StatusRuntimeException(Status.ALREADY_EXISTS.withDescription(msg));
+        var ex = new StatusRuntimeException(Status.ALREADY_EXISTS.withDescription(msg));
         uut.handleException(ex, serverCall, metadata);
 
-        val cap = ArgumentCaptor.forClass(Status.class);
+        var cap = ArgumentCaptor.forClass(Status.class);
         verify(serverCall).close(cap.capture(), same(metadata));
 
         assertThat(cap.getValue().getCode()).isEqualTo(Code.ALREADY_EXISTS);
@@ -174,11 +173,11 @@ class GrpcServerExceptionInterceptorTest {
 
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
         String msg = "456";
-        val ex = new FactValidationException(msg);
-        val metadata = new Metadata(); // dont use mock here
+        var ex = new FactValidationException(msg);
+        var metadata = new Metadata(); // dont use mock here
         uut.handleException(ex, serverCall, metadata);
 
-        val cap = ArgumentCaptor.forClass(Metadata.class);
+        var cap = ArgumentCaptor.forClass(Metadata.class);
         verify(serverCall).close(any(), cap.capture());
 
         assertThat(

@@ -5,11 +5,9 @@ import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.function.Function;
-import lombok.val;
 import org.factcast.core.Fact;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -31,9 +29,9 @@ class SpringTransactionalLensTest {
   class Lifecycle {
     @Test
     void testLifecycle() {
-      val p = new ASpringTxManagedProjection(transactionManager);
+      var p = new ASpringTxManagedProjection(transactionManager);
 
-      val uut = new SpringTransactionalLens(p, springTxManager, definition);
+      var uut = new SpringTransactionalLens(p, springTxManager, definition);
 
       uut.beforeFactProcessing(f);
 
@@ -97,7 +95,7 @@ class SpringTransactionalLensTest {
       when(definition.getTimeout()).thenReturn(1);
 
       SpringTxManagedProjection p = new ASpringTxManagedProjection(transactionManager);
-      val uut = new SpringTransactionalLens(p, springTxManager, definition);
+      var uut = new SpringTransactionalLens(p, springTxManager, definition);
 
       assertThat(uut.flushTimeout()).isEqualTo(800L);
     }
@@ -110,7 +108,7 @@ class SpringTransactionalLensTest {
     void returnsCurrentTx() {
       SpringTxManagedProjection p = new ASpringTxManagedProjection(transactionManager);
 
-      val underTest = new SpringTransactionalLens(p, springTxManager, definition);
+      var underTest = new SpringTransactionalLens(p, springTxManager, definition);
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(TransactionTemplate.class);
       assertThat(t).isNotNull();
@@ -124,7 +122,7 @@ class SpringTransactionalLensTest {
     void returnsNullForOtherType() {
       SpringTxManagedProjection p = new ASpringTxManagedProjection(transactionManager);
 
-      val underTest = new SpringTransactionalLens(p, springTxManager, definition);
+      var underTest = new SpringTransactionalLens(p, springTxManager, definition);
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(Fact.class);
       assertThat(t).isNull();

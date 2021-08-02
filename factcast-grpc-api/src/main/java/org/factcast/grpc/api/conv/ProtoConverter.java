@@ -22,7 +22,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -367,7 +366,7 @@ public class ProtoConverter {
 
   public MSG_Snapshot toProto(
       @NonNull SnapshotId id, @NonNull UUID state, @NonNull byte[] bytes, boolean compressed) {
-    val ret =
+    var ret =
         MSG_Snapshot.newBuilder()
             .setId(toProto(id))
             .setFactId(toProto(state))
@@ -393,7 +392,8 @@ public class ProtoConverter {
   }
 
   public List<FactSpec> fromProto(MSG_FactSpecsJson request) {
-    return FactCastJson.readValue(new TypeReference<List<FactSpec>>() {}, request.getJson());
+    return FactCastJson.readValue(new TypeReference<>() {
+    }, request.getJson());
   }
 
   public MSG_FactSpecsJson toProtoFactSpecs(List<FactSpec> specs) {
