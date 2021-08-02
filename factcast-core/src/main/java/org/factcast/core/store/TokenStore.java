@@ -28,4 +28,6 @@ public interface TokenStore {
 
   @NonNull
   Optional<State> get(@NonNull StateToken token);
+
+  default void compact() {}
 }

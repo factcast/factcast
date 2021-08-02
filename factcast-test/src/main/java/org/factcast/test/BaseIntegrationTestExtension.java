@@ -53,7 +53,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .withEnv("grpc_server_port", "9090")
                       .withEnv("factcast_security_enabled", "false")
                       .withEnv("factcast_grpc_bandwidth_disabled", "true")
-                      .withEnv("factcast_store_pgsql_integrationTestMode", "true")
+                      .withEnv("factcast_store_integrationTestMode", "true")
                       .withEnv(
                           "spring_datasource_url",
                           "jdbc:postgresql://" + dbName + "/fc?user=fc&password=fc")

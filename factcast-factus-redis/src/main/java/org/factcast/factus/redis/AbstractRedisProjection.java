@@ -62,22 +62,22 @@ abstract class AbstractRedisProjection
 
   @SuppressWarnings("ConstantConditions")
   @Override
-  public void factStreamPosition(@NonNull UUID state) {
+  public void factStreamPosition(@NonNull UUID factStreamPosition) {
     RedissonTxManager txMan = RedissonTxManager.get(redisson);
     if (txMan.inTransaction()) {
       txMan.join(
           tx -> {
-            stateBucket(txMan.getCurrentTransaction()).set(state);
+            stateBucket(txMan.getCurrentTransaction()).set(factStreamPosition);
           });
     } else {
       RedissonBatchManager bman = RedissonBatchManager.get(redisson);
       if (bman.inBatch()) {
         bman.join(
             tx -> {
-              stateBucket(bman.getCurrentBatch()).setAsync(state);
+              stateBucket(bman.getCurrentBatch()).setAsync(factStreamPosition);
             });
       } else {
-        stateBucket().set(state);
+        stateBucket().set(factStreamPosition);
       }
     }
   }
