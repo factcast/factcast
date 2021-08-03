@@ -14,31 +14,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-
 public class RedissionTransactionalProjectionExample {
 
-    @ProjectionMetaData(serial = 1)
-    @RedisTransactional
-    public static class UserNames extends AbstractRedisManagedProjection {
+  @ProjectionMetaData(serial = 1)
+  @RedisTransactional
+  public static class UserNames extends AbstractRedisManagedProjection {
 
-        public UserNames(RedissonClient redisson) {
-            super(redisson);
-        }
-
-        public List<String> getUserNames() {
-            Map<UUID, String> userNames = redisson.getMap(redisKey());
-            return new ArrayList<>(userNames.values());
-        }
-
-        @Handler
-        void apply(UserCreated e, RTransaction tx) {
-            Map<UUID, String> userNames = tx.getMap(redisKey());
-            userNames.put(e.aggregateId(), e.userName());
-        }
-
-        @Handler
-        void apply(UserDeleted e, RTransaction tx) {
-            tx.getMap(redisKey()).remove(e.aggregateId());
-        }
+    public UserNames(RedissonClient redisson) {
+      super(redisson);
     }
+
+    public List<String> getUserNames() {
+      Map<UUID, String> userNames = redisson.getMap(redisKey());
+      return new ArrayList<>(userNames.values());
+    }
+
+    @Handler
+    void apply(UserCreated e, RTransaction tx) {
+      Map<UUID, String> userNames = tx.getMap(redisKey());
+      userNames.put(e.aggregateId(), e.userName());
+    }
+
+    @Handler
+    void apply(UserDeleted e, RTransaction tx) {
+      tx.getMap(redisKey()).remove(e.aggregateId());
+    }
+  }
 }
