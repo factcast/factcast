@@ -68,7 +68,11 @@ public abstract class AbstractTransactionalLens implements ProjectorLens {
 
     boolean bufferFull = factsProcessed >= bulkSize;
     if (bufferFull) {
-      log.trace("Bulk considered full on {}.", projectionName);
+      log.trace(
+          "Bulk considered full on {}. (applied: {}, bulk size: {})",
+          projectionName,
+          factsProcessed,
+          bulkSize);
     }
 
     boolean timedOut = timedOut();
