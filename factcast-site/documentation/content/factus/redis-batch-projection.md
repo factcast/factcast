@@ -11,7 +11,7 @@ identifier = "redis-batch-projections"
 weight = 1023
 +++
 
-A *Redis batch projection* is a [transactional projection]({{< ref "transactional_projections.md">}}) 
+A *Redis batch projection* is a [transactional projection]({{< ref "transactional-projections.md">}}) 
 based on [Redisson RBatch](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RBatch.html)
 
 Working with a *Redis batch projection* is **asynchronous** as multiple commands are collected and 
