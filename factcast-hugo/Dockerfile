@@ -1,13 +1,18 @@
 FROM node:16-slim
 
-ADD resources/hugo_extended_0.87.0_Linux-64bit.deb /opt/hugo_extended_0.87.0_Linux-64bit.deb
+#RUN apt update && \
+#    apt install -y git && \
+#    mkdir /srv/hugo
 
-RUN dpkg -i /opt/hugo_extended_0.87.0_Linux-64bit.deb && mkdir /srv/hugo
+RUN apt update && \
+    apt install -y git && \
+    mkdir /srv/hugo
 
 WORKDIR /srv/hugo
 
 RUN npm install -g autoprefixer && \
-    npm install -g postcss-cli
+    npm install -g postcss-cli && \
+    npm install -g hugo-extended
 
 VOLUME /srv/hugo
 
