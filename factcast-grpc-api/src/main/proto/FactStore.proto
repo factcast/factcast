@@ -45,12 +45,14 @@ message MSG_Notification{
     Facts = 4;
     Ffwd = 5;
     KeepAlive = 6;
+    Info = 7;
   }
 
   Type type = 1;
   MSG_Fact fact = 2;
   MSG_UUID id = 3;
   MSG_Facts facts = 4;
+  MSG_Info info = 5;
 }
 
 /**
@@ -86,6 +88,12 @@ message MSG_Fact {
   string header = 1;
   string payload = 2;
 }
+
+message MSG_Info {
+  int64 serialStart = 1;
+  int64 serialHorizon = 2;
+}
+
 
 /**
 	List of Facts to publish atomically

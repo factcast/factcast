@@ -357,7 +357,7 @@ class FactusImplTest {
       // make sure m.executeUpdate actually calls the updated passed so
       // that
       // the prepared update happens on the projection and updates its
-      // state.
+      // fact stream position.
       Mockito.verify(ea, times(2)).apply(any(Fact.class));
       assertThat(m.factStreamPosition()).isEqualTo(f2.id());
     }
@@ -804,7 +804,7 @@ class FactusImplTest {
       // ... and then it should be applied to event projector
       verify(eventApplier).apply(mockedFact);
 
-      // ... and the state should be updated as well
+      // ... and the fact stream position should be updated as well
       verify(subscribedProjection).factStreamPosition(factId);
 
       // onCatchup()

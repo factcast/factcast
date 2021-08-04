@@ -15,13 +15,36 @@
  */
 package org.factcast.core.subscription.observer;
 
+import java.util.UUID;
+import lombok.Generated;
+import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.FactStreamInfo;
+import org.slf4j.LoggerFactory;
 
 /**
- * an observer that provides Facts.
- *
- * <p>see {@link GenericObserver}.
+ * Callback interface to use when subscribing to Facts from FactCast.
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-public interface FactObserver extends GenericObserver<Fact> {}
+@Generated // sneakily skip coverage generation
+public interface FactObserver {
+
+  void onNext(@NonNull Fact element);
+
+  default void onFastForward(@NonNull UUID factIdToFfwdTo) {}
+
+  default void onFactStreamInfo(@NonNull FactStreamInfo info) {}
+
+  default void onCatchup() {
+    // implement if you are interested in that event
+  }
+
+  default void onComplete() {
+    // implement if you are interested in that event
+  }
+
+  default void onError(@NonNull Throwable exception) {
+    LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);
+  }
+}

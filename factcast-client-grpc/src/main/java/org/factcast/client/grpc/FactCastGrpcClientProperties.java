@@ -15,6 +15,7 @@
  */
 package org.factcast.client.grpc;
 
+import java.time.Duration;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -29,6 +30,10 @@ public class FactCastGrpcClientProperties {
   private int catchupBatchsize = 50;
 
   private boolean enableFastForward = true;
+
+  private boolean enableFactStreamInfo = true;
+
+  private Duration catchupProgressInterval = Duration.ofSeconds(30);
 
   private String id = null;
 }
