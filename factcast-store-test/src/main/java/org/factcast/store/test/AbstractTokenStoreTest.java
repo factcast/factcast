@@ -27,7 +27,7 @@ import org.junit.jupiter.api.*;
 @SuppressWarnings("ALL")
 public abstract class AbstractTokenStoreTest {
 
-  TokenStore uut;
+  protected TokenStore uut;
 
   @BeforeEach
   public void setup() {

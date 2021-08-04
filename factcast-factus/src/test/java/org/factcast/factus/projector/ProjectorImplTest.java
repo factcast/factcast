@@ -183,10 +183,10 @@ class ProjectorImplTest {
     @Test
     void createSimple() {
       // INIT
-      UUID state = UUID.fromString("9258562c-e6aa-4855-a765-3b1f49a113d5");
+      UUID factStreamPosition = UUID.fromString("9258562c-e6aa-4855-a765-3b1f49a113d5");
 
       ComplexProjection projection = new ComplexProjection();
-      projection.factStreamPosition(state);
+      projection.factStreamPosition(factStreamPosition);
 
       ProjectorImpl<ComplexAggregate> underTest = new ProjectorImpl<>(eventSerializer, projection);
 
@@ -334,6 +334,22 @@ class ProjectorImplTest {
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("No handler methods discovered on");
+    }
+
+    @Test
+    void handlerWithUnspecificVersion() {
+      ProjectorImpl<Projection> p =
+          new ProjectorImpl<>(eventSerializer, new HandlerWithoutVersionProjection());
+
+      assertThatNoException()
+          .isThrownBy(
+              () -> {
+                Fact f1 = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
+                Fact f2 = Fact.builder().ns("ns").type("type").version(2).buildWithoutPayload();
+
+                p.apply(f1);
+                p.apply(f2);
+              });
     }
   }
 
@@ -527,5 +543,10 @@ class ProjectorImplTest {
     void handle(Object someObject) {
       // nothing
     }
+  }
+
+  static class HandlerWithoutVersionProjection implements Projection {
+    @HandlerFor(ns = "ns", type = "type")
+    void applyFactWithoutSpecificVersion(Fact f) {}
   }
 }

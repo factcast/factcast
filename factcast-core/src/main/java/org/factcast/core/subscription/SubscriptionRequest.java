@@ -35,6 +35,8 @@ public interface SubscriptionRequest {
 
   long keepaliveIntervalInMs();
 
+  boolean streamInfo();
+
   boolean continuous();
 
   boolean ephemeral();

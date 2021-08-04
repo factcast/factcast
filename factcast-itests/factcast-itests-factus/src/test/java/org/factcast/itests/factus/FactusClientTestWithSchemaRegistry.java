@@ -108,7 +108,7 @@ public class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrat
           .withEnv("factcast_security_enabled", "false")
           .withEnv("spring_datasource_url", "jdbc:postgresql://db/fc?user=fc&password=fc")
           .withFileSystemBind(folderForSchemas.toString(), "/schemata/")
-          .withEnv("FACTCAST_STORE_PGSQL_SCHEMA_REGISTRY_URL", "file:///schemata")
+          .withEnv("FACTCAST_STORE_SCHEMA_REGISTRY_URL", "file:///schemata")
           .withNetwork(_docker_network)
           .dependsOn(_postgres)
           .withLogConsumer(

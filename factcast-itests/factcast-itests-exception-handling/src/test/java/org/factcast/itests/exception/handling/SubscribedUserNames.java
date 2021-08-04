@@ -42,8 +42,8 @@ public class SubscribedUserNames implements SubscribedProjection {
   }
 
   @Override
-  public void factStreamPosition(@NonNull UUID pos) {
-    factStreamPosition = pos;
+  public void factStreamPosition(@NonNull UUID factStreamPosition) {
+    this.factStreamPosition = factStreamPosition;
   }
 
   @Override
