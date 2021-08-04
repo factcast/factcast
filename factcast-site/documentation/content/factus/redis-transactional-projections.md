@@ -135,17 +135,28 @@ In contrast to the manual steps in the [*Spring transactional projection*]({{<re
 updating the position of the Fact stream is handled automatically. From a developer perspective, no action is necessary. 
 
 
-Java Interface vs. Redission Specific
--------------------------------------
-As demonstrated in the example above, Redission provides implementations for standard Java data structures like `Map`. 
-Alternatively also the specific Redission type (e.g. [RMap](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html)) 
-could have been used. To support your decision making here are some pros and cons: 
+Java Collections vs. Redission Interface
+----------------------------------------
+As seen in the above examples some Redission data-structures also implement the appropriate Java Collections 
+interface. For example, you can assign a [Redission RMap](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html)
+also to a standard Java `Map`:
 
-Pro Java Standard Interface:
-- standard Java -> no reading required
-- easier to test, particularly when the data structure is used for more than just `put` or `remove`    
+```java
+// 1) use specific Redission type
+RMap<UUID, String> = tx.getMap(getRedisKey());
 
-Pro Reddision Types:
+// 2) use Java Collections type
+Map<UUID, String> = tx.getMap(getRedisKey());
+```
+
+There are good reasons for either variants, `1)` and `2)`: 
+
+### Pro specific Reddision Type
+
 - extended functionality which e.g. reduces I/O load. (e.g. see [`RMap.fastPut(...)`](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html#fastPut(K,V)) 
 and [`RMap.fastRemove(...)`](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html#fastRemove(K...).)
-- data structures which are not available in standard Java Collections (e.g. [RedissonListMultimap](https://javadoc.io/doc/org.redisson/redisson/latest/org/redisson/RedissonListMultimap.html))
+- only option when using data-structures which are not available in standard Java Collections (e.g. [RedissonListMultimap](https://javadoc.io/doc/org.redisson/redisson/latest/org/redisson/RedissonListMultimap.html))
+
+### Pro Java Collections Type
+- standard Java -> no reading required
+- easier to test, particularly when the data-structure is involved in some logic     
