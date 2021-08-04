@@ -27,6 +27,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
@@ -181,6 +182,11 @@ class GrpcObserverAdapter implements FactObserver {
       // we have not sent any fact. check for ffwding
       observer.onNext(converter.createNotificationForFastForward(factIdToFfwdTo));
     }
+  }
+
+  @Override
+  public void onFactStreamInfo(FactStreamInfo info) {
+    observer.onNext(converter.createInfoNotification(info));
   }
 
   public void shutdown() {
