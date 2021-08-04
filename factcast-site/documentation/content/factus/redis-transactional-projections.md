@@ -11,7 +11,7 @@ identifier = "redis-transactional-projections"
 weight = 1022
 +++
 
-A *Redis transactional projection* is a [transactional projection]({{<ref "transactional_projections">}}) 
+A *Redis transactional projection* is a [transactional projection]({{<ref "transactional-projections">}}) 
 based on [Redission RTransaction](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RTransaction.html).
 
 Compared to a [Spring transactional projection]({{< ref "spring-transactional-projections.md">}}), a *Redis transactional projection* is more lightweight since
