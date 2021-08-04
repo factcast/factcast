@@ -23,7 +23,7 @@ constantly communicates with the Redis server.
 
 For this reason, a *Redis transactional projection* is best used for projections which
 - handle only a few events and 
-- which need to read the projection data during the handling of an event. 
+- which need to access the projection's data during the handling of an event. 
  
 For a more performant alternative see [Redis batch projection]({{<ref "redis-batch-projection.md">}})
 
@@ -99,8 +99,8 @@ First we ask the transaction to load the projection's state from Redis.
 In this case it's a map with `UUID` keys and `String` values. 
 Then we update the projection by calling `put` on the map and providing it with the user ID and the user name extracted from the event.
 
-Note: Transaction handling is the responsibility of Factus. As developers, we must not call e.g. `commit()` or `rollback()` ourselfs. 
-Instead, we leave the task of committing the transaction in right moment to Factus.
+Note: Transaction handling is the responsibility of Factus. As developers, you must not call e.g. `commit()` or `rollback()` yourself. 
+Instead, leave the task of committing the transaction in right moment to Factus.
 
 In the previous example the method `getRedisKeys()` was used to retrieve the Redis key of the projection. 
 Let's have a closer look at this method in the next section.
@@ -125,8 +125,8 @@ graph LR
     F -->|automatically updates Fact stream position in| S[ 2. ...UserNames_1_state_tracking]
     F -->|handles concurrent update attempts via| L[ 3. ...UserNames_1_lock]
 {{</mermaid>}}
-*By default a projection is related to three keys in Redis. The application programer uses the first one to access the projection data. 
-The last two are managed automatically by Factus.*    
+*By default a projection is related to three keys in Redis. A developer uses the first one to access the projection data. 
+The last two are automatically managed by Factus.*    
 
 
 Writing The Fact Position
@@ -135,10 +135,10 @@ In contrast to the manual steps in the [*Spring transactional projection*]({{<re
 updating the position of the Fact stream is handled automatically. From a developer perspective, no action is necessary. 
 
 
-Redission Data Structures
--------------------------
+Java Interface vs. Redission Specific
+-------------------------------------
 As demonstrated in the example above, Redission provides implementations for standard Java data structures like `Map`. 
-However, Alternatively also the specific Redission type (e.g. [RMap](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html) 
+Alternatively also the specific Redission type (e.g. [RMap](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html)) 
 could have been used. To support your decision making here are some pros and cons: 
 
 Pro Java Standard Interface:
