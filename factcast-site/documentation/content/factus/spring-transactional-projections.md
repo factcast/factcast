@@ -180,7 +180,7 @@ In case no previous Fact position exists, `null` is returned.
 
 ### Applying Events
 
-As explained [in the introduction to transactional projections]({{< ref "transactional_projections.md" >}}),
+As explained [in the introduction to transactional projections]({{< ref "transactional-projections.md" >}}),
 when receiving an event, two write operations towards the data-store (in our case a JDBC database) happen:
 
 1. the projection is updated
