@@ -34,6 +34,7 @@ import org.assertj.core.util.Lists;
 import org.factcast.client.grpc.ClientStreamObserver.ClientKeepalive;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
+import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -258,6 +259,14 @@ class ClientStreamObserverTest {
     sleep(grace);
     // now it should have triggered an error
     verify(subscription, times(1)).notifyError(any(StaleSubscriptionDetectedException.class));
+  }
+
+  @Test
+  void handlesFactStreamInfo() {
+    FactStreamInfo fsi = new FactStreamInfo(1, 10);
+    uut.onNext(converter.createInfoNotification(fsi));
+
+    verify(subscription).notifyFactStreamInfo(eq(fsi));
   }
 
   @SneakyThrows

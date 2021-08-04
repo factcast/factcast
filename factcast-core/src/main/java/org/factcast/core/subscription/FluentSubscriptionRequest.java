@@ -37,9 +37,11 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
   boolean ephemeral = false;
 
-  long maxBatchDelayInMs = 20; // changed from 0 in 0.4.0
+  long maxBatchDelayInMs = 0; // should be changed from 0 in 0.4.0
 
   long keepaliveIntervalInMs = 0;
+
+  boolean streamInfo;
 
   boolean continuous;
 
@@ -53,6 +55,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
   FluentSubscriptionRequest() {
     debugInfo = createDebugInfo();
+    streamInfo = true;
   }
 
   private String createDebugInfo() {
