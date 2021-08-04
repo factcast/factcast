@@ -30,16 +30,20 @@ sequenceDiagram
 *In a Transactional Projection, the projection update and the update of the Fact stream position run inside a transaction* 
 
 Factus supports transactions for the following external data stores:
-- [data stores supported by Spring Transaction Management]({{< ref "spring_transactional_projections.md" >}}) (e.g. databases via JDBC)
+- [data stores supported by Spring Transaction Management]({{< ref "spring-transactional-projections.md" >}}) (e.g. databases via JDBC)
 - Redis
+    - via [classic transactions]({{< ref "redis-transactional-projections.md" >}})
+    - via [batching]({{< ref "redis-batch-projection.md" >}})
 
 
 Configuration
 -------------
 
 Transactional projections are declared via specific annotations. Currently, supported are
-- `@SpringTransactional` and
-- `@RedisTransactional`
+- [`@SpringTransactional`]({{< ref "spring-transactional-projections.md" >}}),
+- [`@RedisTransactional`]({{< ref "redis-transactional-projections.md" >}}) and
+- [`@RedisBatched`]({{< ref "redis-batch-projection.md" >}})
+
 
 These annotations share two common configuration parameters:
 
@@ -60,7 +64,8 @@ With *bulk processing*
 by e.g. locally collecting a certain amount of operations before sending them over the wire.
 - skipping unnecessary Fact stream position updates is possible (see next section).
 
-The size of the bulk is configured via the previously mentioned `size` value of the `@SpringTransactional` or `@RedisTransactional` annotation.
+The size of the bulk is configured via the previously mentioned `size` value of 
+the `@SpringTransactional`, `@RedisTransactional` or `@RedisBatched` annotation.
  
 Note: Bulk processing only takes place [in the `catchup` phase]({{< ref "concept/_index.md">}}). 
 
