@@ -1,14 +1,11 @@
-+++
-draft = false
-title = "Anatomy of a Fact"
-description = ""
-
-creatordisplayname = "Uwe Schaefer"
-creatoremail = "uwe@codesmell.de"
-parent = "concept"
-identifier = "anatomy"
-weight = 1
-+++
+---
+title: "The Anatomy of a Fact"
+linkTitle: "Anatomy of a Fact"
+menu:
+main:
+weight: 10
+type: docs
+---
 
 ## Facts
 

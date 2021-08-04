@@ -1,18 +1,10 @@
-+++
-draft = false
-title = "Fact Specification"
-description = ""
-
-creatordisplayname = "Uwe Schaefer"
-creatoremail = "uwe@codesmell.de"
-
-
-parent = "concept"
-identifier = "factspec"
-weight = 2
-+++
-
-## Fact Specification
+---
+title: "Fact Specification"
+menu:
+main:
+weight: 20
+type: docs
+---
 
 When consumers subscribe to a Stream of Events, it has to express, which Events he wants to receive. The more precise this can be done, the less resources like bandwidth, CPU-Time etc. are wasted.
 

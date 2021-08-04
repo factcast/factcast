@@ -1,16 +1,12 @@
-+++
-draft = false
-title = "Fact Stream Design"
-description = ""
 
-creatordisplayname = "Uwe Schaefer"
-creatoremail = "uwe@codesmell.de"
 
-parent = "concept"
-identifier = "factsteam"
-
-weight = 3
-+++
+---
+title: "FactStream Design"
+menu:
+main:
+weight: 30
+type: docs
+---
 
 ## Fact Stream design
 

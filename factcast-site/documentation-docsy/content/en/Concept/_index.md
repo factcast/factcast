@@ -1,14 +1,12 @@
 ---
-title: "Concept"
-linkTitle: "concept"
+title: "Concepts"
+linkTitle: "Concepts"
 menu:
   main:
-    weight: 5
+    weight: 20
+type: docs
 ---
 
-
-
-## Concept
 
 In order to use `FactCast` effectively it is necessary to have an overview of the concepts and to understand how `FactCast` might differ from other solutions you are already familiar with. So let's take a look at the basics:
 

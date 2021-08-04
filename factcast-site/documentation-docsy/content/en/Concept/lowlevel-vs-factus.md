@@ -1,17 +1,13 @@
-+++
-draft = false
-title = "Lowlevel-vs-Factus"
-description = ""
 
 
-creatordisplayname = "Uwe Schaefer"
-creatoremail = "uwe@codesmell.de"
+---
+title: "Lowlevel-vs-Factus"
+menu:
+main:
+weight: 99
+type: docs
+---
 
-
-parent = "concept"
-identifier = "lowlevelvsfactus"
-weight = 99
-+++
 
 ## Choose your weapon: FactCast vs Factus
 

@@ -1,20 +1,10 @@
-+++
-draft = false
-title = "Schema validation and Registry"
-description = ""
-date = "2017-04-24T18:36:24+02:00"
-
-
-creatordisplayname = "Uwe Schaefer"
-creatoremail = "uwe@codesmell.de"
-
-
-parent = "concept"
-identifier = "schema-registry"
-weight = 10
-
-
-+++
+---
+title: "Schema validation and Registry"
+menu:
+main:
+weight: 40
+type: docs
+---
 
 
 Since version 0.2.0, FactCast can be configured to validate Facts before publishing them. In order to do that, FactCast needs to have a Schema for the Namespace/Type/Version of a Fact, that is expected to live in a Schema-Registry. 
