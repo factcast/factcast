@@ -27,8 +27,8 @@ For this reason, a *Redis transactional projection* is best used for projections
  
 For a more performant alternative see [Redis batch projection]({{<ref "redis-batch-projection.md">}})
 
-General Structure
------------------
+Structure
+---------
 
 A *Redis transactional projection* has the following features:
 - it is annotated with `@RedisTransactional`
@@ -36,6 +36,7 @@ A *Redis transactional projection* has the following features:
     - the class `AbstractRedisManagedProjection` or 
     - the class `AbstractRedisSubscribedProjection`
 - it provides the serial number of the projection via the `@ProjectionMetaData` annotation
+- the handler methods receive an additional `RTransaction` parameter
 
 
 Example

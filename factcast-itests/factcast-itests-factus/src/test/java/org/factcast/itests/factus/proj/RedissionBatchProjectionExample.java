@@ -31,14 +31,14 @@ public class RedissionBatchProjectionExample {
     }
 
     @Handler
-    void apply(UserCreated created, RBatch tx) {
-      RMapAsync<UUID, String> userNames = tx.getMap(redisKey());
+    void apply(UserCreated created, RBatch batch) {
+      RMapAsync<UUID, String> userNames = batch.getMap(redisKey());
       userNames.putAsync(created.aggregateId(), created.userName());
     }
 
     @Handler
-    void apply(UserDeleted deleted, RBatch tx) {
-      tx.getMap(redisKey()).removeAsync(deleted.aggregateId());
+    void apply(UserDeleted deleted, RBatch batch) {
+      batch.getMap(redisKey()).removeAsync(deleted.aggregateId());
     }
   }
 }
