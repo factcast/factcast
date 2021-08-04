@@ -22,8 +22,7 @@ import static org.assertj.core.api.Assertions.*;
 @SpringBootTest
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @Slf4j
-public class RedissionTransactionalProjectionExampleITest
-    extends AbstractFactCastIntegrationTest {
+public class RedissionTransactionalProjectionExampleITest extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus factus;
 
