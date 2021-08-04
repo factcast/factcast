@@ -1,6 +1,7 @@
 baseURL = "https://docs.factcast.org/"
 languageCode = "en-us"
 title = "FactCast"
+themesdir = "themes"
 
 enableRobotsTXT = true
 
