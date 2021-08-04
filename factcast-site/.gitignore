@@ -2,3 +2,4 @@ target/
 stage
 **/public
 /bin/
+/documentation-docsy/themes/docsy/
