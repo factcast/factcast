@@ -32,7 +32,7 @@ Structure
 
 A *Redis batch projection* is defined as follows:
 
-- it is annotated with `@RedisBatch`
+- it is annotated with `@RedisBatched`
 - it extends either
     - the class `AbstractRedisManagedProjection` or
     - the class `AbstractRedisSubscribedProjection`
@@ -40,7 +40,7 @@ A *Redis batch projection* is defined as follows:
 - the handler methods receive an additional `RBatch` parameter
 
 This structure is similar to a [Redis transactional projection]({{<ref "redis-transactional-projections.md#structure">}}), 
-only the `@RedisBatch` annotation and the `RBatch` method parameter differ.  
+only the `@RedisBatched` annotation and the `RBatch` method parameter differ.  
 
 
 Example
@@ -51,7 +51,7 @@ We continue using the [previously introduced example]({{<ref "redis-transactiona
 
 ```java
 @ProjectionMetaData(serial = 1)
-@RedisBatched
+@RedisBatcheded
 public class UserNames extends AbstractRedisManagedProjection {
 
     public UserNames(RedissonClient redisson) {
@@ -103,5 +103,17 @@ which was introduced [here]({{<ref "redis-transactional-projections.md#automatic
 
 Note: Due to their asynchronous nature, calling `*Async(...)` methods on the `RMapAsync` object, is always non-blocking.    
 
+
+Configuration
+-------------
+
+The `@RedisBatcheded` annotation provides various configuration options:
+
+| Parameter Name         |  Description                                         | Default Value  |
+|------------------------|------------------------------------------------------|----------------|
+| `size`                 |  bulk size                                           |   50           |
+| `responseTimeout`      | timeout in milliseconds for Redis response           |   5000         |
+| `retryAttempts`        | maximum attempts to transmit batch of Redis commands |   5            |
+| `retryInterval`        | time interval in milliseconds between retry attempts |   3000         |
 
 
