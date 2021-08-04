@@ -136,6 +136,20 @@ In contrast to the manual steps in the [*Spring transactional projection*]({{<re
 updating the position of the Fact stream is handled automatically. From a developer perspective, no action is necessary. 
 
 
+Configuration
+-------------
+
+The `@RedisTransactional` annotation provides various configuration options:
+
+| Parameter Name         |  Description                                         | Default Value  |
+|------------------------|------------------------------------------------------|----------------|
+| `size`                 | bulk size                                           |   50           |
+| `timeout`              | timeout in milliseconds until a transaction is interrupted and rolled back |   30000    |
+| `responseTimeout`      | timeout in milliseconds for Redis response. Starts to countdown when transaction has been successfully submitted |   5000 |
+| `retryAttempts`        | maximum attempts to send transaction                 |   5            |
+| `retryInterval`        | time interval in milliseconds between retry attempts |   3000         |
+
+
 Java Collections vs. Redission Interface
 ----------------------------------------
 As seen in the above examples some Redission data-structures also implement the appropriate Java Collections 
