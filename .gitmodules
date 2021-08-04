@@ -1,0 +1,3 @@
+[submodule "factcast-site/documentation-docsy/themes/docsy"]
+	path = factcast-site/documentation-docsy/themes/docsy
+	url = https://github.com/google/docsy.git
