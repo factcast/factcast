@@ -24,26 +24,24 @@ import static org.assertj.core.api.Assertions.*;
 @Slf4j
 public class RedissionBatchProjectionExampleITest extends AbstractFactCastIntegrationTest {
 
-    @Autowired
-    Factus factus;
+  @Autowired Factus factus;
 
-    @Autowired
-    RedissonClient redissonClient;
+  @Autowired RedissonClient redissonClient;
 
-    @Test
-    void getNames() {
-        val event1 = new UserCreated(randomUUID(), "Peter");
-        val event2 = new UserCreated(randomUUID(), "Paul");
-        val event3 = new UserCreated(randomUUID(), "Klaus");
-        val event4 = new UserDeleted(event3.aggregateId());
+  @Test
+  void getNames() {
+    val event1 = new UserCreated(randomUUID(), "Peter");
+    val event2 = new UserCreated(randomUUID(), "Paul");
+    val event3 = new UserCreated(randomUUID(), "Klaus");
+    val event4 = new UserDeleted(event3.aggregateId());
 
-        log.info("Publishing test events");
-        factus.publish(Arrays.asList(event1, event2, event3, event4));
+    log.info("Publishing test events");
+    factus.publish(Arrays.asList(event1, event2, event3, event4));
 
-        val uut = new RedissionBatchProjectionExample.UserNames(redissonClient);
-        factus.update(uut);
-        val userNames = uut.getUserNames();
+    val uut = new RedissionBatchProjectionExample.UserNames(redissonClient);
+    factus.update(uut);
+    val userNames = uut.getUserNames();
 
-        assertThat(userNames).containsExactlyInAnyOrder("Peter", "Paul");
-    }
+    assertThat(userNames).containsExactlyInAnyOrder("Peter", "Paul");
+  }
 }
