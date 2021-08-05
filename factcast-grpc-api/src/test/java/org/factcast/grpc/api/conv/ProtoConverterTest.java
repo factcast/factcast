@@ -22,12 +22,14 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import java.util.*;
 import lombok.NonNull;
+import lombok.val;
 import org.assertj.core.util.Lists;
 import org.assertj.core.util.Maps;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
@@ -688,5 +690,22 @@ public class ProtoConverterTest {
   void toProtoOptionalUUIDNull() {
     MSG_OptionalUuid msg = uut.toProtoOptional(null);
     assertThat(msg.getPresent()).isFalse();
+  }
+
+  @Test
+  void fromProtoInfo() {
+    var msg = MSG_Info.newBuilder().setSerialStart(2).setSerialHorizon(3).build();
+    assertThat(uut.fromProto(msg).startSerial()).isEqualTo(2);
+    assertThat(uut.fromProto(msg).horizonSerial()).isEqualTo(3);
+  }
+
+  @Test
+  public void createInfoNotification() {
+    FactStreamInfo info = new FactStreamInfo(2, 3);
+    MSG_Notification msg = uut.createInfoNotification(info);
+
+    assertThat(msg.getType()).isEqualTo(Type.Info);
+    assertThat(msg.getInfo().getSerialStart()).isEqualTo(2);
+    assertThat(msg.getInfo().getSerialHorizon()).isEqualTo(3);
   }
 }

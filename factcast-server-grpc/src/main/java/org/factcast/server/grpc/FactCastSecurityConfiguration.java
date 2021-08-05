@@ -15,12 +15,6 @@
  */
 package org.factcast.server.grpc;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.autoconfigure.GrpcServerSecurityAutoConfiguration;
 import net.devh.boot.grpc.server.security.authentication.BasicGrpcAuthenticationReader;
@@ -47,6 +41,13 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 @SuppressWarnings("deprecation")
 @Slf4j
 @Configuration
@@ -68,6 +69,12 @@ public class FactCastSecurityConfiguration {
   @ConfigurationProperties(prefix = "factcast.access", ignoreUnknownFields = false)
   public FactCastSecretProperties factCastSecretProperties() {
     return new FactCastSecretProperties();
+  }
+
+  @Bean
+  @ConfigurationProperties(prefix = "factcast.security", ignoreUnknownFields = false)
+  public FactcastSecurityProperties factcastSecurityProperties() {
+    return new FactcastSecurityProperties();
   }
 
   @Bean
@@ -147,10 +154,9 @@ public class FactCastSecurityConfiguration {
   @Bean
   @ConditionalOnMissingBean(FactCastAccessConfiguration.class)
   UserDetailsService godModeUserDetailsService(
-      @org.springframework.beans.factory.annotation.Value("${factcast.security.enabled:#{true}}")
-          boolean securityEnabled) {
+      FactcastSecurityProperties factcastSecurityProperties) {
 
-    if (!securityEnabled) {
+    if (!factcastSecurityProperties.isEnabled()) {
       log.warn(
           "**** FactCast Security is disabled. This is discouraged for production environments. You have been warned. ****");
       return username -> new FactCastUser(FactCastAccount.GOD, "security_disabled");

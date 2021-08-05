@@ -26,10 +26,10 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.TransformationException;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
@@ -69,11 +69,16 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
     lastNotification.set(System.currentTimeMillis());
 
     switch (f.getType()) {
+      case Info:
+        log.trace("received info signal");
+        // receive info message once at the very beginning of the stream
+        FactStreamInfo factStreamInfo = converter.fromProto(f.getInfo());
+        subscription.notifyFactStreamInfo(factStreamInfo);
+        break;
       case KeepAlive:
         log.trace("received keepalive signal");
         // NOP, just used for the update of lastNotification
         break;
-
       case Catchup:
         log.trace("received onCatchup signal");
         subscription.notifyCatchup();
@@ -83,26 +88,15 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
         onCompleted();
         break;
       case Fact:
-        try {
-          log.trace("received single fact");
-          subscription.notifyElement(converter.fromProto(f.getFact()));
-        } catch (TransformationException e) {
-          // cannot happen on client side...
-          onError(e);
-        }
+        log.trace("received single fact");
+        subscription.notifyElement(converter.fromProto(f.getFact()));
         break;
       case Facts:
-        try {
-          List<? extends Fact> facts = converter.fromProto(f.getFacts());
-          log.trace("received {} facts", facts.size());
+        List<? extends Fact> facts = converter.fromProto(f.getFacts());
+        log.trace("received {} facts", facts.size());
 
-          for (Fact fact : facts) {
-            subscription.notifyElement(fact);
-          }
-
-        } catch (TransformationException e) {
-          // cannot happen on client side...
-          onError(e);
+        for (Fact fact : facts) {
+          subscription.notifyElement(fact);
         }
         break;
       case Ffwd:

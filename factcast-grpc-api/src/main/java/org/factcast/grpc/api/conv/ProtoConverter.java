@@ -27,6 +27,7 @@ import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.StateToken;
+import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.grpc.api.ConditionalPublishRequest;
@@ -401,5 +402,21 @@ public class ProtoConverter {
 
   public MSG_Notification createKeepaliveNotification() {
     return MSG_Notification.newBuilder().setType(Type.KeepAlive).build();
+  }
+
+  public FactStreamInfo fromProto(MSG_Info info) {
+    return new FactStreamInfo(info.getSerialStart(), info.getSerialHorizon());
+  }
+
+  @NonNull
+  public MSG_Info toProto(@NonNull FactStreamInfo info) {
+    return MSG_Info.newBuilder()
+        .setSerialStart(info.startSerial())
+        .setSerialHorizon(info.horizonSerial())
+        .build();
+  }
+
+  public MSG_Notification createInfoNotification(FactStreamInfo info) {
+    return MSG_Notification.newBuilder().setType(Type.Info).setInfo(toProto(info)).build();
   }
 }

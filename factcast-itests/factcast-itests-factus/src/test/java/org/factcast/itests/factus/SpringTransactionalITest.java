@@ -1,13 +1,5 @@
 package org.factcast.itests.factus;
 
-import static java.util.UUID.*;
-import static org.assertj.core.api.Assertions.*;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -33,6 +25,15 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.testcontainers.containers.PostgreSQLContainer;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+import static java.util.UUID.*;
+import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class})
@@ -143,7 +144,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @ProjectionMetaData(serial = 1)
-    @SpringTransactional(size = 3)
+    @SpringTransactional(bulkSize = 3)
     class BulkSize3Projection extends AbstractTrackingUserProjection {
       public BulkSize3Projection(
           @NonNull PlatformTransactionManager platformTransactionManager,
@@ -153,7 +154,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @ProjectionMetaData(serial = 1)
-    @SpringTransactional(size = 5)
+    @SpringTransactional(bulkSize = 5)
     class BulkSize5Projection extends AbstractTrackingUserProjection {
       public BulkSize5Projection(
           @NonNull PlatformTransactionManager platformTransactionManager,
@@ -163,7 +164,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @ProjectionMetaData(serial = 1)
-    @SpringTransactional(size = 20)
+    @SpringTransactional(bulkSize = 20)
     class BulkSize20Projection extends AbstractTrackingUserProjection {
       public BulkSize20Projection(
           @NonNull PlatformTransactionManager platformTransactionManager,
@@ -173,7 +174,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @ProjectionMetaData(serial = 1)
-    @SpringTransactional(size = 10)
+    @SpringTransactional(bulkSize = 10)
     class BulkSize10Projection extends AbstractTrackingUserProjection {
       public BulkSize10Projection(
           @NonNull PlatformTransactionManager platformTransactionManager,
@@ -183,7 +184,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @ProjectionMetaData(serial = 1)
-    @SpringTransactional(size = 3000000, timeoutInSeconds = 1) // will flush after 800ms
+    @SpringTransactional(bulkSize = 3000000, timeoutInSeconds = 1) // will flush after 800ms
     class SpringTxProjectionTimeout extends AbstractTrackingUserProjection {
       public SpringTxProjectionTimeout(
           PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
@@ -200,7 +201,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @ProjectionMetaData(serial = 1)
-    @SpringTransactional(size = 5)
+    @SpringTransactional(bulkSize = 5)
     class SpringTxProjectionSizeBlowAt7th extends AbstractTrackingUserProjection {
       private int count;
 
@@ -294,7 +295,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @ProjectionMetaData(serial = 1)
-    @SpringTransactional(size = 3)
+    @SpringTransactional(bulkSize = 3)
     class BulkSize3Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize3Projection(
           @NonNull PlatformTransactionManager platformTransactionManager,
@@ -304,7 +305,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @ProjectionMetaData(serial = 1)
-    @SpringTransactional(size = 5)
+    @SpringTransactional(bulkSize = 5)
     class BulkSize5Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize5Projection(
           @NonNull PlatformTransactionManager platformTransactionManager,
@@ -314,7 +315,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @ProjectionMetaData(serial = 1)
-    @SpringTransactional(size = 20)
+    @SpringTransactional(bulkSize = 20)
     class BulkSize20Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize20Projection(
           @NonNull PlatformTransactionManager platformTransactionManager,
@@ -324,7 +325,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @ProjectionMetaData(serial = 1)
-    @SpringTransactional(size = 10)
+    @SpringTransactional(bulkSize = 10)
     class BulkSize10Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize10Projection(
           @NonNull PlatformTransactionManager platformTransactionManager,
@@ -334,7 +335,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @ProjectionMetaData(serial = 1)
-    @SpringTransactional(size = 3000000, timeoutInSeconds = 1) // will flush after 800ms
+    @SpringTransactional(bulkSize = 3000000, timeoutInSeconds = 1) // will flush after 800ms
     class SpringTxProjectionTimeout extends AbstractTrackingUserSubscribedProjection {
       public SpringTxProjectionTimeout(
           PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
@@ -351,7 +352,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @ProjectionMetaData(serial = 1)
-    @SpringTransactional(size = 5)
+    @SpringTransactional(bulkSize = 5)
     class SpringTxProjectionSizeBlowAt7th extends AbstractTrackingUserSubscribedProjection {
       private int count;
 
@@ -488,8 +489,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void factStreamPosition(@NonNull UUID factStreamPosition) {
-      log.debug("set fact stream position");
+    public void factStreamPosition(@NonNull UUID state) {
+      log.debug("set state");
       assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
       factStreamPositionModifications++;
 
@@ -499,8 +500,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
           "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) "
               + "ON CONFLICT (name) DO UPDATE SET fact_stream_position = ?",
           getScopedName().asString(),
-          factStreamPosition,
-          factStreamPosition);
+          state,
+          state);
     }
 
     @Override

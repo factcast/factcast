@@ -3,10 +3,12 @@ package org.factcast.factus.redis.tx;
 import static org.assertj.core.api.Assertions.*;
 
 import org.factcast.factus.redis.tx.RedisTransactional.Defaults;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.TransactionOptions;
+
+import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 public class RedisTransactionalTest {
@@ -90,10 +92,10 @@ public class RedisTransactionalTest {
 @RedisTransactional()
 class RB1 {}
 
-@RedisTransactional(size = 123)
+@RedisTransactional(bulkSize = 123)
 class RB2 {}
 
-@RedisTransactional(size = 123, responseTimeout = 123)
+@RedisTransactional(bulkSize = 123, responseTimeout = 123)
 class RB3 {}
 
 @RedisTransactional(retryAttempts = 123)
