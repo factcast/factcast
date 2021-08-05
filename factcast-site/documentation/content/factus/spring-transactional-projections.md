@@ -25,8 +25,8 @@ is available. In more detail, for the data-store in question, an implementation 
 must exist. Further down, we provide an example for JDBC.
 
 
-General Approach 
-----------------
+Structure 
+---------
 
 Spring transactional projections are available for 
 - [managed projections]({{< ref "managed-projection.md" >}})  and for 
@@ -263,6 +263,6 @@ Full Example
 ------------
 
 To study the full example see
-- [the UserNames projection](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/SpringJdbcTransactionalProjectionExample.java),
+- [the UserNames projection using `@SpringTransactional`](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/SpringJdbcTransactionalProjectionExample.java),
 - [example code using this projection](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/SpringJdbcTransactionalProjectionExampleITest.java) and    
 - [the Factus integration tests](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/SpringTransactionalITest.java) including managed- and subscribed projections.
