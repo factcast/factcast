@@ -1,8 +1,6 @@
 package org.factcast.factus.redis.batch;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.time.Duration;
-import java.util.function.Function;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -11,6 +9,9 @@ import org.factcast.factus.redis.RedisProjection;
 import org.redisson.api.BatchOptions;
 import org.redisson.api.RBatch;
 import org.redisson.api.RedissonClient;
+
+import java.time.Duration;
+import java.util.function.Function;
 
 @Slf4j
 public class RedisBatchedLens extends AbstractTransactionalLens {
@@ -69,8 +70,8 @@ public class RedisBatchedLens extends AbstractTransactionalLens {
     if (RBatch.class.equals(type)) {
       return f -> {
         batchMan.startOrJoin();
-        RBatch rBatch = batchMan.getCurrentBatch();
-        return rBatch;
+
+        return batchMan.getCurrentBatch();
       };
     }
     return null;
