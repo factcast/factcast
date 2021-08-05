@@ -164,7 +164,7 @@ public class PgLegacyConfigurationProperties implements ApplicationListener<Appl
           "There are legacy properties detected. Property namespace has been renamed from '"
               + LEGACY_PREFIX
               + "' to 'factcast.store'");
-      legacyProperties.forEach(p -> log.error("Property {} found in {}", p.getKey(), p.getValue()));
+      legacyProperties.forEach(p -> log.warn("Property {} found in {}", p.getKey(), p.getValue()));
     }
   }
 
