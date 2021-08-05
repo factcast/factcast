@@ -1,7 +1,7 @@
 +++
-title = "GRPC Command Line Interface"
-weight = 200
+title = "Factcast CLI"
 type="docs"
+weight = 100
 +++
 
 In order to help with quick testing or debugging, FactCast provides a **very** simple CLI that you can use to publish Facts or subscribe and print Facts recieved to stdout.
