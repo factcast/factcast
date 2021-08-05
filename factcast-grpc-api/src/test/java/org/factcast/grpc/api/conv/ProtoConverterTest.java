@@ -32,6 +32,7 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
+import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
 import org.junit.jupiter.api.*;
@@ -553,8 +554,8 @@ public class ProtoConverterTest {
 
   @Test
   public void testFromProtoMSG_UUID_AND_VERSION() {
-    var msg = MSG_UUID_AND_VERSION.newBuilder().setLsb(1).setMsb(2).setVer(99).build();
-    var actual = uut.fromProto(msg);
+    MSG_UUID_AND_VERSION msg = MSG_UUID_AND_VERSION.newBuilder().setLsb(1).setMsb(2).setVer(99).build();
+    @NonNull IdAndVersion actual = uut.fromProto(msg);
     assertNotNull(actual);
     assertThat(actual.uuid()).isEqualTo(new UUID(2, 1));
     assertThat(actual.version()).isEqualTo(99);
@@ -562,7 +563,7 @@ public class ProtoConverterTest {
 
   @Test
   public void testToProtoMSG_UUID_AND_VERSION() {
-    var actual = uut.toProto(new UUID(2, 1), 99);
+    @NonNull FactStoreProto.MSG_UUID_AND_VERSION actual = uut.toProto(new UUID(2, 1), 99);
     assertNotNull(actual);
     assertThat(actual.getLsb()).isEqualTo(1);
     assertThat(actual.getMsb()).isEqualTo(2);
@@ -610,7 +611,7 @@ public class ProtoConverterTest {
 
   @Test
   void fromProtoMSG_OptionalSnapshotEmpty() {
-    var os = MSG_OptionalSnapshot.newBuilder().setPresent(false).build();
+    MSG_OptionalSnapshot os = MSG_OptionalSnapshot.newBuilder().setPresent(false).build();
 
     Optional<Snapshot> snapshot = uut.fromProto(os);
     assertThat(snapshot).isEmpty();
@@ -623,7 +624,7 @@ public class ProtoConverterTest {
 
     MSG_Snapshot snap = uut.toProto(snapId, factId, "huhu".getBytes(Charsets.UTF_8), false);
 
-    var os = MSG_OptionalSnapshot.newBuilder().setPresent(true).setSnapshot(snap).build();
+    MSG_OptionalSnapshot os = MSG_OptionalSnapshot.newBuilder().setPresent(true).setSnapshot(snap).build();
 
     Optional<Snapshot> snapshot = uut.fromProto(os);
     assertThat(snapshot).isPresent();
@@ -673,7 +674,7 @@ public class ProtoConverterTest {
   void fromProtoMSG_FactSpecsJson() {
     FactSpec f1 = FactSpec.ns("foo").type("bar").version(1);
     FactSpec f2 = FactSpec.ns("x").type("y").version(2);
-    var l = Lists.newArrayList(f1, f2);
+    ArrayList<FactSpec> l = Lists.newArrayList(f1, f2);
     MSG_FactSpecsJson m = uut.toProtoFactSpecs(l);
     List<FactSpec> factSpecs = uut.fromProto(m);
     assertThat(factSpecs).isNotEmpty().hasSize(2).contains(f1).contains(f2);
@@ -681,7 +682,7 @@ public class ProtoConverterTest {
 
   @Test
   void fromProtoMSG_OptionalUuidEmpty() {
-    var msg = MSG_OptionalUuid.newBuilder().setPresent(false).build();
+    MSG_OptionalUuid msg = MSG_OptionalUuid.newBuilder().setPresent(false).build();
     assertThat(uut.fromProto(msg)).isNull();
   }
 
@@ -693,7 +694,7 @@ public class ProtoConverterTest {
 
   @Test
   void fromProtoInfo() {
-    var msg = MSG_Info.newBuilder().setSerialStart(2).setSerialHorizon(3).build();
+    MSG_Info msg = MSG_Info.newBuilder().setSerialStart(2).setSerialHorizon(3).build();
     assertThat(uut.fromProto(msg).startSerial()).isEqualTo(2);
     assertThat(uut.fromProto(msg).horizonSerial()).isEqualTo(3);
   }

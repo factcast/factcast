@@ -56,7 +56,7 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
   @Override
   public byte[] serialize(@NonNull SnapshotProjection a) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    var os = new LZ4BlockOutputStream(baos, 8192);
+    LZ4BlockOutputStream os = new LZ4BlockOutputStream(baos, 8192);
     omMessagePack.writeValue(os, a);
     os.close();
     return baos.toByteArray();

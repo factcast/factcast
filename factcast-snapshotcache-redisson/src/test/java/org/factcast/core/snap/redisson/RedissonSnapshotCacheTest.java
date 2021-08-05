@@ -134,8 +134,8 @@ class RedissonSnapshotCacheTest {
 
       {
         // assert all buckets have a ttl
-        final var ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
-        final var ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
+        long ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
+        long ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
 
         assertThat(ttl1).isGreaterThan(7775990000L);
         assertThat(ttl2).isGreaterThan(7775990000L);
@@ -148,8 +148,8 @@ class RedissonSnapshotCacheTest {
 
       sleep(100); // wait fro async op
       {
-        final var ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
-        final var ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
+        long ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
+        long ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
 
         assertThat(ttl1).isGreaterThan(ttl2);
       }

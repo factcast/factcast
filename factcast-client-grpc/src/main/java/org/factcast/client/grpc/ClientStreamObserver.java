@@ -148,7 +148,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
           new TimerTask() {
             @Override
             public void run() {
-              var last = lastNotification.get();
+              long last = lastNotification.get();
 
               if (System.currentTimeMillis() - last > gracePeriod) {
                 onError(new StaleSubscriptionDetectedException(last, gracePeriod));

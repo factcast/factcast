@@ -32,6 +32,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
+import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact.Builder;
@@ -367,8 +368,7 @@ public class ProtoConverter {
 
   public MSG_Snapshot toProto(
       @NonNull SnapshotId id, @NonNull UUID state, @NonNull byte[] bytes, boolean compressed) {
-    var ret =
-        MSG_Snapshot.newBuilder()
+    MSG_Snapshot.Builder ret = MSG_Snapshot.newBuilder()
             .setId(toProto(id))
             .setFactId(toProto(state))
             .setData(ByteString.copyFrom(bytes))
@@ -393,7 +393,7 @@ public class ProtoConverter {
   }
 
   public List<FactSpec> fromProto(MSG_FactSpecsJson request) {
-    return FactCastJson.readValue(new TypeReference<>() {}, request.getJson());
+    return FactCastJson.readValue(new TypeReference<List<FactSpec>>() {}, request.getJson());
   }
 
   public MSG_FactSpecsJson toProtoFactSpecs(List<FactSpec> specs) {

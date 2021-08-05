@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.Specification;
@@ -176,7 +177,7 @@ public class FactSpecTest {
 
   @Test
   public void testFromVarArgs() {
-    var spec = FactSpec.from(TestFactWithType.class, TestFactWithTypeAndVersion.class);
+    List<FactSpec> spec = FactSpec.from(TestFactWithType.class, TestFactWithTypeAndVersion.class);
     assertThat(spec)
         .hasSize(2)
         .contains(FactSpec.ns("ns").type("type").version(2))
@@ -185,8 +186,7 @@ public class FactSpecTest {
 
   @Test
   public void testFromList() {
-    var spec =
-        FactSpec.from(Arrays.asList(TestFactWithType.class, TestFactWithTypeAndVersion.class));
+    List<FactSpec> spec = FactSpec.from(Arrays.asList(TestFactWithType.class, TestFactWithTypeAndVersion.class));
     assertThat(spec)
         .hasSize(2)
         .contains(FactSpec.ns("ns").type("type").version(2))

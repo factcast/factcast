@@ -67,7 +67,7 @@ public interface FactCast extends ReadFactCast {
   }
 
   default LockedOperationBuilder lock(@NonNull FactSpec scope, FactSpec... tail) {
-    var list = new LinkedList<FactSpec>();
+    LinkedList<FactSpec> list = new LinkedList<FactSpec>();
     list.add(scope);
     list.addAll(Arrays.asList(tail));
     return lock(list);

@@ -64,7 +64,7 @@ public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository
 
     return CompletableFuture.runAsync(
         () -> {
-          var id = SnapshotId.of(createKeyForType(type, () -> ser), FAKE_UUID);
+          SnapshotId id = SnapshotId.of(createKeyForType(type, () -> ser), FAKE_UUID);
           putBlocking(new Snapshot(id, state, bytes, ser.includesCompression()));
         });
   }

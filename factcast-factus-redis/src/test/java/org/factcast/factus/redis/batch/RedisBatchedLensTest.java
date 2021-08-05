@@ -35,7 +35,7 @@ class RedisBatchedLensTest {
     @Test
     void resetsTimeIfBatching() {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
-      var underTest = new RedisBatchedLens(p, client);
+      RedisBatchedLens underTest = new RedisBatchedLens(p, client);
 
       underTest.bulkSize(100);
       underTest.start().set(0L);
@@ -59,10 +59,10 @@ class RedisBatchedLensTest {
     @Test
     void counts() {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
-      var underTest = spy(new RedisBatchedLens(p, client));
+      RedisBatchedLens underTest = spy(new RedisBatchedLens(p, client));
       when(underTest.shouldFlush()).thenReturn(false);
 
-      var before = underTest.count().get();
+      int before = underTest.count().get();
       underTest.afterFactProcessing(f);
 
       assertThat(underTest.count().get()).isEqualTo(before + 1);
@@ -80,7 +80,7 @@ class RedisBatchedLensTest {
     void doesNotUnnecessarilyflush() {
 
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
-      var underTest = spy(new RedisBatchedLens(p, client));
+      RedisBatchedLens underTest = spy(new RedisBatchedLens(p, client));
 
       underTest.onCatchup(p);
 
@@ -91,7 +91,7 @@ class RedisBatchedLensTest {
     void flushesOnCacthupIfNecessary() {
 
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
-      var underTest = spy(new RedisBatchedLens(p, client));
+      RedisBatchedLens underTest = spy(new RedisBatchedLens(p, client));
 
       // mark it dirty
       underTest.afterFactProcessing(Fact.builder().id(UUID.randomUUID()).buildWithoutPayload());
@@ -105,7 +105,7 @@ class RedisBatchedLensTest {
     void disablesBatching() {
 
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
-      var underTest = spy(new RedisBatchedLens(p, client));
+      RedisBatchedLens underTest = spy(new RedisBatchedLens(p, client));
       assertThat(underTest.bulkSize()).isNotEqualTo(1);
       underTest.onCatchup(p);
 
@@ -122,7 +122,7 @@ class RedisBatchedLensTest {
     void calculatesStateSkipping() {
 
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
-      var underTest = spy(new RedisBatchedLens(p, client));
+      RedisBatchedLens underTest = spy(new RedisBatchedLens(p, client));
       when(underTest.shouldFlush(anyBoolean())).thenReturn(false, false, true, true);
       when(underTest.isBulkApplying()).thenReturn(false, true, false, true);
 
@@ -141,7 +141,7 @@ class RedisBatchedLensTest {
     @Test
     void resetsClock() {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
-      var underTest = spy(new RedisBatchedLens(p, client));
+      RedisBatchedLens underTest = spy(new RedisBatchedLens(p, client));
       underTest.start().set(System.currentTimeMillis());
 
       underTest.flush();
@@ -152,7 +152,7 @@ class RedisBatchedLensTest {
     @Test
     void delegates() {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
-      var underTest = spy(new RedisBatchedLens(p, client));
+      RedisBatchedLens underTest = spy(new RedisBatchedLens(p, client));
       underTest.flush();
       verify(underTest).doFlush();
     }
@@ -168,7 +168,7 @@ class RedisBatchedLensTest {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       RedissonBatchManager tx = mock(RedissonBatchManager.class);
       when(tx.inBatch()).thenReturn(true);
-      var underTest = new RedisBatchedLens(p, tx, Defaults.create());
+      RedisBatchedLens underTest = new RedisBatchedLens(p, tx, Defaults.create());
 
       underTest.doClear();
 
@@ -186,7 +186,7 @@ class RedisBatchedLensTest {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       RedissonBatchManager tx = mock(RedissonBatchManager.class);
       when(tx.inBatch()).thenReturn(true);
-      var underTest = new RedisBatchedLens(p, tx, Defaults.create());
+      RedisBatchedLens underTest = new RedisBatchedLens(p, tx, Defaults.create());
 
       underTest.doFlush();
 
@@ -205,7 +205,7 @@ class RedisBatchedLensTest {
     @Test
     void rollsback() {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
-      var underTest = spy(new RedisBatchedLens(p, client));
+      RedisBatchedLens underTest = spy(new RedisBatchedLens(p, client));
 
       underTest.afterFactProcessingFailed(f, new IOException("oh dear"));
 
@@ -250,7 +250,7 @@ class RedisBatchedLensTest {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       RedissonBatchManager man = mock(RedissonBatchManager.class);
       when(man.getCurrentBatch()).thenReturn(current);
-      var underTest = new RedisBatchedLens(p, man, Defaults.create());
+      RedisBatchedLens underTest = new RedisBatchedLens(p, man, Defaults.create());
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(RBatch.class);
       assertThat(t).isNotNull();
@@ -261,7 +261,7 @@ class RedisBatchedLensTest {
     void returnsNullForOtherType() {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       RedissonBatchManager tx = mock(RedissonBatchManager.class);
-      var underTest = new RedisBatchedLens(p, tx, Defaults.create());
+      RedisBatchedLens underTest = new RedisBatchedLens(p, tx, Defaults.create());
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(Fact.class);
       assertThat(t).isNull();

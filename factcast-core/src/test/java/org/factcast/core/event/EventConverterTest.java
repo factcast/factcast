@@ -58,7 +58,7 @@ class EventConverterTest {
   static class E2 extends E {
     @Override
     public Map<String, String> additionalMetaMap() {
-      var m = new HashMap<String, String>();
+      HashMap<String, String> m = new HashMap<String, String>();
       m.put(null, "foo");
       return m;
     }

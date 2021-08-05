@@ -45,6 +45,7 @@ import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
@@ -71,7 +72,7 @@ class GrpcFactStoreTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   SubscriptionRequestTO req;
 
-  final ProtoConverter conv = new ProtoConverter();
+  ProtoConverter conv = new ProtoConverter();
 
   @Captor ArgumentCaptor<MSG_Facts> factsCap;
 
@@ -107,42 +108,42 @@ class GrpcFactStoreTest {
   @Test
   void configureWithFastForwardEnabled() {
     when(properties.isEnableFastForward()).thenReturn(true);
-    var meta = uut.prepareMetaData("lz4");
+    Metadata meta = uut.prepareMetaData("lz4");
     assertThat(meta.containsKey(Headers.FAST_FORWARD)).isTrue();
   }
 
   @Test
   void configureWithFastForwardDisabled() {
     when(properties.isEnableFastForward()).thenReturn(false);
-    var meta = uut.prepareMetaData("lz4");
+    Metadata meta = uut.prepareMetaData("lz4");
     assertThat(meta.containsKey(Headers.FAST_FORWARD)).isFalse();
   }
 
   @Test
   void configureWithBatchSize1() {
     when(properties.getCatchupBatchsize()).thenReturn(1);
-    var meta = uut.prepareMetaData("lz4");
+    Metadata meta = uut.prepareMetaData("lz4");
     assertThat(meta.containsKey(Headers.CATCHUP_BATCHSIZE)).isFalse();
   }
 
   @Test
   void configureWithBatchSize10() {
     when(properties.getCatchupBatchsize()).thenReturn(10);
-    var meta = uut.prepareMetaData("lz4");
+    Metadata meta = uut.prepareMetaData("lz4");
     assertThat(meta.get(Headers.CATCHUP_BATCHSIZE)).isEqualTo(String.valueOf(10));
   }
 
   @Test
   void fetchById() {
     TestFact fact = new TestFact();
-    var uuid = fact.id();
-    var conv = new ProtoConverter();
-    var id = conv.toProto(uuid);
+    UUID uuid = fact.id();
+    conv = new ProtoConverter();
+    @NonNull FactStoreProto.MSG_UUID id = conv.toProto(uuid);
     when(blockingStub.fetchById(eq(id)))
         .thenReturn(
             MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
 
-    var result = uut.fetchById(fact.id());
+    Optional<Fact> result = uut.fetchById(fact.id());
     assertThat(result).isPresent();
     assertThat(result.get().id()).isEqualTo(uuid);
   }
@@ -150,14 +151,14 @@ class GrpcFactStoreTest {
   @Test
   void fetchByIdAndVersion() {
     TestFact fact = new TestFact();
-    var uuid = fact.id();
-    var conv = new ProtoConverter();
-    var id = conv.toProto(uuid, 100);
+    UUID uuid = fact.id();
+    conv = new ProtoConverter();
+    @NonNull FactStoreProto.MSG_UUID_AND_VERSION id = conv.toProto(uuid, 100);
     when(blockingStub.fetchByIdAndVersion(eq(id)))
         .thenReturn(
             MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
 
-    var result = uut.fetchByIdAndVersion(fact.id(), 100);
+    Optional<Fact> result = uut.fetchByIdAndVersion(fact.id(), 100);
     assertThat(result).isPresent();
     assertThat(result.get().id()).isEqualTo(uuid);
   }
@@ -165,8 +166,8 @@ class GrpcFactStoreTest {
   @Test
   void fetchByIdThrowsRetryable() {
     TestFact fact = new TestFact();
-    var uuid = fact.id();
-    var id = conv.toProto(uuid);
+    UUID uuid = fact.id();
+    @NonNull FactStoreProto.MSG_UUID id = conv.toProto(uuid);
     when(blockingStub.fetchById(eq(id))).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
 
     assertThatThrownBy(() -> uut.fetchById(fact.id())).isInstanceOf(RetryableException.class);
@@ -175,8 +176,8 @@ class GrpcFactStoreTest {
   @Test
   void fetchByIdAndVersionThrowsRetryable() {
     TestFact fact = new TestFact();
-    var uuid = fact.id();
-    var id = conv.toProto(uuid, 100);
+    UUID uuid = fact.id();
+    @NonNull FactStoreProto.MSG_UUID_AND_VERSION id = conv.toProto(uuid, 100);
     when(blockingStub.fetchByIdAndVersion(eq(id)))
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
 
@@ -379,7 +380,7 @@ class GrpcFactStoreTest {
     UUID id = new UUID(0, 1);
     StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
     when(blockingStub.stateFor(any())).thenReturn(conv.toProto(id));
-    var list = Arrays.asList(FactSpec.ns("foo").aggId(id));
+    List<FactSpec> list = Arrays.asList(FactSpec.ns("foo").aggId(id));
     uut.stateFor(list);
     verify(blockingStub).stateForSpecsJson(conv.toProtoFactSpecs(list));
   }
@@ -482,7 +483,7 @@ class GrpcFactStoreTest {
   @Test
   void getSnapshot() {
     SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    var snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
     when(blockingStub.getSnapshot(eq(conv.toProto(id))))
         .thenReturn(conv.toProtoSnapshot(Optional.of(snap)));
 
@@ -492,7 +493,7 @@ class GrpcFactStoreTest {
   @Test
   void setSnapshotException() {
     SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    var snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
     when(blockingStub.setSnapshot(eq(conv.toProto(snap))))
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
 
@@ -502,7 +503,7 @@ class GrpcFactStoreTest {
   @Test
   void setSnapshot() {
     SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    var snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
     when(blockingStub.setSnapshot(eq(conv.toProto(snap)))).thenReturn(conv.empty());
 
     uut.setSnapshot(snap);
@@ -579,8 +580,8 @@ class GrpcFactStoreTest {
     void translatesSRE() {
 
       String msg = "wrong";
-      var e = new FactValidationException(msg);
-      var metadata = new Metadata();
+      FactValidationException e = new FactValidationException(msg);
+      Metadata metadata = new Metadata();
       metadata.put(
           Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
       metadata.put(
@@ -626,8 +627,8 @@ class GrpcFactStoreTest {
     void translatesSRE() throws Exception {
 
       String msg = "wrong";
-      var e = new FactValidationException(msg);
-      var metadata = new Metadata();
+      FactValidationException e = new FactValidationException(msg);
+      Metadata metadata = new Metadata();
       metadata.put(
           Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
       metadata.put(

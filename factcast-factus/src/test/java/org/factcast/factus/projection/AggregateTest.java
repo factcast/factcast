@@ -29,18 +29,18 @@ class AggregateTest {
 
   @Test
   void hashOfId() {
-    var a = new TestAggregate();
+    TestAggregate a = new TestAggregate();
     UUID id = spy(UUID.randomUUID());
     a.aggregateId(id);
 
-    var result = a.hashCode();
+    int result = a.hashCode();
     assertEquals(Objects.hash(id), result);
   }
 
   @Test
   void equals() {
-    var a = new TestAggregate();
-    var b = new TestAggregate();
+    TestAggregate a = new TestAggregate();
+    TestAggregate b = new TestAggregate();
     a.aggregateId(UUID.randomUUID());
     b.aggregateId(UUID.randomUUID());
 

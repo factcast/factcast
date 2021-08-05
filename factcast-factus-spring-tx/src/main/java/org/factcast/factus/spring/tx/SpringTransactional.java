@@ -23,7 +23,7 @@ public @interface SpringTransactional {
     static final int timeoutInSeconds = 30;
 
     public static DefaultTransactionDefinition create() {
-      var definition = new DefaultTransactionDefinition();
+      DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
 
       definition.setTimeout(timeoutInSeconds);
       definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
@@ -32,7 +32,7 @@ public @interface SpringTransactional {
     }
 
     public static TransactionDefinition with(@NonNull SpringTransactional transactional) {
-      var opts = create();
+      DefaultTransactionDefinition opts = create();
 
       int timeout = transactional.timeoutInSeconds();
 

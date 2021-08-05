@@ -23,6 +23,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
+import lombok.NonNull;
 import org.factcast.core.TestFact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -125,7 +126,7 @@ public class ReconnectingFactSubscriptionWrapperTest {
   @Test
   public void noOnNextAfterClose() throws Exception {
 
-    var observerFromGrpc = uut.observer();
+    FactObserver observerFromGrpc = uut.observer();
     observerFromGrpc.onNext(new TestFact());
     // will be passed to the actual one
     verify(obs).onNext(any());

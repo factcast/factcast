@@ -35,7 +35,7 @@ class SpringTxManagerTest {
 
       assertThat(uut.getCurrentTx()).isNotNull();
 
-      var tx = uut.getCurrentTx();
+      TransactionStatus tx = uut.getCurrentTx();
 
       uut.startOrJoin();
 

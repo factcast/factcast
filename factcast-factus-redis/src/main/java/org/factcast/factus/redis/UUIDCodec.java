@@ -16,7 +16,7 @@ public class UUIDCodec extends BaseCodec {
   public static final UUIDCodec INSTANCE = new UUIDCodec();
   private final Encoder encoder =
       in -> {
-        final var id = (UUID) in;
+        UUID id = (UUID) in;
         ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES * 2);
         buffer.putLong(id.getMostSignificantBits());
         buffer.putLong(id.getLeastSignificantBits());
@@ -24,7 +24,7 @@ public class UUIDCodec extends BaseCodec {
       };
   private final Decoder<Object> decoder =
       (buf, state) -> {
-        final var buffer = buf.nioBuffer(0, 16);
+        ByteBuffer buffer = buf.nioBuffer(0, 16);
         return new UUID(buffer.getLong(), buffer.getLong());
       };
 

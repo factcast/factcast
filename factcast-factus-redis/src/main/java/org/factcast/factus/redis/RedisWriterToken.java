@@ -36,7 +36,7 @@ public class RedisWriterToken implements WriterToken {
     this.lock = lock;
     this.timer = timer;
     liveness = new AtomicBoolean(lock.isLocked());
-    final var watchDogTimeout = redisson.getConfig().getLockWatchdogTimeout();
+    long watchDogTimeout = redisson.getConfig().getLockWatchdogTimeout();
     TimerTask timerTask =
         new TimerTask() {
           @Override
