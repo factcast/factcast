@@ -150,6 +150,12 @@ public class PgLegacyConfigurationProperties implements ApplicationListener<Appl
    */
   private Optional<Duration> minimumTailAge = Optional.empty();
 
+  /**
+   * do not change the default here, see PGTailIndexManagerImpl::triggerTailCreation
+   */
+  private Optional<String> tailManagementCron = Optional.empty();
+
+
   public PgLegacyConfigurationProperties() {}
 
   @Override
@@ -372,5 +378,10 @@ public class PgLegacyConfigurationProperties implements ApplicationListener<Appl
   @DeprecatedConfigurationProperty(reason = "Use new prefix 'factcast.store'.")
   public Optional<Duration> getMinimumTailAge() {
     return this.minimumTailAge;
+  }
+
+  @DeprecatedConfigurationProperty(reason = "Use new prefix 'factcast.store'.")
+  public Optional<String> getTailManagementCron() {
+    return this.tailManagementCron;
   }
 }
