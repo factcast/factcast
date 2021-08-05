@@ -31,7 +31,6 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   @SchedulerLock(name = "triggerTailCreation", lockAtMostFor = "120m")
   public void triggerTailCreation() {
 
-
     if (!props.isTailIndexingEnabled()) {
       return;
     }
