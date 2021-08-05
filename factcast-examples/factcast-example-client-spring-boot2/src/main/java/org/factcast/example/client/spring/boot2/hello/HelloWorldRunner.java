@@ -18,7 +18,6 @@ package org.factcast.example.client.spring.boot2.hello;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -35,7 +34,7 @@ public class HelloWorldRunner implements CommandLineRunner {
   @Override
   public void run(String... args) throws Exception {
 
-    val id = UUID.randomUUID();
+    var id = UUID.randomUUID();
     Fact fact =
         Fact.builder()
             .ns("users")
@@ -46,16 +45,16 @@ public class HelloWorldRunner implements CommandLineRunner {
     fc.publish(fact);
     System.out.println("published " + fact);
 
-    val uc = fc.fetchById(id);
+    var uc = fc.fetchById(id);
     System.out.println(uc.get().jsonPayload());
 
-    val uc1 = fc.fetchByIdAndVersion(id, 1);
+    var uc1 = fc.fetchByIdAndVersion(id, 1);
     System.out.println(uc1.get().jsonPayload());
 
-    val uc2 = fc.fetchByIdAndVersion(id, 2);
+    var uc2 = fc.fetchByIdAndVersion(id, 2);
     System.out.println(uc2.get().jsonPayload());
 
-    val uc3 = fc.fetchByIdAndVersion(id, 3);
+    var uc3 = fc.fetchByIdAndVersion(id, 3);
     System.out.println(uc3.get().jsonPayload());
 
     fc.subscribe(
