@@ -18,7 +18,6 @@ package org.factcast.factus.serializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
 import java.util.function.Function;
 import lombok.NonNull;
