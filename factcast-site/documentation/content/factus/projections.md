@@ -81,6 +81,6 @@ public class UserNames implements SnapshotProjection {
 
 There are several kinds of Projections that we need to look at. This is a rough overview:
 
-![](../projections.png)
+![](../ph_p.png)
 
 But before, let's start with Snapshots...
