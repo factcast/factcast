@@ -2,7 +2,6 @@ package org.factcast.factus.redis.batch;
 
 import static org.assertj.core.api.Assertions.*;
 
-
 import org.factcast.factus.redis.batch.RedisBatched.Defaults;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
