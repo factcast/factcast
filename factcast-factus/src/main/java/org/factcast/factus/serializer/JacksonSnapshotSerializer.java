@@ -31,8 +31,7 @@ public class JacksonSnapshotSerializer implements SnapshotSerializer {
   private final ObjectMapper objectMapper;
   private final JsonSchemaGenerator schemaGen;
 
-@Setter
-  private static Function<String, String> schemaModifier = Function.identity();
+  @Setter private static Function<String, String> schemaModifier = Function.identity();
 
   public JacksonSnapshotSerializer(@NonNull ObjectMapper configuredObjectMapper) {
     this.objectMapper = configuredObjectMapper;
