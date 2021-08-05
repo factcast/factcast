@@ -1,5 +1,4 @@
 +++
-title = "unfiltered changelog"
 
 weight = 100
 

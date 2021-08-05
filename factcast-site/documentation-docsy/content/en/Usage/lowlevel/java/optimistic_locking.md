@@ -1,6 +1,5 @@
 +++
 title = "Java Optimistic Locking"
-weight = 215
 type="docs"
 +++
 
