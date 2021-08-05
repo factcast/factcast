@@ -1262,12 +1262,13 @@ class FactusImplTest {
     void happyPath() {
       AtomicInteger calls = new AtomicInteger(0);
       Duration wait = Duration.ofSeconds(3);
-      IntervalSnapshotter uut = new IntervalSnapshotter<SnapshotProjection>(wait) {
-        @Override
-        void createSnapshot(SnapshotProjection projection, UUID state) {
-          calls.incrementAndGet();
-        }
-      };
+      IntervalSnapshotter uut =
+          new IntervalSnapshotter<SnapshotProjection>(wait) {
+            @Override
+            void createSnapshot(SnapshotProjection projection, UUID state) {
+              calls.incrementAndGet();
+            }
+          };
 
       uut.accept(null, UUID.randomUUID());
       uut.accept(null, UUID.randomUUID());

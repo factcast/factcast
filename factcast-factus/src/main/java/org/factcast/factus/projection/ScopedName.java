@@ -15,13 +15,14 @@ public class ScopedName {
   private final String key;
 
   public static ScopedName fromProjectionMetaData(Class<?> clazz) {
-    ProjectionMetaData metaData = Resolver.resolveFor(clazz)
+    ProjectionMetaData metaData =
+        Resolver.resolveFor(clazz)
             .orElseThrow(
-                    () ->
-                            new IllegalStateException(
-                                    clazz.getName()
-                                            + " must be annotated by "
-                                            + ProjectionMetaData.class.getName()));
+                () ->
+                    new IllegalStateException(
+                        clazz.getName()
+                            + " must be annotated by "
+                            + ProjectionMetaData.class.getName()));
 
     String name = metaData.name();
     if (name.isEmpty()) {

@@ -108,7 +108,8 @@ class SpringTransactionalLensTest {
     void returnsCurrentTx() {
       SpringTxManagedProjection p = new ASpringTxManagedProjection(transactionManager);
 
-      SpringTransactionalLens underTest = new SpringTransactionalLens(p, springTxManager, definition);
+      SpringTransactionalLens underTest =
+          new SpringTransactionalLens(p, springTxManager, definition);
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(TransactionTemplate.class);
       assertThat(t).isNotNull();
@@ -122,7 +123,8 @@ class SpringTransactionalLensTest {
     void returnsNullForOtherType() {
       SpringTxManagedProjection p = new ASpringTxManagedProjection(transactionManager);
 
-      SpringTransactionalLens underTest = new SpringTransactionalLens(p, springTxManager, definition);
+      SpringTransactionalLens underTest =
+          new SpringTransactionalLens(p, springTxManager, definition);
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(Fact.class);
       assertThat(t).isNull();

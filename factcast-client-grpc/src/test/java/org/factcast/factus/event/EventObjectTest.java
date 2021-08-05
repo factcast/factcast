@@ -25,12 +25,13 @@ import org.junit.jupiter.api.*;
 class EventObjectTest {
   @Test
   void defaultsToEmptyMap() {
-    Map<String, String> map = new EventObject() {
-      @Override
-      public Set<UUID> aggregateIds() {
-        return null;
-      }
-    }.additionalMetaMap();
+    Map<String, String> map =
+        new EventObject() {
+          @Override
+          public Set<UUID> aggregateIds() {
+            return null;
+          }
+        }.additionalMetaMap();
 
     assertNotNull(map);
     assertTrue(map.isEmpty());

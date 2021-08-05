@@ -554,7 +554,8 @@ public class ProtoConverterTest {
 
   @Test
   public void testFromProtoMSG_UUID_AND_VERSION() {
-    MSG_UUID_AND_VERSION msg = MSG_UUID_AND_VERSION.newBuilder().setLsb(1).setMsb(2).setVer(99).build();
+    MSG_UUID_AND_VERSION msg =
+        MSG_UUID_AND_VERSION.newBuilder().setLsb(1).setMsb(2).setVer(99).build();
     @NonNull IdAndVersion actual = uut.fromProto(msg);
     assertNotNull(actual);
     assertThat(actual.uuid()).isEqualTo(new UUID(2, 1));
@@ -624,7 +625,8 @@ public class ProtoConverterTest {
 
     MSG_Snapshot snap = uut.toProto(snapId, factId, "huhu".getBytes(Charsets.UTF_8), false);
 
-    MSG_OptionalSnapshot os = MSG_OptionalSnapshot.newBuilder().setPresent(true).setSnapshot(snap).build();
+    MSG_OptionalSnapshot os =
+        MSG_OptionalSnapshot.newBuilder().setPresent(true).setSnapshot(snap).build();
 
     Optional<Snapshot> snapshot = uut.fromProto(os);
     assertThat(snapshot).isPresent();
