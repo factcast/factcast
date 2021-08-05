@@ -20,8 +20,7 @@ class GraalJsTransformerTest {
 
   private ObjectMapper om = new ObjectMapper();
 
-  @Mock
-  Transformation transformation;
+  @Mock Transformation transformation;
 
   @Test
   void testTransform() {
