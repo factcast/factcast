@@ -1,7 +1,7 @@
 ---
 title: "Metrics"
 type: docs
-weigth : 900
+weigth : 1020
 ---
 
 Like [the Factcast server]({{< ref "/Setup/metrics.md" >}} "factcast server metrics"), also Factus makes use 
@@ -27,7 +27,7 @@ The metrics are automatically tagged with
 At the time of writing (Factcast version 0.3.13) the following metrics are supported:
 
 #### Counted
-- `transaction_attempts` - how often was a transaction retried. See [Optimistic Locking]({{< ref "/Usage/factus/projections/optimistic-locking.md" >}} 
+- `transaction_attempts` - how often was a transaction retried. See [Optimistic Locking]({{< ref "/Usage/factus/optimistic-locking.md" >}} 
 "factus optimistic locking") for more background
 - `transaction_abort` - how often was an attempted transaction aborted
 

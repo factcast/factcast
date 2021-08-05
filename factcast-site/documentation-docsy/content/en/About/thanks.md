@@ -26,12 +26,3 @@ and also
 * [@joerg_adler](https://twitter.com/joerg_adler) for providing the REST adapter
 
 
-
-{{< rawhtml >}}
-<div align="right">This project is sponsored by
-<a href="https://www.prisma-capacity.eu/careers#job-offers"><img
-align="bottom" alt="PRISMA European Capacity Platform GmbH" class="inline"
-src="/prisma.png"
-/></a>
-</div>
-{{< /rawhtml >}}

@@ -1,7 +1,7 @@
 +++
 title = "Aggregates"
-weight = 80
 type="docs"
+weight = 200
 +++
 ![](../ph_a.png)
 
