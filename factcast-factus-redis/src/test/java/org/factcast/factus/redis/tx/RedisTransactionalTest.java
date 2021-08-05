@@ -28,7 +28,7 @@ public class RedisTransactionalTest {
 
   @Test
   void responseTimeout() {
-    var t = Defaults.with(RB3.class.getAnnotation(RedisTransactional.class));
+    TransactionOptions t = Defaults.with(RB3.class.getAnnotation(RedisTransactional.class));
     TransactionOptions defaults = Defaults.create();
     assertThat(t).extracting(TransactionOptions::getTimeout).isEqualTo(defaults.getTimeout());
     assertThat(t).extracting(TransactionOptions::getResponseTimeout).isEqualTo(123L);
@@ -44,7 +44,7 @@ public class RedisTransactionalTest {
 
   @Test
   void timeout() {
-    var t = Defaults.with(RB6.class.getAnnotation(RedisTransactional.class));
+    TransactionOptions t = Defaults.with(RB6.class.getAnnotation(RedisTransactional.class));
     TransactionOptions defaults = Defaults.create();
     assertThat(t).extracting(TransactionOptions::getTimeout).isEqualTo(123L);
     assertThat(t)
@@ -62,7 +62,7 @@ public class RedisTransactionalTest {
 
   @Test
   void attempts() {
-    var t = Defaults.with(RB4.class.getAnnotation(RedisTransactional.class));
+    TransactionOptions t = Defaults.with(RB4.class.getAnnotation(RedisTransactional.class));
     TransactionOptions defaults = Defaults.create();
     assertThat(t).extracting(TransactionOptions::getTimeout).isEqualTo(defaults.getTimeout());
     assertThat(t)
@@ -76,7 +76,7 @@ public class RedisTransactionalTest {
 
   @Test
   void interval() {
-    var t = Defaults.with(RB5.class.getAnnotation(RedisTransactional.class));
+    TransactionOptions t = Defaults.with(RB5.class.getAnnotation(RedisTransactional.class));
     TransactionOptions defaults = Defaults.create();
     assertThat(t).extracting(TransactionOptions::getTimeout).isEqualTo(defaults.getTimeout());
     assertThat(t)

@@ -4,6 +4,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import org.factcast.factus.serializer.ProjectionMetaData;
+import org.factcast.factus.serializer.ProjectionMetaData.Resolver;
 import org.factcast.factus.utils.ClassUtils;
 
 @RequiredArgsConstructor(staticName = "of")
@@ -14,14 +15,13 @@ public class ScopedName {
   private final String key;
 
   public static ScopedName fromProjectionMetaData(Class<?> clazz) {
-    var metaData =
-        ProjectionMetaData.Resolver.resolveFor(clazz)
+    ProjectionMetaData metaData = Resolver.resolveFor(clazz)
             .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        clazz.getName()
-                            + " must be annotated by "
-                            + ProjectionMetaData.class.getName()));
+                    () ->
+                            new IllegalStateException(
+                                    clazz.getName()
+                                            + " must be annotated by "
+                                            + ProjectionMetaData.class.getName()));
 
     String name = metaData.name();
     if (name.isEmpty()) {

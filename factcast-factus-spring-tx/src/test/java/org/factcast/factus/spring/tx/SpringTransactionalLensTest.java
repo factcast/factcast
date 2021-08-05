@@ -29,9 +29,9 @@ class SpringTransactionalLensTest {
   class Lifecycle {
     @Test
     void testLifecycle() {
-      var p = new ASpringTxManagedProjection(transactionManager);
+      ASpringTxManagedProjection p = new ASpringTxManagedProjection(transactionManager);
 
-      var uut = new SpringTransactionalLens(p, springTxManager, definition);
+      SpringTransactionalLens uut = new SpringTransactionalLens(p, springTxManager, definition);
 
       uut.beforeFactProcessing(f);
 
@@ -95,7 +95,7 @@ class SpringTransactionalLensTest {
       when(definition.getTimeout()).thenReturn(1);
 
       SpringTxManagedProjection p = new ASpringTxManagedProjection(transactionManager);
-      var uut = new SpringTransactionalLens(p, springTxManager, definition);
+      SpringTransactionalLens uut = new SpringTransactionalLens(p, springTxManager, definition);
 
       assertThat(uut.flushTimeout()).isEqualTo(800L);
     }
@@ -108,7 +108,7 @@ class SpringTransactionalLensTest {
     void returnsCurrentTx() {
       SpringTxManagedProjection p = new ASpringTxManagedProjection(transactionManager);
 
-      var underTest = new SpringTransactionalLens(p, springTxManager, definition);
+      SpringTransactionalLens underTest = new SpringTransactionalLens(p, springTxManager, definition);
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(TransactionTemplate.class);
       assertThat(t).isNotNull();
@@ -122,7 +122,7 @@ class SpringTransactionalLensTest {
     void returnsNullForOtherType() {
       SpringTxManagedProjection p = new ASpringTxManagedProjection(transactionManager);
 
-      var underTest = new SpringTransactionalLens(p, springTxManager, definition);
+      SpringTransactionalLens underTest = new SpringTransactionalLens(p, springTxManager, definition);
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(Fact.class);
       assertThat(t).isNull();

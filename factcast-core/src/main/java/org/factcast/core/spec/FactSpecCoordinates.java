@@ -55,7 +55,7 @@ public class FactSpecCoordinates {
 
     String defaultType = clazz.getSimpleName();
 
-    var spec = clazz.getAnnotation(Specification.class);
+    Specification spec = clazz.getAnnotation(Specification.class);
     if (spec == null) {
       throw new IllegalArgumentException(
           "@" + Specification.class.getSimpleName() + " missing on " + clazz);

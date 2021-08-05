@@ -65,7 +65,7 @@ class AbstractTransactionalLensTest {
     void counts() {
       when(underTest.shouldFlush()).thenReturn(false);
 
-      var before = underTest.count().get();
+      int before = underTest.count().get();
       underTest.afterFactProcessing(f);
 
       assertThat(underTest.count().get()).isEqualTo(before + 1);

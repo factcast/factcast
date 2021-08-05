@@ -138,7 +138,7 @@ class FactusTest {
 
   @Test
   void voidSubscribe() {
-    var p = mock(SubscribedProjection.class);
+    SubscribedProjection p = mock(SubscribedProjection.class);
     underTest.subscribe(p);
 
     sleep(); // call is async, so we wait a bit
@@ -150,7 +150,7 @@ class FactusTest {
 
   @Test
   void withLockOnInstance() {
-    var p = new SP();
+    SP p = new SP();
     underTest.withLockOn(p);
     verify(underTest).withLockOn(SP.class);
   }

@@ -81,7 +81,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
       for (int i = 0; i < parameterTypes.length; i++) {
         Class<?> type = parameterTypes[i];
-        var transformer = createSingleParameterTransformer(m, type);
+        Function<Fact, ?> transformer = createSingleParameterTransformer(m, type);
         parameters[i] = transformer.apply(p);
       }
       return parameters;
@@ -108,7 +108,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     }
 
     for (ProjectorLens p : lenses) {
-      var transformerOrNull = p.parameterTransformerFor(type);
+      Function<Fact, ?> transformerOrNull = p.parameterTransformerFor(type);
       if (transformerOrNull != null) {
         // first one wins
         return transformerOrNull;
@@ -123,7 +123,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   public void apply(@NonNull Fact f) {
     UUID factId = f.id();
     log.trace("Dispatching fact {}", factId);
-    var coords = FactSpecCoordinates.from(f);
+    FactSpecCoordinates coords = FactSpecCoordinates.from(f);
     Dispatcher dispatch = dispatchInfo.get(coords);
     if (dispatch == null) {
       // try to find one with no version as a fallback
@@ -131,7 +131,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     }
 
     if (dispatch == null) {
-      var ihd = new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
+      InvalidHandlerDefinition ihd = new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
       projection.onError(ihd);
       throw ihd;
     }
@@ -191,7 +191,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
                     Dispatcher dispatcher =
                         new Dispatcher(m, callTarget.resolver, fs, deserializer);
-                    var before = map.put(key, dispatcher);
+                    Dispatcher before = map.put(key, dispatcher);
                     if (before != null) {
                       throw new InvalidHandlerDefinition(
                           "Duplicate Handler method found for spec '"
@@ -226,7 +226,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       }
     }
 
-    var ret = projection.postprocess(discovered);
+    @NonNull List<FactSpec> ret = projection.postprocess(discovered);
     //noinspection ConstantConditions
     if (ret == null || ret.isEmpty()) {
       throw new InvalidHandlerDefinition(

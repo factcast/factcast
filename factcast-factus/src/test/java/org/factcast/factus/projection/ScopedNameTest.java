@@ -23,7 +23,7 @@ class ScopedNameTest {
 
   @Test
   void asStringVsToString() {
-    var n = ScopedName.of("foo", 2);
+    ScopedName n = ScopedName.of("foo", 2);
 
     assertThat(n.asString()).isEqualTo("foo_2");
     assertThat(n.toString()).isEqualTo("ScopedName(key=foo_2)");
@@ -31,8 +31,8 @@ class ScopedNameTest {
 
   @Test
   void testWither() {
-    var s = ScopedName.of("foo");
-    var s2 = s.with("bar");
+    ScopedName s = ScopedName.of("foo");
+    ScopedName s2 = s.with("bar");
 
     assertThat(s).isNotSameAs(s2);
     assertThat(s.asString()).isEqualTo("foo");
@@ -41,7 +41,7 @@ class ScopedNameTest {
 
   @Test
   void testWitherRefusesEmpty() {
-    var s = ScopedName.of("foo");
+    ScopedName s = ScopedName.of("foo");
     assertThatThrownBy(
             () -> {
               s.with(" ");

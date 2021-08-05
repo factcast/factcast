@@ -17,6 +17,7 @@ package org.factcast.factus.event;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.*;
@@ -24,13 +25,12 @@ import org.junit.jupiter.api.*;
 class EventObjectTest {
   @Test
   void defaultsToEmptyMap() {
-    var map =
-        new EventObject() {
-          @Override
-          public Set<UUID> aggregateIds() {
-            return null;
-          }
-        }.additionalMetaMap();
+    Map<String, String> map = new EventObject() {
+      @Override
+      public Set<UUID> aggregateIds() {
+        return null;
+      }
+    }.additionalMetaMap();
 
     assertNotNull(map);
     assertTrue(map.isEmpty());

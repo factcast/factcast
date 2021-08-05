@@ -40,19 +40,19 @@ public class FactusMetricsImpl implements FactusMetrics {
   }
 
   private Counter counter(@NonNull CountedEvent op, Tags tags) {
-    var t = Tags.of(Tag.of(TAG_NAME, op.event())).and(tags);
+    Tags t = Tags.of(Tag.of(TAG_NAME, op.event())).and(tags);
 
     return meterRegistry.counter(METRIC_NAME_COUNTS, t);
   }
 
   private Timer timer(@NonNull TimedOperation op, Tags tags) {
-    var t = Tags.of(Tag.of(TAG_NAME, op.op())).and(tags);
+    Tags t = Tags.of(Tag.of(TAG_NAME, op.op())).and(tags);
 
     return meterRegistry.timer(METRIC_NAME_TIMINGS, t);
   }
 
   private AtomicLong gauge(@NonNull GaugedEvent op, Tags tags) {
-    var t = Tags.of(Tag.of(TAG_NAME, op.event())).and(tags);
+    Tags t = Tags.of(Tag.of(TAG_NAME, op.event())).and(tags);
     return meterRegistry.gauge(METRIC_NAME_GAUGES, t, new AtomicLong(0));
   }
 
@@ -100,8 +100,8 @@ public class FactusMetricsImpl implements FactusMetrics {
       Tags tags,
       @NonNull SupplierWithException<R, E> fn)
       throws E {
-    var timer = timer(operation, tags);
-    var sw = Stopwatch.createStarted();
+    Timer timer = timer(operation, tags);
+    Stopwatch sw = Stopwatch.createStarted();
 
     try {
       return fn.get();
@@ -113,7 +113,7 @@ public class FactusMetricsImpl implements FactusMetrics {
 
   @Override
   public void timed(TimedOperation operation, Tags tags, long milliseconds) {
-    var timer = timer(operation, tags);
+    Timer timer = timer(operation, tags);
     timer.record(milliseconds, TimeUnit.MILLISECONDS);
   }
 
@@ -124,7 +124,7 @@ public class FactusMetricsImpl implements FactusMetrics {
 
   @Override
   public void record(@NonNull GaugedEvent event, Tags tags, long value) {
-    var g = gauge(event, tags);
+    AtomicLong g = gauge(event, tags);
     g.set(value);
   }
 }

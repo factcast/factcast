@@ -9,7 +9,10 @@
     <version>0.3.14-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>factcast-factus-redis</artifactId>
+  <artifactId>factcast-factus-redis</artifactId><properties>
+  <maven.compiler.source>1.8</maven.compiler.source>
+  <maven.compiler.target>1.8</maven.compiler.target>
+</properties>
   <dependencyManagement>
     <dependencies>
       <dependency>

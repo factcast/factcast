@@ -140,15 +140,15 @@ class ClientStreamObserverTest {
   @Test
   void translatesException() {
 
-    var e = new FactValidationException("disappointed");
-    var metadata = new Metadata();
+    FactValidationException e = new FactValidationException("disappointed");
+    Metadata metadata = new Metadata();
     metadata.put(
         Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
     metadata.put(
         Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER),
         e.getClass().getName().getBytes());
 
-    var ex = new StatusRuntimeException(Status.UNKNOWN, metadata);
+    StatusRuntimeException ex = new StatusRuntimeException(Status.UNKNOWN, metadata);
 
     uut.onError(ex);
 

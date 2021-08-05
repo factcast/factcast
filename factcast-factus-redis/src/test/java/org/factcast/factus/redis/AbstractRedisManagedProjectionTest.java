@@ -86,7 +86,7 @@ class AbstractRedisManagedProjectionTest {
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
       when(bucket.get()).thenReturn(id);
 
-      final var result = underTest.factStreamPosition();
+      UUID result = underTest.factStreamPosition();
 
       assertThat(result).isEqualTo(id);
     }
@@ -104,7 +104,7 @@ class AbstractRedisManagedProjectionTest {
       when(tx.getBucket(any(), any())).thenReturn(bucket);
       when(bucket.get()).thenReturn(id);
 
-      final var result = underTest.factStreamPosition();
+      UUID result = underTest.factStreamPosition();
 
       assertThat(result).isEqualTo(id);
     }
@@ -193,7 +193,7 @@ class AbstractRedisManagedProjectionTest {
       when(config.getLockWatchdogTimeout()).thenReturn(1000L);
       AbstractRedisManagedProjection underTest = new TestProjection(redisson);
 
-      final var wt = underTest.acquireWriteToken();
+      AutoCloseable wt = underTest.acquireWriteToken();
 
       verify(lock).lock();
       assertThat(wt).isNotNull().isInstanceOf(RedisWriterToken.class);

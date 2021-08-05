@@ -38,7 +38,7 @@ public @interface RedisTransactional {
     }
 
     public static TransactionOptions with(@Nullable RedisTransactional transactional) {
-      var opts = create();
+      TransactionOptions opts = create();
 
       if (transactional != null) {
 

@@ -28,7 +28,7 @@ public class RedisBatchedTest {
 
   @Test
   void responseTimeout() {
-    var t = Defaults.with(RB3.class.getAnnotation(RedisBatched.class));
+    BatchOptions t = Defaults.with(RB3.class.getAnnotation(RedisBatched.class));
     BatchOptions defaults = Defaults.create();
     assertThat(t.getResponseTimeout()).isEqualTo(123);
     assertThat(t).extracting(BatchOptions::getRetryAttempts).isEqualTo(defaults.getRetryAttempts());
@@ -37,7 +37,7 @@ public class RedisBatchedTest {
 
   @Test
   void attempts() {
-    var t = Defaults.with(RB4.class.getAnnotation(RedisBatched.class));
+    BatchOptions t = Defaults.with(RB4.class.getAnnotation(RedisBatched.class));
     BatchOptions defaults = Defaults.create();
     assertThat(t)
         .extracting(BatchOptions::getResponseTimeout)
@@ -48,7 +48,7 @@ public class RedisBatchedTest {
 
   @Test
   void interval() {
-    var t = Defaults.with(RB5.class.getAnnotation(RedisBatched.class));
+    BatchOptions t = Defaults.with(RB5.class.getAnnotation(RedisBatched.class));
     BatchOptions defaults = Defaults.create();
     assertThat(t)
         .extracting(BatchOptions::getResponseTimeout)

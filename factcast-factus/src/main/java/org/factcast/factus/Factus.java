@@ -106,7 +106,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   @SuppressWarnings("unchecked")
   default <S extends SnapshotProjection> Locked<S> withLockOn(@NonNull S snapshotProjection) {
     if (snapshotProjection instanceof Aggregate) {
-      var aggregate = (Aggregate) snapshotProjection;
+      Aggregate aggregate = (Aggregate) snapshotProjection;
       return (Locked<S>) withLockOn(aggregate.getClass(), AggregateUtil.aggregateId(aggregate));
     } else {
       return (Locked<S>) withLockOn(snapshotProjection.getClass());

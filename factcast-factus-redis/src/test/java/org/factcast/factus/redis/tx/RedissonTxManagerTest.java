@@ -132,7 +132,7 @@ class RedissonTxManagerTest {
     @Test
     void keepsCurrent() {
       underTest.startOrJoin();
-      final var curr = underTest.getCurrentTransaction();
+      RTransaction curr = underTest.getCurrentTransaction();
       underTest.join(
           tx -> {
             assertThat(tx).isSameAs(curr);
@@ -161,7 +161,7 @@ class RedissonTxManagerTest {
     @Test
     void keepsCurrent() {
       underTest.startOrJoin();
-      final var curr = underTest.getCurrentTransaction();
+      RTransaction curr = underTest.getCurrentTransaction();
       underTest.join(
           tx -> {
             assertThat(tx).isSameAs(curr);

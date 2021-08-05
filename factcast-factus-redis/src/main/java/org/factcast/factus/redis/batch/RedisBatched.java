@@ -35,7 +35,7 @@ public @interface RedisBatched {
     }
 
     public static BatchOptions with(@Nullable RedisBatched batched) {
-      var opts = create();
+      BatchOptions opts = create();
 
       if (batched != null) {
 

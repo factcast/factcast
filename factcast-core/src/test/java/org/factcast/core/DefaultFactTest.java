@@ -223,7 +223,7 @@ public class DefaultFactTest {
   void testHeader() {
     FactHeader fh = new FactHeader();
     fh.id(UUID.randomUUID()).ns("foo");
-    var f = new DefaultFact(fh, "{}");
+    DefaultFact f = new DefaultFact(fh, "{}");
     assertSame(fh, f.header());
   }
 }

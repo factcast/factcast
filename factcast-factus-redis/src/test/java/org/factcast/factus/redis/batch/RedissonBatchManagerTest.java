@@ -124,7 +124,7 @@ class RedissonBatchManagerTest {
     @Test
     void keepsCurrent() {
       underTest.startOrJoin();
-      var curr = underTest.getCurrentBatch();
+      RBatch curr = underTest.getCurrentBatch();
       underTest.join(
           tx -> {
             assertThat(tx).isSameAs(curr);
@@ -152,7 +152,7 @@ class RedissonBatchManagerTest {
     @Test
     void keepsCurrent() {
       underTest.startOrJoin();
-      var curr = underTest.getCurrentBatch();
+      RBatch curr = underTest.getCurrentBatch();
       underTest.join(
           tx -> {
             assertThat(tx).isSameAs(curr);

@@ -19,6 +19,7 @@ import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
+import org.factcast.core.Fact.Builder;
 import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
@@ -32,9 +33,9 @@ public class EventConverter {
   }
 
   public Fact toFact(@NonNull EventObject p, UUID factId) {
-    var spec = FactSpecCoordinates.from(p.getClass());
+    FactSpecCoordinates spec = FactSpecCoordinates.from(p.getClass());
 
-    var b = Fact.builder();
+    Builder b = Fact.builder();
     b.id(factId);
 
     b.ns(spec.ns());

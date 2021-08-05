@@ -432,10 +432,10 @@ public class GrpcFactStore implements FactStore {
   public void setSnapshot(@NonNull Snapshot snapshot) {
     runAndHandle(
         () -> {
-          var id = snapshot.id();
-          var bytes = snapshot.bytes();
-          var alreadyCompressed = snapshot.compressed();
-          var state = snapshot.lastFact();
+          @NonNull SnapshotId id = snapshot.id();
+          @NonNull byte[] bytes = snapshot.bytes();
+          boolean alreadyCompressed = snapshot.compressed();
+          @NonNull UUID state = snapshot.lastFact();
 
           log.trace("sending snapshot {} to remote store ({}kb)", id, bytes.length / 1024);
 

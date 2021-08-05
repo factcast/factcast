@@ -168,20 +168,19 @@ public class FactCastJsonTest {
 
   @Test
   void testAddSerToHeader() {
-    var newHeader = FactCastJson.addSerToHeader(33, "{}");
+    String newHeader = FactCastJson.addSerToHeader(33, "{}");
     assertEquals("{\"meta\":{\"_ser\":33}}", newHeader);
-    var updatedHeader = FactCastJson.addSerToHeader(77, newHeader);
+    String updatedHeader = FactCastJson.addSerToHeader(77, newHeader);
     assertEquals("{\"meta\":{\"_ser\":77}}", updatedHeader);
 
-    var updatedHeaderWithoutSerAttribute =
-        FactCastJson.addSerToHeader(78, "{\"meta\":{\"foo\":\"bar\"}}");
+    String updatedHeaderWithoutSerAttribute = FactCastJson.addSerToHeader(78, "{\"meta\":{\"foo\":\"bar\"}}");
     assertEquals("{\"meta\":{\"foo\":\"bar\",\"_ser\":78}}", updatedHeaderWithoutSerAttribute);
   }
 
   @Test
   void testToPrettyString() {
-    final var someJson = "{\"meta\":{\"foo\":\"bar\",\"_ser\":78}}";
-    var pretty = FactCastJson.toPrettyString(someJson);
+    String someJson = "{\"meta\":{\"foo\":\"bar\",\"_ser\":78}}";
+    String  pretty = FactCastJson.toPrettyString(someJson);
     assertEquals(
         "{\n"
             + "  \"meta\" : {\n"
@@ -195,9 +194,9 @@ public class FactCastJsonTest {
   @Test
   void testValueToTree() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (var reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
-      var probe = UUID.randomUUID();
+      UUID probe = UUID.randomUUID();
       FactCastJson.valueToTree(probe);
 
       Mockito.verify(om).valueToTree(ArgumentMatchers.same(probe));
@@ -207,7 +206,7 @@ public class FactCastJsonTest {
   @Test
   void testReadTree() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (var reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
       String probe = UUID.randomUUID().toString();
       FactCastJson.readTree(probe);
@@ -219,7 +218,7 @@ public class FactCastJsonTest {
   @Test
   void convertValue() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (var reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
       String probe = UUID.randomUUID().toString();
       FactCastJson.convertValue(probe, Integer.class);
@@ -231,7 +230,7 @@ public class FactCastJsonTest {
   @Test
   void toJsonNode() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (var reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
       Map<String, Object> probe = new HashMap<>();
       FactCastJson.toJsonNode(probe);
@@ -243,7 +242,7 @@ public class FactCastJsonTest {
   @Test
   void writeValueAsBytes() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (var reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
       Map<String, Object> probe = new HashMap<>();
       FactCastJson.writeValueAsBytes(probe);
@@ -255,7 +254,7 @@ public class FactCastJsonTest {
   @Test
   void readValueFromBytes() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (var reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
       ObjectReader or = mock(ObjectReader.class);
       when(om.readerFor(String.class)).thenReturn(or);
@@ -271,7 +270,7 @@ public class FactCastJsonTest {
   @Test
   void writeValueAsString() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (var reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
       UUID probe = UUID.randomUUID();
       FactCastJson.writeValueAsString(probe);
@@ -283,7 +282,7 @@ public class FactCastJsonTest {
   @Test
   void objectMapper() throws Exception {
     ObjectMapper om = Mockito.mock(ObjectMapper.class);
-    try (var reset = FactCastJson.replaceObjectMapper(om)) {
+    try (AutoCloseable reset = FactCastJson.replaceObjectMapper(om)) {
 
       assertSame(om, FactCastJson.mapper());
     }

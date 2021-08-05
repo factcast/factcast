@@ -94,7 +94,7 @@ public class FluentSubscriptionRequestTest {
 
   @Test
   void failsCatchupIfFactSpecListIsEmpty() {
-    var l = new LinkedList<FactSpec>();
+    LinkedList<FactSpec> l = new LinkedList<FactSpec>();
     assertThrows(
         IllegalArgumentException.class,
         () -> SubscriptionRequest.catchup(l).fromScratch().debugInfo());
@@ -102,7 +102,7 @@ public class FluentSubscriptionRequestTest {
 
   @Test
   void failsFollowIfFactSpecListIsEmpty() {
-    var l = new LinkedList<FactSpec>();
+    LinkedList<FactSpec> l = new LinkedList<FactSpec>();
     assertThrows(
         IllegalArgumentException.class,
         () -> SubscriptionRequest.follow(l).fromScratch().debugInfo());
