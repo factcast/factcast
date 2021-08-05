@@ -29,7 +29,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 
-@RequiredArgsConstructor@Slf4j
+@RequiredArgsConstructor
+@Slf4j
 public class PgTokenStore implements TokenStore {
 
   final JdbcTemplate jdbc;

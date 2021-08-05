@@ -198,6 +198,4 @@ public class PgFactStoreInternalConfiguration {
   public LockProvider lockProvider(DataSource dataSource) {
     return new JdbcTemplateLockProvider(dataSource, "shedlock");
   }
-
-
 }

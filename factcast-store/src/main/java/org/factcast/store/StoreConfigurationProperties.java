@@ -140,9 +140,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   Duration minimumTailAge = Duration.ofDays(7);
 
-  /**
-   * do not change the default here, see PGTailIndexManagerImpl::triggerTailCreation
-   */
+  /** do not change the default here, see PGTailIndexManagerImpl::triggerTailCreation */
   String tailManagementCron = "0 0 0 * * *";
 
   public boolean isValidationEnabled() {
