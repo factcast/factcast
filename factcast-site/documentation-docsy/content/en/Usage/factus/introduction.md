@@ -4,7 +4,7 @@ weight = 10
 type = "docs"
 +++
 
-## Motivation
+### Motivation
 
 If Factus is optional, why does it exist in the first place, you might ask.
 
@@ -18,7 +18,7 @@ We say **"good" practices** here, rather than *"best" practices* for a reason. F
 Also, be aware that not every possible use case is covered by Factus so that you occasionally might want to fall back to "doing things yourself" with the low-level FactCast API. 
 In case you encounter such a situation, please open a github issue explaining your motivation. Maybe this is something Factus is currently lacking.
 
-## Enough already, give me details!
+### Enough already, give me details!
 
 Factus replaces FactCast as a central interface. Rather than with 'Facts', Factus deals with 'EventObjects'. Those with be serialized/deserialized to Facts using an 'EventSerializer'.
 Factus ships with a default one that uses Jackson, but you're free to use any library of your taste to accomplish this (like Gson, or whatever is popular with you).

@@ -1,13 +1,16 @@
 ---
-title: "Why?"
+title: "About"
+
+
 menu:
-    main:
-        weight: 10
+  main:
+    weight: 1
 
-weight : 10
-type : docs
-
+type: docs
+weight: 1
 ---
+
+# Motivation
 
 ## Event Sourcing
 
@@ -26,7 +29,7 @@ Amongst others in no particular order:
 
 All of these have a slightly different focus, but all of them deal with persisting, streaming and sometimes processing of Events.
 
-### The Problem at hand
+## The Problem at hand
 
 In a micro-service world, **teams choose their own** tools of trade. This is a very important benefit of using Micro-services in the first place, and you do not want to mess with this principle.
 However, where Subsystems communicate with each other (most likely corssing those team borders) you need some common ground. Event Sourcing is a great pattern here (as well as within those subsystems) because of the decoupling effect of its use.

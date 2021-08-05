@@ -1,5 +1,5 @@
 ---
-title: "Factus"
+title: "Factus Java (high-level)"
 type: docs
 ---
 This section will walk you through using FactCast from an application programmers perspective using the abstractions of Factus.

@@ -4,6 +4,8 @@ weight = 12
 type="docs"
 +++
 
+### Dependencies
+
 First thing you need in your project is a dependency to factus itself.
 
 ```xml
@@ -26,7 +28,7 @@ However, there is a growing list of optional helpful dependencies when it comes 
 
 ____
 
-## Binary Snapshot Serializer
+### Binary Snapshot Serializer
 
 The default Snapshot Serializer in Factus uses Jackson to serialize to/from JSON. This might be less than optimal in terms of storage cost and transport performance/efficiency.
 This optional dependency:
@@ -49,7 +51,7 @@ Should be straightforward and easy.
 
 ____
 
-## Redis SnapshotCache
+### Redis SnapshotCache
 
 From a client's perspective, it is nice to be able to persist snapshots directly into factcast, so that you dont
 need any additional infrastructure to get started. In busy applications with many clients however, it might be
@@ -76,4 +78,3 @@ to your client's project and spring autoconfiguration (if you use spring boot) w
 As it relies on the excellent [Reddison](https://redisson.org/) library, all you need is to add the corresponding redis configuration to your project.
 See [the Redisson documentation](https://github.com/redisson/redisson/tree/master/redisson-spring-boot-starter).
 
-____
