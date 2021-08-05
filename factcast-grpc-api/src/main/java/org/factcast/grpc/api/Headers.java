@@ -23,6 +23,7 @@ public class Headers {
 
   private static final String GRPC_CATCHUP_BATCHSIZE = "fc-cbat";
 
+  // questionable, should be part of request?
   private static final String GRPC_FAST_FORWARD = "fc-ffwd";
 
   private static final String GRPC_CLIENT_ID = "fc-id";

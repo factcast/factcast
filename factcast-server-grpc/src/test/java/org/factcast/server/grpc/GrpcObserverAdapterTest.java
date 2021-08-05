@@ -28,6 +28,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
@@ -74,6 +75,14 @@ public class GrpcObserverAdapterTest {
     uut.onCatchup();
     verify(observer).onNext(any());
     assertEquals(MSG_Notification.Type.Catchup, msg.getValue().getType());
+  }
+
+  @Test
+  void testFactStreamInfo() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
+    FactStreamInfo info = new FactStreamInfo(2, 3);
+    uut.onFactStreamInfo(info);
+    verify(observer).onNext(eq(new ProtoConverter().createInfoNotification(info)));
   }
 
   @Test
