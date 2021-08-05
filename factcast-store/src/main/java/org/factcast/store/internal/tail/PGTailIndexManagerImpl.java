@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
+@Slf4j
 public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
   private final JdbcTemplate jdbc;
@@ -29,9 +31,12 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   @SchedulerLock(name = "triggerTailCreation", lockAtMostFor = "120m")
   public void triggerTailCreation() {
 
+
     if (!props.isTailIndexingEnabled()) {
       return;
     }
+
+    log.debug("Triggering tail index maintenance");
 
     List<String> indexes = jdbc.queryForList(PgConstants.LIST_FACT_INDEXES, String.class);
     if (timeToCreateANewTail(indexes)) {
