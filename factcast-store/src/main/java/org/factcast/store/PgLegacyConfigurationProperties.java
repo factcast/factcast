@@ -150,11 +150,8 @@ public class PgLegacyConfigurationProperties implements ApplicationListener<Appl
    */
   private Optional<Duration> minimumTailAge = Optional.empty();
 
-  /**
-   * do not change the default here, see PGTailIndexManagerImpl::triggerTailCreation
-   */
+  /** do not change the default here, see PGTailIndexManagerImpl::triggerTailCreation */
   private Optional<String> tailManagementCron = Optional.empty();
-
 
   public PgLegacyConfigurationProperties() {}
 
