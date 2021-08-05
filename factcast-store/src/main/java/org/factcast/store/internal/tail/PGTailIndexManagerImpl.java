@@ -31,11 +31,12 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   @SchedulerLock(name = "triggerTailCreation", lockAtMostFor = "120m")
   public void triggerTailCreation() {
 
-    log.warn("Triggering tail index maintenance");
 
     if (!props.isTailIndexingEnabled()) {
       return;
     }
+
+    log.debug("Triggering tail index maintenance");
 
     List<String> indexes = jdbc.queryForList(PgConstants.LIST_FACT_INDEXES, String.class);
     if (timeToCreateANewTail(indexes)) {
