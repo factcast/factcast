@@ -11,4 +11,3 @@ If you find sharp edges or feel like things are missing, please [open an issue o
 If you want to have more control and don't want to opt-in to Factus, you can have a look at the lower-level FactCast API. See the [Lowlevel](/lowlevel) section instead.
 
 
-{{< children nohidden="true" >}}
