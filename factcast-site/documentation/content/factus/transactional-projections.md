@@ -32,7 +32,7 @@ sequenceDiagram
 Factus supports transactions for the following external data stores:
 - [data stores supported by Spring Transaction Management]({{< ref "spring-transactional-projections.md" >}}) (e.g. databases via JDBC)
 - Redis
-    - via [classic transactions]({{< ref "redis-transactional-projections.md" >}})
+    - via [transactions]({{< ref "redis-transactional-projections.md" >}})
     - via [batching]({{< ref "redis-batch-projection.md" >}})
 
 
