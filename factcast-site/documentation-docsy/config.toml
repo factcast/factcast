@@ -134,7 +134,7 @@ github_project_repo = "https://github.com/factcast/factcast"
 #gcs_engine_id = "d72aa9b2712488cc3"
 
 # Enable Algolia DocSearch
-algolia_docsearch = true
+algolia_docsearch = false
 
 # Enable Lunr.js offline search
 offlineSearch = true
@@ -195,27 +195,29 @@ url = "https://github.com/factcast/factcast"
 icon = "fab fa-github"
 
 [[params.links.developer]]
+name = "Changelog"
+url = "/about//changelog"
+icon = "fas fa-scroll"
+
+[[params.links.developer]]
+name = "Roadmap"
+url = "/about//roadmap"
+icon = "fas fa-map-signs"
+desc = "Roadmap"
+
+[[params.links.developer]]
 name = "Contribution"
-url = "/thanks"
+url = "/about//thanks"
 icon = "fas fa-grin-hearts"
 
 [[params.links.developer]]
 name = "Imprint"
-url = "/imprint"
+url = "/about/imprint"
 icon = "fas fa-balance-scale-right"
 desc = "Imprint"
 
 
-[[params.links.user]]
-name = "Changelog"
-url = "/changelog"
-icon = "fas fa-scroll"
 
-[[params.links.user]]
-name = "Roadmap"
-url = "/roadmap"
-icon = "fas fa-map-signs"
-desc = "Roadmap"
 
 
 

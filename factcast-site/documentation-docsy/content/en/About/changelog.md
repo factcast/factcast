@@ -1,10 +1,10 @@
 +++
 title = "Changelog"
 type = "docs"
-weight = 10000
+weight = 10001
 +++
 
-This changelog is filtered. All automatically created PRs regarding dependency upgrades are hidden for readabilities sake. If you are interested, please look at '[unfiltered-changelog](/unfiltered-changelog)'
+This changelog is filtered. All automatically created PRs regarding dependency upgrades are hidden for readabilities sake. If you are interested, please look at '[unfiltered-changelog](../unfiltered-changelog)'
 
 ## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2021-02-03)
 
