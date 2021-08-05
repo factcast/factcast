@@ -5,7 +5,7 @@ import lombok.val;
 import org.factcast.factus.Factus;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
-import org.factcast.itests.factus.proj.RedissionTransactionalProjectionExample;
+import org.factcast.itests.factus.proj.RedisTransactionalProjectionExample;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.*;
 @SpringBootTest
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @Slf4j
-public class RedissionTransactionalProjectionExampleITest extends AbstractFactCastIntegrationTest {
+public class RedisTransactionalProjectionExampleITest extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus factus;
 
@@ -38,7 +38,7 @@ public class RedissionTransactionalProjectionExampleITest extends AbstractFactCa
     log.info("Publishing test events");
     factus.publish(Arrays.asList(event1, event2, event3, event4));
 
-    val uut = new RedissionTransactionalProjectionExample.UserNames(redissonClient);
+    val uut = new RedisTransactionalProjectionExample.UserNames(redissonClient);
     factus.update(uut);
     val userNames = uut.getUserNames();
 

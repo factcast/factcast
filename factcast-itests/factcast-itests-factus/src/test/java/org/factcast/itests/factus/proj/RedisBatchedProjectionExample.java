@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class RedissionBatchProjectionExample {
+public class RedisBatchedProjectionExample {
 
   @ProjectionMetaData(serial = 1)
   @RedisBatched

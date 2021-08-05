@@ -30,7 +30,8 @@ For a more performant alternative see [Redis batch projection]({{<ref "redis-bat
 Structure
 ---------
 
-A *Redis transactional projection* has the following features:
+A *Redis transactional projection* can be a [managed-]({{< ref "managed-projection.md" >}}) or 
+a [subscribed]({{< ref "subscribed-projection.md" >}}) projection. It has the following features:
 - it is annotated with `@RedisTransactional`
 - it extends either 
     - the class `AbstractRedisManagedProjection` or 
@@ -76,14 +77,14 @@ As we decided for a [managed projection]({{< ref "managed-projection.md">}}), we
 The call to `super(...)` enables Factus to take care of transaction management and to automatically persist 
 the Fact stream position. 
 
-In contrast to [other projection types]({{< ref "local-managed-projection.md">}}),
+In contrast to non-transactional projections,
 the `UserNames` projection above does not define an instance variable to store the projection's state. 
 Instead,  accessing and updating the state is carried out inside the single handler methods. 
     
 
 Applying Events 
 --------------
-Received events are processed inside the methods annotated with `@Handler` (the "handler methods"). To participate in the transaction, 
+Received events are processed inside the methods annotated with `@Handler` (the *handler methods*). To participate in the transaction, 
 these methods have an additional `RTransaction` parameter which represents the current transaction.
 
 Let' have a closer look at the handler for the `UserCreated` event:
@@ -152,7 +153,7 @@ The `@RedisTransactional` annotation provides various configuration options:
 
 Java Collections vs. Redission Interface
 ----------------------------------------
-As seen in the above examples some Redission data-structures also implement the appropriate Java Collections 
+As seen in the above example, some Redission data-structures also implement the appropriate Java Collections 
 interface. For example, you can assign a [Redission RMap](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html)
 also to a standard Java `Map`:
 
@@ -175,3 +176,10 @@ and [`RMap.fastRemove(...)`](https://www.javadoc.io/doc/org.redisson/redisson/la
 ### Pro Java Collections Type
 - standard Java -> no reading required
 - easier to test, particularly when the data-structure is involved in some logic     
+
+
+Full Example
+------------
+To study the full example see
+- [the UserNames projection using `@RedisTransactional`](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/RedisTransactionalProjectionExample.java) and
+- [example code using this projection](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/RedisTransactionalProjectionExampleITest.java) 

@@ -12,7 +12,12 @@ weight = 1023
 +++
 
 A *Redis batch projection* is a [transactional projection]({{< ref "transactional-projections.md">}}) 
-based on [Redisson RBatch](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RBatch.html)
+based on [Redisson RBatch](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RBatch.html). 
+Like [Redis transactional projections]({{< ref "redis-transactional-projections.md">}}), also this projection type 
+is more lightweight than [Spring transactional projections]({{< ref "spring-transactional-projections.md">}}). 
+No Spring `PlatformTransactionManager` is needed, 
+the [RBatch](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RBatch.html) object of 
+the [Redission library](https://github.com/redisson/redisson) is enough.  
 
 Working with a *Redis batch projection* is **asynchronous** as multiple commands are collected and 
 transmitted later at a convenient point in time:
@@ -30,7 +35,8 @@ see [Redis transactional projection]({{<ref "redis-transactional-projections.md"
 Structure
 ---------
 
-A *Redis batch projection* is defined as follows:
+A *Redis batch projection* supports [managed-]({{< ref "managed-projection.md" >}}) 
+or [subscribed]({{< ref "subscribed-projection.md" >}}) projection and is defined as follows:
 
 - it is annotated with `@RedisBatched`
 - it extends either
@@ -96,7 +102,8 @@ void apply(UserCreated created, RBatch batch) {
 First, we ask the batch to load the projection's state from Redis. We receive 
 an [`RMapAsync`](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMapAsync.html) object 
 which offers asynchronous versions of the common `Map` methods.
-By calling `putAsync(...)` we add the extracted event data to the map. Underneath, the `RBatch` collects this change and, at a convenient time, transmits it together with other changes to Redis.
+By calling `putAsync(...)` we add the extracted event data to the map. Underneath, the `RBatch` collects this change and, 
+at a convenient point in time, transmits it together with other changes to Redis.
 
 To obtain the Redis key of this projection, we have used the `getRedisKey()` method 
 which was introduced [here]({{<ref "redis-transactional-projections.md#automatic-redis-key">}}).
@@ -117,3 +124,8 @@ The `@RedisBatcheded` annotation provides various configuration options:
 | `retryInterval`        | time interval in milliseconds between retry attempts |   3000         |
 
 
+Full Example
+------------
+To study the full example see
+- [the UserNames projection using `@RedisBatched`](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/RedisBatchedProjectionExample.java) and
+- [example code using this projection](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/RedisBatchedProjectionExampleITest.java)    
