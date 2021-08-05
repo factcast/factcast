@@ -22,7 +22,6 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import java.util.*;
 import lombok.NonNull;
-import lombok.val;
 import org.assertj.core.util.Lists;
 import org.assertj.core.util.Maps;
 import org.factcast.core.Fact;
