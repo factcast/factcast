@@ -1,9 +1,12 @@
 ---
-title: "Introduction"
+title: "Why?"
 menu:
     main:
         weight: 10
-type: docs
+
+weight : 10
+type : docs
+
 ---
 
 ## Event Sourcing
