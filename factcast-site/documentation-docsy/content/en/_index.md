@@ -1,6 +1,6 @@
 +++
 title = "Factcast"
-type = "docs"
+
 +++
 
 {{< rawhtml >}}

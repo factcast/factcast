@@ -1,10 +1,8 @@
 +++
 title = "Roadmap"
-weight = 100
+weight = 10001
 type = "docs"
 +++
-
-# Roadmap
 
 ## Features planned
 

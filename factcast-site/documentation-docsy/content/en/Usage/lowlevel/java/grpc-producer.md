@@ -1,6 +1,5 @@
 +++
 title = "Java GRPC Producer"
-weight = 10
 type="docs"
 +++
 

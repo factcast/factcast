@@ -1,6 +1,5 @@
 +++ 
 title = "Snapshots"
-weight = 70
 type = "docs"
 +++
 
