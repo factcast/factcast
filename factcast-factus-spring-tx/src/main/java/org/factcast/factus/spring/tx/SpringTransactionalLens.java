@@ -80,7 +80,7 @@ public class SpringTransactionalLens extends AbstractTransactionalLens {
               + " is expected to have an annotation @"
               + SpringTransactional.class.getSimpleName());
     }
-    return transactional.size();
+    return transactional.bulkSize();
   }
 
   @VisibleForTesting
