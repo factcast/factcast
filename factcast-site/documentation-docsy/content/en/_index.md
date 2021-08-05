@@ -3,22 +3,10 @@ title = "Factcast"
 
 +++
 
-#
-
-#
-
-
-TODO Landing Page
-
-# Factcast
-
-## A simple Event-store based on PostgreSQL.
-
-#### This is work in progress and neither the Documentation, nor the code is in a "released" state. Please keep that in mind when poking around.
-
-Source Code is available as [github](https://github.com/factcast/factcast) repository.
-
-
+{{< blocks/cover title="Factcast" image_anchor="top" height="full" color="orange" >}}
+<div class="mx-auto">
+	<p class="lead mt-2 py-5"><b>A simple Event-store based on PostgreSQL.</b></p>
+</div>
 {{< rawhtml >}}
 <a href="https://github.com/factcast/factcast/actions"><img src="https://github.com/factcast/factcast/workflows/maven/badge.svg?branch=master" alt="Actions Status"
 class="inline"></a>
@@ -35,16 +23,7 @@ src="https://img.shields.io/docker/v/factcast/factcast?label=dockerhub"></a>
 <a href="https://dependabot.com" rel="nofollow"><img class="inline" src="https://camo.githubusercontent.com/9067c86d33741a2fa11586e87089c65cdda10ec3/68747470733a2f2f6170692e646570656e6461626f742e636f6d2f6261646765732f7374617475733f686f73743d676974687562267265706f3d66616374636173742f6661637463617374" alt="Dependabot Status" data-canonical-src="https://api.dependabot.com/badges/status?host=github&amp;repo=factcast/factcast" style="max-width:100%;"></a>
 {{< /rawhtml >}}
 
-### Recommended Version: 0.3.7
+<p class="mt-5">This is work in progress and neither the Documentation, nor the code is in a "released" state.<br />Please keep that in mind when poking around.</p>
+{{< /blocks/cover >}}
 
-see [changelog](/changelog)
 
-
-{{< rawhtml >}}
-<div align="right">This project is sponsored by
-<a href="https://www.prisma-capacity.eu/careers#job-offers"><img
-align="bottom" alt="PRISMA European Capacity Platform GmbH" class="inline"
-src="/prisma.png"
-/></a>
-</div>
-{{< /rawhtml >}}
