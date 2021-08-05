@@ -23,7 +23,6 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
-import lombok.NonNull;
 import org.factcast.core.TestFact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.observer.FactObserver;

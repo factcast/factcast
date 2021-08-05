@@ -131,7 +131,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     }
 
     if (dispatch == null) {
-      InvalidHandlerDefinition ihd = new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
+      InvalidHandlerDefinition ihd =
+          new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
       projection.onError(ihd);
       throw ihd;
     }

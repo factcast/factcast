@@ -67,7 +67,8 @@ public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository
 
     return CompletableFuture.runAsync(
         () -> {
-          SnapshotId id = SnapshotId.of(
+          SnapshotId id =
+              SnapshotId.of(
                   createKeyForType(type, () -> ser), AggregateUtil.aggregateId(aggregate));
           putBlocking(new Snapshot(id, state, bytes, ser.includesCompression()));
         });

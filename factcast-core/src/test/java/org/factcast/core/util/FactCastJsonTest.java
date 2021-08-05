@@ -173,14 +173,15 @@ public class FactCastJsonTest {
     String updatedHeader = FactCastJson.addSerToHeader(77, newHeader);
     assertEquals("{\"meta\":{\"_ser\":77}}", updatedHeader);
 
-    String updatedHeaderWithoutSerAttribute = FactCastJson.addSerToHeader(78, "{\"meta\":{\"foo\":\"bar\"}}");
+    String updatedHeaderWithoutSerAttribute =
+        FactCastJson.addSerToHeader(78, "{\"meta\":{\"foo\":\"bar\"}}");
     assertEquals("{\"meta\":{\"foo\":\"bar\",\"_ser\":78}}", updatedHeaderWithoutSerAttribute);
   }
 
   @Test
   void testToPrettyString() {
     String someJson = "{\"meta\":{\"foo\":\"bar\",\"_ser\":78}}";
-    String  pretty = FactCastJson.toPrettyString(someJson);
+    String pretty = FactCastJson.toPrettyString(someJson);
     assertEquals(
         "{\n"
             + "  \"meta\" : {\n"

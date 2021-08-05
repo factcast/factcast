@@ -42,7 +42,7 @@ class UUIDCodecTest {
     @Test
     void failsOnMissingBits() {
       UUID id = UUID.randomUUID();
-      ByteBuf enc = Unpooled.wrappedBuffer(new byte[]{1, 2, 3, 4});
+      ByteBuf enc = Unpooled.wrappedBuffer(new byte[] {1, 2, 3, 4});
       assertThatThrownBy(
               () -> {
                 UUIDCodec.INSTANCE.getValueDecoder().decode(enc, null);

@@ -186,7 +186,8 @@ public class FactSpecTest {
 
   @Test
   public void testFromList() {
-    List<FactSpec> spec = FactSpec.from(Arrays.asList(TestFactWithType.class, TestFactWithTypeAndVersion.class));
+    List<FactSpec> spec =
+        FactSpec.from(Arrays.asList(TestFactWithType.class, TestFactWithTypeAndVersion.class));
     assertThat(spec)
         .hasSize(2)
         .contains(FactSpec.ns("ns").type("type").version(2))
