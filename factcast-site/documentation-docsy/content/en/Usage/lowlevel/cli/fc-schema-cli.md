@@ -1,6 +1,6 @@
 +++
 title = "Schema Registry CLI"
-weight = 210
+weight = 110
 
 type="docs"
 +++
