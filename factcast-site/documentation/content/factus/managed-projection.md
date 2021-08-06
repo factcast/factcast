@@ -16,7 +16,7 @@ weight = 300
 
 ![](../ph_m.png)
 
-As we have learnt, SsnapshotProjections are created from scratch or from Snapshots, whenever you fetch them. 
+As we have learnt, SnapshotProjections are created from scratch or from Snapshots, whenever you fetch them. 
 If you look at it from another angle, you could call them unmanaged in a sense, that the application has no 
 control over their lifecycle.
 There are use cases where this is less attractive. Consider a query model that powers a high-traffic REST API. 
