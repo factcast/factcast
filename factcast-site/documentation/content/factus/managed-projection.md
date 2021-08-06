@@ -52,7 +52,7 @@ model, which can be used to provide consistent reads over different nodes that a
 the fact stream. In order to achieve this, you'd just update the model before reading from it.
 
 ```java
- // lets consider userCount a springbean
+ // lets consider userCount is a springbean
  UserCount userCount = new UserCount();
  
  // now catchup with the published events
