@@ -54,25 +54,12 @@ which most likely cover the query and are cheaper to access.
 Note: Tail indexes are implemented as [Postgres Partial Indexes](https://www.postgresql.org/docs/11/indexes-partial.html). 
 
 
-Index Maintenance Trade-Offs
-----------------------------
+Index Maintenance Trade-Off
+---------------------------
 Introducing a new index does not come for free. When new facts are INSERTed, the Postgres database needs to maintain
-the indexes of the fact log.  Hence, the higher the number of indexes, the slower the inserts. 
-See the [recommendations of the configuration section](TODO) for sensible values on the number of tail index generations. 
-   
+the indexes of the fact log.  Hence, the higher the number of indexes, the slower the INSERT performance. 
+See the [recommendations of the configuration section]({{< ref "properties.md#performance--reliability" >}}) for sensible values 
+on the number of tail index generations. 
 
-Configuration
--------------
-
-
-Building Site Below
---------------------
-- tradeoff
-    - an INSERT has to maintain now not only one global index but more 
-- "the smaller the index the faster reading"
-
-- connect to Fast-Forward
-
-Note: An index which is currently updating will not be used by the Postgres database. 
 
 
