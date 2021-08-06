@@ -1,7 +1,5 @@
 ---
 title: "Fact Specification"
-menu:
-main:
 weight: 20
 type: docs
 ---

@@ -1,7 +1,5 @@
 ---
 title: "Lowlevel-vs-Factus"
-menu:
-main:
 weight: 99 
 
 type: docs

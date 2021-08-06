@@ -1,7 +1,5 @@
 ---
 title: "Schema validation and Registry"
-menu:
-main:
 weight: 40
 
 type: docs

@@ -2,8 +2,6 @@
 
 ---
 title: "FactStream Design"
-menu:
-main:
 weight: 30
 type: docs
 ---

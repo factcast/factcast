@@ -3,8 +3,8 @@ title: "Concepts"
 linkTitle: "Concepts"
 
 menu:
-main:
-weight: 20
+    main:
+        weight: 20
 
 type: docs 
 ---

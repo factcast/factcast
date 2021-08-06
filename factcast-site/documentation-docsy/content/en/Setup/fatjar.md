@@ -1,6 +1,7 @@
 ---
 title: "Boot Server fat-jar"
 type: docs
+weight: 110
 ---
 
 ## Building
@@ -8,14 +9,14 @@ type: docs
 First of all, build factcast completely if not yet done by running
 
 
-```sh
+```shell
 mvn install
 ```
 
 
 In order to run a simple example Factcast server, you could enter the project **factcast-examples/factcast-example-server** and run
 
-```sh
+```shell
 mvn spring-boot:run
 ```
 
@@ -26,7 +27,7 @@ In case you want to use your local Postgres instead, take a look at ExampleServe
 As expected, running
 
 
-```sh
+```shell
 mvn package
 ```
 

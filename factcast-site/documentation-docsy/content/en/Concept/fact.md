@@ -1,8 +1,6 @@
 ---
 title: "The Anatomy of a Fact"
 linkTitle: "Anatomy of a Fact"
-menu:
-main:
 weight: 10
 type: docs
 ---
