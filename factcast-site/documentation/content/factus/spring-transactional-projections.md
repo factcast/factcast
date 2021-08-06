@@ -17,22 +17,21 @@ weight = 1021
 Spring comes with [extensive support for transactions](https://docs.spring.io/spring-framework/docs/current/reference/html/data-access.html#transaction) 
 which is employed by *Spring Transactional Projections*. 
 
-Broad Data-Store Support
-------------------------
+## Broad Data-Store Support
+
 Standing on the shoulders of [Spring Transactions](https://docs.spring.io/spring-framework/docs/current/reference/html/data-access.html#transaction), 
-Factus automatically supports transitionally for every data-stores for which Spring transaction management
+Factus supports transitionally for every data-store for which Spring transaction management
 is available. In more detail, for the data-store in question, an implementation of the Spring [`PlatformTransactionManager`](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/PlatformTransactionManager.html)
 must exist. Further down, we provide an example for JDBC.
 
 
-Structure 
----------
+## Structure 
 
 Spring transactional projections are available for 
 - [managed projections]({{< ref "managed-projection.md" >}})  and for 
 - [subscribed projections]({{< ref "subscribed-projection.md" >}}).
 
-Generally, such a projection has three ingredients:
+In general, such a projection has three ingredients:
 - it is annotated with `@SpringTransactional`
 - it extends either 
     - the class `AbstractSpringTxManagedProjection` or 
@@ -59,8 +58,7 @@ To configure transaction management, our managed projection exposes the injected
 Based on this general approach, let's see how a Spring transactional projection with JDBC looks like:   
 
 
-JDBC Based Projection
----------------------
+## JDBC Based Projection
 
 In our example, we will create a JDBC based transactional projection which provides "user names":
 
@@ -115,8 +113,8 @@ both require the following methods to be implemented:
 |`public WriterToken acquireWriteToken(@NonNull Duration maxWait)`  | coordinates write access to the projection, see [here]({{< ref "managed-projection.md" >}}) for details  |
 
 The first two methods tell Factus how to read and write the Fact stream's position 
-(a single UUID value) from the database. Since this is a single value, you could get away with 
-one table (e.g. `spring_jdbc_transactional_projection_example_fact_stream_position` 😉  possessing one UUID column.
+from the database. Since this is a single value, you could get away with 
+one table (e.g. `spring_jdbc_transactional_projection_example_fact_stream_position` 😉 possessing one UUID column.
 
 However, to prepare for more than one transactional projection, we recommend the use of a single table
 containing the Fact stream position of multiple projections:
@@ -126,7 +124,6 @@ CREATE TABLE fact_stream_positions (
     fact_stream_position UUID, 
     PRIMARY KEY (projection_name));
 ```
-
 
 ### Writing The Fact Position
 
@@ -148,8 +145,7 @@ public void factStreamPosition(@NonNull UUID factStreamPosition) {
 For convenience an UPSERT statement (Postgres syntax) is used which INSERTs the UUID the first time 
 and subsequently only UPDATEs the value. 
 
-To avoid hard-coding a unique name for the projection, the helper method `getScopedName()` is employed.
-This method is inherited from the abstract base class.
+To avoid hard-coding a unique name for the projection, the provided helper method `getScopedName()` is employed.
 
 For our example projection `UserNames` the generated name is 
 `package.path.to.projection.UserNames_1`. 
@@ -176,7 +172,6 @@ public UUID factStreamPosition() {
 ``` 
 
 In case no previous Fact position exists, `null` is returned. 
-
 
 ### Applying Events
 
@@ -252,8 +247,8 @@ factus.update(userNames);
 List<String> userNames = uut.getUserNames();
 ```
 
-First we create an instance of the projection and provide it with all required dependencies. Note, that in a Spring
-application you would define the projection as `@Component` and let the dependency injection mechanism provide you an instance.
+First we create an instance of the projection and provide it with all required dependencies. As an alternative, you may want to let Spring manage the lifecycle of the projection
+and let the dependency injection mechanism provide you an instance.
 
 Next, we call `update(...)` on the projection to fetch the latest events from the Fact stream.  As last step, we ask 
 the projection to provide us with user names by calling `getUserNames()`. 
