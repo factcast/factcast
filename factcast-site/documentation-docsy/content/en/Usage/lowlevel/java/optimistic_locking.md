@@ -32,22 +32,22 @@ Transferred to Factcast, this means to express a body of code that:
 
 This code checks if an account with id *newAccountId* already exists, and if not - creates it by publishing the Fact accordingly.
 
-```
-        factcast.lock("myBankNamespace")
-                .on(newAccountId)
-                .attempt(() -> {
-                    // check and maybe abort
-                    if (repo.findById(newAccountId) !=null)
-                        return Attempt.abort("Already exists.");
-                    else
-                      return Attempt.publish(
-                        Fact.builder()
-                        .ns("myBankNamespace")
-                        .type("AccountCreated")
-                        .aggId(newAccountId)
-                        .build("{...}")
-                      );            
-                });
+```java
+factcast.lock("myBankNamespace")
+        .on(newAccountId)
+        .attempt(() -> {
+            // check and maybe abort
+            if (repo.findById(newAccountId) !=null)
+                return Attempt.abort("Already exists.");
+            else
+              return Attempt.publish(
+                Fact.builder()
+                .ns("myBankNamespace")
+                .type("AccountCreated")
+                .aggId(newAccountId)
+                .build("{...}")
+              );            
+        });
 
 ```
 
@@ -57,43 +57,41 @@ You may probably guess what happens, remembering the above steps. Let's dive int
 
 The unavoidable imaginary example, of two BankAccounts and a money transfer between them:
 
-```
-        factcast.lock("myBankNamespace")
-                .on(sourceAccountId,targetAccountId)
-                .optimistic()            // this is optional, defaults to optimistic, currently the only mode supported
-                .retry(100)              // this is optional, default is 10 times
-                .interval(5)             // this is optional, default is no wait interval between attempts (equals to 0)
-                .attempt(() -> {
-                    
-                    // fetch the latest state
-                    Account source = repo.findById(sourceAccountId);
-                    Account target = repo.findById(targetAccountId);
-                    
-                    // run businesslogic on it
-                    if (source.amount() < amountToTransfer)
-                        return Attempt.abort("Insufficient funds.");
-                    
-                    if (target.isClosed())
-                        return Attempt.abort("Target account is closed");
-                    
-                    // everything looks fine, create the Fact to be published
-                    Fact toPublish = Fact.builder()
-                        .ns("myBankNamespace")
-                        .type("transfer")
-                        .aggId(sourceAccountId)
-                        .aggId(targetAccountId)
-                        .build("{...}");            
-                    
-                    // register for publishing
-                    return Attempt.publish(toPublish).andThen(()->{
-                        
-                        // this is only executed at max once, and only if publishing succeeded
-                        log.info("Money was transferred.");
-                        
-                    });
-                    
-                });
-
+```java
+factcast.lock("myBankNamespace")
+        .on(sourceAccountId,targetAccountId)
+        .optimistic()            // this is optional, defaults to optimistic, currently the only mode supported
+        .retry(100)              // this is optional, default is 10 times
+        .interval(5)             // this is optional, default is no wait interval between attempts (equals to 0)
+        .attempt(() -> {
+            
+            // fetch the latest state
+            Account source = repo.findById(sourceAccountId);
+            Account target = repo.findById(targetAccountId);
+            
+            // run businesslogic on it
+            if (source.amount() < amountToTransfer)
+                return Attempt.abort("Insufficient funds.");
+            
+            if (target.isClosed())
+                return Attempt.abort("Target account is closed");
+            
+            // everything looks fine, create the Fact to be published
+            Fact toPublish = Fact.builder()
+                .ns("myBankNamespace")
+                .type("transfer")
+                .aggId(sourceAccountId)
+                .aggId(targetAccountId)
+                .build("{...}");            
+            
+            // register for publishing
+            return Attempt.publish(toPublish).andThen(()->{
+                
+                // this is only executed at max once, and only if publishing succeeded
+                log.info("Money was transferred.");
+                
+            });
+        });
 ```
 
 #### Explanation
@@ -109,7 +107,7 @@ Setting it to *5* means, that before retrying, a 5 msec wait happens.
 
 
 Everything starts with passing a lambda to the *attempt* method. The lambda is of type 
-```
+```java
 @FunctionalInterface
 public interface Attempt {
     IntermediatePublishResult call() throws AttemptAbortedException;
