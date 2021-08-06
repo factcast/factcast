@@ -38,7 +38,6 @@ With AWS RDS for instance, it is rather trivial to setup and operate a PostgreSQ
 
 ## Choice #2: GRPC
 
-
 When it comes to raw performance, REST might not always be the best option. In order to offer a more compact transport, but yet stay platform neutral, FactCast also has a GRPC API. 
 GRPC has a lot of implementations in languages like: 
 
@@ -53,7 +52,7 @@ GRPC has a lot of implementations in languages like:
 * Objective C
 * and even PHP
 
-[{{%icon circle-arrow-right%}}GRPC.io ](http://www.grpc.io/)
+[GRPC.io](http://www.grpc.io/)
 
 ## Choice #3: Spring Boot (Server)
 

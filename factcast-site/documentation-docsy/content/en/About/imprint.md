@@ -1,7 +1,7 @@
 +++
 title = "Legal Notice / Impressum (German)"
 type = "docs"
-weight = 10003
+weight = 100030
 +++
 
 # Angaben gemäß § 5 TMG

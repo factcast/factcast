@@ -1,15 +1,7 @@
 +++
-draft = false
 title = "Migration Guide"
-description = ""
-
-creatordisplayname = "Uwe Schaefer"
-creatoremail = "uwe@codesmell.de"
-
-
-parent = "migration"
-identifier = "migration"
-weight = 99
+type = "docs"
+weight = 100015
 +++
 
 ## Upgrading to 0.3.10
@@ -17,7 +9,7 @@ weight = 99
 0.3.10 changes the namespaces of the metrics. Also some metric names have
 been changed for consistency reasons. If you created dashboards for example based on those
 names, please be prepared to update them accordingly. 
-You can find the current metric names [here](/setup/server/metrics).
+You can find the current metric names [here](/setup/metrics).
 
 ## Upgrading to 0.3.0
 
@@ -25,7 +17,7 @@ There is a new module for use in projects that provide 'EventObjects' but do not
 @Specification and interface EventObject have been moved there - please update your imports accordingly if necessary.
 
 Another new module is factcast-test which is supposed to help with integration tests by adding a capability to dynamically alter namespaces in integration tests.
-See [testing section](/factus/testing)
+See [testing section](/usage/factus/testing)
 
 `factcast.lockGlobally()` **has been removed**. By adding the new locking capabilities, that define the scope of the lock not
 just by aggregate-ids, but by FactSpecs, 'lockGlobally()' needed to be deleted, as there is no proper way to provide a compatible
@@ -57,7 +49,7 @@ We encourage you to update any header in your postgres, that contains 'aggId', r
 
 If you used a 'factcast-security.json' before, you will be please to learn that factcast was extended to support role/namespace based autorisation. Also the filename changed to 'factcast-access.json'.
 
-see [basicauth usage](/setup/examples/grpc-config-basicauth)
+see [basicauth usage](/setup/grpc-config-basicauth)
 
 #### basic-auth setup is enforced
 
@@ -76,7 +68,7 @@ If you used the uniqe_identifier feature before, it was removed. It was only a r
 
 #### optimistic locking
 
-There is a [section on optimitic locking](/usage/java/optimistic_locking/) as a new api feature.
+There is a [section on optimitic locking](/usage/lowlevel/java/optimistic_locking/) as a new api feature.
 
 #### Postgres module uuid-ossp 
 
