@@ -6,7 +6,7 @@ type = "docs"
 
 ![](../ph_m.png)
 
-As we have learnt, SsnapshotProjections are created from scratch or from Snapshots, whenever you fetch them. 
+As we have learnt, SnapshotProjections are created from scratch or from Snapshots, whenever you fetch them. 
 If you look at it from another angle, you could call them unmanaged in a sense, that the application has no 
 control over their lifecycle.
 There are use cases where this is less attractive. Consider a query model that powers a high-traffic REST API. 
@@ -37,12 +37,12 @@ they provide a way for Factus to coordinate updates.
 ## flexible update
 
 One of the most important qualities of ManagedProjections is that they can be updated at any point.
-This makes them viable candidates for a variety of use cases. A default one certainly is a 'strictly consistent' 
+This makes them viable candidates for a variety of use cases. A default one certainly is a "strictly consistent" 
 model, which can be used to provide consistent reads over different nodes that always show the latest state from 
 the fact stream. In order to achieve this, you'd just update the model before reading from it.
 
 ```java
- // lets consider userCount a springbean
+ // lets consider userCount is a spring-bean
  UserCount userCount = new UserCount();
  
  // now catchup with the published events
@@ -50,7 +50,7 @@ the fact stream. In order to achieve this, you'd just update the model before re
 ```
 
 
-Obviously, that makes the application dependent in terms of availability (and maybe latency) on the event store. 
+Obviously, this makes the application dependent on the event store for availability (and possibly latency). 
 The good part however is, that if FactCast was unavailable, you'd still have (a potentially) stale model you can 
 fall back to.
 
