@@ -1,5 +1,5 @@
 ---
-title: "Boot gRPC Client"
+title: "gRPC Client"
 type: docs
 weight: 160
 ---

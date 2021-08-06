@@ -42,11 +42,11 @@ model, which can be used to provide consistent reads over different nodes that a
 the fact stream. In order to achieve this, you'd just update the model before reading from it.
 
 ```java
- // lets consider userCount is a spring-bean
- UserCount userCount = new UserCount();
+// lets consider userCount is a spring-bean
+UserCount userCount = new UserCount();
  
- // now catchup with the published events
- factus.update(userCount);
+// now catchup with the published events
+factus.update(userCount);
 ```
 
 
@@ -62,13 +62,13 @@ once every 5 minutes or whatever your requirements are for public users.
 
 ```java
 
-    private final UserCount userCount;
-    private final Factus factus;
+private final UserCount userCount;
+private final Factus factus;
     
-    @Scheduled(cron = "*/5 * * * *")
-    public void updateUserCountRegularly(){
-        factus.update(userCount);
-    }
+@Scheduled(cron = "*/5 * * * *")
+public void updateUserCountRegularly(){
+    factus.update(userCount);
+}
 
 ```
 

@@ -1,5 +1,5 @@
 ---
-title: "Boot gRPC BasicAuth"
+title: "gRPC BasicAuth"
 type: docs
 weight: 190
 ---

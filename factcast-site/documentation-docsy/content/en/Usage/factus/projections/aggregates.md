@@ -1,5 +1,5 @@
 +++
-title = "Aggregates"
+title = "Aggregate"
 type="docs"
 weight = 200
 +++
@@ -10,27 +10,27 @@ When you think of `User` however, you have different users in the System that di
 So calling `factus.fetch(User.class)` would not make any sense. Here Factus offers two different methods for access:
 
 ```java
-    /**
-     * Same as fetching on a snapshot projection, but limited to one
-     * aggregateId. If no fact was found, Optional.empty will be returned
-     */
-    @NonNull
-    <A extends Aggregate> Optional<A> find(
-            @NonNull Class<A> aggregateClass,
-            @NonNull UUID aggregateId);
+/**
+ * Same as fetching on a snapshot projection, but limited to one
+ * aggregateId. If no fact was found, Optional.empty will be returned
+ */
+@NonNull
+<A extends Aggregate> Optional<A> find(
+        @NonNull Class<A> aggregateClass,
+        @NonNull UUID aggregateId);
 
-    /**
-     * shortcut to find, but returns the aggregate unwrapped. throws
-     * {@link IllegalStateException} if the aggregate does not exist yet.
-     */
-    @NonNull
-    default <A extends Aggregate> A fetch(
-            @NonNull Class<A> aggregateClass,
-            @NonNull UUID aggregateId) {
-        return find(aggregateClass, aggregateId)
-                .orElseThrow(() -> new IllegalStateException("Aggregate of type " + aggregateClass
-                        .getSimpleName() + " for id " + aggregateId + " does not exist."));
-    }
+/**
+ * shortcut to find, but returns the aggregate unwrapped. throws
+ * {@link IllegalStateException} if the aggregate does not exist yet.
+ */
+@NonNull
+default <A extends Aggregate> A fetch(
+        @NonNull Class<A> aggregateClass,
+        @NonNull UUID aggregateId) {
+    return find(aggregateClass, aggregateId)
+            .orElseThrow(() -> new IllegalStateException("Aggregate of type " + aggregateClass
+                    .getSimpleName() + " for id " + aggregateId + " does not exist."));
+}
 
 ```
 

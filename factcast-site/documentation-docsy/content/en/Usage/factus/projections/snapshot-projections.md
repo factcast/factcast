@@ -1,5 +1,5 @@
 +++ 
-title = "Snapshots"
+title = "Snapshot"
 type = "docs"
 weight = 100
 +++
@@ -54,7 +54,7 @@ be happy not to be bothered by this anymore):
 With Factus however, all you need to do is to use the following method:
 
 ```java
-    /**
+ /**
  * If there is a matching snapshot already, it is deserialized and the
  * matching events, which are not yet applied, will be as well. Afterwards, a new
  * snapshot is created and stored.
