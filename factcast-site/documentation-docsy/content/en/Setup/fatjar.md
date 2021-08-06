@@ -1,5 +1,5 @@
 ---
-title: "Boot Server fat-jar"
+title: "fat-jar"
 type: docs
 weight: 110
 ---

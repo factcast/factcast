@@ -1,6 +1,7 @@
 +++
 title = "Java GRPC Consumer"
 type="docs"
+weight = 60
 +++
 
 ## Java GRPC Consumer

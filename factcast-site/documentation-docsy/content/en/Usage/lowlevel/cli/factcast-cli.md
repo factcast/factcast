@@ -9,11 +9,11 @@ In order to help with quick testing or debugging, FactCast provides a **very** s
 ## Usage
 
 Once module factcast-grpc-cli is buildt, it provides a selfcontained fc-cli.jar in its target folder. In order to use it, you can either run
-```
+```shell
 java -jar path_to/fc-cli.jar <OPTIONS> <COMMAND> <COMMAND OPTIONS>
 ```
 or just execute it as
-```
+```shell
 path_to/fc-cli.jar <OPTIONS> <COMMAND> <COMMAND OPTIONS>
 ```
 

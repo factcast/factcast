@@ -1,5 +1,5 @@
 ---
-title: "Boot Server Ports"
+title: "Ports"
 type: docs
 weight: 130
 ---

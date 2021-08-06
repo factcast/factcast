@@ -1,5 +1,5 @@
 ---
-title: "Boot Server Prerequisites"
+title: "Prerequisites"
 type: docs
 weight: 100
 ---

@@ -1,5 +1,5 @@
 ---
-title: "Boot Server fat-jar (TLS)"
+title: "fat-jar (TLS)"
 type: docs
 weight: 120
 ---

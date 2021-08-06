@@ -1,5 +1,5 @@
 ---
-title: "Boot gRPC KeepAlive"
+title: "gRPC KeepAlive"
 type: docs
 weight: 170
 ---

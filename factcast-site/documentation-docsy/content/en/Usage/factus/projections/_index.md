@@ -45,7 +45,6 @@ Also **projections must have a default (no-args) constructor**.
 As we established before, you could also decide to use a nested class to separate the methods from other instance methods, like:
 
 ```java
-
 public class UserNames implements SnapshotProjection {
 
     private final Map<UUID, String> existingNames = new HashMap<>();
@@ -63,15 +62,9 @@ public class UserNames implements SnapshotProjection {
         }
 
     }
-
 // ...
-
 ```
 
 ## many Flavours
 
-There are several kinds of Projections that we need to look at. This is a rough overview:
-
-![](../projections.png)
-
-But before, let's start with Snapshots...
+There are several kinds of Projections that we need to look at. But before, let's start with [Snapshotting](snapshotting)...

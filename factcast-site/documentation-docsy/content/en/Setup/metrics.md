@@ -1,5 +1,5 @@
 ---
-title: "Boot Server Metrics"
+title: "Metrics"
 type: docs
 weight: 150
 ---
