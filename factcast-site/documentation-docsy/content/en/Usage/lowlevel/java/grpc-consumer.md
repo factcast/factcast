@@ -4,9 +4,7 @@ type="docs"
 weight = 60
 +++
 
-## Java GRPC Consumer
-
-As mentioned [{{<icon name="circle-arrow-right" size="small">}}before]({{%relref "/concept/_index.md#read-subscribe"%}}), there are three main Use-Cases for subscribing to a Fact-Stream:
+As mentioned [before]({{%relref "/concept/_index.md#read-subscribe"%}}), there are three main Use-Cases for subscribing to a Fact-Stream:
 
 * Validation of Changes against a sctrictly consistent Model (Catchup)
 * Creating and maintaining a Read-Model (Follow)

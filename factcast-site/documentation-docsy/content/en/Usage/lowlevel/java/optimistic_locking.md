@@ -4,8 +4,6 @@ type="docs"
 weight = 90
 +++
 
-## Optimistic Locking
-
 ### Motivation
 
 Whatever your particular way of modelling your software, in order to be able to enforce invariants in your aggregates, you'd need to coordinate writes to it. In simple monoliths, you do that by synchronizing write access to the aggregate. When Software-Systems become distributed (or at least replicated), this coordination obviously needs to be externalized.

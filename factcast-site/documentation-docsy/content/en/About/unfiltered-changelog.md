@@ -1,23 +1,177 @@
 +++
-
 weight = 109990
-
+type = "docs"
 +++
 
-#
-
-#
-
-
+# Unfiltered changelog
 
 # Changelog
 
-## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2021-02-03)
+## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2021-08-06)
 
-[Full Changelog](https://github.com/factcast/factcast/compare/0.3.9.1...upcoming)
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.13...upcoming)
+
+**Implemented enhancements:**
+
+- Create strategy for resetting projections \(including subscribed projections that come as a spring bean\) between integration tests [\#1482](https://github.com/factcast/factcast/issues/1482)
+- Create view for index stats [\#1435](https://github.com/factcast/factcast/issues/1435)
+- Tail Index Fast Forward - Specify index rotation check via cron expression [\#1431](https://github.com/factcast/factcast/issues/1431)
+- Introduce auto-resilient subscriptions [\#1421](https://github.com/factcast/factcast/issues/1421)
+- Introduce near-cache for PgSchemaStoreImpl [\#1252](https://github.com/factcast/factcast/issues/1252)
+- LockedOnSpecs needs to expose retries and intervalMillis [\#1188](https://github.com/factcast/factcast/issues/1188)
+- Create and maintain "tail index" and implement FastForward mechanism [\#1149](https://github.com/factcast/factcast/issues/1149)
+- remove duplicate index idx\_schemastore [\#1141](https://github.com/factcast/factcast/issues/1141)
+- Add FactStreamInfo notification type [\#1112](https://github.com/factcast/factcast/issues/1112)
+
+**Fixed bugs:**
+
+- Rebuild / unify error handling for subscriptions on server side [\#1458](https://github.com/factcast/factcast/issues/1458)
+- Tail index size too big \(json\_path\_ops missing\) [\#1432](https://github.com/factcast/factcast/issues/1432)
+- Fix duplicate key problem on schemaRegistry update [\#1428](https://github.com/factcast/factcast/issues/1428)
+- Check tokenstore cleanup mechanism [\#1411](https://github.com/factcast/factcast/issues/1411)
+- \[SchemaRegCli\] JSON filtering \(title\) will be applied after Hash is calculated [\#1261](https://github.com/factcast/factcast/issues/1261)
+- Auto configuration for FactValidator \(and maybe other beans\) do not apply due to wrong @ConditionalOnProperty usage [\#1246](https://github.com/factcast/factcast/issues/1246)
+- Fix param name in WhiteListFilterServiceImpl  [\#1144](https://github.com/factcast/factcast/issues/1144)
+- Make sure Schemaregistry uses the same code for building transformationchains \(during validation\) than factcast itself. [\#1104](https://github.com/factcast/factcast/issues/1104)
+- \[Factus\] Lock on non-existing aggregate leads to exception [\#1041](https://github.com/factcast/factcast/issues/1041)
+
+**Closed issues:**
+
+- 0.4.0 cleanup issue [\#1486](https://github.com/factcast/factcast/issues/1486)
+- Improve ProjectorLens Logging [\#1480](https://github.com/factcast/factcast/issues/1480)
+- Parameter of  "void factStreamPosition\(@NonNull UUID state\)" should also be "factStreamPosition" [\#1473](https://github.com/factcast/factcast/issues/1473)
+- Rename StateAware interface [\#1464](https://github.com/factcast/factcast/issues/1464)
+- Add alternative ScriptEngine  [\#1462](https://github.com/factcast/factcast/issues/1462)
+- Fix default SpringTransactional timeout [\#1456](https://github.com/factcast/factcast/issues/1456)
+- Add scheduled check for invalid indices [\#1454](https://github.com/factcast/factcast/issues/1454)
+- Make sure ffwd also works on server side for follow subscriptions [\#1453](https://github.com/factcast/factcast/issues/1453)
+- Reduce number of queries for follow subscriptions [\#1447](https://github.com/factcast/factcast/issues/1447)
+- Remove obsolete index idx\_schemastore [\#1444](https://github.com/factcast/factcast/issues/1444)
+- when publishing, add the client id to meta.source [\#1414](https://github.com/factcast/factcast/issues/1414)
+- Make sure PGFactStream does not handle \(just log\) Exceptions like these [\#1413](https://github.com/factcast/factcast/issues/1413)
+- remove HalfClosed Exception handling [\#1412](https://github.com/factcast/factcast/issues/1412)
+- Evaluate removal of executeUpdate mechanism that is now obsolete due to the addition of projectorplugins [\#1401](https://github.com/factcast/factcast/issues/1401)
+- Handle exceptions more gracefully in factus-redis/factus-spring-tx [\#1391](https://github.com/factcast/factcast/issues/1391)
+- Transport client "name" as part of request metadata [\#1388](https://github.com/factcast/factcast/issues/1388)
+- Fix liquibase ignoring a changeset [\#1386](https://github.com/factcast/factcast/issues/1386)
+- Make AbstractFactCastIntegrationTest configurable \(versions, config folder\) [\#1382](https://github.com/factcast/factcast/issues/1382)
+- Provide integration tests for exception handling in factcast/factus client [\#1377](https://github.com/factcast/factcast/issues/1377)
+- Cache FactStore::serialOf [\#1368](https://github.com/factcast/factcast/issues/1368)
+- Factus: Cleanup key generation for snapshots [\#1363](https://github.com/factcast/factcast/issues/1363)
+- Create supporting index for id lookup and change lookup code accordingly [\#1359](https://github.com/factcast/factcast/issues/1359)
+- Reduce unnecessarily big index size on idx\_fact\_unique\_id [\#1358](https://github.com/factcast/factcast/issues/1358)
+- Additional Server Metric: "CatchupTransformationRatio" [\#1354](https://github.com/factcast/factcast/issues/1354)
+- Add key to ProjectionMetaData [\#1352](https://github.com/factcast/factcast/issues/1352)
+- Make FC startable, even if schemareg update fails [\#1350](https://github.com/factcast/factcast/issues/1350)
+- Improve tests for hash calculation [\#1348](https://github.com/factcast/factcast/issues/1348)
+- Add missing Factus metrics documentation [\#1347](https://github.com/factcast/factcast/issues/1347)
+- refactor RedissonSnapshotCache to use redis native TTLs instead of keeping track of usage in an index [\#1342](https://github.com/factcast/factcast/issues/1342)
+- conflict resolution in transformation running in parallel on different nodes [\#1340](https://github.com/factcast/factcast/issues/1340)
+- Fix documentation [\#1338](https://github.com/factcast/factcast/issues/1338)
+- Fix array handling in nashorn based transformation [\#1334](https://github.com/factcast/factcast/issues/1334)
+- Improve logging in situations, where the client canceled the stream [\#1332](https://github.com/factcast/factcast/issues/1332)
+- Layout ProjectorPlugin System to allow for lifecycle calls and parameter resolution [\#1325](https://github.com/factcast/factcast/issues/1325)
+- extract redisson based code to own module [\#1323](https://github.com/factcast/factcast/issues/1323)
+- Provide suppression possibility for the public handler method warning [\#1305](https://github.com/factcast/factcast/issues/1305)
+- WhiteList: Fix kotlin source to be able to compile with K1.5 [\#1296](https://github.com/factcast/factcast/issues/1296)
+- Server / Schedlock: locking of update attempts does not work for multiple instances [\#1291](https://github.com/factcast/factcast/issues/1291)
+- Factus: Dispatcher complains if version in @HandlerFor not set [\#1290](https://github.com/factcast/factcast/issues/1290)
+- Factus: Emit metrics from compaction job that cleans up snapshots [\#1281](https://github.com/factcast/factcast/issues/1281)
+- cleanup POMs \(reduce redundancy\) [\#1277](https://github.com/factcast/factcast/issues/1277)
+- WhiteList feature does not work in Windows [\#1273](https://github.com/factcast/factcast/issues/1273)
+- Parallelize unit tests and verify execution time advantage [\#1257](https://github.com/factcast/factcast/issues/1257)
+- DefaultDispatcher needs synchronization on its cache [\#1248](https://github.com/factcast/factcast/issues/1248)
+- Add persistent PAGED strategy again [\#1247](https://github.com/factcast/factcast/issues/1247)
+- Improve logging when "channel not coming back" [\#1233](https://github.com/factcast/factcast/issues/1233)
+- Make sure FETCHING query does not time out [\#1187](https://github.com/factcast/factcast/issues/1187)
+- Extend trace logging when dispatching a Fact in Factus [\#1185](https://github.com/factcast/factcast/issues/1185)
+- Documentation: All server metrics should be documented [\#1163](https://github.com/factcast/factcast/issues/1163)
+- Use TOAST storage in postgres for payloads [\#1161](https://github.com/factcast/factcast/issues/1161)
+- Provide example for managing transactionality using JDBC projections [\#1148](https://github.com/factcast/factcast/issues/1148)
+- Improve client communication in the face of an error. [\#1120](https://github.com/factcast/factcast/issues/1120)
+- Factus: Introduce HandlerParameterResolver and define a lifecycle for it [\#1077](https://github.com/factcast/factcast/issues/1077)
+- Action Required: Fix Renovate Configuration [\#871](https://github.com/factcast/factcast/issues/871)
+- rename store.pgsql to store and refactor properties accordingly [\#638](https://github.com/factcast/factcast/issues/638)
+
+## [0.3.13](https://github.com/factcast/factcast/tree/0.3.13) (2021-02-25)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.12...0.3.13)
+
+**Fixed bugs:**
+
+- issue1183: catch unchecked exception during catchup [\#1184](https://github.com/factcast/factcast/pull/1184) ([uweschaefer](https://github.com/uweschaefer))
+
+**Closed issues:**
+
+- Catch exceptions happening during catchup phase [\#1183](https://github.com/factcast/factcast/issues/1183)
+- Schema reg CLI: excluded Events are still used in Transformations \(thus reported as missing\) [\#1180](https://github.com/factcast/factcast/issues/1180)
 
 **Merged pull requests:**
 
+- issue1180 Ignore transformations for blacklisted events [\#1182](https://github.com/factcast/factcast/pull/1182) ([uweschaefer](https://github.com/uweschaefer))
+
+## [0.3.12](https://github.com/factcast/factcast/tree/0.3.12) (2021-02-25)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.11...0.3.12)
+
+**Merged pull requests:**
+
+- \#1185: more trace logging [\#1186](https://github.com/factcast/factcast/pull/1186) ([uweschaefer](https://github.com/uweschaefer))
+
+## [0.3.11](https://github.com/factcast/factcast/tree/0.3.11) (2021-02-21)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.10...0.3.11)
+
+**Fixed bugs:**
+
+- issue1183: catch unchecked exception during catchup [\#1184](https://github.com/factcast/factcast/pull/1184) ([uweschaefer](https://github.com/uweschaefer))
+
+## [0.3.10](https://github.com/factcast/factcast/tree/0.3.10) (2021-02-21)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.9.2...0.3.10)
+
+**Fixed bugs:**
+
+- PGListener does not check if LISTENER is working as expected [\#1173](https://github.com/factcast/factcast/issues/1173)
+
+**Closed issues:**
+
+- Schema reg CLI: excluded Events are still used in Transformations \(thus reported as missing\) [\#1180](https://github.com/factcast/factcast/issues/1180)
+- Release 0.3.10: Migration path for 0.3.10+ regarding metric name changes [\#1177](https://github.com/factcast/factcast/issues/1177)
+
+**Merged pull requests:**
+
+- Issue1163 Document/consolidate/cleanup server metrics [\#1176](https://github.com/factcast/factcast/pull/1176) ([uweschaefer](https://github.com/uweschaefer))
+- Dependency Fixes [\#1175](https://github.com/factcast/factcast/pull/1175) ([mweirauch](https://github.com/mweirauch))
+- \#1173 pg notification test [\#1174](https://github.com/factcast/factcast/pull/1174) ([uweschaefer](https://github.com/uweschaefer))
+- Don't force the latest Maven 3.x patch release on the build [\#1172](https://github.com/factcast/factcast/pull/1172) ([mweirauch](https://github.com/mweirauch))
+- Drop stray "factcast-schema-registry-plugin" directory [\#1171](https://github.com/factcast/factcast/pull/1171) ([mweirauch](https://github.com/mweirauch))
+
+## [0.3.9.2](https://github.com/factcast/factcast/tree/0.3.9.2) (2021-02-21)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.9.1...0.3.9.2)
+
+**Implemented enhancements:**
+
+- Partition fact table by namespace [\#1150](https://github.com/factcast/factcast/issues/1150)
+
+**Fixed bugs:**
+
+- PGListener does not check if LISTENER is working as expected [\#1173](https://github.com/factcast/factcast/issues/1173)
+
+**Closed issues:**
+
+- Release 0.3.10: Migration path for 0.3.10+ regarding metric name changes [\#1177](https://github.com/factcast/factcast/issues/1177)
+
+**Merged pull requests:**
+
+- issue1177 added update note regarding metrics [\#1179](https://github.com/factcast/factcast/pull/1179) ([uweschaefer](https://github.com/uweschaefer))
+- issue1163 fixed minor wording glitch [\#1178](https://github.com/factcast/factcast/pull/1178) ([uweschaefer](https://github.com/uweschaefer))
+- Issue1163 Document/consolidate/cleanup server metrics [\#1176](https://github.com/factcast/factcast/pull/1176) ([uweschaefer](https://github.com/uweschaefer))
+- Dependency Fixes [\#1175](https://github.com/factcast/factcast/pull/1175) ([mweirauch](https://github.com/mweirauch))
+- \#1173 pg notification test [\#1174](https://github.com/factcast/factcast/pull/1174) ([uweschaefer](https://github.com/uweschaefer))
+- Don't force the latest Maven 3.x patch release on the build [\#1172](https://github.com/factcast/factcast/pull/1172) ([mweirauch](https://github.com/mweirauch))
+- Drop stray "factcast-schema-registry-plugin" directory [\#1171](https://github.com/factcast/factcast/pull/1171) ([mweirauch](https://github.com/mweirauch))
 - authenticate-against-dockerhub [\#1168](https://github.com/factcast/factcast/pull/1168) ([uweschaefer](https://github.com/uweschaefer))
 
 ## [0.3.9.1](https://github.com/factcast/factcast/tree/0.3.9.1) (2021-02-03)
@@ -26,9 +180,9 @@ weight = 109990
 
 **Closed issues:**
 
+- incompatible dependencies grpc-\* [\#1166](https://github.com/factcast/factcast/issues/1166)
 - add factcast-test to bom [\#1164](https://github.com/factcast/factcast/issues/1164)
 - Document all metrics \(Server and Client\) [\#1155](https://github.com/factcast/factcast/issues/1155)
-- incompatible dependencies grpc-\* [\#1166](https://github.com/factcast/factcast/issues/1166)
 
 **Merged pull requests:**
 
@@ -41,16 +195,20 @@ weight = 109990
 
 **Implemented enhancements:**
 
+- Factus: lock on a list of FactSpecs \(as avail in factcast interface\) [\#1129](https://github.com/factcast/factcast/issues/1129)
 - Add batch Notification type [\#1111](https://github.com/factcast/factcast/issues/1111)
 - Verify and test QUEUE catchup strategy [\#1110](https://github.com/factcast/factcast/issues/1110)
 - Check if lock is still held in subscribed projections [\#1108](https://github.com/factcast/factcast/issues/1108)
+- Explore use of temp tables instead of catchup table [\#1107](https://github.com/factcast/factcast/issues/1107)
+- Tweak AbstractIntegrationTest to reuse containers between classes in order to reduce build/test-time [\#1102](https://github.com/factcast/factcast/issues/1102)
+- Implement callbacks & and interface for before/after update/catchup of projections [\#1090](https://github.com/factcast/factcast/issues/1090)
 
 **Closed issues:**
 
+- IllegalArgumentException with micrometer-registry-prometheus [\#1142](https://github.com/factcast/factcast/issues/1142)
 - Introduce FETCHING catchup Strategy [\#1136](https://github.com/factcast/factcast/issues/1136)
 - Consider the impact of multimaps for header.meta [\#1128](https://github.com/factcast/factcast/issues/1128)
 - Add missing cleanup of 'catchup' table [\#1106](https://github.com/factcast/factcast/issues/1106)
-- IllegalArgumentException with micrometer-registry-prometheus [\#1142](https://github.com/factcast/factcast/issues/1142)
 
 **Merged pull requests:**
 
@@ -78,6 +236,8 @@ weight = 109990
 
 - Introduce callbacks for "beforeSnapshot" and "beforeHandle" & "afterHandle" [\#1123](https://github.com/factcast/factcast/issues/1123)
 - Add hashcode/equals to aggregate defaulting to the id [\#1121](https://github.com/factcast/factcast/issues/1121)
+- Suppress error logging in PgListener when shutting down [\#1105](https://github.com/factcast/factcast/issues/1105)
+- Add whitelisting capability for schema registry [\#1092](https://github.com/factcast/factcast/issues/1092)
 
 **Merged pull requests:**
 
@@ -94,6 +254,7 @@ weight = 109990
 
 **Implemented enhancements:**
 
+- Use an explicit getId\(\) call instead of class.getCanonicalName\(\) to avoid conflicts when dealing with anonymous classes. [\#1084](https://github.com/factcast/factcast/issues/1084)
 - Explore use of temp tables instead of catchup table [\#1107](https://github.com/factcast/factcast/issues/1107)
 - Tweak AbstractIntegrationTest to reuse containers between classes in order to reduce build/test-time [\#1102](https://github.com/factcast/factcast/issues/1102)
 - Implement callbacks & and interface for before/after update/catchup of projections [\#1090](https://github.com/factcast/factcast/issues/1090)
@@ -104,27 +265,30 @@ weight = 109990
 **Fixed bugs:**
 
 - set liberal limits in integrationTest [\#1114](https://github.com/factcast/factcast/issues/1114)
+- GrpcFactStore: handshake happens too late \(Other beans could already use it\) [\#1086](https://github.com/factcast/factcast/issues/1086)
+- Make sure Schemaregistry uses the same code for building transformationchains \(during validation\) than factcast itself. [\#1104](https://github.com/factcast/factcast/issues/1104)
 - \#1114: Bandwitdth protection: better fingerprinting, switch to disable… [\#1115](https://github.com/factcast/factcast/pull/1115) ([uweschaefer](https://github.com/uweschaefer))
 
 **Closed issues:**
 
-- schema-registry-cli: Enrich validation result output. [\#827](https://github.com/factcast/factcast/issues/827)
 - Suppress metrics for time diff on subscribed projections before catchup. [\#1109](https://github.com/factcast/factcast/issues/1109)
-- Suppress error logging in PgListener when shutting down [\#1105](https://github.com/factcast/factcast/issues/1105)
 - make sure the update of snapshot projections is wrapped in synchronized in order make 100% sure that state is synced to heap before projection instance goes public   [\#1098](https://github.com/factcast/factcast/issues/1098)
 - Factus: Change locking of local projections to synchronize on a private mutex rather than the projection itself  [\#1094](https://github.com/factcast/factcast/issues/1094)
+- schema-registry-cli: Enrich validation result output. [\#827](https://github.com/factcast/factcast/issues/827)
+- Suppress error logging in PgListener when shutting down [\#1105](https://github.com/factcast/factcast/issues/1105)
 - Add whitelisting capability for schema registry [\#1092](https://github.com/factcast/factcast/issues/1092)
 
 **Merged pull requests:**
 
 - \#1114: static containers and shutdown hook [\#1119](https://github.com/factcast/factcast/pull/1119) ([uweschaefer](https://github.com/uweschaefer))
 - \#1040: unified naming [\#1118](https://github.com/factcast/factcast/pull/1118) ([uweschaefer](https://github.com/uweschaefer))
+- \#1109: skip publishing time diff metrics while catching up [\#1117](https://github.com/factcast/factcast/pull/1117) ([uweschaefer](https://github.com/uweschaefer))
 - Log errors that happen while trying to subscribe [\#1113](https://github.com/factcast/factcast/pull/1113) ([BernhardBln](https://github.com/BernhardBln))
 - Issue1092 whitelist [\#1097](https://github.com/factcast/factcast/pull/1097) ([samba2](https://github.com/samba2))
 - Fixed Scheduled [\#1096](https://github.com/factcast/factcast/pull/1096) ([BernhardBln](https://github.com/BernhardBln))
 - Update dependency io.micrometer:micrometer-core to v1.6.0 [\#1089](https://github.com/factcast/factcast/pull/1089) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.5.0 [\#1088](https://github.com/factcast/factcast/pull/1088) ([renovate[bot]](https://github.com/apps/renovate))
-- \#1109: skip publishing time diff metrics while catching up [\#1117](https://github.com/factcast/factcast/pull/1117) ([uweschaefer](https://github.com/uweschaefer))
+- adjusted docs regarding automatic projection serial calculation [\#1079](https://github.com/factcast/factcast/pull/1079) ([uweschaefer](https://github.com/uweschaefer))
 
 ## [0.3.6](https://github.com/factcast/factcast/tree/0.3.6) (2020-10-21)
 
@@ -132,6 +296,7 @@ weight = 109990
 
 **Implemented enhancements:**
 
+- Factus: When fetching SnapshotProjections takes a significant time, persist intermediate snapshots now and then in case another thread also fetches, or the fetching is interrupted before it ends. [\#1075](https://github.com/factcast/factcast/issues/1075)
 - Use an explicit getId\(\) call instead of class.getCanonicalName\(\) to avoid conflicts when dealing with anonymous classes. [\#1084](https://github.com/factcast/factcast/issues/1084)
 - Use an explicit getId\(\) call instead of class.getCanonicalName\(\) to avoid conflicts when dealing with anonymous classes. [\#1085](https://github.com/factcast/factcast/pull/1085) ([uweschaefer](https://github.com/uweschaefer))
 
@@ -139,6 +304,11 @@ weight = 109990
 
 - GrpcFactStore: handshake happens too late \(Other beans could already use it\) [\#1086](https://github.com/factcast/factcast/issues/1086)
 - \#1086\_grpcfactstore--handshake-happe: initialize on construction [\#1087](https://github.com/factcast/factcast/pull/1087) ([uweschaefer](https://github.com/uweschaefer))
+
+**Closed issues:**
+
+- Move metric collection regarding snapshots to snapshotcache [\#1080](https://github.com/factcast/factcast/issues/1080)
+- Factus snapshot deserialization is a fatal error although it doesn't have to [\#1040](https://github.com/factcast/factcast/issues/1040)
 
 **Merged pull requests:**
 
@@ -150,6 +320,7 @@ weight = 109990
 
 **Implemented enhancements:**
 
+- clear local redis in integration test [\#1071](https://github.com/factcast/factcast/issues/1071)
 - Factus: When fetching SnapshotProjections takes a significant time, persist intermediate snapshots now and then in case another thread also fetches, or the fetching is interrupted before it ends. [\#1075](https://github.com/factcast/factcast/issues/1075)
 - \#1075 Factus: When fetching SnapshotProjections takes a significant time, persist intermediate snapshots now and then in case another thread also fetches, or the fetching is interrupted before it ends. [\#1082](https://github.com/factcast/factcast/pull/1082) ([uweschaefer](https://github.com/uweschaefer))
 
@@ -159,14 +330,14 @@ weight = 109990
 
 **Merged pull requests:**
 
+- \#1080 Move metric collection regarding snapshots to snapshotcache [\#1081](https://github.com/factcast/factcast/pull/1081) ([uweschaefer](https://github.com/uweschaefer))
 - Update dependency org.projectlombok:lombok to v1.18.16 [\#1078](https://github.com/factcast/factcast/pull/1078) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency org.postgresql:postgresql to v42.2.18 [\#1076](https://github.com/factcast/factcast/pull/1076) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency org.redisson:redisson to v3.13.6 [\#1074](https://github.com/factcast/factcast/pull/1074) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency io.javalin:javalin to v3.11.2 [\#1067](https://github.com/factcast/factcast/pull/1067) ([renovate[bot]](https://github.com/apps/renovate))
-- \#1080 Move metric collection regarding snapshots to snapshotcache [\#1081](https://github.com/factcast/factcast/pull/1081) ([uweschaefer](https://github.com/uweschaefer))
-- adjusted docs regarding automatic projection serial calculation [\#1079](https://github.com/factcast/factcast/pull/1079) ([uweschaefer](https://github.com/uweschaefer))
 - JSON serialiser now calculates hash over schema [\#1050](https://github.com/factcast/factcast/pull/1050) ([BernhardBln](https://github.com/BernhardBln))
 - Update openjdk Docker tag to v8 [\#1013](https://github.com/factcast/factcast/pull/1013) ([renovate[bot]](https://github.com/apps/renovate))
+- adjusted docs regarding automatic projection serial calculation [\#1079](https://github.com/factcast/factcast/pull/1079) ([uweschaefer](https://github.com/uweschaefer))
 
 ## [0.3.4](https://github.com/factcast/factcast/tree/0.3.4) (2020-10-14)
 
@@ -179,11 +350,13 @@ weight = 109990
 **Fixed bugs:**
 
 - Unify naming \(SnapshotCache vs SnapshotRepository\) and fix Autoconfiguration for SnapshotCaches [\#1070](https://github.com/factcast/factcast/issues/1070)
+- \[Factus\] Lock on non-existing aggregate leads to exception [\#1041](https://github.com/factcast/factcast/issues/1041)
 - Issue1070 autoconfiguration & name unification of snapshotCaches [\#1072](https://github.com/factcast/factcast/pull/1072) ([uweschaefer](https://github.com/uweschaefer))
 
 **Closed issues:**
 
 - Switch formatting to google format [\#1054](https://github.com/factcast/factcast/issues/1054)
+- RedissonSnapshotCacheAutoConfiguration doesnt kick in  [\#1052](https://github.com/factcast/factcast/issues/1052)
 - Factus snapshot deserialization is a fatal error although it doesn't have to [\#1040](https://github.com/factcast/factcast/issues/1040)
 
 **Merged pull requests:**
@@ -201,8 +374,8 @@ weight = 109990
 - Update dependency com.fasterxml.jackson.core:jackson-annotations to v2.11.3 [\#1059](https://github.com/factcast/factcast/pull/1059) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency org.liquibase:liquibase-core to v4.1.0 [\#1058](https://github.com/factcast/factcast/pull/1058) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency org.redisson:redisson-spring-boot-starter to v3.13.5 [\#1057](https://github.com/factcast/factcast/pull/1057) ([renovate[bot]](https://github.com/apps/renovate))
-- Update dependency io.mockk:mockk to v1.10.2 [\#1055](https://github.com/factcast/factcast/pull/1055) ([renovate[bot]](https://github.com/apps/renovate))
 - switch to google format [\#1056](https://github.com/factcast/factcast/pull/1056) ([uweschaefer](https://github.com/uweschaefer))
+- Update dependency io.mockk:mockk to v1.10.2 [\#1055](https://github.com/factcast/factcast/pull/1055) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [0.3.3](https://github.com/factcast/factcast/tree/0.3.3) (2020-09-25)
 
@@ -220,6 +393,7 @@ weight = 109990
 - Update dependency io.github.microutils:kotlin-logging to v1.12.0 [\#1048](https://github.com/factcast/factcast/pull/1048) ([renovate[bot]](https://github.com/apps/renovate))
 - Update mockito.version to v3.5.11 [\#1047](https://github.com/factcast/factcast/pull/1047) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.4.0 [\#1046](https://github.com/factcast/factcast/pull/1046) ([renovate[bot]](https://github.com/apps/renovate))
+- Docs updated [\#1045](https://github.com/factcast/factcast/pull/1045) ([BernhardBln](https://github.com/BernhardBln))
 - Update spring boot to v2.3.4.RELEASE [\#1044](https://github.com/factcast/factcast/pull/1044) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency io.micrometer:micrometer-core to v1.5.5 [\#1043](https://github.com/factcast/factcast/pull/1043) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency org.jacoco:jacoco-maven-plugin to v0.8.6 [\#1039](https://github.com/factcast/factcast/pull/1039) ([renovate[bot]](https://github.com/apps/renovate))
@@ -235,7 +409,6 @@ weight = 109990
 - Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.3.0 [\#1029](https://github.com/factcast/factcast/pull/1029) ([renovate[bot]](https://github.com/apps/renovate))
 - Update kotlin.version to v1.4.10 [\#1028](https://github.com/factcast/factcast/pull/1028) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency commons-io:commons-io to v2.8.0 [\#1027](https://github.com/factcast/factcast/pull/1027) ([renovate[bot]](https://github.com/apps/renovate))
-- Docs updated [\#1045](https://github.com/factcast/factcast/pull/1045) ([BernhardBln](https://github.com/BernhardBln))
 
 ## [0.3.2](https://github.com/factcast/factcast/tree/0.3.2) (2020-09-10)
 
@@ -243,8 +416,8 @@ weight = 109990
 
 **Merged pull requests:**
 
-- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.2.0 [\#1022](https://github.com/factcast/factcast/pull/1022) ([renovate[bot]](https://github.com/apps/renovate))
 - Fix: FactCastAutoConfiguration also configures EventSerializer [\#1025](https://github.com/factcast/factcast/pull/1025) ([BernhardBln](https://github.com/BernhardBln))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.2.0 [\#1022](https://github.com/factcast/factcast/pull/1022) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [0.3.1](https://github.com/factcast/factcast/tree/0.3.1) (2020-09-08)
 
@@ -260,6 +433,7 @@ weight = 109990
 
 **Merged pull requests:**
 
+- Issue1023 @ConditionalOnMissingBean on autoconfiguration [\#1024](https://github.com/factcast/factcast/pull/1024) ([uweschaefer](https://github.com/uweschaefer))
 - Update dependency org.assertj:assertj-core to v3.17.2 [\#1021](https://github.com/factcast/factcast/pull/1021) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency net.javacrumbs.json-unit:json-unit-assertj to v2.19.0 [\#1020](https://github.com/factcast/factcast/pull/1020) ([renovate[bot]](https://github.com/apps/renovate))
 - Update mockito.version to v3.5.10 [\#1019](https://github.com/factcast/factcast/pull/1019) ([renovate[bot]](https://github.com/apps/renovate))
@@ -267,11 +441,10 @@ weight = 109990
 - Update dependency io.javalin:javalin to v3.10.1 [\#1017](https://github.com/factcast/factcast/pull/1017) ([renovate[bot]](https://github.com/apps/renovate))
 - Update mockito.version to v3.5.9 [\#1016](https://github.com/factcast/factcast/pull/1016) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency commons-codec:commons-codec to v1.15 [\#1015](https://github.com/factcast/factcast/pull/1015) ([renovate[bot]](https://github.com/apps/renovate))
+- Issue965 filesystem based schema registry [\#1014](https://github.com/factcast/factcast/pull/1014) ([BernhardBln](https://github.com/BernhardBln))
 - Update dependency org.springframework.boot:spring-boot-dependencies to v2.3.3.RELEASE [\#1012](https://github.com/factcast/factcast/pull/1012) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency net.javacrumbs.json-unit:json-unit-assertj to v2.18.1 [\#1011](https://github.com/factcast/factcast/pull/1011) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency org.springframework.cloud:spring-cloud-dependencies to vHoxton.SR8 [\#1008](https://github.com/factcast/factcast/pull/1008) ([renovate[bot]](https://github.com/apps/renovate))
-- Issue1023 @ConditionalOnMissingBean on autoconfiguration [\#1024](https://github.com/factcast/factcast/pull/1024) ([uweschaefer](https://github.com/uweschaefer))
-- Issue965 filesystem based schema registry [\#1014](https://github.com/factcast/factcast/pull/1014) ([BernhardBln](https://github.com/BernhardBln))
 
 ## [0.3.0](https://github.com/factcast/factcast/tree/0.3.0) (2020-08-30)
 
@@ -302,6 +475,7 @@ weight = 109990
 - Update dependency io.javalin:javalin to v3.10.0 [\#1005](https://github.com/factcast/factcast/pull/1005) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency org.xerial.snappy:snappy-java to v1.1.7.7 [\#1001](https://github.com/factcast/factcast/pull/1001) ([renovate[bot]](https://github.com/apps/renovate))
 - Update mockito.version to v3.5.7 [\#1000](https://github.com/factcast/factcast/pull/1000) ([renovate[bot]](https://github.com/apps/renovate))
+- Foo 1527 more unit tests [\#999](https://github.com/factcast/factcast/pull/999) ([BernhardBln](https://github.com/BernhardBln))
 - Update mockito.version to v3.5.6 [\#998](https://github.com/factcast/factcast/pull/998) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency org.assertj:assertj-core to v3.17.0 [\#997](https://github.com/factcast/factcast/pull/997) ([renovate[bot]](https://github.com/apps/renovate))
 - Update mockito.version to v3.5.5 [\#996](https://github.com/factcast/factcast/pull/996) ([renovate[bot]](https://github.com/apps/renovate))
@@ -340,7 +514,6 @@ weight = 109990
 - Update dependency com.squareup.okhttp3:okhttp to v4.8.0 [\#949](https://github.com/factcast/factcast/pull/949) ([renovate[bot]](https://github.com/apps/renovate))
 - Update mockito.version to v3.4.0 [\#948](https://github.com/factcast/factcast/pull/948) ([renovate[bot]](https://github.com/apps/renovate))
 - Issue941 - Implement Keepalive roundtrip to detect stale postgres listeners [\#943](https://github.com/factcast/factcast/pull/943) ([samba2](https://github.com/samba2))
-- Foo 1527 more unit tests [\#999](https://github.com/factcast/factcast/pull/999) ([BernhardBln](https://github.com/BernhardBln))
 
 ## [factcast-0.1.4.3](https://github.com/factcast/factcast/tree/factcast-0.1.4.3) (2020-08-28)
 
@@ -352,6 +525,7 @@ weight = 109990
 - Coordinate Schemaregistry updates between servers... [\#953](https://github.com/factcast/factcast/issues/953)
 - Add metrics for changes in \#941 [\#950](https://github.com/factcast/factcast/issues/950)
 - Improve connection testing and keepalive while waiting for notifications [\#941](https://github.com/factcast/factcast/issues/941)
+- Introduce msgpack as optional format for \(only\) fact serialization [\#928](https://github.com/factcast/factcast/issues/928)
 - Add Module for integration Tests including GRPC [\#612](https://github.com/factcast/factcast/issues/612)
 
 ## [0.2.5](https://github.com/factcast/factcast/tree/0.2.5) (2020-07-05)
@@ -428,7 +602,6 @@ weight = 109990
 - \#877: added gh action workflow [\#916](https://github.com/factcast/factcast/pull/916) ([uweschaefer](https://github.com/uweschaefer))
 - \#888: FactSpec.from for multiple classes [\#915](https://github.com/factcast/factcast/pull/915) ([uweschaefer](https://github.com/uweschaefer))
 - Update dependency com.spotify:dockerfile-maven-plugin to v1.4.13 [\#914](https://github.com/factcast/factcast/pull/914) ([renovate[bot]](https://github.com/apps/renovate))
-- Update dependency com.fasterxml.jackson.core:jackson-databind to v2.11.1 [\#904](https://github.com/factcast/factcast/pull/904) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency org.apache.maven.plugins:maven-surefire-plugin to v3.0.0-M5 [\#893](https://github.com/factcast/factcast/pull/893) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency org.apache.maven.plugins:maven-failsafe-plugin to v3.0.0-M5 [\#892](https://github.com/factcast/factcast/pull/892) ([renovate[bot]](https://github.com/apps/renovate))
 - \#917: moved to openjdk8 as a base for the docker image [\#918](https://github.com/factcast/factcast/pull/918) ([uweschaefer](https://github.com/uweschaefer))
@@ -447,6 +620,7 @@ weight = 109990
 
 - Issue910 add Timestamp to server generated fields in metadata of a fact [\#911](https://github.com/factcast/factcast/pull/911) ([uweschaefer](https://github.com/uweschaefer))
 - Update dependency org.xerial.snappy:snappy-java to v1.1.7.6 [\#906](https://github.com/factcast/factcast/pull/906) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson.core:jackson-databind to v2.11.1 [\#904](https://github.com/factcast/factcast/pull/904) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency com.fasterxml.jackson.core:jackson-core to v2.11.1 [\#900](https://github.com/factcast/factcast/pull/900) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency com.fasterxml.jackson.core:jackson-annotations to v2.11.1 [\#899](https://github.com/factcast/factcast/pull/899) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency io.github.microutils:kotlin-logging to v1.8.0.1 [\#898](https://github.com/factcast/factcast/pull/898) ([renovate[bot]](https://github.com/apps/renovate))
@@ -471,6 +645,9 @@ weight = 109990
 - Update dependency org.apache.commons:commons-compress to v1.20 [\#857](https://github.com/factcast/factcast/pull/857) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency com.fasterxml.jackson.core:jackson-databind to v2.11.0 [\#855](https://github.com/factcast/factcast/pull/855) ([renovate[bot]](https://github.com/apps/renovate))
 - build\(deps\): Bump postgresql from 42.2.12 to 42.2.13 [\#853](https://github.com/factcast/factcast/pull/853) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
+- build\(deps\): Bump maven-shade-plugin from 3.2.3 to 3.2.4 [\#852](https://github.com/factcast/factcast/pull/852) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
+- build\(deps\): Bump exec-maven-plugin from 1.6.0 to 3.0.0 [\#851](https://github.com/factcast/factcast/pull/851) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
+- build\(deps\): Bump spotless-maven-plugin from 1.31.1 to 1.31.2 [\#850](https://github.com/factcast/factcast/pull/850) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - Configure Renovate [\#819](https://github.com/factcast/factcast/pull/819) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [factcast-0.2.0](https://github.com/factcast/factcast/tree/factcast-0.2.0) (2020-06-21)
@@ -489,12 +666,6 @@ weight = 109990
 
 - Factcast throws Exception \(on publish\) if validation is disabled [\#880](https://github.com/factcast/factcast/issues/880)
 - replace LZ4 impl with commons-compress  [\#861](https://github.com/factcast/factcast/issues/861)
-
-**Merged pull requests:**
-
-- build\(deps\): Bump maven-shade-plugin from 3.2.3 to 3.2.4 [\#852](https://github.com/factcast/factcast/pull/852) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
-- build\(deps\): Bump exec-maven-plugin from 1.6.0 to 3.0.0 [\#851](https://github.com/factcast/factcast/pull/851) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
-- build\(deps\): Bump spotless-maven-plugin from 1.31.1 to 1.31.2 [\#850](https://github.com/factcast/factcast/pull/850) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 
 ## [factcast-0.2.0-RC](https://github.com/factcast/factcast/tree/factcast-0.2.0-RC) (2020-06-01)
 
@@ -668,6 +839,7 @@ weight = 109990
 
 **Merged pull requests:**
 
+- build\(deps\): bump jackson-databind from 2.9.10.1 to 2.9.10.3 in /factcast-bom [\#698](https://github.com/factcast/factcast/pull/698) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Fixed non-matching passwords for unauthenticated access [\#697](https://github.com/factcast/factcast/pull/697) ([otbe](https://github.com/otbe))
 
 ## [factcast-0.2.0-M7](https://github.com/factcast/factcast/tree/factcast-0.2.0-M7) (2020-03-04)
@@ -737,7 +909,6 @@ weight = 109990
 
 **Merged pull requests:**
 
-- build\(deps\): bump jackson-databind from 2.9.10.1 to 2.9.10.3 in /factcast-bom [\#698](https://github.com/factcast/factcast/pull/698) ([dependabot[bot]](https://github.com/apps/dependabot))
 - build\(deps\): bump jackson-core from 2.10.2 to 2.10.3 [\#694](https://github.com/factcast/factcast/pull/694) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - build\(deps\): bump jackson-annotations from 2.10.2 to 2.10.3 [\#693](https://github.com/factcast/factcast/pull/693) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - \#691: updated ktlint dep [\#692](https://github.com/factcast/factcast/pull/692) ([uweschaefer](https://github.com/uweschaefer))
@@ -862,6 +1033,9 @@ weight = 109990
 - Bump maven-javadoc-plugin from 3.1.0 to 3.1.1 [\#513](https://github.com/factcast/factcast/pull/513) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - Bump assertj-core from 3.12.2 to 3.13.0 [\#512](https://github.com/factcast/factcast/pull/512) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - configured os maven plugin [\#511](https://github.com/factcast/factcast/pull/511) ([uweschaefer](https://github.com/uweschaefer))
+- cleanups [\#509](https://github.com/factcast/factcast/pull/509) ([uweschaefer](https://github.com/uweschaefer))
+- more versions [\#508](https://github.com/factcast/factcast/pull/508) ([uweschaefer](https://github.com/uweschaefer))
+- switch to ram instance [\#506](https://github.com/factcast/factcast/pull/506) ([uweschaefer](https://github.com/uweschaefer))
 - Bump spring-cloud-dependencies from Greenwich.SR1 to Greenwich.SR2 [\#460](https://github.com/factcast/factcast/pull/460) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 
 ## [factcast-0.1.4.2](https://github.com/factcast/factcast/tree/factcast-0.1.4.2) (2019-07-28)

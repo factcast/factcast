@@ -4,8 +4,6 @@ weight = 100
 type="docs"
 +++
 
-## nodeJS GRPC Producer
-
 Producing Facts via nodeJS is very simple due to the available [{{<icon name="circle-arrow-right" size="small">}}gRPC](https://www.npmjs.com/package/grpc) NPM Module. It will generate a stub constructor called ```RemoteFactStore``` from our proto file.
 
 ```javascript
