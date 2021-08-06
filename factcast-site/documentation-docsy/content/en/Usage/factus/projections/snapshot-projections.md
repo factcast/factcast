@@ -4,7 +4,7 @@ type = "docs"
 weight = 100
 +++
 
-![](../ph_sp.png)
+![](../ph_sp.png#center)
 
 Now that we know how snapshotting works and what a projection is, it is quite easy to put things together:
 

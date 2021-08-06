@@ -3,7 +3,7 @@ title = "Managed (local)"
 weight = 350
 type = "docs"
 +++
-![](../ph_lm.png)
+![](../ph_lm.png#center)
 
 As a specialization of ManagedProjection, a LocalManagedProjection lives within the application 
 process and **does not use shared external Databases** to maintain its state.
