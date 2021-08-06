@@ -31,7 +31,7 @@ consists of:
 
 JSON-Schema:
 
-```jsonSchema
+```json
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "definitions": {},
