@@ -3,7 +3,7 @@ title: "Releases"
 
 
 type: docs
-weight: 10000
+weight: 100000
 ---
 
 
@@ -20,7 +20,7 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.3.0
 
 #### Feature
 
-* high-level API called [Factus](/factus) that should make application code **MUCH** easier when using FactCast
+* high-level API called [Factus](/usage/factus) that should make application code **MUCH** easier when using FactCast
 * plenty of new modules:
   * factcast-test
   * factcast-factus
@@ -83,8 +83,8 @@ see changelog
 
 #### major features
 
-* Security improvements, added Roles see [Boot gRPC BasicAuth](/setup/examples/grpc-config-basicauth/)
-* Schema Registry tool [Schema Registry CLI](/usage/java/fc-schema-cli/)
+* Security improvements, added Roles see [Boot gRPC BasicAuth](/setup/grpc-config-basicauth)
+* Schema Registry tool [Schema Registry CLI](/usage/lowlevel/cli/fc-schema-cli/)
 * Validation of Fact payloads against JSON Schema [Schema validation and Registry](/concept/schema-registry/)
 * Transformation between Versions (Up-/Downcasting) of Fact payloads [Transformation and Registry](/concept/transformation/)
 
@@ -113,7 +113,7 @@ see changelog
 #### 2018-11-18 0.0.31 (milestone)
 * Introduces / switches to: JUnit5, Spring Boot 2, Testcontainers
 * new example projects
-* **Not a drop-in replacement: See [Migration Guide](migration)**
+* **Not a drop-in replacement: See [Migration Guide](/about/migration)**
 
 #### 2018-10-21 0.0.20 (milestone)
 * added CLI
