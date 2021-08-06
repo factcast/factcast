@@ -1,6 +1,7 @@
 ---
 title: "Boot Server fat-jar (TLS)"
 type: docs
+weight: 120
 ---
 
 #### Non-Encrpyted
@@ -20,7 +21,7 @@ Obviously, for running a TLS Server, you need a certificate. We packaged a snake
 
 In order to run the TLS Server, go to **factcast-examples/factcast-example-tls-server** and run
 
-```sh
+```shell
 mvn spring-boot:run
 ```
 

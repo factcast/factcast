@@ -1,6 +1,7 @@
 ---
 title: "Boot Server Metrics"
 type: docs
+weight: 150
 ---
 
 ## Metrics
@@ -15,7 +16,7 @@ When it comes to metrics, you'll have to know what you're looking for. There are
 
 * **Server** metrics in FactCast Server as well as
 * **Client** metrics in the factcast client and additionally in the
-* [factus client library]({{< ref "/Usage/factus/metrics.md" >}} "factus client library"). 
+* [factus client library](/usage/factus/metrics). 
   
 We're focussing on *Server* metrics here.
 

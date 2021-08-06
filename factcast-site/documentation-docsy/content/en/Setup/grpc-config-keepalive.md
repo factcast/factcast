@@ -1,6 +1,7 @@
 ---
 title: "Boot gRPC KeepAlive"
 type: docs
+weight: 170
 ---
 
 ## keep-alive settings

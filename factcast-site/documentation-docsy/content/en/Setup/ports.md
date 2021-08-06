@@ -1,6 +1,7 @@
 ---
 title: "Boot Server Ports"
 type: docs
+weight: 130
 ---
 
 ## Port defaults and how to change them

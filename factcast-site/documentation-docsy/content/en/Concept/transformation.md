@@ -1,7 +1,5 @@
 ---
 title: "Transformation"
-menu:
-main:
 weight: 90
 type: docs
 ---

@@ -1,6 +1,7 @@
 ---
 title: "Boot Server Prerequisites"
 type: docs
+weight: 100
 ---
 
 
@@ -9,7 +10,7 @@ type: docs
 In order to run the Factcast server, you have to provide a Postgres database at least in version 9.4.
 The following example shows the configuration with one user.
 
-```
+```properties
 spring.datasource.username="user" //that user has to be provided
 spring.datasource.password="password"
 ```
@@ -26,6 +27,6 @@ If you don't want to provide a superuser, you have to consider the following poi
 2.) The Factcast needs the Postgres module [uuid-ossp](https://www.postgresql.org/docs/11/uuid-ossp.html). You have to install that module manually. The server will recognize the already installed module and it won't throw an error caused by missing privileges.
 Login into your Postgres console and execute the following command as superuser:
 
-```
+```sql
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ``` 
