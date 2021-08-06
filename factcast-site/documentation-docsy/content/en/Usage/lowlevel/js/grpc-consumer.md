@@ -4,8 +4,6 @@ weight = 101
 type="docs"
 +++
 
-## nodeJS GRPC Consumer
-
 ```javascript
 const grpc = require('grpc');
 const protoDescriptor = grpc.load('./FactStore.proto');

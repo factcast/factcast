@@ -6,9 +6,8 @@ type: docs
 weight: 100000
 ---
 
-
-
-## Important Releases
+{{% alert info %}} Only important releases are mentioned here.
+{{% /alert %}}
 
 ### RELEASE 0.3.0
 {{< rawhtml >}}

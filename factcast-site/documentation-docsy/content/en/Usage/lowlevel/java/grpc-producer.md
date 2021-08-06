@@ -4,8 +4,6 @@ type="docs"
 weight = 50
 +++
 
-## Java GRPC Producer
-
 #### FactCast.publish(List&lt;Fact&gt; factsToPublish)
 
 In order to produce Facts, you need to create Fact Instances and publish them via ```FactCast.publish()```.

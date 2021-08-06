@@ -4,8 +4,6 @@ type: docs
 weight: 150
 ---
 
-## Metrics
-
 Being a regular Spring Boot 2+ application, the FactCast Server uses [micrometer.io](https://micrometer.io) as its
 metrics emitting/collecting solution. In order to get started collecting the metrics FactCast Server emits, you'll need
 to choose a backend/store for your metrics. Micrometer
