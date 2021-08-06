@@ -8,9 +8,9 @@ type = "docs"
 
 # Changelog
 
-## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2021-08-06)
+## [0.4.0-M1](https://github.com/factcast/factcast/tree/0.4.0-M1) (2021-08-06)
 
-[Full Changelog](https://github.com/factcast/factcast/compare/0.3.13...upcoming)
+[Full Changelog](https://github.com/factcast/factcast/compare/0.3.13...0.4.0-M1)
 
 **Implemented enhancements:**
 
