@@ -4,16 +4,21 @@ weight = 1000
 type = "docs"
 +++
 
-Whenever you need to make business decisions, you need a model to base those decisions on. Most of the time it is 
-important that this model is consistent and up to date with the Facts published at the time the decision takes place.
+To make business decisions, you need a model to base those decisions on. In most cases, it is important that this 
+model is consistent with the facts published at the time of the decision and that the model is up to date.
 
-Think of a use case like making sure that UserNames in a system are unique. In (potentially) distributed applications
-and especially in eventsourced applications this can be a challenging problem. For sure what you want to avoid is 
-pessimistic locking for all sorts of reasons, which leaves us with optimistic locking as a choice.
+For example, we want to ensure that the username is unique for the whole system.
+In case of (potentially) distributed applications and especially in case of eventsourced applications, 
+this can be a difficult problem.
+For sure what you want to avoid is pessimistic locking for all sorts of reasons, 
+which leaves us with optimistic locking as a choice.
 
-On a general level, optimistic locking tries to make a change and to write that change or, if something relevant that 
-might invalidate this change in between, discard the change and try again taking the new state into account.
-Often this is done by adding a versionId or timestamp to a particular Entity/Aggregate to detect concurrent changes.
+On a general level, optimistic locking:
+* **tries** *to make a change* and then *to write that change* **or** 
+* if something happens in the meantime that could invalidate this change,
+*discard the change* and **try again** taking the new state into account.
+
+Often this is done by adding a `versionId` or `timestamp` to a particular Entity/Aggregate to detect concurrent changes.
 
 This process can be *repeated until the change is either successful or definitively unsuccessful and needs to be rejected*.
 
@@ -27,13 +32,13 @@ If a new user registers,
     * repeat from the beginning if this is the case
     * execute the change while making sure no other change can interfere.
     
-In FactCast/Factus, there is no need to assign versionIds or Timestamps to aggregates or even have aggregates for that matter.
-All we have to do is to define a 'scope' of an optimistic lock to check for concurrent changes in order to either 
+In FactCast/Factus, there is no need to assign a `versionId` or `timestamp` to an aggregate or even have aggregates for that matter.
+All you have to do is to define a *scope* of an optimistic lock to check for concurrent changes in order to either 
 discard the prepared changes and try again, or to publish the prepared change if there was no interfering change in between.
 
 Let's look at the example above:
 
-Consider, you have a SnapshotProjection `UserNames` that we have seen before.
+Consider, you have a `SnapshotProjection` `UserNames` that we have seen before.
 
 ```java
 public class UserNames implements SnapshotProjection {
@@ -101,10 +106,10 @@ Applied to our example that would be
 
 As you can see here, the attempt call receives a BiConsumer that consumes
 1. your defined scope, updated to the latest changes in the Fact-stream
-1. a 'RetryableTransaction' that you use to either publish to or abort.
+1. a `RetryableTransaction` that you use to either publish to or abort.
 
-Note that you can use either SnapshotProjections (including aggregates) as well as ManagedProjections to lock on. 
-**SubscribedProjections however are not usable here**, due to the fact that they are in nature eventual consistent, which 
+Note that you can use either a `SnapshotProjection` (including aggregates) as well as a `ManagedProjection` to lock on. 
+**A `SubscribedProjection` however is not usable here**, due to the fact that they are in nature eventual consistent, which 
 breaks a necessary precondition for optimistic locking.  
 
 Also note that you should not (and cannot) publish to Factus directly when executing an attempt, as this would potentially 
