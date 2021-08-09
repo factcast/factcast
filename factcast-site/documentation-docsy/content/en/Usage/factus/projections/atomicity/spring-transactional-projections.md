@@ -1,6 +1,6 @@
 +++
-title = "Spring Transactional Projection"
-weight = 20
+title = "Spring Transactional"
+weight = 500
 type="docs"
 +++
 
