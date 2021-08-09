@@ -1,10 +1,3 @@
-+++
-title = "Changelog (full)"
-weight = 109990
-type = "docs"
-+++
-
-
 # Changelog
 
 ## [0.4.0-M1](https://github.com/factcast/factcast/tree/0.4.0-M1) (2021-08-06)
