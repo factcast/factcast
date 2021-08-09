@@ -1,7 +1,5 @@
 +++
-draft = false
 title = "Tail Index"
-description = ""
 
 creatordisplayname = "Maik Toepfer"
 creatoremail = "maik.toepfer@prisma-capacity.eu"
@@ -22,7 +20,7 @@ Background
 FactCast uses a Postgres database for its persistence. Events (or *Facts*) live in a single database table
 called *fact* which is referred to as the *fact log*. To speed up access to the fact log, 
 a [global index](https://www.postgresql.org/docs/11/textsearch-indexes.html) is used. 
-However, as the fact log is always growing, so is the index (good English?). 
+However, as the fact log is constantly growing, so is the index. 
 With the global index alone, query performance decreases.
 
 
@@ -51,6 +49,8 @@ FactCast removes it and creates a new smaller one. When asked to query facts fro
 the Postgres database has now multiple options. Beside the large global index, there are now much smaller ones
 which most likely cover the query and are cheaper to access.  
 
+For further details on how to configure tail indexes, see [the configuration properties]({{< ref "properties.md#performance--reliability" >}}). 
+
 Note: Tail indexes are implemented as [Postgres Partial Indexes](https://www.postgresql.org/docs/11/indexes-partial.html). 
 
 
@@ -62,4 +62,55 @@ See the [recommendations of the configuration section]({{< ref "properties.md#pe
 on the number of tail index generations. 
 
 
+Fast-Forward
+------------
+The Fast-Forward feature further improves the effectiveness of tail indexes by trying to push a client's 
+fact stream position to the end of the fact stream. There, checking for new facts is supported by the tail indexes.    
 
+Based on the fact log diagram above, here is an example how a regular check for new events without Fast-Forward works:  
+
+{{< mermaid>}}
+sequenceDiagram
+    FactCast Client->>FactCast Server: Are there new facts after position 10?
+    Note right of FactCast Server: look for new facts <br/> via the Global Index
+    FactCast Server->>FactCast Client: No, nothing new
+    Note over FactCast Client,FactCast Server: After some time...
+    FactCast Client->>FactCast Server: Are there new facts after position 10?
+    Note right of FactCast Server: look for new facts <br/> via the Global Index
+    FactCast Server->>FactCast Client: ...
+{{</ mermaid>}}
+
+The client asks the server for new events after its current position "10". Since
+this position is not at the tail of the fact log anymore, the FactCast database has to use the expensive Global index
+to check for new facts. As there are no new events, the fact stream position stays at "10" and after a while 
+the same expensive query via the Global index is repeated.
+
+With Fast-Forward the situation is different:
+
+{{< mermaid>}}
+sequenceDiagram
+    FactCast Client->>FactCast Server: Are there new facts after position 10?
+    Note right of FactCast Server: look for new facts via <br/> the Global Index
+    FactCast Server->>FactCast Client: No, nothing new. Your new fact stream position is 500000 
+    Note over FactCast Client,FactCast Server: After some time...
+    FactCast Client->>FactCast Server: Are there new facts after position 500000?
+    Note right of FactCast Server: look for new facts <br/> via Tail Index no. 1
+    FactCast Server->>FactCast Client: ...
+{{< /mermaid>}}
+
+Here, the client still asks the server for new events after its current position "10". Again,
+the FactCast database has to use the Global Index. However, beside informing the client that no new events were found,
+a new fact stream position of "500000" is promoted to the client. Looking at the diagram of the fact log above, we see, that position
+"500000" is the beginning of the most recent tail index #1. On its next call, the client uses this fast-forwared 
+fact stream position. Since this position is covered by a comparable small tail index, 
+FactCast can scan much quicker for new events than before. 
+
+Fast-Forward can be imagined like a magnet on the right hand, tail side of the fast stream: Whenever possible, 
+FactCast tries to drag clients from a behind position to the tail of the fact stream.
+
+Notes:
+- To omit unnecessary writes of the fact stream position on the client side, FactCast always offers the beginning of
+  the tail index to the client.
+- Fast-Forward is a client- and server side feature of FactCast 0.4.0 onward. However, older clients remain compatible
+with a newer FactCast server as the additional Fast-Forward notification is ignored. 
+   
