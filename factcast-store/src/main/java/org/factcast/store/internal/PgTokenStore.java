@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
@@ -29,6 +30,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @RequiredArgsConstructor
+@Slf4j
 public class PgTokenStore implements TokenStore {
 
   final JdbcTemplate jdbc;
@@ -69,6 +71,7 @@ public class PgTokenStore implements TokenStore {
   @Scheduled(cron = "0 0 4 * * *")
   @SchedulerLock(name = "tokenStoreCompact", lockAtMostFor = "PT10m")
   public void compact() {
+    log.debug("triggering compact on tokenstore");
     jdbc.update(PgConstants.COMPACT_TOKEN);
   }
 }
