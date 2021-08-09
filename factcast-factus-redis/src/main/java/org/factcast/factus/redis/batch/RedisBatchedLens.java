@@ -49,7 +49,7 @@ public class RedisBatchedLens extends AbstractTransactionalLens {
               + " is expected to have an annotation @"
               + RedisBatched.class.getSimpleName());
     }
-    return annotation.size();
+    return annotation.bulkSize();
   }
 
   @VisibleForTesting
