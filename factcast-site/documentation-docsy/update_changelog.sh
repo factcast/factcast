@@ -28,7 +28,7 @@ git tag -l | xargs git tag -d && git fetch -t
 #  echo "{{% alert info %}}This changelog is filtered. All automatically created PRs regarding dependency upgrades are hidden for readabilities sake. If you are interested, please look at '[unfiltered-changelog](/about/unfiltered-changelog)' {{% /alert %}}">>c.md
   echo "">>c.md
 
-  cat changelog.md >> c.md  
+  tail -n +3 changelog.md >> c.md  
 
   mv c.md en/About/changelog.md
 #  mv unfiltered-changelog.md en/About
