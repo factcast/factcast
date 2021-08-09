@@ -3,6 +3,7 @@ title = "Aggregate"
 type="docs"
 weight = 200
 +++
+
 ![](../ph_a.png#center)
 
 Another special flavor of a Snapshot Projection is an Aggregate. An Aggregate extends the notion on Snapshot Projection by bringing in an aggregate Id. This is the one of the `UserNames` example. It does not make sense to maintain two different UserNames Projections, because by definition, the UserNames projection should contain **all** UserNames in the system.

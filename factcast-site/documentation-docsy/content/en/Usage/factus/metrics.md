@@ -27,23 +27,23 @@ The metrics are automatically tagged with
 At the time of writing (Factcast version 0.3.13) the following metrics are supported:
 
 #### Counted
-- `transaction_attempts` - how often was a transaction retried. See [Optimistic Locking]({{< ref "/Usage/factus/optimistic-locking.md" >}} 
+- `transaction_attempts` - how often was a transaction retried. See [Optimistic Locking]({{< ref "optimistic-locking.md" >}} 
 "factus optimistic locking") for more background
 - `transaction_abort` - how often was an attempted transaction aborted
 
 #### Gauged
-- `fetch_size` - size in bytes of a fetched [Snapshot projection]({{< ref "/Usage/factus/projections/snapshot-projections.md" >}} 
-"factus snapshot projections") or [Aggregate projection]({{< ref "/Usage/factus/projections/aggregates.md" >}} 
+- `fetch_size` - size in bytes of a fetched [Snapshot projection]({{< ref "snapshot-projections.md" >}} 
+"factus snapshot projections") or [Aggregate projection]({{< ref "aggregates.md" >}} 
 "factus aggregates") 
   
 #### Timed
-- `managed_projection_update_duration`  - duration in milliseconds a [Managed Projection]({{< ref "/Usage/factus/projections/managed-projection.md" >}} 
+- `managed_projection_update_duration`  - duration in milliseconds a [Managed Projection]({{< ref "managed-projection.md" >}} 
 "factus managed projection") took to update
-- `fetch_duration` - duration in milliseconds it took to fetch a [Snapshot projection]({{< ref "/Usage/factus/projections/snapshot-projections.md" >}} 
+- `fetch_duration` - duration in milliseconds it took to fetch a [Snapshot projection]({{< ref "snapshot-projections.md" >}} 
 "factus snapshot projections")
-- `find_duration` - duration in milliseconds it took to find a specific [Aggregate]({{< ref "/Usage/factus/projections/aggregates.md" >}} 
+- `find_duration` - duration in milliseconds it took to find a specific [Aggregate]({{< ref "aggregates.md" >}} 
 "factus aggregates")
 - `event_processing_latency` - time difference in milliseconds between a fact was published and a consuming  
-[Subscribed projection]({{< ref "/Usage/factus/projections/subscribed-projection.md" >}} "factus subscribed projection") was updated
+[Subscribed projection]({{< ref "subscribed-projection.md" >}} "factus subscribed projection") was updated
   
  

@@ -32,11 +32,10 @@ Spring transactional projections are available for
 - [subscribed projections]({{< ref "subscribed-projection.md" >}}).
 
 In general, such a projection has three ingredients:
-- it is annotated with `@SpringTransactional`
-- it extends either 
-    - the class `AbstractSpringTxManagedProjection` or 
-    - the class `AbstractSpringTxSubscribedProjection`
-- it provides the serial number of the projection via the `@ProjectionMetaData` annotation
+- it is annotated with `@SpringTransactional` to configure bulk and transaction-behavior and
+- it implements `SpringTxProjection` to return the responsible PlatformTransactionManager for this kind of Projection
+
+
 
 Here is an example:
 
