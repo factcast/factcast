@@ -1,5 +1,5 @@
 +++
-title = "Publishing"
+title = "Publication"
 weight = 20
 type="docs"
 +++

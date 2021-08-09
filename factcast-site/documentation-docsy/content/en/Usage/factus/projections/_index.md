@@ -1,5 +1,5 @@
 +++
-title = "Projections"
+title = "Projection"
 type = "docs"
 weight = 50
 
