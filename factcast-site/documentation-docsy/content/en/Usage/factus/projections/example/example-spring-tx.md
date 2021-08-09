@@ -1,4 +1,4 @@
-+++ title = "SpringTx managed"
++++ title = "UserNames (Spring/JDBC)"
 type = "docs"
 weight = 52
 
@@ -66,6 +66,14 @@ Two remarks:
 2) To ensure that the database communication participates in the managed transaction,
    the database access mechanism must be also provided by Spring. Thus, we suggest using the `JdbcTemplate`.
 
+## Configuration
+
+The `@SpringTransactional` annotation provides various configuration options:
+
+| Parameter Name         |  Description                                         | Default Value  |
+|------------------------|------------------------------------------------------|----------------|
+| `bulkSize`             | bulk size                                            |   50           |
+| `timeoutInSeconds`      | timeout in seconds            |   30         |
 
 ## Updating the projection
 
