@@ -91,7 +91,10 @@ public class ExceptionHandlingV3 extends AbstractFactCastIntegrationTest {
     ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
     val proj = new LocalManagedUserNames();
-    assertDoesNotThrow(() -> {ec.update(proj);});
+    assertDoesNotThrow(
+        () -> {
+          ec.update(proj);
+        });
     assertThat(proj.exception()).isNull();
   }
 
