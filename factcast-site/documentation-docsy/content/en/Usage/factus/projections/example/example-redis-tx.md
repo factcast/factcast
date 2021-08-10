@@ -39,7 +39,7 @@ public class UserNames extends AbstractRedisManagedProjection {
 
 FactStreamPosition and Lock-Management are automatically taken care of by the underlying `AbstractRedisManagedProjection`.
 
-In contrast to non-transactional projections, when applying Facts to the Redis data-structure, the instance variable `userNames` cannot be used 
+In contrast to non-atomic projections, when applying Facts to the Redis data structure, the instance variable `userNames` cannot be used 
 as this would violate the transactional semantics. Instead, accessing and updating the
 state is carried out on a transaction derived data-structure (`Map` here) inside the handler methods.
 
@@ -81,7 +81,7 @@ in Redis:
 
 ## Redission API Datastructures vs. Java Collections 
 
-As seen in the above example, some Redission data-structures also implement the appropriate Java Collections interface.
+As seen in the above example, some Redission data structures also implement the appropriate Java Collections interface.
 For example, you can assign
 a [Redission RMap](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html)
 also to a standard Java `Map`:
