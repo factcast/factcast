@@ -45,10 +45,9 @@ As we decided for a [managed projection]({{< ref "managed-projection.md">}}), we
 the `AbstractRedisManagedProjection` class. The call to `super(...)` enables Factus to take care of transaction
 management and to automatically persist the Fact stream position and manage the locks.
 
-In contrast to non-atomic projections, when applying Facts to the Redis data structure, 
-the instance variable `userNames` cannot be used 
+In contrast to non-transactional projections, when applying Facts to the redis datastructure, the instance variable `userNames` cannot be used 
 as this would violate the transactional semantics. Instead, accessing and updating the
-state is carried out on a transaction derived data structure (Map here) inside the handler methods.
+state is carried out on a transaction derived datastructure (Map here) inside the handler methods.
 
 ## Updating the projection
 ### Applying Events
@@ -90,7 +89,7 @@ in Redis:
 
 ## Redission API Datastructures vs. Java Collections 
 
-As seen in the above example, some Redission data structures also implement the appropriate Java Collections interface.
+As seen in the above example, some Redission data-structures also implement the appropriate Java Collections interface.
 For example, you can assign
 a [Redission RMap](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html)
 also to a standard Java `Map`:
