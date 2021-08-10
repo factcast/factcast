@@ -8,7 +8,7 @@ A *Redis transactional projection* is a [transactional projection]({{<ref "atomi
 based on [Redission RTransaction](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RTransaction.html).
 
 Compared to a [Spring transactional projection]({{< ref "spring-transactional-projections.md">}}), a *Redis transactional projection* is more lightweight since
-- transactionallity is directly provided by `RTransaction`. There is no need to deal with Spring's `PlatformTransactionManager`   
+- transactionality is directly provided by `RTransaction`. There is no need to deal with Spring's `PlatformTransactionManager`   
 - the fact stream position is automatically managed (see example below)
     
 Working with a *Redis transactional projection* is **synchronous**. To ensure permanent data consistency, the Redission client 
@@ -17,7 +17,7 @@ constantly communicates with the Redis server, which ensures transactional isola
 For this reason, a *Redis transactional projection* is best used for projections which
 need to access the projection's data during the handling of an event. 
  
-For a more performant alternative see [Redis batch projection]({{<ref "redis-batch-projection.md">}})
+For a better performing alternative, see [Redis batch projection]({{<ref "redis-batch-projection.md">}})
 
 ## Configuration
 
@@ -53,7 +53,7 @@ Factus provides convenient abstract classes for managed and subscribed projectio
 
 ```java
 @Handler
-void apply(SomethingHappened fact, RTramsaction tx) {
+void apply(SomethingHappened fact, RTransaction tx) {
     myMap = tx.getMap( ... ).put( fact.getKey() , fact.getValue() );
 }
 ```

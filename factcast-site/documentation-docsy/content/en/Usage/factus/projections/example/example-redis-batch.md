@@ -23,7 +23,8 @@ The `@RedisBatched` annotation provides various configuration options:
 ## Constructing
 
 Since we decided to use a managed projection, we extended the `AbstractRedisManagedProjection` class.
-To configure the connection to Redis via redisson, we injected RedissonClient in the constructor, calling the parent constructor.
+To configure the connection to Redis via [Redisson](https://github.com/redisson/redisson), 
+we injected RedissonClient in the constructor, calling the parent constructor.
 
 ```java
 @ProjectionMetaData(serial = 1)
@@ -37,7 +38,7 @@ public class UserNames extends AbstractRedisManagedProjection {
 ```
 We are using a managed projection, hence we extend the `AbstractRedisManagedProjection` class.
 To let Factus take care of the batch submission and to automatically persist the Fact stream position and manage the locks, 
-we provide the parent class with the instance of the Redission client (call to `super(...)`)
+we provide the parent class with the instance of the Redisson client (call to `super(...)`)
 
 
 
@@ -60,8 +61,10 @@ which offers asynchronous versions of the common `Map` methods.
 By calling `putAsync(...)` we add the extracted event data to the map. Underneath, the `RBatch` collects this change and, 
 at a convenient point in time, transmits it together with other changes to Redis.
 
-Note: RBatch handling is the responsibility of Factus. As developers, you must not call e.g. `execute()`
+{{% alert title="Note"%}}
+RBatch handling is the responsibility of Factus. As developers, you must not call e.g. `execute()`
 or `discard()` yourself.
+{{% /alert %}}
 
 {{% alert title="Note"%}}
 FactStreamPosition and Lock-Management are automatically taken care of by the underlying `AbstractRedisManagedProjection`.
@@ -69,7 +72,7 @@ FactStreamPosition and Lock-Management are automatically taken care of by the un
 
 ## Default redisKey
 
-The data structures provided by redisson all require a unique identifier which is used to store them in Redis. The method `getRedisKey()` provides an
+The data structures provided by Redisson all require a unique identifier which is used to store them in Redis. The method `getRedisKey()` provides an
 automatically generated name, assembled from the class name of the projection and the serial number configured with
 the `@ProjectionMetaData`.
 
@@ -94,7 +97,7 @@ also to a standard Java `Map`:
         Map<UUID, String> = tx.getMap(getRedisKey());
 ```
 
-There are good reasons for either variants, `1)` and `2)`:
+There are good reasons for either variant, `1)` and `2)`:
 
 | Redisson specific         |  plain Java                                         |
 |------------------------|------------------------------------------------------|
@@ -130,6 +133,6 @@ public class UserNames extends AbstractRedisManagedProjection {
 }
 ```
 
-To study the full example see
+To study the full example, see
 - [the UserNames projection using `@RedisBatched`](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/RedisBatchedProjectionExample.java) and
 - [example code using this projection](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/RedisBatchedProjectionExampleITest.java)    
