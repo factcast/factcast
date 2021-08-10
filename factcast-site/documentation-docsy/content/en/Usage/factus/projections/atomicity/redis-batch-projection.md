@@ -15,16 +15,16 @@ the [Redission library](https://github.com/redisson/redisson) is enough.
 Working with a *Redis batch projection* is **asynchronous** as multiple commands are collected and 
 executed later atomically.
     
-Other than a transaction, writes that have been registered (but not yet executed) on a redis batch can not be read. 
+Other than a transaction, writes registered (but not yet executed) on a Redis batch can not be read. 
 
-A *Redis batch projection* therefore is recommended for projections which
-- handle very many events and
+A *Redis batch projection*, therefore, is recommended for projections which
+- handle a lot of events and
 - don't require reading the current projection state in an event handler.
 
 *Multiple commands can be sent in a batch using RBatch object in a single network call.
-Command batches allow to reduce the overall execution time of a group of commands.* (Reddision RBatch docs)
+Command batches allow to reduce the overall execution time of a group of commands.* (taken from Reddision RBatch docs)
 
-For a synchronous alternative which allows access to the projection state during event handling, 
+For a synchronous alternative that allows access to the projection state during event handling, 
 see [Redis transactional projection]({{<ref "redis-transactional-projections.md">}}).
 
 ## Configuration

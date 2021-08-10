@@ -37,10 +37,10 @@ To use Spring Transactionality, a projection needs to:
 
 ## Applying facts
 
-In your @Handler methods, you need to make sure, you use the Spring-Managed Transaction when talking to your datastore. 
-This might be completely transparent to you (for instance when using JDBC that assigns the transaction to the current thread), or will need you to resolve the current transaction from the given `platformTransactionManager` [example](https://github.com/redisson/redisson/wiki/14.-Integration-with-frameworks#148-spring-transaction-manager).
+In your @Handler methods, you need to make sure you use the Spring-Managed Transaction when talking to your datastore. 
+This might be entirely transparent for you (for instance, when using JDBC that assigns the transaction to the current thread), or will need you to resolve the current transaction from the given `platformTransactionManager` [example](https://github.com/redisson/redisson/wiki/14.-Integration-with-frameworks#148-spring-transaction-manager).
 
-Please consult the spring docs or your driver's documentation.
+Please consult the Spring docs or your driver's documentation.
 
 {{% alert  title="Note" %}} 
 
@@ -50,4 +50,4 @@ Factus provides convenient abstract classes for managed and subscribed projectio
 
 {{% / alert %}}
 
-You can find blueprints of how to get started in the [example section](/usage/factus/projections/example).
+You can find blueprints of getting started in the [example section](/usage/factus/projections/example).

@@ -4,9 +4,9 @@ weight = 1000
 type="docs"
 +++
 
-Let's look at an example. Here is a projection which handles *UserCreated* and
+Here is a projection that handles *UserCreated* and
 *UserDeleted* events. It solves the same problem as the example we've seen in [Spring transactional projections]({{<
-ref "example-spring-tx.md">}}). However, this time we use Redis as our data store and redisson as the access API.
+ref "example-spring-tx.md">}}). However, this time we use Redis as our data store and [Redisson](https://github.com/redisson/redisson) as the access API.
 
 ## Configuration
 
@@ -24,7 +24,7 @@ The `@RedisTransactional` annotation provides various configuration options:
 ## Constructing
 
 Since we decided to use a managed projection, we extended the `AbstractRedisManagedProjection` class.
-To configure the connection to Redis via redisson, we injected RedissonClient in the constructor, calling the parent constructor.
+To configure the connection to Redis via Redisson, we injected `RedissonClient` in the constructor, calling the parent constructor.
 
 ```java
 @ProjectionMetaData(serial = 1)
@@ -39,15 +39,9 @@ public class UserNames extends AbstractRedisManagedProjection {
 
 FactStreamPosition and Lock-Management are automatically taken care of by the underlying `AbstractRedisManagedProjection`.
 
-
-
-As we decided for a [managed projection]({{< ref "managed-projection.md">}}), we extend
-the `AbstractRedisManagedProjection` class. The call to `super(...)` enables Factus to take care of transaction
-management and to automatically persist the Fact stream position and manage the locks.
-
-In contrast to non-transactional projections, when applying Facts to the redis datastructure, the instance variable `userNames` cannot be used 
+In contrast to non-transactional projections, when applying Facts to the Redis data-structure, the instance variable `userNames` cannot be used 
 as this would violate the transactional semantics. Instead, accessing and updating the
-state is carried out on a transaction derived datastructure (Map here) inside the handler methods.
+state is carried out on a transaction derived data-structure (`Map` here) inside the handler methods.
 
 ## Updating the projection
 ### Applying Events
@@ -64,20 +58,18 @@ void apply(UserCreated e,RTransaction tx){
         userNames.put(e.getAggregateId(),e.getUserName());
 }
 ```
-
-Note: RTransaction handling is the responsibility of Factus. As developers, you must not call e.g. `commit()`
+{{% alert title="Note"%}}
+RTransaction handling is the responsibility of Factus. As developers, you must not call e.g. `commit()`
 or `rollback()` yourself.
+{{% /alert %}}
 
-In the previous example the method `getRedisKeys()` was used to retrieve the Redis key of the projection. Let's have a
+In the previous example, the method `getRedisKeys()` was used to retrieve the Redis key of the projection. Let's have a 
 closer look at this method in the next section.
 
-{{% alert title="Note"%}}
-FactStreamPosition and Lock-Management are automatically taken care of by the underlying `AbstractRedisManagedProjection`.
-{{% /alert %}}
 
 ## Default redisKey
 
-The data structures provided by redisson all require a unique identifier which is used to store them in Redis. The method `getRedisKey()` provides an
+The data structures provided by Redisson all require a unique identifier which is used to store them in Redis. The method `getRedisKey()` provides an
 automatically generated name, assembled from the class name of the projection and the serial number configured with
 the `@ProjectionMetaData`.
 
@@ -102,7 +94,7 @@ RMap<UUID, String> =tx.getMap(getRedisKey());
         Map<UUID, String> =tx.getMap(getRedisKey());
 ```
 
-There are good reasons for either variants, `1)` and `2)`:
+There are good reasons for either variant, `1)` and `2)`:
 
 | Redisson specific         |  plain Java                                         |
 |------------------------|------------------------------------------------------|
@@ -141,7 +133,7 @@ public class UserNames extends AbstractRedisManagedProjection {
 }
 ```
 
-To study the full example see
+To study the full example, see
 
 - [the UserNames projection using `@RedisTransactional`](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/RedisTransactionalProjectionExample.java)
   and
