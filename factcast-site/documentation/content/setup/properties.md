@@ -52,7 +52,7 @@ Properties you can use to configure FactCast:
 |factcast.store.indexCheckCron| Cron expression defining a routine check for index validity | `0 0 3 * * *` (3 am)
 |factcast.store.tailIndexingEnabled| enable/ disable [tail indexing]({{< ref "tail-index.md">}}) | false
 |factcast.store.tailGenerationsToKeep| the number of tail indexes to keep. The higher the number, the slower the inserts. Probably 2 or 3 is a good value unless you have a very high tail rebuild frequency and not permanently connected applications (like offline clients for instance) | 3
-|factcast.store.minimumTailAge| tail rotation will be skipped, unless the age of the youngest existing tail is at least this old | 7 days
+|factcast.store.minimumTailAge| minimum age of the youngest tail index, before a new one is created | 7 days
 |factcast.store.tailManagementCron| cron schedule when tail rotation should be carried out  | `0 0 0 * * *` (at midnight)
 
 ___
