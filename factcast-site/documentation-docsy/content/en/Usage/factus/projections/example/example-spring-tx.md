@@ -4,7 +4,7 @@ weight = 52
 
 +++
 
-Here is an example for a managed projection externalizing its state to a relational Database (postgreSQL here) using spring transactional management.
+Here is an example for a managed projection externalizing its state to a relational database (PostgreSQL here) using Spring transactional management.
 
 The example projects a list of used UserNames in the System.
 
@@ -14,7 +14,7 @@ We need to store two things in our JDBC Datastore:
 * the actual list of UserNames, and
 * the fact-stream-position of your projection.
 
-Therefore wew create the necessary tables (probably using liquibase/flyway or similar tooling of your choice):
+Therefore we create the necessary tables (probably using liquibase/flyway or similar tooling of your choice):
 
 ```sql
 CREATE TABLE users (
@@ -57,7 +57,7 @@ public class UserNames extends AbstractSpringTxManagedProjection {
     }
     ...
 ```
-As we're making use of Spring here, we inject a `PlatformTransactionManager` and a `JdbcTemplate` here in order to communicate with the database in a transactional way..
+As we're making use of Spring here, we inject a `PlatformTransactionManager` and a `JdbcTemplate` here in order to communicate with the database in a transactional way.
 
 Two remarks:
 1) As soon as your project uses the `spring-boot-starter-jdbc` dependency,
@@ -105,11 +105,11 @@ public void factStreamPosition(@NonNull UUID factStreamPosition) {
 }
 ``` 
 
-For convenience an UPSERT statement (Postgres syntax) is used which INSERTs the UUID the first time
+For convenience, an UPSERT statement (Postgres syntax) is used, which INSERTs the UUID the first time
 and subsequently only UPDATEs the value.
 
 To avoid hard-coding a unique name for the projection, the provided method `getScopedName()` is employed.
-The default implementation makes sure, the name is unique and includes the serial of the projection.
+The default implementation makes sure the name is unique and includes the serial of the projection.
 
 ### Reading the fact position
 
@@ -172,7 +172,7 @@ public List<String> getUserNames() {
 
 ### Using The Projection
 
-Calling code which wants to talk to the projection, now just needs to call the `getUserNames` method.
+Calling code that wants to talk to the projection, now just needs to call the `getUserNames` method:
 
 ```java
 // create a local instance or get a Spring Bean from the ApplicationContext, depending on your code organization
@@ -184,10 +184,10 @@ factus.update(userNameProjection);
 List<String> userNames = userNameProjection.getUserNames();
 ```
 
-First we create an instance of the projection and provide it with all required dependencies. As an alternative, you may want to let Spring manage the lifecycle of the projection
+First, we create an instance of the projection and provide it with all required dependencies. As an alternative, you may want to let Spring manage the lifecycle of the projection
 and let the dependency injection mechanism provide you an instance.
 
-Next, we call `update(...)` on the projection to fetch the latest events from the Fact stream. Note that when you use a pre-existing (maybe spring managed singleton) instance of the projection, this step is optional and depends on your use-case. As last step, we ask
+Next, we call `update(...)` on the projection to fetch the latest events from the Fact stream. Note that when you use a pre-existing (maybe Spring managed singleton) instance of the projection, this step is optional and depends on your use-case. As last step, we ask
 the projection to provide us with user names by calling `getUserNames()`.
 
 
