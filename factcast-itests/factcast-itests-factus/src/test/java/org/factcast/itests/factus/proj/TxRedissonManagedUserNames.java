@@ -15,9 +15,6 @@
  */
 package org.factcast.itests.factus.proj;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Handler;
@@ -35,9 +32,13 @@ import org.redisson.codec.CompositeCodec;
 import org.redisson.codec.LZ4Codec;
 import org.redisson.codec.MarshallingCodec;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 @Slf4j
 @ProjectionMetaData(serial = 1)
-@RedisTransactional(size = 3, timeout = 10000000)
+@RedisTransactional(bulkSize = 3, timeout = 10000000)
 public class TxRedissonManagedUserNames extends AbstractRedisManagedProjection {
 
   protected final Codec codec =

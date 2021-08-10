@@ -140,6 +140,9 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   Duration minimumTailAge = Duration.ofDays(7);
 
+  /** do not change the default here, see PGTailIndexManagerImpl::triggerTailCreation */
+  String tailManagementCron = "0 0 0 * * *";
+
   public boolean isValidationEnabled() {
     return schemaRegistryUrl != null;
   }
@@ -177,6 +180,7 @@ public class StoreConfigurationProperties implements InitializingBean {
     legacyProperties.getTailIndexingEnabled().ifPresent(this::setTailIndexingEnabled);
     legacyProperties.getTailGenerationsToKeep().ifPresent(this::setTailGenerationsToKeep);
     legacyProperties.getMinimumTailAge().ifPresent(this::setMinimumTailAge);
+    legacyProperties.getTailManagementCron().ifPresent(this::setTailManagementCron);
 
     if (integrationTestMode) {
       log.warn(
