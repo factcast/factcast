@@ -17,7 +17,6 @@ package org.factcast.grpc.api;
 
 import io.grpc.CompressorRegistry;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
