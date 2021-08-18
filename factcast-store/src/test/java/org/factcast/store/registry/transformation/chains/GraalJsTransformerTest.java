@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.SneakyThrows;
-import lombok.val;
 
 @ExtendWith(MockitoExtension.class)
 class GraalJsTransformerTest {
@@ -77,10 +76,10 @@ class GraalJsTransformerTest {
                     // actual transformation
                     + "  e.x = e.y; }\n"));
 
-    val d1 = new HashMap<String, Object>();
+    var d1 = new HashMap<String, Object>();
     d1.put("y", "1");
 
-    val d2 = new HashMap<String, Object>();
+    var d2 = new HashMap<String, Object>();
     d2.put("y", "2");
 
     // warm up engine

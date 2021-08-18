@@ -90,7 +90,6 @@ public class ExceptionHandlingV3 extends AbstractFactCastIntegrationTest {
     ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
     var proj = new LocalManagedUserNames();
-    val proj = new LocalManagedUserNames();
     assertDoesNotThrow(
         () -> {
           ec.update(proj);
