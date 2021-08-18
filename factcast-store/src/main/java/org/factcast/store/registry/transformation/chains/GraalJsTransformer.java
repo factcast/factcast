@@ -64,19 +64,13 @@ public class GraalJsTransformer implements Transformer {
     } else {
       String js = t.transformationCode().get();
 
-      Invocable invocable = warmEngines.get(js);
-
-      if (invocable == null) {
-        invocable = warmEngine(js);
-        // in case there was no warm engine yet, there is a small chance we create several ones
-        // and use them in parallel, but that is fine. We'll keep the last one in that case.
-        warmEngines.put(js, invocable);
-      }
+      Invocable invocable = warmEngines.computeIfAbsent(js, this::createAndWarmEngine);
 
       return runJSTransformation(input, invocable);
     }
   }
 
+  @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
   private JsonNode runJSTransformation(JsonNode input, Invocable invocable) {
     try {
       @SuppressWarnings("unchecked")
@@ -96,7 +90,7 @@ public class GraalJsTransformer implements Transformer {
   }
 
   @NonNull
-  private Invocable warmEngine(String js) {
+  private Invocable createAndWarmEngine(String js) {
     ScriptEngine engine;
 
     synchronized (ENGINE_MUTEX) {
@@ -107,10 +101,7 @@ public class GraalJsTransformer implements Transformer {
 
     try {
       Compilable compilable = (Compilable) engine;
-
-      synchronized (engine) {
-        compilable.compile(js).eval();
-      }
+      compilable.compile(js).eval();
 
       return (Invocable) engine;
 
