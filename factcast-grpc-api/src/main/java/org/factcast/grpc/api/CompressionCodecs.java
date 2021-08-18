@@ -21,11 +21,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.*;
 
 public class CompressionCodecs {
 
-  private final Map<String, Optional<String>> cache = new HashMap<>();
+  private final Map<String, Optional<String>> cache = new ConcurrentHashMap<>();
 
   private final List<String> orderedListOfAvailableCodecs;
 
