@@ -35,7 +35,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 
 import lombok.NonNull;
-import lombok.val;
 
 public class GraalJsTransformer implements Transformer {
 
