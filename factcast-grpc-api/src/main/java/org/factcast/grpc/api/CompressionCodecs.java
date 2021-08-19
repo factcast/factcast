@@ -17,15 +17,16 @@ package org.factcast.grpc.api;
 
 import io.grpc.CompressorRegistry;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CompressionCodecs {
 
-  private final Map<String, Optional<String>> cache = new HashMap<>();
+  private final Map<String, Optional<String>> cache = new ConcurrentHashMap<>();
 
   private final List<String> orderedListOfAvailableCodecs;
 
@@ -44,7 +45,8 @@ public class CompressionCodecs {
   }
 
   public Optional<String> selectFrom(String commaSeparatedList) {
-    return cache.computeIfAbsent(commaSeparatedList, this::fromCommaSeparatedList);
+    if (commaSeparatedList == null) return Optional.empty();
+    else return cache.computeIfAbsent(commaSeparatedList, this::fromCommaSeparatedList);
   }
 
   public String available() {
