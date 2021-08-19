@@ -80,7 +80,7 @@
         <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
         <spring-boot-maven-plugin.version>2.3.4.RELEASE</spring-boot-maven-plugin.version>
-        <maven.version>3.8.1</maven.version>
+        <maven.version>3.8.2</maven.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <spotless-maven-plugin.version>2.12.2</spotless-maven-plugin.version>
