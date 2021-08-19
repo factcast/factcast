@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.factcast</groupId>
         <artifactId>factcast</artifactId>
-        <version>0.4.0-I14-SNAPSHOT</version>
+        <version>0.4.0-I15-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>factcast-store-rds</artifactId>
