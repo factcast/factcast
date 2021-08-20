@@ -91,7 +91,9 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
   class FastForward {
     @NonNull UUID id = UUID.randomUUID();
     @NonNull UUID id2 = UUID.randomUUID();
+    @NonNull UUID id3 = UUID.randomUUID();
     AtomicReference<UUID> fwd = new AtomicReference<>();
+    private long lastSer = 0L;
 
     @NonNull
     FactObserver obs =
@@ -99,7 +101,7 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
 
           @Override
           public void onNext(@NonNull Fact element) {
-            System.out.println("onNext " + element);
+            lastSer = element.serial();
           }
 
           @Override
@@ -133,9 +135,6 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
       SubscriptionRequest scratch = SubscriptionRequest.catchup(spec).fromScratch();
       store.subscribe(SubscriptionRequestTO.forFacts(scratch), obs).awaitCatchup();
 
-      // no ffwd because we found one.
-      assertThat(fwd.get()).isNull();
-
       SubscriptionRequest tail = SubscriptionRequest.catchup(spec).from(id);
       store.subscribe(SubscriptionRequestTO.forFacts(tail), obs).awaitCatchup();
 
@@ -153,13 +152,21 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
       SubscriptionRequest newtail = SubscriptionRequest.catchup(spec).from(id);
       store.subscribe(SubscriptionRequestTO.forFacts(newtail), obs).awaitCatchup();
 
-      // no ffwd because we got a new one (id2)
-      assertThat(fwd.get()).isNull();
+      tailManager.triggerTailCreation();
+      fwd.set(null);
 
-      ////
-
+      // check for empty catchup
       SubscriptionRequest emptyTail = SubscriptionRequest.catchup(spec).from(id2);
       store.subscribe(SubscriptionRequestTO.forFacts(emptyTail), obs).awaitCatchup();
+
+      assertThat(fwd.get()).isNull();
+
+      // check for actual catchup (must not rewind)
+      store.publish(
+          Collections.singletonList(Fact.builder().id(id3).ns("ns1").buildWithoutPayload()));
+
+      SubscriptionRequest nonEmptyTail = SubscriptionRequest.catchup(spec).from(id2);
+      store.subscribe(SubscriptionRequestTO.forFacts(nonEmptyTail), obs).awaitCatchup();
 
       // still no ffwd because the ffwd target is smaller than id2
       assertThat(fwd.get()).isNull();
