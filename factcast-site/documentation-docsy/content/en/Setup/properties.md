@@ -14,7 +14,7 @@ Properties you can use to configure FactCast:
 | factcast.store.schemaRegistryUrl            | if a schemaRegistryUrl is defined, FactCast goes into validating mode. The only protocols allowed here are *'http', 'https', 'classpath' and 'file'. Note that http(s) and file always require two slashes after the colon, e.g. 'https://someserver/...' or 'file:///root/folder/...'.*|  
 | factcast.store.persistentRegistry           | if fetched Schema and Transformation Documents are persisted into Postgres | false 
 | factcast.store.allowUnvalidatedPublish      | If validation is enabled, this controls if publishing facts, that are **not validatable** (due to missing meta-data or due to missing schema in the registry) are allowed to be published or should be rejected.  |  false 
-| factcast.store.schemaStoreRefreshCron       | defines the cron schedule for refreshing the SchemaRegistry by querying for the latest remote changes | `*/60 * * * * *` (every minute) |
+| factcast.store.schemaStoreRefreshCron       | defines the cron schedule for refreshing the SchemaRegistry by querying for the latest remote changes | <nobr>`*/60 * * * * *`</nobr> (every minute) |
 | factcast.store.allowSchemaReplace|If a schema can be replaced by an updated version from the registry (not a good idea in production environments)|false
 
 ---
@@ -39,7 +39,11 @@ Properties you can use to configure FactCast:
 |factcast.store.factNotificationNewConnectionWaitTimeInMillis| how much time to wait between invalidating and acquiring a new connection. note: This parameter is only applied in the part of Factcast which deals with receiving and forwarding database notifications | 100
 |factcast.store.page-size| How many Facts to fetch from the database in one go. Higher values mean more memory usage. | 50
 |factcast.store.catchup-strategy| FETCHING uses database cursors where PAGED uses separate queries on TEMPORARY tables. FETCHING tends to be faster. | FETCHING
-|factcast.store.indexCheckCron| Cron expression defining a routine check for index validity | 0 0 3 * * *
+|factcast.store.indexCheckCron| Cron expression defining a routine check for index validity | `0 0 3 * * *` (3 am)
+|factcast.store.tailIndexingEnabled| enable/ disable [tail indexing]({{< ref "tail-index.md">}}) | false
+|factcast.store.tailGenerationsToKeep| the number of tail indexes to keep. The higher the number, the slower the inserts. Probably 2 or 3 is a good value unless you have a very high tail rebuild frequency and not permanently connected applications (like offline clients for instance) | 3
+|factcast.store.minimumTailAge| minimum age of the youngest tail index, before a new one is created | 7 days
+|factcast.store.tailManagementCron| cron schedule when tail rotation should be carried out  | <nobr>`0 0 0 * * *`</nobr> (at midnight)
 
 ___
 
