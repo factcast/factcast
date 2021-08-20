@@ -1,6 +1,6 @@
 +++
 title = "Contribution"
-type = "docs"
+type = "docs-start"
 weight = 100030
 +++
 

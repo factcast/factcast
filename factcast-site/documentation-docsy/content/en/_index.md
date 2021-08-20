@@ -5,7 +5,7 @@ title = "Factcast"
 
 {{< blocks/cover title="Factcast" image_anchor="top" height="full" color="orange" >}}
 <div class="mx-auto">
-	<p class="lead mt-2 py-5"><b>A simple Event-store based on PostgreSQL.</b></p>
+	<p class="lead mt-2 py-5"><b>A 'good enough' Event-store based on PostgreSQL.</b></p>
 </div>
 {{< rawhtml >}}
 <a href="https://github.com/factcast/factcast/actions"><img src="https://github.com/factcast/factcast/workflows/maven/badge.svg?branch=master" alt="Actions Status"
