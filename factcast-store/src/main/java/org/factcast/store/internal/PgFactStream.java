@@ -27,7 +27,10 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.FactStreamInfo;
+import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
@@ -164,27 +167,13 @@ public class PgFactStream {
         startedSer = idToSerMapper.retrieve(startedId); // should be cached anyway
       }
 
-      if (!factsHaveBeenSent(startedSer, serial)) {
-        // we have not sent any fact. check for ffwding
+      UUID targetId = ffwdTarget.targetId();
+      long targetSer = ffwdTarget.targetSer();
 
-        UUID targetId = ffwdTarget.targetId();
-        long targetSer = ffwdTarget.targetSer();
-
-        if (targetId != null && (!targetId.equals(startedId) && (targetSer > startedSer))) {
-          subscription.notifyFastForward(targetId);
-        }
+      if (targetId != null && (targetSer > startedSer)) {
+        subscription.notifyFastForward(targetId);
       }
     }
-  }
-
-  @VisibleForTesting
-  boolean factsHaveBeenSent(long startedAt, AtomicLong serial) {
-    if (serial.get() == 0 || serial.get() == startedAt) {
-      // nothing has been sent out
-      return false;
-    }
-
-    return true;
   }
 
   @VisibleForTesting
