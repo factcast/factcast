@@ -7,30 +7,36 @@ weigth : 1020
 Inside projections, Factus uses [methods annotated with `@Handler` or `@HandlerFor`]({{< ref "projections.md#projections-in-general" >}}) 
 to process events. These methods allow various parameters, also in combination, which can serve as "input" during event handling.
 
-Common Handler Parameters
--------------------------
+##  Common Handler Parameters
 
-| Parameter Type | Description                                                                                         | 
-|----------------|-----------------------------------------------------------------------------------------------------|
-| `EventObject`  | an instance of a Java class [implementing `EventObject`]({{< ref "introduction.md#eventobjects">}}). This is very common. |
-| `Fact`  | Provides access to all [Fact]({{< ref "fact.md">}}) details including header (JSON) and payload (JSON) |
-| `FactHeader`  | the [Fact header]({{< ref "fact.md#the-header">}}). Provides access to event namespace, type, version, meta entries and others |
-| `UUID`  | the [Fact ID of the Fact header]({{< ref "fact.md#the-header">}}) |
+| Parameter Type | Description                                                                                         |valid on @Handler|valid on @HandlerFor| 
+|----------------|-----------------------------------------------------------------------------------------------------|--|--|
+| `Fact`  | Provides access to all [Fact]({{< ref "fact.md">}}) details including header (JSON) and payload (JSON) | yes | yes |
+| `FactHeader`  | the [Fact header]({{< ref "fact.md#the-header">}}). Provides access to event namespace, type, version, meta entries and others | yes | yes |
+| `UUID`  | the [Fact ID of the Fact header]({{< ref "fact.md#the-header">}}) | yes | yes |
+| `? extends EventObject`  | an instance of a concrete class [implementing `EventObject`]({{< ref "introduction.md#eventobjects">}}). | yes | no |
  
 
-Redis Transactional Projection Parameters
-------------------------------------------
-
-Additional to these common parameters, handler methods of a Redis based transactional projections require one of the following parameter:  
-
-| Parameter Type | Description                                                                                         | 
-|----------------|-----------------------------------------------------------------------------------------------------|
-| `RTransaction` | needed in a [Redis transactional projection]({{< ref "redis-transactional-projections.md">}})
-| `RBatch` | needed in a [Redis batched projection]({{< ref "redis-batch-projection.md">}})
+## Extras on Redis atomic Projections
 
 
-Handler Examples
-----------------
+Additional to these common parameters, ProjectionLenses can add parameters to be used by handler methods. 
+For instance handler methods of a @RedisBatched projection should use:  
+
+| Parameter Type | Description                                                                                         |valid on @Handler|valid on @HandlerFor|
+|----------------|-----------------------------------------------------------------------------------------------------|--|--|
+| `RBatch` | needed in a [Redis batched projection]({{< ref "redis-batch-projection.md">}})| yes | yes |
+
+similar to @RedisTransactional projections that should use:
+
+| Parameter Type | Description                                                                                         |valid on @Handler|valid on @HandlerFor|
+|----------------|-----------------------------------------------------------------------------------------------------|--|--|
+| `RTransaction` | needed in a [Redis transactional projection]({{< ref "redis-transactional-projections.md">}})| yes | yes |
+
+
+## Examples
+
+### @Handler
 
 Here are some examples:
 
@@ -69,11 +75,10 @@ These examples were all based on handling events which
 The next section introduces a more direct alternative. 
 
 
-HandlerFor Examples
--------------------
+### @HandlerFor 
 
-The `@HandlerFor` annotation allows direct access to the Fact data like header or payload. However,
-as the data comes in JSON format, you must take care of the deserialization yourself.   
+
+The `@HandlerFor` annotation allows only direct access to the Fact data like header or payload without any deserialization.   
 
 ```java 
 // handle "SomethingAdded" events in their version 1 
@@ -91,7 +96,6 @@ void applySomethingRemoved(FactHeader factHeader, UUID factId, Fact fact) {
 }
 ```
 
-Full Example
-------------
+### Full Example
 
 See [here](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/FactusVariousHandlerParametersDemoITest.java) for the full example.
