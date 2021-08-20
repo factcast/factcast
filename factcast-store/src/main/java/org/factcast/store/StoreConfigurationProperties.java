@@ -134,10 +134,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   int tailGenerationsToKeep = 3;
 
-  /**
-   * Minimum tail age. Tail rotation will be skipped, unless the age of the youngest existing tail
-   * is at least this old. Defaults to 7 days
-   */
+  /** Minimum age of the youngest tail index, before a new one is created. Defaults to 7 days */
   Duration minimumTailAge = Duration.ofDays(7);
 
   /** do not change the default here, see PGTailIndexManagerImpl::triggerTailCreation */

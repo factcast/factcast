@@ -28,13 +28,14 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
-import org.factcast.store.internal.listen.PgListener;
-import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.tmppaged.PgTmpPagedCatchUpFactory;
+import org.factcast.store.internal.check.IndexCheck;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.listen.PgConnectionTester;
+import org.factcast.store.internal.listen.PgListener;
 import org.factcast.store.internal.lock.AdvisoryWriteLock;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
@@ -197,5 +198,10 @@ public class PgFactStoreInternalConfiguration {
   @Bean
   public LockProvider lockProvider(DataSource dataSource) {
     return new JdbcTemplateLockProvider(dataSource, "shedlock");
+  }
+
+  @Bean
+  public IndexCheck indexCheck(JdbcTemplate jdbcTemplate) {
+    return new IndexCheck(jdbcTemplate);
   }
 }
