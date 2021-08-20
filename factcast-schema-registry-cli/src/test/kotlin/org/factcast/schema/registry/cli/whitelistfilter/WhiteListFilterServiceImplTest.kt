@@ -1,13 +1,9 @@
 package org.factcast.schema.registry.cli.whitelistfilter
 
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import org.factcast.schema.registry.cli.project.structure.*
 import java.nio.file.Paths
-import org.factcast.schema.registry.cli.project.structure.EventFolder
-import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
-import org.factcast.schema.registry.cli.project.structure.NamespaceFolder
-import org.factcast.schema.registry.cli.project.structure.ProjectFolder
-import org.factcast.schema.registry.cli.project.structure.TransformationFolder
 
 class WhiteListFilterServiceImplTest : StringSpec() {
 
@@ -16,11 +12,13 @@ class WhiteListFilterServiceImplTest : StringSpec() {
     init {
         "oneEventInWhiteList" {
             val project = createProjectFolder(
-                    createNamespaceFolder("shipping",
-                            createEventFolder("shipping", "OrderShipped",
-                                    createEventVersionFolder("shipping", "OrderShipped", 1)
-                            )
+                createNamespaceFolder(
+                    "shipping",
+                    createEventFolder(
+                        "shipping", "OrderShipped",
+                        createEventVersionFolder("shipping", "OrderShipped", 1)
                     )
+                )
             )
 
             val whiteList = listOf("/shipping/OrderShipped/versions/1")
@@ -31,12 +29,14 @@ class WhiteListFilterServiceImplTest : StringSpec() {
 
         "oneEventIsFilteredOutSinceItIsNotInWhiteList" {
             val project = createProjectFolder(
-                    createNamespaceFolder("shipping",
-                            createEventFolder("shipping", "OrderShipped",
-                                    createEventVersionFolder("shipping", "OrderShipped", 1),
-                                    createEventVersionFolder("shipping", "OrderShipped", 2) // not whitelisted
-                            )
+                createNamespaceFolder(
+                    "shipping",
+                    createEventFolder(
+                        "shipping", "OrderShipped",
+                        createEventVersionFolder("shipping", "OrderShipped", 1),
+                        createEventVersionFolder("shipping", "OrderShipped", 2) // not whitelisted
                     )
+                )
             )
 
             val whiteList = listOf("/shipping/OrderShipped/versions/1")
@@ -48,28 +48,33 @@ class WhiteListFilterServiceImplTest : StringSpec() {
 
         "whiteListInTwoDifferentContexts" {
             val project = createProjectFolder(
-                    createNamespaceFolder("ordering",
-                            createEventFolder("ordering", "OrderReceived",
-                                    createEventVersionFolder("ordering", "OrderReceived", 1),
-                                    createEventVersionFolder("ordering", "OrderReceived", 2)
-                            ),
-                            createEventFolder("ordering", "OrderProcessed",
-                                    createEventVersionFolder("ordering", "OrderProcessed", 1),
-                                    createEventVersionFolder("ordering", "OrderProcessed", 2)
-                            )
+                createNamespaceFolder(
+                    "ordering",
+                    createEventFolder(
+                        "ordering", "OrderReceived",
+                        createEventVersionFolder("ordering", "OrderReceived", 1),
+                        createEventVersionFolder("ordering", "OrderReceived", 2)
                     ),
-                    createNamespaceFolder("shipping",
-                            createEventFolder("shipping", "OrderShipped",
-                                    createEventVersionFolder("shipping", "OrderShipped", 1),
-                                    createEventVersionFolder("shipping", "OrderShipped", 2)
-                            )
+                    createEventFolder(
+                        "ordering", "OrderProcessed",
+                        createEventVersionFolder("ordering", "OrderProcessed", 1),
+                        createEventVersionFolder("ordering", "OrderProcessed", 2)
                     )
+                ),
+                createNamespaceFolder(
+                    "shipping",
+                    createEventFolder(
+                        "shipping", "OrderShipped",
+                        createEventVersionFolder("shipping", "OrderShipped", 1),
+                        createEventVersionFolder("shipping", "OrderShipped", 2)
+                    )
+                )
             )
 
             val whiteList = listOf(
-                    "/ordering/OrderReceived/versions/1",
-                    "/ordering/OrderProcessed/versions/1",
-                    "/shipping/OrderShipped/versions/1"
+                "/ordering/OrderReceived/versions/1",
+                "/ordering/OrderProcessed/versions/1",
+                "/shipping/OrderShipped/versions/1"
             )
             val filteredProject = uut.filter(project, whiteList)
 
@@ -85,18 +90,21 @@ class WhiteListFilterServiceImplTest : StringSpec() {
 
         "specialCaseIfNoWhiteListEntryMatchesTheEventIsRemovedCompletely" {
             val project = createProjectFolder(
-                    createNamespaceFolder("shipping",
-                            createEventFolder("shipping", "OrderReceived",
-                                    createEventVersionFolder("shipping", "OrderReceived", 1)
-                            ),
-                            createEventFolder("shipping", "OrderShipped",
-                                    createEventVersionFolder("shipping", "OrderShipped", 1)
-                            )
+                createNamespaceFolder(
+                    "shipping",
+                    createEventFolder(
+                        "shipping", "OrderReceived",
+                        createEventVersionFolder("shipping", "OrderReceived", 1)
+                    ),
+                    createEventFolder(
+                        "shipping", "OrderShipped",
+                        createEventVersionFolder("shipping", "OrderShipped", 1)
                     )
+                )
             )
 
             val whiteList = listOf(
-                    "/shipping/OrderReceived/versions/1"
+                "/shipping/OrderReceived/versions/1"
             )
 
             val filteredProject = uut.filter(project, whiteList)
@@ -105,30 +113,33 @@ class WhiteListFilterServiceImplTest : StringSpec() {
 
         "whiteListSupportsWildCards" {
             val project = createProjectFolder(
-                    createNamespaceFolder("shipping",
-                            createEventFolder("shipping", "OrderShipped",
-                                    createEventVersionFolder("shipping", "OrderShipped", 1)
-                            )
-                    ),
-                    createNamespaceFolder("ordering",
-                            createEventFolder(
-                                    "ordering", "OrderReceived",
-                                    createEventVersionFolder("ordering", "OrderReceived", 1)
-                            ),
-                            createEventFolder(
-                                    "ordering", "OrderProcessed",
-                                    createEventVersionFolder("ordering", "OrderProcessed", 1)
-                            ),
-                            createEventFolder(
-                                    "ordering", "OrderProcessed",
-                                    createEventVersionFolder("ordering", "OrderProcessed", 2)
-                            )
+                createNamespaceFolder(
+                    "shipping",
+                    createEventFolder(
+                        "shipping", "OrderShipped",
+                        createEventVersionFolder("shipping", "OrderShipped", 1)
                     )
+                ),
+                createNamespaceFolder(
+                    "ordering",
+                    createEventFolder(
+                        "ordering", "OrderReceived",
+                        createEventVersionFolder("ordering", "OrderReceived", 1)
+                    ),
+                    createEventFolder(
+                        "ordering", "OrderProcessed",
+                        createEventVersionFolder("ordering", "OrderProcessed", 1)
+                    ),
+                    createEventFolder(
+                        "ordering", "OrderProcessed",
+                        createEventVersionFolder("ordering", "OrderProcessed", 2)
+                    )
+                )
             )
 
             val whiteList = listOf(
-                    "/shipping/**",
-                    "/ordering/Order*/versions/1"
+                "/shipping/**",
+                "/ordering/Order*/versions/1"
             )
             val filteredProject = uut.filter(project, whiteList)
 
@@ -141,21 +152,24 @@ class WhiteListFilterServiceImplTest : StringSpec() {
 
         "nonMentionedNameSpacesAreFiltered" {
             val project = createProjectFolder(
-                    createNamespaceFolder("shipping",
-                            createEventFolder("shipping", "OrderShipped",
-                                    createEventVersionFolder("shipping", "OrderShipped", 1)
-                            )
-                    ),
-                    createNamespaceFolder("ordering",
-                            createEventFolder(
-                                    "ordering", "OrderReceived",
-                                    createEventVersionFolder("ordering", "OrderReceived", 1)
-                            )
+                createNamespaceFolder(
+                    "shipping",
+                    createEventFolder(
+                        "shipping", "OrderShipped",
+                        createEventVersionFolder("shipping", "OrderShipped", 1)
                     )
+                ),
+                createNamespaceFolder(
+                    "ordering",
+                    createEventFolder(
+                        "ordering", "OrderReceived",
+                        createEventVersionFolder("ordering", "OrderReceived", 1)
+                    )
+                )
             )
 
             val whiteList = listOf(
-                    "/shipping/**"
+                "/shipping/**"
             )
             val filteredProject = uut.filter(project, whiteList)
 
@@ -165,13 +179,15 @@ class WhiteListFilterServiceImplTest : StringSpec() {
 
         "nonWhitelistedEventIsFullyFilteredOutIncludingTransformationFolder " {
             val project = createProjectFolder(
-                    createNamespaceFolder("shipping",
-                            createEventFolder("shipping", "OrderShipped",
-                                    createEventVersionFolder("shipping", "OrderShipped", 1),
-                                    createEventVersionFolder("shipping", "OrderShipped", 2),
-                                    transformationFolder = listOf(createTransformationFolder("shipping", "OrderShipped", "1-2"))
-                            )
+                createNamespaceFolder(
+                    "shipping",
+                    createEventFolder(
+                        "shipping", "OrderShipped",
+                        createEventVersionFolder("shipping", "OrderShipped", 1),
+                        createEventVersionFolder("shipping", "OrderShipped", 2),
+                        transformationFolder = listOf(createTransformationFolder("shipping", "OrderShipped", "1-2"))
                     )
+                )
             )
 
             val whiteList = listOf("/shipping/OrderShipped/versions/1")
@@ -183,18 +199,20 @@ class WhiteListFilterServiceImplTest : StringSpec() {
 
         "whiteListedEventsPassTheFilterIncludingTheTransformationFolder" {
             val project = createProjectFolder(
-                    createNamespaceFolder("shipping",
-                            createEventFolder("shipping", "OrderShipped",
-                                    createEventVersionFolder("shipping", "OrderShipped", 1),
-                                    createEventVersionFolder("shipping", "OrderShipped", 2),
-                                    transformationFolder = listOf(createTransformationFolder("shipping", "OrderShipped", "1-2"))
-                            )
+                createNamespaceFolder(
+                    "shipping",
+                    createEventFolder(
+                        "shipping", "OrderShipped",
+                        createEventVersionFolder("shipping", "OrderShipped", 1),
+                        createEventVersionFolder("shipping", "OrderShipped", 2),
+                        transformationFolder = listOf(createTransformationFolder("shipping", "OrderShipped", "1-2"))
                     )
+                )
             )
 
             val whiteList = listOf(
-                    "/shipping/OrderShipped/versions/1",
-                    "/shipping/OrderShipped/versions/2"
+                "/shipping/OrderShipped/versions/1",
+                "/shipping/OrderShipped/versions/2"
             )
             val filteredProject = uut.filter(project, whiteList)
 
@@ -204,16 +222,18 @@ class WhiteListFilterServiceImplTest : StringSpec() {
     }
 
     private fun createProjectFolder(vararg namespaceFolders: NamespaceFolder) =
-            ProjectFolder(
-                    path = Paths.get("/registry"),
-                    description = Paths.get("/registry/index.md"),
-                    namespaces = namespaceFolders.asList())
+        ProjectFolder(
+            path = Paths.get("/registry"),
+            description = Paths.get("/registry/index.md"),
+            namespaces = namespaceFolders.asList()
+        )
 
     private fun createNamespaceFolder(namespaceName: String, vararg eventFolders: EventFolder) =
-            NamespaceFolder(
-                    path = Paths.get("/registry/$namespaceName"),
-                    description = Paths.get("/registry/$namespaceName/index.md"),
-                    eventFolders = eventFolders.asList())
+        NamespaceFolder(
+            path = Paths.get("/registry/$namespaceName"),
+            description = Paths.get("/registry/$namespaceName/index.md"),
+            eventFolders = eventFolders.asList()
+        )
 
     private fun createEventFolder(
         namespaceName: String,
@@ -221,21 +241,24 @@ class WhiteListFilterServiceImplTest : StringSpec() {
         vararg versionFolders: EventVersionFolder,
         transformationFolder: List<TransformationFolder> = emptyList()
     ) =
-            EventFolder(
-                    path = Paths.get("/registry/$namespaceName/$eventName"),
-                    description = Paths.get("/registry/$namespaceName/$eventName/index.md"),
-                    transformationFolders = transformationFolder,
-                    versionFolders = versionFolders.asList())
+        EventFolder(
+            path = Paths.get("/registry/$namespaceName/$eventName"),
+            description = Paths.get("/registry/$namespaceName/$eventName/index.md"),
+            transformationFolders = transformationFolder,
+            versionFolders = versionFolders.asList()
+        )
 
     private fun createEventVersionFolder(namespaceName: String, eventName: String, version: Int = 1) =
-            EventVersionFolder(
-                    path = Paths.get("/registry/$namespaceName/$eventName/versions/$version"),
-                    schema = Paths.get("/registry/$namespaceName/$eventName/versions/$version/schema.json"),
-                    description = Paths.get("/registry/$namespaceName/$eventName/versions/$version/index.md"),
-                    examples = listOf(Paths.get("/registry/$namespaceName/$eventName/versions/$version/examples/simple.json")))
+        EventVersionFolder(
+            path = Paths.get("/registry/$namespaceName/$eventName/versions/$version"),
+            schema = Paths.get("/registry/$namespaceName/$eventName/versions/$version/schema.json"),
+            description = Paths.get("/registry/$namespaceName/$eventName/versions/$version/index.md"),
+            examples = listOf(Paths.get("/registry/$namespaceName/$eventName/versions/$version/examples/simple.json"))
+        )
 
     private fun createTransformationFolder(namespaceName: String, eventName: String, transformationName: String) =
-            TransformationFolder(
-                    path = Paths.get("/registry/$namespaceName/$eventName/transformations/$transformationName"),
-                    transformation = null)
+        TransformationFolder(
+            path = Paths.get("/registry/$namespaceName/$eventName/transformations/$transformationName"),
+            transformation = null
+        )
 }

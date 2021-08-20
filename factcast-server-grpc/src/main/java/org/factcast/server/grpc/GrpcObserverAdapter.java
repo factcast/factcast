@@ -18,11 +18,16 @@ package org.factcast.server.grpc;
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
@@ -33,7 +38,6 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @Slf4j
-@RequiredArgsConstructor
 class GrpcObserverAdapter implements FactObserver {
 
   private final ProtoConverter converter = new ProtoConverter();
@@ -42,39 +46,96 @@ class GrpcObserverAdapter implements FactObserver {
 
   @NonNull private final StreamObserver<MSG_Notification> observer;
   @NonNull private final int catchupBatchSize;
+  @NonNull private final ServerExceptionLogger serverExceptionLogger;
 
+  @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
-  GrpcObserverAdapter(String id, StreamObserver<MSG_Notification> observer) {
-    this(id, observer, 1);
-  }
+  private final ServerKeepalive keepalive;
 
   private final ArrayList<Fact> stagedFacts;
+  private final boolean supportsFastForward;
+  private final long keepaliveInMilliseconds;
+
   private final AtomicBoolean caughtUp = new AtomicBoolean(false);
 
   public GrpcObserverAdapter(
       @NonNull String id,
       @NonNull StreamObserver<MSG_Notification> observer,
-      @NonNull int catchupBatchSize) {
+      @NonNull GrpcRequestMetadata meta,
+      @NonNull ServerExceptionLogger serverExceptionLogger,
+      long keepaliveInMilliseconds) {
     this.id = id;
     this.observer = observer;
-    this.catchupBatchSize = catchupBatchSize;
+    catchupBatchSize = meta.catchupBatch().orElse(1);
+    supportsFastForward = meta.supportsFastForward();
+    this.keepaliveInMilliseconds = keepaliveInMilliseconds;
     stagedFacts = new ArrayList<>(catchupBatchSize);
+    this.serverExceptionLogger = serverExceptionLogger;
+    if (keepaliveInMilliseconds > 0) {
+      keepalive = new ServerKeepalive();
+    } else {
+      keepalive = null;
+    }
+  }
+
+  @VisibleForTesting
+  GrpcObserverAdapter(
+      @NonNull String id,
+      @NonNull StreamObserver<MSG_Notification> observer,
+      @NonNull ServerExceptionLogger serverExceptionLogger) {
+    this(id, observer, GrpcRequestMetadata.forTest(), serverExceptionLogger, 0);
+  }
+
+  @VisibleForTesting
+  @Deprecated
+  GrpcObserverAdapter(@NonNull String id, @NonNull StreamObserver<MSG_Notification> observer) {
+    this(id, observer, GrpcRequestMetadata.forTest(), new ServerExceptionLogger(), 0);
+  }
+
+  @VisibleForTesting
+  GrpcObserverAdapter(
+      @NonNull String id,
+      @NonNull StreamObserver<MSG_Notification> observer,
+      GrpcRequestMetadata meta) {
+    this(id, observer, meta, new ServerExceptionLogger(), 0);
+  }
+
+  @VisibleForTesting
+  GrpcObserverAdapter(
+      @NonNull String id, @NonNull StreamObserver<MSG_Notification> observer, long keepalive) {
+    this(id, observer, GrpcRequestMetadata.forTest(), new ServerExceptionLogger(), keepalive);
+  }
+
+  @VisibleForTesting
+  GrpcObserverAdapter(
+      @NonNull String id,
+      @NonNull StreamObserver<MSG_Notification> observer,
+      @NonNull GrpcRequestMetadata meta,
+      @NonNull ServerExceptionLogger serverExceptionLogger) {
+    this(id, observer, meta, serverExceptionLogger, 0);
   }
 
   @Override
   public void onComplete() {
     flush();
+    disableKeepalive();
     log.debug("{} onComplete – sending complete notification", id);
     observer.onNext(converter.createCompleteNotification());
     tryComplete();
   }
 
+  private void disableKeepalive() {
+    if (keepalive != null) {
+      keepalive.shutdown();
+    }
+  }
+
   @Override
-  public void onError(Throwable e) {
+  public void onError(@NonNull Throwable e) {
     flush();
-    log.info("{} onError – sending Error notification {}", id, e.getMessage());
-    observer.onError(e);
-    tryComplete();
+    disableKeepalive();
+    serverExceptionLogger.log(e, id);
+    observer.onError(ServerExceptionHelper.translate(e));
   }
 
   private void tryComplete() {
@@ -103,7 +164,7 @@ class GrpcObserverAdapter implements FactObserver {
   }
 
   @Override
-  public void onNext(Fact element) {
+  public void onNext(@NonNull Fact element) {
     if (catchupBatchSize > 1 && !caughtUp.get()) {
       if (stagedFacts.size() >= catchupBatchSize) {
         flush();
@@ -111,6 +172,53 @@ class GrpcObserverAdapter implements FactObserver {
       stagedFacts.add(element);
     } else {
       observer.onNext(converter.createNotificationFor(element));
+    }
+  }
+
+  @Override
+  public void onFastForward(@NonNull UUID factIdToFfwdTo) {
+    if (supportsFastForward) {
+      log.debug("{} sending ffwd notification to fact id {}", id, factIdToFfwdTo);
+      // we have not sent any fact. check for ffwding
+      observer.onNext(converter.createNotificationForFastForward(factIdToFfwdTo));
+    }
+  }
+
+  @Override
+  public void onFactStreamInfo(FactStreamInfo info) {
+    observer.onNext(converter.createInfoNotification(info));
+  }
+
+  public void shutdown() {
+    disableKeepalive();
+  }
+
+  class ServerKeepalive {
+    private Timer t;
+
+    ServerKeepalive() {
+      t = new Timer("server-keepalive-" + System.currentTimeMillis(), true);
+      reschedule();
+    }
+
+    @VisibleForTesting
+    synchronized void reschedule() {
+      if (t != null) {
+        t.schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                observer.onNext(converter.createKeepaliveNotification());
+                reschedule();
+              }
+            },
+            keepaliveInMilliseconds);
+      }
+    }
+
+    @VisibleForTesting
+    synchronized void shutdown() {
+      t.cancel();
     }
   }
 }

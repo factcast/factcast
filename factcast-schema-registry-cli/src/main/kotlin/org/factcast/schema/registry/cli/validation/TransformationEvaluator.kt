@@ -16,21 +16,38 @@
 package org.factcast.schema.registry.cli.validation
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import java.nio.file.Path
+import org.factcast.schema.registry.cli.domain.Event
+import org.factcast.schema.registry.cli.domain.Namespace
+import org.factcast.schema.registry.cli.domain.Transformation
+import org.factcast.schema.registry.cli.fs.FileSystemService
+import org.factcast.store.registry.transformation.SingleTransformation
+import org.factcast.store.registry.transformation.TransformationKey
+import org.factcast.store.registry.transformation.chains.TransformationChain
+import org.factcast.store.registry.transformation.chains.Transformer
 import javax.inject.Singleton
-import org.factcast.schema.registry.cli.js.JsFunctionExecutor
 
 @Singleton
 class TransformationEvaluator(
-    private val jsFunctionExecutor: JsFunctionExecutor,
-    private val om: ObjectMapper
+    private val transformer: Transformer,
+    private val fs: FileSystemService
 ) {
-    fun evaluate(pathToTransformation: Path, data: JsonNode): JsonNode {
-        val dataAsMap = om.treeToValue(data, Map::class.java)
+    fun evaluate(ns: Namespace, event: Event, transformation: Transformation, data: JsonNode): JsonNode {
+        val key = TransformationKey.of(ns.name, event.type)
+        val singleTransformation =
+            SingleTransformation.of(
+                key,
+                transformation.from,
+                transformation.to,
+                fs.readToString(transformation.transformationPath.toFile())
+            )
+        val chain = TransformationChain.of(
+            key,
+            listOf(singleTransformation),
+            "no-real-meaning"
+        )
 
-        val result = jsFunctionExecutor.execute("transform", pathToTransformation, dataAsMap)
-
-        return om.valueToTree(result)
+        return transformer.transform(chain, data)
     }
+
+
 }

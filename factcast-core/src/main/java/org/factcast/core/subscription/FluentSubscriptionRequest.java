@@ -37,9 +37,11 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
   boolean ephemeral = false;
 
-  boolean marks = true;
+  long maxBatchDelayInMs = 0; // should be changed from 0 in 0.4.0
 
-  long maxBatchDelayInMs = 0;
+  long keepaliveIntervalInMs = 0;
+
+  boolean streamInfo;
 
   boolean continuous;
 
@@ -47,14 +49,13 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
   final List<FactSpec> specs = new LinkedList<>();
 
-  boolean idOnly = false;
-
   final String debugInfo;
 
   String pid;
 
   FluentSubscriptionRequest() {
     debugInfo = createDebugInfo();
+    streamInfo = true;
   }
 
   private String createDebugInfo() {
@@ -99,6 +100,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
       return toBuild;
     }
 
+    @Override
     public SubscriptionRequest fromNullable(UUID id) {
       toBuild.startingAfter = id;
       return toBuild;
@@ -117,15 +119,38 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     }
 
     public SpecBuilder catchup(Collection<FactSpec> specification) {
-      if (specification.isEmpty())
+      if (specification.isEmpty()) {
         throw new IllegalArgumentException("At least one FactSpec is needed for a subscription");
+      }
       specification.forEach(this::catchup);
       return this;
     }
 
+    @Override
+    public SpecBuilder withMaxBatchDelayInMs(long msec) {
+      if (msec < 10) {
+        throw new IllegalArgumentException("The minimum maxBatchDelayInMs is 10msec");
+      }
+
+      toBuild.maxBatchDelayInMs = msec;
+      return this;
+    }
+
+    @Override
+    public SpecBuilder withKeepaliveIntervalInMs(long msec) {
+      if (msec > 0 && msec < 3000) {
+        throw new IllegalArgumentException(
+            "The minimum keepaliveIntervalInMs is 3000ms. To disable keepalive, set it to 0.");
+      }
+
+      toBuild.keepaliveIntervalInMs = msec;
+      return this;
+    }
+
     public SpecBuilder follow(Collection<FactSpec> specification) {
-      if (specification.isEmpty())
+      if (specification.isEmpty()) {
         throw new IllegalArgumentException("At least one FactSpec is needed for a subscription");
+      }
       specification.forEach(this::follow);
       return this;
     }

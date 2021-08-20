@@ -16,17 +16,20 @@
 package org.factcast.core.subscription;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.observer.GenericObserver;
+import org.factcast.core.util.ExceptionHelper;
 
 /**
  * Implements a subscription and offers notifyX methods for the Fact Supplier to write to.
@@ -37,7 +40,7 @@ import org.factcast.core.subscription.observer.GenericObserver;
 @Slf4j
 public class SubscriptionImpl implements Subscription {
 
-  @NonNull final GenericObserver<Fact> observer;
+  @NonNull final FactObserver observer;
 
   @NonNull final FactTransformers transformers;
 
@@ -48,6 +51,9 @@ public class SubscriptionImpl implements Subscription {
   final CompletableFuture<Void> catchup = new CompletableFuture<>();
 
   final CompletableFuture<Void> complete = new CompletableFuture<>();
+
+  @Getter final AtomicLong factsNotTransformed = new AtomicLong(0);
+  @Getter final AtomicLong factsTransformed = new AtomicLong(0);
 
   @Override
   public void close() {
@@ -67,7 +73,7 @@ public class SubscriptionImpl implements Subscription {
     } catch (InterruptedException e) {
       throw new SubscriptionCancelledException(e);
     } catch (ExecutionException e) {
-      throw new SubscriptionCancelledException(e.getCause());
+      throw ExceptionHelper.toRuntime(e.getCause());
     }
     return this;
   }
@@ -80,7 +86,7 @@ public class SubscriptionImpl implements Subscription {
     } catch (InterruptedException e) {
       throw new SubscriptionCancelledException(e);
     } catch (ExecutionException e) {
-      throw new SubscriptionCancelledException(e.getCause());
+      throw ExceptionHelper.toRuntime(e.getCause());
     }
     return this;
   }
@@ -92,7 +98,7 @@ public class SubscriptionImpl implements Subscription {
     } catch (InterruptedException e) {
       throw new SubscriptionCancelledException(e);
     } catch (ExecutionException e) {
-      throw new SubscriptionCancelledException(e.getCause());
+      throw ExceptionHelper.toRuntime(e.getCause());
     }
     return this;
   }
@@ -105,7 +111,7 @@ public class SubscriptionImpl implements Subscription {
     } catch (InterruptedException e) {
       throw new SubscriptionCancelledException(e);
     } catch (ExecutionException e) {
-      throw new SubscriptionCancelledException(e.getCause());
+      throw ExceptionHelper.toRuntime(e.getCause());
     }
     return this;
   }
@@ -117,6 +123,18 @@ public class SubscriptionImpl implements Subscription {
       if (!catchup.isDone()) {
         catchup.complete(null);
       }
+    }
+  }
+
+  public void notifyFastForward(@NonNull UUID factId) {
+    if (!closed.get()) {
+      observer.onFastForward(factId);
+    }
+  }
+
+  public void notifyFactStreamInfo(@NonNull FactStreamInfo info) {
+    if (!closed.get()) {
+      observer.onFactStreamInfo(info);
     }
   }
 
@@ -158,7 +176,13 @@ public class SubscriptionImpl implements Subscription {
 
   public void notifyElement(@NonNull Fact e) throws TransformationException {
     if (!closed.get()) {
-      observer.onNext(transformers.transformIfNecessary(e));
+      Fact transformed = transformers.transformIfNecessary(e);
+      if (transformed == e) {
+        factsNotTransformed.incrementAndGet();
+      } else {
+        factsTransformed.incrementAndGet();
+      }
+      observer.onNext(transformed);
     }
   }
 
@@ -167,8 +191,7 @@ public class SubscriptionImpl implements Subscription {
     return this;
   }
 
-  public static SubscriptionImpl on(
-      @NonNull GenericObserver<org.factcast.core.Fact> o, FactTransformers transformers) {
+  public static SubscriptionImpl on(@NonNull FactObserver o, FactTransformers transformers) {
     return new SubscriptionImpl(o, transformers);
   }
 

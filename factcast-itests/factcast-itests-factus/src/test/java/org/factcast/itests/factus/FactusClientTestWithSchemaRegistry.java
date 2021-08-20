@@ -15,7 +15,7 @@
  */
 package org.factcast.itests.factus;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import config.RedissonProjectionConfiguration;
 import java.io.File;
@@ -31,12 +31,13 @@ import org.factcast.itests.factus.proj.UserV1;
 import org.factcast.itests.factus.proj.UserV2;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactCastExtension;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.test.annotation.DirtiesContext;
@@ -54,7 +55,7 @@ import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 @ExtendWith(FactCastExtension.class)
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest
-@EnableAutoConfiguration
+@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @ContextConfiguration(classes = {Application.class, RedissonProjectionConfiguration.class})
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
@@ -63,21 +64,23 @@ public class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrat
   protected static final Network _docker_network = Network.newNetwork();
 
   private static Path folderForSchemas;
+  private static String oldAddress;
 
   static {
+    Logger l = LoggerFactory.getLogger(FactusClientTestWithSchemaRegistry.class);
     try {
-      folderForSchemas = Files.createTempDirectory("test_schemas").toAbsolutePath();
 
-      log.info("Created temporary schema directory: {}", folderForSchemas);
+      folderForSchemas = Files.createTempDirectory("test_schemas").toAbsolutePath();
+      l.info("Created temporary schema directory: {}", folderForSchemas);
 
       File registry = new ClassPathResource("example-registry").getFile();
 
-      log.info("Copying schema files into temporary schema directory: {}", registry);
+      l.info("Copying schema files into temporary schema directory: {}", registry);
       FileUtils.copyDirectory(registry, folderForSchemas.toFile());
 
     } catch (IOException e) {
       // this is unexpected but kind of fatal
-      log.error("Error creating schema directory", e);
+      l.error("Error creating schema directory", e);
     }
   }
 
@@ -101,28 +104,31 @@ public class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrat
       new GenericContainer<>("factcast/factcast:latest")
           .withExposedPorts(9090)
           .withFileSystemBind("./config", "/config/")
-          .withEnv("grpc.server.port", "9090")
-          .withEnv("factcast.security.enabled", "false")
-          .withEnv("spring.datasource.url", "jdbc:postgresql://db/fc?user=fc&password=fc")
+          .withEnv("grpc_server_port", "9090")
+          .withEnv("factcast_security_enabled", "false")
+          .withEnv("spring_datasource_url", "jdbc:postgresql://db/fc?user=fc&password=fc")
           .withFileSystemBind(folderForSchemas.toString(), "/schemata/")
-          .withEnv("FACTCAST_STORE_PGSQL_SCHEMA_REGISTRY_URL", "file:///schemata")
+          .withEnv("FACTCAST_STORE_SCHEMA_REGISTRY_URL", "file:///schemata")
           .withNetwork(_docker_network)
           .dependsOn(_postgres)
-          .withLogConsumer(new Slf4jLogConsumer(log))
+          .withLogConsumer(
+              new Slf4jLogConsumer(
+                  LoggerFactory.getLogger(FactusClientTestWithSchemaRegistry.class)))
           .waitingFor(new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
 
   @SuppressWarnings("rawtypes")
-  @Container
-  static final GenericContainer _redis =
-      new GenericContainer<>("redis:5.0.3-alpine").withExposedPorts(6379);
-
   @BeforeAll
   public static void startContainers() throws InterruptedException {
     String address = "static://" + _factcast.getHost() + ":" + _factcast.getMappedPort(9090);
+    oldAddress = System.getProperty("grpc.client.factstore.address");
     System.setProperty("grpc.client.factstore.address", address);
+  }
 
-    System.setProperty("spring.redis.host", _redis.getHost());
-    System.setProperty("spring.redis.port", String.valueOf(_redis.getMappedPort(6379)));
+  @AfterAll
+  public static void stopContainers() throws InterruptedException {
+    _factcast.stop();
+    _postgres.stop();
+    System.setProperty("grpc.client.factstore.address", oldAddress);
   }
 
   @Autowired Factus ec;
