@@ -35,7 +35,7 @@ public class HelloWorldRunner implements CommandLineRunner {
   @Override
   public void run(String... args) throws Exception {
 
-    val  id = UUID.randomUUID();
+    val id = UUID.randomUUID();
     Fact fact =
         Fact.builder()
             .ns("users")
@@ -49,13 +49,13 @@ public class HelloWorldRunner implements CommandLineRunner {
     val uc = fc.fetchById(id);
     System.out.println(uc.get().jsonPayload());
 
-    val  uc1 = fc.fetchByIdAndVersion(id, 1);
+    val uc1 = fc.fetchByIdAndVersion(id, 1);
     System.out.println(uc1.get().jsonPayload());
 
-    val  uc2 = fc.fetchByIdAndVersion(id, 2);
+    val uc2 = fc.fetchByIdAndVersion(id, 2);
     System.out.println(uc2.get().jsonPayload());
 
-    val  uc3 = fc.fetchByIdAndVersion(id, 3);
+    val uc3 = fc.fetchByIdAndVersion(id, 3);
     System.out.println(uc3.get().jsonPayload());
 
     fc.subscribe(
