@@ -158,7 +158,7 @@ see changelog
 #### 2018-11-18 0.0.31 (milestone)
   * Introduces / switches to: JUnit5, Spring Boot 2, Testcontainers
   * new example projects
-  * **Not a drop-in replacement: See [Migration Guide](migration)**
+  * **Not a drop-in replacement: See [Migration Guide](../../documentation-docsy/content/en/About/migration)**
 
 #### 2018-10-21 0.0.20 (milestone)
   * added CLI
