@@ -201,11 +201,11 @@ name = "Changelog"
 url = "/about//changelog"
 icon = "fas fa-scroll"
 
-[[params.links.developer]]
-name = "Roadmap"
-url = "/about//roadmap"
-icon = "fas fa-map-signs"
-desc = "Roadmap"
+#[[params.links.developer]]
+#name = "Roadmap"
+#url = "/about//roadmap"
+#icon = "fas fa-map-signs"
+#desc = "Roadmap"
 
 [[params.links.developer]]
 name = "Contribution"
