@@ -15,10 +15,11 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
+import static java.util.Collections.synchronizedMap;
+
 import java.util.List;
 import java.util.Map;
+
 import javax.script.Compilable;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -29,12 +30,18 @@ import org.factcast.core.util.FactCastJson;
 import org.factcast.store.registry.transformation.Transformation;
 import org.graalvm.polyglot.Value;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
+
+import lombok.NonNull;
+
 public class GraalJsTransformer implements Transformer {
 
   private static final int ENGINE_CACHE_CAPACITY = 128;
 
-  private static final Object MUTEX = new Object();
-  private static final LRUMap<String, Invocable> warmEngines = new LRUMap<>(ENGINE_CACHE_CAPACITY);
+  private static final Object ENGINE_MUTEX = new Object();
+  private static final Map<String, Invocable> warmEngines =
+      synchronizedMap(new LRUMap<>(ENGINE_CACHE_CAPACITY));
 
   static {
     // important property to enable nashorn compat mode within GraalJs
@@ -51,39 +58,53 @@ public class GraalJsTransformer implements Transformer {
 
     if (!t.transformationCode().isPresent()) {
       return input;
+
     } else {
       String js = t.transformationCode().get();
 
-      Invocable invocable = warmEngines.get(js);
-      if (invocable == null) {
-        ScriptEngine engine = null;
+      Invocable invocable = warmEngines.computeIfAbsent(js, this::createAndWarmEngine);
 
-        synchronized (MUTEX) {
-          // no guarantee is found anywhere, that creating a
-          // scriptEngine was
-          // supposed to be threadsafe, so...
-          engine = GraalJSScriptEngine.create(null, null);
-        }
+      return runJSTransformation(input, invocable);
+    }
+  }
 
-        try {
-          Compilable compilable = (Compilable) engine;
-          compilable.compile(js).eval();
-          invocable = (Invocable) engine;
-          warmEngines.put(js, invocable);
-        } catch (ScriptException e) {
-          throw new TransformationException(e);
-        }
-      }
+  @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
+  private JsonNode runJSTransformation(JsonNode input, Invocable invocable) {
+    try {
+      @SuppressWarnings("unchecked")
+      Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
 
-      try {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
+      synchronized (invocable) {
         invocable.invokeFunction("transform", jsonAsMap);
-        fixArrayTransformations(jsonAsMap);
-        return FactCastJson.toJsonNode(jsonAsMap);
-      } catch (NoSuchMethodException | ScriptException e) {
-        throw new TransformationException(e);
       }
+
+      fixArrayTransformations(jsonAsMap);
+
+      return FactCastJson.toJsonNode(jsonAsMap);
+
+    } catch (NoSuchMethodException | ScriptException e) {
+      throw new TransformationException(e);
+    }
+  }
+
+  @NonNull
+  private Invocable createAndWarmEngine(String js) {
+    ScriptEngine engine;
+
+    synchronized (ENGINE_MUTEX) {
+      // no guarantee is found anywhere, that creating a
+      // scriptEngine was supposed to be threadsafe, so...
+      engine = GraalJSScriptEngine.create(null, null);
+    }
+
+    try {
+      Compilable compilable = (Compilable) engine;
+      compilable.compile(js).eval();
+
+      return (Invocable) engine;
+
+    } catch (ScriptException e) {
+      throw new TransformationException(e);
     }
   }
 
