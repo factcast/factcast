@@ -9,6 +9,34 @@ weight: 100000
 {{% alert info %}} Only important releases are mentioned here.
 {{% /alert %}}
 
+### RELEASE 0.4.0 (Upcoming)
+### RELEASE 0.4.0-RC1
+{{< rawhtml >}}
+<a
+href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.4.0+">
+0.4.0
+</a>
+{{< /rawhtml >}}
+
+#### Feature
+
+Release focuses on stability & performance 
+  
+Stability
+  * complete error handling overhaul
+  * application level Keepalive & Retry
+  * factus atomic (transactional) processing
+  * use of GraalJS for transformation (as Nashorn is deprecated)
+  * move to Java11 (for the server side of FactCast)
+
+Performance
+  * Tail indexing & Fast-Forward
+  * FETCHING catchup strategy
+  * Factus bulk processing
+  * show progress on factus bulk application 
+
+... and a documentation overhaul. For details, see the changelog.
+    
 ### RELEASE 0.3.0
 {{< rawhtml >}}
 <a
