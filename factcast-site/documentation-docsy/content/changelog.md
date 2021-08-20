@@ -1,5 +1,27 @@
 # Changelog
 
+## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2021-08-20)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.4.0-M1...upcoming)
+
+**Implemented enhancements:**
+
+- Introduce JavaScript execution via GraalJS [\#1145](https://github.com/factcast/factcast/issues/1145)
+
+**Fixed bugs:**
+
+- Concurrency issue with  [\#1508](https://github.com/factcast/factcast/issues/1508)
+- Concurrency issue with GraalJS [\#1506](https://github.com/factcast/factcast/issues/1506)
+- Factus: Make sure FactValidation errors are properly handled in Factus [\#1251](https://github.com/factcast/factcast/issues/1251)
+
+**Closed issues:**
+
+- Fast-Forward also for non-empty catchups [\#1510](https://github.com/factcast/factcast/issues/1510)
+- doc review fixes [\#1499](https://github.com/factcast/factcast/issues/1499)
+- Replace use of lombok val \(to help with compiler performance\) [\#1238](https://github.com/factcast/factcast/issues/1238)
+- remove pg store as a distinct module [\#964](https://github.com/factcast/factcast/issues/964)
+- Rework GRPC Exception Handling & Reconnection behavior [\#736](https://github.com/factcast/factcast/issues/736)
+
 ## [0.4.0-M1](https://github.com/factcast/factcast/tree/0.4.0-M1) (2021-08-06)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/0.3.13...0.4.0-M1)
@@ -10,6 +32,7 @@
 - Create view for index stats [\#1435](https://github.com/factcast/factcast/issues/1435)
 - Tail Index Fast Forward - Specify index rotation check via cron expression [\#1431](https://github.com/factcast/factcast/issues/1431)
 - Introduce auto-resilient subscriptions [\#1421](https://github.com/factcast/factcast/issues/1421)
+- Additional Server Metric: "CatchupTransformationRatio" [\#1354](https://github.com/factcast/factcast/issues/1354)
 - Introduce near-cache for PgSchemaStoreImpl [\#1252](https://github.com/factcast/factcast/issues/1252)
 - LockedOnSpecs needs to expose retries and intervalMillis [\#1188](https://github.com/factcast/factcast/issues/1188)
 - Create and maintain "tail index" and implement FastForward mechanism [\#1149](https://github.com/factcast/factcast/issues/1149)
@@ -53,7 +76,6 @@
 - Factus: Cleanup key generation for snapshots [\#1363](https://github.com/factcast/factcast/issues/1363)
 - Create supporting index for id lookup and change lookup code accordingly [\#1359](https://github.com/factcast/factcast/issues/1359)
 - Reduce unnecessarily big index size on idx\_fact\_unique\_id [\#1358](https://github.com/factcast/factcast/issues/1358)
-- Additional Server Metric: "CatchupTransformationRatio" [\#1354](https://github.com/factcast/factcast/issues/1354)
 - Add key to ProjectionMetaData [\#1352](https://github.com/factcast/factcast/issues/1352)
 - Make FC startable, even if schemareg update fails [\#1350](https://github.com/factcast/factcast/issues/1350)
 - Improve tests for hash calculation [\#1348](https://github.com/factcast/factcast/issues/1348)
