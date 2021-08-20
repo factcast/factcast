@@ -1,18 +1,26 @@
 package org.factcast.store.registry.transformation.chains;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.Optional;
-import lombok.val;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+
 import org.factcast.store.registry.transformation.Transformation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.SneakyThrows;
+import lombok.val;
 
 @ExtendWith(MockitoExtension.class)
 class GraalJsTransformerTest {
@@ -48,5 +56,52 @@ class GraalJsTransformerTest {
     assertThat(result.get("hobbies").get(0).asText()).isEqualTo("foo");
     assertThat(result.get("childMap").get("anotherHobbies").isArray()).isTrue();
     assertThat(result.get("childMap").get("anotherHobbies").get(0).asText()).isEqualTo("bar");
+  }
+
+  @Test
+  @SneakyThrows
+  void testParallelAccess() {
+    when(transformation.transformationCode())
+        .thenReturn(
+            Optional.of(
+                "function transform(e) { \n"
+                    + "  console.log('Starting Busy Wait...'); \n"
+                    // code to do busy waiting in JS:
+                    + "  const date = Date.now();\n"
+                    + "  const milliseconds = 2000;\n"
+                    + "  let currentDate = null;\n"
+                    + "  do {\n"
+                    + "    currentDate = Date.now();\n"
+                    + "  } while (currentDate - date < milliseconds);\n"
+                    + "  console.log('Done busy waiting.'); \n"
+                    // actual transformation
+                    + "  e.x = e.y; }\n"));
+
+    val d1 = new HashMap<String, Object>();
+    d1.put("y", "1");
+
+    val d2 = new HashMap<String, Object>();
+    d2.put("y", "2");
+
+    // warm up engine
+    uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+
+    Callable<JsonNode> c1 =
+        () -> uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+    Callable<JsonNode> c2 =
+        () -> uut.transform(transformation, om.convertValue(d2, JsonNode.class));
+
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
+    try {
+      Future<JsonNode> result1 = executor.submit(c1);
+      Future<JsonNode> result2 = executor.submit(c2);
+      JsonNode n1 = result1.get();
+      JsonNode n2 = result2.get();
+
+      assertThat(n1.get("x").asText()).isEqualTo("1");
+      assertThat(n2.get("x").asText()).isEqualTo("2");
+    } finally {
+      executor.shutdown();
+    }
   }
 }
