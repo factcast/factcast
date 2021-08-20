@@ -18,42 +18,43 @@ We say **"good" practices** here, rather than *"best" practices* for a reason. F
 Also, be aware that not every possible use case is covered by Factus so that you occasionally might want to fall back to "doing things yourself" with the low-level FactCast API. 
 In case you encounter such a situation, please open a github issue explaining your motivation. Maybe this is something Factus is currently lacking.
 
-### EventObjects
+### Factus as a higher level of abstraction
 
-Factus replaces FactCast as a central interface. Rather than with *Facts*, Factus deals with *EventObjects*. 
-Those are serialized/deserialized to Facts using an *EventSerializer*. Factus ships with a default one 
-that uses Jackson, but you're free to use any library of your taste to accomplish this (like Gson, or whatever is popular with you).
+Factus replaces FactCast as a central interface. Rather than with *Facts*, Factus primarily deals with *EventObjects* deserialized from Facts. 
+using an *EventSerializer*. Factus ships with a default one that uses Jackson, but you're free to use any library of your taste to accomplish this (like Gson, or whatever is popular with you).
 
 Concrete events will implement *EventObject* in order to be able to contribute to Fact Headers when serialized, and they are expected to be annotated with `@Specification` in order to declare what the specifics of the `FactHeader` (namespace, type and version) are.
 
 ```java
+import com.google.common.collect.Sets;
+
 /**
  * EventObjects are expected to be annotated with @{@link Specification}.
  */
 public interface EventObject {
 
-    default Map<String, String> additionalFactHeaders() {
-        return Collections.emptyMap();
-    }
+  default Map<String, String> additionalFactHeaders() {
+    return Collections.emptyMap();
+  }
 
-    Set<UUID> aggregateIds();
+  Set<UUID> aggregateIds();
 
 }
+
 /**
  * Example EventObject based event containing one property 
  */
-@Specification(ns = "users", version=1)
+@Specification(ns = "user", type = "UserCreated", version = 1)
 class UserCreated implements EventObject {
-    
-    // getter/ setter omitted
-    private String name;
 
-    @Override
-    public Set<UUID> aggregateIds() {
-        // set of related aggregate IDs 
-        // or empty set if there are no relations
-        return ...;
-    }
+  // getters & setters or builders omitted
+  private UUID userId;
+  private String name;
+
+  @Override
+  public Set<UUID> aggregateIds() {
+    return Sets.newHashSet(userId);
+  }
 }
 ```
 
