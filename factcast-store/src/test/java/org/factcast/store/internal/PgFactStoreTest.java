@@ -93,12 +93,11 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
     @NonNull UUID id2 = UUID.randomUUID();
     @NonNull UUID id3 = UUID.randomUUID();
     AtomicReference<UUID> fwd = new AtomicReference<>();
-          private long lastSer=0L;
+    private long lastSer = 0L;
 
     @NonNull
     FactObserver obs =
         new FactObserver() {
-
 
           @Override
           public void onNext(@NonNull Fact element) {
@@ -164,7 +163,7 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
 
       // check for actual catchup (must not rewind)
       store.publish(
-              Collections.singletonList(Fact.builder().id(id3).ns("ns1").buildWithoutPayload()));
+          Collections.singletonList(Fact.builder().id(id3).ns("ns1").buildWithoutPayload()));
 
       SubscriptionRequest nonEmptyTail = SubscriptionRequest.catchup(spec).from(id2);
       store.subscribe(SubscriptionRequestTO.forFacts(nonEmptyTail), obs).awaitCatchup();
