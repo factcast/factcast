@@ -70,8 +70,8 @@ public class RedisBatchedLens extends AbstractTransactionalLens {
     if (RBatch.class.equals(type)) {
       return f -> {
         batchMan.startOrJoin();
-        RBatch rBatch = batchMan.getCurrentBatch();
-        return rBatch;
+
+        return batchMan.getCurrentBatch();
       };
     }
     return null;
