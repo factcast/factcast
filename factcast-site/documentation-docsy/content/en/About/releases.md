@@ -1,8 +1,7 @@
 ---
 title: "Releases"
 
-
-type: docs
+type : "docs-noedit"
 weight: 100000
 ---
 

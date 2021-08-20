@@ -13,19 +13,12 @@
           <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
             {{ partial "sidebar.html" . }}
           </aside>
-          <aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
-            {{ partial "page-meta-links.html" . }}
-            <hr/>
-            {{ partial "toc.html" . }}
-            {{ partial "taxonomy_terms_clouds.html" . }}
-          </aside>
-          <main class="col-12 col-md-9 col-xl-8 pl-md-5" role="main">
-            {{ partial "version-banner.html" . }}
-            {{ if not .Site.Params.ui.breadcrumb_disable }}{{ partial "breadcrumb.html" . }}{{ end }}
+          <main class="col-10 col-xl-10 pl-md-5" role="main">
             {{ block "main" . }}{{ end }}
           </main>
         </div>
       </div>
+      <br/>
       {{ partial "footer.html" . }}
     </div>
     {{ partial "scripts.html" . }}

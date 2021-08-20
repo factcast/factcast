@@ -4,7 +4,7 @@ weight: 90
 type: docs
 ---
 
-## stay compatible
+## Stay compatible
 
 When decoupling services via facts, it is vitally important, that the consuming party understands the facts it is interested in. Therefore, evolution is a challenge. As soon, as the publisher starts publishing a particular fact type in a (non-compatible) format, the consumer will break. This leads to complex deployment dependencies, that we tried to avoid in the first place.
 
