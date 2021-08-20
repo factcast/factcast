@@ -176,8 +176,6 @@ public class PgFactStream {
     }
   }
 
-
-
   @VisibleForTesting
   void catchup(PgPostQueryMatcher postQueryMatcher) {
     if (isConnected()) {
