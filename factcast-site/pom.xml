@@ -38,34 +38,6 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>3.0.0</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <phase>compile</phase>
-          </execution>
-        </executions>
-        <configuration>
-          <executable>docker</executable>
-          <!-- optional -->
-          <workingDirectory>documentation</workingDirectory>
-          <arguments>
-            <argument>run</argument>
-            <argument>--rm</argument>
-            <argument>-u</argument>
-            <argument>${os.detected.userid}</argument>
-            <argument>-v</argument>
-            <argument>${project.basedir}/documentation:/srv/hugo</argument>
-            <argument>yanqd0/hugo:0.61.0</argument>
-            <argument>hugo</argument>
-          </arguments>
-        </configuration>
-      </plugin>
     </plugins>
     <pluginManagement>
       <plugins>
