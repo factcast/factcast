@@ -176,15 +176,7 @@ public class PgFactStream {
     }
   }
 
-  @VisibleForTesting
-  boolean factsHaveBeenSent(long startedAt, AtomicLong serial) {
-    if (serial.get() == 0 || serial.get() == startedAt) {
-      // nothing has been sent out
-      return false;
-    }
 
-    return true;
-  }
 
   @VisibleForTesting
   void catchup(PgPostQueryMatcher postQueryMatcher) {
