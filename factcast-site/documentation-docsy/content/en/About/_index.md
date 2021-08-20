@@ -10,7 +10,8 @@ type: "docs-start"
 weight: 1
 ---
 
-<div style="text-align: center; font-size: xxx-large;"><i>FactCast is a good enough Event-store based on PostgreSQL.</i></div>
+<div style="text-align: center; font-size: xxx-large;"><i>FactCast is a 'good
+enough' Event-store based on PostgreSQL.</i></div>
 <div style="text-align: center;">and also</div>
 <div style="text-align: center; font-size: xx-large;"><i>Factus is an API to write Event-Sourced applications on the JVM using FactCast</i></div>
 
