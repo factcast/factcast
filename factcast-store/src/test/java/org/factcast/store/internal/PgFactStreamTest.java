@@ -122,16 +122,17 @@ public class PgFactStreamTest {
     }
 
     @Test
-    void noFfwdIfFactsHaveBeenSent() {
+    void ffwdIfFactsHaveBeenSent() {
       UUID uuid = UUID.randomUUID();
       when(request.startingAfter()).thenReturn(Optional.of(uuid));
       when(idToSerMapper.retrieve(uuid)).thenReturn(10L);
-      when(ffwdTarget.targetId()).thenReturn(UUID.randomUUID());
-      serial.set(100);
+      UUID target = UUID.randomUUID();
+      when(ffwdTarget.targetId()).thenReturn(target);
+      when(ffwdTarget.targetSer()).thenReturn(100L);
 
       underTest.fastForward(request, subscription);
 
-      verifyNoInteractions(subscription);
+      verify(subscription).notifyFastForward(target);
     }
 
     @Test
