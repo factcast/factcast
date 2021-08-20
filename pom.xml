@@ -31,8 +31,8 @@
     <module>factcast-factus-bin-snapser</module>
     <module>factcast-client-grpc</module>
     <module>factcast-client-grpc-cli</module>
-        <module>factcast-store</module>
-        <module>factcast-store-rds</module>
+    <module>factcast-store</module>
+    <module>factcast-store-rds</module>
     <module>factcast-store-test</module>
     <module>factcast-core</module>
     <module>factcast-factus</module>
@@ -89,25 +89,26 @@
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <assertj.version>3.20.2</assertj.version>
     <jackson.version>2.12.4</jackson.version>
-        <mockito.version>3.12.0</mockito.version>
+    <mockito.version>3.12.0</mockito.version>
     <junit-jupiter.version>5.7.2</junit-jupiter.version>
     <lombok.version>1.18.20</lombok.version>
     <slf4j-api.version>1.7.32</slf4j-api.version>
+    <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
-        <spring-boot.version>2.5.4</spring-boot.version>
+    <spring-boot.version>2.5.4</spring-boot.version>
     <spring-cloud.version>Hoxton.SR8</spring-cloud.version>
     <spring-grpc.version>2.11.0.RELEASE</spring-grpc.version>
     <grpc.version>1.30.2</grpc.version>
-        <spring-boot-maven-plugin.version>2.5.4</spring-boot-maven-plugin.version>
+    <spring-boot-maven-plugin.version>2.5.4</spring-boot-maven-plugin.version>
     <testcontainers.version>1.16.0</testcontainers.version>
     <arrow.version>0.12.1</arrow.version>
-        <micronaut.version>2.5.12</micronaut.version>
+    <micronaut.version>2.5.12</micronaut.version>
     <kotlin.version>1.5.20</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>4.6.1</kotest.version>
     <redisson.version>3.16.1</redisson.version>
     <redisson-spring-boot-starter.version>3.16.1</redisson-spring-boot-starter.version>
-        <graaljs.version>21.2.0</graaljs.version>
+    <graaljs.version>21.2.0</graaljs.version>
   </properties>
   <dependencies>
     <dependency>
@@ -356,6 +357,7 @@
             <include>*</include>
           </includes>
           <excludedGroups>integration</excludedGroups>
+          <!--suppress UnresolvedMavenProperty -->
           <argLine>${surefire.jacoco.args}</argLine>
         </configuration>
       </plugin>
@@ -368,6 +370,7 @@
           <includes>
             <include>*</include>
           </includes>
+          <!--suppress UnresolvedMavenProperty -->
           <argLine>${failsafe.jacoco.args}</argLine>
         </configuration>
         <executions>
@@ -516,6 +519,7 @@
                 <addDefaultSpecificationEntries>false</addDefaultSpecificationEntries>
               </manifest>
               <manifestEntries>
+                <!--suppress UnresolvedMavenProperty -->
                 <Implementation-Branch>${scmBranch}</Implementation-Branch>
               </manifestEntries>
             </archive>
