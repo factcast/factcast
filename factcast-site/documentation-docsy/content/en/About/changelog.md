@@ -1,7 +1,7 @@
 +++
 title = "Changelog"
 weight = 100010
-type = "docs"
+type = "docs-noedit"
 +++
 
 

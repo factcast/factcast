@@ -1,4 +1,0 @@
-[source,bash]
-----
-$ curl 'http://localhost:9998/facts/d941087a-cb63-400f-bca2-7b65214fafa4' -i
-----
