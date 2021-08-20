@@ -92,6 +92,7 @@
         <junit-jupiter.version>5.7.2</junit-jupiter.version>
         <lombok.version>1.18.20</lombok.version>
         <slf4j-api.version>1.7.32</slf4j-api.version>
+        <!--suppress UnresolvedMavenProperty -->
         <etc>${session.executionRootDirectory}/src/etc</etc>
         <spring-boot.version>2.5.4</spring-boot.version>
         <spring-cloud.version>Hoxton.SR8</spring-cloud.version>
@@ -332,6 +333,7 @@
                         <include>*</include>
                     </includes>
                     <excludedGroups>integration</excludedGroups>
+                    <!--suppress UnresolvedMavenProperty -->
                     <argLine>${surefire.jacoco.args}</argLine>
                 </configuration>
             </plugin>
@@ -344,6 +346,7 @@
                     <includes>
                         <include>*</include>
                     </includes>
+                    <!--suppress UnresolvedMavenProperty -->
                     <argLine>${failsafe.jacoco.args}</argLine>
                 </configuration>
                 <executions>
@@ -492,6 +495,7 @@
                                 <addDefaultSpecificationEntries>false</addDefaultSpecificationEntries>
                             </manifest>
                             <manifestEntries>
+                                <!--suppress UnresolvedMavenProperty -->
                                 <Implementation-Branch>${scmBranch}</Implementation-Branch>
                             </manifestEntries>
                         </archive>
