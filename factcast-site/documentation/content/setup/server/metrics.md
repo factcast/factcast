@@ -28,7 +28,7 @@ When it comes to metrics, you'll have to know what you're looking for. There are
 
 * **Server** metrics in FactCast Server as well as
 * **Client** metrics in the factcast client and additionally in the
-* factus client library. 
+* [factus client library]({{< ref "/factus/metrics.md" >}} "factus client library"). 
   
 We're focussing on *Server* metrics here.
 
@@ -59,7 +59,7 @@ There are a bunch of metrics already emitted in the server. There are different 
 
 As this list is continuously growing, we cannot guarantee
 the documentation's completeness. If you want to see the current list of operations, please look
-at [StoreMetrics.java](https://github.com/factcast/factcast/blob/issue1163/factcast-store-pgsql/src/main/java/org/factcast/store/pgsql/internal/StoreMetrics.java)
+at [StoreMetrics.java](https://github.com/factcast/factcast/blob/issue1163/factcast-store/src/main/java/org/factcast/store/pgsql/internal/StoreMetrics.java)
 .
 
 At the **time of writing (0.3.10)**, the store operations that are counted/measured are:
@@ -105,6 +105,8 @@ At the **time of writing (0.3.10)**, the registry events that are counted are:
 |    schemaConflict | x | 
 |    factValidationFailed | x | 
 |    schemaMissing | x | 
+|    schemaUpdateFailure | x |
+
 
 ### gRPC Metrics
 

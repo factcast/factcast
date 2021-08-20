@@ -1,15 +1,14 @@
 package org.factcast.schema.registry.cli.registry.impl
 
-import io.kotlintest.matchers.match
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import java.nio.file.Paths
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.registry.FactcastIndexCreator
 import org.factcast.schema.registry.cli.registry.StaticPageCreator
+import java.nio.file.Paths
 
 class DistributionCreatorServiceImplTest : StringSpec() {
     val hugoPackageCreator = mockk<StaticPageCreator>()

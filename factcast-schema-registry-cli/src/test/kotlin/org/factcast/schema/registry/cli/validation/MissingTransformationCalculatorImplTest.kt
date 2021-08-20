@@ -1,12 +1,12 @@
 package org.factcast.schema.registry.cli.validation
 
-import io.kotlintest.matchers.collections.shouldContain
-import io.kotlintest.matchers.collections.shouldHaveSize
-import io.kotlintest.specs.StringSpec
-import java.nio.file.Paths
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldHaveSize
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.domain.Version
+import java.nio.file.Paths
 
 class MissingTransformationCalculatorImplTest : StringSpec() {
     val uut = MissingTransformationCalculatorImpl()
@@ -40,7 +40,12 @@ class MissingTransformationCalculatorImplTest : StringSpec() {
         }
 
         "should calculate missing downcast transformations 2" {
-            val event = Event("foo", dummyPath, listOf(version1, version2, version3), listOf(transformation3to2, transformation1to2, transformation2to3))
+            val event = Event(
+                "foo",
+                dummyPath,
+                listOf(version1, version2, version3),
+                listOf(transformation3to2, transformation1to2, transformation2to3)
+            )
 
             val result = uut.calculateDowncastTransformations(event)
             result shouldHaveSize 1
@@ -48,7 +53,12 @@ class MissingTransformationCalculatorImplTest : StringSpec() {
         }
 
         "should calculate missing downcast transformations 3" {
-            val event = Event("foo", dummyPath, listOf(version1, version2, version3), listOf(transformation3to2, transformation2to1, transformation1to2, transformation2to3))
+            val event = Event(
+                "foo",
+                dummyPath,
+                listOf(version1, version2, version3),
+                listOf(transformation3to2, transformation2to1, transformation1to2, transformation2to3)
+            )
 
             val result = uut.calculateDowncastTransformations(event)
             result shouldHaveSize 0
@@ -80,7 +90,12 @@ class MissingTransformationCalculatorImplTest : StringSpec() {
         }
 
         "should calculate missing upcast transformations 2" {
-            val event = Event("foo", dummyPath, listOf(version1, version2, version3), listOf(transformation1to2, transformation3to2, transformation2to1))
+            val event = Event(
+                "foo",
+                dummyPath,
+                listOf(version1, version2, version3),
+                listOf(transformation1to2, transformation3to2, transformation2to1)
+            )
 
             val result = uut.calculateUpcastTransformations(event)
             result shouldHaveSize 1
@@ -88,7 +103,12 @@ class MissingTransformationCalculatorImplTest : StringSpec() {
         }
 
         "should calculate missing upcast transformations 3" {
-            val event = Event("foo", dummyPath, listOf(version1, version2, version3), listOf(transformation1to2, transformation2to3))
+            val event = Event(
+                "foo",
+                dummyPath,
+                listOf(version1, version2, version3),
+                listOf(transformation1to2, transformation2to3)
+            )
 
             val result = uut.calculateUpcastTransformations(event)
             result shouldHaveSize 0

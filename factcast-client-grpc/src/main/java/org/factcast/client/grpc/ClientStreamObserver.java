@@ -15,15 +15,22 @@
  */
 package org.factcast.client.grpc;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.grpc.stub.StreamObserver;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicLong;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.FactStreamInfo;
+import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.TransformationException;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
@@ -36,62 +43,126 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
  * @see Subscription
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
-@RequiredArgsConstructor
 @Slf4j
 class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notification> {
 
-  final ProtoConverter converter = new ProtoConverter();
+  private final ProtoConverter converter = new ProtoConverter();
+  private final AtomicLong lastNotification = new AtomicLong(0);
 
-  @NonNull final SubscriptionImpl subscription;
+  @NonNull private final SubscriptionImpl subscription;
+
+  @VisibleForTesting
+  @Getter(AccessLevel.PACKAGE)
+  private final ClientKeepalive keepAlive;
+
+  public ClientStreamObserver(@NonNull SubscriptionImpl subscription, long keepAliveInterval) {
+    this.subscription = subscription;
+
+    if (keepAliveInterval != 0L) {
+      keepAlive = new ClientKeepalive(keepAliveInterval);
+    } else {
+      keepAlive = null;
+    }
+  }
 
   @Override
   public void onNext(MSG_Notification f) {
-    log.trace("observer got msg: {}", f);
+    lastNotification.set(System.currentTimeMillis());
+
     switch (f.getType()) {
+      case Info:
+        log.trace("received info signal");
+        // receive info message once at the very beginning of the stream
+        FactStreamInfo factStreamInfo = converter.fromProto(f.getInfo());
+        subscription.notifyFactStreamInfo(factStreamInfo);
+        break;
+      case KeepAlive:
+        log.trace("received keepalive signal");
+        // NOP, just used for the update of lastNotification
+        break;
       case Catchup:
-        log.debug("received onCatchup signal");
+        log.trace("received onCatchup signal");
         subscription.notifyCatchup();
         break;
       case Complete:
-        log.debug("received onComplete signal");
-        subscription.notifyComplete();
+        log.trace("received onComplete signal");
+        onCompleted();
         break;
       case Fact:
-        try {
-          subscription.notifyElement(converter.fromProto(f.getFact()));
-        } catch (TransformationException e) {
-          // cannot happen on client side...
-          onError(e);
-        }
+        log.trace("received single fact");
+        subscription.notifyElement(converter.fromProto(f.getFact()));
         break;
       case Facts:
-        try {
-          List<? extends Fact> facts = converter.fromProto(f.getFacts());
+        List<? extends Fact> facts = converter.fromProto(f.getFacts());
+        log.trace("received {} facts", facts.size());
 
-          for (Fact fact : facts) {
-            subscription.notifyElement(fact);
-          }
-
-        } catch (TransformationException e) {
-          // cannot happen on client side...
-          onError(e);
+        for (Fact fact : facts) {
+          subscription.notifyElement(fact);
         }
+        break;
+      case Ffwd:
+        log.debug("received fastfoward signal");
+        subscription.notifyFastForward(converter.fromProto(f.getId()));
         break;
 
       default:
-        subscription.notifyError(
-            new RuntimeException("Unrecognized notification type. THIS IS A BUG!"));
+        onError(new RuntimeException("Unrecognized notification type. THIS IS A BUG!"));
         break;
+    }
+  }
+
+  @VisibleForTesting
+  void disableKeepalive() {
+    if (keepAlive != null) {
+      keepAlive.shutdown();
     }
   }
 
   @Override
   public void onError(Throwable t) {
-    subscription.notifyError(t);
+    disableKeepalive();
+    RuntimeException translated = ClientExceptionHelper.from(t);
+    subscription.notifyError(translated);
   }
 
   @Override
   public void onCompleted() {
+    disableKeepalive();
     subscription.notifyComplete();
+  }
+
+  class ClientKeepalive {
+    private final Timer t = new Timer("client-keepalive-" + System.currentTimeMillis(), true);
+    private final long interval;
+    private final long gracePeriod;
+
+    ClientKeepalive(long interval) {
+      this.interval = interval;
+      gracePeriod =
+          interval * 2 + 200; // 2 times the interval and 200ms extra for potential network i/o
+      lastNotification.set(System.currentTimeMillis());
+      reschedule();
+    }
+
+    void reschedule() {
+      t.schedule(
+          new TimerTask() {
+            @Override
+            public void run() {
+              val last = lastNotification.get();
+
+              if (System.currentTimeMillis() - last > gracePeriod) {
+                onError(new StaleSubscriptionDetectedException(last, gracePeriod));
+              } else {
+                reschedule();
+              }
+            }
+          },
+          interval);
+    }
+
+    void shutdown() {
+      t.cancel(); // the timer and related threads altogether
+    }
   }
 }
