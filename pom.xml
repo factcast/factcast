@@ -84,7 +84,7 @@
         <maven.version>3.8.2</maven.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <spotless-maven-plugin.version>2.12.2</spotless-maven-plugin.version>
+        <spotless-maven-plugin.version>2.12.3</spotless-maven-plugin.version>
         <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
         <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
         <assertj.version>3.20.2</assertj.version>
