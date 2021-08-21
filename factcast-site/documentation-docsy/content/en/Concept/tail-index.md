@@ -28,7 +28,7 @@ In general, [subscriptions]({{< ref "concept/_index.md#read-subscribe" >}}) may 
 
 {{% alert title="Note" %}}
 * Non-follow subscriptions only consist of phase one (they complete after catching up with the past)
-* Follow subscriptions consist onf phase one and two
+* Follow subscriptions consist of phase one and two
 * Ephemeral subscriptions, only consist of phase two (ignore the past and just listen to facts as they are published)
 {{% /alert %}}
 

@@ -66,10 +66,4 @@ When a projection class is changed (e.g. a field is renamed or its type is chang
 In order to rebuild a snapshot in this case a "serial" is to be provided for the Projection.
 Only snapshots that have the same "serial" than the class in its current state will be used.
 
-There are 3 ways to provide a serial:
-
-1. adding `@ProjectionMetaData(serial = 1L)` to the projection class will set the serial to 1
-2. adding `private static final serialVersionUID = 1L` to the projection class will set the serial to 1
-3. let the serial be calculated by the SnapshotSerializer.
-
-If no serial is provided through any means, you will get a warning and snapshots will not be used beyond the lifecycle of the JVM. (Which will make your old snapshots pile up in the cache, so please don't rely on this)
+Serials are declared to projections by adding a `@ProjectionMetaData(serial = 1L)` to the type.
