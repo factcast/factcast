@@ -85,7 +85,6 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
       }
     }
 
-
     @Override
     public void onHalfClose() {
       try {
