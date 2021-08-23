@@ -1,7 +1,6 @@
 package org.factcast.itests.factus;
 
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.factus.Factus;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
