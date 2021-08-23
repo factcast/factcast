@@ -22,7 +22,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -114,7 +113,7 @@ public class PgFactStore extends AbstractFactStore {
   public @NonNull Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int version)
       throws TransformationException {
 
-    val fact = fetchById(id);
+    var fact = fetchById(id);
     // map does not work here due to checked exception
     if (fact.isPresent()) {
       return Optional.of(factTransformerService.transformIfNecessary(fact.get(), version));
@@ -238,7 +237,7 @@ public class PgFactStore extends AbstractFactStore {
 
           try {
             ResultSetExtractor<Long> rch =
-                new ResultSetExtractor<Long>() {
+                new ResultSetExtractor<>() {
                   @Override
                   public Long extractData(ResultSet resultSet)
                       throws SQLException, DataAccessException {

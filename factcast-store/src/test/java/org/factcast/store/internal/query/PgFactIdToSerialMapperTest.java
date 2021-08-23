@@ -21,7 +21,6 @@ import static org.mockito.Mockito.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.UUID;
 import java.util.function.Supplier;
-import lombok.val;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
 import org.junit.jupiter.api.*;
@@ -59,7 +58,7 @@ public class PgFactIdToSerialMapperTest {
         .time(any(StoreMetrics.OP.class), any(Supplier.class));
 
     when(jdbc.queryForObject(anyString(), any(), eq(Long.class))).thenReturn(42L);
-    val ret = uut.retrieve(UUID.randomUUID());
+    var ret = uut.retrieve(UUID.randomUUID());
     assertThat(ret).isEqualTo(42L);
   }
 
@@ -71,7 +70,7 @@ public class PgFactIdToSerialMapperTest {
 
     when(jdbc.queryForObject(anyString(), any(), eq(Long.class)))
         .thenThrow(EmptyResultDataAccessException.class);
-    val ret = uut.retrieve(UUID.randomUUID());
+    var ret = uut.retrieve(UUID.randomUUID());
     assertThat(ret).isEqualTo(0);
   }
 }

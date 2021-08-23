@@ -16,7 +16,6 @@
 package org.factcast.store.registry.http;
 
 import com.google.common.collect.Lists;
-import lombok.val;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.RegistryIndex;
@@ -145,7 +144,7 @@ public class HttpSchemaRegistryTest {
   @Test
   public void testAllowReplaceFalseForSchemes()
       throws InterruptedException, ExecutionException, IOException {
-    val testSource = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
+    var testSource = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
     index.schemes(Lists.newArrayList(testSource));
 
     HttpSchemaRegistry uut =
@@ -166,7 +165,7 @@ public class HttpSchemaRegistryTest {
   @Test
   public void testAllowReplaceTrueForSchemes()
       throws InterruptedException, ExecutionException, IOException {
-    val testSource = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
+    var testSource = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
     index.schemes(Lists.newArrayList(testSource));
 
     when(fileFetcher.fetchSchema(any())).thenReturn("{}").thenReturn("{\"foo\":\"bar\"}");
@@ -192,7 +191,7 @@ public class HttpSchemaRegistryTest {
   @Test
   public void testAllowReplaceFalseForTransformations()
       throws InterruptedException, ExecutionException, IOException {
-    val testSource = new TransformationSource("http://foo/1", "hash", "ns", "type", 1, 2);
+    var testSource = new TransformationSource("http://foo/1", "hash", "ns", "type", 1, 2);
     index.transformations(Lists.newArrayList(testSource));
 
     HttpSchemaRegistry uut =
@@ -213,7 +212,7 @@ public class HttpSchemaRegistryTest {
   @Test
   public void testAllowReplaceTrueForTransformations()
       throws InterruptedException, ExecutionException, IOException {
-    val testSource = new TransformationSource("http://foo/1", "hash", "ns", "type", 1, 2);
+    var testSource = new TransformationSource("http://foo/1", "hash", "ns", "type", 1, 2);
     index.transformations(Lists.newArrayList(testSource));
 
     when(fileFetcher.fetchTransformation(any())).thenReturn("").thenReturn("bar");

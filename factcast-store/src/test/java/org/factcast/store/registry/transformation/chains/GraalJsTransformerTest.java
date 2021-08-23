@@ -5,14 +5,14 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.Optional;
+import org.factcast.store.registry.transformation.Transformation;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import org.factcast.store.registry.transformation.Transformation;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.SneakyThrows;
-import lombok.val;
 
 @ExtendWith(MockitoExtension.class)
 class GraalJsTransformerTest {
@@ -38,18 +37,18 @@ class GraalJsTransformerTest {
             Optional.of(
                 "function transform(e) {e.displayName = e.name + ' ' + e.age; e.hobbies = [e.hobby]; e.childMap.anotherHobbies = [e.childMap.anotherHobby];}"));
 
-    val data = new HashMap<String, Object>();
+    var data = new HashMap<String, Object>();
     data.put("name", "Hugo");
     data.put("age", 38);
     data.put("hobby", "foo");
 
-    val childMap = new HashMap<String, Object>();
+    var childMap = new HashMap<String, Object>();
     childMap.put("anotherName", "Ernst");
     childMap.put("anotherHobby", "bar");
 
     data.put("childMap", childMap);
 
-    val result = uut.transform(transformation, om.convertValue(data, JsonNode.class));
+    var result = uut.transform(transformation, om.convertValue(data, JsonNode.class));
 
     assertThat(result.get("displayName").asText()).isEqualTo("Hugo 38");
     assertThat(result.get("hobbies").isArray()).isTrue();
@@ -77,10 +76,10 @@ class GraalJsTransformerTest {
                     // actual transformation
                     + "  e.x = e.y; }\n"));
 
-    val d1 = new HashMap<String, Object>();
+    var d1 = new HashMap<String, Object>();
     d1.put("y", "1");
 
-    val d2 = new HashMap<String, Object>();
+    var d2 = new HashMap<String, Object>();
     d2.put("y", "2");
 
     // warm up engine

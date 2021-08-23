@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import lombok.val;
 import org.factcast.server.grpc.ServerExceptionLogger.Level;
 import org.factcast.test.Slf4jHelper;
 import org.junit.jupiter.api.*;
@@ -60,8 +59,8 @@ class ServerExceptionLoggerTest {
 
     @Test
     void testLog_info() {
-      val uut = spy(underTest);
-      val e = new Exception();
+      var uut = spy(underTest);
+      var e = new Exception();
 
       doReturn(Level.INFO).when(uut).resolveLevelFor(e);
       doNothing().when(uut).info(any(), any());
@@ -74,8 +73,8 @@ class ServerExceptionLoggerTest {
 
     @Test
     void testLog_warn() {
-      val uut = spy(underTest);
-      val e = new Exception();
+      var uut = spy(underTest);
+      var e = new Exception();
 
       doReturn(Level.WARN).when(uut).resolveLevelFor(e);
       doNothing().when(uut).warn(any(), any());
@@ -88,8 +87,8 @@ class ServerExceptionLoggerTest {
 
     @Test
     void testLog_error() {
-      val uut = spy(underTest);
-      val e = new Exception();
+      var uut = spy(underTest);
+      var e = new Exception();
 
       doReturn(Level.ERROR).when(uut).resolveLevelFor(e);
       doNothing().when(uut).error(any(), any());
@@ -102,8 +101,8 @@ class ServerExceptionLoggerTest {
 
     @Test
     void doesNotLogForJustSendToCLient() {
-      val uut = spy(underTest);
-      val e = new Exception();
+      var uut = spy(underTest);
+      var e = new Exception();
 
       doReturn(Level.JUST_SEND_TO_CONSUMER).when(uut).resolveLevelFor(e);
 
