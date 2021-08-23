@@ -19,8 +19,8 @@ executed later in an atomic way (all or none).
 
 You would want to use Redis Batched for two reasons:
 
-* Atomicity of factStreamPosition updates and your projection state updates
-* Performance
+* atomicity of factStreamPosition updates and your projection state updates
+* increased fact processing throughput
 
 The performance bit is achieved by skipping unnecessary factStreamPosition updates and (more importantly) by reducing the number of operations on your Redis backend by using a `redisson batch` instead of single writes for `bulkSize` updates.
 The `bulkSize` is configurable per projection via the `@RedisBatched` annotation.
