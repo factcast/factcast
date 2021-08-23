@@ -21,7 +21,7 @@ public class TransformationException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 
-  public TransformationException(@NonNull Exception e) {
+  public TransformationException(@NonNull Throwable e) {
     super(e);
   }
 
