@@ -109,7 +109,7 @@ public class GraalJsTransformer implements Transformer {
 
     } catch (Throwable e) {
       // debug level, because it is escalated.
-      log.debug("Exception during transformation. Escalating.",e);
+      log.debug("Exception during transformation. Escalating.", e);
       throw new TransformationException(e);
     }
   }
