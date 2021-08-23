@@ -23,14 +23,13 @@ import static org.assertj.core.api.Assertions.*;
 
 import com.google.common.base.Stopwatch;
 import config.RedissonProjectionConfiguration;
-import java.util.*;
 import java.util.ArrayList;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.subscription.Subscription;
@@ -122,7 +121,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   public void measure(String s, Runnable r) {
-    val sw = Stopwatch.createStarted();
+    var sw = Stopwatch.createStarted();
     r.run();
     log.info("{} {}ms", s, sw.stop().elapsed().toMillis());
   }
@@ -133,7 +132,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   public void txBatchProcessingPerformance() {
 
     int MAX = 10000;
-    val l = new ArrayList<EventObject>(MAX);
+    var l = new ArrayList<EventObject>(MAX);
     log.info("preparing {} Events ", MAX);
     for (int i = 0; i < MAX; i++) {
       l.add(new UserCreated(randomUUID(), "" + i));
@@ -144,7 +143,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     Thread.sleep(1000);
 
     {
-      val sw = Stopwatch.createStarted();
+      var sw = Stopwatch.createStarted();
       RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
       factus.update(p);
       log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
@@ -152,7 +151,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       p.factStreamPosition(new UUID(0, 0));
     }
     {
-      val sw = Stopwatch.createStarted();
+      var sw = Stopwatch.createStarted();
       RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
       factus.update(p);
       log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
@@ -161,7 +160,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     }
     // ----------tx
     {
-      val sw = Stopwatch.createStarted();
+      var sw = Stopwatch.createStarted();
       TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
       factus.update(p);
       log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
@@ -170,7 +169,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     }
 
     {
-      val sw = Stopwatch.createStarted();
+      var sw = Stopwatch.createStarted();
       TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
       factus.update(p);
       log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
@@ -182,9 +181,9 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     // ----------tx
     {
-      val sw = Stopwatch.createStarted();
+      var sw = Stopwatch.createStarted();
       TxRedissonSubscribedUserNames p = new TxRedissonSubscribedUserNames(redissonClient);
-      val sub = factus.subscribeAndBlock(p);
+      var sub = factus.subscribeAndBlock(p);
       sub.awaitCatchup();
       log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
@@ -192,9 +191,9 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     }
 
     {
-      val sw = Stopwatch.createStarted();
+      var sw = Stopwatch.createStarted();
       TxRedissonSubscribedUserNames p = new TxRedissonSubscribedUserNames(redissonClient);
-      val sub = factus.subscribeAndBlock(p);
+      var sub = factus.subscribeAndBlock(p);
       sub.awaitCatchup();
       log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
@@ -203,7 +202,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     // ------------ batch
     {
-      val sw = Stopwatch.createStarted();
+      var sw = Stopwatch.createStarted();
       BatchRedissonManagedUserNames p = new BatchRedissonManagedUserNames(redissonClient);
       factus.update(p);
       log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
@@ -211,7 +210,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       p.factStreamPosition(new UUID(0, 0));
     }
     {
-      val sw = Stopwatch.createStarted();
+      var sw = Stopwatch.createStarted();
       BatchRedissonManagedUserNames p = new BatchRedissonManagedUserNames(redissonClient);
       factus.update(p);
       log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
@@ -228,9 +227,9 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
         redissonClient.createTransaction(
             TransactionOptions.defaults().timeout(1, TimeUnit.MINUTES));
 
-    val tx = redissonClient.createBatch();
+    var tx = redissonClient.createBatch();
 
-    val r = tx.getMap("schubba");
+    var r = tx.getMap("schubba");
     measure(
         "honk",
         () -> {
@@ -316,7 +315,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
         .add(new UserCreated(randomUUID(), "Ringo"))
         .execute();
 
-    val fabFour = factus.fetch(SnapshotUserNames.class);
+    var fabFour = factus.fetch(SnapshotUserNames.class);
     assertThat(fabFour.count()).isEqualTo(4);
     assertThat(fabFour.contains("John")).isTrue();
     assertThat(fabFour.contains("Paul")).isTrue();
@@ -326,7 +325,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     // sadly shot
     factus.publish(new UserDeleted(johnsId));
 
-    val fabThree = factus.fetch(SnapshotUserNames.class);
+    var fabThree = factus.fetch(SnapshotUserNames.class);
     assertThat(fabThree.count()).isEqualTo(3);
     assertThat(fabThree.contains("John")).isFalse();
     assertThat(fabThree.contains("Paul")).isTrue();
@@ -489,7 +488,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
         .add(new UserCreated(randomUUID(), "Ringo"))
         .execute();
 
-    val fabFour = externalizedUserNames;
+    var fabFour = externalizedUserNames;
     factus.update(fabFour);
 
     assertThat(fabFour.count()).isEqualTo(4);
@@ -504,7 +503,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     // publishing does not update a simple projection
     assertThat(fabFour.count()).isEqualTo(4);
 
-    val fabThree = externalizedUserNames;
+    var fabThree = externalizedUserNames;
     factus.update(fabThree);
 
     assertThat(fabThree.count()).isEqualTo(3);
@@ -524,10 +523,10 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     Optional<TestAggregate> optAggregate = factus.find(TestAggregate.class, aggregateId);
     assertThat(optAggregate).isNotEmpty();
 
-    val aggregate = factus.fetch(TestAggregate.class, aggregateId);
+    var aggregate = factus.fetch(TestAggregate.class, aggregateId);
     assertThat(aggregate.magicNumber()).isEqualTo(43);
 
-    val a = factus.fetch(TestAggregate.class, aggregateId);
+    var a = factus.fetch(TestAggregate.class, aggregateId);
 
     // we start 10 threads that try to (in an isolated fashion) lock and
     // increase. Starting with magic number 43, we would end up 53, but
@@ -635,19 +634,19 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   @Test
   void afterUpdateOnSnapshotProjection() {
     UUID aggId = UUID.randomUUID();
-    val f1 =
+    var f1 =
         Fact.builder()
             .aggId(aggId)
             .ns(SimpleAggregate.ns)
             .type(SimpleAggregate.type)
             .buildWithoutPayload();
-    val f2 =
+    var f2 =
         Fact.builder()
             .aggId(aggId)
             .ns(SimpleAggregate.ns)
             .type(SimpleAggregate.type)
             .buildWithoutPayload();
-    val f3 =
+    var f3 =
         Fact.builder()
             .aggId(aggId)
             .ns(SimpleAggregate.ns)
@@ -657,15 +656,15 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     factus.publish(f1);
     factus.publish(f2);
 
-    val a1 = factus.fetch(SimpleAggregate.class, aggId);
+    var a1 = factus.fetch(SimpleAggregate.class, aggId);
     assertThat(a1.factsConsumed).isEqualTo(2);
 
-    val a2 = factus.fetch(SimpleAggregate.class, aggId);
+    var a2 = factus.fetch(SimpleAggregate.class, aggId);
     assertThat(a2.factsConsumed).isEqualTo(0);
 
     factus.publish(f3);
 
-    val a3 = factus.fetch(SimpleAggregate.class, aggId);
+    var a3 = factus.fetch(SimpleAggregate.class, aggId);
     assertThat(a3.factsConsumed).isEqualTo(1);
   }
 }

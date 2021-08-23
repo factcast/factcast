@@ -1,6 +1,14 @@
 package org.factcast.store.internal.tail;
 
-import lombok.val;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.sql.ResultSet;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.UUID;
+
 import org.assertj.core.util.Lists;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
@@ -37,7 +45,7 @@ class PGTailIndexManagerImplTest {
 
     @Test
     void returnsIfTailCreationIsDisabled() {
-      val uut = spy(underTest);
+      final var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(false);
 
       uut.triggerTailCreation();
@@ -48,7 +56,7 @@ class PGTailIndexManagerImplTest {
 
     @Test
     void createsTailIfIndexesEmpty() {
-      val uut = spy(underTest);
+      final var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(jdbc.queryForList(anyString(), eq(String.class))).thenReturn(new LinkedList<>());
       doNothing().when(uut).createNewTail();
@@ -60,7 +68,7 @@ class PGTailIndexManagerImplTest {
 
     @Test
     void createsTailIfYoungestIndexTooOld() {
-      val uut = spy(underTest);
+      final var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(jdbc.queryForList(anyString(), eq(String.class)))
           .thenReturn(Lists.newArrayList(PgConstants.TAIL_INDEX_NAME_PREFIX + "0"));
@@ -73,7 +81,7 @@ class PGTailIndexManagerImplTest {
 
     @Test
     void createsNoTailIfYoungestIndexIsRecent() {
-      val uut = spy(underTest);
+      final var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
       when(jdbc.queryForList(anyString(), eq(String.class)))
@@ -88,7 +96,7 @@ class PGTailIndexManagerImplTest {
 
     @Test
     void removesStaleIndexes() {
-      val uut = spy(underTest);
+      final var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
       when(props.getTailGenerationsToKeep()).thenReturn(2);
@@ -122,7 +130,7 @@ class PGTailIndexManagerImplTest {
     @Test
     void dropsIndex() {
 
-      val uut = spy(underTest);
+      final var uut = spy(underTest);
       uut.removeIndex(INDEX_NAME);
 
       verify(jdbc).update("drop index INDEX_NAME");
@@ -138,16 +146,16 @@ class PGTailIndexManagerImplTest {
 
     @Test
     void parsesIndexTimestamp() {
-      val uut = spy(underTest);
+      final var uut = spy(underTest);
       when(props.getMinimumTailAge())
           .thenReturn(Duration.ofDays(1), Duration.ofHours(1), Duration.ofMinutes(1));
 
-      val ts = System.currentTimeMillis() - 1000 * 60 * 30; // half hour before
+      final var ts = System.currentTimeMillis() - 1000 * 60 * 30; // half hour before
 
       ArrayList<String> indexes = Lists.newArrayList(PgConstants.TAIL_INDEX_NAME_PREFIX + ts);
-      val ret1 = uut.timeToCreateANewTail(indexes);
-      val ret2 = uut.timeToCreateANewTail(indexes);
-      val ret3 = uut.timeToCreateANewTail(indexes);
+      final var ret1 = uut.timeToCreateANewTail(indexes);
+      final var ret2 = uut.timeToCreateANewTail(indexes);
+      final var ret3 = uut.timeToCreateANewTail(indexes);
 
       assertThat(ret1).isFalse();
       assertThat(ret2).isFalse();
@@ -163,7 +171,7 @@ class PGTailIndexManagerImplTest {
     @Test
     void createsIndex() {
 
-      val uut = spy(underTest);
+      final var uut = spy(underTest);
       when(jdbc.queryForObject(anyString(), eq(Long.class))).thenReturn(118L);
       uut.createNewTail();
 
@@ -187,7 +195,7 @@ class PGTailIndexManagerImplTest {
       UUID id = UUID.randomUUID();
       long ser = 42L;
 
-      val uut = spy(underTest);
+      final var uut = spy(underTest);
       when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
           .thenReturn(new PGTailIndexManagerImpl.HighWaterMark().targetId(id).targetSer(ser));
 

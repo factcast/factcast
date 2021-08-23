@@ -1,6 +1,8 @@
 package org.factcast.factus.redis.batch;
 
-import lombok.val;
+import java.lang.annotation.*;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.redisson.api.BatchOptions;
 
 import javax.annotation.Nullable;
@@ -33,7 +35,7 @@ public @interface RedisBatched {
     }
 
     public static BatchOptions with(@Nullable RedisBatched batched) {
-      val opts = create();
+      BatchOptions opts = create();
 
       if (batched != null) {
 
