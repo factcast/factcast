@@ -20,8 +20,8 @@ must exist.
 
 You would want to use Spring Transactional for two reasons:
 
-* Atomicity of factStreamPosition updates and your projection state updates
-* Performance
+* atomicity of factStreamPosition updates and your projection state updates
+* increased fact processing throughput
 
 The Performance bit is achieved by skipping unnecessary factStreamPosition updates and (more importantly) by reducing the number of transactions on your datastore by using one Transaction for `bulkSize` updates instead of single writes.
 For instance, if you use Spring Transactions on a JDBC Datastore, you will have one database transaction around the update of `bulkSize` events. 
