@@ -22,7 +22,7 @@ See [testing section](/usage/factus/testing)
 `factcast.lockGlobally()` **has been removed**. By adding the new locking capabilities, that define the scope of the lock not
 just by aggregate-ids, but by FactSpecs, 'lockGlobally()' needed to be deleted, as there is no proper way to provide a compatible
 migration path.
-As most of the internals of factcast rely on namespaces (for instance for authorization), you really need to enumerate 
+As most of the internals of FactCast rely on namespaces (for instance for authorization), you really need to enumerate 
 all possible namespaces that are in scope for the lock. Please use `factcast.lock(List<FactSpec>)` instead. Sorry for the inconvenience.
  
 
@@ -47,14 +47,14 @@ We encourage you to update any header in your postgres, that contains 'aggId', r
 
 #### basic-auth setup has changed
 
-If you used a 'factcast-security.json' before, you will be please to learn that factcast was extended to support role/namespace based autorisation. Also the filename changed to 'factcast-access.json'.
+If you used a 'factcast-security.json' before, you will be please to learn that FactCast was extended to support role/namespace based autorisation. Also the filename changed to 'factcast-access.json'.
 
 see [basicauth usage](/setup/grpc-config-basicauth)
 
 #### basic-auth setup is enforced
 
 By default, when executing without security enabled, you need to supply a property
-'factcast.security.enabled=false' via commandline or propertyfile to get away with just a warning. If you don't, factcast will exit with errorcode 1.
+'factcast.security.enabled=false' via commandline or propertyfile to get away with just a warning. If you don't, FactCast will exit with errorcode 1.
 
 #### fetching facts by ID has been extended
 
@@ -77,12 +77,12 @@ extension, the user performing the Liquibase operations requires Postgres superu
 
 #### GRPC Protocol Version
 
-The GRPC Protocol Version shifted from 1.0.0 to 1.1.0. That means, in order to talk to a factcast server with version 0.1.0, you can use and client from 0.0.30 on, but in order to use a 0.1.0 client, you'd need to talk to a factcast server with at least the same protocol version than your client.
+The GRPC Protocol Version shifted from 1.0.0 to 1.1.0. That means, in order to talk to a FactCast server with version 0.1.0, you can use and client from 0.0.30 on, but in order to use a 0.1.0 client, you'd need to talk to a FactCast server with at least the same protocol version than your client.
 So the idea is: first update your servers, then update the clients. 
 
 #### GRPC Adresses, Hosts, Ports
 
-We updated to yidongnan/grpc-spring-boot-starter. In order to direct your client to a particular target address of a Factcast server, you might have specified:
+We updated to yidongnan/grpc-spring-boot-starter. In order to direct your client to a particular target address of a FactCast server, you might have specified:
 
 ```
 grpc.client.factstore.port=9443
@@ -134,7 +134,7 @@ The result is, that you have to use > 0.0.14 on Client and Server consistently.
 
 * Note that the jersey impl of the REST interface has its own <a href="https://github.com/Mercateo/factcast-rest-jersey">place on github now.</a> and got new coordinates: **org.factcast:factcast-server-rest-jersey:0.0.12.** If you use the REST Server, you'll need to change your dependencies accordingly
 
-* There is a BOM within factcast at org.factcast:factcast-bom:0.0.12 you can use to conveniently pin versions - remember that factcast-server-rest-jersey might not be available for every milestone and is not part of the BOM
+* There is a BOM within FactCast at org.factcast:factcast-bom:0.0.12 you can use to conveniently pin versions - remember that factcast-server-rest-jersey might not be available for every milestone and is not part of the BOM
 
 
 
