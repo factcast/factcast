@@ -25,6 +25,8 @@ import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
+import jdk.internal.org.jline.utils.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
@@ -37,6 +39,7 @@ import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import lombok.NonNull;
 import lombok.val;
 
+@Slf4j
 public class GraalJsTransformer implements Transformer {
 
   private static final int ENGINE_CACHE_CAPACITY = 128;
@@ -105,7 +108,9 @@ public class GraalJsTransformer implements Transformer {
 
       return (Invocable) engine;
 
-    } catch (ScriptException e) {
+    } catch (Throwable e) {
+      // debug level, because it is escalated.
+      log.debug("Exception during transformation. Escalating.",e);
       throw new TransformationException(e);
     }
   }
