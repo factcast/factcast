@@ -86,8 +86,11 @@ public class GraalJsTransformer implements Transformer {
 
       return FactCastJson.toJsonNode(jsonAsMap);
 
-    } catch (NoSuchMethodException | ScriptException e) {
+    } catch (Throwable e) {
+      // debug level, because it is escalated.
+      log.debug("Exception during transformation. Escalating.", e);
       throw new TransformationException(e);
+
     }
   }
 
@@ -109,7 +112,7 @@ public class GraalJsTransformer implements Transformer {
 
     } catch (Throwable e) {
       // debug level, because it is escalated.
-      log.debug("Exception during transformation. Escalating.", e);
+      log.debug("Exception during engine creation. Escalating.", e);
       throw new TransformationException(e);
     }
   }
