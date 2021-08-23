@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.redis.tx.RedisTransactional;
@@ -48,7 +47,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   class Managed {
     @BeforeEach
     public void setup() {
-      val l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
+      var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
       for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
         l.add(new UserCreated(randomUUID(), "" + i));
       }
@@ -110,7 +109,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   class Subscribed {
     @BeforeEach
     public void setup() {
-      val l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
+      var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
       for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
         l.add(new UserCreated(randomUUID(), "" + i));
       }
