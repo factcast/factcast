@@ -23,7 +23,6 @@ import java.util.Map;
 import javax.script.Compilable;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
-import javax.script.ScriptException;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
@@ -90,7 +89,6 @@ public class GraalJsTransformer implements Transformer {
       // debug level, because it is escalated.
       log.debug("Exception during transformation. Escalating.", e);
       throw new TransformationException(e);
-
     }
   }
 
