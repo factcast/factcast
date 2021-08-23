@@ -53,3 +53,4 @@ If your are new here, you might want to read up on the [motivation]({{< ref "mot
 
 The project is [hosted on GitHub](https://github.com/factcast/factcast) and any kind of contribution is very welcome.
 
+If you have questions that are not easily answered by this website, feel free to open a 'question' issue on [github](https://github.com/factcast/factcast/issues?q=is%3Aissue+label%3Aquestion), or ask a question on [gitter](https://gitter.im/factcast/community).
