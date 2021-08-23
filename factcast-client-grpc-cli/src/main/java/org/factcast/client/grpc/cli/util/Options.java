@@ -30,7 +30,7 @@ public class Options {
         "--basic", "-basic",
       },
       help = true,
-      description = "Basic-Auth crendentials in the form \"user:password\"")
+      description = "Basic-Auth credentials in the form \"user:password\"")
   String basicAuthCredentials;
 
   @Parameter(
