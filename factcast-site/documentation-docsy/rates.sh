@@ -1,0 +1,1 @@
+curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/rate_limit

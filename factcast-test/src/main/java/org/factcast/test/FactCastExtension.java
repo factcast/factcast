@@ -16,11 +16,13 @@
 package org.factcast.test;
 
 import com.google.common.collect.Lists;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.junit.jupiter.api.extension.*;
 
 @Slf4j
@@ -70,7 +72,7 @@ public class FactCastExtension
   }
 
   private void initialize(ExtensionContext context) {
-    val discovered =
+    var discovered =
         Lists.newArrayList(ServiceLoader.load(FactCastIntegrationTestExtension.class).iterator());
     AtomicInteger count = new AtomicInteger(discovered.size());
     while (!discovered.isEmpty()) {

@@ -29,7 +29,6 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
-import lombok.val;
 import org.assertj.core.util.Lists;
 import org.factcast.client.grpc.ClientStreamObserver.ClientKeepalive;
 import org.factcast.core.Fact;
@@ -141,15 +140,15 @@ class ClientStreamObserverTest {
   @Test
   void translatesException() {
 
-    val e = new FactValidationException("disappointed");
-    val metadata = new Metadata();
+    FactValidationException e = new FactValidationException("disappointed");
+    Metadata metadata = new Metadata();
     metadata.put(
         Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
     metadata.put(
         Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER),
         e.getClass().getName().getBytes());
 
-    val ex = new StatusRuntimeException(Status.UNKNOWN, metadata);
+    StatusRuntimeException ex = new StatusRuntimeException(Status.UNKNOWN, metadata);
 
     uut.onError(ex);
 

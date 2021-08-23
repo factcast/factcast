@@ -5,10 +5,11 @@ package org.factcast.factus.redis;
 
 import static org.assertj.core.api.Assertions.*;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.util.UUID;
 import lombok.SneakyThrows;
-import lombok.val;
+
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,7 +25,7 @@ class UUIDCodecTest {
     @SneakyThrows
     @Test
     void shouldUse16Byte() {
-      val enc = UUIDCodec.INSTANCE.getValueEncoder().encode(UUID.randomUUID());
+      ByteBuf enc = UUIDCodec.INSTANCE.getValueEncoder().encode(UUID.randomUUID());
       assertThat(enc.array()).hasSize(16);
     }
 
@@ -32,8 +33,8 @@ class UUIDCodecTest {
     @Test
     void isSymetric() {
       UUID id = UUID.randomUUID();
-      val enc = UUIDCodec.INSTANCE.getValueEncoder().encode(id);
-      val dec = (UUID) UUIDCodec.INSTANCE.getValueDecoder().decode(enc, null);
+      ByteBuf enc = UUIDCodec.INSTANCE.getValueEncoder().encode(id);
+      UUID dec = (UUID) UUIDCodec.INSTANCE.getValueDecoder().decode(enc, null);
       assertThat(dec).isEqualTo(id);
     }
 
@@ -41,7 +42,7 @@ class UUIDCodecTest {
     @Test
     void failsOnMissingBits() {
       UUID id = UUID.randomUUID();
-      val enc = Unpooled.wrappedBuffer(new byte[] {1, 2, 3, 4});
+      ByteBuf enc = Unpooled.wrappedBuffer(new byte[] {1, 2, 3, 4});
       assertThatThrownBy(
               () -> {
                 UUIDCodec.INSTANCE.getValueDecoder().decode(enc, null);

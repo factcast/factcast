@@ -22,7 +22,6 @@ import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.store.internal.PgMetrics;
@@ -85,7 +84,7 @@ public class PgSnapshotCache {
   }
 
   public void compact(@NonNull DateTime thresholdDate) {
-    val deleted =
+    var deleted =
         jdbcTemplate.update(
             "DELETE FROM snapshot_cache WHERE last_access < ?", thresholdDate.toDate());
     metrics.distributionSummary(StoreMetrics.VALUE.SNAPSHOTS_COMPACTED).record(deleted);

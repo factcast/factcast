@@ -21,7 +21,6 @@ import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Tags;
 import java.net.URL;
-import lombok.val;
 import okhttp3.OkHttpClient;
 import org.factcast.core.TestHelper;
 import org.factcast.store.registry.NOPRegistryMetrics;
@@ -55,7 +54,7 @@ public class HttpRegistryFileFetcherTest {
 
   @Test
   public void testNullContracts() {
-    val uut = new HttpRegistryFileFetcher(baseUrl, client, registryMetrics);
+    var uut = new HttpRegistryFileFetcher(baseUrl, client, registryMetrics);
     TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null, registryMetrics));
     TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(baseUrl, null));
     TestHelper.expectNPE(
@@ -69,7 +68,7 @@ public class HttpRegistryFileFetcherTest {
   public void testFetchThrowsOn404() throws Exception {
     try (TestHttpServer s = new TestHttpServer()) {
       URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
-      val uut = new HttpRegistryFileFetcher(baseUrl, registryMetrics);
+      var uut = new HttpRegistryFileFetcher(baseUrl, registryMetrics);
 
       assertThrows(
           RegistryFileFetchException.class,
@@ -101,7 +100,7 @@ public class HttpRegistryFileFetcherTest {
           });
 
       URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
-      val uut = new HttpRegistryFileFetcher(baseUrl, new NOPRegistryMetrics());
+      var uut = new HttpRegistryFileFetcher(baseUrl, new NOPRegistryMetrics());
       String fetch = uut.fetchSchema(new SchemaSource("someId", "123", "ns", "type", 8));
 
       assertEquals(json, fetch);
@@ -122,7 +121,7 @@ public class HttpRegistryFileFetcherTest {
           });
 
       URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
-      val uut = new HttpRegistryFileFetcher(baseUrl, registryMetrics);
+      var uut = new HttpRegistryFileFetcher(baseUrl, registryMetrics);
 
       String fetch =
           uut.fetchTransformation(new TransformationSource("someId", "hash", "ns", "type", 8, 2));

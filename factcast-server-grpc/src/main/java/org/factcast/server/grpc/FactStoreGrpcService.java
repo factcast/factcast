@@ -47,7 +47,6 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
@@ -138,9 +137,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     final int size = facts.size();
 
-    val clientId = grpcRequestMetadata.clientId();
+    final var clientId = grpcRequestMetadata.clientId();
     if (clientId.isPresent()) {
-      val id = clientId.get();
+      final var id = clientId.get();
       facts = facts.stream().map(f -> tagFactSource(f, id)).collect(Collectors.toList());
     }
     log.debug("{}publish {} fact{}", clientIdPrefix(), size, size > 1 ? "s" : "");
@@ -194,7 +193,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
               serverExceptionLogger,
               req.keepaliveIntervalInMs());
 
-      val cancelHandler = new OnCancelHandler(clientIdPrefix(), req, subRef, observer);
+      final var cancelHandler = new OnCancelHandler(clientIdPrefix(), req, subRef, observer);
 
       ((ServerCallStreamObserver<MSG_Notification>) responseObserver)
           .setOnCancelHandler(cancelHandler::run);
@@ -413,9 +412,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         facts.stream().map(Fact::ns).distinct().collect(Collectors.toList());
     assertCanWrite(namespaces);
 
-    val clientId = grpcRequestMetadata.clientId();
+    final var clientId = grpcRequestMetadata.clientId();
     if (clientId.isPresent()) {
-      val id = clientId.get();
+      final var id = clientId.get();
       facts = facts.stream().map(f -> tagFactSource(f, id)).collect(Collectors.toList());
     }
 
@@ -505,7 +504,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     enableResponseCompression(responseObserver);
 
-    val fetchById = o.get();
+    final var fetchById = o.get();
     if (fetchById.isPresent()) {
       assertCanRead(fetchById.get().ns());
     }
