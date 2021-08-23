@@ -85,6 +85,17 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
       }
     }
 
+
+    @Override
+    public void onHalfClose() {
+      try {
+        super.onHalfClose();
+      } catch (RuntimeException ex) {
+        handleException(ex, serverCall, metadata);
+        throw ex;
+      }
+    }
+
     @VisibleForTesting
     void handleException(
         RuntimeException exception, ServerCall<ReqT, RespT> serverCall, Metadata metadata) {
