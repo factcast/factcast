@@ -35,9 +35,9 @@ class GraalJsTransformerTest {
   @Test
   void testTransform() {
     when(transformation.transformationCode())
-            .thenReturn(
-                    Optional.of(
-                            "function transform(e) {e.displayName = e.name + ' ' + e.age; e.hobbies = [e.hobby]; e.childMap.anotherHobbies = [e.childMap.anotherHobby];}"));
+        .thenReturn(
+            Optional.of(
+                "function transform(e) {e.displayName = e.name + ' ' + e.age; e.hobbies = [e.hobby]; e.childMap.anotherHobbies = [e.childMap.anotherHobby];}"));
 
     val data = new HashMap<String, Object>();
     data.put("name", "Hugo");
@@ -63,20 +63,20 @@ class GraalJsTransformerTest {
   @SneakyThrows
   void testParallelAccess() {
     when(transformation.transformationCode())
-            .thenReturn(
-                    Optional.of(
-                            "function transform(e) { \n"
-                                    + "  console.log('Starting Busy Wait...'); \n"
-                                    // code to do busy waiting in JS:
-                                    + "  const date = Date.now();\n"
-                                    + "  const milliseconds = 2000;\n"
-                                    + "  let currentDate = null;\n"
-                                    + "  do {\n"
-                                    + "    currentDate = Date.now();\n"
-                                    + "  } while (currentDate - date < milliseconds);\n"
-                                    + "  console.log('Done busy waiting.'); \n"
-                                    // actual transformation
-                                    + "  e.x = e.y; }\n"));
+        .thenReturn(
+            Optional.of(
+                "function transform(e) { \n"
+                    + "  console.log('Starting Busy Wait...'); \n"
+                    // code to do busy waiting in JS:
+                    + "  const date = Date.now();\n"
+                    + "  const milliseconds = 2000;\n"
+                    + "  let currentDate = null;\n"
+                    + "  do {\n"
+                    + "    currentDate = Date.now();\n"
+                    + "  } while (currentDate - date < milliseconds);\n"
+                    + "  console.log('Done busy waiting.'); \n"
+                    // actual transformation
+                    + "  e.x = e.y; }\n"));
 
     val d1 = new HashMap<String, Object>();
     d1.put("y", "1");
@@ -88,9 +88,9 @@ class GraalJsTransformerTest {
     uut.transform(transformation, om.convertValue(d1, JsonNode.class));
 
     Callable<JsonNode> c1 =
-            () -> uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+        () -> uut.transform(transformation, om.convertValue(d1, JsonNode.class));
     Callable<JsonNode> c2 =
-            () -> uut.transform(transformation, om.convertValue(d2, JsonNode.class));
+        () -> uut.transform(transformation, om.convertValue(d2, JsonNode.class));
 
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
     try {
@@ -109,38 +109,40 @@ class GraalJsTransformerTest {
   @Test
   void logsExceptionBrokenScript() {
     when(transformation.transformationCode())
-            .thenReturn(Optional.of("function transform(e) { \n" + "  br0ken code" + " }\n"));
+        .thenReturn(Optional.of("function transform(e) { \n" + "  br0ken code" + " }\n"));
 
     TestLogger logger = Slf4jHelper.replaceLogger(uut);
 
-    Map<String,Object> d1 = new HashMap<>();
+    Map<String, Object> d1 = new HashMap<>();
     d1.put("y", "1");
     assertThatThrownBy(
             () -> {
               uut.transform(transformation, om.convertValue(d1, JsonNode.class));
             })
-            .isInstanceOf(TransformationException.class);
+        .isInstanceOf(TransformationException.class);
 
     assertThat(logger.lines().size()).isGreaterThan(0);
-    assertThat(logger.lines().stream().anyMatch(f-> f.text.contains("during engine creation"))).isTrue();
+    assertThat(logger.lines().stream().anyMatch(f -> f.text.contains("during engine creation")))
+        .isTrue();
   }
 
   @Test
   void logsExceptionBrokenParam() {
     when(transformation.transformationCode())
-            .thenReturn(Optional.of("function transform(e) {throw \"fail at runtime\"}"));
+        .thenReturn(Optional.of("function transform(e) {throw \"fail at runtime\"}"));
 
     TestLogger logger = Slf4jHelper.replaceLogger(uut);
 
-    Map<String,Object> d1 = new HashMap<>();
+    Map<String, Object> d1 = new HashMap<>();
     d1.put("y", "1");
     assertThatThrownBy(
             () -> {
               uut.transform(transformation, om.convertValue(d1, JsonNode.class));
             })
-            .isInstanceOf(TransformationException.class);
+        .isInstanceOf(TransformationException.class);
 
     assertThat(logger.lines().size()).isGreaterThan(0);
-    assertThat(logger.lines().stream().anyMatch(f-> f.text.contains("during transformation"))).isTrue();
+    assertThat(logger.lines().stream().anyMatch(f -> f.text.contains("during transformation")))
+        .isTrue();
   }
 }
