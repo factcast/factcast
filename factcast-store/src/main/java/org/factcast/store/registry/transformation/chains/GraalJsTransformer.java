@@ -24,6 +24,7 @@ import javax.script.Compilable;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 
+import javax.script.ScriptException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.subscription.TransformationException;
@@ -84,7 +85,7 @@ public class GraalJsTransformer implements Transformer {
 
       return FactCastJson.toJsonNode(jsonAsMap);
 
-    } catch (Throwable e) {
+    } catch (RuntimeException | ScriptException | NoSuchMethodException e) {
       // debug level, because it is escalated.
       log.debug("Exception during transformation. Escalating.", e);
       throw new TransformationException(e);
@@ -107,7 +108,7 @@ public class GraalJsTransformer implements Transformer {
 
       return (Invocable) engine;
 
-    } catch (Throwable e) {
+    } catch (RuntimeException | ScriptException e) {
       // debug level, because it is escalated.
       log.debug("Exception during engine creation. Escalating.", e);
       throw new TransformationException(e);
