@@ -53,7 +53,7 @@ type = "docs-noedit"
 - \[SchemaRegCli\] JSON filtering \(title\) will be applied after Hash is calculated [\#1261](https://github.com/factcast/factcast/issues/1261)
 - Auto configuration for FactValidator \(and maybe other beans\) do not apply due to wrong @ConditionalOnProperty usage [\#1246](https://github.com/factcast/factcast/issues/1246)
 - Fix param name in WhiteListFilterServiceImpl  [\#1144](https://github.com/factcast/factcast/issues/1144)
-- Make sure Schemaregistry uses the same code for building transformationchains \(during validation\) than factcast itself. [\#1104](https://github.com/factcast/factcast/issues/1104)
+- Make sure Schemaregistry uses the same code for building transformationchains \(during validation\) than FactCast itself. [\#1104](https://github.com/factcast/factcast/issues/1104)
 - \[Factus\] Lock on non-existing aggregate leads to exception [\#1041](https://github.com/factcast/factcast/issues/1041)
 
 **Closed issues:**
@@ -215,7 +215,7 @@ type = "docs-noedit"
 
 **Implemented enhancements:**
 
-- Factus: lock on a list of FactSpecs \(as avail in factcast interface\) [\#1129](https://github.com/factcast/factcast/issues/1129)
+- Factus: lock on a list of FactSpecs \(as avail in FactCast interface\) [\#1129](https://github.com/factcast/factcast/issues/1129)
 - Add batch Notification type [\#1111](https://github.com/factcast/factcast/issues/1111)
 - Verify and test QUEUE catchup strategy [\#1110](https://github.com/factcast/factcast/issues/1110)
 - Check if lock is still held in subscribed projections [\#1108](https://github.com/factcast/factcast/issues/1108)
@@ -250,7 +250,7 @@ type = "docs-noedit"
 
 **Implemented enhancements:**
 
-- Factus: lock on a list of FactSpecs \(as avail in factcast interface\) [\#1129](https://github.com/factcast/factcast/issues/1129)
+- Factus: lock on a list of FactSpecs \(as avail in FactCast interface\) [\#1129](https://github.com/factcast/factcast/issues/1129)
 
 **Closed issues:**
 
@@ -286,7 +286,7 @@ type = "docs-noedit"
 
 - set liberal limits in integrationTest [\#1114](https://github.com/factcast/factcast/issues/1114)
 - GrpcFactStore: handshake happens too late \(Other beans could already use it\) [\#1086](https://github.com/factcast/factcast/issues/1086)
-- Make sure Schemaregistry uses the same code for building transformationchains \(during validation\) than factcast itself. [\#1104](https://github.com/factcast/factcast/issues/1104)
+- Make sure Schemaregistry uses the same code for building transformationchains \(during validation\) than FactCast itself. [\#1104](https://github.com/factcast/factcast/issues/1104)
 - \#1114: Bandwitdth protection: better fingerprinting, switch to disable… [\#1115](https://github.com/factcast/factcast/pull/1115) ([uweschaefer](https://github.com/uweschaefer))
 
 **Closed issues:**
@@ -684,7 +684,7 @@ type = "docs-noedit"
 
 **Closed issues:**
 
-- Factcast throws Exception \(on publish\) if validation is disabled [\#880](https://github.com/factcast/factcast/issues/880)
+- FactCast throws Exception \(on publish\) if validation is disabled [\#880](https://github.com/factcast/factcast/issues/880)
 - replace LZ4 impl with commons-compress  [\#861](https://github.com/factcast/factcast/issues/861)
 
 ## [factcast-0.2.0-RC](https://github.com/factcast/factcast/tree/factcast-0.2.0-RC) (2020-06-01)
@@ -701,7 +701,7 @@ type = "docs-noedit"
 - Fix usage of Nashorn \(for now\) in postQueryMatching [\#848](https://github.com/factcast/factcast/issues/848)
 - Prepare for building with JDK\>8 [\#841](https://github.com/factcast/factcast/issues/841)
 - reduce codacy violations to 0 [\#834](https://github.com/factcast/factcast/issues/834)
-- ship lz4 codec with factcast server [\#832](https://github.com/factcast/factcast/issues/832)
+- ship lz4 codec with FactCast server [\#832](https://github.com/factcast/factcast/issues/832)
 - cleanup inspired by to IDEA warnings [\#830](https://github.com/factcast/factcast/issues/830)
 - Update integration tests to use new API for transformation [\#828](https://github.com/factcast/factcast/issues/828)
 - Restore / extend fetchById [\#804](https://github.com/factcast/factcast/issues/804)
@@ -855,7 +855,7 @@ type = "docs-noedit"
 
 **Closed issues:**
 
-- Client yields "UNAUTHENTICATED: Authentication failed" even if Factcast security is disabled [\#696](https://github.com/factcast/factcast/issues/696)
+- Client yields "UNAUTHENTICATED: Authentication failed" even if FactCast security is disabled [\#696](https://github.com/factcast/factcast/issues/696)
 
 **Merged pull requests:**
 
@@ -906,7 +906,7 @@ type = "docs-noedit"
 - \[DepShield\] \(CVSS 9.8\) Vulnerability due to usage of com.fasterxml.jackson.core:jackson-databind:2.9.10.1 [\#671](https://github.com/factcast/factcast/issues/671)
 - \[DepShield\] \(CVSS 9.8\) Vulnerability due to usage of com.fasterxml.jackson.core:jackson-databind:2.9.9.3 [\#661](https://github.com/factcast/factcast/issues/661)
 - disable shading of jackson into core [\#657](https://github.com/factcast/factcast/issues/657)
-- Factcast CLI fails on publishing events [\#643](https://github.com/factcast/factcast/issues/643)
+- FactCast CLI fails on publishing events [\#643](https://github.com/factcast/factcast/issues/643)
 - Add sponsoring note [\#639](https://github.com/factcast/factcast/issues/639)
 - Flaky test PgQueryTest.testRoundtripCatchupEventsInsertedAfterStart [\#628](https://github.com/factcast/factcast/issues/628)
 - Implement Schemaregistry configuration [\#627](https://github.com/factcast/factcast/issues/627)
@@ -914,7 +914,7 @@ type = "docs-noedit"
 - Module for reference server docker building [\#621](https://github.com/factcast/factcast/issues/621)
 - Remove the need for two maven profiles for spotless [\#618](https://github.com/factcast/factcast/issues/618)
 - Make site generation platform agnostic [\#614](https://github.com/factcast/factcast/issues/614)
-- Module for composite docker container with a factcast server & postgres embedded [\#610](https://github.com/factcast/factcast/issues/610)
+- Module for composite docker container with a FactCast server & postgres embedded [\#610](https://github.com/factcast/factcast/issues/610)
 - Wrap site generation in docker container [\#608](https://github.com/factcast/factcast/issues/608)
 - Drop inMem impl of FactStore  [\#607](https://github.com/factcast/factcast/issues/607)
 - Drop support for Spring-boot 1 [\#605](https://github.com/factcast/factcast/issues/605)

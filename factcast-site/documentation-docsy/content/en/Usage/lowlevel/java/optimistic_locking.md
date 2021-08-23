@@ -10,13 +10,13 @@ Whatever your particular way of modelling your software, in order to be able to 
 
 #### Pessimistic Locking
 
-While pessimistic locking makes sure every change is strictly serializable, it has obvious drawbacks in terms of throughput and complexity (timeouts) as well as the danger of deadlock, when the scope of the lock expands to more than one aggregate. This is why we chose to implement a means of optimistic locking in Factcast.
+While pessimistic locking makes sure every change is strictly serializable, it has obvious drawbacks in terms of throughput and complexity (timeouts) as well as the danger of deadlock, when the scope of the lock expands to more than one aggregate. This is why we chose to implement a means of optimistic locking in FactCast.
 
 #### Optimistic Locking
 
 In general, the idea of optimistic locking is to make a change and before publishing it, make sure there was no potentially contradicting change in between. If there was, the process can safely be retried, as there was nothing published yet.
 
-Transferred to Factcast, this means to express a body of code that:
+Transferred to FactCast, this means to express a body of code that:
 
 1. creates an understanding of the published state of the aggregates in question
 2. invokes its business logic according to that state

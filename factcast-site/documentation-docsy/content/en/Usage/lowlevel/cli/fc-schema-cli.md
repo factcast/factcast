@@ -5,7 +5,7 @@ weight = 110
 type="docs"
 +++
 
-This CLI provides a convenient way to create a suitable Schema Registry for your Factcast installation.
+This CLI provides a convenient way to create a suitable Schema Registry for your FactCast installation.
 It will give you the ability to validate events against examples and to make sure that there's always a upcast and if 
 necessary a downcast transformation.
 
@@ -59,7 +59,7 @@ $ java -jar target/fc-schema-cli.jar -h
 ╚═╝     ╚═╝  ╚═╝ ╚═════╝   ╚═╝    ╚═════╝╚═╝  ╚═╝╚══════╝   ╚═╝
 
 Usage: fc-schema [-hV] [COMMAND]
-Tool for working with the Factcast Schema Registry spec
+Tool for working with the FactCast Schema Registry spec
   -h, --help      Show this help message and exit.
   -V, --version   Print version information and exit.
 Commands:

@@ -27,7 +27,7 @@ import picocli.CommandLine.Command
 @Command(
     name = "fc-schema",
     header = [BANNER],
-    description = ["Tool for working with the Factcast Schema Registry spec"],
+    description = ["Tool for working with the FactCast Schema Registry spec"],
     subcommands = [Validate::class, Build::class],
     mixinStandardHelpOptions = true
 )
