@@ -49,7 +49,7 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
 
   private static final JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(omJson);
 
-  @Setter(onMethod = @__(@VisibleForTesting))
+  @Setter
   private static Function<String, String> schemaModifier = Function.identity();
 
   @SneakyThrows
