@@ -197,8 +197,13 @@ url = "https://github.com/factcast/factcast"
 icon = "fab fa-github"
 
 [[params.links.developer]]
+name = "Gitter"
+url = "https://gitter.im/factcast/community"
+icon = "fab fa-gitter"
+
+[[params.links.developer]]
 name = "Changelog"
-url = "/about//changelog"
+url = "/about/changelog"
 icon = "fas fa-scroll"
 
 #[[params.links.developer]]
