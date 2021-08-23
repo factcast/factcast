@@ -1,7 +1,6 @@
 package org.factcast.factus.spring.tx;
 
 import lombok.NonNull;
-import lombok.val;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
@@ -24,7 +23,7 @@ public @interface SpringTransactional {
     static final int timeoutInSeconds = 30;
 
     public static DefaultTransactionDefinition create() {
-      val definition = new DefaultTransactionDefinition();
+      DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
 
       definition.setTimeout(timeoutInSeconds);
       definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
@@ -33,7 +32,7 @@ public @interface SpringTransactional {
     }
 
     public static TransactionDefinition with(@NonNull SpringTransactional transactional) {
-      val opts = create();
+      DefaultTransactionDefinition opts = create();
 
       int timeout = transactional.timeoutInSeconds();
 

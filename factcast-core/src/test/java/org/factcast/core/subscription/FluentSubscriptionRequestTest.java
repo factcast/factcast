@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.LinkedList;
 import java.util.UUID;
-import lombok.val;
 import org.factcast.core.spec.FactSpec;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
@@ -95,7 +94,7 @@ public class FluentSubscriptionRequestTest {
 
   @Test
   void failsCatchupIfFactSpecListIsEmpty() {
-    val l = new LinkedList<FactSpec>();
+    LinkedList<FactSpec> l = new LinkedList<FactSpec>();
     assertThrows(
         IllegalArgumentException.class,
         () -> SubscriptionRequest.catchup(l).fromScratch().debugInfo());
@@ -103,7 +102,7 @@ public class FluentSubscriptionRequestTest {
 
   @Test
   void failsFollowIfFactSpecListIsEmpty() {
-    val l = new LinkedList<FactSpec>();
+    LinkedList<FactSpec> l = new LinkedList<FactSpec>();
     assertThrows(
         IllegalArgumentException.class,
         () -> SubscriptionRequest.follow(l).fromScratch().debugInfo());

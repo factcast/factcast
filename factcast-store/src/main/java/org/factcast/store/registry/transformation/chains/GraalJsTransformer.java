@@ -35,7 +35,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 
 import lombok.NonNull;
-import lombok.val;
 
 @Slf4j
 public class GraalJsTransformer implements Transformer {
@@ -124,7 +123,7 @@ public class GraalJsTransformer implements Transformer {
   }
 
   private Object transformMapValue(Object input) {
-    val value = Value.asValue(input);
+    var value = Value.asValue(input);
     if (value.hasArrayElements()) {
       return value.as(List.class);
     } else if (input instanceof Map) {

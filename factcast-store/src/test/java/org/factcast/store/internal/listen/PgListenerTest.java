@@ -16,13 +16,13 @@
 package org.factcast.store.internal.listen;
 
 import com.google.common.eventbus.EventBus;
-import lombok.val;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -31,9 +31,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.PGNotification;
 import org.postgresql.core.Notification;
 import org.postgresql.jdbc.PgConnection;
-
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -211,7 +208,7 @@ public class PgListenerTest {
     pgListener.destroy();
 
     verify(eventBus, atLeastOnce()).post(factCaptor.capture());
-    val allEvents = factCaptor.getAllValues();
+    var allEvents = factCaptor.getAllValues();
 
     // first event is the general wakeup to the subscribers after startup
     assertEquals("scheduled-poll", allEvents.get(0).name());

@@ -6,7 +6,6 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
-import lombok.val;
 import org.factcast.core.FactValidationException;
 import org.factcast.core.store.RetryableException;
 import org.junit.jupiter.api.*;
@@ -38,15 +37,15 @@ class ClientExceptionHelperTest {
 
     @Test
     void extractsTransportedException() {
-      val e = new FactValidationException("disappointed");
-      val metadata = new Metadata();
+      e = new FactValidationException("disappointed");
+      Metadata metadata = new Metadata();
       metadata.put(
           Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
       metadata.put(
           Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER),
           e.getClass().getName().getBytes());
 
-      val ex = new StatusRuntimeException(Status.UNKNOWN, metadata);
+      StatusRuntimeException ex = new StatusRuntimeException(Status.UNKNOWN, metadata);
       assertThat(ClientExceptionHelper.from(ex))
           .isInstanceOf(FactValidationException.class)
           .extracting(Throwable::getMessage)
@@ -55,7 +54,7 @@ class ClientExceptionHelperTest {
 
     @Test
     void wrapsRetryable() {
-      val ex = new StatusRuntimeException(Status.UNKNOWN);
+      StatusRuntimeException ex = new StatusRuntimeException(Status.UNKNOWN);
       assertThat(ClientExceptionHelper.from(ex))
           .isInstanceOf(RetryableException.class)
           .extracting(Throwable::getCause)
@@ -64,14 +63,14 @@ class ClientExceptionHelperTest {
 
     @Test
     void ignoresNonReconstructableException() {
-      val e = new MissesRequiredContructorException(1);
-      val metadata = new Metadata();
+      e = new MissesRequiredContructorException(1);
+      Metadata metadata = new Metadata();
       metadata.put(
           Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
       metadata.put(
           Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER),
           e.getClass().getName().getBytes());
-      val ex = new StatusRuntimeException(Status.UNKNOWN, metadata);
+      StatusRuntimeException ex = new StatusRuntimeException(Status.UNKNOWN, metadata);
 
       assertThat(ClientExceptionHelper.from(ex))
           .isInstanceOf(RetryableException.class)
