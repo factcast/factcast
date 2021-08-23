@@ -25,7 +25,6 @@ import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import jdk.internal.org.jline.utils.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.subscription.TransformationException;
@@ -110,7 +109,7 @@ public class GraalJsTransformer implements Transformer {
 
     } catch (Throwable e) {
       // debug level, because it is escalated.
-      log.debug("Exception during transformation. Escalating.",e);
+      log.debug("Exception during transformation. Escalating.", e);
       throw new TransformationException(e);
     }
   }
