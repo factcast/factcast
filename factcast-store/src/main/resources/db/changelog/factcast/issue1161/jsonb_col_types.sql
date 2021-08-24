@@ -9,6 +9,7 @@ ALTER TABLE fact
 ALTER TABLE schemastore
     ALTER COLUMN jsonschema SET STORAGE EXTENDED,
     ALTER COLUMN jsonschema TYPE jsonb USING jsonschema::jsonb;
+DISCARD PLANS;
 
 -- depending on the size of your transformationcache, this can take a while.
 -- if you want to play safe, cannot afford any downtime and reduce the
@@ -19,3 +20,4 @@ ALTER TABLE transformationcache
     ALTER COLUMN header TYPE jsonb USING header::jsonb,
     ALTER COLUMN payload SET STORAGE EXTENDED,
     ALTER COLUMN payload TYPE jsonb USING payload::jsonb;
+DISCARD PLANS;
