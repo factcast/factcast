@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -49,8 +48,7 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
 
   private static final JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(omJson);
 
-  @Setter
-  private static Function<String, String> schemaModifier = Function.identity();
+  @Setter private static Function<String, String> schemaModifier = Function.identity();
 
   @SneakyThrows
   @Override
