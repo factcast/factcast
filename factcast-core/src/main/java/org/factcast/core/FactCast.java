@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import lombok.NonNull;
-import lombok.val;
 import org.factcast.core.lock.DeprecatedLockedOperationBuilder;
 import org.factcast.core.lock.LockedOperationBuilder;
 import org.factcast.core.spec.FactSpec;
@@ -51,10 +50,12 @@ public interface FactCast extends ReadFactCast {
     return new DefaultFactCast(store);
   }
 
+  @Override
   default FactCast retry(int maxAttempts) {
     return retry(maxAttempts, Retry.DEFAULT_WAIT_TIME_MILLIS);
   }
 
+  @Override
   default FactCast retry(int maxAttempts, long minimumWaitIntervalMillis) {
     return Retry.wrap(this, maxAttempts, minimumWaitIntervalMillis);
   }
@@ -66,7 +67,7 @@ public interface FactCast extends ReadFactCast {
   }
 
   default LockedOperationBuilder lock(@NonNull FactSpec scope, FactSpec... tail) {
-    val list = new LinkedList<FactSpec>();
+    LinkedList<FactSpec> list = new LinkedList<FactSpec>();
     list.add(scope);
     list.addAll(Arrays.asList(tail));
     return lock(list);

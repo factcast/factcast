@@ -22,7 +22,7 @@ Java Objects.
 #### This is where Factus comes in.
 
 Factus is a higher-level API for java applications to work with factcast. Using Factus from java is entirely optional.
-Factus just uses Factcast underneath, so every feature you may find in Factus can be used with raw FactCast as well.
+Factus just uses FactCast underneath, so every feature you may find in Factus can be used with raw FactCast as well.
 
 > Whereas factcast tries to limit the number of assumptions, Factus is highly opinionated.
 

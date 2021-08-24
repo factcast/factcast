@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,7 +29,6 @@ import java.util.function.Function;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.SneakyThrows;
-import lombok.val;
 import net.jpountz.lz4.LZ4BlockInputStream;
 import net.jpountz.lz4.LZ4BlockOutputStream;
 import org.factcast.factus.projection.SnapshotProjection;
@@ -50,14 +48,13 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
 
   private static final JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(omJson);
 
-  @Setter(onMethod = @__(@VisibleForTesting))
-  private static Function<String, String> schemaModifier = Function.identity();
+  @Setter private static Function<String, String> schemaModifier = Function.identity();
 
   @SneakyThrows
   @Override
   public byte[] serialize(@NonNull SnapshotProjection a) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    val os = new LZ4BlockOutputStream(baos, 8192);
+    LZ4BlockOutputStream os = new LZ4BlockOutputStream(baos, 8192);
     omMessagePack.writeValue(os, a);
     os.close();
     return baos.toByteArray();

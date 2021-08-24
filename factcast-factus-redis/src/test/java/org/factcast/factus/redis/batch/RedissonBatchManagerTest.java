@@ -3,11 +3,8 @@ package org.factcast.factus.redis.batch;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import lombok.val;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -127,7 +124,7 @@ class RedissonBatchManagerTest {
     @Test
     void keepsCurrent() {
       underTest.startOrJoin();
-      val curr = underTest.getCurrentBatch();
+      RBatch curr = underTest.getCurrentBatch();
       underTest.join(
           tx -> {
             assertThat(tx).isSameAs(curr);
@@ -155,7 +152,7 @@ class RedissonBatchManagerTest {
     @Test
     void keepsCurrent() {
       underTest.startOrJoin();
-      val curr = underTest.getCurrentBatch();
+      RBatch curr = underTest.getCurrentBatch();
       underTest.join(
           tx -> {
             assertThat(tx).isSameAs(curr);
