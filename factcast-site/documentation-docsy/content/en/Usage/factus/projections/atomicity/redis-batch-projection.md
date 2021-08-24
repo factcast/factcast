@@ -13,7 +13,22 @@ the [RBatch](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisso
 the [Redission library](https://github.com/redisson/redisson) is enough.  
 
 Working with a *Redis batch projection* is **asynchronous** as multiple commands are collected and 
-executed later atomically.
+executed later in an atomic way (all or none).
+
+## Motivation
+
+You would want to use Redis Batched for two reasons:
+
+* atomicity of factStreamPosition updates and your projection state updates
+* increased fact processing throughput
+
+The performance bit is achieved by skipping unnecessary factStreamPosition updates and (more importantly) by reducing the number of operations on your Redis backend by using a `redisson batch` instead of single writes for `bulkSize` updates.
+The `bulkSize` is configurable per projection via the `@RedisBatched` annotation.
+
+Redisson batches improve performance significantly by collecting operations and executing them together as well as
+delegating all possible work to an async thread. It has the effect, that you cannot read non-executed (batched) changes.
+If this is unacceptable for your projection, consider [Redis transactional projections]({{<ref "redis-transactional-projections.md">}}).
+See the Redisson documentation for details.
     
 Other than a transaction, writes registered (but not yet executed) on a Redis batch can not be read. 
 
@@ -21,11 +36,10 @@ A *Redis batch projection*, therefore, is recommended for projections which
 - handle a lot of events and
 - don't require reading the current projection state in an event handler.
 
-*Multiple commands can be sent in a batch using RBatch object in a single network call.
-Command batches allow to reduce the overall execution time of a group of commands.* (taken from Reddision RBatch docs)
-
-For a synchronous alternative that allows access to the projection state during event handling, 
+For an alternative that allows access to the projection state during event handling, 
 see [Redis transactional projection]({{<ref "redis-transactional-projections.md">}}).
+
+
 
 ## Configuration
 
