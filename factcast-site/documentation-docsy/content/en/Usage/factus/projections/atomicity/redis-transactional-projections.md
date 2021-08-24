@@ -11,13 +11,24 @@ Compared to a [Spring transactional projection]({{< ref "spring-transactional-pr
 - transactionality is directly provided by `RTransaction`. There is no need to deal with Spring's `PlatformTransactionManager`   
 - the fact stream position is automatically managed (see example below)
     
-Working with a *Redis transactional projection* is **synchronous**. To ensure permanent data consistency, the Redission client 
-constantly communicates with the Redis server, which ensures transactional isolation.
 
-For this reason, a *Redis transactional projection* is best used for projections which
-need to access the projection's data during the handling of an event. 
- 
-For a better performing alternative, see [Redis batch projection]({{<ref "redis-batch-projection.md">}})
+## Motivation
+
+You would want to use Redis Transactional for two reasons:
+
+* atomicity of factStreamPosition updates and your projection state updates
+* increased fact processing throughput
+
+The performance bit is achieved by skipping unnecessary factStreamPosition updates and (more importantly) by 
+reducing the number of operations on your Redis backend by using `bulkSize` updates with one `redisson transsaction` instead of single writes.
+The `bulkSize` is configurable per projection via the `@RedisTransactional` annotation.
+
+Working with a *Redis transactional projection* you can read your own uncommitted write. For this reason, a *Redis transactional projection* is best used for projections which
+need to access the projection's data during the handling of an event.
+
+If this is not necessary, you could also use a better performing alternative: [Redis batch projection]({{<ref "redis-batch-projection.md">}})
+
+
 
 ## Configuration
 

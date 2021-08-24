@@ -16,6 +16,17 @@ Factus supports transactionality for every data-store for which Spring transacti
 is available. In more detail, for the data-store in question, an implementation of the Spring [`PlatformTransactionManager`](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/PlatformTransactionManager.html)
 must exist. 
 
+## Motivation
+
+You would want to use Spring Transactional for two reasons:
+
+* atomicity of factStreamPosition updates and your projection state updates
+* increased fact processing throughput
+
+The Performance bit is achieved by skipping unnecessary factStreamPosition updates and (more importantly) by reducing the number of transactions on your datastore by using one Transaction for `bulkSize` updates instead of single writes.
+For instance, if you use Spring Transactions on a JDBC Datastore, you will have one database transaction around the update of `bulkSize` events. 
+The `bulkSize` is configurable per projection via the @SpringTransactional annotation.
+
 ## Configuration
 
 In order to make use of spring transaction support, the necessary dependency has to be included in your project:
