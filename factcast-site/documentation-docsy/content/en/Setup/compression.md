@@ -2,7 +2,7 @@
 title: "Compression"
 type: docs
 weight: 155
-description: How to choose the Compressor from the client perspective
+description: Selecting a compressor 
 ---
 
 ## Why ?
