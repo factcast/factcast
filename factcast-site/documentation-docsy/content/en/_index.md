@@ -1,9 +1,9 @@
 +++
-title = "Factcast"
+title = "FactCast"
 
 +++
 
-{{< blocks/cover title="Factcast" image_anchor="top" height="full" color="orange" >}}
+{{< blocks/cover title="FactCast" image_anchor="top" height="full" color="orange" >}}
 <div class="mx-auto">
 	<p class="lead mt-2 py-5"><b>A 'good enough' Event-store based on PostgreSQL.</b></p>
 </div>
