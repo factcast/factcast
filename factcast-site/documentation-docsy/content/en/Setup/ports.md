@@ -2,11 +2,12 @@
 title: "Ports"
 type: docs
 weight: 130
+description: Port defaults and how to change them
 ---
 
-## Port defaults and how to change them
 
-The default TCP-Port exposed is 9090. As usual you can set it via environment variables.
+
+The default TCP-Port exposed is 9090. As usual, you can set it via environment variables.
 
 Standard ports used:
 

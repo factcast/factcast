@@ -2,10 +2,11 @@
 title: "Properties"
 type: docs
 weight: 200
+description: Properties you can use to configure FactCast
 ---
 
 
-Properties you can use to configure FactCast:
+
 
 ### Schemaregistry
 
