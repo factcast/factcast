@@ -50,9 +50,17 @@ databaseChangeLog:
   - include:
       file: factcast/issue942/snapshotCache.sql
       relativeToChangelogFile: true
-  - include:
-      file: factcast/issue1161/storage-setting.sql
-      relativeToChangelogFile: true
+  - changeSet:
+      id: transformationcache_and_schemastore_col_to_jsonb
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1161/jsonb_col_types.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
   - changeSet:
       id: unique_index_using_uuids_to_reduce_space_requirements_gracefully
       runInTransaction: false
