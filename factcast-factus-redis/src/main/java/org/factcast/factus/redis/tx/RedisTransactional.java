@@ -1,6 +1,8 @@
 package org.factcast.factus.redis.tx;
 
-import lombok.val;
+import java.lang.annotation.*;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.redisson.api.TransactionOptions;
 
 import javax.annotation.Nullable;
@@ -36,7 +38,7 @@ public @interface RedisTransactional {
     }
 
     public static TransactionOptions with(@Nullable RedisTransactional transactional) {
-      val opts = create();
+      TransactionOptions opts = create();
 
       if (transactional != null) {
 

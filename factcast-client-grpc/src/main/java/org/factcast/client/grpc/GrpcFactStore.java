@@ -31,7 +31,6 @@ import javax.annotation.PostConstruct;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
@@ -433,10 +432,10 @@ public class GrpcFactStore implements FactStore {
   public void setSnapshot(@NonNull Snapshot snapshot) {
     runAndHandle(
         () -> {
-          val id = snapshot.id();
-          val bytes = snapshot.bytes();
-          val alreadyCompressed = snapshot.compressed();
-          val state = snapshot.lastFact();
+          @NonNull SnapshotId id = snapshot.id();
+          @NonNull byte[] bytes = snapshot.bytes();
+          boolean alreadyCompressed = snapshot.compressed();
+          @NonNull UUID state = snapshot.lastFact();
 
           log.trace("sending snapshot {} to remote store ({}kb)", id, bytes.length / 1024);
 

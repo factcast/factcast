@@ -1,6 +1,7 @@
 package org.factcast.factus.redis.batch;
 
-import lombok.val;
+import static org.assertj.core.api.Assertions.*;
+
 import org.factcast.factus.redis.batch.RedisBatched.Defaults;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +28,7 @@ public class RedisBatchedTest {
 
   @Test
   void responseTimeout() {
-    val t = Defaults.with(RB3.class.getAnnotation(RedisBatched.class));
+    BatchOptions t = Defaults.with(RB3.class.getAnnotation(RedisBatched.class));
     BatchOptions defaults = Defaults.create();
     assertThat(t.getResponseTimeout()).isEqualTo(123);
     assertThat(t).extracting(BatchOptions::getRetryAttempts).isEqualTo(defaults.getRetryAttempts());
@@ -36,7 +37,7 @@ public class RedisBatchedTest {
 
   @Test
   void attempts() {
-    val t = Defaults.with(RB4.class.getAnnotation(RedisBatched.class));
+    BatchOptions t = Defaults.with(RB4.class.getAnnotation(RedisBatched.class));
     BatchOptions defaults = Defaults.create();
     assertThat(t)
         .extracting(BatchOptions::getResponseTimeout)
@@ -47,7 +48,7 @@ public class RedisBatchedTest {
 
   @Test
   void interval() {
-    val t = Defaults.with(RB5.class.getAnnotation(RedisBatched.class));
+    BatchOptions t = Defaults.with(RB5.class.getAnnotation(RedisBatched.class));
     BatchOptions defaults = Defaults.create();
     assertThat(t)
         .extracting(BatchOptions::getResponseTimeout)

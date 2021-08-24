@@ -1,26 +1,26 @@
 package org.factcast.store.registry.transformation.chains;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
-
+import lombok.SneakyThrows;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.registry.transformation.Transformation;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.factcast.test.Slf4jHelper;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.SneakyThrows;
-import lombok.val;
+import slf4jtest.TestLogger;
 
 @ExtendWith(MockitoExtension.class)
 class GraalJsTransformerTest {
@@ -38,18 +38,18 @@ class GraalJsTransformerTest {
             Optional.of(
                 "function transform(e) {e.displayName = e.name + ' ' + e.age; e.hobbies = [e.hobby]; e.childMap.anotherHobbies = [e.childMap.anotherHobby];}"));
 
-    val data = new HashMap<String, Object>();
+    var data = new HashMap<String, Object>();
     data.put("name", "Hugo");
     data.put("age", 38);
     data.put("hobby", "foo");
 
-    val childMap = new HashMap<String, Object>();
+    var childMap = new HashMap<String, Object>();
     childMap.put("anotherName", "Ernst");
     childMap.put("anotherHobby", "bar");
 
     data.put("childMap", childMap);
 
-    val result = uut.transform(transformation, om.convertValue(data, JsonNode.class));
+    var result = uut.transform(transformation, om.convertValue(data, JsonNode.class));
 
     assertThat(result.get("displayName").asText()).isEqualTo("Hugo 38");
     assertThat(result.get("hobbies").isArray()).isTrue();
@@ -77,10 +77,10 @@ class GraalJsTransformerTest {
                     // actual transformation
                     + "  e.x = e.y; }\n"));
 
-    val d1 = new HashMap<String, Object>();
+    var d1 = new HashMap<String, Object>();
     d1.put("y", "1");
 
-    val d2 = new HashMap<String, Object>();
+    var d2 = new HashMap<String, Object>();
     d2.put("y", "2");
 
     // warm up engine
@@ -103,5 +103,45 @@ class GraalJsTransformerTest {
     } finally {
       executor.shutdown();
     }
+  }
+
+  @Test
+  void logsExceptionBrokenScript() {
+    when(transformation.transformationCode())
+        .thenReturn(Optional.of("function transform(e) { \n" + "  br0ken code" + " }\n"));
+
+    TestLogger logger = Slf4jHelper.replaceLogger(uut);
+
+    Map<String, Object> d1 = new HashMap<>();
+    d1.put("y", "1");
+    assertThatThrownBy(
+            () -> {
+              uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+            })
+        .isInstanceOf(TransformationException.class);
+
+    assertThat(logger.lines().size()).isGreaterThan(0);
+    assertThat(logger.lines().stream().anyMatch(f -> f.text.contains("during engine creation")))
+        .isTrue();
+  }
+
+  @Test
+  void logsExceptionBrokenParam() {
+    when(transformation.transformationCode())
+        .thenReturn(Optional.of("function transform(e) {throw \"fail at runtime\"}"));
+
+    TestLogger logger = Slf4jHelper.replaceLogger(uut);
+
+    Map<String, Object> d1 = new HashMap<>();
+    d1.put("y", "1");
+    assertThatThrownBy(
+            () -> {
+              uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+            })
+        .isInstanceOf(TransformationException.class);
+
+    assertThat(logger.lines().size()).isGreaterThan(0);
+    assertThat(logger.lines().stream().anyMatch(f -> f.text.contains("during transformation")))
+        .isTrue();
   }
 }

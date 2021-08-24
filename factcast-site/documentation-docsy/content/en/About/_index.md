@@ -43,7 +43,7 @@ software systems that communicate over events.
 
 It provides two APIs for the JVM:
 
-1. Factcast client: low-level, un-opinionated GRPC library to publish / subscribe to facts
+1. FactCast client: low-level, un-opinionated GRPC library to publish / subscribe to facts
 2. Factus:  high-level, opinionated library working with facts as Objects, as well as abstractions like Aggregates &
    Projections
 
@@ -53,3 +53,4 @@ If your are new here, you might want to read up on the [motivation]({{< ref "mot
 
 The project is [hosted on GitHub](https://github.com/factcast/factcast) and any kind of contribution is very welcome.
 
+If you have questions that are not easily answered by this website, feel free to open a 'question' issue on [github](https://github.com/factcast/factcast/issues?q=is%3Aissue+label%3Aquestion), or ask a question on [gitter](https://gitter.im/factcast/community).

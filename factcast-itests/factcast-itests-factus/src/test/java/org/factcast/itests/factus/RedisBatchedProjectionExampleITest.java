@@ -1,7 +1,6 @@
 package org.factcast.itests.factus;
 
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.factus.Factus;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
@@ -30,17 +29,17 @@ public class RedisBatchedProjectionExampleITest extends AbstractFactCastIntegrat
 
   @Test
   void getNames() {
-    val event1 = new UserCreated(randomUUID(), "Peter");
-    val event2 = new UserCreated(randomUUID(), "Paul");
-    val event3 = new UserCreated(randomUUID(), "Klaus");
-    val event4 = new UserDeleted(event3.aggregateId());
+    var event1 = new UserCreated(randomUUID(), "Peter");
+    var event2 = new UserCreated(randomUUID(), "Paul");
+    var event3 = new UserCreated(randomUUID(), "Klaus");
+    var event4 = new UserDeleted(event3.aggregateId());
 
     log.info("Publishing test events");
     factus.publish(Arrays.asList(event1, event2, event3, event4));
 
-    val uut = new RedisBatchedProjectionExample.UserNames(redissonClient);
+    var uut = new RedisBatchedProjectionExample.UserNames(redissonClient);
     factus.update(uut);
-    val userNames = uut.getUserNames();
+    var userNames = uut.getUserNames();
 
     assertThat(userNames).containsExactlyInAnyOrder("Peter", "Paul");
   }

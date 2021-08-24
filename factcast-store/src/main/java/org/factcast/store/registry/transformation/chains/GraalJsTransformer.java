@@ -23,8 +23,9 @@ import java.util.Map;
 import javax.script.Compilable;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
-import javax.script.ScriptException;
 
+import javax.script.ScriptException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
@@ -35,8 +36,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 
 import lombok.NonNull;
-import lombok.val;
 
+@Slf4j
 public class GraalJsTransformer implements Transformer {
 
   private static final int ENGINE_CACHE_CAPACITY = 128;
@@ -84,7 +85,9 @@ public class GraalJsTransformer implements Transformer {
 
       return FactCastJson.toJsonNode(jsonAsMap);
 
-    } catch (NoSuchMethodException | ScriptException e) {
+    } catch (RuntimeException | ScriptException | NoSuchMethodException e) {
+      // debug level, because it is escalated.
+      log.debug("Exception during transformation. Escalating.", e);
       throw new TransformationException(e);
     }
   }
@@ -105,7 +108,9 @@ public class GraalJsTransformer implements Transformer {
 
       return (Invocable) engine;
 
-    } catch (ScriptException e) {
+    } catch (RuntimeException | ScriptException e) {
+      // debug level, because it is escalated.
+      log.debug("Exception during engine creation. Escalating.", e);
       throw new TransformationException(e);
     }
   }
@@ -119,7 +124,7 @@ public class GraalJsTransformer implements Transformer {
   }
 
   private Object transformMapValue(Object input) {
-    val value = Value.asValue(input);
+    var value = Value.asValue(input);
     if (value.hasArrayElements()) {
       return value.as(List.class);
     } else if (input instanceof Map) {

@@ -6,7 +6,7 @@ weight: 120
 
 #### Non-Encrpyted
 
-In order to run a simple example Factcast server, you could enter the project **factcast-examples/factcast-example-server**, see [fatjar](../fatjar)
+In order to run a simple example FactCast server, you could enter the project **factcast-examples/factcast-example-server**, see [fatjar](../fatjar)
 
 
 ## TLS Server
