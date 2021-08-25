@@ -148,3 +148,4 @@ CREATE INDEX snapshot_cache_last_access ON snapshot_cache USING BTREE (last_acce
           LEFT JOIN pg_stat_all_indexes psai ON i.indexrelid = psai.indexrelid                                               
  WHERE t.schemaname NOT IN ('pg_catalog', 'information_schema')                                                              
  ORDER BY 1, 2;    
+ 
