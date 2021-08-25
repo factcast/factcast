@@ -1,17 +1,17 @@
 <configuration>
-    <appender name="STDOUT"
-        class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%msg%n</pattern>
-        </encoder>
-    </appender>
+	<appender name="STDOUT"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%msg%n</pattern>
+		</encoder>
+	</appender>
 
-    <property name="log.level" value="${log.level:-INFO}" />
+	<property name="log.level" value="${log.level:-INFO}" />
 
-    <logger name="org.factcast.schema.registry.cli"
-        level="${log.level}" />
+	<logger name="org.factcast.schema.registry.cli"
+		level="${log.level}" />
 
-    <root level="ERROR">
-        <appender-ref ref="STDOUT" />
-    </root>
+	<root level="ERROR">
+		<appender-ref ref="STDOUT" />
+	</root>
 </configuration>
