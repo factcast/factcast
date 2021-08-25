@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.SneakyThrows;
-import lombok.val;
 
 @ExtendWith(MockitoExtension.class)
 class GraalJsTransformerTest {
