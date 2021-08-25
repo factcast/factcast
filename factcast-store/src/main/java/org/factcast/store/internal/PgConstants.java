@@ -16,8 +16,10 @@
 package org.factcast.store.internal;
 
 import java.util.Random;
+
 import lombok.AccessLevel;
 import lombok.Generated;
+import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
 
 /**
@@ -35,14 +37,35 @@ public class PgConstants {
 
   public static final String TABLE_FACT = "fact";
   public static final String TAIL_INDEX_NAME_PREFIX = "idx_fact_tail_";
-  public static final String LIST_FACT_INDEXES =
-      "select indexname from pg_indexes where tablename = '"
+
+  public static final String INDEX_NAME_COLUMN = "index_name";
+  public static final String VALID_COLUMN = "valid";
+  public static final String IS_VALID = "Y";
+  public static final String IS_INVALID = "N";
+
+  public static final String LIST_FACT_INDEXES_WITH_VALIDATION =
+      "select "
+          + INDEX_NAME_COLUMN
+          + ", "
+          + VALID_COLUMN
+          + " from stats_index where tablename = '"
           + TABLE_FACT
-          + "' and indexname like '"
+          + "' and "
+          + INDEX_NAME_COLUMN
+          + " like '"
           + TAIL_INDEX_NAME_PREFIX
-          + "%' order by indexname desc";
+          + "%' order by "
+          + INDEX_NAME_COLUMN
+          + " desc";
+
   public static final String BROKEN_INDEX_NAMES =
-      "SELECT index_name FROM stats_index WHERE valid = 'N'";
+      "SELECT "
+          + INDEX_NAME_COLUMN
+          + " FROM stats_index WHERE "
+          + VALID_COLUMN
+          + " = '"
+          + IS_INVALID
+          + "'";
 
   private static final String TABLE_TOKENSTORE = "tokenstore";
 
@@ -258,8 +281,7 @@ public class PgConstants {
 
   public static String createTailIndex(long epoch, long ser) {
     return "create index concurrently "
-        + TAIL_INDEX_NAME_PREFIX
-        + epoch
+        + tailIndexName(epoch)
         + " on "
         + TABLE_FACT
         + " using GIN("
@@ -268,6 +290,11 @@ public class PgConstants {
         + COLUMN_SER
         + ">"
         + ser;
+  }
+
+  @NonNull
+  public static String tailIndexName(long epoch) {
+    return TAIL_INDEX_NAME_PREFIX + epoch;
   }
 
   public static String dropTailIndex(String indexName) {
