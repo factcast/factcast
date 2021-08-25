@@ -46,7 +46,9 @@ public class PgConstants {
   public static final String LIST_FACT_INDEXES_WITH_VALIDATION =
       "select "
           + INDEX_NAME_COLUMN
-          + ", valid from stats_index where tablename = '"
+          + ", "
+          + VALID_COLUMN
+          + " from stats_index where tablename = '"
           + TABLE_FACT
           + "' and "
           + INDEX_NAME_COLUMN
@@ -55,8 +57,15 @@ public class PgConstants {
           + "%' order by "
           + INDEX_NAME_COLUMN
           + " desc";
+
   public static final String BROKEN_INDEX_NAMES =
-      "SELECT " + INDEX_NAME_COLUMN + " FROM stats_index WHERE valid = 'N'";
+      "SELECT "
+          + INDEX_NAME_COLUMN
+          + " FROM stats_index WHERE "
+          + VALID_COLUMN
+          + " = '"
+          + IS_INVALID
+          + "'";
 
   private static final String TABLE_TOKENSTORE = "tokenstore";
 
@@ -265,7 +274,6 @@ public class PgConstants {
           + ") from "
           + TABLE_FACT
           + ")";
-  private static long DURATION_120_MINUTES = 120 * 60 * 1_000;
 
   private static String fromHeader(String attributeName) {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
@@ -287,22 +295,6 @@ public class PgConstants {
   @NonNull
   public static String tailIndexName(long epoch) {
     return TAIL_INDEX_NAME_PREFIX + epoch;
-  }
-
-  public static String indexCreationInProgress(long currentEpoch) {
-    long epoch120MinsBefore = currentEpoch - DURATION_120_MINUTES;
-    return "select * from stats_index where"
-        + " tablename = '"
-        + TABLE_FACT
-        + "' and "
-        + INDEX_NAME_COLUMN
-        + " like '"
-        + TAIL_INDEX_NAME_PREFIX
-        + "%' and "
-        + INDEX_NAME_COLUMN
-        + " >=  '"
-        + tailIndexName(epoch120MinsBefore)
-        + "' and valid = 'N'";
   }
 
   public static String dropTailIndex(String indexName) {
