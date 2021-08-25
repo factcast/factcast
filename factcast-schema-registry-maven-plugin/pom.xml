@@ -83,7 +83,7 @@
 
 	<build>
 		<pluginManagement>
-			<!-- lock down plugins versions to avoid using Maven defaults (may be 
+			<!-- lock down plugins versions to avoid using Maven defaults (may be
 				moved to parent pom) -->
 			<plugins>
 				<plugin>
@@ -123,7 +123,7 @@
 					<artifactId>maven-invoker-plugin</artifactId>
 					<version>3.2.2</version>
 				</plugin>
-				<!--This plugin's configuration is used to store Eclipse m2e settings 
+				<!--This plugin's configuration is used to store Eclipse m2e settings
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>

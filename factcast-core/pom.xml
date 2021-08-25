@@ -61,13 +61,13 @@
 				<artifactId>maven-jar-plugin</artifactId>
 			</plugin>
 			<!-- disabled, see issu657 -->
-			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-shade-plugin</artifactId> 
-				<version>3.2.2</version> <executions> <execution> <phase>package</phase> 
-				<goals> <goal>shade</goal> </goals> <configuration> <artifactSet> <includes> 
-				<include>com.fasterxml.**:*</include> </includes> </artifactSet> <relocations> 
-				<relocation> <pattern>com.fasterxml</pattern> <shadedPattern>org.factcast.relocated.com.fasterxml</shadedPattern> 
-				<excludes> <exclude>com.fasterxml.jackson.annotation</exclude> </excludes> 
-				</relocation> </relocations> </configuration> </execution> </executions> 
+			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-shade-plugin</artifactId>
+				<version>3.2.2</version> <executions> <execution> <phase>package</phase>
+				<goals> <goal>shade</goal> </goals> <configuration> <artifactSet> <includes>
+				<include>com.fasterxml.**:*</include> </includes> </artifactSet> <relocations>
+				<relocation> <pattern>com.fasterxml</pattern> <shadedPattern>org.factcast.relocated.com.fasterxml</shadedPattern>
+				<excludes> <exclude>com.fasterxml.jackson.annotation</exclude> </excludes>
+				</relocation> </relocations> </configuration> </execution> </executions>
 				</plugin> -->
 		</plugins>
 	</build>

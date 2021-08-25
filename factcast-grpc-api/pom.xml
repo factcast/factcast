@@ -50,7 +50,7 @@
 			<scope>test</scope>
 			<type>test-jar</type>
 		</dependency>
-		<!-- <dependency> <groupId>com.google.guava</groupId> <artifactId>guava</artifactId> 
+		<!-- <dependency> <groupId>com.google.guava</groupId> <artifactId>guava</artifactId>
 			</dependency> -->
 		<dependency>
 			<groupId>net.jpountz.lz4</groupId>

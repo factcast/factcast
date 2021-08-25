@@ -67,7 +67,7 @@
 			<groupId>org.testcontainers</groupId>
 			<artifactId>postgresql</artifactId>
 			<version>${testcontainers.version}</version>
-			<!-- sadly no idea how to keep it in local execution, but exclude it from 
+			<!-- sadly no idea how to keep it in local execution, but exclude it from
 				fat-jar -->
 		</dependency>
 		<dependency>

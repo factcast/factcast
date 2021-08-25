@@ -3,7 +3,7 @@
 		"-//Puppy Crawl//DTD Check Configuration 1.3//EN"
 		"http://checkstyle.sourceforge.net/dtds/configuration_1_3.dtd">
 
-<!-- Checkstyle is highly configurable. Be sure to read the documentation 
+<!-- Checkstyle is highly configurable. Be sure to read the documentation
 	at http://checkstyle.sf.net -->
 
 <module name="Checker">
