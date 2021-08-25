@@ -442,6 +442,7 @@
 							</includes>
 							<eclipseWtp>
 								<type>XML</type>
+								<version>4.13.0</version>
 							</eclipseWtp>
 						</format>
 					</formats>
