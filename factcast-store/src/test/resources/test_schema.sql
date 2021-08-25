@@ -1,4 +1,4 @@
-CREATE
+# CREATE
   EXTENSION IF NOT EXISTS "uuid-ossp";
 
 DROP
@@ -44,7 +44,7 @@ CREATE
       payload JSONB NOT NULL
     );
 
-CREATE
+# CREATE
   OR REPLACE FUNCTION notifyFactInsert() RETURNS TRIGGER AS $$ BEGIN PERFORM pg_notify(
     'fact_insert',
     json_build_object(
@@ -60,12 +60,12 @@ END;
 
 $$ LANGUAGE plpgsql;
 
-CREATE
+# CREATE
   CONSTRAINT TRIGGER tr_deferred_fact_insert AFTER INSERT
     ON
     fact DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE PROCEDURE notifyFactInsert();
 
-CREATE
+# CREATE
   SEQUENCE catchup_seq;
 
 CREATE
@@ -76,7 +76,7 @@ CREATE
       ts TIMESTAMP
     );
 
-CREATE
+# CREATE
   TABLE
     IF NOT EXISTS tokenstore(
       token UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -133,29 +133,24 @@ CREATE
       PRIMARY KEY(name)
     );
 
+-- note that the UUID is part of the primary key, so it is not nullable.
+-- while it makes sense to use a separate uuid when storing aggregate states, it is
+-- completely useless with projection states. In this case we store a fake uuid(0,0) in order to maintain the PK constraint
 CREATE
   TABLE
     IF NOT EXISTS snapshot_cache(
-      cache_key VARCHAR(2048) NOT NULL, -- note that the UUID is part of thePRIMARY KEY,
-      so it IS NOT nullable. -- while it makes sense to use a
-
-      separate uuid
-      WHEN storing aggregate states,
-      it IS -- completely useless
-WITH projection states. IN this CASE
-        we store a fake uuid(
-          0,
-          0
-        ) IN ORDER TO maintain the PK CONSTRAINT uuid uuid NOT NULL, -- represents the stateOF the BLOB(
-        processed ALL relevant facts up TO factid
-    ) factid uuid NOT NULL,
-    DATA bytea NOT NULL, -- indicated if the data is already compressedIN ORDER TO bypass transport compression IF possible compressed BOOLEAN NOT NULL,
-    last_access TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-    PRIMARY KEY(
-      uuid,
-      cache_key
-    ));
+      cache_key VARCHAR(2048) NOT NULL,
+      uuid uuid NOT NULL, -- represents the state of the blob (processed all relevant facts up to factid)
+      factid uuid NOT NULL,
+      DATA bytea NOT NULL, -- indicated if the data is already compressed in order to bypass transport compression if possible
+      compressed BOOLEAN NOT NULL,
+      last_access TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+      PRIMARY KEY(
+        uuid,
+        cache_key
+      )
+    );
 
 ALTER TABLE
   ONLY public.catchup ADD CONSTRAINT catchup_pkey PRIMARY KEY(
