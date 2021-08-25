@@ -6,6 +6,8 @@ import static org.factcast.store.internal.PgConstants.IS_INVALID;
 import static org.factcast.store.internal.PgConstants.IS_VALID;
 import static org.factcast.store.internal.PgConstants.LIST_FACT_INDEXES_WITH_VALIDATION;
 import static org.factcast.store.internal.PgConstants.VALID_COLUMN;
+import static org.factcast.store.internal.PgConstants.dropTailIndex;
+import static org.factcast.store.internal.PgConstants.tailIndexName;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -243,6 +245,43 @@ class PGTailIndexManagerImplTest {
       verify(jdbc)
           .update(
               startsWith("create index concurrently " + PgConstants.TAIL_INDEX_NAME_PREFIX + ts));
+      verify(jdbc).update(endsWith("WHERE ser>118"));
+    }
+
+    @Test
+    void dropsIndexUponException() {
+
+      final var uut = spy(underTest);
+      when(jdbc.queryForObject(anyString(), eq(Long.class))).thenReturn(118L);
+      long ts = System.currentTimeMillis() / 10000;
+      when(jdbc.update(startsWith("create index concurrently " + tailIndexName(ts))))
+          .thenThrow(new RuntimeException("Some exception!"));
+
+      // RUN
+      uut.createNewTail();
+
+      verify(jdbc).update(startsWith("create index concurrently " + tailIndexName(ts)));
+      verify(jdbc).update(startsWith(dropTailIndex(tailIndexName(ts))));
+      verify(jdbc).update(endsWith("WHERE ser>118"));
+    }
+
+    @Test
+    void dropsIndexUponException_withAnotherException() {
+
+      final var uut = spy(underTest);
+      when(jdbc.queryForObject(anyString(), eq(Long.class))).thenReturn(118L);
+      long ts = System.currentTimeMillis() / 10000;
+      when(jdbc.update(startsWith("create index concurrently " + tailIndexName(ts))))
+          .thenThrow(new RuntimeException("Some exception!"));
+      when(jdbc.update(startsWith(dropTailIndex(tailIndexName(ts)))))
+          .thenThrow(new RuntimeException("Another exception!"));
+
+      // RUN
+      uut.createNewTail();
+
+      verify(jdbc).update(startsWith("create index concurrently " + tailIndexName(ts)));
+      verify(jdbc).update(startsWith(dropTailIndex(tailIndexName(ts))));
+      // this must still happen:
       verify(jdbc).update(endsWith("WHERE ser>118"));
     }
   }
