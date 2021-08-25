@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.registry.transformation.Transformation;
 import org.factcast.test.Slf4jHelper;
 import org.junit.jupiter.api.*;
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.SneakyThrows;
+import slf4jtest.TestLogger;
 
 @ExtendWith(MockitoExtension.class)
 class GraalJsTransformerTest {
