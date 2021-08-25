@@ -88,6 +88,8 @@ public class PgConnectionSupplier {
           setProperty(dbp, "socketTimeout", "0");
           setProperty(dbp, "connectTimeout", singleConnectionProperties.get("connectTimeout"));
           setProperty(dbp, "loginTimeout", singleConnectionProperties.get("loginTimeout"));
+          // disable statement caching
+          setProperty(dbp, "preparedStatementCacheQueries", "0");
         } catch (IllegalArgumentException e) {
           throw new IllegalArgumentException(
               "illegal connectionProperties: " + connectionProperties);

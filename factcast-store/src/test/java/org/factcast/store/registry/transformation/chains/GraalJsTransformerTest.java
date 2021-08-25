@@ -1,9 +1,12 @@
 package org.factcast.store.registry.transformation.chains;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
@@ -11,6 +14,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.factcast.store.registry.transformation.Transformation;
+import org.factcast.test.Slf4jHelper;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
@@ -20,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.SneakyThrows;
+import lombok.val;
 
 @ExtendWith(MockitoExtension.class)
 class GraalJsTransformerTest {
@@ -102,5 +107,45 @@ class GraalJsTransformerTest {
     } finally {
       executor.shutdown();
     }
+  }
+
+  @Test
+  void logsExceptionBrokenScript() {
+    when(transformation.transformationCode())
+        .thenReturn(Optional.of("function transform(e) { \n" + "  br0ken code" + " }\n"));
+
+    TestLogger logger = Slf4jHelper.replaceLogger(uut);
+
+    Map<String, Object> d1 = new HashMap<>();
+    d1.put("y", "1");
+    assertThatThrownBy(
+            () -> {
+              uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+            })
+        .isInstanceOf(TransformationException.class);
+
+    assertThat(logger.lines().size()).isGreaterThan(0);
+    assertThat(logger.lines().stream().anyMatch(f -> f.text.contains("during engine creation")))
+        .isTrue();
+  }
+
+  @Test
+  void logsExceptionBrokenParam() {
+    when(transformation.transformationCode())
+        .thenReturn(Optional.of("function transform(e) {throw \"fail at runtime\"}"));
+
+    TestLogger logger = Slf4jHelper.replaceLogger(uut);
+
+    Map<String, Object> d1 = new HashMap<>();
+    d1.put("y", "1");
+    assertThatThrownBy(
+            () -> {
+              uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+            })
+        .isInstanceOf(TransformationException.class);
+
+    assertThat(logger.lines().size()).isGreaterThan(0);
+    assertThat(logger.lines().stream().anyMatch(f -> f.text.contains("during transformation")))
+        .isTrue();
   }
 }

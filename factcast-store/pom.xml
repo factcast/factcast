@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-        <version>0.4.0-I15-SNAPSHOT</version>
+        <version>0.4.0-I17-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
     <artifactId>factcast-store</artifactId>
@@ -140,7 +140,7 @@
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>3.13.10</version>
+            <version>3.13.11</version>
       <scope>test</scope>
     </dependency>
     <dependency>
