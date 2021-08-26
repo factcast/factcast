@@ -142,7 +142,8 @@ public class GrpcFactStore implements FactStore {
       String[] sa = credentials.get().split(":");
       if (sa.length != 2) {
         throw new IllegalArgumentException(
-            "Credentials in 'grpc.client.factstore.credentials' have to be defined as 'username:password'");
+            "Credentials in 'grpc.client.factstore.credentials' have to be defined as"
+                + " 'username:password'");
       }
       CallCredentials basic = CallCredentialsHelper.basicAuth(sa[0], sa[1]);
       blockingStub = blockingStub.withCallCredentials(basic);

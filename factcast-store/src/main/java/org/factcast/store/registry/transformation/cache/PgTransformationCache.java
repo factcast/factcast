@@ -40,7 +40,8 @@ public class PgTransformationCache implements TransformationCache {
     // dup-keys can be ignored, in case another node just did the same
 
     jdbcTemplate.update(
-        "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? :: JSONB) ON CONFLICT(cache_key) DO NOTHING",
+        "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
+            + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
         cacheKey,
         fact.jsonHeader(),
         fact.jsonPayload());

@@ -183,7 +183,8 @@ public class PgConstants {
           + COLUMN_HEADER
           + "->'meta','{}') || concat('{\"_ser\":', "
           + COLUMN_SER
-          + " ,', \"_ts\":', EXTRACT(EPOCH FROM now()::timestamptz(3))*1000, '}' )::jsonb , true) WHERE header @> ?::jsonb";
+          + " ,', \"_ts\":', EXTRACT(EPOCH FROM now()::timestamptz(3))*1000, '}' )::jsonb , true)"
+          + " WHERE header @> ?::jsonb";
 
   public static final String SELECT_DISTINCT_NAMESPACE =
       "SELECT DISTINCT("
