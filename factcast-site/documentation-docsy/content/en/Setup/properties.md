@@ -51,7 +51,7 @@ be replaced by an updated version from the registry (not a good idea in producti
 |factcast.store.tailGenerationsToKeep| the number of tail indexes to keep. The higher the number, the slower the inserts. Probably 2 or 3 is a good value unless you have a very high tail rebuild frequency and not permanently connected applications (like offline clients for instance) | 3
 |factcast.store.minimumTailAge| minimum age of the youngest tail index, before a new one is created | 7 days
 |factcast.store.tailManagementCron| cron schedule when tail rotation should be carried out  | <nobr>`0 0 0 * * *`</nobr> (at midnight)
-|factcast.store.tailIndexCreationTimeout| Index creation can hang for a long time in case of many open transactions. To avoid this, you can specify a timeout.<BR>In case you want to give it a new try with every run, specify a time slighly shorter than the time between two runs, e.g. 23h59m if the cron job runs 24 hours. | <nobr>`23 hours 59 minutes`</nobr> (at midnight)
+|factcast.store.tailIndexCreationTimeout| Index creation can hang for a long time in case of many open transactions. To avoid this, you can specify a timeout.<BR>We will subtract 5 seconds from the given duration before applying it to setTimeout. | <nobr>`1d`</nobr>
 
 ___
 
