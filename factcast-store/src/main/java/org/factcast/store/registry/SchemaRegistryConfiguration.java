@@ -94,7 +94,8 @@ public class SchemaRegistryConfiguration {
 
       } else {
         log.warn(
-            "**** SchemaRegistry-mode is disabled. Fact validation will not happen. This is discouraged for production environments. You have been warned. ****");
+            "**** SchemaRegistry-mode is disabled. Fact validation will not happen. This is"
+                + " discouraged for production environments. You have been warned. ****");
         return new NOPSchemaRegistry();
       }
 

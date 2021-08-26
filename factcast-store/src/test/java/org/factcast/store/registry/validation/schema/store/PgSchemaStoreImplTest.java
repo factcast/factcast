@@ -82,7 +82,9 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
     uut.register(source, "foo");
     verify(mockTpl)
         .update(
-            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
+            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? ::"
+                + " JSONB) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set"
+                + " hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
             "id",
             "hash",
             "ns",
@@ -110,7 +112,9 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
     SchemaSource source = new SchemaSource().hash("hash").id("id").ns("ns").type("type");
 
     when(mockTpl.update(
-            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
+            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? ::"
+                + " JSONB) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set"
+                + " hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
             "id",
             "hash",
             "ns",
@@ -130,7 +134,9 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
     uut.register(source, "foo");
     verify(mockTpl)
         .update(
-            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) ON CONFLICT ON CONSTRAINT schemastore_ns_type_version_key DO UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
+            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? ::"
+                + " JSONB) ON CONFLICT ON CONSTRAINT schemastore_ns_type_version_key DO UPDATE set"
+                + " hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
             "id",
             "hash",
             "ns",
