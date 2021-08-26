@@ -111,9 +111,11 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     log.debug("Creating tail index {}.", indexName);
 
     try {
-      jdbc.update(PgConstants.createTailIndex(currentTimeMillis, serial));
+      jdbc.update(PgConstants.createTailIndex(indexName, serial));
 
     } catch (RuntimeException e) {
+      // keep log message in sync with asserts in
+      // PGTailIndexManagerImplIntTest.doesNotCreateIndexConcurrently
       log.error("Error creating tail index {}, trying to drop it...", indexName, e);
 
       try {
@@ -123,6 +125,8 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
             indexName);
 
       } catch (RuntimeException e2) {
+        // keep log message in sync with asserts in
+        // PGTailIndexManagerImplIntTest.doesNotCreateIndexConcurrently
         log.error(
             "After error, tried to drop the index that could not be created ({}), but received another error:",
             indexName,
