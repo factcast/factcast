@@ -300,4 +300,8 @@ public class PgConstants {
   public static String dropTailIndex(String indexName) {
     return "drop index if exists " + indexName;
   }
+
+  public static String setStatementTimeout(long millis) {
+    return "set statement_timeout to " + millis;
+  }
 }

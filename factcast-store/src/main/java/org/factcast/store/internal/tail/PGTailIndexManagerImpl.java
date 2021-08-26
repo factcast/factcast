@@ -50,7 +50,8 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
   @Override
   @Scheduled(cron = "${factcast.store.tailManagementCron:0 0 0 * * *}")
-  @SchedulerLock(name = "triggerTailCreation", lockAtMostFor = "120m")
+  // TODO: docs
+  @SchedulerLock(name = "triggerTailCreation", lockAtMostFor = "5m")
   public void triggerTailCreation() {
 
     if (!props.isTailIndexingEnabled()) {
@@ -109,6 +110,9 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     var indexName = PgConstants.tailIndexName(currentTimeMillis);
 
     log.debug("Creating tail index {}.", indexName);
+
+    // make sure index creation does not hang forever
+    jdbc.execute(PgConstants.setStatementTimeout(props.getTailIndexCreationTimeout().toMillis()));
 
     try {
       jdbc.update(PgConstants.createTailIndex(indexName, serial));
@@ -182,9 +186,12 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   private boolean isNotRecent(@NonNull String index) {
     long indexTimestamp =
         Long.parseLong(index.substring(PgConstants.TAIL_INDEX_NAME_PREFIX.length()));
+
     Duration age = Duration.ofMillis(System.currentTimeMillis() - indexTimestamp);
-    // two hours should be sufficient to recognise a broken index
-    Duration minAge = Duration.ofHours(2);
+    // use the time after which a hanging index creation would run into a timeout,
+    // plus 5 extra seconds, as the millis are obtained before the index creation is started
+    Duration minAge = props.getTailIndexCreationTimeout().plusSeconds(5);
+
     return minAge.minus(age).isNegative();
   }
 
