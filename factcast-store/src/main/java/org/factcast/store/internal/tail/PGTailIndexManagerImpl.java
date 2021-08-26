@@ -50,7 +50,8 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
   @Override
   @Scheduled(cron = "${factcast.store.tailManagementCron:0 0 0 * * *}")
-  // TODO: docs
+  // Here we only need to ensure not two tasks are running in parallel until index creation
+  // was triggered. 5 minutes should be more than enough.
   @SchedulerLock(name = "triggerTailCreation", lockAtMostFor = "5m")
   public void triggerTailCreation() {
 
