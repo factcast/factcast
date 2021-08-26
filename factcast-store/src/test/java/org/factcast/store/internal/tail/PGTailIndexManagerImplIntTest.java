@@ -75,6 +75,7 @@ class PGTailIndexManagerImplIntTest {
       var s = c.createStatement();
       s.setFetchSize(1);
       var resultSet = s.executeQuery("select * from fact limit 2;");
+      while (resultSet.next()) {}
 
       var before = System.currentTimeMillis();
 
