@@ -34,7 +34,7 @@
     <dependency>
       <groupId>net.javacrumbs.shedlock</groupId>
       <artifactId>shedlock-provider-jdbc-template</artifactId>
-      <version>4.25.0</version>
+      <version>4.26.0</version>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
