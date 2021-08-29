@@ -20,6 +20,7 @@ import java.util.concurrent.Executors;
 import javax.sql.DataSource;
 
 import org.factcast.core.store.FactStore;
+import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.observer.FastForwardTarget;
@@ -112,7 +113,7 @@ public class PgFactStoreInternalConfiguration {
   public FactStore factStore(
       JdbcTemplate jdbcTemplate,
       PgSubscriptionFactory subscriptionFactory,
-      PgTokenStore tokenStore,
+      TokenStore tokenStore,
       FactTableWriteLock lock,
       FactTransformerService factTransformerService,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
