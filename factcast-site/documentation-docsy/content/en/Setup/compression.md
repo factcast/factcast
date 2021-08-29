@@ -22,7 +22,7 @@ efficiency of the compression is dependent on the message size. We'll get to tha
 In order to agree on which compressor to use, there is an initial handshake when the client connects to the server,
 in which the available compressors on client and server are compared, and the server selects the one to use.
 
-The clients sends a list of what he accepts, and the server picks his *favorite* compressor out of that list in the order
+The clients send a list of what he accepts, and the server picks his *favorite* compressor out of that list in the order
 shown above (LZ4 first, then snappy, GZip as a fallback).
 
 As the client should be low on dependencies and assumptions, Gzip (as supported by the JDK) is the default compressor 
@@ -55,14 +55,14 @@ prefer them over GZip.
 
 ## Compressor efficiency
 
-As there currently is no stream-compression in GRPC, each message transferred from server to client is compressed separately. 
+As there currently is no stream-compression in GRPC, the server compresses each message transferred to the client separately. 
 The smaller this message is, the less efficient the compression can be. For this reason it is important (during the 
-catchup phase, where you expect a lot of messages) to allow the server to bundle messages into a batch that will 
-then be compressed and sent as one message.
+catchup phase, where you expect a lot of messages) to allow the server to bundle messages into a batch that it will 
+compress and send as one message.
 
 See [`factcast.grpc.client.catchup-batchsize`](/setup/properties/#factcast-client-specific)
 
-In the follow phase, this setting has no meaning, as you don't want to wait for your batch to fill up before you recieve 
+In the follow phase, this setting has no meaning, as you don't want to wait for your batch to fill up before you receive 
 the latest publications from the server. Latency is more important than compression efficiency in that case.  
 
 
