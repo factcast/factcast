@@ -15,15 +15,10 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.eventbus.AsyncEventBus;
-import com.google.common.eventbus.EventBus;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import lombok.NonNull;
-import net.javacrumbs.shedlock.core.LockProvider;
-import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
-import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
-import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
+import java.util.concurrent.Executors;
+
+import javax.sql.DataSource;
+
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
@@ -54,8 +49,17 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import javax.sql.DataSource;
-import java.util.concurrent.Executors;
+import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
 
 /**
  * Main @Configuration class for a PGFactStore
@@ -63,10 +67,12 @@ import java.util.concurrent.Executors;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @SuppressWarnings("UnstableApiUsage")
+@Slf4j
 @Configuration
 @EnableTransactionManagement
 @EnableScheduling
-@EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_SCHEDULER)
+// not that InterceptMode.PROXY_SCHEDULER does not work when wrapped at runtime (by opentelemetry for instance)
+@EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_METHOD)
 @Import({
   SchemaRegistryConfiguration.class,
   PgSnapshotCacheConfiguration.class,
@@ -197,7 +203,14 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   public LockProvider lockProvider(DataSource dataSource) {
-    return new JdbcTemplateLockProvider(dataSource, "shedlock");
+    log.debug("Configuring lock provider.");
+    var config =
+        JdbcTemplateLockProvider.Configuration.builder()
+            .withJdbcTemplate(new JdbcTemplate(dataSource))
+            .usingDbTime()
+            .build();
+
+    return new JdbcTemplateLockProvider(config);
   }
 
   @Bean

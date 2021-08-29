@@ -50,7 +50,9 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
   @Override
   @Scheduled(cron = "${factcast.store.tailManagementCron:0 0 0 * * *}")
-  @SchedulerLock(name = "triggerTailCreation", lockAtMostFor = "120m")
+  // Here we only need to ensure not two tasks are running in parallel until index creation
+  // was triggered. 5 minutes should be more than enough.
+  @SchedulerLock(name = "triggerTailCreation", lockAtMostFor = "5m")
   public void triggerTailCreation() {
 
     if (!props.isTailIndexingEnabled()) {
@@ -110,10 +112,17 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
     log.debug("Creating tail index {}.", indexName);
 
+    // make sure index creation does not hang forever.
+    // make 5 seconds shorter to compensate for the gap between currentTimeMillis and create index
+    jdbc.execute(
+        PgConstants.setStatementTimeout(props.getTailCreationTimeout().minusSeconds(5).toMillis()));
+
     try {
-      jdbc.update(PgConstants.createTailIndex(currentTimeMillis, serial));
+      jdbc.update(PgConstants.createTailIndex(indexName, serial));
 
     } catch (RuntimeException e) {
+      // keep log message in sync with asserts in
+      // PGTailIndexManagerImplIntTest.doesNotCreateIndexConcurrently
       log.error("Error creating tail index {}, trying to drop it...", indexName, e);
 
       try {
@@ -123,6 +132,8 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
             indexName);
 
       } catch (RuntimeException e2) {
+        // keep log message in sync with asserts in
+        // PGTailIndexManagerImplIntTest.doesNotCreateIndexConcurrently
         log.error(
             "After error, tried to drop the index that could not be created ({}), but received another error:",
             indexName,
@@ -178,9 +189,12 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   private boolean isNotRecent(@NonNull String index) {
     long indexTimestamp =
         Long.parseLong(index.substring(PgConstants.TAIL_INDEX_NAME_PREFIX.length()));
+
     Duration age = Duration.ofMillis(System.currentTimeMillis() - indexTimestamp);
-    // two hours should be sufficient to recognise a broken index
-    Duration minAge = Duration.ofHours(2);
+    // use the time after which a hanging index creation would run into a timeout,
+    // plus 5 extra seconds, as the millis are obtained before the index creation is started
+    Duration minAge = props.getTailCreationTimeout();
+
     return minAge.minus(age).isNegative();
   }
 

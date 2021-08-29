@@ -279,9 +279,9 @@ public class PgConstants {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
   }
 
-  public static String createTailIndex(long epoch, long ser) {
+  public static String createTailIndex(String indexName, long ser) {
     return "create index concurrently "
-        + tailIndexName(epoch)
+        + indexName
         + " on "
         + TABLE_FACT
         + " using GIN("
@@ -298,6 +298,10 @@ public class PgConstants {
   }
 
   public static String dropTailIndex(String indexName) {
-    return "drop index " + indexName;
+    return "drop index if exists " + indexName;
+  }
+
+  public static String setStatementTimeout(long millis) {
+    return "set statement_timeout to " + millis;
   }
 }

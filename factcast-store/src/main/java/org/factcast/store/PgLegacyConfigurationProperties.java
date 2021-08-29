@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 @ConfigurationProperties(prefix = PgLegacyConfigurationProperties.LEGACY_PREFIX)
 @EqualsAndHashCode
 @ToString
+@Deprecated
 public class PgLegacyConfigurationProperties implements ApplicationListener<ApplicationReadyEvent> {
 
   public static final String LEGACY_PREFIX = "factcast.store.pgsql";
