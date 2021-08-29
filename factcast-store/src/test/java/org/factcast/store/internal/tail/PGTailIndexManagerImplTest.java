@@ -152,19 +152,22 @@ class PGTailIndexManagerImplTest {
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
       when(props.getTailGenerationsToKeep()).thenReturn(2);
-      when(props.getTailIndexCreationTimeout()).thenReturn(Duration.ofSeconds(5));
+      when(props.getTailCreationTimeout()).thenReturn(Duration.ofSeconds(5));
 
       long now = System.currentTimeMillis();
       String t1Valid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - 10000);
       String t2Valid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - 11000);
-      String t3InvalidButRecent = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - 60);
+      String t3InvalidButRecent =
+          PgConstants.TAIL_INDEX_NAME_PREFIX + (now - 60);
 
       // we remove invalid indices older than 2 hours from now, so use a timestamp older than that
       var threeHours = Duration.ofHours(3).toMillis();
-      String t4Invalid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - threeHours);
+      String t4Invalid =
+          PgConstants.TAIL_INDEX_NAME_PREFIX + (now - threeHours);
 
       var fourHours = Duration.ofHours(4).toMillis();
-      String t5Invalid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - fourHours);
+      String t5Invalid =
+          PgConstants.TAIL_INDEX_NAME_PREFIX + (now - fourHours);
 
       when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
           .thenReturn(
