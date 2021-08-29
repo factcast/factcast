@@ -115,8 +115,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     // make sure index creation does not hang forever.
     // make 5 seconds shorter to compensate for the gap between currentTimeMillis and create index
     jdbc.execute(
-        PgConstants.setStatementTimeout(
-            props.getTailCreationTimeout().minusSeconds(5).toMillis()));
+        PgConstants.setStatementTimeout(props.getTailCreationTimeout().minusSeconds(5).toMillis()));
 
     try {
       jdbc.update(PgConstants.createTailIndex(indexName, serial));
