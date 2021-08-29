@@ -22,7 +22,6 @@ import org.factcast.core.store.FactStore;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
 import org.factcast.test.Slf4jHelper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +46,6 @@ class PGTailIndexManagerImplIntTest {
   @Autowired DataSource dataSource;
   @Autowired JdbcTemplate jdbcTemplate;
 
-
   @Test
   void happyPathWithoutExceptions() {
     var now = System.currentTimeMillis();
@@ -62,7 +60,7 @@ class PGTailIndexManagerImplIntTest {
   @DisabledForJreRange(min = JRE.JAVA_9)
   void doesNotCreateIndexConcurrently() {
     TestLogger logger = Slf4jHelper.replaceLogger(tailManager);
-    
+
     var c = dataSource.getConnection();
     c.setAutoCommit(false);
 
