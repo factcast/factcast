@@ -149,7 +149,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    * <p>In case you want to give it a new try with every run, specify a time slighly shorter than
    * the time between two runs, e.g. 23h59m if the cron job runs 24 hours.
    */
-  Duration tailIndexCreationTimeout = Duration.ofDays(1).minusMinutes(1);
+  Duration tailCreationTimeout = Duration.ofDays(1).minusMinutes(1);
 
   public boolean isValidationEnabled() {
     return schemaRegistryUrl != null;
