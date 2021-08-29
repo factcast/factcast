@@ -24,6 +24,7 @@ import org.factcast.store.test.IntegrationTest;
 import org.factcast.test.Slf4jHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -46,13 +47,6 @@ class PGTailIndexManagerImplIntTest {
   @Autowired DataSource dataSource;
   @Autowired JdbcTemplate jdbcTemplate;
 
-  // TODO: use logger
-  TestLogger logger;
-
-  @BeforeEach
-  void setup() {
-    logger = Slf4jHelper.replaceLogger(tailManager);
-  }
 
   @Test
   void happyPathWithoutExceptions() {
@@ -65,7 +59,10 @@ class PGTailIndexManagerImplIntTest {
 
   @Test
   @SneakyThrows
+  @DisabledForJreRange(min = JRE.JAVA_9)
   void doesNotCreateIndexConcurrently() {
+    TestLogger logger = Slf4jHelper.replaceLogger(tailManager);
+    
     var c = dataSource.getConnection();
     c.setAutoCommit(false);
 
