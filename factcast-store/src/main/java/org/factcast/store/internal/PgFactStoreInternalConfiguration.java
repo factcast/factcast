@@ -71,7 +71,8 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMo
 @Configuration
 @EnableTransactionManagement
 @EnableScheduling
-// not that InterceptMode.PROXY_SCHEDULER does not work when wrapped at runtime (by opentelemetry for instance)
+// not that InterceptMode.PROXY_SCHEDULER does not work when wrapped at runtime (by opentelemetry
+// for instance)
 @EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_METHOD)
 @Import({
   SchemaRegistryConfiguration.class,
