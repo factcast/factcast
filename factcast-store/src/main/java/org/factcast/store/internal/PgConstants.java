@@ -15,7 +15,6 @@
  */
 package org.factcast.store.internal;
 
-
 import lombok.AccessLevel;
 import lombok.Generated;
 import lombok.NonNull;
@@ -51,7 +50,7 @@ public class PgConstants {
           + " from stats_index where tablename = '"
           + TABLE_FACT
           + "' and "
-          +    INDEX_NAME_COLUMN
+          + INDEX_NAME_COLUMN
           + " like '"
           + TAIL_INDEX_NAME_PREFIX
           + "%' order by "
