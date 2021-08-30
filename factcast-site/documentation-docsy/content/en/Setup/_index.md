@@ -4,7 +4,7 @@ type: docs
 menu:
     main:
         weight: 50
-
+description: Setup and configuration of client and server
 weight: 30
 ---
 
