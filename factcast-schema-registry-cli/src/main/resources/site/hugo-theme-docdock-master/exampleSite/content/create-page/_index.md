@@ -30,25 +30,25 @@ Each Hugo page has to define a Front Matter in yaml, toml or json.
 
 Hugo-theme-docdock uses the following parameters on top of the existing ones :
 
-	+++
-	# Type of content, set "slide" to display it fullscreen with reveal.js
-	type="page"
+    +++
+    # Type of content, set "slide" to display it fullscreen with reveal.js
+    type="page"
 
-	# Creator's Display name
-	creatordisplayname = "Valere JEANTET"
-	# Creator's Email
-	creatoremail = "valere.jeantet@gmail.com"
-	# LastModifier's Display name
-	lastmodifierdisplayname = "Valere JEANTET"
-	# LastModifier's Email
-	lastmodifieremail = "valere.jeantet@gmail.com"
-	+++
+    # Creator's Display name
+    creatordisplayname = "Valere JEANTET"
+    # Creator's Email
+    creatoremail = "valere.jeantet@gmail.com"
+    # LastModifier's Display name
+    lastmodifierdisplayname = "Valere JEANTET"
+    # LastModifier's Email
+    lastmodifieremail = "valere.jeantet@gmail.com"
+    +++
 
 
 ## Ordering
 
 Hugo provides a flexible way to handle order for your pages.
 
-The simplest way is to use `weight` parameter in the front matter of your page. 
+The simplest way is to use `weight` parameter in the front matter of your page.
 
 [{{%icon circle-arrow-right%}}Read more on content organization]({{%relref "content-organisation/_index.md"%}})

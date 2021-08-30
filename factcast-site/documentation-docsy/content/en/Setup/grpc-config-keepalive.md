@@ -29,4 +29,4 @@ Further details can be found here : `net.devh.boot.grpc.client.config.GrpcChanne
 |`grpc.server.permit-keep-alive-without-calls`|  Configures whether clients are allowed to send keep-alive HTTP/2 PINGs even if there are no outstanding RPCs on the connection. Defaults to false.| true |
 |`grpc.server.permit-keep-alive-time`          | Specifies the most aggressive keep-alive time in seconds clients are permitted to configure. Defaults to 5min. | 100 |
 
-Further details can be found here : `net.devh.boot.grpc.server.config.GrpcServerProperties`. 
+Further details can be found here : `net.devh.boot.grpc.server.config.GrpcServerProperties`.

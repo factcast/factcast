@@ -9,13 +9,13 @@ You can change the style and behavior of the theme without touching it.
 * overide existing css or js with your own files
 
 {{%notice note %}}
-No needs to copy the entire theme to customize some parts 
+No needs to copy the entire theme to customize some parts
 Bellow are solutions to avoid copying the entire theme into your own codebase.
 {{%/notice%}}
 
 ## Add custom CSS and JS or HTML into the \<head\> part of each page :
 
-Create a custom header partial `layouts/partials/custom-head.html` 
+Create a custom header partial `layouts/partials/custom-head.html`
 
 > * content/
 > * layouts/
@@ -61,6 +61,6 @@ now feel free to add the JS, CSS, HTML code you want :)
 ## Overide existing CSS or JS
 
 Create the matching file in your static folder, hugo will use yours instead of the theme's one.
-Example : 
+Example :
 
 create a theme.css and place it into `static/css/` to fully overide docdock's theme.css

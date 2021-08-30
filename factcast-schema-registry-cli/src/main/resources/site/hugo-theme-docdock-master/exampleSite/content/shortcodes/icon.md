@@ -10,7 +10,7 @@ It uses :
 * glyphicons library (bootstrap).[more info here](http://getbootstrap.com/components/#glyphicons)
 * fontawesome library [more info here](http://fontawesome.io/)
 
-This `icon` shortcode will display an icon in your page. 
+This `icon` shortcode will display an icon in your page.
 
 ## Usage
 
@@ -25,8 +25,8 @@ setting only the name as argument works too : `{{</*icon film*/>}}` instead of `
 {{%/alert%}}
 
 # Demo
-	
-	{{</* icon name="film" size="large" */>}}
+
+    {{</* icon name="film" size="large" */>}}
 
 {{<icon name="film" size="large">}}
 
@@ -1251,4 +1251,3 @@ setting only the name as argument works too : `{{</*icon film*/>}}` instead of `
 - {{< icon fa-youtube >}} fa-youtube
 - {{< icon fa-youtube-play >}} fa-youtube-play
 - {{< icon fa-youtube-square >}} fa-youtube-square
-

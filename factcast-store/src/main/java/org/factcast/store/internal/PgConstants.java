@@ -15,13 +15,13 @@
  */
 package org.factcast.store.internal;
 
-import java.util.Random;
 
 import lombok.AccessLevel;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Random;
 /**
  * String constants mainly used in SQL-Statement creation
  *
@@ -51,7 +51,7 @@ public class PgConstants {
           + " from stats_index where tablename = '"
           + TABLE_FACT
           + "' and "
-          + INDEX_NAME_COLUMN
+          +    INDEX_NAME_COLUMN
           + " like '"
           + TAIL_INDEX_NAME_PREFIX
           + "%' order by "

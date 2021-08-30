@@ -4,7 +4,7 @@
           "http://checkstyle.sourceforge.net/dtds/configuration_1_3.dtd">
 
 <!--
-    Checkstyle is highly configurable. Be sure to read the documentation at http://checkstyle.sf.net 
+    Checkstyle is highly configurable. Be sure to read the documentation at http://checkstyle.sf.net
  -->
 
 <module name = "Checker">
@@ -37,7 +37,7 @@
             <property name="exceptionVariableName" value="expected|ignore"/>
         </module>
         <module name="UpperEll"/>
-      
+
         <!-- Rules from Sun's Java Style  -->
         <module name="IllegalImport"/>
         <module name="EmptyStatement"/>
@@ -47,7 +47,7 @@
             <property name="format" value="(FIXME)"/>
             <message key="todo.match" value="Resolve unexpected comment."/>
         </module>
-       
+
         <!-- Custom  -->
         <module name="DefaultComesLast">
             <property name="skipIfLastAndSharedWithCase" value="true"/>

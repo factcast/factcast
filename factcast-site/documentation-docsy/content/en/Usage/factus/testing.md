@@ -18,18 +18,16 @@ Assuming you use the excellent TestContainers library in order to create & manag
 In order to use the extension you either need to enable [Junit-Extension-Autodetection](https://junit.org/junit5/docs/current/user-guide/#running-tests-build-maven-config-params), or use
 ```java
 @ExtendWith(FactCastExtension.class)
-``` 
+```
 on your integration Test Class.
 
 The easy way to get the full package is to just extend AbstractIntegrationTest:
 
 ```java
 public class MyIntegrationTest extends AbstractFactcastIntegrationTest { // ...
-} 
+}
 ```
 which gives you the latest factcast found locally or at docker-hub running against a somewhat current postgres, both being started in a docker container (locally installed docker is a prerequiste of course).
 
-Also, in order to make sure, that FactCast-Server is **NOT** caching internally in memory, you can add a property to switch it into integrationTestMode. 
+Also, in order to make sure, that FactCast-Server is **NOT** caching internally in memory, you can add a property to switch it into integrationTestMode.
 [See Properties](/setup/properties).
-
-  

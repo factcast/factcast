@@ -8,4 +8,3 @@ Configuration in 'application.properties':
 grpc.client.factstore.address=static://localhost:9090,ibm.com:7777
 ```
 to connect and balance between ibm.com:7777 and localhost:9090.
-  

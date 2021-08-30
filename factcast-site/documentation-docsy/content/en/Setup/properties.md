@@ -1,6 +1,6 @@
 ---
 title: "Properties"
-type: docs 
+type: docs
 weight: 200
 description: Properties you can use to configure FactCast
 ---
@@ -12,9 +12,9 @@ description: Properties you can use to configure FactCast
 
 | Property        | Description           | Default
 | ------------- |:-------------|:-----|
-| factcast.store.schemaRegistryUrl            | if a schemaRegistryUrl is defined, FactCast goes into validating mode. The only protocols allowed here are *'http', 'https', 'classpath' and 'file'. Note that http(s) and file always require two slashes after the colon, e.g. 'https://someserver/...' or 'file:///root/folder/...'.*|  
-| factcast.store.persistentRegistry           | if fetched Schema and Transformation Documents are persisted into Postgres | false 
-| factcast.store.allowUnvalidatedPublish      | If validation is enabled, this controls if publishing facts, that are **not validatable** (due to missing meta-data or due to missing schema in the registry) are allowed to be published or should be rejected.  |  false 
+| factcast.store.schemaRegistryUrl            | if a schemaRegistryUrl is defined, FactCast goes into validating mode. The only protocols allowed here are *'http', 'https', 'classpath' and 'file'. Note that http(s) and file always require two slashes after the colon, e.g. 'https://someserver/...' or 'file:///root/folder/...'.*|
+| factcast.store.persistentRegistry           | if fetched Schema and Transformation Documents are persisted into Postgres | false
+| factcast.store.allowUnvalidatedPublish      | If validation is enabled, this controls if publishing facts, that are **not validatable** (due to missing meta-data or due to missing schema in the registry) are allowed to be published or should be rejected.  |  false
 | factcast.store.schemaStoreRefreshCron       | defines the cron schedule for refreshing the SchemaRegistry by querying for the latest remote changes | <nobr>`*/60 * * * * *`</nobr> (every minute) |
 | factcast.store.allowSchemaReplace|If a schema can be replaced by an updated version from the registry (not a good idea in production environments)|false
 
@@ -116,4 +116,4 @@ grpc.server.permit-keep-alive-time          = 100
 | ------------- |:-------------|:-----|
 |factcast.store.integrationTestMode| when set to true, disables all non-essential memory-internal caches, timing might differ to production of course. | false
 
-Further details can be found here : `net.devh.boot.grpc.server.config.GrpcServerProperties`. 
+Further details can be found here : `net.devh.boot.grpc.server.config.GrpcServerProperties`.

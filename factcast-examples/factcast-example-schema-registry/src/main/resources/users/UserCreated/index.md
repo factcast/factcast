@@ -1,1 +1,1 @@
-Describes a user creation event. 
+Describes a user creation event.

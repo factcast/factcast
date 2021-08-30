@@ -12,4 +12,3 @@ description = "Hugo-built Sites with docdock theme"
 
 #### [https://bitfan.io/](https://bitfan.io)  by [@vjeantet](https://github.com/vjeantet)
 ![https://bitfan.io/](/showcase/bitfan.site.png?height=250&classes=border,shadow)
-

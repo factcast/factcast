@@ -19,8 +19,8 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.4.0
 
 #### Feature
 
-Release focuses on stability & performance 
-  
+Release focuses on stability & performance
+
 Stability
   * complete error handling overhaul
   * application level Keepalive & Retry
@@ -32,10 +32,10 @@ Performance
   * Tail indexing & Fast-Forward
   * FETCHING catchup strategy
   * Factus bulk processing
-  * show progress on factus bulk application 
+  * show progress on factus bulk application
 
 ... and a documentation overhaul. For details, see the changelog.
-    
+
 ### RELEASE 0.3.0
 {{< rawhtml >}}
 <a
@@ -156,4 +156,3 @@ see changelog
 #### 2018-10-03 0.0.12 (milestone)
 * Note that the jersey impl of the REST interface has its own <a href="https://github.com/Mercateo/factcast-rest-jersey">place on github now.</a> and got new coordinates: **org.factcast:factcast-server-rest-jersey:0.0.12.** If you use the REST Server, you'll need to change your dependencies accordingly
 * There is a BOM within FactCast at org.factcast:factcast-bom:0.0.12 you can use to conveniently pin versions - remember that factcast-server-rest-jersey might not be available for every milestone and is not part of the BOM
-

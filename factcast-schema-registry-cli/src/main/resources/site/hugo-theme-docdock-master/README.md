@@ -1,6 +1,6 @@
 # Hugo docDock Theme
 
-This repository contains a theme for [Hugo](https://gohugo.io/), based on 
+This repository contains a theme for [Hugo](https://gohugo.io/), based on
 
 * [Matcornic Learn theme](https://github.com/matcornic/hugo-theme-learn/).
 * [facette.io](https://facette.io/)'s documentation style css (Facette is a great time series data visualization software)

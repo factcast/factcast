@@ -2,7 +2,7 @@ factcast-schema-registry-cli
 ============================
 
 This CLI provides a convenient way to create a suitable Schema Registry for your Factcast installation.
-It will give you the ability to validate events against examples and to make sure that there's always an upcast and if 
+It will give you the ability to validate events against examples and to make sure that there's always an upcast and if
 necessary a downcast transformation.
 
 Synopsis
@@ -24,7 +24,7 @@ Options
 | `-p`         | `--base-path`  | Directory where your source files live. Defaults to the current directory.             |
 | `-o`         | `--output`     | Output directory of the registry. If omitted creates `output` in the current directory. |
 | `-w`         | `--white-list` | Path to an whitelist file. Optional.  |
-| `-s`         | `--schema-strip-titles` |  Remove the 'title' attribute from JSON schema files |                         
+| `-s`         | `--schema-strip-titles` |  Remove the 'title' attribute from JSON schema files |
 
 Whitelisting
 ------------
@@ -47,4 +47,4 @@ The default application log level is _info_. More application details are availa
 
 ```
 java -Dlog.level=trace -jar fc-schema-cli.jar validate
-``` 
+```

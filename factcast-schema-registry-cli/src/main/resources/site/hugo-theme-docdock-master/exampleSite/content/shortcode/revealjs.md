@@ -76,5 +76,3 @@ ___
 ## Source :
 
 * [{{%icon "sunglasses" %}} click here to view raw content](https://github.com/vjeantet/hugo-theme-docdock/blob/master/content/shortcode/revealjs.md)
-
-

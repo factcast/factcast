@@ -24,7 +24,7 @@ Transferred to FactCast, this means to express a body of code that:
 4. rechecks, if the state recorded in 1. is still unchanged and then
 5. either publishes the prepared Facts or retries by going back to 1.
 
-### Usage 
+### Usage
 
 #### a simple example
 
@@ -44,7 +44,7 @@ factcast.lock("myBankNamespace")
                 .type("AccountCreated")
                 .aggId(newAccountId)
                 .build("{...}")
-              );            
+              );
         });
 
 ```
@@ -62,32 +62,32 @@ factcast.lock("myBankNamespace")
         .retry(100)              // this is optional, default is 10 times
         .interval(5)             // this is optional, default is no wait interval between attempts (equals to 0)
         .attempt(() -> {
-            
+
             // fetch the latest state
             Account source = repo.findById(sourceAccountId);
             Account target = repo.findById(targetAccountId);
-            
+
             // run businesslogic on it
             if (source.amount() < amountToTransfer)
                 return Attempt.abort("Insufficient funds.");
-            
+
             if (target.isClosed())
                 return Attempt.abort("Target account is closed");
-            
+
             // everything looks fine, create the Fact to be published
             Fact toPublish = Fact.builder()
                 .ns("myBankNamespace")
                 .type("transfer")
                 .aggId(sourceAccountId)
                 .aggId(targetAccountId)
-                .build("{...}");            
-            
+                .build("{...}");
+
             // register for publishing
             return Attempt.publish(toPublish).andThen(()->{
-                
+
                 // this is only executed at max once, and only if publishing succeeded
                 log.info("Money was transferred.");
-                
+
             });
         });
 ```
@@ -99,12 +99,12 @@ First, you tell factcast to record a state according to all events that have eit
 The number of retries is set to *100* here (default is 10, which for many systems is an acceptable default). In essence this means, that the attempt will be executed at max 100 times, before factcast gives up and throws an ***OptimisticRetriesExceededException*** which extends ConcurrentModificationException.
 
 If *interval* is not set, it defaults to 0 with the effect, that the code passed into *attempt* is continuously retried without any pause until it either *aborts*, succeeds, or the max number of retries was hit (see above).
-Setting it to *5* means, that before retrying, a 5 msec wait happens. 
+Setting it to *5* means, that before retrying, a 5 msec wait happens.
 
 {{< warning >}}<b>WARNING</b>: Setting interval to non-zero makes your code block a thread. The above combination of 100 retries with a 5 msec interval means, that - at worst - your code could block <i>longer than half a second</i>.{{< /warning >}}
 
 
-Everything starts with passing a lambda to the *attempt* method. The lambda is of type 
+Everything starts with passing a lambda to the *attempt* method. The lambda is of type
 ```java
 @FunctionalInterface
 public interface Attempt {
@@ -121,5 +121,3 @@ If the constraints do not hold, you may choose to abort the Attempt and thus abo
 On the other hand, if you choose to publish new facts using *Attempt.publish(...)*, the state will be checked and the Fact(s) will be published if there was not change in between (otherwise a retry will be issued, see above).
 
 *Optionally*, you can pass a runnable using *.andThen* and schedule it for execution once, if **and only if** the publishing succeeded. Or in other words, this runnable is executed just once or never (in case of *abort* or *OptimisticRetriesExceededException*).
-
-

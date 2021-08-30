@@ -12,5 +12,3 @@ please [open an issue on github](https://github.com/factcast/factcast/issues/new
 
 If you want to have more control and don't want to opt-in to Factus, you can have a look at the lower-level FactCast
 API. See the [Lowlevel](/usage/lowlevel) section instead.
-
-

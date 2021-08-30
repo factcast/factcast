@@ -42,7 +42,7 @@ Usage: fc-cli [options] [command] [command options]
         * -ns
             the namespace filtered on
 
-    follow      read all matching facts and keep connected while listening for 
+    follow      read all matching facts and keep connected while listening for
             new ones
       Usage: follow [options]
         Options:
@@ -61,16 +61,15 @@ Usage: fc-cli [options] [command] [command options]
         * --payload, -p
             Filename of an existing json file to read the payload from
 
-    enumerateNamespaces      lists all namespaces in the factstore in no 
+    enumerateNamespaces      lists all namespaces in the factstore in no
             particular order
       Usage: enumerateNamespaces
 
-    enumerateTypes      lists all types used with a namespace in no particular 
-            order 
+    enumerateTypes      lists all types used with a namespace in no particular
+            order
       Usage: enumerateTypes namespace
 
     serialOf      get the serial of a fact identified by id
       Usage: serialOf id
 
 ```
-

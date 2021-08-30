@@ -11,4 +11,4 @@ lastmodifierdisplayname = "Valere JEANTET"
 lastmodifieremail = "valere.jeantet@gmail.com"
 
 +++
-DocDock Documentation 
+DocDock Documentation

@@ -1,4 +1,4 @@
-+++ 
++++
 title = "Snapshot"
 type = "docs"
 weight = 100
@@ -29,7 +29,7 @@ public class UserNames implements SnapshotProjection {
     existingNames.remove(deleted.aggregateId());
   }
 // ...
-``` 
+```
 
 This projection is interested in `UserCreated` and `UserDeleted` EventObjects and can be serialized by
 the `SnapshotSerializer`.
@@ -89,7 +89,6 @@ There are plenty of methods that you can override in order to hook into the life
   opportunity to clean up.
 * onAfterRestore() - will be called whenever factus deserializes a projection from a snapshot. Might be an opportunity
   to initialize things.
-* executeUpdate(Runnable) - will be called to update the state of a projection. The runnable includes applying the Fact/Event and also updating the state of the projection, in case you want to do something like introduce transactionality here. 
+* executeUpdate(Runnable) - will be called to update the state of a projection. The runnable includes applying the Fact/Event and also updating the state of the projection, in case you want to do something like introduce transactionality here.
 
 This is not meant to be an exhaustive list. Look at the interfaces/classes you implement/extend and their javadoc.
-

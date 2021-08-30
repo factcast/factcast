@@ -16,16 +16,16 @@ A simple example would be to have all Facts regarding a particular Aggregate Roo
 
 ```
 User-1234
-	UserCreated
-	UserNameChanged
-	UserPasswordResetRequested
-	UserPasswordReset
-```  
+    UserCreated
+    UserNameChanged
+    UserPasswordResetRequested
+    UserPasswordReset
+```
 While this kind of Stream design makes it trivial to find all the Facts that have to be aggregated to reconstruct the state of User(id=1234), you are not done, yet.
 
 ### Facts that are not picked by Aggregate-Id
 
-Let's just say, we want to create a report on how many *UserPasswordReset* Facts there are per Month. Here we are facing the problem, that (well after publishing the Fact), we need to pick only those *UserPasswordReset* from the Store, regardless of any Aggregate relation. 
+Let's just say, we want to create a report on how many *UserPasswordReset* Facts there are per Month. Here we are facing the problem, that (well after publishing the Fact), we need to pick only those *UserPasswordReset* from the Store, regardless of any Aggregate relation.
 
 Here we see, that relying only on ahead of time tagging and categorizing of Facts would break our necks. If we don't have a way to express out interest in particular Facts, maybe based on criteria, we come up with a year after publishing the Facts, FactSourcing either looses its point or at least get frustratingly inefficient, because you'd need to iterate any Fact there is, and filter on the consumer side.
 
@@ -36,11 +36,11 @@ Here we are faced with the necessity of Store-Side filtering of FactStreams.
 What about Facts, that have impact to more than one Aggregates?
 ```
 User-1234
-	UserCreated
-	UserFollowedUser
-```  
+    UserCreated
+    UserFollowedUser
+```
 
-Here the second Fact obviously has impact on both the following, as well as the user being followed. 
+Here the second Fact obviously has impact on both the following, as well as the user being followed.
 
 #### Bad Practice: Splitting Facts
 
@@ -55,15 +55,12 @@ In order to do that, you inject JavaScript Projection code into the FactStore, t
 
 ## Conclusion
 
-As a consumer, you need to be able to express, what Facts are of interest to you. While tagging/categorizing those Facts might help when filtering, you cannot possibly rely on being able to predict all future needs when publishing an Fact. 
+As a consumer, you need to be able to express, what Facts are of interest to you. While tagging/categorizing those Facts might help when filtering, you cannot possibly rely on being able to predict all future needs when publishing an Fact.
 
 The actual filtering of FactStreams according to the consumer's needs should also probably be done within the Store, for efficiency reasons. You don't want to flood the network with Facts that end up being filtered out, if at all possible.
 
 This requires a **flexible way of expressing**, what Facts you are interested in, ultimately leading to **scripted Predicates**.
 
-Filtering could be done either ahead of time (by emitting Facts into different Streams and creating new Streams whenever a consumer's need changes), or just-in-time, which might have some impact on performance.   
- 
+Filtering could be done either ahead of time (by emitting Facts into different Streams and creating new Streams whenever a consumer's need changes), or just-in-time, which might have some impact on performance.
+
 [Fact Specification]({{%relref "/concept/factspec.md"%}})
-
-
-

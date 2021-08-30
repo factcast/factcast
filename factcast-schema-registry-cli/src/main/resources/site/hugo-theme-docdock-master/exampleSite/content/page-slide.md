@@ -34,18 +34,18 @@ In the frontmatter of your page file, set **type** and **revealOptions** params
 
 Your content will be served as a fullscreen revealjs presentation and revealOptions will be used to ajust its behaviour.
 
-	+++
-	title = "Test slide"
-	type="slide"
+    +++
+    title = "Test slide"
+    type="slide"
 
-	theme = "league"
-	[revealOptions]
-	transition= 'concave'
-	controls= true
-	progress= true
-	history= true
-	center= true
-	+++
+    theme = "league"
+    [revealOptions]
+    transition= 'concave'
+    controls= true
+    progress= true
+    history= true
+    center= true
+    +++
 
 [read more about reveal options here](https://github.com/hakimel/reveal.js/#configuration)
 
@@ -57,12 +57,12 @@ As both horizontal and vertical slides are supported by reveal.js each has it's 
 
 To denote the start of a horizontal slide simply add the following delimiter in your Markdown:
 
-	---
+    ---
 
 
 To denote the start of a vertical slide simply add the following delimiter in your Markdown:
-	
-	___
+
+    ___
 
 By using a combination of horizontal and vertical slides you can customize the navigation within your slideshow presentation. Typically vertical slides are used to present information below a top-level horizontal slide.
 

@@ -45,10 +45,10 @@ in the page frontmatter, add a `head` param to insert any HTML code before the m
 
 example to display a "Hello"
 
-	+++
-	title = "Github repo"
-	head ="<label>Hello</label> "
-	+++
+    +++
+    title = "Github repo"
+    head ="<label>Hello</label> "
+    +++
 
 
 
@@ -56,12 +56,12 @@ example to display a "Hello"
 
 in the page frontmatter, add a `pre` param to insert any HTML code before the menu label:
 
-example to display a github icon 
+example to display a github icon
 
-	+++
-	title = "Github repo"
-	pre ="<i class='fa fa-github'></i> "
-	+++
+    +++
+    title = "Github repo"
+    pre ="<i class='fa fa-github'></i> "
+    +++
 
 ![dsf](/menu-entry-icon.png?height=40px&classes=shadow)
 
@@ -69,24 +69,24 @@ example to display a github icon
 
 Add a `name` param next to `[menu.main]`
 
-	+++
-	[menu.main]
-	parent = ""
-	identifier = "repo"
-	pre ="<i class='fa fa-github'></i> "
-	name = "Github repo"
-	+++ -->
+    +++
+    [menu.main]
+    parent = ""
+    identifier = "repo"
+    pre ="<i class='fa fa-github'></i> "
+    name = "Github repo"
+    +++ -->
 
 <!-- ### Create a page redirector
 Add a `url` param next to `[menu.main]`
 
-	+++
-	[menu.main]
-	parent = "page"
-	identifier = "page-images"
-	weight = 23
-	url = "/shortcode/image/"
-	+++
+    +++
+    [menu.main]
+    parent = "page"
+    identifier = "page-images"
+    weight = 23
+    url = "/shortcode/image/"
+    +++
 
 {{%alert info%}}Look at the menu "Create Page/About images" which redirects to "Shortcodes/image{{%/alert%}}
  -->
@@ -94,10 +94,10 @@ Add a `url` param next to `[menu.main]`
 
 in your frontmatter add `weight` param with a number to order.
 
-	+++
-	title="My page"
-	weight = 4
-	+++
+    +++
+    title="My page"
+    weight = 4
+    +++
 
 {{%info%}}add `ordersectionsby = "title"` in your config.toml to order menu entries by title{{%/info%}}
 
@@ -106,10 +106,10 @@ in your frontmatter add `weight` param with a number to order.
 
 in your frontmatter add `hidden=true` param.
 
-	+++
-	title="My page"
-	hidden = true
-	+++
+    +++
+    title="My page"
+    hidden = true
+    +++
 
 
 ### Unfolded menu entry by default
@@ -132,7 +132,4 @@ Content organization **is** your `content` folder structure.
 
 ### Homepage
 
-Find out how to [customize homepage]({{%relref "homepage.md"%}}) 
-
-
-
+Find out how to [customize homepage]({{%relref "homepage.md"%}})

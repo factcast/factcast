@@ -6,7 +6,7 @@ weight = 50
 +++
 ![](ph_p.png#center)
 
-Before we can look at processing Events, we first have to talk about another abstraction that does not exist in FactCast: `Projection` 
+Before we can look at processing Events, we first have to talk about another abstraction that does not exist in FactCast: `Projection`
 
 
 ```java
@@ -38,7 +38,7 @@ public class UserNames implements SnapshotProjection {
         existingNames.remove(deleted.aggregateId());
     }
 // ...
-``` 
+```
 Here the EventObject 'UserDeleted' and 'UserCreated' are just basically tuples of a UserId (aggregateId) and a Name (userName).
 Also **projections must have a default (no-args) constructor**.
 

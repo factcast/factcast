@@ -9,7 +9,7 @@ type: docs
 
 FactCast is centered around *Facts*. We say Facts instead of Events, because Event has become a blurry term that could mean any number of things from a simple ```onWhatNot() ``` call handled by an Event-Loop to a ```LegalContractCreated``` with any flavor of semantics.
 
-We decided to use the term Fact over Domain-Event because we want to highlight the notion of an Event being an immutable thing that, once it is published, became an observable Fact. 
+We decided to use the term Fact over Domain-Event because we want to highlight the notion of an Event being an immutable thing that, once it is published, became an observable Fact.
 
 Obviously, a Fact is history and cannot be changed, after it happened. This is one of the cornerstones of EventSourcing and provides us with Facts being **immutable**, which plays an important role when it comes to caching.
 
@@ -44,8 +44,8 @@ JSON-Schema:
             "id": "/properties/aggIds",
             "type": "array",
             "items":{
-            	"id": "/properties/aggIds/items",
-            	"type": "string",
+                "id": "/properties/aggIds/items",
+                "type": "string",
                 "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
             }
         },
@@ -61,8 +61,8 @@ JSON-Schema:
             "id": "/properties/meta",
             "type": "object",
             "additionalProperties": {
-		        "type": "string",
-		        "description": "Some string values"
+                "type": "string",
+                "description": "Some string values"
             },
         }
     },
@@ -85,7 +85,7 @@ When a fact is read from FactCast, it is guaranteed to have two field set in the
 |_ts |long / int64| timestamp in milliseconds, when this fact was published to factcast.|
 
 As you can see, all meta-data attributes prefixed with "_" are supposed to be server created, so please do not use an "_" prefix yourself.
-  
+
 
 ### The Payload
 

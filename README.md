@@ -1,4 +1,4 @@
-# FactCast 
+# FactCast
 
 #### is a 'good enough' event store using PostgreSQL for persistence, and offers remoting via GRPC.
 
@@ -36,5 +36,3 @@ Gee, i wish there was a solution, that is flexible, platform neutral and could b
 [Read more on factcast.org](https://factcast.org)
 
 [Detailed changlelog](https://docs.factcast.org/changelog)
-
-

@@ -18,15 +18,15 @@ Therefore we create the necessary tables (probably using liquibase/flyway or sim
 
 ```sql
 CREATE TABLE users (
-    name TEXT, 
-    id UUID, 
+    name TEXT,
+    id UUID,
     PRIMARY KEY (id));
 ```
 
 ```sql
 CREATE TABLE fact_stream_positions (
     projection_name TEXT,
-    fact_stream_position UUID, 
+    fact_stream_position UUID,
     PRIMARY KEY (projection_name));
 ```
 
@@ -86,7 +86,7 @@ both require the following methods to be implemented:
 |`public void factStreamPosition(@NonNull UUID factStreamPosition)` | write the current position of the Fact stream to the database |
 |`public WriterToken acquireWriteToken(@NonNull Duration maxWait)`  | coordinates write access to the projection, see [here]({{< ref "managed-projection.md" >}}) for details  |
 
-The first two methods tell Factus how to read and write the Fact stream's position from the database. 
+The first two methods tell Factus how to read and write the Fact stream's position from the database.
 
 ### Writing the fact position
 
@@ -96,14 +96,14 @@ Provided the table `fact_stream_positions` exists, here is an example of how to 
 @Override
 public void factStreamPosition(@NonNull UUID factStreamPosition) {
     jdbcTemplate.update(
-            "INSERT INTO fact_stream_positions (projection_name, fact_stream_position) " + 
+            "INSERT INTO fact_stream_positions (projection_name, fact_stream_position) " +
             "VALUES (?, ?) " +
             "ON CONFLICT (projection_name) DO UPDATE SET fact_stream_position = ?",
             getScopedName().asString(),
             factStreamPosition,
             factStreamPosition);
 }
-``` 
+```
 
 For convenience, an UPSERT statement (Postgres syntax) is used, which INSERTs the UUID the first time
 and subsequently only UPDATEs the value.
@@ -128,7 +128,7 @@ public UUID factStreamPosition() {
         return null;
     }
 }
-``` 
+```
 
 In case no previous Fact position exists, `null` is returned.
 
@@ -140,8 +140,8 @@ When processing the *UserCreated* event, we add a new row to the `users` tables,
 @Handler
 void apply(UserCreated e) {
     jdbcTemplate.update(
-            "INSERT INTO users (name, id) VALUES (?,?);", 
-            e.getUserName(), 
+            "INSERT INTO users (name, id) VALUES (?,?);",
+            e.getUserName(),
             e.getAggregateId());
 }
 ```
@@ -153,7 +153,7 @@ When handling the *UserDeleted* event we do the opposite and remove the appropri
 void apply(UserDeleted e) {
     jdbcTemplate.update("DELETE FROM users where id = ?", e.getAggregateId());
 }
-``` 
+```
 
 We have finished the implementation of the event-processing part of our projection. What is missing is a way to
 make the projection's data accessible for users.

@@ -100,6 +100,3 @@ If you have doubts, feel free to contact us to discuss your situation.
 
 We easily **publish thousands** and **serve and process hundreds of thousands** of facts a second. However, if your requirements are in a
 completely different ballpark, you might want to look at different solutions.
-
-
-

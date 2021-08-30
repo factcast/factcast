@@ -26,7 +26,7 @@ class CustomerRepository{
  public Customer getCustomer(UUID customerId){
    // match all Facts currently published about that customer
    SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("myapp").aggId(customerId)).fromScratch();
-   
+
    Customer customer = new Customer(id);
    // stream all these Facts to the customer object's handle method, and wait until the stream ends.
    factCast.subscribeToFacts(req, customer::handle ).awaitComplete();
@@ -71,8 +71,8 @@ class QueryOptimizedView {
    factCast.subscribeToFacts(req, this::handle );
  }
 
- private FactSpec type(String type){ 
-   return FactSpec.ns("myapp").type(type); 
+ private FactSpec type(String type){
+   return FactSpec.ns("myapp").type(type);
  }
 
  @Transactional
@@ -109,8 +109,8 @@ class CustomerCache {
    factCast.subscribeToFacts(req, this::handle );
  }
 
- private FactSpec type(String type){ 
-  return FactSpec.ns("myapp").type(type); 
+ private FactSpec type(String type){
+  return FactSpec.ns("myapp").type(type);
  }
 
  @Transactional

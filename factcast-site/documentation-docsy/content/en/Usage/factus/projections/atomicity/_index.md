@@ -5,7 +5,7 @@ weight = 52
 
 +++
 
-{{% alert title="Note" %}} 
+{{% alert title="Note" %}}
 Atomic projections only make sense in terms of:
 - [managed projections]({{< ref "managed-projection.md" >}})  and for
 - [subscribed projections]({{< ref "subscribed-projection.md" >}}).
@@ -71,7 +71,7 @@ With *bulk processing*
 The size of the bulk can be configured via a common `bulkSize` attribute of
 the `@SpringTransactional`, `@RedisTransactional` or `@RedisBatched` annotation.
 
-Once the bulkSize is reached, or a configured timeout is triggered, the recorded operations of this bulk will be flushed to the datastore. 
+Once the bulkSize is reached, or a configured timeout is triggered, the recorded operations of this bulk will be flushed to the datastore.
 
 {{% alert title="Note" %}} Bulk processing only takes place [in the `catchup` phase](/concept). {{% /alert %}}
 
@@ -95,7 +95,7 @@ sequenceDiagram
   Projection->>External Data Store: event 3: store fact-stream-position
 ```
 
-*Processing three events with bulk size "1" - each fact-stream-position is written*  
+*Processing three events with bulk size "1" - each fact-stream-position is written*
 As initially explained, here, each update of the projection is accompanied by an update of the fact-stream-position.
 
 
@@ -123,4 +123,3 @@ this significantly improves event-processing throughput.
 
 {{% alert title="Note"%}} 'Large enough' of course depends on multiple factors like network, storage, etc.
 Your mileage may vary. {{% / alert %}}
-

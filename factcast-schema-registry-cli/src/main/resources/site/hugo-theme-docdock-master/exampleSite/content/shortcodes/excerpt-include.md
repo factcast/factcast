@@ -17,9 +17,9 @@ Before you can use this shortcode, the excerpt must have been defined using the 
 ## Demo
 The paragraph below shows an example of an Excerpt Include shortcode, containing content from an excerpt which we have defined on the Excerpt shortcode page. On the Excerpt Include shortcode below, we have set the options to show both the title of the page and the panel surrounding the content.
 
-	{{%/*excerpt-include filename="shortcodes/excerpt.md" panel="From excerpt page" /*/%}}
+    {{%/*excerpt-include filename="shortcodes/excerpt.md" panel="From excerpt page" /*/%}}
 
 {{%excerpt-include filename="shortcodes/excerpt.md" panel="From excerpt page" /%}}
- 
-> Don't create an excerpt file in the ```/layouts/shortcodes/``` folder. 
+
+> Don't create an excerpt file in the ```/layouts/shortcodes/``` folder.
 > In this example, ```shortcodes/filename.md``` is part of the ```exampleSite/content``` folder, and ```shortcodes``` is just a path in the ```/content```.

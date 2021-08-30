@@ -56,4 +56,3 @@ For example:
 renders as
 
 {{%attachments title="Related files" pattern=".*(pdf|mp4)"/%}}
-

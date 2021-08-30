@@ -10,12 +10,12 @@ to choose a backend/store for your metrics. Micrometer
 has [lots of prebuilt bindings to choose from](https://micrometer.io/docs). Please refer to the respective documentation
 in the **Setup** section of the micrometer docs.
 
-When it comes to metrics, you'll have to know what you're looking for. There are 
+When it comes to metrics, you'll have to know what you're looking for. There are
 
 * **Server** metrics in FactCast Server as well as
 * **Client** metrics in the factcast client and additionally in the
-* [factus client library](/usage/factus/metrics). 
-  
+* [factus client library](/usage/factus/metrics).
+
 We're focussing on *Server* metrics here.
 
 ### Metric namespaces and their organization
@@ -30,10 +30,10 @@ At the time of writing, there are four namespaces exposed:
 Depending on your micrometer binding, you may see a slightly different spelling in your data (like '
 factcast_store_timer`, if your datasource has a special meaning for the '.'-character)
 
-Furthermore, metrics in operations are automatically tagged with 
+Furthermore, metrics in operations are automatically tagged with
 
-* an operation name 
-* a store name ('pgsql' currently) and 
+* an operation name
+* a store name ('pgsql' currently) and
 * an exception tag ('None' if unset).
 
 ### Existing metrics
@@ -66,7 +66,7 @@ At the **time of writing (0.3.10)**, the store operations that are counted/measu
 |    clearSnapshot  | x |
 |    compactSnapshotCache  | x |
 |    notifyDatabaseRoundTrip | x |
-|    missedDatabaseRoundtrip | x |  
+|    missedDatabaseRoundtrip | x |
 
 At the **time of writing (0.3.10)**, the registry operations that are counted/measured are:
 
@@ -81,16 +81,16 @@ At the **time of writing (0.3.10)**, the registry events that are counted are:
 
 | event | meter  |
 |---|---|
-|    transformationCache-hit  | x | 
-|    transformationCache-miss | x | 
-|    missingTransformationInformation | x | 
-|    transformationConflict | x | 
-|    registryFileFetchFailed | x | 
-|    schemaRegistryUnavailable | x | 
-|    transformationFailed | x | 
-|    schemaConflict | x | 
-|    factValidationFailed | x | 
-|    schemaMissing | x | 
+|    transformationCache-hit  | x |
+|    transformationCache-miss | x |
+|    missingTransformationInformation | x |
+|    transformationConflict | x |
+|    registryFileFetchFailed | x |
+|    schemaRegistryUnavailable | x |
+|    transformationFailed | x |
+|    schemaConflict | x |
+|    factValidationFailed | x |
+|    schemaMissing | x |
 |    schemaUpdateFailure | x |
 
 
@@ -103,5 +103,5 @@ The relevant namespaces are:
 * `grpcServerRequestsReceived` and
 * `grpcServerResponsesSent`
 
-These automatically added metrics only focus on service methods defined in the [protocol buffer specs](https://github.com/factcast/factcast/blob/master/factcast-grpc-api/src/main/proto/FactStore.proto). 
+These automatically added metrics only focus on service methods defined in the [protocol buffer specs](https://github.com/factcast/factcast/blob/master/factcast-grpc-api/src/main/proto/FactStore.proto).
 Since a gRPC remote call triggers not everything we want to measure, we introduced additional metrics. When comparing, for instance, the automatically added durations of gRPC vs. the 'factcast.store.duration', you will find a subtle difference. The reason for this is that instead of including the gRPC overhead, we chose to only measure the actual invocations on the FactStore/TokenStore implementation. Depending on your needs, you may want to focus on one or the other.

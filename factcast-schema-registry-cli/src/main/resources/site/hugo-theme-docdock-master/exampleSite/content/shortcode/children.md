@@ -25,28 +25,22 @@ Use the children shortcode to list the child pages of a page and the further des
 
 ## Demo
 
-	{{%/* children  */%}}
+    {{%/* children  */%}}
 
 {{%children %}}
 
-	{{%/* children description="true"   */%}}
+    {{%/* children description="true"   */%}}
 
 {{%children description="true"   %}}
 
-	{{%/* children nohidden="true" */%}}
+    {{%/* children nohidden="true" */%}}
 
 {{% children nohidden="true" %}}
 
-	{{%/* children style="h3" depth="3" description="true" */%}}
+    {{%/* children style="h3" depth="3" description="true" */%}}
 
 {{% children style="h3" depth="3" description="true" %}}
 
-	{{%/* children style="div" depth="999" */%}}
+    {{%/* children style="div" depth="999" */%}}
 
 {{% children style="div" depth="999" %}}
-
-
-
-
-
-

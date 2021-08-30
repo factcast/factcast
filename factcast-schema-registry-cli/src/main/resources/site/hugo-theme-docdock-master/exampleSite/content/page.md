@@ -34,27 +34,27 @@ Each Hugo page has to define a Front Matter in yaml, toml or json.
 
 Hugo-theme-docdock uses the following parameters on top of the existing ones :
 
-	+++
-	# Creator's Display name
-	creatordisplayname = "Valere JEANTET"
-	# Creator's Email
-	creatoremail = "valere.jeantet@gmail.com"
-	# LastModifier's Display name
-	lastmodifierdisplayname = "Valere JEANTET"
-	# LastModifier's Email
-	lastmodifieremail = "valere.jeantet@gmail.com"
-	# Type of content, set "slide" to display it fullscreen with reveal.js
-	type="page"
+    +++
+    # Creator's Display name
+    creatordisplayname = "Valere JEANTET"
+    # Creator's Email
+    creatoremail = "valere.jeantet@gmail.com"
+    # LastModifier's Display name
+    lastmodifierdisplayname = "Valere JEANTET"
+    # LastModifier's Email
+    lastmodifieremail = "valere.jeantet@gmail.com"
+    # Type of content, set "slide" to display it fullscreen with reveal.js
+    type="page"
 
-	# Menu configuration
-	[menu.main]
-	# page identifier (when empty menu entry will not display for this page)
-	identifier="page-id" 
-	# identifier of the parent's page (when empty, page will be attached to rootpage)
-	parent="parent-page-id" 
-	# Order page menu entry
-	weight = 1 
-	+++
+    # Menu configuration
+    [menu.main]
+    # page identifier (when empty menu entry will not display for this page)
+    identifier="page-id"
+    # identifier of the parent's page (when empty, page will be attached to rootpage)
+    parent="parent-page-id"
+    # Order page menu entry
+    weight = 1
+    +++
 
 
 ## Ordering
@@ -63,6 +63,6 @@ Hugo provides a flexible way to handle order for your pages.
 
 The simplest way is to use `weight` parameter in the front matter of your page.
 
-Be aware that weight are applied separately for each menu level. 
+Be aware that weight are applied separately for each menu level.
 
 [{{%icon circle-arrow-right%}}Read more on content organization]({{%relref "organisation.md"%}})

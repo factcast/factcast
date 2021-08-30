@@ -1,3 +1,3 @@
 ### factcast-store-test
 
-common test code for factstore implementations 
+common test code for factstore implementations

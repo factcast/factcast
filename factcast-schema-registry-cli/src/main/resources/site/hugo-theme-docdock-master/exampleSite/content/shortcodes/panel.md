@@ -8,7 +8,7 @@ description = "Allow you to highlight information or put it in a box."
 {{% panel theme="success" header="The panel shortcode" %}}Allow you to highlight information or put it in a box. They create a colored box surrounding your text{{% /panel %}}
 
 
-## Usage 
+## Usage
 
 | Parameter | Default | Description |
 |:--|:--|:--|
@@ -20,7 +20,7 @@ description = "Allow you to highlight information or put it in a box."
 
 By default :
 
-	{{%/* panel */%}}this is a panel text{{%/* /panel */%}}
+    {{%/* panel */%}}this is a panel text{{%/* /panel */%}}
 
 {{%panel%}}this is a panel text{{%/panel%}}
 
@@ -28,18 +28,18 @@ By default :
 
 Easily add a heading container to your panel with `header` parameter. You may apply any theme.
 
-	{{%/* panel theme="danger" header="panel title" */%}}this is a panel text{{%/* /panel */%}}
+    {{%/* panel theme="danger" header="panel title" */%}}this is a panel text{{%/* /panel */%}}
 
 {{% panel theme="danger" header="panel title" %}}this is a panel text{{% /panel %}}
 
-	{{%/* panel theme="success" header="panel title" */%}}this is a panel text{{%/* /panel */%}}
+    {{%/* panel theme="success" header="panel title" */%}}this is a panel text{{%/* /panel */%}}
 
 {{% panel theme="success" header="panel title" %}}this is a panel text{{% /panel %}}
 
 ## Panel with footer
 Wrap a secondary text in footer.
 
-	{{%/* panel footer="panel footer" */%}}Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.{{%/* /panel */%}}
+    {{%/* panel footer="panel footer" */%}}Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.{{%/* /panel */%}}
 
 {{% panel footer="panel footer" %}}
 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
