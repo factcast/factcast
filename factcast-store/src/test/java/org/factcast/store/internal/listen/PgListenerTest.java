@@ -52,11 +52,12 @@ import org.postgresql.jdbc.PgConnection;
 
 import com.google.common.eventbus.EventBus;
 
+@SuppressWarnings("UnstableApiUsage")
 @ExtendWith(MockitoExtension.class)
 public class PgListenerTest {
 
   private static final Predicate<PgListener.FactInsertionEvent> IS_FACT_INSERT =
-      f -> f.name().equals("fact_insert");
+      f -> f.name().equals(PgConstants.CHANNEL_FACT_INSERT);
 
   @Mock PgConnectionSupplier pgConnectionSupplier;
 
@@ -161,14 +162,14 @@ public class PgListenerTest {
   public void subscribersAreOnlyInformedAboutNewFactsInDatabase() {
     PGNotification[] receivedNotifications =
         new PGNotification[] {
-          new Notification("some notification", 1, "{}"), new Notification("fact_insert", 1, "{}")
+          new Notification("some notification", 1, "{}"), new Notification(PgConstants.CHANNEL_FACT_INSERT, 1, "{}")
         };
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.informSubscriberOfChannelNotifications(receivedNotifications);
 
     verify(eventBus, times(1)).post(factCaptor.capture());
-    assertEquals("fact_insert", factCaptor.getAllValues().get(0).name());
+    assertEquals(PgConstants.CHANNEL_FACT_INSERT, factCaptor.getAllValues().get(0).name());
   }
 
   @Test
@@ -258,15 +259,15 @@ public class PgListenerTest {
     // grouped by tx id, ns and type
     assertThat(allEvents.stream().filter(IS_FACT_INSERT))
         .containsExactlyInAnyOrder(
-            new PgListener.FactInsertionEvent("fact_insert", null, null),
-            new PgListener.FactInsertionEvent("fact_insert", null, null),
-            new PgListener.FactInsertionEvent("fact_insert", null, null),
+            new PgListener.FactInsertionEvent(PgConstants.CHANNEL_FACT_INSERT, null, null),
+            new PgListener.FactInsertionEvent(PgConstants.CHANNEL_FACT_INSERT, null, null),
+            new PgListener.FactInsertionEvent(PgConstants.CHANNEL_FACT_INSERT, null, null),
             // must appear only once
-            new PgListener.FactInsertionEvent("fact_insert", "namespace", "theType"),
+            new PgListener.FactInsertionEvent(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType"),
             // must appear, even if was in the same tx as theType
-            new PgListener.FactInsertionEvent("fact_insert", "namespace", "theOtherType"),
+            new PgListener.FactInsertionEvent(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"),
             // must appear, as it is a new tx
-            new PgListener.FactInsertionEvent("fact_insert", "namespace", "theOtherType"));
+            new PgListener.FactInsertionEvent(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"));
   }
 
   @Test
