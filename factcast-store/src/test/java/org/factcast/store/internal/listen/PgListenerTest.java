@@ -162,7 +162,8 @@ public class PgListenerTest {
   public void subscribersAreOnlyInformedAboutNewFactsInDatabase() {
     PGNotification[] receivedNotifications =
         new PGNotification[] {
-          new Notification("some notification", 1, "{}"), new Notification(PgConstants.CHANNEL_FACT_INSERT, 1, "{}")
+          new Notification("some notification", 1, "{}"),
+          new Notification(PgConstants.CHANNEL_FACT_INSERT, 1, "{}")
         };
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
@@ -263,11 +264,14 @@ public class PgListenerTest {
             new PgListener.FactInsertionEvent(PgConstants.CHANNEL_FACT_INSERT, null, null),
             new PgListener.FactInsertionEvent(PgConstants.CHANNEL_FACT_INSERT, null, null),
             // must appear only once
-            new PgListener.FactInsertionEvent(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType"),
+            new PgListener.FactInsertionEvent(
+                PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType"),
             // must appear, even if was in the same tx as theType
-            new PgListener.FactInsertionEvent(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"),
+            new PgListener.FactInsertionEvent(
+                PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"),
             // must appear, as it is a new tx
-            new PgListener.FactInsertionEvent(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"));
+            new PgListener.FactInsertionEvent(
+                PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"));
   }
 
   @Test
