@@ -99,6 +99,7 @@ class PGTailIndexManagerImplTest {
     @Test
     void createsNoTailIfYoungestIndexIsRecent() {
       final var uut = spy(underTest);
+      doNothing().when(uut).createNewTail();
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
       when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
@@ -112,7 +113,6 @@ class PGTailIndexManagerImplTest {
 
       uut.triggerTailCreation();
 
-      verify(uut, never()).createNewTail();
     }
 
     @Test
@@ -199,7 +199,7 @@ class PGTailIndexManagerImplTest {
       final var uut = spy(underTest);
       uut.removeIndex(INDEX_NAME);
 
-      verify(jdbc).update("drop index if exists INDEX_NAME");
+      verify(jdbc).update("DROP INDEX CONCURRENTLY IF EXISTS INDEX_NAME");
     }
   }
 
