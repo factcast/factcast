@@ -15,14 +15,31 @@
  */
 package org.factcast.store.internal.listen;
 
-import com.google.common.eventbus.EventBus;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -32,10 +49,7 @@ import org.postgresql.PGNotification;
 import org.postgresql.core.Notification;
 import org.postgresql.jdbc.PgConnection;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import com.google.common.eventbus.EventBus;
 
 @ExtendWith(MockitoExtension.class)
 public class PgListenerTest {
@@ -194,7 +208,11 @@ public class PgListenerTest {
               new Notification(
                   PgConstants.CHANNEL_FACT_INSERT,
                   1,
-                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theType\"}}")
+                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theType\"}, \"txId\": 123}"),
+              new Notification(
+                  PgConstants.CHANNEL_FACT_INSERT,
+                  1,
+                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theType\"}, \"txId\": 123}")
             },
             new PGNotification[] {new Notification(PgConstants.CHANNEL_FACT_INSERT, 2, "{}")}, //
             new PGNotification[] {new Notification(PgConstants.CHANNEL_FACT_INSERT, 3, "{}")},
@@ -219,7 +237,10 @@ public class PgListenerTest {
     // in total there are only 3 notifies
     long totalNotifyCount = allEvents.stream().filter(f -> f.name().equals("fact_insert")).count();
 
-    assertEquals(5, totalNotifyCount); // rather than one per array, we now get one per notification
+    assertEquals(
+        4,
+        totalNotifyCount); // rather than one per array, we now get one per notification type,
+                           // grouped by tx id, ns and type
     assertThat(allEvents)
         .contains(new PgListener.FactInsertionEvent("fact_insert", "namespace", "theType"));
   }

@@ -15,31 +15,35 @@
  */
 package org.factcast.store.internal.listen;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.EventBus;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.annotation.Nullable;
+
 import org.factcast.core.util.FactCastJson;
-import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
+import org.factcast.store.internal.StoreMetrics;
 import org.postgresql.PGNotification;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
-import javax.annotation.Nullable;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.eventbus.EventBus;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Listens (sql LISTEN command) to a channel on Postgresql and passes a trigger on an EventBus.
@@ -134,7 +138,7 @@ public class PgListener implements InitializingBean, DisposableBean {
   @VisibleForTesting
   protected void informSubscriberOfChannelNotifications(PGNotification[] notifications) {
     Arrays.stream(notifications)
-        .forEachOrdered(
+        .map(
             n -> {
               String name = n.getName();
               switch (name) {
@@ -143,32 +147,39 @@ public class PgListener implements InitializingBean, DisposableBean {
 
                   try {
                     JsonNode root = FactCastJson.readTree(json);
+                    var txId = root.get("txId").asText();
                     JsonNode header = root.get("header");
 
                     String ns = header.get("ns").asText();
                     String type = header.get("type").asText();
 
-                    log.trace(
-                        "notifying consumers for '{}' with ns={}, type={}",
-                        PgConstants.CHANNEL_FACT_INSERT,
-                        ns,
-                        type);
-                    postEvent(PgConstants.CHANNEL_FACT_INSERT, ns, type);
+                    return new Key(PgConstants.CHANNEL_FACT_INSERT, txId, ns, type);
 
                   } catch (JsonProcessingException | NullPointerException e) {
                     // unparseable, probably longer than 8k ?
                     // fall back to informingAllSubscribers
-                    log.trace("notifying consumers for '{}'", PgConstants.CHANNEL_FACT_INSERT);
-                    postEvent(PgConstants.CHANNEL_FACT_INSERT);
+                    return new Key(PgConstants.CHANNEL_FACT_INSERT, null, null, null);
                   }
-                  break;
+
                 default:
                   if (!PgConstants.CHANNEL_ROUNDTRIP.equals(name)) {
                     log.debug("Ignored notification from unknown channel: {}", name);
                   }
 
-                  break;
+                  return null;
               }
+            })
+        .distinct()
+        .filter(Objects::nonNull)
+        .forEachOrdered(
+            key -> {
+              log.trace(
+                  "notifying consumers for '{}' with ns={}, type={} (once for tx id {})",
+                  key.eventName(),
+                  key.ns(),
+                  key.type(),
+                  key.txId());
+              postEvent(key.eventName(), key.ns(), key.type());
             });
   }
 
@@ -236,6 +247,14 @@ public class PgListener implements InitializingBean, DisposableBean {
   @Value
   public static class FactInsertionEvent {
     String name;
+    String ns;
+    String type;
+  }
+
+  @Value
+  public static class Key {
+    String eventName;
+    String txId;
     String ns;
     String type;
   }
