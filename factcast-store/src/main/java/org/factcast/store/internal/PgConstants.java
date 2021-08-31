@@ -298,7 +298,7 @@ public class PgConstants {
   }
 
   public static String dropTailIndex(String indexName) {
-    return "drop index if exists " + indexName;
+    return "DROP INDEX CONCURRENTLY IF EXISTS " + indexName;
   }
 
   public static String setStatementTimeout(long millis) {

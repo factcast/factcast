@@ -1,33 +1,26 @@
 package org.factcast.store.internal.tail;
 
-import static java.util.function.Predicate.not;
-import static org.factcast.store.internal.PgConstants.INDEX_NAME_COLUMN;
-import static org.factcast.store.internal.PgConstants.IS_INVALID;
-import static org.factcast.store.internal.PgConstants.IS_VALID;
-import static org.factcast.store.internal.PgConstants.LIST_FACT_INDEXES_WITH_VALIDATION;
-import static org.factcast.store.internal.PgConstants.VALID_COLUMN;
+import static java.util.function.Predicate.*;
+import static org.factcast.store.internal.PgConstants.*;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
+import lombok.Data;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
-
-import com.google.common.annotations.VisibleForTesting;
-
-import lombok.Data;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -62,15 +55,15 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     log.debug("Triggering tail index maintenance");
 
     var indexesWithValidityFlag = jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION);
-
     var validIndexes = getValidIndices(indexesWithValidityFlag);
+    // delete first
+    removeOldestValidIndices(validIndexes);
+    removeNonRecentInvalidIndices(indexesWithValidityFlag);
 
+    // THEN create
     if (timeToCreateANewTail(validIndexes) && !indexCreationInProgress(indexesWithValidityFlag)) {
       createNewTail();
     }
-
-    removeOldestValidIndices(validIndexes);
-    removeNonRecentInvalidIndices(indexesWithValidityFlag);
 
     refreshHighwaterMark();
 
