@@ -204,7 +204,8 @@ public class PgListenerTest {
         .thenReturn(
             new PGNotification[] { //
               new Notification(PgConstants.CHANNEL_FACT_INSERT, 1, "{}"), //
-              new Notification(PgConstants.CHANNEL_FACT_INSERT, 1, "{}"), //
+              // let us test a broken one
+              new Notification(PgConstants.CHANNEL_FACT_INSERT, 1, "{"), //
               new Notification(
                   PgConstants.CHANNEL_FACT_INSERT,
                   1,
@@ -216,13 +217,14 @@ public class PgListenerTest {
             },
             new PGNotification[] {new Notification(PgConstants.CHANNEL_FACT_INSERT, 2, "{}")}, //
             new PGNotification[] {new Notification(PgConstants.CHANNEL_FACT_INSERT, 3, "{}")},
+            new PGNotification[] {new Notification(PgConstants.CHANNEL_ROUNDTRIP, 3, "{}")},
             new PGNotification[] {},
             new PGNotification[] {},
             new PGNotification[] {});
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.listen();
-    sleep(500);
+    sleep(50_000);
     pgListener.destroy();
 
     verify(eventBus, atLeastOnce()).post(factCaptor.capture());
@@ -238,9 +240,8 @@ public class PgListenerTest {
     long totalNotifyCount = allEvents.stream().filter(f -> f.name().equals("fact_insert")).count();
 
     assertEquals(
-        4,
-        totalNotifyCount); // rather than one per array, we now get one per notification type,
-                           // grouped by tx id, ns and type
+        4, totalNotifyCount); // rather than one per array, we now get one per notification type,
+    // grouped by tx id, ns and type
     assertThat(allEvents)
         .contains(new PgListener.FactInsertionEvent("fact_insert", "namespace", "theType"));
   }
