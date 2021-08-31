@@ -33,6 +33,7 @@ import static org.mockito.Mockito.when;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.function.Predicate;
 
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
@@ -53,6 +54,9 @@ import com.google.common.eventbus.EventBus;
 
 @ExtendWith(MockitoExtension.class)
 public class PgListenerTest {
+
+  private static final Predicate<PgListener.FactInsertionEvent> IS_FACT_INSERT =
+      f -> f.name().equals("fact_insert");
 
   @Mock PgConnectionSupplier pgConnectionSupplier;
 
@@ -213,9 +217,20 @@ public class PgListenerTest {
               new Notification(
                   PgConstants.CHANNEL_FACT_INSERT,
                   1,
-                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theType\"}, \"txId\": 123}")
+                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theType\"}, \"txId\": 123}"),
+              // should trigger other notification:
+              new Notification(
+                  PgConstants.CHANNEL_FACT_INSERT,
+                  1,
+                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theOtherType\"}, \"txId\": 123}")
             },
-            new PGNotification[] {new Notification(PgConstants.CHANNEL_FACT_INSERT, 2, "{}")}, //
+            new PGNotification[] {
+              new Notification(PgConstants.CHANNEL_FACT_INSERT, 2, "{}"),
+              new Notification(
+                  PgConstants.CHANNEL_FACT_INSERT,
+                  1,
+                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theOtherType\"}, \"txId\": 345}")
+            }, //
             new PGNotification[] {new Notification(PgConstants.CHANNEL_FACT_INSERT, 3, "{}")},
             new PGNotification[] {new Notification(PgConstants.CHANNEL_ROUNDTRIP, 3, "{}")},
             new PGNotification[] {},
@@ -224,7 +239,7 @@ public class PgListenerTest {
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.listen();
-    sleep(50_000);
+    sleep(500);
     pgListener.destroy();
 
     verify(eventBus, atLeastOnce()).post(factCaptor.capture());
@@ -233,17 +248,25 @@ public class PgListenerTest {
     // first event is the general wakeup to the subscribers after startup
     assertEquals("scheduled-poll", allEvents.get(0).name());
     // events 2 - incl. 4 are notifies
-    assertTrue(
-        allEvents.subList(1, 4).stream().allMatch(event -> event.name().equals("fact_insert")));
+    assertTrue(allEvents.subList(1, 4).stream().allMatch(IS_FACT_INSERT));
 
     // in total there are only 3 notifies
-    long totalNotifyCount = allEvents.stream().filter(f -> f.name().equals("fact_insert")).count();
+    long totalNotifyCount = allEvents.stream().filter(IS_FACT_INSERT).count();
 
     assertEquals(
-        4, totalNotifyCount); // rather than one per array, we now get one per notification type,
+        6, totalNotifyCount); // rather than one per array, we now get one per notification type,
     // grouped by tx id, ns and type
-    assertThat(allEvents)
-        .contains(new PgListener.FactInsertionEvent("fact_insert", "namespace", "theType"));
+    assertThat(allEvents.stream().filter(IS_FACT_INSERT))
+        .containsExactlyInAnyOrder(
+            new PgListener.FactInsertionEvent("fact_insert", null, null),
+            new PgListener.FactInsertionEvent("fact_insert", null, null),
+            new PgListener.FactInsertionEvent("fact_insert", null, null),
+            // must appear only once
+            new PgListener.FactInsertionEvent("fact_insert", "namespace", "theType"),
+            // must appear, even if was in the same tx as theType
+            new PgListener.FactInsertionEvent("fact_insert", "namespace", "theOtherType"),
+            // must appear, as it is a new tx
+            new PgListener.FactInsertionEvent("fact_insert", "namespace", "theOtherType"));
   }
 
   @Test
