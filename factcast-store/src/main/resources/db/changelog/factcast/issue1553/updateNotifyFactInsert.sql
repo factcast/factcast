@@ -9,3 +9,6 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tr_fact_insert ON fact;
+CREATE TRIGGER tr_fact_insert AFTER INSERT ON fact FOR EACH ROW EXECUTE PROCEDURE notifyFactInsert();
