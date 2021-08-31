@@ -112,7 +112,6 @@ class PGTailIndexManagerImplTest {
                       IS_VALID)));
 
       uut.triggerTailCreation();
-
     }
 
     @Test
