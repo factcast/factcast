@@ -99,9 +99,9 @@ class PGTailIndexManagerImplTest {
     @Test
     void createsNoTailIfYoungestIndexIsRecent() {
       final var uut = spy(underTest);
-      doNothing().when(uut).createNewTail();
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
+      when(props.getTailGenerationsToKeep()).thenReturn(3);
       when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
           .thenReturn(
               Lists.newArrayList(
