@@ -15,20 +15,25 @@
  */
 package org.factcast.store.internal;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
-import com.google.common.eventbus.EventBus;
-import io.micrometer.core.instrument.DistributionSummary;
 import java.sql.ResultSet;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
-import lombok.SneakyThrows;
 
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -46,6 +51,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.google.common.eventbus.EventBus;
+
+import io.micrometer.core.instrument.DistributionSummary;
+import lombok.SneakyThrows;
 import slf4jtest.LogLevel;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,6 +63,7 @@ public class PgFactStreamTest {
 
   @Mock SubscriptionRequest req;
   @Mock SubscriptionImpl sub;
+  @Mock FactTransformers factTransformers;
   @Mock PgSynchronizedQuery query;
   @Mock FastForwardTarget ffwdTarget;
   @Mock PgMetrics metrics;
@@ -208,8 +219,8 @@ public class PgFactStreamTest {
     final var logger = Slf4jHelper.replaceLogger(uut);
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
-    when(sub.factsTransformed()).thenReturn(new AtomicLong(50L));
-    when(sub.factsNotTransformed()).thenReturn(new AtomicLong(50L));
+    when(factTransformers.factsTransformed()).thenReturn(50L);
+    when(factTransformers.factsNotTransformed()).thenReturn(50L);
 
     uut.logCatchupTransformationStats();
 
@@ -222,8 +233,8 @@ public class PgFactStreamTest {
     final var logger = Slf4jHelper.replaceLogger(uut);
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
-    when(sub.factsTransformed()).thenReturn(new AtomicLong(10L));
-    when(sub.factsNotTransformed()).thenReturn(new AtomicLong(90L));
+    when(factTransformers.factsTransformed()).thenReturn(10L);
+    when(factTransformers.factsNotTransformed()).thenReturn(90L);
 
     uut.logCatchupTransformationStats();
 
@@ -236,8 +247,8 @@ public class PgFactStreamTest {
     final var logger = Slf4jHelper.replaceLogger(uut);
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
-    when(sub.factsTransformed()).thenReturn(new AtomicLong(1L));
-    when(sub.factsNotTransformed()).thenReturn(new AtomicLong(90L));
+    when(factTransformers.factsTransformed()).thenReturn(1L);
+    when(factTransformers.factsNotTransformed()).thenReturn(90L);
 
     uut.logCatchupTransformationStats();
 
@@ -251,6 +262,8 @@ public class PgFactStreamTest {
     private ResultSet rs;
 
     @Mock private SubscriptionImpl subscription;
+
+    @Mock private FactTransformers factTransformers;
 
     @Mock private PgPostQueryMatcher postQueryMatcher;
 
@@ -288,6 +301,9 @@ public class PgFactStreamTest {
     void test_happyCase() {
       when(isConnectedSupplier.get()).thenReturn(true);
 
+      when(factTransformers.transformIfNecessary(any()))
+          .thenAnswer(inv -> inv.getArgument(0, Fact.class));
+
       when(rs.isClosed()).thenReturn(false);
       when(rs.getString(PgConstants.ALIAS_ID)).thenReturn("550e8400-e29b-11d4-a716-446655440000");
       when(rs.getString(PgConstants.ALIAS_NS)).thenReturn("foo");
@@ -302,12 +318,16 @@ public class PgFactStreamTest {
       verify(postQueryMatcher).test(any());
       verify(subscription).notifyElement(any());
       verify(serial).set(10L);
+      verify(factTransformers).transformIfNecessary(any());
     }
 
     @Test
     @SneakyThrows
     void test_exception() {
       when(isConnectedSupplier.get()).thenReturn(true);
+
+      when(factTransformers.transformIfNecessary(any()))
+          .thenAnswer(inv -> inv.getArgument(0, Fact.class));
 
       when(rs.isClosed()).thenReturn(false);
       when(rs.getString(PgConstants.ALIAS_ID)).thenReturn("550e8400-e29b-11d4-a716-446655440000");

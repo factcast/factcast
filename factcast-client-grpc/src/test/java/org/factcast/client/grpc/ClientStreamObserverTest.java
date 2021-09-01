@@ -15,37 +15,44 @@
  */
 package org.factcast.client.grpc;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-import io.grpc.Metadata;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import lombok.SneakyThrows;
+
 import org.assertj.core.util.Lists;
 import org.factcast.client.grpc.ClientStreamObserver.ClientKeepalive;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import io.grpc.Metadata;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
+import lombok.SneakyThrows;
 
 @ExtendWith(MockitoExtension.class)
 class ClientStreamObserverTest {
@@ -60,8 +67,7 @@ class ClientStreamObserverTest {
 
   @BeforeEach
   void setUp() {
-    FactTransformers trans = new NullFactTransformer();
-    SubscriptionImpl subscriptionImpl = new SubscriptionImpl(factObserver, trans);
+    SubscriptionImpl subscriptionImpl = new SubscriptionImpl(factObserver);
     subscription = spy(subscriptionImpl);
     uut = new ClientStreamObserver(subscription, 0L);
   }

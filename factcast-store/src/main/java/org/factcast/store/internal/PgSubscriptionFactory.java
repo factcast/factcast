@@ -15,13 +15,13 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.EventBus;
 import java.util.concurrent.CompletableFuture;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.*;
+
+import org.factcast.core.subscription.FactTransformersFactory;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
@@ -29,6 +29,13 @@ import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.registry.transformation.chains.MissingTransformationInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.eventbus.EventBus;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 // TODO integrate with PGQuery
 @SuppressWarnings("UnstableApiUsage")
@@ -51,14 +58,15 @@ class PgSubscriptionFactory {
   final PgMetrics metrics;
 
   public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
-    SubscriptionImpl subscription =
-        SubscriptionImpl.on(observer, transformersFactory.createFor(req));
+    var transformers = transformersFactory.createFor(req);
+    SubscriptionImpl subscription = SubscriptionImpl.on(observer);
     PgFactStream pgsub =
         new PgFactStream(
             jdbcTemplate,
             eventBus,
             idToSerialMapper,
             subscription,
+            transformers,
             fetcher,
             catchupFactory,
             target,

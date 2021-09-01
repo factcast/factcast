@@ -13,16 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.client.grpc;
+package org.factcast.core.subscription;
+
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.factcast.core.Fact;
 
 import lombok.NonNull;
-import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactTransformers;
 
 public class NullFactTransformer implements FactTransformers {
+
+  private final AtomicLong factsNotTransformed = new AtomicLong(0);
 
   @Override
   public @NonNull Fact transformIfNecessary(@NonNull Fact e) {
     return e;
+  }
+
+  @Override
+  public long factsTransformed() {
+    return 0;
+  }
+
+  @Override
+  public long factsNotTransformed() {
+    return factsNotTransformed.get();
   }
 }

@@ -15,13 +15,16 @@
  */
 package org.factcast.store.registry.transformation;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.subscription.FactTransformerService;
@@ -34,11 +37,13 @@ import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.factcast.store.registry.transformation.chains.TransformationChain;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.factcast.store.registry.transformation.chains.Transformer;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 @ExtendWith(MockitoExtension.class)
 public class FactTransformersImplTest {
@@ -66,6 +71,9 @@ public class FactTransformersImplTest {
     assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
 
     verifyNoInteractions(registryMetrics);
+
+    assertThat(uut.factsNotTransformed()).isEqualTo(1);
+    assertThat(uut.factsTransformed()).isEqualTo(0);
   }
 
   @Test
@@ -84,6 +92,9 @@ public class FactTransformersImplTest {
     assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
 
     verifyNoInteractions(registryMetrics);
+
+    assertThat(uut.factsNotTransformed()).isEqualTo(1);
+    assertThat(uut.factsTransformed()).isEqualTo(0);
   }
 
   @Test
@@ -104,6 +115,9 @@ public class FactTransformersImplTest {
     assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
 
     verifyNoInteractions(registryMetrics);
+
+    assertThat(uut.factsNotTransformed()).isEqualTo(1);
+    assertThat(uut.factsTransformed()).isEqualTo(0);
   }
 
   @Test
@@ -136,5 +150,8 @@ public class FactTransformersImplTest {
 
     verify(registryMetrics)
         .timed(eq(RegistryMetrics.OP.TRANSFORMATION), any(), any(SupplierWithException.class));
+
+    assertThat(uut.factsNotTransformed()).isEqualTo(0);
+    assertThat(uut.factsTransformed()).isEqualTo(1);
   }
 }

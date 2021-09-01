@@ -15,19 +15,16 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.EventBus;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
+import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -39,6 +36,13 @@ import org.factcast.store.internal.query.PgQueryBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.eventbus.EventBus;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Creates and maintains a subscription.
@@ -57,6 +61,7 @@ public class PgFactStream {
   final PgFactIdToSerialMapper idToSerMapper;
 
   final SubscriptionImpl subscription;
+  final FactTransformers factTransformers;
 
   final AtomicLong serial = new AtomicLong(0);
 
@@ -90,7 +95,7 @@ public class PgFactStream {
     PreparedStatementSetter setter = q.createStatementSetter(serial);
     RowCallbackHandler rsHandler =
         new FactRowCallbackHandler(
-            subscription, postQueryMatcher, this::isConnected, serial, request);
+            subscription, factTransformers, postQueryMatcher, this::isConnected, serial, request);
     PgSynchronizedQuery query =
         new PgSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler, serial, fetcher);
     catchupAndFollow(request, subscription, query);
@@ -197,9 +202,9 @@ public class PgFactStream {
 
   @VisibleForTesting
   void logCatchupTransformationStats() {
-    if (subscription.factsTransformed().get() > 0) {
-      long sum = subscription.factsTransformed().get() + subscription.factsNotTransformed().get();
-      long transf = subscription.factsTransformed().get();
+    if (factTransformers.factsTransformed() > 0) {
+      long sum = factTransformers.factsTransformed() + factTransformers.factsNotTransformed();
+      long transf = factTransformers.factsTransformed();
       long ratio = Math.round(100.0 / sum * transf);
       RatioLogLevel level = calculateLogLevel(sum, ratio);
 
@@ -255,6 +260,8 @@ public class PgFactStream {
 
     final SubscriptionImpl subscription;
 
+    final FactTransformers factTransformers;
+
     final PgPostQueryMatcher postQueryMatcher;
 
     final Supplier<Boolean> isConnectedSupplier;
@@ -272,10 +279,11 @@ public class PgFactStream {
               "ResultSet already closed. We should not have got here. THIS IS A BUG!");
         }
         Fact f = PgFact.from(rs);
-        UUID factId = f.id();
-        if (postQueryMatcher.test(f)) {
+        Fact transformed = factTransformers.transformIfNecessary(f);
+        UUID factId = transformed.id();
+        if (postQueryMatcher.test(transformed)) {
           try {
-            subscription.notifyElement(f);
+            subscription.notifyElement(transformed);
             log.trace("{} notifyElement called with id={}", request, factId);
           } catch (Throwable e) {
             rs.close();
