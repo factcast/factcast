@@ -195,18 +195,6 @@ public class PgConstants {
 
   public static final String LISTEN_ROUNDTRIP_CHANNEL_SQL = "LISTEN " + CHANNEL_ROUNDTRIP;
 
-  public static final String UPDATE_FACT_SERIALS =
-      "update "
-          + TABLE_FACT
-          + " set "
-          + COLUMN_HEADER
-          + "= jsonb_set( "
-          + COLUMN_HEADER
-          + " , '{meta}' , COALESCE("
-          + COLUMN_HEADER
-          + "->'meta','{}') || concat('{\"_ser\":', "
-          + COLUMN_SER
-          + " ,', \"_ts\":', EXTRACT(EPOCH FROM now()::timestamptz(3))*1000, '}' )::jsonb , true) WHERE header @> ?::jsonb";
 
   public static final String SELECT_DISTINCT_NAMESPACE =
       "SELECT DISTINCT("

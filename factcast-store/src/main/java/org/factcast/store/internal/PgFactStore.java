@@ -145,15 +145,6 @@ public class PgFactStore extends AbstractFactStore {
                   statement.setString(1, fact.jsonHeader());
                   statement.setString(2, fact.jsonPayload());
                 });
-            // add serials to headers
-            jdbcTemplate.batchUpdate(
-                PgConstants.UPDATE_FACT_SERIALS,
-                copiedListOfFacts,
-                BATCH_SIZE,
-                (statement, fact) -> {
-                  String idMatch = "{\"id\":\"" + fact.id() + "\"}";
-                  statement.setString(1, idMatch);
-                });
 
           } catch (DuplicateKeyException dupkey) {
             throw new IllegalArgumentException(dupkey.getMessage());
