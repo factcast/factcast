@@ -195,7 +195,6 @@ public class PgConstants {
 
   public static final String LISTEN_ROUNDTRIP_CHANNEL_SQL = "LISTEN " + CHANNEL_ROUNDTRIP;
 
-
   public static final String SELECT_DISTINCT_NAMESPACE =
       "SELECT DISTINCT("
           + COLUMN_HEADER
