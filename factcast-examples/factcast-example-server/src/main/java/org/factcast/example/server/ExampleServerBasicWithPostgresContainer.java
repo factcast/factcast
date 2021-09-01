@@ -31,14 +31,14 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @SuppressWarnings("ALL")
 @SpringBootApplication
 @Slf4j
-public class ExampleServerWithPostgresContainer {
+public class ExampleServerBasicWithPostgresContainer {
 
   public static void main(String[] args) {
     // you will want to replace this with RDS, a local pgsql database or
     // whatever your usecase is.
     startPostgresContainer();
 
-    SpringApplication.run(ExampleServerWithPostgresContainer.class, args);
+    SpringApplication.run(ExampleServerBasicWithPostgresContainer.class, args);
   }
 
   private static void startPostgresContainer() {
