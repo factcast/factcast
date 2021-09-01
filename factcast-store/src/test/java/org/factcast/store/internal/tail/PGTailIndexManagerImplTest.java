@@ -101,6 +101,7 @@ class PGTailIndexManagerImplTest {
       final var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
+      when(props.getTailGenerationsToKeep()).thenReturn(3);
       when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
           .thenReturn(
               Lists.newArrayList(
@@ -111,8 +112,6 @@ class PGTailIndexManagerImplTest {
                       IS_VALID)));
 
       uut.triggerTailCreation();
-
-      verify(uut, never()).createNewTail();
     }
 
     @Test
@@ -199,7 +198,7 @@ class PGTailIndexManagerImplTest {
       final var uut = spy(underTest);
       uut.removeIndex(INDEX_NAME);
 
-      verify(jdbc).update("drop index if exists INDEX_NAME");
+      verify(jdbc).update("DROP INDEX CONCURRENTLY IF EXISTS INDEX_NAME");
     }
   }
 
