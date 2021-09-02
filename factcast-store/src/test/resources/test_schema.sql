@@ -147,5 +147,26 @@ CREATE INDEX snapshot_cache_last_access ON snapshot_cache USING BTREE (last_acce
           LEFT JOIN pg_index i ON c.oid = i.indrelid                                                                         
           LEFT JOIN pg_stat_all_indexes psai ON i.indexrelid = psai.indexrelid                                               
  WHERE t.schemaname NOT IN ('pg_catalog', 'information_schema')                                                              
- ORDER BY 1, 2;    
- 
+ ORDER BY 1, 2;
+
+
+DROP TRIGGER IF EXISTS tr_fact_augment ON fact CASCADE;
+DROP FUNCTION IF EXISTS augmentSerialAndTimestamp CASCADE;
+
+CREATE FUNCTION augmentSerialAndTimestamp() RETURNS trigger AS $$
+BEGIN
+    SELECT jsonb_set(
+                   NEW.header,
+                   '{meta}',
+                   COALESCE(NEW.header->'meta','{}') ||
+                   CONCAT('{',
+                          '"_ser":', NEW.ser, ',',
+                          '"_ts":', EXTRACT(EPOCH FROM now()::timestamptz(3))*1000,
+                          '}')::jsonb,
+                   true)
+    INTO NEW.header;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER tr_fact_augment BEFORE INSERT ON fact FOR EACH ROW EXECUTE PROCEDURE augmentSerialAndTimestamp();
+
