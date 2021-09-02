@@ -25,8 +25,7 @@ public class SignalDeduplicationSet {
   }
 
   private void trim(LinkedHashSet<Signal> lhs) {
-    if(lhs.size()>capacity)
-    {
+    if (lhs.size() > capacity) {
       Iterator<Signal> i = lhs.iterator();
       i.next();
       i.remove();
