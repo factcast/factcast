@@ -229,6 +229,12 @@ public class PgListener implements InitializingBean, DisposableBean {
   @VisibleForTesting
   protected void postEvent(@NonNull PgListener.Signal signal) {
     if (running.get() && signalDeduplicationSet.add(signal)) {
+      log.trace(
+          "notifying consumers for '{}' with ns={}, type={}, tx={}",
+          signal.name(),
+          signal.ns(),
+          signal.type(),
+          signal.txId());
       eventBus.post(signal);
     }
   }
