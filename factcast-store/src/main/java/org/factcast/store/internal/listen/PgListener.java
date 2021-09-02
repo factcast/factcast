@@ -26,7 +26,6 @@ import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
@@ -67,6 +66,8 @@ public class PgListener implements InitializingBean, DisposableBean {
   private Thread listenerThread;
 
   private final CountDownLatch countDownLatch = new CountDownLatch(1);
+
+  private final SignalDeduplicationSet signalDeduplicationSet = new SignalDeduplicationSet(512);
 
   @VisibleForTesting
   protected void listen() {
@@ -133,53 +134,38 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @VisibleForTesting
   protected void informSubscriberOfChannelNotifications(PGNotification[] notifications) {
-    Arrays.stream(notifications)
-        .map(
+    Arrays.asList(notifications)
+        .forEach(
             n -> {
               String name = n.getName();
-              switch (name) {
-                case PgConstants.CHANNEL_FACT_INSERT:
-                  String json = n.getParameter();
 
-                  try {
-                    JsonNode root = FactCastJson.readTree(json);
-                    var txId = root.get("txId").asText();
-                    JsonNode header = root.get("header");
+              if (PgConstants.CHANNEL_FACT_INSERT.equals(name)) {
+                String json = n.getParameter();
 
-                    String ns = header.get("ns").asText();
-                    String type = header.get("type").asText();
+                try {
+                  JsonNode root = FactCastJson.readTree(json);
+                  var txId = root.get("txId").asText();
+                  JsonNode header = root.get("header");
 
-                    return new Key(txId, ns, type);
+                  String ns = header.get("ns").asText();
+                  String type = header.get("type").asText();
 
-                  } catch (JsonProcessingException | NullPointerException e) {
-                    // unparseable, probably longer than 8k ?
-                    // fall back to informingAllSubscribers
-                    log.debug(
-                        "Unparesable JSON header from Notification: {}. Notifying everyone - just in case",
-                        name);
-                    return new Key(null, null, null);
-                  }
+                  postEvent(new Signal(PgConstants.CHANNEL_FACT_INSERT, ns, type, txId));
 
-                default:
-                  if (!PgConstants.CHANNEL_ROUNDTRIP.equals(name)) {
-                    log.debug("Ignored notification from unknown channel: {}", name);
-                  }
-
-                  return null;
+                } catch (JsonProcessingException | NullPointerException e) {
+                  // unparseable, probably longer than 8k ?
+                  // fall back to informingAllSubscribers
+                  log.debug(
+                          "Unparesable JSON header from Notification: {}. Notifying everyone - just in case",
+                          name);
+                  postEvent(PgConstants.CHANNEL_FACT_INSERT);
+                }
               }
-            })
-        .distinct()
-        .filter(Objects::nonNull)
-        .forEachOrdered(
-            key -> {
-              log.trace(
-                  "notifying consumers for '{}' with ns={}, type={} (once for tx id {})",
-                  PgConstants.CHANNEL_FACT_INSERT,
-                  key.ns(),
-                  key.type(),
-                  key.txId());
-              postEvent(PgConstants.CHANNEL_FACT_INSERT, key.ns(), key.type());
+              if (!PgConstants.CHANNEL_ROUNDTRIP.equals(name)) {
+                log.debug("Ignored notification from unknown channel: {}", name);
+              }
             });
+
   }
 
   // try to receive Postgres notifications until timeout is over. In case we
@@ -232,29 +218,24 @@ public class PgListener implements InitializingBean, DisposableBean {
   }
 
   @VisibleForTesting
-  protected void postEvent(String name) {
-    postEvent(name, null, null);
+  protected void postEvent(@NonNull String name) {
+    // don't test against dedup list here!
+    eventBus.post(new Signal(name, null, null, null));
   }
 
   @VisibleForTesting
-  protected void postEvent(@NonNull String name, @Nullable String ns, @Nullable String type) {
-    if (running.get()) {
-      eventBus.post(new FactInsertionEvent(name, ns, type));
+  protected void postEvent(@NonNull PgListener.Signal signal) {
+    if (running.get()&&signalDeduplicationSet.add(signal)) {
+      eventBus.post(signal);
     }
   }
 
   @Value
-  public static class FactInsertionEvent {
-    String name;
+  public static class Signal {
+    @NonNull String name;
     String ns;
     String type;
-  }
-
-  @Value
-  public static class Key {
     String txId;
-    String ns;
-    String type;
   }
 
   @Override
