@@ -15,19 +15,17 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
-import com.google.common.annotations.VisibleForTesting;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics.EVENT;
+import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
@@ -36,7 +34,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
-import java.util.concurrent.atomic.AtomicLong;
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -51,6 +54,8 @@ public class PgFetchingCatchup implements PgCatchup {
   @NonNull final PgPostQueryMatcher postQueryMatcher;
 
   @NonNull final SubscriptionImpl subscription;
+
+  @NonNull final FactTransformers factTransformers;
 
   @NonNull final AtomicLong serial;
 
@@ -93,11 +98,12 @@ public class PgFetchingCatchup implements PgCatchup {
   RowCallbackHandler createRowCallbackHandler(boolean skipTesting, PgFactExtractor extractor) {
     return rs -> {
       Fact f = extractor.mapRow(rs, 0); // does not use the rowNum anyway
-      if (skipTesting || postQueryMatcher.test(f)) {
-        subscription.notifyElement(f);
+      Fact transformed = factTransformers.transformIfNecessary(f);
+      if (skipTesting || postQueryMatcher.test(transformed)) {
+        subscription.notifyElement(transformed);
         metrics.counter(EVENT.CATCHUP_FACT);
       } else {
-        log.trace("{} filtered id={}", req, f.id());
+        log.trace("{} filtered id={}", req, transformed.id());
       }
     };
   }

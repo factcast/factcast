@@ -185,11 +185,15 @@ public class PgFactStream {
   void catchup(PgPostQueryMatcher postQueryMatcher) {
     if (isConnected()) {
       log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial.get());
-      pgCatchupFactory.create(request, postQueryMatcher, subscription, serial, metrics).run();
+      pgCatchupFactory
+          .create(request, postQueryMatcher, subscription, factTransformers, serial, metrics)
+          .run();
     }
     if (isConnected()) {
       log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
-      pgCatchupFactory.create(request, postQueryMatcher, subscription, serial, metrics).run();
+      pgCatchupFactory
+          .create(request, postQueryMatcher, subscription, factTransformers, serial, metrics)
+          .run();
     }
   }
 

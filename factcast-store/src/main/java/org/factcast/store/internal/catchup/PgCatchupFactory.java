@@ -16,11 +16,14 @@
 package org.factcast.store.internal.catchup;
 
 import java.util.concurrent.atomic.AtomicLong;
-import lombok.NonNull;
+
+import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
+
+import lombok.NonNull;
 
 public interface PgCatchupFactory {
 
@@ -28,6 +31,7 @@ public interface PgCatchupFactory {
       @NonNull SubscriptionRequestTO request,
       @NonNull PgPostQueryMatcher postQueryMatcher,
       @NonNull SubscriptionImpl subscription,
+      @NonNull FactTransformers factTransformers,
       @NonNull AtomicLong serial,
       @NonNull PgMetrics metrics);
 }

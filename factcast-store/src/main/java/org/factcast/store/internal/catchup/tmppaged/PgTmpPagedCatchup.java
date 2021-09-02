@@ -15,11 +15,12 @@
  */
 package org.factcast.store.internal.catchup.tmppaged;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
@@ -30,9 +31,10 @@ import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -47,6 +49,8 @@ public class PgTmpPagedCatchup implements PgCatchup {
   @NonNull final PgPostQueryMatcher postQueryMatcher;
 
   @NonNull final SubscriptionImpl subscription;
+
+  @NonNull final FactTransformers factTransformers;
 
   @NonNull final AtomicLong serial;
   @NonNull final PgMetrics metrics;
@@ -76,9 +80,10 @@ public class PgTmpPagedCatchup implements PgCatchup {
           facts = fetch.fetchFacts(serial);
 
           for (Fact f : facts) {
-            UUID factId = f.id();
-            if (skipTesting || postQueryMatcher.test(f)) {
-              subscription.notifyElement(f);
+            Fact transformed = factTransformers.transformIfNecessary(f);
+            UUID factId = transformed.id();
+            if (skipTesting || postQueryMatcher.test(transformed)) {
+              subscription.notifyElement(transformed);
             } else {
               log.trace("{} filtered id={}", request, factId);
             }
