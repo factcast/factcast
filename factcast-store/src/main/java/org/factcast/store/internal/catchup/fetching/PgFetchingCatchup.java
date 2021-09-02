@@ -15,6 +15,8 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
@@ -31,7 +33,8 @@ import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.core.PreparedStatementCallback;
+import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -81,30 +84,49 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @VisibleForTesting
   void fetch(JdbcTemplate jdbc) {
-    jdbc.setFetchSize(props.getPageSize());
-    jdbc.setQueryTimeout(0); // disable query timeout
     var skipTesting = postQueryMatcher.canBeSkipped();
 
     PgQueryBuilder b = new PgQueryBuilder(req.specs());
     var extractor = new PgFactExtractor(serial);
     String catchupSQL = b.createSQL();
-    jdbc.query(
+
+    jdbc.execute(
         catchupSQL,
-        b.createStatementSetter(serial),
-        createRowCallbackHandler(skipTesting, extractor));
+        createPreparedStatementCallbackHandler(
+            b.createStatementSetter(serial), skipTesting, extractor));
   }
 
   @VisibleForTesting
-  RowCallbackHandler createRowCallbackHandler(boolean skipTesting, PgFactExtractor extractor) {
-    return rs -> {
-      Fact f = extractor.mapRow(rs, 0); // does not use the rowNum anyway
+  PreparedStatementCallback<Void> createPreparedStatementCallbackHandler(
+      PreparedStatementSetter statementSetter, boolean skipTesting, PgFactExtractor extractor) {
+
+    return ps -> {
+      statementSetter.setValues(ps);
+
+      ps.setQueryTimeout(0); // disable query timeout
+      ps.setFetchSize(props.getPageSize());
+
+      try (var resultSet = ps.executeQuery()) {
+        iterateOverResultSet(skipTesting, extractor, resultSet);
+      }
+
+      return null;
+    };
+  }
+
+  private void iterateOverResultSet(
+      boolean skipTesting, PgFactExtractor extractor, ResultSet resultSet) throws SQLException {
+
+    while (resultSet.next()) {
+      Fact f = extractor.mapRow(resultSet, 0); // does not use the rowNum anyway
       Fact transformed = factTransformers.transformIfNecessary(f);
+
       if (skipTesting || postQueryMatcher.test(transformed)) {
         subscription.notifyElement(transformed);
         metrics.counter(EVENT.CATCHUP_FACT);
       } else {
         log.trace("{} filtered id={}", req, transformed.id());
       }
-    };
+    }
   }
 }
