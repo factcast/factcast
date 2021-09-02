@@ -15,18 +15,33 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
-import lombok.NonNull;
-import lombok.SneakyThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.same;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+import java.sql.ResultSet;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
+import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
-import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -41,11 +56,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
-import java.sql.ResultSet;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 
 @ExtendWith(MockitoExtension.class)
 class PgFetchingCatchupTest {
@@ -55,6 +67,7 @@ class PgFetchingCatchupTest {
   @Mock @NonNull SubscriptionRequestTO req;
   @Mock @NonNull PgPostQueryMatcher postQueryMatcher;
   @Mock @NonNull SubscriptionImpl subscription;
+  @Mock @NonNull FactTransformers factTransformers;
   @Mock @NonNull AtomicLong serial;
   @Mock @NonNull PgMetrics metrics;
   @InjectMocks PgFetchingCatchup underTest;
@@ -124,6 +137,8 @@ class PgFetchingCatchupTest {
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
       when(postQueryMatcher.test(testFact)).thenReturn(false);
+      when(factTransformers.transformIfNecessary(any()))
+              .thenAnswer(inv -> inv.getArgument(0, Fact.class));
       cbh.processRow(rs);
 
       verifyNoInteractions(subscription);
@@ -137,6 +152,9 @@ class PgFetchingCatchupTest {
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
       when(postQueryMatcher.test(testFact)).thenReturn(true);
+      when(factTransformers.transformIfNecessary(any()))
+              .thenAnswer(inv -> inv.getArgument(0, Fact.class));
+
       cbh.processRow(rs);
 
       verify(subscription).notifyElement(testFact);
@@ -148,6 +166,8 @@ class PgFetchingCatchupTest {
       final var cbh = underTest.createRowCallbackHandler(false, extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
+              when(factTransformers.transformIfNecessary(any()))
+                      .thenAnswer(inv -> inv.getArgument(0, Fact.class));
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
       when(postQueryMatcher.test(testFact)).thenReturn(true);
       doThrow(TransformationException.class).when(subscription).notifyElement(testFact);
