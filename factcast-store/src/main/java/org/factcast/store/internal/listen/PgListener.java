@@ -19,27 +19,25 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.util.FactCastJson;
-import org.factcast.store.internal.StoreMetrics;
-import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.PgConstants;
-import org.factcast.store.internal.PgMetrics;
-import org.postgresql.PGNotification;
-import org.postgresql.jdbc.PgConnection;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
-
-import javax.annotation.Nullable;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.util.FactCastJson;
+import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.PgConstants;
+import org.factcast.store.internal.PgMetrics;
+import org.factcast.store.internal.StoreMetrics;
+import org.postgresql.PGNotification;
+import org.postgresql.jdbc.PgConnection;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
 
 /**
  * Listens (sql LISTEN command) to a channel on Postgresql and passes a trigger on an EventBus.
@@ -67,6 +65,8 @@ public class PgListener implements InitializingBean, DisposableBean {
   private Thread listenerThread;
 
   private final CountDownLatch countDownLatch = new CountDownLatch(1);
+
+  private final SignalDeduplicationSet signalDeduplicationSet = new SignalDeduplicationSet(512);
 
   @VisibleForTesting
   protected void listen() {
@@ -133,41 +133,40 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @VisibleForTesting
   protected void informSubscriberOfChannelNotifications(PGNotification[] notifications) {
-    Arrays.stream(notifications)
-        .forEachOrdered(
+
+    AtomicBoolean oncePerArray = new AtomicBoolean(false);
+
+    Arrays.asList(notifications)
+        .forEach(
             n -> {
               String name = n.getName();
-              switch (name) {
-                case PgConstants.CHANNEL_FACT_INSERT:
-                  String json = n.getParameter();
 
-                  try {
-                    JsonNode root = FactCastJson.readTree(json);
-                    JsonNode header = root.get("header");
+              if (PgConstants.CHANNEL_FACT_INSERT.equals(name)) {
+                String json = n.getParameter();
 
-                    String ns = header.get("ns").asText();
-                    String type = header.get("type").asText();
+                try {
+                  JsonNode root = FactCastJson.readTree(json);
+                  JsonNode header = root.get("header");
 
-                    log.trace(
-                        "notifying consumers for '{}' with ns={}, type={}",
-                        PgConstants.CHANNEL_FACT_INSERT,
-                        ns,
-                        type);
-                    postEvent(PgConstants.CHANNEL_FACT_INSERT, ns, type);
+                  String ns = header.get("ns").asText();
+                  String type = header.get("type").asText();
+                  String txId = root.get("txId").asText();
 
-                  } catch (JsonProcessingException | NullPointerException e) {
-                    // unparseable, probably longer than 8k ?
-                    // fall back to informingAllSubscribers
-                    log.trace("notifying consumers for '{}'", PgConstants.CHANNEL_FACT_INSERT);
+                  postEvent(new Signal(PgConstants.CHANNEL_FACT_INSERT, ns, type, txId));
+
+                } catch (JsonProcessingException | NullPointerException e) {
+                  // unparseable, probably longer than 8k ?
+                  // fall back to informingAllSubscribers
+                  if (!oncePerArray.getAndSet(true)) {
+                    log.debug(
+                        "Unparesable JSON header from Notification: {}. Notifying everyone - just in case",
+                        name);
                     postEvent(PgConstants.CHANNEL_FACT_INSERT);
                   }
-                  break;
-                default:
-                  if (!PgConstants.CHANNEL_ROUNDTRIP.equals(name)) {
-                    log.debug("Ignored notification from unknown channel: {}", name);
-                  }
-
-                  break;
+                }
+              }
+              if (!PgConstants.CHANNEL_ROUNDTRIP.equals(name)) {
+                log.debug("Ignored notification from unknown channel: {}", name);
               }
             });
   }
@@ -222,22 +221,30 @@ public class PgListener implements InitializingBean, DisposableBean {
   }
 
   @VisibleForTesting
-  protected void postEvent(String name) {
-    postEvent(name, null, null);
+  protected void postEvent(@NonNull String name) {
+    // don't test against dedup list here!
+    eventBus.post(new Signal(name, null, null, null));
   }
 
   @VisibleForTesting
-  protected void postEvent(@NonNull String name, @Nullable String ns, @Nullable String type) {
-    if (running.get()) {
-      eventBus.post(new FactInsertionEvent(name, ns, type));
+  protected void postEvent(@NonNull PgListener.Signal signal) {
+    if (running.get() && signalDeduplicationSet.add(signal)) {
+      log.trace(
+          "notifying consumers for '{}' with ns={}, type={}, tx={}",
+          signal.name(),
+          signal.ns(),
+          signal.type(),
+          signal.txId());
+      eventBus.post(signal);
     }
   }
 
   @Value
-  public static class FactInsertionEvent {
-    String name;
+  public static class Signal {
+    @NonNull String name;
     String ns;
     String type;
+    String txId;
   }
 
   @Override
