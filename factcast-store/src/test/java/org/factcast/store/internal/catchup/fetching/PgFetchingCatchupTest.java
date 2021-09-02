@@ -138,7 +138,7 @@ class PgFetchingCatchupTest {
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
       when(postQueryMatcher.test(testFact)).thenReturn(false);
       when(factTransformers.transformIfNecessary(any()))
-              .thenAnswer(inv -> inv.getArgument(0, Fact.class));
+          .thenAnswer(inv -> inv.getArgument(0, Fact.class));
       cbh.processRow(rs);
 
       verifyNoInteractions(subscription);
@@ -153,7 +153,7 @@ class PgFetchingCatchupTest {
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
       when(postQueryMatcher.test(testFact)).thenReturn(true);
       when(factTransformers.transformIfNecessary(any()))
-              .thenAnswer(inv -> inv.getArgument(0, Fact.class));
+          .thenAnswer(inv -> inv.getArgument(0, Fact.class));
 
       cbh.processRow(rs);
 
@@ -166,8 +166,8 @@ class PgFetchingCatchupTest {
       final var cbh = underTest.createRowCallbackHandler(false, extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
-              when(factTransformers.transformIfNecessary(any()))
-                      .thenAnswer(inv -> inv.getArgument(0, Fact.class));
+      when(factTransformers.transformIfNecessary(any()))
+          .thenAnswer(inv -> inv.getArgument(0, Fact.class));
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
       when(postQueryMatcher.test(testFact)).thenReturn(true);
       doThrow(TransformationException.class).when(subscription).notifyElement(testFact);
