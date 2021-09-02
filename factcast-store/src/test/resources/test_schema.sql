@@ -133,13 +133,10 @@ CREATE
       PRIMARY KEY(name)
     );
 
--- note that the UUID is part of the primary key, so it is not nullable.
--- while it makes sense to use a separate uuid when storing aggregate states, it is
--- completely useless with projection states. In this case we store a fake uuid(0,0) in order to maintain the PK constraint
 CREATE
   TABLE
     IF NOT EXISTS snapshot_cache(
-      cache_key VARCHAR(2048) NOT NULL,
+      cache_key VARCHAR(2048) NOT NULL, -- note that the UUID is part of the primary key, so it is not nullable.-- while it makes sense to use a separate uuid when storing aggregate states, it is-- completely useless with projection states. In this case we store a fake uuid(0,0) in order to maintain the PK constraint
       uuid uuid NOT NULL, -- represents the state of the blob (processed all relevant facts up to factid)
       factid uuid NOT NULL,
       DATA bytea NOT NULL, -- indicated if the data is already compressed in order to bypass transport compression if possible
@@ -221,6 +218,11 @@ CREATE
   public.transformationcache
     USING btree(last_access);
 
+CREATE
+  INDEX snapshot_cache_last_access ON
+  snapshot_cache
+    USING BTREE(last_access);
+
 DROP
   VIEW IF EXISTS stats_index;
 
@@ -267,44 +269,7 @@ CREATE
     1,
     2;
 
-DROP
-  TRIGGER IF EXISTS tr_fact_augment ON
-  fact CASCADE;
+-- unfortunately, the masterminds behind spring desperately need this last 'separator character'. don't ask why...
+-- just remove it, if you copy this to a console.
 
-DROP
-  FUNCTION IF EXISTS augmentSerialAndTimestamp CASCADE;
-
-CREATE
-  FUNCTION augmentSerialAndTimestamp() RETURNS TRIGGER AS $$ BEGIN SELECT
-    jsonb_set(
-      NEW.header,
-      '{meta}',
-      COALESCE(
-        NEW.header -> 'meta',
-        '{}'
-      )|| CONCAT(
-        '{',
-        '"_ser":',
-        NEW.ser,
-        ',',
-        '"_ts":',
-        EXTRACT(
-          EPOCH
-        FROM
-          now()::timestamptz(3)
-        )* 1000,
-        '}'
-      )::jsonb,
-      TRUE
-    ) INTO
-      NEW.header;
-
-RETURN NEW;
-END;
-
-$$ LANGUAGE plpgsql;
-
-CREATE
-  TRIGGER tr_fact_augment BEFORE INSERT
-    ON
-    fact FOR EACH ROW EXECUTE PROCEDURE augmentSerialAndTimestamp();
+#
