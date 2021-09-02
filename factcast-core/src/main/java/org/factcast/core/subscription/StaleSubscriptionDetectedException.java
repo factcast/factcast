@@ -13,12 +13,12 @@ public class StaleSubscriptionDetectedException extends RuntimeException {
   private static String createMessage(long last, long gracePeriod) {
     if (last == 0L) {
       return "Even though expected due to requesting keepalive, the client did not receive any"
-                 + " notification at all (waited for "
+          + " notification at all (waited for "
           + gracePeriod
           + "ms)";
     } else {
       return "Even though expected due to requesting keepalive, the client did not receive any"
-                 + " notification for the last "
+          + " notification for the last "
           + gracePeriod
           + "ms. (Last notification was received "
           + last
