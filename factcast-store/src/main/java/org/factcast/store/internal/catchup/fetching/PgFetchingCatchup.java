@@ -15,32 +15,31 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
-import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
-import org.factcast.store.internal.StoreMetrics.EVENT;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCallback;
-import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -64,69 +63,63 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final PgMetrics metrics;
 
+  @NonNull
+  @Setter(value = AccessLevel.PACKAGE, onMethod = @__(@VisibleForTesting))
+  DataSourceFactory dataSourceFactory = SingleConnectionDataSource::new;
+
+  @NonNull
+  @Setter(value = AccessLevel.PACKAGE, onMethod = @__(@VisibleForTesting))
+  JdbcTemplateFactory jdbcTemplateFactory = JdbcTemplate::new;
+
+  @NonNull
+  @Setter(value = AccessLevel.PACKAGE, onMethod = @__(@VisibleForTesting))
+  PagingPreparedStatementCallbackFactory pagingPreparedStatementCallbackFactory =
+      PagingPreparedStatementCallback::new;
+
+  @NonNull
+  @Setter(value = AccessLevel.PACKAGE, onMethod = @__(@VisibleForTesting))
+  Function<List<FactSpec>, PgQueryBuilder> pgQueryBuilderFactory = PgQueryBuilder::new;
+
+  @NonNull
+  @Setter(value = AccessLevel.PACKAGE, onMethod = @__(@VisibleForTesting))
+  Function<AtomicLong, PgFactExtractor> pgFactExtractorFactory = PgFactExtractor::new;
+
   @SneakyThrows
   @Override
   public void run() {
 
-    PgConnection connection = connectionSupplier.get();
-    connection.setAutoCommit(false); // necessary for using cursors
+    try (PgConnection connection = connectionSupplier.get()) {
+      connection.setAutoCommit(false); // necessary for using cursors
 
-    // connection may stay open quite a while, and we do not want a CPool to interfere
-    SingleConnectionDataSource ds = new SingleConnectionDataSource(connection, true);
+      // connection may stay open quite a while, and we do not want a CPool to interfere
+      SingleConnectionDataSource ds = dataSourceFactory.create(connection, true);
 
-    try {
-      var jdbc = new JdbcTemplate(ds);
-      fetch(jdbc);
-    } finally {
-      ds.destroy();
+      try {
+        var jdbc = jdbcTemplateFactory.create(ds);
+        fetch(jdbc);
+      } finally {
+        ds.destroy();
+      }
     }
   }
 
   @VisibleForTesting
   void fetch(JdbcTemplate jdbc) {
-    var skipTesting = postQueryMatcher.canBeSkipped();
 
-    PgQueryBuilder b = new PgQueryBuilder(req.specs());
-    var extractor = new PgFactExtractor(serial);
-    String catchupSQL = b.createSQL();
+    var b = pgQueryBuilderFactory.apply(req.specs());
+    var extractor = pgFactExtractorFactory.apply(serial);
+    var catchupSQL = b.createSQL();
 
     jdbc.execute(
         catchupSQL,
-        createPreparedStatementCallbackHandler(
-            b.createStatementSetter(serial), skipTesting, extractor));
-  }
-
-  @VisibleForTesting
-  PreparedStatementCallback<Void> createPreparedStatementCallbackHandler(
-      PreparedStatementSetter statementSetter, boolean skipTesting, PgFactExtractor extractor) {
-
-    return ps -> {
-      statementSetter.setValues(ps);
-
-      ps.setQueryTimeout(0); // disable query timeout
-      ps.setFetchSize(props.getPageSize());
-
-      try (var resultSet = ps.executeQuery()) {
-        iterateOverResultSet(skipTesting, extractor, resultSet);
-      }
-
-      return null;
-    };
-  }
-
-  private void iterateOverResultSet(
-      boolean skipTesting, PgFactExtractor extractor, ResultSet resultSet) throws SQLException {
-
-    while (resultSet.next()) {
-      Fact f = extractor.mapRow(resultSet, 0); // does not use the rowNum anyway
-      Fact transformed = factTransformers.transformIfNecessary(f);
-
-      if (skipTesting || postQueryMatcher.test(transformed)) {
-        subscription.notifyElement(transformed);
-        metrics.counter(EVENT.CATCHUP_FACT);
-      } else {
-        log.trace("{} filtered id={}", req, transformed.id());
-      }
-    }
+        pagingPreparedStatementCallbackFactory.create(
+            b.createStatementSetter(serial),
+            extractor,
+            props,
+            factTransformers,
+            subscription,
+            metrics,
+            req,
+            postQueryMatcher));
   }
 }

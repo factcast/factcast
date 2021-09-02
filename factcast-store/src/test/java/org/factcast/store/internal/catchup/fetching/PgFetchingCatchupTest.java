@@ -15,318 +15,147 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyInt;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.same;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
-import org.factcast.core.Fact;
-import org.factcast.core.TestFact;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
-import lombok.NonNull;
 import lombok.SneakyThrows;
 
 @ExtendWith(MockitoExtension.class)
 class PgFetchingCatchupTest {
 
-  @Mock @NonNull PgConnectionSupplier connectionSupplier;
-  @Mock @NonNull StoreConfigurationProperties props;
-  @Mock @NonNull SubscriptionRequestTO req;
-  @Mock @NonNull PgPostQueryMatcher postQueryMatcher;
-  @Mock @NonNull SubscriptionImpl subscription;
-  @Mock @NonNull FactTransformers factTransformers;
-  @Mock @NonNull AtomicLong serial;
-  @Mock @NonNull PgMetrics metrics;
+  @Mock PgConnectionSupplier connectionSupplier;
+  @Mock StoreConfigurationProperties props;
+  @Mock SubscriptionRequestTO req;
+  @Mock PgPostQueryMatcher postQueryMatcher;
+  @Mock SubscriptionImpl subscription;
+  @Mock FactTransformers factTransformers;
+  @Mock AtomicLong serial;
+  @Mock PgMetrics metrics;
+  // need to inject those manually:
+  @Mock DataSourceFactory dataSourceFactory;
+  @Mock JdbcTemplateFactory jdbcTemplateFactory;
+  @Mock PagingPreparedStatementCallbackFactory pagingPreparedStatementCallbackFactory;
+  @Mock Function<List<FactSpec>, PgQueryBuilder> pgQueryBuilderFactory;
+  @Mock Function<AtomicLong, PgFactExtractor> pgFactExtractorFactory;
+
   @InjectMocks PgFetchingCatchup underTest;
 
-  @Mock @NonNull PreparedStatementSetter statementSetters;
-  @Mock PgFactExtractor extractor;
+  @Mock List<FactSpec> specs;
+  @Mock PgConnection con;
+  @Mock SingleConnectionDataSource dataSource;
+  @Mock JdbcTemplate jdbcTemplate;
+  @Mock PagingPreparedStatementCallback pagingPreparedStatementCallback;
+  @Mock PgQueryBuilder pgQueryBuilder;
+  @Mock PgFactExtractor pgFactExtractor;
+  @Mock PreparedStatementSetter preparedStatementSetter;
 
-  @Nested
-  class WhenRunning {
-    @BeforeEach
-    void setup() {}
+  @BeforeEach
+  @SneakyThrows
+  void setup() {
+    underTest.dataSourceFactory(dataSourceFactory);
+    underTest.jdbcTemplateFactory(jdbcTemplateFactory);
+    underTest.pagingPreparedStatementCallbackFactory(pagingPreparedStatementCallbackFactory);
+    underTest.pgQueryBuilderFactory(pgQueryBuilderFactory);
+    underTest.pgFactExtractorFactory(pgFactExtractorFactory);
 
-    @SneakyThrows
-    @Test
-    void connectionHandling() {
-      PgConnection con = mock(PgConnection.class);
-      when(connectionSupplier.get()).thenReturn(con);
-
-      final var uut = spy(underTest);
-      doNothing().when(uut).fetch(any());
-
-      uut.run();
-
-      verify(con).setAutoCommit(false);
-      verify(con).close();
-    }
+    when(pgQueryBuilderFactory.apply(specs)).thenReturn(pgQueryBuilder);
+    when(pgFactExtractorFactory.apply(serial)).thenReturn(pgFactExtractor);
+    when(pagingPreparedStatementCallbackFactory.create(
+            preparedStatementSetter,
+            pgFactExtractor,
+            props,
+            factTransformers,
+            subscription,
+            metrics,
+            req,
+            postQueryMatcher))
+        .thenReturn(pagingPreparedStatementCallback);
+    when(pgQueryBuilder.createStatementSetter(serial)).thenReturn(preparedStatementSetter);
+    when(pgQueryBuilder.createSQL()).thenReturn("SELECT * FROM FACT WHERE ...");
+    when(req.specs()).thenReturn(specs);
   }
 
-  @Nested
-  class WhenFetching {
-    @Mock @NonNull JdbcTemplate jdbc;
+  @Test
+  @SneakyThrows
+  void connectionHandling() {
+    when(connectionSupplier.get()).thenReturn(con);
+    when(dataSourceFactory.create(con, true)).thenReturn(dataSource);
+    when(jdbcTemplateFactory.create(dataSource)).thenReturn(jdbcTemplate);
 
-    @BeforeEach
-    void setup() {
-      Mockito.when(props.getPageSize()).thenReturn(47);
-    }
+    underTest.run();
 
-    @Test
-    @SneakyThrows
-    void setsCorrectFetchSize() {
+    InOrder inOrder =
+        inOrder(con, dataSourceFactory, jdbcTemplateFactory, jdbcTemplate, dataSource);
 
-      final var cbh =
-          underTest.createPreparedStatementCallbackHandler(statementSetters, true, extractor);
-
-      PreparedStatement preparedStatement = mock(PreparedStatement.class);
-      ResultSet rs = mock(ResultSet.class);
-      when(preparedStatement.executeQuery()).thenReturn(rs);
-
-      cbh.doInPreparedStatement(preparedStatement);
-
-      verify(preparedStatement).setFetchSize(eq(props.getPageSize()));
-    }
-
-    @Test
-    @SneakyThrows
-    void setsCorrectQueryTimeout() {
-
-      final var cbh =
-          underTest.createPreparedStatementCallbackHandler(statementSetters, true, extractor);
-
-      PreparedStatement preparedStatement = mock(PreparedStatement.class);
-      ResultSet rs = mock(ResultSet.class);
-      when(preparedStatement.executeQuery()).thenReturn(rs);
-
-      cbh.doInPreparedStatement(preparedStatement);
-
-      verify(preparedStatement).setQueryTimeout(0);
-    }
+    inOrder.verify(con).setAutoCommit(false);
+    // need to check we set suppressClose to true
+    inOrder.verify(dataSourceFactory).create(con, true);
+    inOrder.verify(jdbcTemplateFactory).create(dataSource);
+    // now run query
+    inOrder.verify(jdbcTemplate).execute(anyString(), any(PagingPreparedStatementCallback.class));
+    // clean up
+    inOrder.verify(dataSource).destroy();
+    inOrder.verify(con).close();
   }
 
-  @Nested
-  class WhenCreatingRowCallbackHandler {
-    final boolean SKIP_TESTING = true;
-    @Mock PgFactExtractor extractor;
+  @Test
+  @SneakyThrows
+  void runQuery() {
 
-    @BeforeEach
-    void setup() {}
+    underTest.fetch(jdbcTemplate);
 
-    @SneakyThrows
-    @Test
-    void skipsPostQueryMatching() {
-      // INIT
-      final var cbh =
-          underTest.createPreparedStatementCallbackHandler(
-              statementSetters, SKIP_TESTING, extractor);
-      ResultSet rs = mock(ResultSet.class);
-      when(rs.next()).thenReturn(true, false);
+    InOrder inOrder =
+        inOrder(
+            pgQueryBuilderFactory,
+            pgFactExtractorFactory,
+            jdbcTemplate,
+            pagingPreparedStatementCallbackFactory);
 
-      Fact testFact = new TestFact();
-      when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      // return true, so if skipTesting is ignored, we would actually notify the subscription
-      when(factTransformers.transformIfNecessary(any()))
-          .thenAnswer(inv -> inv.getArgument(0, Fact.class));
+    inOrder.verify(pgQueryBuilderFactory).apply(specs);
+    inOrder.verify(pgFactExtractorFactory).apply(serial);
 
-      PreparedStatement preparedStatement = mock(PreparedStatement.class);
-      when(preparedStatement.executeQuery()).thenReturn(rs);
+    inOrder
+        .verify(pagingPreparedStatementCallbackFactory)
+        .create(
+            preparedStatementSetter,
+            pgFactExtractor,
+            props,
+            factTransformers,
+            subscription,
+            metrics,
+            req,
+            postQueryMatcher);
 
-      // RUN
-      cbh.doInPreparedStatement(preparedStatement);
-
-      // ASSERT
-      InOrder inOrder =
-          inOrder(
-              statementSetters,
-              preparedStatement,
-              rs,
-              factTransformers,
-              extractor,
-              postQueryMatcher);
-
-      inOrder.verify(statementSetters).setValues(preparedStatement);
-
-      inOrder.verify(preparedStatement).setQueryTimeout(0);
-      inOrder.verify(preparedStatement).setFetchSize(props.getPageSize());
-
-      inOrder.verify(preparedStatement).executeQuery();
-
-      inOrder.verify(rs).next();
-
-      inOrder.verify(extractor).mapRow(rs, 0);
-
-      inOrder.verify(factTransformers).transformIfNecessary(testFact);
-
-      verify(subscription).notifyElement(testFact);
-
-      inOrder.verify(rs).next();
-
-      inOrder.verify(rs).close();
-
-      verifyNoInteractions(postQueryMatcher);
-    }
-
-    @SneakyThrows
-    @Test
-    void filtersInPostQueryMatching() {
-      // INIT
-      final var cbh =
-          underTest.createPreparedStatementCallbackHandler(statementSetters, false, extractor);
-      ResultSet rs = mock(ResultSet.class);
-      when(rs.next()).thenReturn(true, false);
-
-      Fact testFact = new TestFact();
-      when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      when(postQueryMatcher.test(testFact)).thenReturn(false);
-      when(factTransformers.transformIfNecessary(any()))
-          .thenAnswer(inv -> inv.getArgument(0, Fact.class));
-
-      PreparedStatement preparedStatement = mock(PreparedStatement.class);
-      when(preparedStatement.executeQuery()).thenReturn(rs);
-
-      // RUN
-      cbh.doInPreparedStatement(preparedStatement);
-
-      // ASSERT
-      InOrder inOrder =
-          inOrder(
-              statementSetters,
-              preparedStatement,
-              rs,
-              factTransformers,
-              extractor,
-              postQueryMatcher);
-
-      inOrder.verify(statementSetters).setValues(preparedStatement);
-
-      inOrder.verify(preparedStatement).setQueryTimeout(0);
-      inOrder.verify(preparedStatement).setFetchSize(props.getPageSize());
-
-      inOrder.verify(preparedStatement).executeQuery();
-
-      inOrder.verify(rs).next();
-
-      inOrder.verify(extractor).mapRow(rs, 0);
-
-      inOrder.verify(factTransformers).transformIfNecessary(testFact);
-
-      inOrder.verify(postQueryMatcher).test(testFact);
-
-      inOrder.verify(rs).next();
-
-      inOrder.verify(rs).close();
-
-      verifyNoInteractions(subscription);
-    }
-
-    @SneakyThrows
-    @Test
-    void notifies() {
-      final var cbh =
-          underTest.createPreparedStatementCallbackHandler(statementSetters, false, extractor);
-      ResultSet rs = mock(ResultSet.class);
-      when(rs.next()).thenReturn(true, false);
-      Fact testFact = new TestFact();
-      when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      when(postQueryMatcher.test(testFact)).thenReturn(true);
-      when(factTransformers.transformIfNecessary(any()))
-          .thenAnswer(inv -> inv.getArgument(0, Fact.class));
-
-      PreparedStatement preparedStatement = mock(PreparedStatement.class);
-      when(preparedStatement.executeQuery()).thenReturn(rs);
-
-      // RUN
-      cbh.doInPreparedStatement(preparedStatement);
-
-      // ASSERT
-      InOrder inOrder =
-          inOrder(
-              statementSetters,
-              preparedStatement,
-              rs,
-              factTransformers,
-              subscription,
-              extractor,
-              postQueryMatcher);
-
-      inOrder.verify(statementSetters).setValues(preparedStatement);
-
-      inOrder.verify(preparedStatement).setQueryTimeout(0);
-      inOrder.verify(preparedStatement).setFetchSize(props.getPageSize());
-
-      inOrder.verify(preparedStatement).executeQuery();
-
-      inOrder.verify(rs).next();
-
-      inOrder.verify(extractor).mapRow(rs, 0);
-
-      inOrder.verify(factTransformers).transformIfNecessary(testFact);
-
-      inOrder.verify(postQueryMatcher).test(testFact);
-
-      verify(subscription).notifyElement(testFact);
-
-      inOrder.verify(rs).next();
-
-      inOrder.verify(rs).close();
-    }
-
-    @SneakyThrows
-    @Test
-    void notifiesTransformationException() {
-      final var cbh =
-          underTest.createPreparedStatementCallbackHandler(statementSetters, false, extractor);
-      ResultSet rs = mock(ResultSet.class);
-      when(rs.next()).thenReturn(true, false);
-      Fact testFact = new TestFact();
-      when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      doThrow(TransformationException.class).when(factTransformers).transformIfNecessary(any());
-
-      PreparedStatement preparedStatement = mock(PreparedStatement.class);
-      when(preparedStatement.executeQuery()).thenReturn(rs);
-
-      // just test that it'll be escalated unchanged from the code,
-      // so that it can be handled in PgSubscriptionFactory
-      assertThatThrownBy(
-              () -> {
-                cbh.doInPreparedStatement(preparedStatement);
-              })
-          .isInstanceOf(TransformationException.class);
-    }
+    inOrder
+        .verify(jdbcTemplate)
+        .execute("SELECT * FROM FACT WHERE ...", pagingPreparedStatementCallback);
   }
 }
