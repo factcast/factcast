@@ -445,7 +445,8 @@
 								<version>4.13.0</version>
 							</eclipseWtp>
 							<indent>
-								<tabs>true</tabs>
+                                                              <spaces>true</spaces>
+                                                              <spacesPerTab>2</spacesPerTab>
 							</indent>
 							<trimTrailingWhitespace />
 							<endWithNewline />
