@@ -1,4 +1,4 @@
-# CREATE
+CREATE
   EXTENSION IF NOT EXISTS "uuid-ossp";
 
 DROP
@@ -44,7 +44,7 @@ CREATE
       payload JSONB NOT NULL
     );
 
-# CREATE
+CREATE
   OR REPLACE FUNCTION notifyFactInsert() RETURNS TRIGGER AS $$ BEGIN PERFORM pg_notify(
     'fact_insert',
     json_build_object(
@@ -60,12 +60,12 @@ END;
 
 $$ LANGUAGE plpgsql;
 
-# CREATE
+CREATE
   CONSTRAINT TRIGGER tr_deferred_fact_insert AFTER INSERT
     ON
     fact DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE PROCEDURE notifyFactInsert();
 
-# CREATE
+CREATE
   SEQUENCE catchup_seq;
 
 CREATE
@@ -76,7 +76,7 @@ CREATE
       ts TIMESTAMP
     );
 
-# CREATE
+CREATE
   TABLE
     IF NOT EXISTS tokenstore(
       token UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -221,7 +221,90 @@ CREATE
   public.transformationcache
     USING btree(last_access);
 
+DROP
+  VIEW IF EXISTS stats_index;
+
 CREATE
-  INDEX snapshot_cache_last_access ON
-  snapshot_cache
-    USING BTREE(last_access);
+  VIEW stats_index AS SELECT
+    t.schemaname,
+    t.tablename,
+    c.reltuples::BIGINT AS num_rows,
+    pg_size_pretty(
+      pg_relation_size(c.oid)
+    ) AS table_size,
+    psai.indexrelname AS index_name,
+    pg_size_pretty(
+      pg_relation_size(i.indexrelid)
+    ) AS index_size,
+    CASE
+      WHEN i.indisunique THEN 'Y'
+      ELSE 'N'
+    END AS "unique",
+    psai.idx_scan AS number_of_scans,
+    psai.idx_tup_read AS tuples_read,
+    psai.idx_tup_fetch AS tuples_fetched,
+    CASE
+      WHEN i.indisvalid THEN 'Y'
+      ELSE CASE
+        WHEN i IS NULL THEN '-'
+        ELSE 'N'
+      END
+    END AS "valid"
+  FROM
+    pg_tables t
+  LEFT JOIN pg_class c ON
+    t.tablename = c.relname
+  LEFT JOIN pg_index i ON
+    c.oid = i.indrelid
+  LEFT JOIN pg_stat_all_indexes psai ON
+    i.indexrelid = psai.indexrelid
+  WHERE
+    t.schemaname NOT IN(
+      'pg_catalog',
+      'information_schema'
+    )
+  ORDER BY
+    1,
+    2;
+
+DROP
+  TRIGGER IF EXISTS tr_fact_augment ON
+  fact CASCADE;
+
+DROP
+  FUNCTION IF EXISTS augmentSerialAndTimestamp CASCADE;
+
+CREATE
+  FUNCTION augmentSerialAndTimestamp() RETURNS TRIGGER AS $$ BEGIN SELECT
+    jsonb_set(
+      NEW.header,
+      '{meta}',
+      COALESCE(
+        NEW.header -> 'meta',
+        '{}'
+      )|| CONCAT(
+        '{',
+        '"_ser":',
+        NEW.ser,
+        ',',
+        '"_ts":',
+        EXTRACT(
+          EPOCH
+        FROM
+          now()::timestamptz(3)
+        )* 1000,
+        '}'
+      )::jsonb,
+      TRUE
+    ) INTO
+      NEW.header;
+
+RETURN NEW;
+END;
+
+$$ LANGUAGE plpgsql;
+
+CREATE
+  TRIGGER tr_fact_augment BEFORE INSERT
+    ON
+    fact FOR EACH ROW EXECUTE PROCEDURE augmentSerialAndTimestamp();

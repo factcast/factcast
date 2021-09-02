@@ -57,9 +57,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class PgFactStore extends AbstractFactStore {
 
-  // is that interesting to configure?
-  private static final int BATCH_SIZE = 500;
-
   @NonNull private final JdbcTemplate jdbcTemplate;
 
   @NonNull private final PgSubscriptionFactory subscriptionFactory;
@@ -133,27 +130,17 @@ public class PgFactStore extends AbstractFactStore {
 
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
             int numberOfFactsToPublish = factsToPublish.size();
-            log.trace(
-                "Inserting {} fact(s){}",
-                numberOfFactsToPublish,
-                numberOfFactsToPublish > BATCH_SIZE ? " in batches of " + BATCH_SIZE : "");
+            log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
             jdbcTemplate.batchUpdate(
                 PgConstants.INSERT_FACT,
                 copiedListOfFacts,
-                BATCH_SIZE,
+                // batch limitation not necessary
+                Integer.MAX_VALUE,
                 (statement, fact) -> {
                   statement.setString(1, fact.jsonHeader());
                   statement.setString(2, fact.jsonPayload());
                 });
-            // add serials to headers
-            jdbcTemplate.batchUpdate(
-                PgConstants.UPDATE_FACT_SERIALS,
-                copiedListOfFacts,
-                BATCH_SIZE,
-                (statement, fact) -> {
-                  String idMatch = "{\"id\":\"" + fact.id() + "\"}";
-                  statement.setString(1, idMatch);
-                });
+            // adding serials to headers is done via trigger
 
           } catch (DuplicateKeyException dupkey) {
             throw new IllegalArgumentException(dupkey.getMessage());
