@@ -128,7 +128,8 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
         // keep log message in sync with asserts in
         // PGTailIndexManagerImplIntTest.doesNotCreateIndexConcurrently
         log.error(
-            "After error, tried to drop the index that could not be created ({}), but received another error:",
+            "After error, tried to drop the index that could not be created ({}), but received"
+                + " another error:",
             indexName,
             e2);
       }
