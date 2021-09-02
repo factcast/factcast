@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.store.internal.listen.PgListener;
+import org.factcast.store.internal.listen.PgListener.Signal;
 
 /**
  * Executes a given runnable if triggered, but ignores all subsequent triggers for maxDelayInMillis.
@@ -108,7 +108,7 @@ class CondensedQueryExecutor {
 
   // called by the EventBus
   @Subscribe
-  public void onEvent(PgListener.FactInsertionEvent ev) {
+  public void onEvent(Signal ev) {
 
     String ns = ev.ns();
     String type = ev.type();

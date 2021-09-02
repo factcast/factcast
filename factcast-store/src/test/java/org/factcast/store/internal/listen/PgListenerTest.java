@@ -15,32 +15,21 @@
  */
 package org.factcast.store.internal.listen;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
+import com.google.common.eventbus.EventBus;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.function.Predicate;
-
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.factcast.store.internal.listen.PgListener.Signal;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -50,13 +39,11 @@ import org.postgresql.PGNotification;
 import org.postgresql.core.Notification;
 import org.postgresql.jdbc.PgConnection;
 
-import com.google.common.eventbus.EventBus;
-
 @SuppressWarnings("UnstableApiUsage")
 @ExtendWith(MockitoExtension.class)
 public class PgListenerTest {
 
-  private static final Predicate<PgListener.FactInsertionEvent> IS_FACT_INSERT =
+  private static final Predicate<Signal> IS_FACT_INSERT =
       f -> f.name().equals(PgConstants.CHANNEL_FACT_INSERT);
 
   @Mock PgConnectionSupplier pgConnectionSupplier;
@@ -73,7 +60,7 @@ public class PgListenerTest {
 
   final StoreConfigurationProperties props = new StoreConfigurationProperties();
 
-  @Captor ArgumentCaptor<PgListener.FactInsertionEvent> factCaptor;
+  @Captor ArgumentCaptor<Signal> factCaptor;
 
   @Test
   public void postgresListenersAreSetup() throws SQLException {
@@ -184,7 +171,7 @@ public class PgListenerTest {
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.informSubscriberOfChannelNotifications(receivedNotifications);
 
-    verify(eventBus, never()).post(any(PgListener.FactInsertionEvent.class));
+    verify(eventBus, never()).post(any(Signal.class));
   }
 
   @Test
@@ -200,7 +187,6 @@ public class PgListenerTest {
     verify(pgConnectionSupplier, times(3)).get();
   }
 
-  // tests the whole thread
   @Test
   void testNotify() throws Exception {
     when(pgConnectionSupplier.get()).thenReturn(conn);
@@ -231,7 +217,16 @@ public class PgListenerTest {
               new Notification(
                   PgConstants.CHANNEL_FACT_INSERT,
                   1,
-                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theOtherType\"}, \"txId\": 345}")
+                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theOtherType\"}, \"txId\": 345}"),
+              // recurring notifications in second array:
+              new Notification(
+                  PgConstants.CHANNEL_FACT_INSERT,
+                  1,
+                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theOtherType\"}, \"txId\": 123}"),
+              new Notification(
+                  PgConstants.CHANNEL_FACT_INSERT,
+                  1,
+                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theType\"}, \"txId\": 123}"),
             }, //
             new PGNotification[] {new Notification(PgConstants.CHANNEL_FACT_INSERT, 3, "{}")},
             new PGNotification[] {new Notification(PgConstants.CHANNEL_ROUNDTRIP, 3, "{}")},
@@ -255,23 +250,23 @@ public class PgListenerTest {
     // in total there are only 3 notifies
     long totalNotifyCount = allEvents.stream().filter(IS_FACT_INSERT).count();
 
-    assertEquals(
-        6, totalNotifyCount); // rather than one per array, we now get one per notification type,
+    allEvents.stream().forEach(System.out::println);
+
     // grouped by tx id, ns and type
     assertThat(allEvents.stream().filter(IS_FACT_INSERT))
         .containsExactlyInAnyOrder(
-            new PgListener.FactInsertionEvent(PgConstants.CHANNEL_FACT_INSERT, null, null),
-            new PgListener.FactInsertionEvent(PgConstants.CHANNEL_FACT_INSERT, null, null),
-            new PgListener.FactInsertionEvent(PgConstants.CHANNEL_FACT_INSERT, null, null),
+            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null, null),
+            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null, null),
+            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null, null),
+            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null, null),
             // must appear only once
-            new PgListener.FactInsertionEvent(
-                PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType"),
+            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType", "123"),
             // must appear, even if was in the same tx as theType
-            new PgListener.FactInsertionEvent(
-                PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"),
+            new PgListener.Signal(
+                PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType", "123"),
             // must appear, as it is a new tx
-            new PgListener.FactInsertionEvent(
-                PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"));
+            new PgListener.Signal(
+                PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType", "345"));
   }
 
   @Test
