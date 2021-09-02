@@ -1,15 +1,16 @@
 ---
 title: "Properties"
-type: docs
+type: docs 
 weight: 200
+description: Properties you can use to configure FactCast
 ---
 
 
-Properties you can use to configure FactCast:
+
 
 ### Schemaregistry
 
-| Property        | Description           | Default   
+| Property        | Description           | Default
 | ------------- |:-------------|:-----|
 | factcast.store.schemaRegistryUrl            | if a schemaRegistryUrl is defined, FactCast goes into validating mode. The only protocols allowed here are *'http', 'https', 'classpath' and 'file'. Note that http(s) and file always require two slashes after the colon, e.g. 'https://someserver/...' or 'file:///root/folder/...'.*|  
 | factcast.store.persistentRegistry           | if fetched Schema and Transformation Documents are persisted into Postgres | false 
@@ -21,18 +22,18 @@ Properties you can use to configure FactCast:
 
 ### Transformation-Registry
 
-| Property        | Description           | Default   
+| Property        | Description           | Default
 | ------------- |:-------------|:-----|
-| factcast.store.persistentTransformationCache                    | if Transformed Fact payloads are persistently cached into Postgres| false 
-| factcast.store.inMemTransformationCacheCapacity                 | when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum value here is 1000. | 1_000_000 
-| factcast.store.deleteTransformationsStaleForDays                | when using the persistent impl of the transformation cache, this is the min number of days a transformation result is not read in order to be considered stale. This should free some space in a regular cleanup job | 14  
+| factcast.store.persistentTransformationCache                    | if Transformed Fact payloads are persistently cached into Postgres| false
+| factcast.store.inMemTransformationCacheCapacity                 | when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum value here is 1000. | 1_000_000
+| factcast.store.deleteTransformationsStaleForDays                | when using the persistent impl of the transformation cache, this is the min number of days a transformation result is not read in order to be considered stale. This should free some space in a regular cleanup job | 14
 | factcast.store.transformationCacheCompactCron                   | defines the cron schedule for compacting the transformation result cache | `0 0 0 * * *` (at midnight)
 
 ---
 
 ### Performance / Reliability
 
-| Property        | Description           | Default   
+| Property        | Description           | Default
 | ------------- |:-------------|:-----|
 |factcast.store.factNotificationBlockingWaitTimeInMillis| Controls how long to block waiting for new notifications from the database (Postgres LISTEN/ NOTIFY mechanism). When this time exceeds the notifications is repeated | 15000 (15sec)
 |factcast.store.factNotificationMaxRoundTripLatencyInMillis| When FactCast did not receive any notifications after factNotificationBlockingWaitTimeInMillis milliseconds it validates the health of the database connection. For this purpose it sends an internal notification to the database and waits for the given time to receive back an answer. If the time is exceeded the database connection is renewed | 200
@@ -41,17 +42,18 @@ Properties you can use to configure FactCast:
 |factcast.store.catchup-strategy| FETCHING uses database cursors where PAGED uses separate queries on TEMPORARY tables. FETCHING tends to be faster. | FETCHING
 |factcast.store.indexCheckCron| Cron expression defining a routine check for index validity | `0 0 3 * * *` (3 am)
 |factcast.store.tailIndexingEnabled| enable/ disable [tail indexing]({{< ref "tail-index.md">}}) | false
+|factcast.store.tailManagementCron| cron schedule when tail rotation should be carried out  | <nobr>`0 0 0 * * *`</nobr> (at midnight)
 |factcast.store.tailGenerationsToKeep| the number of tail indexes to keep. The higher the number, the slower the inserts. Probably 2 or 3 is a good value unless you have a very high tail rebuild frequency and not permanently connected applications (like offline clients for instance) | 3
 |factcast.store.minimumTailAge| minimum age of the youngest tail index, before a new one is created | 7 days
-|factcast.store.tailManagementCron| cron schedule when tail rotation should be carried out  | <nobr>`0 0 0 * * *`</nobr> (at midnight)
+|factcast.store.tailCreationTimeout| Index creation can hang for a long time in case of many open transactions. To avoid this, you can specify a timeout.<BR>We will subtract 5 seconds from the given duration before applying it to setTimeout. | <nobr>`1d`</nobr>
 
 ___
 
 ### Snapshots
 
-| Property        | Description           | Default   
+| Property        | Description           | Default
 | ------------- |:-------------|:-----|
-| factcast.store.deleteSnapshotStaleForDays |   min number of days a snapshot is kept even though it is not read anymore | 90  
+| factcast.store.deleteSnapshotStaleForDays |   min number of days a snapshot is kept even though it is not read anymore | 90
 | factcast.store.snapshotCacheCompactCron             |defines the cron schedule for compacting the snapshot cache | `0 0 0 * * *` (at midnight)
 
 ___
@@ -59,7 +61,6 @@ ___
 ### gRPC
 
 Properties you can use to configure gRPC:
-
 
 #### gRPC Client
 
@@ -75,9 +76,9 @@ Properties you can use to configure gRPC:
 #### gRPC Client recommended settings
 
 ```properties
-grpc.client.factstore.enable-keep-alive=true
-grpc.client.factstore.keep-alive-time=300
-grpc.client.factstore.keep-alive-without-calls=true
+grpc.client.factstore.enable-keep-alive        = true
+grpc.client.factstore.keep-alive-time          = 300
+grpc.client.factstore.keep-alive-without-calls = true
 ```
 
 Further details can be found here : `net.devh.boot.grpc.client.config.GrpcChannelProperties`.
@@ -105,14 +106,13 @@ Further details can be found here : `net.devh.boot.grpc.client.config.GrpcChanne
 #### gRPC Server recommended settings
 
 ```properties
-grpc.server.permit-keep-alive-without-calls=true
-grpc.server.permit-keep-alive-time=100
+grpc.server.permit-keep-alive-without-calls = true
+grpc.server.permit-keep-alive-time          = 100
 ```
-
 
 ### Testing
 
-| Property        | Semantics           | Default   
+| Property        | Semantics           | Default
 | ------------- |:-------------|:-----|
 |factcast.store.integrationTestMode| when set to true, disables all non-essential memory-internal caches, timing might differ to production of course. | false
 
