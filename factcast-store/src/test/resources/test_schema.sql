@@ -269,6 +269,48 @@ CREATE
     1,
     2;
 
+DROP
+  TRIGGER IF EXISTS tr_fact_augment ON
+  fact CASCADE;
+
+DROP
+  FUNCTION IF EXISTS augmentSerialAndTimestamp CASCADE;
+
+CREATE
+  FUNCTION augmentSerialAndTimestamp() RETURNS TRIGGER AS $$ BEGIN SELECT
+    jsonb_set(
+      NEW.header,
+      '{meta}',
+      COALESCE(
+        NEW.header -> 'meta',
+        '{}'
+      )|| CONCAT(
+        '{',
+        '"_ser":',
+        NEW.ser,
+        ',',
+        '"_ts":',
+        EXTRACT(
+          EPOCH
+        FROM
+          now()::timestamptz(3)
+        )* 1000,
+        '}'
+      )::jsonb,
+      TRUE
+    ) INTO
+      NEW.header;
+
+RETURN NEW;
+END;
+
+$$ LANGUAGE plpgsql;
+
+CREATE
+  TRIGGER tr_fact_augment BEFORE INSERT
+    ON
+    fact FOR EACH ROW EXECUTE PROCEDURE augmentSerialAndTimestamp();
+
 -- unfortunately, the masterminds behind spring desperately need this last 'separator character'. don't ask why...
 -- just remove it, if you copy this to a console.
 
