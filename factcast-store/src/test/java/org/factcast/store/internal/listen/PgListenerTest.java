@@ -250,12 +250,9 @@ public class PgListenerTest {
     // in total there are only 3 notifies
     long totalNotifyCount = allEvents.stream().filter(IS_FACT_INSERT).count();
 
-    allEvents.stream().forEach(System.out::println);
-
     // grouped by tx id, ns and type
     assertThat(allEvents.stream().filter(IS_FACT_INSERT))
         .containsExactlyInAnyOrder(
-            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null, null),
             new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null, null),
             new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null, null),
             new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null, null),

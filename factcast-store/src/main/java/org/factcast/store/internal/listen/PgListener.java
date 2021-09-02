@@ -22,7 +22,6 @@ import com.google.common.eventbus.EventBus;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -134,6 +133,9 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @VisibleForTesting
   protected void informSubscriberOfChannelNotifications(PGNotification[] notifications) {
+
+    AtomicBoolean oncePerArray = new AtomicBoolean(false);
+
     Arrays.asList(notifications)
         .forEach(
             n -> {
@@ -155,17 +157,18 @@ public class PgListener implements InitializingBean, DisposableBean {
                 } catch (JsonProcessingException | NullPointerException e) {
                   // unparseable, probably longer than 8k ?
                   // fall back to informingAllSubscribers
-                  log.debug(
-                          "Unparesable JSON header from Notification: {}. Notifying everyone - just in case",
-                          name);
-                  postEvent(PgConstants.CHANNEL_FACT_INSERT);
+                  if (!oncePerArray.getAndSet(true)) {
+                    log.debug(
+                        "Unparesable JSON header from Notification: {}. Notifying everyone - just in case",
+                        name);
+                    postEvent(PgConstants.CHANNEL_FACT_INSERT);
+                  }
                 }
               }
               if (!PgConstants.CHANNEL_ROUNDTRIP.equals(name)) {
                 log.debug("Ignored notification from unknown channel: {}", name);
               }
             });
-
   }
 
   // try to receive Postgres notifications until timeout is over. In case we
@@ -225,7 +228,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @VisibleForTesting
   protected void postEvent(@NonNull PgListener.Signal signal) {
-    if (running.get()&&signalDeduplicationSet.add(signal)) {
+    if (running.get() && signalDeduplicationSet.add(signal)) {
       eventBus.post(signal);
     }
   }
