@@ -146,11 +146,11 @@ public class PgListener implements InitializingBean, DisposableBean {
 
                 try {
                   JsonNode root = FactCastJson.readTree(json);
-                  var txId = root.get("txId").asText();
                   JsonNode header = root.get("header");
 
                   String ns = header.get("ns").asText();
                   String type = header.get("type").asText();
+                  String txId = root.get("txId").asText();
 
                   postEvent(new Signal(PgConstants.CHANNEL_FACT_INSERT, ns, type, txId));
 
