@@ -47,9 +47,9 @@ public class PgSchemaStoreImpl implements SchemaStore {
 
     try {
       jdbcTemplate.update(
-          "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) "
-              + "ON CONFLICT ON CONSTRAINT schemastore_pkey DO "
-              + "UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
+          "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? ::"
+              + " JSONB) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set"
+              + " hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
           // INSERT
           key.id(),
           key.hash(),
@@ -71,9 +71,9 @@ public class PgSchemaStoreImpl implements SchemaStore {
       // as we have seen conflicts on the triple ns.type,version as well (which is surprising,
       // because pkey should complain first, we handle this situation by giving it another try here:
       jdbcTemplate.update(
-          "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) "
-              + "ON CONFLICT ON CONSTRAINT schemastore_ns_type_version_key DO "
-              + "UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
+          "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? ::"
+              + " JSONB) ON CONFLICT ON CONSTRAINT schemastore_ns_type_version_key DO UPDATE set"
+              + " hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
           // INSERT
           key.id(),
           key.hash(),

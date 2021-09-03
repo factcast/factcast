@@ -59,7 +59,8 @@ public class FactValidator {
 
           return Lists.newArrayList(
               new FactValidationError(
-                  "Fact is not validatable. (usually lacks necessary information like namespace, type or version)"));
+                  "Fact is not validatable. (usually lacks necessary information like namespace,"
+                      + " type or version)"));
         }
       }
     }

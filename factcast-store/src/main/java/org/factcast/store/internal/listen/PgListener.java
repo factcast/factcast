@@ -159,7 +159,8 @@ public class PgListener implements InitializingBean, DisposableBean {
                   // fall back to informingAllSubscribers
                   if (!oncePerArray.getAndSet(true)) {
                     log.debug(
-                        "Unparesable JSON header from Notification: {}. Notifying everyone - just in case",
+                        "Unparesable JSON header from Notification: {}. Notifying everyone - just"
+                            + " in case",
                         name);
                     postEvent(PgConstants.CHANNEL_FACT_INSERT);
                   }

@@ -38,7 +38,8 @@ public class InLockedOperation {
   public static void assertNotInLockedOperation() {
     if (isInLockedOperation.get()) {
       throw new IllegalStateException(
-          "Currently within locked operation 'Locked.attempt(...)', hence this operation is not allowed");
+          "Currently within locked operation 'Locked.attempt(...)', hence this operation is not"
+              + " allowed");
     }
   }
 }
