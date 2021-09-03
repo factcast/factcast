@@ -16,6 +16,7 @@
 package org.factcast.store.internal.catchup.fetching;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -23,11 +24,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics.EVENT;
+import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
@@ -35,8 +36,6 @@ import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -69,6 +68,9 @@ public class PgFetchingCatchup implements PgCatchup {
     try {
       var jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
+    } catch (Throwable e) {
+      log.error("while fetching: ", e);
+      throw e;
     } finally {
       ds.destroy();
     }
