@@ -46,7 +46,8 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
   private final String id;
 
-  BlockingStreamObserver(@NonNull String id, @NonNull ServerCallStreamObserver<T> delegate, int batchSize) {
+  BlockingStreamObserver(
+      @NonNull String id, @NonNull ServerCallStreamObserver<T> delegate, int batchSize) {
     this.id = id;
     this.delegate = delegate;
     this.batchSize = batchSize;
@@ -77,7 +78,7 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
               throw new TransportLayerException(
                   id
                       + " channel not coming back after waiting "
-                      + (WAIT_TIME *batchSize* RETRY_COUNT)
+                      + (WAIT_TIME * batchSize * RETRY_COUNT)
                       + "msec (1000 * batchSize * 50 retries");
             }
           }
