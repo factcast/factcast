@@ -45,7 +45,7 @@ class GrpcObserverAdapter implements FactObserver {
   @NonNull private final String id;
 
   @NonNull private final StreamObserver<MSG_Notification> observer;
-  @NonNull private final int catchupBatchSize;
+  private final int catchupBatchSize;
   @NonNull private final ServerExceptionLogger serverExceptionLogger;
 
   @Getter(AccessLevel.PROTECTED)
