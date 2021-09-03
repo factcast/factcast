@@ -13,8 +13,8 @@ jobs:
         with:
           # Recommended: latest versions of Google Java Format require JDK 11+
           java-version: "11"
-      - uses: axel-op/googlejavaformat-action@v3
+      - run: ./mvnw -B spotless:apply --file pom.xml
+      # commit possible changes after applying formatter
+      - uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          args: "--skip-sorting-imports --replace"
-          # Recommended if you use MacOS:
-          # githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commit_message: Apply formatter
