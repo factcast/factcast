@@ -35,19 +35,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
-  private static final int RETRY_COUNT = 60;
+  private static final int RETRY_COUNT = 50;
 
   private static final int WAIT_TIME = 1000;
 
   private final ServerCallStreamObserver<T> delegate;
+  private int batchSize;
 
   private final Object lock = new Object();
 
   private final String id;
 
-  BlockingStreamObserver(@NonNull String id, @NonNull ServerCallStreamObserver<T> delegate) {
+  BlockingStreamObserver(@NonNull String id, @NonNull ServerCallStreamObserver<T> delegate, int batchSize) {
     this.id = id;
     this.delegate = delegate;
+    this.batchSize = batchSize;
     this.delegate.setOnReadyHandler(this::wakeup);
     this.delegate.setOnCancelHandler(this::wakeup);
   }
@@ -75,8 +77,8 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
               throw new TransportLayerException(
                   id
                       + " channel not coming back after waiting "
-                      + (WAIT_TIME * RETRY_COUNT)
-                      + "msec");
+                      + (WAIT_TIME *batchSize* RETRY_COUNT)
+                      + "msec (1000 * batchSize * 50 retries");
             }
           }
         }
@@ -116,7 +118,7 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
       log.trace("{} channel not ready. Slow client? Attempt: {}/{}", id, i, RETRY_COUNT);
       try {
-        lock.wait(WAIT_TIME);
+        lock.wait((long) WAIT_TIME * batchSize);
       } catch (InterruptedException meh) {
         // ignore
       }
