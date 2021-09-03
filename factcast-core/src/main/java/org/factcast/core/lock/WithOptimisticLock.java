@@ -111,7 +111,8 @@ public class WithOptimisticLock {
       if (ret == null) {
         // Attempt should not return null, this is an abuse of the API.
         log.error(
-            "Attempt should not return null, this is an abuse of the API. We will however treat it as an abort. Please fix the problem!");
+            "Attempt should not return null, this is an abuse of the API. We will however treat it"
+                + " as an abort. Please fix the problem!");
         throw new AttemptAbortedException("Attempt aborted due to null-return. No message given.");
       }
       return ret;

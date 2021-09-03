@@ -95,7 +95,8 @@ public class TransformationTest {
         createTestFact(
             id,
             3,
-            "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER PETERSON\"}");
+            "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER"
+                + " PETERSON\"}");
     fc.publish(f);
 
     final var found = fc.fetchByIdAndVersion(id, 1).orElse(null);
@@ -115,7 +116,8 @@ public class TransformationTest {
         createTestFact(
             id,
             3,
-            "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER PETERSON\"}");
+            "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER"
+                + " PETERSON\"}");
     fc.publish(f);
     final var found = fc.fetchById(id).orElse(null);
     assertNotNull(found);
@@ -130,7 +132,8 @@ public class TransformationTest {
         createTestFact(
             id,
             3,
-            "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER PETERSON\"}");
+            "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER"
+                + " PETERSON\"}");
     fc.publish(f);
 
     final var found = fc.fetchByIdAndVersion(id, 0).orElse(null);

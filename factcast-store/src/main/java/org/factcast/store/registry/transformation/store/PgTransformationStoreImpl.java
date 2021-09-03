@@ -35,9 +35,10 @@ public class PgTransformationStoreImpl extends AbstractTransformationStore {
   protected void doStore(@NonNull TransformationSource source, String transformation)
       throws TransformationConflictException {
     jdbcTemplate.update(
-        "INSERT INTO transformationstore (id, hash, ns, type, from_version, to_version, transformation) VALUES (?,?,?,?,?,?,?)"
-            + "ON CONFLICT ON CONSTRAINT transformationstore_pkey DO "
-            + "UPDATE set hash=?,ns=?,type=?,from_version=?, to_version=?, transformation=? WHERE transformationstore.id=?",
+        "INSERT INTO transformationstore (id, hash, ns, type, from_version, to_version,"
+            + " transformation) VALUES (?,?,?,?,?,?,?)ON CONFLICT ON CONSTRAINT"
+            + " transformationstore_pkey DO UPDATE set hash=?,ns=?,type=?,from_version=?,"
+            + " to_version=?, transformation=? WHERE transformationstore.id=?",
         // INSERT
         source.id(),
         source.hash(),
@@ -83,7 +84,8 @@ public class PgTransformationStoreImpl extends AbstractTransformationStore {
   @Override
   public List<Transformation> get(@NonNull TransformationKey key) {
     return jdbcTemplate.query(
-        "SELECT from_version, to_version, transformation FROM transformationstore WHERE ns=? AND type=?",
+        "SELECT from_version, to_version, transformation FROM transformationstore WHERE ns=? AND"
+            + " type=?",
         new Object[] {key.ns(), key.type()},
         (rs, rowNum) -> {
           int from = rs.getInt("from_version");

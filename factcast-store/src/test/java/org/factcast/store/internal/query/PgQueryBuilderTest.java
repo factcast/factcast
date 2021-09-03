@@ -93,11 +93,13 @@ class PgQueryBuilderTest {
       assertThat(sql)
           .startsWith(
               "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds,"
-                  + " header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact");
+                  + " header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version"
+                  + " FROM fact");
 
       // where clause for two specs
       final var expectedSpec1 =
-          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)";
+          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @>"
+              + " ?::jsonb)";
       final var expectedSpec2 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no aggid
       assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
@@ -123,7 +125,8 @@ class PgQueryBuilderTest {
 
       // where clause for two specs
       final var expectedSpec1 =
-          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)";
+          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @>"
+              + " ?::jsonb)";
       final var expectedSpec2 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no aggid
       assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
@@ -149,7 +152,8 @@ class PgQueryBuilderTest {
 
       // where clause for two specs
       final var expectedSpec1 =
-          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)";
+          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @>"
+              + " ?::jsonb)";
       final var expectedSpec2 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no aggid
       assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
