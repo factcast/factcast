@@ -15,8 +15,18 @@
  */
 package org.factcast.core.subscription;
 
-@FunctionalInterface
+import java.util.List;
+
+import org.factcast.core.Fact;
+
+import lombok.NonNull;
+
 public interface FactTransformersFactory {
 
-  FactTransformers createFor(SubscriptionRequestTO sr);
+  @NonNull
+  FactTransformers createSimpleFactTransformers(@NonNull SubscriptionRequestTO sr);
+
+  @NonNull
+  FactTransformers createBatchFactTransformers(
+      @NonNull SubscriptionRequestTO sr, @NonNull List<Fact> factsForCacheWarmup);
 }

@@ -15,10 +15,6 @@
  */
 package org.factcast.store.registry.transformation;
 
-import liquibase.integration.spring.SpringLiquibase;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.SchemaRegistry;
@@ -35,6 +31,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import liquibase.integration.spring.SpringLiquibase;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @Slf4j
@@ -79,17 +79,30 @@ public class TransformationConfiguration {
 
   @Bean
   public FactTransformersFactory factTransformersFactory(
-      FactTransformerService trans, RegistryMetrics registryMetrics) {
-    return new FactTransformersFactoryImpl(trans, registryMetrics);
+      SimpleCacheLookupFactTransformerService trans,
+      RegistryMetrics registryMetrics,
+      BatchCacheLookupFactTransformerServiceFactory batchCacheLookupFactTransformerServiceFactory) {
+    return new FactTransformersFactoryImpl(
+        trans, registryMetrics, batchCacheLookupFactTransformerServiceFactory);
   }
 
   @Bean
-  public FactTransformerService factTransformerService(
+  public BatchCacheLookupFactTransformerServiceFactory
+      batchCacheLookupFactTransformerServiceFactory(
+          TransformationChains chains,
+          Transformer trans,
+          TransformationCache cache,
+          RegistryMetrics registryMetrics) {
+    return new BatchCacheLookupFactTransformerServiceFactory(chains, trans, cache, registryMetrics);
+  }
+
+  @Bean
+  public SimpleCacheLookupFactTransformerService cacheLookupFactTransformationService(
       TransformationChains chains,
       Transformer trans,
       TransformationCache cache,
       RegistryMetrics registryMetrics) {
-    return new FactTransformerServiceImpl(chains, trans, cache, registryMetrics);
+    return new SimpleCacheLookupFactTransformerService(chains, trans, cache, registryMetrics);
   }
 
   @Bean

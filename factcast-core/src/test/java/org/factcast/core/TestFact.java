@@ -21,6 +21,9 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import org.factcast.core.util.FactCastJson;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -28,7 +31,6 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.SneakyThrows;
-import org.factcast.core.util.FactCastJson;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -82,5 +84,10 @@ public class TestFact implements Fact {
   public @NonNull FactHeader header() {
     if (header == null) header = FactCastJson.readValue(FactHeader.class, jsonHeader());
     return header;
+  }
+
+  @Override
+  public String toString() {
+    return "TestFact{" + "id=" + id + '}';
   }
 }

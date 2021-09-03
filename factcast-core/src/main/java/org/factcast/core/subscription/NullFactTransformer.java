@@ -15,28 +15,14 @@
  */
 package org.factcast.core.subscription;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.factcast.core.Fact;
 
 import lombok.NonNull;
 
 public class NullFactTransformer implements FactTransformers {
 
-  private final AtomicLong factsNotTransformed = new AtomicLong(0);
-
   @Override
   public @NonNull Fact transformIfNecessary(@NonNull Fact e) {
     return e;
-  }
-
-  @Override
-  public long factsTransformed() {
-    return 0;
-  }
-
-  @Override
-  public long factsNotTransformed() {
-    return factsNotTransformed.get();
   }
 }

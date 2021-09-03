@@ -17,7 +17,7 @@ package org.factcast.store.internal.catchup.tmppaged;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.factcast.core.subscription.FactTransformers;
+import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
@@ -44,7 +44,7 @@ public class PgTmpPagedCatchUpFactory implements PgCatchupFactory {
       @NonNull SubscriptionRequestTO request,
       @NonNull PgPostQueryMatcher postQueryMatcher,
       @NonNull SubscriptionImpl subscription,
-      @NonNull FactTransformers factTransformers,
+      @NonNull FactTransformersFactory factTransformersFactory,
       @NonNull AtomicLong serial,
       @NonNull PgMetrics metrics) {
     return new PgTmpPagedCatchup(
@@ -53,8 +53,7 @@ public class PgTmpPagedCatchUpFactory implements PgCatchupFactory {
         request,
         postQueryMatcher,
         subscription,
-        factTransformers,
-        serial,
-        metrics);
+        factTransformersFactory,
+        serial);
   }
 }

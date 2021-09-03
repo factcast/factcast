@@ -21,7 +21,6 @@ import javax.sql.DataSource;
 
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.TokenStore;
-import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.StoreConfigurationProperties;
@@ -40,6 +39,7 @@ import org.factcast.store.internal.snapcache.PgSnapshotCache;
 import org.factcast.store.internal.snapcache.PgSnapshotCacheConfiguration;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
 import org.factcast.store.registry.SchemaRegistryConfiguration;
+import org.factcast.store.registry.transformation.FactTransformer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -115,7 +115,7 @@ public class PgFactStoreInternalConfiguration {
       PgSubscriptionFactory subscriptionFactory,
       TokenStore tokenStore,
       FactTableWriteLock lock,
-      FactTransformerService factTransformerService,
+      FactTransformer factTransformer,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       PgSnapshotCache snapCache,
       PgMetrics pgMetrics) {
@@ -124,7 +124,7 @@ public class PgFactStoreInternalConfiguration {
         subscriptionFactory,
         tokenStore,
         lock,
-        factTransformerService,
+        factTransformer,
         pgFactIdToSerialMapper,
         snapCache,
         pgMetrics);

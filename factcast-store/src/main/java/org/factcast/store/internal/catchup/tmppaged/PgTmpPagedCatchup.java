@@ -20,11 +20,10 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactTransformers;
+import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
@@ -50,10 +49,9 @@ public class PgTmpPagedCatchup implements PgCatchup {
 
   @NonNull final SubscriptionImpl subscription;
 
-  @NonNull final FactTransformers factTransformers;
+  @NonNull final FactTransformersFactory factTransformersFactory;
 
   @NonNull final AtomicLong serial;
-  @NonNull final PgMetrics metrics;
 
   @SneakyThrows
   @Override
@@ -78,6 +76,9 @@ public class PgTmpPagedCatchup implements PgCatchup {
         List<Fact> facts;
         do {
           facts = fetch.fetchFacts(serial);
+
+          var factTransformers =
+              factTransformersFactory.createBatchFactTransformers(request, facts);
 
           for (Fact f : facts) {
             Fact transformed = factTransformers.transformIfNecessary(f);

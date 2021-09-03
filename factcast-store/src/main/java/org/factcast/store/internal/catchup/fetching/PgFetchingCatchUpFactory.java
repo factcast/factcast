@@ -17,7 +17,7 @@ package org.factcast.store.internal.catchup.fetching;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.factcast.core.subscription.FactTransformers;
+import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
@@ -44,7 +44,7 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory {
       @NonNull SubscriptionRequestTO request,
       @NonNull PgPostQueryMatcher postQueryMatcher,
       @NonNull SubscriptionImpl subscription,
-      @NonNull FactTransformers factTransformers,
+      @NonNull FactTransformersFactory factTransformersFactory,
       @NonNull AtomicLong serial,
       @NonNull PgMetrics metrics) {
     return new PgFetchingCatchup(
@@ -53,7 +53,7 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory {
         request,
         postQueryMatcher,
         subscription,
-        factTransformers,
+        factTransformersFactory,
         serial,
         metrics);
   }

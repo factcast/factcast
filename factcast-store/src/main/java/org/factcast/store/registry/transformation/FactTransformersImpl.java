@@ -16,10 +16,8 @@
 package org.factcast.store.registry.transformation;
 
 import java.util.OptionalInt;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.internal.RequestedVersions;
@@ -32,35 +30,19 @@ import lombok.RequiredArgsConstructor;
 public class FactTransformersImpl implements FactTransformers {
 
   @NonNull private final RequestedVersions requested;
-
-  @NonNull private final FactTransformerService trans;
-
+  @NonNull private final FactTransformer trans;
   @NonNull private final RegistryMetrics registryMetrics;
-
-  private final AtomicLong factsNotTransformed = new AtomicLong(0);
-  private final AtomicLong factsTransformed = new AtomicLong(0);
 
   @Override
   public @NonNull Fact transformIfNecessary(@NonNull Fact e) throws TransformationException {
 
-    var transformed = transformIfNecessaryInternal(e);
-
-    if (transformed == e) {
-      factsNotTransformed.incrementAndGet();
-    } else {
-      factsTransformed.incrementAndGet();
-    }
-
-    return transformed;
-  }
-
-  private Fact transformIfNecessaryInternal(@NonNull Fact e) {
     String ns = e.ns();
     String type = e.type();
     int version = e.version();
 
     if (type == null || requested.matches(ns, type, version)) {
       return e;
+
     } else {
       OptionalInt max = requested.get(ns, type).stream().mapToInt(v -> v).max();
       int targetVersion =
@@ -72,15 +54,5 @@ public class FactTransformersImpl implements FactTransformers {
           TransformationException.class,
           () -> trans.transformIfNecessary(e, targetVersion));
     }
-  }
-
-  @Override
-  public long factsNotTransformed() {
-    return factsNotTransformed.get();
-  }
-
-  @Override
-  public long factsTransformed() {
-    return factsTransformed.get();
   }
 }

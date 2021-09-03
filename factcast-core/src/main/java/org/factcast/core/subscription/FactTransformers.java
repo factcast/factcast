@@ -23,8 +23,4 @@ public interface FactTransformers {
 
   @NonNull
   Fact transformIfNecessary(@NonNull Fact e) throws TransformationException;
-
-  long factsNotTransformed();
-
-  long factsTransformed();
 }

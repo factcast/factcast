@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.FactTransformers;
+import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
@@ -57,7 +57,7 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final SubscriptionImpl subscription;
 
-  @NonNull final FactTransformers factTransformers;
+  @NonNull final FactTransformersFactory factTransformersFactory;
 
   @NonNull final AtomicLong serial;
 
@@ -74,7 +74,7 @@ public class PgFetchingCatchup implements PgCatchup {
   @NonNull
   @Setter(value = AccessLevel.PACKAGE, onMethod = @__(@VisibleForTesting))
   PagingPreparedStatementCallbackFactory pagingPreparedStatementCallbackFactory =
-      PagingPreparedStatementCallback::new;
+      FetchingPreparedStatementCallback::new;
 
   @NonNull
   @Setter(value = AccessLevel.PACKAGE, onMethod = @__(@VisibleForTesting))
@@ -116,7 +116,7 @@ public class PgFetchingCatchup implements PgCatchup {
             b.createStatementSetter(serial),
             extractor,
             props,
-            factTransformers,
+            factTransformersFactory,
             subscription,
             metrics,
             req,

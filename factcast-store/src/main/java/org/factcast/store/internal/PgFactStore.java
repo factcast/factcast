@@ -15,13 +15,16 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.collect.Lists;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -30,7 +33,6 @@ import org.factcast.core.store.AbstractFactStore;
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
-import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
@@ -39,6 +41,7 @@ import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.snapcache.PgSnapshotCache;
+import org.factcast.store.registry.transformation.FactTransformer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
@@ -48,6 +51,11 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.google.common.collect.Lists;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * A PostgreSQL based FactStore implementation
@@ -66,7 +74,8 @@ public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final FactTableWriteLock lock;
 
-  @NonNull private final FactTransformerService factTransformerService;
+  @NonNull private final FactTransformer factTransformer;
+
   @NonNull private final PgFactIdToSerialMapper pgFactIdToSerialMapper;
 
   @NonNull private final PgMetrics metrics;
@@ -79,7 +88,7 @@ public class PgFactStore extends AbstractFactStore {
       @NonNull PgSubscriptionFactory subscriptionFactory,
       @NonNull TokenStore tokenStore,
       @NonNull FactTableWriteLock lock,
-      @NonNull FactTransformerService factTransformerService,
+      @NonNull FactTransformer factTransformer,
       @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
       @NonNull PgSnapshotCache snapCache,
       @NonNull PgMetrics metrics) {
@@ -91,7 +100,7 @@ public class PgFactStore extends AbstractFactStore {
     this.pgFactIdToSerialMapper = pgFactIdToSerialMapper;
     this.snapCache = snapCache;
     this.metrics = metrics;
-    this.factTransformerService = factTransformerService;
+    this.factTransformer = factTransformer;
   }
 
   @Override
@@ -116,7 +125,7 @@ public class PgFactStore extends AbstractFactStore {
     var fact = fetchById(id);
     // map does not work here due to checked exception
     if (fact.isPresent()) {
-      return Optional.of(factTransformerService.transformIfNecessary(fact.get(), version));
+      return Optional.of(factTransformer.transformIfNecessary(fact.get(), version));
     } else {
       return fact;
     }

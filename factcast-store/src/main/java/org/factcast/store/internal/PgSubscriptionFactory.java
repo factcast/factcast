@@ -58,7 +58,6 @@ class PgSubscriptionFactory {
   final PgMetrics metrics;
 
   public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
-    var transformers = transformersFactory.createFor(req);
     SubscriptionImpl subscription = SubscriptionImpl.on(observer);
     PgFactStream pgsub =
         new PgFactStream(
@@ -66,7 +65,7 @@ class PgSubscriptionFactory {
             eventBus,
             idToSerialMapper,
             subscription,
-            transformers,
+            transformersFactory,
             fetcher,
             catchupFactory,
             target,

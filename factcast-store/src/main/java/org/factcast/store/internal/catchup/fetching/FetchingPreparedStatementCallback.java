@@ -3,9 +3,11 @@ package org.factcast.store.internal.catchup.fetching;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactTransformers;
+import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
@@ -23,12 +25,12 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
-public class PagingPreparedStatementCallback implements PreparedStatementCallback<Void> {
+public class FetchingPreparedStatementCallback implements PreparedStatementCallback<Void> {
 
   @NonNull private final PreparedStatementSetter statementSetter;
   @NonNull private final PgFactExtractor extractor;
   @NonNull private final StoreConfigurationProperties props;
-  @NonNull private final FactTransformers factTransformers;
+  @NonNull private final FactTransformersFactory factTransformersFactory;
   @NonNull private final SubscriptionImpl subscription;
   @NonNull private final PgMetrics metrics;
   @NonNull private final SubscriptionRequestTO req;
@@ -52,16 +54,46 @@ public class PagingPreparedStatementCallback implements PreparedStatementCallbac
 
   private void iterateOverResultSet(@NonNull ResultSet resultSet) throws SQLException {
 
-    while (resultSet.next()) {
-      Fact f = extractor.mapRow(resultSet, 0); // does not use the rowNum anyway
-      Fact transformed = factTransformers.transformIfNecessary(f);
+    List<Fact> fetchedFacts = new ArrayList<>(props.getPageSize());
 
-      if (postQueryMatcher.canBeSkipped() || postQueryMatcher.test(transformed)) {
-        subscription.notifyElement(transformed);
-        metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT);
-      } else {
-        log.trace("{} filtered id={}", req, transformed.id());
+    while (true) {
+      fetchFacts(resultSet, fetchedFacts);
+
+      if (fetchedFacts.isEmpty()) {
+        break;
       }
+
+      var factTransformers = factTransformersFactory.createBatchFactTransformers(req, fetchedFacts);
+
+      fetchedFacts.stream()
+          .map(factTransformers::transformIfNecessary)
+          .forEachOrdered(this::processFact);
     }
   }
+
+  private void fetchFacts(@NonNull ResultSet resultSet, List<Fact> fetchedFacts)
+      throws SQLException {
+
+    fetchedFacts.clear();
+
+    for (int i = 0; i < props.getPageSize(); i++) {
+      // proceed to next record if there are more; otherwise stop
+      if (!resultSet.next()) {
+        return;
+      }
+
+      Fact fact = extractor.mapRow(resultSet, 0); // does not use the rowNum anyway
+      fetchedFacts.add(fact);
+    }
+  }
+
+  private void processFact(@NonNull Fact f) {
+    if (postQueryMatcher.canBeSkipped() || postQueryMatcher.test(f)) {
+      subscription.notifyElement(f);
+      metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT);
+    } else {
+      log.trace("{} filtered id={}", req, f.id());
+    }
+  }
+
 }

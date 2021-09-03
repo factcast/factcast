@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.FactTransformers;
+import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
@@ -56,7 +56,7 @@ class PgFetchingCatchupTest {
   @Mock SubscriptionRequestTO req;
   @Mock PgPostQueryMatcher postQueryMatcher;
   @Mock SubscriptionImpl subscription;
-  @Mock FactTransformers factTransformers;
+  @Mock FactTransformersFactory factTransformersFactory;
   @Mock AtomicLong serial;
   @Mock PgMetrics metrics;
   // need to inject those manually:
@@ -72,7 +72,7 @@ class PgFetchingCatchupTest {
   @Mock PgConnection con;
   @Mock SingleConnectionDataSource dataSource;
   @Mock JdbcTemplate jdbcTemplate;
-  @Mock PagingPreparedStatementCallback pagingPreparedStatementCallback;
+  @Mock FetchingPreparedStatementCallback fetchingPreparedStatementCallback;
   @Mock PgQueryBuilder pgQueryBuilder;
   @Mock PgFactExtractor pgFactExtractor;
   @Mock PreparedStatementSetter preparedStatementSetter;
@@ -92,12 +92,12 @@ class PgFetchingCatchupTest {
             preparedStatementSetter,
             pgFactExtractor,
             props,
-            factTransformers,
+            factTransformersFactory,
             subscription,
             metrics,
             req,
             postQueryMatcher))
-        .thenReturn(pagingPreparedStatementCallback);
+        .thenReturn(fetchingPreparedStatementCallback);
     when(pgQueryBuilder.createStatementSetter(serial)).thenReturn(preparedStatementSetter);
     when(pgQueryBuilder.createSQL()).thenReturn("SELECT * FROM FACT WHERE ...");
     when(req.specs()).thenReturn(specs);
@@ -120,7 +120,7 @@ class PgFetchingCatchupTest {
     inOrder.verify(dataSourceFactory).create(con, true);
     inOrder.verify(jdbcTemplateFactory).create(dataSource);
     // now run query
-    inOrder.verify(jdbcTemplate).execute(anyString(), any(PagingPreparedStatementCallback.class));
+    inOrder.verify(jdbcTemplate).execute(anyString(), any(FetchingPreparedStatementCallback.class));
     // clean up
     inOrder.verify(dataSource).destroy();
     inOrder.verify(con).close();
@@ -148,7 +148,7 @@ class PgFetchingCatchupTest {
             preparedStatementSetter,
             pgFactExtractor,
             props,
-            factTransformers,
+            factTransformersFactory,
             subscription,
             metrics,
             req,
@@ -156,6 +156,6 @@ class PgFetchingCatchupTest {
 
     inOrder
         .verify(jdbcTemplate)
-        .execute("SELECT * FROM FACT WHERE ...", pagingPreparedStatementCallback);
+        .execute("SELECT * FROM FACT WHERE ...", fetchingPreparedStatementCallback);
   }
 }

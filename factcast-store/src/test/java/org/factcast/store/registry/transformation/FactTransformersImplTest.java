@@ -27,7 +27,6 @@ import java.util.Map;
 
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
-import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.RequestedVersions;
 import org.factcast.store.registry.NOPRegistryMetrics;
@@ -63,17 +62,14 @@ public class FactTransformersImplTest {
 
     RequestedVersions requestedVersions = new RequestedVersions();
     Fact probe = new TestFact().version(33);
-    FactTransformerService service =
-        new FactTransformerServiceImpl(chains, trans, cache, registryMetrics);
+    SimpleCacheLookupFactTransformerService service =
+        new SimpleCacheLookupFactTransformerService(chains, trans, cache, registryMetrics);
     FactTransformersImpl uut =
         new FactTransformersImpl(requestedVersions, service, registryMetrics);
 
     assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
 
     verifyNoInteractions(registryMetrics);
-
-    assertThat(uut.factsNotTransformed()).isEqualTo(1);
-    assertThat(uut.factsTransformed()).isEqualTo(0);
   }
 
   @Test
@@ -84,17 +80,14 @@ public class FactTransformersImplTest {
     String ns = probe.ns();
     String type = probe.type();
     requestedVersions.add(ns, type, 0);
-    FactTransformerService service =
-        new FactTransformerServiceImpl(chains, trans, cache, registryMetrics);
+    SimpleCacheLookupFactTransformerService service =
+        new SimpleCacheLookupFactTransformerService(chains, trans, cache, registryMetrics);
 
     FactTransformersImpl uut =
         new FactTransformersImpl(requestedVersions, service, registryMetrics);
     assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
 
     verifyNoInteractions(registryMetrics);
-
-    assertThat(uut.factsNotTransformed()).isEqualTo(1);
-    assertThat(uut.factsTransformed()).isEqualTo(0);
   }
 
   @Test
@@ -106,8 +99,8 @@ public class FactTransformersImplTest {
     String type = probe.type();
     requestedVersions.add(ns, type, 33);
 
-    FactTransformerService service =
-        new FactTransformerServiceImpl(chains, trans, cache, registryMetrics);
+    SimpleCacheLookupFactTransformerService service =
+        new SimpleCacheLookupFactTransformerService(chains, trans, cache, registryMetrics);
 
     FactTransformersImpl uut =
         new FactTransformersImpl(requestedVersions, service, registryMetrics);
@@ -115,9 +108,6 @@ public class FactTransformersImplTest {
     assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
 
     verifyNoInteractions(registryMetrics);
-
-    assertThat(uut.factsNotTransformed()).isEqualTo(1);
-    assertThat(uut.factsTransformed()).isEqualTo(0);
   }
 
   @Test
@@ -137,8 +127,8 @@ public class FactTransformersImplTest {
     when(trans.transform(any(), eq(FactCastJson.readTree(probe.jsonPayload()))))
         .thenReturn(transformedJsonNode);
 
-    FactTransformerService service =
-        new FactTransformerServiceImpl(chains, trans, cache, registryMetrics);
+    SimpleCacheLookupFactTransformerService service =
+        new SimpleCacheLookupFactTransformerService(chains, trans, cache, registryMetrics);
 
     FactTransformersImpl uut =
         new FactTransformersImpl(requestedVersions, service, registryMetrics);
@@ -150,8 +140,5 @@ public class FactTransformersImplTest {
 
     verify(registryMetrics)
         .timed(eq(RegistryMetrics.OP.TRANSFORMATION), any(), any(SupplierWithException.class));
-
-    assertThat(uut.factsNotTransformed()).isEqualTo(0);
-    assertThat(uut.factsTransformed()).isEqualTo(1);
   }
 }
