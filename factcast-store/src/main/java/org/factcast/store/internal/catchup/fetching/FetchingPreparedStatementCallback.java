@@ -95,5 +95,4 @@ public class FetchingPreparedStatementCallback implements PreparedStatementCallb
       log.trace("{} filtered id={}", req, f.id());
     }
   }
-
 }
