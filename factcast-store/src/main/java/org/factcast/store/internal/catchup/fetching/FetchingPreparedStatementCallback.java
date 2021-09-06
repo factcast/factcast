@@ -63,11 +63,13 @@ public class FetchingPreparedStatementCallback implements PreparedStatementCallb
         break;
       }
 
-      var factTransformers = factTransformersFactory.createBatchFactTransformers(req, fetchedFacts);
+      try (var factTransformers =
+          factTransformersFactory.createBatchFactTransformers(req, fetchedFacts)) {
 
-      fetchedFacts.stream()
-          .map(factTransformers::transformIfNecessary)
-          .forEachOrdered(this::processFact);
+        fetchedFacts.stream()
+            .map(factTransformers::transformIfNecessary)
+            .forEachOrdered(this::processFact);
+      }
     }
   }
 

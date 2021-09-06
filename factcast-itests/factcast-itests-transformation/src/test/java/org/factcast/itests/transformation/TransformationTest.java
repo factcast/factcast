@@ -15,21 +15,32 @@
  */
 package org.factcast.itests.transformation;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.MissingTransformationInformationException;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.util.FactCastJson;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -168,6 +179,67 @@ public class TransformationTest {
     } catch (Exception anyOther) {
       fail("unexpected Exception", anyOther);
     }
+  }
+
+  @Test
+  public void publishAndSubscribe_fromCacheOrTransformed() {
+    // INIT
+    UUID id1 = UUID.randomUUID();
+    fc.publish(
+        createTestFact(id1, 1, "{\"firstName\":\"Cached\",\"lastName\":\"Needs transformation\"}"));
+    // put version in cache, but not the one we want
+    fc.fetchByIdAndVersion(id1, 2);
+
+    UUID id2 = UUID.randomUUID();
+    fc.publish(
+        createTestFact(
+            id2, 1, "{\"firstName\":\"Cached\",\"lastName\":\"Does not need transformation\"}"));
+    // put the version in cache that we want
+    fc.fetchByIdAndVersion(id2, 3);
+
+    UUID id3 = UUID.randomUUID();
+    // not the version we want, but do not put into cache
+    fc.publish(
+        createTestFact(
+            id3, 1, "{\"firstName\":\"Not Cached\",\"lastName\":\"Needs transformation\"}"));
+
+    UUID id4 = UUID.randomUUID();
+    // publish the version we want
+    fc.publish(
+        createTestFact(
+            id4,
+            3,
+            "{\"firstName\":\"Not Cached\",\"lastName\":\"Does not need transformation\", "
+                + "\"salutation\":\"Mr\",\"displayName\":\"Not Cached Does not need transformation\"}"));
+
+    UUID id5 = UUID.randomUUID();
+    // publish the version we want
+    fc.publish(
+        createTestFact(
+            id5,
+            3,
+            "{\"firstName\":\"Not Cached 2\",\"lastName\":\"Does not need transformation 2\", "
+                + "\"salutation\":\"Mr\",\"displayName\":\"Not Cached 2 Does not need transformation 2\"}"));
+
+    // RUN
+    SubscriptionRequest req =
+        SubscriptionRequest.catchup(
+                FactSpec.ns("users")
+                    .type("UserCreated")
+                    .version(3)
+                    .jsFilterScript(
+                        "function (h,e){ return e.firstName.indexOf('Cached') != -1; }"))
+            .fromScratch();
+
+    List<Fact> facts = new ArrayList<>();
+    fc.subscribe(req, facts::add).awaitCatchup();
+
+    // ASSERT
+    assertThat(facts)
+        .hasSize(5)
+        .extracting(Fact::id, Fact::version)
+        .containsExactlyInAnyOrder(
+            tuple(id1, 3), tuple(id2, 3), tuple(id3, 3), tuple(id4, 3), tuple(id5, 3));
   }
 
   @Test

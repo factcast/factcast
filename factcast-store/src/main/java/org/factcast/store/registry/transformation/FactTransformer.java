@@ -7,5 +7,5 @@ public interface FactTransformer extends AutoCloseable {
   Fact transformIfNecessary(Fact e, int targetVersion) throws TransformationException;
 
   @Override
-  default void close() throws Exception {}
+  default void close() {}
 }

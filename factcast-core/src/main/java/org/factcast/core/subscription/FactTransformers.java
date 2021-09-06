@@ -25,5 +25,5 @@ public interface FactTransformers extends AutoCloseable {
   Fact transformIfNecessary(@NonNull Fact e) throws TransformationException;
 
   @Override
-  default void close() throws Exception {}
+  default void close() {}
 }

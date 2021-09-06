@@ -48,7 +48,7 @@ public class FactTransformersImpl implements FactTransformers {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     trans.close();
   }
 }

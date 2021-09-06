@@ -68,7 +68,7 @@ public class BatchCacheLookupFactTransformerService extends AbstractFactTransfor
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     executorService.shutdown();
   }
 
