@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.4.0-I22-SNAPSHOT</version>
+  <version>0.4.0-I23-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -90,7 +91,7 @@
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <assertj.version>3.20.2</assertj.version>
     <jackson.version>2.12.5</jackson.version>
-        <mockito.version>3.12.4</mockito.version>
+    <mockito.version>3.12.4</mockito.version>
     <junit-jupiter.version>5.7.2</junit-jupiter.version>
     <lombok.version>1.18.20</lombok.version>
     <slf4j-api.version>1.7.32</slf4j-api.version>
@@ -392,8 +393,8 @@
             <licenseHeader>
               <file>file://${etc}/header.txt</file>
             </licenseHeader>
-            <trimTrailingWhitespace/>
-            <removeUnusedImports/>
+            <trimTrailingWhitespace />
+            <removeUnusedImports />
             <googleJavaFormat>
               <version>1.7</version> <!-- optional -->
               <style>GOOGLE</style> <!-- or AOSP (optional) -->
@@ -409,16 +410,48 @@
             <licenseHeader>
               <file>file://${etc}/header.txt</file>
             </licenseHeader>
-            <trimTrailingWhitespace/>
+            <trimTrailingWhitespace />
             <ktlint>
               <!-- Optional, available versions: https://github.com/shyiko/ktlint/releases -->
-              <version>0.36.0</version>
+              <version>0.42.1</version>
             </ktlint>
             <includes>
               <include>/src/main/kotlin/**/*.kt
               </include>
             </includes>
           </kotlin>
+          <sql>
+            <excludes>
+              <exclude>**/src/main/resources/db/**</exclude>
+            </excludes>
+            <includes>
+              <include>**/*.sql</include>
+            </includes>
+            <dbeaver>
+              <configFile>dbeaver.properties</configFile>
+            </dbeaver>
+          </sql>
+          <formats>
+            <format>
+              <excludes>
+                <exclude>**/documentation-docsy/**</exclude>
+              </excludes>
+              <includes>
+                <include>**/*.xml</include>
+                <include>**/*.xsd</include>
+              </includes>
+              <eclipseWtp>
+                <type>XML</type>
+                <version>4.13.0</version>
+              </eclipseWtp>
+              <indent>
+                <spaces>true</spaces>
+                <spacesPerTab>2</spacesPerTab>
+              </indent>
+              <trimTrailingWhitespace />
+              <endWithNewline />
+            </format>
+          </formats>
         </configuration>
       </plugin>
     </plugins>
@@ -435,7 +468,8 @@
           <artifactId>maven-deploy-plugin</artifactId>
           <version>2.8.2</version>
         </plugin>
-        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself. -->
+        <!--This plugin's configuration is used to store Eclipse m2e settings
+          only. It has no influence on the Maven build itself. -->
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
@@ -453,7 +487,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute/>
+                    <execute />
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -466,7 +500,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute/>
+                    <execute />
                   </action>
                 </pluginExecution>
               </pluginExecutions>

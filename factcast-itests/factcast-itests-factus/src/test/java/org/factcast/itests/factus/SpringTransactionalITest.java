@@ -441,7 +441,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       txSeen.add(jdbcTemplate.queryForObject("select txid_current()", String.class));
 
       jdbcTemplate.update(
-          "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET fact_stream_position = ?",
+          "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) ON CONFLICT"
+              + " (name) DO UPDATE SET fact_stream_position = ?",
           getScopedName().asString(),
           factStreamPosition,
           factStreamPosition);

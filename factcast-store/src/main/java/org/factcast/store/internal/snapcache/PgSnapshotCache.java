@@ -36,7 +36,8 @@ public class PgSnapshotCache {
       "SELECT factid,data,compressed FROM snapshot_cache WHERE uuid=? AND cache_key=?";
 
   private static final String UPSERT_SNAPSHOT =
-      "INSERT INTO snapshot_cache(uuid,cache_key,factid,data,compressed) VALUES (?,?,?,?,?) ON CONFLICT (uuid,cache_key) DO UPDATE set factid=?, data=?, compressed=?";
+      "INSERT INTO snapshot_cache(uuid,cache_key,factid,data,compressed) VALUES (?,?,?,?,?) ON"
+          + " CONFLICT (uuid,cache_key) DO UPDATE set factid=?, data=?, compressed=?";
 
   private static final String CLEAR_SNAPSHOT =
       "DELETE FROM snapshot_cache WHERE uuid=? AND cache_key=?";

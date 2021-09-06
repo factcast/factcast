@@ -30,9 +30,10 @@ public final class ExceptionAfterPublish extends IllegalStateException {
 
   public ExceptionAfterPublish(@NonNull List<Fact> publishedFacts, @NonNull Throwable e) {
     super(
-        "An exception has happened in the 'andThen' part of your publishing attempt. "
-            + "This is a programming error, as the runnable in andThen is not supposed to throw an Exception. "
-            + "Note that publish actually worked, and the ids of your the published facts are "
+        "An exception has happened in the 'andThen' part of your publishing attempt. This is a"
+            + " programming error, as the runnable in andThen is not supposed to throw an"
+            + " Exception. Note that publish actually worked, and the ids of your the published"
+            + " facts are "
             + render(publishedFacts),
         e);
     this.publishedFacts = publishedFacts;

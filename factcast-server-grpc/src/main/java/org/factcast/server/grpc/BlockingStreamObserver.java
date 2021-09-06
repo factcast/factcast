@@ -16,6 +16,7 @@
 package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -35,9 +36,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
-  private static final int RETRY_COUNT = 50;
+  private static final int RETRY_COUNT = 100;
 
-  private static final int WAIT_TIME = 1000;
+  private static final long WAIT_TIME_MILLIS = 1000;
 
   private final ServerCallStreamObserver<T> delegate;
   private int batchSize;
@@ -46,8 +47,8 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
   private final String id;
 
-  BlockingStreamObserver(
-      @NonNull String id, @NonNull ServerCallStreamObserver<T> delegate, int batchSize) {
+  BlockingStreamObserver(@NonNull String id, @NonNull ServerCallStreamObserver<T> delegate, int batchSize) {
+    if (batchSize<1)throw new IllegalArgumentException("batchSize must be >=1");
     this.id = id;
     this.delegate = delegate;
     this.batchSize = batchSize;
@@ -78,8 +79,8 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
               throw new TransportLayerException(
                   id
                       + " channel not coming back after waiting "
-                      + (WAIT_TIME * batchSize * RETRY_COUNT)
-                      + "msec (1000 * batchSize * 50 retries");
+                      + (WAIT_TIME_MILLIS * batchSize * RETRY_COUNT)
+                      + "msec ("+ WAIT_TIME_MILLIS +" * batchSize * "+RETRY_COUNT+" retries");
             }
           }
         }
@@ -115,11 +116,12 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
   }
 
   private void waitForDelegate() {
-    for (int i = 1; i <= RETRY_COUNT; i++) {
+    int retry = RETRY_COUNT * batchSize;
+    for (int i = 1; i <= retry; i++) {
 
-      log.trace("{} channel not ready. Slow client? Attempt: {}/{}", id, i, RETRY_COUNT);
+      log.trace("{} channel not ready. Slow client? Attempt: {}/{}", id, i, retry);
       try {
-        lock.wait((long) WAIT_TIME * batchSize);
+        lock.wait(WAIT_TIME_MILLIS);
       } catch (InterruptedException meh) {
         // ignore
       }

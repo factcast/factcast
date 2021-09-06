@@ -41,7 +41,8 @@ class GraalJsTransformerTest {
     when(transformation.transformationCode())
         .thenReturn(
             Optional.of(
-                "function transform(e) {e.displayName = e.name + ' ' + e.age; e.hobbies = [e.hobby]; e.childMap.anotherHobbies = [e.childMap.anotherHobby];}"));
+                "function transform(e) {e.displayName = e.name + ' ' + e.age; e.hobbies ="
+                    + " [e.hobby]; e.childMap.anotherHobbies = [e.childMap.anotherHobby];}"));
 
     var data = new HashMap<String, Object>();
     data.put("name", "Hugo");
