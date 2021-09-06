@@ -45,8 +45,7 @@ public class RequestedVersions {
     if (fact.type() == null) {
       return true;
     }
-    Set<Integer> set = get(fact.ns(), fact.type());
-    return set.isEmpty() || set.contains(0) || set.contains(fact.version());
+    return matches(fact.ns(), fact.type(), fact.version());
   }
 
   public int getTargetVersion(Fact fact) throws IllegalArgumentException {

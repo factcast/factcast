@@ -19,11 +19,8 @@ import org.factcast.core.Fact;
 
 import lombok.NonNull;
 
-public interface FactTransformers extends AutoCloseable {
+public interface FactTransformers {
 
   @NonNull
   Fact transformIfNecessary(@NonNull Fact e) throws TransformationException;
-
-  @Override
-  default void close() {}
 }

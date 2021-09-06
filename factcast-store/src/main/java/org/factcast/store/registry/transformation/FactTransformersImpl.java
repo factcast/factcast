@@ -46,9 +46,4 @@ public class FactTransformersImpl implements FactTransformers {
           () -> trans.transformIfNecessary(e, targetVersion));
     }
   }
-
-  @Override
-  public void close() {
-    trans.close();
-  }
 }

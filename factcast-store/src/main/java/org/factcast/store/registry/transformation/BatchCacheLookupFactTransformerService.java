@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.factcast.core.Fact;
@@ -37,14 +35,9 @@ import org.factcast.store.registry.transformation.chains.Transformer;
 
 import lombok.NonNull;
 
-public class BatchCacheLookupFactTransformerService extends AbstractFactTransformer
-    implements AutoCloseable {
+public class BatchCacheLookupFactTransformerService extends AbstractFactTransformer {
 
   @NonNull private final TransformationCache cache;
-
-  // TODO: what is a good number here?
-  // TODO: keep in mind we only have more than one thread if we have different ns/type/version
-  @NonNull private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
   /**
    * Contains the original facts with corresponding target versions for those facts that needs
@@ -65,11 +58,6 @@ public class BatchCacheLookupFactTransformerService extends AbstractFactTransfor
     super(chains, trans, registryMetrics);
     this.cache = cache;
     warmupCache(factsForCacheWarmup, requestedVersions);
-  }
-
-  @Override
-  public void close() {
-    executorService.shutdown();
   }
 
   private void warmupCache(
@@ -98,8 +86,7 @@ public class BatchCacheLookupFactTransformerService extends AbstractFactTransfor
     }
 
     this.cacheLookup =
-        CompletableFuture.supplyAsync(
-                () -> cache.find(factToTargetVersions.values()), executorService)
+        CompletableFuture.supplyAsync(() -> cache.find(factToTargetVersions.values()))
             .thenApply(this::handleCacheResult);
   }
 
@@ -116,9 +103,9 @@ public class BatchCacheLookupFactTransformerService extends AbstractFactTransfor
             notInCache ->
                 transformedFacts.put(
                     notInCache,
-                    executorService.submit(
+                    CompletableFuture.supplyAsync(
                         () ->
-                            // TODO: insert into cachnf
+                            // TODO: insert into cache
                             transform(
                                 notInCache.fact(),
                                 notInCache.targetVersion(),
