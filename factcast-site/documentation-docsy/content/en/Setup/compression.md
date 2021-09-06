@@ -22,7 +22,7 @@ efficiency of the compression is dependent on the message size. We'll get to tha
 In order to agree on which compressor to use, there is an initial handshake when the client connects to the server,
 in which the available compressors on client and server are compared, and the server selects the one to use.
 
-The clients send a list of what he accepts, and the server picks his *favorite* compressor out of that list in the order
+The server send a list of what he accepts, and the client picks his *favorite* compressor out of that list in the order
 shown above (LZ4 first, then snappy, GZip as a fallback).
 
 As the client should be low on dependencies and assumptions, Gzip (as supported by the JDK) is the default compressor 
