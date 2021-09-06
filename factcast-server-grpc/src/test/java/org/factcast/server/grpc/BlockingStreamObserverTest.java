@@ -40,7 +40,7 @@ public class BlockingStreamObserverTest {
 
   @BeforeEach
   void setUp() {
-    uut = new BlockingStreamObserver<>("foo", delegate);
+    uut = new BlockingStreamObserver<>("foo", delegate,1);
   }
 
   @Test
@@ -52,9 +52,9 @@ public class BlockingStreamObserverTest {
 
   @Test
   void testNullContract() {
-    expectNPE(() -> new BlockingStreamObserver(null, mock(ServerCallStreamObserver.class)));
-    expectNPE(() -> new BlockingStreamObserver(null, null));
-    expectNPE(() -> new BlockingStreamObserver("oink", null));
+    expectNPE(() -> new BlockingStreamObserver(null, mock(ServerCallStreamObserver.class),1));
+    expectNPE(() -> new BlockingStreamObserver(null, null,1));
+    expectNPE(() -> new BlockingStreamObserver("oink", null,1));
   }
 
   @Test
