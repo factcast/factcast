@@ -119,7 +119,6 @@ public class FactCastSecurityConfiguration {
       FactCastAccessConfiguration cc, FactCastSecretProperties secrets) {
     log.info("FactCast Security is enabled.");
     return username -> {
-      log.debug("*** username is " + username);
       Optional<FactCastAccount> account = cc.findAccountById(username);
       return account
           .map(a -> toUser(a, secrets.getSecrets().get(a.id())))

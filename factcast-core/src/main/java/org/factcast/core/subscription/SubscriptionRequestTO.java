@@ -40,9 +40,11 @@ import org.factcast.core.util.FactCastJson;
 @NoArgsConstructor
 public class SubscriptionRequestTO implements SubscriptionRequest {
 
+  public static final long DEFAULT_MAX_BATCH_DELAY_IN_MS = 10;
+
   private static final String PID = ManagementFactory.getRuntimeMXBean().getName();
 
-  @JsonProperty long maxBatchDelayInMs = 20;
+  @JsonProperty long maxBatchDelayInMs = DEFAULT_MAX_BATCH_DELAY_IN_MS;
 
   @JsonProperty long keepaliveIntervalInMs = 0;
 
