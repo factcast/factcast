@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 @ConfigurationProperties(prefix = PgLegacyConfigurationProperties.LEGACY_PREFIX)
 @EqualsAndHashCode
 @ToString
+@Deprecated
 public class PgLegacyConfigurationProperties implements ApplicationListener<ApplicationReadyEvent> {
 
   public static final String LEGACY_PREFIX = "factcast.store.pgsql";
@@ -150,6 +151,9 @@ public class PgLegacyConfigurationProperties implements ApplicationListener<Appl
    */
   private Optional<Duration> minimumTailAge = Optional.empty();
 
+  /** do not change the default here, see PGTailIndexManagerImpl::triggerTailCreation */
+  private Optional<String> tailManagementCron = Optional.empty();
+
   public PgLegacyConfigurationProperties() {}
 
   @Override
@@ -164,7 +168,7 @@ public class PgLegacyConfigurationProperties implements ApplicationListener<Appl
           "There are legacy properties detected. Property namespace has been renamed from '"
               + LEGACY_PREFIX
               + "' to 'factcast.store'");
-      legacyProperties.forEach(p -> log.error("Property {} found in {}", p.getKey(), p.getValue()));
+      legacyProperties.forEach(p -> log.warn("Property {} found in {}", p.getKey(), p.getValue()));
     }
   }
 
@@ -372,5 +376,10 @@ public class PgLegacyConfigurationProperties implements ApplicationListener<Appl
   @DeprecatedConfigurationProperty(reason = "Use new prefix 'factcast.store'.")
   public Optional<Duration> getMinimumTailAge() {
     return this.minimumTailAge;
+  }
+
+  @DeprecatedConfigurationProperty(reason = "Use new prefix 'factcast.store'.")
+  public Optional<String> getTailManagementCron() {
+    return this.tailManagementCron;
   }
 }

@@ -47,7 +47,6 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
@@ -71,6 +70,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -86,7 +86,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @RequiredArgsConstructor
 @GrpcService
 @SuppressWarnings("all")
-public class FactStoreGrpcService extends RemoteFactStoreImplBase {
+public class FactStoreGrpcService extends RemoteFactStoreImplBase implements InitializingBean {
 
   static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
 
@@ -138,9 +138,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     final int size = facts.size();
 
-    val clientId = grpcRequestMetadata.clientId();
+    final var clientId = grpcRequestMetadata.clientId();
     if (clientId.isPresent()) {
-      val id = clientId.get();
+      final var id = clientId.get();
       facts = facts.stream().map(f -> tagFactSource(f, id)).collect(Collectors.toList());
     }
     log.debug("{}publish {} fact{}", clientIdPrefix(), size, size > 1 ? "s" : "");
@@ -182,7 +182,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
       resetDebugInfo(req, grpcRequestMetadata);
       BlockingStreamObserver<MSG_Notification> resp =
-          new BlockingStreamObserver<>(req.toString(), (ServerCallStreamObserver) responseObserver);
+          new BlockingStreamObserver<>(req.toString(), (ServerCallStreamObserver) responseObserver, grpcRequestMetadata.catchupBatch().orElse(1));
 
       AtomicReference<Subscription> subRef = new AtomicReference();
 
@@ -194,7 +194,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
               serverExceptionLogger,
               req.keepaliveIntervalInMs());
 
-      val cancelHandler = new OnCancelHandler(clientIdPrefix(), req, subRef, observer);
+      final var cancelHandler = new OnCancelHandler(clientIdPrefix(), req, subRef, observer);
 
       ((ServerCallStreamObserver<MSG_Notification>) responseObserver)
           .setOnCancelHandler(cancelHandler::run);
@@ -317,13 +317,18 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     String name = grpcRequestMetadata.clientId().orElse("");
     properties.put(Capabilities.CODECS.toString(), codecs.available());
-    log.info("{}handshake properties: {} ", clientIdPrefix(), properties);
+    log.info("{}handshake (serverConfig={})", clientIdPrefix(), properties);
     return properties;
   }
 
   @VisibleForTesting
   void retrieveImplementationVersion(HashMap<String, String> properties) {
-    String implVersion = "UNKNOWN";
+    properties.put(Capabilities.FACTCAST_IMPL_VERSION.toString(), getImplVersion().orElse("UNKNOWN"));
+  }
+
+  private Optional<String> getImplVersion() {
+    String implVersion=null;
+
     URL propertiesUrl = getProjectProperties();
     Properties buildProperties = new Properties();
     if (propertiesUrl != null) {
@@ -341,7 +346,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         // "UNKNOWN"
       }
     }
-    properties.put(Capabilities.FACTCAST_IMPL_VERSION.toString(), implVersion);
+    return Optional.ofNullable(implVersion);
   }
 
   @VisibleForTesting
@@ -413,9 +418,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         facts.stream().map(Fact::ns).distinct().collect(Collectors.toList());
     assertCanWrite(namespaces);
 
-    val clientId = grpcRequestMetadata.clientId();
+    final var clientId = grpcRequestMetadata.clientId();
     if (clientId.isPresent()) {
-      val id = clientId.get();
+      final var id = clientId.get();
       facts = facts.stream().map(f -> tagFactSource(f, id)).collect(Collectors.toList());
     }
 
@@ -505,7 +510,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     enableResponseCompression(responseObserver);
 
-    val fetchById = o.get();
+    final var fetchById = o.get();
     if (fetchById.isPresent()) {
       assertCanRead(fetchById.get().ns());
     }
@@ -615,5 +620,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     responseObserver.onNext(MSG_Empty.getDefaultInstance());
     responseObserver.onCompleted();
+  }
+
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    log.info("Service version: {}",getImplVersion().orElse("UNKNOWN"));
   }
 }

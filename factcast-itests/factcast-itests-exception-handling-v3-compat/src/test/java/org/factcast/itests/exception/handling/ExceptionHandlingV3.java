@@ -22,7 +22,6 @@ import io.grpc.StatusRuntimeException;
 import java.util.Collections;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
@@ -90,8 +89,11 @@ public class ExceptionHandlingV3 extends AbstractFactCastIntegrationTest {
 
     ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
-    val proj = new LocalManagedUserNames();
-    assertDoesNotThrow(() -> ec.update(proj));
+    var proj = new LocalManagedUserNames();
+    assertDoesNotThrow(
+        () -> {
+          ec.update(proj);
+        });
     assertThat(proj.exception()).isNull();
   }
 

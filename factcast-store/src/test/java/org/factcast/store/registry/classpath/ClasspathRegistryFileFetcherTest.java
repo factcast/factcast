@@ -17,7 +17,6 @@ package org.factcast.store.registry.classpath;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import lombok.val;
 import org.factcast.store.registry.transformation.TransformationSource;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.junit.jupiter.api.*;
@@ -26,7 +25,7 @@ class ClasspathRegistryFileFetcherTest {
 
   @Test
   void fetchTransformation() {
-    val uut = new ClasspathRegistryFileFetcher("/example-registry");
+    var uut = new ClasspathRegistryFileFetcher("/example-registry");
     String transformation =
         uut.fetchTransformation(new TransformationSource("1-2", "xxx", "ns", "type", 1, 2));
     assertEquals(
@@ -35,8 +34,8 @@ class ClasspathRegistryFileFetcherTest {
 
   @Test
   void fetchSchema() {
-    val uut = new ClasspathRegistryFileFetcher("/example-registry");
-    val s = uut.fetchSchema(new SchemaSource("x", "xxx", "ns", "type", 1));
+    var uut = new ClasspathRegistryFileFetcher("/example-registry");
+    var s = uut.fetchSchema(new SchemaSource("x", "xxx", "ns", "type", 1));
     assertEquals(
         "{\n"
             + "  \"additionalProperties\" : true,\n"

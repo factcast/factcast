@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
@@ -37,7 +36,7 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -96,7 +95,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
     ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
-    val proj = new LocalManagedUserNames();
+    var proj = new LocalManagedUserNames();
     assertThatThrownBy(() -> ec.update(proj)).isInstanceOf(TransformationException.class);
   }
 
@@ -134,9 +133,9 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
     ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
-    val catchupLatch = new CountDownLatch(1);
-    val errorLatch = new CountDownLatch(1);
-    val proj = new SubscribedUserNames(catchupLatch, errorLatch);
+    var catchupLatch = new CountDownLatch(1);
+    var errorLatch = new CountDownLatch(1);
+    var proj = new SubscribedUserNames(catchupLatch, errorLatch);
     ec.subscribe(proj);
 
     assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
@@ -150,9 +149,9 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     // INIT
     UUID aggId = UUID.randomUUID();
 
-    val catchupLatch = new CountDownLatch(1);
-    val errorLatch = new CountDownLatch(1);
-    val proj = new SubscribedUserNames(catchupLatch, errorLatch);
+    var catchupLatch = new CountDownLatch(1);
+    var errorLatch = new CountDownLatch(1);
+    var proj = new SubscribedUserNames(catchupLatch, errorLatch);
     ec.subscribe(proj);
 
     assertThat(catchupLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
@@ -173,7 +172,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     fc.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
     AtomicReference<Throwable> e = new AtomicReference<>();
-    val errorLatch = new CountDownLatch(1);
+    var errorLatch = new CountDownLatch(1);
 
     fc.subscribe(
         SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(2))
@@ -202,8 +201,8 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     UUID aggId = UUID.randomUUID();
 
     AtomicReference<Throwable> e = new AtomicReference<>();
-    val errorLatch = new CountDownLatch(1);
-    val catchupLatch = new CountDownLatch(1);
+    var errorLatch = new CountDownLatch(1);
+    var catchupLatch = new CountDownLatch(1);
 
     fc.subscribe(
         SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(2))

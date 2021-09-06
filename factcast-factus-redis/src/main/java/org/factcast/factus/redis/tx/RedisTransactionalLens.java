@@ -1,7 +1,6 @@
 package org.factcast.factus.redis.tx;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.function.Function;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -11,6 +10,8 @@ import org.factcast.factus.redis.tx.RedisTransactional.Defaults;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
+
+import java.util.function.Function;
 
 @Slf4j
 public class RedisTransactionalLens extends AbstractTransactionalLens {
@@ -52,7 +53,7 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
               + " is expected to have an annotation @"
               + RedisTransactional.class.getSimpleName());
     }
-    return transactional.size();
+    return transactional.bulkSize();
   }
 
   @VisibleForTesting

@@ -3,7 +3,7 @@ package org.factcast.store.internal;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
-import lombok.val;
+
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -59,7 +59,7 @@ class PgSubscriptionFactoryTest {
 
     @Test
     void testConnect_transformationException() {
-      val e = new TransformationException("foo");
+      final var e = new TransformationException("foo");
 
       doThrow(e).when(pgsub).connect(req);
 
@@ -71,7 +71,7 @@ class PgSubscriptionFactoryTest {
 
     @Test
     void testConnect_someException() {
-      val e = new IllegalArgumentException("foo");
+      final var e = new IllegalArgumentException("foo");
 
       doThrow(e).when(pgsub).connect(req);
 

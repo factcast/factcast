@@ -3,14 +3,17 @@ package org.factcast.factus.redis.tx;
 import java.lang.annotation.*;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
-import lombok.val;
 import org.redisson.api.TransactionOptions;
+
+import javax.annotation.Nullable;
+import java.lang.annotation.*;
+import java.util.concurrent.TimeUnit;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Inherited
 public @interface RedisTransactional {
-  int size() default 50;
+  int bulkSize() default 50;
 
   long timeout() default Defaults.timeout;
 
@@ -35,7 +38,7 @@ public @interface RedisTransactional {
     }
 
     public static TransactionOptions with(@Nullable RedisTransactional transactional) {
-      val opts = create();
+      TransactionOptions opts = create();
 
       if (transactional != null) {
 

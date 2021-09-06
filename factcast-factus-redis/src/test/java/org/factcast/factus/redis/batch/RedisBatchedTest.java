@@ -2,12 +2,13 @@ package org.factcast.factus.redis.batch;
 
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.val;
 import org.factcast.factus.redis.batch.RedisBatched.Defaults;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.BatchOptions;
+
+import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 public class RedisBatchedTest {
@@ -27,7 +28,7 @@ public class RedisBatchedTest {
 
   @Test
   void responseTimeout() {
-    val t = Defaults.with(RB3.class.getAnnotation(RedisBatched.class));
+    BatchOptions t = Defaults.with(RB3.class.getAnnotation(RedisBatched.class));
     BatchOptions defaults = Defaults.create();
     assertThat(t.getResponseTimeout()).isEqualTo(123);
     assertThat(t).extracting(BatchOptions::getRetryAttempts).isEqualTo(defaults.getRetryAttempts());
@@ -36,7 +37,7 @@ public class RedisBatchedTest {
 
   @Test
   void attempts() {
-    val t = Defaults.with(RB4.class.getAnnotation(RedisBatched.class));
+    BatchOptions t = Defaults.with(RB4.class.getAnnotation(RedisBatched.class));
     BatchOptions defaults = Defaults.create();
     assertThat(t)
         .extracting(BatchOptions::getResponseTimeout)
@@ -47,7 +48,7 @@ public class RedisBatchedTest {
 
   @Test
   void interval() {
-    val t = Defaults.with(RB5.class.getAnnotation(RedisBatched.class));
+    BatchOptions t = Defaults.with(RB5.class.getAnnotation(RedisBatched.class));
     BatchOptions defaults = Defaults.create();
     assertThat(t)
         .extracting(BatchOptions::getResponseTimeout)
@@ -60,10 +61,10 @@ public class RedisBatchedTest {
 @RedisBatched()
 class RB1 {}
 
-@RedisBatched(size = 123)
+@RedisBatched(bulkSize = 123)
 class RB2 {}
 
-@RedisBatched(size = 123, responseTimeout = 123)
+@RedisBatched(bulkSize = 123, responseTimeout = 123)
 class RB3 {}
 
 @RedisBatched(retryAttempts = 123)

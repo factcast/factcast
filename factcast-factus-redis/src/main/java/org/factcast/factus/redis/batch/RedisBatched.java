@@ -3,15 +3,18 @@ package org.factcast.factus.redis.batch;
 import java.lang.annotation.*;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
-import lombok.val;
 import org.redisson.api.BatchOptions;
+
+import javax.annotation.Nullable;
+import java.lang.annotation.*;
+import java.util.concurrent.TimeUnit;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Inherited
 public @interface RedisBatched {
 
-  int size() default 50;
+  int bulkSize() default 50;
 
   long responseTimeout() default Defaults.responseTimeout;
 
@@ -32,7 +35,7 @@ public @interface RedisBatched {
     }
 
     public static BatchOptions with(@Nullable RedisBatched batched) {
-      val opts = create();
+      BatchOptions opts = create();
 
       if (batched != null) {
 

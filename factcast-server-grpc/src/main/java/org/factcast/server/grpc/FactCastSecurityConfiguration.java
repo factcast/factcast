@@ -62,7 +62,8 @@ public class FactCastSecurityConfiguration {
   @ConditionalOnResource(resources = "classpath:factcast-security.json")
   public Object credentialConfigurationFromClasspath() {
     throw new IllegalArgumentException(
-        "classpath:factcast-security.json was removed in this release. Please read the migration guide.");
+        "classpath:factcast-security.json was removed in this release. Please read the migration"
+            + " guide.");
   }
 
   @Bean
@@ -118,7 +119,6 @@ public class FactCastSecurityConfiguration {
       FactCastAccessConfiguration cc, FactCastSecretProperties secrets) {
     log.info("FactCast Security is enabled.");
     return username -> {
-      log.debug("*** username is " + username);
       Optional<FactCastAccount> account = cc.findAccountById(username);
       return account
           .map(a -> toUser(a, secrets.getSecrets().get(a.id())))
@@ -158,7 +158,8 @@ public class FactCastSecurityConfiguration {
 
     if (!factcastSecurityProperties.isEnabled()) {
       log.warn(
-          "**** FactCast Security is disabled. This is discouraged for production environments. You have been warned. ****");
+          "**** FactCast Security is disabled. This is discouraged for production environments. You"
+              + " have been warned. ****");
       return username -> new FactCastUser(FactCastAccount.GOD, "security_disabled");
     }
 
