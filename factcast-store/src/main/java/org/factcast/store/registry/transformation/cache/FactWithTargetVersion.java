@@ -21,4 +21,9 @@ public class FactWithTargetVersion implements Comparable<FactWithTargetVersion> 
   public int compareTo(@NonNull FactWithTargetVersion o) {
     return Comparator.comparing(FactWithTargetVersion::order).compare(this, o);
   }
+
+  public FactWithTargetVersion replaceFactWith(Fact newFact) {
+    return new FactWithTargetVersion(
+        order, newFact, targetVersion, transformationKey, transformationChain);
+  }
 }

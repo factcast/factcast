@@ -89,6 +89,11 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
+  public void put(Collection<FactWithTargetVersion> transformedFactsWithTargetVersion) {
+    transformedFactsWithTargetVersion.forEach(f -> put(f.fact(), f.transformationChain().id()));
+  }
+
+  @Override
   public void compact(@NonNull DateTime thresholdDate) {
     registryMetrics.timed(
         RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE,

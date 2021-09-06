@@ -31,7 +31,18 @@ public interface TransformationCache {
 
   Optional<Fact> find(UUID eventId, int version, String transformationChainId);
 
+  /**
+   * Load given facts with target version, and enrich cached facts with the original {@link
+   * FactWithTargetVersion}.
+   *
+   * @param factsWithTargetVersion
+   * @return map with those given {@link FactWithTargetVersion} for which a cache entry was found as
+   *     key and the cached fact in the desired version as value.
+   */
   Map<FactWithTargetVersion, Fact> find(Collection<FactWithTargetVersion> factsWithTargetVersion);
+
+  /** Put given freshly transformed facts into cache. */
+  void put(Collection<FactWithTargetVersion> transformedFactsWithTargetVersion);
 
   void compact(DateTime thresholdDate);
 }
