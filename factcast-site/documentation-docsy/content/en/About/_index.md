@@ -31,7 +31,6 @@ src="https://img.shields.io/docker/v/factcast/factcast?label=dockerhub"></a>
 <a href="https://www.apache.org/licenses/LICENSE-2.0" rel="nofollow">
 <img  class="inline" src="https://camo.githubusercontent.com/e63d202eb7ed9151a9c46eae71f8599e67a26a56/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d41534c322d677265656e2e7376673f7374796c653d666c6174" data-canonical-src="https://img.shields.io/badge/license-ASL2-green.svg?style=flat" style="max-width:100%;">
 </a>
-<a href="https://dependabot.com" rel="nofollow"><img class="inline" src="https://camo.githubusercontent.com/9067c86d33741a2fa11586e87089c65cdda10ec3/68747470733a2f2f6170692e646570656e6461626f742e636f6d2f6261646765732f7374617475733f686f73743d676974687562267265706f3d66616374636173742f6661637463617374" alt="Dependabot Status" data-canonical-src="https://api.dependabot.com/badges/status?host=github&amp;repo=factcast/factcast" style="max-width:100%;"></a>
 </center>
 {{< /rawhtml >}}
 
