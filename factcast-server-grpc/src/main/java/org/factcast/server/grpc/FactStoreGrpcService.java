@@ -70,6 +70,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -85,7 +86,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @RequiredArgsConstructor
 @GrpcService
 @SuppressWarnings("all")
-public class FactStoreGrpcService extends RemoteFactStoreImplBase {
+public class FactStoreGrpcService extends RemoteFactStoreImplBase implements InitializingBean {
 
   static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
 
@@ -316,13 +317,18 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     String name = grpcRequestMetadata.clientId().orElse("");
     properties.put(Capabilities.CODECS.toString(), codecs.available());
-    log.info("{}handshake properties: {} ", clientIdPrefix(), properties);
+    log.info("{}handshake (serverConfig={})", clientIdPrefix(), properties);
     return properties;
   }
 
   @VisibleForTesting
   void retrieveImplementationVersion(HashMap<String, String> properties) {
-    String implVersion = "UNKNOWN";
+    properties.put(Capabilities.FACTCAST_IMPL_VERSION.toString(), getImplVersion().orElse("UNKNOWN"));
+  }
+
+  private Optional<String> getImplVersion() {
+    String implVersion=null;
+
     URL propertiesUrl = getProjectProperties();
     Properties buildProperties = new Properties();
     if (propertiesUrl != null) {
@@ -340,7 +346,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
         // "UNKNOWN"
       }
     }
-    properties.put(Capabilities.FACTCAST_IMPL_VERSION.toString(), implVersion);
+    return Optional.ofNullable(implVersion);
   }
 
   @VisibleForTesting
@@ -614,5 +620,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase {
 
     responseObserver.onNext(MSG_Empty.getDefaultInstance());
     responseObserver.onCompleted();
+  }
+
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    log.info("Service version: {}",getImplVersion().orElse("UNKNOWN"));
   }
 }
