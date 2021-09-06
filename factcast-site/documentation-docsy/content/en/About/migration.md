@@ -4,6 +4,54 @@ type = "docs"
 weight = 100015
 +++
 
+## Upgrading to 0.4.0
+
+*Please make sure you followed the migration guide if your current version is <0.3.10.*
+
+#### Building
+
+* Java11 runtime is required for building and running the server
+* lombok val is disallowed by configuration
+  
+    Please use Java11's final var instead. 
+
+#### Server
+
+* Java11 runtime is required for building and running the server
+
+
+* Default Postgres version shifted from 9.6 to 11.5
+  
+  While there is no indication that FactCast won't run on 9.x or 10.x we test against 11 now, (as 14 already is around the corner)
+
+
+* Property namespace for the store has been changed from `org.factcast.store.pg` to `org.factcast.store`. 
+  
+  While 0.4.0 still supports
+the older namespace, it is deprecated and should be migrated asap. Note that new properties are only added to the 
+new namespace, so please adjust your projects accordingly.
+
+
+* Note that the default catchup strategy was changed from PAGED or TMPPAGED to FETCHING. Make sure your postgres does not
+timeout connections.
+  
+#### Client
+
+* The Subscription default for 'maxBatchDelayInMs' changed from **0**msec to **10**msec
+
+  We feel like this is a good compromise between reducing the server load and minimizing latency. If you absolutely need
+minimum latency, you can still set it to 0 on a per-subscription basis.
+
+* The default for `factcast.grpc.client.catchup-batchsize` is set to **50**.
+
+    If, for some weird reason, you don't want the transfer to be batched, you can set this down to 1 again.
+
+* The default for `factcast.grpc.client.id` is `${spring.application.name}`
+
+    The id is used for logging purposes on the server.   
+
+    
+
 ## Upgrading to 0.3.10
 
 0.3.10 changes the namespaces of the metrics. Also some metric names have
