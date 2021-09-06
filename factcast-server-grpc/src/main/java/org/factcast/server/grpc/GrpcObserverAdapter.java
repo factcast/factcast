@@ -117,8 +117,8 @@ class GrpcObserverAdapter implements FactObserver {
 
   @Override
   public void onComplete() {
-    flush();
     disableKeepalive();
+    flush();
     log.debug("{} onComplete – sending complete notification", id);
     observer.onNext(converter.createCompleteNotification());
     tryComplete();
@@ -132,8 +132,8 @@ class GrpcObserverAdapter implements FactObserver {
 
   @Override
   public void onError(@NonNull Throwable e) {
-    flush();
     disableKeepalive();
+    flush();
     serverExceptionLogger.log(e, id);
     observer.onError(ServerExceptionHelper.translate(e));
   }

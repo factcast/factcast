@@ -78,9 +78,11 @@ class PgSubscriptionFactory {
       try {
         pgsub.connect(req);
       } catch (MissingTransformationInformation | TransformationException e) {
-        log.warn("{} transformation error: {}", req, e.getMessage());
+        log.warn("{} Notifying subscriber of transformation error: {}", req, e.getMessage());
         subscription.notifyError(e);
-      } catch (Throwable e) {
+      } catch (Exception e) {
+        // not limiting to RuntimeException, in case anyone used @SneakyThrows
+        log.warn("{} Notifying subscriber of runtime error: {}", req, e.getMessage());
         subscription.notifyError(e);
       }
     };
