@@ -26,7 +26,7 @@
     <module>factcast-test</module>
     <module>factcast-test-redis</module>
     <module>factcast-internal-dep</module>
-    <module>factcast-internal-dep-boot</module>
+	    <module>factcast-internal-dep-boot</module>
     <module>factcast-spring-boot-autoconfigure</module>
     <module>factcast-factus-event</module>
     <module>factcast-factus-bin-snapser</module>
