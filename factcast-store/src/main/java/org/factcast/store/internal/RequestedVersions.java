@@ -19,6 +19,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.factcast.core.Fact;
+
 import lombok.NonNull;
 
 public class RequestedVersions {
@@ -36,5 +39,21 @@ public class RequestedVersions {
   public boolean matches(@NonNull String ns, String type, int version) {
     Set<Integer> set = get(ns, type);
     return set.isEmpty() || set.contains(0) || set.contains(version);
+  }
+
+  public boolean noTypeOrMatches(@NonNull Fact fact) {
+    if (fact.type() == null) {
+      return true;
+    }
+    Set<Integer> set = get(fact.ns(), fact.type());
+    return set.isEmpty() || set.contains(0) || set.contains(fact.version());
+  }
+
+  public int getTargetVersion(Fact fact) throws IllegalArgumentException {
+    return get(fact.ns(), fact.type()).stream()
+        .mapToInt(v -> v)
+        .max()
+        .orElseThrow(
+            () -> new IllegalArgumentException("No requested Version !? This must not happen."));
   }
 }

@@ -18,6 +18,7 @@ package org.factcast.store.registry.transformation;
 import java.util.List;
 
 import org.factcast.core.Fact;
+import org.factcast.store.internal.RequestedVersions;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
@@ -34,8 +35,9 @@ public class BatchCacheLookupFactTransformerServiceFactory {
   @NonNull private final TransformationCache cache;
   @NonNull private final RegistryMetrics registryMetrics;
 
-  BatchCacheLookupFactTransformerService create(List<Fact> factsForCacheWarmup) {
+  BatchCacheLookupFactTransformerService create(
+      List<Fact> factsForCacheWarmup, RequestedVersions requestedVersions) {
     return new BatchCacheLookupFactTransformerService(
-        chains, trans, cache, registryMetrics, factsForCacheWarmup);
+        chains, trans, cache, registryMetrics, factsForCacheWarmup, requestedVersions);
   }
 }

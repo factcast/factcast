@@ -15,8 +15,6 @@
  */
 package org.factcast.store.registry.transformation;
 
-import java.util.OptionalInt;
-
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.TransformationException;
@@ -36,23 +34,21 @@ public class FactTransformersImpl implements FactTransformers {
   @Override
   public @NonNull Fact transformIfNecessary(@NonNull Fact e) throws TransformationException {
 
-    String ns = e.ns();
-    String type = e.type();
-    int version = e.version();
-
-    if (type == null || requested.matches(ns, type, version)) {
+    if (requested.noTypeOrMatches(e)) {
       return e;
 
     } else {
-      OptionalInt max = requested.get(ns, type).stream().mapToInt(v -> v).max();
-      int targetVersion =
-          max.orElseThrow(
-              () -> new IllegalArgumentException("No requested Version !? This must not happen."));
+      int targetVersion = requested.getTargetVersion(e);
 
       return registryMetrics.timed(
           RegistryMetrics.OP.TRANSFORMATION,
           TransformationException.class,
           () -> trans.transformIfNecessary(e, targetVersion));
     }
+  }
+
+  @Override
+  public void close() throws Exception {
+    trans.close();
   }
 }

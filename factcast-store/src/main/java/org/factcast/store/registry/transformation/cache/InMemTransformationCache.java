@@ -15,18 +15,22 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NonNull;
+
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.Fact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.joda.time.DateTime;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NonNull;
 
 public class InMemTransformationCache implements TransformationCache {
   private final RegistryMetrics registryMetrics;
@@ -67,6 +71,21 @@ public class InMemTransformationCache implements TransformationCache {
             ? RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT
             : RegistryMetrics.EVENT.TRANSFORMATION_CACHE_MISS);
     return cached.map(FactAndAccessTime::fact);
+  }
+
+  @Override
+  public Map<FactWithTargetVersion, Fact> find(
+      Collection<FactWithTargetVersion> factsWithTargetVersion) {
+
+    Map<FactWithTargetVersion, Fact> result = new HashMap<>();
+
+    factsWithTargetVersion.forEach(
+        f -> {
+          var cached = find(f.fact().id(), f.targetVersion(), f.transformationChain().id());
+          cached.ifPresent(fact -> result.put(f, fact));
+        });
+
+    return result;
   }
 
   @Override

@@ -54,7 +54,7 @@ public class FactTransformersFactoryImpl implements FactTransformersFactory {
 
     return new FactTransformersImpl(
         rv,
-        batchCacheLookupFactTransformerServiceFactory.create(factsForCacheWarmup),
+        batchCacheLookupFactTransformerServiceFactory.create(factsForCacheWarmup, rv),
         registryMetrics);
   }
 

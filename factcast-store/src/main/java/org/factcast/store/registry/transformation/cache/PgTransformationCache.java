@@ -15,17 +15,22 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+
 import org.factcast.core.Fact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.registry.metrics.RegistryMetrics.OP;
 import org.joda.time.DateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class PgTransformationCache implements TransformationCache {
@@ -74,6 +79,23 @@ public class PgTransformationCache implements TransformationCache {
     registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
 
     return Optional.of(facts.get(0));
+  }
+
+  @Override
+  public Map<FactWithTargetVersion, Fact> find(
+      Collection<FactWithTargetVersion> factsWithTargetVersion) {
+
+    // TODO: implement lookup via one select, this code is just for testing!!
+
+    Map<FactWithTargetVersion, Fact> result = new HashMap<>();
+
+    factsWithTargetVersion.forEach(
+        f -> {
+          var cached = find(f.fact().id(), f.targetVersion(), f.transformationChain().id());
+          cached.ifPresent(fact -> result.put(f, fact));
+        });
+
+    return result;
   }
 
   @Override

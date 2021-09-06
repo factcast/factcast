@@ -15,8 +15,11 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
 import org.factcast.core.Fact;
 import org.joda.time.DateTime;
 
@@ -27,6 +30,8 @@ public interface TransformationCache {
   void put(Fact f, String transformationChainId);
 
   Optional<Fact> find(UUID eventId, int version, String transformationChainId);
+
+  Map<FactWithTargetVersion, Fact> find(Collection<FactWithTargetVersion> factsWithTargetVersion);
 
   void compact(DateTime thresholdDate);
 }

@@ -15,60 +15,144 @@
  */
 package org.factcast.store.registry.transformation;
 
+import static java.util.function.Predicate.not;
+
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.store.internal.RequestedVersions;
 import org.factcast.store.registry.metrics.RegistryMetrics;
+import org.factcast.store.registry.transformation.cache.FactWithTargetVersion;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
-import org.factcast.store.registry.transformation.chains.TransformationChain;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.factcast.store.registry.transformation.chains.Transformer;
 
 import lombok.NonNull;
 
-public class BatchCacheLookupFactTransformerService extends AbstractFactTransformer {
+public class BatchCacheLookupFactTransformerService extends AbstractFactTransformer
+    implements AutoCloseable {
 
   @NonNull private final TransformationCache cache;
+
+  // TODO: what is a good number here?
+  // TODO: keep in mind we only have more than one thread if we have different ns/type/version
+  @NonNull private final ExecutorService executorService = Executors.newFixedThreadPool(5);
+
+  /**
+   * Contains the original facts with corresponding target versions for those facts that needs
+   * transformation.
+   */
+  private final Map<Fact, FactWithTargetVersion> factToTargetVersions = new HashMap<>();
+
+  private Future<Map<FactWithTargetVersion, Fact>> cacheLookup;
+  private Map<FactWithTargetVersion, Future<Fact>> transformedFacts = new HashMap<>();
 
   public BatchCacheLookupFactTransformerService(
       @NonNull TransformationChains chains,
       @NonNull Transformer trans,
       @NonNull TransformationCache cache,
       @NonNull RegistryMetrics registryMetrics,
-      @NonNull List<Fact> factsForCacheWarmup) {
+      @NonNull List<Fact> factsForCacheWarmup,
+      @NonNull RequestedVersions requestedVersions) {
     super(chains, trans, registryMetrics);
     this.cache = cache;
-    warmupCache(factsForCacheWarmup);
+    warmupCache(factsForCacheWarmup, requestedVersions);
   }
 
-  private void warmupCache(List<Fact> factsForCacheWarmup) {
-    // TODO implement me
+  @Override
+  public void close() throws Exception {
+    executorService.shutdown();
+  }
+
+  private void warmupCache(
+      @NonNull List<Fact> factsForCacheWarmup, @NonNull RequestedVersions requestedVersions) {
+
+    for (int i = 0; i < factsForCacheWarmup.size(); i++) {
+
+      Fact fact = factsForCacheWarmup.get(i);
+
+      if (requestedVersions.noTypeOrMatches(fact)) {
+        continue;
+      }
+
+      var key = TransformationKey.of(fact.ns(), fact.type());
+      var targetVersion = requestedVersions.getTargetVersion(fact);
+
+      if (!isTransformationNecessary(fact, targetVersion)) {
+        continue;
+      }
+
+      var chain = getChain(fact, targetVersion, key);
+
+      var factWithTargetVersion = new FactWithTargetVersion(i, fact, targetVersion, key, chain);
+
+      factToTargetVersions.put(fact, factWithTargetVersion);
+    }
+
+    this.cacheLookup =
+        CompletableFuture.supplyAsync(
+                () -> cache.find(factToTargetVersions.values()), executorService)
+            .thenApply(this::handleCacheResult);
+  }
+
+  private Map<FactWithTargetVersion, Fact> handleCacheResult(
+      Map<FactWithTargetVersion, Fact> fromCache) {
+
+    // TODO: update read timestamps from cache
+
+    factToTargetVersions.values().stream()
+        .filter(not(fromCache::containsKey))
+        // make sure we transform the facts in the order they are requested
+        .sorted()
+        .forEachOrdered(
+            notInCache ->
+                transformedFacts.put(
+                    notInCache,
+                    executorService.submit(
+                        () ->
+                            // TODO: insert into cachnf
+                            transform(
+                                notInCache.fact(),
+                                notInCache.targetVersion(),
+                                notInCache.transformationKey(),
+                                notInCache.transformationChain()))));
+
+    return fromCache;
   }
 
   @Override
   public Fact transformIfNecessary(Fact e, int targetVersion) throws TransformationException {
 
-    if (!isTransformationNecessary(e, targetVersion)) {
+    var factWithTargetVersion = factToTargetVersions.get(e);
+
+    if (factWithTargetVersion == null) {
       return e;
     }
 
-    TransformationKey key = TransformationKey.of(e.ns(), e.type());
-    TransformationChain chain = getChain(e, targetVersion, key);
+    try {
+      var fromCache = cacheLookup.get().get(factWithTargetVersion);
+      if (fromCache != null) {
+        return fromCache;
+      }
 
-    // TODO: instead use warmed-up cache
-    Optional<Fact> cached = cache.find(e.id(), targetVersion, chain.id());
+      var transformed = transformedFacts.get(factWithTargetVersion).get();
+      if (transformed == null) {
+        throw new IllegalStateException(
+            "Fact which required transformation was neither found in cache nor in transformation map. This is a bug.");
+      }
 
-    if (cached.isPresent()) {
-      return cached.get();
-
-    } else {
-      // TODO: instead use transformation futures
-      Fact transformed = transform(e, targetVersion, key, chain);
-      // TODO: remove this
-      cache.put(transformed, chain.id());
       return transformed;
+
+    } catch (InterruptedException | ExecutionException exception) {
+      throw new TransformationException(exception);
     }
   }
 }
