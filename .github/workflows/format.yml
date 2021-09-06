@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2 # v2 minimum required
+        with:
+          token: ${{ secrets.PAT }}
       - uses: actions/setup-java@v1
         with:
           # Recommended: latest versions of Google Java Format require JDK 11+
