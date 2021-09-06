@@ -95,7 +95,7 @@ public class SubscriptionRequestTOTest {
     FactSpec s = FactSpec.ns("foo");
     SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
     SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
-    assertEquals(0, uut.maxBatchDelayInMs());
+    assertEquals(SubscriptionRequestTO.DEFAULT_MAX_BATCH_DELAY_IN_MS, uut.maxBatchDelayInMs());
     uut.maxBatchDelayInMs(7);
     assertEquals(7, uut.maxBatchDelayInMs());
   }
