@@ -37,7 +37,7 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
   private static final int RETRY_COUNT = 100;
 
-  private static final int WAIT_TIME = 1000;
+  private static final long WAIT_TIME_MILLIS = 1000;
 
   private final ServerCallStreamObserver<T> delegate;
   private int batchSize;
@@ -77,8 +77,8 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
               throw new TransportLayerException(
                   id
                       + " channel not coming back after waiting "
-                      + (WAIT_TIME * batchSize * RETRY_COUNT)
-                      + "msec ("+WAIT_TIME+" * batchSize * "+RETRY_COUNT+" retries");
+                      + (WAIT_TIME_MILLIS * batchSize * RETRY_COUNT)
+                      + "msec ("+ WAIT_TIME_MILLIS +" * batchSize * "+RETRY_COUNT+" retries");
             }
           }
         }
@@ -119,7 +119,7 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
       log.trace("{} channel not ready. Slow client? Attempt: {}/{}", id, i, retry);
       try {
-        lock.wait((long) WAIT_TIME );
+        lock.wait(WAIT_TIME_MILLIS);
       } catch (InterruptedException meh) {
         // ignore
       }
