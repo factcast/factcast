@@ -15,6 +15,7 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toMap;
@@ -44,6 +45,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
+@SuppressWarnings("SqlResolve")
 @Slf4j
 @RequiredArgsConstructor
 public class PgTransformationCache implements TransformationCache {
@@ -162,6 +164,10 @@ public class PgTransformationCache implements TransformationCache {
   private List<FactWithCacheKey> loadFromCache(
       @NonNull Collection<FactWithTargetVersion> factsWithTargetVersion) {
 
+    if (factsWithTargetVersion.isEmpty()) {
+      return emptyList();
+    }
+
     Set<String> cacheKeys = generateCacheKeys(factsWithTargetVersion);
 
     String inSqlQuery = String.join(",", Collections.nCopies(cacheKeys.size(), "?"));
@@ -185,6 +191,10 @@ public class PgTransformationCache implements TransformationCache {
   @NonNull
   private void updateTimestampsOfFactsLoadedFromCache(
       @NonNull List<FactWithCacheKey> cachedFactsWithKeys) {
+
+    if (cachedFactsWithKeys.isEmpty()) {
+      return;
+    }
 
     String inSqlUpdate = String.join(",", Collections.nCopies(cachedFactsWithKeys.size(), "?"));
 
@@ -230,7 +240,7 @@ public class PgTransformationCache implements TransformationCache {
   private Set<String> generateCacheKeys(
       @NonNull Collection<FactWithTargetVersion> factsWithTargetVersion) {
     return factsWithTargetVersion.stream()
-        .map(f -> CacheKey.of(f.fact().id(), f.fact().version(), f.transformationChain().id()))
+        .map(f -> CacheKey.of(f.fact().id(), f.targetVersion(), f.transformationChain().id()))
         .collect(Collectors.toSet());
   }
 
