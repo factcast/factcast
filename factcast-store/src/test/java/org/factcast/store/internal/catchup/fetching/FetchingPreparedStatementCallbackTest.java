@@ -144,7 +144,7 @@ class FetchingPreparedStatementCallbackTest {
 
     inOrder.verify(rs).close();
 
-    verifyNoMoreInteractions(postQueryMatcher);
+    verifyNoMoreInteractions(postQueryMatcher, factTransformers);
   }
 
   @SneakyThrows
