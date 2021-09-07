@@ -38,6 +38,18 @@ import org.factcast.store.registry.transformation.chains.Transformer;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * This transformer service is initialised with a list of facts for which {@link
+ * #transformIfNecessary(Fact, int)} will be called later.
+ *
+ * <p>Like this, the service can identify the facts that require transformation upfront, query the
+ * cache for them and transform the remaining ones not found in the cache.
+ *
+ * <p>This approach was chosen to allow the subscription to already start sending facts to the
+ * client in the case those at the beginning of the list do not require transformation. Then the
+ * processing time of the client can be used to query the cache and do the transformations
+ * meanwhile.
+ */
 @Slf4j
 public class BatchCacheLookupFactTransformerService extends AbstractFactTransformer {
 
@@ -59,6 +71,10 @@ public class BatchCacheLookupFactTransformerService extends AbstractFactTransfor
   private final Map<FactWithTargetVersion, CompletableFuture<Fact>> transformedFacts =
       new HashMap<>();
 
+  /**
+   * All facts that you plan to pass to {@link #transformIfNecessary(Fact, int)} need to be in
+   * factsForCacheWarmup!
+   */
   public BatchCacheLookupFactTransformerService(
       @NonNull TransformationChains chains,
       @NonNull Transformer trans,
@@ -222,6 +238,13 @@ public class BatchCacheLookupFactTransformerService extends AbstractFactTransfor
     cache.put(transformedFactsWithTargetVersion);
   }
 
+  /**
+   * This method transforms the given fact if required, either by finding it in the cache or
+   * transforming it.
+   *
+   * <p>Note: all facts requested here must have been passed to the constructor, otherwise they will
+   * be returned as they are, even with a wrong version.
+   */
   @Override
   public Fact transformIfNecessary(Fact e, int targetVersion) throws TransformationException {
 
