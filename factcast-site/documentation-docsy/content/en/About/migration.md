@@ -4,6 +4,29 @@ type = "docs"
 weight = 100015
 +++
 
+
+## Upgrading to 0.4.1
+
+*This only applies if you used 0.4.0 on you data before.*
+
+If you rely on the header meta-attributes '_ser' or '_ts', there was a bug in 0.4.0 that has the consequence, of some
+events missing the mentioned attributes.
+
+In order to add them where they are missing, you would want to execute the following SQL on your factstore database:
+
+```sql
+update fact set header = 
+        jsonb_set( header, '{meta}' , 
+            COALESCE(header->'meta','{}') 
+                || concat('{"_ser":', ser ,
+                    ', "_ts":', EXTRACT(EPOCH FROM now()::timestamptz(3))*1000, '}' )::jsonb 
+                , true) 
+    WHERE (header ->> 'meta')::jsonb ->> '_ser' is null 
+```
+
+Obviously, the timestamp will not be correct here, but at least there is one. If you have a better indication of
+the publishing time in the payload of your events, you may want to use that one instead.
+
 ## Upgrading to 0.4.0
 
 *Please make sure you followed the migration guide if your current version is <0.3.10.*
