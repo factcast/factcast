@@ -97,14 +97,43 @@ databaseChangeLog:
   - include:
       file: factcast/issue1435/stats_index.sql
       relativeToChangelogFile: true
-  - include:
-      file: factcast/issue1444/obsolete_index.sql
-      relativeToChangelogFile: true
-  - include:
-      file: factcast/issue1553/updateNotifyFactInsert.sql
-      relativeToChangelogFile: true
-  - include:
-      file: factcast/issue1558/augmentation_trigger.sql
-      relativeToChangelogFile: true
+
+
+  - changeSet:
+      id: drop_obsolete_index
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1444/drop_obsolete_index.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: updateNotifyFactInsert
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1553/updateNotifyFactInsert.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: augmentation_trigger
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1558/augmentation_trigger.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
 
 
