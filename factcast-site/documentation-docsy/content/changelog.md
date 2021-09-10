@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.4.1](https://github.com/factcast/factcast/tree/0.4.1) (2021-09-10)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.4.0...0.4.1)
+
+**Closed issues:**
+
+- Fix trigger creation that failed in 0.4.0 [\#1582](https://github.com/factcast/factcast/issues/1582)
+- Condense notifications and trace logs on mass publications [\#1553](https://github.com/factcast/factcast/issues/1553)
+
+**Merged pull requests:**
+
+- issue1582 run DDL outside of transactions [\#1583](https://github.com/factcast/factcast/pull/1583) ([uweschaefer](https://github.com/uweschaefer))
+- Update dependency ch.qos.logback:logback-classic to v1.2.6 [\#1581](https://github.com/factcast/factcast/pull/1581) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency net.javacrumbs.shedlock:shedlock-spring to v4.27.0 [\#1580](https://github.com/factcast/factcast/pull/1580) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency net.javacrumbs.shedlock:shedlock-provider-jdbc-template to v4.27.0 [\#1579](https://github.com/factcast/factcast/pull/1579) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.apache.maven.plugins:maven-javadoc-plugin to v3.3.1 [\#1578](https://github.com/factcast/factcast/pull/1578) ([renovate[bot]](https://github.com/apps/renovate))
+- Update micronaut.version to v2.5.13 [\#1569](https://github.com/factcast/factcast/pull/1569) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.redisson:redisson-spring-boot-starter to v3.16.2 [\#1566](https://github.com/factcast/factcast/pull/1566) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [0.4.0](https://github.com/factcast/factcast/tree/0.4.0) (2021-09-06)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/0.3.13...0.4.0)

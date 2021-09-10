@@ -8,8 +8,24 @@ weight: 100000
 {{% alert info %}} Only important releases are mentioned here.
 {{% /alert %}}
 
-### RELEASE 0.4.0 (Upcoming)
-### RELEASE 0.4.0-RC1
+### RELEASE 0.4.1
+
+{{< rawhtml >}}
+<a
+href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.4.1+">
+0.4.1
+</a>
+{{< /rawhtml >}}
+
+##### Performance
+  * Increase ingestion performance
+  * Reduce load on follow subscriptions
+
+##### Important bugfix
+  * Fixes missing "_ser" and "_ts" attributes in header
+  * see migration guide if you have been on 0.4.0 before 
+
+### RELEASE 0.4.0 
 {{< rawhtml >}}
 <a
 href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.4.0+">
