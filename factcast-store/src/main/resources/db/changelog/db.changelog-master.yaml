@@ -98,6 +98,9 @@ databaseChangeLog:
       file: factcast/issue1435/stats_index.sql
       relativeToChangelogFile: true
   - include:
+      file: factcast/issue1444/obsolete_index.sql
+      relativeToChangelogFile: true
+  - include:
       file: factcast/issue1553/updateNotifyFactInsert.sql
       relativeToChangelogFile: true
   - include:
