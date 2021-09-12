@@ -7,6 +7,7 @@
   ],
   "stabilityDays": 1,
   "prCreation": "immediate",
+  "ignorePaths": ["factcast-itests/factcast-itests-exception-handling-v3-compat"],
   "packageRules": [
     {
       "packagePatterns": [
