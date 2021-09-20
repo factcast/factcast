@@ -8,27 +8,29 @@ import org.factcast.itests.docexample.event.UserEmailChanged;
 import org.factcast.itests.docexample.event.UserRemoved;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Component
 public class UserEmailsProjection extends LocalManagedProjection {
 
-    @Getter
-    private Set<String> userEmails = new HashSet<>();
+    private Map<UUID, String> userEmails = new HashMap<>();
+
+    public Set<String> getEmails() {
+        return new HashSet<>(userEmails.values());
+    }
 
     @Handler
     void apply(UserAdded event) {
-        userEmails.add(event.getEmail());
+        userEmails.put(event.getUserId(), event.getEmail());
     }
 
     @Handler
     void apply(UserEmailChanged event) {
-        userEmails.add(event.getEmail());
+        userEmails.put(event.getUserId(), event.getEmail());
     }
 
     @Handler
     void apply(UserRemoved event) {
-        userEmails.remove(event.getEmail());
+        userEmails.remove(event.getUserId());
     }
 }
