@@ -1,4 +1,4 @@
-package org.factcast.itests.docexample;
+package org.factcast.itests.docexample.factcastlowlevel;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

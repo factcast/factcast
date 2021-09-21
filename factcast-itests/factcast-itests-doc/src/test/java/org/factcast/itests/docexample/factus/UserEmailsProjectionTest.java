@@ -1,8 +1,8 @@
-package org.factcast.itests.docexample;
+package org.factcast.itests.docexample.factus;
 
-import org.factcast.itests.docexample.event.UserAdded;
-import org.factcast.itests.docexample.event.UserEmailChanged;
-import org.factcast.itests.docexample.event.UserRemoved;
+import org.factcast.itests.docexample.factus.event.UserAdded;
+import org.factcast.itests.docexample.factus.event.UserEmailChanged;
+import org.factcast.itests.docexample.factus.event.UserRemoved;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

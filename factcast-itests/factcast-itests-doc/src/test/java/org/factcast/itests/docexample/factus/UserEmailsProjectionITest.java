@@ -1,10 +1,9 @@
 package org.factcast.itests.docexample.factus;
 
 import org.factcast.factus.Factus;
-import org.factcast.itests.docexample.UserEmailsProjection;
-import org.factcast.itests.docexample.event.UserAdded;
-import org.factcast.itests.docexample.event.UserEmailChanged;
-import org.factcast.itests.docexample.event.UserRemoved;
+import org.factcast.itests.docexample.factus.event.UserAdded;
+import org.factcast.itests.docexample.factus.event.UserEmailChanged;
+import org.factcast.itests.docexample.factus.event.UserRemoved;
 import org.factcast.test.FactCastExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +23,7 @@ import static org.assertj.core.api.Assertions.*;
 // provide fresh application context including uut for each test
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @ExtendWith({FactCastExtension.class})
-public class FactusExampleIntegrationTest {
+public class UserEmailsProjectionITest {
 
     @Autowired
     Factus factus;
