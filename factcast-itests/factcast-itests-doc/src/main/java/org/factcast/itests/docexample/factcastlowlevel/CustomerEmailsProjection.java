@@ -23,10 +23,18 @@ public class CustomerEmailsProjection {
 
     public void dispatchFacts(Fact fact) {
         switch (fact.type()) {
-            case "CustomerAdded": handleCustomerAdded(fact); break;
-            case "CustomerEmailChanged": handleCustomerEmailChanged(fact); break;
-            case "CustomerRemoved": handleCustomerRemoved(fact); break;
-            default: log.error("Event type {} not supported", fact.type()); break;
+            case "CustomerAdded":
+                handleCustomerAdded(fact);
+                break;
+            case "CustomerEmailChanged":
+                handleCustomerEmailChanged(fact);
+                break;
+            case "CustomerRemoved":
+                handleCustomerRemoved(fact);
+                break;
+            default:
+                log.error("Event type {} not supported", fact.type());
+                break;
         }
     }
 
