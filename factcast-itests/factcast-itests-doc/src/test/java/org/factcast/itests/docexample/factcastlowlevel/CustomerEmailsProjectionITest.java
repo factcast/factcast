@@ -1,10 +1,10 @@
-package org.factcast.itests.docexample.factus;
+package org.factcast.itests.docexample.factcastlowlevel;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.itests.docexample.CustomerEmailsProjection;
+import org.factcast.itests.docexample.factcastlowlevel.CustomerEmailsProjection;
 import org.factcast.test.FactCastExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.*;
 // provide fresh application context including uut for each test
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @ExtendWith({FactCastExtension.class})
-public class FactCastLowLevelExampleIntegrationTest {
+public class CustomerEmailsProjectionITest {
 
     @Autowired
     FactCast factCast;

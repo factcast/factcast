@@ -1,10 +1,8 @@
-package org.factcast.itests.docexample;
+package org.factcast.itests.docexample.factus;
 
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
-import org.factcast.itests.docexample.event.UserAdded;
-import org.factcast.itests.docexample.event.UserEmailChanged;
-import org.factcast.itests.docexample.event.UserRemoved;
+import org.factcast.itests.docexample.factus.event.*;
 import org.springframework.stereotype.Component;
 
 import java.util.*;

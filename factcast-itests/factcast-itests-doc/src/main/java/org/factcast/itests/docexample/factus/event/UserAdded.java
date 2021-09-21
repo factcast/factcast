@@ -1,4 +1,4 @@
-package org.factcast.itests.docexample.event;
+package org.factcast.itests.docexample.factus.event;
 
 import lombok.Data;
 import org.factcast.factus.event.EventObject;
@@ -10,14 +10,17 @@ import java.util.Set;
 import java.util.UUID;
 
 @Data
-@Specification(ns = "user", type = "UserRemoved", version = 1)
-public class UserRemoved implements EventObject {
+@Specification(ns = "user", type = "UserAdded", version = 1)
+public class UserAdded implements EventObject {
 
     private final UUID userId;
+    private final String email;
 
-    @ConstructorProperties("userId")
-    public UserRemoved(UUID userId) {
+    // hint Jackson deserializer
+    @ConstructorProperties({"userId","email"})
+    public UserAdded(UUID userId, String email) {
         this.userId = userId;
+        this.email = email;
     }
 
     @Override
