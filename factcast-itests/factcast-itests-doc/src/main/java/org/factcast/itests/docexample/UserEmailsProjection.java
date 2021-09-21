@@ -1,6 +1,5 @@
 package org.factcast.itests.docexample;
 
-import lombok.Getter;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.itests.docexample.event.UserAdded;
