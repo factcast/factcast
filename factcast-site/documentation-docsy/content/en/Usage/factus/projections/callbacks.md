@@ -13,9 +13,6 @@ When implementing the [Projection interface](https://github.com/factcast/factcas
 | `void onComplete()`                              | called when subscription closed without error  |
 | `void onError(Throwable exception)`              | called when subscription closed after receiving an error. The default impl is to simply logs the error. |
 
-Example
--------
-
 ### postprocess
 
 Annotating your handler methods gives you a convenient way of declaring a projection's interest into particular facts, filtered by `ns`,`type`,pojo to deserialize into, version etc.
@@ -70,3 +67,11 @@ public void onCatchup() {
       // perform further actions e.g. switch health indicator to "up"
 }
 ```
+### onComplete
+
+The `onComplete` method is called when the server terminated a subscription without any error. It is the last signal a server sends. The default behavior is to ignore this.
+
+### onError
+
+The `onError` method is called when the server terminated a subscription due to an error, or when one of your apply methods threw an exception. The subscription will be closed, either way.
+The default behavior is to just log the error.
