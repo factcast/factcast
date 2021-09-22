@@ -31,7 +31,7 @@ public class CustomerEmailsProjectionITest {
     FactCast factCast;
 
     @Test
-    public void emailOfSingleCustomer() {
+    void emailOfSingleCustomer() {
         UUID customerId1 = UUID.randomUUID();
         Fact customer1Added = Fact.builder()
                 .id(UUID.randomUUID())
@@ -61,7 +61,7 @@ public class CustomerEmailsProjectionITest {
 
 
     @Test
-    public void emailOfMultipleCustomers() {
+    void emailOfMultipleCustomers() {
         UUID customerId1 = UUID.randomUUID();
         UUID customerId2 = UUID.randomUUID();
 
