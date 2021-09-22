@@ -21,7 +21,7 @@ class UserEmailsProjectionTest {
     }
 
     @Test
-    public void emailIsAdded() {
+    void emailIsAdded() {
         uut.apply(new UserAdded(someUserId, "foo@bar.com"));
         var emails = uut.getEmails();
         assertThat(emails).hasSize(1);
@@ -29,7 +29,7 @@ class UserEmailsProjectionTest {
     }
 
     @Test
-    public void emailIsChanged() {
+    void emailIsChanged() {
         uut.apply(new UserAdded(someUserId, "foo@bar.com"));
         uut.apply(new UserEmailChanged(someUserId, "something@else.com"));
         var emails = uut.getEmails();
@@ -38,7 +38,7 @@ class UserEmailsProjectionTest {
     }
 
     @Test
-    public void emailRemoved() {
+    void emailRemoved() {
         uut.apply(new UserAdded(someUserId, "foo@bar.com"));
         uut.apply(new UserRemoved(someUserId));
         var emails = uut.getEmails();

@@ -32,7 +32,7 @@ public class UserEmailsProjectionITest {
     UserEmailsProjection uut;
 
     @Test
-    public void emailOfSingleUser() {
+    void emailOfSingleUser() {
         factus.publish(new UserAdded(UUID.randomUUID(), "user1@bar.com"));
         factus.update(uut);
         var emails = uut.getEmails();
@@ -41,7 +41,7 @@ public class UserEmailsProjectionITest {
     }
 
     @Test
-    public void emailOfMultipleUsers() {
+    void emailOfMultipleUsers() {
         var userId1 = UUID.randomUUID();
         var userId2 = UUID.randomUUID();
         factus.publish(List.of(
