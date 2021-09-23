@@ -37,8 +37,11 @@ For this reason they are *a magnitude slower than unit tests*.
 
 ## Testing FactCast (low-level)
 
-In this section introduces the `CustomerEmails` projection for which we will then write unit- as well as integration tests.
-For interaction with FactCast we are using the low-level API.
+This section introduces the `CustomerEmails` projection for which we will write 
+- unit tests and 
+- integration tests.
+
+For interaction with FactCast we are using here the low-level API.
 
 ### The Customer Emails Projection
 
@@ -47,7 +50,8 @@ Imagine our application needs a unique list of customer emails. To provide this 
 - `CustomerEmailChanged`
 - `CustomerRemoved`
 
-`CustomerAdded` and `CustomerEmailChanged` both contain a customerId and the email address. The `CustomerRemoved` fact only carries the customerId.
+`CustomerAdded` and `CustomerEmailChanged` both contain a customer ID and the email address. 
+The `CustomerRemoved` fact only carries the customer ID.
 
 Here is a possible projection using the FactCast low-level API:
 
@@ -61,7 +65,7 @@ public class CustomerEmailsProjection {
         return new HashSet<>(customerEmails.values());
     }
 
-    public void dispatchFacts(Fact fact) {
+    public void apply(Fact fact) {
         switch (fact.type()) {
             case "CustomerAdded": handleCustomerAdded(fact); break;
             case "CustomerEmailChanged": handleCustomerEmailChanged(fact); break;
@@ -70,21 +74,25 @@ public class CustomerEmailsProjection {
         }
     }
 
-    private void handleCustomerAdded(Fact fact) {
+    @VisibleForTesting
+    void handleCustomerAdded(Fact fact) {
         var payload = parsePayload(fact);
         customerEmails.put(getCustomerId(payload), payload.get("email").asText());
     }
 
-    private void handleCustomerEmailChanged(Fact fact) {
+    @VisibleForTesting
+    void handleCustomerEmailChanged(Fact fact) {
         var payload = parsePayload(fact);
         customerEmails.put(getCustomerId(payload), payload.get("email").asText());
     }
 
-    private void handleCustomerRemoved(Fact fact) {
+    @VisibleForTesting
+    void handleCustomerRemoved(Fact fact) {
         var payload = parsePayload(fact);
         customerEmails.remove(getCustomerId(payload));
     }
 
+    @SneakyThrows
     private JsonNode parsePayload(Fact fact) {
         return objectMapper.readTree(fact.jsonPayload());
     }
@@ -94,17 +102,20 @@ public class CustomerEmailsProjection {
     }
 }
 ```
-
-The method `dispatchFacts` acts as an entry point for the projection. It receives a `Fact` from the caller and further dispatches it to the appropriate handler method.
-Inside a handler method first the fact's JSON payload is parsed using the Jackson library. 
-Then the internal state of the projection, the `customerEmails` map, is updated. The handler for `CustomerAdded` adds a new entry to the map. When handling the `CustomerEmailChanged` fact, an existing entry is updated. Finally, a `CustomerRemoved` fact removes a customer's entry from the `customerEmails` map.
+The method `apply` acts as an entry point for the projection. It receives a `Fact` from the caller and further dispatches it to the appropriate handler method.
+Inside a handler method first the `Fact` object's JSON payload is parsed using the Jackson library. 
+Then the internal state of the projection, the `customerEmails` map, is updated. 
+The handler for `CustomerAdded` adds a new entry to the map. 
+When handling the `CustomerEmailChanged` fact, an existing entry is updated. 
+Finally, a `CustomerRemoved` fact removes a customer's entry from the `customerEmails` map.
 
 To provide our application with the unique list of customer emails, the `getCustomerEmails()` method
-returns the values of our internal `customerEmails` map wrapped in a Set.
+returns the values of our internal `customerEmails` map wrapped in a `Set`.
 
 ### Unit Testing A Projection
 
-Looking at the projection code above we see that there are no external dependencies. Instead, we receive `Fact` objects as input and return a customized view of the internal data.
+Looking at the projection code above, we see that there are no external dependencies. 
+Instead, we receive `Fact` objects as input and return a customized view of the internal state as result.
 
 A unit test for this is straight forward, let's look at an example for the `CustomerAdded` fact:
 
@@ -113,18 +124,18 @@ A unit test for this is straight forward, let's look at an example for the `Cust
 void emailIsAdded() {
     // arrange
     Fact customerAdded = Fact.builder()
-            .id(UUID.randomUUID())
-            .ns("user")
-            .type("CustomerAdded")
-            .version(1)
-            .build(String.format(
-                    "{\"id\":\"%s\", \"email\": \"%s\"}",
-                    UUID.randomUUID(),
-                    "customer@bar.com"));
-    
+        .id(UUID.randomUUID())
+        .ns("user")
+        .type("CustomerAdded")
+        .version(1)
+        .build(String.format(
+            "{\"id\":\"%s\", \"email\": \"%s\"}",
+            UUID.randomUUID(),
+            "customer@bar.com"));
+        
     // act
-    var uut = new CustomerEmailsProjection()
-    uut.dispatchFacts(customerAdded);
+    CustomerEmailsProjection uut = new CustomerEmailsProjection();
+    uut.handleCustomerAdded(customerAdded);
     var emails = uut.getCustomerEmails();
 
     // assert
@@ -134,20 +145,25 @@ void emailIsAdded() {
 ```
 
 First, we create a test `CustomerAdded` fact using the convenient builder the `Fact` class is providing.
-Then, we let the newly created `CustomerEmailsProjection` class deal with our test fact by passing it to the `dispatchFacts` method. 
+Then, we let the newly created `CustomerEmailsProjection` class deal with our test fact 
+by passing it to it's dedicated handler method `handleCustomerAdded`. 
 As the last step we check if the returned `Set` of emails corresponds to our expectations.
 
-The unit tests for the remaining two other facts look very similar, so they are left out here.
-However, you can find the full test code [here](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/test/java/org/factcast/itests/docexample/factcastlowlevel/CustomerEmailsProjectionTest.java).  
+Since the focus of the unit test is on *the details of how a fact is handled*, 
+we execute the handler method `handleCustomerAdded` directly. 
+However, [the full unit test](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/test/java/org/factcast/itests/docexample/factcastlowlevel/CustomerEmailsProjectionTest.java)
+contains also a test for the dispatching logic of the `apply` method.
+Additionally, the unit tests for the remaining two other handlers look very similar.
+They are also left out here but are part of [the full test code](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/test/java/org/factcast/itests/docexample/factcastlowlevel/CustomerEmailsProjectionTest.java).  
 
 To conclude, checking your projection's logic should be done with unit tests as they are simple and fast to execute. At some point though, you want to test if your code really is able to communicate with FactCast and this is where integration tests come in. 
 
 ### Integration Tests
 
-FactCast supports you in writing integration test by providing you a Junit5 extension which 
-automatically provides you with the required 
-
-As discussed [here]({{< ref "/usage/factus/testing.md" >}}), FactCast comes with a Junit5 extension which simplifies a local integration testing a lot.
+When writing integration tests, FactCast tries to support you as much as possible.
+Thus, it [provides a Junit5 extension]({{< ref "/usage/factus/testing.md" >}}) which 
+starts a FactCast server plus its Postgres database in the background.
+These two components are pre-configured and are ready to use.  
 
 
 {{% alert  title="Note" %}}
@@ -169,77 +185,35 @@ Before writing your first integration test
 </dependency>
 ```
 
-#### Test Scenario
-
-Here is an overview of the scenario we will write an integration test for:
-
-```mermaid
-graph LR
-    I[Integration Test] -->|1. requests customer emails| R[CustomerRepository]
-    R -->|4. serves customer emails| I
-    R -->|2. subscribes to facts from| D[FactCast]
-    R -->|3. updates and reads| C[CustomerEmailsProjection]
+- to allow TLS free authentication between our test code and the local FactCast server, create an `application.properties` file in the project's `resources` directory with the following content:
+```properties
+grpc.client.factstore.negotiationType=PLAINTEXT
 ```
-
-Our integration test is still interested in customer emails. However, instead of directly talking to the projection we now communicate with a `CustomerRepository` (1). This class encapsulate the details of the FactCast communication. It will first subscribe to the three relevant facts, `CustomerAdded`, `CustomerEmailChanged` and `CustomerRemoved` from FactCast (2). It will then use this subscription to
-update the `CustomerEmailsProjection` (3). When all facts are applied, the repository will ask
-the projection for customer emails and will delegate the result back to the integration test (4).
-
-Notice that, compared to the unit test, our test scope is larger and contains the `CustomerRepository`,
-FactCast and the `CustomerEmailsProjection`.
-
-Before we start working on our integration test, let's have a quick look at the new `CustomerRepository`.
-
-#### The Customer Repository
-
-The `CustomerRepository` class encapsulates the interaction between FactCast and the `CustomerEmailsProjection`. As currently the only duty of this repository is to find out about customer emails, the implementation is rather slim:
-
-```java
-@Component
-public class CustomerRepository {
-
-    @Autowired
-    FactCast factCast;
-
-    public Set<String> getCustomerEmails() {
-        var subscriptionRequest = SubscriptionRequest
-                .catchup(FactSpec.ns("user").type("CustomerAdded"))
-                .or(FactSpec.ns("user").type("CustomerEmailChanged"))
-                .or(FactSpec.ns("user").type("CustomerRemoved"))
-                .fromScratch();
-
-        var projection = new CustomerEmailsProjection();
-        factCast.subscribe(subscriptionRequest, projection::dispatchFacts).awaitComplete();
-        return projection.getCustomerEmails();
-    }
-}
-```
-
-Using a `SubscriptionRequest`, we define that we are interested in facts of type `CustomerAdded`, `CustomerEmailChanged` and `CustomerRemoved`. All of these facts live in the "user" namespace. 
-We then instruct FactCast to fetch the specified facts and send them to the `dispatchFacts` method of our `CustomerEmailsProjection`. To ensure that also the latest facts are applied, the subscription
-blocks until the last fact was processed by the projection. Now that the projection is up-to-date 
-we return the customers emails.
-
-After we are aware of what we need to test, let's look at how it is done.
 
 #### Writing The Integration Test
 
-
-As discussed [here]({{< ref "/usage/factus/testing.md" >}}), FactCast comes with a Junit5 extension which simplifies a local integration testing a lot.
-
-As mentioned before, this example assumes that you are using the Java FactCast client in combination with Spring Boot. 
+Our integration test builds up on the previous unit test example. This time however, we want to check if the 
+`CustomerEmailsProjection` can also be updated by a real FactCast server:
 
 ```java
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@ExtendWith({FactCastExtension.class})
+@ExtendWith(FactCastExtension.class)
 public class CustomerEmailsProjectionITest {
 
     @Autowired FactCast factCast;
-    @Autowired CustomerRepository uut;
+    @Autowired CustomerEmailsProjection uut;
+
+    private class FactObserverImpl implements FactObserver {
+        @Override
+        public void onNext(@NonNull Fact fact) {
+            uut.apply(fact);
+        }
+    }
 
     @Test
     void emailOfSingleCustomer() {
+        // arrange
         UUID customerId1 = UUID.randomUUID();
         Fact customer1Added = Fact.builder()
                 .id(UUID.randomUUID())
@@ -253,17 +227,111 @@ public class CustomerEmailsProjectionITest {
 
         factCast.publish(customer1Added);
 
+        // act
+        var subscriptionRequest = SubscriptionRequest
+                .catchup(FactSpec.ns("user").type("CustomerAdded"))
+                .or(FactSpec.ns("user").type("CustomerEmailChanged"))
+                .or(FactSpec.ns("user").type("CustomerRemoved"))
+                .fromScratch();
+
+        factCast.subscribe(subscriptionRequest, new FactObserverImpl()).awaitComplete();
+
+        // assert
         var customerEmails = uut.getCustomerEmails();
         assertThat(customerEmails).hasSize(1);
         assertThat(customerEmails).containsExactly("customer1@bar.com");
     }
 ```
 
+Let's got through this top-down and have a look at the annotations first. 
+To use Spring's dependency injection we define the test as `@SpringBootTest`. 
+The `@DirtiesContext` configuration ensures that every single test is provided 
+with fresh Spring beans. In our example this annotation guarantees that
+each test is working with an empty `CustomerEmailsProjection`. 
 
-First a `SubscriptionRequest` is created which 
+The previously mentioned `FactCastExtension` starts the FactCast server
+and the Postgres database *once* before the first test is executed. 
+Between the tests the extension wipes all old facts from the FactCast server 
+so that you are guaranteed to always start from scratch.
 
-Please see here for details on how to use the FactCast low-level API, see 
+Continuing in the code, the `emailOfSingleCustomer` test first arranges the test data 
+by publishing a `CustomerAdded` fact to the local FactCast. In the middle "act"
+part, we create a `SubscriptionRequest` which covers all the facts we are interested in. 
+This subscription request is then used to `subscribe` to these facts.
 
+To tell FactCast what to do with the received events, 
+we provide our custom implementation of `FactObserver` as second argument.
+Once a fact is received, FactCast invokes the `onNext` method of the `FactObserverImpl` 
+which in our case simply delegates to the `apply` method of the `CustomerEmailsProjection`.
+ 
+The last "assert" part of our test is identical with the previous unit test. However,
+this time the real infrastructure was involved.
+
+{{% alert  title="Note" %}}
+For details of the FactCast low-level API please refer to [the API documentation]({{< ref "/usage/lowlevel/java">}}).
+{{% /alert %}}
+
+### A Customer Repository
+
+The integration test above aimed to show you the minimal required setup. 
+However, in real live you would probably introduce a dedicated *Repository* to deal with all the 
+details of the FactCast communication:
+
+```mermaid
+graph LR
+    I[Integration Test] -->|1. requests customer emails| R[CustomerRepository]
+    R -->|4. serves customer emails| I
+    R -->|2. subscribes to facts from| D[FactCast]
+    R -->|3. updates and reads| C[CustomerEmailsProjection]
+```
+
+Now our integration test asks the `CustomerRepository` for customer emails (1). 
+The `CustomerRepository` will first subscribe to the three relevant facts, `CustomerAdded`, `CustomerEmailChanged` and `CustomerRemoved` from FactCast (2). 
+It will then use this subscription to update the `CustomerEmailsProjection` (3). 
+When all facts are applied, the repository will query the projection for customer emails and 
+will delegate the result back to the integration test (4).
+
+Here is a possible implementation:
+```java
+@Repository
+public class CustomerRepository {
+
+    @Autowired FactCast factCast;
+
+    public Set<String> getCustomerEmails() {
+        var subscriptionRequest = SubscriptionRequest
+                .catchup(FactSpec.ns("user").type("CustomerAdded"))
+                .or(FactSpec.ns("user").type("CustomerEmailChanged"))
+                .or(FactSpec.ns("user").type("CustomerRemoved"))
+                .fromScratch();
+
+        var projection = new CustomerEmailsProjection();
+        class FactObserverImpl implements FactObserver {
+
+            @Override
+            public void onNext(@NonNull Fact fact) {
+                projection.apply(fact);
+            }
+        }
+
+        factCast.subscribe(subscriptionRequest, new FactObserverImpl()).awaitComplete();
+        return projection.getCustomerEmails();
+    }
+}
+```
+You will notice is that we mostly moved the code concerning FactCast communication 
+into the `CustomerRepository` class. To fetch customer emails a client now only 
+needs to call `getCustomerEmails` without worrying about FactCast details.
+
+The only difference in the implementation is that this time 
+we have implemented the `FactObserverImpl` class inside the `getCustomerEmails` 
+to provide a fresh projection with every call of `getCustomerEmails`. 
+In a real live, however, you would probably not always fetch the events from scratch
+but use a [follow subscription]({{< ref "/usage/lowlevel/java/grpc-consumer.md#example-code-follow" >}}).
+
+
+-------
+# Building site - no trespassing
 
 ## Testing with Factus
 
@@ -271,8 +339,6 @@ Factus builds up on the low-level FactCast API and provides a higher level of ab
 As with the direct FactCast API described before 
 
 TODO: show Redis Map example
-TODO: Fact vs `Fact` vs fact vs Event
-TODO FactCast vs FactCast
 
 - challenges: state external like Redis or Postgres: Try to 
 
