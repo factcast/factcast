@@ -1,11 +1,7 @@
 package org.factcast.itests.docexample.factcastlowlevel;
 
-import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.test.FactCastExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,21 +18,13 @@ import static org.assertj.core.api.Assertions.*;
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @ExtendWith(FactCastExtension.class)
-public class CustomerEmailsProjectionITest {
+public class CustomerRepositoryITest {
 
     @Autowired
     FactCast factCast;
 
     @Autowired
-    CustomerEmailsProjection uut;
-
-    private class FactObserverImpl implements FactObserver {
-
-        @Override
-        public void onNext(@NonNull Fact fact) {
-            uut.apply(fact);
-        }
-    }
+    CustomerRepository uut;
 
     @Test
     void emailOfSingleCustomer() {
@@ -52,14 +40,6 @@ public class CustomerEmailsProjectionITest {
                         "customer1@bar.com"));
 
         factCast.publish(customer1Added);
-
-        var subscriptionRequest = SubscriptionRequest
-                .catchup(FactSpec.ns("user").type("CustomerAdded"))
-                .or(FactSpec.ns("user").type("CustomerEmailChanged"))
-                .or(FactSpec.ns("user").type("CustomerRemoved"))
-                .fromScratch();
-
-        factCast.subscribe(subscriptionRequest, new FactObserverImpl()).awaitComplete();
 
         var customerEmails = uut.getCustomerEmails();
         assertThat(customerEmails).hasSize(1);
@@ -114,15 +94,7 @@ public class CustomerEmailsProjectionITest {
                 customer1EmailChanged,
                 customer2Removed));
 
-        var subscriptionRequest = SubscriptionRequest
-                .catchup(FactSpec.ns("user").type("CustomerAdded"))
-                .or(FactSpec.ns("user").type("CustomerEmailChanged"))
-                .or(FactSpec.ns("user").type("CustomerRemoved"))
-                .fromScratch();
-
-        factCast.subscribe(subscriptionRequest, new FactObserverImpl()).awaitComplete();
         var customerEmails = uut.getCustomerEmails();
-
         assertThat(customerEmails).hasSize(1);
         assertThat(customerEmails).containsExactly("customer1-new@bar.com");
     }

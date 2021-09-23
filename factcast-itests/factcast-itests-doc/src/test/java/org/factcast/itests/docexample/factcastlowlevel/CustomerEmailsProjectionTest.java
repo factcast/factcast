@@ -19,6 +19,7 @@ public class CustomerEmailsProjectionTest {
 
     @Test
     void emailIsAdded() {
+        // arrange
         Fact customerAdded = Fact.builder()
                 .id(UUID.randomUUID())
                 .ns("user")
@@ -28,10 +29,11 @@ public class CustomerEmailsProjectionTest {
                         "{\"id\":\"%s\", \"email\": \"%s\"}",
                         UUID.randomUUID(),
                         "customer@bar.com"));
-
-        uut.dispatchFacts(customerAdded);
+        // act
+        uut.handleCustomerAdded(customerAdded);
         var emails = uut.getCustomerEmails();
 
+        // assert
         assertThat(emails).hasSize(1);
         assertThat(emails).containsExactly("customer@bar.com");
     }
@@ -60,8 +62,8 @@ public class CustomerEmailsProjectionTest {
                         customerId,
                         "customer-new@bar.com"));
 
-        uut.dispatchFacts(customerAdded);
-        uut.dispatchFacts(customerEmailChanged);
+        uut.handleCustomerAdded(customerAdded);
+        uut.handleCustomerEmailChanged(customerEmailChanged);
         var emails = uut.getCustomerEmails();
 
         assertThat(emails).hasSize(1);
@@ -89,10 +91,63 @@ public class CustomerEmailsProjectionTest {
                 .version(1)
                 .build(String.format("{\"id\":\"%s\"}", customerId));
 
-        uut.dispatchFacts(customerAdded);
-        uut.dispatchFacts(customerRemoved);
+        uut.handleCustomerAdded(customerAdded);
+        uut.handleCustomerRemoved(customerRemoved);
         var emails = uut.getCustomerEmails();
 
         assertThat(emails).isEmpty();
     }
+
+    @Test
+    void applyingFactsWorks() {
+        var customerId1 = UUID.randomUUID();
+        var customerId2 = UUID.randomUUID();
+
+        Fact customer1Added = Fact.builder()
+                .id(UUID.randomUUID())
+                .ns("user")
+                .type("CustomerAdded")
+                .version(1)
+                .build(String.format(
+                        "{\"id\":\"%s\", \"email\": \"%s\"}",
+                        customerId1,
+                        "customer1@bar.com"));
+
+        Fact customer1EmailChanged = Fact.builder()
+                .id(UUID.randomUUID())
+                .ns("user")
+                .type("CustomerEmailChanged")
+                .version(1)
+                .build(String.format(
+                        "{\"id\":\"%s\", \"email\": \"%s\"}",
+                        customerId1,
+                        "customer1-new@bar.com"));
+
+        Fact customer2Added = Fact.builder()
+                .id(UUID.randomUUID())
+                .ns("user")
+                .type("CustomerAdded")
+                .version(1)
+                .build(String.format(
+                        "{\"id\":\"%s\", \"email\": \"%s\"}",
+                        customerId2,
+                        "customer2@bar.com"));
+
+        Fact customer2Removed = Fact.builder()
+                .id(UUID.randomUUID())
+                .ns("user")
+                .type("CustomerRemoved")
+                .version(1)
+                .build(String.format("{\"id\":\"%s\"}", customerId2));
+
+        uut.apply(customer1Added);
+        uut.apply(customer1EmailChanged);
+        uut.apply(customer2Added);
+        uut.apply(customer2Removed);
+
+        var emails = uut.getCustomerEmails();
+        assertThat(emails).hasSize(1);
+        assertThat(emails).containsExactly("customer1-new@bar.com");
+    }
+
 }

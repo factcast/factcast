@@ -1,8 +1,11 @@
 package org.factcast.itests.docexample.factcastlowlevel;
 
+import lombok.NonNull;
+import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +18,6 @@ public class CustomerRepository {
     FactCast factCast;
 
     public Set<String> getCustomerEmails() {
-        // TODO is this too naive or is it ok for a demo case?
         var subscriptionRequest = SubscriptionRequest
                 .catchup(FactSpec.ns("user").type("CustomerAdded"))
                 .or(FactSpec.ns("user").type("CustomerEmailChanged"))
@@ -23,7 +25,15 @@ public class CustomerRepository {
                 .fromScratch();
 
         var projection = new CustomerEmailsProjection();
-        factCast.subscribe(subscriptionRequest, projection::dispatchFacts).awaitComplete();
+        class FactObserverImpl implements FactObserver {
+
+            @Override
+            public void onNext(@NonNull Fact fact) {
+                projection.apply(fact);
+            }
+        }
+
+        factCast.subscribe(subscriptionRequest, new FactObserverImpl()).awaitComplete();
         return projection.getCustomerEmails();
     }
 }
