@@ -2,15 +2,10 @@ package org.factcast.itests.docexample.factcastlowlevel;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.itests.docexample.factcastlowlevel.CustomerEmailsProjection;
 import org.factcast.test.FactCastExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -21,7 +16,6 @@ import static org.assertj.core.api.Assertions.*;
 
 
 @SpringBootTest
-@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 // provide fresh application context including uut for each test
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @ExtendWith({FactCastExtension.class})
@@ -29,6 +23,9 @@ public class CustomerEmailsProjectionITest {
 
     @Autowired
     FactCast factCast;
+
+    @Autowired
+    CustomerRepository uut;
 
     @Test
     void emailOfSingleCustomer() {
@@ -45,20 +42,10 @@ public class CustomerEmailsProjectionITest {
 
         factCast.publish(customer1Added);
 
-        var subscriptionRequest = SubscriptionRequest
-                .catchup(FactSpec.ns("user").type("CustomerAdded"))
-                .or(FactSpec.ns("user").type("CustomerEmailChanged"))
-                .or(FactSpec.ns("user").type("CustomerRemoved"))
-                .fromScratch();
-
-        var projection = new CustomerEmailsProjection();
-        factCast.subscribe(subscriptionRequest, projection::dispatchFacts).awaitComplete();
-
-        var customerEmails = projection.getCustomerEmails();
+        var customerEmails = uut.getCustomerEmails();
         assertThat(customerEmails).hasSize(1);
         assertThat(customerEmails).containsExactly("customer1@bar.com");
     }
-
 
     @Test
     void emailOfMultipleCustomers() {
@@ -108,15 +95,7 @@ public class CustomerEmailsProjectionITest {
                 customer1EmailChanged,
                 customer2Removed));
 
-        var subscriptionRequest = SubscriptionRequest
-                .catchup(FactSpec.ns("user").type("CustomerAdded"))
-                .or(FactSpec.ns("user").type("CustomerEmailChanged"))
-                .or(FactSpec.ns("user").type("CustomerRemoved"))
-                .fromScratch();
-        var projection = new CustomerEmailsProjection();
-        factCast.subscribe(subscriptionRequest, projection::dispatchFacts).awaitComplete();
-
-        var customerEmails = projection.getCustomerEmails();
+        var customerEmails = uut.getCustomerEmails();
         assertThat(customerEmails).hasSize(1);
         assertThat(customerEmails).containsExactly("customer1-new@bar.com");
     }
