@@ -44,5 +44,5 @@ Here, you would use code like:
 ```
 
 This will add the additional filter defined by the `@FilterByMeta` annotation to `FactSpec`. 
-As a result, the filtering now takes place at the server side. 
-Client side filtering, like in the body of the `apply` method, is not necessary.
+As a result, the filtering now takes place at the server side instead of 
+wasteful client side filtering (like in the body of the `apply` method).
