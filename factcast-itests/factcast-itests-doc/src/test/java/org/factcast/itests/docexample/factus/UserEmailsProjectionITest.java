@@ -17,9 +17,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
-// provide fresh application context including uut for each test
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@ExtendWith({FactCastExtension.class})
+@ExtendWith(FactCastExtension.class)
 public class UserEmailsProjectionITest {
 
     @Autowired

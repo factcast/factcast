@@ -2,6 +2,7 @@ package org.factcast.itests.docexample.factcastlowlevel;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -21,7 +22,7 @@ public class CustomerEmailsProjection {
         return new HashSet<>(customerEmails.values());
     }
 
-    public void dispatchFacts(Fact fact) {
+    public void apply(Fact fact) {
         switch (fact.type()) {
             case "CustomerAdded":
                 handleCustomerAdded(fact);
@@ -38,17 +39,20 @@ public class CustomerEmailsProjection {
         }
     }
 
-    private void handleCustomerAdded(Fact fact) {
+    @VisibleForTesting
+    void handleCustomerAdded(Fact fact) {
         var payload = parsePayload(fact);
         customerEmails.put(getCustomerId(payload), payload.get("email").asText());
     }
 
-    private void handleCustomerEmailChanged(Fact fact) {
+    @VisibleForTesting
+    void handleCustomerEmailChanged(Fact fact) {
         var payload = parsePayload(fact);
         customerEmails.put(getCustomerId(payload), payload.get("email").asText());
     }
 
-    private void handleCustomerRemoved(Fact fact) {
+    @VisibleForTesting
+    void handleCustomerRemoved(Fact fact) {
         var payload = parsePayload(fact);
         customerEmails.remove(getCustomerId(payload));
     }
