@@ -33,7 +33,7 @@ public class CustomerEmailsProjection {
                 handleCustomerRemoved(fact);
                 break;
             default:
-                log.error("Event type {} not supported", fact.type());
+                log.error("Fact type {} not supported", fact.type());
                 break;
         }
     }
