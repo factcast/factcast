@@ -42,7 +42,7 @@ public class FactusVariousHandlerParametersDemoITest extends AbstractFactCastInt
       System.out.println("Namespace: " + header.ns());
       System.out.println("Event type: " + header.type());
       System.out.println("Event version: " + header.version());
-      System.out.println("Meta entries: " + header.meta());
+      System.out.println("FilterByMeta entries: " + header.meta());
     }
 
     @Handler
