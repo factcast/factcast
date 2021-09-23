@@ -8,10 +8,11 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.util.Set;
 
-@Component
+@Repository
 public class CustomerRepository {
 
     @Autowired
