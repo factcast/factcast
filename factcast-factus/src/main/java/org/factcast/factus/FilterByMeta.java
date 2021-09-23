@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.event;
+package org.factcast.factus;
 
 import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-@Documented
-@Inherited
-public @interface Specification {
-  String ns();
+@Target(value = ElementType.METHOD)
+@Repeatable(FilterByMetas.class)
+public @interface FilterByMeta {
+  String key();
 
-  String type() default "";
-
-  int version() default 0;
+  String value();
 }
