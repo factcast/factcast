@@ -13,7 +13,13 @@ An event-sourced application usually performs [two kinds of interaction]({{< ref
 Building up *projections* works on both API levels, low-level and Factus. 
 However, to simplify development, the high-level Factus API has [explicit support for this concept]({{< ref "/usage/factus/projections/types">}}).
 {{% /alert %}}
- 
+
+{{% alert title="fact vs. event" %}}
+This guide refers to a *fact* as the JSON based data structure which is handled by the low-level FactCast API.
+In contrast, an *event* is an abstraction of the Factus library which hides these details and uses
+Java POJOs instead.
+{{% /alert %}}
+
 ### Unit Tests
 
 *Projections* are best tested in isolation, ideally at the unit test level. 
@@ -111,7 +117,7 @@ Finally, a `CustomerRemoved` fact removes a customer's entry from the `customerE
 To provide our application with a unique list of customer emails, the `getCustomerEmails()` method
 returns the values of our internal `customerEmails` map wrapped in a `Set`.
 
-### Unit Testing A Projection
+### Unit Tests
 
 Looking at the projection code above, we see that there are no external dependencies. 
 Instead, we receive `Fact` objects as input and return a customized view of the internal state.
@@ -317,21 +323,174 @@ public class CustomerRepository {
 You will notice is that we mostly moved the code concerning FactCast communication into the `CustomerRepository` class. 
 A client now only needs to call `getCustomerEmails` without worrying about FactCast details to fetch customer emails.
 
-The only difference in the implementation is that we have implemented the `FactObserverImpl` class inside the `getCustomerEmails` 
+The only difference is that we have implemented the `FactObserverImpl` class inside the `getCustomerEmails` 
 to provide a new projection with every call of `getCustomerEmails`. 
 In a real live, however, you would probably not always fetch the events from scratch
 but use a [follow subscription]({{< ref "/usage/lowlevel/java/grpc-consumer.md#example-code-follow" >}}).
 
 
--------
-# Building site - no trespassing
-
 ## Testing with Factus
 
-Factus builds up on the low-level FactCast API and provides a higher level of abstraction.  
-As with the direct FactCast API described before 
+Factus builds up on the low-level FactCast API and provides a higher level of abstraction. 
+To see Factus in action we use a scenario which is very similar to what you have seen before. 
+This time we have a `UserEmailsProjection` which we will ask for a unique list of user emails.
 
-TODO: show Redis Map example
+These are the events we need to handle:
+- [`UserAdded`](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserAdded.java),
+- [`UserEmailChanged`](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserEmailChanged.java) and
+- [`UserRemoved`](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserRemoved.java).
 
-- challenges: state external like Redis or Postgres: Try to 
+The `UserAdded` and `UserEmailChanged` event contain two properties, the user ID and the email. 
+The `UserRemoved` event only contains the user ID.
 
+### An Example Event
+
+To get an idea of how the events are defined, let's have a look inside `UserAdded`:
+```java
+@Data // provides getter + setter, hashCode, equals, toString (Lombok)
+@Specification(ns = "user", type = "UserAdded", version = 1)
+public class UserAdded implements EventObject {
+
+    private final UUID userId;
+    private final String email;
+
+    // hint Jackson deserializer
+    @ConstructorProperties({"userId","email"})
+    public UserAdded(UUID userId, String email) {
+        this.userId = userId;
+        this.email = email;
+    }
+
+    @Override
+    public Set<UUID> aggregateIds() {
+        return Collections.emptySet();
+    }
+}
+```
+
+We create a Factus compatible event by implementing the `EventObject` interface 
+and supplying the fact details via the `@Specification` annotation. 
+The event itself contains the properties `userId` and `email` which are simply fields of the `UserAdded` class. 
+The `@ConstructorProperties` annotation helps the Jackson deserializer to identify the right constructor arguments. 
+For more details on how to define a Factus event read on [here]({{< ref "/usage/factus/introduction">}}).  
+
+### The User Emails Projection
+
+Now that we know which events to handle, we can process them in the `UserEmailsProjection`:
+
+```java
+public class UserEmailsProjection extends LocalManagedProjection {
+
+    private Map<UUID, String> userEmails = new HashMap<>();
+
+    public Set<String> getEmails() {
+        return new HashSet<>(userEmails.values());
+    }
+
+    @Handler
+    void apply(UserAdded event) {
+        userEmails.put(event.getUserId(), event.getEmail());
+    }
+
+    @Handler
+    void apply(UserEmailChanged event) {
+        userEmails.put(event.getUserId(), event.getEmail());
+    }
+
+    @Handler
+    void apply(UserRemoved event) {
+        userEmails.remove(event.getUserId());
+    }
+}
+```
+
+You will instantly notice how short this implementation is compared to the `CustomerEmailsProjection` class before.
+No dispatching or explicit JSON parsing is needed. Instead, the event handler methods each receive their event 
+as plain Java POJO which is ready to use. 
+
+To keep the internal state, we use the `userEmails` map. 
+A `UserAdded` event adds an entry to this map, the `UserEmailChanged` event updates the map and `UserRemoved` removes an entry.  
+
+As projection type we decided for a [`LocalManagedProjection`]({{< ref "local-managed-projection.md" >}}) 
+which is intended for in-memory use cases. 
+See [here]({{< ref "/usage/factus/projections/types" >}}) for detailed reading on the various Factus supported projection types.
+
+### Unit Tests
+
+The unit test for this projection tests each handler method individually. 
+As an example, here is the test for the `UserAdded` event handler:
+
+```java
+@Test
+void emailIsAdded() {
+    // arrange
+    UUID someUserId = UUID.randomUUID();
+    UserAdded userAddedEvent = new UserAdded(someUserId, "foo@bar.com")
+
+    // act
+    UserEmailsProjection uut = new UserEmailsProjection();
+    uut.apply(userAddedEvent);
+    var emails = uut.getEmails();
+    
+    // assert
+    assertThat(emails).hasSize(1);
+    assertThat(emails).containsExactly("foo@bar.com");
+}
+```
+
+First we create a `userAddedEvent` which we then `apply` to the responsible handler method of the `UserEmailsProjection` class. 
+To check the result, we fetch the `Set` of emails and, as last part, examine the content. 
+
+#### Integration Test
+
+After we have covered each handler method with detailed tests on unit level, 
+we also want an integration test to test against a real FactCast server. 
+
+Here is an example:
+
+```java
+@SpringBootTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@ExtendWith(FactCastExtension.class)
+public class UserEmailsProjectionITest {
+
+    @Autowired Factus factus;
+    @Autowired UserEmailsProjection uut;
+    
+    @Test
+    void emailOfSingleUser() {
+        // arrange
+        UUID someUserId = UUID.randomUUID();
+        UserAdded userAddedEvent = new UserAdded(someUserId, "user1@bar.com");
+        factus.publish(userAddedEvent);
+        
+        // act
+        factus.update(uut);
+        var emails = uut.getEmails();
+        
+        // assert
+        assertThat(emails).hasSize(1);
+        assertThat(emails).containsExactly("user1@bar.com");
+    }
+```
+
+The annotations of the test class are identical to the integration test shown for the low-level API.
+Hence, we only introduce them quickly here:
+- `@SpringBootTest` 
+  - starts a Spring container to enable dependency injection of the `factus` Spring bean
+- `@DirtiesContext` 
+  - ensures that each test starts with a fresh `UserEmailsProjection`
+- `@ExtendWith(FactCastExtension.class)` 
+  - starts a FactCast and its Postgres database in the background
+  - erases old events inside FactCast before each test
+
+The test itself first creates a `UserAdded` event which is then published to FactCast.
+Compared to the low-level integration test, the "act" part is slim and shows the power of the Factus API:
+The call to `factus.update(...)` builds a subscription request for all the handled events of the `UserEmailsProjection` class.
+The events returned from FactCast are then automatically applied to the correct handler.
+
+The test concludes by checking if the state of the `UserEmailsProjection` was updated as correctly.
+
+## Full Example Code
+
+The code for all examples introduced here can be found [here](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/).

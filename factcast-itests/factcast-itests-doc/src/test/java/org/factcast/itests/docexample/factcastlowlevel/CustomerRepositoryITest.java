@@ -3,6 +3,7 @@ package org.factcast.itests.docexample.factcastlowlevel;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.test.FactCastExtension;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
