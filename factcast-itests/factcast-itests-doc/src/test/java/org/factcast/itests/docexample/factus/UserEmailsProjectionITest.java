@@ -5,6 +5,7 @@ import org.factcast.itests.docexample.factus.event.UserAdded;
 import org.factcast.itests.docexample.factus.event.UserEmailChanged;
 import org.factcast.itests.docexample.factus.event.UserRemoved;
 import org.factcast.test.FactCastExtension;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
