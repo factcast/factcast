@@ -21,15 +21,13 @@ import static org.assertj.core.api.Assertions.*;
 
 
 @SpringBootTest
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @ExtendWith(FactCastExtension.class)
-public class CustomerEmailsProjectionITest {
+class CustomerEmailsProjectionITest {
 
     @Autowired
     FactCast factCast;
 
-    @Autowired
-    CustomerEmailsProjection uut;
+    private final CustomerEmailsProjection uut=new CustomerEmailsProjection();
 
     private class FactObserverImpl implements FactObserver {
 

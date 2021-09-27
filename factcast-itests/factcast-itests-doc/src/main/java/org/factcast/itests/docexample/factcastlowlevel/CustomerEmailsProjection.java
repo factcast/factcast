@@ -1,23 +1,22 @@
 package org.factcast.itests.docexample.factcastlowlevel;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.springframework.stereotype.Component;
+import org.factcast.core.util.FactCastJson;
 
 import java.util.*;
 
-@Component
+
 @Slf4j
 public class CustomerEmailsProjection {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final Map<UUID, String> customerEmails = new HashMap<>();
 
-    private Map<UUID, String> customerEmails = new HashMap<>();
-
+    @NonNull
     public Set<String> getCustomerEmails() {
         return new HashSet<>(customerEmails.values());
     }
@@ -41,28 +40,33 @@ public class CustomerEmailsProjection {
 
     @VisibleForTesting
     void handleCustomerAdded(Fact fact) {
-        var payload = parsePayload(fact);
-        customerEmails.put(getCustomerId(payload), payload.get("email").asText());
+        JsonNode payload = parsePayload(fact);
+        customerEmails.put(extractIdFrom(payload), extractEmailFrom(payload));
     }
 
     @VisibleForTesting
     void handleCustomerEmailChanged(Fact fact) {
-        var payload = parsePayload(fact);
-        customerEmails.put(getCustomerId(payload), payload.get("email").asText());
+        JsonNode payload = parsePayload(fact);
+        customerEmails.put(extractIdFrom(payload), extractEmailFrom(payload));
     }
 
     @VisibleForTesting
     void handleCustomerRemoved(Fact fact) {
-        var payload = parsePayload(fact);
-        customerEmails.remove(getCustomerId(payload));
+        JsonNode payload = parsePayload(fact);
+        customerEmails.remove(extractIdFrom(payload));
     }
+
+    // helper methods:
 
     @SneakyThrows
     private JsonNode parsePayload(Fact fact) {
-        return objectMapper.readTree(fact.jsonPayload());
+        return FactCastJson.readTree(fact.jsonPayload());
     }
 
-    private UUID getCustomerId(JsonNode payload) {
+    private UUID extractIdFrom(JsonNode payload) {
         return UUID.fromString(payload.get("id").asText());
+    }
+    private String extractEmailFrom(JsonNode payload) {
+        return payload.get("email").asText();
     }
 }
