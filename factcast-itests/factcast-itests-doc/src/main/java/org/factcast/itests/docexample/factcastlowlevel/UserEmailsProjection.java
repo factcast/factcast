@@ -12,25 +12,22 @@ import java.util.*;
 
 
 @Slf4j
-public class CustomerEmailsProjection {
+public class UserEmailsProjection {
 
-    private final Map<UUID, String> customerEmails = new HashMap<>();
+    private final Map<UUID, String> userEmails = new HashMap<>();
 
     @NonNull
-    public Set<String> getCustomerEmails() {
-        return new HashSet<>(customerEmails.values());
+    public Set<String> getUserEmails() {
+        return new HashSet<>(userEmails.values());
     }
 
     public void apply(Fact fact) {
         switch (fact.type()) {
-            case "CustomerAdded":
-                handleCustomerAdded(fact);
+            case "UserAdded":
+                handleUserAdded(fact);
                 break;
-            case "CustomerEmailChanged":
-                handleCustomerEmailChanged(fact);
-                break;
-            case "CustomerRemoved":
-                handleCustomerRemoved(fact);
+            case "UserRemoved":
+                handleUserRemoved(fact);
                 break;
             default:
                 log.error("Fact type {} not supported", fact.type());
@@ -39,21 +36,15 @@ public class CustomerEmailsProjection {
     }
 
     @VisibleForTesting
-    void handleCustomerAdded(Fact fact) {
+    void handleUserAdded(Fact fact) {
         JsonNode payload = parsePayload(fact);
-        customerEmails.put(extractIdFrom(payload), extractEmailFrom(payload));
+        userEmails.put(extractIdFrom(payload), extractEmailFrom(payload));
     }
 
     @VisibleForTesting
-    void handleCustomerEmailChanged(Fact fact) {
+    void handleUserRemoved(Fact fact) {
         JsonNode payload = parsePayload(fact);
-        customerEmails.put(extractIdFrom(payload), extractEmailFrom(payload));
-    }
-
-    @VisibleForTesting
-    void handleCustomerRemoved(Fact fact) {
-        JsonNode payload = parsePayload(fact);
-        customerEmails.remove(extractIdFrom(payload));
+        userEmails.remove(extractIdFrom(payload));
     }
 
     // helper methods:
