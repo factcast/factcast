@@ -1,26 +1,28 @@
 package org.factcast.itests.docexample.factus.event;
 
-import lombok.Data;
+import lombok.Getter;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
 
-import java.beans.ConstructorProperties;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
-@Data
+@Getter
 @Specification(ns = "user", type = "UserAdded", version = 1)
 public class UserAdded implements EventObject {
 
-    private final UUID userId;
-    private final String email;
+    private UUID userId;
+    private String email;
 
-    // hint Jackson deserializer
-    @ConstructorProperties({"userId","email"})
-    public UserAdded(UUID userId, String email) {
-        this.userId = userId;
-        this.email = email;
+    // used by Jackson deserializer
+    protected UserAdded(){}
+
+    public static UserAdded of(UUID userId, String email) {
+        UserAdded fact = new UserAdded();
+        fact.userId = userId;
+        fact.email = email;
+        return fact;
     }
 
     @Override

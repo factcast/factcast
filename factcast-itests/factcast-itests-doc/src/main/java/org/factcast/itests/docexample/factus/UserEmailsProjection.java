@@ -2,12 +2,11 @@ package org.factcast.itests.docexample.factus;
 
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
-import org.factcast.itests.docexample.factus.event.*;
-import org.springframework.stereotype.Component;
+import org.factcast.itests.docexample.factus.event.UserAdded;
+import org.factcast.itests.docexample.factus.event.UserRemoved;
 
 import java.util.*;
 
-@Component
 public class UserEmailsProjection extends LocalManagedProjection {
 
     private Map<UUID, String> userEmails = new HashMap<>();
@@ -18,11 +17,6 @@ public class UserEmailsProjection extends LocalManagedProjection {
 
     @Handler
     void apply(UserAdded event) {
-        userEmails.put(event.getUserId(), event.getEmail());
-    }
-
-    @Handler
-    void apply(UserEmailChanged event) {
         userEmails.put(event.getUserId(), event.getEmail());
     }
 
