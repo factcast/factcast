@@ -6,14 +6,14 @@ type: docs
 
 
 
-{{% alert title="Preface" %}} 
+{{% alert title="Preface" %}}
 
-This guide refers to a *fact* as the JSON based data structure which
-is handled by the low-level FactCast API (see class `Fact`). In contrast, an *event* is an abstraction of the Factus
-library which hides these details and uses Java POJOs instead (see `EventObject`).
+This guide refers to a *fact* as the JSON based data structure which is handled by the low-level FactCast API (see
+class `Fact`). In contrast, an *event* is an abstraction of the Factus library which hides these details and uses Java
+POJOs instead (see `EventObject`).
 
-The examples below may use Spring Boot or Lombok. None
-of those frameworks are necessary for testing, as the Junit5 extension is framework-agnostic. {{% / alert %}}
+The examples below may use Spring Boot or Lombok. None of those frameworks are necessary for testing, as the Junit5
+extension is framework-agnostic. {{% / alert %}}
 
 ## Introduction
 
@@ -24,14 +24,13 @@ server:
   called *projections*.
 - It publishes new facts to the event log.
 
-Building up *projections* works on both APIs, low-level and Factus. However, to simplify development, the
-high-level Factus API has [explicit support for this concept]({{< ref "/usage/factus/projections/types">}}).
-
+Building up *projections* works on both APIs, low-level and Factus. However, to simplify development, the high-level
+Factus API has [explicit support for this concept]({{< ref "/usage/factus/projections/types">}}).
 
 ### Unit Tests
 
 *Projections* are best tested in isolation, ideally at the unit test level. In the end, they are classes receiving facts
-and updating some internal state. However, as soon as the projection's state is externalized (e.g. 
+and updating some internal state. However, as soon as the projection's state is externalized (e.g.
 [see here]({{< ref "/usage/factus/projections/atomicity/" >}})) this test approach can get challenging.
 
 ### Integration Tests
@@ -46,135 +45,126 @@ they **usually perform significantly slower** than unit tests.
 
 ## Testing FactCast (low-level)
 
-This section introduces the `CustomerEmails` projection for which we will write
+This section introduces the `UserEmails` projection for which we will write
 
 - unit tests and
 - integration tests.
 
 For interaction with FactCast we are using the low-level API.
 
-### The Customer Emails Projection
+### The User Emails Projection
 
-Imagine our application needs a set of customer emails currently in use in the System. To provide this information, we
+Imagine our application needs a set of user emails currently in use in the system. To provide this information, we
 identified these facts which contain the relevant data:
 
-- `CustomerAdded`
-- `CustomerEmailChanged`
-- `CustomerRemoved`
+- `UserAdded`
+- `UserRemoved`
 
-`CustomerAdded` and `CustomerEmailChanged` both contain a customer ID and the email address. The `CustomerRemoved` fact
-only carries the customer ID to remove.
+The user `UserAdded` fact contains a user ID and the email address. `UserRemoved`
+only carries the user ID to remove.
 
 Here is a possible projection using the FactCast low-level API:
 
 ```java
 @Slf4j
-public class CustomerEmailsProjection {
+public class UserEmailsProjection {
 
-  private final Map<UUID, String> customerEmails = new HashMap<>();
+    private final Map<UUID, String> userEmails = new HashMap<>();
 
-  @NonNull
-  public Set<String> getCustomerEmails() {
-    return new HashSet<>(customerEmails.values());
-  }
-
-  public void apply(Fact fact) {
-    switch (fact.type()) {
-      case "CustomerAdded":
-        handleCustomerAdded(fact);
-        break;
-      case "CustomerEmailChanged":
-        handleCustomerEmailChanged(fact);
-        break;
-      case "CustomerRemoved":
-        handleCustomerRemoved(fact);
-        break;
-      default:
-        log.error("Fact type {} not supported", fact.type());
-        break;
+    @NonNull
+    public Set<String> getUserEmails() {
+        return new HashSet<>(userEmails.values());
     }
-  }
 
-  @VisibleForTesting
-  void handleCustomerAdded(Fact fact) {
-    JsonNode payload = parsePayload(fact);
-    customerEmails.put(extractIdFrom(payload), extractEmailFrom(payload));
-  }
+    public void apply(Fact fact) {
+        switch (fact.type()) {
+            case "UserAdded":
+                handleUserAdded(fact);
+                break;
+            case "UserRemoved":
+                handleUserRemoved(fact);
+                break;
+            default:
+                log.error("Fact type {} not supported", fact.type());
+                break;
+        }
+    }
 
-  @VisibleForTesting
-  void handleCustomerEmailChanged(Fact fact) {
-    JsonNode payload = parsePayload(fact);
-    customerEmails.put(extractIdFrom(payload), extractEmailFrom(payload));
-  }
+    @VisibleForTesting
+    void handleUserAdded(Fact fact) {
+        JsonNode payload = parsePayload(fact);
+        userEmails.put(extractIdFrom(payload), extractEmailFrom(payload));
+    }
 
-  @VisibleForTesting
-  void handleCustomerRemoved(Fact fact) {
-    JsonNode payload = parsePayload(fact);
-    customerEmails.remove(extractIdFrom(payload));
-  }
+    @VisibleForTesting
+    void handleUserRemoved(Fact fact) {
+        JsonNode payload = parsePayload(fact);
+        userEmails.remove(extractIdFrom(payload));
+    }
 
-  // helper methods:
+    // helper methods:
 
-  @SneakyThrows
-  private JsonNode parsePayload(Fact fact) {
-    return FactCastJson.readTree(fact.jsonPayload());
-  }
+    @SneakyThrows
+    private JsonNode parsePayload(Fact fact) {
+        return FactCastJson.readTree(fact.jsonPayload());
+    }
 
-  private UUID extractIdFrom(JsonNode payload) {
-    return UUID.fromString(payload.get("id").asText());
-  }
-  private String extractEmailFrom(JsonNode payload) {
-    return payload.get("email").asText();
-  }
+    private UUID extractIdFrom(JsonNode payload) {
+        return UUID.fromString(payload.get("id").asText());
+    }
+
+    private String extractEmailFrom(JsonNode payload) {
+        return payload.get("email").asText();
+    }
 }
 ```
 
 The method `apply` acts as an entry point for the projection and dispatches the received `Fact` to the appropriate
 handling behavior. There, the `Fact` object's JSON payload is parsed using the Jackson library and the projection's data
-(the `customerEmails` map), is updated accordingly.
+(the `userEmails` map), is updated accordingly.
 
-Note, that we chose to avoid using a raw `ObjectMapper` here, but instead use the helper class `FactCastJson` as it contains a
-pre-configured ObjectMapper. 
+Note, that we chose to avoid using a raw `ObjectMapper` here, but instead use the helper class `FactCastJson` as it
+contains a pre-configured ObjectMapper.
 
-To query the projection for the customer emails, the `getCustomerEmails()` method returns the values of our
-internal `customerEmails` map's values copied to a new `Set`.
+To query the projection for the user emails, the `getUserEmails()` method returns the values of our
+internal `userEmails` map's values copied to a new `Set`.
 
 ### Unit Tests
 
-Unit Testing this projection is very easier, as there are no external dependencies. We use `Fact` objects as input and
+Unit testing this projection is very easier, as there are no external dependencies. We use `Fact` objects as input and
 check the customized view of the internal map.
 
-Let's look at an example for the `CustomerAdded` fact:
+Let's look at an example for the `UserAdded` fact:
 
 ```java
-    @Test
-    void emailIsAddedWhenCustomerAdded(){
-            // arrange
-            String jsonPayload=String.format(
-            "{\"id\":\"%s\", \"email\": \"%s\"}",
-            UUID.randomUUID(),
-            "customer@bar.com");
-            Fact customerAdded=Fact.builder()
-            .id(UUID.randomUUID())
-            .ns("user")
-            .type("CustomerAdded")
-            .version(1)
-            .build(jsonPayload);
+@Test
+void whenHandlingUserAddedFactEmailIsAdded() {
+    // arrange
+    String jsonPayload = String.format(
+        "{\"id\":\"%s\", \"email\": \"%s\"}",
+        UUID.randomUUID(),
+        "user@bar.com");
+    Fact userAdded = Fact.builder()
+        .id(UUID.randomUUID())
+        .ns("user")
+        .type("UserAdded")
+        .version(1)
+        .build(jsonPayload);
 
-            // act
-            uut.handleCustomerAdded(customerAdded);
+    // act
+    uut.handleUserAdded(userAdded);
 
-            // assert
-            Set<String> emails=uut.getCustomerEmails();
-            assertThat(emails).hasSize(1).containsExactly("customer@bar.com");
-        }
+    // assert
+    Set<String> emails = uut.getUserEmails();
+    assertThat(emails).hasSize(1).containsExactly("user@bar.com");
+}
 ```
 
 Note the use of the convenient builder the `Fact` class is providing.
 
-Since the focus of this unit test is on `handleCustomerAdded`, we execute the method directly.
-[The full unit test](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/test/java/org/factcast/itests/docexample/factcastlowlevel/CustomerEmailsProjectionTest.java)
-also contains a test for the dispatching logic of the `apply` method, as well as similar tests for the other handlers.
+Since the focus of this unit test is on `handleUserAdded`, we execute the method directly.
+[The full unit test](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/test/java/org/factcast/itests/docexample/factcastlowlevel/UserEmailsProjectionTest.java)
+also contains a test for the dispatching logic of the `apply` method, as well as a similar test for the `handleUserRemoved` method.
 
 Checking your projection's logic should preferably be done with unit tests in the first place, even though you might
 also want to add an integration test to prove it to work in conjunction with its collaborators.
@@ -193,16 +183,14 @@ Before writing your first integration test
 - add the `factcast-test` module to your `pom.xml`:
 
 ```xml
+
 <dependency>
-  <groupId>org.factcast</groupId>
-  <artifactId>factcast-test</artifactId>
-  <version>${factcast.version}</version>
-  <scope>test</scope>
+    <groupId>org.factcast</groupId>
+    <artifactId>factcast-test</artifactId>
+    <version>${factcast.version}</version>
+    <scope>test</scope>
 </dependency>
 ```
-
-
-// TODO: check it should be UPGRADE or if integrationtest mode should already do this  
 
 - to allow TLS free authentication between our test code and the local FactCast server, create
   an `application.properties` file in the project's `resources` directory with the following content:
@@ -216,55 +204,51 @@ This will make the client application connect to the server without using TLS.
 #### Writing The Integration Test
 
 Our integration test builds upon the previous unit test example. This time however, we want to check if the
-`CustomerEmailsProjection` can also be updated by a real FactCast server:
+`UserEmailsProjection` can also be updated by a real FactCast server:
 
 ```java
 @SpringBootTest
 @ExtendWith(FactCastExtension.class)
-public class CustomerEmailsProjectionITest {
+class UserEmailsProjectionITest {
 
-  @Autowired FactCast factCast;
-  CustomerEmailsProjection uut= new CustomerEmailsProjection();
+    @Autowired FactCast factCast;
 
-  private class FactObserverImpl implements FactObserver {
-    @Override
-    public void onNext(@NonNull Fact fact) {
-      uut.apply(fact);
+    private final UserEmailsProjection uut = new UserEmailsProjection();
+
+    private class FactObserverImpl implements FactObserver {
+
+        @Override
+        public void onNext(@NonNull Fact fact) {
+            uut.apply(fact);
+        }
     }
-  }
 
-  @Test
-  void emailOfSingleCustomer() {
-    // arrange
-    UUID customerId1 = UUID.randomUUID();
-    Fact customer1Added =
-        Fact.builder()
+    @Test
+    void projectionHandlesUserAddedFact() {
+        UUID userId = UUID.randomUUID();
+        Fact userAdded = Fact.builder()
             .id(UUID.randomUUID())
             .ns("user")
-            .type("CustomerAdded")
+            .type("UserAdded")
             .version(1)
-            .build(
-                String.format(
-                    "{\"id\":\"%s\", \"email\": \"%s\"}", customerId1, "customer1@bar.com"));
+            .build(String.format(
+                "{\"id\":\"%s\", \"email\": \"%s\"}",
+                userId,
+                "user@bar.com"));
 
-    factCast.publish(customer1Added);
+        factCast.publish(userAdded);
 
-    // act
-    var subscriptionRequest =
-        SubscriptionRequest.catchup(FactSpec.ns("user").type("CustomerAdded"))
-            .or(FactSpec.ns("user").type("CustomerEmailChanged"))
-            .or(FactSpec.ns("user").type("CustomerRemoved"))
+        SubscriptionRequest subscriptionRequest = SubscriptionRequest
+            .catchup(FactSpec.ns("user").type("UserAdded"))
+            .or(FactSpec.ns("user").type("UserRemoved"))
             .fromScratch();
 
-    factCast.subscribe(subscriptionRequest, new FactObserverImpl()).awaitComplete();
+        factCast.subscribe(subscriptionRequest, new FactObserverImpl()).awaitComplete();
 
-    // assert
-    var customerEmails = uut.getCustomerEmails();
-    assertThat(customerEmails).hasSize(1);
-    assertThat(customerEmails).containsExactly("customer1@bar.com");
+        Set<String> userEmails = uut.getUserEmails();
+        assertThat(userEmails).hasSize(1).containsExactly("user@bar.com");
   }
   //...
-}
 ```
 
 The previously mentioned `FactCastExtension` starts the FactCast server and the Postgres database *once* before the
@@ -272,94 +256,87 @@ first test is executed. Between the tests, the extension wipes all old facts fro
 guaranteed to always start from scratch.
 
 Once a fact is received, FactCast invokes the `onNext` method of the `FactObserverImpl`, which delegates to the `apply`
-method of the `CustomerEmailsProjection`.
+method of the `UserEmailsProjection`.
 
 For details of the FactCast low-level API please refer to [the API documentation]({{< ref "/usage/lowlevel/java">}}).
 
 ## Testing with Factus
 
 Factus builds up on the low-level FactCast API and provides a higher level of abstraction. To see Factus in action we
-use a scenario which is very similar to what you have seen before. This time we have a `UserEmailsProjection` which we
-will ask for a unique list of user emails.
+use the same scenario as before, an `UserEmailsProjection` which we will ask for a set of user emails.
 
 These are the events we need to handle:
 
 - [`UserAdded`](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserAdded.java)
-  ,
-- [`UserEmailChanged`](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserEmailChanged.java)
   and
 - [`UserRemoved`](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserRemoved.java)
   .
 
-The `UserAdded` and `UserEmailChanged` event contain two properties, the user ID and the email. The `UserRemoved` event
-only contains the user ID.
+The `UserAdded` event contains two properties, the user ID and the email whereas `UserRemoved` only contains the user ID.
 
 ### An Example Event
 
 To get an idea of how the events are defined, let's have a look inside `UserAdded`:
 
 ```java
-@Data // provides getter + setter, hashCode, equals, toString (Lombok)
+@Getter
 @Specification(ns = "user", type = "UserAdded", version = 1)
 public class UserAdded implements EventObject {
 
-  private final UUID userId;
-  private final String email;
+    private UUID userId;
+    private String email;
 
-  // hint Jackson deserializer
-  @ConstructorProperties({"userId", "email"})
-  public UserAdded(UUID userId, String email) {
-    this.userId = userId;
-    this.email = email;
-  }
+    // used by Jackson deserializer
+    protected UserAdded(){}
 
-  @Override
-  public Set<UUID> aggregateIds() {
-    return Collections.emptySet();
-  }
+    public static UserAdded of(UUID userId, String email) {
+        UserAdded fact = new UserAdded();
+        fact.userId = userId;
+        fact.email = email;
+        return fact;
+    }
+
+    @Override
+    public Set<UUID> aggregateIds() {
+        return Collections.emptySet();
+      }
 }
 ```
 
 We create a Factus compatible event by implementing the `EventObject` interface and supplying the fact details via
 the `@Specification` annotation. The event itself contains the properties `userId` and `email` which are simply fields
-of the `UserAdded` class. The `@ConstructorProperties` annotation helps the Jackson deserializer to identify the right
-constructor arguments. For more details on how to define a Factus event read on 
+of the `UserAdded` class. The `protected` no-args constructor is used by Jackson when deserializing from JSON back to a POJO.
+The `of` factory method is used by application- and test code to create an `UserAdded` event. For more details on how to define a Factus event read on
 [here]({{< ref "/usage/factus/introduction">}}).
 
 ### The User Emails Projection
 
-Now that we know which events to handle, we can process them in the `UserEmailsProjection`:
+Now that we know which events to handle, we can process them in the Factus based `UserEmailsProjection`:
 
 ```java
 public class UserEmailsProjection extends LocalManagedProjection {
 
-  private final Map<UUID, String> userEmails = new HashMap<>();
+    private Map<UUID, String> userEmails = new HashMap<>();
 
-  public Set<String> getEmails() {
-    return new HashSet<>(userEmails.values());
-  }
+    public Set<String> getEmails() {
+        return new HashSet<>(userEmails.values());
+    }
 
-  @Handler
-  void apply(UserAdded event) {
-    userEmails.put(event.getUserId(), event.getEmail());
-  }
+    @Handler
+    void apply(UserAdded event) {
+        userEmails.put(event.getUserId(), event.getEmail());
+    }
 
-  @Handler
-  void apply(UserEmailChanged event) {
-// needs to assert user exists
-    userEmails.put(event.getUserId(), event.getEmail());
-  }
-
-  @Handler
-  void apply(UserRemoved event) {
-    userEmails.remove(event.getUserId());
-  }
+    @Handler
+    void apply(UserRemoved event) {
+        userEmails.remove(event.getUserId());
+    }
 }
 ```
 
-You will instantly notice how short this implementation is compared to the `CustomerEmailsProjection` class before. No
-dispatching or explicit JSON parsing is needed. Instead, the event handler methods each receive their event as plain
-Java POJO which is ready to use.
+You will instantly notice how short this implementation is compared to the `UserEmailsProjection` class of 
+the low-level API example before. No dispatching or explicit JSON parsing is needed. 
+Instead, the event handler methods each receive their event as plain Java POJO which is ready to use.
 
 As projection type we decided for a [`LocalManagedProjection`]({{< ref "local-managed-projection.md" >}})
 which is intended for self-managed, in-memory use cases. See [here]({{< ref "/usage/factus/projections/types" >}}) for
@@ -372,20 +349,15 @@ the `UserAdded` event handler:
 
 ```java
 @Test
-void emailIsAddedWhenUserAddedEvent(){
-        // arrange
-        UUID someUserId=UUID.randomUUID();
-        UserAdded userAddedEvent=new UserAdded(someUserId,"foo@bar.com")
+void whenHandlingUserAddedEventEmailIsAdded() {
+    UUID someUserId = UUID.randomUUID();
 
-        // act
-        UserEmailsProjection uut=new UserEmailsProjection();
-        uut.apply(userAddedEvent);
-        var emails=uut.getEmails();
-
-        // assert
-        assertThat(emails).hasSize(1);
-        assertThat(emails).containsExactly("foo@bar.com");
-        }
+    UserEmailsProjection uut = new UserEmailsProjection();
+    uut.apply(UserAdded.of(someUserId, "foo@bar.com"));
+    
+    Set<String> emails = uut.getEmails();
+    assertThat(emails).hasSize(1).containsExactly("foo@bar.com");
+}
 ```
 
 First we create a `userAddedEvent` which we then `apply` to the responsible handler method of the `UserEmailsProjection`
@@ -399,30 +371,24 @@ against a real FactCast server.
 Here is an example:
 
 ```java
-
 @SpringBootTest
 @ExtendWith(FactCastExtension.class)
 public class UserEmailsProjectionITest {
 
-  @Autowired
-  Factus factus;
-  UserEmailsProjection uut= new ...;
+    @Autowired Factus factus;
 
-  @Test
-  void emailOfSingleUser_TODO() {
-    // arrange
-    UUID someUserId = UUID.randomUUID();
-    UserAdded userAddedEvent = new UserAdded(someUserId, "user1@bar.com");
-    factus.publish(userAddedEvent);
+    @Test
+    void projectionHandlesUserAddedEvent() {
+        UserAdded userAdded = UserAdded.of(UUID.randomUUID(), "user@bar.com");
+        factus.publish(userAdded);
 
-    // act
-    factus.update(uut);
-    var emails = uut.getEmails();
+        UserEmailsProjection uut = new UserEmailsProjection();
+        factus.update(uut);
 
-    // assert
-    assertThat(emails).hasSize(1);
-    assertThat(emails).containsExactly("user1@bar.com");
-  }
+        Set<String> emails = uut.getEmails();
+        assertThat(emails).hasSize(1).containsExactly("user@bar.com");
+    }
+    //...
 ```
 
 The annotations of the test class are identical to the integration test shown for the low-level API. Hence, we only
