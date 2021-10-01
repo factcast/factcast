@@ -15,19 +15,8 @@
  */
 package org.factcast.factus.serializer.binary;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
-import com.google.common.hash.Hashing;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.function.Function;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import net.jpountz.lz4.LZ4BlockInputStream;
 import net.jpountz.lz4.LZ4BlockOutputStream;
@@ -35,20 +24,18 @@ import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+
 public class BinarySnapshotSerializer implements SnapshotSerializer {
 
-  private static final ObjectMapper omMessagePack =
-      configure(new ObjectMapper(new MessagePackFactory()));
+  private final ObjectMapper omMessagePack;
 
-  // needed for schema generation, but with same settings like message pack
-  // mapper
-  private static final ObjectMapper omJson = configure(new ObjectMapper());
-
-  private static final ObjectWriter writerJson = omJson.writer();
-
-  private static final JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(omJson);
-
-  @Setter private static Function<String, String> schemaModifier = Function.identity();
+  public BinarySnapshotSerializer(@NonNull BinarySnapshotSerializerCustomizer customizer) {
+    ObjectMapper om = new ObjectMapper(new MessagePackFactory());
+    customizer.accept(om);
+    omMessagePack = om;
+  }
 
   @SneakyThrows
   @Override
@@ -73,25 +60,8 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
     return true;
   }
 
-  @SuppressWarnings("UnstableApiUsage")
-  @Override
-  @SneakyThrows
-  public Long calculateProjectionSerial(Class<? extends SnapshotProjection> projectionClass) {
-    JsonSchema jsonSchema = schemaGen.generateSchema(projectionClass);
-
-    String schema = writerJson.writeValueAsString(jsonSchema);
-
-    return Hashing.sha512().hashUnencodedChars(schemaModifier.apply(schema)).asLong();
-  }
-
   @Override
   public String getId() {
     return "BinarySnapshotSerializer";
-  }
-
-  private static ObjectMapper configure(ObjectMapper objectMapper) {
-    return objectMapper
-        .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   }
 }

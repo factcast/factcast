@@ -18,6 +18,7 @@ package org.factcast.spring.boot.autoconfigure.highlevel;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.serializer.binary.BinarySnapshotSerializer;
+import org.factcast.factus.serializer.binary.BinarySnapshotSerializerCustomizer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -31,7 +32,14 @@ public class BinarySnapshotSerializerAutoConfiguration {
   @Bean
   @Order(100)
   @ConditionalOnMissingBean(SnapshotSerializer.class)
-  public SnapshotSerializer binarySnapshotSerializer() {
-    return new BinarySnapshotSerializer();
+  public SnapshotSerializer binarySnapshotSerializer(
+      BinarySnapshotSerializerCustomizer customizer) {
+    return new BinarySnapshotSerializer(customizer);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public BinarySnapshotSerializerCustomizer binarySnapshotSerializerCustomizer() {
+    return BinarySnapshotSerializerCustomizer.defaultCustomizer();
   }
 }
