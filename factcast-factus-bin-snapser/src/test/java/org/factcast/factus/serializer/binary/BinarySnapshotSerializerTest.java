@@ -15,24 +15,23 @@
  */
 package org.factcast.factus.serializer.binary;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.UUID;
-import java.util.function.Function;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class BinarySnapshotSerializerTest {
 
-  @InjectMocks private BinarySnapshotSerializer underTest;
+  private BinarySnapshotSerializer underTest =
+      new BinarySnapshotSerializer(BinarySnapshotSerializerCustomizer.defaultCustomizer());
 
   @Nested
   class WhenSerializing {
@@ -58,37 +57,6 @@ class BinarySnapshotSerializerTest {
 
   @Nested
   class whenCalculatingHash {
-    @Test
-    void calculateHash() {
-      try {
-        // In reality, an existing class would be changed. As we cannot
-        // do this in a unit test (with easy means), we use several
-        // classes instead to fake the lifecycle of the class.
-        // The problem is that then, we will always get different hashes
-        // as the Classname is part of the schema.
-        // The solution is to rename the classname of all TestClassV*
-        // classes to "TestClass".
-        BinarySnapshotSerializer.schemaModifier(
-            schema -> schema.replaceAll("TestClassV[^\"]*\"", "TestClass"));
-
-        long v1 = underTest.calculateProjectionSerial(TestClassV1.class);
-        long v1a = underTest.calculateProjectionSerial(TestClassV1a_noRelevantChange.class);
-        long v2a = underTest.calculateProjectionSerial(TestClassV2a_withChanges_newField.class);
-        long v2b = underTest.calculateProjectionSerial(TestClassV2b_withChanges_typeChanged.class);
-        long v2c = underTest.calculateProjectionSerial(TestClassV2c_withChanges_fieldRenamed.class);
-
-        assertThat(v1).isEqualTo(v1a);
-
-        assertThat(v1).isNotEqualTo(v2a);
-        assertThat(v1).isNotEqualTo(v2b);
-        assertThat(v1).isNotEqualTo(v2c);
-
-      } finally {
-        // reset to "do nothing"
-        BinarySnapshotSerializer.schemaModifier(Function.identity());
-      }
-    }
-
     @Test
     void upcastingWorksWhenHashesAreEqual() {
       // INIT
