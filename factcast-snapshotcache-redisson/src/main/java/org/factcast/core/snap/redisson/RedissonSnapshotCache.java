@@ -73,7 +73,7 @@ public class RedissonSnapshotCache implements SnapshotCache {
   }
 
   @Override
-  @Deprecated
+  @Deprecated // using EXPIRE instead
   public void compact(int retentionTimeInDays) {
     Duration daysAgo = Duration.ofDays(retentionTimeInDays);
     long threshold = Instant.now().minus(daysAgo).toEpochMilli();

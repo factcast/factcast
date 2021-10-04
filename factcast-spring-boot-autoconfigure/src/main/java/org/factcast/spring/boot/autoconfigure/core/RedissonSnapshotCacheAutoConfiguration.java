@@ -42,12 +42,6 @@ public class RedissonSnapshotCacheAutoConfiguration {
     return new RedissonSnapshotCache(redisson, retentionTimeInDays);
   }
 
-  @Deprecated
-  // needed for stale snapshots, can be removed at some point
-  @Scheduled(cron = "${factcast.redis.snapshotCacheCompactCron:0 0 0 * * *}")
-  public void compactTrigger(
-      SnapshotCache snapshotCache,
-      @Value("${factcast.redis.deleteSnapshotStaleForDays:90}") int retentionTimeInDays) {
-    snapshotCache.compact(retentionTimeInDays);
-  }
+
+  // compacting no longer needed with redis as we use EXPIRE instead
 }
