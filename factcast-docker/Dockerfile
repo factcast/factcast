@@ -1,4 +1,4 @@
-FROM ghcr.io/graalvm/graalvm-ce:java11-21.2.0
+FROM openjdk:11-slim
 #FROM adoptopenjdk:8u252-b09-jre-openj9-0.20.0-bionic
 
 
