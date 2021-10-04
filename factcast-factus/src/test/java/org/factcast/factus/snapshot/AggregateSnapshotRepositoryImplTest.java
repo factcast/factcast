@@ -1,13 +1,5 @@
 package org.factcast.factus.snapshot;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-import java.time.Duration;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.SnapshotId;
@@ -16,13 +8,24 @@ import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.AggregateUtil;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Duration;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AggregateSnapshotRepositoryImplTest {
@@ -75,9 +78,6 @@ class AggregateSnapshotRepositoryImplTest {
       verify(snap).getSnapshot(idCaptor.capture());
 
       assertThat(idCaptor.getValue()).isNotNull();
-
-      // never calculate hash, as it is given
-      verify(snapshotSerializer, never()).calculateProjectionSerial(any());
 
       assertThat(idCaptor.getValue().key()).contains("_43_").endsWith("_narf");
     }
