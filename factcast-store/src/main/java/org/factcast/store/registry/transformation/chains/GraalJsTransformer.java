@@ -55,6 +55,7 @@ public class GraalJsTransformer implements Transformer {
 
   @Override
   public JsonNode transform(Transformation t, JsonNode input) throws TransformationException {
+    // classloadershifting is necessary for truffle to find its peers
     ClassLoader oldCl = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(Truffle.class.getClassLoader());
     try {
