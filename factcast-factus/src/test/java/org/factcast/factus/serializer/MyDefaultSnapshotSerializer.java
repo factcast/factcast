@@ -34,11 +34,6 @@ public class MyDefaultSnapshotSerializer implements SnapshotSerializer {
   }
 
   @Override
-  public Long calculateProjectionSerial(Class<? extends SnapshotProjection> projectionClass) {
-    return null;
-  }
-
-  @Override
   public String getId() {
     return "MyDefault";
   }
