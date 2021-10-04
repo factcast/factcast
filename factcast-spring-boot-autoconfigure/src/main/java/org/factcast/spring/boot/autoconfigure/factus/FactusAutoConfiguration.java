@@ -46,6 +46,7 @@ import org.springframework.core.annotation.Order;
 @ConditionalOnClass(Factus.class)
 @Generated
 @Slf4j
+@AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
 public class FactusAutoConfiguration {
 
   @Bean
@@ -82,7 +83,6 @@ public class FactusAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
   public SnapshotSerializer snapshotSerializer() {
     return new DefaultSnapshotSerializer();
   }

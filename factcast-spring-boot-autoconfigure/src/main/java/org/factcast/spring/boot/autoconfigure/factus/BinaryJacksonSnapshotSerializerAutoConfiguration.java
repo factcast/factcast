@@ -24,16 +24,17 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
 @Configuration
 @ConditionalOnClass(BinaryJacksonSnapshotSerializer.class)
 @Slf4j
+@AutoConfigureOrder(-100)
 public class BinaryJacksonSnapshotSerializerAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean(SnapshotSerializer.class)
-  @AutoConfigureOrder(-100)
-  public SnapshotSerializer binarySnapshotSerializer(
+  public SnapshotSerializer snapshotSerializer(
       BinaryJacksonSnapshotSerializerCustomizer customizer) {
     return new BinaryJacksonSnapshotSerializer(customizer);
   }
