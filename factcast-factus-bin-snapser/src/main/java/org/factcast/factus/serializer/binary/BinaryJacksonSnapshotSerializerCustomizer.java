@@ -7,9 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.function.Consumer;
 
-public interface BinarySnapshotSerializerCustomizer extends Consumer<ObjectMapper> {
+public interface BinaryJacksonSnapshotSerializerCustomizer extends Consumer<ObjectMapper> {
 
-  static BinarySnapshotSerializerCustomizer defaultCustomizer() {
+  static BinaryJacksonSnapshotSerializerCustomizer defaultCustomizer() {
     return objectMapper ->
         objectMapper
             .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)

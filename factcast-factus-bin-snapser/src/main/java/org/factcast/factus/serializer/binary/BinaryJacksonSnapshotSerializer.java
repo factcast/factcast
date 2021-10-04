@@ -27,11 +27,13 @@ import org.msgpack.jackson.dataformat.MessagePackFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
-public class BinarySnapshotSerializer implements SnapshotSerializer {
+public class BinaryJacksonSnapshotSerializer implements SnapshotSerializer {
+
+  private static final int BLOCKSIZE = 65536;
 
   private final ObjectMapper omMessagePack;
 
-  public BinarySnapshotSerializer(@NonNull BinarySnapshotSerializerCustomizer customizer) {
+  public BinaryJacksonSnapshotSerializer(@NonNull BinaryJacksonSnapshotSerializerCustomizer customizer) {
     ObjectMapper om = new ObjectMapper(new MessagePackFactory());
     customizer.accept(om);
     omMessagePack = om;
@@ -40,8 +42,9 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
   @SneakyThrows
   @Override
   public byte[] serialize(@NonNull SnapshotProjection a) {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    LZ4BlockOutputStream os = new LZ4BlockOutputStream(baos, 8192);
+    ByteArrayOutputStream baos = new ByteArrayOutputStream(BLOCKSIZE+16);
+
+    LZ4BlockOutputStream os = new LZ4BlockOutputStream(baos, BLOCKSIZE);
     omMessagePack.writeValue(os, a);
     os.close();
     return baos.toByteArray();
@@ -62,6 +65,6 @@ public class BinarySnapshotSerializer implements SnapshotSerializer {
 
   @Override
   public String getId() {
-    return "BinarySnapshotSerializer";
+    return "BinaryJacksonSnapshotSerializer";
   }
 }
