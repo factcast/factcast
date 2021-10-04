@@ -33,6 +33,7 @@ import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -81,7 +82,7 @@ public class FactusAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  @Order(Ordered.LOWEST_PRECEDENCE)
+  @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
   public SnapshotSerializer snapshotSerializer() {
     return new DefaultSnapshotSerializer();
   }
