@@ -19,19 +19,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.serializer.binary.BinaryJacksonSnapshotSerializer;
 import org.factcast.factus.serializer.binary.BinaryJacksonSnapshotSerializerCustomizer;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 
 @Configuration
 @ConditionalOnClass(BinaryJacksonSnapshotSerializer.class)
 @Slf4j
+@AutoConfigureOrder(-100)
 public class BinaryJacksonSnapshotSerializerAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean(SnapshotSerializer.class)
-  public SnapshotSerializer binarySnapshotSerializer(
+  public SnapshotSerializer snapshotSerializer(
       BinaryJacksonSnapshotSerializerCustomizer customizer) {
     return new BinaryJacksonSnapshotSerializer(customizer);
   }
