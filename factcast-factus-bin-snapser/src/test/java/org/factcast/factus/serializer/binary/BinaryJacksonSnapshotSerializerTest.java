@@ -15,23 +15,21 @@
  */
 package org.factcast.factus.serializer.binary;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.factcast.factus.projection.SnapshotProjection;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith(MockitoExtension.class)
-class BinarySnapshotSerializerTest {
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.UUID;
+import org.factcast.factus.projection.SnapshotProjection;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-  private BinarySnapshotSerializer underTest =
-      new BinarySnapshotSerializer(BinarySnapshotSerializerCustomizer.defaultCustomizer());
+@ExtendWith(MockitoExtension.class)
+class BinaryJacksonSnapshotSerializerTest {
+
+  private final BinaryJacksonSnapshotSerializer underTest =
+      new BinaryJacksonSnapshotSerializer(BinaryJacksonSnapshotSerializerCustomizer.defaultCustomizer());
 
   @Nested
   class WhenSerializing {
@@ -56,9 +54,9 @@ class BinarySnapshotSerializerTest {
   }
 
   @Nested
-  class whenCalculatingHash {
+  class whenDeserializing {
     @Test
-    void upcastingWorksWhenHashesAreEqual() {
+    void upcastingWorks() {
       // INIT
       TestClassV1 testClassV1 = new TestClassV1();
       testClassV1.id = "123";
@@ -80,7 +78,7 @@ class BinarySnapshotSerializerTest {
     }
 
     @Test
-    void downcastingWorksWhenHashesAreEqual() {
+    void downcastingWorks() {
       // INIT
       TestClassV1a_noRelevantChange testClassV1a = new TestClassV1a_noRelevantChange();
       testClassV1a.id = "123";
