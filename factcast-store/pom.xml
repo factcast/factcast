@@ -174,5 +174,10 @@
       <artifactId>graal-sdk</artifactId>
       <version>${graaljs.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.graalvm.truffle</groupId>
+      <artifactId>truffle-api</artifactId>
+      <version>${graaljs.version}</version>
+    </dependency>
   </dependencies>
 </project>
