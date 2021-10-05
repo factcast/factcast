@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.Data;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.Value;
 import org.assertj.core.util.Lists;
 import org.assertj.core.util.Maps;
@@ -31,8 +32,7 @@ import org.factcast.core.FactHeader;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.factus.Handler;
-import org.factcast.factus.HandlerFor;
+import org.factcast.factus.*;
 import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.LocalManagedProjection;
@@ -549,4 +549,77 @@ class ProjectorImplTest {
     @HandlerFor(ns = "ns", type = "type")
     void applyFactWithoutSpecificVersion(Fact f) {}
   }
+
+
+
+  public static class HandlerMethdsWithAdditionalFilters{
+    @HandlerFor(ns = "ns", type = "type")
+    @FilterByMeta(key="foo",value = "bar")
+    public void applyWithOneMeta(Fact f) {}
+
+    @HandlerFor(ns = "ns", type = "type")
+    @FilterByMeta(key="foo",value = "bar")
+    @FilterByMeta(key="bar",value = "baz")
+    public void applyWithMultiMeta(Fact f) {}
+
+    @HandlerFor(ns = "ns", type = "type")
+    @FilterByAggId("1010a955-04a2-417b-9904-f92f88fdb67d")
+    public void applyWithAggId(Fact f) {}
+
+    @HandlerFor(ns = "ns", type = "type")
+    @FilterByScript("function myfilter(e){}")
+    public void applyWithFilterScript(Fact f) {}
+
+
+
+  }
+
+  @SneakyThrows
+  @Test
+  public void detectsSingleMeta(){
+    FactSpec spec=FactSpec.ns("ns");
+    Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithOneMeta",Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m,spec);
+
+    assertThat(spec.meta()).containsEntry("foo","bar");
+    assertThat(spec.meta()).hasSize(1);
+
+  }
+  @SneakyThrows
+  @Test
+  public void detectsMultiMeta(){
+    FactSpec spec=FactSpec.ns("ns");
+    Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithMultiMeta",Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m,spec);
+
+    assertThat(spec.meta()).containsEntry("foo","bar");
+    assertThat(spec.meta()).containsEntry("bar","baz");
+    assertThat(spec.meta()).hasSize(2);
+
+  }
+
+  @SneakyThrows
+  @Test
+  public void detectsAggId(){
+    FactSpec spec=FactSpec.ns("ns");
+    Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithAggId",Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m,spec);
+
+    assertThat(spec.aggId()).isEqualTo(UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67d"));
+
+  }
+
+
+  @SneakyThrows
+  @Test
+  public void detectsFilterScript(){
+    FactSpec spec=FactSpec.ns("ns");
+    Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithFilterScript",Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m,spec);
+
+    assertThat(spec.filterScript()).isEqualTo(org.factcast.core.spec.FilterScript.js("function myfilter(e){}"));
+
+  }
+
+
 }
