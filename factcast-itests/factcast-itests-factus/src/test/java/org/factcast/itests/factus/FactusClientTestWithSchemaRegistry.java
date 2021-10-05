@@ -15,121 +15,30 @@
  */
 package org.factcast.itests.factus;
 
-import static org.assertj.core.api.Assertions.*;
-
 import config.RedissonProjectionConfiguration;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.Duration;
-import java.util.UUID;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
 import org.factcast.itests.factus.proj.UserV1;
 import org.factcast.itests.factus.proj.UserV2;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.factcast.test.FactCastExtension;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 
-@ExtendWith(FactCastExtension.class)
-@Testcontainers(disabledWithoutDocker = true)
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.*;
+
 @SpringBootTest
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @ContextConfiguration(classes = {Application.class, RedissonProjectionConfiguration.class})
-@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
 public class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrationTest {
-
-  protected static final Network _docker_network = Network.newNetwork();
-
-  private static Path folderForSchemas;
-  private static String oldAddress;
-
-  static {
-    Logger l = LoggerFactory.getLogger(FactusClientTestWithSchemaRegistry.class);
-    try {
-
-      folderForSchemas = Files.createTempDirectory("test_schemas").toAbsolutePath();
-      l.info("Created temporary schema directory: {}", folderForSchemas);
-
-      File registry = new ClassPathResource("example-registry").getFile();
-
-      l.info("Copying schema files into temporary schema directory: {}", registry);
-      FileUtils.copyDirectory(registry, folderForSchemas.toFile());
-
-    } catch (IOException e) {
-      // this is unexpected but kind of fatal
-      l.error("Error creating schema directory", e);
-    }
-  }
-
-  @SneakyThrows
-  @AfterAll
-  public static void cleanup() {
-    FileUtils.deleteQuietly(folderForSchemas.toFile());
-  }
-
-  @Container
-  protected static final PostgreSQLContainer _postgres =
-      new PostgreSQLContainer<>("postgres:11.4")
-          .withDatabaseName("fc")
-          .withUsername("fc")
-          .withPassword("fc")
-          .withNetworkAliases("db")
-          .withNetwork(_docker_network);
-
-  @Container
-  protected static final GenericContainer _factcast =
-      new GenericContainer<>("factcast/factcast:latest")
-          .withExposedPorts(9090)
-          .withFileSystemBind("./config", "/config/")
-          .withEnv("grpc_server_port", "9090")
-          .withEnv("factcast_security_enabled", "false")
-          .withEnv("spring_datasource_url", "jdbc:postgresql://db/fc?user=fc&password=fc")
-          .withFileSystemBind(folderForSchemas.toString(), "/schemata/")
-          .withEnv("FACTCAST_STORE_SCHEMA_REGISTRY_URL", "file:///schemata")
-          .withNetwork(_docker_network)
-          .dependsOn(_postgres)
-          .withLogConsumer(
-              new Slf4jLogConsumer(
-                  LoggerFactory.getLogger(FactusClientTestWithSchemaRegistry.class)))
-          .waitingFor(new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
-
-  @SuppressWarnings("rawtypes")
-  @BeforeAll
-  public static void startContainers() throws InterruptedException {
-    String address = "static://" + _factcast.getHost() + ":" + _factcast.getMappedPort(9090);
-    oldAddress = System.getProperty("grpc.client.factstore.address");
-    System.setProperty("grpc.client.factstore.address", address);
-  }
-
-  @AfterAll
-  public static void stopContainers() throws InterruptedException {
-    _factcast.stop();
-    _postgres.stop();
-    System.setProperty("grpc.client.factstore.address", oldAddress);
-  }
 
   @Autowired Factus ec;
 

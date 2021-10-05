@@ -40,10 +40,6 @@
       <artifactId>jackson-dataformat-msgpack</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.module</groupId>
-      <artifactId>jackson-module-jsonSchema</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus</artifactId>
     </dependency>
