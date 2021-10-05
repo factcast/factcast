@@ -15,18 +15,8 @@
  */
 package org.factcast.itests.factus;
 
-import static java.util.Arrays.*;
-import static java.util.UUID.*;
-import static java.util.stream.Collectors.*;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
-import static org.assertj.core.api.Assertions.*;
-
 import com.google.common.base.Stopwatch;
 import config.RedissonProjectionConfiguration;
-import java.util.ArrayList;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +35,8 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
@@ -56,6 +47,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
+
+import java.util.ArrayList;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
+import static java.util.Arrays.*;
+import static java.util.UUID.*;
+import static java.util.stream.Collectors.*;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class, RedissonProjectionConfiguration.class})

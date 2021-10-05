@@ -13,25 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.highlevel;
+package org.factcast.spring.boot.autoconfigure.factus;
 
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.serializer.binary.BinarySnapshotSerializer;
+import org.factcast.factus.serializer.binary.BinaryJacksonSnapshotSerializer;
+import org.factcast.factus.serializer.binary.BinaryJacksonSnapshotSerializerCustomizer;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 
 @Configuration
-@ConditionalOnClass(BinarySnapshotSerializer.class)
+@ConditionalOnClass(BinaryJacksonSnapshotSerializer.class)
 @Slf4j
-public class BinarySnapshotSerializerAutoConfiguration {
+@AutoConfigureOrder(-100)
+public class BinaryJacksonSnapshotSerializerAutoConfiguration {
   @Bean
-  @Order(100)
   @ConditionalOnMissingBean(SnapshotSerializer.class)
-  public SnapshotSerializer binarySnapshotSerializer() {
-    return new BinarySnapshotSerializer();
+  public SnapshotSerializer snapshotSerializer(
+      BinaryJacksonSnapshotSerializerCustomizer customizer) {
+    return new BinaryJacksonSnapshotSerializer(customizer);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public BinaryJacksonSnapshotSerializerCustomizer binarySnapshotSerializerCustomizer() {
+    return BinaryJacksonSnapshotSerializerCustomizer.defaultCustomizer();
   }
 }
