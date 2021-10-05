@@ -15,27 +15,24 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import static java.util.Collections.synchronizedMap;
+import static java.util.Collections.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import java.util.List;
 import java.util.Map;
-
 import javax.script.Compilable;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
-
 import javax.script.ScriptException;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.registry.transformation.Transformation;
 import org.graalvm.polyglot.Value;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
-
-import lombok.NonNull;
 
 @Slf4j
 public class GraalJsTransformer implements Transformer {
@@ -58,21 +55,28 @@ public class GraalJsTransformer implements Transformer {
 
   @Override
   public JsonNode transform(Transformation t, JsonNode input) throws TransformationException {
+    // classloadershifting is necessary for truffle to find its peers
+    ClassLoader oldCl = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(Truffle.class.getClassLoader());
+    try {
+      if (!t.transformationCode().isPresent()) {
+        return input;
 
-    if (!t.transformationCode().isPresent()) {
-      return input;
+      } else {
+        String js = t.transformationCode().get();
 
-    } else {
-      String js = t.transformationCode().get();
+        Invocable invocable = warmEngines.computeIfAbsent(js, this::createAndWarmEngine);
 
-      Invocable invocable = warmEngines.computeIfAbsent(js, this::createAndWarmEngine);
-
-      return runJSTransformation(input, invocable);
+        return runJSTransformation(input, invocable);
+      }
+    } finally {
+      Thread.currentThread().setContextClassLoader(oldCl);
     }
   }
 
   @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
   private JsonNode runJSTransformation(JsonNode input, Invocable invocable) {
+
     try {
       @SuppressWarnings("unchecked")
       Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);

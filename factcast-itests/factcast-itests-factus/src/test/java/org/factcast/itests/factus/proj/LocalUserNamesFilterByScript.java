@@ -15,24 +15,24 @@
  */
 package org.factcast.itests.factus.proj;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.factus.FilterByMeta;
 import org.factcast.factus.FilterByScript;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Slf4j
 @ProjectionMetaData(serial = 1)
 public class LocalUserNamesFilterByScript extends LocalManagedProjection {
-    ConcurrentHashMap<UUID, String> map = new ConcurrentHashMap<>();
+  ConcurrentHashMap<UUID, String> map = new ConcurrentHashMap<>();
 
   public Map<UUID, String> userNames() {
     return map;
@@ -58,11 +58,9 @@ public class LocalUserNamesFilterByScript extends LocalManagedProjection {
 
   @SneakyThrows
   @Handler
-  @FilterByScript("function isGeorge(header, payload){" +
-          "return payload.userName == 'george';"+
-          "}")
+  @FilterByScript(
+      "function isGeorge(header, payload){" + "return payload.userName == 'George';" + "}")
   protected void apply(UserCreated created) {
     userNames().put(created.aggregateId(), created.userName());
   }
-
 }
