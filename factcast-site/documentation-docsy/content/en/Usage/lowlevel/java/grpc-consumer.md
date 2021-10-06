@@ -29,7 +29,7 @@ class CustomerRepository{
    
    Customer customer = new Customer(id);
    // stream all these Facts to the customer object's handle method, and wait until the stream ends.
-   factCast.subscribeToFacts(req, customer::handle ).awaitComplete();
+   factCast.subscribe(req, customer::handle ).awaitComplete();
 
    // the customer object should now be in its latest state, and ready for command validation
    return customer;
@@ -68,7 +68,7 @@ class QueryOptimizedView {
           .or(type("PurchaseCompleted"))
       .from(lastFactProcessed);
 
-   factCast.subscribeToFacts(req, this::handle );
+   factCast.subscribe(req, this::handle );
  }
 
  private FactSpec type(String type){ 
@@ -106,7 +106,7 @@ class CustomerCache {
           .or(type("PurchaseCompleted"))
       .fromNowOn();
 
-   factCast.subscribeToFacts(req, this::handle );
+   factCast.subscribe(req, this::handle );
  }
 
  private FactSpec type(String type){ 
