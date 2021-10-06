@@ -13,28 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.serializer;
+package org.factcast.factus;
 
-import org.factcast.factus.projection.SnapshotProjection;
+import java.lang.annotation.*;
 
-public class MyDefaultSnapshotSerializer implements SnapshotSerializer {
-  @Override
-  public byte[] serialize(SnapshotProjection a) {
-    return new byte[0];
-  }
-
-  @Override
-  public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
-    return null;
-  }
-
-  @Override
-  public boolean includesCompression() {
-    return false;
-  }
-
-  @Override
-  public String getId() {
-    return "MyDefault";
-  }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(value = ElementType.METHOD)
+public @interface FilterByAggId {
+  String value();
 }

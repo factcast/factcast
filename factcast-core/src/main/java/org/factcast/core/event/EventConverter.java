@@ -39,7 +39,14 @@ public class EventConverter {
     b.id(factId);
 
     b.ns(spec.ns());
-    b.type(spec.type());
+
+    String type = spec.type();
+    if (type == null || type.trim().isEmpty()) {
+      type = p.getClass().getSimpleName();
+    }
+
+    b.type(type);
+
     int version = spec.version();
     if (version > 0) // 0 is not allowed on publishing
     {
