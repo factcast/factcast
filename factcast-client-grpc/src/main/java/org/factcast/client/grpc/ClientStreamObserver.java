@@ -20,6 +20,9 @@ import io.grpc.stub.StreamObserver;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -30,6 +33,7 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.core.util.ExceptionHelper;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
@@ -47,6 +51,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
   private final ProtoConverter converter = new ProtoConverter();
   private final AtomicLong lastNotification = new AtomicLong(0);
+  private final ExecutorService clientBoundExecutor = Executors.newSingleThreadExecutor();
 
   @NonNull private final SubscriptionImpl subscription;
 
@@ -68,6 +73,18 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
   public void onNext(MSG_Notification f) {
     lastNotification.set(System.currentTimeMillis());
 
+    try {
+      if (clientBoundExecutor.isShutdown())
+        throw new IllegalStateException(
+            "Executor for this observer already shut down. THIS IS A BUG!");
+      clientBoundExecutor.submit(() -> process(f)).get();
+    } catch (ExecutionException | InterruptedException e) {
+        clientBoundExecutor.shutdown();
+        throw ExceptionHelper.toRuntime(e.getCause());
+    }
+  }
+
+  private void process(MSG_Notification f) {
     switch (f.getType()) {
       case Info:
         log.trace("received info signal");
@@ -86,6 +103,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
       case Complete:
         log.trace("received onComplete signal");
         onCompleted();
+        clientBoundExecutor.shutdown();
         break;
       case Fact:
         log.trace("received single fact");
@@ -106,6 +124,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
       default:
         onError(new RuntimeException("Unrecognized notification type. THIS IS A BUG!"));
+        clientBoundExecutor.shutdown();
         break;
     }
   }
@@ -121,13 +140,22 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
   public void onError(Throwable t) {
     disableKeepalive();
     RuntimeException translated = ClientExceptionHelper.from(t);
-    subscription.notifyError(translated);
+    try {
+      subscription.notifyError(translated);
+    } finally {
+      clientBoundExecutor.shutdown();
+    }
   }
 
   @Override
   public void onCompleted() {
     disableKeepalive();
-    subscription.notifyComplete();
+    // TODO dont we switch tracks here?
+    try {
+      subscription.notifyComplete();
+    } finally {
+      clientBoundExecutor.shutdown();
+    }
   }
 
   class ClientKeepalive {
