@@ -9,7 +9,7 @@ import java.util.*;
 
 public class UserEmailsProjection extends LocalManagedProjection {
 
-    private Map<UUID, String> userEmails = new HashMap<>();
+    private final Map<UUID, String> userEmails = new HashMap<>();
 
     public Set<String> getEmails() {
         return new HashSet<>(userEmails.values());
