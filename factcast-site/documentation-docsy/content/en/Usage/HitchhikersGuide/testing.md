@@ -316,7 +316,7 @@ Now that we know which events to handle, we can process them in the Factus based
 ```java
 public class UserEmailsProjection extends LocalManagedProjection {
 
-    private Map<UUID, String> userEmails = new HashMap<>();
+    private final Map<UUID, String> userEmails = new HashMap<>();
 
     public Set<String> getEmails() {
         return new HashSet<>(userEmails.values());
