@@ -72,6 +72,18 @@ class ClientStreamObserverTest {
   }
 
   @Test
+  void registersForCleanup() {
+    verify(subscription).onClose(any());
+  }
+
+  @Test
+  void shutsdownOnSubscriptionClose() {
+    subscription.close();
+    assertThat(uut.clientBoundExecutor().isShutdown()).isTrue();
+  }
+
+
+  @Test
   void testOnNext() {
     Fact f = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     MSG_Notification n = converter.createNotificationFor(f);

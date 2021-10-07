@@ -51,6 +51,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
   private final ProtoConverter converter = new ProtoConverter();
   private final AtomicLong lastNotification = new AtomicLong(0);
+  @Getter(AccessLevel.PROTECTED)
   private final ExecutorService clientBoundExecutor = Executors.newSingleThreadExecutor();
 
   @NonNull private final SubscriptionImpl subscription;
@@ -61,11 +62,21 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
   public ClientStreamObserver(@NonNull SubscriptionImpl subscription, long keepAliveInterval) {
     this.subscription = subscription;
+    subscription.onClose(this::tryShutdown);
 
     if (keepAliveInterval != 0L) {
       keepAlive = new ClientKeepalive(keepAliveInterval);
     } else {
       keepAlive = null;
+    }
+  }
+
+  private void tryShutdown() {
+    try{
+      clientBoundExecutor.shutdown();
+    }catch(Exception e)
+    {
+      log.error("While shutting down executor:",e);
     }
   }
 
@@ -79,7 +90,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
             "Executor for this observer already shut down. THIS IS A BUG!");
       clientBoundExecutor.submit(() -> process(f)).get();
     } catch (ExecutionException | InterruptedException e) {
-        clientBoundExecutor.shutdown();
+        tryShutdown();
         throw ExceptionHelper.toRuntime(e.getCause());
     }
   }
@@ -103,7 +114,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
       case Complete:
         log.trace("received onComplete signal");
         onCompleted();
-        clientBoundExecutor.shutdown();
+        tryShutdown();
         break;
       case Fact:
         log.trace("received single fact");
@@ -143,7 +154,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
     try {
       subscription.notifyError(translated);
     } finally {
-      clientBoundExecutor.shutdown();
+      tryShutdown();
     }
   }
 
@@ -154,7 +165,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
     try {
       subscription.notifyComplete();
     } finally {
-      clientBoundExecutor.shutdown();
+      tryShutdown();
     }
   }
 
