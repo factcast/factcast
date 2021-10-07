@@ -1,12 +1,20 @@
 # Changelog
 
-## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2021-10-07)
+## [0.4.3](https://github.com/factcast/factcast/tree/0.4.3) (2021-10-07)
 
-[Full Changelog](https://github.com/factcast/factcast/compare/0.4.2...upcoming)
+[Full Changelog](https://github.com/factcast/factcast/compare/0.4.2...0.4.3)
+
+**Fixed bugs:**
+
+- issue1634 tools using threadlocal fail due to GRPC using different thread for subsequent calls to onNext   [\#1635](https://github.com/factcast/factcast/pull/1635) ([uweschaefer](https://github.com/uweschaefer))
 
 **Closed issues:**
 
 - Concurrency problem in Atomic Projections when called from different threads by GRPC [\#1634](https://github.com/factcast/factcast/issues/1634)
+
+**Merged pull requests:**
+
+- Update dependency org.projectlombok:lombok to v1.18.22 [\#1637](https://github.com/factcast/factcast/pull/1637) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [0.4.2](https://github.com/factcast/factcast/tree/0.4.2) (2021-10-06)
 
@@ -1101,9 +1109,6 @@
 - build\(deps\): Bump spring-boot-starter-test from 2.2.6.RELEASE to 2.2.7.RELEASE [\#801](https://github.com/factcast/factcast/pull/801) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - build\(deps\): Bump snappy-java from 1.1.7.4 to 1.1.7.5 [\#800](https://github.com/factcast/factcast/pull/800) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - build\(deps\): Bump snappy-java from 1.1.7.3 to 1.1.7.4 [\#799](https://github.com/factcast/factcast/pull/799) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
-- build\(deps-dev\): Bump assertj-core from 3.15.0 to 3.16.0 [\#798](https://github.com/factcast/factcast/pull/798) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
-- build\(deps\): Bump spotless-maven-plugin from 1.30.0 to 1.31.0 [\#797](https://github.com/factcast/factcast/pull/797) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
-- build\(deps\): Bump shedlock-spring from 4.9.1 to 4.9.2 [\#796](https://github.com/factcast/factcast/pull/796) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - build\(deps\): Bump shedlock-provider-jdbc-template from 4.9.1 to 4.9.2 [\#795](https://github.com/factcast/factcast/pull/795) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - build\(deps\): Bump shedlock-spring from 4.9.0 to 4.9.1 [\#794](https://github.com/factcast/factcast/pull/794) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - build\(deps\): Bump shedlock-provider-jdbc-template from 4.9.0 to 4.9.1 [\#793](https://github.com/factcast/factcast/pull/793) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
