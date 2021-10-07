@@ -58,6 +58,43 @@ public class SubscriptionImplTest {
   }
 
   @Test
+  void onCloseStacksUpAndIgnoresException() {
+
+    class DoNothing implements Runnable{
+      @Override
+      public void run() {
+
+      }
+    }
+
+    class Fails implements Runnable{
+      @Override
+      public void run() {
+        throw new IllegalArgumentException();
+      }
+    }
+
+    Runnable h1 = spy(new DoNothing());
+    Runnable h2 = spy(new DoNothing());
+    Runnable h3 = spy(new Fails());
+    Runnable h4 = spy(new DoNothing());
+
+    uut.onClose(h1);
+    uut.onClose(h2);
+    uut.onClose(h3);
+    uut.onClose(h4);
+
+    uut.close();
+
+    verify(h1).run();
+    verify(h2).run();
+    verify(h3).run();
+    verify(h4).run();
+
+
+  }
+
+  @Test
   void testAwaitCatchup() {
     expect(TimeoutException.class, () -> uut.awaitCatchup(10));
     expect(TimeoutException.class, () -> uut.awaitComplete(10));
