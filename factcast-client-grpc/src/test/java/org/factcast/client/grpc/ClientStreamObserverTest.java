@@ -73,7 +73,7 @@ class ClientStreamObserverTest {
 
   @Test
   void registersForCleanup() {
-    verify(subscription).onClose(any());
+    verify(subscription, times(2)).onClose(any());
   }
 
   @Test
