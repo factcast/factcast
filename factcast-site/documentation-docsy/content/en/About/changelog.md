@@ -5,6 +5,66 @@ type = "docs"
 +++
 
 
+## [upcoming](https://github.com/factcast/factcast/tree/upcoming) (2021-10-07)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.4.2...upcoming)
+
+**Closed issues:**
+
+- Concurrency problem in Atomic Projections when called from different threads by GRPC [\#1634](https://github.com/factcast/factcast/issues/1634)
+
+## [0.4.2](https://github.com/factcast/factcast/tree/0.4.2) (2021-10-06)
+
+[Full Changelog](https://github.com/factcast/factcast/compare/0.4.1...0.4.2)
+
+**Fixed bugs:**
+
+- Make BinarySnapshotSerializer configurable [\#1621](https://github.com/factcast/factcast/issues/1621)
+- issue1629 autoconfiguration precedence [\#1630](https://github.com/factcast/factcast/pull/1630) ([uweschaefer](https://github.com/uweschaefer))
+
+**Closed issues:**
+
+- Fix AutoConfiguration regarding binarySerializer [\#1629](https://github.com/factcast/factcast/issues/1629)
+- Runtime error when upgrading to FC 0.4.1 - Only no-arg methods may be annotated with @Scheduled [\#1627](https://github.com/factcast/factcast/issues/1627)
+- Make Factus itests executable \(and green\) again  [\#1623](https://github.com/factcast/factcast/issues/1623)
+- SnapshotSerializerSupplier gives ConcurrentModificationException [\#1598](https://github.com/factcast/factcast/issues/1598)
+- Factus: Add possibility to add meta K/V Pairs to a FactSpec via @Handler or @HandlerFor Annotations [\#1595](https://github.com/factcast/factcast/issues/1595)
+- Document hook methods of each Projection [\#1591](https://github.com/factcast/factcast/issues/1591)
+- Hitchhikers Guide to Integration Testing [\#1160](https://github.com/factcast/factcast/issues/1160)
+
+**Merged pull requests:**
+
+- issue1627 removed deprecated scheduled expiration [\#1628](https://github.com/factcast/factcast/pull/1628) ([uweschaefer](https://github.com/uweschaefer))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.17.0 [\#1626](https://github.com/factcast/factcast/pull/1626) ([renovate[bot]](https://github.com/apps/renovate))
+- Update maven.version to v3.8.3 [\#1625](https://github.com/factcast/factcast/pull/1625) ([renovate[bot]](https://github.com/apps/renovate))
+- \#1623: make factus itests executable again [\#1624](https://github.com/factcast/factcast/pull/1624) ([otbe](https://github.com/otbe))
+- \#1621: make BinarySnapshotSerializer's object mapper configurable  [\#1622](https://github.com/factcast/factcast/pull/1622) ([otbe](https://github.com/otbe))
+- Update dependency com.squareup.okhttp3:okhttp to v4.9.2 [\#1618](https://github.com/factcast/factcast/pull/1618) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson:jackson-bom to v2.13.0 [\#1617](https://github.com/factcast/factcast/pull/1617) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson.core:jackson-core to v2.13.0 [\#1616](https://github.com/factcast/factcast/pull/1616) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.fasterxml.jackson.core:jackson-annotations to v2.13.0 [\#1615](https://github.com/factcast/factcast/pull/1615) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency net.javacrumbs.shedlock:shedlock-spring to v4.28.0 [\#1614](https://github.com/factcast/factcast/pull/1614) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency net.javacrumbs.shedlock:shedlock-provider-jdbc-template to v4.28.0 [\#1613](https://github.com/factcast/factcast/pull/1613) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.16.0 [\#1612](https://github.com/factcast/factcast/pull/1612) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.liquibase:liquibase-core to v4.5.0 [\#1611](https://github.com/factcast/factcast/pull/1611) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.14.0 [\#1609](https://github.com/factcast/factcast/pull/1609) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency io.javalin:javalin to v3.13.12 [\#1608](https://github.com/factcast/factcast/pull/1608) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.postgresql:postgresql to v42.2.24 [\#1607](https://github.com/factcast/factcast/pull/1607) ([renovate[bot]](https://github.com/apps/renovate))
+- Update spring boot to v2.5.5 [\#1606](https://github.com/factcast/factcast/pull/1606) ([renovate[bot]](https://github.com/apps/renovate))
+- Update junit5 monorepo to v5.8.1 [\#1605](https://github.com/factcast/factcast/pull/1605) ([renovate[bot]](https://github.com/apps/renovate))
+- issue1595: factus: handlers: filtering by annotation [\#1604](https://github.com/factcast/factcast/pull/1604) ([uweschaefer](https://github.com/uweschaefer))
+- Issues1160 Hitchhiker's Guide to Testing [\#1603](https://github.com/factcast/factcast/pull/1603) ([samba2](https://github.com/samba2))
+- Update redisson.version to v3.16.3 [\#1602](https://github.com/factcast/factcast/pull/1602) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.redisson:redisson-spring-boot-starter to v3.16.3 [\#1601](https://github.com/factcast/factcast/pull/1601) ([renovate[bot]](https://github.com/apps/renovate))
+- \#1598: Fix SnapshotSerializerSupplier ConcurrentModificationException [\#1599](https://github.com/factcast/factcast/pull/1599) ([samba2](https://github.com/samba2))
+- Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.13.1 [\#1597](https://github.com/factcast/factcast/pull/1597) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency org.assertj:assertj-core to v3.21.0 [\#1596](https://github.com/factcast/factcast/pull/1596) ([renovate[bot]](https://github.com/apps/renovate))
+- Update kotlin.version to v1.5.31 [\#1594](https://github.com/factcast/factcast/pull/1594) ([renovate[bot]](https://github.com/apps/renovate))
+- \#1591 document hook methods [\#1593](https://github.com/factcast/factcast/pull/1593) ([samba2](https://github.com/samba2))
+- Update kotest.version to v4.6.3 [\#1592](https://github.com/factcast/factcast/pull/1592) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency io.micrometer:micrometer-core to v1.7.4 [\#1589](https://github.com/factcast/factcast/pull/1589) ([renovate[bot]](https://github.com/apps/renovate))
+- Update junit5 monorepo to v5.8.0 [\#1587](https://github.com/factcast/factcast/pull/1587) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [0.4.1](https://github.com/factcast/factcast/tree/0.4.1) (2021-09-10)
 
 [Full Changelog](https://github.com/factcast/factcast/compare/0.4.0...0.4.1)
