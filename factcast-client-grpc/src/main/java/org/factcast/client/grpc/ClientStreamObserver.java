@@ -62,13 +62,16 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
   public ClientStreamObserver(@NonNull SubscriptionImpl subscription, long keepAliveInterval) {
     this.subscription = subscription;
-    subscription.onClose(this::tryShutdown);
 
     if (keepAliveInterval != 0L) {
       keepAlive = new ClientKeepalive(keepAliveInterval);
     } else {
       keepAlive = null;
     }
+
+    subscription.onClose(this::tryShutdown);
+    subscription.onClose(this::disableKeepalive);
+
   }
 
   private void tryShutdown() {
@@ -88,6 +91,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
       if (clientBoundExecutor.isShutdown())
         throw new IllegalStateException(
             "Executor for this observer already shut down. THIS IS A BUG!");
+
       clientBoundExecutor.submit(() -> process(f)).get();
     } catch (ExecutionException | InterruptedException e) {
         tryShutdown();
@@ -114,7 +118,6 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
       case Complete:
         log.trace("received onComplete signal");
         onCompleted();
-        tryShutdown();
         break;
       case Fact:
         log.trace("received single fact");
@@ -135,7 +138,6 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
       default:
         onError(new RuntimeException("Unrecognized notification type. THIS IS A BUG!"));
-        clientBoundExecutor.shutdown();
         break;
     }
   }
