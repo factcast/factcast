@@ -22,7 +22,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -57,9 +56,6 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Slf4j
 public class PgFactStore extends AbstractFactStore {
-
-  // is that interesting to configure?
-  private static final int BATCH_SIZE = 500;
 
   @NonNull private final JdbcTemplate jdbcTemplate;
 
@@ -114,7 +110,7 @@ public class PgFactStore extends AbstractFactStore {
   public @NonNull Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int version)
       throws TransformationException {
 
-    val fact = fetchById(id);
+    var fact = fetchById(id);
     // map does not work here due to checked exception
     if (fact.isPresent()) {
       return Optional.of(factTransformerService.transformIfNecessary(fact.get(), version));
@@ -134,27 +130,17 @@ public class PgFactStore extends AbstractFactStore {
 
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
             int numberOfFactsToPublish = factsToPublish.size();
-            log.trace(
-                "Inserting {} fact(s){}",
-                numberOfFactsToPublish,
-                numberOfFactsToPublish > BATCH_SIZE ? " in batches of " + BATCH_SIZE : "");
+            log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
             jdbcTemplate.batchUpdate(
                 PgConstants.INSERT_FACT,
                 copiedListOfFacts,
-                BATCH_SIZE,
+                // batch limitation not necessary
+                Integer.MAX_VALUE,
                 (statement, fact) -> {
                   statement.setString(1, fact.jsonHeader());
                   statement.setString(2, fact.jsonPayload());
                 });
-            // add serials to headers
-            jdbcTemplate.batchUpdate(
-                PgConstants.UPDATE_FACT_SERIALS,
-                copiedListOfFacts,
-                BATCH_SIZE,
-                (statement, fact) -> {
-                  String idMatch = "{\"id\":\"" + fact.id() + "\"}";
-                  statement.setString(1, idMatch);
-                });
+            // adding serials to headers is done via trigger
 
           } catch (DuplicateKeyException dupkey) {
             throw new IllegalArgumentException(dupkey.getMessage());
@@ -238,7 +224,7 @@ public class PgFactStore extends AbstractFactStore {
 
           try {
             ResultSetExtractor<Long> rch =
-                new ResultSetExtractor<Long>() {
+                new ResultSetExtractor<>() {
                   @Override
                   public Long extractData(ResultSet resultSet)
                       throws SQLException, DataAccessException {

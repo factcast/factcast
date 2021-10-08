@@ -1,0 +1,36 @@
+{{ define "main" }}
+<div class="td-content">
+  {{ with .Params.description }}<div class="lead">{{ . | markdownify }}</div>{{ end }}
+	<header class="article-meta">
+		{{ $context := . }}
+		{{ if .Site.Params.Taxonomy.taxonomyPageHeader }}
+			{{ range $index, $taxo := .Site.Params.Taxonomy.taxonomyPageHeader }}
+				{{ partial "taxonomy_terms_article.html" (dict "context" $context "taxo" $taxo ) }}
+			{{ end }}
+		{{ else }}
+			{{ range $taxo, $taxo_map := .Site.Taxonomies }}
+				{{ partial "taxonomy_terms_article.html" (dict "context" $context "taxo" $taxo ) }}
+			{{ end }}
+		{{ end }}
+		{{ if (and (not .Params.hide_readingtime) (.Site.Params.ui.readingtime.enable)) }}
+			{{ partial "reading-time.html" . }}
+		{{ end }}
+	</header>
+	{{ .Content }}
+        {{ partial "section-index.html" . }}
+	{{ if (and (not .Params.hide_feedback) (.Site.Params.ui.feedback.enable) (.Site.GoogleAnalytics)) }}
+		{{ partial "feedback.html" .Site.Params.ui.feedback }}
+		<br />
+	{{ end }}
+	{{ if (.Site.DisqusShortname) }}
+		<br />
+		{{ partial "disqus-comment.html" . }}
+	{{ end }}
+	<div  style="position: absolute;bottom: 0;right: 0">This project is sponsored by
+		<a href="https://www.prisma-capacity.eu/careers#job-offers"><img
+				align="bottom" alt="PRISMA European Capacity Platform GmbH" class="inline"
+				src="/prisma.png"
+		/></a>
+	</div>
+</div>
+{{ end }}

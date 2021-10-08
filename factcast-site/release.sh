@@ -3,7 +3,7 @@ set -e
 
 
 (
- cd documentation
+ cd documentation-docsy
  bash release.sh
 )
 

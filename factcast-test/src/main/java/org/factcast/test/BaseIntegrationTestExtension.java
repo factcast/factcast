@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.junit.jupiter.api.extension.*;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -105,16 +104,15 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
 
     log.trace("erasing postgres state in between tests for {}", url);
 
-    try (val con = DriverManager.getConnection(url, p);
-        val st = con.createStatement()) {
+    try (var con = DriverManager.getConnection(url, p);
+        var st = con.createStatement()) {
       st.execute(
           "DO $$ DECLARE\n"
               + "    r RECORD;\n"
               + "BEGIN\n"
-              + "    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema() AND "
-              + "("
-              + "NOT ((tablename like 'databasechangelog%') OR (tablename like 'qrtz%') OR (tablename = 'schedlock')))"
-              + ") LOOP\n"
+              + "    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()"
+              + " AND (NOT ((tablename like 'databasechangelog%') OR (tablename like 'qrtz%') OR"
+              + " (tablename = 'schedlock')))) LOOP\n"
               + "        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || '';\n"
               + "    END LOOP;\n"
               + "END $$;");

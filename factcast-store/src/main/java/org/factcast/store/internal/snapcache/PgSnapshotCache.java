@@ -22,7 +22,6 @@ import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.store.internal.PgMetrics;
@@ -37,7 +36,8 @@ public class PgSnapshotCache {
       "SELECT factid,data,compressed FROM snapshot_cache WHERE uuid=? AND cache_key=?";
 
   private static final String UPSERT_SNAPSHOT =
-      "INSERT INTO snapshot_cache(uuid,cache_key,factid,data,compressed) VALUES (?,?,?,?,?) ON CONFLICT (uuid,cache_key) DO UPDATE set factid=?, data=?, compressed=?";
+      "INSERT INTO snapshot_cache(uuid,cache_key,factid,data,compressed) VALUES (?,?,?,?,?) ON"
+          + " CONFLICT (uuid,cache_key) DO UPDATE set factid=?, data=?, compressed=?";
 
   private static final String CLEAR_SNAPSHOT =
       "DELETE FROM snapshot_cache WHERE uuid=? AND cache_key=?";
@@ -85,7 +85,7 @@ public class PgSnapshotCache {
   }
 
   public void compact(@NonNull DateTime thresholdDate) {
-    val deleted =
+    var deleted =
         jdbcTemplate.update(
             "DELETE FROM snapshot_cache WHERE last_access < ?", thresholdDate.toDate());
     metrics.distributionSummary(StoreMetrics.VALUE.SNAPSHOTS_COMPACTED).record(deleted);

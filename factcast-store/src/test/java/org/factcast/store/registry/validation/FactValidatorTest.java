@@ -17,7 +17,8 @@ package org.factcast.store.registry.validation;
 
 import com.github.fge.jsonschema.main.JsonSchema;
 import io.micrometer.core.instrument.Tags;
-import lombok.val;
+import java.util.Optional;
+
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.NOPRegistryMetrics;
@@ -49,7 +50,7 @@ public class FactValidatorTest {
 
   @Test
   public void testFailsToValidateIfNotValidatable() {
-    val registryMetrics = Mockito.spy(new NOPRegistryMetrics());
+    var registryMetrics = spy(new NOPRegistryMetrics());
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
     when(props.isValidationEnabled()).thenReturn(true);
@@ -77,7 +78,7 @@ public class FactValidatorTest {
 
   @Test
   public void testFailsToValidateIfValidatableButMissingSchema() throws Exception {
-    val registryMetrics = spy(new NOPRegistryMetrics());
+    final var registryMetrics = spy(new NOPRegistryMetrics());
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
     when(props.isValidationEnabled()).thenReturn(true);
@@ -141,7 +142,7 @@ public class FactValidatorTest {
 
   @Test
   public void testFailsToValidateWithMatchingSchemaButNonMatchingFact() throws Exception {
-    val registryMetrics = spy(new NOPRegistryMetrics());
+    final var registryMetrics = spy(new NOPRegistryMetrics());
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
     when(props.isValidationEnabled()).thenReturn(true);

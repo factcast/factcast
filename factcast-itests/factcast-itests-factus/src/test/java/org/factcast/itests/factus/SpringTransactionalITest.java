@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.factus.Factus;
 import org.factcast.factus.Handler;
 import org.factcast.factus.event.EventObject;
@@ -15,9 +14,7 @@ import org.factcast.factus.spring.tx.AbstractSpringTxSubscribedProjection;
 import org.factcast.factus.spring.tx.SpringTransactional;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -65,7 +62,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   void setUp() {
     createTables();
 
-    val l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
+    var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
     for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
       l.add(new UserCreated(randomUUID(), "" + i));
     }
@@ -77,7 +74,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   class Managed {
     @Test
     public void testBulkSize3() {
-      val s = new BulkSize3Projection(platformTransactionManager, jdbcTemplate);
+      var s = new BulkSize3Projection(platformTransactionManager, jdbcTemplate);
       factus.update(s);
 
       assertThat(s.factStreamPositionModifications()).isEqualTo(4);
@@ -87,7 +84,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Test
     public void testBulkSize5() {
-      val s = new BulkSize5Projection(platformTransactionManager, jdbcTemplate);
+      var s = new BulkSize5Projection(platformTransactionManager, jdbcTemplate);
       factus.update(s);
 
       assertThat(s.factStreamPositionModifications()).isEqualTo(2);
@@ -97,7 +94,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Test
     public void testBulkSize10() {
-      val s = new BulkSize10Projection(platformTransactionManager, jdbcTemplate);
+      var s = new BulkSize10Projection(platformTransactionManager, jdbcTemplate);
       factus.update(s);
 
       assertThat(s.factStreamPositionModifications()).isEqualTo(1);
@@ -107,7 +104,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Test
     public void testBulkSize20() {
-      val s = new BulkSize20Projection(platformTransactionManager, jdbcTemplate);
+      var s = new BulkSize20Projection(platformTransactionManager, jdbcTemplate);
       factus.update(s);
 
       assertThat(s.factStreamPositionModifications()).isEqualTo(1);
@@ -117,7 +114,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Test
     public void testBulkApplyTimeout() {
-      val s = new SpringTxProjectionTimeout(platformTransactionManager, jdbcTemplate);
+      var s = new SpringTxProjectionTimeout(platformTransactionManager, jdbcTemplate);
       factus.update(s);
 
       assertThat(s.factStreamPositionModifications())
@@ -228,7 +225,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   class Subscribed {
     @Test
     public void testBulkSize3() {
-      val s = new BulkSize3Projection(platformTransactionManager, jdbcTemplate);
+      var s = new BulkSize3Projection(platformTransactionManager, jdbcTemplate);
       factus.subscribeAndBlock(s).awaitCatchup();
 
       assertThat(s.factStreamPositionModifications()).isEqualTo(4);
@@ -238,7 +235,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Test
     public void testBulkSize5() {
-      val s = new BulkSize5Projection(platformTransactionManager, jdbcTemplate);
+      var s = new BulkSize5Projection(platformTransactionManager, jdbcTemplate);
       factus.subscribeAndBlock(s).awaitCatchup();
 
       assertThat(s.factStreamPositionModifications()).isEqualTo(2);
@@ -248,7 +245,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Test
     public void testBulkSize10() {
-      val s = new BulkSize10Projection(platformTransactionManager, jdbcTemplate);
+      var s = new BulkSize10Projection(platformTransactionManager, jdbcTemplate);
       factus.subscribeAndBlock(s).awaitCatchup();
 
       assertThat(s.factStreamPositionModifications()).isEqualTo(1);
@@ -258,7 +255,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Test
     public void testBulkSize20() {
-      val s = new BulkSize20Projection(platformTransactionManager, jdbcTemplate);
+      var s = new BulkSize20Projection(platformTransactionManager, jdbcTemplate);
       factus.subscribeAndBlock(s).awaitCatchup();
 
       assertThat(s.factStreamPositionModifications()).isEqualTo(1);
@@ -268,7 +265,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Test
     public void testBulkApplyTimeout() {
-      val s = new SpringTxProjectionTimeout(platformTransactionManager, jdbcTemplate);
+      var s = new SpringTxProjectionTimeout(platformTransactionManager, jdbcTemplate);
       factus.subscribeAndBlock(s).awaitCatchup();
 
       assertThat(s.factStreamPositionModifications())
@@ -444,7 +441,8 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       txSeen.add(jdbcTemplate.queryForObject("select txid_current()", String.class));
 
       jdbcTemplate.update(
-          "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET fact_stream_position = ?",
+          "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) ON CONFLICT"
+              + " (name) DO UPDATE SET fact_stream_position = ?",
           getScopedName().asString(),
           factStreamPosition,
           factStreamPosition);

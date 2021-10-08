@@ -27,13 +27,11 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactHeader;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.spec.FactSpecCoordinates;
-import org.factcast.factus.Handler;
-import org.factcast.factus.HandlerFor;
+import org.factcast.factus.*;
 import org.factcast.factus.SuppressFactusWarnings.Warning;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
@@ -82,7 +80,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
       for (int i = 0; i < parameterTypes.length; i++) {
         Class<?> type = parameterTypes[i];
-        val transformer = createSingleParameterTransformer(m, type);
+        Function<Fact, ?> transformer = createSingleParameterTransformer(m, type);
         parameters[i] = transformer.apply(p);
       }
       return parameters;
@@ -109,7 +107,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     }
 
     for (ProjectorLens p : lenses) {
-      val transformerOrNull = p.parameterTransformerFor(type);
+      Function<Fact, ?> transformerOrNull = p.parameterTransformerFor(type);
       if (transformerOrNull != null) {
         // first one wins
         return transformerOrNull;
@@ -124,7 +122,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   public void apply(@NonNull Fact f) {
     UUID factId = f.id();
     log.trace("Dispatching fact {}", factId);
-    val coords = FactSpecCoordinates.from(f);
+    FactSpecCoordinates coords = FactSpecCoordinates.from(f);
     Dispatcher dispatch = dispatchInfo.get(coords);
     if (dispatch == null) {
       // try to find one with no version as a fallback
@@ -132,7 +130,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     }
 
     if (dispatch == null) {
-      val ihd = new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
+      InvalidHandlerDefinition ihd =
+          new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
       projection.onError(ihd);
       throw ihd;
     }
@@ -192,7 +191,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
                     Dispatcher dispatcher =
                         new Dispatcher(m, callTarget.resolver, fs, deserializer);
-                    val before = map.put(key, dispatcher);
+                    Dispatcher before = map.put(key, dispatcher);
                     if (before != null) {
                       throw new InvalidHandlerDefinition(
                           "Duplicate Handler method found for spec '"
@@ -227,7 +226,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       }
     }
 
-    val ret = projection.postprocess(discovered);
+    @NonNull List<FactSpec> ret = projection.postprocess(discovered);
     //noinspection ConstantConditions
     if (ret == null || ret.isEmpty()) {
       throw new InvalidHandlerDefinition(
@@ -348,7 +347,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
       HandlerFor handlerFor = m.getAnnotation(HandlerFor.class);
       if (handlerFor != null) {
-        return FactSpec.ns(handlerFor.ns()).type(handlerFor.type()).version(handlerFor.version());
+        return addOptionalFilterInfo(m,FactSpec.ns(handlerFor.ns()).type(handlerFor.type()).version(handlerFor.version()));
       }
 
       List<Class<?>> eventPojoTypes =
@@ -367,9 +366,29 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
               "Multiple EventPojo Parameters. Cannot introspect FactSpec from " + m);
         } else {
           Class<?> eventPojoType = eventPojoTypes.get(0);
-          return FactSpec.from(eventPojoType);
+          return addOptionalFilterInfo(m,FactSpec.from(eventPojoType));
         }
       }
+    }
+
+    @VisibleForTesting static FactSpec addOptionalFilterInfo(Method m, FactSpec spec) {
+      FilterByMetas attributes = m.getAnnotation(FilterByMetas.class);
+      if(attributes!=null)
+        Arrays.stream(attributes.value()).forEach( a -> spec.meta(a.key(),a.value()));
+
+      FilterByMeta attribute = m.getAnnotation(FilterByMeta.class);
+      if(attribute!=null)
+        spec.meta(attribute.key(),attribute.value());
+
+      FilterByAggId aggregateId = m.getAnnotation(FilterByAggId.class);
+      if(aggregateId!=null)
+          spec.aggId(UUID.fromString(aggregateId.value()));
+
+      FilterByScript filterByScript = m.getAnnotation(FilterByScript.class);
+      if(filterByScript !=null)
+        spec.filterScript(org.factcast.core.spec.FilterScript.js(filterByScript.value()));
+
+      return spec;
     }
 
     private static Collection<CallTarget> getRelevantClasses(Projection p) {

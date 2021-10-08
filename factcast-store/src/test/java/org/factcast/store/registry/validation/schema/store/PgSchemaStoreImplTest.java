@@ -19,7 +19,6 @@ import static org.mockito.Mockito.*;
 
 import java.sql.SQLException;
 import java.util.Collections;
-import lombok.val;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
@@ -56,7 +55,7 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
   void doesNotRefetch() {
     // first goes to DB
 
-    val uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
+    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
 
     SchemaKey key = mock(SchemaKey.class);
     when(mockTpl.queryForList(any(), eq(String.class), same(null), same(null), eq(0)))
@@ -77,13 +76,15 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
   void cachesRegistrations() {
     // first goes to DB
 
-    val uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
+    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
 
     SchemaSource source = new SchemaSource().hash("hash").id("id").ns("ns").type("type");
     uut.register(source, "foo");
     verify(mockTpl)
         .update(
-            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
+            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? ::"
+                + " JSONB) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set"
+                + " hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
             "id",
             "hash",
             "ns",
@@ -106,12 +107,14 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
 
   @Test
   void retriesOnWrongConstrainConflict() {
-    val uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
+    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
 
     SchemaSource source = new SchemaSource().hash("hash").id("id").ns("ns").type("type");
 
     when(mockTpl.update(
-            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
+            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? ::"
+                + " JSONB) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set"
+                + " hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
             "id",
             "hash",
             "ns",
@@ -131,7 +134,9 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
     uut.register(source, "foo");
     verify(mockTpl)
         .update(
-            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? :: JSONB) ON CONFLICT ON CONSTRAINT schemastore_ns_type_version_key DO UPDATE set hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
+            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? ::"
+                + " JSONB) ON CONFLICT ON CONSTRAINT schemastore_ns_type_version_key DO UPDATE set"
+                + " hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
             "id",
             "hash",
             "ns",

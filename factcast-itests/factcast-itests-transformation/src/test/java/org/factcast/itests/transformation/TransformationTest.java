@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.UUID;
-import lombok.val;
+
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
@@ -43,7 +43,7 @@ public class TransformationTest {
     Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
     fc.publish(f);
 
-    val found = fc.fetchById(id).orElse(null);
+    final var found = fc.fetchById(id).orElse(null);
     assertNotNull(found);
     assertEquals(f.ns(), found.ns());
     assertEquals(f.type(), found.type());
@@ -57,7 +57,7 @@ public class TransformationTest {
     Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
     fc.publish(f);
 
-    val found = fc.fetchByIdAndVersion(id, 2).orElse(null);
+    final var found = fc.fetchByIdAndVersion(id, 2).orElse(null);
 
     assertNotNull(found);
     assertEquals(f.ns(), found.ns());
@@ -79,7 +79,7 @@ public class TransformationTest {
             id, 2, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\"}");
     fc.publish(f);
 
-    val found = fc.fetchByIdAndVersion(id, 1).orElse(null);
+    final var found = fc.fetchByIdAndVersion(id, 1).orElse(null);
     assertNotNull(found);
     assertEquals(f.ns(), found.ns());
     assertEquals(f.type(), found.type());
@@ -95,10 +95,11 @@ public class TransformationTest {
         createTestFact(
             id,
             3,
-            "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER PETERSON\"}");
+            "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER"
+                + " PETERSON\"}");
     fc.publish(f);
 
-    val found = fc.fetchByIdAndVersion(id, 1).orElse(null);
+    final var found = fc.fetchByIdAndVersion(id, 1).orElse(null);
     assertNotNull(found);
     assertEquals(f.ns(), found.ns());
     assertEquals(f.type(), found.type());
@@ -115,9 +116,10 @@ public class TransformationTest {
         createTestFact(
             id,
             3,
-            "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER PETERSON\"}");
+            "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER"
+                + " PETERSON\"}");
     fc.publish(f);
-    val found = fc.fetchById(id).orElse(null);
+    final var found = fc.fetchById(id).orElse(null);
     assertNotNull(found);
     assertEquals(3, found.version());
   }
@@ -130,10 +132,11 @@ public class TransformationTest {
         createTestFact(
             id,
             3,
-            "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER PETERSON\"}");
+            "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"PETER"
+                + " PETERSON\"}");
     fc.publish(f);
 
-    val found = fc.fetchByIdAndVersion(id, 0).orElse(null);
+    final var found = fc.fetchByIdAndVersion(id, 0).orElse(null);
     assertNotNull(found);
     assertEquals(3, found.version());
   }
@@ -145,7 +148,7 @@ public class TransformationTest {
     Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
     fc.publish(f);
 
-    val found = fc.fetchByIdAndVersion(id, 3).orElse(null);
+    final var found = fc.fetchByIdAndVersion(id, 3).orElse(null);
     assertNotNull(found);
     assertEquals(f.ns(), found.ns());
     assertEquals(f.type(), found.type());
