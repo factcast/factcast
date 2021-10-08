@@ -72,6 +72,42 @@ class ClientStreamObserverTest {
   }
 
   @Test
+  void registersForCleanup() {
+    verify(subscription, times(2)).onClose(any());
+  }
+
+  @Test
+  void shutsdownOnSubscriptionClose() {
+    subscription.close();
+    assertThat(uut.clientBoundExecutor().isShutdown()).isTrue();
+  }
+
+  @Test
+  void shutsdownOnErrorRecieved() {
+    assertThat(uut.clientBoundExecutor().isShutdown()).isFalse();
+    uut.onError(new IOException());
+    assertThat(uut.clientBoundExecutor().isShutdown()).isTrue();
+  }
+
+
+  @Test
+  void shutsdownOnCompleteRecieved() {
+    assertThat(uut.clientBoundExecutor().isShutdown()).isFalse();
+    uut.onCompleted();
+    assertThat(uut.clientBoundExecutor().isShutdown()).isTrue();
+  }
+
+  @Test
+  void rethrowsProcessingError() {
+    doThrow(new UnsupportedOperationException()).when(factObserver).onNext(any());
+
+    Fact f = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+    MSG_Notification n = converter.createNotificationFor(f);
+    assertThatThrownBy( () -> { uut.onNext(n); })
+            .isInstanceOf(UnsupportedOperationException.class);
+  }
+
+  @Test
   void testOnNext() {
     Fact f = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     MSG_Notification n = converter.createNotificationFor(f);

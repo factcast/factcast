@@ -5,8 +5,57 @@ type : "docs-noedit"
 weight: 100000
 ---
 
-{{% alert info %}} Only important releases are mentioned here.
+Only important releases are mentioned here.
+
+For full overview, you can look at the [changelog](/about/changelog)
+______
+
+
+
+### RELEASE 0.4.3
+
+{{< rawhtml >}}
+<a
+href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.4.3+">
+0.4.3
+</a>
+{{< /rawhtml >}}
+
+#### Fixes
+
+Factus: Important fix regarding threading when using Atomicity 
+
+{{% alert theme="info" %}} If you are using factus and Atomicity, please update to 0.4.3 asap.
 {{% /alert %}}
+
+______
+
+
+### RELEASE 0.4.2
+
+{{< rawhtml >}}
+<a
+href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.4.2+">
+0.4.2
+</a>
+{{< /rawhtml >}}
+
+#### Fixes
+
+Fix AutoConfiguration and make BinarySnapshotSerializer configurable
+ConcurrentModificationException in SnapshotSerializerSupplier  
+
+#### Features
+
+Factus: Add possibility to add meta K/V Pairs to a FactSpec via @Handler or @HandlerFor Annotations #1595
+
+#### Documentation
+
+Document hook methods of each Projection #1591
+Hitchhikers Guide to Integration Testing #1160
+
+______
+
 
 ### RELEASE 0.4.1
 
@@ -24,6 +73,10 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.4.1
 ##### Important bugfix
   * Fixes missing "_ser" and "_ts" attributes in header
   * see migration guide if you have been on 0.4.0 before 
+
+______
+
+
 
 ### RELEASE 0.4.0 
 {{< rawhtml >}}
@@ -51,6 +104,10 @@ Performance
   * show progress on factus bulk application 
 
 ... and a documentation overhaul. For details, see the changelog.
+
+______
+
+
     
 ### RELEASE 0.3.0
 {{< rawhtml >}}
@@ -79,7 +136,9 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.3.0
 * added switch to allow updates of SchemaRegistry (not a good idea in production, but handy on other stages)
 
 
-see changelog
+______
+
+
 
 ### RELEASE 0.2.5
 {{< rawhtml >}}
@@ -94,7 +153,10 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.2.5
   subscription requests
 * added PID to subscription requests (compatible change)
 
-see changelog
+
+______
+
+
 
 ### RELEASE 0.2.4
 {{< rawhtml >}}
@@ -104,7 +166,10 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.2.4
 </a>
 {{< /rawhtml >}}
 
-see changelog
+
+______
+
+
 
 ### RELEASE 0.2.1
 {{< rawhtml >}}
@@ -114,7 +179,10 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.2.1
 </a>
 {{< /rawhtml >}}
 
-see changelog
+
+______
+
+
 
 ### RELEASE 0.2.0
 {{< rawhtml >}}
@@ -136,6 +204,10 @@ see changelog
 * dropped Spring Boot1 support
 * dropped InMem impl of FactCast
 * FactCast Server includes lz4 by default
+
+______
+
+
 
 ## Past Releases
 
