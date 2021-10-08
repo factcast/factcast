@@ -27,7 +27,6 @@ import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.function.Function;
 import lombok.NonNull;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.observer.FastForwardTarget;
@@ -146,7 +145,7 @@ public class GrpcObserverAdapterTest {
   @Test
   void testOnError() {
     GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
-    val exception = new Exception();
+    var exception = new Exception();
     verify(observer, never()).onNext(any());
     uut.onError(exception);
     verify(observer).onError(any());
@@ -232,7 +231,7 @@ public class GrpcObserverAdapterTest {
       fail("expected " + Arrays.toString(ex));
     } catch (Throwable actual) {
 
-      val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
+      var matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
       if (!matches) {
         fail("Wrong exception, expected " + Arrays.toString(ex) + " but got " + actual);
       }

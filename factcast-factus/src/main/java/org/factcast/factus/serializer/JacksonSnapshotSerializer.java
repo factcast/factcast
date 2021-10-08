@@ -16,24 +16,21 @@
 package org.factcast.factus.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.hash.Hashing;
-import java.util.function.Function;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.projection.SnapshotProjection;
 
+import java.util.function.Function;
+
 public class JacksonSnapshotSerializer implements SnapshotSerializer {
 
   private final ObjectMapper objectMapper;
   private final JsonSchemaGenerator schemaGen;
 
-  @Setter(onMethod = @__(@VisibleForTesting))
-  private static Function<String, String> schemaModifier = Function.identity();
+  @Setter private static Function<String, String> schemaModifier = Function.identity();
 
   public JacksonSnapshotSerializer(@NonNull ObjectMapper configuredObjectMapper) {
     this.objectMapper = configuredObjectMapper;
@@ -59,15 +56,6 @@ public class JacksonSnapshotSerializer implements SnapshotSerializer {
   @Override
   public boolean includesCompression() {
     return false;
-  }
-
-  @SuppressWarnings("UnstableApiUsage")
-  @SneakyThrows
-  @Override
-  public Long calculateProjectionSerial(Class<? extends SnapshotProjection> projectionClass) {
-    JsonSchema jsonSchema = schemaGen.generateSchema(projectionClass);
-    String schema = objectMapper.writeValueAsString(jsonSchema);
-    return Hashing.sha512().hashUnencodedChars(schemaModifier.apply(schema)).asLong();
   }
 
   @Override

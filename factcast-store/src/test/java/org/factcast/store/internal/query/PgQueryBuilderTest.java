@@ -23,7 +23,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import lombok.val;
+
 import org.assertj.core.util.Lists;
 import org.factcast.core.spec.FactSpec;
 import org.junit.jupiter.api.*;
@@ -46,13 +46,13 @@ class PgQueryBuilderTest {
     @Test
     void happyPath() {
       Mockito.when(serial.get()).thenReturn(120L);
-      val spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
-      val spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
-      val spec3 = FactSpec.ns("ns3");
-      val specs = Lists.newArrayList(spec1, spec2, spec3);
-      val underTest = new PgQueryBuilder(specs);
-      val setter = underTest.createStatementSetter(serial);
-      val ps = mock(PreparedStatement.class);
+      final var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
+      final var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
+      final var spec3 = FactSpec.ns("ns3");
+      final var specs = Lists.newArrayList(spec1, spec2, spec3);
+      final var underTest = new PgQueryBuilder(specs);
+      final var setter = underTest.createStatementSetter(serial);
+      final var ps = mock(PreparedStatement.class);
 
       setter.setValues(ps);
 
@@ -83,22 +83,24 @@ class PgQueryBuilderTest {
 
     @Test
     void happyPath() {
-      val spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
-      val spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
-      val specs = Lists.newArrayList(spec1, spec2);
-      val underTest = new PgQueryBuilder(specs);
-      val sql = underTest.createSQL();
+      final var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
+      final var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
+      final var specs = Lists.newArrayList(spec1, spec2);
+      final var underTest = new PgQueryBuilder(specs);
+      final var sql = underTest.createSQL();
 
       // projection
       assertThat(sql)
           .startsWith(
               "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds,"
-                  + " header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact");
+                  + " header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version"
+                  + " FROM fact");
 
       // where clause for two specs
-      val expectedSpec1 =
-          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)";
-      val expectedSpec2 =
+      final var expectedSpec1 =
+          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @>"
+              + " ?::jsonb)";
+      final var expectedSpec2 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no aggid
       assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
       assertThat(sql).endsWith("AND ser>? ORDER BY ser ASC");
@@ -112,19 +114,20 @@ class PgQueryBuilderTest {
 
     @Test
     void happyPath() {
-      val spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
-      val spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
-      val specs = Lists.newArrayList(spec1, spec2);
-      val underTest = new PgQueryBuilder(specs);
-      val sql = underTest.createStateSQL();
+      final var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
+      final var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
+      final var specs = Lists.newArrayList(spec1, spec2);
+      final var underTest = new PgQueryBuilder(specs);
+      final var sql = underTest.createStateSQL();
 
       // projection
       assertThat(sql).startsWith("SELECT ser FROM fact");
 
       // where clause for two specs
-      val expectedSpec1 =
-          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)";
-      val expectedSpec2 =
+      final var expectedSpec1 =
+          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @>"
+              + " ?::jsonb)";
+      final var expectedSpec2 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no aggid
       assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
       assertThat(sql).endsWith(" ORDER BY ser DESC LIMIT 1");
@@ -138,19 +141,20 @@ class PgQueryBuilderTest {
 
     @Test
     void happyPath() {
-      val spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
-      val spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
-      val specs = Lists.newArrayList(spec1, spec2);
-      val underTest = new PgQueryBuilder(specs);
-      val sql = underTest.catchupSQL();
+      final var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
+      final var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
+      final var specs = Lists.newArrayList(spec1, spec2);
+      final var underTest = new PgQueryBuilder(specs);
+      final var sql = underTest.catchupSQL();
 
       // projection
       assertThat(sql).startsWith("INSERT INTO catchup (ser) (SELECT ser FROM fact");
 
       // where clause for two specs
-      val expectedSpec1 =
-          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)";
-      val expectedSpec2 =
+      final var expectedSpec1 =
+          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @>"
+              + " ?::jsonb)";
+      final var expectedSpec2 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no aggid
       assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
     }

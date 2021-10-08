@@ -18,8 +18,8 @@ package org.factcast.core.event;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.factcast.core.Fact;
+import org.factcast.core.Fact.Builder;
 import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
@@ -33,13 +33,20 @@ public class EventConverter {
   }
 
   public Fact toFact(@NonNull EventObject p, UUID factId) {
-    val spec = FactSpecCoordinates.from(p.getClass());
+    FactSpecCoordinates spec = FactSpecCoordinates.from(p.getClass());
 
-    val b = Fact.builder();
+    Builder b = Fact.builder();
     b.id(factId);
 
     b.ns(spec.ns());
-    b.type(spec.type());
+
+    String type = spec.type();
+    if (type == null || type.trim().isEmpty()) {
+      type = p.getClass().getSimpleName();
+    }
+
+    b.type(type);
+
     int version = spec.version();
     if (version > 0) // 0 is not allowed on publishing
     {

@@ -3,8 +3,8 @@ package org.factcast.factus.projection;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
-import lombok.val;
 import org.factcast.factus.serializer.ProjectionMetaData;
+import org.factcast.factus.serializer.ProjectionMetaData.Resolver;
 import org.factcast.factus.utils.ClassUtils;
 
 @RequiredArgsConstructor(staticName = "of")
@@ -15,8 +15,8 @@ public class ScopedName {
   private final String key;
 
   public static ScopedName fromProjectionMetaData(Class<?> clazz) {
-    val metaData =
-        ProjectionMetaData.Resolver.resolveFor(clazz)
+    ProjectionMetaData metaData =
+        Resolver.resolveFor(clazz)
             .orElseThrow(
                 () ->
                     new IllegalStateException(

@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import lombok.val;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
@@ -41,7 +40,7 @@ public class BlockingStreamObserverTest {
 
   @BeforeEach
   void setUp() {
-    uut = new BlockingStreamObserver<>("foo", delegate);
+    uut = new BlockingStreamObserver<>("foo", delegate,1);
   }
 
   @Test
@@ -53,9 +52,9 @@ public class BlockingStreamObserverTest {
 
   @Test
   void testNullContract() {
-    expectNPE(() -> new BlockingStreamObserver(null, mock(ServerCallStreamObserver.class)));
-    expectNPE(() -> new BlockingStreamObserver(null, null));
-    expectNPE(() -> new BlockingStreamObserver("oink", null));
+    expectNPE(() -> new BlockingStreamObserver(null, mock(ServerCallStreamObserver.class),1));
+    expectNPE(() -> new BlockingStreamObserver(null, null,1));
+    expectNPE(() -> new BlockingStreamObserver("oink", null,1));
   }
 
   @Test
@@ -129,7 +128,7 @@ public class BlockingStreamObserverTest {
       fail("expected " + Arrays.toString(ex));
     } catch (Throwable actual) {
 
-      val matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
+      var matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
       if (!matches) {
         fail("Wrong exception, expected " + Arrays.toString(ex) + " but got " + actual);
       }

@@ -15,14 +15,15 @@
  */
 package org.factcast.store;
 
-import lombok.Data;
-import lombok.experimental.Accessors;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Duration;
+
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.time.Duration;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("DefaultAnnotationParam")
 @ConfigurationProperties(prefix = StoreConfigurationProperties.PROPERTIES_PREFIX)
@@ -134,14 +135,21 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   int tailGenerationsToKeep = 3;
 
-  /**
-   * Minimum tail age. Tail rotation will be skipped, unless the age of the youngest existing tail
-   * is at least this old. Defaults to 7 days
-   */
+  /** Minimum age of the youngest tail index, before a new one is created. Defaults to 7 days */
   Duration minimumTailAge = Duration.ofDays(7);
 
   /** do not change the default here, see PGTailIndexManagerImpl::triggerTailCreation */
   String tailManagementCron = "0 0 0 * * *";
+
+  /**
+   * Index creation can hang for a long time in case of many open transactions.
+   *
+   * <p>Abort after given timeout.
+   *
+   * <p>In case you want to give it a new try with every run, specify a time slighly shorter than
+   * the time between two runs, e.g. 23h59m if the cron job runs 24 hours.
+   */
+  Duration tailCreationTimeout = Duration.ofDays(1).minusMinutes(1);
 
   public boolean isValidationEnabled() {
     return schemaRegistryUrl != null;

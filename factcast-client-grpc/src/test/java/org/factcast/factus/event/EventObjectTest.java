@@ -17,15 +17,15 @@ package org.factcast.factus.event;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import lombok.val;
 import org.junit.jupiter.api.*;
 
 class EventObjectTest {
   @Test
   void defaultsToEmptyMap() {
-    val map =
+    Map<String, String> map =
         new EventObject() {
           @Override
           public Set<UUID> aggregateIds() {
