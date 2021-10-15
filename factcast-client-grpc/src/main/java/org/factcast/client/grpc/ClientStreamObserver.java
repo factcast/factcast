@@ -132,7 +132,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
         }
         break;
       case Ffwd:
-        log.debug("received fastfoward signal");
+        log.debug("received fastforward signal");
         subscription.notifyFastForward(converter.fromProto(f.getId()));
         break;
 
