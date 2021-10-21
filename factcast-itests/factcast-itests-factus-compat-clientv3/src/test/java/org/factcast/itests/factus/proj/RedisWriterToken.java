@@ -32,7 +32,7 @@ public class RedisWriterToken implements WriterToken {
   public RedisWriterToken(@NonNull RedissonClient redisson, @NonNull RLock lock) {
     this.lock = lock;
     liveness = new AtomicBoolean(lock.isLocked());
-    val watchDogTimeout = redisson.getConfig().getLockWatchdogTimeout();
+    final var watchDogTimeout = redisson.getConfig().getLockWatchdogTimeout();
     TimerTask timerTask =
         new TimerTask() {
           @Override
