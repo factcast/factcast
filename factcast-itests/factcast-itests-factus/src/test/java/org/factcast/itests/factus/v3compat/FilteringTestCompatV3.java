@@ -1,7 +1,6 @@
 package org.factcast.itests.factus.v3compat;
 
 
-import org.factcast.itests.factus.FactusClientTest;
 import org.factcast.itests.factus.filtering.FilteringTest;
 import org.factcast.test.FactcastTestConfig;
 

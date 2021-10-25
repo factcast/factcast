@@ -17,15 +17,9 @@ package org.factcast.itests.factus.v3compat;
 
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.itests.factus.FactCastSnapshotCacheTest;
-import org.factcast.spring.boot.autoconfigure.core.RedissonSnapshotCacheAutoConfiguration;
 import org.factcast.test.FactcastTestConfig;
-import org.redisson.spring.starter.RedissonAutoConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
 
