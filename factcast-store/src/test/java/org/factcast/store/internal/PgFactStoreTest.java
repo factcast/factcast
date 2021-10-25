@@ -15,8 +15,11 @@
  */
 package org.factcast.store.internal;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.same;
+import static org.mockito.Mockito.verify;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -24,7 +27,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import lombok.NonNull;
+
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -37,13 +40,18 @@ import org.factcast.store.internal.StoreMetrics.OP;
 import org.factcast.store.internal.tail.PGTailIndexManager;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.store.test.IntegrationTest;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import lombok.NonNull;
+import lombok.SneakyThrows;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
@@ -84,6 +92,34 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
     store.setSnapshot(snap);
 
     verify(metrics).time(same(OP.SET_SNAPSHOT), any(Runnable.class));
+  }
+
+  /** This happens in a trigger */
+  @Test
+  @SneakyThrows
+  void testSerialAndTimestampWereAugmented() {
+    // INIT
+    UUID id = UUID.randomUUID();
+
+    // RUN
+    // we need to check if the timestamp that is added to meta makes sense, hence
+    // capture current millis before and after publishing, and compare against the timestamp
+    // set in meta.
+    var before = System.currentTimeMillis();
+    uut.publish(Fact.builder().ns("augmentation").type("test").id(id).buildWithoutPayload());
+
+    // ASSERT
+    var fact = uut.fetchById(id);
+    // fetching after here, as the trigger seems to be delayed
+    var after = System.currentTimeMillis();
+
+    assertThat(fact).isPresent();
+
+    assertThat(Long.parseLong(fact.get().meta("_ser"))).isGreaterThanOrEqualTo(1);
+
+    assertThat(Long.parseLong(fact.get().meta("_ts")))
+        .isGreaterThanOrEqualTo(before)
+        .isLessThanOrEqualTo(after);
   }
 
   @Nested
