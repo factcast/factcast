@@ -68,12 +68,17 @@ class PgListenerIntegrationTest {
 
       UUID id1 = UUID.randomUUID();
       UUID id2 = UUID.randomUUID();
+      UUID id3 = UUID.randomUUID();
 
       // RUN
+      // publish together, should have same tx id
       factStore.publish(
-          List.of(Fact.builder().ns("test").type("listenerTest").id(id1).buildWithoutPayload()));
+          List.of(
+              Fact.builder().ns("test").type("listenerTest1").id(id1).buildWithoutPayload(),
+              Fact.builder().ns("test").type("listenerTest1").id(id2).buildWithoutPayload()));
+      // separate, should have another tx id
       factStore.publish(
-          List.of(Fact.builder().ns("test").type("listenerTest").id(id2).buildWithoutPayload()));
+          List.of(Fact.builder().ns("test").type("listenerTest2").id(id3).buildWithoutPayload()));
 
       // ASSERT
       // first, check trigger
@@ -83,42 +88,58 @@ class PgListenerIntegrationTest {
           .extracting(PGNotification::getName)
           .allMatch(CHANNEL_FACT_INSERT::equals);
 
-      AtomicLong txId1 = new AtomicLong();
+      AtomicLong txId1a = new AtomicLong();
+      AtomicLong txId1b = new AtomicLong();
       AtomicLong txId2 = new AtomicLong();
 
       assertThat(notifications)
           .extracting(n -> FactCastJson.readTree(n.getParameter()))
-          .hasSize(2)
+          .hasSize(3)
           .anySatisfy(
               n -> {
                 var h = n.get("header");
                 assertThat(h.get("ns").asText()).isEqualTo("test");
-                assertThat(h.get("type").asText()).isEqualTo("listenerTest");
+                assertThat(h.get("type").asText()).isEqualTo("listenerTest1");
                 assertThat(h.get("id").asText()).isEqualTo(id1.toString().toLowerCase());
                 assertThat(n.get("txId").asLong(-1)).isGreaterThanOrEqualTo(0);
-                txId1.set(n.get("txId").asLong());
+                txId1a.set(n.get("txId").asLong());
               })
           .anySatisfy(
               n -> {
                 var h = n.get("header");
                 assertThat(h.get("ns").asText()).isEqualTo("test");
-                assertThat(h.get("type").asText()).isEqualTo("listenerTest");
+                assertThat(h.get("type").asText()).isEqualTo("listenerTest1");
                 assertThat(h.get("id").asText()).isEqualTo(id2.toString().toLowerCase());
+                assertThat(n.get("txId").asLong(-1)).isGreaterThanOrEqualTo(0);
+                txId1b.set(n.get("txId").asLong());
+              })
+          .anySatisfy(
+              n -> {
+                var h = n.get("header");
+                assertThat(h.get("ns").asText()).isEqualTo("test");
+                assertThat(h.get("type").asText()).isEqualTo("listenerTest2");
+                assertThat(h.get("id").asText()).isEqualTo(id3.toString().toLowerCase());
                 assertThat(n.get("txId").asLong(-1)).isGreaterThanOrEqualTo(0);
                 txId2.set(n.get("txId").asLong());
               });
 
+      // facts published together should have same tx id
+      assertThat(txId1a.get()).isEqualTo(txId1b.get());
+      // facts published separately should have different tx ids
+      assertThat(txId1a.get()).isNotEqualTo(txId2.get());
+
       // now, check events from event bus against tx ids obtained from notifications
+      // here we have deduplication, so for the first two facts published together,
+      // we should only have one event here:
       assertThat(events.signals())
           .extracting(PgListener.Signal::name, PgListener.Signal::ns, PgListener.Signal::type)
-          .containsExactly(
-              tuple(CHANNEL_FACT_INSERT, "test", "listenerTest"),
-              tuple(CHANNEL_FACT_INSERT, "test", "listenerTest"));
+          .containsExactlyInAnyOrder(
+              tuple(CHANNEL_FACT_INSERT, "test", "listenerTest1"),
+              tuple(CHANNEL_FACT_INSERT, "test", "listenerTest2"));
 
       assertThat(events.signals())
-          .extracting(PgListener.Signal::txId)
-          .anySatisfy(txId -> assertThat(Long.parseLong(txId)).isEqualTo(txId1.get()))
-          .anySatisfy(txId -> assertThat(Long.parseLong(txId)).isEqualTo(txId2.get()));
+          .extracting(s -> Long.parseLong(s.txId()))
+          .containsExactlyInAnyOrder(txId1a.get(), txId2.get());
     }
 
     public class EventCollector {
