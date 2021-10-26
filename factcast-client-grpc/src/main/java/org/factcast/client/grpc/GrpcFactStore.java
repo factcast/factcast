@@ -15,23 +15,24 @@
  */
 package org.factcast.client.grpc;
 
-import static io.grpc.stub.ClientCalls.*;
+import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.grpc.*;
-import io.grpc.Status.Code;
-import io.grpc.stub.MetadataUtils;
-import io.grpc.stub.StreamObserver;
-import java.util.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
-import lombok.Generated;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.client.security.CallCredentialsHelper;
+
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -52,12 +53,40 @@ import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto;
-import org.factcast.grpc.api.gen.FactStoreProto.*;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_FactSpecsJson;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSnapshot;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import io.grpc.CallCredentials;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.Metadata;
+import io.grpc.Status.Code;
+import io.grpc.StatusRuntimeException;
+import io.grpc.stub.MetadataUtils;
+import io.grpc.stub.StreamObserver;
+import lombok.Generated;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
@@ -74,6 +103,9 @@ public class GrpcFactStore implements FactStore {
 
   private static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
 
+  /** The version of this grpc client (taking from pom.xml), to send to the server during handshake */
+  private static final String CLIENT_VERSION = loadClientVersion();
+
   private RemoteFactStoreBlockingStub blockingStub;
 
   private RemoteFactStoreStub stub;
@@ -82,6 +114,7 @@ public class GrpcFactStore implements FactStore {
 
   private RemoteFactStoreBlockingStub rawBlockingStub;
   private final FactCastGrpcClientProperties properties;
+
   @Nullable private final String clientId;
 
   private final ProtoConverter converter = new ProtoConverter();
@@ -236,6 +269,7 @@ public class GrpcFactStore implements FactStore {
       try {
         Metadata metadata = new Metadata();
         addClientIdTo(metadata);
+        addClientVersionTo(metadata);
         MSG_ServerConfig handshake =
             MetadataUtils.attachHeaders(blockingStub, metadata).handshake(converter.empty());
         ServerConfig cfg = converter.fromProto(handshake);
@@ -320,6 +354,11 @@ public class GrpcFactStore implements FactStore {
     if (clientId != null) {
       meta.put(Headers.CLIENT_ID, clientId);
     }
+  }
+
+  @VisibleForTesting
+  void addClientVersionTo(@NonNull Metadata meta) {
+    meta.put(Headers.CLIENT_VERSION, CLIENT_VERSION);
   }
 
   @Override
@@ -457,5 +496,17 @@ public class GrpcFactStore implements FactStore {
           //noinspection ResultOfMethodCallIgnored
           blockingStub.clearSnapshot(converter.toProto(id));
         });
+  }
+
+  private static String loadClientVersion() {
+    try (InputStream is = ClassLoader.getSystemResourceAsStream("version.properties")) {
+      Properties p = new Properties();
+      p.load(is);
+      return p.getProperty("version", "unknown");
+
+    } catch (IOException e) {
+      log.error("Unable to load client version.", e);
+      return "unknown";
+    }
   }
 }

@@ -15,39 +15,25 @@
  */
 package org.factcast.server.grpc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.hash.Hashing;
-import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Bucket4j;
-import io.github.bucket4j.Refill;
-import io.grpc.Metadata;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
-import io.grpc.stub.ServerCallStreamObserver;
-import io.grpc.stub.StreamObserver;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.service.GrpcService;
+
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -66,7 +52,25 @@ import org.factcast.grpc.api.conv.IdAndVersion;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto.*;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_FactSpecsJson;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSnapshot;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Snapshot;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_SnapshotId;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID_AND_VERSION;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
@@ -74,6 +78,30 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.hash.Hashing;
+
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.Bucket4j;
+import io.github.bucket4j.Refill;
+import io.grpc.Metadata;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
+import io.grpc.stub.ServerCallStreamObserver;
+import io.grpc.stub.StreamObserver;
+import io.micrometer.core.instrument.MeterRegistry;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+import net.devh.boot.grpc.server.service.GrpcService;
 
 /**
  * Service that provides access to an injected FactStore via GRPC.
@@ -83,45 +111,74 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
-@RequiredArgsConstructor
 @GrpcService
 @SuppressWarnings("all")
 public class FactStoreGrpcService extends RemoteFactStoreImplBase implements InitializingBean {
 
   static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
+  static final String CLIENT_VERSION_COUNTER_NAME = "factstore.clientVersion";
 
   static final AtomicLong subscriptionIdStore = new AtomicLong();
 
-  @NonNull final FactStore store;
-  @NonNull final GrpcRequestMetadata grpcRequestMetadata;
-  @NonNull final GrpcLimitProperties grpcLimitProperties;
+  @NonNull private final FactStore store;
+  @NonNull private final GrpcRequestMetadata grpcRequestMetadata;
+  @NonNull private final GrpcLimitProperties grpcLimitProperties;
 
-  @NonNull final FastForwardTarget ffwdTarget;
+  @NonNull private final FastForwardTarget ffwdTarget;
 
-  final CompressionCodecs codecs = new CompressionCodecs();
+  @NonNull private final MeterRegistry meterRegistry;
 
-  final ProtoConverter converter = new ProtoConverter();
+  private final CompressionCodecs codecs = new CompressionCodecs();
 
-  final ServerExceptionLogger serverExceptionLogger = new ServerExceptionLogger();
+  private final ProtoConverter converter = new ProtoConverter();
+
+  private final ServerExceptionLogger serverExceptionLogger = new ServerExceptionLogger();
 
   @VisibleForTesting
   @Deprecated
-  protected FactStoreGrpcService(FactStore store, GrpcRequestMetadata grpcRequestMetadata) {
-    this(store, grpcRequestMetadata, new GrpcLimitProperties(), FastForwardTarget.forTest());
+  protected FactStoreGrpcService(
+      FactStore store, GrpcRequestMetadata grpcRequestMetadata, MeterRegistry meterRegistry) {
+    this(
+        store,
+        grpcRequestMetadata,
+        new GrpcLimitProperties(),
+        FastForwardTarget.forTest(),
+        meterRegistry);
   }
 
   @VisibleForTesting
   @Deprecated
   protected FactStoreGrpcService(
-      FactStore store, GrpcRequestMetadata grpcRequestMetadata, GrpcLimitProperties props) {
-    this(store, grpcRequestMetadata, props, FastForwardTarget.forTest());
+      FactStore store,
+      GrpcRequestMetadata grpcRequestMetadata,
+      GrpcLimitProperties props,
+      MeterRegistry meterRegistry) {
+    this(store, grpcRequestMetadata, props, FastForwardTarget.forTest(), meterRegistry);
   }
 
   @VisibleForTesting
   @Deprecated
   protected FactStoreGrpcService(
-      FactStore store, GrpcRequestMetadata grpcRequestMetadata, FastForwardTarget target) {
-    this(store, grpcRequestMetadata, new GrpcLimitProperties(), target);
+      FactStore store,
+      GrpcRequestMetadata grpcRequestMetadata,
+      FastForwardTarget target,
+      MeterRegistry meterRegistry) {
+    this(store, grpcRequestMetadata, new GrpcLimitProperties(), target, meterRegistry);
+  }
+
+  public FactStoreGrpcService(
+      @NonNull FactStore store,
+      @NonNull GrpcRequestMetadata grpcRequestMetadata,
+      @NonNull GrpcLimitProperties grpcLimitProperties,
+      @NonNull FastForwardTarget ffwdTarget,
+      @NonNull MeterRegistry meterRegistry) {
+    this.store = store;
+    this.grpcRequestMetadata = grpcRequestMetadata;
+    this.grpcLimitProperties = grpcLimitProperties;
+    this.ffwdTarget = ffwdTarget;
+    this.meterRegistry = meterRegistry;
+    // register counter
+    meterRegistry.counter(CLIENT_VERSION_COUNTER_NAME);
   }
 
   @Override
@@ -182,7 +239,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
       resetDebugInfo(req, grpcRequestMetadata);
       BlockingStreamObserver<MSG_Notification> resp =
-          new BlockingStreamObserver<>(req.toString(), (ServerCallStreamObserver) responseObserver, grpcRequestMetadata.catchupBatch().orElse(1));
+          new BlockingStreamObserver<>(
+              req.toString(),
+              (ServerCallStreamObserver) responseObserver,
+              grpcRequestMetadata.catchupBatch().orElse(1));
 
       AtomicReference<Subscription> subRef = new AtomicReference();
 
@@ -304,30 +364,58 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @Override
   public void handshake(MSG_Empty request, StreamObserver<MSG_ServerConfig> responseObserver) {
+    String clientVersion = recordClientVersion();
     initialize(responseObserver);
 
-    ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
+    ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties(clientVersion));
     responseObserver.onNext(converter.toProto(cfg));
     responseObserver.onCompleted();
   }
 
-  private Map<String, String> collectProperties() {
+  private String recordClientVersion() {
+    // If there is no client version, we can assume it is smaller than 0.4.4.
+    // In case the client was not able to figure out its version, the version will be "unknown".
+    // However, this indicates that the client must be >= 0.4.4., as clients before that wouldn't
+    // even try.
+    // So the following values can be used as tags here:
+    // - "< 0.4.4"
+    // - "unknown"
+    // - <semver>, e.g. "1.2.3"
+    // - <semver snapshot>, e.g. "1.2.3-SNAPSHOT"
+    String clientVersion = grpcRequestMetadata.clientVersion().orElse("< 0.4.4");
+    meterRegistry
+        .counter(
+            CLIENT_VERSION_COUNTER_NAME,
+            "clientVersion",
+            clientVersion,
+            "clientId",
+            grpcRequestMetadata.clientId().orElse("unknown"))
+        .increment();
+    return clientVersion;
+  }
+
+  private Map<String, String> collectProperties(String clientVersion) {
     HashMap<String, String> properties = new HashMap<>();
     retrieveImplementationVersion(properties);
 
     String name = grpcRequestMetadata.clientId().orElse("");
     properties.put(Capabilities.CODECS.toString(), codecs.available());
-    log.info("{}handshake (serverConfig={})", clientIdPrefix(), properties);
+    log.info(
+        "{}handshake (serverConfig={}; clientVersion={})",
+        clientIdPrefix(),
+        properties,
+        clientVersion);
     return properties;
   }
 
   @VisibleForTesting
   void retrieveImplementationVersion(HashMap<String, String> properties) {
-    properties.put(Capabilities.FACTCAST_IMPL_VERSION.toString(), getImplVersion().orElse("UNKNOWN"));
+    properties.put(
+        Capabilities.FACTCAST_IMPL_VERSION.toString(), getImplVersion().orElse("UNKNOWN"));
   }
 
   private Optional<String> getImplVersion() {
-    String implVersion=null;
+    String implVersion = null;
 
     URL propertiesUrl = getProjectProperties();
     Properties buildProperties = new Properties();
@@ -624,6 +712,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @Override
   public void afterPropertiesSet() throws Exception {
-    log.info("Service version: {}",getImplVersion().orElse("UNKNOWN"));
+    log.info("Service version: {}", getImplVersion().orElse("UNKNOWN"));
   }
 }

@@ -28,6 +28,8 @@ public class Headers {
 
   private static final String GRPC_CLIENT_ID = "fc-id";
 
+  private static final String GRPC_CLIENT_VERSION = "fc-ver";
+
   public static final Metadata.Key<String> MESSAGE_COMPRESSION =
       Metadata.Key.of(Headers.GRPC_COMPRESSION_HEADER, Metadata.ASCII_STRING_MARSHALLER);
 
@@ -39,4 +41,7 @@ public class Headers {
 
   public static final Metadata.Key<String> CLIENT_ID =
       Metadata.Key.of(Headers.GRPC_CLIENT_ID, Metadata.ASCII_STRING_MARSHALLER);
+
+  public static final Metadata.Key<String> CLIENT_VERSION =
+      Metadata.Key.of(Headers.GRPC_CLIENT_VERSION, Metadata.ASCII_STRING_MARSHALLER);
 }

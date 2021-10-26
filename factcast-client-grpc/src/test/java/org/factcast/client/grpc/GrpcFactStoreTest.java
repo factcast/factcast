@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.factcast.core.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.AdditionalAnswers.delegatesTo;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -27,6 +28,10 @@ import io.grpc.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.lang.model.util.Types;
+
+import io.grpc.MethodDescriptor;
 import lombok.NonNull;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
@@ -546,6 +551,18 @@ class GrpcFactStoreTest {
   }
 
   @Test
+  void testAddClientVersionToMeta() {
+    Metadata meta = mock(Metadata.class);
+
+    uut.addClientVersionTo(meta);
+
+    ArgumentCaptor<String> stringCaptor = ArgumentCaptor.forClass(String.class);
+    verify(meta).put(same(Headers.CLIENT_VERSION), stringCaptor.capture());
+
+    assertThat(stringCaptor.getValue()).matches("\\d+\\.\\d+\\.\\d+(-SNAPSHOT)?");
+  }
+
+  @Test
   void testAddClientIdToMetaDoesNotUseNull() {
     Metadata meta = mock(Metadata.class);
     uut = new GrpcFactStore(mock(Channel.class), Optional.of("foo:bar"));
@@ -554,6 +571,8 @@ class GrpcFactStoreTest {
 
     verifyNoInteractions(meta);
   }
+
+
 
   @Nested
   class RunAndHandle {
