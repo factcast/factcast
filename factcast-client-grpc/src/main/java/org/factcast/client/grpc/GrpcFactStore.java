@@ -97,14 +97,17 @@ import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 @Slf4j
 public class GrpcFactStore implements FactStore {
 
-  private final CompressionCodecs codecs = new CompressionCodecs();
+    private final CompressionCodecs codecs = new CompressionCodecs();
 
   private static final String CHANNEL_NAME = "factstore";
 
   private static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
 
-  /** The version of this grpc client (taking from pom.xml), to send to the server during handshake */
+  /**
+   * The version of this grpc client (taking from pom.xml), to send to the server during handshake
+   */
   private static final String CLIENT_VERSION = loadClientVersion();
+    private static final String UNKNOWN_VERSION = "unknown";
 
   private RemoteFactStoreBlockingStub blockingStub;
 
@@ -500,13 +503,19 @@ public class GrpcFactStore implements FactStore {
 
   private static String loadClientVersion() {
     try (InputStream is = ClassLoader.getSystemResourceAsStream("version.properties")) {
+
+      if (is == null) {
+        return UNKNOWN_VERSION;
+      }
+
       Properties p = new Properties();
       p.load(is);
-      return p.getProperty("version", "unknown");
+
+      return p.getProperty("version", UNKNOWN_VERSION);
 
     } catch (IOException e) {
       log.error("Unable to load client version.", e);
-      return "unknown";
+      return UNKNOWN_VERSION;
     }
   }
 }
