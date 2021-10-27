@@ -17,13 +17,20 @@ package org.factcast.core.lock;
 
 import java.util.List;
 import java.util.Optional;
+
+import org.factcast.core.Fact;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import org.factcast.core.Fact;
 
+/**
+ * This class needs to stay final and have package-protected constructors, as is this the only way
+ * we can detect if {@link Attempt#publish(Fact, Fact...)} was forgotten. Otherwise, this detection
+ * could be circumvented by creating this class or a subclass and returning this.
+ */
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public final class IntermediatePublishResult {
 

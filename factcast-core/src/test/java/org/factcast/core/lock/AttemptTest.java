@@ -39,7 +39,7 @@ public class AttemptTest {
 
   @Test
   public void testPublish() {
-    assertThrows(IllegalArgumentException.class, () -> Attempt.publish(new LinkedList<>()));
+    assertThat( Attempt.publish(new LinkedList<>()).factsToPublish()).isEmpty();
   }
 
   @Test

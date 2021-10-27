@@ -15,34 +15,38 @@
  */
 package org.factcast.core.lock;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
 import java.util.UUID;
-import org.factcast.core.store.FactStore;
-import org.junit.jupiter.api.*;
 
-public class LockedOperationBuilderTest {
+import org.factcast.core.store.FactStore;
+import org.junit.jupiter.api.Test;
+
+class LockedOperationBuilderTest {
 
   final DeprecatedLockedOperationBuilder uut =
       new DeprecatedLockedOperationBuilder(mock(FactStore.class), "ns");
 
   @Test
-  public void testAttemptNullContracts() {
+  void testAttemptNullContracts() {
     assertThrows(NullPointerException.class, () -> uut.on(UUID.randomUUID()).attempt(null));
   }
 
   @Test
-  public void testAttemptAbortsOnNull() {
+  void testAttemptAbortsOnNull() {
     assertThrows(
         AttemptAbortedException.class, () -> uut.on(UUID.randomUUID()).attempt(() -> null));
   }
 
   @Test
-  public void testAttemptWithoutPublishing() {
+  void testAttemptWithoutPublishing() {
+    // Note: we will get an exception if we do not return an IntermediatePublishResult.
+    // The only way to create such a result is via Attempt.publish, as the only constructor of
+    // that class is package-protected and the class is final.
+    // So the only thing one can return, if not doing Attempt.publish, Attempt.abort or throw some
+    // exception, is null. Not returning anything is prevented by the compiler.
     assertThrows(
-        IllegalArgumentException.class,
-        () -> uut.on(UUID.randomUUID()).attempt(() -> mock(IntermediatePublishResult.class)));
+        AttemptAbortedException.class, () -> uut.on(UUID.randomUUID()).attempt(() -> null));
   }
 }
