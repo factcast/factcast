@@ -15,22 +15,40 @@
  */
 package org.factcast.server.grpc;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.factcast.server.grpc.FactStoreGrpcService.CLIENT_VERSION_COUNTER_NAME;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.matches;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import io.grpc.Status;
-import io.grpc.StatusException;
-import io.grpc.StatusRuntimeException;
-import io.grpc.stub.ServerCallStreamObserver;
-import io.grpc.stub.StreamObserver;
 import java.net.URL;
-import java.util.*;
-import lombok.NonNull;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.UUID;
+
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -45,15 +63,27 @@ import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
-import org.factcast.grpc.api.gen.FactStoreProto.*;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_FactSpecsJson;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSnapshot;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.server.grpc.auth.FactCastAccount;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -62,6 +92,18 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
+import io.grpc.Status;
+import io.grpc.StatusException;
+import io.grpc.StatusRuntimeException;
+import io.grpc.stub.ServerCallStreamObserver;
+import io.grpc.stub.StreamObserver;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import lombok.NonNull;
 
 @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
 @ExtendWith(MockitoExtension.class)
@@ -72,6 +114,7 @@ public class FactStoreGrpcServiceTest {
   @Mock FastForwardTarget ffwdTarget;
   @Mock GrpcLimitProperties grpcLimitProperties;
   @Mock GrpcRequestMetadata grpcRequestMetadata;
+  @Mock MeterRegistry meterRegistry;
 
   @InjectMocks FactStoreGrpcService uut;
 
@@ -85,7 +128,7 @@ public class FactStoreGrpcServiceTest {
 
   @BeforeEach
   void setUp() {
-    uut = new FactStoreGrpcService(backend, meta);
+    uut = new FactStoreGrpcService(backend, meta, meterRegistry);
 
     SecurityContextHolder.setContext(
         new SecurityContext() {
@@ -109,7 +152,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void currentTime() {
     var store = mock(FactStore.class);
-    var uut = new FactStoreGrpcService(store, meta);
+    var uut = new FactStoreGrpcService(store, meta, meterRegistry);
     when(store.currentTime()).thenReturn(101L);
     StreamObserver<MSG_CurrentDatabaseTime> stream = mock(StreamObserver.class);
 
@@ -137,7 +180,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchById() {
     var store = mock(FactStore.class);
-    var uut = new FactStoreGrpcService(store, meta);
+    var uut = new FactStoreGrpcService(store, meta, meterRegistry);
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).buildWithoutPayload();
     var expected = Optional.of(fact);
     when(store.fetchById(fact.id())).thenReturn(expected);
@@ -153,7 +196,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchByIEmpty() {
     var store = mock(FactStore.class);
-    var uut = new FactStoreGrpcService(store, meta);
+    var uut = new FactStoreGrpcService(store, meta, meterRegistry);
 
     Optional<Fact> expected = Optional.empty();
     UUID id = UUID.randomUUID();
@@ -172,7 +215,7 @@ public class FactStoreGrpcServiceTest {
     assertThatThrownBy(
             () -> {
               var store = mock(FactStore.class);
-              var uut = new FactStoreGrpcService(store, meta);
+              var uut = new FactStoreGrpcService(store, meta, meterRegistry);
               Fact fact =
                   Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).buildWithoutPayload();
               when(store.fetchById(fact.id())).thenThrow(IllegalMonitorStateException.class);
@@ -191,7 +234,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchByIdAndVersion() throws TransformationException {
     var store = mock(FactStore.class);
-    var uut = new FactStoreGrpcService(store, meta);
+    var uut = new FactStoreGrpcService(store, meta, meterRegistry);
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).buildWithoutPayload();
     var expected = Optional.of(fact);
     when(store.fetchByIdAndVersion(fact.id(), 1)).thenReturn(expected);
@@ -207,7 +250,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchByIdAndVersionEmpty() throws TransformationException {
     var store = mock(FactStore.class);
-    var uut = new FactStoreGrpcService(store, meta);
+    var uut = new FactStoreGrpcService(store, meta, meterRegistry);
     Optional<Fact> expected = Optional.empty();
     @NonNull UUID id = UUID.randomUUID();
     when(store.fetchByIdAndVersion(id, 1)).thenReturn(expected);
@@ -287,7 +330,7 @@ public class FactStoreGrpcServiceTest {
     when(grpcRequestMetadata.clientId()).thenReturn(Optional.of(clientId));
     doNothing().when(backend).publish(acFactList.capture());
 
-    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadata, meterRegistry);
 
     Fact f1 = Fact.builder().ns("test").build("{}");
     MSG_Fact msg1 = conv.toProto(f1);
@@ -321,7 +364,8 @@ public class FactStoreGrpcServiceTest {
             meta,
             new GrpcLimitProperties()
                 .initialNumberOfFollowRequestsAllowedPerClient(3)
-                .numberOfFollowRequestsAllowedPerClientPerMinute(1));
+                .numberOfFollowRequestsAllowedPerClientPerMinute(1),
+            meterRegistry);
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
     when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
 
@@ -350,7 +394,8 @@ public class FactStoreGrpcServiceTest {
                 .initialNumberOfCatchupRequestsAllowedPerClient(3)
                 .numberOfCatchupRequestsAllowedPerClientPerMinute(1)
                 .initialNumberOfFollowRequestsAllowedPerClient(3)
-                .numberOfFollowRequestsAllowedPerClientPerMinute(3));
+                .numberOfFollowRequestsAllowedPerClientPerMinute(3),
+            meterRegistry);
     when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
 
     // must not throw exception
@@ -374,7 +419,8 @@ public class FactStoreGrpcServiceTest {
                 .numberOfCatchupRequestsAllowedPerClientPerMinute(1)
                 .initialNumberOfFollowRequestsAllowedPerClient(3)
                 .numberOfFollowRequestsAllowedPerClientPerMinute(1)
-                .disabled(true));
+                .disabled(true),
+            meterRegistry);
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
     when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
 
@@ -396,7 +442,8 @@ public class FactStoreGrpcServiceTest {
                 .initialNumberOfCatchupRequestsAllowedPerClient(3)
                 .numberOfCatchupRequestsAllowedPerClientPerMinute(1)
                 .initialNumberOfFollowRequestsAllowedPerClient(3)
-                .numberOfFollowRequestsAllowedPerClientPerMinute(1));
+                .numberOfFollowRequestsAllowedPerClientPerMinute(1),
+            meterRegistry);
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
     when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
 
@@ -417,7 +464,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   public void testSerialOf() {
-    uut = new FactStoreGrpcService(backend, meta);
+    uut = new FactStoreGrpcService(backend, meta, meterRegistry);
 
     StreamObserver so = mock(StreamObserver.class);
     assertThrows(NullPointerException.class, () -> uut.serialOf(null, so));
@@ -435,7 +482,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   public void testSerialOfThrows() {
-    uut = new FactStoreGrpcService(backend, meta);
+    uut = new FactStoreGrpcService(backend, meta, meterRegistry);
 
     StreamObserver so = mock(StreamObserver.class);
     when(backend.serialOf(any(UUID.class))).thenThrow(UnsupportedOperationException.class);
@@ -447,7 +494,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   public void testEnumerateNamespaces() {
-    uut = new FactStoreGrpcService(backend, meta);
+    uut = new FactStoreGrpcService(backend, meta, meterRegistry);
     StreamObserver so = mock(StreamObserver.class);
     when(backend.enumerateNamespaces()).thenReturn(Sets.newHashSet("foo", "bar"));
 
@@ -462,7 +509,7 @@ public class FactStoreGrpcServiceTest {
   public void testEnumerateNamespacesThrows() {
     assertThatThrownBy(
             () -> {
-              uut = new FactStoreGrpcService(backend, meta);
+              uut = new FactStoreGrpcService(backend, meta, meterRegistry);
               StreamObserver so = mock(StreamObserver.class);
               when(backend.enumerateNamespaces()).thenThrow(UnsupportedOperationException.class);
 
@@ -473,7 +520,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   public void testEnumerateTypes() {
-    uut = new FactStoreGrpcService(backend, meta);
+    uut = new FactStoreGrpcService(backend, meta, meterRegistry);
     StreamObserver so = mock(StreamObserver.class);
 
     when(backend.enumerateTypes(eq("ns"))).thenReturn(Sets.newHashSet("foo", "bar"));
@@ -489,7 +536,7 @@ public class FactStoreGrpcServiceTest {
   public void testEnumerateTypesThrows() {
     assertThatThrownBy(
             () -> {
-              uut = new FactStoreGrpcService(backend, meta);
+              uut = new FactStoreGrpcService(backend, meta, meterRegistry);
               StreamObserver so = mock(StreamObserver.class);
               when(backend.enumerateTypes(eq("ns"))).thenThrow(UnsupportedOperationException.class);
 
@@ -515,10 +562,35 @@ public class FactStoreGrpcServiceTest {
   public void testHandshake() {
 
     StreamObserver so = mock(StreamObserver.class);
+    Counter mockedCounter = mock(Counter.class);
+
+    lenient()
+        .when(
+            meterRegistry.counter(
+                eq(CLIENT_VERSION_COUNTER_NAME),
+                eq("clientVersion"),
+                anyString(),
+                eq("clientId"),
+                eq("unknown")))
+        .thenReturn(mockedCounter);
+
     uut.handshake(conv.empty(), so);
 
     verify(so).onCompleted();
     verify(so).onNext(any(MSG_ServerConfig.class));
+
+    InOrder inOrder = inOrder(meterRegistry);
+    // first register counter in constructor
+    inOrder.verify(meterRegistry, atLeastOnce()).counter(eq(CLIENT_VERSION_COUNTER_NAME));
+    // and then actually increment, but with tags
+    inOrder.verify(meterRegistry)
+        .counter(
+            eq(CLIENT_VERSION_COUNTER_NAME),
+            eq("clientVersion"),
+            matches("\\d+\\.\\d+\\.\\d+(-SNAPSHOT)?"),
+            eq("clientId"),
+            eq("unknown"));
+    verify(mockedCounter).increment();
   }
 
   @Test
@@ -660,7 +732,7 @@ public class FactStoreGrpcServiceTest {
     String clientId = "someApplication";
     when(grpcRequestMetadata.clientId()).thenReturn(Optional.of(clientId));
 
-    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadata, meterRegistry);
 
     UUID id = UUID.randomUUID();
 

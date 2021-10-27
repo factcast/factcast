@@ -15,7 +15,8 @@
  */
 package org.factcast.server.grpc;
 
-import net.devh.boot.grpc.server.scope.GrpcRequestScope;
+import java.util.concurrent.TimeUnit;
+
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.CompressionCodecs;
@@ -25,17 +26,21 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import net.devh.boot.grpc.server.scope.GrpcRequestScope;
+
 @Configuration
 @EnableConfigurationProperties(GrpcLimitProperties.class)
 public class FactCastGrpcServerConfiguration {
 
   @Bean
   public FactStoreGrpcService factStoreGrpcService(
-      FactStore store,
-      GrpcRequestMetadata grpcMetaData,
-      GrpcLimitProperties props,
-      FastForwardTarget target) {
-    return new FactStoreGrpcService(store, grpcMetaData, props, target);
+          FactStore store,
+          GrpcRequestMetadata grpcMetaData,
+          GrpcLimitProperties props,
+          FastForwardTarget target,
+          MeterRegistry meterRegistry) {
+    return new FactStoreGrpcService(store, grpcMetaData, props, target, meterRegistry);
   }
 
   @Bean

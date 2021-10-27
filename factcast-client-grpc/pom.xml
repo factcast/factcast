@@ -99,4 +99,24 @@
       <optional>true</optional>
     </dependency>
   </dependencies>
+  <build>
+    <resources>
+      <!-- do not filter src/main/resources, except for version.properties,
+        where we want the project version to be replaced -->
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>false</filtering>
+        <excludes>
+          <exclude>version.properties</exclude>
+        </excludes>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>version.properties</include>
+        </includes>
+      </resource>
+    </resources>
+  </build>
 </project>

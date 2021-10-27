@@ -51,4 +51,8 @@ public class GrpcRequestMetadata {
   public Optional<String> clientId() {
     return Optional.ofNullable(headers).map(headers -> headers.get(Headers.CLIENT_ID));
   }
+
+  public Optional<String> clientVersion() {
+    return Optional.ofNullable(headers).map(headers -> headers.get(Headers.CLIENT_VERSION));
+  }
 }
