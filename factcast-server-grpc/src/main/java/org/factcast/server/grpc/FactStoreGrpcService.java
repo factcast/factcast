@@ -452,6 +452,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
     StateForRequest req = converter.fromProto(request);
     String ns = req.ns(); // TODO is this gets null, we're screwed
+    assertCanRead(ns);
     StateToken token =
         store.stateFor(
             req.aggIds().stream()
@@ -467,6 +468,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     initialize(responseObserver);
     List<FactSpec> req = converter.fromProto(request);
     if (!req.isEmpty()) {
+
+      assertCanRead(req.stream().map(FactSpec::ns).collect(Collectors.toList()));
 
       StateToken token = store.stateFor(req);
       responseObserver.onNext(converter.toProto(token.uuid()));
