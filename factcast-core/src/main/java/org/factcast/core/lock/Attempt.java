@@ -18,8 +18,10 @@ package org.factcast.core.lock;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import lombok.NonNull;
+
 import org.factcast.core.Fact;
+
+import lombok.NonNull;
 
 @FunctionalInterface
 public interface Attempt {
@@ -36,9 +38,11 @@ public interface Attempt {
     throw new AttemptAbortedException(msg);
   }
 
+  /**
+   * Publish given lists of events. The list may be empty. In that case, the call will return
+   * quietly and without exception. A given andThen operation will be executed.
+   */
   static IntermediatePublishResult publish(@NonNull List<Fact> factsToPublish) {
-    if (factsToPublish.isEmpty())
-      throw new IllegalArgumentException("List of Facts to publish must not be empty");
     return new IntermediatePublishResult(factsToPublish);
   }
 

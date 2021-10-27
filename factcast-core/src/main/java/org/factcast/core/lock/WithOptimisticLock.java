@@ -64,16 +64,13 @@ public class WithOptimisticLock {
         IntermediatePublishResult r = runAndWrapException(operation);
 
         List<Fact> factsToPublish = r.factsToPublish();
-        if (factsToPublish == null || factsToPublish.isEmpty()) {
-          throw new IllegalArgumentException(
-              "Attempt exited without abort, but does not publish any facts.");
-        }
 
-        // from here on, we know the server takes care of invalidation
-        publishIfUnchanged = true;
+        // from here on, we know the server takes care of invalidation.
+        // but only if we actually published something!
+        publishIfUnchanged = !factsToPublish.isEmpty();
 
-        // try to publish
-        if (store.publishIfUnchanged(r.factsToPublish(), Optional.of(token))) {
+        // try to publish if not empty
+        if (factsToPublish.isEmpty() || store.publishIfUnchanged(factsToPublish, Optional.of(token))) {
 
           // publishing worked
           // now run the 'andThen' operation

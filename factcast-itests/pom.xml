@@ -18,6 +18,7 @@
     <module>factcast-itests-tls</module>
     <module>factcast-itests-transformation</module>
     <module>factcast-itests-novalidation</module>
+    <module>factcast-itests-core</module>
     <module>factcast-itests-factus</module>
     <module>factcast-itests-exception-handling</module>
     <module>factcast-itests-exception-handling-v3-compat</module>
