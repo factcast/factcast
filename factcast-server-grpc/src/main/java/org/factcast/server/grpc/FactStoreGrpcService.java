@@ -116,7 +116,7 @@ import net.devh.boot.grpc.server.service.GrpcService;
 public class FactStoreGrpcService extends RemoteFactStoreImplBase implements InitializingBean {
 
   static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
-  static final String CLIENT_VERSION_COUNTER_NAME = "factstore.clientVersion";
+  static final String CLIENT_VERSION_COUNTER_NAME = "factstore.clients";
 
   static final AtomicLong subscriptionIdStore = new AtomicLong();
 
