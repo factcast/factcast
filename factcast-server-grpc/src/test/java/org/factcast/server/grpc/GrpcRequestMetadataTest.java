@@ -114,4 +114,28 @@ class GrpcRequestMetadataTest {
       assertThat(underTest.clientId()).isEmpty();
     }
   }
+
+  @Nested
+  class WhenClientingId {
+    @BeforeEach
+    void setup() {}
+
+    @Test
+    void extracts() {
+      Metadata headers = new Metadata();
+      headers.put(Headers.CLIENT_VERSION, "narf");
+
+      underTest.headers(headers);
+
+      assertThat(underTest.clientVersion()).isPresent().hasValue("narf");
+    }
+
+    @Test
+    void extractsUnset() {
+      Metadata headers = new Metadata();
+      underTest.headers(headers);
+
+      assertThat(underTest.clientVersion()).isEmpty();
+    }
+  }
 }

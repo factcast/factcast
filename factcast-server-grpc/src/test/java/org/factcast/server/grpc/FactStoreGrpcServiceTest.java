@@ -78,6 +78,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.server.grpc.auth.FactCastAccount;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
+import org.factcast.test.Slf4jHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -104,6 +105,8 @@ import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.NonNull;
+import lombok.SneakyThrows;
+import slf4jtest.TestLogger;
 
 @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
 @ExtendWith(MockitoExtension.class)
@@ -583,7 +586,8 @@ public class FactStoreGrpcServiceTest {
     // first register counter in constructor
     inOrder.verify(meterRegistry, atLeastOnce()).counter(eq(CLIENT_VERSION_COUNTER_NAME));
     // and then actually increment, but with tags
-    inOrder.verify(meterRegistry)
+    inOrder
+        .verify(meterRegistry)
         .counter(
             eq(CLIENT_VERSION_COUNTER_NAME),
             eq("clientVersion"),
@@ -1059,5 +1063,28 @@ public class FactStoreGrpcServiceTest {
     when(f.jsonHeader()).thenReturn("{borken");
     Fact f1 = uut.tagFactSource(f, "after");
     assertSame(f, f1);
+  }
+
+  @Test
+  void testDeprecatedConstructor() {
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadata, ffwdTarget, meterRegistry);
+    verify(meterRegistry, atLeastOnce()).counter(CLIENT_VERSION_COUNTER_NAME);
+  }
+
+  @Test
+  @SneakyThrows
+  void testAfterPropertiesSet() {
+    // INIT
+    TestLogger logger = Slf4jHelper.replaceLogger(uut);
+    // RUN
+    uut.afterPropertiesSet();
+    // ASSERT
+    var firstLogLine =
+        logger.lines().stream()
+            .map(line -> line.text)
+            .filter(message -> message.contains("Service version: "))
+            .findFirst();
+
+    assertThat(firstLogLine).isPresent().get().isEqualTo("Service version: UNKNOWN");
   }
 }
