@@ -24,5 +24,5 @@ import org.factcast.factus.serializer.SnapshotSerializer;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface SerializeUsing {
-  Class<? extends SnapshotSerializer> value();
+  Class<? extends SnapshotSerializer>[] value();
 }

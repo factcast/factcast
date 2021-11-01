@@ -15,8 +15,11 @@
  */
 package org.factcast.spring.boot.autoconfigure.factus;
 
+import java.util.List;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Generated;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
@@ -77,8 +80,10 @@ public class FactusAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public SnapshotSerializerSupplier snapshotSerializerSupplier(SnapshotSerializer ser) {
-    return new SnapshotSerializerSupplier(ser);
+  public SnapshotSerializerSupplier snapshotSerializerSupplier(@NonNull SnapshotSerializer snapshotSerializer,
+                                                               @NonNull List<SnapshotSerializer> allSerializers) {
+    // TODO: if we have more snapshot serializers, do we need to use @Named?
+    return new SnapshotSerializerSupplier(snapshotSerializer, allSerializers);
   }
 
   @Bean

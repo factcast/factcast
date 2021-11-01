@@ -16,28 +16,36 @@
 package org.factcast.factus.snapshot;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.JacksonSnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class SnapshotSerializerSupplier {
 
   @NonNull private final SnapshotSerializer defaultSerializer;
+  @NonNull private final List<SnapshotSerializer> allSnapshotSerializers;
 
   private final Map<Class<? extends SnapshotSerializer>, SnapshotSerializer> serializers =
       new ConcurrentHashMap<>();
   private final Map<Class<? extends SnapshotProjection>, SnapshotSerializer> cache =
       new ConcurrentHashMap<>();
 
-  public SnapshotSerializerSupplier(@NonNull SnapshotSerializer defaultSerializer) {
+  public SnapshotSerializerSupplier(
+      @NonNull SnapshotSerializer defaultSerializer,
+      @NonNull List<SnapshotSerializer> allSnapshotSerializers) {
     this.defaultSerializer = defaultSerializer;
+    this.allSnapshotSerializers = allSnapshotSerializers;
     if (!(defaultSerializer instanceof JacksonSnapshotSerializer)) {
       log.info(
           "Using {} as a default SnapshotSerializer", defaultSerializer.getClass().getSimpleName());
@@ -53,20 +61,73 @@ public class SnapshotSerializerSupplier {
           if (classAnnotation == null) {
             return defaultSerializer;
           } else {
-            Class<? extends SnapshotSerializer> ser = classAnnotation.value();
-            return serializers.computeIfAbsent(ser, SnapshotSerializerSupplier::instanciate);
+            return findFirstApplicableSerializer(classAnnotation.value());
           }
         });
   }
 
-  private static <C> C instanciate(Class<C> clazz) {
+  private SnapshotSerializer findFirstApplicableSerializer(
+      Class<? extends SnapshotSerializer>[] candidates) {
+
+    if (candidates == null || candidates.length == 0) {
+      throw new SerializerInstantiationException(
+          "@SerializeUsing used with empty lists of serializers, aborting.");
+    }
+
+    for (Class<? extends SnapshotSerializer> c : candidates) {
+
+      // first check if we have given serializer as bean (or constructed it previously)
+      SnapshotSerializer beanOrConstructedInstance =
+          serializers.computeIfAbsent(
+              c,
+              key ->
+                  allSnapshotSerializers.stream()
+                      .filter(s -> s.getClass().equals(key))
+                      .findFirst()
+                      .orElse(null));
+
+      if (beanOrConstructedInstance != null) {
+        return beanOrConstructedInstance;
+      }
+
+      // not a bean? Check if it has a public default constructor
+      try {
+        if (Modifier.isPublic(c.getDeclaredConstructor().getModifiers())) {
+
+          // looks good, try to construct and put into serializers cache
+          SnapshotSerializer serializer =
+              serializers.computeIfAbsent(c, SnapshotSerializerSupplier::instantiate);
+
+          if (serializer != null) {
+            return serializer;
+          }
+
+          // if was null, try next candidate
+        }
+      } catch (NoSuchMethodException e) {
+        // not possible to construct, try next candidate
+      }
+    }
+
+    String candidateNames =
+        Arrays.stream(candidates).map(Class::toString).collect(Collectors.joining(", "));
+
+    // no candidate found, neither bean nor public default constructor, throw exception
+    throw new SerializerInstantiationException(
+        "None of the given serializers ("
+            + candidateNames
+            + ") were found or could be instantiated, aborting.");
+  }
+
+  private static <C> C instantiate(Class<C> clazz) {
     try {
       return clazz.getDeclaredConstructor().newInstance();
+
     } catch (InstantiationException
         | IllegalAccessException
         | InvocationTargetException
         | NoSuchMethodException e) {
-      throw new SerializerInstantiationException("Cannot create instance from " + clazz, e);
+      return null;
     }
   }
 }
