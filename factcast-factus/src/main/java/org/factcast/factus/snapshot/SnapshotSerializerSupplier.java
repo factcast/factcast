@@ -61,17 +61,18 @@ public class SnapshotSerializerSupplier {
           if (classAnnotation == null) {
             return defaultSerializer;
           } else {
-            return findFirstApplicableSerializer(classAnnotation.value());
+            return findFirstApplicableSerializer(classAnnotation.value(), aClass);
           }
         });
   }
 
   private SnapshotSerializer findFirstApplicableSerializer(
-      Class<? extends SnapshotSerializer>[] candidates) {
+      Class<? extends SnapshotSerializer>[] candidates,
+      Class<? extends SnapshotProjection> aClass) {
 
     if (candidates == null || candidates.length == 0) {
       throw new SerializerInstantiationException(
-          "@SerializeUsing used with empty lists of serializers, aborting.");
+          "@SerializeUsing used with empty lists of serializers on " + aClass + ".");
     }
 
     for (Class<? extends SnapshotSerializer> c : candidates) {
@@ -107,16 +108,24 @@ public class SnapshotSerializerSupplier {
       } catch (NoSuchMethodException e) {
         // not possible to construct, try next candidate
       }
+
+      log.warn(
+          "SnapshotSerializer {} was listed in @SerializeUsing(...) on class {}, but neither found a bean of this type, "
+              + "nor was it possible to construct an instance of it using a public default constructor.",
+          c,
+          aClass);
     }
 
-    String candidateNames =
+    String serializerNames =
         Arrays.stream(candidates).map(Class::toString).collect(Collectors.joining(", "));
 
     // no candidate found, neither bean nor public default constructor, throw exception
     throw new SerializerInstantiationException(
         "None of the given serializers ("
-            + candidateNames
-            + ") were found or could be instantiated, aborting.");
+            + serializerNames
+            + ") listed in @SerializeUsing(...) on class "
+            + aClass
+            + " were found as bean or could be instantiated.");
   }
 
   private static <C> C instantiate(Class<C> clazz) {
@@ -127,6 +136,9 @@ public class SnapshotSerializerSupplier {
         | IllegalAccessException
         | InvocationTargetException
         | NoSuchMethodException e) {
+      // since we have checked if there is a public non-default constructor previously,
+      // we will rarely end up here. But if we do, log a warning
+      log.warn("Not able to create an instance of serializer " + clazz + ".", e);
       return null;
     }
   }
