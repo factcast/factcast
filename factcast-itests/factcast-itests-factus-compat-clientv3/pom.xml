@@ -131,12 +131,6 @@
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
     </dependency>
-    <!-- <dependency> -->
-    <!-- &lt;!&ndash; only for dependency and build order analysis &ndash;&gt; -->
-    <!-- <groupId>org.factcast</groupId> -->
-    <!-- <artifactId>factcast-docker-dep</artifactId> -->
-    <!-- <scope>test</scope> -->
-    <!-- </dependency> -->
     <dependency>
       <groupId>net.javacrumbs.json-unit</groupId>
       <artifactId>json-unit-assertj</artifactId>
