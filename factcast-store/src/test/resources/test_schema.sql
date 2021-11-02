@@ -51,7 +51,9 @@ CREATE
       'ser',
       NEW.ser,
       'header',
-      NEW.header
+      NEW.header,
+      'txId',
+      txid_current()
     )::text
   );
 
@@ -59,6 +61,10 @@ RETURN NEW;
 END;
 
 $$ LANGUAGE plpgsql;
+
+DROP
+  TRIGGER IF EXISTS tr_deferred_fact_insert ON
+  fact;
 
 CREATE
   CONSTRAINT TRIGGER tr_deferred_fact_insert AFTER INSERT
