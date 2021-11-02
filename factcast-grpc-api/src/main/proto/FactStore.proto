@@ -20,6 +20,9 @@ message MSG_UUID_AND_VERSION {
 message MSG_UUIDs {
   repeated MSG_UUID uuids = 1;
 }
+message MSG_Count {
+  int64 count = 1;
+}
 
 message MSG_OptionalSerial {
   bool present = 1;
@@ -174,6 +177,7 @@ service RemoteFactStore {
   rpc handshake (MSG_Empty) returns (MSG_ServerConfig) {}
   rpc enumerateNamespaces (MSG_Empty) returns (MSG_StringSet) {}
   rpc enumerateTypes (MSG_String) returns (MSG_StringSet) {}
+  rpc countFacts (MSG_FactSpecsJson) returns (MSG_Count) {}
 
   rpc publishConditional (MSG_ConditionalPublishRequest) returns (MSG_ConditionalPublishResult) {}
   rpc invalidate (MSG_UUID) returns (MSG_Empty) {}

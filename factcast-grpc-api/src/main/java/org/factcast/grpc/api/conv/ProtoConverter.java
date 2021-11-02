@@ -15,13 +15,15 @@
  */
 package org.factcast.grpc.api.conv;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.ProtocolStringList;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -32,9 +34,40 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
-import org.factcast.grpc.api.gen.FactStoreProto.*;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Count;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_FactSpecsJson;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Info;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact.Builder;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSerial;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSnapshot;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalUuid;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProperties;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerProtocolVersion;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Snapshot;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_SnapshotId;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_String;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StringSet;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_SubscriptionRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID_AND_VERSION;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.ProtocolStringList;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Converts Protobuf messages to Java Objects and back.
@@ -418,5 +451,13 @@ public class ProtoConverter {
 
   public MSG_Notification createInfoNotification(FactStreamInfo info) {
     return MSG_Notification.newBuilder().setType(Type.Info).setInfo(toProto(info)).build();
+  }
+
+  public MSG_Count toCount(long count) {
+    return MSG_Count.newBuilder().setCount(count).build();
+  }
+
+  public long fromProto(MSG_Count result) {
+    return result.getCount();
   }
 }

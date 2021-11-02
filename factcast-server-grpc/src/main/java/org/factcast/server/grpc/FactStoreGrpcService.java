@@ -52,6 +52,7 @@ import org.factcast.grpc.api.conv.IdAndVersion;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishResult;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
@@ -488,6 +489,19 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     assertCanRead(ns);
     Set<String> types = store.enumerateTypes(ns);
     responseObserver.onNext(converter.toProto(types));
+    responseObserver.onCompleted();
+  }
+
+  @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
+  public void countFacts(MSG_FactSpecsJson request,
+                         StreamObserver<FactStoreProto.MSG_Count> responseObserver) {
+    // TODO: secure endpoint further!
+    initialize(responseObserver);
+
+    List<FactSpec> specs = converter.fromProto(request);
+
+    responseObserver.onNext(converter.toCount(store.countFacts(specs)));
     responseObserver.onCompleted();
   }
 

@@ -18,6 +18,7 @@ package org.factcast.client.grpc.cli;
 import com.beust.jcommander.ParameterException;
 import lombok.RequiredArgsConstructor;
 import org.factcast.client.grpc.cli.cmd.Catchup;
+import org.factcast.client.grpc.cli.cmd.CountFacts;
 import org.factcast.client.grpc.cli.cmd.EnumerateNamespaces;
 import org.factcast.client.grpc.cli.cmd.EnumerateTypes;
 import org.factcast.client.grpc.cli.cmd.Follow;
@@ -43,6 +44,7 @@ public class CLI {
             new Publish(),
             new EnumerateNamespaces(),
             new EnumerateTypes(),
+            new CountFacts(),
             new SerialOf());
     try {
       Command cmd = parser.parse(arguments);

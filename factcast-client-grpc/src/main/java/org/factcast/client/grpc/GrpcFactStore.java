@@ -97,7 +97,7 @@ import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 @Slf4j
 public class GrpcFactStore implements FactStore {
 
-    private final CompressionCodecs codecs = new CompressionCodecs();
+  private final CompressionCodecs codecs = new CompressionCodecs();
 
   private static final String CHANNEL_NAME = "factstore";
 
@@ -107,7 +107,8 @@ public class GrpcFactStore implements FactStore {
    * The version of this grpc client (taking from pom.xml), to send to the server during handshake
    */
   private static final String CLIENT_VERSION = loadClientVersion();
-    private static final String UNKNOWN_VERSION = "unknown";
+
+  private static final String UNKNOWN_VERSION = "unknown";
 
   private RemoteFactStoreBlockingStub blockingStub;
 
@@ -370,6 +371,16 @@ public class GrpcFactStore implements FactStore {
         () -> {
           MSG_Empty empty = converter.empty();
           return converter.fromProto(blockingStub.enumerateNamespaces(empty));
+        });
+  }
+
+  @Override
+  public long countFacts(List<FactSpec> specs) {
+    return callAndHandle(
+        () -> {
+          MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
+          FactStoreProto.MSG_Count result = blockingStub.countFacts(msg);
+          return converter.fromProto(result);
         });
   }
 

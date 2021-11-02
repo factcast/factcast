@@ -54,6 +54,11 @@ class DefaultFactCast implements FactCast {
   }
 
   @Override
+  public long countFacts(@NonNull List<FactSpec> specs) {
+    return store.countFacts(specs);
+  }
+
+  @Override
   @NonNull
   public OptionalLong serialOf(@NonNull UUID id) {
     return store.serialOf(id);

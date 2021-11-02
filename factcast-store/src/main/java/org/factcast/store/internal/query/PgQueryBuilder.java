@@ -21,11 +21,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.spec.FactSpec;
 import org.factcast.store.internal.PgConstants;
 import org.springframework.jdbc.core.PreparedStatementSetter;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Provides {@link PreparedStatementSetter} and the corresponding SQL from a list of {@link
@@ -71,7 +73,39 @@ public class PgQueryBuilder {
     };
   }
 
+  public PreparedStatementSetter createStatementSetter() {
+    return p -> {
+      // TODO vulnerable of json injection attack
+      int count = 0;
+      for (FactSpec spec : factSpecs) {
+
+        String ns = spec.ns();
+        if (ns != null && !"*".equals(ns)) {
+          p.setString(++count, "{\"ns\": \"" + spec.ns() + "\"}");
+        }
+
+        String type = spec.type();
+        if (type != null) {
+          p.setString(++count, "{\"type\": \"" + type + "\"}");
+        }
+        // version is intentionally not used here
+        UUID agg = spec.aggId();
+        if (agg != null) {
+          p.setString(++count, "{\"aggIds\": [\"" + agg + "\"]}");
+        }
+        Map<String, String> meta = spec.meta();
+        for (Entry<String, String> e : meta.entrySet()) {
+          p.setString(++count, "{\"meta\":{\"" + e.getKey() + "\":\"" + e.getValue() + "\"}}");
+        }
+      }
+    };
+  }
+
   private String createWhereClause() {
+    return createWhereClause(true);
+  }
+
+  private String createWhereClause(boolean withSerialFilter) {
     List<String> predicates = new LinkedList<>();
     factSpecs.forEach(
         spec -> {
@@ -101,7 +135,11 @@ public class PgQueryBuilder {
           predicates.add(sb.toString());
         });
     String predicatesAsString = String.join(" OR ", predicates);
-    return "( " + predicatesAsString + " ) AND " + PgConstants.COLUMN_SER + ">?";
+    if (withSerialFilter) {
+      return "( " + predicatesAsString + " ) AND " + PgConstants.COLUMN_SER + ">?";
+    } else {
+      return predicatesAsString;
+    }
   }
 
   public String createSQL() {
@@ -131,6 +169,21 @@ public class PgQueryBuilder {
             + PgConstants.COLUMN_SER
             + " DESC LIMIT 1";
     log.trace("{} createStateSQL={}", factSpecs, sql);
+    return sql;
+  }
+
+  public String createCountSQL() {
+
+    String whereClause;
+
+    if (factSpecs.isEmpty()) {
+      whereClause = "";
+    } else {
+      whereClause = " WHERE " + createWhereClause(false);
+    }
+
+    String sql = "SELECT COUNT(*) FROM " + PgConstants.TABLE_FACT + whereClause;
+    log.trace("{} createCountSQL={}", factSpecs, sql);
     return sql;
   }
 

@@ -52,6 +52,8 @@ public interface FactStore {
   @NonNull
   Set<String> enumerateNamespaces();
 
+  long countFacts(List<FactSpec> specs);
+
   @NonNull
   Set<String> enumerateTypes(@NonNull String ns);
 

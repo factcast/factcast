@@ -15,11 +15,14 @@
  */
 package org.factcast.core;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 import lombok.NonNull;
+
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.TransformationException;
@@ -64,6 +67,8 @@ public interface ReadFactCast {
 
   @NonNull
   Set<String> enumerateTypes(@NonNull String ns);
+
+  long countFacts(@NonNull List<FactSpec> specs);
 
   @NonNull
   ReadFactCast retry(int maxAttempts);

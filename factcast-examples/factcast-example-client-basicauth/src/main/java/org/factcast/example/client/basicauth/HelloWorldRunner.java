@@ -15,6 +15,8 @@
  */
 package org.factcast.example.client.basicauth;
 
+import java.util.Collections;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
@@ -24,6 +26,8 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+
+import com.google.common.collect.Lists;
 
 @RequiredArgsConstructor
 @Component
@@ -38,12 +42,17 @@ public class HelloWorldRunner implements CommandLineRunner {
     fc.publish(fact);
     System.out.println("published " + fact);
 
+    FactSpec factSpec = FactSpec.ns("smoke");
+
     Subscription sub =
         fc.subscribe(
-                SubscriptionRequest.catchup(FactSpec.ns("smoke")).fromScratch(),
+                SubscriptionRequest.catchup(factSpec).fromScratch(),
                 System.out::println)
             .awaitCatchup(5000);
 
     sub.close();
+
+    System.out.println("Published facts so far in smoke: " + fc.countFacts(Lists.newArrayList(factSpec)));
+    System.out.println("Published facts so far in total: " + fc.countFacts(Collections.emptyList()));
   }
 }

@@ -15,13 +15,16 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.collect.Lists;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -48,6 +51,11 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.google.common.collect.Lists;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * A PostgreSQL based FactStore implementation
@@ -189,6 +197,16 @@ public class PgFactStore extends AbstractFactStore {
   }
 
   @Override
+  public long countFacts(List<FactSpec> specs) {
+    // TODO: do not use count!
+    // TODO: use metrics!
+    PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+    String countSQL = pgQueryBuilder.createCountSQL();
+    var statementSetter = pgQueryBuilder.createStatementSetter();
+    return queryLong(countSQL, statementSetter);
+  }
+
+  @Override
   public @NonNull Set<String> enumerateTypes(@NonNull String ns) {
     return metrics.time(
         StoreMetrics.OP.ENUMERATE_TYPES,
@@ -223,24 +241,24 @@ public class PgFactStore extends AbstractFactStore {
               pgQueryBuilder.createStatementSetter(new AtomicLong(0));
 
           try {
-            ResultSetExtractor<Long> rch =
-                new ResultSetExtractor<>() {
-                  @Override
-                  public Long extractData(ResultSet resultSet)
-                      throws SQLException, DataAccessException {
-                    if (!resultSet.next()) {
-                      return 0L;
-                    } else {
-                      return resultSet.getLong(1);
-                    }
-                  }
-                };
-            long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
+            long lastSerial = queryLong(stateSQL, statementSetter);
             return State.of(specs, lastSerial);
           } catch (EmptyResultDataAccessException lastSerialIs0Then) {
             return State.of(specs, 0);
           }
         });
+  }
+
+  private long queryLong(String sql, PreparedStatementSetter statementSetter) {
+    ResultSetExtractor<Long> rch =
+            resultSet -> {
+              if (!resultSet.next()) {
+                return 0L;
+              } else {
+                return resultSet.getLong(1);
+              }
+            };
+    return jdbcTemplate.query(sql, statementSetter, rch);
   }
 
   @Override
