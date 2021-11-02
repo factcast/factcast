@@ -88,6 +88,11 @@ class PgListenerIntegrationTest {
           .extracting(PGNotification::getName)
           .allMatch(CHANNEL_FACT_INSERT::equals);
 
+      // Below, we will check that all three inserts were communicated via the postgres channel.
+      // We will also extract the transaction id from all three notifications, and check, whether
+      // the transaction ids for the listenerTest1 (two events published within one transaction)
+      // have the same id, while the id for listenerTest2 should be different.
+      // We use AtomicLong here, in order to return the tx id from the lambda.
       AtomicLong txId1a = new AtomicLong();
       AtomicLong txId1b = new AtomicLong();
       AtomicLong txId2 = new AtomicLong();
@@ -102,6 +107,7 @@ class PgListenerIntegrationTest {
                 assertThat(h.get("type").asText()).isEqualTo("listenerTest1");
                 assertThat(h.get("id").asText()).isEqualTo(id1.toString().toLowerCase());
                 assertThat(n.get("txId").asLong(-1)).isGreaterThanOrEqualTo(0);
+                // if we reach this point, we know it is the first event, store tx id
                 txId1a.set(n.get("txId").asLong());
               })
           .anySatisfy(
@@ -111,6 +117,7 @@ class PgListenerIntegrationTest {
                 assertThat(h.get("type").asText()).isEqualTo("listenerTest1");
                 assertThat(h.get("id").asText()).isEqualTo(id2.toString().toLowerCase());
                 assertThat(n.get("txId").asLong(-1)).isGreaterThanOrEqualTo(0);
+                // if we reach this point, we know it is the second event, store tx id
                 txId1b.set(n.get("txId").asLong());
               })
           .anySatisfy(
@@ -120,6 +127,7 @@ class PgListenerIntegrationTest {
                 assertThat(h.get("type").asText()).isEqualTo("listenerTest2");
                 assertThat(h.get("id").asText()).isEqualTo(id3.toString().toLowerCase());
                 assertThat(n.get("txId").asLong(-1)).isGreaterThanOrEqualTo(0);
+                // if we reach this point, we know it is the third event, store tx id
                 txId2.set(n.get("txId").asLong());
               });
 
