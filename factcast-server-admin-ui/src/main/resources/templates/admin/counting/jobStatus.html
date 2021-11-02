@@ -1,0 +1,12 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Factcast Admin UI</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="refresh" content="2"/>
+</head>
+<body>
+<h1>Factcast Admin UI / <a th:href="@{/admin/counting}">Counting</a> / Job Status</h1>
+<span th:text="'Job status of job ' + ${id} + ' is: ' + ${status}"/>
+</body>
+</html>

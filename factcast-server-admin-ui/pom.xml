@@ -47,13 +47,7 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
     </dependency>
-    <!-- Dev Tools -->
-    <!-- <dependency> -->
-    <!-- <groupId>org.springframework.boot</groupId> -->
-    <!-- <artifactId>spring-boot-devtools</artifactId> -->
-    <!-- <scope>runtime</scope> -->
-    <!-- <optional>true</optional> -->
-    <!-- </dependency> -->
+
     <!-- Test dependencies -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -66,12 +60,5 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  <!-- <build> -->
-  <!-- <plugins> -->
-  <!-- <plugin> -->
-  <!-- <groupId>org.springframework.boot</groupId> -->
-  <!-- <artifactId>spring-boot-maven-plugin</artifactId> -->
-  <!-- </plugin> -->
-  <!-- </plugins> -->
-  <!-- </build> -->
+
 </project>
