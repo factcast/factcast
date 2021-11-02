@@ -80,16 +80,15 @@ public class FactusAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public SnapshotSerializerSupplier snapshotSerializerSupplier(@NonNull SnapshotSerializer snapshotSerializer,
+  public SnapshotSerializerSupplier snapshotSerializerSupplier(@NonNull SnapshotSerializer defaultSnapshotSerializer,
                                                                @NonNull List<SnapshotSerializer> allSerializers) {
-    // TODO: if we have more snapshot serializers, do we need to use @Named?
-    return new SnapshotSerializerSupplier(snapshotSerializer, allSerializers);
+    return new SnapshotSerializerSupplier(defaultSnapshotSerializer, allSerializers);
   }
 
   @Bean
   @ConditionalOnMissingBean
   @Order(Ordered.LOWEST_PRECEDENCE)
-  public SnapshotSerializer snapshotSerializer() {
+  public SnapshotSerializer defaultSnapshotSerializer() {
     return new DefaultSnapshotSerializer();
   }
 

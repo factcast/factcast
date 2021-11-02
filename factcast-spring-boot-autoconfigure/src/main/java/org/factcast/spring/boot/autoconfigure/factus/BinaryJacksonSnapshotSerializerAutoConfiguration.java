@@ -32,7 +32,7 @@ import org.springframework.context.annotation.Configuration;
 public class BinaryJacksonSnapshotSerializerAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean(SnapshotSerializer.class)
-  public SnapshotSerializer snapshotSerializer(
+  public SnapshotSerializer defaultSnapshotSerializer(
       BinaryJacksonSnapshotSerializerCustomizer customizer) {
     return new BinaryJacksonSnapshotSerializer(customizer);
   }

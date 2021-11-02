@@ -41,7 +41,7 @@ public class Application {
   }
 
   @Bean
-  public SnapshotSerializer snapshotSerializer() {
+  public SnapshotSerializer defaultSnapshotSerializer() {
     ObjectMapper mapper = new ObjectMapper();
     mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
     mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
