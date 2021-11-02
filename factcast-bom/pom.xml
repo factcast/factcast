@@ -41,6 +41,11 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
+        <artifactId>factcast-server-admin-ui</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
         <artifactId>factcast-spring-boot-autoconfigure</artifactId>
         <version>${project.version}</version>
       </dependency>

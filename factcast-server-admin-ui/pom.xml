@@ -9,7 +9,7 @@
     <version>0.4.4-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>factcast-server-grpc</artifactId>
+  <artifactId>factcast-server-admin-ui</artifactId>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -22,70 +22,56 @@
     </dependencies>
   </dependencyManagement>
   <dependencies>
+    <!-- Lombok -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
     </dependency>
+    <!-- spring boot starters -->
     <dependency>
-      <groupId>net.devh</groupId>
-      <artifactId>grpc-server-spring-boot-starter</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-grpc-api</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-thymeleaf</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-server-admin-ui</artifactId>
-    </dependency>
+    <!-- Factcast dependencies -->
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-core</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-autoconfigure</artifactId>
-    </dependency>
+    <!-- Tools -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
     </dependency>
+    <!-- Dev Tools -->
+    <!-- <dependency> -->
+    <!-- <groupId>org.springframework.boot</groupId> -->
+    <!-- <artifactId>spring-boot-devtools</artifactId> -->
+    <!-- <scope>runtime</scope> -->
+    <!-- <optional>true</optional> -->
+    <!-- </dependency> -->
+    <!-- Test dependencies -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-security</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>net.jpountz.lz4</groupId>
-      <artifactId>lz4</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.xerial.snappy</groupId>
-      <artifactId>snappy-java</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-compress</artifactId>
-      <version>1.21</version>
+      <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.github.vladimir-bukhtoyarov</groupId>
-      <artifactId>bucket4j-core</artifactId>
-      <version>4.10.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-test</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-configuration-processor</artifactId>
-      <optional>true</optional>
+      <scope>test</scope>
     </dependency>
   </dependencies>
+  <!-- <build> -->
+  <!-- <plugins> -->
+  <!-- <plugin> -->
+  <!-- <groupId>org.springframework.boot</groupId> -->
+  <!-- <artifactId>spring-boot-maven-plugin</artifactId> -->
+  <!-- </plugin> -->
+  <!-- </plugins> -->
+  <!-- </build> -->
 </project>

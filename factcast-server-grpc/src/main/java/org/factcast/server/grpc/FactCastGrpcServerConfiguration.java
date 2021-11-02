@@ -20,9 +20,11 @@ import java.util.concurrent.TimeUnit;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.CompressionCodecs;
+import org.factcast.server.admin.ui.FactCastServerAdminUiConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 
@@ -30,6 +32,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import net.devh.boot.grpc.server.scope.GrpcRequestScope;
 
 @Configuration
+@Import(FactCastServerAdminUiConfiguration.class)
 @EnableConfigurationProperties(GrpcLimitProperties.class)
 public class FactCastGrpcServerConfiguration {
 
