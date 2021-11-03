@@ -23,6 +23,10 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.factcast.core.Fact;
@@ -43,7 +47,6 @@ import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.snapcache.PgSnapshotCache;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -55,6 +58,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.google.common.collect.Lists;
 
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -78,6 +82,8 @@ public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final PgSnapshotCache snapCache;
 
+  @NonNull private final ExecutorService countExecutors;
+
   @Autowired
   public PgFactStore(
       @NonNull JdbcTemplate jdbcTemplate,
@@ -97,6 +103,8 @@ public class PgFactStore extends AbstractFactStore {
     this.snapCache = snapCache;
     this.metrics = metrics;
     this.factTransformerService = factTransformerService;
+
+    this.countExecutors = Executors.newFixedThreadPool(2);
   }
 
   @Override
@@ -197,13 +205,25 @@ public class PgFactStore extends AbstractFactStore {
   }
 
   @Override
+  // TOOD: is this ok here?
+  @SneakyThrows
   public long countFacts(List<FactSpec> specs) {
-    // TODO: do not use count!
-    // TODO: use metrics!
-    PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-    String countSQL = pgQueryBuilder.createCountSQL();
-    var statementSetter = pgQueryBuilder.createStatementSetter();
-    return queryLong(countSQL, statementSetter);
+    var counter = countExecutors.submit(() -> countFactsInternal(specs));
+    return counter.get();
+  }
+
+    private long countFactsInternal(List<FactSpec> specs){
+    return metrics.time(
+        StoreMetrics.OP.COUNT_FACTS,
+        () -> {
+          PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+
+          // TODO: do not use count?
+          var countSQL = pgQueryBuilder.createCountSQL();
+          var statementSetter = pgQueryBuilder.createStatementSetter();
+
+          return queryLong(countSQL, statementSetter);
+        });
   }
 
   @Override
@@ -251,13 +271,13 @@ public class PgFactStore extends AbstractFactStore {
 
   private long queryLong(String sql, PreparedStatementSetter statementSetter) {
     ResultSetExtractor<Long> rch =
-            resultSet -> {
-              if (!resultSet.next()) {
-                return 0L;
-              } else {
-                return resultSet.getLong(1);
-              }
-            };
+        resultSet -> {
+          if (!resultSet.next()) {
+            return 0L;
+          } else {
+            return resultSet.getLong(1);
+          }
+        };
     return jdbcTemplate.query(sql, statementSetter, rch);
   }
 

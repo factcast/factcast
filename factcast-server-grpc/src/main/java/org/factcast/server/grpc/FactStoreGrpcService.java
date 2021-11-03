@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Properties;
@@ -493,13 +494,16 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   @Override
+  // TODO: secure for admins, maybe "ROLE_ADMIN"?
   @Secured(FactCastAuthority.AUTHENTICATED)
-  public void countFacts(MSG_FactSpecsJson request,
-                         StreamObserver<FactStoreProto.MSG_Count> responseObserver) {
-    // TODO: secure endpoint further!
+  public void countFacts(
+      MSG_FactSpecsJson request, StreamObserver<FactStoreProto.MSG_Count> responseObserver) {
     initialize(responseObserver);
 
     List<FactSpec> specs = converter.fromProto(request);
+
+    // TODO: is this fine? Or admin should be able to read it all? Might leak certain information!
+    specs.stream().map(FactSpec::ns).filter(Objects::nonNull).forEach(this::assertCanRead);
 
     responseObserver.onNext(converter.toCount(store.countFacts(specs)));
     responseObserver.onCompleted();

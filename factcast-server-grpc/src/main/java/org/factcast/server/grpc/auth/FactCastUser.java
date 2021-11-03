@@ -37,6 +37,7 @@ public class FactCastUser implements UserDetails, CredentialsContainer {
         new User(
             account.id(),
             secret,
+            // TODO: why are we not adding the roles from the account here?
             AuthorityUtils.createAuthorityList(FactCastAuthority.AUTHENTICATED));
   }
 

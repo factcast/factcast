@@ -62,7 +62,9 @@ public class StoreMetrics {
 
     INVALIDATE_STATE_TOKEN("invalidateStateToken"),
 
-    NOTIFY_ROUNDTRIP("notifyRoundTripLatency");
+    NOTIFY_ROUNDTRIP("notifyRoundTripLatency"),
+
+    COUNT_FACTS("countFacts");
 
     @NonNull final String name;
 
