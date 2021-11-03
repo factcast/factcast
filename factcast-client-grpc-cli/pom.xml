@@ -17,6 +17,21 @@
     <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
+  <repositories>
+    <repository>
+      <id>spring-release</id>
+      <name>Spring release</name>
+      <url>https://repo.spring.io/release</url>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>spring-release</id>
+      <name>Spring release</name>
+      <url>https://repo.spring.io/release</url>
+    </pluginRepository>
+  </pluginRepositories>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -36,6 +51,11 @@
     </dependencies>
   </dependencyManagement>
   <dependencies>
+    <dependency>
+      <groupId>org.springframework.experimental</groupId>
+      <artifactId>spring-native</artifactId>
+      <version>0.10.5</version>
+    </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
@@ -88,6 +108,46 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.1</version>
+        <configuration>
+          <transformers>
+            <transformer
+              implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+              <mainClass>fccli</mainClass>
+            </transformer>
+          </transformers>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.springframework.experimental</groupId>
+        <artifactId>spring-aot-maven-plugin</artifactId>
+        <version>0.10.5</version>
+        <executions>
+          <execution>
+            <id>test-generate</id>
+            <goals>
+              <goal>test-generate</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>generate</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
         <executions>
@@ -106,4 +166,55 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>native</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.graalvm.buildtools</groupId>
+            <artifactId>native-maven-plugin</artifactId>
+            <version>0.9.4</version>
+            <executions>
+              <execution>
+                <id>test-native</id>
+                <goals>
+                  <goal>test</goal>
+                </goals>
+                <phase>test</phase>
+              </execution>
+              <execution>
+                <id>build-native</id>
+                <goals>
+                  <goal>build</goal>
+                </goals>
+                <phase>package</phase>
+              </execution>
+            </executions>
+            <configuration>
+              <!-- the "static" parameter does not work under macos, maybe insert
+                conditionally? -->
+              <buildArgs>--enable-all-security-services
+                -H:ReflectionConfigurationFiles=${project.basedir}/reflection.json
+                --initialize-at-build-time=jdk.xml.internal.SecuritySupport
+                --initialize-at-build-time=javax.xml.parsers.FactoryFinder
+                --initialize-at-build-time=com.sun.org.apache.xerces
+                --initialize-at-build-time=jdk.xml.internal.JdkXmlUtils
+                --initialize-at-build-time=javax.xml.datatype.DatatypeFactory
+              </buildArgs>
+              <mainClass>org.factcast.client.grpc.cli.CLI</mainClass>
+            </configuration>
+          </plugin>
+          <!-- Avoid a clash between Spring Boot repackaging and native-maven-plugin -->
+          <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <configuration>
+              <classifier>exec</classifier>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
