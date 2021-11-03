@@ -15,15 +15,18 @@
  */
 package org.factcast.schema.registry.cli.commands
 
-import java.io.IOException
-import java.nio.file.Path
-import javax.inject.Singleton
 import mu.KotlinLogging
+import org.apache.commons.io.FileUtils
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.ProjectService
 import org.factcast.schema.registry.cli.registry.DistributionCreatorService
+import org.factcast.schema.registry.cli.tools.UnzipUtils
 import org.factcast.schema.registry.cli.validation.ValidationService
 import org.factcast.schema.registry.cli.validation.formatErrors
+import java.io.File
+import java.io.IOException
+import java.nio.file.Path
+import javax.inject.Singleton
 
 private val logger = KotlinLogging.logger {}
 
@@ -34,7 +37,12 @@ class CommandServiceImpl(
     private val projectService: ProjectService,
     private val distributionCreatorService: DistributionCreatorService
 ) : CommandService {
-    override fun build(sourceRoot: Path, outputRoot: Path, whiteList: Path?, schemaStripTitles: Boolean) = try {
+    override fun build(
+        sourceRoot: Path,
+        outputRoot: Path,
+        whiteList: Path?,
+        schemaStripTitles: Boolean
+    ) = try {
         fileSystemService.deleteDirectory(outputRoot)
 
         logger.info("Starting building Factcast Schema Registry")
@@ -53,7 +61,11 @@ class CommandServiceImpl(
                 1
             }, {
                 try {
-                    distributionCreatorService.createDistributable(outputRoot, it, schemaStripTitles)
+                    distributionCreatorService.createDistributable(
+                        outputRoot,
+                        it,
+                        schemaStripTitles
+                    )
 
                     logger.info("Build finished!")
 
@@ -85,15 +97,43 @@ class CommandServiceImpl(
                 logger.info("")
                 logger.error("Validation failed!")
 
-                 1
+                1
             }, {
                 logger.info("Project seems to be valid!")
 
-                 0
+                0
             })
     } catch (e: IllegalArgumentException) {
         logger.error(e) { "Invalid paths" }
 
-         1
+        1
     }
+
+    override fun create(targetPath: Path): Int {
+
+        CommandServiceImpl::class.java.getResourceAsStream("/factcast-example-schema-registry.zip")
+            .use {
+
+                if (it == null) {
+                    logger.error("Error, could not extract example schema registry.")
+                    return 1
+                }
+
+                logger.info("Extracting example schema registry to ${targetPath}.")
+
+                return try {
+                    UnzipUtils.unzip(it, targetPath)
+                    logger.info("Successfully extracted schema registry.")
+                    0
+
+                } catch (e: Exception) {
+
+                    logger.error(e) { "Unable to extract example schema registry." }
+                    1
+                }
+            }
+
+    }
+
+
 }

@@ -233,6 +233,7 @@
             <nonFilteredFileExtension>woff</nonFilteredFileExtension>
             <nonFilteredFileExtension>woff2</nonFilteredFileExtension>
             <nonFilteredFileExtension>png</nonFilteredFileExtension>
+            <nonFilteredFileExtension>zip</nonFilteredFileExtension>
           </nonFilteredFileExtensions>
         </configuration>
       </plugin>
