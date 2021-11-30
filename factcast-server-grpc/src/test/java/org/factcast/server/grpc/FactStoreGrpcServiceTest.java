@@ -50,6 +50,9 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
 import org.factcast.server.grpc.auth.FactCastAccount;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
+import org.factcast.server.grpc.metrics.ServerMetrics;
+import org.factcast.server.grpc.metrics.ServerMetrics.OP;
+import org.factcast.server.grpc.metrics.ServerMetricsImpl;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
@@ -70,8 +73,10 @@ public class FactStoreGrpcServiceTest {
   @Mock FactStore backend;
   @Mock GrpcRequestMetadata meta;
   @Mock FastForwardTarget ffwdTarget;
-  @Mock GrpcLimitProperties grpcLimitProperties;
+  @Mock(lenient = true) GrpcLimitProperties grpcLimitProperties;
   @Mock GrpcRequestMetadata grpcRequestMetadata;
+  @Mock
+  ServerMetrics metrics;
 
   @InjectMocks FactStoreGrpcService uut;
 
@@ -85,7 +90,9 @@ public class FactStoreGrpcServiceTest {
 
   @BeforeEach
   void setUp() {
-    uut = new FactStoreGrpcService(backend, meta);
+
+    when(grpcLimitProperties.numberOfCatchupRequestsAllowedPerClientPerMinute()).thenReturn(5);
+    when(grpcLimitProperties.initialNumberOfCatchupRequestsAllowedPerClient()).thenReturn(5);
 
     SecurityContextHolder.setContext(
         new SecurityContext() {
@@ -514,8 +521,17 @@ public class FactStoreGrpcServiceTest {
   @Test
   public void testHandshake() {
 
+    ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
+
     StreamObserver so = mock(StreamObserver.class);
-    uut.handshake(conv.empty(), so);
+    MSG_Empty empty = conv.empty();
+    uut.handshake(empty, so);
+
+    verify(metrics).timed(same(OP.HANDSHAKE),runnable.capture());
+
+    Runnable r = runnable.getValue();
+
+    r.run();
 
     verify(so).onCompleted();
     verify(so).onNext(any(MSG_ServerConfig.class));
