@@ -70,6 +70,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
+import org.factcast.server.grpc.metrics.NOPServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetrics.OP;
 import org.springframework.beans.factory.InitializingBean;
@@ -109,21 +110,21 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   @VisibleForTesting
   @Deprecated
   protected FactStoreGrpcService(FactStore store, GrpcRequestMetadata grpcRequestMetadata) {
-    this(store, grpcRequestMetadata, new GrpcLimitProperties(), FastForwardTarget.forTest(), ServerMetrics.forTest());
+    this(store, grpcRequestMetadata, new GrpcLimitProperties(), FastForwardTarget.forTest(), new NOPServerMetrics());
   }
 
   @VisibleForTesting
   @Deprecated
   protected FactStoreGrpcService(
       FactStore store, GrpcRequestMetadata grpcRequestMetadata, GrpcLimitProperties props) {
-    this(store, grpcRequestMetadata, props, FastForwardTarget.forTest(), ServerMetrics.forTest());
+    this(store, grpcRequestMetadata, props, FastForwardTarget.forTest(), new NOPServerMetrics());
   }
 
   @VisibleForTesting
   @Deprecated
   protected FactStoreGrpcService(
       FactStore store, GrpcRequestMetadata grpcRequestMetadata, FastForwardTarget target) {
-    this(store, grpcRequestMetadata, new GrpcLimitProperties(), target, ServerMetrics.forTest());
+    this(store, grpcRequestMetadata, new GrpcLimitProperties(), target, new NOPServerMetrics());
   }
 
   @Override
