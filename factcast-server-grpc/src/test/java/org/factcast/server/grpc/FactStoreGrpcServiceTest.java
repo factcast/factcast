@@ -50,15 +50,13 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
 import org.factcast.server.grpc.auth.FactCastAccount;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
+import org.factcast.server.grpc.metrics.NOPServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetrics.OP;
 import org.factcast.server.grpc.metrics.ServerMetricsImpl;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.intercept.RunAsUserToken;
 import org.springframework.security.core.Authentication;
@@ -75,8 +73,8 @@ public class FactStoreGrpcServiceTest {
   @Mock FastForwardTarget ffwdTarget;
   @Mock(lenient = true) GrpcLimitProperties grpcLimitProperties;
   @Mock GrpcRequestMetadata grpcRequestMetadata;
-  @Mock
-  ServerMetrics metrics;
+  @Spy
+  ServerMetrics metrics= new NOPServerMetrics();
 
   @InjectMocks FactStoreGrpcService uut;
 
@@ -521,17 +519,11 @@ public class FactStoreGrpcServiceTest {
   @Test
   public void testHandshake() {
 
-    ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
-
     StreamObserver so = mock(StreamObserver.class);
     MSG_Empty empty = conv.empty();
     uut.handshake(empty, so);
 
-    verify(metrics).timed(same(OP.HANDSHAKE),runnable.capture());
-
-    Runnable r = runnable.getValue();
-
-    r.run();
+    verify(metrics).timed(same(OP.HANDSHAKE),any(Runnable.class));
 
     verify(so).onCompleted();
     verify(so).onNext(any(MSG_ServerConfig.class));
