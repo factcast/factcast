@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.github.fge.jsonschema.core.exceptions.ProcessingException
 import com.github.fge.jsonschema.main.JsonSchema
 import com.github.fge.jsonschema.main.JsonSchemaFactory
-import io.kotest.assertions.arrow.either.shouldBeLeft
-import io.kotest.assertions.arrow.either.shouldBeRight
+import io.kotest.assertions.arrow.core.shouldBeLeft
+import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase
 import io.kotest.core.test.TestResult
@@ -36,7 +36,7 @@ class SchemaServiceImplTest : StringSpec() {
         "loadSchema for invalid path" {
             every { fs.readToJsonNode(dummyPath) } returns null
 
-            uut.loadSchema(dummyPath).shouldBeLeft {
+            uut.loadSchema(dummyPath).shouldBeLeft().also {
                 it.shouldBeInstanceOf<ProjectError.NoSuchFile>()
             }
 
@@ -49,7 +49,7 @@ class SchemaServiceImplTest : StringSpec() {
             every { fs.readToJsonNode(dummyPath) } returns jsonNodeMock
             every { jsonSchemaFactory.getJsonSchema(any<JsonNode>()) } throws ProcessingException("")
 
-            uut.loadSchema(dummyPath).shouldBeLeft {
+            uut.loadSchema(dummyPath).shouldBeLeft().also {
                 it.shouldBeInstanceOf<ProjectError.CorruptedSchema>()
             }
 
@@ -63,7 +63,7 @@ class SchemaServiceImplTest : StringSpec() {
             every { fs.readToJsonNode(dummyPath) } returns jsonNodeMock
             every { jsonSchemaFactory.getJsonSchema(any<JsonNode>()) } returns schemaMock
 
-            uut.loadSchema(dummyPath).shouldBeRight {
+            uut.loadSchema(dummyPath).shouldBeRight().also {
                 it shouldBe schemaMock
             }
 
