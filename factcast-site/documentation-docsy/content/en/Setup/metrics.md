@@ -49,7 +49,9 @@ As this list is continuously growing, we cannot guarantee
 the documentation's completeness. If you want to see the current list of operations, please look
 at for instance [StoreMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-store/src/main/java/org/factcast/store/internal/StoreMetrics.java)
 , [RegistryMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-store/src/main/java/org/factcast/store/registry/metrics/RegistryMetrics.java)
-, or [ServerMetrics.java](https://github.com/factcast/factcast/blob/master/)... TODO
+, or [ServerMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-server-grpc/src/main/java/org/factcast/server/grpc/metrics/ServerMetrics.java) respectively.
+
+
 
 At the **time of writing (0.3.10)**, the store operations that are counted/measured are:
 
@@ -95,6 +97,12 @@ At the **time of writing (0.3.10)**, the registry events that are counted are:
 |    factValidationFailed | x | 
 |    schemaMissing | x | 
 |    schemaUpdateFailure | x |
+
+At the **time of writing (0.4.4)**, the server operations that are counted/measured are:
+
+| operation               | duration  |
+|-------------------------|---|
+| handshake               |  x |
 
 
 ### gRPC Metrics
