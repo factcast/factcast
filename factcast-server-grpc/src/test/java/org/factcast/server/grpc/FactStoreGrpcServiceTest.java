@@ -50,12 +50,13 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
 import org.factcast.server.grpc.auth.FactCastAccount;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
+import org.factcast.server.grpc.metrics.NOPServerMetrics;
+import org.factcast.server.grpc.metrics.ServerMetrics;
+import org.factcast.server.grpc.metrics.ServerMetrics.OP;
+import org.factcast.server.grpc.metrics.ServerMetricsImpl;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.intercept.RunAsUserToken;
 import org.springframework.security.core.Authentication;
@@ -70,8 +71,10 @@ public class FactStoreGrpcServiceTest {
   @Mock FactStore backend;
   @Mock GrpcRequestMetadata meta;
   @Mock FastForwardTarget ffwdTarget;
-  @Mock GrpcLimitProperties grpcLimitProperties;
+  @Mock(lenient = true) GrpcLimitProperties grpcLimitProperties;
   @Mock GrpcRequestMetadata grpcRequestMetadata;
+  @Spy
+  ServerMetrics metrics= new NOPServerMetrics();
 
   @InjectMocks FactStoreGrpcService uut;
 
@@ -85,7 +88,9 @@ public class FactStoreGrpcServiceTest {
 
   @BeforeEach
   void setUp() {
-    uut = new FactStoreGrpcService(backend, meta);
+
+    when(grpcLimitProperties.numberOfCatchupRequestsAllowedPerClientPerMinute()).thenReturn(5);
+    when(grpcLimitProperties.initialNumberOfCatchupRequestsAllowedPerClient()).thenReturn(5);
 
     SecurityContextHolder.setContext(
         new SecurityContext() {
@@ -515,7 +520,10 @@ public class FactStoreGrpcServiceTest {
   public void testHandshake() {
 
     StreamObserver so = mock(StreamObserver.class);
-    uut.handshake(conv.empty(), so);
+    MSG_Empty empty = conv.empty();
+    uut.handshake(empty, so);
+
+    verify(metrics).timed(same(OP.HANDSHAKE),any(Runnable.class));
 
     verify(so).onCompleted();
     verify(so).onNext(any(MSG_ServerConfig.class));
