@@ -1,6 +1,7 @@
 package org.factcast.schema.registry.cli.utils
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.paths.shouldBeADirectory
 import io.kotest.matchers.paths.shouldBeEmptyDirectory
 import io.kotest.matchers.paths.shouldContainFile
 import io.kotest.matchers.paths.shouldNotBeEmptyDirectory
@@ -31,6 +32,7 @@ class UnzipUtilsTest : StringSpec() {
 
                 tempDir.resolve("emptyDir").shouldBeEmptyDirectory()
 
+                tempDir.resolve("nonEmptyDir").shouldBeADirectory()
                 tempDir.resolve("nonEmptyDir").shouldNotBeEmptyDirectory()
                 tempDir.resolve("nonEmptyDir").shouldContainFile("subDirFile")
 

@@ -230,6 +230,12 @@
             <nonFilteredFileExtension>png</nonFilteredFileExtension>
             <nonFilteredFileExtension>zip</nonFilteredFileExtension>
           </nonFilteredFileExtensions>
+          <resources>
+            <resource>
+              <directory>src/main/resources</directory>
+              <filtering>false</filtering>
+            </resource>
+          </resources>
         </configuration>
       </plugin>
       <plugin>
