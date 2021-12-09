@@ -16,14 +16,12 @@
 package org.factcast.schema.registry.cli.commands
 
 import mu.KotlinLogging
-import org.apache.commons.io.FileUtils
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.ProjectService
 import org.factcast.schema.registry.cli.registry.DistributionCreatorService
-import org.factcast.schema.registry.cli.tools.UnzipUtils
+import org.factcast.schema.registry.cli.utils.UnzipUtils
 import org.factcast.schema.registry.cli.validation.ValidationService
 import org.factcast.schema.registry.cli.validation.formatErrors
-import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import javax.inject.Singleton

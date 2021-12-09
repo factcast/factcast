@@ -1,4 +1,4 @@
-package org.factcast.schema.registry.cli.tools
+package org.factcast.schema.registry.cli.utils
 
 import org.apache.commons.io.FileUtils
 import java.io.*
@@ -13,7 +13,8 @@ import kotlin.io.path.exists
  * a destination directory.
  *
  * Taken from https://gist.github.com/NitinPraksash9911/dea21ec4b8ae7df068f8f891187b6d1e
- * and modified to work with InputStreams and java.nio.Path
+ * and modified to work with InputStreams and java.nio.Path and removed bug that files in
+ * subdirectories made it crash.
  *
  */
 object UnzipUtils {
@@ -46,7 +47,7 @@ object UnzipUtils {
                             // if the entry is a file, extracts it
                             extractFile(input, filePath)
                         } else {
-                            // if the entry is a directory, make the directory
+                            // if the entry is an empty directory or was explicitly added, create the directory
                             filePath.createDirectories()
                         }
 
@@ -67,6 +68,10 @@ object UnzipUtils {
      */
     @Throws(IOException::class)
     private fun extractFile(inputStream: InputStream, destFilePath: Path) {
+
+        // sometimes required
+        destFilePath.parent.createDirectories()
+
         val bos = BufferedOutputStream(FileOutputStream(destFilePath.toFile()))
         val bytesIn = ByteArray(BUFFER_SIZE)
         var read: Int
