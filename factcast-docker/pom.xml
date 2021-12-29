@@ -88,9 +88,9 @@
       </plugin>
 
       <plugin>
-        <groupId>com.spotify</groupId>
-        <artifactId>dockerfile-maven-plugin</artifactId>
-        <version>1.4.13</version>
+        <groupId>io.fabric8</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
+        <version>0.38.1</version>
         <executions>
           <execution>
             <id>default</id>
@@ -98,13 +98,27 @@
               <goal>build</goal>
             </goals>
             <configuration>
-              <tag>latest</tag>
+              <images>
+                <image>
+                  <build>
+                    <tags>
+                      <tag>latest</tag>
+                    </tags>
+                  </build>
+                </image>
+              </images>
             </configuration>
           </execution>
         </executions>
         <configuration>
-          <repository>factcast/factcast</repository>
-          <tag>latest</tag>
+          <images>
+            <image>
+              <name>factcast/factcast</name>
+              <build>
+                <dockerFileDir>${project.basedir}</dockerFileDir>
+              </build>
+            </image>
+          </images>
         </configuration>
       </plugin>
     </plugins>
@@ -120,9 +134,9 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>com.spotify</groupId>
-            <artifactId>dockerfile-maven-plugin</artifactId>
-            <version>1.4.13</version>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <version>0.38.1</version>
             <executions>
               <execution>
                 <id>default</id>
@@ -131,13 +145,30 @@
                   <goal>push</goal>
                 </goals>
                 <configuration>
-                  <tag>${project.version}</tag>
+                  <images>
+                    <image>
+                      <build>
+                        <tags>
+                          <tag>${project.version}</tag>
+                        </tags>
+                      </build>
+                    </image>
+                  </images>
                 </configuration>
               </execution>
             </executions>
             <configuration>
-              <repository>factcast/factcast</repository>
-              <tag>latest</tag>
+              <images>
+                <image>
+                  <name>factcast/factcast</name>
+                  <build>
+                    <dockerFileDir>${project.basedir}</dockerFileDir>
+                    <tags>
+                      <tag>latest</tag>
+                    </tags>
+                  </build>
+                </image>
+              </images>
             </configuration>
           </plugin>
         </plugins>
