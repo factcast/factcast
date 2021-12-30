@@ -1,5 +1,5 @@
 #!/bin/bash
-../mvnw -Ddocker deploy docker:tag docker:push
+../mvnw -Ddocker deploy docker:push
 echo "now you can do: "
 echo ""
 echo "docker tag factcast/factcast:latest factcast/factcast:<VERSION>"
