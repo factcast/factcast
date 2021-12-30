@@ -62,17 +62,6 @@
                   <goal>build</goal>
                   <goal>push</goal>
                 </goals>
-                <configuration>
-                  <images>
-                    <image>
-                      <build>
-                        <tags>
-                          <tag>${project.version}</tag>
-                        </tags>
-                      </build>
-                    </image>
-                  </images>
-                </configuration>
               </execution>
             </executions>
             <configuration>
@@ -83,6 +72,7 @@
                     <dockerFileDir>${project.basedir}</dockerFileDir>
                     <tags>
                       <tag>latest</tag>
+                      <tag>${project.version}</tag>
                     </tags>
                   </build>
                 </image>

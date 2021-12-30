@@ -97,17 +97,6 @@
             <goals>
               <goal>build</goal>
             </goals>
-            <configuration>
-              <images>
-                <image>
-                  <build>
-                    <tags>
-                      <tag>latest</tag>
-                    </tags>
-                  </build>
-                </image>
-              </images>
-            </configuration>
           </execution>
         </executions>
         <configuration>
@@ -116,6 +105,9 @@
               <name>factcast/factcast</name>
               <build>
                 <dockerFileDir>${project.basedir}</dockerFileDir>
+                <tags>
+                  <tag>latest</tag>
+                </tags>
               </build>
             </image>
           </images>
@@ -144,17 +136,6 @@
                   <goal>build</goal>
                   <goal>push</goal>
                 </goals>
-                <configuration>
-                  <images>
-                    <image>
-                      <build>
-                        <tags>
-                          <tag>${project.version}</tag>
-                        </tags>
-                      </build>
-                    </image>
-                  </images>
-                </configuration>
               </execution>
             </executions>
             <configuration>
@@ -165,6 +146,7 @@
                     <dockerFileDir>${project.basedir}</dockerFileDir>
                     <tags>
                       <tag>latest</tag>
+                      <tag>${project.version}</tag>
                     </tags>
                   </build>
                 </image>
