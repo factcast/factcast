@@ -111,7 +111,7 @@
     <redisson.version>3.16.7</redisson.version>
     <redisson-spring-boot-starter.version>3.16.7</redisson-spring-boot-starter.version>
     <graaljs.version>21.3.0</graaljs.version>
-    <shedlock.version>4.30.0</shedlock.version>
+    <shedlock.version>4.31.0</shedlock.version>
   </properties>
   <dependencies>
     <dependency>
