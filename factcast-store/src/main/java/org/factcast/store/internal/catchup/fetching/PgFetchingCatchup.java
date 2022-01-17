@@ -56,6 +56,8 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final PgMetrics metrics;
 
+  private long factCounter = 0L;
+
   @SneakyThrows
   @Override
   public void run() {
@@ -87,6 +89,7 @@ public class PgFetchingCatchup implements PgCatchup {
         catchupSQL,
         b.createStatementSetter(serial),
         createRowCallbackHandler(skipTesting, extractor));
+    metrics.counter(EVENT.CATCHUP_FACT).increment(factCounter); // TODO this needs to TAG it for each subscription?
   }
 
   @VisibleForTesting
@@ -95,7 +98,7 @@ public class PgFetchingCatchup implements PgCatchup {
       Fact f = extractor.mapRow(rs, 0); // does not use the rowNum anyway
       if (skipTesting || postQueryMatcher.test(f)) {
         subscription.notifyElement(f);
-        metrics.counter(EVENT.CATCHUP_FACT);
+        factCounter++;
       } else {
         log.trace("{} filtered id={}", req, f.id());
       }
