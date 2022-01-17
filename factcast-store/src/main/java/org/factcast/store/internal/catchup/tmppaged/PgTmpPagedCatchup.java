@@ -25,6 +25,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
+import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -49,7 +50,10 @@ public class PgTmpPagedCatchup implements PgCatchup {
   @NonNull final SubscriptionImpl subscription;
 
   @NonNull final AtomicLong serial;
+
   @NonNull final PgMetrics metrics;
+
+  private long factCounter = 0L;
 
   @SneakyThrows
   @Override
@@ -79,11 +83,13 @@ public class PgTmpPagedCatchup implements PgCatchup {
             UUID factId = f.id();
             if (skipTesting || postQueryMatcher.test(f)) {
               subscription.notifyElement(f);
+              factCounter++;
             } else {
               log.trace("{} filtered id={}", request, factId);
             }
           }
         } while (!facts.isEmpty());
+        metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT).increment(factCounter); // TODO this needs to TAG it for each subscription?
       }
     } finally {
       ds.destroy();
