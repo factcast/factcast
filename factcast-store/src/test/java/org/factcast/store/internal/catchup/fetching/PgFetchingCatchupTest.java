@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
+import io.micrometer.core.instrument.Counter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
@@ -25,6 +26,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
+import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
@@ -87,6 +89,22 @@ class PgFetchingCatchupTest {
     @BeforeEach
     void setup() {
       Mockito.when(props.getPageSize()).thenReturn(47);
+      when(metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT)).thenReturn(new Counter() {
+        @Override
+        public void increment(double v) {
+
+        }
+
+        @Override
+        public double count() {
+          return 0;
+        }
+
+        @Override
+        public Id getId() {
+          return null;
+        }
+      });
     }
 
     @Test
