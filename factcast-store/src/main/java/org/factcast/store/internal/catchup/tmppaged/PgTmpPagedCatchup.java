@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal.catchup.tmppaged;
 
+import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -40,17 +41,11 @@ import java.util.concurrent.atomic.AtomicLong;
 public class PgTmpPagedCatchup implements PgCatchup {
 
   @NonNull final PgConnectionSupplier connectionSupplier;
-
   @NonNull final StoreConfigurationProperties props;
-
   @NonNull final SubscriptionRequestTO request;
-
   @NonNull final PgPostQueryMatcher postQueryMatcher;
-
   @NonNull final SubscriptionImpl subscription;
-
   @NonNull final AtomicLong serial;
-
   @NonNull final PgMetrics metrics;
 
   private long factCounter = 0L;
@@ -62,37 +57,41 @@ public class PgTmpPagedCatchup implements PgCatchup {
     SingleConnectionDataSource ds = new SingleConnectionDataSource(connectionSupplier.get(), true);
     try {
       var jdbc = new JdbcTemplate(ds);
-
-      jdbc.execute("CREATE TEMPORARY TABLE catchup(ser bigint)");
-
-      PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request);
-      // first collect all the sers
-      var numberOfFactsToCatchUp = prep.prepareCatchup(serial);
-      // and AFTERWARDs create the inmem index
-      jdbc.execute("CREATE INDEX catchup_tmp_idx1 ON catchup(ser ASC)"); // improves perf on sorting
-
-      var skipTesting = postQueryMatcher.canBeSkipped();
-
-      if (numberOfFactsToCatchUp > 0) {
-        PgCatchUpFetchTmpPage fetch = new PgCatchUpFetchTmpPage(jdbc, props.getPageSize(), request);
-        List<Fact> facts;
-        do {
-          facts = fetch.fetchFacts(serial);
-
-          for (Fact f : facts) {
-            UUID factId = f.id();
-            if (skipTesting || postQueryMatcher.test(f)) {
-              subscription.notifyElement(f);
-              factCounter++;
-            } else {
-              log.trace("{} filtered id={}", request, factId);
-            }
-          }
-        } while (!facts.isEmpty());
-        metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT).increment(factCounter); // TODO this needs to TAG it for each subscription?
-      }
+      fetch(jdbc);
     } finally {
       ds.destroy();
+    }
+  }
+
+  @VisibleForTesting
+  void fetch(JdbcTemplate jdbc) {
+    jdbc.execute("CREATE TEMPORARY TABLE catchup(ser bigint)");
+
+    PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request);
+    // first collect all the sers
+    var numberOfFactsToCatchUp = prep.prepareCatchup(serial);
+    // and AFTERWARDs create the inmem index
+    jdbc.execute("CREATE INDEX catchup_tmp_idx1 ON catchup(ser ASC)"); // improves perf on sorting
+
+    var skipTesting = postQueryMatcher.canBeSkipped();
+
+    if (numberOfFactsToCatchUp > 0) {
+      PgCatchUpFetchTmpPage fetch = new PgCatchUpFetchTmpPage(jdbc, props.getPageSize(), request);
+      List<Fact> facts;
+      do {
+        facts = fetch.fetchFacts(serial);
+
+        for (Fact f : facts) {
+          UUID factId = f.id();
+          if (skipTesting || postQueryMatcher.test(f)) {
+            subscription.notifyElement(f);
+            factCounter++;
+          } else {
+            log.trace("{} filtered id={}", request, factId);
+          }
+        }
+      } while (!facts.isEmpty());
+      metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT).increment(factCounter); // TODO this needs to TAG it for each subscription?
     }
   }
 }
