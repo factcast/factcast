@@ -57,7 +57,7 @@ At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group 
 
 | operation               | type    | description                                                                                                                        |
 |-------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------|
-| handshake               | `timer` | Time to process the GRPC handshakes on the application level. Does not include the duration of marshalling and protocol mechanics. |
+| handshake               | `timer` | Duration of the initial handshake. |
 
 At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.store` are:
 
