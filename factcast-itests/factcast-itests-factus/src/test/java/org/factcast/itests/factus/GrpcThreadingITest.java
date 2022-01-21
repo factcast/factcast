@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.*;
 @EnableAutoConfiguration
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @Slf4j
-class GrpcThreadingITest extends AbstractFactCastIntegrationTest {
+public class GrpcThreadingITest extends AbstractFactCastIntegrationTest {
   @Autowired JdbcTemplate jdbcTemplate;
   @Autowired PlatformTransactionManager platformTransactionManager;
   @Autowired Factus factus;

@@ -15,11 +15,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 @SpringBootTest
 @Slf4j
+@DirtiesContext
 public class SpringJdbcTransactionalProjectionExampleITest extends AbstractFactCastIntegrationTest {
 
   @Autowired JdbcTemplate jdbcTemplate;
