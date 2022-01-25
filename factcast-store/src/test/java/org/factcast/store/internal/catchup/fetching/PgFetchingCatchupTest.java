@@ -89,22 +89,7 @@ class PgFetchingCatchupTest {
     @BeforeEach
     void setup() {
       Mockito.when(props.getPageSize()).thenReturn(47);
-      when(metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT)).thenReturn(new Counter() {
-        @Override
-        public void increment(double v) {
-
-        }
-
-        @Override
-        public double count() {
-          return 0;
-        }
-
-        @Override
-        public Id getId() {
-          return null;
-        }
-      });
+      when(metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT)).thenReturn(mock(Counter.class));
     }
 
     @Test

@@ -102,22 +102,7 @@ class PgTmpPagedCatchupTest {
           .thenReturn(testFactList)
           .thenReturn(new ArrayList<Fact>());
       // stop iteration after first fetch
-      when(metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT)).thenReturn(new Counter() {
-        @Override
-        public void increment(double v) {
-
-        }
-
-        @Override
-        public double count() {
-          return 0;
-        }
-
-        @Override
-        public Id getId() {
-          return null;
-        }
-      });
+      when(metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT)).thenReturn(mock(Counter.class));
       when(postQueryMatcher.test(testFact)).thenReturn(true);
       underTest.fetch(jdbc);
       verify(subscription).notifyElement(testFact);
