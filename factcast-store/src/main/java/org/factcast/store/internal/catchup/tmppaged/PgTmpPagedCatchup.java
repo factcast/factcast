@@ -16,6 +16,9 @@
 package org.factcast.store.internal.catchup.tmppaged;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -32,23 +35,25 @@ import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
-
 @Slf4j
 @RequiredArgsConstructor
 public class PgTmpPagedCatchup implements PgCatchup {
 
-  @NonNull final PgConnectionSupplier connectionSupplier;
-  @NonNull final StoreConfigurationProperties props;
-  @NonNull final SubscriptionRequestTO request;
-  @NonNull final PgPostQueryMatcher postQueryMatcher;
-  @NonNull final SubscriptionImpl subscription;
-  @NonNull final AtomicLong serial;
-  @NonNull final PgMetrics metrics;
+  @NonNull
+  final PgConnectionSupplier connectionSupplier;
+  @NonNull
+  final StoreConfigurationProperties props;
+  @NonNull
+  final SubscriptionRequestTO request;
+  @NonNull
+  final PgPostQueryMatcher postQueryMatcher;
+  @NonNull
+  final SubscriptionImpl subscription;
+  @NonNull
+  final AtomicLong serial;
+  @NonNull
+  final PgMetrics metrics;
 
-  private long factCounter = 0L;
 
   @SneakyThrows
   @Override
@@ -65,6 +70,7 @@ public class PgTmpPagedCatchup implements PgCatchup {
 
   @VisibleForTesting
   void fetch(JdbcTemplate jdbc) {
+    long factCounter = 0L;
     jdbc.execute("CREATE TEMPORARY TABLE catchup(ser bigint)");
 
     PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request);
@@ -86,7 +92,8 @@ public class PgTmpPagedCatchup implements PgCatchup {
           if (skipTesting || postQueryMatcher.test(f)) {
             subscription.notifyElement(f);
             factCounter++;
-          } else {
+          }
+          else {
             log.trace("{} filtered id={}", request, factId);
           }
         }

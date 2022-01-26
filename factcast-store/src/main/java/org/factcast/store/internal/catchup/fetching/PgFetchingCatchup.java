@@ -16,6 +16,7 @@
 package org.factcast.store.internal.catchup.fetching;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -23,11 +24,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics.EVENT;
+import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
@@ -36,27 +37,32 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 @Slf4j
 @RequiredArgsConstructor
 public class PgFetchingCatchup implements PgCatchup {
 
-  @NonNull final PgConnectionSupplier connectionSupplier;
+  @NonNull
+  final PgConnectionSupplier connectionSupplier;
 
-  @NonNull final StoreConfigurationProperties props;
+  @NonNull
+  final StoreConfigurationProperties props;
 
-  @NonNull final SubscriptionRequestTO req;
+  @NonNull
+  final SubscriptionRequestTO req;
 
-  @NonNull final PgPostQueryMatcher postQueryMatcher;
+  @NonNull
+  final PgPostQueryMatcher postQueryMatcher;
 
-  @NonNull final SubscriptionImpl subscription;
+  @NonNull
+  final SubscriptionImpl subscription;
 
-  @NonNull final AtomicLong serial;
+  @NonNull
+  final AtomicLong serial;
 
-  @NonNull final PgMetrics metrics;
+  @NonNull
+  final PgMetrics metrics;
 
-  private long factCounter = 0L;
+  protected long factCounter = 0L;
 
   @SneakyThrows
   @Override
@@ -86,9 +92,9 @@ public class PgFetchingCatchup implements PgCatchup {
     var extractor = new PgFactExtractor(serial);
     String catchupSQL = b.createSQL();
     jdbc.query(
-        catchupSQL,
-        b.createStatementSetter(serial),
-        createRowCallbackHandler(skipTesting, extractor));
+            catchupSQL,
+            b.createStatementSetter(serial),
+            createRowCallbackHandler(skipTesting, extractor));
     metrics.counter(EVENT.CATCHUP_FACT).increment(factCounter); // TODO this needs to TAG it for each subscription?
   }
 
@@ -99,7 +105,8 @@ public class PgFetchingCatchup implements PgCatchup {
       if (skipTesting || postQueryMatcher.test(f)) {
         subscription.notifyElement(f);
         factCounter++;
-      } else {
+      }
+      else {
         log.trace("{} filtered id={}", req, f.id());
       }
     };
