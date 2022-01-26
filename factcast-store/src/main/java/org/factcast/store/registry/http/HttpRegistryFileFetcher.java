@@ -29,6 +29,8 @@ import org.factcast.store.registry.RegistryFileFetcher;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.TransformationSource;
 import org.factcast.store.registry.validation.schema.SchemaSource;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 
 /**
  * fetches one schema from the registry according to its coordinates (SchemaKey)
@@ -59,6 +61,7 @@ public class HttpRegistryFileFetcher implements RegistryFileFetcher {
   }
 
   @Override
+  @Retryable(value = RegistryFileFetchException.class, maxAttempts = 10, backoff = @Backoff(delay = 100))
   public String fetchTransformation(TransformationSource key) throws IOException {
     String id = key.id();
     URL url = new URL(baseUrl, id);
@@ -69,6 +72,7 @@ public class HttpRegistryFileFetcher implements RegistryFileFetcher {
   }
 
   @Override
+  @Retryable(value = RegistryFileFetchException.class, maxAttempts = 10, backoff = @Backoff(delay = 100))
   public String fetchSchema(SchemaSource key) throws IOException {
     String id = key.id();
 

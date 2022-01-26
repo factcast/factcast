@@ -133,6 +133,11 @@
       <artifactId>spring-boot-starter-jdbc</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-store</artifactId>
+      <scope>test</scope>
+    </dependency>
 
   </dependencies>
   <build>
