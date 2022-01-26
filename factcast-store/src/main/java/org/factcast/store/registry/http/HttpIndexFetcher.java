@@ -30,6 +30,8 @@ import org.factcast.store.registry.IndexFetcher;
 import org.factcast.store.registry.RegistryIndex;
 import org.factcast.store.registry.SchemaRegistryUnavailableException;
 import org.factcast.store.registry.metrics.RegistryMetrics;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 
 /**
  * fetches the index (using if-modified-since)
@@ -65,6 +67,7 @@ public class HttpIndexFetcher implements IndexFetcher {
 
   /** @return future for empty, if index is unchanged, otherwise the updated index. */
   @Override
+  @Retryable(value = SchemaRegistryUnavailableException.class, maxAttempts = 10, backoff = @Backoff(delay = 100))
   public Optional<RegistryIndex> fetchIndex() {
 
     try {
