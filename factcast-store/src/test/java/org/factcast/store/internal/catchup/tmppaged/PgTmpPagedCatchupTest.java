@@ -85,7 +85,7 @@ class PgTmpPagedCatchupTest {
     @BeforeEach
     void setup() {
       doNothing().when(jdbc).execute(anyString());
-      when(metrics.counter(any())).thenReturn(counter);
+
       when(postQueryMatcher.canBeSkipped()).thenReturn(true);
     }
 
@@ -118,13 +118,13 @@ class PgTmpPagedCatchupTest {
               .thenReturn(new ArrayList<Fact>());
       // stop iteration after first fetch
       when(metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT)).thenReturn(mock(Counter.class));
-      when(postQueryMatcher.test(testFact)).thenReturn(true);
       underTest.fetch(jdbc);
       verify(subscription).notifyElement(testFact);
     }
 
     @Test
     void counts() {
+      when(metrics.counter(any())).thenReturn(counter);
       when(jdbc.execute(anyString(), any(PreparedStatementCallback.class))).thenReturn(1L);
       List<Fact> testFactList = Lists.newArrayList(new TestFact(), new TestFact());
       when(jdbc
