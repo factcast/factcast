@@ -39,6 +39,7 @@
     <module>factcast-factus</module>
     <module>factcast-factus-redis</module>
     <module>factcast-factus-spring-tx</module>
+    <module>factcast-factus-dynamodb</module>
     <module>factcast-server-grpc</module>
     <module>factcast-grpc-api</module>
     <module>factcast-schema-registry-cli</module>
