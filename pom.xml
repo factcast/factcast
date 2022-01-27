@@ -94,7 +94,7 @@
     <mockito.version>3.12.4</mockito.version>
     <junit-jupiter.version>5.8.2</junit-jupiter.version>
     <lombok.version>1.18.22</lombok.version>
-    <slf4j-api.version>1.7.33</slf4j-api.version>
+    <slf4j-api.version>1.7.35</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
     <spring-boot.version>2.5.5</spring-boot.version>
@@ -109,9 +109,9 @@
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>4.6.4</kotest.version>
     <redisson.version>3.16.8</redisson.version>
-    <redisson-spring-boot-starter.version>3.16.7</redisson-spring-boot-starter.version>
+    <redisson-spring-boot-starter.version>3.16.8</redisson-spring-boot-starter.version>
     <graaljs.version>21.3.1</graaljs.version>
-    <shedlock.version>4.31.0</shedlock.version>
+    <shedlock.version>4.32.0</shedlock.version>
   </properties>
   <dependencies>
     <dependency>
