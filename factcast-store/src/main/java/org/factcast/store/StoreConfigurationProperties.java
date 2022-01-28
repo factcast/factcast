@@ -204,5 +204,18 @@ public class StoreConfigurationProperties implements InitializingBean {
               + PROPERTIES_PREFIX
               + ".integrationTestMode) ****");
     }
+
+    if(!isSchemaRegistryConfigured()) {
+      log.warn(
+              "**** SchemaRegistry-mode is disabled. Fact validation will not happen. This is"
+                      + " discouraged for production environments. You have been warned. ****");
+
+      } else  {
+        if(!isValidationEnabled()) {
+          log.warn(
+                  "**** SchemaRegistry-mode is enabled but validation of Facts is disabled. This is"
+                          + " discouraged for production environments. You have been warned. ****");
+        }
+    }
   }
 }
