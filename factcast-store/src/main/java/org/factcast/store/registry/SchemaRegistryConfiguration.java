@@ -73,7 +73,7 @@ public class SchemaRegistryConfiguration {
 
     try {
 
-      if (p.isValidationEnabled()) {
+      if (p.isSchemaRegistryConfigured()) {
         String fullUrl = p.getSchemaRegistryUrl();
         if (!fullUrl.contains(":")) {
           fullUrl = "classpath:" + fullUrl;
@@ -130,7 +130,7 @@ public class SchemaRegistryConfiguration {
   @Bean
   public ScheduledRegistryRefresher scheduledRegistryFresher(
       SchemaRegistry registry, StoreConfigurationProperties properties) {
-    if (properties.isValidationEnabled()) {
+    if (properties.isSchemaRegistryConfigured()) {
       return new ScheduledRegistryRefresher(registry);
     } else return null;
   }

@@ -52,6 +52,13 @@ public class StoreConfigurationProperties implements InitializingBean {
   String schemaRegistryUrl;
 
   /**
+   * If a schemaRegistryUrl is set, you can still decide to enable or disable validation based on the definitions there.
+   * This is mostly useful for batch insertions during a bigger migration for example where your facts are already validated,
+   * and you want to reduce load on the FactCast server.
+   */
+  boolean validationEnabled = true;
+
+  /**
    * If validation is enabled, this controls if the local snapshot of the registry is persisted to
    * psql or just kept in mem. (Defaults to true)
    */
@@ -151,7 +158,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   Duration tailCreationTimeout = Duration.ofDays(1).minusMinutes(1);
 
-  public boolean isValidationEnabled() {
+  public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
   }
 
