@@ -16,7 +16,6 @@
 package org.factcast.store.internal;
 
 import java.util.Random;
-
 import lombok.AccessLevel;
 import lombok.Generated;
 import lombok.NonNull;

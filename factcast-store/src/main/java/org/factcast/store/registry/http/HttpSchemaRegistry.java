@@ -16,6 +16,7 @@
 package org.factcast.store.registry.http;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.net.URL;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.StoreConfigurationProperties;
@@ -23,8 +24,6 @@ import org.factcast.store.registry.AbstractSchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.TransformationStore;
 import org.factcast.store.registry.validation.schema.SchemaStore;
-
-import java.net.URL;
 
 @Slf4j
 public class HttpSchemaRegistry extends AbstractSchemaRegistry {

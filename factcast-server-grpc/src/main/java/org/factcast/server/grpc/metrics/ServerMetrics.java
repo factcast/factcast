@@ -24,7 +24,6 @@ import org.factcast.factus.metrics.SupplierWithException;
 
 public interface ServerMetrics {
 
-
   void timed(OP operation, Runnable fn);
 
   void timed(OP operation, Tags tags, Runnable fn);
@@ -68,5 +67,4 @@ public interface ServerMetrics {
       this.event = event;
     }
   }
-
 }
