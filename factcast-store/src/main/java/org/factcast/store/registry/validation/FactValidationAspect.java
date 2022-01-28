@@ -31,6 +31,7 @@ import org.factcast.core.FactValidationException;
 @RequiredArgsConstructor
 public class FactValidationAspect {
 
+  public static final int MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL = 10;
   private final FactValidator validator;
 
   @SuppressWarnings("unchecked")
@@ -46,11 +47,9 @@ public class FactValidationAspect {
   }
 
   private void validate(List<? extends Fact> facts) {
+    var stream = facts.size() >= MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL ? facts.parallelStream() : facts.stream();
     var errors =
-        facts.parallelStream()
-            .map(validator::validate)
-            .flatMap(Collection::stream)
-            .collect(Collectors.toList());
+        stream.map(validator::validate).flatMap(Collection::stream).collect(Collectors.toList());
 
     if (!errors.isEmpty())
       throw new FactValidationException(
