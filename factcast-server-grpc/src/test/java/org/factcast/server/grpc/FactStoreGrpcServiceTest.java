@@ -16,8 +16,8 @@
 package org.factcast.server.grpc;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -53,7 +53,6 @@ import org.factcast.server.grpc.auth.FactCastUser;
 import org.factcast.server.grpc.metrics.NOPServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetrics.OP;
-import org.factcast.server.grpc.metrics.ServerMetricsImpl;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.*;
@@ -71,10 +70,12 @@ public class FactStoreGrpcServiceTest {
   @Mock FactStore backend;
   @Mock GrpcRequestMetadata meta;
   @Mock FastForwardTarget ffwdTarget;
-  @Mock(lenient = true) GrpcLimitProperties grpcLimitProperties;
+
+  @Mock(lenient = true)
+  GrpcLimitProperties grpcLimitProperties;
+
   @Mock GrpcRequestMetadata grpcRequestMetadata;
-  @Spy
-  ServerMetrics metrics= new NOPServerMetrics();
+  @Spy ServerMetrics metrics = new NOPServerMetrics();
 
   @InjectMocks FactStoreGrpcService uut;
 
@@ -523,7 +524,7 @@ public class FactStoreGrpcServiceTest {
     MSG_Empty empty = conv.empty();
     uut.handshake(empty, so);
 
-    verify(metrics).timed(same(OP.HANDSHAKE),any(Runnable.class));
+    verify(metrics).timed(same(OP.HANDSHAKE), any(Runnable.class));
 
     verify(so).onCompleted();
     verify(so).onNext(any(MSG_ServerConfig.class));

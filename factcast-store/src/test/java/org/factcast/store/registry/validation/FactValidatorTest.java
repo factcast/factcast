@@ -15,10 +15,12 @@
  */
 package org.factcast.store.registry.validation;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import com.github.fge.jsonschema.main.JsonSchema;
 import io.micrometer.core.instrument.Tags;
 import java.util.Optional;
-
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.NOPRegistryMetrics;
@@ -29,11 +31,6 @@ import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 public class FactValidatorTest {
   @Test
