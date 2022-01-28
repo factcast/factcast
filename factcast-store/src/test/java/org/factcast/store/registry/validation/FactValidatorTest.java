@@ -30,20 +30,31 @@ import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class FactValidatorTest {
   @Test
-  public void testValidateIfDisabled() throws Exception {
+  public void testSchemaRegistryDisabled() throws Exception {
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
-    when(props.isValidationEnabled()).thenReturn(false);
+    when(props.isSchemaRegistryConfigured()).thenReturn(false);
 
     FactValidator uut =
         new FactValidator(props, mock(SchemaRegistry.class), mock(RegistryMetrics.class));
+    Fact probeFact = Fact.builder().ns("foo").type("bar").version(1).buildWithoutPayload();
+    assertThat(uut.validate(probeFact)).isEmpty();
+  }
+
+  @Test
+  public void testValidationDisabled() throws Exception {
+
+    StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
+    when(props.isSchemaRegistryConfigured()).thenReturn(true);
+    when(props.isValidationEnabled()).thenReturn(false);
+
+    FactValidator uut =
+            new FactValidator(props, mock(SchemaRegistry.class), mock(RegistryMetrics.class));
     Fact probeFact = Fact.builder().ns("foo").type("bar").version(1).buildWithoutPayload();
     assertThat(uut.validate(probeFact)).isEmpty();
   }
@@ -53,6 +64,7 @@ public class FactValidatorTest {
     var registryMetrics = spy(new NOPRegistryMetrics());
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
+    when(props.isSchemaRegistryConfigured()).thenReturn(true);
     when(props.isValidationEnabled()).thenReturn(true);
     when(props.isAllowUnvalidatedPublish()).thenReturn(false);
 
@@ -67,6 +79,7 @@ public class FactValidatorTest {
   public void testValidateIfNotValidatableButAllowed() throws Exception {
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
+    when(props.isSchemaRegistryConfigured()).thenReturn(true);
     when(props.isValidationEnabled()).thenReturn(true);
     when(props.isAllowUnvalidatedPublish()).thenReturn(true);
 
@@ -81,6 +94,7 @@ public class FactValidatorTest {
     final var registryMetrics = spy(new NOPRegistryMetrics());
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
+    when(props.isSchemaRegistryConfigured()).thenReturn(true);
     when(props.isValidationEnabled()).thenReturn(true);
     when(props.isAllowUnvalidatedPublish()).thenReturn(false);
     SchemaRegistry sr = mock(SchemaRegistry.class);
@@ -97,6 +111,7 @@ public class FactValidatorTest {
   public void testValidateWithMatchingSchema() throws Exception {
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
+    when(props.isSchemaRegistryConfigured()).thenReturn(true);
     when(props.isValidationEnabled()).thenReturn(true);
     when(props.isAllowUnvalidatedPublish()).thenReturn(false);
 
@@ -128,6 +143,7 @@ public class FactValidatorTest {
   public void testValidateWithoutMatchingSchema() throws Exception {
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
+    when(props.isSchemaRegistryConfigured()).thenReturn(true);
     when(props.isValidationEnabled()).thenReturn(true);
     when(props.isAllowUnvalidatedPublish()).thenReturn(true);
 
@@ -145,6 +161,7 @@ public class FactValidatorTest {
     final var registryMetrics = spy(new NOPRegistryMetrics());
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
+    when(props.isSchemaRegistryConfigured()).thenReturn(true);
     when(props.isValidationEnabled()).thenReturn(true);
     when(props.isAllowUnvalidatedPublish()).thenReturn(false);
 
