@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
@@ -399,24 +399,17 @@
             <licenseHeader>
               <file>file://${etc}/header.txt</file>
             </licenseHeader>
-            <trimTrailingWhitespace />
-            <removeUnusedImports />
+            <trimTrailingWhitespace/>
             <googleJavaFormat>
-              <version>1.7</version> <!-- optional -->
-              <style>GOOGLE</style> <!-- or AOSP (optional) -->
+              <version>1.9</version>
+              <style>GOOGLE</style>
             </googleJavaFormat>
-            <includes>
-              <include>/src/main/java/**/*.java
-              </include>
-              <include>/src/test/java/**/*.java
-              </include>
-            </includes>
           </java>
           <kotlin>
             <licenseHeader>
               <file>file://${etc}/header.txt</file>
             </licenseHeader>
-            <trimTrailingWhitespace />
+            <trimTrailingWhitespace/>
             <ktlint>
               <!-- Optional, available versions: https://github.com/shyiko/ktlint/releases -->
               <version>0.42.1</version>
@@ -441,6 +434,8 @@
             <format>
               <excludes>
                 <exclude>**/documentation-docsy/**</exclude>
+                <exclude>**/output/public/**</exclude>
+                <exclude>.*/**</exclude>
               </excludes>
               <includes>
                 <include>**/*.xml</include>
@@ -454,8 +449,8 @@
                 <spaces>true</spaces>
                 <spacesPerTab>2</spacesPerTab>
               </indent>
-              <trimTrailingWhitespace />
-              <endWithNewline />
+              <trimTrailingWhitespace/>
+              <endWithNewline/>
             </format>
           </formats>
         </configuration>
@@ -493,7 +488,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute />
+                    <execute/>
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -506,7 +501,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute />
+                    <execute/>
                   </action>
                 </pluginExecution>
               </pluginExecutions>
