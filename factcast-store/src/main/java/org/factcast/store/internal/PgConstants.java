@@ -16,7 +16,6 @@
 package org.factcast.store.internal;
 
 import java.util.Random;
-
 import lombok.AccessLevel;
 import lombok.Generated;
 import lombok.NonNull;
@@ -44,36 +43,36 @@ public class PgConstants {
   public static final String IS_INVALID = "N";
 
   public static final String LIST_FACT_INDEXES_WITH_VALIDATION =
-      "select "
-          + INDEX_NAME_COLUMN
-          + ", "
-          + VALID_COLUMN
-          + " from stats_index where tablename = '"
-          + TABLE_FACT
-          + "' and "
-          + INDEX_NAME_COLUMN
-          + " like '"
-          + TAIL_INDEX_NAME_PREFIX
-          + "%' order by "
-          + INDEX_NAME_COLUMN
-          + " desc";
+          "select "
+                  + INDEX_NAME_COLUMN
+                  + ", "
+                  + VALID_COLUMN
+                  + " from stats_index where tablename = '"
+                  + TABLE_FACT
+                  + "' and "
+                  + INDEX_NAME_COLUMN
+                  + " like '"
+                  + TAIL_INDEX_NAME_PREFIX
+                  + "%' order by "
+                  + INDEX_NAME_COLUMN
+                  + " desc";
 
   public static final String BROKEN_INDEX_NAMES =
-      "SELECT "
-          + INDEX_NAME_COLUMN
-          + " FROM stats_index WHERE "
-          + VALID_COLUMN
-          + " = '"
-          + IS_INVALID
-          + "'";
+          "SELECT "
+                  + INDEX_NAME_COLUMN
+                  + " FROM stats_index WHERE "
+                  + VALID_COLUMN
+                  + " = '"
+                  + IS_INVALID
+                  + "'";
 
   private static final String TABLE_TOKENSTORE = "tokenstore";
 
   public static final String CHANNEL_FACT_INSERT = "fact_insert";
   public static final String CHANNEL_SCHEDULED_POLL = "scheduled-poll";
   public static final String CHANNEL_ROUNDTRIP =
-      "roundtrip_channel_"
-          + Math.abs(new Random().nextLong()); // using the pid lead to a sql exception
+          "roundtrip_channel_"
+                  + Math.abs(new Random().nextLong()); // using the pid lead to a sql exception
 
   public static final String COLUMN_PAYLOAD = "payload";
 
@@ -102,92 +101,92 @@ public class PgConstants {
   private static final String ALIAS_VERSION = "version";
 
   public static final String PROJECTION_FACT =
-      String.join(
-          ", ",
-          COLUMN_SER,
-          COLUMN_HEADER,
-          COLUMN_PAYLOAD,
-          fromHeader(ALIAS_ID),
-          fromHeader(ALIAS_AGGID),
-          fromHeader(ALIAS_NS),
-          fromHeader(ALIAS_TYPE),
-          fromHeader(ALIAS_VERSION));
+          String.join(
+                  ", ",
+                  COLUMN_SER,
+                  COLUMN_HEADER,
+                  COLUMN_PAYLOAD,
+                  fromHeader(ALIAS_ID),
+                  fromHeader(ALIAS_AGGID),
+                  fromHeader(ALIAS_NS),
+                  fromHeader(ALIAS_TYPE),
+                  fromHeader(ALIAS_VERSION));
 
   public static final String INSERT_FACT =
-      "INSERT INTO "
-          + TABLE_FACT
-          + "("
-          + COLUMN_HEADER
-          + ","
-          + COLUMN_PAYLOAD
-          + ") VALUES (cast(? as jsonb),cast (? as jsonb))";
+          "INSERT INTO "
+                  + TABLE_FACT
+                  + "("
+                  + COLUMN_HEADER
+                  + ","
+                  + COLUMN_PAYLOAD
+                  + ") VALUES (cast(? as jsonb),cast (? as jsonb))";
 
   public static final String INSERT_TOKEN =
-      "INSERT INTO "
-          + TABLE_TOKENSTORE
-          + " ("
-          + COLUMN_STATE
-          + ") VALUES (cast (? as jsonb)) RETURNING token";
+          "INSERT INTO "
+                  + TABLE_TOKENSTORE
+                  + " ("
+                  + COLUMN_STATE
+                  + ") VALUES (cast (? as jsonb)) RETURNING token";
 
   public static final String COMPACT_TOKEN =
-      "DELETE FROM " + TABLE_TOKENSTORE + " WHERE extract(month from age(ts))>1";
+          "DELETE FROM " + TABLE_TOKENSTORE + " WHERE extract(month from age(ts))>1";
 
   public static final String DELETE_TOKEN = "DELETE FROM " + TABLE_TOKENSTORE + " WHERE token=?";
 
   public static final String SELECT_BY_ID =
-      "SELECT "
-          + PROJECTION_FACT
-          + " FROM "
-          + TABLE_FACT
-          + " WHERE "
-          + COLUMN_HEADER
-          + " @> cast (? as jsonb)";
+          "SELECT "
+                  + PROJECTION_FACT
+                  + " FROM "
+                  + TABLE_FACT
+                  + " WHERE "
+                  + COLUMN_HEADER
+                  + " @> cast (? as jsonb)";
 
   public static final String SELECT_LATEST_SER =
-      "SELECT max(" + COLUMN_SER + ") FROM " + TABLE_FACT;
+          "SELECT max(" + COLUMN_SER + ") FROM " + TABLE_FACT;
 
   public static final //
   String SELECT_FACT_FROM_CATCHUP = //
-      "SELECT "
-          + PROJECTION_FACT
-          + " FROM "
-          + //
-          TABLE_FACT
-          + " WHERE "
-          + COLUMN_SER
-          + //
-          " IN ( "
-          + "   SELECT "
-          + COLUMN_SER
-          + " FROM "
-          + //
-          TABLE_CATCHUP
-          + "   WHERE ( "
-          + COLUMN_SER
-          + //
+          "SELECT "
+                  + PROJECTION_FACT
+                  + " FROM "
+                  + //
+                  TABLE_FACT
+                  + " WHERE "
+                  + COLUMN_SER
+                  + //
+                  " IN ( "
+                  + "   SELECT "
+                  + COLUMN_SER
+                  + " FROM "
+                  + //
+                  TABLE_CATCHUP
+                  + "   WHERE ( "
+                  + COLUMN_SER
+                  + //
 
-          // the inner ORDER BY is important! see #1002
+                  // the inner ORDER BY is important! see #1002
 
-          ">? ) ORDER BY "
-          + COLUMN_SER
-          + " ASC LIMIT ? ) ORDER BY "
-          + COLUMN_SER
-          + " ASC";
+                  ">? ) ORDER BY "
+                  + COLUMN_SER
+                  + " ASC LIMIT ? ) ORDER BY "
+                  + COLUMN_SER
+                  + " ASC";
 
   public static final //
   String SELECT_LATEST_FACTID_FOR_AGGID = //
-      "SELECT "
-          + COLUMN_HEADER
-          + "->>'id' FROM "
-          + //
-          TABLE_FACT
-          + " WHERE "
-          + COLUMN_HEADER
-          + //
-          " @> cast (? as jsonb) ORDER BY ser DESC LIMIT 1";
+          "SELECT "
+                  + COLUMN_HEADER
+                  + "->>'id' FROM "
+                  + //
+                  TABLE_FACT
+                  + " WHERE "
+                  + COLUMN_HEADER
+                  + //
+                  " @> cast (? as jsonb) ORDER BY ser DESC LIMIT 1";
 
   public static final String SELECT_BY_HEADER_JSON =
-      "SELECT " + COLUMN_SER + " FROM " + TABLE_FACT + " WHERE " + COLUMN_HEADER + " @> ?::jsonb";
+          "SELECT " + COLUMN_SER + " FROM " + TABLE_FACT + " WHERE " + COLUMN_HEADER + " @> ?::jsonb";
 
   public static final String LISTEN_SQL = "LISTEN " + CHANNEL_FACT_INSERT;
 
@@ -196,85 +195,85 @@ public class PgConstants {
   public static final String LISTEN_ROUNDTRIP_CHANNEL_SQL = "LISTEN " + CHANNEL_ROUNDTRIP;
 
   public static final String UPDATE_FACT_SERIALS =
-      "update "
-          + TABLE_FACT
-          + " set "
-          + COLUMN_HEADER
-          + "= jsonb_set( "
-          + COLUMN_HEADER
-          + " , '{meta}' , COALESCE("
-          + COLUMN_HEADER
-          + "->'meta','{}') || concat('{\"_ser\":', "
-          + COLUMN_SER
-          + " ,', \"_ts\":', EXTRACT(EPOCH FROM now()::timestamptz(3))*1000, '}' )::jsonb , true)"
-          + " WHERE header @> ?::jsonb";
+          "update "
+                  + TABLE_FACT
+                  + " set "
+                  + COLUMN_HEADER
+                  + "= jsonb_set( "
+                  + COLUMN_HEADER
+                  + " , '{meta}' , COALESCE("
+                  + COLUMN_HEADER
+                  + "->'meta','{}') || concat('{\"_ser\":', "
+                  + COLUMN_SER
+                  + " ,', \"_ts\":', EXTRACT(EPOCH FROM now()::timestamptz(3))*1000, '}' )::jsonb , true)"
+                  + " WHERE header @> ?::jsonb";
 
   public static final String SELECT_DISTINCT_NAMESPACE =
-      "SELECT DISTINCT("
-          + COLUMN_HEADER
-          + "->>'"
-          + ALIAS_NS
-          + "') "
-          + ALIAS_NS
-          + " FROM "
-          + TABLE_FACT
-          + " WHERE "
-          + COLUMN_HEADER
-          + "->>'"
-          + ALIAS_NS
-          + "' IS NOT NULL";
+          "SELECT DISTINCT("
+                  + COLUMN_HEADER
+                  + "->>'"
+                  + ALIAS_NS
+                  + "') "
+                  + ALIAS_NS
+                  + " FROM "
+                  + TABLE_FACT
+                  + " WHERE "
+                  + COLUMN_HEADER
+                  + "->>'"
+                  + ALIAS_NS
+                  + "' IS NOT NULL";
 
   public static final String SELECT_DISTINCT_TYPE_IN_NAMESPACE =
-      "SELECT DISTINCT("
-          + COLUMN_HEADER
-          + "->>'"
-          + ALIAS_TYPE
-          + "') "
-          + " FROM "
-          + TABLE_FACT
-          + " WHERE ("
-          + COLUMN_HEADER
-          + "->>'"
-          + ALIAS_NS
-          + "')=? AND ( "
-          + COLUMN_HEADER
-          + "->>'"
-          + ALIAS_TYPE
-          + "') IS NOT NULL";
+          "SELECT DISTINCT("
+                  + COLUMN_HEADER
+                  + "->>'"
+                  + ALIAS_TYPE
+                  + "') "
+                  + " FROM "
+                  + TABLE_FACT
+                  + " WHERE ("
+                  + COLUMN_HEADER
+                  + "->>'"
+                  + ALIAS_NS
+                  + "')=? AND ( "
+                  + COLUMN_HEADER
+                  + "->>'"
+                  + ALIAS_TYPE
+                  + "') IS NOT NULL";
 
   public static final String SELECT_SER_BY_ID =
-      "SELECT "
-          + COLUMN_SER
-          + " FROM "
-          + TABLE_FACT
-          + " WHERE "
-          + " (("
-          + COLUMN_HEADER
-          + "->>'"
-          + ALIAS_ID
-          + "')::uuid) = CAST(? as uuid)";
+          "SELECT "
+                  + COLUMN_SER
+                  + " FROM "
+                  + TABLE_FACT
+                  + " WHERE "
+                  + " (("
+                  + COLUMN_HEADER
+                  + "->>'"
+                  + ALIAS_ID
+                  + "')::uuid) = CAST(? as uuid)";
 
   public static final String SELECT_STATE_FROM_TOKEN =
-      "SELECT " + COLUMN_STATE + " FROM " + TABLE_TOKENSTORE + " WHERE " + COLUMN_TOKEN + "=?";
+          "SELECT " + COLUMN_STATE + " FROM " + TABLE_TOKENSTORE + " WHERE " + COLUMN_TOKEN + "=?";
 
   public static final String SELECT_NS_FROM_TOKEN =
-      "SELECT " + COLUMN_NAMESPACE + " FROM " + TABLE_TOKENSTORE + " WHERE " + COLUMN_TOKEN + "=?";
+          "SELECT " + COLUMN_NAMESPACE + " FROM " + TABLE_TOKENSTORE + " WHERE " + COLUMN_TOKEN + "=?";
 
   public static final String LAST_SERIAL_IN_LOG = "select COALESCE(max(ser),0) from fact";
   public static final String HIGHWATER_MARK =
-      "select ("
-          + COLUMN_HEADER
-          + "->>'"
-          + ALIAS_ID
-          + "')::uuid as targetId, ser as targetSer from "
-          + TABLE_FACT
-          + " where "
-          + COLUMN_SER
-          + "=(select max("
-          + COLUMN_SER
-          + ") from "
-          + TABLE_FACT
-          + ")";
+          "select ("
+                  + COLUMN_HEADER
+                  + "->>'"
+                  + ALIAS_ID
+                  + "')::uuid as targetId, ser as targetSer from "
+                  + TABLE_FACT
+                  + " where "
+                  + COLUMN_SER
+                  + "=(select max("
+                  + COLUMN_SER
+                  + ") from "
+                  + TABLE_FACT
+                  + ")";
 
   private static String fromHeader(String attributeName) {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
@@ -282,15 +281,15 @@ public class PgConstants {
 
   public static String createTailIndex(String indexName, long ser) {
     return "create index concurrently "
-        + indexName
-        + " on "
-        + TABLE_FACT
-        + " using GIN("
-        + COLUMN_HEADER
-        + " jsonb_path_ops) WHERE "
-        + COLUMN_SER
-        + ">"
-        + ser;
+            + indexName
+            + " on "
+            + TABLE_FACT
+            + " using GIN("
+            + COLUMN_HEADER
+            + " jsonb_path_ops) WITH (gin_pending_list_limit = 16384 , fastupdate = true)  WHERE "
+            + COLUMN_SER
+            + ">"
+            + ser;
   }
 
   @NonNull
