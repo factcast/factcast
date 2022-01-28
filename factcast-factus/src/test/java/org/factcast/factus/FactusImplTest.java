@@ -115,6 +115,21 @@ class FactusImplTest {
     verify(eventConverter).toFact(mockedEventObject);
   }
 
+  @Test
+  void testSerialOf() {
+    // ARRANGE
+    UUID id = randomUUID();
+    OptionalLong ret = OptionalLong.of(7);
+    when(fc.serialOf(any())).thenReturn(ret);
+
+    // ACT
+    OptionalLong optSerial = underTest.serialOf(id);
+
+    // ASSERT
+    assertThat(optSerial).isSameAs(ret);
+    verify(fc).serialOf(id);
+  }
+
   @Nested
   class WhenPublishing {
 
