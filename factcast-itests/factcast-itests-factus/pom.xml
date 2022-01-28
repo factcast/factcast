@@ -133,7 +133,6 @@
       <artifactId>spring-boot-starter-jdbc</artifactId>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
   <build>
     <plugins>

@@ -556,7 +556,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     FactCastUser user = getFactcastUser();
     if (!user.canRead(ns)) {
 
-      log.error("{}Not allowed to read from namespace '{}'", clientIdPrefix(), ns);
+      log.warn("{}Not allowed to read from namespace '{}'", clientIdPrefix(), ns);
       throw new StatusRuntimeException(Status.PERMISSION_DENIED, new Metadata());
     }
   }
@@ -571,7 +571,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     FactCastUser user = getFactcastUser();
     for (String ns : namespaces) {
       if (!user.canWrite(ns)) {
-        log.error("{}Not allowed to write to namespace '{}'", clientIdPrefix(), ns);
+        log.warn("{}Not allowed to write to namespace '{}'", clientIdPrefix(), ns);
         throw new StatusRuntimeException(Status.PERMISSION_DENIED, new Metadata());
       }
     }

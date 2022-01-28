@@ -21,7 +21,9 @@ import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Tags;
 import java.net.URL;
-import okhttp3.OkHttpClient;
+import lombok.SneakyThrows;
+import okhttp3.*;
+import okhttp3.Response.Builder;
 import org.factcast.core.TestHelper;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.RegistryFileFetchException;
@@ -37,11 +39,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class HttpRegistryFileFetcherTest {
-  @Mock private URL baseUrl;
+  @Mock
+  private URL baseUrl;
 
-  @Mock private OkHttpClient client;
+  @Mock
+  private OkHttpClient client;
 
-  @Spy private final RegistryMetrics registryMetrics = new NOPRegistryMetrics();
+  @Spy
+  private final RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 
   @Test
   public void testCreateSchemaUrl() throws Exception {
@@ -58,7 +63,7 @@ public class HttpRegistryFileFetcherTest {
     TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null, registryMetrics));
     TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(baseUrl, null));
     TestHelper.expectNPE(
-        () -> new HttpRegistryFileFetcher(null, new OkHttpClient(), registryMetrics));
+            () -> new HttpRegistryFileFetcher(null, new OkHttpClient(), registryMetrics));
     TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null, null, registryMetrics));
     TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(new URL("http://ibm.com"), null));
     TestHelper.expectNPE(() -> uut.fetchSchema(null));
@@ -71,18 +76,18 @@ public class HttpRegistryFileFetcherTest {
       var uut = new HttpRegistryFileFetcher(baseUrl, registryMetrics);
 
       assertThrows(
-          RegistryFileFetchException.class,
-          () -> uut.fetchSchema(new SchemaSource("unknown", "123", "ns", "type", 8)));
+              RegistryFileFetchException.class,
+              () -> uut.fetchSchema(new SchemaSource("unknown", "123", "ns", "type", 8)));
 
-      verify(registryMetrics)
-          .timed(
-              eq(RegistryMetrics.OP.FETCH_REGISTRY_FILE),
-              eq(RegistryFileFetchException.class),
-              any(SupplierWithException.class));
-      verify(registryMetrics)
-          .count(
-              RegistryMetrics.EVENT.REGISTRY_FILE_FETCH_FAILED,
-              Tags.of(RegistryMetrics.TAG_STATUS_CODE_KEY, "404"));
+      verify(registryMetrics, atLeastOnce())
+              .timed(
+                      eq(RegistryMetrics.OP.FETCH_REGISTRY_FILE),
+                      eq(RegistryFileFetchException.class),
+                      any(SupplierWithException.class));
+      verify(registryMetrics, atLeastOnce())
+              .count(
+                      RegistryMetrics.EVENT.REGISTRY_FILE_FETCH_FAILED,
+                      Tags.of(RegistryMetrics.TAG_STATUS_CODE_KEY, "404"));
     }
   }
 
@@ -93,11 +98,11 @@ public class HttpRegistryFileFetcherTest {
       String json = "{\"foo\":\"bar\"}";
 
       s.get(
-          "/registry/someId",
-          ctx -> {
-            ctx.res.setStatus(200);
-            ctx.res.getWriter().write(json);
-          });
+              "/registry/someId",
+              ctx -> {
+                ctx.res.setStatus(200);
+                ctx.res.getWriter().write(json);
+              });
 
       URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
       var uut = new HttpRegistryFileFetcher(baseUrl, new NOPRegistryMetrics());
@@ -114,25 +119,54 @@ public class HttpRegistryFileFetcherTest {
       String json = "{\"foo\":\"bar\"}";
 
       s.get(
-          "/registry/someId",
-          ctx -> {
-            ctx.res.setStatus(200);
-            ctx.res.getWriter().write(json);
-          });
+              "/registry/someId",
+              ctx -> {
+                ctx.res.setStatus(200);
+                ctx.res.getWriter().write(json);
+              });
 
       URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
       var uut = new HttpRegistryFileFetcher(baseUrl, registryMetrics);
 
       String fetch =
-          uut.fetchTransformation(new TransformationSource("someId", "hash", "ns", "type", 8, 2));
+              uut.fetchTransformation(new TransformationSource("someId", "hash", "ns", "type", 8, 2));
 
       assertEquals(json, fetch);
 
       verify(registryMetrics)
-          .timed(
-              eq(RegistryMetrics.OP.FETCH_REGISTRY_FILE),
-              eq(RegistryFileFetchException.class),
-              any(SupplierWithException.class));
+              .timed(
+                      eq(RegistryMetrics.OP.FETCH_REGISTRY_FILE),
+                      eq(RegistryFileFetchException.class),
+                      any(SupplierWithException.class));
     }
+  }
+
+
+  @SneakyThrows
+  @Test
+  void retries() {
+    Call call = mock(Call.class);
+    OkHttpClient client = mock(OkHttpClient.class);
+    HttpRegistryFileFetcher uut = new HttpRegistryFileFetcher(new URL("http://ibm.com"), client, registryMetrics);
+    when(client.newCall(any())).thenReturn(call);
+
+    Request request = new Request.Builder().url("http://ibm.com").get().build();
+    Response fail = new Builder().code(503).request(request).protocol(Protocol.HTTP_1_1).message("slow down, fella").build();
+    Response success = new Builder().code(200).request(request).protocol(Protocol.HTTP_1_1).message("ok").body(
+            ResponseBody.create(MediaType.parse("application/json"), "{}"
+            )
+    ).build();
+
+    when(call.execute())
+            .thenReturn(fail)
+            .thenReturn(fail)
+            .thenReturn(fail)
+            .thenReturn(fail)
+            .thenReturn(fail)
+            .thenReturn(fail)
+            .thenReturn(success);
+
+    SchemaSource key = new SchemaSource("id", "hash", "ns", "type", 1);
+    uut.fetchSchema(key);
   }
 }
