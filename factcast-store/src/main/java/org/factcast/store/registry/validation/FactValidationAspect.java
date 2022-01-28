@@ -15,7 +15,7 @@
  */
 package org.factcast.store.registry.validation;
 
-import java.util.LinkedList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -46,10 +46,11 @@ public class FactValidationAspect {
   }
 
   private void validate(List<? extends Fact> facts) {
-
-    List<FactValidationError> errors = new LinkedList<>();
-
-    facts.forEach(f -> errors.addAll(validator.validate(f)));
+    var errors =
+        facts.parallelStream()
+            .map(validator::validate)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toList());
 
     if (!errors.isEmpty())
       throw new FactValidationException(
