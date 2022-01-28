@@ -48,7 +48,7 @@ public class FactValidator {
   private final RegistryMetrics registryMetrics;
 
   public List<FactValidationError> validate(Fact fact) {
-    if (props.isValidationEnabled()) {
+    if (props.isSchemaRegistryConfigured() && props.isValidationEnabled()) {
       if (isValidateable(fact)) {
         return doValidate(fact);
       } else {
