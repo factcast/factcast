@@ -46,6 +46,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -71,6 +72,7 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMo
 @Slf4j
 @Configuration
 @EnableTransactionManagement
+@EnableRetry
 @EnableScheduling
 // not that InterceptMode.PROXY_SCHEDULER does not work when wrapped at runtime (by opentelemetry
 // for instance)

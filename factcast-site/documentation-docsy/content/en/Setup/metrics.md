@@ -20,8 +20,10 @@ We're focussing on *Server* metrics here.
 
 ### Metric namespaces and their organization
 
-At the time of writing, there are four namespaces exposed:
+At the time of writing, there are six namespaces exposed:
 
+* `factcast.server.timer`
+* `factcast.server.meter`
 * `factcast.store.timer`
 * `factcast.store.meter`
 * `factcast.registry.timer`
@@ -38,61 +40,68 @@ Furthermore, metrics in operations are automatically tagged with
 
 ### Existing metrics
 
-There are a bunch of metrics already emitted in the server. There are different kinds of metrics used:
+There are a bunch of metrics already emitted in the server. These metrics can be grouped by type:
 
 * Timers (collecting durations of code execution)
 * Meters (collecting metric events, for example, occurrences of errors)
 
 As this list is continuously growing, we cannot guarantee
 the documentation's completeness. If you want to see the current list of operations, please look
-at [StoreMetrics.java](https://github.com/factcast/factcast/blob/issue1163/factcast-store/src/main/java/org/factcast/store/pgsql/internal/StoreMetrics.java)
-.
+at [StoreMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-store/src/main/java/org/factcast/store/internal/StoreMetrics.java)
+, [RegistryMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-store/src/main/java/org/factcast/store/registry/metrics/RegistryMetrics.java)
+, or [ServerMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-server-grpc/src/main/java/org/factcast/server/grpc/metrics/ServerMetrics.java) respectively.
 
-At the **time of writing (0.3.10)**, the store operations that are counted/measured are:
 
-| operation | duration  |
-|---|---|
-|    publish |  x |
-|    subscribe-follow |x |
-|    subscribe-catchup | x |
-|    fetchById | x |
-|    serialOf |  x |
-|    enumerateNamespaces | x |
-|    enumerateTypes |  x |
-|    getStateFor |  x |
-|    publishIfUnchanged | x |
-|    getSnapshot | x |
-|    setSnapshot  | x |
-|    clearSnapshot  | x |
-|    compactSnapshotCache  | x |
-|    notifyDatabaseRoundTrip | x |
-|    missedDatabaseRoundtrip | x |  
 
-At the **time of writing (0.3.10)**, the registry operations that are counted/measured are:
+At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.server` are:
 
-| operation |  duration  |
-|---|---|
-| refreshRegistry | x |
-| compactTransformationCache | x |
-| transformEvent | x  |
-| tchRegistryFile | x |
+| operation               | type    | description                                                                                                                        |
+|-------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------|
+| handshake               | `timer` | Duration of the initial handshake. |
 
-At the **time of writing (0.3.10)**, the registry events that are counted are:
+At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.store` are:
 
-| event | meter  |
-|---|---|
-|    transformationCache-hit  | x | 
-|    transformationCache-miss | x | 
-|    missingTransformationInformation | x | 
-|    transformationConflict | x | 
-|    registryFileFetchFailed | x | 
-|    schemaRegistryUnavailable | x | 
-|    transformationFailed | x | 
-|    schemaConflict | x | 
-|    factValidationFailed | x | 
-|    schemaMissing | x | 
-|    schemaUpdateFailure | x |
+| operation                  | type    | description                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+|----------------------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| publish                    | `timer` | Time to publish (write) a fact or a list of facts sent by the client.<br />Ref: [concepts](/concept)                                                                                                                                                                                                                                                                                                                                                              |
+| subscribe-follow           | `timer` | Time to create and return a follow subscription (not the actual stream of facts).<br />Ref: [concepts](/concept)                                                                                                                                                                                                                                                                                                                                                  |
+| subscribe-catchup          | `timer` | Time to create and return a catchup subscription (not the actual stream of facts).<br />Ref: [concepts](/concept)                                                                                                                                                                                                                                                                                                                                                 |
+| fetchById                  | `timer` | Time to get a fact from a given ID.                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| serialOf                   | `timer` | Time to get the serial of a fact.                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| enumerateNamespaces        | `timer` | Time to process namespaces enumeration.                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| enumerateTypes             | `timer` | Time to process types enumeration.                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| getStateFor                | `timer` | Time to get the latest state token for a given fact specification. The state represents the serial of the last fact matching the specifications, and is used by the client to determine whether a fact stream has been updated at a given point in time. Relevant for optimistic locking.<br />Ref: [optimistic locking](/usage/factus/optimistic-locking)                                                                                                        |
+| publishIfUnchanged         | `timer` | Time to check against the given state token and possibly publish (write) a fact or a list of facts sent by the client.<br />Ref: [optimistic locking](/usage/factus/optimistic-locking)                                                                                                                                                                                                                                                                           |
+| getSnapshot                | `timer` | Time to read a snapshot from the cache.<br />Ref: [snapshots](/usage/factus/projections/snapshotting/)                                                                                                                                                                                                                                                                                                                                                            |
+| setSnapshot                | `timer` | Time to create/update a snapshot from the cache.<br />Ref: [snapshots](/usage/factus/projections/snapshotting/)                                                                                                                                                                                                                                                                                                                                                   |
+| clearSnapshot              | `timer` | Time to delete a snapshot from the cache.<br />Ref: [snapshots](/usage/factus/projections/snapshotting/)                                                                                                                                                                                                                                                                                                                                                          |
+| compactSnapshotCache       | `timer` | Time to delete old entries from the snapshot cache.<br />Ref: [snapshots](/usage/factus/projections/snapshotting/)                                                                                                                                                                                                                                                                                                                                                |
+| invalidateStateToken       | `timer` | Time to invalidate the state token used for optimistic locking. The client can abort the transaction and let the server invalidate the token used for consistency.<br />Ref: [optimistic locking](/usage/factus/optimistic-locking)                                                                                                                                                                                                                               |
+| notifyRoundTripLatency     | `timer` | Time it takes for a notify on the database to be echoed back to the listener (roundtrip).                                                                                                                                                                                                                                                                                                                                                                         |
+| catchupFact                | `meter` | Counts the number of facts returned by a catchup subscription or catchup part of a follow subscription request (e.g. Factus managed projections) managed by the EventStore.<br />Ref: [concepts](/concept)                                                                                                                                                                                                                                                        |
+| catchupTransformationRatio | `meter` | [deprecated] Percentage of facts transformed (downcasted/upcasted) by the server in response to a subscribed client. Useful for debugging the amount of overhead due to transforming, for subscription returning a significant amount of facts.<br />Ref: [transformation](/concept/transformation)                                                                                                                                                               |
+| missedRoundtrip            | `meter` | If inactive for more than a configured interval (`factcast.store.factNotificationBlockingWaitTimeInMillis`), the server validates the health of the database connection. For this purpose it sends an internal notification to the database and waits to receive back an answer in the interval defined by `factcast.store.factNotificationMaxRoundTripLatencyInMillis`. This metric counts the number of notifications sent without an answer from the database. |
+| snapshotsCompacted         | `meter` | Counts the number of old snapshots deleted. This runs as a dedicated scheduled job, configured by `factcast.store.snapshotCacheCompactCron`.<br />Ref: [snapshots](/usage/factus/projections/snapshotting/)                                                                                                                                                                                                                                                       |
 
+At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.registry` are:
+
+| operation                        | type    | description                                                                                                                                                                         |
+|----------------------------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| transformEvent                   | `timer` | Time to transform (upcast/downcast) a single fact.<br />Ref: [transformation](/concept/transformation)                                                                              |
+| fetchRegistryFile                | `timer` | Time to retrieve a file from the schema registry.<br />Ref: [facts validation](/concept/schema-registry/)                                                                           |
+| refreshRegistry                  | `timer` | Time to execute the schema registry refresh, in order to get the latest schema and transformation updates.                                                                          |
+| compactTransformationCache       | `timer` | Time to delete old entries from the transformation cache.                                                                                                                           |
+| transformationCache-hit          | `meter` | Counts the number of hits from the transformation cache.                                                                                                                            |
+| transformationCache-miss         | `meter` | Counts the number of misses from the transformation cache.                                                                                                                          |
+| missingTransformationInformation | `meter` | Counts the number of times that the server was not able to find transformation information from the schema registry.                                                                |
+| transformationConflict           | `meter` | Counts the number of conflicts encountered by the server during schema registry update, which is caused by trying to change an existing transformation.                             |
+| registryFileFetchFailed          | `meter` | Counts the number of times that the server was not able to get a json file from the schema registry.                                                                                |
+| schemaRegistryUnavailable        | `meter` | Counts the number of times that the server was unable to reach the schema registry.                                                                                                 |
+| transformationFailed             | `meter` | Counts the number of times that the server failed to transform a fact, using downcasting/upcasting scripts.                                                                         |
+| schemaConflict                   | `meter` | Counts the number of conflicts detected by the server on the facts schema returned by the schema registry.                                                                          |
+| factValidationFailed             | `meter` | Counts the number of times that the server failed to validate a fact, that is attempted to be published, against the schema registry.                                               |
+| schemaMissing                    | `meter` | Counts the number of times that the server detected a schema missing from the schema registry.                                                                                      |
+| schemaUpdateFailure              | `meter` | Counts the number of times that the server was unable to update its schema definition from the schema registry, while fetching the initial state of the registry or during refresh. |
 
 ### gRPC Metrics
 
