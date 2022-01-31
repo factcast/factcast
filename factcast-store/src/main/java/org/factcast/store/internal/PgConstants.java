@@ -286,7 +286,7 @@ public class PgConstants {
         + TABLE_FACT
         + " using GIN("
         + COLUMN_HEADER
-        + " jsonb_path_ops) WHERE "
+        + " jsonb_path_ops) WITH (gin_pending_list_limit = 16384 , fastupdate = true)  WHERE "
         + COLUMN_SER
         + ">"
         + ser;

@@ -135,5 +135,16 @@ databaseChangeLog:
             splitStatements: false
             stripComments: true
 
+  - changeSet:
+      id: gin_fast_update
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1696/gin_fast_update.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
 
 
