@@ -257,7 +257,8 @@ class ProjectorImplTest {
     void invalidPostprocessReturnsEmptyList() {
       // INIT
       ProjectorImpl<Projection> underTest =
-          new ProjectorImpl<>(eventSerializer, new PostProcessingProjection(Collections.emptyList()));
+          new ProjectorImpl<>(
+              eventSerializer, new PostProcessingProjection(Collections.emptyList()));
 
       // RUN
       assertThatThrownBy(() -> underTest.createFactSpecs())
