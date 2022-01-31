@@ -51,6 +51,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
   private final ProtoConverter converter = new ProtoConverter();
   private final AtomicLong lastNotification = new AtomicLong(0);
+
   @Getter(AccessLevel.PROTECTED)
   private final ExecutorService clientBoundExecutor = Executors.newSingleThreadExecutor();
 
@@ -71,15 +72,13 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
     subscription.onClose(this::tryShutdown);
     subscription.onClose(this::disableKeepalive);
-
   }
 
   private void tryShutdown() {
-    try{
+    try {
       clientBoundExecutor.shutdown();
-    }catch(Exception e)
-    {
-      log.error("While shutting down executor:",e);
+    } catch (Exception e) {
+      log.error("While shutting down executor:", e);
     }
   }
 
@@ -94,8 +93,8 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
       clientBoundExecutor.submit(() -> process(f)).get();
     } catch (ExecutionException | InterruptedException e) {
-        tryShutdown();
-        throw ExceptionHelper.toRuntime(e.getCause());
+      tryShutdown();
+      throw ExceptionHelper.toRuntime(e.getCause());
     }
   }
 
