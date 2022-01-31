@@ -19,13 +19,13 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
-import org.assertj.core.util.Lists;
 import org.assertj.core.util.Maps;
 import org.factcast.core.Fact;
 import org.factcast.core.FactHeader;
@@ -257,7 +257,7 @@ class ProjectorImplTest {
     void invalidPostprocessReturnsEmptyList() {
       // INIT
       ProjectorImpl<Projection> underTest =
-          new ProjectorImpl<>(eventSerializer, new PostProcessingProjection(Lists.emptyList()));
+          new ProjectorImpl<>(eventSerializer, new PostProcessingProjection(Collections.emptyList()));
 
       // RUN
       assertThatThrownBy(() -> underTest.createFactSpecs())
