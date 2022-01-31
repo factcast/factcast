@@ -75,13 +75,12 @@ public class TestFact implements Fact {
     return header;
   }
 
-
   @SneakyThrows
-  public static Fact copy(@NonNull Fact f){
+  public static Fact copy(@NonNull Fact f) {
     String header = f.jsonHeader();
     String payload = f.jsonPayload();
     ObjectNode h = (ObjectNode) FactCastJson.readTree(header);
     h.set("id", new TextNode(UUID.randomUUID().toString()));
-    return Fact.of(h.toString(),payload);
+    return Fact.of(h.toString(), payload);
   }
 }
