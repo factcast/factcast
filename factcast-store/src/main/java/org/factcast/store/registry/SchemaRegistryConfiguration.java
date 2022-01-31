@@ -72,7 +72,7 @@ public class SchemaRegistryConfiguration {
 
     try {
 
-      if (p.isValidationEnabled()) {
+      if (p.isSchemaRegistryConfigured()) {
         String fullUrl = p.getSchemaRegistryUrl();
         if (!fullUrl.contains(":")) {
           fullUrl = "classpath:" + fullUrl;
@@ -92,9 +92,6 @@ public class SchemaRegistryConfiguration {
         return registry;
 
       } else {
-        log.warn(
-            "**** SchemaRegistry-mode is disabled. Fact validation will not happen. This is"
-                + " discouraged for production environments. You have been warned. ****");
         return new NOPSchemaRegistry();
       }
 
@@ -129,7 +126,7 @@ public class SchemaRegistryConfiguration {
   @Bean
   public ScheduledRegistryRefresher scheduledRegistryFresher(
       SchemaRegistry registry, StoreConfigurationProperties properties) {
-    if (properties.isValidationEnabled()) {
+    if (properties.isSchemaRegistryConfigured()) {
       return new ScheduledRegistryRefresher(registry);
     } else return null;
   }
