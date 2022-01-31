@@ -32,9 +32,6 @@ import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 public class FactValidatorTest {
   @Test
   public void testSchemaRegistryDisabled() throws Exception {
@@ -56,7 +53,7 @@ public class FactValidatorTest {
     when(props.isValidationEnabled()).thenReturn(false);
 
     FactValidator uut =
-            new FactValidator(props, mock(SchemaRegistry.class), mock(RegistryMetrics.class));
+        new FactValidator(props, mock(SchemaRegistry.class), mock(RegistryMetrics.class));
     Fact probeFact = Fact.builder().ns("foo").type("bar").version(1).buildWithoutPayload();
     assertThat(uut.validate(probeFact)).isEmpty();
   }
