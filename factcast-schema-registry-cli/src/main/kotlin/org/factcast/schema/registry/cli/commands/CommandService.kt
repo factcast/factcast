@@ -20,4 +20,5 @@ import java.nio.file.Path
 interface CommandService {
     fun build(sourceRoot: Path, outputRoot: Path, whiteList: Path? = null, schemaStripTitles: Boolean = false): Int
     fun validate(sourceRoot: Path, whiteList: Path? = null): Int
+    fun create(targetPath: Path): Int
 }

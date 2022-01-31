@@ -19,6 +19,7 @@ import io.micronaut.configuration.picocli.PicocliRunner
 import io.micronaut.core.annotation.Introspected
 import kotlin.system.exitProcess
 import org.factcast.schema.registry.cli.commands.Build
+import org.factcast.schema.registry.cli.commands.Create
 import org.factcast.schema.registry.cli.commands.Validate
 import org.factcast.schema.registry.cli.utils.BANNER
 import picocli.CommandLine
@@ -28,7 +29,7 @@ import picocli.CommandLine.Command
     name = "fc-schema",
     header = [BANNER],
     description = ["Tool for working with the FactCast Schema Registry spec"],
-    subcommands = [Validate::class, Build::class],
+    subcommands = [Validate::class, Build::class, Create::class],
     mixinStandardHelpOptions = true
 )
 @Introspected
