@@ -41,26 +41,19 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 @RequiredArgsConstructor
 public class PgFetchingCatchup implements PgCatchup {
 
-  @NonNull
-  final PgConnectionSupplier connectionSupplier;
+  @NonNull final PgConnectionSupplier connectionSupplier;
 
-  @NonNull
-  final StoreConfigurationProperties props;
+  @NonNull final StoreConfigurationProperties props;
 
-  @NonNull
-  final SubscriptionRequestTO req;
+  @NonNull final SubscriptionRequestTO req;
 
-  @NonNull
-  final PgPostQueryMatcher postQueryMatcher;
+  @NonNull final PgPostQueryMatcher postQueryMatcher;
 
-  @NonNull
-  final SubscriptionImpl subscription;
+  @NonNull final SubscriptionImpl subscription;
 
-  @NonNull
-  final AtomicLong serial;
+  @NonNull final AtomicLong serial;
 
-  @NonNull
-  final PgMetrics metrics;
+  @NonNull final PgMetrics metrics;
 
   protected long factCounter = 0L;
 
@@ -92,10 +85,12 @@ public class PgFetchingCatchup implements PgCatchup {
     var extractor = new PgFactExtractor(serial);
     String catchupSQL = b.createSQL();
     jdbc.query(
-            catchupSQL,
-            b.createStatementSetter(serial),
-            createRowCallbackHandler(skipTesting, extractor));
-    metrics.counter(EVENT.CATCHUP_FACT).increment(factCounter); // TODO this needs to TAG it for each subscription?
+        catchupSQL,
+        b.createStatementSetter(serial),
+        createRowCallbackHandler(skipTesting, extractor));
+    metrics
+        .counter(EVENT.CATCHUP_FACT)
+        .increment(factCounter); // TODO this needs to TAG it for each subscription?
   }
 
   @VisibleForTesting
@@ -105,8 +100,7 @@ public class PgFetchingCatchup implements PgCatchup {
       if (skipTesting || postQueryMatcher.test(f)) {
         subscription.notifyElement(f);
         factCounter++;
-      }
-      else {
+      } else {
         log.trace("{} filtered id={}", req, f.id());
       }
     };

@@ -23,7 +23,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-
 import org.assertj.core.util.Lists;
 import org.factcast.core.spec.FactSpec;
 import org.junit.jupiter.api.*;

@@ -110,7 +110,12 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   @VisibleForTesting
   @Deprecated
   protected FactStoreGrpcService(FactStore store, GrpcRequestMetadata grpcRequestMetadata) {
-    this(store, grpcRequestMetadata, new GrpcLimitProperties(), FastForwardTarget.forTest(), new NOPServerMetrics());
+    this(
+        store,
+        grpcRequestMetadata,
+        new GrpcLimitProperties(),
+        FastForwardTarget.forTest(),
+        new NOPServerMetrics());
   }
 
   @VisibleForTesting
@@ -185,7 +190,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
       resetDebugInfo(req, grpcRequestMetadata);
       BlockingStreamObserver<MSG_Notification> resp =
-          new BlockingStreamObserver<>(req.toString(), (ServerCallStreamObserver) responseObserver, grpcRequestMetadata.catchupBatch().orElse(1));
+          new BlockingStreamObserver<>(
+              req.toString(),
+              (ServerCallStreamObserver) responseObserver,
+              grpcRequestMetadata.catchupBatch().orElse(1));
 
       AtomicReference<Subscription> subRef = new AtomicReference();
 
@@ -307,14 +315,15 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @Override
   public void handshake(MSG_Empty request, StreamObserver<MSG_ServerConfig> responseObserver) {
-    metrics.timed(OP.HANDSHAKE,()->{
-      initialize(responseObserver);
+    metrics.timed(
+        OP.HANDSHAKE,
+        () -> {
+          initialize(responseObserver);
 
-      ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
-      responseObserver.onNext(converter.toProto(cfg));
-      responseObserver.onCompleted();
-    });
-
+          ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
+          responseObserver.onNext(converter.toProto(cfg));
+          responseObserver.onCompleted();
+        });
   }
 
   private Map<String, String> collectProperties() {
@@ -329,11 +338,12 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @VisibleForTesting
   void retrieveImplementationVersion(HashMap<String, String> properties) {
-    properties.put(Capabilities.FACTCAST_IMPL_VERSION.toString(), getImplVersion().orElse("UNKNOWN"));
+    properties.put(
+        Capabilities.FACTCAST_IMPL_VERSION.toString(), getImplVersion().orElse("UNKNOWN"));
   }
 
   private Optional<String> getImplVersion() {
-    String implVersion=null;
+    String implVersion = null;
 
     URL propertiesUrl = getProjectProperties();
     Properties buildProperties = new Properties();
@@ -630,6 +640,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @Override
   public void afterPropertiesSet() throws Exception {
-    log.info("Service version: {}",getImplVersion().orElse("UNKNOWN"));
+    log.info("Service version: {}", getImplVersion().orElse("UNKNOWN"));
   }
 }

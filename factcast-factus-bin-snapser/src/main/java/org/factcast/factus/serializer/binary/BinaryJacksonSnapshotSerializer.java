@@ -16,6 +16,8 @@
 package org.factcast.factus.serializer.binary;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.jpountz.lz4.LZ4BlockInputStream;
@@ -24,16 +26,14 @@ import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-
 public class BinaryJacksonSnapshotSerializer implements SnapshotSerializer {
 
   private static final int BLOCKSIZE = 65536;
 
   private final ObjectMapper omMessagePack;
 
-  public BinaryJacksonSnapshotSerializer(@NonNull BinaryJacksonSnapshotSerializerCustomizer customizer) {
+  public BinaryJacksonSnapshotSerializer(
+      @NonNull BinaryJacksonSnapshotSerializerCustomizer customizer) {
     ObjectMapper om = new ObjectMapper(new MessagePackFactory());
     customizer.accept(om);
     omMessagePack = om;
@@ -42,7 +42,7 @@ public class BinaryJacksonSnapshotSerializer implements SnapshotSerializer {
   @SneakyThrows
   @Override
   public byte[] serialize(@NonNull SnapshotProjection a) {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream(BLOCKSIZE+16);
+    ByteArrayOutputStream baos = new ByteArrayOutputStream(BLOCKSIZE + 16);
 
     LZ4BlockOutputStream os = new LZ4BlockOutputStream(baos, BLOCKSIZE);
     omMessagePack.writeValue(os, a);

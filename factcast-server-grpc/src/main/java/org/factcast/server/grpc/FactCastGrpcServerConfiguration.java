@@ -38,8 +38,9 @@ public class FactCastGrpcServerConfiguration {
       FactStore store,
       GrpcRequestMetadata grpcMetaData,
       GrpcLimitProperties props,
-      FastForwardTarget target, ServerMetrics metrics) {
-    return new FactStoreGrpcService(store, grpcMetaData, props, target,metrics);
+      FastForwardTarget target,
+      ServerMetrics metrics) {
+    return new FactStoreGrpcService(store, grpcMetaData, props, target, metrics);
   }
 
   @Bean
@@ -67,7 +68,7 @@ public class FactCastGrpcServerConfiguration {
   }
 
   @Bean
-  public ServerMetrics serverMetrics(@NonNull MeterRegistry reg){
+  public ServerMetrics serverMetrics(@NonNull MeterRegistry reg) {
     return new ServerMetricsImpl(reg);
   }
 }
