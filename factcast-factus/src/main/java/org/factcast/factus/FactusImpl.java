@@ -486,6 +486,11 @@ public class FactusImpl implements Factus {
     return new LockedOnSpecs(fc, this, specs, factusMetrics);
   }
 
+  @Override
+  public OptionalLong serialOf(@NonNull UUID factId) {
+    return fc.serialOf(factId);
+  }
+
   abstract static class IntervalSnapshotter<P extends SnapshotProjection>
       implements BiConsumer<P, UUID> {
 
