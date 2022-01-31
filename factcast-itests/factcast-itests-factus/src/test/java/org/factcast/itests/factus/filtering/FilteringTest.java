@@ -20,34 +20,16 @@ import static java.util.UUID.*;
 import static java.util.stream.Collectors.*;
 import static org.assertj.core.api.Assertions.*;
 
-import com.google.common.base.Stopwatch;
-import java.util.ArrayList;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import lombok.SneakyThrows;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.util.Maps;
-import org.factcast.core.Fact;
 import org.factcast.core.event.EventConverter;
-import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
-import org.factcast.factus.HandlerFor;
-import org.factcast.factus.event.EventObject;
-import org.factcast.factus.lock.LockedOperationAbortedException;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.LocalManagedProjection;
-import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.Application;
-import org.factcast.itests.factus.event.TestAggregateIncremented;
 import org.factcast.itests.factus.event.UserCreated;
-import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.*;
-import org.redisson.api.RTransaction;
-import org.redisson.api.TransactionOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -68,19 +50,18 @@ public class FilteringTest extends AbstractFactCastIntegrationTest {
   @Autowired EventConverter eventConverter;
   final LocalUserNamesFilterByMeta localUserNamesFilterByMeta = new LocalUserNamesFilterByMeta();
 
-  final LocalUserNamesFilterByAggregateId localUserNamesFilterByAggregateId = new LocalUserNamesFilterByAggregateId();
+  final LocalUserNamesFilterByAggregateId localUserNamesFilterByAggregateId =
+      new LocalUserNamesFilterByAggregateId();
 
-  final LocalUserNamesFilterByScript localUserNamesFilterByScript = new LocalUserNamesFilterByScript();
+  final LocalUserNamesFilterByScript localUserNamesFilterByScript =
+      new LocalUserNamesFilterByScript();
 
   @Test
   public void filtersByScript() {
 
-    UserCreated john =
-        new UserCreated(randomUUID(), "John") ;
-    UserCreated ringo =
-        new UserCreated(randomUUID(), "Ringo") ;
-    UserCreated paul =
-        new UserCreated(randomUUID(), "Paul") ;
+    UserCreated john = new UserCreated(randomUUID(), "John");
+    UserCreated ringo = new UserCreated(randomUUID(), "Ringo");
+    UserCreated paul = new UserCreated(randomUUID(), "Paul");
     // not included
     UserCreated george = new UserCreated(randomUUID(), "George");
 
@@ -94,33 +75,34 @@ public class FilteringTest extends AbstractFactCastIntegrationTest {
     assertThat(localUserNamesFilterByScript.count()).isEqualTo(1);
     assertThat(localUserNamesFilterByScript.contains("George")).isTrue();
   }
+
   @Test
   public void filtersByMeta() {
 
     UserCreated john =
-            new UserCreated(randomUUID(), "John") {
-              @Override
-              public Map<String, String> additionalMetaMap() {
-                return Maps.newHashMap("type", "customer");
-              }
-            };
+        new UserCreated(randomUUID(), "John") {
+          @Override
+          public Map<String, String> additionalMetaMap() {
+            return Maps.newHashMap("type", "customer");
+          }
+        };
     UserCreated ringo =
-            new UserCreated(randomUUID(), "Ringo") {
-              @Override
-              public Map<String, String> additionalMetaMap() {
-                // not included
-                return Maps.newHashMap("type", "vip");
-              }
-            };
+        new UserCreated(randomUUID(), "Ringo") {
+          @Override
+          public Map<String, String> additionalMetaMap() {
+            // not included
+            return Maps.newHashMap("type", "vip");
+          }
+        };
     UserCreated paul =
-            new UserCreated(randomUUID(), "Paul") {
-              @Override
-              public Map<String, String> additionalMetaMap() {
-                Map<String, String> m = Maps.newHashMap("type", "customer");
-                m.put("vip", "true");
-                return m;
-              }
-            };
+        new UserCreated(randomUUID(), "Paul") {
+          @Override
+          public Map<String, String> additionalMetaMap() {
+            Map<String, String> m = Maps.newHashMap("type", "customer");
+            m.put("vip", "true");
+            return m;
+          }
+        };
     // not included
     UserCreated george = new UserCreated(randomUUID(), "George");
 
@@ -134,34 +116,35 @@ public class FilteringTest extends AbstractFactCastIntegrationTest {
     assertThat(localUserNamesFilterByMeta.count()).isEqualTo(1);
     assertThat(localUserNamesFilterByMeta.contains("Paul")).isTrue();
   }
+
   @Test
   public void filtersByAggregateId() {
 
-    UUID johnsId = new UUID(12,13);
+    UUID johnsId = new UUID(12, 13);
     UserCreated john =
-            new UserCreated(johnsId, "John") {
-              @Override
-              public Map<String, String> additionalMetaMap() {
-                return Maps.newHashMap("type", "customer");
-              }
-            };
+        new UserCreated(johnsId, "John") {
+          @Override
+          public Map<String, String> additionalMetaMap() {
+            return Maps.newHashMap("type", "customer");
+          }
+        };
     UserCreated ringo =
-            new UserCreated(randomUUID(), "Ringo") {
-              @Override
-              public Map<String, String> additionalMetaMap() {
-                // not included
-                return Maps.newHashMap("type", "vip");
-              }
-            };
+        new UserCreated(randomUUID(), "Ringo") {
+          @Override
+          public Map<String, String> additionalMetaMap() {
+            // not included
+            return Maps.newHashMap("type", "vip");
+          }
+        };
     UserCreated paul =
-            new UserCreated(randomUUID(), "Paul") {
-              @Override
-              public Map<String, String> additionalMetaMap() {
-                Map<String, String> m = Maps.newHashMap("type", "customer");
-                m.put("vip", "true");
-                return m;
-              }
-            };
+        new UserCreated(randomUUID(), "Paul") {
+          @Override
+          public Map<String, String> additionalMetaMap() {
+            Map<String, String> m = Maps.newHashMap("type", "customer");
+            m.put("vip", "true");
+            return m;
+          }
+        };
     // not included
     UserCreated george = new UserCreated(randomUUID(), "George");
 
@@ -175,5 +158,4 @@ public class FilteringTest extends AbstractFactCastIntegrationTest {
     assertThat(localUserNamesFilterByAggregateId.count()).isEqualTo(1);
     assertThat(localUserNamesFilterByAggregateId.contains("John")).isTrue();
   }
-
 }

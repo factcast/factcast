@@ -15,17 +15,16 @@
  */
 package org.factcast.factus.serializer;
 
+import static org.assertj.core.api.Assertions.*;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.UUID;
 import lombok.Data;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class JacksonSnapshotSerializerTest {

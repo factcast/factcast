@@ -39,21 +39,13 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 @RequiredArgsConstructor
 public class PgTmpPagedCatchup implements PgCatchup {
 
-  @NonNull
-  final PgConnectionSupplier connectionSupplier;
-  @NonNull
-  final StoreConfigurationProperties props;
-  @NonNull
-  final SubscriptionRequestTO request;
-  @NonNull
-  final PgPostQueryMatcher postQueryMatcher;
-  @NonNull
-  final SubscriptionImpl subscription;
-  @NonNull
-  final AtomicLong serial;
-  @NonNull
-  final PgMetrics metrics;
-
+  @NonNull final PgConnectionSupplier connectionSupplier;
+  @NonNull final StoreConfigurationProperties props;
+  @NonNull final SubscriptionRequestTO request;
+  @NonNull final PgPostQueryMatcher postQueryMatcher;
+  @NonNull final SubscriptionImpl subscription;
+  @NonNull final AtomicLong serial;
+  @NonNull final PgMetrics metrics;
 
   @SneakyThrows
   @Override
@@ -92,13 +84,14 @@ public class PgTmpPagedCatchup implements PgCatchup {
           if (skipTesting || postQueryMatcher.test(f)) {
             subscription.notifyElement(f);
             factCounter++;
-          }
-          else {
+          } else {
             log.trace("{} filtered id={}", request, factId);
           }
         }
       } while (!facts.isEmpty());
-      metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT).increment(factCounter); // TODO this needs to TAG it for each subscription?
+      metrics
+          .counter(StoreMetrics.EVENT.CATCHUP_FACT)
+          .increment(factCounter); // TODO this needs to TAG it for each subscription?
     }
   }
 }

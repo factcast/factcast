@@ -58,7 +58,8 @@ public class FactValidatorConfiguration {
   }
 
   @Bean
-  @ConditionalOnExpression("!'${factcast.store.schema-registry-url:}'.isEmpty() && ${factcast.store.validation-enabled:true}")
+  @ConditionalOnExpression(
+      "!'${factcast.store.schema-registry-url:}'.isEmpty() && ${factcast.store.validation-enabled:true}")
   public FactValidationAspect factValidationAspect(
       StoreConfigurationProperties props, FactValidator v) {
     return new FactValidationAspect(v);
