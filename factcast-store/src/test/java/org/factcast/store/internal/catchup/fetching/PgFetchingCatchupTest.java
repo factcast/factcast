@@ -49,30 +49,28 @@ import org.springframework.jdbc.core.RowCallbackHandler;
 @ExtendWith(MockitoExtension.class)
 class PgFetchingCatchupTest {
 
-  @Mock
-  @NonNull PgConnectionSupplier connectionSupplier;
+  @Mock @NonNull PgConnectionSupplier connectionSupplier;
+
   @Mock(lenient = true)
-  @NonNull StoreConfigurationProperties props;
-  @Mock
-  @NonNull SubscriptionRequestTO req;
-  @Mock
-  @NonNull PgPostQueryMatcher postQueryMatcher;
-  @Mock
-  @NonNull SubscriptionImpl subscription;
-  @Mock
-  @NonNull AtomicLong serial;
+  @NonNull
+  StoreConfigurationProperties props;
+
+  @Mock @NonNull SubscriptionRequestTO req;
+  @Mock @NonNull PgPostQueryMatcher postQueryMatcher;
+  @Mock @NonNull SubscriptionImpl subscription;
+  @Mock @NonNull AtomicLong serial;
+
   @Mock(lenient = true)
-  @NonNull PgMetrics metrics;
-  @Mock
-  @NonNull Counter counter;
-  @InjectMocks
-  PgFetchingCatchup underTest;
+  @NonNull
+  PgMetrics metrics;
+
+  @Mock @NonNull Counter counter;
+  @InjectMocks PgFetchingCatchup underTest;
 
   @Nested
   class WhenRunning {
     @BeforeEach
-    void setup() {
-    }
+    void setup() {}
 
     @SneakyThrows
     @Test
@@ -92,8 +90,7 @@ class PgFetchingCatchupTest {
 
   @Nested
   class WhenFetching {
-    @Mock
-    @NonNull JdbcTemplate jdbc;
+    @Mock @NonNull JdbcTemplate jdbc;
 
     @BeforeEach
     void setup() {
@@ -104,8 +101,8 @@ class PgFetchingCatchupTest {
     @Test
     void setsCorrectFetchSize() {
       doNothing()
-              .when(jdbc)
-              .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
+          .when(jdbc)
+          .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
       underTest.fetch(jdbc);
       verify(jdbc).setFetchSize(eq(props.getPageSize()));
     }
@@ -120,12 +117,13 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void countsNumberOfFacts() {
-      PgFactExtractor extractor = new PgFactExtractor(new AtomicLong(1L)) {
-        @Override
-        public @NonNull Fact mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
-          return null;
-        }
-      };
+      PgFactExtractor extractor =
+          new PgFactExtractor(new AtomicLong(1L)) {
+            @Override
+            public @NonNull Fact mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
+              return null;
+            }
+          };
 
       RowCallbackHandler rowCallbackHandler = underTest.createRowCallbackHandler(true, extractor);
       rowCallbackHandler.processRow(mock(ResultSet.class));
@@ -139,13 +137,10 @@ class PgFetchingCatchupTest {
   @Nested
   class WhenCreatingRowCallbackHandler {
     final boolean SKIP_TESTING = true;
-    @Mock
-    PgFactExtractor extractor;
-
+    @Mock PgFactExtractor extractor;
 
     @BeforeEach
-    void setup() {
-    }
+    void setup() {}
 
     @SneakyThrows
     @Test
@@ -197,9 +192,7 @@ class PgFetchingCatchupTest {
               () -> {
                 cbh.processRow(rs);
               })
-              .isInstanceOf(TransformationException.class);
+          .isInstanceOf(TransformationException.class);
     }
-
-
   }
 }
