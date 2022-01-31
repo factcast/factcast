@@ -15,6 +15,9 @@
  */
 package org.factcast.store.registry.http;
 
+import static org.assertj.core.api.Assertions.*;
+
+import java.net.MalformedURLException;
 import lombok.NonNull;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -26,10 +29,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.net.MalformedURLException;
-
-import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class HttpSchemaRegistryFactoryTest {

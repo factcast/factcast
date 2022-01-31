@@ -347,7 +347,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
       HandlerFor handlerFor = m.getAnnotation(HandlerFor.class);
       if (handlerFor != null) {
-        return addOptionalFilterInfo(m,FactSpec.ns(handlerFor.ns()).type(handlerFor.type()).version(handlerFor.version()));
+        return addOptionalFilterInfo(
+            m, FactSpec.ns(handlerFor.ns()).type(handlerFor.type()).version(handlerFor.version()));
       }
 
       List<Class<?>> eventPojoTypes =
@@ -366,26 +367,25 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
               "Multiple EventPojo Parameters. Cannot introspect FactSpec from " + m);
         } else {
           Class<?> eventPojoType = eventPojoTypes.get(0);
-          return addOptionalFilterInfo(m,FactSpec.from(eventPojoType));
+          return addOptionalFilterInfo(m, FactSpec.from(eventPojoType));
         }
       }
     }
 
-    @VisibleForTesting static FactSpec addOptionalFilterInfo(Method m, FactSpec spec) {
+    @VisibleForTesting
+    static FactSpec addOptionalFilterInfo(Method m, FactSpec spec) {
       FilterByMetas attributes = m.getAnnotation(FilterByMetas.class);
-      if(attributes!=null)
-        Arrays.stream(attributes.value()).forEach( a -> spec.meta(a.key(),a.value()));
+      if (attributes != null)
+        Arrays.stream(attributes.value()).forEach(a -> spec.meta(a.key(), a.value()));
 
       FilterByMeta attribute = m.getAnnotation(FilterByMeta.class);
-      if(attribute!=null)
-        spec.meta(attribute.key(),attribute.value());
+      if (attribute != null) spec.meta(attribute.key(), attribute.value());
 
       FilterByAggId aggregateId = m.getAnnotation(FilterByAggId.class);
-      if(aggregateId!=null)
-          spec.aggId(UUID.fromString(aggregateId.value()));
+      if (aggregateId != null) spec.aggId(UUID.fromString(aggregateId.value()));
 
       FilterByScript filterByScript = m.getAnnotation(FilterByScript.class);
-      if(filterByScript !=null)
+      if (filterByScript != null)
         spec.filterScript(org.factcast.core.spec.FilterScript.js(filterByScript.value()));
 
       return spec;
