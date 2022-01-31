@@ -188,20 +188,19 @@ public class SubscriptionImpl implements Subscription {
 
   public SubscriptionImpl onClose(Runnable e) {
     Runnable formerOnClose = onClose;
-    onClose = ()->{
-      tryRun(formerOnClose);
-      tryRun(e);
-    };
+    onClose =
+        () -> {
+          tryRun(formerOnClose);
+          tryRun(e);
+        };
     return this;
   }
 
   private void tryRun(Runnable e) {
-    try{
+    try {
       e.run();
-    }
-    catch (Exception ex)
-    {
-      log.error("While executing onClose:",ex);
+    } catch (Exception ex) {
+      log.error("While executing onClose:", ex);
     }
   }
 
