@@ -45,7 +45,7 @@ public class TransformationConfiguration {
       @NonNull StoreConfigurationProperties props,
       @NonNull RegistryMetrics registryMetrics,
       @Autowired(required = false) SpringLiquibase unused) {
-    if (props.isValidationEnabled() && props.isPersistentRegistry())
+    if (props.isSchemaRegistryConfigured() && props.isPersistentRegistry())
       return new PgTransformationStoreImpl(jdbcTemplate, registryMetrics);
 
     // otherwise
@@ -58,7 +58,7 @@ public class TransformationConfiguration {
       @NonNull StoreConfigurationProperties props,
       @NonNull RegistryMetrics registryMetrics,
       @Autowired(required = false) SpringLiquibase unused) {
-    if (props.isValidationEnabled() && props.isPersistentTransformationCache())
+    if (props.isSchemaRegistryConfigured() && props.isPersistentTransformationCache())
       return new PgTransformationCache(jdbcTemplate, registryMetrics);
 
     // otherwise
