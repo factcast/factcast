@@ -17,6 +17,7 @@ package org.factcast.factus;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -125,4 +126,6 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   LockedOnSpecs withLockOn(@NonNull FactSpec spec, @NonNull FactSpec... additional);
 
   LockedOnSpecs withLockOn(@NonNull List<FactSpec> specs);
+
+  OptionalLong serialOf(@NonNull UUID factId);
 }
