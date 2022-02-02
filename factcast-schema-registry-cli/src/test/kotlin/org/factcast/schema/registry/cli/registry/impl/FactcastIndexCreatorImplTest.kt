@@ -31,6 +31,8 @@ class FactcastIndexCreatorImplTest : StringSpec() {
 
     val uut = FactcastIndexCreatorImpl(fs, om, indexFileCalculator)
 
+    val titleFiltered = setOf("title")
+
     override fun afterTest(testCase: TestCase, result: TestResult) {
         clearAllMocks()
     }
@@ -38,48 +40,32 @@ class FactcastIndexCreatorImplTest : StringSpec() {
     init {
         "createIndexFile - should create a valid index file" {
             val index = Index(emptyList(), emptyList())
-            every { indexFileCalculator.calculateIndex(dummyProject, true) } returns index
+            every { indexFileCalculator.calculateIndex(dummyProject, titleFiltered) } returns index
             every { fs.ensureDirectories(dummyPath) } returns Unit
             every { om.writeValue(any<File>(), index) } returns Unit
 
-            uut.createIndexFile(dummyPath, dummyProject, true)
+            uut.createIndexFile(dummyPath, dummyProject, titleFiltered)
 
             verifyAll {
-                indexFileCalculator.calculateIndex(dummyProject, true)
+                indexFileCalculator.calculateIndex(dummyProject, titleFiltered)
                 fs.ensureDirectories(dummyPath)
                 om.writeValue(match<File> { it.path.platformIndependent().endsWith("index.json") }, index)
             }
             confirmVerified(indexFileCalculator, fs, om)
         }
 
-        "copySchemes - should copy the schema for each version" {
-            every { fs.copyFile(dummyPath.toFile(), any()) } returns Unit
-
-            uut.copySchemes(dummyPath, dummyProject, false)
-
-            verifyAll {
-                fs.copyFile(
-                    any(),
-                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version1)) })
-                fs.copyFile(
-                    any(),
-                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version2)) })
-            }
-            confirmVerified(fs)
-        }
-
         "copySchemes - should copy the schema for each version with stripped title attribute" {
-            every { fs.copyJsonFilteringTitle(dummyPath.toFile(), any()) } returns Unit
+            every { fs.copyFilteredJson(dummyPath.toFile(), any(), any()) } returns Unit
 
-            uut.copySchemes(dummyPath, dummyProject, true)
+            uut.copySchemes(dummyPath, dummyProject, titleFiltered)
 
             verifyAll {
-                fs.copyJsonFilteringTitle(
+                fs.copyFilteredJson(
                     any(),
-                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version1)) })
-                fs.copyJsonFilteringTitle(
+                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version1)) }, titleFiltered)
+                fs.copyFilteredJson(
                     any(),
-                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version2)) })
+                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version2)) }, titleFiltered)
             }
             confirmVerified(fs)
         }

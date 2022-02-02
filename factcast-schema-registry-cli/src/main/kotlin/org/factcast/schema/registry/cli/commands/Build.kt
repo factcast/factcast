@@ -15,11 +15,11 @@
  */
 package org.factcast.schema.registry.cli.commands
 
+import picocli.CommandLine.Command
+import picocli.CommandLine.Option
 import java.nio.file.Paths
 import javax.inject.Inject
 import kotlin.system.exitProcess
-import picocli.CommandLine.Command
-import picocli.CommandLine.Option
 
 @Command(
     name = "build",
@@ -36,8 +36,18 @@ class Build : Runnable {
     @Option(names = ["-w", "--white-list"], description = ["Path to an optional whitelist file."])
     var whiteList: String? = null
 
-    @Option(names = ["-s", "--schema-strip-titles"], description = ["Remove the 'title' attribute from JSON schema files. Optional."])
+    @Option(
+        names = ["-s", "--schema-strip-titles"],
+        description = ["Remove the 'title' attribute from JSON schema files. Optional."]
+    )
     var schemaStripTitles: Boolean = false
+
+    @Option(
+        names = ["--schema-remove-fields"],
+        description = ["Remove arbitrary fields from the schema like title, description, example."],
+        split = ","
+    )
+    var removeSchemaFields: Set<String> = emptySet()
 
     @Inject
     lateinit var commandService: CommandService
@@ -47,9 +57,14 @@ class Build : Runnable {
         val outputRoot = Paths.get(outputPath).toAbsolutePath().normalize()
         val whiteListPath = whiteList?.let { Paths.get(it).toAbsolutePath().normalize() }
 
-        val exitCode = commandService.build(sourceRoot, outputRoot, whiteListPath, schemaStripTitles)
+        val exitCode = commandService.build(
+            sourceRoot,
+            outputRoot,
+            whiteListPath,
+            if (schemaStripTitles) removeSchemaFields.plus("title") else removeSchemaFields
+        )
 
         if (exitCode != 0)
-        exitProcess(exitCode)
+            exitProcess(exitCode)
     }
 }

@@ -34,7 +34,7 @@ class CommandServiceImpl(
     private val projectService: ProjectService,
     private val distributionCreatorService: DistributionCreatorService
 ) : CommandService {
-    override fun build(sourceRoot: Path, outputRoot: Path, whiteList: Path?, schemaStripTitles: Boolean) = try {
+    override fun build(sourceRoot: Path, outputRoot: Path, whiteList: Path?, removedSchemaProps: Set<String>) = try {
         fileSystemService.deleteDirectory(outputRoot)
 
         logger.info("Starting building Factcast Schema Registry")
@@ -53,7 +53,7 @@ class CommandServiceImpl(
                 1
             }, {
                 try {
-                    distributionCreatorService.createDistributable(outputRoot, it, schemaStripTitles)
+                    distributionCreatorService.createDistributable(outputRoot, it, removedSchemaProps)
 
                     logger.info("Build finished!")
 

@@ -28,10 +28,10 @@ class DistributionCreatorServiceImpl(
     private val staticPageCreator: StaticPageCreator,
     private val factcastIndexCreator: FactcastIndexCreator
 ) : DistributionCreatorService {
-    override fun createDistributable(outputPath: Path, project: Project, schemaStripTitles: Boolean) {
+    override fun createDistributable(outputPath: Path, project: Project, removedSchemaProps: Set<String>) {
         staticPageCreator.createPage(outputPath, project)
 
         val indexPath = outputPath.resolve(Paths.get("static", "registry"))
-        factcastIndexCreator.createFactcastIndex(indexPath, project, schemaStripTitles)
+        factcastIndexCreator.createFactcastIndex(indexPath, project, removedSchemaProps)
     }
 }
