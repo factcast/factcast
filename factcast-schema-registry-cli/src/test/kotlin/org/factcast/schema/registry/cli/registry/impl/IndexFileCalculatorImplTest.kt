@@ -49,7 +49,7 @@ class IndexFileCalculatorImplTest : StringSpec() {
                 )
             )
 
-            val index = uut.calculateIndex(dummyProject, false)
+            val index = uut.calculateIndex(dummyProject, emptySet())
 
             index.schemes shouldHaveSize 2
             verify(exactly = 3) { checksumService.createMd5Hash(any<Path>()) }
@@ -72,7 +72,7 @@ class IndexFileCalculatorImplTest : StringSpec() {
                 )
             )
 
-            val index = uut.calculateIndex(dummyProject, true)
+            val index = uut.calculateIndex(dummyProject, setOf("title"))
 
             index.schemes shouldHaveSize 2
             verify(exactly = 2) { fileSystemService.readToJsonNode(dummyPath) }
@@ -87,7 +87,7 @@ class IndexFileCalculatorImplTest : StringSpec() {
         }
 
         "semantically identical JSON strings have same hash" {
-            val mapper = ObjectMapper();
+            val mapper = ObjectMapper()
 
             val jsonWithSameHashCode = listOf(
                 "{\"foo1\":\"bar1\", \"foo2\":\"bar2\"}",
@@ -97,7 +97,7 @@ class IndexFileCalculatorImplTest : StringSpec() {
             )
 
             jsonWithSameHashCode.forEach { jsonString ->
-                val jsonNode = mapper.readTree(jsonString);
+                val jsonNode = mapper.readTree(jsonString)
                 every { fileSystemService.readToJsonNode(any()) } returns jsonNode
 
                 val checksumService = ChecksumServiceImpl(fileSystemService, ObjectMapper())
@@ -105,7 +105,7 @@ class IndexFileCalculatorImplTest : StringSpec() {
                     checksumService, missingTransformationCalculator,
                     fileSystemService
                 )
-                val result = uut.createTitleFilteredMd5Hash(Paths.get("some/file"))
+                val result = uut.createFilteredMd5Hash(Paths.get("some/file"), setOf("title"))
 
                 result shouldBe "9250500f3449b8ca0a53566d16253321"
             }
@@ -126,8 +126,8 @@ class IndexFileCalculatorImplTest : StringSpec() {
                 fileSystemService
             )
 
-            val indexWithoutStrippedTitles = uut.calculateIndex(dummyProject, false)
-            val indexWithStrippedTitles = uut.calculateIndex(dummyProject, true)
+            val indexWithoutStrippedTitles = uut.calculateIndex(dummyProject, emptySet())
+            val indexWithStrippedTitles = uut.calculateIndex(dummyProject, setOf("title"))
 
             indexWithoutStrippedTitles.schemes[0].hash shouldBe "f560b3a9a93014b6939f100ce187641b"
             indexWithStrippedTitles.schemes[0].hash shouldBe "26e0e35414d1c5cecac62eb900b50efc"
