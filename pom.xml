@@ -81,7 +81,6 @@
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
-    <spring-boot-maven-plugin.version>2.3.4.RELEASE</spring-boot-maven-plugin.version>
     <maven.version>3.8.4</maven.version>
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
     <maven.compiler.source>11</maven.compiler.source>
@@ -101,7 +100,6 @@
     <spring-cloud.version>2020.0.2</spring-cloud.version>
     <spring-grpc.version>2.11.0.RELEASE</spring-grpc.version>
     <grpc.version>1.30.2</grpc.version>
-    <spring-boot-maven-plugin.version>2.6.3</spring-boot-maven-plugin.version>
     <testcontainers.version>1.16.3</testcontainers.version>
     <arrow.version>1.0.1</arrow.version>
     <micronaut.version>2.5.13</micronaut.version>
@@ -511,7 +509,7 @@
         <plugin>
           <groupId>org.springframework.boot</groupId>
           <artifactId>spring-boot-maven-plugin</artifactId>
-          <version>${spring-boot-maven-plugin.version}</version>
+          <version>${spring-boot.version}</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
