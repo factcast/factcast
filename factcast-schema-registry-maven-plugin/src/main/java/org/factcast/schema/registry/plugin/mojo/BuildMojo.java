@@ -37,6 +37,6 @@ public class BuildMojo extends AbstractBaseMojo {
             outputDirectory,
             includedEvents,
             schemaStripTitles,
-            stripSchemaProperties));
+            removeSchemaFields));
   }
 }

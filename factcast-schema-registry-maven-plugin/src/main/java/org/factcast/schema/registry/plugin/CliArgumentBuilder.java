@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.apache.commons.lang3.StringUtils;
 
 /** Builds the command line arguments for the schema registry CLI */
 public class CliArgumentBuilder {
@@ -61,8 +60,8 @@ public class CliArgumentBuilder {
     }
 
     if (!stripSchemaProperties.isEmpty()) {
-      argumentList.add(
-          "--remove-schema-properties " + StringUtils.join(stripSchemaProperties, ","));
+      argumentList.add("--schema-remove-fields");
+      argumentList.add(String.join(",", stripSchemaProperties));
     }
 
     String[] argumentListArr = new String[argumentList.size()];
