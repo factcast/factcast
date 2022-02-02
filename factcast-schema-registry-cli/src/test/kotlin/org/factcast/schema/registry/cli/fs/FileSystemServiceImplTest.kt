@@ -105,12 +105,13 @@ class FileSystemServiceImplTest : StringSpec() {
             uut.exists(outputPath) shouldBe true
         }
 
-        "copyJsonFilteringTitle" {
+        "copyFilteredJson" {
             val outputPath = Paths.get(tmp.toString(), "test.txt")
 
-            uut.copyJsonFilteringTitle(
+            uut.copyFilteredJson(
                 fixture("schema.json").toFile(),
-                outputPath.toFile()
+                outputPath.toFile(),
+                setOf("title")
             )
 
             uut.exists(outputPath) shouldBe true

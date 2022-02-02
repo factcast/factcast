@@ -34,9 +34,9 @@ class FactcastIndexCreatorImpl(
     private val om: ObjectMapper,
     private val indexFileCalculator: IndexFileCalculator
 ) : FactcastIndexCreator {
-    override fun createFactcastIndex(contentBase: Path, project: Project, schemaStripTitles: Boolean) {
-        createIndexFile(contentBase, project, schemaStripTitles)
-        copySchemes(contentBase, project, schemaStripTitles)
+    override fun createFactcastIndex(contentBase: Path, project: Project, removedSchemaProps: Set<String>) {
+        createIndexFile(contentBase, project, removedSchemaProps)
+        copySchemes(contentBase, project, removedSchemaProps)
         copyTransformations(contentBase, project)
     }
 
@@ -55,19 +55,17 @@ class FactcastIndexCreatorImpl(
     }
 
     @VisibleForTesting
-    fun copySchemes(registryPath: Path, project: Project, schemaStripTitles: Boolean) {
+    fun copySchemes(registryPath: Path, project: Project, removedSchemaProps: Set<String>) {
         project.mapEventVersions { namespace, event, version ->
             val outputPath = registryPath.resolve(getEventId(namespace, event, version))
-            if (schemaStripTitles)
-                fileSystemService.copyJsonFilteringTitle(version.schemaPath.toFile(), outputPath.toFile())
-            else
-                fileSystemService.copyFile(version.schemaPath.toFile(), outputPath.toFile())
+            fileSystemService.copyFilteredJson(version.schemaPath.toFile(), outputPath.toFile(), removedSchemaProps)
+
         }
     }
 
     @VisibleForTesting
-    fun createIndexFile(contentBase: Path, project: Project, schemaStripTitles: Boolean) {
-        val index = indexFileCalculator.calculateIndex(project, schemaStripTitles)
+    fun createIndexFile(contentBase: Path, project: Project, removedSchemaProps: Set<String>) {
+        val index = indexFileCalculator.calculateIndex(project, removedSchemaProps)
         val path = contentBase.resolve("index.json")
 
         fileSystemService.ensureDirectories(contentBase)

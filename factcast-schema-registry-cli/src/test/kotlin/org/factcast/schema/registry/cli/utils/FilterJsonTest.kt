@@ -4,12 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
-class FilterTitleFromJsonTest : StringSpec() {
+class FilterJsonTest : StringSpec() {
 
     val objectMapper = ObjectMapper()
 
     init {
-        "filters Title" {
+        "filters fields" {
 
             val inputJson = """
                 {
@@ -17,15 +17,18 @@ class FilterTitleFromJsonTest : StringSpec() {
                     "title" : "i am unwanted",
                     "nested" : {
                         "foo" : "bar",
-                        "title" : "i am unwanted"
+                        "title" : "i am unwanted",
+                        "example": "foo"
                     }
                 }
             """.trimIndent()
             val unfiltered = objectMapper.readTree(inputJson)
 
-            val filtered = filterTitleFrom(unfiltered)
+            val filtered = filterJson(unfiltered, setOf("title", "example"))
 
             filtered.findParents("title")?.size shouldBe 0
+            filtered.findParents("example")?.size shouldBe 0
+            filtered.findParents("foo")?.size shouldBe 2
         }
 
         "no content change if title is missing" {
@@ -40,7 +43,7 @@ class FilterTitleFromJsonTest : StringSpec() {
             """.trimIndent()
 
             val unfiltered = objectMapper.readTree(inputJson)
-            unfiltered shouldBe filterTitleFrom(unfiltered)
+            unfiltered shouldBe filterJson(unfiltered, setOf("title"))
         }
     }
 }

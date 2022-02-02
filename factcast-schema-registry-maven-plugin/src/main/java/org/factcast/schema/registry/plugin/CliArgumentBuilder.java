@@ -17,7 +17,9 @@ package org.factcast.schema.registry.plugin;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /** Builds the command line arguments for the schema registry CLI */
 public class CliArgumentBuilder {
@@ -26,7 +28,7 @@ public class CliArgumentBuilder {
   private CliArgumentBuilder() {}
 
   public static String[] build(String command, File sourceDirectory, List<String> includedEvents) {
-    return build(command, sourceDirectory, null, includedEvents, false);
+    return build(command, sourceDirectory, null, includedEvents, false, new HashSet<>());
   }
 
   public static String[] build(
@@ -34,7 +36,8 @@ public class CliArgumentBuilder {
       File sourceDirectory,
       File outputDirectory,
       List<String> includedEvents,
-      boolean schemaStripTitles) {
+      boolean schemaStripTitles,
+      Set<String> stripSchemaProperties) {
     List<String> argumentList = new ArrayList<>();
     argumentList.add(command);
 
@@ -54,6 +57,11 @@ public class CliArgumentBuilder {
 
     if (schemaStripTitles) {
       argumentList.add("-s");
+    }
+
+    if (!stripSchemaProperties.isEmpty()) {
+      argumentList.add("--schema-remove-fields");
+      argumentList.add(String.join(",", stripSchemaProperties));
     }
 
     String[] argumentListArr = new String[argumentList.size()];
