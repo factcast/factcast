@@ -100,6 +100,6 @@ class CliArgumentBuilderTest {
     assertTrue(Files.readAllLines(Paths.get(builder[6])).contains("bar"));
     assertEquals("-s", builder[7]);
     assertEquals("--schema-remove-fields", builder[8]);
-    assertEquals(" description,example", builder[9]);
+    assertEquals("description,example", builder[9]);
   }
 }
