@@ -3,12 +3,14 @@ package org.factcast.schema.registry.cli.utils
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 
-fun filterTitleFrom(input: JsonNode): JsonNode {
+fun filterJson(input: JsonNode, removedSchemaProps: Set<String>): JsonNode {
     val tree = input.deepCopy<JsonNode>()
 
-    tree.findParents("title")
+    removedSchemaProps.forEach { property ->
+        tree.findParents(property)
             ?.map { it as ObjectNode }
-            ?.forEach { it.remove("title") }
+            ?.forEach { it.remove(property) }
+    }
 
     return tree
 }

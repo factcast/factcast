@@ -19,5 +19,5 @@ import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.registry.index.Index
 
 interface IndexFileCalculator {
-    fun calculateIndex(project: Project, schemaStripTitles: Boolean): Index
+    fun calculateIndex(project: Project, removedSchemaProps: Set<String>): Index
 }

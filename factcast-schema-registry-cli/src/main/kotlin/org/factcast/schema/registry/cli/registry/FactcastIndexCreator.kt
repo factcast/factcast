@@ -19,5 +19,5 @@ import java.nio.file.Path
 import org.factcast.schema.registry.cli.domain.Project
 
 interface FactcastIndexCreator {
-    fun createFactcastIndex(contentBase: Path, project: Project, schemaStripTitles: Boolean = false)
+    fun createFactcastIndex(contentBase: Path, project: Project, removedSchemaProps: Set<String> = emptySet())
 }
