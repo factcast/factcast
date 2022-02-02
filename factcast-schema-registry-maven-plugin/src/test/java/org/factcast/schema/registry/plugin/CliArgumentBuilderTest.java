@@ -93,12 +93,13 @@ class CliArgumentBuilderTest {
             true,
             Sets.newHashSet("description", "example"));
 
-    assertEquals(9, builder.length);
+    assertEquals(10, builder.length);
     assertEquals("-o", builder[3]);
     assertEquals("bazz", builder[4]);
     assertEquals("-w", builder[5]);
     assertTrue(Files.readAllLines(Paths.get(builder[6])).contains("bar"));
     assertEquals("-s", builder[7]);
-    assertEquals("--remove-schema-properties description,example", builder[8]);
+    assertEquals("--schema-remove-fields", builder[8]);
+    assertEquals(" description,example", builder[9]);
   }
 }
