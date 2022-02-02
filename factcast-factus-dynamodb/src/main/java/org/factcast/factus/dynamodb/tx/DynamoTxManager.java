@@ -1,5 +1,6 @@
 package org.factcast.factus.dynamodb.tx;
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -9,25 +10,23 @@ import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.Setter;
 import org.redisson.api.RTransaction;
-import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
 
 public class DynamoTxManager {
 
-  private static final ThreadLocal<Map<RedissonClient, DynamoTxManager>> holder =
-          ThreadLocal.withInitial((Supplier<Map<RedissonClient, DynamoTxManager>>) HashMap::new);
+  private static final ThreadLocal<Map<AmazonDynamoDBClient, DynamoTxManager>> holder =
+      ThreadLocal.withInitial((Supplier<Map<AmazonDynamoDBClient, DynamoTxManager>>) HashMap::new);
 
-  public static DynamoTxManager get(@NonNull RedissonClient c) {
-    Map<RedissonClient, DynamoTxManager> map = getMap();
+  public static DynamoTxManager get(@NonNull AmazonDynamoDBClient c) {
+    Map<AmazonDynamoDBClient, DynamoTxManager> map = getMap();
     return map.computeIfAbsent(c, DynamoTxManager::new);
   }
 
-  private static Map<RedissonClient, DynamoTxManager> getMap() {
+  private static Map<AmazonDynamoDBClient, DynamoTxManager> getMap() {
     return holder.get();
   }
 
-  @Setter
-  private TransactionOptions options = DynamoTransactional.Defaults.create();
+  @Setter private TransactionOptions options = DynamoTransactional.Defaults.create();
 
   public boolean inTransaction() {
     return currentTx != null;
@@ -35,9 +34,9 @@ public class DynamoTxManager {
 
   // no atomicref needed here as this class is used threadbound anyway
   private RTransaction currentTx;
-  private final RedissonClient redisson;
+  private final AmazonDynamoDBClient redisson;
 
-  DynamoTxManager(@NonNull RedissonClient redisson) {
+  DynamoTxManager(@NonNull AmazonDynamoDBClient redisson) {
     this.redisson = redisson;
   }
 
@@ -56,15 +55,12 @@ public class DynamoTxManager {
     return block.apply(currentTx);
   }
 
-  /**
-   * @return true if tx was started, false if there was one running
-   */
+  /** @return true if tx was started, false if there was one running */
   public boolean startOrJoin() {
     if (currentTx == null) {
       currentTx = redisson.createTransaction(options);
       return true;
-    }
-    else {
+    } else {
       return false;
     }
   }

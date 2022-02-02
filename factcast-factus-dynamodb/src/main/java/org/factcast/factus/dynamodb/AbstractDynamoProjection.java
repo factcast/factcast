@@ -1,5 +1,6 @@
 package org.factcast.factus.dynamodb;
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.util.UUID;
@@ -14,18 +15,16 @@ import org.factcast.factus.projection.WriterTokenAware;
 import org.factcast.factus.redis.batch.RedissonBatchManager;
 
 abstract class AbstractDynamoProjection
-        implements DynamoProjection, FactStreamPositionAware, WriterTokenAware, Named {
-  @Getter
-  protected final RedissonClient redisson;
+    implements DynamoProjection, FactStreamPositionAware, WriterTokenAware, Named {
+  @Getter protected final AmazonDynamoDBClient client;
 
   private final RLock lock;
   private final String stateBucketName;
 
-  @Getter
-  private final String redisKey;
+  @Getter private final String redisKey;
 
   public AbstractDynamoProjection(@NonNull RedissonClient redisson) {
-    this.redisson = redisson;
+    this.client = redisson;
 
     redisKey = getScopedName().asString();
     stateBucketName = redisKey + "_state_tracking";
@@ -46,16 +45,15 @@ abstract class AbstractDynamoProjection
 
   @VisibleForTesting
   RBucket<UUID> stateBucket() {
-    return redisson.getBucket(stateBucketName, UUIDCodec.INSTANCE);
+    return client.getBucket(stateBucketName, UUIDCodec.INSTANCE);
   }
 
   @Override
   public UUID factStreamPosition() {
-    DynamoTxManager man = DynamoTxManager.get(redisson);
+    DynamoTxManager man = DynamoTxManager.get(client);
     if (man.inTransaction()) {
       return man.join((Function<RTransaction, UUID>) tx -> stateBucket(tx).get());
-    }
-    else {
+    } else {
       return stateBucket().get();
     }
     // note: were not trying to use a bucket from a running batch as it would require to execute the
@@ -65,22 +63,20 @@ abstract class AbstractDynamoProjection
   @SuppressWarnings("ConstantConditions")
   @Override
   public void factStreamPosition(@NonNull UUID position) {
-    DynamoTxManager txMan = DynamoTxManager.get(redisson);
+    DynamoTxManager txMan = DynamoTxManager.get(client);
     if (txMan.inTransaction()) {
       txMan.join(
-              tx -> {
-                stateBucket(txMan.getCurrentTransaction()).set(position);
-              });
-    }
-    else {
-      RedissonBatchManager bman = RedissonBatchManager.get(redisson);
+          tx -> {
+            stateBucket(txMan.getCurrentTransaction()).set(position);
+          });
+    } else {
+      RedissonBatchManager bman = RedissonBatchManager.get(client);
       if (bman.inBatch()) {
         bman.join(
-                tx -> {
-                  stateBucket(bman.getCurrentBatch()).setAsync(position);
-                });
-      }
-      else {
+            tx -> {
+              stateBucket(bman.getCurrentBatch()).setAsync(position);
+            });
+      } else {
         stateBucket().set(position);
       }
     }
@@ -89,6 +85,6 @@ abstract class AbstractDynamoProjection
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
     lock.lock();
-    return new DynamoWriterToken(redisson, lock);
+    return new DynamoWriterToken(client, lock);
   }
 }
