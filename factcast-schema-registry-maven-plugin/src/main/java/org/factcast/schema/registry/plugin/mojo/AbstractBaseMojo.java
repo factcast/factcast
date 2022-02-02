@@ -34,8 +34,8 @@ public abstract class AbstractBaseMojo extends AbstractMojo {
 
   @Parameter protected boolean schemaStripTitles;
 
-  @Parameter(property = "stripSchemaProperties")
-  protected Set<String> stripSchemaProperties = new HashSet<>();
+  @Parameter(property = "removeSchemaFields")
+  protected Set<String> removeSchemaFields = new HashSet<>();
 
   protected void checkSourceDirectory() {
     if (!sourceDirectory.exists())
