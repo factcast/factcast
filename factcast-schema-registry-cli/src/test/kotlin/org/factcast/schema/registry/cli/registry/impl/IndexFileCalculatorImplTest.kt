@@ -90,10 +90,10 @@ class IndexFileCalculatorImplTest : StringSpec() {
             val mapper = ObjectMapper()
 
             val jsonWithSameHashCode = listOf(
-                "{\"foo1\":\"bar1\", \"foo2\":\"bar2\"}",
-                "{   \"foo1\"  :  \"bar1\",   \"foo2\"   :  \"bar2\"}   ",
-                "{\"foo1\":\"bar1\", \"title\"  :\"some title\", \"foo2\":\"bar2\"}",
-                "{   \"foo1\"   :  \"bar1\",  \"title\"  :  \"some title\",  \"foo2\"  :  \"bar2\"  }"
+                """{"type":"string","foo1":"bar1", "foo2":"bar2"}""",
+                """{   "type"   :   "string",   "foo1"   :   "bar1",   "foo2"   :   "bar2"}""",
+                """{"type":"string","foo1":"bar1", "foo2":"bar2","title":"title"}""",
+                """{   "type"   :   "string",   "foo1"   :   "bar1",   "foo2"   :   "bar2",   "title"   :   "title"}""",
             )
 
             jsonWithSameHashCode.forEach { jsonString ->
@@ -107,7 +107,7 @@ class IndexFileCalculatorImplTest : StringSpec() {
                 )
                 val result = uut.createFilteredMd5Hash(Paths.get("some/file"), setOf("title"))
 
-                result shouldBe "9250500f3449b8ca0a53566d16253321"
+                result shouldBe "c98fec7850d52fa8eda4c3fd8ff4d8f8"
             }
         }
 
