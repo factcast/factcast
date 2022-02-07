@@ -15,47 +15,48 @@
  */
 package org.factcast.factus.dynamodb;
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
 import org.factcast.factus.projection.WriterToken;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 
 public class DynamoWriterToken implements WriterToken {
-  private final @NonNull
-  RLock lock;
+
+  private final DynamoOperations dynamo;
+  private final String lockIdentifier;
   private final Timer timer;
   private final AtomicBoolean liveness;
 
   @VisibleForTesting
   protected DynamoWriterToken(
-          @NonNull RedissonClient redisson, @NonNull RLock lock, @NonNull Timer timer
-  ) {
-    this.lock = lock;
+      @NonNull AmazonDynamoDBClient client, String projectionIdentifier, @NonNull Timer timer) {
+    this.dynamo = new DynamoOperations(client);
+    this.lockIdentifier = projectionIdentifier;
     this.timer = timer;
-    liveness = new AtomicBoolean(lock.isLocked());
-    long watchDogTimeout = redisson.getConfig().getLockWatchdogTimeout();
+    liveness = new AtomicBoolean(dynamo.retrieveLockState(lockIdentifier));
+    long watchDogTimeout = 10000; // 10 seconds
     TimerTask timerTask =
-            new TimerTask() {
-              @Override
-              public void run() {
-                liveness.set(lock.isLocked());
-              }
-            };
+        new TimerTask() {
+          @Override
+          public void run() {
+            if (liveness.get()) dynamo.lock(lockIdentifier);
+          }
+        };
     timer.scheduleAtFixedRate(timerTask, 0, (long) (watchDogTimeout / 1.5));
   }
 
-  public DynamoWriterToken(@NonNull RedissonClient redisson, @NonNull RLock lock) {
-    this(redisson, lock, new Timer());
+  protected DynamoWriterToken(@NonNull AmazonDynamoDBClient client, String projectionIdentifier) {
+    this(client, projectionIdentifier, new Timer());
   }
 
   @Override
   public void close() throws Exception {
+    liveness.set(false);
     timer.cancel();
-    lock.unlock();
+    dynamo.removeLock(lockIdentifier);
   }
 
   @Override

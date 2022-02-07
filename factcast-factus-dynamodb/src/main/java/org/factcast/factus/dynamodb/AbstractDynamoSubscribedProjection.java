@@ -1,12 +1,12 @@
 package org.factcast.factus.dynamodb;
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import lombok.NonNull;
 import org.factcast.factus.projection.SubscribedProjection;
-import org.redisson.api.RedissonClient;
 
 public abstract class AbstractDynamoSubscribedProjection extends AbstractDynamoProjection
-        implements SubscribedProjection {
-  public AbstractDynamoSubscribedProjection(@NonNull RedissonClient redisson) {
-    super(redisson);
+    implements SubscribedProjection {
+  public AbstractDynamoSubscribedProjection(@NonNull AmazonDynamoDBClient client) {
+    super(client);
   }
 }
