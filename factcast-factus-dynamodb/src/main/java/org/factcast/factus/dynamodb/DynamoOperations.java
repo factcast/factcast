@@ -1,76 +1,81 @@
 package org.factcast.factus.dynamodb;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import static org.factcast.factus.dynamodb.DynamoConstants.*;
+
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import lombok.NonNull;
 
 /** shamelessly stolen from shedlock */
-class DynamoOperations {
-  private final AmazonDynamoDBClient client;
-  private final DynamoDBMapper mapper;
+public class DynamoOperations {
+  static final String LOCK_UNTIL = "lockUntil";
+  static final String LOCKED_AT = "lockedAt";
 
-  public DynamoOperations(@NonNull AmazonDynamoDBClient client) {
+  private static final String OBTAIN_LOCK_QUERY =
+      "set " + LOCK_UNTIL + " = :lockUntil, " + LOCKED_AT + " = :lockedAt ";
+  private static final String OBTAIN_LOCK_CONDITION =
+      LOCK_UNTIL + " <= :lockedAt or attribute_not_exists(" + LOCK_UNTIL + ")";
+  private static final int LOCK_EXPIRATION_SECONDS = 10;
+
+  private final AmazonDynamoDB client;
+
+  public DynamoOperations(@NonNull AmazonDynamoDB client) {
     this.client = client;
-    mapper = new DynamoDBMapper(client);
   }
 
-  public void removeLock(@NonNull String lockIdentifier) {
-    DeleteItemRequest request = new DeleteItemRequest();
-    request.setReturnConsumedCapacity(ReturnConsumedCapacity.NONE);
-    request.setReturnValues(ReturnValue.NONE);
-
-    Map<String, AttributeValue> keysMap = new HashMap<>();
-    keysMap.put("id", new AttributeValue(lockIdentifier));
-    request.setKey(keysMap);
-
-    // FIXME retry on unexpected SC / exception ?
-    DeleteItemResult result = client.deleteItem(request);
-    // FIXME check sc
+  public void remove(@NonNull String lockId) {
+    Map<String, AttributeValue> key = Collections.singletonMap("_id", DynamoConstants.attr(lockId));
+    client.deleteItem(
+        new DeleteItemRequest().withTableName(DynamoConstants.LOCK_TABLE).withKey(key));
   }
 
-  public void lock(@NonNull String lockIdentifier) {
-    UpdateItemRequest request = new UpdateItemRequest();
-    request.setTableName(DynamoConstants.LOCK_TABLE);
-    request.setReturnConsumedCapacity(ReturnConsumedCapacity.NONE);
-    request.setReturnValues(ReturnValue.NONE);
-
-    Map<String, AttributeValue> keysMap = new HashMap<>();
-    keysMap.put("id", new AttributeValue(lockIdentifier));
-    request.setKey(keysMap);
-
-    Map<String, AttributeValueUpdate> map = new HashMap<>();
-    map.put(
-        "expires",
-        new AttributeValueUpdate(
-            new AttributeValue().withN(String.valueOf(System.currentTimeMillis())), "PUT"));
-    request.setAttributeUpdates(map);
-
-    // TODO need to block & retry here if condition fails
-
+  @NonNull
+  // maybe add param here to indicate short/longterm lock?
+  public Optional<DynamoWriterToken> lock(@NonNull String lockId) {
     try {
-      UpdateItemResult result = client.updateItem(request);
-      // There are three possible situations:
-      // 1. The lock document does not exist yet - it is inserted - we have the lock
-      // 2. The lock document exists and lockUtil <= now - it is updated - we have the lock
-      // 3. The lock document exists and lockUtil > now - ConditionalCheckFailedException is thrown
-      int httpStatusCode = result.getSdkHttpMetadata().getHttpStatusCode();
-      if (httpStatusCode / 100 != 2) {
-        // not OK
-        throw new IllegalStateException(
-            "Lock refresh failed with SC:" + httpStatusCode + "\n" + result);
-      }
+      update(lockId, true);
+      return Optional.of(new DynamoWriterToken(this, lockId));
     } catch (ConditionalCheckFailedException e) {
-      // failed to aquire lock
-    } catch (AmazonServiceException e) {
-      throw new IllegalStateException("Lock refresh failed with Exception", e);
+      // Condition failed. This means there was a lock with lockUntil > now.
+      return Optional.empty();
     }
   }
 
-  public boolean retrieveLockState(@NonNull String lockIdentifier) {
-    return true; // TODO
+  private void update(String lockId, boolean ifUnlocked) throws ConditionalCheckFailedException {
+    Instant now = Instant.now();
+    String nowIso = DynamoConstants.toIsoString(now);
+    String lockUntilIso = toIsoString(now.plus(LOCK_EXPIRATION_SECONDS, ChronoUnit.SECONDS));
+
+    Map<String, AttributeValue> key = Collections.singletonMap("_id", attr(lockId));
+
+    Map<String, AttributeValue> attributeUpdates = new HashMap<>(2);
+    attributeUpdates.put(":lockUntil", attr(lockUntilIso));
+    attributeUpdates.put(":lockedAt", attr(nowIso));
+
+    UpdateItemRequest request =
+        new UpdateItemRequest()
+            .withTableName(DynamoConstants.LOCK_TABLE)
+            .withKey(key)
+            .withUpdateExpression(OBTAIN_LOCK_QUERY)
+            .withExpressionAttributeValues(attributeUpdates)
+            .withReturnValues(ReturnValue.UPDATED_NEW);
+
+    if (ifUnlocked) request = request.withConditionExpression(OBTAIN_LOCK_CONDITION);
+
+    // There are three possible situations:
+    // 1. The lock document does not exist yet - it is inserted - we have the lock
+    // 2. The lock document exists and lockUtil <= now - it is updated - we have the lock
+    // 3. The lock document exists and lockUtil > now - ConditionalCheckFailedException is thrown
+    client.updateItem(request);
+  }
+
+  public void refresh(@NonNull String lockId) {
+    update(lockId, false);
   }
 }

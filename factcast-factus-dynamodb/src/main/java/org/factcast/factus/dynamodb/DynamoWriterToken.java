@@ -15,7 +15,6 @@
  */
 package org.factcast.factus.dynamodb;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -25,42 +24,41 @@ import org.factcast.factus.projection.WriterToken;
 
 public class DynamoWriterToken implements WriterToken {
 
-  private final DynamoOperations dynamo;
-  private final String lockIdentifier;
+  private final DynamoOperations operations;
+  private final String lockId;
   private final Timer timer;
-  private final AtomicBoolean liveness;
+  private final AtomicBoolean valid = new AtomicBoolean(true);
 
   @VisibleForTesting
-  protected DynamoWriterToken(
-      @NonNull AmazonDynamoDBClient client, String projectionIdentifier, @NonNull Timer timer) {
-    this.dynamo = new DynamoOperations(client);
-    this.lockIdentifier = projectionIdentifier;
+  protected DynamoWriterToken(@NonNull DynamoOperations ops, String lockId, @NonNull Timer timer) {
+    this.operations = ops;
+    this.lockId = lockId;
     this.timer = timer;
-    liveness = new AtomicBoolean(dynamo.retrieveLockState(lockIdentifier));
-    long watchDogTimeout = 10000; // 10 seconds
+
+    long watchDogTimeout = 3000; // 3 seconds TODO
     TimerTask timerTask =
         new TimerTask() {
           @Override
           public void run() {
-            if (liveness.get()) dynamo.lock(lockIdentifier);
+            operations.refresh(lockId);
           }
         };
-    timer.scheduleAtFixedRate(timerTask, 0, (long) (watchDogTimeout / 1.5));
+    timer.scheduleAtFixedRate(timerTask, watchDogTimeout, watchDogTimeout);
   }
 
-  protected DynamoWriterToken(@NonNull AmazonDynamoDBClient client, String projectionIdentifier) {
-    this(client, projectionIdentifier, new Timer());
+  protected DynamoWriterToken(@NonNull DynamoOperations ops, String lockId) {
+    this(ops, lockId, new Timer());
   }
 
   @Override
   public void close() throws Exception {
-    liveness.set(false);
+    valid.set(false);
     timer.cancel();
-    dynamo.removeLock(lockIdentifier);
+    operations.remove(lockId);
   }
 
   @Override
   public boolean isValid() {
-    return liveness.get();
+    return valid.get();
   }
 }

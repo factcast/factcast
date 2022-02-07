@@ -1,15 +1,18 @@
 package org.factcast.factus;
 
+import static org.assertj.core.api.Assertions.*;
+
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.waiters.WaiterParameters;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.factcast.factus.dynamodb.DynamoConstants;
-import org.factcast.factus.dynamodb.DynamoLockItem;
+import org.factcast.factus.dynamodb.DynamoOperations;
+import org.factcast.factus.dynamodb.DynamoWriterToken;
 import org.junit.jupiter.api.*;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.containers.localstack.LocalStackContainer.Service;
@@ -30,18 +33,17 @@ public class DynamoDBPlayground {
   @BeforeAll
   public static void setUp() {
     AmazonDynamoDB client = getClient();
-    DynamoDBMapper mapper = new DynamoDBMapper(client);
 
     {
       client.createTable(
           new CreateTableRequest()
               .withTableName(TABLE_NAME)
               .withKeySchema(
-                  new KeySchemaElement().withKeyType(KeyType.HASH).withAttributeName("id"))
+                  new KeySchemaElement().withKeyType(KeyType.HASH).withAttributeName("_id"))
               .withBillingMode(BillingMode.PAY_PER_REQUEST)
               .withAttributeDefinitions(
                   new AttributeDefinition()
-                      .withAttributeName("id")
+                      .withAttributeName("_id")
                       .withAttributeType(ScalarAttributeType.S)));
 
       var describeTable = new DescribeTableRequest().withTableName(TABLE_NAME);
@@ -50,9 +52,15 @@ public class DynamoDBPlayground {
     }
     {
       client.createTable(
-          mapper
-              .generateCreateTableRequest(DynamoLockItem.class)
-              .withBillingMode(BillingMode.PAY_PER_REQUEST));
+          new CreateTableRequest()
+              .withTableName(DynamoConstants.LOCK_TABLE)
+              .withKeySchema(
+                  new KeySchemaElement().withKeyType(KeyType.HASH).withAttributeName("_id"))
+              .withBillingMode(BillingMode.PAY_PER_REQUEST)
+              .withAttributeDefinitions(
+                  new AttributeDefinition()
+                      .withAttributeName("_id")
+                      .withAttributeType(ScalarAttributeType.S)));
 
       var describeTable = new DescribeTableRequest().withTableName(DynamoConstants.LOCK_TABLE);
       var waitParams = new WaiterParameters<DescribeTableRequest>().withRequest(describeTable);
@@ -60,9 +68,24 @@ public class DynamoDBPlayground {
     }
   }
 
+  @SneakyThrows
   @Test
   void theTestWithNoName() {
     AmazonDynamoDB client = getClient();
+
+    Optional<DynamoWriterToken> lock1 = new DynamoOperations(client).lock("l1");
+    assertThat(lock1).isNotEmpty();
+
+    Optional<DynamoWriterToken> lock2 = new DynamoOperations(client).lock("l2");
+    assertThat(lock2).isNotEmpty();
+
+    Optional<DynamoWriterToken> lock1b = new DynamoOperations(client).lock("l1");
+    assertThat(lock1b).isEmpty();
+
+    lock1.get().close();
+    // re-acquire
+    lock1b = new DynamoOperations(client).lock("l1");
+    assertThat(lock1b).isNotEmpty();
   }
 
   @SneakyThrows
@@ -72,16 +95,6 @@ public class DynamoDBPlayground {
     return AmazonDynamoDBClientBuilder.standard()
         .withEndpointConfiguration(endpointConfiguration)
         .withCredentials(new DefaultAWSCredentialsProviderChain())
-        .build();
-  }
-
-  @SneakyThrows
-  private static AmazonDynamoDB getClient1() {
-    AmazonDynamoDBClientBuilder standard = AmazonDynamoDBClientBuilder.standard();
-    return standard
-        .withEndpointConfiguration(
-            localstack.getEndpointConfiguration(LocalStackContainer.Service.DYNAMODB))
-        .withCredentials(localstack.getDefaultCredentialsProvider())
         .build();
   }
 }

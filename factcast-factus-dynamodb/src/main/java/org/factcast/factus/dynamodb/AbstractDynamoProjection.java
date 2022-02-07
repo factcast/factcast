@@ -2,6 +2,7 @@ package org.factcast.factus.dynamodb;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
@@ -20,9 +21,11 @@ abstract class AbstractDynamoProjection
   private final String lockBucketName;
 
   @Getter private final String scopedName;
+  private final DynamoOperations ops;
 
   public AbstractDynamoProjection(@NonNull AmazonDynamoDBClient amazonDynamoDBClient) {
     this.client = amazonDynamoDBClient;
+    this.ops = new DynamoOperations(client);
 
     scopedName = getScopedName().asString();
     stateBucketName = scopedName + "_state_tracking";
@@ -57,9 +60,12 @@ abstract class AbstractDynamoProjection
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-    // TODO
-    /* lock.lock();
-    return new DynamoWriterToken(client, lock);*/
-    return new DynamoWriterToken(client, lockBucketName);
+    // TODO maxWait
+    Optional<DynamoWriterToken> token;
+    do {
+      token = ops.lock(lockBucketName);
+      // TODO loop exp. backoff
+    } while (token.isEmpty());
+    return token.get();
   }
 }
