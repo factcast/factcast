@@ -31,7 +31,12 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.http.ValidationConstants;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.factcast.store.registry.transformation.*;
+import org.factcast.store.registry.transformation.Transformation;
+import org.factcast.store.registry.transformation.TransformationConflictException;
+import org.factcast.store.registry.transformation.TransformationKey;
+import org.factcast.store.registry.transformation.TransformationSource;
+import org.factcast.store.registry.transformation.TransformationStore;
+import org.factcast.store.registry.transformation.TransformationStoreListener;
 import org.factcast.store.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
@@ -144,7 +149,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
       int count = toFetch.size();
       log.info(
           "SchemaStore will be updated, {} {} to fetch.", count, count == 1 ? "schema" : "schemes");
-      toFetch.parallelStream()
+      toFetch.stream()
           .forEach(
               source -> {
                 try {
@@ -176,7 +181,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
           "TransformationStore will be updated, {} {} to fetch.",
           count,
           count == 1 ? "transformation" : "transformations");
-      toFetch.parallelStream()
+      toFetch.stream()
           .forEach(
               source -> {
                 try {
