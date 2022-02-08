@@ -15,12 +15,6 @@
  */
 package org.factcast.server.grpc;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.grpc.Status;
@@ -29,7 +23,13 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.UUID;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
@@ -45,17 +45,34 @@ import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
-import org.factcast.grpc.api.gen.FactStoreProto.*;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ConditionalPublishRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_CurrentDatabaseTime;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Empty;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_FactSpecsJson;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalSnapshot;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_ServerConfig;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_StateForRequest;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_UUID;
 import org.factcast.server.grpc.auth.FactCastAccount;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
 import org.factcast.server.grpc.metrics.NOPServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetrics.OP;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
-import org.mockito.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.intercept.RunAsUserToken;
 import org.springframework.security.core.Authentication;
@@ -63,27 +80,57 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
 @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
 @ExtendWith(MockitoExtension.class)
 public class FactStoreGrpcServiceTest {
 
-  @Mock FactStore backend;
-  @Mock GrpcRequestMetadata meta;
-  @Mock FastForwardTarget ffwdTarget;
+  @Mock
+  FactStore backend;
+  @Mock
+  GrpcRequestMetadata meta;
+  @Mock
+  FastForwardTarget ffwdTarget;
 
   @Mock(lenient = true)
   GrpcLimitProperties grpcLimitProperties;
 
-  @Mock GrpcRequestMetadata grpcRequestMetadata;
-  @Spy ServerMetrics metrics = new NOPServerMetrics();
+  @Mock
+  GrpcRequestMetadata grpcRequestMetadata;
+  @Spy
+  ServerMetrics metrics = new NOPServerMetrics();
 
-  @InjectMocks FactStoreGrpcService uut;
+  @InjectMocks
+  FactStoreGrpcService uut;
 
-  @Captor ArgumentCaptor<List<Fact>> acFactList;
+  @Captor
+  ArgumentCaptor<List<Fact>> acFactList;
 
   final ProtoConverter conv = new ProtoConverter();
 
-  @Captor private ArgumentCaptor<SubscriptionRequestTO> reqCaptor;
+  @Captor
+  private ArgumentCaptor<SubscriptionRequestTO> reqCaptor;
 
   private final FactCastUser PRINCIPAL = new FactCastUser(FactCastAccount.GOD, "DISABLED");
 
@@ -129,14 +176,14 @@ public class FactStoreGrpcServiceTest {
   @Test
   void currentTimeWithException() {
     assertThatThrownBy(
-            () -> {
-              when(backend.currentTime()).thenThrow(RuntimeException.class);
-              StreamObserver<MSG_CurrentDatabaseTime> stream = mock(StreamObserver.class);
+        () -> {
+          when(backend.currentTime()).thenThrow(RuntimeException.class);
+          StreamObserver<MSG_CurrentDatabaseTime> stream = mock(StreamObserver.class);
 
-              uut.currentTime(MSG_Empty.getDefaultInstance(), stream);
+          uut.currentTime(MSG_Empty.getDefaultInstance(), stream);
 
-              verifyNoMoreInteractions(stream);
-            })
+          verifyNoMoreInteractions(stream);
+        })
         .isInstanceOf(RuntimeException.class);
   }
 
@@ -176,21 +223,21 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchByIdThrowingException() {
     assertThatThrownBy(
-            () -> {
-              var store = mock(FactStore.class);
-              var uut = new FactStoreGrpcService(store, meta);
-              Fact fact =
-                  Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).buildWithoutPayload();
-              when(store.fetchById(fact.id())).thenThrow(IllegalMonitorStateException.class);
-              StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+        () -> {
+          var store = mock(FactStore.class);
+          var uut = new FactStoreGrpcService(store, meta);
+          Fact fact =
+              Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).buildWithoutPayload();
+          when(store.fetchById(fact.id())).thenThrow(IllegalMonitorStateException.class);
+          StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
 
-              uut.fetchById(new ProtoConverter().toProto(fact.id()), stream);
+          uut.fetchById(new ProtoConverter().toProto(fact.id()), stream);
 
-              verify(stream, never()).onNext(any());
-              verify(stream, never()).onCompleted();
+          verify(stream, never()).onNext(any());
+          verify(stream, never()).onCompleted();
 
-              verifyNoMoreInteractions(stream);
-            })
+          verifyNoMoreInteractions(stream);
+        })
         .isInstanceOf(IllegalMonitorStateException.class);
   }
 
@@ -467,13 +514,13 @@ public class FactStoreGrpcServiceTest {
   @Test
   public void testEnumerateNamespacesThrows() {
     assertThatThrownBy(
-            () -> {
-              uut = new FactStoreGrpcService(backend, meta);
-              StreamObserver so = mock(StreamObserver.class);
-              when(backend.enumerateNamespaces()).thenThrow(UnsupportedOperationException.class);
+        () -> {
+          uut = new FactStoreGrpcService(backend, meta);
+          StreamObserver so = mock(StreamObserver.class);
+          when(backend.enumerateNamespaces()).thenThrow(UnsupportedOperationException.class);
 
-              uut.enumerateNamespaces(conv.empty(), so);
-            })
+          uut.enumerateNamespaces(conv.empty(), so);
+        })
         .isInstanceOf(UnsupportedOperationException.class);
   }
 
@@ -494,26 +541,26 @@ public class FactStoreGrpcServiceTest {
   @Test
   public void testEnumerateTypesThrows() {
     assertThatThrownBy(
-            () -> {
-              uut = new FactStoreGrpcService(backend, meta);
-              StreamObserver so = mock(StreamObserver.class);
-              when(backend.enumerateTypes(eq("ns"))).thenThrow(UnsupportedOperationException.class);
+        () -> {
+          uut = new FactStoreGrpcService(backend, meta);
+          StreamObserver so = mock(StreamObserver.class);
+          when(backend.enumerateTypes(eq("ns"))).thenThrow(UnsupportedOperationException.class);
 
-              uut.enumerateTypes(conv.toProto("ns"), so);
-            })
+          uut.enumerateTypes(conv.toProto("ns"), so);
+        })
         .isInstanceOf(UnsupportedOperationException.class);
   }
 
   @Test
   public void testPublishThrows() {
     assertThatThrownBy(
-            () -> {
-              doThrow(UnsupportedOperationException.class).when(backend).publish(anyList());
-              List<Fact> toPublish = Lists.newArrayList(Fact.builder().build("{}"));
-              StreamObserver so = mock(StreamObserver.class);
+        () -> {
+          doThrow(UnsupportedOperationException.class).when(backend).publish(anyList());
+          List<Fact> toPublish = Lists.newArrayList(Fact.builder().build("{}"));
+          StreamObserver so = mock(StreamObserver.class);
 
-              uut.publish(conv.toProto(toPublish), so);
-            })
+          uut.publish(conv.toProto(toPublish), so);
+        })
         .isInstanceOf(UnsupportedOperationException.class);
   }
 
@@ -564,104 +611,127 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   public void testInvalidate() {
+    UUID id = UUID.randomUUID();
+    MSG_UUID req = conv.toProto(id);
+    StreamObserver o = mock(StreamObserver.class);
+    uut.invalidate(req, o);
 
-    {
-      UUID id = UUID.randomUUID();
-      MSG_UUID req = conv.toProto(id);
-      StreamObserver o = mock(StreamObserver.class);
-      uut.invalidate(req, o);
+    verify(backend).invalidate(eq(new StateToken(id)));
+    verify(o).onNext(any());
+    verify(o).onCompleted();
+  }
 
-      verify(backend).invalidate(eq(new StateToken(id)));
-      verify(o).onNext(any());
-      verify(o).onCompleted();
-    }
+  @Test
+  public void testInvalidatePropagatesGRPCException() {
+    doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend).invalidate(any());
 
-    {
-      doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend).invalidate(any());
-
-      UUID id = UUID.randomUUID();
-      MSG_UUID req = conv.toProto(id);
-      StreamObserver o = mock(StreamObserver.class);
-      assertThatThrownBy(
-              () -> {
-                uut.invalidate(req, o);
-              })
-          .isInstanceOf(StatusRuntimeException.class);
-      verify(backend).invalidate(eq(new StateToken(id)));
-      verifyNoMoreInteractions(o);
-    }
+    UUID id = UUID.randomUUID();
+    MSG_UUID req = conv.toProto(id);
+    StreamObserver o = mock(StreamObserver.class);
+    assertThatThrownBy(
+        () -> {
+          uut.invalidate(req, o);
+        })
+        .isInstanceOf(StatusRuntimeException.class);
+    verify(backend).invalidate(eq(new StateToken(id)));
+    verifyNoMoreInteractions(o);
   }
 
   @Test
   public void testStateFor() {
+    UUID id = UUID.randomUUID();
 
-    {
-      UUID id = UUID.randomUUID();
+    StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
+    MSG_StateForRequest req = conv.toProto(sfr);
+    StreamObserver o = mock(StreamObserver.class);
+    UUID token = UUID.randomUUID();
+    when(backend.stateFor(any())).thenReturn(new StateToken(token));
+    uut.stateFor(req, o);
+    ArrayList<FactSpec> expectedFactSpecs = Lists.newArrayList(FactSpec.ns("foo").aggId(id));
 
-      StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
+    verify(backend).stateFor(eq(expectedFactSpecs));
+    verify(o).onNext(eq(conv.toProto(token)));
+    verify(o).onCompleted();
+  }
+
+  @Test
+  public void testStateForPropagatesGRPCException() {
+    doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend).stateFor(any());
+
+    UUID id = UUID.randomUUID();
+    StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
+    MSG_StateForRequest req = conv.toProto(sfr);
+    StreamObserver o = mock(StreamObserver.class);
+    assertThatThrownBy(
+        () -> {
+          uut.stateFor(req, o);
+        })
+        .isInstanceOf(StatusRuntimeException.class);
+    ArrayList<FactSpec> expectedFactSpecs = Lists.newArrayList(FactSpec.ns("foo").aggId(id));
+    verify(backend).stateFor(eq(expectedFactSpecs));
+    verifyNoMoreInteractions(o);
+  }
+
+  @Test
+  public void testStateForNotAllowedOnNS() {
+    UUID id = UUID.randomUUID();
+
+    FactCastUser mockedFactCastUser = mock(FactCastUser.class);
+    when(mockedFactCastUser.canRead("denied")).thenReturn(false);
+
+    Authentication mockedAuthentication = mock(Authentication.class);
+    when(mockedAuthentication.getPrincipal()).thenReturn(mockedFactCastUser);
+
+    SecurityContext mockedSecurityContext = mock(SecurityContext.class);
+    when(mockedSecurityContext.getAuthentication()).thenReturn(mockedAuthentication);
+
+    try (MockedStatic<SecurityContextHolder> utilities =
+             Mockito.mockStatic(SecurityContextHolder.class)) {
+      utilities.when(() -> SecurityContextHolder.getContext()).thenReturn(mockedSecurityContext);
+
+      StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "denied");
       MSG_StateForRequest req = conv.toProto(sfr);
       StreamObserver o = mock(StreamObserver.class);
-      UUID token = UUID.randomUUID();
-      when(backend.stateFor(any())).thenReturn(new StateToken(token));
-      uut.stateFor(req, o);
-
-      verify(backend).stateFor(any());
-      verify(o).onNext(eq(conv.toProto(token)));
-      verify(o).onCompleted();
-    }
-
-    {
-      doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend).stateFor(any());
-
-      UUID id = UUID.randomUUID();
-      StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
-      MSG_StateForRequest req = conv.toProto(sfr);
-      StreamObserver o = mock(StreamObserver.class);
-      assertThatThrownBy(
-              () -> {
-                uut.stateFor(req, o);
-              })
-          .isInstanceOf(StatusRuntimeException.class);
-      verifyNoMoreInteractions(o);
+      assertThatThrownBy(() -> uut.stateFor(req, o)).isInstanceOf(StatusRuntimeException.class);
     }
   }
 
   @Test
   public void testPublishConditional() {
-    {
-      UUID id = UUID.randomUUID();
+    UUID id = UUID.randomUUID();
 
-      ConditionalPublishRequest sfr = new ConditionalPublishRequest(Lists.newArrayList(), id);
-      MSG_ConditionalPublishRequest req = conv.toProto(sfr);
-      StreamObserver o = mock(StreamObserver.class);
-      when(backend.publishIfUnchanged(any(), any())).thenReturn(true);
+    ConditionalPublishRequest sfr = new ConditionalPublishRequest(Lists.newArrayList(), id);
+    MSG_ConditionalPublishRequest req = conv.toProto(sfr);
+    StreamObserver o = mock(StreamObserver.class);
+    when(backend.publishIfUnchanged(any(), any())).thenReturn(true);
 
-      uut.publishConditional(req, o);
+    uut.publishConditional(req, o);
 
-      verify(backend)
-          .publishIfUnchanged(eq(Lists.newArrayList()), eq(Optional.of(new StateToken(id))));
-      verify(o).onNext(eq(conv.toProto(true)));
-      verify(o).onCompleted();
-    }
+    verify(backend)
+        .publishIfUnchanged(eq(Lists.newArrayList()), eq(Optional.of(new StateToken(id))));
+    verify(o).onNext(eq(conv.toProto(true)));
+    verify(o).onCompleted();
+  }
 
-    {
-      doThrow(new StatusRuntimeException(Status.DATA_LOSS))
-          .when(backend)
-          .publishIfUnchanged(any(), any());
+  @Test
+  public void testPublishConditionalPropagatesGRPCException() {
+    doThrow(new StatusRuntimeException(Status.DATA_LOSS))
+        .when(backend)
+        .publishIfUnchanged(any(), any());
 
-      UUID id = UUID.randomUUID();
+    UUID id = UUID.randomUUID();
 
-      ConditionalPublishRequest sfr = new ConditionalPublishRequest(Lists.newArrayList(), id);
-      MSG_ConditionalPublishRequest req = conv.toProto(sfr);
-      StreamObserver o = mock(StreamObserver.class);
+    ConditionalPublishRequest sfr = new ConditionalPublishRequest(Lists.newArrayList(), id);
+    MSG_ConditionalPublishRequest req = conv.toProto(sfr);
+    StreamObserver o = mock(StreamObserver.class);
 
-      assertThatThrownBy(
-              () -> {
-                uut.publishConditional(req, o);
-              })
-          .isInstanceOf(StatusRuntimeException.class);
-      verifyNoMoreInteractions(o);
-    }
+    assertThatThrownBy(
+        () -> {
+          uut.publishConditional(req, o);
+        })
+        .isInstanceOf(StatusRuntimeException.class);
+    verify(backend).publishIfUnchanged(eq(Lists.newArrayList()), eq(Optional.of(new StateToken(id))));
+    verifyNoMoreInteractions(o);
   }
 
   @Test
@@ -801,6 +871,29 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
+  public void testStateForSpecsJsonNotAllowedOnNS() {
+    FactCastUser mockedFactCastUser = mock(FactCastUser.class);
+    when(mockedFactCastUser.canRead("denied")).thenReturn(false);
+
+    Authentication mockedAuthentication = mock(Authentication.class);
+    when(mockedAuthentication.getPrincipal()).thenReturn(mockedFactCastUser);
+
+    SecurityContext mockedSecurityContext = mock(SecurityContext.class);
+    when(mockedSecurityContext.getAuthentication()).thenReturn(mockedAuthentication);
+
+    try (MockedStatic<SecurityContextHolder> utilities =
+             Mockito.mockStatic(SecurityContextHolder.class)) {
+      utilities.when(() -> SecurityContextHolder.getContext()).thenReturn(mockedSecurityContext);
+
+      ArrayList<FactSpec> list = Lists.newArrayList(FactSpec.ns("denied").type("nope"));
+      MSG_FactSpecsJson req = conv.toProtoFactSpecs(list);
+      StreamObserver<MSG_UUID> obs = mock(StreamObserver.class);
+      assertThatThrownBy(() -> uut.stateForSpecsJson(req, obs))
+          .isInstanceOf(StatusRuntimeException.class);
+    }
+  }
+
+  @Test
   void invalidateStateToken() {
 
     var id = UUID.randomUUID();
@@ -820,18 +913,18 @@ public class FactStoreGrpcServiceTest {
   void invalidateStateTokenWithError() {
 
     assertThatThrownBy(
-            () -> {
-              var id = UUID.randomUUID();
-              var req = conv.toProto(id);
-              var stateToken = new StateToken(id);
-              StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
-              doThrow(RuntimeException.class).when(backend).invalidate(any());
-              // ACT
-              uut.invalidate(req, obs);
+        () -> {
+          var id = UUID.randomUUID();
+          var req = conv.toProto(id);
+          var stateToken = new StateToken(id);
+          StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
+          doThrow(RuntimeException.class).when(backend).invalidate(any());
+          // ACT
+          uut.invalidate(req, obs);
 
-              verify(backend).invalidate(eq(stateToken));
-              verifyNoMoreInteractions(obs);
-            })
+          verify(backend).invalidate(eq(stateToken));
+          verifyNoMoreInteractions(obs);
+        })
         .isInstanceOf(RuntimeException.class);
   }
 
@@ -879,15 +972,15 @@ public class FactStoreGrpcServiceTest {
   @Test
   void clearSnapshotWithException() {
     assertThatThrownBy(
-            () -> {
-              var id = SnapshotId.of("foo", UUID.randomUUID());
-              var req = conv.toProto(id);
-              StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
-              doThrow(TestException.class).when(backend).clearSnapshot(eq(id));
+        () -> {
+          var id = SnapshotId.of("foo", UUID.randomUUID());
+          var req = conv.toProto(id);
+          StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
+          doThrow(TestException.class).when(backend).clearSnapshot(eq(id));
 
-              // ACT
-              uut.clearSnapshot(req, obs);
-            })
+          // ACT
+          uut.clearSnapshot(req, obs);
+        })
         .isInstanceOf(TestException.class);
   }
 
@@ -927,18 +1020,18 @@ public class FactStoreGrpcServiceTest {
   @Test
   void getSnapshotException() {
     assertThatThrownBy(
-            () -> {
-              var id = SnapshotId.of("foo", UUID.randomUUID());
-              var req = conv.toProto(id);
-              StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
-              Optional<Snapshot> optSnap = Optional.empty();
-              when(backend.getSnapshot(id)).thenThrow(TestException.class);
+        () -> {
+          var id = SnapshotId.of("foo", UUID.randomUUID());
+          var req = conv.toProto(id);
+          StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
+          Optional<Snapshot> optSnap = Optional.empty();
+          when(backend.getSnapshot(id)).thenThrow(TestException.class);
 
-              // ACT
-              uut.getSnapshot(req, obs);
+          // ACT
+          uut.getSnapshot(req, obs);
 
-              verify(backend).getSnapshot(eq(id));
-            })
+          verify(backend).getSnapshot(eq(id));
+        })
         .isInstanceOf(TestException.class);
   }
 
@@ -960,19 +1053,19 @@ public class FactStoreGrpcServiceTest {
   @Test
   void setSnapshotWithException() {
     assertThatThrownBy(
-            () -> {
-              var id = SnapshotId.of("foo", UUID.randomUUID());
-              Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-              var req = conv.toProto(snap);
-              StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
-              doThrow(TestException.class).when(backend).setSnapshot(any());
+        () -> {
+          var id = SnapshotId.of("foo", UUID.randomUUID());
+          Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+          var req = conv.toProto(snap);
+          StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
+          doThrow(TestException.class).when(backend).setSnapshot(any());
 
-              // ACT
-              uut.setSnapshot(req, obs);
+          // ACT
+          uut.setSnapshot(req, obs);
 
-              verify(backend).setSnapshot(snap);
-              verifyNoMoreInteractions(obs);
-            })
+          verify(backend).setSnapshot(snap);
+          verifyNoMoreInteractions(obs);
+        })
         .isInstanceOf(TestException.class);
   }
 
