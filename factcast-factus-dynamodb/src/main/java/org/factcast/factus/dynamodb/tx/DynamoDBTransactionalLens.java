@@ -20,7 +20,7 @@ public class DynamoDBTransactionalLens extends AbstractTransactionalLens {
     this.dynamoTxManager = DynamoDBTxManager.get(client);
     bulkSize = getSize(p);
     flushTimeout = getTimeout(p);
-    log.info(
+    log.trace(
         "Created {} instance for {} with batchsize={},timeout={}",
         getClass().getSimpleName(),
         p,
