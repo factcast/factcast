@@ -1,5 +1,6 @@
 package org.factcast.factus.spring.tx;
 
+import com.google.auto.service.AutoService;
 import java.util.Collection;
 import java.util.Collections;
 import javax.annotation.Nullable;
@@ -8,6 +9,7 @@ import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projector.ProjectorLens;
 import org.factcast.factus.projector.ProjectorPlugin;
 
+@AutoService(ProjectorPlugin.class)
 public class SpringTxProjectorPlugin implements ProjectorPlugin {
 
   @Nullable

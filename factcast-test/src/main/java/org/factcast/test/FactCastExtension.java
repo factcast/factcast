@@ -15,6 +15,7 @@
  */
 package org.factcast.test;
 
+import com.google.auto.service.AutoService;
 import com.google.common.collect.Lists;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.*;
 
 @Slf4j
+@AutoService(Extension.class)
 public class FactCastExtension
     implements Extension,
         BeforeEachCallback,

@@ -1,5 +1,6 @@
 package org.factcast.factus.redis;
 
+import com.google.auto.service.AutoService;
 import java.util.Collection;
 import java.util.Collections;
 import lombok.NonNull;
@@ -12,6 +13,7 @@ import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.redis.tx.RedisTransactionalLens;
 import org.redisson.api.RedissonClient;
 
+@AutoService(ProjectorPlugin.class)
 public class RedisProjectorPlugin implements ProjectorPlugin {
 
   @Override

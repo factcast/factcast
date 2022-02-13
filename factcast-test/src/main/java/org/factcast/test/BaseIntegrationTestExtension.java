@@ -1,5 +1,6 @@
 package org.factcast.test;
 
+import com.google.auto.service.AutoService;
 import java.sql.DriverManager;
 import java.time.Duration;
 import java.util.Map;
@@ -18,6 +19,7 @@ import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 
 @SuppressWarnings("rawtypes")
 @Slf4j
+@AutoService(FactCastIntegrationTestExtension.class)
 public class BaseIntegrationTestExtension implements FactCastIntegrationTestExtension {
   private final Map<FactcastTestConfig.Config, Containers> executions = new ConcurrentHashMap<>();
 

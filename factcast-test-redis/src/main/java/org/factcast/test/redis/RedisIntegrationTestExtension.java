@@ -1,10 +1,10 @@
 package org.factcast.test.redis;
 
+import com.google.auto.service.AutoService;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
-
 import org.factcast.test.FactCastIntegrationTestExtension;
 import org.junit.jupiter.api.extension.*;
 import org.redisson.Redisson;
@@ -12,6 +12,7 @@ import org.redisson.config.Config;
 import org.testcontainers.containers.GenericContainer;
 
 @SuppressWarnings("rawtypes")
+@AutoService(FactCastIntegrationTestExtension.class)
 @Slf4j
 public class RedisIntegrationTestExtension implements FactCastIntegrationTestExtension {
 

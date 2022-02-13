@@ -9,62 +9,61 @@
     <version>0.4.4-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>factcast-factus-dynamodb</artifactId>
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-  </properties>
+  <artifactId>factcast-test-dynamodb</artifactId>
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-internal-dep-boot</artifactId>
+        <artifactId>factcast-internal-dep</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
-
   <dependencies>
+
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
     </dependency>
-
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-factus</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-test</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
-
     <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-test-dynamodb</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>${junit-jupiter.version}</version>
+      <scope>provided</scope>
     </dependency>
-
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <version>${slf4j-api.version}</version>
-      <scope>test</scope>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-commons</artifactId>
     </dependency>
-
-
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${testcontainers.version}</version>
+      <scope>compile</scope>
+    </dependency>
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-dynamodb</artifactId>
       <version>1.12.83</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>localstack</artifactId>
+      <version>1.16.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>1.16.0</version>
     </dependency>
 
     <dependency>
@@ -73,7 +72,6 @@
       <version>1.0-rc7</version>
       <optional>true</optional>
     </dependency>
+
   </dependencies>
-
-
 </project>
