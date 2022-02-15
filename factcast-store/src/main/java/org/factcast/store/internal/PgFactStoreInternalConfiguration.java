@@ -15,10 +15,18 @@
  */
 package org.factcast.store.internal;
 
+import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.concurrent.Executors;
-
 import javax.sql.DataSource;
-
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.FactTransformerService;
@@ -46,21 +54,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-
-import com.google.common.eventbus.AsyncEventBus;
-import com.google.common.eventbus.EventBus;
-
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.core.LockProvider;
-import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
-import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
-import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
 
 /**
  * Main @Configuration class for a PGFactStore
@@ -71,6 +68,7 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMo
 @Slf4j
 @Configuration
 @EnableTransactionManagement
+@EnableRetry
 @EnableScheduling
 // not that InterceptMode.PROXY_SCHEDULER does not work when wrapped at runtime (by opentelemetry
 // for instance)

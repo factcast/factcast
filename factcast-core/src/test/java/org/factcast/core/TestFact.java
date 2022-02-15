@@ -15,19 +15,10 @@
  */
 package org.factcast.core;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.Setter;
-import lombok.SneakyThrows;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import java.util.*;
+import lombok.*;
 import org.factcast.core.util.FactCastJson;
 
 @AllArgsConstructor
@@ -82,5 +73,14 @@ public class TestFact implements Fact {
   public @NonNull FactHeader header() {
     if (header == null) header = FactCastJson.readValue(FactHeader.class, jsonHeader());
     return header;
+  }
+
+  @SneakyThrows
+  public static Fact copy(@NonNull Fact f) {
+    String header = f.jsonHeader();
+    String payload = f.jsonPayload();
+    ObjectNode h = (ObjectNode) FactCastJson.readTree(header);
+    h.set("id", new TextNode(UUID.randomUUID().toString()));
+    return Fact.of(h.toString(), payload);
   }
 }

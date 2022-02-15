@@ -1,6 +1,7 @@
 package org.factcast.factus.dynamodb.tx;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -51,11 +52,16 @@ public class DynamoDBTxManager {
   /** @return true if tx was started, false if there was one running */
   public boolean startOrJoin() {
     if (currentTx == null) {
-      currentTx = new DynamoDBTransaction();
+      currentTx = createNewTransaction();
       return true;
     } else {
       return false;
     }
+  }
+
+  @VisibleForTesting
+  DynamoDBTransaction createNewTransaction() {
+    return new DynamoDBTransaction();
   }
 
   public void commit() {

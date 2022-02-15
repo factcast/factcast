@@ -23,7 +23,9 @@ import java.net.URL;
 import java.util.Date;
 import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
-import okhttp3.OkHttpClient;
+import lombok.SneakyThrows;
+import okhttp3.*;
+import okhttp3.Response.Builder;
 import org.factcast.core.TestHelper;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.SchemaRegistryUnavailableException;
@@ -82,7 +84,7 @@ public class HttpIndexFetcherTest {
 
       assertThrows(SchemaRegistryUnavailableException.class, () -> uut.fetchIndex());
 
-      verify(registryMetrics)
+      verify(registryMetrics, atLeastOnce())
           .count(
               RegistryMetrics.EVENT.SCHEMA_REGISTRY_UNAVAILABLE,
               Tags.of(RegistryMetrics.TAG_STATUS_CODE_KEY, "404"));
@@ -95,5 +97,47 @@ public class HttpIndexFetcherTest {
     TestHelper.expectNPE(() -> new HttpIndexFetcher(new URL("http://ibm.com"), null));
     TestHelper.expectNPE(
         () -> new HttpIndexFetcher(null, new OkHttpClient(), mock(RegistryMetrics.class)));
+  }
+
+  @SneakyThrows
+  @Test
+  void retries() {
+    Call call = mock(Call.class);
+
+    OkHttpClient client = mock(OkHttpClient.class);
+    when(client.newCall(any())).thenReturn(call);
+
+    uut = new HttpIndexFetcher(new URL("http://ibm.com"), client, mock(RegistryMetrics.class));
+
+    Request request = new Request.Builder().url("http://ibm.com").get().build();
+    Response fail =
+        new Builder()
+            .code(503)
+            .request(request)
+            .protocol(Protocol.HTTP_1_1)
+            .message("slow down, fella")
+            .build();
+    Response success =
+        new Builder()
+            .code(200)
+            .request(request)
+            .protocol(Protocol.HTTP_1_1)
+            .message("ok")
+            .body(
+                ResponseBody.create(
+                    MediaType.parse("application/json"),
+                    "{\"schemes\": [], \"transformations\": []}"))
+            .build();
+
+    when(call.execute())
+        .thenReturn(fail)
+        .thenReturn(fail)
+        .thenReturn(fail)
+        .thenReturn(fail)
+        .thenReturn(fail)
+        .thenReturn(fail)
+        .thenReturn(success);
+
+    uut.fetchIndex();
   }
 }

@@ -21,10 +21,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import lombok.NonNull;
@@ -105,6 +102,11 @@ class FactusTest {
             }
 
             @Override
+            public OptionalLong serialOf(@NonNull UUID factId) {
+              return OptionalLong.empty();
+            }
+
+            @Override
             public void close() throws IOException {}
 
             @Override
@@ -129,7 +131,7 @@ class FactusTest {
           });
 
   @Test
-  void publishListEventObjects() {
+  void defaultMethod_publishListEventObjects() {
     List<EventObject> l = Lists.newArrayList(new EP(), new EP());
     underTest.publish(l);
 
@@ -137,7 +139,7 @@ class FactusTest {
   }
 
   @Test
-  void voidSubscribe() {
+  void defaultMethod_voidSubscribe() {
     SubscribedProjection p = mock(SubscribedProjection.class);
     underTest.subscribe(p);
 
@@ -149,7 +151,7 @@ class FactusTest {
   static class SP implements SnapshotProjection {}
 
   @Test
-  void withLockOnInstance() {
+  void defaultMethod_withLockOnInstance() {
     SP p = new SP();
     underTest.withLockOn(p);
     verify(underTest).withLockOn(SP.class);

@@ -83,4 +83,6 @@ public class DynamoDBPlayground extends AbstractFactCastIntegrationTest {
     relock2 = new DynamoDBOperations(client).lock("l2");
     assertThat(relock2).isNotEmpty(); // should be able to reacquire after the old one expired
   }
+
+
 }

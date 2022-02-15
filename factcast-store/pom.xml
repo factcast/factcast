@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.4.4-SNAPSHOT</version>
+    <version>0.5.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-store</artifactId>
@@ -67,7 +67,7 @@
     <dependency>
       <groupId>org.liquibase</groupId>
       <artifactId>liquibase-core</artifactId>
-      <version>4.7.0</version><!--$NO-MVN-MAN-VER$ -->
+      <version>4.7.1</version><!--$NO-MVN-MAN-VER$ -->
       <exclusions>
         <exclusion>
           <groupId>ch.qos.logback</groupId>
@@ -78,7 +78,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.3.1</version><!--$NO-MVN-MAN-VER$ -->
+      <version>42.3.2</version><!--$NO-MVN-MAN-VER$ -->
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -178,6 +178,10 @@
       <groupId>org.graalvm.truffle</groupId>
       <artifactId>truffle-api</artifactId>
       <version>${graaljs.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.retry</groupId>
+      <artifactId>spring-retry</artifactId>
     </dependency>
   </dependencies>
 </project>

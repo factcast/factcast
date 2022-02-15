@@ -16,6 +16,7 @@
 package org.factcast.store.internal.catchup.fetching;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -23,11 +24,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics.EVENT;
+import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
@@ -35,8 +36,6 @@ import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -55,6 +54,8 @@ public class PgFetchingCatchup implements PgCatchup {
   @NonNull final AtomicLong serial;
 
   @NonNull final PgMetrics metrics;
+
+  protected long factCounter = 0L;
 
   @SneakyThrows
   @Override
@@ -87,6 +88,9 @@ public class PgFetchingCatchup implements PgCatchup {
         catchupSQL,
         b.createStatementSetter(serial),
         createRowCallbackHandler(skipTesting, extractor));
+    metrics
+        .counter(EVENT.CATCHUP_FACT)
+        .increment(factCounter); // TODO this needs to TAG it for each subscription?
   }
 
   @VisibleForTesting
@@ -95,7 +99,7 @@ public class PgFetchingCatchup implements PgCatchup {
       Fact f = extractor.mapRow(rs, 0); // does not use the rowNum anyway
       if (skipTesting || postQueryMatcher.test(f)) {
         subscription.notifyElement(f);
-        metrics.counter(EVENT.CATCHUP_FACT);
+        factCounter++;
       } else {
         log.trace("{} filtered id={}", req, f.id());
       }

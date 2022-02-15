@@ -18,6 +18,7 @@ package org.factcast.schema.registry.plugin;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -73,7 +74,8 @@ class CliArgumentBuilderTest {
   @Test
   void withOutputDirAndEmptyWhiteList() {
     String[] builder =
-        CliArgumentBuilder.build("build", sourceDir, outputDir, Collections.emptyList(), false);
+        CliArgumentBuilder.build(
+            "build", sourceDir, outputDir, Collections.emptyList(), false, Sets.newHashSet());
 
     assertEquals(5, builder.length);
     assertEquals("-o", builder[3]);
@@ -83,13 +85,21 @@ class CliArgumentBuilderTest {
   @Test
   void withAllArguments() throws IOException {
     String[] builder =
-        CliArgumentBuilder.build("build", sourceDir, outputDir, Arrays.asList("bar"), true);
+        CliArgumentBuilder.build(
+            "build",
+            sourceDir,
+            outputDir,
+            Arrays.asList("bar"),
+            true,
+            Sets.newHashSet("description", "example"));
 
-    assertEquals(8, builder.length);
+    assertEquals(10, builder.length);
     assertEquals("-o", builder[3]);
     assertEquals("bazz", builder[4]);
     assertEquals("-w", builder[5]);
     assertTrue(Files.readAllLines(Paths.get(builder[6])).contains("bar"));
     assertEquals("-s", builder[7]);
+    assertEquals("--schema-remove-fields", builder[8]);
+    assertEquals("description,example", builder[9]);
   }
 }

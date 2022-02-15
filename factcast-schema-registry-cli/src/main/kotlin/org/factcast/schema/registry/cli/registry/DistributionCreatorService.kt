@@ -19,5 +19,5 @@ import java.nio.file.Path
 import org.factcast.schema.registry.cli.domain.Project
 
 interface DistributionCreatorService {
-    fun createDistributable(outputPath: Path, project: Project, schemaStripTitles: Boolean = false)
+    fun createDistributable(outputPath: Path, project: Project, removedSchemaProps: Set<String> = emptySet())
 }

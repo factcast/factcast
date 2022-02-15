@@ -60,14 +60,12 @@ public class SubscriptionImplTest {
   @Test
   void onCloseStacksUpAndIgnoresException() {
 
-    class DoNothing implements Runnable{
+    class DoNothing implements Runnable {
       @Override
-      public void run() {
-
-      }
+      public void run() {}
     }
 
-    class Fails implements Runnable{
+    class Fails implements Runnable {
       @Override
       public void run() {
         throw new IllegalArgumentException();
@@ -90,8 +88,6 @@ public class SubscriptionImplTest {
     verify(h2).run();
     verify(h3).run();
     verify(h4).run();
-
-
   }
 
   @Test

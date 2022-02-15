@@ -15,23 +15,28 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import io.micrometer.core.instrument.Counter;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
+import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
-import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -41,22 +46,25 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
-import java.sql.ResultSet;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class PgFetchingCatchupTest {
 
   @Mock @NonNull PgConnectionSupplier connectionSupplier;
-  @Mock @NonNull StoreConfigurationProperties props;
+
+  @Mock(lenient = true)
+  @NonNull
+  StoreConfigurationProperties props;
+
   @Mock @NonNull SubscriptionRequestTO req;
   @Mock @NonNull PgPostQueryMatcher postQueryMatcher;
   @Mock @NonNull SubscriptionImpl subscription;
   @Mock @NonNull AtomicLong serial;
-  @Mock @NonNull PgMetrics metrics;
+
+  @Mock(lenient = true)
+  @NonNull
+  PgMetrics metrics;
+
+  @Mock @NonNull Counter counter;
   @InjectMocks PgFetchingCatchup underTest;
 
   @Nested
@@ -87,6 +95,7 @@ class PgFetchingCatchupTest {
     @BeforeEach
     void setup() {
       Mockito.when(props.getPageSize()).thenReturn(47);
+      when(metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT)).thenReturn(counter);
     }
 
     @Test
@@ -96,6 +105,32 @@ class PgFetchingCatchupTest {
           .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
       underTest.fetch(jdbc);
       verify(jdbc).setFetchSize(eq(props.getPageSize()));
+    }
+
+    @Test
+    void counts() {
+      underTest.factCounter = 7;
+      underTest.fetch(jdbc);
+      verify(counter).increment(7);
+    }
+
+    @SneakyThrows
+    @Test
+    void countsNumberOfFacts() {
+      PgFactExtractor extractor =
+          new PgFactExtractor(new AtomicLong(1L)) {
+            @Override
+            public @NonNull Fact mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
+              return null;
+            }
+          };
+
+      RowCallbackHandler rowCallbackHandler = underTest.createRowCallbackHandler(true, extractor);
+      rowCallbackHandler.processRow(mock(ResultSet.class));
+      rowCallbackHandler.processRow(mock(ResultSet.class));
+      rowCallbackHandler.processRow(mock(ResultSet.class));
+
+      assertThat(underTest.factCounter).isEqualTo(3);
     }
   }
 

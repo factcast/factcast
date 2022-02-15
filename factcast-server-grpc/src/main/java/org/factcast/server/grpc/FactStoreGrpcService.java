@@ -110,7 +110,12 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   @VisibleForTesting
   @Deprecated
   protected FactStoreGrpcService(FactStore store, GrpcRequestMetadata grpcRequestMetadata) {
-    this(store, grpcRequestMetadata, new GrpcLimitProperties(), FastForwardTarget.forTest(), new NOPServerMetrics());
+    this(
+        store,
+        grpcRequestMetadata,
+        new GrpcLimitProperties(),
+        FastForwardTarget.forTest(),
+        new NOPServerMetrics());
   }
 
   @VisibleForTesting
@@ -185,7 +190,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
       resetDebugInfo(req, grpcRequestMetadata);
       BlockingStreamObserver<MSG_Notification> resp =
-          new BlockingStreamObserver<>(req.toString(), (ServerCallStreamObserver) responseObserver, grpcRequestMetadata.catchupBatch().orElse(1));
+          new BlockingStreamObserver<>(
+              req.toString(),
+              (ServerCallStreamObserver) responseObserver,
+              grpcRequestMetadata.catchupBatch().orElse(1));
 
       AtomicReference<Subscription> subRef = new AtomicReference();
 
@@ -307,14 +315,15 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @Override
   public void handshake(MSG_Empty request, StreamObserver<MSG_ServerConfig> responseObserver) {
-    metrics.timed(OP.HANDSHAKE,()->{
-      initialize(responseObserver);
+    metrics.timed(
+        OP.HANDSHAKE,
+        () -> {
+          initialize(responseObserver);
 
-      ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
-      responseObserver.onNext(converter.toProto(cfg));
-      responseObserver.onCompleted();
-    });
-
+          ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
+          responseObserver.onNext(converter.toProto(cfg));
+          responseObserver.onCompleted();
+        });
   }
 
   private Map<String, String> collectProperties() {
@@ -329,11 +338,12 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @VisibleForTesting
   void retrieveImplementationVersion(HashMap<String, String> properties) {
-    properties.put(Capabilities.FACTCAST_IMPL_VERSION.toString(), getImplVersion().orElse("UNKNOWN"));
+    properties.put(
+        Capabilities.FACTCAST_IMPL_VERSION.toString(), getImplVersion().orElse("UNKNOWN"));
   }
 
   private Optional<String> getImplVersion() {
-    String implVersion=null;
+    String implVersion = null;
 
     URL propertiesUrl = getProjectProperties();
     Properties buildProperties = new Properties();
@@ -442,6 +452,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
     StateForRequest req = converter.fromProto(request);
     String ns = req.ns(); // TODO is this gets null, we're screwed
+    assertCanRead(ns);
     StateToken token =
         store.stateFor(
             req.aggIds().stream()
@@ -457,6 +468,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     initialize(responseObserver);
     List<FactSpec> req = converter.fromProto(request);
     if (!req.isEmpty()) {
+
+      assertCanRead(req.stream().map(FactSpec::ns).collect(Collectors.toList()));
 
       StateToken token = store.stateFor(req);
       responseObserver.onNext(converter.toProto(token.uuid()));
@@ -556,7 +569,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     FactCastUser user = getFactcastUser();
     if (!user.canRead(ns)) {
 
-      log.error("{}Not allowed to read from namespace '{}'", clientIdPrefix(), ns);
+      log.warn("{}Not allowed to read from namespace '{}'", clientIdPrefix(), ns);
       throw new StatusRuntimeException(Status.PERMISSION_DENIED, new Metadata());
     }
   }
@@ -571,7 +584,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     FactCastUser user = getFactcastUser();
     for (String ns : namespaces) {
       if (!user.canWrite(ns)) {
-        log.error("{}Not allowed to write to namespace '{}'", clientIdPrefix(), ns);
+        log.warn("{}Not allowed to write to namespace '{}'", clientIdPrefix(), ns);
         throw new StatusRuntimeException(Status.PERMISSION_DENIED, new Metadata());
       }
     }
@@ -630,6 +643,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @Override
   public void afterPropertiesSet() throws Exception {
-    log.info("Service version: {}",getImplVersion().orElse("UNKNOWN"));
+    log.info("Service version: {}", getImplVersion().orElse("UNKNOWN"));
   }
 }

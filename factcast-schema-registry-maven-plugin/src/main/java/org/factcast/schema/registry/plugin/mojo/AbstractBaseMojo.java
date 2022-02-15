@@ -16,7 +16,9 @@
 package org.factcast.schema.registry.plugin.mojo;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
@@ -31,6 +33,9 @@ public abstract class AbstractBaseMojo extends AbstractMojo {
   protected List<String> includedEvents;
 
   @Parameter protected boolean schemaStripTitles;
+
+  @Parameter(property = "removeSchemaFields")
+  protected Set<String> removeSchemaFields = new HashSet<>();
 
   protected void checkSourceDirectory() {
     if (!sourceDirectory.exists())

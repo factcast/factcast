@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import lombok.SneakyThrows;
-
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;

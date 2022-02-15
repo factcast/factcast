@@ -18,6 +18,6 @@ package org.factcast.schema.registry.cli.commands
 import java.nio.file.Path
 
 interface CommandService {
-    fun build(sourceRoot: Path, outputRoot: Path, whiteList: Path? = null, schemaStripTitles: Boolean = false): Int
+    fun build(sourceRoot: Path, outputRoot: Path, whiteList: Path? = null, removedSchemaProps: Set<String> = emptySet()): Int
     fun validate(sourceRoot: Path, whiteList: Path? = null): Int
 }

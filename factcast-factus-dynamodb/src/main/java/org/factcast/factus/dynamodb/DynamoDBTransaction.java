@@ -9,12 +9,12 @@ import lombok.NonNull;
 public class DynamoDBTransaction {
   private List<TransactWriteItem> items = Lists.newArrayList();
 
-  public final void add(@NonNull TransactWriteItem item) {
+  public void add(@NonNull TransactWriteItem item) {
     checkState();
     this.items.add(item);
   }
 
-  public final TransactWriteItemsRequest asTransactWriteItemsRequest() {
+  public TransactWriteItemsRequest asTransactWriteItemsRequest() {
     checkState();
     return new TransactWriteItemsRequest().withTransactItems(items);
   }

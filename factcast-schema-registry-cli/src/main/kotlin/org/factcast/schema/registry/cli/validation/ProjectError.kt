@@ -41,6 +41,7 @@ sealed class ProjectError {
     class WrongVersionFormat(val version: String, val path: Path) : ProjectError()
     class NoUpcastForVersion(val fromVersion: Int, val toVersion: Int, val type: String) : ProjectError()
     class TransformationValidationError(val type: String, val fromVersion: Int, val toVersion: Int, val result: ProcessingReport) : ProjectError()
+    class TransformationError(val type: String, val fromVersion: Int, val toVersion: Int, val exception: Throwable) : ProjectError()
     class NoDowncastForVersion(val fromVersion: Int, val toVersion: Int, val type: String, val result: ProcessingReport) : ProjectError()
     class MissingVersionForTransformation(val fromVersion: Int, val toVersion: Int, val transformationPath: Path) : ProjectError()
 }

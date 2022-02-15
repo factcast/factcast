@@ -22,6 +22,11 @@ import com.github.fge.jsonschema.main.JsonSchema;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import io.micrometer.core.instrument.Tags;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
@@ -29,12 +34,6 @@ import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.http.ValidationConstants;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.validation.schema.SchemaKey;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 public class FactValidator {
@@ -48,7 +47,7 @@ public class FactValidator {
   private final RegistryMetrics registryMetrics;
 
   public List<FactValidationError> validate(Fact fact) {
-    if (props.isValidationEnabled()) {
+    if (props.isSchemaRegistryConfigured() && props.isValidationEnabled()) {
       if (isValidateable(fact)) {
         return doValidate(fact);
       } else {
