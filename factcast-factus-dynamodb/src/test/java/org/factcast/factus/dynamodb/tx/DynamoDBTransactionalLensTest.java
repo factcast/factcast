@@ -7,7 +7,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.factus.dynamodb.ADynamoDBManagedProjection;
@@ -237,38 +237,47 @@ class DynamoDBTransactionalLensTest {
     }
   }
 
+  @Nested
+  class WhenParameteringTransformerFor {
 
+    @Mock private Fact f;
+    @Mock DynamoDBTransaction current;
 
-    @Nested
-    class WhenParameteringTransformerFor {
+    @Test
+    void returnsCurrentTx() {
+      try (MockedStatic<DynamoDBTxManager> manager = Mockito.mockStatic(DynamoDBTxManager.class)) {
+        DynamoDBTxManager mgr = mock(DynamoDBTxManager.class);
 
-      @Mock private Fact f;
-      @Mock DynamoDBTransactional current;
+        when(mgr.getCurrentTransaction()).thenReturn(current);
+        manager.when(() -> DynamoDBTxManager.get(same(client))).thenReturn(mgr);
 
-      @Test
-      void returnsCurrentTx() {
-        try (MockedStatic<DynamoDBTxManager> manager = Mockito.mockStatic(DynamoDBTxManager.class)) {
-          DynamoDBTxManager mgr = mock(DynamoDBTxManager.class);
-          manager.when(() -> DynamoDBTxManager.get(same(client))).thenReturn(mgr);
-
-          DynamoDBManagedProjection p = new ADynamoDBManagedProjection(client);
-
+        DynamoDBManagedProjection p = new ADynamoDBManagedProjection(client);
+        var underTest = new DynamoDBTransactionalLens(p, client);
         Function<Fact, ?> t = underTest.parameterTransformerFor(DynamoDBTransaction.class);
         assertThat(t).isNotNull();
-        assertThat(t.apply(f)).isInstanceOf(RTransaction.class).isNotNull().isSameAs(current);
+        assertThat(t.apply(f))
+            .isInstanceOf(DynamoDBTransaction.class)
+            .isNotNull()
+            .isSameAs(current);
       }
+    }
 
-      @Test
-      void returnsNullForOtherType() {
-        RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
-        RedissonTxManager tx = mock(RedissonTxManager.class);
-        RedisTransactionalLens underTest = new RedisTransactionalLens(p, tx, Defaults.create());
+    class SomeUnrelatedType {}
 
-        Function<Fact, ?> t = underTest.parameterTransformerFor(Fact.class);
+    @Test
+    void returnsNullForOtherType() {
+      try (MockedStatic<DynamoDBTxManager> manager = Mockito.mockStatic(DynamoDBTxManager.class)) {
+        DynamoDBTxManager mgr = mock(DynamoDBTxManager.class);
+        manager.when(() -> DynamoDBTxManager.get(same(client))).thenReturn(mgr);
+
+        DynamoDBManagedProjection p = new ADynamoDBManagedProjection(client);
+        var underTest = new DynamoDBTransactionalLens(p, client);
+
+        Function<Fact, ?> t = underTest.parameterTransformerFor(SomeUnrelatedType.class);
         assertThat(t).isNull();
       }
     }
-   }
+  }
 
   class NonAnnotatedRedisManagedProjection implements DynamoDBManagedProjection {
 

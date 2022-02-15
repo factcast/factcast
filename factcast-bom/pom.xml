@@ -72,7 +72,12 @@
       <dependency>
         <groupId>org.factcast</groupId>
         <artifactId>factcast-factus-dynamodb</artifactId>
-        <version>0.4.4-SNAPSHOT</version>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-test-dynamodb</artifactId>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
