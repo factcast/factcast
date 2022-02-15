@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
 import org.factcast.factus.projection.WriterToken;
 // TODO
+
 public class DynamoDBWriterToken implements WriterToken {
 
   private final DynamoDBOperations operations;
