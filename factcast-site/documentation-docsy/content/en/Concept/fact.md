@@ -23,7 +23,7 @@ consists of:
 * a **required** namespace 'ns' of type String
 * an optional set of aggregateIds 'aggId' of type array of UUIDs
 * an optional (but mostly used) Fact-Type 'type' of type String
-* an optional Object 'meta' any number of key-value pairs, where the values are Strings
+* an optional Object 'meta' containing any number of key-value pairs, where the values are Strings
 * any additional information you want to put in a Fact Header
 
 
