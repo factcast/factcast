@@ -54,7 +54,7 @@ public class WithOptimisticLock {
       boolean publishIfUnchanged = false;
 
       // fetch current state
-      StateToken token = store.stateFor(factSpecs);
+      StateToken token = store.currentStateFor(factSpecs);
 
       try {
 

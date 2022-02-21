@@ -16,8 +16,8 @@
 package org.factcast.store.test;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -1146,7 +1146,7 @@ public abstract class AbstractFactStoreTest {
 
     private static final long serialVersionUID = 1L;
 
-    private int i;
+    private final int i;
 
     public MyAbortException(int i) {
       super("nah");
@@ -1251,7 +1251,7 @@ public abstract class AbstractFactStoreTest {
     } catch (AttemptAbortedException expected) {
     }
 
-    verify(store, times(1)).stateFor(any());
+    verify(store, times(1)).currentStateFor(any());
     verify(store, times(1)).invalidate(any());
   }
 
@@ -1264,7 +1264,7 @@ public abstract class AbstractFactStoreTest {
 
     uut.lock(NS).on(agg1).attempt(() -> Attempt.publish(fact(agg1)));
 
-    verify(store, times(1)).stateFor(any());
+    verify(store, times(1)).currentStateFor(any());
     verify(store, times(0)).invalidate(any());
   }
 
@@ -1278,12 +1278,12 @@ public abstract class AbstractFactStoreTest {
     } catch (AttemptAbortedException expected) {
     }
 
-    verify(store, times(1)).stateFor(any());
+    verify(store, times(1)).currentStateFor(any());
     verify(store, times(1)).invalidate(any());
   }
 
   static class ToListObserver implements FactObserver {
-    @Getter private List<Fact> list = new LinkedList<>();
+    @Getter private final List<Fact> list = new LinkedList<>();
 
     @Override
     public void onNext(@NonNull Fact element) {

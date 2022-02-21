@@ -68,6 +68,12 @@ public abstract class AbstractFactStore implements FactStore {
     return tokenStore.create(state);
   }
 
+  @Override
+  public StateToken currentStateFor(@NonNull List<FactSpec> specs) {
+    State state = getCurrentStateFor(specs);
+    return tokenStore.create(state);
+  }
+
   @SuppressWarnings("WeakerAccess")
   protected final boolean isStateUnchanged(@NonNull State snapshotState) {
     State currentState = getStateFor(snapshotState.specs());
@@ -75,4 +81,7 @@ public abstract class AbstractFactStore implements FactStore {
   }
 
   protected abstract State getStateFor(@NonNull List<FactSpec> specs);
+
+  @NonNull
+  protected abstract State getCurrentStateFor(List<FactSpec> specs);
 }
