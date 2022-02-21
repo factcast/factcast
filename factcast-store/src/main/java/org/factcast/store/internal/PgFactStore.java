@@ -63,25 +63,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class PgFactStore extends AbstractFactStore {
 
-  @NonNull
-  private final JdbcTemplate jdbcTemplate;
+  @NonNull private final JdbcTemplate jdbcTemplate;
 
-  @NonNull
-  private final PgSubscriptionFactory subscriptionFactory;
+  @NonNull private final PgSubscriptionFactory subscriptionFactory;
 
-  @NonNull
-  private final FactTableWriteLock lock;
+  @NonNull private final FactTableWriteLock lock;
 
-  @NonNull
-  private final FactTransformerService factTransformerService;
-  @NonNull
-  private final PgFactIdToSerialMapper pgFactIdToSerialMapper;
+  @NonNull private final FactTransformerService factTransformerService;
+  @NonNull private final PgFactIdToSerialMapper pgFactIdToSerialMapper;
 
-  @NonNull
-  private final PgMetrics metrics;
+  @NonNull private final PgMetrics metrics;
 
-  @NonNull
-  private final PgSnapshotCache snapCache;
+  @NonNull private final PgSnapshotCache snapCache;
 
   @Autowired
   public PgFactStore(
@@ -113,7 +106,7 @@ public class PgFactStore extends AbstractFactStore {
             jdbcTemplate
                 .query(
                     PgConstants.SELECT_BY_ID,
-                    new Object[]{"{\"id\":\"" + id + "\"}"},
+                    new Object[] {"{\"id\":\"" + id + "\"}"},
                     this::extractFactFromResultSet)
                 .stream()
                 .findFirst());
@@ -209,7 +202,7 @@ public class PgFactStore extends AbstractFactStore {
             new HashSet<>(
                 jdbcTemplate.query(
                     PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
-                    new Object[]{ns},
+                    new Object[] {ns},
                     this::extractStringFromResultSet)));
   }
 

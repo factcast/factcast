@@ -24,8 +24,7 @@ import org.factcast.core.spec.FactSpec;
 
 @RequiredArgsConstructor
 public abstract class AbstractFactStore implements FactStore {
-  @NonNull
-  protected final TokenStore tokenStore;
+  @NonNull protected final TokenStore tokenStore;
 
   @Override
   public boolean publishIfUnchanged(
@@ -80,9 +79,7 @@ public abstract class AbstractFactStore implements FactStore {
 
   protected abstract State getStateFor(@NonNull List<FactSpec> specs);
 
-  /**
-   * This can be overridden for performance optimizations
-   */
+  /** This can be overridden for performance optimizations */
   protected State getStateFor(@NonNull List<FactSpec> specs, long lastMatchingSerial) {
     return getStateFor(specs);
   }
