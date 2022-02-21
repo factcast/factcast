@@ -17,8 +17,8 @@ package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.factcast.core.TestHelper.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -391,6 +391,27 @@ class GrpcFactStoreTest {
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
     try {
       uut.stateFor(Lists.emptyList());
+      fail();
+    } catch (RetryableException expected) {
+    }
+  }
+
+  @Test
+  void testCurrentStateForPositive() {
+    UUID id = new UUID(0, 1);
+    StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
+    when(blockingStub.currentStateForSpecsJson(any())).thenReturn(conv.toProto(id));
+    List<FactSpec> list = Arrays.asList(FactSpec.ns("foo").aggId(id));
+    uut.currentStateFor(list);
+    verify(blockingStub).currentStateForSpecsJson(conv.toProtoFactSpecs(list));
+  }
+
+  @Test
+  void testCurrentStateForNegative() {
+    when(blockingStub.currentStateForSpecsJson(any()))
+        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+    try {
+      uut.currentStateFor(Lists.emptyList());
       fail();
     } catch (RetryableException expected) {
     }
