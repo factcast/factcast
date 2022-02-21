@@ -244,6 +244,23 @@ public class PgFactStore extends AbstractFactStore {
   }
 
   @Override
+  protected State getCurrentStateFor(List<FactSpec> specs) {
+    return metrics.time(
+        StoreMetrics.OP.GET_STATE_FOR,
+        () -> {
+          try {
+            return State.of(
+                specs,
+                Optional.ofNullable(
+                        jdbcTemplate.queryForObject(PgConstants.SELECT_LATEST_SER, Long.class))
+                    .orElse(0L));
+          } catch (EmptyResultDataAccessException lastSerialIs0Then) {
+            return State.of(specs, 0);
+          }
+        });
+  }
+
+  @Override
   public long currentTime() {
     return jdbcTemplate.queryForObject(PgConstants.CURRENT_TIME_MILLIS, Long.class);
   }

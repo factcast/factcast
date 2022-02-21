@@ -82,7 +82,7 @@ class LockedSnapshotProjectionTest {
   void attemptSuccess() {
     // INIT
     // first time querying state: no facts yet
-    when(factStore.stateFor(factSpecs)).thenReturn(noEvents);
+    when(factStore.currentStateFor(factSpecs)).thenReturn(noEvents);
 
     // publishing went through without any problems
     when(factStore.publishIfUnchanged(any(), any())).thenReturn(true);

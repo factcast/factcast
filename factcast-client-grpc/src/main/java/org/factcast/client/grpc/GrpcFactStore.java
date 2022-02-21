@@ -375,6 +375,16 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
+  public @NonNull StateToken currentStateFor(List<FactSpec> specs) {
+    return callAndHandle(
+        () -> {
+          MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
+          MSG_UUID result = blockingStub.currentStateForSpecsJson(msg);
+          return new StateToken(converter.fromProto(result));
+        });
+  }
+
+  @Override
   public void invalidate(@NonNull StateToken token) {
     runAndHandle(
         () -> {
