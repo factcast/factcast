@@ -24,7 +24,8 @@ import org.factcast.core.spec.FactSpec;
 
 @RequiredArgsConstructor
 public abstract class AbstractFactStore implements FactStore {
-  @NonNull protected final TokenStore tokenStore;
+  @NonNull
+  protected final TokenStore tokenStore;
 
   @Override
   public boolean publishIfUnchanged(
@@ -63,6 +64,7 @@ public abstract class AbstractFactStore implements FactStore {
 
   // TODO needed?
   @Override
+  @NonNull
   public StateToken stateFor(@NonNull List<FactSpec> specs) {
     State state = getStateFor(specs);
     return tokenStore.create(state);
@@ -70,9 +72,18 @@ public abstract class AbstractFactStore implements FactStore {
 
   @SuppressWarnings("WeakerAccess")
   protected final boolean isStateUnchanged(@NonNull State snapshotState) {
-    State currentState = getStateFor(snapshotState.specs());
+    long serialOfLastMatchingFact = snapshotState.serialOfLastMatchingFact();
+
+    State currentState = getStateFor(snapshotState.specs(), serialOfLastMatchingFact);
     return currentState.serialOfLastMatchingFact() == snapshotState.serialOfLastMatchingFact();
   }
 
   protected abstract State getStateFor(@NonNull List<FactSpec> specs);
+
+  /**
+   * This can be overridden for performance optimizations
+   */
+  protected State getStateFor(@NonNull List<FactSpec> specs, long lastMatchingSerial) {
+    return getStateFor(specs);
+  }
 }
