@@ -87,9 +87,7 @@ public abstract class AbstractFactStore implements FactStore {
 
   @NonNull
   protected abstract State getCurrentStateFor(List<FactSpec> specs);
-  /**
-   * This can be overridden for performance optimizations
-   **/
+  /** This can be overridden for performance optimizations */
   @NonNull
   protected State getStateFor(@NonNull List<FactSpec> specs, long lastMatchingSerial) {
     return getStateFor(specs);
