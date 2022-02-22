@@ -42,6 +42,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.NonNull;
@@ -465,13 +466,21 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   @Override
   public void stateForSpecsJson(
       MSG_FactSpecsJson request, StreamObserver<MSG_UUID> responseObserver) {
+    Function<List<FactSpec>, StateToken> tokenSupplier = r -> store.stateFor(r);
+    doStateFor(request, responseObserver, tokenSupplier);
+  }
+
+  private void doStateFor(
+      MSG_FactSpecsJson request,
+      StreamObserver<MSG_UUID> responseObserver,
+      Function<List<FactSpec>, StateToken> tokenSupplier) {
     initialize(responseObserver);
     List<FactSpec> req = converter.fromProto(request);
     if (!req.isEmpty()) {
 
       assertCanRead(req.stream().map(FactSpec::ns).collect(Collectors.toList()));
 
-      StateToken token = store.stateFor(req);
+      StateToken token = tokenSupplier.apply(req);
       responseObserver.onNext(converter.toProto(token.uuid()));
       responseObserver.onCompleted();
 
@@ -481,6 +490,14 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
           new IllegalArgumentException(
               clientIdPrefix() + "Cannot determine state for empty list of fact specifications"));
     }
+  }
+
+  @Override
+  public void currentStateForSpecsJson(
+      MSG_FactSpecsJson request, StreamObserver<MSG_UUID> responseObserver) {
+    initialize(responseObserver);
+    Function<List<FactSpec>, StateToken> tokenSupplier = r -> store.currentStateFor(r);
+    doStateFor(request, responseObserver, tokenSupplier);
   }
 
   @Override

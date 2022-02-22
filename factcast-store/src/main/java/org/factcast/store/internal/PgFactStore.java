@@ -18,12 +18,7 @@ package org.factcast.store.internal;
 import com.google.common.collect.Lists;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -255,6 +250,18 @@ public class PgFactStore extends AbstractFactStore {
           } catch (EmptyResultDataAccessException lastSerialIs0Then) {
             return State.of(specs, 0);
           }
+        });
+  }
+
+  @Override
+  protected State getCurrentStateFor(List<FactSpec> specs) {
+    return metrics.time(
+        StoreMetrics.OP.GET_STATE_FOR,
+        () -> {
+          long max =
+              Objects.requireNonNull(
+                  jdbcTemplate.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class));
+          return State.of(specs, max);
         });
   }
 

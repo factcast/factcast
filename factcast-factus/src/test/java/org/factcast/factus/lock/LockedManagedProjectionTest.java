@@ -15,16 +15,9 @@
  */
 package org.factcast.factus.lock;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.List;
@@ -42,15 +35,9 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
 import org.factcast.factus.Factus;
 import org.factcast.factus.metrics.FactusMetrics;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InOrder;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /** Component test of Locked and WithOptimisticLock. */
@@ -90,7 +77,7 @@ class LockedManagedProjectionTest {
   void attemptSuccess() {
     // INIT
     // first time querying state: no facts yet
-    when(factStore.stateFor(factSpecs)).thenReturn(noEvents);
+    when(factStore.currentStateFor(factSpecs)).thenReturn(noEvents);
 
     // publishing went through without any problems
     when(factStore.publishIfUnchanged(any(), any())).thenReturn(true);
@@ -136,7 +123,7 @@ class LockedManagedProjectionTest {
   void attemptSuccessListOfEventObjects() {
     // INIT
     // first time querying state: no facts yet
-    when(factStore.stateFor(factSpecs)).thenReturn(noEvents);
+    when(factStore.currentStateFor(factSpecs)).thenReturn(noEvents);
 
     // publishing went through without any problems
     when(factStore.publishIfUnchanged(any(), any())).thenReturn(true);
@@ -182,7 +169,7 @@ class LockedManagedProjectionTest {
   void attemptSuccessFact() throws Exception {
     // INIT
     // first time querying state: no facts yet
-    when(factStore.stateFor(factSpecs)).thenReturn(noEvents);
+    when(factStore.currentStateFor(factSpecs)).thenReturn(noEvents);
 
     // publishing went through without any problems
     when(factStore.publishIfUnchanged(any(), any())).thenReturn(true);
@@ -231,7 +218,7 @@ class LockedManagedProjectionTest {
   void testTxWiresThroughToFactus() throws Exception {
     // INIT
     // first time querying state: no facts yet
-    when(factStore.stateFor(factSpecs)).thenReturn(noEvents);
+    when(factStore.currentStateFor(factSpecs)).thenReturn(noEvents);
 
     // publishing went through without any problems
     when(factStore.publishIfUnchanged(any(), any())).thenReturn(true);
@@ -282,7 +269,7 @@ class LockedManagedProjectionTest {
   void attemptAborted() {
     // INIT
     // first time querying state: no facts yet
-    when(factStore.stateFor(factSpecs)).thenReturn(firstEvent);
+    when(factStore.currentStateFor(factSpecs)).thenReturn(firstEvent);
 
     doAnswer(
             inv -> {
