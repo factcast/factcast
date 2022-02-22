@@ -25,11 +25,15 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import lombok.NonNull;
+import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.store.State;
+import org.factcast.core.store.StateToken;
+import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -54,6 +58,8 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
   @Autowired FactStore fs;
 
   @Autowired PgMetrics metrics;
+
+  @Autowired TokenStore tokenStore;
 
   @Autowired PGTailIndexManager tailManager;
 
@@ -88,14 +94,14 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
 
   @Nested
   class FastForward {
-    @NonNull UUID id = UUID.randomUUID();
-    @NonNull UUID id2 = UUID.randomUUID();
-    @NonNull UUID id3 = UUID.randomUUID();
-    AtomicReference<UUID> fwd = new AtomicReference<>();
+    @NonNull final UUID id = UUID.randomUUID();
+    @NonNull final UUID id2 = UUID.randomUUID();
+    @NonNull final UUID id3 = UUID.randomUUID();
+    final AtomicReference<UUID> fwd = new AtomicReference<>();
     private long lastSer = 0L;
 
     @NonNull
-    FactObserver obs =
+    final FactObserver obs =
         new FactObserver() {
 
           @Override
@@ -193,5 +199,15 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
       // now it should ffwd again to the last unrelated one
       assertThat(fwd.get()).isNotNull().isNotEqualTo(first);
     }
+  }
+
+  @Test
+  void getCurrentStateOnEmptyFactTableReturns0() {
+    StateToken token = store.currentStateFor(Lists.newArrayList());
+    assertThat(token).isNotNull();
+
+    Optional<State> state = tokenStore.get(token);
+    assertThat(state).isNotEmpty();
+    assertThat(state.get()).extracting(State::serialOfLastMatchingFact).isEqualTo(0L);
   }
 }

@@ -82,4 +82,7 @@ public interface FactStore {
   void setSnapshot(@NonNull Snapshot snapshot);
 
   void clearSnapshot(@NonNull SnapshotId id);
+
+  @NonNull
+  StateToken currentStateFor(List<FactSpec> factSpecs);
 }

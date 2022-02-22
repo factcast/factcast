@@ -142,9 +142,6 @@ public class PgConstants {
           + COLUMN_HEADER
           + " @> cast (? as jsonb)";
 
-  public static final String SELECT_LATEST_SER =
-      "SELECT max(" + COLUMN_SER + ") FROM " + TABLE_FACT;
-
   public static final //
   String SELECT_FACT_FROM_CATCHUP = //
       "SELECT "
@@ -259,7 +256,8 @@ public class PgConstants {
   public static final String SELECT_NS_FROM_TOKEN =
       "SELECT " + COLUMN_NAMESPACE + " FROM " + TABLE_TOKENSTORE + " WHERE " + COLUMN_TOKEN + "=?";
 
-  public static final String LAST_SERIAL_IN_LOG = "select COALESCE(max(ser),0) from fact";
+  public static final String LAST_SERIAL_IN_LOG =
+      "SELECT COALESCE(MAX(" + COLUMN_SER + "),0) from " + TABLE_FACT;
   public static final String HIGHWATER_MARK =
       "select ("
           + COLUMN_HEADER

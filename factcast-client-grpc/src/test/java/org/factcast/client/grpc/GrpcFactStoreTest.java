@@ -397,6 +397,27 @@ class GrpcFactStoreTest {
   }
 
   @Test
+  void testCurrentStateForPositive() {
+    UUID id = new UUID(0, 1);
+    StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
+    when(blockingStub.currentStateForSpecsJson(any())).thenReturn(conv.toProto(id));
+    List<FactSpec> list = Arrays.asList(FactSpec.ns("foo").aggId(id));
+    uut.currentStateFor(list);
+    verify(blockingStub).currentStateForSpecsJson(conv.toProtoFactSpecs(list));
+  }
+
+  @Test
+  void testCurrentStateForNegative() {
+    when(blockingStub.currentStateForSpecsJson(any()))
+        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+    try {
+      uut.currentStateFor(Lists.emptyList());
+      fail();
+    } catch (RetryableException expected) {
+    }
+  }
+
+  @Test
   void testPublishIfUnchangedPositive() {
 
     UUID id = new UUID(0, 1);
