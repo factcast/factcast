@@ -142,9 +142,6 @@ public class PgConstants {
           + COLUMN_HEADER
           + " @> cast (? as jsonb)";
 
-  public static final String SELECT_LATEST_SER =
-      "SELECT max(" + COLUMN_SER + ") FROM " + TABLE_FACT;
-
   public static final //
   String SELECT_FACT_FROM_CATCHUP = //
       "SELECT "
