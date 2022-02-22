@@ -43,7 +43,7 @@ public abstract class AbstractFactStore implements FactStore {
             return false;
           }
         } finally {
-          tokenStore.invalidate(token);
+          invalidate(token);
         }
       } else {
         // token is unknown, just reject.
