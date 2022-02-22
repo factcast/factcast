@@ -39,6 +39,7 @@ import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.snapcache.PgSnapshotCache;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
@@ -214,13 +215,22 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   protected State getStateFor(@NonNull List<FactSpec> specs) {
+    return doGetState(specs, 0);
+  }
+
+  @Override
+  protected State getStateFor(@NonNull List<FactSpec> specs, long lastMatchingSerial) {
+    return doGetState(specs, lastMatchingSerial);
+  }
+
+  private State doGetState(@NotNull List<FactSpec> specs, long lastMatchingSerial) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
           PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
           String stateSQL = pgQueryBuilder.createStateSQL();
           PreparedStatementSetter statementSetter =
-              pgQueryBuilder.createStatementSetter(new AtomicLong(0));
+              pgQueryBuilder.createStatementSetter(new AtomicLong(lastMatchingSerial));
 
           try {
             ResultSetExtractor<Long> rch =
