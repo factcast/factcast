@@ -33,9 +33,7 @@ public class PgLatestSerialFetcher {
 
   @NonNull final JdbcTemplate jdbcTemplate;
 
-  /**
-   * @return 0, if no Fact is found, or exception is raised.
-   */
+  /** @return 0, if no Fact is found, or exception is raised. */
   public long retrieveLatestSer() {
     // noinspection CatchMayIgnoreException
     try {
