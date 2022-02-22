@@ -1,4 +1,28 @@
+/*
+ * Copyright © 2017-2022 factcast.org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.factcast.core.store;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,15 +35,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 @ExtendWith(MockitoExtension.class)
 class AbstractFactStoreTest {
 
@@ -29,9 +44,12 @@ class AbstractFactStoreTest {
   @BeforeEach
   void setUp() {
     tokenStore = mock(TokenStore.class);
-    uut = mock(AbstractFactStore.class, Mockito.withSettings()
-        .useConstructor(tokenStore)
-        .defaultAnswer(Mockito.CALLS_REAL_METHODS));
+    uut =
+        mock(
+            AbstractFactStore.class,
+            Mockito.withSettings()
+                .useConstructor(tokenStore)
+                .defaultAnswer(Mockito.CALLS_REAL_METHODS));
   }
 
   @Test
@@ -57,7 +75,8 @@ class AbstractFactStoreTest {
     long notZero = 2L;
     State state = State.of(Lists.emptyList(), lastSerial);
     when(tokenStore.get(eq(token))).thenReturn(Optional.of(state));
-    when(uut.getStateFor(Lists.emptyList(), lastSerial)).thenReturn(State.of(Lists.emptyList(), notZero));
+    when(uut.getStateFor(Lists.emptyList(), lastSerial))
+        .thenReturn(State.of(Lists.emptyList(), notZero));
     boolean published = uut.publishIfUnchanged(Lists.emptyList(), Optional.of(token));
     verify(uut, never()).publish(any());
     verify(uut).invalidate(eq(token));
@@ -71,7 +90,8 @@ class AbstractFactStoreTest {
     long zero = 0L;
     State state = State.of(Lists.emptyList(), lastSerial);
     when(tokenStore.get(eq(token))).thenReturn(Optional.of(state));
-    when(uut.getStateFor(Lists.emptyList(), lastSerial)).thenReturn(State.of(Lists.emptyList(), zero));
+    when(uut.getStateFor(Lists.emptyList(), lastSerial))
+        .thenReturn(State.of(Lists.emptyList(), zero));
     boolean published = uut.publishIfUnchanged(Lists.emptyList(), Optional.of(token));
     verify(uut).publish(any());
     verify(uut).invalidate(eq(token));
