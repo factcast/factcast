@@ -15,6 +15,14 @@
  */
 package org.factcast.server.grpc;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.same;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
 import io.grpc.ServerCallHandler;
@@ -31,14 +39,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.same;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class GrpcServerExceptionInterceptorTest {
