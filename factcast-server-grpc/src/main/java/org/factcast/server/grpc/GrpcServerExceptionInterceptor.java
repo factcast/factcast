@@ -16,14 +16,9 @@
 package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.grpc.ForwardingServerCallListener;
-import io.grpc.Metadata;
-import io.grpc.ServerCall;
-import io.grpc.ServerCallHandler;
-import io.grpc.ServerInterceptor;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
+import io.grpc.*;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 import org.factcast.core.FactValidationException;
@@ -31,7 +26,10 @@ import org.slf4j.Logger;
 
 @Slf4j
 @GrpcGlobalServerInterceptor
+@RequiredArgsConstructor
 public class GrpcServerExceptionInterceptor implements ServerInterceptor {
+  final GrpcRequestMetadata scopedBean;
+
   @Override
   public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
       ServerCall<ReqT, RespT> serverCall,
@@ -41,7 +39,7 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
     return new ExceptionHandlingServerCallListener<>(listener, serverCall, metadata);
   }
 
-  static class ExceptionHandlingServerCallListener<ReqT, RespT>
+  class ExceptionHandlingServerCallListener<ReqT, RespT>
       extends ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> {
     private final ServerCall<ReqT, RespT> serverCall;
 
@@ -106,7 +104,7 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
       if (exception instanceof RequestCanceledByClientException) {
         // maybe we can even skip this close call?
         serverCall.close(Status.CANCELLED.withDescription(exception.getMessage()), metadata);
-        log.debug("Connection cancelled by client.");
+        log.debug("Connection cancelled by client '{}'.", scopedBean.clientId());
         return;
       }
 
@@ -128,9 +126,9 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
     @VisibleForTesting
     protected void logIfNecessary(@NonNull Logger logger, @NonNull RuntimeException exception) {
       if (exception instanceof FactValidationException) {
-        logger.warn("", exception);
+        logger.warn("Exception triggered by client '{}':", scopedBean.clientId(), exception);
       } else {
-        logger.error("", exception);
+        logger.error("Exception triggered by client '{}':", scopedBean.clientId(), exception);
       }
     }
   }
