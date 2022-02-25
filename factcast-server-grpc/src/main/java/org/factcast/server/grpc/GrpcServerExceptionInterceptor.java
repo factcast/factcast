@@ -16,9 +16,18 @@
 package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.grpc.*;
+import io.grpc.ForwardingServerCallListener;
+import io.grpc.Metadata;
+import io.grpc.ServerCall;
+import io.grpc.ServerCallHandler;
+import io.grpc.ServerInterceptor;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
+import org.factcast.core.FactValidationException;
+import org.slf4j.Logger;
 
 @Slf4j
 @GrpcGlobalServerInterceptor
@@ -51,7 +60,6 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
         super.onReady();
       } catch (RuntimeException ex) {
         handleException(ex, serverCall, metadata);
-        throw ex;
       }
     }
 
@@ -61,7 +69,6 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
         super.onCancel();
       } catch (RuntimeException ex) {
         handleException(ex, serverCall, metadata);
-        throw ex;
       }
     }
 
@@ -71,7 +78,6 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
         super.onComplete();
       } catch (RuntimeException ex) {
         handleException(ex, serverCall, metadata);
-        throw ex;
       }
     }
 
@@ -81,7 +87,6 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
         super.onMessage(message);
       } catch (RuntimeException ex) {
         handleException(ex, serverCall, metadata);
-        throw ex;
       }
     }
 
@@ -91,7 +96,6 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
         super.onHalfClose();
       } catch (RuntimeException ex) {
         handleException(ex, serverCall, metadata);
-        throw ex;
       }
     }
 
@@ -109,12 +113,25 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
       // in case someone knows exactly what status to throw
       if (exception instanceof StatusRuntimeException) {
         var e = (StatusRuntimeException) exception;
+        if (!Status.PERMISSION_DENIED.equals(e.getStatus())) {
+          log.error("", e);
+        }
         serverCall.close(e.getStatus(), metadata);
         return;
       }
 
+      logIfNecessary(log, exception);
       StatusRuntimeException sre = ServerExceptionHelper.translate(exception);
       serverCall.close(sre.getStatus(), sre.getTrailers());
+    }
+
+    @VisibleForTesting
+    protected void logIfNecessary(@NonNull Logger logger, @NonNull RuntimeException exception) {
+      if (exception instanceof FactValidationException) {
+        logger.warn("", exception);
+      } else {
+        logger.error("", exception);
+      }
     }
   }
 }
