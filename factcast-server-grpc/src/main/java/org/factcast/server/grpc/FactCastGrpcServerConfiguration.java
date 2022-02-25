@@ -49,8 +49,8 @@ public class FactCastGrpcServerConfiguration {
   }
 
   @Bean
-  public GrpcServerExceptionInterceptor grpcExceptionInterceptor() {
-    return new GrpcServerExceptionInterceptor();
+  public GrpcServerExceptionInterceptor grpcExceptionInterceptor(GrpcRequestMetadata m) {
+    return new GrpcServerExceptionInterceptor(m);
   }
 
   @Bean
