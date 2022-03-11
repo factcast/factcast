@@ -83,11 +83,9 @@ public class GraalJsTransformer implements Transformer {
 
       synchronized (invocable) {
         invocable.invokeFunction("transform", jsonAsMap);
+        fixArrayTransformations(jsonAsMap);
+        return FactCastJson.toJsonNode(jsonAsMap);
       }
-
-      fixArrayTransformations(jsonAsMap);
-
-      return FactCastJson.toJsonNode(jsonAsMap);
 
     } catch (RuntimeException | ScriptException | NoSuchMethodException e) {
       // debug level, because it is escalated.
