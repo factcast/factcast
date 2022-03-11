@@ -21,7 +21,11 @@ import java.util.concurrent.CompletableFuture;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.FactTransformersFactory;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
@@ -77,7 +81,10 @@ class PgSubscriptionFactory {
     return () -> {
       try {
         pgsub.connect(req);
-      } catch (MissingTransformationInformation | TransformationException e) {
+      } catch (TransformationException e) {
+        log.error("{} Notifying subscriber of transformation error: {}", req, e.getMessage());
+        subscription.notifyError(e);
+      } catch (MissingTransformationInformation e) {
         // warn level because it hints at broken transformations/schema registry
         log.warn("{} Notifying subscriber of transformation error: {}", req, e.getMessage());
         subscription.notifyError(e);
