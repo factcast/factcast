@@ -18,19 +18,14 @@ package org.factcast.store.internal;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
-import org.factcast.core.subscription.FactTransformersFactory;
-import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -93,6 +88,50 @@ class PgSubscriptionFactoryTest {
 
       verify(pgsub).connect(req);
       verify(subscription).notifyError(e);
+    }
+
+    @Test
+    void warnsForMissingTransformations() {
+      underTest = spy(underTest);
+      doThrow(MissingTransformationInformationException.class).when(pgsub).connect(any());
+
+      underTest.connect(req, subscription, pgsub).run();
+
+      verify(underTest)
+          .warnAndNotify(
+              same(subscription),
+              same(req),
+              eq("missing transformation"),
+              any(MissingTransformationInformationException.class));
+      verify(subscription).notifyError(any(MissingTransformationInformationException.class));
+    }
+
+    @Test
+    void errsForTransformationErrors() {
+      underTest = spy(underTest);
+      doThrow(TransformationException.class).when(pgsub).connect(any());
+
+      underTest.connect(req, subscription, pgsub).run();
+
+      verify(underTest)
+          .errorAndNotify(
+              same(subscription),
+              same(req),
+              eq("failing transformation"),
+              any(TransformationException.class));
+      verify(subscription).notifyError(any(TransformationException.class));
+    }
+
+    @Test
+    void warnsForRuntimeExceptions() {
+      underTest = spy(underTest);
+      doThrow(RuntimeException.class).when(pgsub).connect(any());
+
+      underTest.connect(req, subscription, pgsub).run();
+
+      verify(underTest)
+          .warnAndNotify(same(subscription), same(req), eq("runtime"), any(RuntimeException.class));
+      verify(subscription).notifyError(any(Exception.class));
     }
   }
 }
