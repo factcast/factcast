@@ -122,6 +122,42 @@ class GraalJsTransformerTest {
   }
 
   @Test
+  @SneakyThrows
+  void testParallelAccess_modifyingObjects() {
+    when(transformation.transformationCode())
+        .thenReturn(Optional.of("function transform(e) { e.foo = {}; e.foo.bar = e.y; }\n"));
+
+    var d1 = new HashMap<String, Object>();
+    d1.put("y", "1");
+
+    var d2 = new HashMap<String, Object>();
+    d2.put("y", "2");
+
+    // warm up engine
+    uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+
+    Callable<JsonNode> c1 =
+        () -> uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+    Callable<JsonNode> c2 =
+        () -> uut.transform(transformation, om.convertValue(d2, JsonNode.class));
+
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
+    try {
+      Future<JsonNode> result1 = executor.submit(c1);
+      Future<JsonNode> result2 = executor.submit(c2);
+      JsonNode n1 = result1.get();
+      JsonNode n2 = result2.get();
+
+      assertThat(n1.get("y").asText()).isEqualTo("1");
+      assertThat(n1.get("foo").get("bar").asText()).isEqualTo("1");
+      assertThat(n2.get("y").asText()).isEqualTo("2");
+      assertThat(n2.get("foo").get("bar").asText()).isEqualTo("2");
+    } finally {
+      executor.shutdown();
+    }
+  }
+
+  @Test
   void logsExceptionBrokenScript() {
     when(transformation.transformationCode())
         .thenReturn(Optional.of("function transform(e) { \n" + "  br0ken code" + " }\n"));
