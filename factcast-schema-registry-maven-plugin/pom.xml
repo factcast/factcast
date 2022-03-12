@@ -79,6 +79,13 @@
       <artifactId>factcast-schema-registry-cli</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.module</groupId>
+      <artifactId>jackson-module-kotlin</artifactId>
+      <!-- even though all other modules are avail for 2.13.2, this one is missing -->
+      <version>2.13.1</version>
+      <scope>runtime</scope>
+    </dependency>
   </dependencies>
 
   <build>
