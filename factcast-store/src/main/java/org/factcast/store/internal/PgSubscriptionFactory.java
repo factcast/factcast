@@ -27,7 +27,6 @@ import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
-import org.factcast.store.registry.transformation.chains.MissingTransformationInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 // TODO integrate with PGQuery
@@ -77,16 +76,38 @@ class PgSubscriptionFactory {
     return () -> {
       try {
         pgsub.connect(req);
-      } catch (MissingTransformationInformation | TransformationException e) {
+      } catch (MissingTransformationInformationException e) {
         // warn level because it hints at broken transformations/schema registry
-        log.warn("{} Notifying subscriber of transformation error: {}", req, e.getMessage());
-        subscription.notifyError(e);
-      } catch (Exception e) {
+        warnAndNotify(subscription, req, "missing transformation", e);
+      } catch (TransformationException e) {
+        errorAndNotify(subscription, req, "failing transformation", e);
+      } catch (RuntimeException e) {
         // warn level because it is unexpected and unlikely to be a client induced error
         // not limiting to RuntimeException, in case anyone used @SneakyThrows
-        log.warn("{} Notifying subscriber of runtime error: {}", req, e.getMessage());
-        subscription.notifyError(e);
+        warnAndNotify(subscription, req, "runtime", e);
       }
     };
+  }
+
+  private static final String LOGLINE = "{} Notifying subscriber of {} error: {}";
+
+  @VisibleForTesting
+  void warnAndNotify(
+      @NonNull SubscriptionImpl sub,
+      @NonNull SubscriptionRequestTO req,
+      @NonNull String typeOfError,
+      @NonNull Exception e) {
+    log.warn(LOGLINE, req, typeOfError, e.getMessage());
+    sub.notifyError(e);
+  }
+
+  @VisibleForTesting
+  void errorAndNotify(
+      @NonNull SubscriptionImpl sub,
+      @NonNull SubscriptionRequestTO req,
+      @NonNull String typeOfError,
+      @NonNull Exception e) {
+    log.error(LOGLINE, req, typeOfError, e.getMessage());
+    sub.notifyError(e);
   }
 }
