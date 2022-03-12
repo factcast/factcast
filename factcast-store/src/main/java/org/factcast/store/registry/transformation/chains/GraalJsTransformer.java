@@ -81,13 +81,16 @@ public class GraalJsTransformer implements Transformer {
       @SuppressWarnings("unchecked")
       Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
 
+      // if you have transformations that add new objects like "foo.bar = {}"
+      // this will lead to have PolyglotMap's being created inside jsonAsMap
+      // these Graal maps are bound to a Context which bound to a ScriptEngine in our case
+      // jackson seems somehow to access fields of this map which leads to exceptions like
+      // mentioned in https://github.com/factcast/factcast/issues/1506
       synchronized (invocable) {
         invocable.invokeFunction("transform", jsonAsMap);
+        fixArrayTransformations(jsonAsMap);
+        return FactCastJson.toJsonNode(jsonAsMap);
       }
-
-      fixArrayTransformations(jsonAsMap);
-
-      return FactCastJson.toJsonNode(jsonAsMap);
 
     } catch (RuntimeException | ScriptException | NoSuchMethodException e) {
       // debug level, because it is escalated.
