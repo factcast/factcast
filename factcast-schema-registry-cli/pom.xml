@@ -228,6 +228,9 @@
             <nonFilteredFileExtension>woff</nonFilteredFileExtension>
             <nonFilteredFileExtension>woff2</nonFilteredFileExtension>
             <nonFilteredFileExtension>png</nonFilteredFileExtension>
+            <nonFilteredFileExtension>mp3</nonFilteredFileExtension>
+            <nonFilteredFileExtension>mp4</nonFilteredFileExtension>
+            <nonFilteredFileExtension>pdf</nonFilteredFileExtension>
           </nonFilteredFileExtensions>
         </configuration>
       </plugin>
