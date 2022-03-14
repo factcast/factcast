@@ -273,19 +273,19 @@ public class PgFactStream {
         }
         Fact f = PgFact.from(rs);
         UUID factId = f.id();
-        if (postQueryMatcher.test(f)) {
-          try {
+        try {
+          if (postQueryMatcher.test(f)) {
             subscription.notifyElement(f);
             log.trace("{} notifyElement called with id={}", request, factId);
-          } catch (Throwable e) {
-            rs.close();
-            subscription.notifyError(e);
+          } else {
+            // TODO add sid
+            log.trace("{} filtered id={}", request, factId);
           }
-        } else {
-          // TODO add sid
-          log.trace("{} filtered id={}", request, factId);
+          serial.set(rs.getLong(PgConstants.COLUMN_SER));
+        } catch (Throwable e) {
+          rs.close();
+          subscription.notifyError(e);
         }
-        serial.set(rs.getLong(PgConstants.COLUMN_SER));
       }
     }
   }
