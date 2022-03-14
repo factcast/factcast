@@ -195,6 +195,32 @@ class TransformationValidationServiceImplTest : StringSpec() {
             confirmVerified(transformationEvaluator)
         }
 
+        "calculateValidationErrors - should succeed because transformation is skipped" {
+            val namespace = Namespace("foo", dummyPath, listOf(event1))
+            val dummyProject = Project(null, listOf(namespace))
+
+            every { fs.readToJsonNode(dummyPath) } returns jsonNodeMock
+            every { schemaService.loadSchema(dummyPath) } returns Either.Right(schemaMock)
+            every {
+                transformationEvaluator.evaluate(
+                    namespace,
+                    event1,
+                    transformation1to2,
+                    jsonNodeMock
+                )
+            } returns null
+            every { schemaMock.validate(jsonNodeMock) } returns processingResultMock
+            every { processingResultMock.isSuccess } returns true
+
+            val result = uut.calculateValidationErrors(dummyProject)
+
+            result shouldHaveSize 0
+
+            verify { transformationEvaluator.evaluate(namespace, event1, transformation1to2, jsonNodeMock) }
+            verify { schemaService.loadSchema(dummyPath) }
+            confirmVerified(transformationEvaluator, schemaMock)
+        }
+
         "calculateNoopDowncastErrors - should fail on non existing schema" {
             val namespace = Namespace("foo", dummyPath, listOf(event1))
             val dummyProject = Project(null, listOf(namespace))
