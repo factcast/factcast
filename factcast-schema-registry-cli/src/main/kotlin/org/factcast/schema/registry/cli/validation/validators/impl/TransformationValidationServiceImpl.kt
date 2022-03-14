@@ -61,6 +61,7 @@ class TransformationValidationServiceImpl(
             )
         }
 
+
         val examples = fromVersion.examples
             .mapNotNull { fileSystemService.readToJsonNode(it.exampleFilePath) }
 
@@ -68,7 +69,7 @@ class TransformationValidationServiceImpl(
             .loadSchema(toVersion.schemaPath)
             .fold({ listOf(it) }) { schema ->
                 examples.mapNotNull { example ->
-                    val transformationResult: JsonNode
+                    val transformationResult: JsonNode?
                     try {
                         transformationResult = transformationEvaluator.evaluate(ns, event, transformation, example)
                     } catch (e: Exception) {
@@ -80,16 +81,18 @@ class TransformationValidationServiceImpl(
                         )
                     }
 
-                    val validationResult = schema.validate(transformationResult)
-                    if (validationResult.isSuccess) {
-                        null
-                    } else {
-                        ProjectError.TransformationValidationError(
-                            event.type,
-                            fromVersion.version,
-                            toVersion.version,
-                            validationResult
-                        )
+                    transformationResult?.let {
+                        val validationResult = schema.validate(it)
+                        if (!validationResult.isSuccess) {
+                            null
+                        } else {
+                            ProjectError.TransformationValidationError(
+                                event.type,
+                                fromVersion.version,
+                                toVersion.version,
+                                validationResult
+                            )
+                        }
                     }
                 }
             }
