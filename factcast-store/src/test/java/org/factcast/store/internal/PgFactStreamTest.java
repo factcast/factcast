@@ -15,9 +15,16 @@
  */
 package org.factcast.store.internal;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import com.google.common.eventbus.EventBus;
 import io.micrometer.core.instrument.DistributionSummary;
@@ -325,7 +332,7 @@ public class PgFactStreamTest {
       verify(postQueryMatcher).test(any());
       verify(subscription).notifyError(exception);
       verify(rs).close();
-      verify(serial).set(10L);
+      verify(serial, never()).set(10L);
     }
   }
 }
