@@ -83,7 +83,7 @@ class TransformationValidationServiceImpl(
 
                     transformationResult?.let {
                         val validationResult = schema.validate(it)
-                        if (!validationResult.isSuccess) {
+                        if (validationResult.isSuccess) {
                             null
                         } else {
                             ProjectError.TransformationValidationError(
