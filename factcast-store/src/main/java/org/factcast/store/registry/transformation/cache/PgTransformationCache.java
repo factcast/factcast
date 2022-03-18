@@ -17,6 +17,7 @@ package org.factcast.store.registry.transformation.cache;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,7 +39,7 @@ public class PgTransformationCache implements TransformationCache {
 
   private final RegistryMetrics registryMetrics;
 
-  private List<String> cacheKeysBatch = new ArrayList<String>();
+  private List<String> cacheKeysBatch = Collections.synchronizedList(new ArrayList<>());
   private int cacheKeysBatchSize = 100;
 
   @VisibleForTesting
@@ -90,7 +91,9 @@ public class PgTransformationCache implements TransformationCache {
     }
 
     cacheKeysBatch.add(cacheKey);
-    if (cacheKeysBatch.size() >= cacheKeysBatchSize) CompletableFuture.runAsync(touchBatch());
+    if (cacheKeysBatch.size() >= cacheKeysBatchSize) {
+      CompletableFuture.runAsync(this::touchBatch);
+    }
 
     registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
 
@@ -108,21 +111,26 @@ public class PgTransformationCache implements TransformationCache {
   }
 
   @VisibleForTesting
-  Runnable touchBatch() {
-    return () -> {
+  void touchBatch() {
+    List<String> copy;
+    synchronized (cacheKeysBatch) {
+      copy = new ArrayList<String>(cacheKeysBatch);
+      cacheKeysBatch.clear();
+    }
+    if (copy.isEmpty()) {
+      return;
+    } else {
       try {
         jdbcTemplate.batchUpdate(
             "UPDATE transformationcache SET last_access=now() WHERE cache_key = ?",
-            cacheKeysBatch,
-            cacheKeysBatchSize,
+            copy,
+            copy.size(),
             (ps, arg) -> ps.setString(1, arg));
       } catch (RuntimeException e) {
         log.warn(
             "Could not complete batch update last_access on transformation cache. Error: {}",
             e.getMessage());
-      } finally {
-        cacheKeysBatch.clear();
       }
-    };
+    }
   }
 }
