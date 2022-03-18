@@ -15,11 +15,15 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import com.google.common.annotations.VisibleForTesting;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
@@ -28,10 +32,26 @@ import org.joda.time.DateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @RequiredArgsConstructor
+@Slf4j
 public class PgTransformationCache implements TransformationCache {
   private final JdbcTemplate jdbcTemplate;
 
   private final RegistryMetrics registryMetrics;
+
+  private List<String> cacheKeysBatch = new ArrayList<String>();
+  private int cacheKeysBatchSize = 100;
+
+  @VisibleForTesting
+  PgTransformationCache(
+      JdbcTemplate jdbcTemplate,
+      RegistryMetrics registryMetrics,
+      List<String> cacheKeysBatch,
+      int cacheKeysBatchSize) {
+    this.jdbcTemplate = jdbcTemplate;
+    this.registryMetrics = registryMetrics;
+    this.cacheKeysBatch = cacheKeysBatch;
+    this.cacheKeysBatchSize = cacheKeysBatchSize;
+  }
 
   @Override
   public void put(@NonNull Fact fact, @NonNull String transformationChainId) {
@@ -69,8 +89,8 @@ public class PgTransformationCache implements TransformationCache {
       return Optional.empty();
     }
 
-    jdbcTemplate.update(
-        "UPDATE transformationcache SET last_access=now() WHERE cache_key = ?", cacheKey);
+    cacheKeysBatch.add(cacheKey);
+    if (cacheKeysBatch.size() >= cacheKeysBatchSize) CompletableFuture.runAsync(touchBatch());
 
     registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
 
@@ -85,5 +105,24 @@ public class PgTransformationCache implements TransformationCache {
           jdbcTemplate.update(
               "DELETE FROM transformationcache WHERE last_access < ?", thresholdDate.toDate());
         });
+  }
+
+  @VisibleForTesting
+  Runnable touchBatch() {
+    return () -> {
+      try {
+        jdbcTemplate.batchUpdate(
+            "UPDATE transformationcache SET last_access=now() WHERE cache_key = ?",
+            cacheKeysBatch,
+            cacheKeysBatchSize,
+            (ps, arg) -> ps.setString(1, arg));
+      } catch (RuntimeException e) {
+        log.warn(
+            "Could not complete batch update last_access on transformation cache. Error: {}",
+            e.getMessage());
+      } finally {
+        cacheKeysBatch.clear();
+      }
+    };
   }
 }
