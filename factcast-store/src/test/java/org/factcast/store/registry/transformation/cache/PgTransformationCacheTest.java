@@ -15,6 +15,8 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,8 +34,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import static org.junit.Assert.assertTrue;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
