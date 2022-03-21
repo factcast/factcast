@@ -15,12 +15,13 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.PgTestConfiguration;
@@ -43,12 +44,19 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 class PgTransformationCacheTest extends AbstractTransformationCacheTest {
   @Autowired private JdbcTemplate tpl;
 
-  private final List<String> cacheKeysBatch = new ArrayList<String>();
-  private final int cacheKeysBatchSize = 10;
+  private final List<String> buffer = new ArrayList<String>();
+  private final int maxBufferSize = 10;
+  private final CountDownLatch wasflushed = new CountDownLatch(1);
 
   @Override
   protected TransformationCache createUUT() {
-    return new PgTransformationCache(tpl, registryMetrics, cacheKeysBatch, cacheKeysBatchSize);
+    return new PgTransformationCache(tpl, registryMetrics, buffer, maxBufferSize) {
+      @Override
+      public void flush() {
+        super.flush();
+        wasflushed.countDown();
+      }
+    };
   }
 
   @Test
@@ -57,15 +65,17 @@ class PgTransformationCacheTest extends AbstractTransformationCacheTest {
     String chainId = "1-2-3";
     String cacheKey = CacheKey.of(fact, chainId);
     uut.put(fact, chainId);
+    assertThat(buffer).isEmpty(); // not touched by a put
 
     uut.find(fact.id(), fact.version(), chainId);
 
-    assertTrue(cacheKeysBatch.contains(cacheKey));
+    assertThat(buffer).contains(cacheKey);
   }
 
+  @SneakyThrows
   @Test
   void testFlushBatchAfterFind() {
-    for (int i = 0; i < cacheKeysBatchSize; i++) {
+    for (int i = 0; i < maxBufferSize; i++) {
       Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
       String chainId = String.valueOf(i);
       uut.put(fact, chainId);
@@ -73,25 +83,24 @@ class PgTransformationCacheTest extends AbstractTransformationCacheTest {
       uut.find(fact.id(), fact.version(), chainId);
     }
     // flush is async
-    sleep();
+    wasflushed.await();
 
-    assertTrue(cacheKeysBatch.isEmpty());
+    assertThat(buffer).isEmpty();
   }
 
   @Test
   void testBatchUpdateAfterFind() {
-    for (int i = 0; i < cacheKeysBatchSize; i++) {
+    for (int i = 0; i < maxBufferSize; i++) {
       Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
       String chainId = String.valueOf(i);
       uut.put(fact, chainId);
-      cacheKeysBatch.add(CacheKey.of(fact, chainId));
+      buffer.add(CacheKey.of(fact, chainId));
     }
     Date maxDateOnInsert = getMaxLastAccessDate();
 
     ((PgTransformationCache) uut).flush();
 
-    Date minDateOnUpdate = getMinLastAccessDate();
-    assertTrue(minDateOnUpdate.after(maxDateOnInsert));
+    assertThat(getMinLastAccessDate()).isAfter(maxDateOnInsert);
   }
 
   private Date getMaxLastAccessDate() {
@@ -108,10 +117,5 @@ class PgTransformationCacheTest extends AbstractTransformationCacheTest {
             new Object[] {},
             (rs, rowNum) -> rs.getObject("last_access", Date.class))
         .get(0);
-  }
-
-  @SneakyThrows
-  private void sleep() {
-    Thread.sleep(100);
   }
 }
