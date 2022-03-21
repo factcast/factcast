@@ -15,23 +15,42 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import com.google.common.annotations.VisibleForTesting;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.registry.metrics.RegistryMetrics.OP;
 import org.joda.time.DateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 
 @RequiredArgsConstructor
+@Slf4j
 public class PgTransformationCache implements TransformationCache {
   private final JdbcTemplate jdbcTemplate;
 
   private final RegistryMetrics registryMetrics;
+
+  private List<String> cacheKeysBuffer = Collections.synchronizedList(new ArrayList<>());
+  private int maxBufferSize = 1000;
+
+  @VisibleForTesting
+  PgTransformationCache(
+      JdbcTemplate jdbcTemplate,
+      RegistryMetrics registryMetrics,
+      List<String> cacheKeysBatch,
+      int maxBufferSize) {
+    this.jdbcTemplate = jdbcTemplate;
+    this.registryMetrics = registryMetrics;
+    this.cacheKeysBuffer = cacheKeysBatch;
+    this.maxBufferSize = maxBufferSize;
+  }
 
   @Override
   public void put(@NonNull Fact fact, @NonNull String transformationChainId) {
@@ -69,8 +88,10 @@ public class PgTransformationCache implements TransformationCache {
       return Optional.empty();
     }
 
-    jdbcTemplate.update(
-        "UPDATE transformationcache SET last_access=now() WHERE cache_key = ?", cacheKey);
+    cacheKeysBuffer.add(cacheKey);
+    if (cacheKeysBuffer.size() >= maxBufferSize) {
+      CompletableFuture.runAsync(this::flush);
+    }
 
     registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
 
@@ -85,5 +106,27 @@ public class PgTransformationCache implements TransformationCache {
           jdbcTemplate.update(
               "DELETE FROM transformationcache WHERE last_access < ?", thresholdDate.toDate());
         });
+  }
+
+  @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
+  public void flush() {
+    List<String> copy;
+    synchronized (cacheKeysBuffer) {
+      copy = new ArrayList<String>(cacheKeysBuffer);
+      cacheKeysBuffer.clear();
+    }
+    if (!copy.isEmpty()) {
+      try {
+        jdbcTemplate.batchUpdate(
+            "UPDATE transformationcache SET last_access=now() WHERE cache_key = ?",
+            copy,
+            copy.size(),
+            (ps, arg) -> ps.setString(1, arg));
+      } catch (RuntimeException e) {
+        log.warn(
+            "Could not complete batch update last_access on transformation cache. Error: {}",
+            e.getMessage());
+      }
+    }
   }
 }
