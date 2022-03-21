@@ -16,12 +16,9 @@
 package org.factcast.store.registry.transformation.cache;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +28,7 @@ import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.registry.metrics.RegistryMetrics.OP;
 import org.joda.time.DateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -39,19 +37,19 @@ public class PgTransformationCache implements TransformationCache {
 
   private final RegistryMetrics registryMetrics;
 
-  private List<String> cacheKeysBatch = Collections.synchronizedList(new ArrayList<>());
-  private int cacheKeysBatchSize = 100;
+  private List<String> cacheKeysBuffer = Collections.synchronizedList(new ArrayList<>());
+  private int maxBufferSize = 1000;
 
   @VisibleForTesting
   PgTransformationCache(
       JdbcTemplate jdbcTemplate,
       RegistryMetrics registryMetrics,
       List<String> cacheKeysBatch,
-      int cacheKeysBatchSize) {
+      int maxBufferSize) {
     this.jdbcTemplate = jdbcTemplate;
     this.registryMetrics = registryMetrics;
-    this.cacheKeysBatch = cacheKeysBatch;
-    this.cacheKeysBatchSize = cacheKeysBatchSize;
+    this.cacheKeysBuffer = cacheKeysBatch;
+    this.maxBufferSize = maxBufferSize;
   }
 
   @Override
@@ -90,9 +88,9 @@ public class PgTransformationCache implements TransformationCache {
       return Optional.empty();
     }
 
-    cacheKeysBatch.add(cacheKey);
-    if (cacheKeysBatch.size() >= cacheKeysBatchSize) {
-      CompletableFuture.runAsync(this::touchBatch);
+    cacheKeysBuffer.add(cacheKey);
+    if (cacheKeysBuffer.size() >= maxBufferSize) {
+      CompletableFuture.runAsync(this::flush);
     }
 
     registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
@@ -110,16 +108,14 @@ public class PgTransformationCache implements TransformationCache {
         });
   }
 
-  @VisibleForTesting
-  void touchBatch() {
+  @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
+  public void flush() {
     List<String> copy;
-    synchronized (cacheKeysBatch) {
-      copy = new ArrayList<String>(cacheKeysBatch);
-      cacheKeysBatch.clear();
+    synchronized (cacheKeysBuffer) {
+      copy = new ArrayList<String>(cacheKeysBuffer);
+      cacheKeysBuffer.clear();
     }
-    if (copy.isEmpty()) {
-      return;
-    } else {
+    if (!copy.isEmpty()) {
       try {
         jdbcTemplate.batchUpdate(
             "UPDATE transformationcache SET last_access=now() WHERE cache_key = ?",

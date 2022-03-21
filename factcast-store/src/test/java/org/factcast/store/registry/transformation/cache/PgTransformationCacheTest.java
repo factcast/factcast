@@ -15,7 +15,7 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,8 +25,8 @@ import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -43,8 +43,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 class PgTransformationCacheTest extends AbstractTransformationCacheTest {
   @Autowired private JdbcTemplate tpl;
 
-  private List<String> cacheKeysBatch = new ArrayList<String>();
-  private int cacheKeysBatchSize = 10;
+  private final List<String> cacheKeysBatch = new ArrayList<String>();
+  private final int cacheKeysBatchSize = 10;
 
   @Override
   protected TransformationCache createUUT() {
@@ -88,7 +88,7 @@ class PgTransformationCacheTest extends AbstractTransformationCacheTest {
     }
     Date maxDateOnInsert = getMaxLastAccessDate();
 
-    ((PgTransformationCache) uut).touchBatch();
+    ((PgTransformationCache) uut).flush();
 
     Date minDateOnUpdate = getMinLastAccessDate();
     assertTrue(minDateOnUpdate.after(maxDateOnInsert));
