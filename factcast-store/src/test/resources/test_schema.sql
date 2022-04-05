@@ -304,38 +304,70 @@ CREATE
 RETURN NEW;
 END;
 
-CREATE OR REPLACE FUNCTION notifyFactInsert() RETURNS trigger AS
-$$
-DECLARE
-    notified BOOLEAN;
-    ns varchar;
-    type varchar;
-BEGIN
+CREATE
+  OR REPLACE FUNCTION notifyFactInsert() RETURNS TRIGGER AS $$ DECLARE notified BOOLEAN;
 
-    ns := NEW.header ->> 'ns';
-    type := NEW.header ->> 'type';
+ns VARCHAR;
 
-    notified := NULLIF(current_setting(CONCAT('myvars.facttrigger.',ns,'.',type), TRUE), '');
+TYPE VARCHAR;
 
-    IF notified IS NULL THEN
-        perform set_config(CONCAT('myvars.facttrigger.',ns,'.',type),'TRUE',TRUE);
-        PERFORM pg_notify('fact_insert', json_build_object(
-                'ser', NEW.ser,
-            -- header is deprecated and will be removed
-                'header', NEW.header,
-                'txId', txid_current(),
-                'ns',ns,
-                'type',type
-            )::text);
-    END IF;
+BEGIN ns := NEW.header ->> 'ns';
 
-    RETURN NEW;
+TYPE := NEW.header ->> 'type';
+
+notified := NULLIF(
+  current_setting(
+    CONCAT(
+      'myvars.facttrigger.',
+      ns,
+      '.',
+      TYPE
+    ),
+    TRUE
+  ),
+  ''
+);
+
+IF notified IS NULL THEN perform set_config(
+  CONCAT(
+    'myvars.facttrigger.',
+    ns,
+    '.',
+    TYPE
+  ),
+  'TRUE',
+  TRUE
+);
+
+PERFORM pg_notify(
+  'fact_insert',
+  json_build_object(
+    'ser',
+    NEW.ser, -- header is deprecated and will be removed'header',
+    NEW.header,
+    'txId',
+    txid_current(),
+    'ns',
+    ns,
+    'type',
+    TYPE
+  )::text
+);
+END IF;
+
+RETURN NEW;
 END;
+
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS tr_deferred_fact_insert ON fact;
-CREATE CONSTRAINT TRIGGER tr_deferred_fact_insert AFTER INSERT ON fact DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE PROCEDURE notifyFactInsert();
+DROP
+  TRIGGER IF EXISTS tr_deferred_fact_insert ON
+  fact;
 
+CREATE
+  CONSTRAINT TRIGGER tr_deferred_fact_insert AFTER INSERT
+    ON
+    fact DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE PROCEDURE notifyFactInsert();
 
 -- unfortunately, the masterminds behind spring desperately need this last 'separator character'. don't ask why...
 -- just remove it, if you copy this to a console.
