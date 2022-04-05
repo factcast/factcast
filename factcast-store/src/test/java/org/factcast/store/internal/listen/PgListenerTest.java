@@ -23,6 +23,8 @@ import static org.mockito.Mockito.*;
 import com.google.common.eventbus.EventBus;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
@@ -189,6 +191,9 @@ public class PgListenerTest {
 
   @Test
   void testNotify() throws Exception {
+
+    CountDownLatch latch = new CountDownLatch(1);
+
     when(pgConnectionSupplier.get()).thenReturn(conn);
     when(conn.prepareStatement(anyString())).thenReturn(ps);
     when(conn.prepareCall(anyString()).execute()).thenReturn(true);
@@ -201,42 +206,40 @@ public class PgListenerTest {
               new Notification(
                   PgConstants.CHANNEL_FACT_INSERT,
                   1,
-                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theType\"}, \"txId\": 123}"),
-              new Notification(
-                  PgConstants.CHANNEL_FACT_INSERT,
-                  1,
-                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theType\"}, \"txId\": 123}"),
+                  "{\"ns\":\"namespace\",\"type\":\"theType\"}"),
+
               // should trigger other notification:
               new Notification(
                   PgConstants.CHANNEL_FACT_INSERT,
                   1,
-                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theOtherType\"}, \"txId\": 123}")
+                  "{\"ns\":\"namespace\",\"type\":\"theOtherType\"}")
             },
             new PGNotification[] {
               new Notification(PgConstants.CHANNEL_FACT_INSERT, 2, "{}"),
               new Notification(
                   PgConstants.CHANNEL_FACT_INSERT,
                   1,
-                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theOtherType\"}, \"txId\": 345}"),
+                  "{\"ns\":\"namespace\",\"type\":\"theOtherType\"}"),
               // recurring notifications in second array:
               new Notification(
                   PgConstants.CHANNEL_FACT_INSERT,
                   1,
-                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theOtherType\"}, \"txId\": 123}"),
-              new Notification(
-                  PgConstants.CHANNEL_FACT_INSERT,
-                  1,
-                  "{\"header\":{\"ns\":\"namespace\",\"type\":\"theType\"}, \"txId\": 123}"),
+                  "{\"ns\":\"namespace\",\"type\":\"theType\"}"),
             }, //
             new PGNotification[] {new Notification(PgConstants.CHANNEL_FACT_INSERT, 3, "{}")},
             new PGNotification[] {new Notification(PgConstants.CHANNEL_ROUNDTRIP, 3, "{}")},
             new PGNotification[] {},
             new PGNotification[] {},
-            new PGNotification[] {});
+            new PGNotification[] {})
+        .thenAnswer(
+            i -> {
+              latch.countDown();
+              return null;
+            });
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.listen();
-    sleep(500);
+    latch.await(1, TimeUnit.MINUTES);
     pgListener.destroy();
 
     verify(eventBus, atLeastOnce()).post(factCaptor.capture());
@@ -245,25 +248,22 @@ public class PgListenerTest {
     // first event is the general wakeup to the subscribers after startup
     assertEquals("scheduled-poll", allEvents.get(0).name());
     // events 2 - incl. 4 are notifies
-    assertTrue(allEvents.subList(1, 4).stream().allMatch(IS_FACT_INSERT));
+    assertTrue(allEvents.subList(1, 3).stream().allMatch(IS_FACT_INSERT));
 
     // in total there are only 3 notifies
+    // TODO delete or assert?
     long totalNotifyCount = allEvents.stream().filter(IS_FACT_INSERT).count();
 
     // grouped by tx id, ns and type
     assertThat(allEvents.stream().filter(IS_FACT_INSERT))
         .containsExactlyInAnyOrder(
-            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null, null),
-            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null, null),
-            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null, null),
-            // must appear only once
-            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType", "123"),
-            // must appear, even if was in the same tx as theType
-            new PgListener.Signal(
-                PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType", "123"),
-            // must appear, as it is a new tx
-            new PgListener.Signal(
-                PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType", "345"));
+            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null),
+            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null),
+            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null),
+            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType"),
+            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"),
+            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType"),
+            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"));
   }
 
   @Test
