@@ -350,7 +350,8 @@ PERFORM pg_notify(
   'fact_insert',
   json_build_object(
     'ser',
-    NEW.ser, -- header is deprecated and will be removed'header',
+    NEW.ser, -- header is deprecated and will be removed
+    'header',
     NEW.header,
     'txId',
     txid_current(),
