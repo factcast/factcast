@@ -304,6 +304,12 @@ CREATE
 RETURN NEW;
 END;
 
+
+CREATE
+  TRIGGER tr_fact_augment BEFORE INSERT
+    ON
+    fact FOR EACH ROW EXECUTE PROCEDURE augmentSerialAndTimestamp();
+
 CREATE OR REPLACE FUNCTION notifyFactInsert() RETURNS trigger AS
 $$
 DECLARE
