@@ -66,8 +66,6 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-  private final SignalDeduplicationSet signalDeduplicationSet = new SignalDeduplicationSet(512);
-
   @VisibleForTesting
   protected void listen() {
     log.trace("Starting instance Listener");
@@ -146,13 +144,11 @@ public class PgListener implements InitializingBean, DisposableBean {
 
                 try {
                   JsonNode root = FactCastJson.readTree(json);
-                  JsonNode header = root.get("header");
+                  // since 0.5.2, all those attributes are top level
+                  String ns = root.get("ns").asText();
+                  String type = root.get("type").asText();
 
-                  String ns = header.get("ns").asText();
-                  String type = header.get("type").asText();
-                  String txId = root.get("txId").asText();
-
-                  postEvent(new Signal(PgConstants.CHANNEL_FACT_INSERT, ns, type, txId));
+                  postEvent(new Signal(PgConstants.CHANNEL_FACT_INSERT, ns, type));
 
                 } catch (JsonProcessingException | NullPointerException e) {
                   // unparseable, probably longer than 8k ?
@@ -165,8 +161,7 @@ public class PgListener implements InitializingBean, DisposableBean {
                     postEvent(PgConstants.CHANNEL_FACT_INSERT);
                   }
                 }
-              }
-              if (!PgConstants.CHANNEL_ROUNDTRIP.equals(name)) {
+              } else if (!PgConstants.CHANNEL_ROUNDTRIP.equals(name)) {
                 log.debug("Ignored notification from unknown channel: {}", name);
               }
             });
@@ -224,18 +219,17 @@ public class PgListener implements InitializingBean, DisposableBean {
   @VisibleForTesting
   protected void postEvent(@NonNull String name) {
     // don't test against dedup list here!
-    eventBus.post(new Signal(name, null, null, null));
+    eventBus.post(new Signal(name, null, null));
   }
 
   @VisibleForTesting
   protected void postEvent(@NonNull PgListener.Signal signal) {
-    if (running.get() && signalDeduplicationSet.add(signal)) {
+    if (running.get()) {
       log.trace(
-          "notifying consumers for '{}' with ns={}, type={}, tx={}",
+          "notifying consumers for '{}' with ns={}, type={}",
           signal.name(),
           signal.ns(),
-          signal.type(),
-          signal.txId());
+          signal.type());
       eventBus.post(signal);
     }
   }
@@ -245,7 +239,6 @@ public class PgListener implements InitializingBean, DisposableBean {
     @NonNull String name;
     String ns;
     String type;
-    String txId;
   }
 
   @Override
