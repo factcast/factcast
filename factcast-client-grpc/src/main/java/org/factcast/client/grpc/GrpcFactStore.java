@@ -30,6 +30,7 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import lombok.Generated;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 import org.factcast.core.Fact;
@@ -87,7 +88,7 @@ public class GrpcFactStore implements FactStore {
   private final ProtoConverter converter = new ProtoConverter();
 
   private final AtomicBoolean initialized = new AtomicBoolean(false);
-  private boolean fastStateToken;
+  @VisibleForTesting @Setter private boolean fastStateToken;
 
   @Autowired
   @Generated
