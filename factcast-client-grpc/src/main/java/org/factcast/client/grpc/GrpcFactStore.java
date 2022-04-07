@@ -87,6 +87,7 @@ public class GrpcFactStore implements FactStore {
   private final ProtoConverter converter = new ProtoConverter();
 
   private final AtomicBoolean initialized = new AtomicBoolean(false);
+  private boolean fastStateToken;
 
   @Autowired
   @Generated
@@ -247,6 +248,11 @@ public class GrpcFactStore implements FactStore {
       logProtocolVersion(serverProtocolVersion);
       logServerVersion(serverProperties);
       configureCompressionAndMetaData(serverProperties.get(Capabilities.CODECS.toString()));
+
+      this.fastStateToken =
+          Optional.ofNullable(serverProperties.get(Capabilities.FAST_STATE_TOKEN.toString()))
+              .map(Boolean::parseBoolean)
+              .orElse(false);
     }
   }
 
@@ -376,12 +382,14 @@ public class GrpcFactStore implements FactStore {
 
   @Override
   public @NonNull StateToken currentStateFor(List<FactSpec> specs) {
-    return callAndHandle(
-        () -> {
-          MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
-          MSG_UUID result = blockingStub.currentStateForSpecsJson(msg);
-          return new StateToken(converter.fromProto(result));
-        });
+    if (!this.fastStateToken) return stateFor(specs);
+    else
+      return callAndHandle(
+          () -> {
+            MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
+            MSG_UUID result = blockingStub.currentStateForSpecsJson(msg);
+            return new StateToken(converter.fromProto(result));
+          });
   }
 
   @Override
