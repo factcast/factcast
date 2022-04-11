@@ -17,7 +17,8 @@ package org.factcast.grpc.api;
 
 public enum Capabilities {
   FACTCAST_IMPL_VERSION,
-  CODECS;
+  CODECS,
+  FAST_STATE_TOKEN;
 
   @Override
   public String toString() {
