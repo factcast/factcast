@@ -398,6 +398,7 @@ class GrpcFactStoreTest {
 
   @Test
   void testCurrentStateForPositive() {
+    uut.fastStateToken(true);
     UUID id = new UUID(0, 1);
     StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
     when(blockingStub.currentStateForSpecsJson(any())).thenReturn(conv.toProto(id));
@@ -408,6 +409,7 @@ class GrpcFactStoreTest {
 
   @Test
   void testCurrentStateForNegative() {
+    uut.fastStateToken(true);
     when(blockingStub.currentStateForSpecsJson(any()))
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
     try {
