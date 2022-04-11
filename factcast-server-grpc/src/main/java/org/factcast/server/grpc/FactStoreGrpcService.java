@@ -333,6 +333,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
     String name = grpcRequestMetadata.clientId().orElse("");
     properties.put(Capabilities.CODECS.toString(), codecs.available());
+    // since 0.5.2
+    properties.put(Capabilities.FAST_STATE_TOKEN.toString(), Boolean.TRUE.toString());
+
     log.info("{}handshake (serverConfig={})", clientIdPrefix(), properties);
     return properties;
   }
