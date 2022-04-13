@@ -100,7 +100,7 @@
     <spring-cloud.version>2020.0.5</spring-cloud.version>
     <spring-grpc.version>2.13.1.RELEASE</spring-grpc.version>
     <grpc.version>1.42.1</grpc.version>
-    <testcontainers.version>1.17.0</testcontainers.version>
+    <testcontainers.version>1.17.1</testcontainers.version>
     <arrow.version>1.0.1</arrow.version>
     <micronaut.version>2.5.13</micronaut.version>
     <kotlin.version>1.6.20</kotlin.version>
