@@ -19,7 +19,10 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -51,9 +54,9 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
   private final AtomicReference<UUID> factIdSeen = new AtomicReference<>();
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
-
+  // TODO configurable?
   private static final int ALLOWED_TIME_BETWEEN_RECONNECTS = 3000;
-
+  // TODO configurable?
   private static final int ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION = 5;
 
   private final ExecutorService es =
@@ -233,8 +236,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
               sleep(100);
               log.info("Trying to reconnect.");
 
-              CompletableFuture.runAsync(
-                  ReconnectingFactSubscriptionWrapper.this::initiateReconnect, es);
+              initiateReconnect();
             }
           }
 
