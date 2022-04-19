@@ -103,7 +103,7 @@
     <testcontainers.version>1.17.1</testcontainers.version>
     <arrow.version>1.0.1</arrow.version>
     <micronaut.version>2.5.13</micronaut.version>
-    <kotlin.version>1.6.20</kotlin.version>
+    <kotlin.version>1.6.21</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>4.6.4</kotest.version>
     <redisson.version>3.17.0</redisson.version>
