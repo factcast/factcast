@@ -220,20 +220,21 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
             log.info("Closing subscription due to onError triggered.", exception);
 
             if (isServerException(exception) || reconnectedTooOften()) {
+
+              // TODO log recorded exceptions
+
               // give up
               originalObserver.onError(exception);
               throw ExceptionHelper.toRuntime(exception);
+
             } else {
+
               log.debug("Pausing 100ms before reconnect");
               sleep(100);
               log.info("Trying to reconnect.");
 
               CompletableFuture.runAsync(
                   ReconnectingFactSubscriptionWrapper.this::initiateReconnect, es);
-
-              // has to be last call, due to older impls. of onError might
-              // decide to throw an exception
-              originalObserver.onError(exception);
             }
           }
 
