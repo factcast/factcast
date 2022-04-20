@@ -25,7 +25,7 @@ import org.redisson.Redisson;
 import org.redisson.config.Config;
 import org.testcontainers.containers.GenericContainer;
 
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({"rawtypes", "resource"})
 @Slf4j
 public class RedisIntegrationTestExtension implements FactCastIntegrationTestExtension {
 
