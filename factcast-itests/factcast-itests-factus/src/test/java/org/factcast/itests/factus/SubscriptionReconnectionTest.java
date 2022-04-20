@@ -31,6 +31,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.test.AbstractFactCastIntegrationTest;
+import org.factcast.test.FactCastExtension;
 import org.factcast.test.toxi.FactCastProxy;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,15 +83,28 @@ class SubscriptionReconnectionTest extends AbstractFactCastIntegrationTest {
   @SneakyThrows
   @Test
   void subscribeWithReconnect() {
+    log.info(
+        "Using FcProxy {} {}:{}",
+        proxy.getName(),
+        proxy.getContainerIpAddress(),
+        proxy.getProxyPort());
+
+    fetchAll();
     Stopwatch sw = Stopwatch.createStarted();
-    // fetchAll();
+    fetchAll();
     long rt = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 
-    proxy.toxics().limitData("limit", ToxicDirection.DOWNSTREAM, 1024);
-
     sw = Stopwatch.createStarted();
-    fetchAll();
-    Thread.sleep(30000000L);
+    fetchAll(
+        f -> {
+          if (f.serial() == MAX_FACTS / 4) {
+            FactCastExtension.setProxyState(proxy.getName(), false);
+            sleep(100);
+            FactCastExtension.setProxyState(proxy.getName(), true);
+          }
+
+          log.info("Got {}", f.serial());
+        });
 
     long rtWithReconnect = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 
@@ -116,5 +130,10 @@ class SubscriptionReconnectionTest extends AbstractFactCastIntegrationTest {
         .awaitComplete();
 
     assertThat(count).hasValue(MAX_FACTS);
+  }
+
+  @SneakyThrows
+  private void sleep(long ms) {
+    Thread.sleep(ms);
   }
 }
