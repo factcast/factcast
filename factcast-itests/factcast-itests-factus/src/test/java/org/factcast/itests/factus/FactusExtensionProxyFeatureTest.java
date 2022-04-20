@@ -25,9 +25,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
+import org.factcast.test.redis.RedisProxy;
 import org.factcast.test.toxi.FactCastProxy;
 import org.factcast.test.toxi.PostgresqlProxy;
 import org.junit.jupiter.api.*;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -39,9 +41,12 @@ import org.springframework.test.context.ContextConfiguration;
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @Slf4j
 class FactusExtensionProxyFeatureTest extends AbstractFactCastIntegrationTest {
+  public static final long LATENCY = 300L;
   @Autowired Factus factus;
+  @Autowired RedissonClient redis;
   private FactCastProxy fcProxy;
   private PostgresqlProxy pgProxy;
+  private RedisProxy redisProxy;
 
   @Test
   void fcProxyIsInjected() {
@@ -53,42 +58,58 @@ class FactusExtensionProxyFeatureTest extends AbstractFactCastIntegrationTest {
     assertThat(pgProxy).isNotNull();
   }
 
+  @Test
+  void redisProxyIsInjected() {
+    assertThat(redisProxy).isNotNull();
+  }
+
   void publish() {
     factus.publish(Fact.builder().ns("foo").type("bar").buildWithoutPayload());
   }
 
   @SneakyThrows
   @Test
-  void publishWithLatency() {
+  void factcastInteractionWithLatency() {
     Stopwatch sw = Stopwatch.createStarted();
     publish();
     long rtWithoutLatency = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 
-    fcProxy.toxics().latency("one second latency", ToxicDirection.UPSTREAM, 1000L);
+    fcProxy.toxics().latency("some latency", ToxicDirection.UPSTREAM, LATENCY);
 
     sw = Stopwatch.createStarted();
     publish();
     long rtWithLatency = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 
-    assertThat(rtWithoutLatency).isLessThan(1000L);
-    assertThat(rtWithLatency).isGreaterThan(1000L);
+    assertThat(rtWithoutLatency).isLessThan(LATENCY);
+    assertThat(rtWithLatency).isGreaterThan(LATENCY);
   }
 
   @SneakyThrows
   @Test
   void publishWithLatencyASecondTime() {
+    factcastInteractionWithLatency(); // fails if proxy was not reset
+  }
+
+  @SneakyThrows
+  @Test
+  void redisInteractionWithLatency() {
     Stopwatch sw = Stopwatch.createStarted();
-    publish();
+    redis.getBucket("foo").set("bar");
     long rtWithoutLatency = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 
-    fcProxy.toxics().latency("one second latency", ToxicDirection.UPSTREAM, 1000L);
+    redisProxy.toxics().latency("some latency", ToxicDirection.UPSTREAM, LATENCY);
 
     sw = Stopwatch.createStarted();
-    publish();
+    redis.getBucket("foo").set("bar");
     long rtWithLatency = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 
-    assertThat(rtWithoutLatency)
-        .isLessThan(1000L); // will fail if latency was not reset between tests
-    assertThat(rtWithLatency).isGreaterThan(1000L);
+    assertThat(rtWithoutLatency).isLessThan(LATENCY);
+    assertThat(rtWithLatency).isGreaterThan(LATENCY);
+  }
+
+  @SneakyThrows
+  @Test
+  void redisWithLatencyASecondTime() {
+    redisInteractionWithLatency(); // fails if proxy was not reset
   }
 }

@@ -15,29 +15,22 @@
  */
 package org.factcast.test;
 
-import java.lang.reflect.Field;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublishers;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.time.Duration;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.test.toxi.FactCastProxy;
 import org.factcast.test.toxi.PostgresqlProxy;
-import org.factcast.test.toxi.ToxiProxySupplier;
 import org.junit.jupiter.api.extension.*;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.ToxiproxyContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
@@ -58,45 +51,12 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
     return true;
   }
 
-  private ToxiProxySupplier getProxySupplierFor(
-      Class<? extends ToxiProxySupplier> type, Containers currentContainers) {
-
-    if (type == null || FactCastProxy.class.equals(type))
-      return new FactCastProxy(currentContainers.proxy.getProxy(currentContainers.fc, FC_PORT));
-
-    if (PostgresqlProxy.class.equals(type))
-      return new PostgresqlProxy(currentContainers.proxy.getProxy(currentContainers.db, PG_PORT));
-
-    throw new IllegalArgumentException("Unexpected ProxySupplier requested");
-  }
-
-  private Collection<Field> getToxiFields(Object testInstance) {
-    Set<Field> s = new HashSet<>();
-    collectFields(testInstance.getClass(), s);
-    return s;
-  }
-
-  private Set<Field> collectFields(Class<?> aClass, Set<Field> s) {
-    if (aClass == null || aClass == Object.class) return s;
-
-    s.addAll(List.of(aClass.getDeclaredFields()));
-    return collectFields(aClass.getSuperclass(), s);
-  }
-
   private void startOrReuse(FactcastTestConfig.Config config) {
     Containers containers =
         executions.computeIfAbsent(
             config,
             key -> {
               String dbName = "db" + config.hashCode();
-              String TOXIPROXY_NETWORK_ALIAS = "toxiproxy" + config.hashCode();
-
-              ToxiproxyContainer toxiProxy =
-                  new ToxiproxyContainer("shopify/toxiproxy:2.1.0")
-                      .withNetwork(_docker_network)
-                      .withNetworkAliases(TOXIPROXY_NETWORK_ALIAS);
-
-              toxiProxy.start();
 
               PostgreSQLContainer db =
                   new PostgreSQLContainer<>("postgres:" + config.postgresVersion())
@@ -104,10 +64,9 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .withUsername("fc")
                       .withPassword("fc")
                       .withNetworkAliases(dbName)
-                      .withNetwork(_docker_network);
+                      .withNetwork(FactCastExtension._docker_network);
               db.start();
-
-              ContainerProxy pgProxy = toxiProxy.getProxy(db, PG_PORT);
+              ContainerProxy pgProxy = FactCastExtension.proxy(db, PG_PORT);
 
               GenericContainer fc =
                   new GenericContainer<>("factcast/factcast:" + config.factcastVersion())
@@ -120,11 +79,11 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .withEnv(
                           "spring_datasource_url",
                           "jdbc:postgresql://"
-                              + TOXIPROXY_NETWORK_ALIAS
+                              + FactCastExtension.TOXIPROXY_NETWORK_ALIAS
                               + ":"
                               + pgProxy.getOriginalProxyPort()
                               + "/fc?user=fc&password=fc")
-                      .withNetwork(_docker_network)
+                      .withNetwork(FactCastExtension._docker_network)
                       .dependsOn(db)
                       .withLogConsumer(
                           new Slf4jLogConsumer(
@@ -132,11 +91,13 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .waitingFor(
                           new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
               fc.start();
+              ContainerProxy fcProxy = FactCastExtension.proxy(fc, FC_PORT);
 
-              return new Containers(db, fc, toxiProxy);
+              return new Containers(
+                  db, fc, new PostgresqlProxy(pgProxy), new FactCastProxy(fcProxy));
             });
 
-    ContainerProxy fcProxy = containers.proxy.getProxy(containers.fc, FC_PORT);
+    ContainerProxy fcProxy = containers.fcProxy.get();
     String address = "static://" + fcProxy.getContainerIpAddress() + ":" + fcProxy.getProxyPort();
     System.setProperty("grpc.client.factstore.address", address);
   }
@@ -162,30 +123,17 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
     FactcastTestConfig.Config config = discoverConfig(ctx);
     Containers containers = executions.get(config);
 
-    // reset proxies
-    reset(containers.proxy);
-
-    // inject toxi into field
+    FactCastExtension.resetProxy();
     ctx.getTestInstance()
         .ifPresent(
             t -> {
-              getProxyFields(t)
-                  .forEach(
-                      proxyField -> {
-                        proxyField.setAccessible(true);
-                        try {
-                          ToxiProxySupplier proxySupplier =
-                              getProxySupplierFor(
-                                  (Class<? extends ToxiProxySupplier>) proxyField.getType(),
-                                  containers);
-                          proxyField.set(t, proxySupplier);
-                        } catch (IllegalAccessException e) {
-                          throw new RuntimeException(e);
-                        }
-                      });
+              FactCastIntegrationTestExtension.inject(t, containers.pgProxy);
+              FactCastIntegrationTestExtension.inject(t, containers.fcProxy);
             });
+    erasePostgres(containers);
+  }
 
-    // erase postgres
+  private void erasePostgres(Containers containers) throws SQLException {
     PostgreSQLContainer pg = containers.db;
     String url = pg.getJdbcUrl();
     Properties p = new Properties();
@@ -209,30 +157,11 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
     }
   }
 
-  @SneakyThrows
-  private void reset(ToxiproxyContainer proxy) {
-    HttpClient cl = HttpClient.newHttpClient();
-    String host = proxy.getHost();
-    int controlPort = proxy.getControlPort();
-    cl.send(
-            HttpRequest.newBuilder()
-                .method("POST", BodyPublishers.noBody())
-                .uri(new URI("http://" + host + ":" + controlPort + "/reset"))
-                .build(),
-            BodyHandlers.ofString())
-        .statusCode();
-  }
-
-  @NonNull
-  private Stream<Field> getProxyFields(Object t) {
-    return getToxiFields(t).stream()
-        .filter(f -> ToxiProxySupplier.class.isAssignableFrom(f.getType()));
-  }
-
   @Value
   static class Containers {
     PostgreSQLContainer db;
     GenericContainer fc;
-    ToxiproxyContainer proxy;
+    PostgresqlProxy pgProxy;
+    FactCastProxy fcProxy;
   }
 }
