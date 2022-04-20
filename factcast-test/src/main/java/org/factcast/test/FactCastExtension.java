@@ -34,6 +34,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.ToxiproxyContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
+import org.testcontainers.utility.DockerImageName;
 
 @Slf4j
 public class FactCastExtension
@@ -118,7 +119,9 @@ public class FactCastExtension
 
   private static void initializeProxy() {
     toxiProxy =
-        new ToxiproxyContainer("shopify/toxiproxy:2.1.0")
+        new ToxiproxyContainer(
+                DockerImageName.parse("ghcr.io/shopify/toxiproxy:2.4.0")
+                    .asCompatibleSubstituteFor("shopify/toxiproxy"))
             .withNetwork(_docker_network)
             .withNetworkAliases(TOXIPROXY_NETWORK_ALIAS);
     toxiProxy.start();
@@ -141,6 +144,20 @@ public class FactCastExtension
             HttpRequest.newBuilder()
                 .method("POST", BodyPublishers.noBody())
                 .uri(new URI("http://" + host + ":" + controlPort + "/reset"))
+                .build(),
+            BodyHandlers.ofString())
+        .statusCode();
+  }
+
+  @SneakyThrows
+  public static void setProxyState(String name, boolean shouldBeOn) {
+    HttpClient cl = HttpClient.newHttpClient();
+    String host = toxiProxy.getHost();
+    int controlPort = toxiProxy.getControlPort();
+    cl.send(
+            HttpRequest.newBuilder()
+                .method("POST", BodyPublishers.ofString("{\"enabled\":" + shouldBeOn + "}"))
+                .uri(new URI("http://" + host + ":" + controlPort + "/proxies/" + name))
                 .build(),
             BodyHandlers.ofString())
         .statusCode();

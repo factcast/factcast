@@ -59,6 +59,8 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
   // TODO configurable?
   private static final int ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION = 5;
 
+  private final List<Long> reconnects = new LinkedList<>();
+
   private final ExecutorService es =
       Executors.newCachedThreadPool(
           new ThreadFactory() {
@@ -93,8 +95,14 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
       Subscription cur = currentSubscription.get();
       if (cur != null) {
 
-        cur.awaitCatchup();
-        return this;
+        try {
+          cur.awaitCatchup();
+          return this;
+        } catch (Exception e) {
+          if (reconnects.size() >= ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION) {
+            throw e;
+          }
+        }
 
       } else {
         sleep(100);
@@ -120,8 +128,14 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
       if (cur != null) {
 
-        cur.awaitCatchup(waitTimeInMillis);
-        return this;
+        try {
+          cur.awaitCatchup(waitTimeInMillis);
+          return this;
+        } catch (Exception e) {
+          if (reconnects.size() >= ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION) {
+            throw e;
+          }
+        }
       } else {
         sleep(100);
       }
@@ -140,8 +154,14 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
       if (cur != null) {
 
-        cur.awaitComplete();
-        return this;
+        try {
+          cur.awaitComplete();
+          return this;
+        } catch (Exception e) {
+          if (reconnects.size() >= ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION) {
+            throw e;
+          }
+        }
 
       } else {
         sleep(100);
@@ -160,8 +180,14 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
       if (cur != null) {
 
-        cur.awaitComplete(waitTimeInMillis);
-        return this;
+        try {
+          cur.awaitComplete(waitTimeInMillis);
+          return this;
+        } catch (Exception e) {
+          if (reconnects.size() >= ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION) {
+            throw e;
+          }
+        }
 
         // escalate TimeoutException
       } else {
@@ -188,8 +214,6 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
     observer =
         new FactObserver() {
-
-          private final List<Long> reconnects = new LinkedList<>();
 
           @Override
           public void onNext(@NonNull Fact element) {
