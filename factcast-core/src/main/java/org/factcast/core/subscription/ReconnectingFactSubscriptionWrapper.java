@@ -99,7 +99,8 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
           cur.awaitCatchup();
           return this;
         } catch (Exception e) {
-          if (reconnects.size() >= ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION) {
+          if (isNotRetryable(e)
+              || reconnects.size() >= ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION) {
             throw e;
           }
         }
@@ -132,7 +133,8 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
           cur.awaitCatchup(waitTimeInMillis);
           return this;
         } catch (Exception e) {
-          if (reconnects.size() >= ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION) {
+          if (isNotRetryable(e)
+              || reconnects.size() >= ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION) {
             throw e;
           }
         }
@@ -158,7 +160,8 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
           cur.awaitComplete();
           return this;
         } catch (Exception e) {
-          if (reconnects.size() >= ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION) {
+          if (isNotRetryable(e)
+              || reconnects.size() >= ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION) {
             throw e;
           }
         }
@@ -184,7 +187,8 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
           cur.awaitComplete(waitTimeInMillis);
           return this;
         } catch (Exception e) {
-          if (reconnects.size() >= ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION) {
+          if (isNotRetryable(e)
+              || reconnects.size() >= ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION) {
             throw e;
           }
         }
@@ -246,7 +250,7 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
 
             log.info("Closing subscription due to onError triggered.", exception);
 
-            if (isServerException(exception) || reconnectedTooOften()) {
+            if (isNotRetryable(exception) || reconnectedTooOften()) {
 
               // TODO log recorded exceptions
 
@@ -281,14 +285,21 @@ public class ReconnectingFactSubscriptionWrapper implements Subscription {
   }
 
   @VisibleForTesting
-  boolean isServerException(@NonNull Throwable exception) {
-
-    if (exception instanceof StaleSubscriptionDetectedException) {
-      // assume connection problem
-      return false;
+  boolean isNotRetryable(@NonNull Throwable exception) {
+    if (exception.getClass().getCanonicalName().startsWith("io.grpc")) {
+      final String exceptionAsString = exception.toString();
+      return !exceptionAsString.contains("StatusRuntimeException")
+          || !exceptionAsString.contains("UNAVAILABLE");
     }
 
-    return exception.getClass().getName().startsWith("org.factcast");
+    //    if (exception instanceof StaleSubscriptionDetectedException) {
+    //      // assume connection problem
+    //      return false;
+    //    }
+    //
+    //    return exception.getClass().getName().startsWith("org.factcast");
+
+    return true;
   }
 
   private synchronized void initiateReconnect() {

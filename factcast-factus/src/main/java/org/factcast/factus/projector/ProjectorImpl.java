@@ -161,7 +161,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       lenses.forEach(l -> l.afterFactProcessingFailed(f, e));
 
       // pass along and potentially rethrow
-      projection.onError(e);
+      //      projection.onError(e);
       throw new IllegalArgumentException(e);
     } catch (Throwable e) {
 

@@ -144,13 +144,13 @@ public class ReconnectingFactSubscriptionWrapperTest {
 
   @Test
   public void isServerException() throws Exception {
-    assertThat(uut.isServerException(new RuntimeException())).isFalse();
-    assertThat(uut.isServerException(new IllegalArgumentException())).isFalse();
-    assertThat(uut.isServerException(new IOException())).isFalse();
-    assertThat(uut.isServerException(new TransformationException(""))).isTrue();
-    assertThat(uut.isServerException(new MissingTransformationInformationException(""))).isTrue();
+    assertThat(uut.isNotRetryable(new RuntimeException())).isFalse();
+    assertThat(uut.isNotRetryable(new IllegalArgumentException())).isFalse();
+    assertThat(uut.isNotRetryable(new IOException())).isFalse();
+    assertThat(uut.isNotRetryable(new TransformationException(""))).isTrue();
+    assertThat(uut.isNotRetryable(new MissingTransformationInformationException(""))).isTrue();
     // important because it needs to reconnect, which only happens if it is NOT categorized as
     // serverException
-    assertThat(uut.isServerException(new StaleSubscriptionDetectedException())).isFalse();
+    assertThat(uut.isNotRetryable(new StaleSubscriptionDetectedException())).isFalse();
   }
 }
