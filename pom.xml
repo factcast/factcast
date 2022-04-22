@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.5.4-SNAPSHOT</version>
+  <version>0.5.5-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -70,7 +70,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven-clean-plugin.version>3.2.0</maven-clean-plugin.version>
-    <maven-javadoc-plugin.version>3.3.2</maven-javadoc-plugin.version>
+    <maven-javadoc-plugin.version>3.4.0</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
     <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
     <maven-jar-plugin.version>3.2.2</maven-jar-plugin.version>
@@ -87,7 +87,7 @@
     <maven.compiler.target>11</maven.compiler.target>
     <spotless-maven-plugin.version>2.22.1</spotless-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
-    <nexus-staging-maven-plugin.version>1.6.12</nexus-staging-maven-plugin.version>
+    <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
     <assertj.version>3.22.0</assertj.version>
     <jackson.version>2.13.2</jackson.version>
     <mockito.version>3.12.4</mockito.version>
@@ -96,12 +96,12 @@
     <slf4j-api.version>1.7.36</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
-    <spring-boot.version>2.6.6</spring-boot.version>
+    <spring-boot.version>2.6.7</spring-boot.version>
     <spring-cloud.version>2020.0.5</spring-cloud.version>
     <spring-grpc.version>2.13.1.RELEASE</spring-grpc.version>
     <grpc.version>1.42.1</grpc.version>
     <testcontainers.version>1.17.1</testcontainers.version>
-    <arrow.version>1.0.1</arrow.version>
+    <arrow.version>1.1.2</arrow.version>
     <micronaut.version>2.5.13</micronaut.version>
     <kotlin.version>1.6.21</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
