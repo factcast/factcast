@@ -30,9 +30,9 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
+import org.factcast.core.subscription.InternalSubscription;
 import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
@@ -55,13 +55,13 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
   @Getter(AccessLevel.PROTECTED)
   private final ExecutorService clientBoundExecutor = Executors.newSingleThreadExecutor();
 
-  @NonNull private final SubscriptionImpl subscription;
+  @NonNull private final InternalSubscription subscription;
 
   @VisibleForTesting
   @Getter(AccessLevel.PACKAGE)
   private final ClientKeepalive keepAlive;
 
-  public ClientStreamObserver(@NonNull SubscriptionImpl subscription, long keepAliveInterval) {
+  public ClientStreamObserver(@NonNull InternalSubscription subscription, long keepAliveInterval) {
     this.subscription = subscription;
 
     if (keepAliveInterval != 0L) {

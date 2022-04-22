@@ -38,7 +38,7 @@ import org.factcast.core.util.ExceptionHelper;
  */
 @RequiredArgsConstructor
 @Slf4j
-public class SubscriptionImpl implements Subscription {
+public class SubscriptionImpl implements InternalSubscription {
 
   @NonNull final FactObserver observer;
 
@@ -116,6 +116,7 @@ public class SubscriptionImpl implements Subscription {
     return this;
   }
 
+  @Override
   @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
   public void notifyCatchup() {
     if (!closed.get()) {
@@ -126,18 +127,21 @@ public class SubscriptionImpl implements Subscription {
     }
   }
 
+  @Override
   public void notifyFastForward(@NonNull UUID factId) {
     if (!closed.get()) {
       observer.onFastForward(factId);
     }
   }
 
+  @Override
   public void notifyFactStreamInfo(@NonNull FactStreamInfo info) {
     if (!closed.get()) {
       observer.onFactStreamInfo(info);
     }
   }
 
+  @Override
   @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
   public void notifyComplete() {
     if (!closed.get()) {
@@ -152,6 +156,7 @@ public class SubscriptionImpl implements Subscription {
     }
   }
 
+  @Override
   public void notifyError(Throwable e) {
     if (!closed.get()) {
       if (!catchup.isDone()) {
@@ -174,6 +179,7 @@ public class SubscriptionImpl implements Subscription {
     }
   }
 
+  @Override
   public void notifyElement(@NonNull Fact e) throws TransformationException {
     if (!closed.get()) {
       Fact transformed = transformers.transformIfNecessary(e);
@@ -186,6 +192,7 @@ public class SubscriptionImpl implements Subscription {
     }
   }
 
+  @Override
   public SubscriptionImpl onClose(Runnable e) {
     Runnable formerOnClose = onClose;
     onClose =
