@@ -75,6 +75,24 @@ class GraalJsTransformerTest {
   }
 
   @Test
+  void testTransform_nestedArray() {
+    when(transformation.transformationCode())
+        .thenReturn(
+            Optional.of(
+                "function transform(e) {e.newMap = {foo: []}; e.newArray = []; e.oldMap.foo = [];}"));
+
+    var data = new HashMap<String, Object>();
+    data.put("oldMap", new HashMap<String, Object>());
+
+    var result = uut.transform(transformation, om.convertValue(data, JsonNode.class));
+
+    assertThat(result.get("newMap").isObject()).isTrue();
+    assertThat(result.get("newArray").isArray()).isTrue();
+    assertThat(result.get("oldMap").get("foo").isArray()).isTrue();
+    assertThat(result.get("newMap").get("foo").isArray()).isTrue();
+  }
+
+  @Test
   @SneakyThrows
   void testParallelAccess() {
     when(transformation.transformationCode())
