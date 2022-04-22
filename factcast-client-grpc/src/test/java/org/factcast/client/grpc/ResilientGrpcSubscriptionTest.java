@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription;
+package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
-import org.factcast.core.TestFact;
-import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionCancelledException;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
@@ -33,41 +36,45 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class ReconnectingFactSubscriptionWrapperTest {
-  @Mock private FactStore store;
+class ResilientGrpcSubscriptionTest {
+  @Mock(lenient = true)
+  private GrpcFactStore store;
 
   @Mock private SubscriptionRequestTO req;
 
   @Mock private FactObserver obs;
 
-  ReconnectingFactSubscriptionWrapper uut;
+  @Mock private Subscription subscription;
 
   private final ArgumentCaptor<FactObserver> observerAC =
       ArgumentCaptor.forClass(FactObserver.class);
 
-  @Mock private Subscription subscription;
+  ResilientGrpcSubscription uut;
 
   @BeforeEach
   public void setup() {
-    when(store.subscribe(any(), observerAC.capture())).thenReturn(subscription);
-    uut = new ReconnectingFactSubscriptionWrapper(store, req, obs);
+    // order is important here, you have been warned
+    when(store.internalSubscribe(any(), observerAC.capture())).thenReturn(subscription);
+    uut = new ResilientGrpcSubscription(store, req, obs);
+    when(store.subscribe(any(), observerAC.capture())).thenReturn(uut);
   }
 
   @Test
-  public void testAwaitComplete() {
-
-    observerAC.getValue().onComplete();
-
-    assertTimeout(
-        Duration.ofMillis(1000),
-        () -> {
-          // needs to return immediately
-          uut.awaitComplete();
-        });
+  void testAwaitCompleteDelegatesToSubscription() {
+    // needs to return immediately
+    uut.awaitComplete();
+    verify(subscription).awaitComplete();
   }
 
   @Test
-  public void testAwaitCompleteLong() throws Exception {
+  void testAwaitCatchupDelegatesToSubscription() {
+    // needs to return immediately
+    uut.awaitCatchup();
+    verify(subscription).awaitCatchup();
+  }
+
+  @Test
+  void testAwaitCompleteLong() throws Exception {
     when(subscription.awaitComplete(anyLong()))
         .thenThrow(TimeoutException.class)
         .then(x -> subscription);
@@ -84,20 +91,7 @@ public class ReconnectingFactSubscriptionWrapperTest {
   }
 
   @Test
-  public void testAwaitCatchup() {
-
-    observerAC.getValue().onCatchup();
-
-    assertTimeout(
-        Duration.ofMillis(1000),
-        () -> {
-          // needs to return immediately
-          uut.awaitCatchup();
-        });
-  }
-
-  @Test
-  public void testAwaitCatchupLong() throws Exception {
+  void testAwaitCatchupLong() throws Exception {
     when(subscription.awaitCatchup(anyLong()))
         .thenThrow(TimeoutException.class)
         .then(x -> subscription);
@@ -114,7 +108,7 @@ public class ReconnectingFactSubscriptionWrapperTest {
   }
 
   @Test
-  public void testAssertSubscriptionStateNotClosed() throws Exception {
+  void testAssertSubscriptionStateNotClosed() throws Exception {
     uut.close();
     assertThrows(SubscriptionCancelledException.class, () -> uut.awaitCatchup());
     assertThrows(SubscriptionCancelledException.class, () -> uut.awaitCatchup(1L));
@@ -123,34 +117,25 @@ public class ReconnectingFactSubscriptionWrapperTest {
   }
 
   @Test
-  public void noOnNextAfterClose() throws Exception {
+  void isServerException() throws Exception {
 
-    FactObserver observerFromGrpc = uut.observer();
-    observerFromGrpc.onNext(new TestFact());
-    // will be passed to the actual one
-    verify(obs).onNext(any());
+    assertThat(uut.isRetryable(new RuntimeException())).isFalse();
+    assertThat(uut.isRetryable(new IllegalArgumentException())).isFalse();
+    assertThat(uut.isRetryable(new IOException())).isFalse();
+    assertThat(uut.isRetryable(new StatusRuntimeException(Status.UNAUTHENTICATED))).isFalse();
+    assertThat(uut.isRetryable(new StatusRuntimeException(Status.PERMISSION_DENIED))).isFalse();
+    assertThat(uut.isRetryable(new StatusRuntimeException(Status.RESOURCE_EXHAUSTED))).isFalse();
+    assertThat(uut.isRetryable(new StatusRuntimeException(Status.INVALID_ARGUMENT))).isFalse();
 
-    uut.close();
+    //
+    assertThat(uut.isRetryable(new StatusRuntimeException(Status.UNKNOWN))).isTrue();
+    assertThat(uut.isRetryable(new StatusRuntimeException(Status.UNAVAILABLE))).isTrue();
+    assertThat(uut.isRetryable(new StatusRuntimeException(Status.ABORTED))).isTrue();
 
-    observerFromGrpc.onNext(new TestFact());
-    observerFromGrpc.onNext(new TestFact());
-    observerFromGrpc.onNext(new TestFact());
-    observerFromGrpc.onNext(new TestFact());
-    observerFromGrpc.onNext(new TestFact());
-
-    // non of them reach the original observer
-    verify(obs, times(1)).onNext(any());
-  }
-
-  @Test
-  public void isServerException() throws Exception {
-    assertThat(uut.isNotRetryable(new RuntimeException())).isFalse();
-    assertThat(uut.isNotRetryable(new IllegalArgumentException())).isFalse();
-    assertThat(uut.isNotRetryable(new IOException())).isFalse();
-    assertThat(uut.isNotRetryable(new TransformationException(""))).isTrue();
-    assertThat(uut.isNotRetryable(new MissingTransformationInformationException(""))).isTrue();
+    // assertThat(uut.isNotRetryable(new TransformationExceptione());
+    // assertThat(uut.isNotRetryable(new MissingTransformationInformationException());
     // important because it needs to reconnect, which only happens if it is NOT categorized as
     // serverException
-    assertThat(uut.isNotRetryable(new StaleSubscriptionDetectedException())).isFalse();
+    // assertThat(uut.isNotRetryable(new StaleSubscriptionDetectedException())).isFalse();
   }
 }

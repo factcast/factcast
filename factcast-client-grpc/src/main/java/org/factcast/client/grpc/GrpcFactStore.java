@@ -40,6 +40,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
+import org.factcast.core.subscription.InternalSubscription;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -193,9 +194,14 @@ public class GrpcFactStore implements FactStore {
   @Override
   public Subscription subscribe(
       @NonNull SubscriptionRequestTO req, @NonNull FactObserver observer) {
+    return new ResilientGrpcSubscription(this, req, observer);
+  }
+
+  public Subscription internalSubscribe(
+      @NonNull SubscriptionRequestTO req, @NonNull FactObserver observer) {
     return callAndHandle(
         () -> {
-          SubscriptionImpl subscription = SubscriptionImpl.on(observer);
+          InternalSubscription subscription = SubscriptionImpl.on(observer);
           StreamObserver<FactStoreProto.MSG_Notification> responseObserver =
               new ClientStreamObserver(subscription, req.keepaliveIntervalInMs());
           ClientCall<MSG_SubscriptionRequest, MSG_Notification> call =
