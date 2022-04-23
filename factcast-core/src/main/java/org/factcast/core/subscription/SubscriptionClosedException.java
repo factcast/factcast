@@ -20,15 +20,15 @@ package org.factcast.core.subscription;
  *
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
-public class SubscriptionCancelledException extends RuntimeException {
+public class SubscriptionClosedException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 
-  public SubscriptionCancelledException(Throwable e) {
+  public SubscriptionClosedException(Throwable e) {
     super(e);
   }
 
-  public SubscriptionCancelledException(String msg) {
+  public SubscriptionClosedException(String msg) {
     super(msg);
   }
 }

@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.*;
 
 import com.google.common.base.Stopwatch;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
+import io.grpc.StatusRuntimeException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.test.AbstractFactCastIntegrationTest;
@@ -93,6 +96,7 @@ class SubscriptionReconnectionTest extends AbstractFactCastIntegrationTest {
     Stopwatch sw = Stopwatch.createStarted();
     fetchAll();
     long rt = sw.stop().elapsed(TimeUnit.MILLISECONDS);
+    var count = new AtomicInteger();
 
     sw = Stopwatch.createStarted();
     fetchAll(
@@ -102,15 +106,51 @@ class SubscriptionReconnectionTest extends AbstractFactCastIntegrationTest {
             sleep(100);
             FactCastExtension.setProxyState(proxy.getName(), true);
           }
-
           log.info("Got {}", f.serial());
+          count.incrementAndGet();
         });
 
     long rtWithReconnect = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 
     assertThat(rtWithReconnect).isGreaterThan(rt);
+    assertThat(count.get()).isEqualTo(MAX_FACTS);
 
     log.info("Runtime with/without reconnect: {}/{}", rtWithReconnect, rt);
+  }
+
+  @SneakyThrows
+  @Test
+  void subscribeWithFailingReconnect() {
+    log.info(
+        "Using FcProxy {} {}:{}",
+        proxy.getName(),
+        proxy.getContainerIpAddress(),
+        proxy.getProxyPort());
+
+    fetchAll();
+    Stopwatch sw = Stopwatch.createStarted();
+    var count = new AtomicInteger();
+    fetchAll();
+
+    sw = Stopwatch.createStarted();
+    assertThatThrownBy(
+            () ->
+                fetchAll(
+                    f -> {
+                      if (f.serial() == MAX_FACTS / 8) {
+                        try {
+                          // let it repeatedly fail after each 1k sent...
+                          proxy.toxics().limitData("limit", ToxicDirection.DOWNSTREAM, 1024);
+                        } catch (IOException e) {
+                          throw new RuntimeException(e);
+                        }
+                        // and don't turn it on again
+                      }
+                      log.info("Got {}", f.serial());
+                      count.incrementAndGet();
+                    }))
+        .isInstanceOfAny(SubscriptionClosedException.class, StatusRuntimeException.class);
+    assertThat(count.get()).isLessThan(MAX_FACTS);
   }
 
   private void fetchAll() {
@@ -119,17 +159,13 @@ class SubscriptionReconnectionTest extends AbstractFactCastIntegrationTest {
 
   private void fetchAll(FactObserver o) {
     log.info("Fetching");
-    AtomicInteger count = new AtomicInteger(0);
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("ns")).fromScratch();
     fc.subscribe(
             req,
             f -> {
-              count.incrementAndGet();
               o.onNext(f);
             })
         .awaitComplete();
-
-    assertThat(count).hasValue(MAX_FACTS);
   }
 
   @SneakyThrows

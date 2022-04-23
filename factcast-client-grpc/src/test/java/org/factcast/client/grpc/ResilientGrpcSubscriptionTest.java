@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionCancelledException;
+import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.junit.jupiter.api.*;
@@ -110,10 +110,10 @@ class ResilientGrpcSubscriptionTest {
   @Test
   void testAssertSubscriptionStateNotClosed() throws Exception {
     uut.close();
-    assertThrows(SubscriptionCancelledException.class, () -> uut.awaitCatchup());
-    assertThrows(SubscriptionCancelledException.class, () -> uut.awaitCatchup(1L));
-    assertThrows(SubscriptionCancelledException.class, () -> uut.awaitComplete());
-    assertThrows(SubscriptionCancelledException.class, () -> uut.awaitComplete(1L));
+    assertThrows(SubscriptionClosedException.class, () -> uut.awaitCatchup());
+    assertThrows(SubscriptionClosedException.class, () -> uut.awaitCatchup(1L));
+    assertThrows(SubscriptionClosedException.class, () -> uut.awaitComplete());
+    assertThrows(SubscriptionClosedException.class, () -> uut.awaitComplete(1L));
   }
 
   @Test
