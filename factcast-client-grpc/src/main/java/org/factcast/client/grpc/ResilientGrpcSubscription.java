@@ -34,7 +34,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionCancelledException;
+import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
@@ -57,7 +57,7 @@ public class ResilientGrpcSubscription implements Subscription {
   private final FactObserver delegatingObserver;
 
   private final AtomicReference<UUID> lastFactIdSeen = new AtomicReference<>();
-  private final AtomicReference<Subscription> currentSubscription = new AtomicReference<>();
+  private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
   private final List<Long> timestampsOfReconnectionAttempts = new ArrayList<>();
 
@@ -71,24 +71,24 @@ public class ResilientGrpcSubscription implements Subscription {
   }
 
   @Override
-  public Subscription awaitCatchup() throws SubscriptionCancelledException {
+  public Subscription awaitCatchup() throws SubscriptionClosedException {
     return delegate(Subscription::awaitCatchup);
   }
 
   @Override
   public Subscription awaitCatchup(long waitTimeInMillis)
-      throws SubscriptionCancelledException, TimeoutException {
+      throws SubscriptionClosedException, TimeoutException {
     return delegate(Subscription::awaitCatchup, waitTimeInMillis);
   }
 
   @Override
-  public Subscription awaitComplete() throws SubscriptionCancelledException {
+  public Subscription awaitComplete() throws SubscriptionClosedException {
     return delegate(Subscription::awaitComplete);
   }
 
   @Override
   public Subscription awaitComplete(long waitTimeInMillis)
-      throws SubscriptionCancelledException, TimeoutException {
+      throws SubscriptionClosedException, TimeoutException {
     return delegate(Subscription::awaitComplete, waitTimeInMillis);
   }
 
@@ -107,20 +107,16 @@ public class ResilientGrpcSubscription implements Subscription {
     long startTime = System.currentTimeMillis();
     for (; ; ) {
       assertSubscriptionStateNotClosed();
-      Subscription cur = currentSubscription.get();
+      long maxPause = waitTimeInMillis - (System.currentTimeMillis() - startTime);
 
-      if (cur != null) {
-
-        try {
-          consumer.accept(cur, waitTimeInMillis);
-          return this;
-        } catch (Exception e) {
-          if (!shouldRetry(e)) {
-            throw e;
-          }
+      Subscription cur = currentSubscription.getAndBlock(maxPause);
+      try {
+        consumer.accept(cur, maxPause);
+        return this;
+      } catch (Exception e) {
+        if (!shouldRetry(e)) {
+          throw e;
         }
-      } else {
-        sleep(100);
       }
       if ((System.currentTimeMillis() - startTime) > waitTimeInMillis) {
         throw new TimeoutException();
@@ -131,20 +127,14 @@ public class ResilientGrpcSubscription implements Subscription {
   private ResilientGrpcSubscription delegate(Consumer<Subscription> consumer) {
     for (; ; ) {
       assertSubscriptionStateNotClosed();
-      Subscription cur = currentSubscription.get();
-      if (cur != null) {
-        try {
-          consumer.accept(cur);
-          return this;
-        } catch (Exception e) {
-          if (!shouldRetry(e)) {
-            throw e;
-          }
+      Subscription cur = currentSubscription.getAndBlock();
+      try {
+        consumer.accept(cur);
+        return this;
+      } catch (Exception e) {
+        if (!shouldRetry(e)) {
+          throw e;
         }
-      } else {
-        // wait for a new subscription to be created
-        // TODO maybe replace by currSub.wait?
-        sleep(100);
       }
     }
   }
@@ -169,16 +159,9 @@ public class ResilientGrpcSubscription implements Subscription {
     return isRetryable(exception) && !attemptsExhausted();
   }
 
-  private void sleep(long millis) {
-    try {
-      Thread.sleep(millis);
-    } catch (InterruptedException ignore) {
-    }
-  }
-
   private void assertSubscriptionStateNotClosed() {
     if (isClosed.get()) {
-      throw new SubscriptionCancelledException("Subscription already cancelled");
+      throw new SubscriptionClosedException("Subscription already closed");
     }
   }
 
@@ -194,12 +177,14 @@ public class ResilientGrpcSubscription implements Subscription {
     //      return false;
     //    }
 
-    if (exception instanceof RetryableException) return true;
-
-    return false;
+    return exception instanceof RetryableException;
   }
 
   private synchronized void connect() {
+    reConnect();
+  }
+
+  private synchronized void reConnect() {
     SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(originalRequest);
     UUID last = lastFactIdSeen.get();
     if (last != null) {
@@ -209,15 +194,7 @@ public class ResilientGrpcSubscription implements Subscription {
     if (currentSubscription.get() == null) {
       // might throw exceptions TODO
       Subscription plainSubscription = store.internalSubscribe(to, delegatingObserver);
-      boolean settingSucceeded = currentSubscription.compareAndSet(null, plainSubscription);
-      if (!settingSucceeded) {
-        // TODO something weird is going on here
-        try {
-          plainSubscription.close();
-        } catch (Throwable ignore) {
-        }
-        throw new IllegalStateException("TODO");
-      }
+      currentSubscription.set(plainSubscription);
     }
   }
 
@@ -269,15 +246,13 @@ public class ResilientGrpcSubscription implements Subscription {
       registerAttempt();
 
       if (shouldRetry(exception)) {
-        log.debug("Pausing 100ms before reconnect");
-        sleep(100);
         log.info("Trying to reconnect.");
-
-        connect();
+        reConnect();
         // TODO log recorded exceptions?
 
       } else {
-        // give up
+        log.error("Too many failures, giving up.");
+        close();
         originalObserver.onError(exception);
         throw ExceptionHelper.toRuntime(exception);
       }
@@ -286,6 +261,51 @@ public class ResilientGrpcSubscription implements Subscription {
     @Override
     public void onFactStreamInfo(FactStreamInfo info) {
       originalObserver.onFactStreamInfo(info);
+    }
+  }
+
+  private class SubscriptionHolder {
+    // even though this is an atomicref, sync is necessary for wait/notify
+    private final AtomicReference<Subscription> currentSubscription = new AtomicReference<>();
+
+    @NonNull
+    public Subscription getAndBlock() {
+      return getAndBlock(1000);
+    }
+
+    @NonNull
+    public Subscription getAndBlock(long maxPause) {
+      synchronized (currentSubscription) {
+        do {
+          assertSubscriptionStateNotClosed();
+          if (currentSubscription.get() == null) {
+            try {
+              currentSubscription.wait(Math.min(maxPause, 1000));
+            } catch (InterruptedException ignore) {
+            }
+          }
+        } while (currentSubscription.get() == null);
+        return currentSubscription.get();
+      }
+    }
+
+    Subscription getAndSet(Subscription s) {
+      synchronized (currentSubscription) {
+        return currentSubscription.getAndSet(s);
+      }
+    }
+
+    void set(Subscription s) {
+      synchronized (currentSubscription) {
+        currentSubscription.set(s);
+        currentSubscription.notifyAll();
+      }
+    }
+
+    public Subscription get() {
+      synchronized (currentSubscription) {
+        return currentSubscription.get();
+      }
     }
   }
 }

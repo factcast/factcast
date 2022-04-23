@@ -58,8 +58,8 @@ public class SubscriptionImpl implements InternalSubscription {
   @Override
   public void close() {
     if (!closed.getAndSet(true)) {
-      SubscriptionCancelledException closedException =
-          new SubscriptionCancelledException("Client closed the subscription");
+      SubscriptionClosedException closedException =
+          new SubscriptionClosedException("Client closed the subscription");
       catchup.completeExceptionally(closedException);
       complete.completeExceptionally(closedException);
       onClose.run();
@@ -67,11 +67,11 @@ public class SubscriptionImpl implements InternalSubscription {
   }
 
   @Override
-  public Subscription awaitCatchup() throws SubscriptionCancelledException {
+  public Subscription awaitCatchup() throws SubscriptionClosedException {
     try {
       catchup.get();
     } catch (InterruptedException e) {
-      throw new SubscriptionCancelledException(e);
+      throw new SubscriptionClosedException(e);
     } catch (ExecutionException e) {
       throw ExceptionHelper.toRuntime(e.getCause());
     }
@@ -80,11 +80,11 @@ public class SubscriptionImpl implements InternalSubscription {
 
   @Override
   public Subscription awaitCatchup(long waitTimeInMillis)
-      throws SubscriptionCancelledException, TimeoutException {
+      throws SubscriptionClosedException, TimeoutException {
     try {
       catchup.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
-      throw new SubscriptionCancelledException(e);
+      throw new SubscriptionClosedException(e);
     } catch (ExecutionException e) {
       throw ExceptionHelper.toRuntime(e.getCause());
     }
@@ -92,11 +92,11 @@ public class SubscriptionImpl implements InternalSubscription {
   }
 
   @Override
-  public Subscription awaitComplete() throws SubscriptionCancelledException {
+  public Subscription awaitComplete() throws SubscriptionClosedException {
     try {
       complete.get();
     } catch (InterruptedException e) {
-      throw new SubscriptionCancelledException(e);
+      throw new SubscriptionClosedException(e);
     } catch (ExecutionException e) {
       throw ExceptionHelper.toRuntime(e.getCause());
     }
@@ -105,11 +105,11 @@ public class SubscriptionImpl implements InternalSubscription {
 
   @Override
   public Subscription awaitComplete(long waitTimeInMillis)
-      throws SubscriptionCancelledException, TimeoutException {
+      throws SubscriptionClosedException, TimeoutException {
     try {
       complete.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
-      throw new SubscriptionCancelledException(e);
+      throw new SubscriptionClosedException(e);
     } catch (ExecutionException e) {
       throw ExceptionHelper.toRuntime(e.getCause());
     }
@@ -166,7 +166,6 @@ public class SubscriptionImpl implements InternalSubscription {
         complete.completeExceptionally(e);
       }
       observer.onError(e);
-
       tryClose();
     }
   }
