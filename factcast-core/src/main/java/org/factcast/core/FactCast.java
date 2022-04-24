@@ -75,9 +75,7 @@ public interface FactCast extends ReadFactCast {
     return lock(list);
   }
 
-  /**
-   * @deprecated use lock(FactSpec) instead
-   */
+  /** @deprecated use lock(FactSpec) instead */
   @Deprecated(forRemoval = true)
   DeprecatedLockedOperationBuilder lock(@NonNull String ns);
 }
