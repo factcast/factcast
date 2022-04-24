@@ -71,6 +71,7 @@ public class SubscriptionImpl implements InternalSubscription {
     try {
       catchup.get();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new SubscriptionClosedException(e);
     } catch (ExecutionException e) {
       throw ExceptionHelper.toRuntime(e.getCause());
@@ -84,6 +85,7 @@ public class SubscriptionImpl implements InternalSubscription {
     try {
       catchup.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new SubscriptionClosedException(e);
     } catch (ExecutionException e) {
       throw ExceptionHelper.toRuntime(e.getCause());
@@ -96,6 +98,7 @@ public class SubscriptionImpl implements InternalSubscription {
     try {
       complete.get();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new SubscriptionClosedException(e);
     } catch (ExecutionException e) {
       throw ExceptionHelper.toRuntime(e.getCause());
@@ -109,6 +112,7 @@ public class SubscriptionImpl implements InternalSubscription {
     try {
       complete.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new SubscriptionClosedException(e);
     } catch (ExecutionException e) {
       throw ExceptionHelper.toRuntime(e.getCause());
