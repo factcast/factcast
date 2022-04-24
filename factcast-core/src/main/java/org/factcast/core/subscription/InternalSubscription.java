@@ -20,17 +20,16 @@ import java.util.UUID;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 
+@SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
 public interface InternalSubscription extends Subscription {
   void close();
 
-  @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
   void notifyCatchup();
 
   void notifyFastForward(@NonNull UUID factId);
 
   void notifyFactStreamInfo(@NonNull FactStreamInfo info);
 
-  @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
   void notifyComplete();
 
   void notifyError(Throwable e);

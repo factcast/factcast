@@ -17,8 +17,8 @@ package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.factcast.core.TestHelper.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -303,8 +303,8 @@ class GrpcFactStoreTest {
 
   @Test
   void testWrapRetryable_nonRetryable() {
-    StatusRuntimeException cause = new StatusRuntimeException(Status.DEADLINE_EXCEEDED);
-    RuntimeException e = GrpcFactStore.wrapRetryable(cause);
+    StatusRuntimeException cause = new StatusRuntimeException(Status.ALREADY_EXISTS);
+    RuntimeException e = ClientExceptionHelper.from(cause);
     assertTrue(e instanceof StatusRuntimeException);
     assertSame(e, cause);
   }
@@ -312,7 +312,7 @@ class GrpcFactStoreTest {
   @Test
   void testWrapRetryable() {
     StatusRuntimeException cause = new StatusRuntimeException(Status.UNAVAILABLE);
-    RuntimeException e = GrpcFactStore.wrapRetryable(cause);
+    RuntimeException e = ClientExceptionHelper.from(cause);
     assertTrue(e instanceof RetryableException);
     assertSame(e.getCause(), cause);
   }

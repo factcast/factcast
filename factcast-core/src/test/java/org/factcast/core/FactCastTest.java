@@ -56,35 +56,6 @@ public class FactCastTest {
   }
 
   @Test
-  void testRetryValidatesMaxAttempts() {
-    FactStore store = mock(FactStore.class);
-    assertThrows(IllegalArgumentException.class, () -> FactCast.from(store).retry(-42));
-  }
-
-  @Test
-  public void testRetryChecksNumberOfAttempts() {
-    FactStore store = mock(FactStore.class);
-    FactCast fc = FactCast.from(store);
-    assertThrows(IllegalArgumentException.class, () -> fc.retry(0));
-    assertThrows(IllegalArgumentException.class, () -> fc.retry(0, 100));
-
-    assertNotNull(fc.retry(10));
-  }
-
-  @Test
-  public void testRetryChecksWaitInterval() {
-
-    FactStore store = mock(FactStore.class);
-    FactCast fc = FactCast.from(store);
-
-    assertThrows(IllegalArgumentException.class, () -> fc.retry(10, -100));
-
-    assertNotNull(fc.retry(10, 0));
-    assertNotNull(fc.retry(10, 1));
-    assertNotNull(fc.retry(10, 100));
-  }
-
-  @Test
   public void testPublishFactNPE() {
     FactStore store = mock(FactStore.class);
     FactCast fc = FactCast.from(store);

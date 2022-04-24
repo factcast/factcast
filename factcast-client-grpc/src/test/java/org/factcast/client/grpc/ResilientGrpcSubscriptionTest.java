@@ -25,6 +25,7 @@ import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
+import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -55,7 +56,7 @@ class ResilientGrpcSubscriptionTest {
   public void setup() {
     // order is important here, you have been warned
     when(store.internalSubscribe(any(), observerAC.capture())).thenReturn(subscription);
-    uut = new ResilientGrpcSubscription(store, req, obs);
+    uut = new ResilientGrpcSubscription(store, req, obs, new ResilienceConfiguration());
     when(store.subscribe(any(), observerAC.capture())).thenReturn(uut);
   }
 
@@ -119,18 +120,30 @@ class ResilientGrpcSubscriptionTest {
   @Test
   void isServerException() throws Exception {
 
-    assertThat(uut.isRetryable(new RuntimeException())).isFalse();
-    assertThat(uut.isRetryable(new IllegalArgumentException())).isFalse();
-    assertThat(uut.isRetryable(new IOException())).isFalse();
-    assertThat(uut.isRetryable(new StatusRuntimeException(Status.UNAUTHENTICATED))).isFalse();
-    assertThat(uut.isRetryable(new StatusRuntimeException(Status.PERMISSION_DENIED))).isFalse();
-    assertThat(uut.isRetryable(new StatusRuntimeException(Status.RESOURCE_EXHAUSTED))).isFalse();
-    assertThat(uut.isRetryable(new StatusRuntimeException(Status.INVALID_ARGUMENT))).isFalse();
+    assertThat(ClientExceptionHelper.isRetryable(new RuntimeException())).isFalse();
+    assertThat(ClientExceptionHelper.isRetryable(new IllegalArgumentException())).isFalse();
+    assertThat(ClientExceptionHelper.isRetryable(new IOException())).isFalse();
+    assertThat(
+            ClientExceptionHelper.isRetryable(new StatusRuntimeException(Status.UNAUTHENTICATED)))
+        .isFalse();
+    assertThat(
+            ClientExceptionHelper.isRetryable(new StatusRuntimeException(Status.PERMISSION_DENIED)))
+        .isFalse();
+    assertThat(
+            ClientExceptionHelper.isRetryable(
+                new StatusRuntimeException(Status.RESOURCE_EXHAUSTED)))
+        .isFalse();
+    assertThat(
+            ClientExceptionHelper.isRetryable(new StatusRuntimeException(Status.INVALID_ARGUMENT)))
+        .isFalse();
 
     //
-    assertThat(uut.isRetryable(new StatusRuntimeException(Status.UNKNOWN))).isTrue();
-    assertThat(uut.isRetryable(new StatusRuntimeException(Status.UNAVAILABLE))).isTrue();
-    assertThat(uut.isRetryable(new StatusRuntimeException(Status.ABORTED))).isTrue();
+    assertThat(ClientExceptionHelper.isRetryable(new StatusRuntimeException(Status.UNKNOWN)))
+        .isTrue();
+    assertThat(ClientExceptionHelper.isRetryable(new StatusRuntimeException(Status.UNAVAILABLE)))
+        .isTrue();
+    assertThat(ClientExceptionHelper.isRetryable(new StatusRuntimeException(Status.ABORTED)))
+        .isTrue();
 
     // assertThat(uut.isNotRetryable(new TransformationExceptione());
     // assertThat(uut.isNotRetryable(new MissingTransformationInformationException());

@@ -19,7 +19,6 @@ import static io.grpc.stub.ClientCalls.*;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.*;
-import io.grpc.Status.Code;
 import io.grpc.stub.MetadataUtils;
 import io.grpc.stub.StreamObserver;
 import java.util.*;
@@ -38,7 +37,6 @@ import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.InternalSubscription;
 import org.factcast.core.subscription.Subscription;
@@ -163,6 +161,7 @@ public class GrpcFactStore implements FactStore {
               factsToPublish.stream().map(converter::toProto).collect(Collectors.toList());
           MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
 
+          //noinspection ResultOfMethodCallIgnored
           blockingStub.publish(mfs);
         });
   }
@@ -192,9 +191,12 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
+  @NonNull
   public Subscription subscribe(
       @NonNull SubscriptionRequestTO req, @NonNull FactObserver observer) {
-    return new ResilientGrpcSubscription(this, req, observer);
+    if (properties.getResilience().isEnabled())
+      return new ResilientGrpcSubscription(this, req, observer, properties.getResilience());
+    else return internalSubscribe(req, observer);
   }
 
   public Subscription internalSubscribe(
@@ -221,16 +223,13 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
+  @NonNull
   public OptionalLong serialOf(@NonNull UUID l) {
     return callAndHandle(
         () -> {
           MSG_UUID protoMessage = converter.toProto(l);
           MSG_OptionalSerial responseMessage;
-          try {
-            responseMessage = blockingStub.serialOf(protoMessage);
-          } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-          }
+          responseMessage = blockingStub.serialOf(protoMessage);
           return converter.fromProto(responseMessage);
         });
   }
@@ -244,13 +243,14 @@ public class GrpcFactStore implements FactStore {
       try {
         Metadata metadata = new Metadata();
         addClientIdTo(metadata);
+        @SuppressWarnings("deprecation")
         MSG_ServerConfig handshake =
             MetadataUtils.attachHeaders(blockingStub, metadata).handshake(converter.empty());
         ServerConfig cfg = converter.fromProto(handshake);
         serverProtocolVersion = cfg.version();
         serverProperties = cfg.properties();
       } catch (StatusRuntimeException e) {
-        throw wrapRetryable(e);
+        throw ClientExceptionHelper.from(e);
       }
       logProtocolVersion(serverProtocolVersion);
       logServerVersion(serverProperties);
@@ -336,6 +336,7 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
+  @NonNull
   public Set<String> enumerateNamespaces() {
     return callAndHandle(
         () -> {
@@ -345,21 +346,10 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
-  public Set<String> enumerateTypes(String ns) {
+  @NonNull
+  public Set<String> enumerateTypes(@NonNull String ns) {
     return callAndHandle(
-        () -> {
-          return converter.fromProto(blockingStub.enumerateTypes(converter.toProto(ns)));
-        });
-  }
-
-  @VisibleForTesting
-  static RuntimeException wrapRetryable(StatusRuntimeException e) {
-    // TODO
-    if (e.getStatus().getCode() == Code.UNAVAILABLE) {
-      return new RetryableException(e);
-    } else {
-      return e;
-    }
+        () -> converter.fromProto(blockingStub.enumerateTypes(converter.toProto(ns))));
   }
 
   @Override
@@ -378,7 +368,8 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
-  public @NonNull StateToken stateFor(List<FactSpec> specs) {
+  @NonNull
+  public StateToken stateFor(@NonNull List<FactSpec> specs) {
     return callAndHandle(
         () -> {
           MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
@@ -388,7 +379,8 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
-  public @NonNull StateToken currentStateFor(List<FactSpec> specs) {
+  @NonNull
+  public StateToken currentStateFor(List<FactSpec> specs) {
     if (!this.fastStateToken) return stateFor(specs);
     else
       return callAndHandle(
@@ -421,7 +413,8 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
-  public Optional<Fact> fetchById(UUID id) {
+  @NonNull
+  public Optional<Fact> fetchById(@NonNull UUID id) {
     log.trace("fetching {} from remote store", id);
 
     return callAndHandle(
@@ -433,7 +426,8 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
-  public Optional<Fact> fetchByIdAndVersion(UUID id, int versionExpected) {
+  @NonNull
+  public Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected) {
     log.trace("fetching {} from remote store as version {}", id, versionExpected);
     return callAndHandle(
         () -> {
@@ -444,7 +438,8 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
-  public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
+  @NonNull
+  public Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
     log.trace("fetching snapshot {} from remote store", id);
     return callAndHandle(
         () -> {
@@ -459,7 +454,7 @@ public class GrpcFactStore implements FactStore {
     runAndHandle(
         () -> {
           @NonNull SnapshotId id = snapshot.id();
-          @NonNull byte[] bytes = snapshot.bytes();
+          byte[] bytes = snapshot.bytes();
           boolean alreadyCompressed = snapshot.compressed();
           @NonNull UUID state = snapshot.lastFact();
 
@@ -476,11 +471,7 @@ public class GrpcFactStore implements FactStore {
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
     log.trace("clearing snapshot {} in remote store", id);
-
-    runAndHandle(
-        () -> {
-          //noinspection ResultOfMethodCallIgnored
-          blockingStub.clearSnapshot(converter.toProto(id));
-        });
+    //noinspection ResultOfMethodCallIgnored
+    runAndHandle(() -> blockingStub.clearSnapshot(converter.toProto(id)));
   }
 }

@@ -19,6 +19,7 @@ import java.time.Duration;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -31,9 +32,18 @@ public class FactCastGrpcClientProperties {
 
   private boolean enableFastForward = true;
 
-  private boolean enableFactStreamInfo = true;
-
-  private Duration catchupProgressInterval = Duration.ofSeconds(30);
-
   private String id = null;
+
+  @NestedConfigurationProperty
+  private ResilienceConfiguration resilience = new ResilienceConfiguration();
+
+  @Data
+  @Accessors(fluent = false)
+  public static class ResilienceConfiguration {
+    private boolean enabled = true;
+
+    private Duration window = Duration.ofSeconds(30);
+
+    private int retries = 10;
+  }
 }

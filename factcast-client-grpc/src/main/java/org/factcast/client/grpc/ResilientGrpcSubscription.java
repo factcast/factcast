@@ -15,14 +15,9 @@
  */
 package org.factcast.client.grpc;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Sets;
-import io.grpc.Status;
-import io.grpc.Status.Code;
-import io.grpc.StatusRuntimeException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -30,8 +25,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
-import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
@@ -41,29 +36,26 @@ import org.factcast.core.util.ExceptionHelper;
 
 @Slf4j
 public class ResilientGrpcSubscription implements Subscription {
-  // TODO configurable?
-  private static final int ALLOWED_TIME_BETWEEN_RECONNECTS = 3000;
-  // TODO configurable?
-  private static final int ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION = 5;
-  private static final Set<Code> RETRYABLE_STATUS =
-      Sets.newHashSet(
-          Status.UNKNOWN.getCode(), //
-          Status.UNAVAILABLE.getCode(), //
-          Status.ABORTED.getCode());
 
   private final GrpcFactStore store;
   private final SubscriptionRequestTO originalRequest;
+  private final ResilienceConfiguration config;
   private final FactObserver originalObserver;
   private final FactObserver delegatingObserver;
 
   private final AtomicReference<UUID> lastFactIdSeen = new AtomicReference<>();
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
-  private final List<Long> timestampsOfReconnectionAttempts = new ArrayList<>();
+  private final List<Long> timestampsOfReconnectionAttempts =
+      Collections.synchronizedList(new ArrayList<>());
 
   public ResilientGrpcSubscription(
-      @NonNull GrpcFactStore store, @NonNull SubscriptionRequestTO req, @NonNull FactObserver obs) {
+      @NonNull GrpcFactStore store,
+      @NonNull SubscriptionRequestTO req,
+      @NonNull FactObserver obs,
+      @NonNull ResilienceConfiguration config) {
     this.store = store;
+    this.config = config;
     originalObserver = obs;
     originalRequest = req;
     delegatingObserver = new DelegatingFactObserver();
@@ -141,50 +133,34 @@ public class ResilientGrpcSubscription implements Subscription {
 
   private boolean attemptsExhausted() {
     int attempts = numberOfAttemptsInWindow();
-    return attempts > ALLOWED_NUMBER_OF_RECONNECTS_BEFORE_ESCALATION;
+    return attempts > config.getRetries();
   }
 
   private int numberOfAttemptsInWindow() {
     long now = System.currentTimeMillis();
     // remove all older reconnection attempts
-    timestampsOfReconnectionAttempts.removeIf(t -> now - t > ALLOWED_TIME_BETWEEN_RECONNECTS);
+    timestampsOfReconnectionAttempts.removeIf(t -> now - t > config.getWindow().toMillis());
     return timestampsOfReconnectionAttempts.size();
   }
 
-  private void registerAttempt() {
-    timestampsOfReconnectionAttempts.add(System.currentTimeMillis());
-  }
-
   private boolean shouldRetry(Throwable exception) {
-    return isRetryable(exception) && !attemptsExhausted();
+    return ClientExceptionHelper.isRetryable(exception) && !attemptsExhausted();
   }
 
   private void assertSubscriptionStateNotClosed() {
     if (isClosed.get()) {
-      throw new SubscriptionClosedException("Subscription already closed");
+      throw new SubscriptionClosedException(
+          "Subscription already closed  (" + originalRequest + ")");
     }
-  }
-
-  @VisibleForTesting
-  boolean isRetryable(@NonNull Throwable exception) {
-    if (exception instanceof StatusRuntimeException) {
-      Code s = ((StatusRuntimeException) exception).getStatus().getCode();
-      return RETRYABLE_STATUS.contains(s);
-    }
-    // TODO anything else?
-    //    if (exception instanceof StaleSubscriptionDetectedException) {
-    //      // assume connection problem
-    //      return false;
-    //    }
-
-    return exception instanceof RetryableException;
   }
 
   private synchronized void connect() {
+    log.debug("Connecting ({})", originalRequest);
     reConnect();
   }
 
   private synchronized void reConnect() {
+    log.debug("Reconnecting ({})", originalRequest);
     SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(originalRequest);
     UUID last = lastFactIdSeen.get();
     if (last != null) {
@@ -192,9 +168,12 @@ public class ResilientGrpcSubscription implements Subscription {
     }
 
     if (currentSubscription.get() == null) {
-      // might throw exceptions TODO
-      Subscription plainSubscription = store.internalSubscribe(to, delegatingObserver);
-      currentSubscription.set(plainSubscription);
+      try {
+        Subscription plainSubscription = store.internalSubscribe(to, delegatingObserver);
+        currentSubscription.set(plainSubscription);
+      } catch (Exception e) {
+        fail(e);
+      }
     }
   }
 
@@ -203,8 +182,16 @@ public class ResilientGrpcSubscription implements Subscription {
     try {
       if (current != null) current.close();
     } catch (Exception justLog) {
-      log.warn("Ignoring Exception while closing a subscription:", justLog);
+      log.warn("Ignoring Exception while closing a subscription ({})", originalRequest, justLog);
     }
+  }
+
+  private void fail(Throwable exception) {
+    log.error("Too many failures, giving up. ({})", originalRequest);
+    close();
+    currentSubscription.unblock();
+    originalObserver.onError(exception);
+    throw ExceptionHelper.toRuntime(exception);
   }
 
   @FunctionalInterface
@@ -240,26 +227,25 @@ public class ResilientGrpcSubscription implements Subscription {
 
     @Override
     public void onError(@NonNull Throwable exception) {
-      log.info("Closing subscription due to onError triggered.", exception);
+      log.info("Closing subscription due to onError triggered.  ({})", originalRequest, exception);
       closeAndDetachSubscription();
 
       registerAttempt();
 
       if (shouldRetry(exception)) {
-        log.info("Trying to reconnect.");
+        log.info("Trying to resubscribe ({})", originalRequest);
         reConnect();
-        // TODO log recorded exceptions?
-
       } else {
-        log.error("Too many failures, giving up.");
-        close();
-        originalObserver.onError(exception);
-        throw ExceptionHelper.toRuntime(exception);
+        fail(exception);
       }
     }
 
+    private void registerAttempt() {
+      timestampsOfReconnectionAttempts.add(System.currentTimeMillis());
+    }
+
     @Override
-    public void onFactStreamInfo(FactStreamInfo info) {
+    public void onFactStreamInfo(@NonNull FactStreamInfo info) {
       originalObserver.onFactStreamInfo(info);
     }
   }
@@ -270,18 +256,21 @@ public class ResilientGrpcSubscription implements Subscription {
 
     @NonNull
     public Subscription getAndBlock() {
-      return getAndBlock(1000);
+      return getAndBlock(0);
     }
 
     @NonNull
     public Subscription getAndBlock(long maxPause) {
+      long end = System.currentTimeMillis() + maxPause;
       synchronized (currentSubscription) {
         do {
           assertSubscriptionStateNotClosed();
           if (currentSubscription.get() == null) {
             try {
-              currentSubscription.wait(Math.min(maxPause, 1000));
+              currentSubscription.wait(maxPause == 0 ? 0 : end - System.currentTimeMillis());
             } catch (InterruptedException ignore) {
+              // can be ignored
+              Thread.currentThread().interrupt();
             }
           }
         } while (currentSubscription.get() == null);
@@ -289,7 +278,7 @@ public class ResilientGrpcSubscription implements Subscription {
       }
     }
 
-    Subscription getAndSet(Subscription s) {
+    Subscription getAndSet(@SuppressWarnings("SameParameterValue") Subscription s) {
       synchronized (currentSubscription) {
         return currentSubscription.getAndSet(s);
       }
@@ -305,6 +294,13 @@ public class ResilientGrpcSubscription implements Subscription {
     public Subscription get() {
       synchronized (currentSubscription) {
         return currentSubscription.get();
+      }
+    }
+
+    /** used to unblock getAndBlock calls */
+    public void unblock() {
+      synchronized (currentSubscription) {
+        currentSubscription.notifyAll();
       }
     }
   }

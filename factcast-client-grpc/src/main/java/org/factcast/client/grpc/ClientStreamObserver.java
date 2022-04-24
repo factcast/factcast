@@ -92,9 +92,12 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
             "Executor for this observer already shut down. THIS IS A BUG!");
 
       clientBoundExecutor.submit(() -> process(f)).get();
-    } catch (ExecutionException | InterruptedException e) {
+    } catch (ExecutionException e) {
       tryShutdown();
       throw ExceptionHelper.toRuntime(e.getCause());
+    } catch (InterruptedException e) {
+      tryShutdown();
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -162,7 +165,6 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
   @Override
   public void onCompleted() {
     disableKeepalive();
-    // TODO dont we switch tracks here?
     try {
       subscription.notifyComplete();
     } finally {

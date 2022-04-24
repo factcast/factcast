@@ -35,6 +35,7 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactCastExtension;
+import org.factcast.test.SLF4JTestSpy;
 import org.factcast.test.toxi.FactCastProxy;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,15 +43,21 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class})
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
+@TestPropertySource(
+    properties =
+        "factcast.grpc.client.resilience.retries="
+            + SubscriptionReconnectionITest.NUMBER_OF_RETRIES)
 @Slf4j
-class SubscriptionReconnectionTest extends AbstractFactCastIntegrationTest {
+class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
+  static final int NUMBER_OF_RETRIES = 99;
 
   private static final int MAX_FACTS = 10000;
-  private static final long LATENCY = 5000;
+  private static final long LATENCY = 2000;
   @Autowired FactCast fc;
   FactCastProxy proxy;
 
@@ -121,36 +128,37 @@ class SubscriptionReconnectionTest extends AbstractFactCastIntegrationTest {
   @SneakyThrows
   @Test
   void subscribeWithFailingReconnect() {
-    log.info(
-        "Using FcProxy {} {}:{}",
-        proxy.getName(),
-        proxy.getContainerIpAddress(),
-        proxy.getProxyPort());
+    try (var spy = SLF4JTestSpy.attach()) {
 
-    fetchAll();
-    Stopwatch sw = Stopwatch.createStarted();
-    var count = new AtomicInteger();
-    fetchAll();
+      fetchAll();
+      Stopwatch sw = Stopwatch.createStarted();
+      var count = new AtomicInteger();
+      fetchAll();
 
-    sw = Stopwatch.createStarted();
-    assertThatThrownBy(
-            () ->
-                fetchAll(
-                    f -> {
-                      if (f.serial() == MAX_FACTS / 8) {
-                        try {
-                          // let it repeatedly fail after each 1k sent...
-                          proxy.toxics().limitData("limit", ToxicDirection.DOWNSTREAM, 1024);
-                        } catch (IOException e) {
-                          throw new RuntimeException(e);
+      sw = Stopwatch.createStarted();
+      assertThatThrownBy(
+              () ->
+                  fetchAll(
+                      f -> {
+                        if (f.serial() == MAX_FACTS / 8) {
+                          try {
+                            // let it repeatedly fail after each 1k sent...
+                            proxy.toxics().limitData("limit", ToxicDirection.DOWNSTREAM, 1024);
+                          } catch (IOException e) {
+                            throw new RuntimeException(e);
+                          }
+                          // and don't turn it on again
                         }
-                        // and don't turn it on again
-                      }
-                      log.info("Got {}", f.serial());
-                      count.incrementAndGet();
-                    }))
-        .isInstanceOfAny(SubscriptionClosedException.class, StatusRuntimeException.class);
-    assertThat(count.get()).isLessThan(MAX_FACTS);
+                        log.info("Got {}", f.serial());
+                        count.incrementAndGet();
+                      }))
+          .isInstanceOfAny(SubscriptionClosedException.class, StatusRuntimeException.class);
+      assertThat(count.get()).isLessThan(MAX_FACTS);
+
+      assertThat(
+              spy.stream().filter(e -> e.getFormattedMessage().contains("Trying to resubscribe")))
+          .hasSize(NUMBER_OF_RETRIES);
+    }
   }
 
   private void fetchAll() {
