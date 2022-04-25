@@ -45,7 +45,9 @@ class Resilience {
   }
 
   boolean shouldRetry(Throwable exception) {
-    return ClientExceptionHelper.isRetryable(exception) && !attemptsExhausted();
+    return config.isEnabled()
+        && ClientExceptionHelper.isRetryable(exception)
+        && !attemptsExhausted();
   }
 
   void sleepForInterval() {
