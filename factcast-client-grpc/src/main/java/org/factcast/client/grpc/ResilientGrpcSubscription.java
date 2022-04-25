@@ -15,6 +15,7 @@
  */
 package org.factcast.client.grpc;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,7 +37,6 @@ public class ResilientGrpcSubscription implements Subscription {
 
   private final GrpcFactStore store;
   private final SubscriptionRequestTO originalRequest;
-  private final ResilienceConfiguration config;
   private final FactObserver originalObserver;
   private final FactObserver delegatingObserver;
 
@@ -52,7 +52,6 @@ public class ResilientGrpcSubscription implements Subscription {
       @NonNull FactObserver obs,
       @NonNull ResilienceConfiguration config) {
     this.store = store;
-    this.config = config;
     resilience = new Resilience(config);
     originalObserver = obs;
     originalRequest = req;
@@ -91,7 +90,8 @@ public class ResilientGrpcSubscription implements Subscription {
     }
   }
 
-  private ResilientGrpcSubscription delegate(
+  @VisibleForTesting
+  ResilientGrpcSubscription delegate(
       ThrowingBiConsumer<Subscription, Long> consumer, long waitTimeInMillis)
       throws TimeoutException {
     long startTime = System.currentTimeMillis();
@@ -114,7 +114,8 @@ public class ResilientGrpcSubscription implements Subscription {
     }
   }
 
-  private ResilientGrpcSubscription delegate(Consumer<Subscription> consumer) {
+  @VisibleForTesting
+  ResilientGrpcSubscription delegate(Consumer<Subscription> consumer) {
     for (; ; ) {
       assertSubscriptionStateNotClosed();
       Subscription cur = currentSubscription.getAndBlock();
@@ -168,7 +169,8 @@ public class ResilientGrpcSubscription implements Subscription {
     }
   }
 
-  private void fail(Throwable exception) {
+  @VisibleForTesting
+  void fail(Throwable exception) {
     log.error("Too many failures, giving up. ({})", originalRequest);
     close();
     currentSubscription.unblock();
@@ -177,7 +179,7 @@ public class ResilientGrpcSubscription implements Subscription {
   }
 
   @FunctionalInterface
-  private interface ThrowingBiConsumer<T, U> {
+  interface ThrowingBiConsumer<T, U> {
     void accept(T t, U u) throws TimeoutException;
   }
 
@@ -229,7 +231,8 @@ public class ResilientGrpcSubscription implements Subscription {
     }
   }
 
-  private class SubscriptionHolder {
+  @VisibleForTesting
+  class SubscriptionHolder {
     // even though this is an atomicref, sync is necessary for wait/notify
     private final AtomicReference<Subscription> currentSubscription = new AtomicReference<>();
 
