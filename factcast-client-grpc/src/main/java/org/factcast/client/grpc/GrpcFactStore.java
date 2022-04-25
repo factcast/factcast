@@ -73,6 +73,7 @@ public class GrpcFactStore implements FactStore {
   private static final String CHANNEL_NAME = "factstore";
 
   private static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
+  private final Resilience resilience;
 
   private RemoteFactStoreBlockingStub blockingStub;
 
@@ -150,6 +151,8 @@ public class GrpcFactStore implements FactStore {
       blockingStub = blockingStub.withCallCredentials(basic);
       stub = stub.withCallCredentials(basic);
     }
+
+    resilience = new Resilience(properties.getResilience());
   }
 
   @Override
@@ -181,12 +184,20 @@ public class GrpcFactStore implements FactStore {
   // GrpcGlobalClientInterceptor was tested but did not work as expected
   @VisibleForTesting
   <T> T callAndHandle(@NonNull Callable<T> block) {
-    try {
-      return block.call();
-    } catch (StatusRuntimeException e) {
-      throw ClientExceptionHelper.from(e);
-    } catch (Exception e) {
-      throw ExceptionHelper.toRuntime(e);
+    for (; ; ) {
+      try {
+        return block.call();
+      } catch (StatusRuntimeException e) {
+        if (resilience.shouldRetry(e)) {
+          resilience.registerAttempt();
+          resilience.sleepForInterval();
+          // continue and try next attempt
+        } else {
+          throw ClientExceptionHelper.from(e);
+        }
+      } catch (Exception e) {
+        throw ExceptionHelper.toRuntime(e);
+      }
     }
   }
 

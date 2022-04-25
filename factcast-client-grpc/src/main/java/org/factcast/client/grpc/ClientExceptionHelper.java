@@ -64,8 +64,8 @@ public class ClientExceptionHelper {
 
   private static final Set<Code> RETRYABLE_STATUS =
       Sets.newHashSet(
-          Status.UNKNOWN.getCode(), //
-          Status.UNAVAILABLE.getCode(), //
+          Status.UNKNOWN.getCode(),
+          Status.UNAVAILABLE.getCode(),
           Status.ABORTED.getCode(),
           Status.DEADLINE_EXCEEDED.getCode());
 

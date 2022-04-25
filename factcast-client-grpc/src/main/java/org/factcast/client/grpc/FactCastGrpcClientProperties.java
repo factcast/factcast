@@ -45,5 +45,7 @@ public class FactCastGrpcClientProperties {
     private Duration window = Duration.ofSeconds(30);
 
     private int retries = 10;
+
+    private Duration interval = Duration.ofMillis(100);
   }
 }
