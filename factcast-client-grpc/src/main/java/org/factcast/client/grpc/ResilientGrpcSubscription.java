@@ -15,9 +15,6 @@
  */
 package org.factcast.client.grpc;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,8 +43,8 @@ public class ResilientGrpcSubscription implements Subscription {
   private final AtomicReference<UUID> lastFactIdSeen = new AtomicReference<>();
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
-  private final List<Long> timestampsOfReconnectionAttempts =
-      Collections.synchronizedList(new ArrayList<>());
+
+  private final Resilience resilience;
 
   public ResilientGrpcSubscription(
       @NonNull GrpcFactStore store,
@@ -56,6 +53,7 @@ public class ResilientGrpcSubscription implements Subscription {
       @NonNull ResilienceConfiguration config) {
     this.store = store;
     this.config = config;
+    resilience = new Resilience(config);
     originalObserver = obs;
     originalRequest = req;
     delegatingObserver = new DelegatingFactObserver();
@@ -106,7 +104,7 @@ public class ResilientGrpcSubscription implements Subscription {
         consumer.accept(cur, maxPause);
         return this;
       } catch (Exception e) {
-        if (!shouldRetry(e)) {
+        if (!resilience.shouldRetry(e)) {
           throw e;
         }
       }
@@ -124,27 +122,11 @@ public class ResilientGrpcSubscription implements Subscription {
         consumer.accept(cur);
         return this;
       } catch (Exception e) {
-        if (!shouldRetry(e)) {
+        if (!resilience.shouldRetry(e)) {
           throw e;
         }
       }
     }
-  }
-
-  private boolean attemptsExhausted() {
-    int attempts = numberOfAttemptsInWindow();
-    return attempts > config.getRetries();
-  }
-
-  private int numberOfAttemptsInWindow() {
-    long now = System.currentTimeMillis();
-    // remove all older reconnection attempts
-    timestampsOfReconnectionAttempts.removeIf(t -> now - t > config.getWindow().toMillis());
-    return timestampsOfReconnectionAttempts.size();
-  }
-
-  private boolean shouldRetry(Throwable exception) {
-    return ClientExceptionHelper.isRetryable(exception) && !attemptsExhausted();
   }
 
   private void assertSubscriptionStateNotClosed() {
@@ -230,18 +212,15 @@ public class ResilientGrpcSubscription implements Subscription {
       log.info("Closing subscription due to onError triggered.  ({})", originalRequest, exception);
       closeAndDetachSubscription();
 
-      registerAttempt();
+      resilience.registerAttempt();
 
-      if (shouldRetry(exception)) {
+      if (resilience.shouldRetry(exception)) {
         log.info("Trying to resubscribe ({})", originalRequest);
+        resilience.sleepForInterval();
         reConnect();
       } else {
         fail(exception);
       }
-    }
-
-    private void registerAttempt() {
-      timestampsOfReconnectionAttempts.add(System.currentTimeMillis());
     }
 
     @Override
