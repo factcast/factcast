@@ -16,7 +16,6 @@
 package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.factcast.core.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -36,6 +35,8 @@ import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.ConditionalPublishRequest;
@@ -74,10 +75,12 @@ class GrpcFactStoreTest {
 
   @Mock public Optional<String> credentials;
   private GrpcFactStore uut;
+  private ResilienceConfiguration resilienceConfig = new ResilienceConfiguration();
 
   @BeforeEach
   public void setup() {
-    when(properties.getResilience()).thenReturn(new ResilienceConfiguration());
+    when(properties.getResilience()).thenReturn(resilienceConfig);
+    resilienceConfig.setEnabled(false);
     uut = new GrpcFactStore(blockingStub, stub, credentials, properties, "someTest");
   }
 
@@ -268,13 +271,6 @@ class GrpcFactStoreTest {
   }
 
   @Test
-  void testSubscribeNull() {
-    expectNPE(() -> uut.subscribe(null, mock(FactObserver.class)));
-    expectNPE(() -> uut.subscribe(null, null));
-    expectNPE(() -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
-  }
-
-  @Test
   void testCompatibleProtocolVersion() {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
@@ -334,18 +330,6 @@ class GrpcFactStoreTest {
       assertTrue(e instanceof StatusRuntimeException);
       assertFalse(e instanceof RetryableException);
     }
-  }
-
-  @Test
-  void testSubscribeNullParameters() {
-    expectNPE(() -> uut.subscribe(null, mock(FactObserver.class)));
-    expectNPE(() -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
-    expectNPE(() -> uut.subscribe(null, null));
-  }
-
-  @Test
-  void testSerialOfNullParameters() {
-    expectNPE(() -> uut.serialOf(null));
   }
 
   @Test
@@ -446,11 +430,34 @@ class GrpcFactStoreTest {
   }
 
   @Test
-  void testSubscribe() {
+  void testInternalSubscribe() {
     assertThrows(
         NullPointerException.class, () -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
-    assertThrows(NullPointerException.class, () -> uut.subscribe(null, null));
-    assertThrows(NullPointerException.class, () -> uut.subscribe(null, mock(FactObserver.class)));
+    assertThrows(NullPointerException.class, () -> uut.internalSubscribe(null, null));
+    assertThrows(
+        NullPointerException.class, () -> uut.internalSubscribe(null, mock(FactObserver.class)));
+  }
+
+  @Test
+  void testSubscribeWithoutResilience() {
+
+    resilienceConfig.setEnabled(false);
+    SubscriptionRequestTO req =
+        new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
+    var s = uut.subscribe(req, element -> {});
+
+    assertThat(s).isInstanceOf(Subscription.class).isNotInstanceOf(ResilientGrpcSubscription.class);
+  }
+
+  @Test
+  void testSubscribeWithResilience() {
+
+    resilienceConfig.setEnabled(true);
+    SubscriptionRequestTO req =
+        new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
+    var s = uut.subscribe(req, element -> {});
+
+    assertThat(s).isInstanceOf(ResilientGrpcSubscription.class);
   }
 
   @Test
