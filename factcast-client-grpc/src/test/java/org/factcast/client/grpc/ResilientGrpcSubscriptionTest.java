@@ -24,8 +24,17 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
+import org.factcast.client.grpc.ResilientGrpcSubscription.DelegatingFactObserver;
+import org.factcast.client.grpc.ResilientGrpcSubscription.ThrowingBiConsumer;
+import org.factcast.core.Fact;
+import org.factcast.core.store.RetryableException;
+import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -50,13 +59,14 @@ class ResilientGrpcSubscriptionTest {
   private final ArgumentCaptor<FactObserver> observerAC =
       ArgumentCaptor.forClass(FactObserver.class);
 
+  ResilienceConfiguration config = new ResilienceConfiguration();
   ResilientGrpcSubscription uut;
 
   @BeforeEach
   public void setup() {
     // order is important here, you have been warned
     when(store.internalSubscribe(any(), observerAC.capture())).thenReturn(subscription);
-    uut = new ResilientGrpcSubscription(store, req, obs, new ResilienceConfiguration());
+    uut = new ResilientGrpcSubscription(store, req, obs, config);
     when(store.subscribe(any(), observerAC.capture())).thenReturn(uut);
   }
 
@@ -150,5 +160,133 @@ class ResilientGrpcSubscriptionTest {
     // important because it needs to reconnect, which only happens if it is NOT categorized as
     // serverException
     // assertThat(uut.isNotRetryable(new StaleSubscriptionDetectedException())).isFalse();
+  }
+
+  @Test
+  void deletegateWithTimeout() {
+
+    config.setEnabled(true).setRetries(100);
+
+    ThrowingBiConsumer<Subscription, Long> consumer =
+        (s, l) -> {
+          sleep(300);
+          throw new RetryableException(new Exception());
+        };
+    assertThatThrownBy(
+            () -> {
+              uut.delegate(consumer, 1000);
+            })
+        .isInstanceOf(TimeoutException.class);
+  }
+
+  @Test
+  void deletegateThrowing() {
+    config.setEnabled(true).setRetries(100);
+
+    Consumer<Subscription> consumer = mock(Consumer.class);
+    doThrow(
+            new RetryableException(new IOException()),
+            new RetryableException(new Exception()),
+            new IllegalArgumentException())
+        .when(consumer)
+        .accept(any());
+
+    assertThatThrownBy(
+            () -> {
+              uut.delegate(consumer);
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void deletegateThrowingWithRetryDisabled() {
+    config.setEnabled(false);
+
+    Consumer<Subscription> consumer = mock(Consumer.class);
+    RetryableException initial = new RetryableException(new IOException());
+    doThrow(initial, new RetryableException(new Exception()), new IllegalArgumentException())
+        .when(consumer)
+        .accept(any());
+
+    assertThatThrownBy(
+            () -> {
+              uut.delegate(consumer);
+            })
+        .isSameAs(initial);
+  }
+
+  @Test
+  void testFail() {
+    IOException ex = new IOException();
+    assertThatThrownBy(
+            () -> {
+              uut.fail(ex);
+            })
+        .isInstanceOf(RuntimeException.class)
+        .getCause()
+        .isInstanceOf(IOException.class);
+
+    verify(obs).onError(ex);
+  }
+
+  @SneakyThrows
+  private void sleep(int i) {
+    Thread.sleep(i);
+  }
+
+  @Nested
+  class DelegatingFactObserverTest {
+
+    DelegatingFactObserver dfo;
+
+    @BeforeEach
+    public void setup() {
+      // order is important here, you have been warned
+      when(store.internalSubscribe(any(), observerAC.capture())).thenReturn(subscription);
+      uut = new ResilientGrpcSubscription(store, req, obs, config);
+      when(store.subscribe(any(), observerAC.capture())).thenReturn(uut);
+      dfo = uut.new DelegatingFactObserver();
+    }
+
+    @Test
+    void catchupDelegates() {
+      dfo.onCatchup();
+      verify(obs).onCatchup();
+    }
+
+    @Test
+    void nextDelegates() {
+      @NonNull Fact f = Fact.builder().ns("foo").type("bar").buildWithoutPayload();
+      dfo.onNext(f);
+      verify(obs).onNext(f);
+    }
+
+    @Test
+    void nextChecksForClosing() {
+      uut.close();
+      @NonNull Fact f = Fact.builder().ns("foo").type("bar").buildWithoutPayload();
+      dfo.onNext(f);
+      verify(obs, never()).onNext(f);
+    }
+
+    @Test
+    void completeDelegates() {
+      dfo.onComplete();
+      verify(obs).onComplete();
+    }
+
+    @Test
+    void ffwDelegates() {
+      @NonNull UUID id = UUID.randomUUID();
+      dfo.onFastForward(id);
+      verify(obs).onFastForward(id);
+    }
+
+    @Test
+    void infoDelegates() {
+      @NonNull FactStreamInfo info = new FactStreamInfo(1, 10);
+      dfo.onFactStreamInfo(info);
+      verify(obs).onFactStreamInfo(info);
+    }
   }
 }
