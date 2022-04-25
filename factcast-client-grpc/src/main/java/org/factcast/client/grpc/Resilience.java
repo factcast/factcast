@@ -18,12 +18,13 @@ package org.factcast.client.grpc;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 
 @RequiredArgsConstructor
 class Resilience {
-  private final ResilienceConfiguration config;
+  @NonNull private final ResilienceConfiguration config;
   private final List<Long> timestampsOfReconnectionAttempts =
       Collections.synchronizedList(new ArrayList<>());
 

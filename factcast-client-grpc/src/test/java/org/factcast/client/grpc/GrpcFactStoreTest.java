@@ -17,8 +17,8 @@ package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.factcast.core.TestHelper.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -26,9 +26,9 @@ import com.google.common.collect.Sets;
 import io.grpc.*;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
 import org.assertj.core.util.Lists;
+import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
 import org.factcast.core.snap.Snapshot;
@@ -38,7 +38,6 @@ import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.Headers;
 import org.factcast.grpc.api.StateForRequest;
@@ -51,15 +50,17 @@ import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
-import org.mockito.*;
+import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class GrpcFactStoreTest {
 
-  @InjectMocks GrpcFactStore uut;
-
-  @Mock FactCastGrpcClientProperties properties;
+  @Mock(lenient = true)
+  FactCastGrpcClientProperties properties;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   RemoteFactStoreBlockingStub blockingStub;
@@ -67,20 +68,18 @@ class GrpcFactStoreTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   RemoteFactStoreStub stub;
 
-  @Mock FactCastGrpcChannelFactory factory;
-
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  SubscriptionRequestTO req;
-
   ProtoConverter conv = new ProtoConverter();
 
   @Captor ArgumentCaptor<MSG_Facts> factsCap;
 
   @Mock public Optional<String> credentials;
-  @Mock private CompressionCodecs codecs;
-  @Mock private ProtoConverter converter;
-  @Mock private AtomicBoolean initialized;
-  @InjectMocks private GrpcFactStore underTest;
+  private GrpcFactStore uut;
+
+  @BeforeEach
+  public void setup() {
+    when(properties.getResilience()).thenReturn(new ResilienceConfiguration());
+    uut = new GrpcFactStore(blockingStub, stub, credentials, properties, "someTest");
+  }
 
   @Test
   void testPublish() {
@@ -588,14 +587,14 @@ class GrpcFactStoreTest {
       doThrow(damn).when(block).run();
       assertThatThrownBy(
               () -> {
-                underTest.runAndHandle(block);
+                uut.runAndHandle(block);
               })
           .isSameAs(damn);
     }
 
     @Test
     void happyPath() {
-      underTest.runAndHandle(block);
+      uut.runAndHandle(block);
       verify(block).run();
     }
 
@@ -616,7 +615,7 @@ class GrpcFactStoreTest {
           .run();
       assertThatThrownBy(
               () -> {
-                underTest.runAndHandle(block);
+                uut.runAndHandle(block);
               })
           .isNotSameAs(e)
           .isInstanceOf(FactValidationException.class)
@@ -635,14 +634,14 @@ class GrpcFactStoreTest {
       when(block.call()).thenThrow(damn);
       assertThatThrownBy(
               () -> {
-                underTest.callAndHandle(block);
+                uut.callAndHandle(block);
               })
           .isSameAs(damn);
     }
 
     @Test
     void happyPath() throws Exception {
-      underTest.callAndHandle(block);
+      uut.callAndHandle(block);
       verify(block).call();
     }
 
@@ -663,7 +662,7 @@ class GrpcFactStoreTest {
 
       assertThatThrownBy(
               () -> {
-                underTest.callAndHandle(block);
+                uut.callAndHandle(block);
               })
           .isNotSameAs(e)
           .isInstanceOf(FactValidationException.class)
