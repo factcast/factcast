@@ -125,7 +125,8 @@ public class GrpcFactStore implements FactStore {
         null);
   }
 
-  private GrpcFactStore(
+  @VisibleForTesting
+  GrpcFactStore(
       @NonNull RemoteFactStoreBlockingStub newBlockingStub,
       @NonNull RemoteFactStoreStub newStub,
       @NonNull Optional<String> credentials,
