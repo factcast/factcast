@@ -23,7 +23,7 @@ package org.factcast.core.subscription;
 public class SubscriptionClosedException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
-  // TODO cover
+
   public SubscriptionClosedException(Throwable e) {
     super(e);
   }

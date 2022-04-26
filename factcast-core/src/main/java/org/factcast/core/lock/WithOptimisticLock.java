@@ -15,12 +15,9 @@
  */
 package org.factcast.core.lock;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -100,12 +97,6 @@ public class WithOptimisticLock {
     throw new OptimisticRetriesExceededException(retry);
   }
 
-  // TODO cover
-  @VisibleForTesting
-  List<FactSpec> toFactSpecs(String ns, List<UUID> ids) {
-    return ids.stream().map(id -> FactSpec.ns(ns).aggId(id)).collect(Collectors.toList());
-  }
-
   private IntermediatePublishResult runAndWrapException(Attempt operation)
       throws AttemptAbortedException {
 
@@ -127,7 +118,7 @@ public class WithOptimisticLock {
       }
     }
   }
-  // TODO cover
+
   @SneakyThrows
   private void sleep() {
     if (interval > 0) {
