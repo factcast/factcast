@@ -15,7 +15,7 @@
  */
 package org.factcast.core.spec;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -192,15 +192,5 @@ public class FactSpecTest {
         .hasSize(2)
         .contains(FactSpec.ns("ns").type("type").version(2))
         .contains(FactSpec.ns("ns").type("type"));
-  }
-
-  @Test
-  void testCopy() {
-    var org = FactSpec.from(TestFactWithType.class);
-    var copy = org.copy();
-    assertThat(copy).isEqualTo(org).isNotSameAs(org);
-
-    org.meta("foo", "bar");
-    assertThat(copy).isNotEqualTo(org);
   }
 }

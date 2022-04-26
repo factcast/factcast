@@ -31,11 +31,11 @@ import org.slf4j.LoggerFactory;
 public interface FactObserver {
 
   void onNext(@NonNull Fact element);
-
+  // TODO cover
   default void onFastForward(@NonNull UUID factIdToFfwdTo) {}
-
+  // TODO cover
   default void onFactStreamInfo(@NonNull FactStreamInfo info) {}
-
+  // TODO cover
   default void onCatchup() {
     // implement if you are interested in that event
   }
@@ -43,7 +43,7 @@ public interface FactObserver {
   default void onComplete() {
     // implement if you are interested in that event
   }
-
+  // TODO cover
   default void onError(@NonNull Throwable exception) {
     LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);
   }
