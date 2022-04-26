@@ -16,8 +16,8 @@
 package org.factcast.store.test;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -45,7 +45,6 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
@@ -808,14 +807,6 @@ public abstract class AbstractFactStoreTest {
     s.awaitComplete();
 
     assertEquals(2, toListObserver.list().size());
-  }
-
-  @Test
-  public void testSubscribeToFactsParameterContract() throws Exception {
-    FactObserver observer = mock(FactObserver.class);
-    assertThrows(NullPointerException.class, () -> uut.subscribe(null, observer));
-    assertThrows(
-        NullPointerException.class, () -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
   }
 
   /// optimistic locking
