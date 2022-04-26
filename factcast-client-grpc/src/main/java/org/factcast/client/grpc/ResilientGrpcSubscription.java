@@ -99,10 +99,12 @@ public class ResilientGrpcSubscription implements Subscription {
       assertSubscriptionStateNotClosed();
       long maxPause = waitTimeInMillis - (System.currentTimeMillis() - startTime);
 
-      Subscription cur = currentSubscription.getAndBlock(maxPause);
       try {
+        Subscription cur = currentSubscription.getAndBlock(maxPause);
         consumer.accept(cur, maxPause);
         return this;
+      } catch (TimeoutException t) {
+        throw t;
       } catch (Exception e) {
         if (!resilience.shouldRetry(e)) {
           throw e;
@@ -118,13 +120,13 @@ public class ResilientGrpcSubscription implements Subscription {
   ResilientGrpcSubscription delegate(Consumer<Subscription> consumer) {
     for (; ; ) {
       assertSubscriptionStateNotClosed();
-      Subscription cur = currentSubscription.getAndBlock();
       try {
+        Subscription cur = currentSubscription.getAndBlock();
         consumer.accept(cur);
         return this;
       } catch (Exception e) {
         if (!resilience.shouldRetry(e)) {
-          throw e;
+          throw ExceptionHelper.toRuntime(e);
         }
       }
     }
@@ -237,20 +239,23 @@ public class ResilientGrpcSubscription implements Subscription {
     private final AtomicReference<Subscription> currentSubscription = new AtomicReference<>();
 
     @NonNull
-    public Subscription getAndBlock() {
+    public Subscription getAndBlock() throws TimeoutException {
       return getAndBlock(0);
     }
 
     @NonNull
-    public Subscription getAndBlock(long maxPause) {
+    public Subscription getAndBlock(long maxPause) throws TimeoutException {
       long end = System.currentTimeMillis() + maxPause;
       synchronized (currentSubscription) {
         do {
           assertSubscriptionStateNotClosed();
           if (currentSubscription.get() == null) {
             try {
-              long waitTime =
-                  maxPause == 0 ? 0 : Math.min(Math.abs(end - System.currentTimeMillis()), 1);
+              var now = System.currentTimeMillis();
+              long waitTime = maxPause == 0 ? 0 : end - now;
+              if (maxPause != 0 && waitTime < 1)
+                throw new TimeoutException("Timeout while acquiring subscription");
+
               currentSubscription.wait(waitTime);
             } catch (InterruptedException ignore) {
               // can be ignored

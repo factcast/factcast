@@ -24,6 +24,8 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -304,16 +306,27 @@ class ResilientGrpcSubscriptionTest {
       sh = uut.new SubscriptionHolder();
     }
 
+    @SneakyThrows
     @Test
-    void blocksUntilSubscriptionAvailable() {}
+    void blocksUntilSubscriptionAvailable() {
+      Subscription s = mock(Subscription.class);
+      new Timer()
+          .schedule(
+              new TimerTask() {
+                @Override
+                public void run() {
+                  sh.set(s);
+                }
+              },
+              1000);
+      assertThat(sh.getAndBlock(0)).isSameAs(s);
+    }
 
     @Test
-    @Disabled
-    // question if timeout is a good idea here.
     void blocksUntilTimeroutReached() {
       assertThatThrownBy(
               () -> {
-                sh.getAndBlock(10);
+                sh.getAndBlock(100);
               })
           .isInstanceOf(TimeoutException.class);
     }
