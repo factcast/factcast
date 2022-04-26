@@ -16,13 +16,16 @@
 package org.factcast.store.test;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +34,6 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.lock.Attempt;
@@ -698,24 +700,6 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  protected void testEnumerateTypesNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> uut.enumerateTypes(null));
-  }
-
-  @Test
-  protected void testInvalidateNullContract() {
-    Assertions.assertThrows(NullPointerException.class, () -> store.invalidate(null));
-  }
-
-  @Test
-  protected void testPublishIfUnchangedNullContract() {
-    Assertions.assertThrows(
-        NullPointerException.class, () -> store.publishIfUnchanged(Lists.emptyList(), null));
-    Assertions.assertThrows(
-        NullPointerException.class, () -> store.publishIfUnchanged(null, Optional.empty()));
-  }
-
-  @Test
   protected void testEnumerateTypes() {
     uut.publish(Fact.builder().ns("ns1").type("t1").build("{}"));
     uut.publish(Fact.builder().ns("ns2").type("t2").build("{}"));
@@ -1310,25 +1294,6 @@ public abstract class AbstractFactStoreTest {
         }
       }
     }
-  }
-
-  @Test
-  public void nullContracts_publishIfUnchanged() {
-    assertThrows(
-        NullPointerException.class, () -> store.publishIfUnchanged(Lists.emptyList(), null));
-
-    assertThrows(NullPointerException.class, () -> store.publishIfUnchanged(null, null));
-
-    assertThrows(
-        NullPointerException.class, () -> store.publishIfUnchanged(null, Optional.empty()));
-  }
-
-  @Test
-  public void testSubscribeNullContract() throws Exception {
-    assertThrows(NullPointerException.class, () -> store.subscribe(null, mock(FactObserver.class)));
-    assertThrows(NullPointerException.class, () -> store.subscribe(null, null));
-    assertThrows(
-        NullPointerException.class, () -> store.subscribe(mock(SubscriptionRequestTO.class), null));
   }
 
   @Test

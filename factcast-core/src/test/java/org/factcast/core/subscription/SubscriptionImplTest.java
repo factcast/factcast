@@ -109,11 +109,6 @@ public class SubscriptionImplTest {
   }
 
   @Test
-  void testNullConst() {
-    Assertions.assertThrows(NullPointerException.class, () -> new SubscriptionImpl(null, null));
-  }
-
-  @Test
   void testNotifyElementNull() {
     Assertions.assertThrows(NullPointerException.class, () -> uut.notifyElement(null));
   }

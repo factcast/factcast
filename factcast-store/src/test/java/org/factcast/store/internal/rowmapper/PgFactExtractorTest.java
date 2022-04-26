@@ -49,10 +49,4 @@ public class PgFactExtractorTest {
     assertEquals(110, mapRow.version());
     assertEquals(id, mapRow.id());
   }
-
-  @Test
-  void testMapRowNullContracts() {
-
-    assertThrows(NullPointerException.class, () -> uut.mapRow(null, 1));
-  }
 }

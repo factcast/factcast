@@ -26,7 +26,6 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.SneakyThrows;
 import okhttp3.*;
 import okhttp3.Response.Builder;
-import org.factcast.core.TestHelper;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.SchemaRegistryUnavailableException;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -89,14 +88,6 @@ public class HttpIndexFetcherTest {
               RegistryMetrics.EVENT.SCHEMA_REGISTRY_UNAVAILABLE,
               Tags.of(RegistryMetrics.TAG_STATUS_CODE_KEY, "404"));
     }
-  }
-
-  @Test
-  public void testNullContracts() {
-    TestHelper.expectNPE(() -> new HttpIndexFetcher(null, mock(RegistryMetrics.class)));
-    TestHelper.expectNPE(() -> new HttpIndexFetcher(new URL("http://ibm.com"), null));
-    TestHelper.expectNPE(
-        () -> new HttpIndexFetcher(null, new OkHttpClient(), mock(RegistryMetrics.class)));
   }
 
   @SneakyThrows

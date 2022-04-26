@@ -184,12 +184,7 @@ public class FactSpecMatcherTest {
   }
 
   @Test
-  void testFactSpecMatcherNullConstructor() {
-    Assertions.assertThrows(NullPointerException.class, () -> new FactSpecMatcher(null));
-  }
-
-  @Test
-  public void testMatchesNull() {
+  void testMatchesNull() {
     TestHelper.expectNPE(() -> FactSpecMatcher.matches(null));
   }
 }
