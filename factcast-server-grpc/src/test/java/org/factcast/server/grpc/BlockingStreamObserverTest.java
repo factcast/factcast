@@ -99,13 +99,14 @@ public class BlockingStreamObserverTest {
   void testOnNextNotReadyThenCancelled() throws Exception {
     CountDownLatch waitForDelegate = new CountDownLatch(1);
     CountDownLatch waitForOnNextToExit = new CountDownLatch(1);
-    uut = new BlockingStreamObserver<>("foo", delegate, 1){
-      @Override
-      void waitForDelegate() {
-        waitForDelegate.countDown();
-        super.waitForDelegate();
-      }
-    };
+    uut =
+        new BlockingStreamObserver<>("foo", delegate, 1) {
+          @Override
+          void waitForDelegate() {
+            waitForDelegate.countDown();
+            super.waitForDelegate();
+          }
+        };
 
     AtomicBoolean ready = new AtomicBoolean(false);
     AtomicBoolean cancelled = new AtomicBoolean(false);
