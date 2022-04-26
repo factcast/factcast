@@ -16,8 +16,8 @@
 package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -63,10 +63,10 @@ class GrpcFactStoreTest {
   @Mock(lenient = true)
   FactCastGrpcClientProperties properties;
 
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS, lenient = true)
   RemoteFactStoreBlockingStub blockingStub;
 
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS, lenient = true)
   RemoteFactStoreStub stub;
 
   ProtoConverter conv = new ProtoConverter();
@@ -80,6 +80,10 @@ class GrpcFactStoreTest {
   @BeforeEach
   public void setup() {
     when(properties.getResilience()).thenReturn(resilienceConfig);
+    // preserve deep stub behavior
+    when(stub.withWaitForReady()).thenReturn(stub);
+    when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+    //
     resilienceConfig.setEnabled(false);
     uut = new GrpcFactStore(blockingStub, stub, credentials, properties, "someTest");
   }

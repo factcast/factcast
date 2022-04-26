@@ -54,7 +54,7 @@ import org.springframework.test.context.TestPropertySource;
             + SubscriptionReconnectionITest.NUMBER_OF_RETRIES)
 @Slf4j
 class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
-  static final int NUMBER_OF_RETRIES = 99;
+  static final int NUMBER_OF_RETRIES = 30;
 
   private static final int MAX_FACTS = 10000;
   private static final long LATENCY = 2000;

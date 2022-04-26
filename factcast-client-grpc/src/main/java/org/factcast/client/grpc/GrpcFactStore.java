@@ -138,8 +138,8 @@ public class GrpcFactStore implements FactStore {
     this.clientId = clientId;
 
     // initially use the raw ones...
-    blockingStub = rawBlockingStub;
-    stub = rawStub;
+    blockingStub = rawBlockingStub.withWaitForReady();
+    stub = rawStub.withWaitForReady();
 
     if (credentials.isPresent()) {
       String[] sa = credentials.get().split(":");
@@ -174,10 +174,23 @@ public class GrpcFactStore implements FactStore {
   // GrpcGlobalClientInterceptor was tested but did not work as expected
   @VisibleForTesting
   void runAndHandle(@NonNull Runnable block) {
-    try {
-      block.run();
-    } catch (StatusRuntimeException e) {
-      throw ClientExceptionHelper.from(e);
+    for (; ; ) {
+      try {
+        block.run();
+        return;
+      } catch (StatusRuntimeException e) {
+        if (resilience.shouldRetry(e)) {
+          log.warn("Temporary failure", e);
+          log.info("Retry call to remote server");
+          resilience.registerAttempt();
+          resilience.sleepForInterval();
+          // continue and try next attempt
+        } else {
+          throw ClientExceptionHelper.from(e);
+        }
+      } catch (Exception e) {
+        throw ExceptionHelper.toRuntime(e);
+      }
     }
   }
 
@@ -187,9 +200,12 @@ public class GrpcFactStore implements FactStore {
   <T> T callAndHandle(@NonNull Callable<T> block) {
     for (; ; ) {
       try {
-        return block.call();
+        T call = block.call();
+        return call;
       } catch (StatusRuntimeException e) {
         if (resilience.shouldRetry(e)) {
+          log.warn("Temporary failure", e);
+          log.info("Retry call to remote server");
           resilience.registerAttempt();
           resilience.sleepForInterval();
           // continue and try next attempt
